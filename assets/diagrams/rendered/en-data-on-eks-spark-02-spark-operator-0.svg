@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Spark Operator reconciliation loop</title>
+  <desc id="ddesc">A cyclic flowchart showing the Spark Operator's control loop: a user applies a SparkApplication custom resource, the Operator Controller watches it and hands off through a mutating admission webhook to create a driver pod, which requests executor pods to run the Spark job, after which the Operator writes progress back to the resource's status field and the controller reconciles again.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="28" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.18em">SPARK OPERATOR</text>
+  <text x="40" y="52" font-size="20" font-weight="700" fill="#232F3E">Reconciliation loop</text>
+
+  <!-- ============ CONNECTORS (drawn before boxes) ============ -->
+
+  <!-- A -> B (top row, left to right) -->
+  <line x1="220" y1="150" x2="260" y2="150" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- B -> C -->
+  <line x1="440" y1="150" x2="480" y2="150" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- C -> D -->
+  <line x1="660" y1="150" x2="700" y2="150" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- D -> E (drop down right side, same x-axis, straight) -->
+  <line x1="790" y1="190" x2="790" y2="430" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- E -> F (bottom row, right to left) -->
+  <line x1="700" y1="470" x2="660" y2="470" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- F -> G -->
+  <line x1="480" y1="470" x2="440" y2="470" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- G -> B (loop back, same x-axis, straight, accent = the reconcile signal) -->
+  <line x1="350" y1="430" x2="350" y2="190" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- label for loop-back, vertical segment: label sits to the side with 6-10px horizontal gap -->
+  <rect x="362" y="300" width="70" height="12" rx="2" fill="#ffffff"/>
+  <text x="397" y="309" class="mono" fill="#EC7211" font-size="8" letter-spacing="0.06em" text-anchor="middle">RECONCILE</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- A: kubectl apply (input) -->
+  <rect x="40" y="110" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="40" y="110" width="180" height="80" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="130" y="146" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">kubectl apply</text>
+  <text x="130" y="162" font-size="10" fill="#232F3E" text-anchor="middle">SparkApplication CR</text>
+  <text x="130" y="178" class="mono" font-size="9" fill="#545B64" text-anchor="middle">kubectl</text>
+
+  <!-- B: Operator Controller (focal hub) -->
+  <rect x="260" y="110" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="260" y="110" width="180" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="350" y="146" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Operator Controller</text>
+  <text x="350" y="162" font-size="10" fill="#232F3E" text-anchor="middle">watches the CR</text>
+  <text x="350" y="178" class="mono" font-size="9" fill="#EC7211" text-anchor="middle">controller</text>
+
+  <!-- C: Mutating Admission Webhook -->
+  <rect x="480" y="110" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="480" y="110" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="570" y="140" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Mutating Admission</text>
+  <text x="570" y="154" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Webhook</text>
+  <text x="570" y="170" font-size="10" fill="#545B64" text-anchor="middle">injects pod customizations</text>
+  <text x="570" y="182" class="mono" font-size="9" fill="#545B64" text-anchor="middle">webhook</text>
+
+  <!-- D: Operator creates Driver Pod -->
+  <rect x="700" y="110" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="700" y="110" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="790" y="146" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Operator creates</text>
+  <text x="790" y="162" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Driver Pod</text>
+  <text x="790" y="178" class="mono" font-size="9" fill="#545B64" text-anchor="middle">driver pod</text>
+
+  <!-- E: Driver requests Executor Pods -->
+  <rect x="700" y="430" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="700" y="430" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="790" y="466" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Driver requests</text>
+  <text x="790" y="482" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Executor Pods</text>
+  <text x="790" y="498" class="mono" font-size="9" fill="#545B64" text-anchor="middle">executor pods</text>
+
+  <!-- F: Spark job runs (state) -->
+  <rect x="480" y="430" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="480" y="430" width="180" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="570" y="474" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Spark job runs</text>
+  <text x="570" y="490" class="mono" font-size="9" fill="#545B64" text-anchor="middle">spark job</text>
+
+  <!-- G: Operator writes progress back to CR .status -->
+  <rect x="260" y="430" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="260" y="430" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="350" y="460" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Operator writes progress</text>
+  <text x="350" y="476" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">back to CR .status</text>
+  <text x="350" y="494" class="mono" font-size="9" fill="#545B64" text-anchor="middle">cr.status</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="530" x2="920" y2="530" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="550" class="mono" fill="#545B64" font-size="8" letter-spacing="0.14em">LEGEND</text>
+
+  <rect x="140" y="542" width="12" height="12" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="158" y="552" class="mono" fill="#545B64" font-size="9">USER ACTION</text>
+
+  <rect x="300" y="542" width="12" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="318" y="552" class="mono" fill="#545B64" font-size="9">CONTROL HUB</text>
+
+  <rect x="460" y="542" width="12" height="12" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="478" y="552" class="mono" fill="#545B64" font-size="9">RUNTIME STATE</text>
+
+  <line x1="640" y1="548" x2="670" y2="548" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="678" y="552" class="mono" fill="#545B64" font-size="9">RECONCILE LOOP</text>
+</svg>

@@ -72,36 +72,7 @@ Practical scaling patterns covered in this document:
 
 ### Metrics-based Scaling Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application<br/>Pod
-    participant Envoy as Envoy<br/>Sidecar
-    participant Prom as Prometheus
-    participant KEDA as KEDA<br/>Operator
-    participant HPA as HPA
-    participant K8s as Kubernetes<br/>API
-
-    App->>Envoy: HTTP request processing
-    Envoy->>Envoy: Generate metrics<br/>istio_requests_total<br/>istio_request_duration_milliseconds
-
-    Envoy->>Prom: Expose metrics<br/>:15090/stats/prometheus
-    Prom->>Prom: Collect and store metrics
-
-    Note over KEDA: Execute at pollingInterval
-
-    KEDA->>Prom: Execute PromQL query<br/>rate(istio_requests_total[1m])
-    Prom->>KEDA: Return current RPS value<br/>e.g., 1,500 RPS
-
-    KEDA->>KEDA: Compare threshold<br/>threshold: 1,000 RPS<br/>current: 1,500 RPS<br/>-> Scale out needed
-
-    KEDA->>HPA: Calculate and update target replicas<br/>current: 10 -> desired: 15
-
-    HPA->>K8s: Update ReplicaSet
-    K8s->>App: Create 5 new Pods
-
-    Note over App,K8s: Wait cooldownPeriod<br/>then evaluate next scaling
-```
+![A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus, compares the result to a threshold, and when it decides to scale out it updates the HPA target so Kubernetes creates new Pods, then waits out a cooldown period before evaluating again.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-0.png)
 
 ### ScaledObject Basic Structure
 
@@ -176,36 +147,7 @@ spec:
 
 #### How It Works
 
-```mermaid
-flowchart TD
-    Start[Collect Metrics]
-    Query[Execute PromQL<br/>Query]
-    Check{RPS > 100?}
-    ScaleOut[Increase Replicas]
-    Check2{RPS < 50?}
-    ScaleIn[Decrease Replicas]
-    Wait[Wait]
-
-    Start --> Query
-    Query --> Check
-    Check -->|Yes| ScaleOut
-    Check -->|No| Check2
-    Check2 -->|Yes| ScaleIn
-    Check2 -->|No| Wait
-    ScaleOut --> Wait
-    ScaleIn --> Wait
-    Wait --> Start
-
-    %% Style definitions
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef wait fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Start,Query,ScaleOut,ScaleIn action;
-    class Check,Check2 decision;
-    class Wait wait;
-```
+![A polling loop collects RPS metrics, checks the RPS against a scale-out threshold and a scale-in threshold, adjusts replica count when a threshold is crossed, then waits and repeats.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-1.png)
 
 ### 2. Latency Based Scaling
 
@@ -774,40 +716,7 @@ spec:
 
 ### 1. Metric Selection Guide
 
-```mermaid
-flowchart TD
-    Start{Workload<br/>Characteristics}
-
-    Stateless{Stateless<br/>Service?}
-    Traffic{Traffic<br/>Pattern Predictable?}
-    Latency{Latency<br/>Sensitive?}
-
-    RPSScale[RPS-based<br/>Scaling]
-    LatencyScale[Latency-based<br/>Scaling]
-    Composite[Composite Metrics<br/>Scaling]
-    Predictive[Predictive Scaling<br/>+ Cron]
-
-    Start --> Stateless
-    Stateless -->|Yes| Traffic
-    Stateless -->|No| LatencyScale
-
-    Traffic -->|Yes| Predictive
-    Traffic -->|No| Latency
-
-    Latency -->|Yes| LatencyScale
-    Latency -->|No| RPSScale
-
-    RPSScale -.->|Combine| Composite
-    LatencyScale -.->|Combine| Composite
-
-    %% Style definitions
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef strategy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class Start,Stateless,Traffic,Latency decision;
-    class RPSScale,LatencyScale,Composite,Predictive strategy;
-```
+![A decision tree that routes a workload to RPS-based, latency-based, predictive, or composite scaling based on whether it is stateless, has a predictable traffic pattern, and is latency sensitive, with the two single-metric strategies able to combine into a composite one.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-2.png)
 
 **Recommended Metrics**:
 

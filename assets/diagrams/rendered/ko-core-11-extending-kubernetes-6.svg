@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d6title d6desc">
+  <title id="d6title">Amazon EKS 확장 기능 아키텍처</title>
+  <desc id="d6desc">EKS 클러스터가 컨트롤 플레인과 노드 그룹을 관리하고, 컨트롤 플레인에 연결된 VPC CNI·CoreDNS·kube-proxy·EBS CSI·로드 밸런서 컨트롤러 같은 추가 기능이 각각 대응하는 AWS 서비스와 연동되며, IAM이 IRSA로 노드 그룹에 권한을 부여하는 구조를 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">ARCHITECTURE · AMAZON EKS</text>
+  <text x="40" y="46" fill="#232F3E" font-size="16" font-weight="700" class="sans">Amazon EKS 확장 기능 아키텍처</text>
+
+  <!-- ============ Zones ============ -->
+  <rect x="100" y="44" width="660" height="284" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="116" y="48" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="164" y="57" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS</text>
+
+  <rect x="120" y="212" width="560" height="100" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+  <rect x="136" y="216" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="196" y="225" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">EKS 추가 기능</text>
+
+  <rect x="120" y="348" width="680" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="136" y="352" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="180" y="361" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">AWS 서비스</text>
+
+  <!-- ============ Arrows ============ -->
+  <!-- EKS -> CP (관리) -->
+  <path d="M437,108 V126 Q437,134 429,134 H356 Q348,134 348,142 V160" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="376" y="114" width="32" height="12" fill="#ffffff"/>
+  <text x="392" y="123" fill="#545B64" font-size="8" class="mono" text-anchor="middle">관리</text>
+
+  <!-- EKS -> NG (관리) -->
+  <path d="M483,108 V126 Q483,134 491,134 H644 Q652,134 652,142 V160" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="551" y="114" width="32" height="12" fill="#ffffff"/>
+  <text x="567" y="123" fill="#545B64" font-size="8" class="mono" text-anchor="middle">관리</text>
+
+  <!-- CP -> VCNI -->
+  <path d="M307,192 V224 Q307,232 299,232 H204 Q196,232 196,240 V244" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- CP -> CDNSKP -->
+  <path d="M332,192 V244" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- CP -> EBSCSI -->
+  <path d="M362,192 V224 Q362,232 370,232 H460 Q468,232 468,240 V244" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- CP -> ALBC -->
+  <path d="M389,192 V224 Q389,232 397,232 H596 Q604,232 604,240 V244" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- VCNI -> VPC -->
+  <path d="M196,276 V380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- EBSCSI -> EBS -->
+  <path d="M468,276 V320 Q468,328 460,328 H336 Q328,328 328,336 V380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- ALBC -> ELB -->
+  <path d="M604,276 V320 Q604,328 596,328 H468 Q460,328 460,336 V380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- IAM -> NG (IRSA) -->
+  <path d="M648,396 H792 Q800,396 800,388 V184 Q800,176 792,176 H720" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="808" y="280" width="36" height="12" fill="#ffffff"/>
+  <text x="826" y="289" fill="#545B64" font-size="8" class="mono" text-anchor="middle">IRSA</text>
+
+  <!-- ============ Nodes ============ -->
+  <!-- EKS (focal) -->
+  <rect x="392" y="76" width="136" height="32" rx="6" fill="#ffffff"/>
+  <rect x="392" y="76" width="136" height="32" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="460" y="96" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">EKS 클러스터</text>
+
+  <!-- CP -->
+  <rect x="280" y="160" width="136" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="348" y="180" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">컨트롤 플레인</text>
+
+  <!-- NG -->
+  <rect x="584" y="160" width="136" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="652" y="180" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">노드 그룹</text>
+
+  <!-- VCNI -->
+  <rect x="136" y="244" width="120" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="196" y="264" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">Amazon VPC CNI</text>
+
+  <!-- CDNSKP (merged) -->
+  <rect x="272" y="244" width="120" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="332" y="258" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">CoreDNS</text>
+  <text x="332" y="270" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">kube-proxy</text>
+
+  <!-- EBSCSI -->
+  <rect x="408" y="244" width="120" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="468" y="258" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">Amazon EBS</text>
+  <text x="468" y="270" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">CSI 드라이버</text>
+
+  <!-- ALBC -->
+  <rect x="544" y="244" width="120" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="604" y="258" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">AWS Load</text>
+  <text x="604" y="270" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">Balancer Ctrl</text>
+
+  <!-- VPC -->
+  <rect x="140" y="380" width="112" height="32" rx="6" fill="#ffffff"/>
+  <rect x="140" y="380" width="112" height="32" rx="6" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="1"/>
+  <text x="196" y="400" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">Amazon VPC</text>
+
+  <!-- EBS -->
+  <rect x="272" y="380" width="112" height="32" rx="6" fill="#ffffff"/>
+  <rect x="272" y="380" width="112" height="32" rx="6" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="1"/>
+  <text x="328" y="400" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">Amazon EBS</text>
+
+  <!-- ELB -->
+  <rect x="404" y="380" width="112" height="32" rx="6" fill="#ffffff"/>
+  <rect x="404" y="380" width="112" height="32" rx="6" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="1"/>
+  <text x="460" y="400" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">Elastic LB</text>
+
+  <!-- IAM -->
+  <rect x="536" y="380" width="112" height="32" rx="6" fill="#ffffff"/>
+  <rect x="536" y="380" width="112" height="32" rx="6" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="1"/>
+  <text x="592" y="400" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">AWS IAM</text>
+
+  <!-- ACK (merged with AWS services target) -->
+  <rect x="668" y="380" width="112" height="32" rx="6" fill="#ffffff"/>
+  <rect x="668" y="380" width="112" height="32" rx="6" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="1"/>
+  <text x="724" y="396" fill="#232F3E" font-size="9" font-weight="600" class="sans" text-anchor="middle">ACK</text>
+  <text x="724" y="407" fill="#545B64" font-size="7" class="mono" text-anchor="middle">→ AWS 서비스 관리</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="496" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="492" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="232" y="496" fill="#545B64" font-size="9" class="sans">클러스터 진입점(EKS)</text>
+  <circle cx="440" cy="492" r="4" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="1"/>
+  <text x="452" y="496" fill="#545B64" font-size="9" class="sans">AWS 관리형 서비스</text>
+  <circle cx="640" cy="492" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="652" y="496" fill="#545B64" font-size="9" class="sans">EKS 구성요소·애드온</text>
+</svg>

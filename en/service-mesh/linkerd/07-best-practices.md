@@ -621,27 +621,7 @@ linkerd diagnostics proxy-metrics deploy/my-service -n my-app
 
 ### Migration Strategy
 
-```mermaid
-graph TB
-    subgraph "Phase 1: Preparation"
-        A[Analyze Istio Environment]
-        B[Build Linkerd Test Environment]
-        C[Review Feature Mapping]
-    end
-
-    subgraph "Phase 2: Parallel Operation"
-        D[Migrate by Namespace]
-        E[Verify Traffic]
-        F[Integrate Monitoring]
-    end
-
-    subgraph "Phase 3: Completion"
-        G[Remove Istio]
-        H[Optimize Linkerd]
-    end
-
-    A --> B --> C --> D --> E --> F --> G --> H
-```
+![An eight-step migration path from Istio to Linkerd grouped into three phases: preparation (analyze the Istio environment, build a test environment, review feature mapping), parallel operation (migrate by namespace, verify traffic, integrate monitoring), and completion (remove Istio, then optimize Linkerd), with the Istio-removal step highlighted as the key milestone.](../../.gitbook/assets/en-service-mesh-linkerd-07-best-practices-0.png)
 
 ### Feature Mapping
 

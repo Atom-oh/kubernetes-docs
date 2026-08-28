@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workloadentry-usecases-title workloadentry-usecases-desc">
+    <title id="workloadentry-usecases-title">WorkloadEntry use cases</title>
+    <desc id="workloadentry-usecases-desc">Architecture diagram showing legacy VMs and a bare-metal server registering with the istiod control plane while their applications keep talking over mTLS to matching workloads inside a Kubernetes cluster.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="40" y="64" width="200" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="68" width="117" height="12" rx="2" fill="#ffffff"/>
+    <text x="114" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">LEGACY ENVIRONMENT</text>
+    <rect x="696" y="64" width="224" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="712" y="68" width="117" height="12" rx="2" fill="#ffffff"/>
+    <text x="770" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">KUBERNETES CLUSTER</text>
+
+    <!-- arrows -->
+    <line x1="224" y1="120" x2="712" y2="120" stroke="#545B64" stroke-width="1" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+    <line x1="224" y1="208" x2="712" y2="208" stroke="#545B64" stroke-width="1" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+
+    <path d="M224,144 H304 Q312,144 312,152 H400" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <path d="M224,232 H312 Q320,232 320,224 V180 Q320,172 328,172 H400" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <path d="M224,300 H328 Q336,300 336,292 V200 Q336,192 344,192 H400" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <path d="M560,156 H668 Q676,156 676,148 V140 Q676,132 684,132 H816" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <path d="M560,188 H692 Q700,188 700,196 V212 Q700,220 708,220 H816" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- arrow labels -->
+    <rect x="451" y="100" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="468" y="109" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+    <rect x="451" y="188" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="468" y="197" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+    <rect x="248" y="280" width="57" height="12" rx="2" fill="#ffffff"/>
+    <text x="276" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MESH REG</text>
+    <rect x="603" y="168" width="46" height="12" rx="2" fill="#ffffff"/>
+    <text x="626" y="177" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIG</text>
+
+    <!-- nodes: Legacy Environment -->
+    <rect x="56" y="104" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="104" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="64" y="110" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" opacity="0.6"/>
+    <text x="78" y="119" fill="rgba(35,47,62,0.60)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VM</text>
+    <text x="140" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Legacy App</text>
+    <text x="140" y="146" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Virtual Machine</text>
+
+    <rect x="56" y="192" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="192" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="64" y="198" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" opacity="0.6"/>
+    <text x="78" y="207" fill="rgba(35,47,62,0.60)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VM</text>
+    <text x="140" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Database</text>
+    <text x="140" y="234" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Virtual Machine</text>
+
+    <rect x="56" y="272" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="272" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="64" y="278" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" opacity="0.6"/>
+    <text x="78" y="287" fill="rgba(35,47,62,0.60)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BM</text>
+    <text x="140" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">High-Perf Server</text>
+    <text x="140" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Bare Metal</text>
+
+    <!-- nodes: Kubernetes Cluster -->
+    <rect x="712" y="104" width="96" height="56" rx="6" fill="#ffffff"/>
+    <rect x="712" y="104" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="720" y="110" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.6"/>
+    <text x="734" y="119" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="760" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">New App</text>
+    <text x="760" y="146" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod</text>
+
+    <rect x="816" y="104" width="88" height="56" rx="6" fill="#ffffff"/>
+    <rect x="816" y="104" width="88" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="824" y="110" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.6"/>
+    <text x="838" y="119" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+    <text x="860" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy</text>
+    <text x="860" y="146" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Sidecar</text>
+
+    <rect x="712" y="192" width="96" height="56" rx="6" fill="#ffffff"/>
+    <rect x="712" y="192" width="96" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="720" y="198" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.6"/>
+    <text x="734" y="207" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="760" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Microservice</text>
+    <text x="760" y="234" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod</text>
+
+    <rect x="816" y="192" width="88" height="56" rx="6" fill="#ffffff"/>
+    <rect x="816" y="192" width="88" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="824" y="198" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.6"/>
+    <text x="838" y="207" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+    <text x="860" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy</text>
+    <text x="860" y="234" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Sidecar</text>
+
+    <!-- node: istiod (focal) -->
+    <rect x="400" y="140" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="400" y="140" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="408" y="146" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.6"/>
+    <text x="422" y="155" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CP</text>
+    <text x="480" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">istiod</text>
+    <text x="480" y="186" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Control Plane</text>
+
+    <!-- legend -->
+    <line x1="40" y1="516" x2="920" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="548" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="60" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">VM / bare metal</text>
+
+    <rect x="216" y="548" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="236" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">K8s workload</text>
+
+    <rect x="384" y="548" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="404" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Control plane</text>
+
+    <line x1="560" y1="553" x2="588" y2="553" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="596" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Mesh registration / config</text>
+
+    <line x1="792" y1="553" x2="820" y2="553" stroke="#545B64" stroke-width="1" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+    <text x="828" y="556" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">mTLS traffic</text>
+  </svg>

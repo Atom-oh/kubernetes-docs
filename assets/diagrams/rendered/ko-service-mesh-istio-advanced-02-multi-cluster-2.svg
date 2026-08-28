@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-advanced-02-multi-cluster-2-title ko-service-mesh-istio-advanced-02-multi-cluster-2-desc">
+    <title id="ko-service-mesh-istio-advanced-02-multi-cluster-2-title">Route53 기반 Active-Standby 재해 복구 흐름</title>
+    <desc id="ko-service-mesh-istio-advanced-02-multi-cluster-2-desc">Global DNS(Route53)가 평상시 100% 트래픽을 활성 클러스터로 보내고, 재해 발생 시 대기 클러스터로 전환하며, 두 클러스터는 실시간 구성 복제로 연결된 DR 구조.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+      <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="188" y1="288.0" x2="300" y2="288.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="229.0" y="268.0" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="244.0" y="277.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">정상</text>
+<path d="M 188,428.0 H 376.0 Q 384.0,428.0 384.0,420.0 V 316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="196.0" y="414.0" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="228" y="423.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">장애 발생</text>
+<path d="M 468,278.0 H 612 Q 620,278.0 620,270.0 V 160" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="506.0" y="258.0" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="544.0" y="267.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">정상: 100%</text>
+<path d="M 468,298.0 H 612 Q 620,298.0 620,306.0 V 340" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="510.0" y="306.0" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="544.0" y="315.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">정상: 0%</text>
+<line x1="790" y1="212" x2="790" y2="320" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="798" y="260.0" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="830.0" y="269.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">구성 복제</text>
+<rect x="60" y="260" width="128" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="260" width="128" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="124.0" y="292.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">사용자</text>
+<rect x="300" y="260" width="168" height="56" rx="6" fill="#ffffff"/>
+<rect x="300" y="260" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="308" y="266" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="323" y="275" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DNS</text>
+<text x="384.0" y="284.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Global DNS</text>
+<text x="384.0" y="302.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Route53</text>
+<rect x="60" y="400" width="128" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="400" width="128" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="124.0" y="432.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">재해 발생</text>
+<rect x="620" y="140" width="200" height="72" rx="6" fill="#ffffff"/>
+<rect x="620" y="140" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="628" y="146" width="30" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="643" y="155" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ACT</text>
+<text x="720.0" y="172.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">활성 클러스터</text>
+<text x="720.0" y="190.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Primary Region</text>
+<rect x="620" y="320" width="200" height="72" rx="6" fill="#ffffff"/>
+<rect x="620" y="320" width="200" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="720.0" y="352.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">대기 클러스터</text>
+<text x="720.0" y="370.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">DR Region</text>
+<text x="620" y="234" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">Failover 후: 0% → 100%로 전환</text>
+<line x1="30" y1="472" x2="930" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="488" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="120" y="478" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="140" y="486" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">활성 (Primary)</text>
+<rect x="300" y="478" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="320" y="486" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">대기 (Standby)</text>
+<line x1="500" y1="483" x2="528" y2="483" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="536" y="486" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">비활성 경로 / 복제</text>
+  </svg>

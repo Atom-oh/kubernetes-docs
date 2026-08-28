@@ -28,37 +28,7 @@ Amazon VPC CNI (Container Network Interface) is the default networking plugin fo
 
 VPC CNI consists of two main components:
 
-```mermaid
-flowchart TD
-    subgraph Node["EC2 Worker Node"]
-        A[IPAMD / L-IPAM Daemon]
-        B[CNI Binary]
-        C[Primary ENI]
-        D[Secondary ENI 1]
-        E[Secondary ENI 2]
-    end
-
-    F[Amazon VPC]
-    G[Pod 1]
-    H[Pod 2]
-    I[Pod 3]
-
-    A -->|IP allocation mgmt| B
-    B -->|Assign IP| G
-    B -->|Assign IP| H
-    B -->|Assign IP| I
-    C -->|Primary network| F
-    D -->|Additional IPs| F
-    E -->|Additional IPs| F
-
-    classDef node fill:#FF9900,stroke:#333,stroke-width:1px,color:white
-    classDef vpc fill:#232F3E,stroke:#333,stroke-width:1px,color:white
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,E node
-    class F vpc
-    class G,H,I pod
-```
+![On each EC2 worker node, the IPAMD daemon manages IP allocation and hands addresses to the CNI binary, which assigns them to Pods, while the node's primary and secondary ENIs each draw those IP addresses from the Amazon VPC.](../.gitbook/assets/en-networking-01-vpc-cni-0.png)
 
 1. **IPAMD (L-IPAM Daemon)**: A daemon running on each node that pre-allocates and manages ENIs and IP addresses
 2. **CNI Binary**: The CNI plugin called by kubelet that receives IPs from IPAMD and configures Pod network namespaces

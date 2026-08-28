@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-9-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-9-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-9-title">Ambient Mode 트래픽 흐름: eBPF 리다이렉트와 선택적 L7 처리</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-9-desc">애플리케이션 파드가 보낸 패킷은 eBPF가 투명하게 ztunnel로 리다이렉트하며, mTLS와 메트릭만 필요하면 ztunnel이 곧바로 대상 서비스로 전송하지만 VirtualService 라우팅이나 AuthorizationPolicy 같은 L7 처리가 필요하면 ztunnel이 Waypoint Proxy를 거쳤다가 다시 대상 서비스로 mTLS 트래픽을 보낸다는 것을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="110" y1="84" x2="110" y2="660" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="280" y1="84" x2="280" y2="660" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="450" y1="84" x2="450" y2="660" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="620" y1="84" x2="620" y2="660" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="810" y1="84" x2="810" y2="660" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="45.0" y="40" width="130" height="44" rx="6" fill="#ffffff"/>
+<rect x="45.0" y="40" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110" y="66.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">App</text>
+<rect x="215.0" y="40" width="130" height="44" rx="6" fill="#ffffff"/>
+<rect x="215.0" y="40" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="66.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eBPF</text>
+<rect x="385.0" y="40" width="130" height="44" rx="6" fill="#ffffff"/>
+<rect x="385.0" y="40" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="450" y="66.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ztunnel</text>
+<rect x="555.0" y="40" width="130" height="44" rx="6" fill="#ffffff"/>
+<rect x="555.0" y="40" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="620" y="66.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waypoint</text>
+<rect x="745.0" y="40" width="130" height="44" rx="6" fill="#ffffff"/>
+<rect x="745.0" y="40" width="130" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810" y="66.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Target</text>
+<rect x="225.0" y="108" width="110.0" height="38" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="280.0" y="124" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">L4만 필요한 경우</text>
+<text x="280.0" y="138" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">(mTLS, Metrics)</text>
+<rect x="165.2" y="151" width="59.6" height="12" rx="2" fill="#ffffff"/>
+<text x="195.0" y="160" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">1. 패킷 전송</text>
+<line x1="110" y1="170" x2="280" y2="170" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="325.9" y="201" width="78.2" height="12" rx="2" fill="#ffffff"/>
+<text x="365.0" y="210" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">2. 투명 리다이렉트</text>
+<line x1="280" y1="220" x2="450" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="480.0" y="250" width="80" height="38" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="520.0" y="266" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">mTLS 암호화</text>
+<text x="520.0" y="280" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">L4 메트릭 수집</text>
+<rect x="581.6" y="311" width="96.8" height="12" rx="2" fill="#ffffff"/>
+<text x="630.0" y="320" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">3. mTLS 트래픽 전송</text>
+<line x1="450" y1="330" x2="810" y2="330" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="214.0" y="380" width="302.0" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="365.0" y="396" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">L7 필요한 경우 (VirtualService, AuthorizationPolicy)</text>
+<rect x="165.2" y="421" width="59.6" height="12" rx="2" fill="#ffffff"/>
+<text x="195.0" y="430" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">1. 패킷 전송</text>
+<line x1="110" y1="440" x2="280" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="325.9" y="461" width="78.2" height="12" rx="2" fill="#ffffff"/>
+<text x="365.0" y="470" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">2. 투명 리다이렉트</text>
+<line x1="280" y1="480" x2="450" y2="480" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="495.9" y="501" width="78.2" height="12" rx="2" fill="#ffffff"/>
+<text x="535.0" y="510" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">3. L7 처리 필요</text>
+<line x1="450" y1="520" x2="620" y2="520" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="617.0" y="550" width="86.0" height="38" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="660.0" y="566" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">라우팅 · 인가 검증</text>
+<text x="660.0" y="580" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">L7 메트릭 수집</text>
+<rect x="499.0" y="581" width="72.0" height="12" rx="2" fill="#ffffff"/>
+<text x="535.0" y="590" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">4. 처리된 트래픽</text>
+<line x1="620" y1="600" x2="450" y2="600" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="581.6" y="611" width="96.8" height="12" rx="2" fill="#ffffff"/>
+<text x="630.0" y="620" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">5. mTLS 트래픽 전송</text>
+<line x1="450" y1="630" x2="810" y2="630" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+</svg>

@@ -9,35 +9,7 @@ Cilium Service Mesh의 트래픽 관리는 eBPF 기반 L4 로드 밸런싱과 En
 
 ## 트래픽 관리 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Traffic Management Layers"
-        subgraph "L7 - Envoy"
-            HTTP[HTTP Routing]
-            gRPC[gRPC Routing]
-            TLS[TLS Termination]
-            Headers[Header Manipulation]
-        end
-
-        subgraph "L4 - eBPF"
-            LB[Load Balancing]
-            CT[Connection Tracking]
-            NAT[NAT/SNAT]
-            DSR[Direct Server Return]
-        end
-
-        subgraph "L3 - eBPF"
-            Routing[IP Routing]
-            Tunnel[Tunnel/Overlay]
-            Policy[Network Policy]
-        end
-    end
-
-    Client[Client] --> HTTP
-    HTTP --> LB
-    LB --> Routing
-    Routing --> Server[Server]
-```
+![클라이언트 요청이 L7 Envoy 계층의 HTTP 라우팅, L4 eBPF 계층의 로드 밸런싱, L3 eBPF 계층의 IP 라우팅을 차례로 거쳐 서버에 도달하며, 각 계층에 함께 제공되는 다른 트래픽 관리 기능들을 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-02-traffic-management-0.png)
 
 ## CiliumEnvoyConfig
 
@@ -457,29 +429,7 @@ loadBalancer:
 
 #### Maglev 해싱
 
-```mermaid
-graph TB
-    subgraph "Maglev Consistent Hashing"
-        Client[Client Request]
-        Hash[Hash Function<br/>src_ip + dst_ip + src_port + dst_port + protocol]
-        Table[Lookup Table<br/>65537 entries]
-        Backend[Backend Selection]
-    end
-
-    Client --> Hash
-    Hash --> Table
-    Table --> Backend
-
-    subgraph "Backends"
-        B1[Backend 1]
-        B2[Backend 2]
-        B3[Backend 3]
-    end
-
-    Backend --> B1
-    Backend --> B2
-    Backend --> B3
-```
+![클라이언트 요청의 5-튜플을 해시 함수에 넣고 65,537개 엔트리의 룩업 테이블을 거쳐, 허브 역할을 하는 백엔드 선택 단계에서 세 개의 백엔드 중 하나로 일관되게 분산시키는 Maglev 해싱 흐름을 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-02-traffic-management-1.png)
 
 ### L7 로드 밸런싱 (Envoy)
 

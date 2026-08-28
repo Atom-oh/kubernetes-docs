@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-advanced-08-argo-rollouts-3-title ko-service-mesh-istio-advanced-08-argo-rollouts-3-desc">
+<title id="ko-service-mesh-istio-advanced-08-argo-rollouts-3-title">AnalysisRun 반복 측정과 판정 로직</title>
+<desc id="ko-service-mesh-istio-advanced-08-argo-rollouts-3-desc">AnalysisRun이 30초마다 성공률을 반복 측정하며, 모든 측정이 통과하면 다음 단계로 진행하고 실패가 임계치(2회)에 도달하면 자동 롤백하는 판정 흐름도.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Arrows (before boxes) -->
+<line x1="480" y1="88" x2="480" y2="124" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="180" x2="480" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="304" x2="480" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="580" y1="260" x2="680" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="428" x2="480" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M380,384 H78 Q70,384 70,376 V160 Q70,152 78,152 H370" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<line x1="780" y1="288" x2="780" y2="352" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="440" x2="780" y2="468" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M880,396 H928 Q936,396 936,388 V160 Q936,152 928,152 H590" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels -->
+<rect x="496" y="312" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="511" y="321" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+
+<rect x="612" y="240" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="627" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+
+<rect x="496" y="436" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="511" y="445" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+
+<rect x="192" y="132" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="224" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RETRY · NO</text>
+
+<rect x="796" y="446" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="811" y="455" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES</text>
+
+<rect x="727" y="132" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="759" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RETRY · NO</text>
+
+<!-- Nodes -->
+<rect x="400" y="40" width="160" height="48" rx="20" fill="#ffffff"/>
+<rect x="400" y="40" width="160" height="48" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AnalysisRun 시작</text>
+
+<rect x="370" y="124" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="370" y="124" width="220" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">30초마다 측정</text>
+<text x="480" y="164" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">최대 5회 반복</text>
+
+<polygon points="480,216 580,260 480,304 380,260" fill="#ffffff"/>
+<polygon points="480,216 580,260 480,304 380,260" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="256" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">성공률</text>
+<text x="480" y="270" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&gt;= 95%?</text>
+
+<polygon points="480,340 580,384 480,428 380,384" fill="#ffffff"/>
+<polygon points="480,340 580,384 480,428 380,384" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="380" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">5회 모두</text>
+<text x="480" y="394" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">통과?</text>
+
+<rect x="400" y="460" width="160" height="48" rx="20" fill="#ffffff"/>
+<rect x="400" y="460" width="160" height="48" rx="20" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480" y="484" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">전체 성공!</text>
+
+<rect x="680" y="232" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="232" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">실패 카운트 증가</text>
+<text x="780" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">failure count++</text>
+
+<polygon points="780,352 880,396 780,440 680,396" fill="#ffffff"/>
+<polygon points="780,352 880,396 780,440 680,396" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="392" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">2회</text>
+<text x="780" y="406" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">실패?</text>
+
+<rect x="700" y="468" width="160" height="48" rx="20" fill="#ffffff"/>
+<rect x="700" y="468" width="160" height="48" rx="20" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="780" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자동 롤백</text>
+
+<!-- Legend -->
+<line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="120" y="553" width="16" height="10" rx="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144" y="561" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">시작 / 종료</text>
+<polygon points="270,553 282,558 270,563 258,558" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="294" y="561" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">판정</text>
+<line x1="380" y1="586" x2="408" y2="586" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="416" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">재측정 루프백</text>
+</svg>

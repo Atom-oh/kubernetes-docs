@@ -92,16 +92,7 @@ When `latest` is acceptable:
 
 Implement a promotion workflow rather than rebuilding images:
 
-```mermaid
-flowchart LR
-    Build["Build<br/>abc123-dev"] -->|Push| Dev["myapp-dev"]
-    Dev -->|Retag + Promote| Stage["myapp-stage<br/>abc123-stage"]
-    Stage -->|Retag + Promote| Prod["myapp-prod<br/>v1.2.3"]
-
-    style Dev fill:#F39C12,stroke:#d68910,color:#fff
-    style Stage fill:#3498DB,stroke:#2980b9,color:#fff
-    style Prod fill:#27AE60,stroke:#1e8449,color:#fff
-```
+![A single image is built once, then promoted unchanged from dev to stage to production registries by retagging the same digest, so the artifact that ships to production is bit-for-bit the one that was tested earlier.](../.gitbook/assets/en-container-registry-04-best-practices-0.png)
 
 Promotion script:
 
@@ -218,20 +209,7 @@ myapp:v1.0.0-arm64     # ARM64-specific
 4. **Security**: Control over what images enter your environment
 5. **Cost savings**: Reduce cross-region/internet transfer costs
 
-```mermaid
-flowchart TD
-    Need{"Caching/Mirroring<br/>Required?"}
-    Need -->|Rate Limit Issues| RL{"Your Environment"}
-    Need -->|Availability/Performance| Perf{"Infrastructure"}
-
-    RL -->|AWS/EKS| ECR_PTC["ECR Pull-through Cache"]
-    RL -->|Self-hosted| Harbor_Proxy["Harbor Proxy Cache"]
-    RL -->|Simple Mirror| Containerd["containerd Mirror Config"]
-
-    Perf -->|Air-gap| Harbor_Full["Harbor Full Mirror"]
-    Perf -->|Multi-region| ECR_Rep["ECR Cross-region<br/>Replication"]
-    Perf -->|Edge| Harbor_Rep["Harbor Pull<br/>Replication"]
-```
+![A decision tree for choosing a caching or mirroring strategy: it first asks whether the problem is registry rate limits or availability/performance, then routes rate-limit cases by environment (AWS/EKS, self-hosted, or a simple mirror) and performance cases by infrastructure need (air-gapped, multi-region, or edge).](../.gitbook/assets/en-container-registry-04-best-practices-1.png)
 
 ### Pull-Through Cache Comparison
 

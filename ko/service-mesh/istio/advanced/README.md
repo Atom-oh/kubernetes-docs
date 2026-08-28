@@ -21,46 +21,7 @@ Istio의 고급 기능들을 다룹니다. 이 섹션에서는 Ambient Mode, Mul
 
 ### 주요 주제
 
-```mermaid
-flowchart TB
-    subgraph Deployment["배포 모드"]
-        Sidecar[Sidecar Mode<br/>전통적 방식]
-        Ambient[Ambient Mode<br/>새로운 아키텍처]
-    end
-
-    subgraph MultiCluster["Multi-cluster"]
-        Primary[Primary Cluster<br/>Control Plane]
-        Remote[Remote Cluster<br/>Workload Only]
-    end
-
-    subgraph Advanced["고급 기능"]
-        EnvoyFilter[EnvoyFilter<br/>커스터마이제이션]
-        DNS[DNS Caching<br/>성능 최적화]
-        Protocol[gRPC/WebSocket<br/>프로토콜 지원]
-    end
-
-    subgraph Integration["통합"]
-        ArgoRollouts[Argo Rollouts<br/>Progressive Delivery]
-    end
-
-    Sidecar --> EnvoyFilter
-    Ambient --> EnvoyFilter
-    Primary --> Remote
-    EnvoyFilter --> Protocol
-    ArgoRollouts -.-> Sidecar
-
-    %% 스타일 정의
-    classDef deployment fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef multi fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef advanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef integration fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Sidecar,Ambient deployment;
-    class Primary,Remote multi;
-    class EnvoyFilter,DNS,Protocol advanced;
-    class ArgoRollouts integration;
-```
+![배포 모드(Sidecar/Ambient)와 Multi-cluster 토폴로지가 EnvoyFilter를 통한 고급 커스터마이제이션으로 이어지고, EnvoyFilter가 gRPC/WebSocket 프로토콜 지원을 가능하게 하며, Argo Rollouts 통합이 Sidecar 배포에 의존하는 관계를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-README-0.png)
 
 ## 1. Ambient Mode
 
@@ -78,37 +39,7 @@ Istio 1.28+에서 도입된 새로운 데이터 플레인 아키텍처입니다.
 
 ### Ambient Mode 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Pod1["Pod (App Only)"]
-        App1[Application<br/>No Sidecar]
-    end
-
-    subgraph Node["Kubernetes Node"]
-        Ztunnel[ztunnel<br/>L4 Proxy<br/>mTLS, Telemetry]
-    end
-
-    subgraph Waypoint["Waypoint Proxy (Optional)"]
-        WP[Waypoint<br/>L7 Proxy<br/>Advanced Routing]
-    end
-
-    App1 -->|Transparent| Ztunnel
-    Ztunnel -->|L4 only| Service[Service]
-    Ztunnel -.->|L7 needed| WP
-    WP --> Service
-
-    %% 스타일 정의
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App1 pod;
-    class Ztunnel ztunnel;
-    class WP waypoint;
-    class Service service;
-```
+![사이드카가 없는 애플리케이션 파드가 노드 레벨의 ztunnel을 통해 투명하게 mTLS 통신을 처리하고, L7 라우팅이 필요할 때만 선택적으로 waypoint 프록시를 거쳐 서비스에 도달하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-README-1.png)
 
 **자세한 내용**: [Ambient Mode 상세 가이드](01-ambient-mode.md)
 
@@ -118,36 +49,7 @@ flowchart TB
 
 ### Multi-cluster 토폴로지
 
-```mermaid
-flowchart TB
-    subgraph Primary["Primary Cluster<br/>us-east-1"]
-        CP1[Istiod<br/>Control Plane]
-        Service1[Service A]
-    end
-
-    subgraph Remote1["Remote Cluster 1<br/>us-west-2"]
-        Service2[Service B]
-    end
-
-    subgraph Remote2["Remote Cluster 2<br/>eu-west-1"]
-        Service3[Service C]
-    end
-
-    CP1 -.->|구성 푸시| Service2
-    CP1 -.->|구성 푸시| Service3
-    Service1 <-->|Cross-cluster<br/>통신| Service2
-    Service1 <-->|Cross-cluster<br/>통신| Service3
-
-    %% 스타일 정의
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class CP1 primary;
-    class Service2,Service3 remote;
-    class Service1 service;
-```
+![Primary 클러스터의 Istiod 컨트롤 플레인이 두 원격 클러스터에 구성을 푸시하고, Primary의 서비스 A가 각 원격 클러스터의 서비스와 양방향 크로스클러스터 통신을 주고받는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-README-2.png)
 
 **사용 사례**:
 - 다중 리전 배포
@@ -289,31 +191,7 @@ Sidecar 프록시 주입 메커니즘과 커스터마이제이션을 다룹니�
 
 ### Injection 방식
 
-```mermaid
-flowchart TB
-    Pod[Pod 생성]
-    Check{Namespace에<br/>label 있음?}
-    Inject[Sidecar 주입]
-    Deploy[Pod 배포]
-    Skip[주입 생략]
-
-    Pod --> Check
-    Check -->|istio-injection=enabled| Inject
-    Check -->|No| Skip
-    Inject --> Deploy
-    Skip --> Deploy
-
-    %% 스타일 정의
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef inject fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Pod,Deploy pod;
-    class Check decision;
-    class Inject inject;
-    class Skip pod;
-```
+![파드가 생성될 때 네임스페이스에 istio-injection 라벨이 있는지 검사해 Sidecar를 주입하거나 생략한 뒤, 두 경로 모두 동일하게 파드 배포로 합류하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-README-3.png)
 
 **자세한 내용**: [Sidecar Injection 가이드](07-sidecar-injection.md)
 
@@ -371,46 +249,7 @@ KEDA를 활용하여 Istio 메트릭 기반 오토스케일링을 구현합니�
 
 ### KEDA 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph IstioMesh[Istio Service Mesh]
-        Service[Service<br/>with Envoy]
-        Envoy[Envoy Proxy]
-        Service --> Envoy
-    end
-
-    subgraph Observability[관찰성 스택]
-        Prometheus[Prometheus<br/>메트릭 수집]
-        CloudWatch[CloudWatch<br/>AWS 메트릭]
-    end
-
-    subgraph Autoscaling[오토스케일링]
-        KEDA[KEDA<br/>Operator]
-        HPA[HPA<br/>Controller]
-        ScaledObject[ScaledObject<br/>정책]
-    end
-
-    Envoy -->|메트릭| Prometheus
-    Envoy -->|메트릭| CloudWatch
-
-    Prometheus -->|쿼리| KEDA
-    CloudWatch -->|쿼리| KEDA
-
-    KEDA -->|생성/관리| HPA
-    ScaledObject -->|정의| KEDA
-
-    HPA -->|스케일| Service
-
-    %% 스타일 정의
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef observability fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef autoscaling fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Service,Envoy istio;
-    class Prometheus,CloudWatch observability;
-    class KEDA,HPA,ScaledObject autoscaling;
-```
+![Envoy 프록시가 내보낸 메트릭을 Prometheus와 CloudWatch가 수집하고, KEDA Operator가 이를 쿼리해 ScaledObject 정책에 따라 HPA를 생성·관리함으로써 최종적으로 서비스를 스케일하는 순환 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-README-4.png)
 
 ### 주요 스케일링 전략
 

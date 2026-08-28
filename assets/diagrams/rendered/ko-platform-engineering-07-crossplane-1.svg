@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-platform-engineering-07-crossplane-1-title ko-platform-engineering-07-crossplane-1-desc">
+    <title id="ko-platform-engineering-07-crossplane-1-title">컨트롤 플레인과 프로바이더 런타임</title>
+    <desc id="ko-platform-engineering-07-crossplane-1-desc">쿠버네티스 클러스터 안에서 API 서버·etcd로 이뤄진 컨트롤 플레인이 Claim부터 Managed Resource까지의 리소스 체인을 관리하고, Provider Runtime의 Provider-AWS 컨트롤러가 실제 AWS API를 호출하는 구조를 보여주는 아키텍처 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="56" width="880" height="364" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="60" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="146.0" y="69" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">쿠버네티스 클러스터</text>
+<rect x="440" y="316" width="480" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="456" y="320" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="541.0" y="329" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">PROVIDER RUNTIME</text>
+<line x1="240" y1="114" x2="280" y2="114" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="420" y1="114" x2="460" y2="114" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 650,140 V 272 Q 650,280 642,280 H 528 Q 520,280 520,272 V 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="488" y="294.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="500.0" y="303" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">설치</text>
+<line x1="200" y1="242" x2="260" y2="242" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="210.0" y="222" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="230" y="231" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">XR 생성</text>
+<line x1="420" y1="242" x2="460" y2="242" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="620" y1="242" x2="680" y2="242" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 760,268 V 292 Q 760,300 752,300 H 608 Q 600,300 600,292 V 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="608" y="316.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="620.0" y="325" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">관리</text>
+<line x1="660" y1="370" x2="700" y2="370" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="560" y1="396" x2="560" y2="488" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="568" y="436.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="591.0" y="445" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">API 호출</text>
+<rect x="80" y="88" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="80" y="88" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Crossplane</text>
+<text x="160.0" y="122.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Core</text>
+<text x="160.0" y="134.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Controller</text>
+<rect x="280" y="88" width="140" height="52" rx="6" fill="#ffffff"/>
+<rect x="280" y="88" width="140" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API</text>
+<text x="350.0" y="122.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Server</text>
+<rect x="460" y="88" width="100" height="52" rx="6" fill="#ffffff"/>
+<rect x="460" y="88" width="100" height="52" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="510.0" y="118.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd</text>
+<rect x="640" y="88" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="640" y="88" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="720.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Package</text>
+<text x="720.0" y="122.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Manager</text>
+<rect x="80" y="216" width="120" height="52" rx="6" fill="#ffffff"/>
+<rect x="80" y="216" width="120" height="52" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="140.0" y="240.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Claim</text>
+<text x="140.0" y="256.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">개발자 Namespace</text>
+<rect x="260" y="216" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="260" y="216" width="160" height="52" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="340.0" y="236.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Composite</text>
+<text x="340.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resource</text>
+<text x="340.0" y="262.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">XR</text>
+<rect x="460" y="216" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="460" y="216" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="540.0" y="246.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Composition</text>
+<rect x="680" y="216" width="160" height="52" rx="6" fill="#ffffff"/>
+<rect x="680" y="216" width="160" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760.0" y="236.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Managed</text>
+<text x="760.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resources</text>
+<rect x="460" y="344" width="200" height="52" rx="6" fill="#ffffff"/>
+<rect x="460" y="344" width="200" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="560.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Provider-AWS</text>
+<text x="560.0" y="384.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Controller</text>
+<rect x="700" y="344" width="200" height="52" rx="6" fill="#ffffff"/>
+<rect x="700" y="344" width="200" height="52" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="800.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS CRDs</text>
+<text x="800.0" y="384.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">900+</text>
+<rect x="460" y="488" width="200" height="52" rx="6" fill="#ffffff"/>
+<rect x="460" y="488" width="200" height="52" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="560.0" y="518.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS API</text>
+  </svg>

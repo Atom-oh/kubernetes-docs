@@ -45,37 +45,7 @@ spiffe://cluster.local/ns/default/sa/productpage
 5. Agent가 Envoy에 인증서 전달 (SDS 프로토콜)
 6. 인증서 자동 갱신 (기본 TTL: 24시간)
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[애플리케이션]
-        Envoy1[Envoy<br/>Proxy]
-    end
-    
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy<br/>Proxy]
-        App2[애플리케이션]
-    end
-    
-    Istiod[istiod<br/>인증서 발급]
-    
-    App1 -->|평문| Envoy1
-    Envoy1 <-->|mTLS 암호화| Envoy2
-    Envoy2 -->|평문| App2
-    
-    Istiod -.->|인증서| Envoy1
-    Istiod -.->|인증서| Envoy2
-    
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Istiod control;
-```
+![Envoy 사이드카 간 mTLS 암호화 통신과 istiod가 각 Envoy에 인증서를 발급하는 과정을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-0.png)
 
 ## mTLS 모드
 
@@ -132,32 +102,7 @@ Istio는 설치 시 자동으로 자체 서명된 루트 CA를 생성합니다. 
 - **Intermediate CA**: 워크로드 인증서 발급용 중간 CA
 - **Workload Certificates**: 각 서비스의 mTLS 인증서 (자동 갱신)
 
-```mermaid
-flowchart TD
-    subgraph IstioCA["Istio CA (istiod)"]
-        RootCA[Root CA<br/>자체 서명]
-        IntermediateCA[Intermediate CA<br/>워크로드 인증서 발급]
-    end
-
-    subgraph Workloads["워크로드"]
-        Cert1[Service A<br/>인증서]
-        Cert2[Service B<br/>인증서]
-        Cert3[Service C<br/>인증서]
-    end
-
-    RootCA -->|서명| IntermediateCA
-    IntermediateCA -->|발급| Cert1
-    IntermediateCA -->|발급| Cert2
-    IntermediateCA -->|발급| Cert3
-
-    %% 스타일 정의
-    classDef ca fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef cert fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class RootCA,IntermediateCA ca;
-    class Cert1,Cert2,Cert3 cert;
-```
+![Istio CA의 Root CA가 Intermediate CA에 서명하고, Intermediate CA가 각 워크로드 서비스에 인증서를 발급하는 계층 구조를 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-1.png)
 
 **기본 인증서 속성**:
 - 유효 기간: **90일** (자동 갱신: 만료 24시간 전)
@@ -460,27 +405,7 @@ spec:
 
 ALB는 클라이언트 인증서 기반 mTLS를 지원합니다.
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>Client Cert]
-    ALB[ALB<br/>mTLS Termination]
-    Gateway[Istio Gateway<br/>TLS]
-    Service[Backend Service<br/>Envoy mTLS]
-
-    Client <-->|mTLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
-
-    %% 스타일 정의
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class ALB aws;
-    class Gateway,Service istio;
-```
+![클라이언트의 mTLS가 ALB에서 종료되고, ALB부터 Istio Gateway와 백엔드 서비스까지는 TLS/mTLS로 이어지는 구간별 보안 체인을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-2.png)
 
 #### 1단계: ALB에 mTLS 설정
 
@@ -605,29 +530,7 @@ spec:
 
 CloudFront는 클라이언트 인증서 검증을 지원합니다.
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>Client Cert]
-    CloudFront[CloudFront<br/>mTLS + Edge]
-    ALB[ALB<br/>TLS]
-    Gateway[Istio Gateway]
-    Service[Backend Service<br/>Envoy mTLS]
-
-    Client <-->|mTLS| CloudFront
-    CloudFront <-->|TLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
-
-    %% 스타일 정의
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class CloudFront,ALB aws;
-    class Gateway,Service istio;
-```
+![클라이언트의 mTLS가 CloudFront 엣지에서 검증되고, ALB와 Istio Gateway를 거쳐 백엔드 서비스까지 TLS/mTLS로 이어지는 구간별 보안 체인을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-3.png)
 
 #### 1단계: CloudFront 배포 생성
 
@@ -766,42 +669,7 @@ spec:
 
 클라이언트부터 백엔드까지 전체 구간 mTLS:
 
-```mermaid
-flowchart TB
-    Client[클라이언트<br/>Client Cert]
-
-    subgraph AWS ["AWS Edge"]
-        CF[CloudFront<br/>mTLS Verification]
-        ALB[ALB<br/>Header Forwarding]
-    end
-
-    subgraph EKS ["EKS Cluster"]
-        Gateway[Istio Gateway<br/>Header Validation]
-
-        subgraph Mesh ["Service Mesh"]
-            ServiceA[Service A<br/>Envoy mTLS]
-            ServiceB[Service B<br/>Envoy mTLS]
-            ServiceC[Service C<br/>Envoy mTLS]
-        end
-    end
-
-    Client <-->|1\. mTLS| CF
-    CF -->|2\. TLS + Headers| ALB
-    ALB -->|3\. TLS + Headers| Gateway
-    Gateway <-->|4\. mTLS| ServiceA
-    ServiceA <-->|5\. mTLS| ServiceB
-    ServiceB <-->|6\. mTLS| ServiceC
-
-    %% 스타일 정의
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class CF,ALB aws;
-    class Gateway,ServiceA,ServiceB,ServiceC istio;
-```
+![클라이언트부터 CloudFront, ALB, Istio Gateway를 거쳐 메시 내부 서비스 A·B·C까지 6개 구간이 모두 mTLS 또는 TLS로 보호되는 전체 경로를 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-4.png)
 
 **구간별 보안**:
 1. **클라이언트 → CloudFront**: mTLS (클라이언트 인증서 검증)

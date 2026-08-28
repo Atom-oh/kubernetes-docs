@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="argoseq-title argoseq-desc">
+    <title id="argoseq-title">ArgoCD application creation and sync sequence</title>
+    <desc id="argoseq-desc">Sequence diagram showing a user creating an ArgoCD application through the API Server, which renders manifests via the Repo Server, followed by the Application Controller repeatedly comparing desired and actual state against Kubernetes and applying changes on drift in a reconciliation loop.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="960" height="760" fill="#ffffff"/>
+
+    <!-- Lifelines: U=100 API=300 R=500 C=700 K=880 -->
+    <line x1="100" y1="104" x2="100" y2="664" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="300" y1="104" x2="300" y2="664" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="500" y1="104" x2="500" y2="664" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="700" y1="104" x2="700" y2="664" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="880" y1="104" x2="880" y2="664" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Loop frame: Reconciliation (API..K8s lifelines) -->
+    <rect x="288" y="340" width="604" height="284" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <rect x="288" y="340" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="308" y="352" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">LOOP</text>
+    <text x="300" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[every 3 min]</text>
+
+    <!-- Activation bars -->
+    <rect x="296" y="140" width="8" height="160" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="696" y="400" width="8" height="192" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+    <!-- 1 User -> API: Create Application -->
+    <path d="M 100,140 H 296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="132" y="120" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="198" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">CREATE APPLICATION</text>
+
+    <!-- 2 API -> Repo: Request Manifests -->
+    <path d="M 304,180 H 500" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="336" y="160" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="402" y="169" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">REQUEST MANIFESTS</text>
+
+    <!-- 3 Repo self: Fetch from Git -->
+    <path d="M 500,212 H 536 Q 544,212 544,220 Q 544,228 536,228 H 500"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="552" y="214" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="608" y="223" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">FETCH FROM GIT</text>
+
+    <!-- 4 Repo --> API: Rendered Manifests (return, dashed) -->
+    <path d="M 500,260 H 304" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="336" y="240" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="402" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RENDERED MANIFESTS</text>
+
+    <!-- 5 API --> User: Application Created (headline success) -->
+    <path d="M 296,300 H 100" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="132" y="280" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="198" y="289" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">APPLICATION CREATED</text>
+
+    <!-- 6 Ctrl -> Repo: Get Desired State -->
+    <path d="M 696,400 H 500" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="536" y="380" width="124" height="12" rx="2" fill="#ffffff"/>
+    <text x="598" y="389" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">GET DESIRED STATE</text>
+
+    <!-- 7 Repo --> Ctrl: Manifests (return, dashed) -->
+    <path d="M 500,432 H 696" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="562" y="412" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="598" y="421" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">MANIFESTS</text>
+
+    <!-- 8 Ctrl -> K8s: Get Actual State -->
+    <path d="M 704,464 H 880" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="730" y="444" width="124" height="12" rx="2" fill="#ffffff"/>
+    <text x="792" y="453" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">GET ACTUAL STATE</text>
+
+    <!-- 9 K8s --> Ctrl: Resources (return, dashed) -->
+    <path d="M 880,496 H 704" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="756" y="476" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="792" y="485" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RESOURCES</text>
+
+    <!-- 10 Ctrl -> K8s: Apply Changes (if drift) -->
+    <path d="M 704,528 H 880" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="722" y="508" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="792" y="517" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">APPLY (IF DRIFT)</text>
+
+    <!-- 11 K8s --> Ctrl: Applied (return, dashed) -->
+    <path d="M 880,560 H 704" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="758" y="540" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="790" y="549" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">APPLIED</text>
+
+    <!-- 12 Ctrl -> API: Update Status -->
+    <path d="M 696,592 H 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="434" y="572" width="124" height="12" rx="2" fill="#ffffff"/>
+    <text x="496" y="581" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">UPDATE STATUS</text>
+
+    <!-- Actor boxes -->
+    <rect x="40" y="56" width="120" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+    <text x="100" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+
+    <rect x="240" y="56" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="300" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API Server</text>
+
+    <rect x="440" y="56" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Repo Server</text>
+
+    <rect x="640" y="56" width="120" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="700" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller</text>
+
+    <rect x="820" y="56" width="120" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="880" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="680" x2="920" y2="680" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="700" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="696" x2="168" y2="696" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="176" y="700" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CALL / RETURN</text>
+    <line x1="380" y1="696" x2="408" y2="696" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="416" y="700" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">HEADLINE SUCCESS</text>
+    <rect x="640" y="688" width="24" height="16" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="672" y="700" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">LOOP: RECONCILIATION</text>
+  </svg>

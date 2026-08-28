@@ -61,59 +61,7 @@ IDP는 다음과 같은 문제를 해결합니다:
 
 Backstage는 프론트엔드(React SPA)와 백엔드(Node.js)로 구성된 웹 애플리케이션이며, 플러그인 기반 아키텍처를 통해 기능을 확장합니다.
 
-```mermaid
-graph TB
-    subgraph users["사용자"]
-        DEV[개발자]
-        PM[플랫폼 엔지니어]
-    end
-
-    subgraph backstage["Backstage Application"]
-        subgraph frontend["Frontend - React SPA"]
-            UI[Backstage UI]
-            FP1[Catalog Plugin UI]
-            FP2[TechDocs Plugin UI]
-            FP3[Scaffolder Plugin UI]
-            FP4[Kubernetes Plugin UI]
-        end
-
-        subgraph backend["Backend - Node.js"]
-            API[Backstage Backend API]
-            BP1[Catalog Backend]
-            BP2[TechDocs Backend]
-            BP3[Scaffolder Backend]
-            BP4[Auth Backend]
-            BP5[Kubernetes Backend]
-        end
-    end
-
-    subgraph storage["데이터 저장소"]
-        PG[(PostgreSQL / RDS)]
-        S3[(S3 - TechDocs)]
-    end
-
-    subgraph external["외부 시스템"]
-        GH[GitHub / GitLab]
-        K8S[EKS Cluster]
-        ARGO[ArgoCD]
-        OIDC[Cognito / Okta]
-    end
-
-    DEV --> UI
-    PM --> UI
-    UI --> API
-    FP1 --> BP1
-    FP2 --> BP2
-    FP3 --> BP3
-    FP4 --> BP5
-    BP1 --> PG
-    BP2 --> S3
-    BP4 --> OIDC
-    BP1 --> GH
-    BP3 --> GH
-    BP5 --> K8S
-    BP5 --> ARGO
-```
+![개발자와 플랫폼 엔지니어가 Backstage UI를 통해 백엔드 API와 플러그인 백엔드를 거쳐 PostgreSQL, S3, GitHub, EKS, ArgoCD, Cognito/Okta 등 저장소 및 외부 시스템과 연동되는 Backstage 애플리케이션 아키텍처를 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-0.png)
 
 ### 핵심 구성 요소
 
@@ -565,55 +513,7 @@ backend.start();
 
 Backstage Software Catalog는 다양한 Entity 타입을 사용하여 조직의 소프트웨어 생태계를 모델링합니다.
 
-```mermaid
-graph TB
-    subgraph domain["Domain"]
-        D[payments-domain]
-    end
-
-    subgraph system["System"]
-        S1[order-system]
-        S2[payment-system]
-    end
-
-    subgraph components["Component"]
-        C1[order-api]
-        C2[order-worker]
-        C3[payment-gateway]
-    end
-
-    subgraph apis["API"]
-        A1[order-rest-api]
-        A2[payment-grpc-api]
-    end
-
-    subgraph resources["Resource"]
-        R1[order-db]
-        R2[payment-queue]
-    end
-
-    subgraph people["조직"]
-        G1[platform-team]
-        G2[backend-team]
-        U1[alice]
-        U2[bob]
-    end
-
-    D --> S1
-    D --> S2
-    S1 --> C1
-    S1 --> C2
-    S2 --> C3
-    C1 -->|provides| A1
-    C3 -->|provides| A2
-    C1 -->|consumes| A2
-    C1 -->|dependsOn| R1
-    C2 -->|dependsOn| R2
-    G1 -->|owns| S1
-    G2 -->|owns| S2
-    U1 -->|memberOf| G1
-    U2 -->|memberOf| G2
-```
+![payments-domain 아래 order-system과 payment-system이 있고 각 시스템의 컴포넌트가 API를 제공/소비하고 리소스에 의존하며, platform-team과 backend-team이 각 시스템을 소유하는 Backstage 카탈로그 엔티티 관계를 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-1.png)
 
 ### Entity 타입 개요
 
@@ -1703,14 +1603,7 @@ TechDocs는 Backstage의 "docs-as-code" 솔루션으로, MkDocs를 기반으로 
 
 ### TechDocs 워크플로우
 
-```mermaid
-graph LR
-    DEV[개발자] -->|Markdown 작성| GIT[Git Repository]
-    GIT -->|CI에서 빌드| BUILD[MkDocs Build]
-    BUILD -->|업로드| S3[(S3 Bucket)]
-    S3 -->|렌더링| BS[Backstage TechDocs UI]
-    DEV -->|문서 열람| BS
-```
+![개발자가 작성한 Markdown이 Git Repository, CI 빌드, S3 업로드를 거쳐 Backstage TechDocs UI에서 렌더링되고 개발자가 그 UI에서 문서를 열람하는 TechDocs 빌드 파이프라인을 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png)
 
 ### S3 스토리지 백엔드 구성
 
@@ -2027,22 +1920,7 @@ kubernetes:
 
 Backstage의 Permission Framework는 플러그인 수준의 세밀한 접근 제어를 제공합니다. 이를 통해 "누가 무엇을 할 수 있는가"를 정책으로 정의할 수 있습니다.
 
-```mermaid
-graph TB
-    REQ[사용자 요청] --> PF[Permission Framework]
-    PF --> PP[Permission Policy]
-    PP --> ALLOW[허용]
-    PP --> DENY[거부]
-    PP --> COND[조건부 허용]
-
-    subgraph policies["정책 예시"]
-        P1["platform-team: 모든 권한"]
-        P2["backend-team: 소유 서비스만 수정"]
-        P3["viewer: 읽기 전용"]
-    end
-
-    PP --> policies
-```
+![사용자 요청이 Permission Framework와 Permission Policy를 거쳐 허용, 거부, 조건부 허용 중 하나로 판정되며 platform-team/backend-team/viewer 정책 예시가 참조되는 Backstage 권한 프레임워크 흐름을 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-3.png)
 
 ### Permission 플러그인 설치
 

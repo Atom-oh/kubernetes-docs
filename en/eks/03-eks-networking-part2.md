@@ -8,39 +8,7 @@ In this document, we will learn about services, load balancing, and network poli
 
 Kubernetes provides the following service types:
 
-```mermaid
-flowchart TD
-    subgraph Service_Types ["Kubernetes Service Types"]
-        ClusterIP[ClusterIP<br>Accessible only within the cluster]
-        NodePort[NodePort<br>Accessible through a specific port on all nodes]
-        LoadBalancer[LoadBalancer<br>Accessible through an external load balancer]
-        ExternalName[ExternalName<br>Provides CNAME record for external services]
-    end
-
-    subgraph Access_Methods ["Access Methods"]
-        Internal[Within cluster]
-        Node_Access[Node IP:Port]
-        External_LB[External load balancer]
-        DNS[DNS CNAME]
-    end
-
-    ClusterIP --> Internal
-    NodePort --> Node_Access
-    LoadBalancer --> External_LB
-    ExternalName --> DNS
-
-    %% Class definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ClusterIP,NodePort,LoadBalancer,ExternalName k8sComponent;
-    class External_LB awsService;
-    class Internal,Node_Access,DNS default;
-```
+![Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../.gitbook/assets/en-eks-03-eks-networking-part2-0.png)
 
 1. **ClusterIP**: Service accessible only within the cluster
 2. **NodePort**: Service accessible through a specific port on all nodes
@@ -120,58 +88,7 @@ spec:
 
 EKS integrates Kubernetes services with AWS load balancers to make applications accessible from outside.
 
-```mermaid
-flowchart TD
-    subgraph Internet ["Internet"]
-        Users((Users))
-    end
-
-    subgraph AWS_Cloud ["AWS Cloud"]
-        subgraph Load_Balancers ["AWS Load Balancers"]
-            CLB[Classic Load Balancer]
-            NLB[Network Load Balancer]
-            ALB[Application Load Balancer]
-        end
-
-        subgraph EKS_Cluster ["EKS Cluster"]
-            subgraph Services ["Kubernetes Services"]
-                Service1[LoadBalancer Service]
-                Service2[NodePort Service]
-                Ingress[Ingress Resource]
-            end
-
-            subgraph Pods ["Pods"]
-                Pod1[Pod 1]
-                Pod2[Pod 2]
-                Pod3[Pod 3]
-            end
-        end
-    end
-
-    Users --> CLB
-    Users --> NLB
-    Users --> ALB
-    CLB --> Service1
-    NLB --> Service1
-    ALB --> Ingress
-    Ingress --> Service2
-    Service1 --> Pod1
-    Service1 --> Pod2
-    Service2 --> Pod3
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CLB,NLB,ALB awsService;
-    class Service1,Service2,Ingress k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class Users default;
-```
+![Users reach a Classic, Network, or Application Load Balancer; the CLB and NLB attach directly to a LoadBalancer Service while the ALB routes through an Ingress resource to a NodePort Service, and both services forward traffic into the cluster's pods.](../.gitbook/assets/en-eks-03-eks-networking-part2-1.png)
 
 ### Classic Load Balancer (CLB)
 
@@ -233,48 +150,7 @@ metadata:
 
 To use ALB, you need to install the AWS Load Balancer Controller and use Ingress resources:
 
-```mermaid
-flowchart TD
-    subgraph AWS_Cloud ["AWS Cloud"]
-        subgraph VPC ["VPC"]
-            subgraph Public_Subnets ["Public Subnets"]
-                ALB[Application Load Balancer]
-            end
-
-            subgraph Private_Subnets ["Private Subnets"]
-                subgraph EKS_Cluster ["EKS Cluster"]
-                    ALBIC[AWS Load Balancer Controller]
-                    Ingress[Ingress Resource]
-                    Service1[Service 1]
-                    Service2[Service 2]
-                    Pod1[Pod 1]
-                    Pod2[Pod 2]
-                end
-            end
-        end
-    end
-
-    Internet((Internet)) --> ALB
-    ALB --> Ingress
-    ALBIC --> ALB
-    Ingress --> Service1
-    Ingress --> Service2
-    Service1 --> Pod1
-    Service2 --> Pod2
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class ALB,Public_Subnets,Private_Subnets awsService;
-    class ALBIC,Ingress,Service1,Service2 k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Internet default;
-```
+![Internet traffic reaches an ALB in the VPC's public subnet, which is driven by the AWS Load Balancer Controller and an Ingress resource in the private-subnet EKS cluster to route to Service 1 and Service 2 and their backing pods.](../.gitbook/assets/en-eks-03-eks-networking-part2-2.png)
 
 1. Install AWS Load Balancer Controller:
 
@@ -354,26 +230,7 @@ metadata:
 
 ### Service and Load Balancer Best Practices
 
-```mermaid
-flowchart TD
-    A[Service and Load Balancer Best Practices] --> B[Use ClusterIP for internal services]
-    A --> C[Use LoadBalancer or Ingress for external services]
-    A --> D[Use ALB when path-based routing, SSL termination, authentication are needed]
-    A --> E[Use NLB when TCP/UDP traffic, high performance, static IP are needed]
-    A --> F[Use internal load balancers for services accessed only within the cluster]
-    A --> G[Enable cross-zone load balancing for high availability]
-    A --> H[Select appropriate target type]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C,D,E,F,G,H default;
-```
+![Five best practices for choosing and configuring Kubernetes Services and load balancers on EKS, branching from a single root recommendation: default to internal traffic, go external deliberately, choose ALB for L7 needs, choose NLB for L4 needs, and tune load balancer attributes.](../.gitbook/assets/en-eks-03-eks-networking-part2-3.png)
 
 1. **Use ClusterIP for internal services**: Use ClusterIP type for services accessed only within the cluster.
 2. **Use LoadBalancer or Ingress for external services**: Use LoadBalancer type or Ingress resources for services that need external access.
@@ -387,52 +244,7 @@ flowchart TD
 
 Network policies are used to control pod-to-pod communication. To use network policies in EKS, you need to install a CNI plugin that supports network policies (e.g., Calico, Cilium).
 
-```mermaid
-flowchart TD
-    subgraph EKS_Cluster ["EKS Cluster"]
-        subgraph Network_Policies ["Network Policies"]
-            NP1[Namespace Isolation Policy]
-            NP2[Specific Pod Communication Allow Policy]
-            NP3[External Traffic Restriction Policy]
-            NP4[Egress Traffic Restriction Policy]
-        end
-
-        subgraph Namespaces ["Namespaces"]
-            subgraph NS1 ["Namespace 1"]
-                Pod1[Frontend Pod]
-                Pod2[Backend Pod]
-            end
-
-            subgraph NS2 ["Namespace 2"]
-                Pod3[Database Pod]
-            end
-        end
-
-        NP1 --> NS1
-        NP1 --> NS2
-        NP2 --> Pod1
-        NP2 --> Pod2
-        NP3 --> Pod1
-        NP4 --> Pod2
-        Pod1 --> Pod2
-        Pod2 --> Pod3
-    end
-
-    External((External Services)) --> Pod1
-    Pod2 --> External
-
-    %% Class definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class NP1,NP2,NP3,NP4,NS1,NS2 k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Pod3 dataStore;
-    class External default;
-```
+![Four network policies govern traffic in an EKS cluster: namespace isolation reaches both namespaces, a pod-communication policy allows the frontend pod to reach the backend pod, an external-traffic policy scopes what reaches the frontend pod, and an egress policy scopes what the backend pod may reach, while the backend pod also talks to a database pod in a second namespace.](../.gitbook/assets/en-eks-03-eks-networking-part2-4.png)
 
 ### Installing Calico
 
@@ -560,24 +372,7 @@ spec:
 
 ### Network Policy Best Practices
 
-```mermaid
-flowchart TD
-    A[Network Policy Best Practices] --> B[Apply default deny policy]
-    A --> C[Namespace isolation]
-    A --> D[Apply principle of least privilege]
-    A --> E[Restrict egress traffic]
-    A --> F[Test policies]
-
-    %% Class definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class A,B,C,D,E,F default;
-```
+![Five best practices for Kubernetes network policies branching from a single root: default-deny, namespace isolation, least privilege, restrict egress, and test policies before rollout.](../.gitbook/assets/en-eks-03-eks-networking-part2-5.png)
 
 1. **Apply default deny policy**: Deny all traffic by default and explicitly allow only necessary traffic.
 2. **Namespace isolation**: Enhance security by restricting communication between namespaces.
@@ -596,20 +391,7 @@ flowchart TD
 
 Gateway API is Kubernetes' next-generation service networking API that overcomes the limitations of traditional Ingress resources and provides richer routing capabilities. AWS Load Balancer Controller supports Gateway API, enabling L4 (NLB) and L7 (ALB) routing configuration through Gateway resources.
 
-```mermaid
-flowchart TD
-    GC[GatewayClass] --> GW[Gateway]
-    GW --> HR[HTTPRoute - L7/ALB]
-    GW --> TR[TCPRoute - L4/NLB]
-    HR --> SVC1[Service A]
-    HR --> SVC2[Service B]
-    TR --> SVC3[Service C]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    class GC,GW,HR,TR k8sComponent;
-    class SVC1,SVC2,SVC3 awsService;
-```
+![A GatewayClass configures a Gateway, which fans out to an HTTPRoute for L7 traffic through an ALB and a TCPRoute for L4 traffic through an NLB; the HTTPRoute distributes to Service A and Service B, and the TCPRoute forwards to Service C.](../.gitbook/assets/en-eks-03-eks-networking-part2-6.png)
 
 ### Prerequisites
 

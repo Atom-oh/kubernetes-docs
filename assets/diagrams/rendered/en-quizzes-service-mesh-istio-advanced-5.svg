@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="bluegreen-title bluegreen-desc">
+  <title id="bluegreen-title">Blue-green rollout with analysis-gated active/preview swap</title>
+  <desc id="bluegreen-desc">Diagram showing an Istio Gateway sending production traffic to an active service backed by the current blue version, and preview traffic to a preview service backed by the new green version, while an AnalysisTemplate gates whether the rollout promotes to a traffic switch that swaps active and preview, or rolls back.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-reject" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Arrows -->
+  <line x1="152" y1="88" x2="192" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Gateway -> ActiveService (production) -->
+  <path d="M 240,120 V 172 Q 240,180 232,180 H 218 Q 210,180 210,188 V 200"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="60" y="164" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="100" y="173" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PRODUCTION</text>
+
+  <!-- Gateway -.-> PreviewService (preview, dashed) -->
+  <path d="M 288,120 V 172 Q 288,180 296,180 H 642 Q 650,180 650,188 V 200"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="440" y="164" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="472" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PREVIEW</text>
+
+  <!-- ActiveService -> Blue -->
+  <line x1="210" y1="256" x2="210" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- PreviewService -> Green -->
+  <line x1="650" y1="256" x2="650" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Analysis -> Green (metric analysis) -->
+  <path d="M 450,460 V 420 Q 450,412 458,412 H 642 Q 650,412 650,404 V 376"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="500" y="404" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="556" y="413" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">METRIC ANALYSIS</text>
+
+  <!-- Analysis -> Promote (success) -->
+  <path d="M 420,516 V 540 Q 420,548 412,548 H 398 Q 390,548 390,556 V 560"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="336" y="528" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="368" y="537" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SUCCESS</text>
+
+  <!-- Analysis -> Rollback (failure) -->
+  <path d="M 480,516 V 540 Q 480,548 488,548 H 602 Q 610,548 610,556 V 560"
+        fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#arrow-reject)"/>
+  <rect x="548" y="528" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="580" y="537" fill="#DD344C" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FAILURE</text>
+
+  <!-- Promote -> Swap -->
+  <line x1="390" y1="608" x2="390" y2="632" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Node: User -->
+  <rect x="40" y="56" width="112" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="96" y="92" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+
+  <!-- Node: Gateway -->
+  <rect x="192" y="56" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="264" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio Gateway</text>
+  <text x="264" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ingress</text>
+
+  <!-- Node: ActiveService -->
+  <rect x="120" y="200" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="210" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Active Service</text>
+  <text x="210" y="240" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">production traffic</text>
+
+  <!-- Node: PreviewService (optional/dashed) -->
+  <rect x="560" y="200" width="180" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="650" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Preview Service</text>
+  <text x="650" y="240" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">test traffic</text>
+
+  <!-- Node: Blue -->
+  <rect x="120" y="320" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="210" y="344" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Blue</text>
+  <text x="210" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">current version v1</text>
+
+  <!-- Node: Green -->
+  <rect x="560" y="320" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="650" y="344" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Green</text>
+  <text x="650" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">new version v2</text>
+
+  <!-- Node: Analysis (focal) -->
+  <rect x="360" y="460" width="180" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="450" y="484" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AnalysisTemplate</text>
+  <text x="450" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">promotion gate</text>
+
+  <!-- Node: Promote -->
+  <rect x="320" y="560" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="390" y="588" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Traffic Switch</text>
+
+  <!-- Node: Rollback (danger) -->
+  <rect x="540" y="560" width="140" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="610" y="588" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rollback</text>
+
+  <!-- Node: Swap -->
+  <rect x="320" y="632" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="390" y="656" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Active ⇄ Preview</text>
+  <text x="390" y="672" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">swap</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="712" x2="930" y2="712" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="728" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="724" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="192" y="728" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">PROMOTION GATE</text>
+  <line x1="380" y1="724" x2="408" y2="724" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="416" y="728" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">PREVIEW / OPTIONAL PATH</text>
+  <circle cx="680" cy="724" r="5" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+  <text x="692" y="728" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">ROLLBACK OUTCOME</text>
+</svg>

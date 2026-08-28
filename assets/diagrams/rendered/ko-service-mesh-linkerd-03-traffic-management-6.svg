@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lktm-flagger-title lktm-flagger-desc">
+<title id="lktm-flagger-title">Flagger 자동 카나리 배포 흐름</title>
+<desc id="lktm-flagger-desc">Flagger가 배포 변경을 감지해 카나리를 초기화하고, 메트릭 분석 결과 성공 기준을 충족하면 트래픽을 단계적으로 늘려 50%에 도달하면 프로모션하고, 기준을 충족하지 못하면 롤백하는 의사결정 흐름을 보여주는 플로차트.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- Arrows (drawn before boxes) -->
+<line x1="480" y1="68" x2="480" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="160" x2="480" y2="196" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="252" x2="480" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- CHECK -> STEP (예) -->
+<line x1="552" y1="320" x2="680" y2="320" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="604" y="300" width="24" height="12" rx="2" fill="#FFFFFF"/>
+<text x="616" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">예</text>
+
+<!-- CHECK -> ROLLBACK (아니오) -->
+<line x1="408" y1="320" x2="280" y2="320" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="324" y="300" width="40" height="12" rx="2" fill="#FFFFFF"/>
+<text x="344" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">아니오</text>
+
+<!-- STEP -> PROMOTE (50% 도달) -->
+<line x1="760" y1="348" x2="760" y2="420" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="766" y="376" width="60" height="12" rx="2" fill="#FFFFFF"/>
+<text x="796" y="385" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">50% 도달</text>
+
+<!-- STEP -> ANALYZE (loop back, 50% 미만) -->
+<path d="M720,292 V232 Q720,224 712,224 H568" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="608" y="204" width="64" height="12" rx="2" fill="#FFFFFF"/>
+<text x="640" y="213" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">50% 미만</text>
+
+<!-- ROLLBACK -> merge dot -->
+<path d="M200,348 V480 Q200,488 208,488 H472 Q480,488 480,496 V500" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- PROMOTE -> merge dot -->
+<path d="M760,476 V480 Q760,488 752,488 H488 Q480,488 480,496 V500" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- merge dot -> END -->
+<line x1="480" y1="504" x2="480" y2="520" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<circle cx="480" cy="500" r="4" fill="#232F3E"/>
+
+<!-- Node: START (oval) -->
+<ellipse cx="480" cy="44" rx="72" ry="24" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="41" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Deployment</text>
+<text x="480" y="54" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">변경 감지</text>
+
+<!-- Node: INIT -->
+<rect x="392" y="104" width="176" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Canary 초기화</text>
+<text x="480" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% 트래픽</text>
+
+<!-- Node: ANALYZE -->
+<rect x="392" y="196" width="176" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">메트릭 분석</text>
+
+<!-- Node: CHECK (diamond, focal decision) -->
+<polygon points="480,280 552,320 480,360 408,320" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="316" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">성공 기준</text>
+<text x="480" y="330" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">충족?</text>
+
+<!-- Node: STEP -->
+<rect x="680" y="292" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">트래픽 증가</text>
+<text x="760" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+10%</text>
+
+<!-- Node: ROLLBACK -->
+<rect x="120" y="292" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">롤백</text>
+<text x="200" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">0% 카나리</text>
+
+<!-- Node: PROMOTE -->
+<rect x="680" y="420" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="444" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로모션</text>
+<text x="760" y="460" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">100% 카나리</text>
+
+<!-- Node: END (oval) -->
+<ellipse cx="480" cy="544" rx="72" ry="24" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="548" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">완료</text>
+
+</svg>

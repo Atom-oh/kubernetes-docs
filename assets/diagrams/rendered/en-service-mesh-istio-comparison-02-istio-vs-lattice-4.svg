@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hybridarch-title hybridarch-desc">
+<title id="hybridarch-title">Hybrid Istio and VPC Lattice architecture</title>
+<desc id="hybridarch-desc">Architecture diagram showing an Istio mesh handling frontend-to-backend traffic inside an EKS cluster, then exiting through an egress gateway into a VPC Lattice service network that reaches an ECS payment service and a Lambda notification service in separate VPCs.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="40" y="40" width="880" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="404" y="44" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">ISTIO MESH · VPC 1 EKS</text>
+
+<rect x="40" y="264" width="880" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="424" y="268" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="277" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">VPC LATTICE</text>
+
+<!-- Arrows -->
+<line x1="184" y1="120" x2="204" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="324" y1="120" x2="636" y2="120" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<line x1="756" y1="120" x2="776" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Backend -> Service Network (egress) -->
+<path d="M 836,144 V 252 Q 836,260 828,260 H 284 Q 276,260 276,268 V 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Service Network -> Payment Service / Notification Service -->
+<line x1="356" y1="384" x2="396" y2="384" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 316,360 V 344 Q 316,336 324,336 H 648 Q 656,336 656,344 V 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Payment Service -> Payment (ECS), Notification Service -> Notification (Lambda) -->
+<path d="M 476,408 V 416 Q 476,424 468,424 H 136 Q 128,424 128,432" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 656,408 V 480 Q 656,488 648,488 H 136 Q 128,488 128,496" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels -->
+<rect x="448" y="100" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="468" y="109" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+<rect x="530" y="240" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="556" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EGRESS</text>
+
+<!-- Nodes: Istio mesh row -->
+<rect x="64" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="72" y="104" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="87" y="113" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="124" y="126" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Frontend</text>
+
+<rect x="204" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="212" y="104" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="227" y="113" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="264" y="126" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+
+<rect x="636" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="644" y="104" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="659" y="113" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">ENV</text>
+<text x="696" y="126" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+
+<rect x="776" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="784" y="104" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="799" y="113" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="836" y="126" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend</text>
+
+<!-- VPC Lattice row -->
+<rect x="196" y="360" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="196" y="360" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="204" y="368" width="26" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="217" y="377" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">SN</text>
+<text x="276" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Network</text>
+
+<rect x="396" y="360" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="404" y="368" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="419" y="377" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="476" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Payment Service</text>
+
+<rect x="576" y="360" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="584" y="368" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="599" y="377" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="656" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Notification Service</text>
+
+<!-- Standalone compute nodes -->
+<rect x="64" y="432" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="72" y="440" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="87" y="449" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">ECS</text>
+<text x="128" y="460" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Payment</text>
+<text x="128" y="472" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ECS task · VPC 2</text>
+
+<rect x="64" y="496" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="72" y="504" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="89" y="513" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">LMB</text>
+<text x="128" y="524" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Notification</text>
+<text x="128" y="536" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Lambda · VPC 3</text>
+
+<!-- Legend -->
+<line x1="240" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="240" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="240" y="528" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Istio mesh / compute</text>
+<rect x="440" y="528" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="460" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service network (focal)</text>
+<line x1="660" y1="534" x2="688" y2="534" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="696" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Istio mTLS (in-cluster)</text>
+</svg>

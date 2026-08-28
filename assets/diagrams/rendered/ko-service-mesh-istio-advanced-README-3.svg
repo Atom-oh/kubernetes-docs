@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 720 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="inj-title inj-desc">
+    <title id="inj-title">Sidecar Injection 결정 흐름</title>
+    <desc id="inj-desc">파드가 생성될 때 네임스페이스에 istio-injection 라벨이 있는지 검사해 Sidecar를 주입하거나 생략한 뒤, 두 경로 모두 동일하게 파드 배포로 합류하는 흐름을 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="360" y1="88" x2="360" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="360" y1="168" x2="360" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="240" x2="580" y2="240" stroke="#7D8998" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="360" y1="288" x2="360" y2="328" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M660,264 V392 Q660,400 652,400 H428 Q420,400 420,408 V440"
+          fill="none" stroke="#7D8998" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="360" y1="376" x2="360" y2="416" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="360" y1="416" x2="360" y2="440" stroke="#232F3E" stroke-width="1.2"/>
+
+    <!-- Arrow labels -->
+    <rect x="336" y="298" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="307" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">ENABLED</text>
+
+    <rect x="504" y="226" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="516" y="235" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">NO</text>
+
+    <!-- Start oval -->
+    <rect x="280" y="40" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="360" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 생성</text>
+
+    <!-- Diamond: Check -->
+    <polygon points="360,192 460,240 360,288 260,240" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="360" y="234" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Namespace에</text>
+    <text x="360" y="248" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">label 있음?</text>
+
+    <!-- Node: Skip -->
+    <rect x="580" y="216" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="660" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">주입 생략</text>
+
+    <!-- Node: Inject (focal happy path) -->
+    <rect x="280" y="328" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="360" y="356" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sidecar 주입</text>
+
+    <!-- Merge dot -->
+    <circle cx="360" cy="416" r="4" fill="#232F3E"/>
+
+    <!-- Node: Deploy -->
+    <rect x="280" y="440" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="360" y="468" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 배포</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="520" x2="680" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="536" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND · SHAPE CARRIES TYPE</text>
+
+    <rect x="40" y="552" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="72" y="562" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">시작 / 종료</text>
+
+    <polygon points="184,552 200,558 184,564 168,558" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="216" y="562" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">결정</text>
+
+    <rect x="280" y="552" width="24" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="312" y="562" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">핵심 경로 (Sidecar 주입)</text>
+
+    <circle cx="500" cy="558" r="4" fill="#232F3E"/>
+    <text x="512" y="562" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">분기 합류 지점</text>
+  </svg>

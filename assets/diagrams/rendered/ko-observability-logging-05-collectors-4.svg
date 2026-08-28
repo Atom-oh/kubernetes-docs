@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 532" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-observability-logging-05-collectors-4-title ko-observability-logging-05-collectors-4-desc">
+<title id="ko-observability-logging-05-collectors-4-title">로그 수집기 선택 의사결정 흐름</title>
+<desc id="ko-observability-logging-05-collectors-4-desc">목적지가 Loki 전용인지, AWS 환경인지, OTEL 표준이 필요한지를 순서대로 물어 FluentBit, Promtail, Grafana Alloy, OTEL Collector 중 하나를 선택하도록 안내한다.</desc>
+<defs>
+<style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");
+text { font-synthesis: none; }</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<path d="M 480,42.0 V 62" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 370,110 H 228 Q 220,110 220,118 V 172" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="281.0" y="90" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="295.0" y="99" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+<path d="M 590,110 H 692 Q 700,110 700,118 V 172" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="631.0" y="90" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="645.0" y="99" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+<path d="M 120,220 H 108 Q 100,220 100,228 V 308" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="96.0" y="200" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="110.0" y="209" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+<path d="M 320,220 H 332 Q 340,220 340,228 V 308" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="316.0" y="200" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="330.0" y="209" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+<path d="M 600,220 H 528 Q 520,220 520,228 V 418" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="546.0" y="200" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="560.0" y="209" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+<path d="M 800,220 H 822 Q 830,220 830,228 V 282" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="801.0" y="200" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="815.0" y="209" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+<path d="M 775,330 H 708 Q 700,330 700,338 V 418" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="723.5" y="310" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="737.5" y="319" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+<path d="M 885,330 H 882 Q 890,330 890,338 V 418" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="873.5" y="310" width="28" height="12" rx="2" fill="#FFFFFF"/>
+<text x="887.5" y="319" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+<rect x="380.0" y="6.0" width="200" height="36" rx="18.0" fill="#FFFFFF"/>
+<rect x="380.0" y="6.0" width="200" height="36" rx="18.0" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="28" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로그 수집기 선택</text>
+<polygon points="480,62 590,110 480,158 370,110" fill="#FFFFFF"/>
+<polygon points="480,62 590,110 480,158 370,110" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="107.5" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">목적지가</text>
+<text x="480" y="120.5" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki 전용?</text>
+<polygon points="220,172 320,220 220,268 120,220" fill="#FFFFFF"/>
+<polygon points="220,172 320,220 220,268 120,220" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+<text x="220" y="217.5" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">기존</text>
+<text x="220" y="230.5" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Promtail 사용?</text>
+<polygon points="700,172 800,220 700,268 600,220" fill="#FFFFFF"/>
+<polygon points="700,172 800,220 700,268 600,220" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+<text x="700" y="224.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS 환경?</text>
+<polygon points="830,282 885,330 830,378 775,330" fill="#FFFFFF"/>
+<polygon points="830,282 885,330 830,378 775,330" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+<text x="830" y="327.5" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OTEL 표준</text>
+<text x="830" y="340.5" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">필요?</text>
+<rect x="30.0" y="308.0" width="140" height="44" rx="6" fill="#FFFFFF"/>
+<rect x="30.0" y="308.0" width="140" height="44" rx="6" fill="rgba(122,161,22,0.08)" stroke="#5A7D3A" stroke-width="1.2"/>
+<text x="100" y="334" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Promtail 유지</text>
+<rect x="270.0" y="308.0" width="140" height="44" rx="6" fill="#FFFFFF"/>
+<rect x="270.0" y="308.0" width="140" height="44" rx="6" fill="rgba(122,161,22,0.08)" stroke="#5A7D3A" stroke-width="1.2"/>
+<text x="340" y="334" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana Alloy</text>
+<rect x="450.0" y="418.0" width="140" height="44" rx="6" fill="#FFFFFF"/>
+<rect x="450.0" y="418.0" width="140" height="44" rx="6" fill="rgba(122,161,22,0.08)" stroke="#5A7D3A" stroke-width="1.2"/>
+<text x="520" y="444" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FluentBit</text>
+<rect x="635.0" y="418.0" width="130" height="44" rx="6" fill="#FFFFFF"/>
+<rect x="635.0" y="418.0" width="130" height="44" rx="6" fill="rgba(122,161,22,0.08)" stroke="#5A7D3A" stroke-width="1.2"/>
+<text x="700" y="444" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OTEL Collector</text>
+<rect x="840.0" y="418.0" width="100" height="44" rx="6" fill="#FFFFFF"/>
+<rect x="840.0" y="418.0" width="100" height="44" rx="6" fill="rgba(122,161,22,0.08)" stroke="#5A7D3A" stroke-width="1.2"/>
+<text x="890" y="444" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FluentBit</text>
+<line x1="30" y1="492" x2="930" y2="492" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<polygon points="37,502 44,509 37,516 30,509" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+<text x="52" y="513" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">결정</text>
+<rect x="150" y="502" width="14" height="14" rx="4" fill="#FFFFFF" stroke="#5A7D3A" stroke-width="1.2"/>
+<text x="172" y="513" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">선택 결과</text>
+</svg>

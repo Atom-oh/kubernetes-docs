@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+  <title id="d1-title">Experiment outcome routing</title>
+  <desc id="d1-desc">The AnalysisRun status decides the Experiment's outcome: a Successful result lets the Rollout proceed to its next canary step, while Failed, Inconclusive, or Error results fail the Experiment and abort the Rollout into a Degraded state.</desc>
+
+  <defs><style>
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");
+:root{
+  --paper:#FFFFFF; --paper-2:#F2F3F3; --ink:#232F3E; --muted:#545B64; --soft:#7D8998;
+  --rule:rgba(35,47,62,0.12); --rule-solid:#D5DBDB;
+  --accent:#EC7211; --accent-tint:rgba(255,153,0,0.10); --link:#0972D3;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#161E2D; --paper-2:#232F3E; --ink:#FFFFFF; --muted:#B6BEC9; --soft:#8D99A8;
+    --rule:rgba(255,255,255,0.12); --rule-solid:rgba(255,255,255,0.25);
+    --accent:#FF9900; --accent-tint:rgba(255,153,0,0.14); --link:#539FE5;
+  }
+}
+text{ fill:var(--ink); font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; }
+</style>
+    <pattern id="d1-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="11" cy="11" r="0.8" fill="var(--ink)" opacity="0.10"/>
+    </pattern>
+    <marker id="d1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/>
+    </marker>
+    <marker id="d1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" fill="var(--paper)"/>
+  <rect x="0" y="0" width="960" height="600" fill="url(#d1-dots)" opacity="0.55"/>
+
+  <!-- Title -->
+  <text x="40" y="46" font-size="20" font-weight="700" fill="var(--ink)">AnalysisRun status decides the Experiment outcome</text>
+  <text x="40" y="66" font-size="9" font-family="'Geist Mono',monospace" fill="var(--muted)" letter-spacing="0.02em">EXPERIMENT RESULT ROUTING</text>
+
+  <!-- ===== Connectors (before nodes) ===== -->
+
+  <!-- AR -> OK : Successful (accent, happy path) -->
+  <path d="M600,254 H660 Q668,254 668,262 V318 Q668,326 676,326 H700"
+        fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#d1-arrow-accent)"/>
+  <rect x="614" y="272" width="70" height="14" rx="2" fill="var(--paper)"/>
+  <text x="649" y="282" font-size="8" font-family="'Geist Mono',monospace" fill="var(--accent)" text-anchor="middle" letter-spacing="0.02em">Successful</text>
+
+  <!-- AR -> NG : Failed / Inconclusive / Error -->
+  <path d="M600,314 H660 Q668,314 668,322 V378 Q668,386 676,386 H700"
+        fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#d1-arrow)"/>
+  <rect x="586" y="334" width="164" height="14" rx="2" fill="var(--paper)"/>
+  <text x="668" y="344" font-size="8" font-family="'Geist Mono',monospace" fill="var(--muted)" text-anchor="middle" letter-spacing="0.01em">Failed / Inconclusive / Error</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- AR: AnalysisRun status (focal / hub) -->
+  <g>
+    <rect x="400" y="252" width="200" height="72" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+    <text x="500" y="284" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">AnalysisRun</text>
+    <text x="500" y="301" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle" fill="var(--muted)">status</text>
+  </g>
+
+  <!-- OK: Experiment Successful -->
+  <g>
+    <rect x="700" y="284" width="220" height="72" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"/>
+    <text x="810" y="310" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Experiment Successful</text>
+    <text x="810" y="326" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle" fill="var(--muted)">Rollout proceeds to</text>
+    <text x="810" y="338" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle" fill="var(--muted)">next step</text>
+  </g>
+
+  <!-- NG: Experiment Failed -->
+  <g>
+    <rect x="700" y="378" width="220" height="72" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"/>
+    <text x="810" y="404" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">Experiment Failed</text>
+    <text x="810" y="420" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle" fill="var(--muted)">Rollout aborted</text>
+    <text x="810" y="432" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle" fill="var(--muted)">(Degraded)</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="40" y1="562" x2="64" y2="562" stroke="var(--accent)" stroke-width="1.2"/>
+  <text x="70" y="565" font-size="8" font-family="'Geist Mono',monospace" fill="var(--muted)">successful outcome</text>
+  <line x1="230" y1="562" x2="254" y2="562" stroke="var(--muted)" stroke-width="1"/>
+  <text x="260" y="565" font-size="8" font-family="'Geist Mono',monospace" fill="var(--muted)">failed / errored outcome</text>
+</svg>

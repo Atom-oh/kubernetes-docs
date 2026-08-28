@@ -115,18 +115,7 @@ Two caveats are worth planning around before turning this on:
 
 The most common pattern this site sees paired with Kafka on EKS is streaming data from MSK through Flink and landing it in Apache Iceberg tables on S3 for downstream analytics.
 
-```mermaid
-flowchart LR
-    A[MSK / Kafka Source Topic] --> B[Flink Job]
-    subgraph B1[TaskManagers]
-        C[(RocksDB State Backend)]
-    end
-    B --- B1
-    B -.periodic checkpoint.-> D[(S3 Checkpoint Storage)]
-    B --> E{Sink}
-    E -->|KafkaSink - EXACTLY_ONCE 2PC| F[Kafka Output Topic]
-    E -->|Dynamic Iceberg Sink| G[(S3 / Iceberg Tables)]
-```
+![A Flink job consuming from a Kafka source keeps operator state in RocksDB inside its TaskManagers, periodically checkpoints that state to S3, and routes processed records through a sink to either a Kafka output topic (exactly-once via two-phase commit) or S3/Iceberg tables.](../../.gitbook/assets/en-data-on-eks-flink-03-state-checkpointing-streaming-0.png)
 
 ### Dynamic Iceberg Sink
 

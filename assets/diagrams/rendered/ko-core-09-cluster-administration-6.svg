@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">백업 및 복구 프로세스</title>
+<desc id="d">예약된 백업이 etcd 스냅샷과 리소스 YAML을 백업 저장소에 모으고, 재해가 발생하면 그 저장소로부터 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구하는 흐름을 보여주는 다이어그램</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="10" y="20" width="660" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="22" y="14" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="51.0" y="23" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">백업 프로세스</text>
+<rect x="10" y="348" width="940" height="110" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="22" y="342" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="51.0" y="351" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">복구 프로세스</text>
+<path d="M 170,128 H 252 Q 260,128 260,120 V 72" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 170,144 H 252 Q 260,144 260,152 V 200" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 420,72 H 492 Q 500,72 500,80 V 128" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 420,200 H 492 Q 500,200 500,192 V 144" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="180" y1="404" x2="220" y2="404" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="360" y1="404" x2="410" y2="404" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="550" y1="404" x2="600" y2="404" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="740" y1="404" x2="790" y2="404" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 540,160 V 288 Q 540,296 532,296 H 298 Q 290,296 290,304 V 380" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 600,160 V 288 Q 600,296 608,296 H 852 Q 860,296 860,304 V 380" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="30" y="112" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="30" y="112" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="138.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">백업 일정 설정</text>
+<rect x="260" y="48" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="260" y="48" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340.0" y="74.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd 스냅샷 생성</text>
+<rect x="260" y="176" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="260" y="176" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340.0" y="202.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">리소스 YAML 백업</text>
+<rect x="500" y="112" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="500" y="112" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="508" y="118" width="28" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-width="0.8" opacity="0.4"/>
+<text x="522" y="127" fill="#545B64" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">S3</text>
+<text x="570.0" y="138.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">백업 저장소</text>
+<rect x="40" y="380" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="380" width="140" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="110.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">재해 발생</text>
+<rect x="220" y="380" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="220" y="380" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd 복구</text>
+<rect x="410" y="380" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="410" y="380" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="406.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">서비스 재시작</text>
+<rect x="600" y="380" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="600" y="380" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클러스터 검증</text>
+<rect x="790" y="380" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="790" y="380" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="406.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">리소스 복구</text>
+</svg>

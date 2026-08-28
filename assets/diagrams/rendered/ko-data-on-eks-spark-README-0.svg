@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spark-k8s-title spark-k8s-desc">
+  <title id="spark-k8s-title">Spark on Kubernetes 실행 구조</title>
+  <desc id="spark-k8s-desc">spark-submit이 Kubernetes API Server에 드라이버 Pod 생성을 요청하고, 드라이버 Pod가 API Server를 통해 Executor Pod를 스케줄링받은 뒤 각 Executor가 드라이버에 등록 및 상태를 보고하는 흐름</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">DATA ON EKS &#183; SPARK-SUBMIT</text>
+  <text x="40" y="56" fill="#232F3E" font-size="20" font-weight="700">Spark on Kubernetes 실행 구조</text>
+
+  <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+
+  <!-- 1. S -> API : straight -->
+  <line x1="200" y1="120" x2="400" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="256" y="100" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="300" y="109" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">드라이버 생성</text>
+
+  <!-- 2. API -> D (unlabeled) -->
+  <path d="M412,152 V212 Q412,220 404,220 H108 Q100,220 100,228 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 3. D -> API : Executor Pod 요청 -->
+  <path d="M160,320 V258 Q160,250 168,250 H440 Q448,250 448,242 V152" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="266" y="230" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="314" y="239" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">EXECUTOR 요청</text>
+
+  <!-- 4. API -> E1 : 스케줄링 -->
+  <path d="M484,152 V264 Q484,272 476,272 H368 Q360,272 360,280 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="390" y="252" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="422" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">스케줄링</text>
+
+  <!-- 5. API -> E2 : 스케줄링 -->
+  <path d="M536,152 V282 Q536,290 544,290 H592 Q600,290 600,298 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="536" y="270" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="568" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">스케줄링</text>
+
+  <!-- 6. API -> E3 : 스케줄링 (hop over #5's horizontal at x=588,y=290) -->
+  <path d="M588,152 V282 a8,8 0 0,0 0,16 Q588,306 596,306 H832 Q840,306 840,314 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="682" y="286" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="714" y="295" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">스케줄링</text>
+
+  <!-- 7. E1 -> D : 등록 / 상태 보고 -->
+  <path d="M320,384 V412 Q320,420 312,420 H178 Q170,420 170,412 V384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="209" y="402" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="249" y="411" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">등록&#183;상태보고</text>
+
+  <!-- 8. E2 -> D : 등록 / 상태 보고 -->
+  <path d="M560,384 V432 Q560,440 552,440 H138 Q130,440 130,432 V384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="305" y="422" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="345" y="431" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">등록&#183;상태보고</text>
+
+  <!-- 9. E3 -> D : 등록 / 상태 보고 -->
+  <path d="M800,384 V452 Q800,460 792,460 H98 Q90,460 90,452 V384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="405" y="442" width="80" height="12" rx="2" fill="#ffffff"/>
+  <text x="445" y="451" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">등록&#183;상태보고</text>
+
+  <!-- ===================== NODES ===================== -->
+
+  <!-- S: spark-submit (input treatment) -->
+  <rect x="40" y="88" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="88" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <rect x="48" y="94" width="34" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+  <text x="65" y="103" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CLI</text>
+  <text x="120" y="126" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">spark-submit</text>
+  <text x="120" y="142" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">local client</text>
+
+  <!-- API: Kubernetes API Server (backend treatment) -->
+  <rect x="400" y="88" width="220" height="64" rx="6" fill="#ffffff"/>
+  <rect x="400" y="88" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="408" y="94" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="425" y="103" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+  <text x="510" y="126" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubernetes API Server</text>
+  <text x="510" y="142" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">control plane</text>
+
+  <!-- D: Driver Pod (focal) -->
+  <rect x="40" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="320" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="48" y="326" width="42" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="69" y="335" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DRIVER</text>
+  <text x="120" y="358" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Driver Pod</text>
+  <text x="120" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">spark driver</text>
+
+  <!-- E1, E2, E3: Executor Pods (store treatment) -->
+  <rect x="280" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="280" y="320" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="288" y="326" width="42" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="309" y="335" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXEC</text>
+  <text x="360" y="358" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Executor Pod 1</text>
+  <text x="360" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">task runner</text>
+
+  <rect x="520" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="520" y="320" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="528" y="326" width="42" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="549" y="335" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXEC</text>
+  <text x="600" y="358" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Executor Pod 2</text>
+  <text x="600" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">task runner</text>
+
+  <rect x="760" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="760" y="320" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="768" y="326" width="42" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="789" y="335" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXEC</text>
+  <text x="840" y="358" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Executor Pod 3</text>
+  <text x="840" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">task runner</text>
+
+  <!-- ===================== LEGEND ===================== -->
+  <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <rect x="160" y="532" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="182" y="542" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">드라이버 (스케줄링 요청 주체)</text>
+
+  <rect x="480" y="532" width="14" height="14" rx="3" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="502" y="542" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Executor (실제 작업 처리)</text>
+</svg>

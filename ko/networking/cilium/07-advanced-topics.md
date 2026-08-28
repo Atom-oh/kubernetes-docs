@@ -55,57 +55,7 @@ Cilium의 성능을 최적화하고 일반적인 문제를 해결하는 방법�
 
 ### 성능 튜닝 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "Cilium 성능 튜닝 영역"
-        direction TB
-        
-        subgraph "커널 매개변수"
-            TCP[TCP 매개변수]
-            Conntrack[연결 추적]
-            ARP[ARP 캐시]
-            Memory[메모리 관리]
-        end
-        
-        subgraph "eBPF 맵"
-            CTMap[연결 추적 맵]
-            NATMap[NAT 맵]
-            PolicyMap[정책 맵]
-            EndpointMap[엔드포인트 맵]
-        end
-        
-        subgraph "리소스 할당"
-            CPULimit[CPU 제한]
-            MemLimit[메모리 제한]
-            PodPriority[Pod 우선순위]
-            NodeAffinity[노드 어피니티]
-        end
-        
-        subgraph "네트워킹 모드"
-            DirectRouting[직접 라우팅]
-            Overlay[오버레이]
-            KubeProxy[kube-proxy 대체]
-            XDP[XDP 가속화]
-        end
-    end
-    
-    Performance[성능 최적화] --> TCP & Conntrack & ARP & Memory
-    Performance --> CTMap & NATMap & PolicyMap & EndpointMap
-    Performance --> CPULimit & MemLimit & PodPriority & NodeAffinity
-    Performance --> DirectRouting & Overlay & KubeProxy & XDP
-    
-    classDef kernel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ebpf fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef resource fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef perf fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    
-    class TCP,Conntrack,ARP,Memory kernel;
-    class CTMap,NATMap,PolicyMap,EndpointMap ebpf;
-    class CPULimit,MemLimit,PodPriority,NodeAffinity resource;
-    class DirectRouting,Overlay,KubeProxy,XDP network;
-    class Performance perf;
-```
+![Cilium 성능 최적화라는 중심 목표가 커널 매개변수, eBPF 맵, 리소스 할당, 네트워킹 모드라는 네 가지 튜닝 영역으로 나뉘고, 각 영역에 구체적인 조정 항목들이 속해 있는 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-07-advanced-topics-0.png)
 
 ### 성능 튜닝 영역:
 

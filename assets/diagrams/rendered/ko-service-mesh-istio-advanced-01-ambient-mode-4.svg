@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="amb04-title amb04-desc">
+<title id="amb04-title">Waypoint 배포 단위: ServiceAccount별 프록시 공유</title>
+<desc id="amb04-desc">하나의 Namespace 안에서 frontend와 backend ServiceAccount가 각자 별도의 Waypoint 프록시를 공유하고, ztunnel이 L7 라우팅이 필요한 트래픽을 해당 Waypoint로 전달하는 구조를 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="460" y="60" width="440" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="468" y="64" width="142" height="12" rx="2" fill="#ffffff"/>
+<text x="539.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NAMESPACE: PRODUCTION</text>
+<rect x="500" y="120" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="500" y="120" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="580.0" y="147.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">frontend SA</text>
+<text x="580.0" y="161.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">(2 pods)</text>
+<rect x="500" y="320" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="500" y="320" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="580.0" y="347.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">backend SA</text>
+<text x="580.0" y="361.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">(2 pods)</text>
+<rect x="720" y="120" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="720" y="120" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="790.0" y="147.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waypoint</text>
+<text x="790.0" y="161.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">for frontend</text>
+<rect x="720" y="320" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="720" y="320" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="790.0" y="347.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waypoint</text>
+<text x="790.0" y="361.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">for backend</text>
+<rect x="60" y="220" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="220" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="130.0" y="254.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ztunnel</text>
+<path d="M 200,236 H 432 Q 440,236 440,228 V 172 Q 440,164 448,164 H 720" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="301.0" y="216" width="78" height="12" rx="2" fill="#ffffff"/>
+<text x="340" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L7 ROUTING</text>
+<path d="M 200,268 H 472 Q 480,268 480,276 V 356 Q 480,364 488,364 H 720" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="301.0" y="248" width="78" height="12" rx="2" fill="#ffffff"/>
+<text x="340" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L7 ROUTING</text>
+<line x1="720" y1="140" x2="660" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="720" y1="340" x2="660" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+</svg>

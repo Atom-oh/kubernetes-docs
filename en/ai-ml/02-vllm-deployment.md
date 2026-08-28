@@ -30,52 +30,7 @@ kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable
 
 vLLM is an LLM inference engine with the following characteristics:
 
-```mermaid
-flowchart TD
-    subgraph vLLM [vLLM Architecture]
-        subgraph Features [Key Features]
-            PagedAttention[PagedAttention]
-            ContinuousBatching[Continuous Batching]
-            DistributedInference[Distributed Inference]
-            Quantization[Quantization]
-            OpenAIAPI[OpenAI Compatible API]
-        end
-
-        subgraph Components [Core Components]
-            Engine[Inference Engine]
-            Scheduler[Request Scheduler]
-            KVCache[KV Cache Manager]
-            ModelLoader[Model Loader]
-            APIServer[API Server]
-        end
-
-        subgraph Benefits [Key Benefits]
-            MemoryEfficiency[Memory Efficiency]
-            HighThroughput[High Throughput]
-            LowLatency[Low Latency]
-            Scalability[Scalability]
-        end
-    end
-
-    PagedAttention --> MemoryEfficiency
-    ContinuousBatching --> HighThroughput
-    DistributedInference --> Scalability
-    Quantization --> MemoryEfficiency
-
-    Engine --> KVCache
-    Scheduler --> Engine
-    ModelLoader --> Engine
-    Engine --> APIServer
-
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
-    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
-    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
-    class vLLM default;
-```
+![Diagram grouping vLLM's core features, its internal component pipeline, and the resulting benefits such as memory efficiency and high throughput.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
 
 ### Key Features of vLLM
 
@@ -252,41 +207,7 @@ response = client.chat.completions.create(
 
 System requirements for deploying vLLM on EKS:
 
-```mermaid
-flowchart TD
-    subgraph Requirements [System Requirements]
-        subgraph Hardware [Hardware]
-            GPU[NVIDIA GPU]
-            Memory[GPU Memory]
-            CPU[CPU Cores]
-        end
-
-        subgraph Software [Software]
-            CUDA[CUDA 12.1+]
-            Python[Python 3.9+]
-            PyTorch[PyTorch 2.4.0+]
-        end
-
-        subgraph ModelSize [Requirements by Model Size]
-            Model7B[7B Model: 16GB+ GPU Memory]
-            Model13B[13B Model: 24GB+ GPU Memory]
-            Model70B[70B Model: 80GB+ GPU Memory]
-        end
-    end
-
-    GPU --> Memory
-    Memory --> ModelSize
-
-    classDef hardwareNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef softwareNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef modelNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class GPU,Memory,CPU,Hardware hardwareNode;
-    class CUDA,Python,PyTorch,Software softwareNode;
-    class Model7B,Model13B,Model70B,ModelSize modelNode;
-    class Requirements default;
-```
+![Diagram showing hardware and software prerequisites for vLLM, and how GPU memory determines the supported model size tier.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
 
 1. **Hardware**:
    - NVIDIA GPU (Volta, Turing, Ampere, Hopper architecture)
@@ -310,69 +231,7 @@ flowchart TD
 
 ## EKS Infrastructure Configuration
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS Cloud]
-        subgraph EKS [Amazon EKS]
-            subgraph ControlPlane [Control Plane]
-                APIServer[API Server]
-                Scheduler[Scheduler]
-                ControllerManager[Controller Manager]
-            end
-
-            subgraph NodeGroups [Node Groups]
-                subgraph GPUNodes [GPU Nodes]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.12xlarge]
-                end
-
-                subgraph CPUNodes [CPU Nodes]
-                    C5[c5.4xlarge]
-                    M5[m5.4xlarge]
-                end
-            end
-
-            subgraph Storage [Storage]
-                FSx[FSx for Lustre]
-                EBS[Amazon EBS]
-                S3[Amazon S3]
-            end
-
-            subgraph Networking [Networking]
-                VPC[VPC]
-                Subnet[Subnet]
-                SecurityGroup[Security Group]
-                EFA[Elastic Fabric Adapter]
-            end
-        end
-
-        subgraph Services [AWS Services]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-            IAM[IAM]
-        end
-    end
-
-    GPUNodes --> Storage
-    GPUNodes --> Networking
-    CPUNodes --> Storage
-    CPUNodes --> Networking
-
-    EKS --> Services
-
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ECR,CloudWatch,IAM,FSx,EBS,S3 awsService;
-    class APIServer,Scheduler,ControllerManager,ControlPlane,Networking,VPC,Subnet,SecurityGroup,EFA k8sComponent;
-    class P4d,P3,G5,GPUNodes gpuNode;
-    class C5,M5,CPUNodes cpuNode;
-    class AWS,EKS,NodeGroups,Storage default;
-```
+![Architecture diagram of an Amazon EKS cluster running vLLM: a control plane, GPU and CPU node groups, storage and networking resources, and supporting AWS services.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
 
 ## Storage Configuration
 
@@ -467,106 +326,7 @@ spec:
 
 The following diagram shows two main architectures for deploying vLLM on EKS:
 
-```mermaid
-flowchart TD
-    subgraph Deployment [vLLM Deployment Architecture]
-        subgraph SingleNode [Single Node Deployment]
-            Pod1[vLLM Pod]
-
-            subgraph Pod1Components [Pod Components]
-                Container1[vLLM Container]
-                Volume1[Model Volume]
-            end
-
-            subgraph GPUs1 [GPU]
-                GPU1[GPU 0]
-                GPU2[GPU 1]
-                GPU3["..."]
-                GPU4[GPU 7]
-            end
-        end
-
-        subgraph MultiNode [Multi-Node Deployment]
-            Pod2[vLLM Pod 0]
-            Pod3[vLLM Pod 1]
-
-            subgraph Pod2Components [Pod 0 Components]
-                Container2[vLLM Container]
-                Volume2[Model Volume]
-            end
-
-            subgraph Pod3Components [Pod 1 Components]
-                Container3[vLLM Container]
-                Volume3[Model Volume]
-            end
-
-            subgraph GPUs2 [Node 0 GPU]
-                GPU5[GPU 0]
-                GPU6[GPU 1]
-                GPU7["..."]
-                GPU8[GPU 7]
-            end
-
-            subgraph GPUs3 [Node 1 GPU]
-                GPU9[GPU 0]
-                GPU10[GPU 1]
-                GPU11["..."]
-                GPU12[GPU 7]
-            end
-
-            NCCL[NCCL Communication]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSx[FSx for Lustre]
-            S3[Amazon S3]
-        end
-
-        subgraph Networking [Networking]
-            Service[Kubernetes Service]
-            LoadBalancer[Load Balancer]
-            Client[Client]
-        end
-    end
-
-    Pod1 --> Pod1Components
-    Pod1Components --> GPUs1
-    Container1 --> Volume1
-
-    Pod2 --> Pod2Components
-    Pod3 --> Pod3Components
-    Pod2Components --> GPUs2
-    Pod3Components --> GPUs3
-    Container2 --> Volume2
-    Container3 --> Volume3
-
-    Pod2 <--> NCCL
-    Pod3 <--> NCCL
-
-    Volume1 --> FSx
-    Volume2 --> FSx
-    Volume3 --> FSx
-    FSx --> S3
-
-    Client --> LoadBalancer
-    LoadBalancer --> Service
-    Service --> Pod1
-    Service --> Pod2
-
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef containerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef networkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod1Components,Pod2Components,Pod3Components podComponent;
-    class Container1,Container2,Container3,Volume1,Volume2,Volume3,NCCL containerComponent;
-    class GPU1,GPU2,GPU3,GPU4,GPU5,GPU6,GPU7,GPU8,GPU9,GPU10,GPU11,GPU12,GPUs1,GPUs2,GPUs3 gpuComponent;
-    class FSx,S3,Storage storageComponent;
-    class Service,LoadBalancer,Client,Networking networkComponent;
-    class Deployment,SingleNode,MultiNode default;
-```
+![Diagram comparing a single-node vLLM pod deployment with a multi-node NCCL-synchronized deployment, both fed by a load balancer and sharing FSx/S3-backed storage.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
 
 ### Single Node Deployment
 
@@ -758,52 +518,7 @@ spec:
 
 ## Performance Optimization
 
-```mermaid
-flowchart TD
-    subgraph Optimization [Performance Optimization]
-        subgraph GPUMemory [GPU Memory Optimization]
-            MemoryUtil[GPU Memory Utilization Adjustment]
-            Quantization[Quantization Application]
-            SwapSpace[Swap Space Utilization]
-        end
-
-        subgraph Throughput [Throughput Optimization]
-            BatchSize[Batch Size Adjustment]
-            KVCache[KV Cache Optimization]
-            TensorParallel[Tensor Parallel Processing]
-        end
-
-        subgraph NetworkOpt [Network Optimization]
-            EFA[EFA Utilization]
-            NCCLSettings[NCCL Settings Optimization]
-            NodePlacement[Node Placement Optimization]
-        end
-    end
-
-    MemoryUtil -->|--gpu-memory-utilization=0.9| Performance([Performance Improvement])
-    Quantization -->|--quantization awq| Performance
-    SwapSpace -->|--swap-space=16| Performance
-
-    BatchSize -->|--max-num-batched-tokens=8192| Performance
-    KVCache -->|--block-size=16| Performance
-    TensorParallel -->|--tensor-parallel-size=8| Performance
-
-    EFA -->|vpc.amazonaws.com/efa: 1| Performance
-    NCCLSettings -->|NCCL_DEBUG=INFO| Performance
-    NodePlacement -->|topology.kubernetes.io/zone| Performance
-
-    classDef gpuMemNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef throughputNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef performanceNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class MemoryUtil,Quantization,SwapSpace,GPUMemory gpuMemNode;
-    class BatchSize,KVCache,TensorParallel,Throughput throughputNode;
-    class EFA,NCCLSettings,NodePlacement,NetworkOpt networkNode;
-    class Performance performanceNode;
-    class Optimization default;
-```
+![Diagram showing GPU memory, throughput, and network optimization techniques, each with its configuration flag, converging on overall performance improvement.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
 
 ### GPU Memory Optimization
 
@@ -892,72 +607,7 @@ affinity:
 
 ## Monitoring and Logging
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [Monitoring and Logging]
-        subgraph MetricsCollection [Metrics Collection]
-            vLLMMetrics[vLLM Metrics]
-            GPUMetrics[GPU Metrics]
-            KubeMetrics[Kubernetes Metrics]
-        end
-
-        subgraph MonitoringStack [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
-
-        subgraph LoggingStack [Logging Stack]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
-
-        subgraph Dashboards [Dashboards]
-            GPUUtilization[GPU Utilization]
-            Throughput[Throughput]
-            Latency[Latency]
-            ErrorRate[Error Rate]
-        end
-
-        subgraph Alerts [Alerts]
-            HighLatency[High Latency]
-            LowThroughput[Low Throughput]
-            GPUError[GPU Error]
-            OOMError[Out of Memory Error]
-        end
-    end
-
-    vLLMMetrics --> Prometheus
-    GPUMetrics --> Prometheus
-    KubeMetrics --> Prometheus
-
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-
-    AlertManager --> Alerts
-    Grafana --> Dashboards
-
-    vLLMMetrics --> Fluentd
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-
-    classDef metricsNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class vLLMMetrics,GPUMetrics,KubeMetrics,MetricsCollection metricsNode;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringNode;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingNode;
-    class GPUUtilization,Throughput,Latency,ErrorRate,Dashboards dashboardNode;
-    class HighLatency,LowThroughput,GPUError,OOMError,Alerts alertNode;
-    class Monitoring default;
-```
+![Diagram showing vLLM, GPU, and Kubernetes metrics flowing into a Prometheus/Grafana monitoring stack that produces dashboards and alerts, alongside a separate logging stack.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
 
 ### Prometheus Metrics
 
@@ -1033,50 +683,7 @@ data:
 
 ## Autoscaling
 
-```mermaid
-flowchart TD
-    subgraph Autoscaling [Autoscaling]
-        subgraph PodScaling [Pod Scaling]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            CustomMetrics[Custom Metrics]
-        end
-
-        subgraph NodeScaling [Node Scaling]
-            Karpenter[Karpenter]
-            ClusterAutoscaler[Cluster Autoscaler]
-            SpotInstances[Spot Instances]
-        end
-
-        subgraph ScalingTriggers [Scaling Triggers]
-            CPUUtilization[CPU Utilization]
-            GPUUtilization[GPU Utilization]
-            RequestsPerSecond[Requests Per Second]
-            QueueLength[Queue Length]
-        end
-    end
-
-    CPUUtilization --> HPA
-    GPUUtilization --> CustomMetrics
-    RequestsPerSecond --> KEDA
-    QueueLength --> KEDA
-
-    HPA --> Karpenter
-    KEDA --> Karpenter
-    CustomMetrics --> ClusterAutoscaler
-
-    Karpenter --> SpotInstances
-
-    classDef podScalingNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeScalingNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef triggerNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class HPA,KEDA,CustomMetrics,PodScaling podScalingNode;
-    class Karpenter,ClusterAutoscaler,SpotInstances,NodeScaling nodeScalingNode;
-    class CPUUtilization,GPUUtilization,RequestsPerSecond,QueueLength,ScalingTriggers triggerNode;
-    class Autoscaling default;
-```
+![Diagram showing CPU, GPU, request-rate, and queue-length signals driving pod-level autoscaling, which in turn drives GPU node autoscaling and spot capacity.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
 ### HPA (Horizontal Pod Autoscaler)
 
@@ -1221,63 +828,7 @@ securityContext:
 
 ## Client Integration
 
-```mermaid
-flowchart TD
-    subgraph ClientIntegration [Client Integration]
-        subgraph Gateway [API Gateway]
-            Nginx[Nginx]
-            APIGateway[API Gateway]
-            Envoy[Envoy Proxy]
-        end
-
-        subgraph Clients [Clients]
-            PythonClient[Python Client]
-            JavaScriptClient[JavaScript Client]
-            CurlClient[Curl Client]
-        end
-
-        subgraph Security [Security]
-            Auth[Authentication]
-            RateLimit[Rate Limiting]
-            CORS[CORS]
-        end
-
-        subgraph Backend [Backend]
-            vLLMService[vLLM Service]
-            LoadBalancer[Load Balancer]
-        end
-    end
-
-    Clients --> Gateway
-    Gateway --> Security
-    Security --> Backend
-
-    PythonClient -->|HTTP Request| Nginx
-    JavaScriptClient -->|HTTP Request| APIGateway
-    CurlClient -->|HTTP Request| Envoy
-
-    Nginx --> Auth
-    APIGateway --> RateLimit
-    Envoy --> CORS
-
-    Auth --> LoadBalancer
-    RateLimit --> LoadBalancer
-    CORS --> LoadBalancer
-
-    LoadBalancer --> vLLMService
-
-    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef clientNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef backendNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Nginx,APIGateway,Envoy,Gateway gatewayNode;
-    class PythonClient,JavaScriptClient,CurlClient,Clients clientNode;
-    class Auth,RateLimit,CORS,Security securityNode;
-    class vLLMService,LoadBalancer,Backend backendNode;
-    class ClientIntegration default;
-```
+![Diagram showing client SDKs reaching vLLM through an API gateway, a security layer for authentication and rate limiting, and finally the load-balanced backend service.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
 
 ### API Gateway
 

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-02-basic-concepts-4-title en-service-mesh-istio-02-basic-concepts-4-desc">
+<title id="en-service-mesh-istio-02-basic-concepts-4-title">Istio Major Version History</title>
+<desc id="en-service-mesh-istio-02-basic-concepts-4-desc">Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in January 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.20 introduction of Ambient Mode as major milestones.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="56" y1="300" x2="904" y2="300" stroke="#545B64" stroke-width="1"/>
+<circle cx="56.0" cy="300" r="4" fill="#232F3E"/>
+<line x1="56.0" y1="300" x2="56.0" y2="284" stroke="#545B64" stroke-width="0.8"/>
+<text x="56.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="56.0" y="256" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 0.1 announced</text>
+<text x="56.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2017-05</text>
+<circle cx="162.0" cy="300" r="6" fill="#EC7211"/>
+<line x1="162.0" y1="300" x2="162.0" y2="316" stroke="#545B64" stroke-width="0.8"/>
+<text x="162.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="162.0" y="338" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.0</text>
+<text x="162.0" y="352" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— production ready</text>
+<text x="162.0" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2018-07</text>
+<circle cx="268.0" cy="300" r="4" fill="#232F3E"/>
+<line x1="268.0" y1="300" x2="268.0" y2="284" stroke="#545B64" stroke-width="0.8"/>
+<text x="268.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="268.0" y="256" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.1</text>
+<text x="268.0" y="270" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— performance improvements</text>
+<text x="268.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2019-03</text>
+<circle cx="374.0" cy="300" r="6" fill="#EC7211"/>
+<line x1="374.0" y1="300" x2="374.0" y2="316" stroke="#545B64" stroke-width="0.8"/>
+<text x="374.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="374.0" y="338" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.5</text>
+<text x="374.0" y="352" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— istiod consolidation</text>
+<text x="374.0" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2020-03</text>
+<circle cx="480.0" cy="300" r="4" fill="#232F3E"/>
+<line x1="480.0" y1="300" x2="480.0" y2="284" stroke="#545B64" stroke-width="0.8"/>
+<text x="480.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="480.0" y="256" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.10</text>
+<text x="480.0" y="270" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— discovery selectors</text>
+<text x="480.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2021-05</text>
+<circle cx="586.0" cy="300" r="4" fill="#232F3E"/>
+<line x1="586.0" y1="300" x2="586.0" y2="316" stroke="#545B64" stroke-width="0.8"/>
+<text x="586.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="586.0" y="338" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.13 —</text>
+<text x="586.0" y="352" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Gateway API support</text>
+<text x="586.0" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2022-02</text>
+<circle cx="692.0" cy="300" r="6" fill="#EC7211"/>
+<line x1="692.0" y1="300" x2="692.0" y2="284" stroke="#545B64" stroke-width="0.8"/>
+<text x="692.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="692.0" y="256" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.20</text>
+<text x="692.0" y="270" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— Ambient Mode</text>
+<text x="692.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2023-11</text>
+<circle cx="798.0" cy="300" r="4" fill="#232F3E"/>
+<line x1="798.0" y1="300" x2="798.0" y2="316" stroke="#545B64" stroke-width="0.8"/>
+<text x="798.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="798.0" y="338" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.22</text>
+<text x="798.0" y="352" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— stability improvements</text>
+<text x="798.0" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2024-05</text>
+<circle cx="904.0" cy="300" r="4" fill="#232F3E"/>
+<line x1="904.0" y1="300" x2="904.0" y2="284" stroke="#545B64" stroke-width="0.8"/>
+<text x="904.0" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle"></text>
+<text x="904.0" y="256" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio 1.28</text>
+<text x="904.0" y="270" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">— current version</text>
+<text x="904.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">2025-01</text>
+</svg>

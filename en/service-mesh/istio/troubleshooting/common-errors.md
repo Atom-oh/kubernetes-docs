@@ -34,36 +34,7 @@ HTTP 503 Service Unavailable
 
 ### Root Cause
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8s as Kubernetes
-    participant App as Application
-    participant Envoy as Envoy Proxy
-    participant Client as Client
-
-    Note over K8s,Client: Pod termination starts (kubectl delete pod)
-
-    K8s->>App: Send SIGTERM
-    K8s->>Envoy: Send SIGTERM
-
-    rect rgb(255, 200, 200)
-        Note over Envoy: Problem: Envoy terminates first
-        Envoy->>Envoy: Starts terminating immediately
-    end
-
-    Client->>Envoy: Send request
-    Envoy-->>Client: Connection refused
-
-    rect rgb(200, 255, 200)
-        Note over App: App is still running
-        App->>App: Processing requests...
-    end
-
-    Note over K8s: After 30 seconds (terminationGracePeriodSeconds)
-    K8s->>App: SIGKILL (force termination)
-    K8s->>Envoy: SIGKILL (force termination)
-```
+![Sequence diagram showing Kubernetes sending SIGTERM to both the application and Envoy proxy at the same time; because Envoy terminates first while the application keeps running, a client request during that window gets connection refused before Kubernetes finally sends SIGKILL to both after the grace period.](../../../.gitbook/assets/en-service-mesh-istio-troubleshooting-common-errors-0.png)
 
 **Root Causes**:
 1. Envoy and application receive SIGTERM simultaneously
@@ -98,35 +69,7 @@ spec:
 ```
 
 **How It Works**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8s as Kubernetes
-    participant App as Application
-    participant Envoy as Envoy Proxy
-    participant Client as Client
-
-    Note over K8s,Client: Pod termination starts
-
-    K8s->>App: Send SIGTERM
-    K8s->>Envoy: Send SIGTERM
-
-    rect rgb(200, 255, 200)
-        Note over Envoy: Enters Drain mode
-        Envoy->>Envoy: Reject new connections<br/>Maintain existing connections<br/>Wait 30 seconds
-    end
-
-    Client->>Envoy: Send request
-    Envoy->>App: Forward request
-    App->>Envoy: Response
-    Envoy->>Client: Normal response
-
-    Note over Envoy: Confirm active connections closed
-    Envoy->>Envoy: Normal termination
-
-    Note over App: App also terminates normally
-    App->>App: Graceful Shutdown
-```
+![Sequence diagram showing that once Envoy enters drain mode on SIGTERM it keeps serving existing connections for the full grace period, so a client request during shutdown still gets forwarded to the application and returned normally, and both Envoy and the application terminate cleanly afterward.](../../../.gitbook/assets/en-service-mesh-istio-troubleshooting-common-errors-1.png)
 
 #### Method 2: Control Envoy Termination Behavior with Pod Annotation
 
@@ -357,21 +300,7 @@ SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
 
 ### Cause 1: PeerAuthentication Mode Mismatch
 
-```mermaid
-flowchart TD
-    Client[Client Service<br/>mTLS STRICT]
-    Server[Server Service<br/>mTLS DISABLE]
-
-    Client -->|mTLS connection attempt| Server
-    Server -.->|Requires plaintext connection| Client
-
-    Error[503 Error<br/>upstream connect error]
-
-    Server -.-> Error
-
-    classDef error fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    class Error error;
-```
+![Flowchart showing a client service in STRICT mTLS mode attempting an encrypted connection to a server service configured in DISABLE mode; the server demands a plaintext connection instead, and the mismatch surfaces to the client as a 503 upstream connect error.](../../../.gitbook/assets/en-service-mesh-istio-troubleshooting-common-errors-2.png)
 
 **Solution**:
 

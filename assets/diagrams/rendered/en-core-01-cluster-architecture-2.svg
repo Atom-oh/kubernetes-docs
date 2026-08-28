@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-01-cluster-architecture-2-title en-core-01-cluster-architecture-2-desc">
+<title id="en-core-01-cluster-architecture-2-title">Control plane internal communication</title>
+<desc id="en-core-01-cluster-architecture-2-desc">Architecture diagram showing the scheduler, controller manager, and cloud controller manager all calling the kube-apiserver, which in turn reads and writes cluster state to etcd over gRPC.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="parrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="parrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="parrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="parrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<path d="M 280,148.0 H 332 Q 340,148.0 340,156.0 V 240.0 Q 340,248.0 348,248.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#parrow)"/>
+<path d="M 280,260.0 H 338 Q 340,264.0 342,264.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#parrow)"/>
+<path d="M 280,372.0 H 332 Q 340,372.0 340,364.0 V 288.0 Q 340,280.0 348,280.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#parrow)"/>
+<line x1="580" y1="264.0" x2="700" y2="264.0" stroke="#EC7211" stroke-width="1.4" marker-end="url(#parrow-accent)" marker-start="url(#parrow-accent-start)"/>
+<rect x="600.0" y="244.0" width="80" height="12" rx="2" fill="#FFFFFF"/>
+<text x="640.0" y="253.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">gRPC :2379</text>
+<rect x="80" y="120" width="200" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="80" y="120" width="200" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="152.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-scheduler</text>
+<rect x="80" y="232" width="200" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="80" y="232" width="200" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-controller-manager</text>
+<rect x="80" y="344" width="200" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="80" y="344" width="200" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="376.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">cloud-controller-manager</text>
+<rect x="420" y="232" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="420" y="232" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="500.0" y="260.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-apiserver</text>
+<text x="500.0" y="286.5" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">control plane frontend</text>
+<rect x="700" y="232" width="140" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="700" y="232" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="770.0" y="268.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">etcd</text>
+</svg>

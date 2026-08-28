@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="oncall-priority-title oncall-priority-desc">
+    <title id="oncall-priority-title">알림 채널 우선순위</title>
+    <desc id="oncall-priority-desc">알림의 중요도에 따라 Important 알림은 Push·전화·SMS·Slack·Email 모든 채널로, Default 알림은 Slack과 Email 기본 채널로만 전달되는 우선순위 규칙을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows -->
+    <line x1="480" y1="56" x2="480" y2="108" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M425,140 H370 Q362,140 362,148 V212 Q362,220 354,220 H300" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M535,140 H619 Q627,140 627,148 V212 Q627,220 635,220 H720" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M248,276 H177 Q169,276 169,284 V332 Q169,340 161,340 H90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M274,276 H270 Q262,276 262,284 V332 Q262,340 254,340 H250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M300,276 H347 Q355,276 355,284 V332 Q355,340 363,340 H410" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M326,276 H429 Q437,276 437,284 V332 Q437,340 445,340 H548" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M352,276 H522 Q530,276 530,284 V332 Q530,340 538,340 H708" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M693,276 H650 Q642,276 642,284 V332 Q642,340 634,340 H592" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="747" y1="276" x2="747" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Labels for B branches -->
+    <rect x="342" y="176" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="372" y="186" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">IMPORTANT</text>
+    <rect x="598" y="176" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="624" y="186" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">DEFAULT</text>
+
+    <!-- Node A: 알림 발생 (start, oval) -->
+    <rect x="400" y="16" width="160" height="40" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="40" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">알림 발생</text>
+
+    <!-- Node B: diamond 중요도? -->
+    <polygon points="480,108 535,140 480,172 425,140" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="144" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">중요도?</text>
+
+    <!-- Node C: 모든 채널 (focal) -->
+    <rect x="220" y="220" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="300" y="252" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">모든 채널</text>
+
+    <!-- Node D: 기본 채널만 -->
+    <rect x="640" y="220" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="720" y="252" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">기본 채널만</text>
+
+    <!-- Terminal nodes -->
+    <rect x="20" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="90" y="372" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Push</text>
+
+    <rect x="180" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="250" y="372" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Phone Call</text>
+
+    <rect x="340" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="410" y="372" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">SMS</text>
+
+    <rect x="500" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="570" y="372" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Slack</text>
+
+    <rect x="660" y="340" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="730" y="372" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Email</text>
+
+  </svg>

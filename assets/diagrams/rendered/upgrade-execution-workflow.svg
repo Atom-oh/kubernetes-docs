@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 610" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="upgrade-execution-workflow-title upgrade-execution-workflow-desc">
+<title id="upgrade-execution-workflow-title">EKS Upgrade Execution Workflow</title>
+<desc id="upgrade-execution-workflow-desc">Flowchart showing the five-phase EKS cluster upgrade workflow — assessment, staging test, preparation, execution, and validation — each retrying on failure, with control-plane health as the one hard gate during execution: a failed API server check routes to contacting AWS support instead of proceeding.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1D8102"/></marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="480" y1="70" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="140" x2="480" y2="166" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="210" x2="480" y2="236" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="280" x2="480" y2="306" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="350" x2="480" y2="368" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="448" x2="480" y2="466" stroke="#1D8102" stroke-width="1.2" marker-end="url(#arrow-green)"/>
+<rect x="486" y="450" width="30" height="14" rx="2" fill="#ffffff"/>
+<text x="501" y="461" fill="#1D8102" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="590" y1="408" x2="670" y2="408" stroke="#B0031A" stroke-width="1.2" marker-end="url(#arrow-red)"/>
+<rect x="612" y="396" width="30" height="14" rx="2" fill="#ffffff"/>
+<text x="627" y="407" fill="#B0031A" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="480" y1="510" x2="480" y2="536" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 590 178 L 646 178 Q 654 178 654 170 L 654 158 Q 654 150 646 150 L 608 150 Q 600 150 600 158 L 600 166" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arrow)"/>
+<rect x="600" y="132" width="72" height="14" rx="2" fill="#ffffff"/>
+<text x="636" y="143" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">RETRY ON FAIL</text>
+<path d="M 590 478 L 646 478 Q 654 478 654 470 L 654 458 Q 654 450 646 450 L 608 450 Q 600 450 600 458 L 600 466" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arrow)"/>
+<rect x="600" y="432" width="72" height="14" rx="2" fill="#ffffff"/>
+<text x="636" y="443" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">FIX &amp; RETRY</text>
+<rect x="380" y="26" width="200" height="44" rx="22" fill="#ffffff"/>
+<rect x="380" y="26" width="200" height="44" rx="22" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="53" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Begin Upgrade Process</text>
+<rect x="370" y="96" width="220" height="44" rx="6" fill="#ffffff"/>
+<rect x="370" y="96" width="220" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="114" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Assessment</text>
+<text x="480" y="128" fill="#545B64" font-size="9" font-weight="400" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Changelog, add-ons, third-party</text>
+<rect x="370" y="166" width="220" height="44" rx="6" fill="#ffffff"/>
+<rect x="370" y="166" width="220" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="184" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Staging Test</text>
+<text x="480" y="198" fill="#545B64" font-size="9" font-weight="400" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Full upgrade rehearsal</text>
+<rect x="370" y="236" width="220" height="44" rx="6" fill="#ffffff"/>
+<rect x="370" y="236" width="220" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="254" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Preparation</text>
+<text x="480" y="268" fill="#545B64" font-size="9" font-weight="400" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Window, rollback, IaC</text>
+<rect x="360" y="306" width="240" height="44" rx="6" fill="#ffffff"/>
+<rect x="360" y="306" width="240" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="324" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Execution</text>
+<text x="480" y="338" fill="#545B64" font-size="9" font-weight="400" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Control plane → add-ons → nodes</text>
+<polygon points="480,368 590,408 480,448 370,408" fill="#ffffff"/>
+<polygon points="480,368 590,408 480,448 370,408" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="405" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<text x="480" y="419" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Healthy?</text>
+<rect x="670" y="386" width="180" height="44" rx="6" fill="#ffffff"/>
+<rect x="670" y="386" width="180" height="44" rx="6" fill="rgba(176,3,26,0.06)" stroke="#B0031A" stroke-width="1.2"/>
+<text x="760" y="411" fill="#B0031A" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Contact AWS Support</text>
+<rect x="370" y="466" width="220" height="44" rx="6" fill="#ffffff"/>
+<rect x="370" y="466" width="220" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="484" fill="#232F3E" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Validation</text>
+<text x="480" y="498" fill="#545B64" font-size="9" font-weight="400" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Workloads, network, storage</text>
+<rect x="380" y="536" width="200" height="44" rx="22" fill="rgba(29,129,2,0.06)"/>
+<rect x="380" y="536" width="200" height="44" rx="22" fill="rgba(29,129,2,0.06)" stroke="#1D8102" stroke-width="1.2"/>
+<text x="480" y="563" fill="#1D8102" font-size="11" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Upgrade Complete</text>
+</svg>

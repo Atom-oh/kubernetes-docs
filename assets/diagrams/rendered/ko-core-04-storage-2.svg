@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-04-storage-2-title ko-core-04-storage-2-desc">
+    <title id="ko-core-04-storage-2-title">동적 프로비저닝 흐름</title>
+    <desc id="ko-core-04-storage-2-desc">사용자가 만든 PersistentVolumeClaim이 StorageClass를 참조하여 PersistentVolume을 자동으로 생성·바인딩하고, 파드가 이를 통해 물리적 스토리지를 사용하는 동적 프로비저닝 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="610" y1="124" x2="610" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="250" y1="124" x2="250" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="340" y1="216" x2="520" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="610" y1="240" x2="610" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 280,240 V 324 Q 280,332 288,332 H 520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="220" y1="356" x2="220" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="610" y1="356" x2="610" y2="424" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="618" y="152" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="632.0" y="161" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">생성</text>
+<rect x="258" y="152" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="272.0" y="161" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">생성</text>
+<rect x="416.0" y="196" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="430" y="205" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">참조</text>
+<rect x="618" y="268" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="638.0" y="277" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">프로비저닝</text>
+<rect x="244" y="276" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="258.0" y="285" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">바인딩</text>
+<rect x="228" y="292" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="242.0" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">사용</text>
+<rect x="618" y="384" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="632.0" y="393" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">연결</text>
+<rect x="530" y="76" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="530" y="76" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="538" y="82" width="26" height="12" rx="2" fill="transparent" stroke="#7D8998" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="551.0" y="91" fill="#7D8998" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ADM</text>
+<text x="610.0" y="102.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">클러스터 관리자</text>
+<rect x="170" y="76" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="170" y="76" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="178" y="82" width="26" height="12" rx="2" fill="transparent" stroke="#7D8998" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="191.0" y="91" fill="#7D8998" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">USR</text>
+<text x="250.0" y="102.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">사용자</text>
+<rect x="520" y="192" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="520" y="192" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="528" y="198" width="24" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="540.0" y="207" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SC</text>
+<text x="610.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">스토리지 클래스</text>
+<rect x="160" y="192" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="160" y="192" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="168" y="198" width="26" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="181.0" y="207" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PVC</text>
+<text x="250.0" y="218.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">퍼시스턴트 볼륨 클레임</text>
+<rect x="520" y="308" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="520" y="308" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="528" y="314" width="24" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="540.0" y="323" fill="#EC7211" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PV</text>
+<text x="610.0" y="334.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">퍼시스턴트 볼륨</text>
+<rect x="140" y="356" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="140" y="356" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="148" y="362" width="26" height="12" rx="2" fill="transparent" stroke="#7D8998" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="161.0" y="371" fill="#7D8998" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="220.0" y="382.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드</text>
+<rect x="520" y="424" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="520" y="424" width="180" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="610.0" y="450.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Noto Sans KR', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">물리적 스토리지</text>
+<line x1="40" y1="492" x2="920" y2="492" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="506" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="40" y="524" width="16" height="11" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="64" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">관리자 / 사용자 / 파드</text>
+<rect x="188.39999999999998" y="524" width="16" height="11" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="212.39999999999998" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">StorageClass / PVC</text>
+<rect x="363.2" y="524" width="16" height="11" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="387.2" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">PersistentVolume</text>
+<rect x="524.8" y="524" width="16" height="11" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="548.8" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Noto Sans KR', sans-serif">물리 스토리지</text>
+  </svg>

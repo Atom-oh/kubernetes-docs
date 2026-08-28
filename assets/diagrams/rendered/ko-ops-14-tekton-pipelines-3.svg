@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-ops-14-tekton-pipelines-3-title ko-ops-14-tekton-pipelines-3-desc">
+    <title id="ko-ops-14-tekton-pipelines-3-title">Tekton Triggers 웹훅 이벤트 흐름</title>
+    <desc id="ko-ops-14-tekton-pipelines-3-desc">GitHub 웹훅 이벤트가 EventListener와 Interceptor의 검증을 거쳐 TriggerBinding/Template에서 파라미터로 매핑되고, 최종적으로 새 PipelineRun 생성을 트리거하는 순서를 보여주는 시퀀스 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="100" y1="92" x2="100" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="280" y1="92" x2="280" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="460" y1="92" x2="460" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="640" y1="92" x2="640" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="820" y1="92" x2="820" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="100" y1="140" x2="280" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="146.0" y="120" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="190.0" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">WEBHOOK EVENT</text>
+<line x1="280" y1="196" x2="460" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="326.0" y="176" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="370.0" y="185" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FILTER/VERIFY</text>
+<path d="M 460,236 h 64 q 8,0 8,10 q 0,10 -8,10 h -64" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="468" y="238" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="510.0" y="247" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">SECRET · CEL</text>
+<line x1="460" y1="300" x2="640" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="512.0" y="280" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="550.0" y="289" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">VALID EVENT</text>
+<path d="M 640,340 h 64 q 8,0 8,10 q 0,10 -8,10 h -64" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="648" y="342" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="693.0" y="351" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">PARAM MAPPING</text>
+<line x1="640" y1="412" x2="820" y2="412" stroke="#EC7211" stroke-width="1.6" marker-end="url(#arrow-accent)"/>
+<rect x="707.0" y="392" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="730.0" y="401" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CREATE</text>
+<path d="M 820,452 h 64 q 8,0 8,10 q 0,10 -8,10 h -64" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="828" y="454" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="870.0" y="463" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">PIPELINE RUN</text>
+<rect x="25.0" y="40" width="150" height="52" rx="6" fill="#ffffff"/>
+<rect x="25.0" y="40" width="150" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100" y="62" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">GitHub/GitLab</text>
+<text x="100" y="84" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Webhook 소스</text>
+<rect x="205.0" y="40" width="150" height="52" rx="6" fill="#ffffff"/>
+<rect x="205.0" y="40" width="150" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="62" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EventListener</text>
+<text x="280" y="84" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">이벤트 수신</text>
+<rect x="385.0" y="40" width="150" height="52" rx="6" fill="#ffffff"/>
+<rect x="385.0" y="40" width="150" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460" y="62" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Interceptor</text>
+<text x="460" y="84" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">필터 · 검증</text>
+<rect x="565.0" y="40" width="150" height="52" rx="6" fill="#ffffff"/>
+<rect x="565.0" y="40" width="150" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="640" y="58" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TriggerBinding</text>
+<text x="640" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">/ Template</text>
+<text x="640" y="84" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">파라미터 매핑</text>
+<rect x="745.0" y="40" width="150" height="52" rx="6" fill="#ffffff"/>
+<rect x="745.0" y="40" width="150" height="52" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820" y="62" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PipelineRun</text>
+<text x="820" y="84" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">실행 생성</text>
+  </svg>

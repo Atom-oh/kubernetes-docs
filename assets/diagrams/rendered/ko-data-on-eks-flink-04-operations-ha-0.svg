@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flink-autoscaler-karpenter-title flink-autoscaler-karpenter-desc">
+  <title id="flink-autoscaler-karpenter-title">오토스케일러 &amp; Karpenter 연동 흐름</title>
+  <desc id="flink-autoscaler-karpenter-desc">Flink 오토스케일러가 버텍스 메트릭을 평가해 병렬도를 늘리거나 줄이고, 그 결과에 따라 Karpenter가 EC2 노드를 새로 프로비저닝하거나 통합/종료하는 흐름을 보여주는 플로우차트</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap"); text{font-family:'Amazon Ember','Noto Sans CJK KR','Helvetica Neue',Helvetica,Arial,sans-serif;}</style></defs><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="36" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">FLOWCHART</text>
+  <text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700">오토스케일러 &amp; Karpenter 연동 흐름</text>
+
+  <!-- ============ CONNECTORS (drawn first, behind boxes) ============ -->
+
+  <!-- A -> B straight vertical (shared x=480) -->
+  <path d="M480,152 L480,224" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="490" y="180" width="132" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="189" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.06em">오토스케일러 평가</text>
+
+  <!-- B bottom-left attach (443,288) -> down -> left -> down into C top (230,340) -->
+  <path d="M443,288 L443,320 Q443,328 435,328 L238,328 Q230,328 230,336"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="300" y="308" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="336" y="317" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">병렬도 증가</text>
+
+  <!-- B bottom-right attach (517,288) -> down -> right -> down into E top (730,340) -->
+  <path d="M517,288 L517,320 Q517,328 525,328 L722,328 Q730,328 730,336"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="588" y="308" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="624" y="317" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">병렬도 감소</text>
+
+  <!-- C -> D straight vertical (shared x=230) -->
+  <path d="M230,404 L230,460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="240" y="422" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="244" y="431" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.06em">스케줄 불가</text>
+
+  <!-- E -> F straight vertical (shared x=730) -->
+  <path d="M730,404 L730,460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="740" y="422" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="744" y="431" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.06em">노드가 비게 됨</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- A: metric input -->
+  <rect x="340" y="88" width="280" height="64" rx="6" fill="#ffffff"/>
+  <rect x="340" y="88" width="280" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="115" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">버텍스별 메트릭:</text>
+  <text x="480" y="133" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">백프레셔, Busy Time, 랙</text>
+
+  <!-- B: focal decision hub -->
+  <rect x="370" y="224" width="220" height="64" rx="6" fill="#ffffff"/>
+  <rect x="370" y="224" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="251" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">오토스케일러가</text>
+  <text x="480" y="269" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">병렬도 변경</text>
+
+  <!-- C: scale-up step -->
+  <rect x="130" y="340" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="130" y="340" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="230" y="367" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">TaskManager Pod</text>
+  <text x="230" y="385" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">추가 요청</text>
+
+  <!-- D: scale-up outcome -->
+  <rect x="130" y="460" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="130" y="460" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="230" y="487" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Karpenter가 새 EC2</text>
+  <text x="230" y="505" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">노드 프로비저닝</text>
+
+  <!-- E: scale-down step -->
+  <rect x="630" y="340" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="630" y="340" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="730" y="367" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">TaskManager Pod</text>
+  <text x="730" y="385" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">제거</text>
+
+  <!-- F: scale-down outcome -->
+  <rect x="630" y="460" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="630" y="460" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="730" y="487" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Karpenter가 노드</text>
+  <text x="730" y="505" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">통합/종료</text>
+
+</svg>

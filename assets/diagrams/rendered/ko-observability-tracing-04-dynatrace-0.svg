@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="dyn-arch-title dyn-arch-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="dyn-arch-title">EKS 위의 Dynatrace OneAgent 아키텍처</title>
+  <desc id="dyn-arch-desc">EKS 클러스터 안의 세 서비스가 OneAgent DaemonSet에 자동 계측되고, OneAgent가 ActiveGate를 거쳐 Dynatrace SaaS에 데이터를 전송하며 SaaS가 Davis AI 엔진과 Grail 데이터 레이크하우스로 나뉘어 공급하는 과정을 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Zones (bg -> zones -> arrows -> nodes) -->
+  <rect x="32" y="40" width="896" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="44" y="44" width="220" height="12" rx="2" fill="#ffffff"/>
+  <text x="52" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">AMAZON EKS 클러스터</text>
+
+  <rect x="32" y="336" width="896" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="44" y="340" width="180" height="12" rx="2" fill="#ffffff"/>
+  <text x="52" y="349" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">DYNATRACE PLATFORM</text>
+
+  <!-- Arrows (drawn before nodes) -->
+  <!-- E1: Service A -> OneAgent (dashed, top entry) -->
+  <path d="M160,128 H306 Q314,128 314,136 V168" fill="none" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <!-- E2: Service B -> OneAgent -->
+  <path d="M336,128 H356 Q364,128 364,136 V168" fill="none" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <!-- E3: Service C -> OneAgent -->
+  <path d="M512,128 H422 Q414,128 414,136 V168" fill="none" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- E4: OneAgent -> ActiveGate (straight, accent since primary telemetry path from focal node) -->
+  <line x1="464" y1="196" x2="520" y2="196" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="468" y="176" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="492" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.03em">텔레메트리</text>
+
+  <!-- E5: ActiveGate -> SaaS -->
+  <path d="M600,224 H488 Q480,224 480,232 V352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="516" y="270" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="560" y="279" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">암호화된 연결</text>
+
+  <!-- E6: SaaS -> Davis -->
+  <path d="M444,408 H388 Q380,408 380,416 V432" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- E7: SaaS -> Grail -->
+  <path d="M516,408 H612 Q620,408 620,416 V432" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Nodes -->
+  <!-- Service A -->
+  <rect x="88" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+  <rect x="88" y="72" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="160" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+
+  <!-- Service B -->
+  <rect x="264" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+  <rect x="264" y="72" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="336" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+
+  <!-- Service C -->
+  <rect x="440" y="72" width="144" height="56" rx="6" fill="#ffffff"/>
+  <rect x="440" y="72" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="512" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service C</text>
+
+  <!-- OneAgent (focal) -->
+  <rect x="264" y="168" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="264" y="168" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="364" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OneAgent</text>
+  <text x="364" y="208" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DaemonSet</text>
+
+  <!-- ActiveGate -->
+  <rect x="520" y="168" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="520" y="168" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="600" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ActiveGate</text>
+  <text x="600" y="208" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">StatefulSet</text>
+
+  <!-- Dynatrace SaaS -->
+  <rect x="380" y="352" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="380" y="352" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="480" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Dynatrace SaaS</text>
+
+  <!-- Davis AI Engine -->
+  <rect x="280" y="432" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="280" y="432" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="380" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Davis AI Engine</text>
+
+  <!-- Grail Data Lakehouse -->
+  <rect x="520" y="432" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="520" y="432" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="620" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grail Data Lakehouse</text>
+
+  <!-- Legend -->
+  <line x1="32" y1="536" x2="928" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="32" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="128" y1="548" x2="160" y2="548" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="168" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">텔레메트리 전송</text>
+
+  <line x1="336" y1="548" x2="368" y2="548" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="376" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">자동 계측 (Auto-Instrumentation)</text>
+
+  <circle cx="616" cy="548" r="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="628" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">텔레메트리 수집 허브</text>
+</svg>

@@ -86,58 +86,7 @@ Kubernetes provides various types of services to support multiple ways of exposi
 
 ### Service Architecture
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Cluster"
-        subgraph "Service Types"
-            LB[LoadBalancer]
-            NP[NodePort]
-            CIP[ClusterIP]
-            EXT[ExternalName]
-
-            LB --> NP
-            NP --> CIP
-        end
-
-        subgraph "Service Discovery"
-            DNS[CoreDNS]
-            EP[Endpoints]
-
-            CIP --> DNS
-            CIP --> EP
-        end
-
-        subgraph "Backend Pods"
-            Pod1[Pod 1]
-            Pod2[Pod 2]
-            Pod3[Pod 3]
-
-            EP --> Pod1
-            EP --> Pod2
-            EP --> Pod3
-        end
-    end
-
-    ExtClient[External Client] --> LB
-    ExtClient --> NP
-    IntClient[Cluster Internal Client] --> CIP
-    IntClient --> DNS
-    EXT --> ExtService[External Service]
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef discovery fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ExtClient,IntClient client;
-    class LB,NP,CIP,EXT service;
-    class DNS,EP discovery;
-    class Pod1,Pod2,Pod3 pod;
-    class ExtService external;
-```
+![External and internal clients reach backend Pods through LoadBalancer, NodePort, or ClusterIP services, with ClusterIP resolved via CoreDNS and routed through Endpoints, while ExternalName instead aliases to an outside service via DNS CNAME.](../.gitbook/assets/en-core-03-services-networking-0.png)
 
 ### Service Type Comparison
 
@@ -308,31 +257,7 @@ spec:
 
 Ingress is an API object that exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Ingress provides load balancing, SSL termination, and name-based virtual hosting.
 
-```mermaid
-graph LR
-    Client[External Client] --> LB[Load Balancer]
-    LB --> IC[Ingress Controller]
-    IC --> Ingress[Ingress Resource]
-    Ingress --> S1[Service A]
-    Ingress --> S2[Service B]
-    S1 --> P1[Pod A-1]
-    S1 --> P2[Pod A-2]
-    S2 --> P3[Pod B-1]
-    S2 --> P4[Pod B-2]
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client client;
-    class LB awsService;
-    class IC,Ingress,S1,S2 k8sComponent;
-    class P1,P2,P3,P4 userApp;
-```
+![An external client's request passes through a load balancer and Ingress controller to a single Ingress resource, which fans out by host or path to Service A and Service B, each load-balancing across its own backend Pods.](../.gitbook/assets/en-core-03-services-networking-1.png)
 
 ### Ingress Controller
 
@@ -652,42 +577,7 @@ spec:
 
 Network policies provide a way to control communication between Pods. To use network policies, the network plugin must support them (e.g., Calico, Cilium, Weave Net).
 
-```mermaid
-graph TD
-    subgraph "Namespace A"
-        FE[Frontend Pod]
-        API[API Pod]
-        DB[Database Pod]
-
-        NP1[Network Policy 1]
-        NP2[Network Policy 2]
-
-        FE -- Allowed --> API
-        API -- Allowed --> DB
-        FE -. Blocked .-> DB
-    end
-
-    subgraph "Namespace B"
-        MON[Monitoring Pod]
-
-        NP3[Network Policy 3]
-
-        MON -- Allowed --> API
-        MON -. Blocked .-> DB
-    end
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class FE,API userApp;
-    class DB dataStore;
-    class MON k8sComponent;
-    class NP1,NP2,NP3 policy;
-```
+![Network policies allow the Frontend Pod to reach the API Pod and the API Pod to reach the Database Pod, and allow a Monitoring Pod in another namespace to reach the API Pod, while directly blocking the Frontend Pod and the Monitoring Pod from reaching the Database Pod.](../.gitbook/assets/en-core-03-services-networking-2.png)
 
 ### Basic Network Policy
 
@@ -807,49 +697,7 @@ This network policy allows ingress traffic from the `192.168.1.0/24` CIDR block 
 
 A service mesh is an infrastructure layer that manages communication between microservices. Service meshes provide features such as service discovery, load balancing, encryption, authentication, authorization, and observability.
 
-```mermaid
-graph TD
-    subgraph "Control Plane"
-        IC[Istio Control Plane]
-    end
-
-    subgraph "Service A"
-        A[Service A]
-        SA[Sidecar Proxy A]
-        A <--> SA
-    end
-
-    subgraph "Service B"
-        B[Service B]
-        SB[Sidecar Proxy B]
-        B <--> SB
-    end
-
-    subgraph "Service C"
-        C[Service C]
-        SC[Sidecar Proxy C]
-        C <--> SC
-    end
-
-    IC <-.-> SA
-    IC <-.-> SB
-    IC <-.-> SC
-
-    SA <--> SB
-    SB <--> SC
-    SA <--> SC
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class IC k8sComponent;
-    class A,B,C userApp;
-    class SA,SB,SC proxy;
-```
+![A control plane configures three sidecar proxies over a dashed control channel; each sidecar exchanges traffic with its own service and with the other two sidecars, so all service-to-service traffic passes through the proxy mesh rather than direct connections.](../.gitbook/assets/en-core-03-services-networking-3.png)
 
 ### Istio
 
@@ -942,26 +790,7 @@ This ServiceProfile defines routes and retry policies for the `nginx` service.
 
 ## Cilium
 
-```mermaid
-graph TD
-    K8S[Kubernetes] --> CNI[Container Network Interface]
-    CNI --> Cilium[Cilium]
-    Cilium --> EBPF[eBPF]
-    EBPF --> Kernel[Linux Kernel]
-    Cilium --> Hubble[Hubble]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cni fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef plugin fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef kernel fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class K8S k8sComponent;
-    class CNI cni;
-    class Cilium,Hubble plugin;
-    class EBPF,Kernel kernel;
-```
+![Kubernetes delegates networking through the Container Network Interface to Cilium, which programs eBPF code running in the Linux kernel and also feeds Hubble for network observability.](../.gitbook/assets/en-core-03-services-networking-4.png)
 
 [Cilium Details](../networking/cilium/README.md)
 

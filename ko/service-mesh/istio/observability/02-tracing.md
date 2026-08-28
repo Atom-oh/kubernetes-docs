@@ -24,40 +24,7 @@
 
 Istio는 W3C Trace Context 표준을 지원하여 표준화된 trace 전파를 보장합니다.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Frontend
-    participant Client as Client
-    end
-    box rgba(70, 107, 176, 0.1) Service A
-    participant EnvoyA as Envoy Proxy
-    participant AppA as App A
-    end
-    box rgba(70, 107, 176, 0.1) Service B
-    participant EnvoyB as Envoy Proxy
-    participant AppB as App B
-    end
-    box rgba(230, 82, 44, 0.1) Tracing Backend
-    participant Jaeger as Jaeger Collector
-    end
-
-    Client->>EnvoyA: HTTP Request
-    Note over EnvoyA: Generate Trace ID<br/>+ Span ID
-
-    EnvoyA->>AppA: Forward with<br/>traceparent header
-    Note over AppA: Extract context<br/>Create child span
-
-    AppA->>EnvoyB: HTTP Request<br/>with traceparent
-    Note over EnvoyB: Extract parent context<br/>Create new span
-
-    EnvoyB->>AppB: Forward with<br/>updated traceparent
-
-    EnvoyA-->>Jaeger: Export Span
-    EnvoyB-->>Jaeger: Export Span
-    AppA-->>Jaeger: Export Span (optional)
-    AppB-->>Jaeger: Export Span (optional)
-```
+![클라이언트 요청이 Service A와 Service B의 Envoy 프록시·애플리케이션을 거치며 traceparent 헤더로 trace context가 전파되고, 각 홉이 생성한 스팬을 Jaeger Collector로 비동기 내보내는 분산 추적 흐름을 보여주는 시퀀스 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-observability-02-tracing-0.png)
 
 ### 핵심 개념
 

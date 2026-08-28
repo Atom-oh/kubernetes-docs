@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-02-basic-concepts-14-title en-service-mesh-istio-02-basic-concepts-14-desc">
+<title id="en-service-mesh-istio-02-basic-concepts-14-title">One Feature Set Across Every Workload Type</title>
+<desc id="en-service-mesh-istio-02-basic-concepts-14-desc">Diagram showing three workload types — Kubernetes pods, multi-cluster workloads, and virtual machines — all connecting into the same set of common mesh features: mTLS encryption, traffic management, security policy, and metrics and tracing.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="280" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="44" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="100.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">WORKLOAD TYPES</text>
+<rect x="600" y="40" width="320" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="612" y="44" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="663.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">COMMON FEATURES</text>
+<line x1="288" y1="100.0" x2="600" y2="100.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="288" y1="188.0" x2="600" y2="188.0" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<line x1="288" y1="276.0" x2="600" y2="276.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="534.0" y="168.0" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="560" y="177.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SHARED</text>
+<rect x="72" y="72" width="216" height="56" rx="6" fill="#ffffff"/>
+<rect x="72" y="72" width="216" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="94.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes Pod</text>
+<text x="180.0" y="110.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">inside cluster</text>
+<rect x="72" y="160" width="216" height="56" rx="6" fill="#ffffff"/>
+<rect x="72" y="160" width="216" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="180.0" y="182.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Multi-Cluster</text>
+<text x="180.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">different cluster</text>
+<rect x="72" y="248" width="216" height="56" rx="6" fill="#ffffff"/>
+<rect x="72" y="248" width="216" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="180.0" y="270.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Virtual Machine</text>
+<text x="180.0" y="286.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">outside cluster</text>
+<rect x="632" y="72" width="256" height="48" rx="6" fill="#ffffff"/>
+<rect x="632" y="72" width="256" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="760.0" y="98.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">mTLS Encryption</text>
+<rect x="632" y="128" width="256" height="48" rx="6" fill="#ffffff"/>
+<rect x="632" y="128" width="256" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="760.0" y="154.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Traffic Management</text>
+<rect x="632" y="184" width="256" height="48" rx="6" fill="#ffffff"/>
+<rect x="632" y="184" width="256" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="760.0" y="210.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Security Policy</text>
+<rect x="632" y="240" width="256" height="48" rx="6" fill="#ffffff"/>
+<rect x="632" y="240" width="256" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="760.0" y="266.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Metrics &amp; Tracing</text>
+</svg>

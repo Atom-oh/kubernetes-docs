@@ -79,54 +79,7 @@ Kubernetes Volumes are directories where containers within a Pod can store and s
 
 ### Kubernetes Storage Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes Storage Architecture"
-        subgraph "Application Layer"
-            Pod1[Pod]
-            Pod2[Pod]
-            Pod3[Pod]
-
-            Pod1 --> PVC1[PersistentVolumeClaim]
-            Pod2 --> PVC2[PersistentVolumeClaim]
-            Pod3 --> PVC3[PersistentVolumeClaim]
-        end
-
-        subgraph "Storage Abstraction Layer"
-            PVC1 --> PV1[PersistentVolume]
-            PVC2 --> PV2[PersistentVolume]
-            PVC3 --> PV3[PersistentVolume]
-
-            SC[StorageClass] --> PV1
-            SC --> PV2
-            SC --> PV3
-        end
-
-        subgraph "Physical Storage Layer"
-            PV1 --> CSI[CSI Driver]
-            PV2 --> CSI
-            PV3 --> CSI
-
-            CSI --> Cloud[Cloud Storage\nEBS, EFS, Azure Disk, etc.]
-            CSI --> Local[Local Storage]
-            CSI --> NFS[NFS Server]
-        end
-    end
-
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pvc fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pv fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef sc fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef driver fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    classDef storage fill:#28a745,stroke:#333,stroke-width:1px,color:white;
-
-    class Pod1,Pod2,Pod3 pod;
-    class PVC1,PVC2,PVC3 pvc;
-    class PV1,PV2,PV3 pv;
-    class SC sc;
-    class CSI driver;
-    class Cloud,Local,NFS storage;
-```
+![Pods claim storage through a PersistentVolumeClaim, which binds to a PersistentVolume provisioned by a StorageClass; the CSI Driver attaches that volume to the underlying cloud, local, or NFS backend storage.](../.gitbook/assets/en-core-04-storage-0.png)
 
 ### Why Volumes Are Needed
 
@@ -332,27 +285,7 @@ spec:
 
 A Persistent Volume (PV) is cluster storage provisioned by an administrator or dynamically provisioned using a Storage Class. PVs have a lifecycle independent of Pods, and PVs are retained even when Pods are deleted.
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| PV[Persistent Volume]
-    User[User] -->|Creates| PVC[Persistent Volume Claim]
-    PVC -->|Binds| PV
-    Pod[Pod] -->|Uses| PVC
-    PV -->|Connects| Storage[(Physical Storage)]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+![An administrator creates a Persistent Volume while a user's claim binds to it before a Pod uses that claim, with the volume ultimately connecting to physical storage.](../.gitbook/assets/en-core-04-storage-1.png)
 
 ### PV Creation
 
@@ -459,29 +392,7 @@ spec:
 
 Storage Classes describe the "classes" of storage provided by administrators. Storage Classes are used to dynamically provision PVs.
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| SC[Storage Class]
-    User[User] -->|Creates| PVC[Persistent Volume Claim]
-    PVC -->|References| SC
-    SC -->|Dynamic Provisioning| PV[Persistent Volume]
-    PVC -->|Binds| PV
-    Pod[Pod] -->|Uses| PVC
-    PV -->|Connects| Storage[(Physical Storage)]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class SC,PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+![A user's PersistentVolumeClaim references a StorageClass, which dynamically provisions a PersistentVolume that the claim binds to and a Pod uses, ultimately connecting to physical storage.](../.gitbook/assets/en-core-04-storage-2.png)
 
 ### Storage Class Creation
 
@@ -596,29 +507,7 @@ spec:
 
 Kubernetes supports volume snapshots to create point-in-time copies of PVs. This is useful for backup and restore scenarios.
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| VSC[Volume Snapshot Class]
-    User[User] -->|Creates| VS[Volume Snapshot]
-    VS -->|References| VSC
-    VS -->|Creates Snapshot| PVC1[Existing PVC]
-    User -->|Creates| PVC2[New PVC]
-    PVC2 -->|Uses as Data Source| VS
-    PVC2 -->|Binds| PV2[New PV]
-    PV2 -->|Restores from Snapshot| Storage[(Physical Storage)]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class VSC,VS,PVC1,PVC2,PV2 k8sComponent;
-    class Storage storage;
-```
+![A Volume Snapshot references a Volume Snapshot Class and captures an existing PersistentVolumeClaim, and a new PVC using that snapshot as its data source binds to a new PV restored from it.](../.gitbook/assets/en-core-04-storage-3.png)
 
 ### Volume Snapshot Class
 
@@ -668,27 +557,7 @@ spec:
 
 Kubernetes supports the ability to expand the size of PVCs. For this, `allowVolumeExpansion: true` must be set in the storage class.
 
-```mermaid
-graph TD
-    User[User] -->|Request PVC Size Increase| PVC[Persistent Volume Claim]
-    PVC -->|Expansion Request| SC[Storage Class]
-    SC -->|Check allowVolumeExpansion: true| PV[Persistent Volume]
-    PV -->|Expand Volume Size| Storage[(Physical Storage)]
-    PV -->|Expand File System| Pod[Pod]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class User user;
-    class SC,PVC,PV k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
+![A user's request to enlarge a PersistentVolumeClaim passes through the StorageClass, which checks that allowVolumeExpansion is enabled before the PersistentVolume grows the underlying disk and the Pod's filesystem.](../.gitbook/assets/en-core-04-storage-4.png)
 
 ### PVC Expansion
 
@@ -1138,39 +1007,7 @@ This ensures:
 
 Various storage options are available in Amazon EKS. Each option has different use cases and performance characteristics, so it's important to choose the appropriate storage for your application's requirements.
 
-```mermaid
-graph TD
-    EKS["Amazon EKS"] --> EBS["Amazon EBS"]
-    EKS --> EFS["Amazon EFS"]
-    EKS --> FSx["Amazon FSx for Lustre"]
-
-    EBS --> EBS_CSI["EBS CSI Driver"]
-    EFS --> EFS_CSI["EFS CSI Driver"]
-    FSx --> FSx_CSI["FSx CSI Driver"]
-
-    EBS_CSI --> EBS_SC["EBS Storage Class"]
-    EFS_CSI --> EFS_SC["EFS Storage Class"]
-    FSx_CSI --> FSx_SC["FSx Storage Class"]
-
-    EBS_SC --> EBS_PV["EBS Persistent Volume"]
-    EFS_SC --> EFS_PV["EFS Persistent Volume"]
-    FSx_SC --> FSx_PV["FSx Persistent Volume"]
-
-    EBS_PV --> Pod1["Pod (RWO)"]
-    EFS_PV --> Pod2["Pod (RWX)"]
-    FSx_PV --> Pod3["Pod (RWX, High Performance)"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    %% Apply classes
-    class EKS,EBS_CSI,EFS_CSI,FSx_CSI,EBS_SC,EFS_SC,FSx_SC,EBS_PV,EFS_PV,FSx_PV k8sComponent
-    class Pod1,Pod2,Pod3 userApp
-    class EBS,EFS,FSx awsService
-```
+![Amazon EKS pods consume block storage from EBS, shared file storage from EFS, and high-performance parallel storage from FSx for Lustre, each provisioned through its own CSI driver, StorageClass, and PersistentVolume.](../.gitbook/assets/en-core-04-storage-5.png)
 
 ### Amazon EBS
 

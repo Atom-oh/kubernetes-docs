@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Envoy가 자동 생성하는 관찰성 데이터 흐름</title>
+<desc id="ddesc">Envoy Proxy가 자동으로 생성한 메트릭, 트레이스, 로그가 Prometheus, Jaeger, 로깅 시스템을 거쳐 Grafana와 Jaeger UI, Kiali로 시각화되는 흐름</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="64" y="192" width="232" height="192" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="76" y="196" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="87.0" y="205" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">파드</text>
+
+<path d="M 180,272 L 180,304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<rect x="196" y="282" width="31" height="12" rx="2" fill="#ffffff"/>
+<text x="196" y="291" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">트래픽</text>
+
+<path d="M 270,316 H 337.0 Q 345.0,316 345.0,308 V 176 Q 345.0,168 353.0,168 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="329.5" y="230" width="31" height="12" rx="2" fill="#ffffff"/>
+<text x="345" y="239" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">메트릭</text>
+
+<path d="M 270,328 H 337.0 Q 345.0,328 345.0,320 V 296 Q 345.0,288 353.0,288 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="327.0" y="296" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="345" y="305" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">트레이스</text>
+
+<path d="M 270,340 H 337.0 Q 345.0,340 345.0,348 V 400 Q 345.0,408 353.0,408 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="332.0" y="362" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="345" y="371" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">로그</text>
+
+<path d="M 560,168 H 612.0 Q 620.0,168 620.0,160 V 136 Q 620.0,128 628.0,128 H 680" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="604.5" y="136" width="31" height="12" rx="2" fill="#ffffff"/>
+<text x="620" y="145" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">시각화</text>
+
+<path d="M 560,288 L 680,288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="607.0" y="268" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="620" y="277" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">분석</text>
+
+<path d="M 750,420 V 68 Q 750,60 742,60 H 498 Q 490,60 490,68 V 140" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="607.0" y="40" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="620" y="49" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">쿼리</text>
+
+<rect x="90" y="224" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="90" y="224" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션</text>
+<rect x="90" y="304" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="90" y="304" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="180.0" y="330.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Proxy</text>
+<rect x="420" y="140" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="140" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="490.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Prometheus</text>
+<text x="490.0" y="180.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">메트릭 수집</text>
+<rect x="420" y="260" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="260" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="490.0" y="284.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Jaeger</text>
+<text x="490.0" y="300.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">분산 추적</text>
+<rect x="420" y="380" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="380" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="490.0" y="410.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">로깅 시스템</text>
+<rect x="680" y="100" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="100" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="750.0" y="124.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Grafana</text>
+<text x="750.0" y="140.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">대시보드</text>
+<rect x="680" y="260" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="260" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="750.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Jaeger UI</text>
+<rect x="680" y="420" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="420" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="750.0" y="444.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kiali</text>
+<text x="750.0" y="460.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">메시 대시보드</text>
+</svg>

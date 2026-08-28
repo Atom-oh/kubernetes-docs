@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="sq-title sq-desc">
+      <title id="sq-title">mTLS 인증서 자동 순환 시퀀스</title>
+      <desc id="sq-desc">Istiod가 Envoy 사이드카에 24시간 수명의 X.509 인증서를 발급하고, 만료 8시간 전 Envoy가 CSR로 갱신을 요청해 새 인증서를 무중단으로 교체하는 시퀀스.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ============ LIFELINES ============ -->
+      <line x1="240" y1="60" x2="240" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="720" y1="60" x2="720" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- ============ "IN USE" BANDS (drawn before messages, behind everything else) ============ -->
+      <rect x="30" y="176" width="900" height="32" rx="4" fill="rgba(35,47,62,0.035)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8"/>
+      <text x="480" y="196" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">T=0~16시간 · 인증서 사용 중</text>
+
+      <rect x="30" y="440" width="900" height="32" rx="4" fill="rgba(35,47,62,0.035)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8"/>
+      <text x="480" y="460" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">T=16~24시간 · 새 인증서로 사용 중</text>
+
+      <!-- ============ ACTIVATION BAR (Istiod, during CSR handling) ============ -->
+      <rect x="716" y="292" width="8" height="76" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+      <!-- ============ MESSAGES ============ -->
+      <!-- 1. Istiod -> Envoy: initial issuance -->
+      <line x1="716" y1="120" x2="244" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="424" y="100" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="460" y="109" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">새 인증서 발급</text>
+
+      <!-- 2. Envoy -> Istiod: CSR request -->
+      <line x1="240" y1="292" x2="712" y2="292" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="410" y="272" width="100" height="12" rx="2" fill="#ffffff"/>
+      <text x="460" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">인증서 요청(CSR)</text>
+
+      <!-- 3. Istiod -> Envoy: renewal issuance (headline / accent) -->
+      <line x1="716" y1="360" x2="244" y2="360" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="424" y="340" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="460" y="349" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">새 인증서 발급</text>
+
+      <!-- 4. Envoy self-message: hot reload -->
+      <path d="M240,396 H280 Q288,396 288,404 V404 Q288,412 280,412 H240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="296" y="396" width="112" height="24" rx="2" fill="#ffffff"/>
+      <text x="352" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">인증서 교체</text>
+      <text x="352" y="417" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">(Hot Reload)</text>
+
+      <!-- ============ NOTES ============ -->
+      <rect x="330" y="76" width="300" height="14" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+      <text x="480" y="86" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">T=0시간 · 초기 인증서 발급</text>
+
+      <rect x="736" y="128" width="212" height="40" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="742" y="141" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">유효기간: 24시간</text>
+      <text x="742" y="153" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">형식: X.509</text>
+      <text x="742" y="165" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">SPIFFE ID 포함</text>
+
+      <rect x="270" y="228" width="420" height="14" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+      <text x="480" y="238" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">T=16시간 · 자동 갱신 시작 (만료 8시간 전)</text>
+
+      <rect x="736" y="300" width="212" height="28" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="742" y="313" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">SPIFFE ID 검증</text>
+      <text x="742" y="325" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">새 인증서 생성</text>
+
+      <rect x="12" y="424" width="212" height="14" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="18" y="434" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.02em">무중단으로 새 인증서 적용</text>
+
+      <rect x="290" y="490" width="380" height="14" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+      <text x="480" y="500" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">T=24시간 · 이전 인증서 만료 (영향 없음)</text>
+
+      <!-- ============ ACTORS ============ -->
+      <rect x="150" y="20" width="180" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="240" y="44" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Envoy Sidecar</text>
+
+      <rect x="620" y="20" width="200" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="720" y="44" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Istiod (CA)</text>
+
+      <!-- ============ LEGEND ============ -->
+      <line x1="30" y1="530" x2="930" y2="530" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="30" y="540" width="18" height="8" rx="3" fill="rgba(35,47,62,0.035)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8"/>
+      <text x="56" y="548" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">인증서 유효 구간</text>
+
+      <rect x="204" y="540" width="8" height="8" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="220" y="548" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Istiod 처리 중(활성화)</text>
+
+      <line x1="400" y1="544" x2="428" y2="544" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="436" y="548" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">갱신된 인증서 발급</text>
+    </svg>

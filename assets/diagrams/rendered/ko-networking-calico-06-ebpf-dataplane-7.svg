@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf7-title ebpf7-desc">
+    <title id="ebpf7-title">Connect-Time Load Balancing 동작 원리</title>
+    <desc id="ebpf7-desc">애플리케이션이 VIP로 connect를 호출하면 eBPF 프로그램이 소켓 계층에서 NAT Map을 조회해 백엔드를 선택하고 목적지를 바꿔치기해 돌려주므로, 이후 패킷은 NAT 없이 백엔드 Pod와 곧바로 TCP 연결된다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Lifelines -->
+    <line x1="120" y1="88" x2="120" y2="416" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="360" y1="88" x2="360" y2="416" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="600" y1="88" x2="600" y2="416" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="840" y1="88" x2="840" y2="416" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Messages -->
+    <line x1="120" y1="120" x2="360" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="185" y="100" width="110" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="109" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">CONNECT(VIP:80)</text>
+
+    <line x1="360" y1="160" x2="600" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="384" y="140" width="192" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="149" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">CGROUP_SOCK_ADDR</text>
+
+    <!-- Self-messages on eBPF -->
+    <path d="M 600,200 H 632 Q 640,200 640,208 V 216 Q 640,224 632,224 H 600"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="656" y="204" width="220" height="12" rx="2" fill="#ffffff"/>
+    <text x="656" y="213" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">1. SERVICE LOOKUP (NAT MAP)</text>
+
+    <path d="M 600,240 H 632 Q 640,240 640,248 V 256 Q 640,264 632,264 H 600"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="656" y="244" width="180" height="12" rx="2" fill="#ffffff"/>
+    <text x="656" y="253" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">2. BACKEND SELECTION</text>
+
+    <path d="M 600,280 H 632 Q 640,280 640,288 V 296 Q 640,304 632,304 H 600"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="656" y="284" width="228" height="12" rx="2" fill="#ffffff"/>
+    <text x="656" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">3. REWRITE DST TO BACKEND</text>
+
+    <line x1="600" y1="336" x2="360" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="380" y="316" width="200" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="325" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">MODIFIED CONNECT(:8080)</text>
+
+    <!-- Headline: Socket -> Backend, direct connection -->
+    <line x1="360" y1="376" x2="840" y2="376" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="515" y="356" width="170" height="12" rx="2" fill="#ffffff"/>
+    <text x="600" y="365" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">DIRECT TCP CONNECTION</text>
+
+    <!-- Caption -->
+    <text x="480" y="440" fill="#232F3E" font-size="12" font-style="italic" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">NAT 없이 직접 연결!</text>
+
+    <!-- Actors -->
+    <rect x="50" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="50" y="40" width="140" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="120" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">애플리케이션</text>
+
+    <rect x="290" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="290" y="40" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="360" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">Socket Layer</text>
+
+    <rect x="530" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="530" y="40" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="600" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">eBPF Program</text>
+
+    <rect x="770" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="770" y="40" width="140" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="840" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">Backend Pod</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="40" y1="513" x2="68" y2="513" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="76" y="516" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif">패킷 레벨 NAT 없이 이어지는 직접 연결</text>
+  </svg>

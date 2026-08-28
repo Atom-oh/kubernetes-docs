@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Knative request path through Ingress, Activator, Autoscaler, and revisions</title>
+<desc id="d">A client request enters through an ingress gateway; when a revision is scaled to zero the Activator buffers and forwards the request while the Autoscaler brings a pod up, and once running requests reach the queue-proxy sidecar and user container directly, with concurrency metrics feeding the Autoscaler's scaling decisions to the Controller which manages the revision's deployment.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="216" y="228" width="168" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="248" y="232" width="104" height="12" rx="2" fill="#ffffff"/>
+<text x="300" y="241" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">INGRESS LAYER</text>
+
+<rect x="408" y="28" width="336" height="212" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="512" y="32" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="576" y="41" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KNATIVE-SERVING NS</text>
+
+<rect x="408" y="344" width="336" height="138" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="524" y="348" width="104" height="12" rx="2" fill="#ffffff"/>
+<text x="576" y="357" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION NS</text>
+
+<!-- Arrows (drawn before nodes) -->
+<!-- A1 Client -> Gateway -->
+<line x1="176" y1="292" x2="232" y2="292" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="182" y="272" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="206" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REQUEST</text>
+
+<!-- A2 Gateway -> Activator (scale = 0) -->
+<path d="M 368,284 Q 376,284 376,276 V 96 Q 376,88 384,88 H 432"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="384" y="140" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="408" y="149" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCALE=0</text>
+
+<!-- A3 Gateway -> Pod (scale > 0), accent headline -->
+<path d="M 368,304 H 380 Q 388,304 388,312 V 352 Q 388,360 396,360 H 512 Q 520,360 520,368 V 376"
+      fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="376" y="284" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="402" y="293" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCALE&gt;0</text>
+
+<!-- A4 Activator -> Pod (buffer & activate), dashed -->
+<path d="M 432,100 H 408 Q 400,100 400,108 V 382 Q 400,390 408,390 H 464"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="408" y="248" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="434" y="257" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ACTIVATE</text>
+
+<!-- A5 Pod -> Autoscaler (concurrency metrics), dashed -->
+<path d="M 464,420 H 420 Q 412,420 412,412 V 204 Q 412,196 420,196 H 432"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="420" y="300" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="446" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">METRICS</text>
+
+<!-- A6 Activator -> Autoscaler (report / scale decision) -->
+<line x1="502" y1="116" x2="502" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="508" y="136" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="532" y="145" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REPORT</text>
+
+<!-- A7 Webhook -> Controller (validate & default) -->
+<line x1="672" y1="100" x2="672" y2="168" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="678" y="126" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="705" y="135" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">VALIDATE</text>
+
+<!-- A8 Controller -> Pod (manage deployments) -->
+<line x1="672" y1="208" x2="672" y2="376" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="678" y="280" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="706" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">MANAGE</text>
+
+<!-- Nodes -->
+<!-- Client -->
+<rect x="48" y="260" width="128" height="64" rx="6" fill="#ffffff"/>
+<rect x="48" y="260" width="128" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="112" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+<text x="112" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">request</text>
+
+<!-- Gateway -->
+<rect x="232" y="260" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+<text x="300" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Kourier / Istio</text>
+
+<!-- Activator -->
+<rect x="432" y="60" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="502" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Activator</text>
+<text x="502" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">buffers requests</text>
+
+<!-- Autoscaler -->
+<rect x="432" y="168" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="502" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Autoscaler</text>
+<text x="502" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">KPA</text>
+
+<!-- Webhook -->
+<rect x="616" y="60" width="112" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="672" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Webhook</text>
+
+<!-- Controller -->
+<rect x="616" y="168" width="112" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="672" y="192" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller</text>
+
+<!-- Pod (Revision) — focal -->
+<rect x="464" y="376" width="224" height="90" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="576" y="408" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Queue Proxy + Container</text>
+<text x="576" y="424" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Revision v1 / v2</text>
+<text x="576" y="440" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">x2 — one pod per active revision</text>
+<text x="576" y="456" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar proxies traffic to app</text>
+
+<!-- Legend -->
+<line x1="40" y1="502" x2="920" y2="502" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="518" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="534" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal — running revision</text>
+<line x1="256" y1="538" x2="284" y2="538" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="292" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Warm path (traffic served)</text>
+<line x1="480" y1="538" x2="508" y2="538" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="516" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cold-start / control path</text>
+</svg>

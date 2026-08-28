@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3title d3desc">
+    <title id="d3title">공유 Trust Anchor 기반 크로스 클러스터 PKI</title>
+    <desc id="d3desc">하나의 공유 Root CA(Trust Anchor)가 West와 East 각 클러스터의 중간 CA(Issuer)에 서명하고, 각 Issuer가 자신의 클러스터 안 워크로드 인증서에 서명함으로써 두 클러스터가 서로를 신뢰하는 mTLS 체계를 이룬다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="260" y="80" width="440" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="280" y="84" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="324" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">SHARED PKI</text>
+
+    <rect x="40" y="340" width="420" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="60" y="344" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="116" y="353" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">CLUSTER WEST</text>
+
+    <rect x="500" y="340" width="420" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="520" y="344" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="576" y="353" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">CLUSTER EAST</text>
+
+    <!-- arrows (before nodes) -->
+    <!-- TA -> II_W (fan exit at x=456) -->
+    <path d="M456,160 V168 Q456,176 448,176 H388 Q380,176 380,184 V196"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- TA -> II_E (fan exit at x=504) -->
+    <path d="M504,160 V168 Q504,176 512,176 H572 Q580,176 580,184 V196"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- II_W -> WC_W1 (fan exit at x=344) -->
+    <path d="M344,244 V300 Q344,308 336,308 H168 Q160,308 160,316 V372"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- II_W -> WC_W2 (fan exit at x=416) -->
+    <path d="M416,244 V300 Q416,308 408,308 H348 Q340,308 340,316 V372"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- II_E -> WC_E1 (fan exit at x=524) -->
+    <path d="M524,244 V300 Q524,308 532,308 H612 Q620,308 620,316 V372"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- II_E -> WC_E2 (fan exit at x=596) -->
+    <path d="M596,244 V300 Q596,308 604,308 H792 Q800,308 800,316 V372"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: TA (Trust Anchor, focal) -->
+    <rect x="380" y="112" width="200" height="48" rx="6" fill="#ffffff"/>
+    <rect x="380" y="112" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="388" y="118" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,113,17,0.60)" stroke-width="0.8"/>
+    <text x="402" y="127" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CA</text>
+    <text x="480" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trust Anchor</text>
+    <text x="480" y="153" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">공유 Root CA</text>
+
+    <!-- Node: II_W -->
+    <rect x="290" y="196" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="290" y="196" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="298" y="202" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="312" y="211" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CA</text>
+    <text x="380" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Issuer West</text>
+    <text x="380" y="237" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Intermediate CA</text>
+
+    <!-- Node: II_E -->
+    <rect x="490" y="196" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="490" y="196" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="498" y="202" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="512" y="211" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CA</text>
+    <text x="580" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Issuer East</text>
+    <text x="580" y="237" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Intermediate CA</text>
+
+    <!-- Node: WC_W1 -->
+    <rect x="90" y="372" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="90" y="372" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="98" y="378" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="116" y="387" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CERT</text>
+    <text x="160" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload Cert W1</text>
+
+    <!-- Node: WC_W2 -->
+    <rect x="270" y="372" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="270" y="372" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="278" y="378" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="296" y="387" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CERT</text>
+    <text x="340" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload Cert W2</text>
+
+    <!-- Node: WC_E1 -->
+    <rect x="550" y="372" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="550" y="372" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="558" y="378" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="576" y="387" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CERT</text>
+    <text x="620" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload Cert E1</text>
+
+    <!-- Node: WC_E2 -->
+    <rect x="730" y="372" width="140" height="48" rx="6" fill="#ffffff"/>
+    <rect x="730" y="372" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="738" y="378" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="756" y="387" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CERT</text>
+    <text x="800" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload Cert E2</text>
+  </svg>

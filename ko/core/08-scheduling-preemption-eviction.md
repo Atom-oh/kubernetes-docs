@@ -72,85 +72,7 @@ EOF
 
 ## Kubernetes 스케줄링 아키텍처
 
-```mermaid
-graph TD
-    subgraph "Kubernetes 스케줄링 시스템"
-        subgraph "스케줄링 컴포넌트"
-            Scheduler["kube-scheduler"]
-            Queue["스케줄링 큐"]
-            Cache["노드 & 포드 캐시"]
-            Plugins["스케줄링 플러그인"]
-        end
-        
-        subgraph "스케줄링 단계"
-            QueueSort["큐 정렬"]
-            PreFilter["사전 필터링"]
-            Filter["필터링"]
-            PreScore["사전 스코어링"]
-            Score["스코어링"]
-            Bind["바인딩"]
-            Reserve["예약"]
-            Permit["허가"]
-        end
-        
-        subgraph "스케줄링 제약 조건"
-            NodeSelector["노드 셀렉터"]
-            NodeAffinity["노드 어피니티"]
-            PodAffinity["포드 어피니티"]
-            PodAntiAffinity["포드 안티-어피니티"]
-            Taints["테인트"]
-            Tolerations["톨러레이션"]
-            TopologySpread["토폴로지 분배"]
-        end
-        
-        subgraph "선점 및 축출"
-            Priority["우선순위 & 선점"]
-            PDB["포드 중단 예산"]
-            Descheduler["디스케줄러"]
-            TaintManager["테인트 매니저"]
-        end
-    end
-    
-    API[API 서버] --> Queue
-    Queue --> Scheduler
-    Scheduler --> Cache
-    Scheduler --> Plugins
-    
-    Plugins --> QueueSort
-    QueueSort --> PreFilter
-    PreFilter --> Filter
-    Filter --> PreScore
-    PreScore --> Score
-    Score --> Reserve
-    Reserve --> Permit
-    Permit --> Bind
-    
-    NodeSelector --> Filter
-    NodeAffinity --> Filter
-    PodAffinity --> Filter
-    PodAntiAffinity --> Filter
-    Taints --> Filter
-    Tolerations --> Filter
-    TopologySpread --> Filter & Score
-    
-    Priority --> Scheduler
-    PDB --> TaintManager
-    Descheduler --> API
-    
-    %% 스타일 정의
-    classDef component fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef constraint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef disruption fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef api fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class Scheduler,Queue,Cache,Plugins component;
-    class QueueSort,PreFilter,Filter,PreScore,Score,Reserve,Permit,Bind stage;
-    class NodeSelector,NodeAffinity,PodAffinity,PodAntiAffinity,Taints,Tolerations,TopologySpread constraint;
-    class Priority,PDB,Descheduler,TaintManager disruption;
-    class API api;
-```
+![kube-scheduler를 중심으로 큐·필터링·스코어링·바인딩으로 이어지는 스케줄링 파이프라인과, 이를 제약하는 정책 및 선점·축출 메커니즘의 관계를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-0.png)
 
 ## 스케줄링 개념 비교
 
@@ -232,56 +154,7 @@ Kubernetes 스케줄러는 포드를 적절한 노드에 배치하는 컨트롤 
 
 Kubernetes 스케줄러는 다음과 같은 과정으로 작동합니다:
 
-```mermaid
-graph TD
-    subgraph "스케줄러 작동 과정"
-        API["API 서버"] -->|1. 포드 생성 이벤트| Queue["스케줄링 큐"]
-        Queue -->|2. 포드 선택| Scheduler["kube-scheduler"]
-        Scheduler -->|3. 필터링| FilterPlugins["필터 플러그인"]
-        FilterPlugins -->|4. 필터링된 노드| ScorePlugins["스코어 플러그인"]
-        ScorePlugins -->|5. 노드 점수| BestNode["최적 노드 선택"]
-        BestNode -->|6. 바인딩| Binding["API 서버에 바인딩 요청"]
-        Binding -->|7. 포드 바인딩| Node["노드"]
-    end
-    
-    subgraph "필터 플러그인"
-        FP1["NodeResourcesFit"]
-        FP2["NodeName"]
-        FP3["NodeUnschedulable"]
-        FP4["TaintToleration"]
-        FP5["NodeAffinity"]
-    end
-    
-    subgraph "스코어 플러그인"
-        SP1["NodeResourcesBalancedAllocation"]
-        SP2["ImageLocality"]
-        SP3["InterPodAffinity"]
-        SP4["NodeAffinity"]
-        SP5["TaintToleration"]
-    end
-    
-    FilterPlugins --- FP1
-    FilterPlugins --- FP2
-    FilterPlugins --- FP3
-    FilterPlugins --- FP4
-    FilterPlugins --- FP5
-    
-    ScorePlugins --- SP1
-    ScorePlugins --- SP2
-    ScorePlugins --- SP3
-    ScorePlugins --- SP4
-    ScorePlugins --- SP5
-    
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef schedulerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pluginComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class API,Node k8sComponent;
-    class Queue,Scheduler,FilterPlugins,ScorePlugins,BestNode,Binding schedulerComponent;
-    class FP1,FP2,FP3,FP4,FP5,SP1,SP2,SP3,SP4,SP5 pluginComponent;
-```
+![kube-scheduler가 API 서버로부터 포드 생성 이벤트를 감시해 필터 플러그인과 스코어 플러그인을 거쳐 최적 노드에 바인딩하기까지의 처리 순서를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-1.png)
 
 1. **포드 큐 감시**: 스케줄러는 API 서버를 감시하여 스케줄링되지 않은 포드를 찾습니다.
 2. **노드 필터링**: 포드를 실행할 수 있는 노드 집합을 식별합니다.
@@ -327,43 +200,7 @@ spec:
 
 Kubernetes는 포드를 특정 노드에 배치하기 위한 여러 메커니즘을 제공합니다.
 
-```mermaid
-graph TD
-    subgraph "노드 선택 메커니즘"
-        NS["노드 셀렉터<br>(nodeSelector)"]
-        NN["노드 이름<br>(nodeName)"]
-        NA["노드 어피니티<br>(nodeAffinity)"]
-    end
-    
-    subgraph "노드 셀렉터 예시"
-        Pod1["포드"] -->|nodeSelector| Label["노드 레이블"]
-        Label -->|일치| Node1["노드 1<br>gpu=true"]
-        Label -->|불일치| Node2["노드 2<br>gpu=false"]
-    end
-    
-    subgraph "노드 어피니티 예시"
-        Pod2["포드"] -->|nodeAffinity| Expr["표현식<br>zone in (us-east-1a, us-east-1b)"]
-        Expr -->|일치| Node3["노드 3<br>zone=us-east-1a"]
-        Expr -->|일치| Node4["노드 4<br>zone=us-east-1b"]
-        Expr -->|불일치| Node5["노드 5<br>zone=us-west-1a"]
-    end
-    
-    NS -->|간단한 레이블 매칭| Pod1
-    NN -->|직접 노드 지정| DirectNode["특정 노드"]
-    NA -->|복잡한 표현식| Pod2
-    
-    %% 스타일 정의
-    classDef selectionMechanism fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef matchComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class NS,NN,NA selectionMechanism;
-    class Pod1,Pod2 k8sComponent;
-    class Label,Expr matchComponent;
-    class Node1,Node2,Node3,Node4,Node5,DirectNode nodeComponent;
-```
+![nodeSelector, nodeName, nodeAffinity 세 가지 노드 선택 방식이 각각 레이블 매칭, 직접 지정, 표현식 매칭을 통해 포드를 노드에 배치하는 방식을 비교하는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-2.png)
 
 ### 노드 셀렉터(Node Selector)
 
@@ -406,58 +243,7 @@ spec:
 
 포드 어피니티와 안티-어피니티는 포드 간의 관계를 기반으로 포드를 배치하는 방법을 제공합니다.
 
-```mermaid
-graph TD
-    subgraph "포드 어피니티"
-        PA["podAffinity"]
-        PA -->|같은 노드/토폴로지에 배치| Together["함께 배치"]
-        
-        subgraph "어피니티 예시"
-            WebPod["웹 포드<br>app=web"]
-            CachePod["캐시 포드<br>app=cache"]
-            WebPod -->|함께 배치| CachePod
-            Node1["노드 1"] -->|포함| WebPod
-            Node1 -->|포함| CachePod
-        end
-    end
-    
-    subgraph "포드 안티-어피니티"
-        PAA["podAntiAffinity"]
-        PAA -->|다른 노드/토폴로지에 배치| Apart["분리 배치"]
-        
-        subgraph "안티-어피니티 예시"
-            WebPod1["웹 포드 1<br>app=web"]
-            WebPod2["웹 포드 2<br>app=web"]
-            WebPod1 -->|분리 배치| WebPod2
-            Node2["노드 2"] -->|포함| WebPod1
-            Node3["노드 3"] -->|포함| WebPod2
-        end
-    end
-    
-    subgraph "어피니티 유형"
-        Required["requiredDuringSchedulingIgnoredDuringExecution<br>(하드 요구 사항)"]
-        Preferred["preferredDuringSchedulingIgnoredDuringExecution<br>(소프트 요구 사항)"]
-    end
-    
-    PA -->|유형| Required
-    PA -->|유형| Preferred
-    PAA -->|유형| Required
-    PAA -->|유형| Preferred
-    
-    %% 스타일 정의
-    classDef affinityType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef affinityResult fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef affinityKind fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class PA,PAA affinityType;
-    class Together,Apart affinityResult;
-    class WebPod,CachePod,WebPod1,WebPod2 k8sComponent;
-    class Node1,Node2,Node3 nodeComponent;
-    class Required,Preferred affinityKind;
-```
+![podAffinity는 관련 포드를 같은 노드에 모으고 podAntiAffinity는 같은 레이블의 포드를 서로 다른 노드로 분리 배치한다는 대조를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-3.png)
 
 ### 포드 어피니티(Pod Affinity)
 
@@ -544,63 +330,7 @@ affinity:
 
 테인트(Taint)와 톨러레이션(Toleration)은 노드가 특정 포드를 거부할 수 있게 하는 메커니즘입니다.
 
-```mermaid
-graph TD
-    subgraph "테인트와 톨러레이션 메커니즘"
-        Taint["테인트<br>(노드에 적용)"]
-        Toleration["톨러레이션<br>(포드에 적용)"]
-        
-        Taint -->|없으면 거부| Pod["포드"]
-        Pod -->|있으면 허용| Toleration
-        Toleration -.->|일치| Taint
-    end
-    
-    subgraph "테인트 효과"
-        NoSchedule["NoSchedule<br>(스케줄링 방지)"]
-        PreferNoSchedule["PreferNoSchedule<br>(가능하면 스케줄링 방지)"]
-        NoExecute["NoExecute<br>(실행 중인 포드 축출)"]
-    end
-    
-    subgraph "사용 사례"
-        DedicatedNode["전용 노드"]
-        SpecialHW["특수 하드웨어"]
-        Maintenance["노드 유지 관리"]
-        NodeIssue["노드 문제"]
-    end
-    
-    Taint -->|효과 유형| NoSchedule
-    Taint -->|효과 유형| PreferNoSchedule
-    Taint -->|효과 유형| NoExecute
-    
-    Taint -->|적용| DedicatedNode
-    Taint -->|적용| SpecialHW
-    Taint -->|적용| Maintenance
-    Taint -->|적용| NodeIssue
-    
-    subgraph "예시"
-        GPUNode["GPU 노드<br>key=gpu:NoSchedule"]
-        RegularPod["일반 포드<br>(톨러레이션 없음)"]
-        GPUPod["GPU 포드<br>(톨러레이션 있음)"]
-        
-        GPUNode -->|거부| RegularPod
-        GPUNode -->|허용| GPUPod
-        GPUPod -->|톨러레이션| GPUToleration["key=gpu,effect=NoSchedule"]
-    end
-    
-    %% 스타일 정의
-    classDef taintComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef effectComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef useCaseComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class Taint,Toleration taintComponent;
-    class NoSchedule,PreferNoSchedule,NoExecute effectComponent;
-    class DedicatedNode,SpecialHW,Maintenance,NodeIssue useCaseComponent;
-    class Pod,RegularPod,GPUPod,GPUToleration k8sComponent;
-    class GPUNode nodeComponent;
-```
+![노드에 적용된 테인트는 일치하는 톨러레이션이 없는 포드를 거부하며, GPU 노드 예시로 일반 포드는 거부되고 톨러레이션을 가진 포드만 배치되는 과정을 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-4.png)
 
 ### 테인트(Taint)
 
@@ -716,53 +446,7 @@ spec:
 
 Kubernetes는 포드 우선순위와 선점(Preemption) 기능을 통해 중요한 워크로드가 클러스터 리소스를 확보할 수 있도록 합니다.
 
-```mermaid
-graph TD
-    subgraph "우선순위 및 선점 메커니즘"
-        PC["PriorityClass<br>(우선순위 클래스)"]
-        Pod["포드"]
-        Preemption["선점<br>(Preemption)"]
-        
-        PC -->|우선순위 할당| Pod
-        Pod -->|리소스 부족 시| Preemption
-        Preemption -->|제거| LowPriorityPod["우선순위가 낮은 포드"]
-    end
-    
-    subgraph "우선순위 클래스 예시"
-        SystemCritical["system-cluster-critical<br>(1000000000)"]
-        SystemNodeCritical["system-node-critical<br>(2000000000)"]
-        HighPriority["high-priority<br>(custom, e.g., 100000)"]
-        DefaultPriority["default<br>(0)"]
-    end
-    
-    subgraph "선점 과정"
-        Step1["1. 스케줄링 실패<br>(리소스 부족)"]
-        Step2["2. 선점 대상 포드 선택"]
-        Step3["3. 선점 대상 포드 종료"]
-        Step4["4. 우선순위 높은 포드 스케줄링"]
-        
-        Step1 -->|트리거| Step2
-        Step2 -->|선택| Step3
-        Step3 -->|완료| Step4
-    end
-    
-    PC --- SystemCritical
-    PC --- SystemNodeCritical
-    PC --- HighPriority
-    PC --- DefaultPriority
-    
-    %% 스타일 정의
-    classDef priorityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef priorityClass fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef preemptionStep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class PC,Preemption priorityComponent;
-    class Pod,LowPriorityPod k8sComponent;
-    class SystemCritical,SystemNodeCritical,HighPriority,DefaultPriority priorityClass;
-    class Step1,Step2,Step3,Step4 preemptionStep;
-```
+![PriorityClass로 우선순위가 부여된 포드가 리소스 부족 시 선점을 통해 우선순위가 낮은 포드를 제거하고, 그 선점 과정이 4단계로 진행되는 흐름을 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-5.png)
 
 ### 우선순위 클래스(PriorityClass)
 
@@ -820,54 +504,7 @@ spec:
 
 포드 축출(Pod Eviction)은 노드 문제 발생 시 포드를 안전하게 이동시키는 과정입니다. 축출은 다양한 이유로 발생할 수 있습니다.
 
-```mermaid
-graph TD
-    subgraph "축출 유형"
-        ControllerEviction["kube-controller-manager<br>축출"]
-        KubeletEviction["kubelet 축출"]
-        UserEviction["사용자 축출"]
-    end
-    
-    subgraph "축출 원인"
-        NodeNotReady["노드 NotReady"]
-        NodeUnreachable["노드 Unreachable"]
-        ResourcePressure["리소스 부족<br>(메모리, 디스크 등)"]
-        HardwareIssue["하드웨어 문제"]
-        Maintenance["유지 관리"]
-    end
-    
-    subgraph "kubelet 축출 신호"
-        MemoryAvailable["memory.available"]
-        NodefsAvailable["nodefs.available"]
-        NodefsInodesFree["nodefs.inodesFree"]
-        ImagefsAvailable["imagefs.available"]
-        ImagefsInodesFree["imagefs.inodesFree"]
-        PidAvailable["pid.available"]
-    end
-    
-    ControllerEviction -->|원인| NodeNotReady
-    ControllerEviction -->|원인| NodeUnreachable
-    KubeletEviction -->|원인| ResourcePressure
-    KubeletEviction -->|원인| HardwareIssue
-    UserEviction -->|원인| Maintenance
-    
-    KubeletEviction -->|모니터링| MemoryAvailable
-    KubeletEviction -->|모니터링| NodefsAvailable
-    KubeletEviction -->|모니터링| NodefsInodesFree
-    KubeletEviction -->|모니터링| ImagefsAvailable
-    KubeletEviction -->|모니터링| ImagefsInodesFree
-    KubeletEviction -->|모니터링| PidAvailable
-    
-    %% 스타일 정의
-    classDef evictionType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionCause fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionSignal fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class ControllerEviction,KubeletEviction,UserEviction evictionType;
-    class NodeNotReady,NodeUnreachable,ResourcePressure,HardwareIssue,Maintenance evictionCause;
-    class MemoryAvailable,NodefsAvailable,NodefsInodesFree,ImagefsAvailable,ImagefsInodesFree,PidAvailable evictionSignal;
-```
+![컨트롤러·kubelet·사용자에 의한 세 가지 포드 축출 경로가 각각 노드 불가용, 리소스 압박, 유지 관리라는 서로 다른 원인에서 시작됨을 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-6.png)
 
 ### 축출 유형
 
@@ -927,50 +564,7 @@ kubelet은 다음 순서로 포드를 축출합니다:
 
 포드 중단 예산(Pod Disruption Budget, PDB)은 자발적 중단 중에도 애플리케이션의 가용성을 유지하기 위한 방법입니다. PDB는 동시에 중단될 수 있는 포드의 수를 제한합니다.
 
-```mermaid
-graph TD
-    subgraph "PDB 구성 요소"
-        PDB["PodDisruptionBudget"]
-        PDB -->|설정| MinAvailable["minAvailable<br>(최소 가용 포드 수)"]
-        PDB -->|설정| MaxUnavailable["maxUnavailable<br>(최대 불가용 포드 수)"]
-        PDB -->|선택| Selector["selector<br>(대상 포드 선택)"]
-    end
-    
-    subgraph "PDB 작동 방식"
-        Disruption["자발적 중단<br>(노드 드레인 등)"]
-        Check{{"PDB 조건 충족?"}}
-        Allow["포드 축출 허용"]
-        Deny["포드 축출 거부"]
-        
-        Disruption -->|확인| Check
-        Check -->|예| Allow
-        Check -->|아니오| Deny
-    end
-    
-    subgraph "PDB 예시"
-        Deployment["Deployment<br>(replicas: 5)"]
-        PDB1["PDB<br>(minAvailable: 3)"]
-        PDB2["PDB<br>(maxUnavailable: 2)"]
-        
-        Deployment -->|적용| PDB1
-        Deployment -->|적용| PDB2
-        PDB1 -.->|동일 효과| PDB2
-    end
-    
-    %% 스타일 정의
-    classDef pdbComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef pdbSetting fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef disruptionFlow fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class PDB,Selector pdbComponent;
-    class MinAvailable,MaxUnavailable pdbSetting;
-    class Deployment,PDB1,PDB2 k8sComponent;
-    class Disruption,Check disruptionFlow;
-    class Allow,Deny resultComponent;
-```
+![PodDisruptionBudget이 minAvailable·maxUnavailable 조건으로 자발적 중단 시 포드 축출을 허용할지 거부할지 결정하는 흐름을 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-7.png)
 
 ### PDB 정의
 
@@ -1063,48 +657,7 @@ evictionPressureTransitionPeriod: "30s"
 
 토폴로지 분배 제약 조건은 포드를 클러스터의 여러 토폴로지 도메인(노드, 영역, 리전 등)에 균등하게 분산시키는 기능입니다. 이는 고가용성을 보장하고 장애 도메인의 영향을 최소화하는 데 유용합니다.
 
-```mermaid
-graph TD
-    subgraph "TopologySpreadConstraints 개념"
-        TSC["TopologySpreadConstraints"]
-        TSC -->|설정| MaxSkew["maxSkew<br>(최대 불균형 허용치)"]
-        TSC -->|설정| TopologyKey["topologyKey<br>(토폴로지 도메인 키)"]
-        TSC -->|설정| WhenUnsatisfiable["whenUnsatisfiable<br>(제약 미충족 시 동작)"]
-        TSC -->|설정| LabelSelector["labelSelector<br>(대상 포드 선택)"]
-    end
-
-    subgraph "EKS 가용 영역 분산 예시"
-        AZ1["ap-northeast-2a<br>포드: 3개"]
-        AZ2["ap-northeast-2b<br>포드: 2개"]
-        AZ3["ap-northeast-2c<br>포드: 3개"]
-
-        NewPod["새 포드"] -->|maxSkew=1| AZ2
-
-        Note1["maxSkew=1이면<br>AZ2에 배치 (2개 → 3개)"]
-    end
-
-    subgraph "whenUnsatisfiable 옵션"
-        DoNotSchedule["DoNotSchedule<br>(스케줄링 거부)"]
-        ScheduleAnyway["ScheduleAnyway<br>(최선 노력 배치)"]
-    end
-
-    WhenUnsatisfiable -->|옵션| DoNotSchedule
-    WhenUnsatisfiable -->|옵션| ScheduleAnyway
-
-    %% 스타일 정의
-    classDef tscComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef settingComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef azComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef optionComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef noteComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class TSC tscComponent;
-    class MaxSkew,TopologyKey,WhenUnsatisfiable,LabelSelector settingComponent;
-    class AZ1,AZ2,AZ3,NewPod azComponent;
-    class DoNotSchedule,ScheduleAnyway optionComponent;
-    class Note1 noteComponent;
-```
+![TopologySpreadConstraints가 maxSkew로 가용 영역 간 포드 분산을 제어하고, whenUnsatisfiable 옵션으로 제약을 충족하지 못했을 때의 동작을 선택하는 구조를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-8.png)
 
 ### 주요 필드 설명
 
@@ -1260,42 +813,7 @@ topologySpreadConstraints:
 
 Pod Deletion Cost는 HPA(Horizontal Pod Autoscaler)가 스케일다운 시 어떤 포드를 먼저 제거할지 결정하는 데 사용되는 어노테이션입니다. 낮은 비용의 포드가 먼저 제거됩니다.
 
-```mermaid
-graph TD
-    subgraph "Pod Deletion Cost 작동 방식"
-        HPA["HPA 스케일다운<br>5개 → 3개"]
-
-        subgraph "포드 목록"
-            Pod1["Pod A<br>cost: 100"]
-            Pod2["Pod B<br>cost: -50"]
-            Pod3["Pod C<br>cost: 0"]
-            Pod4["Pod D<br>cost: 500"]
-            Pod5["Pod E<br>cost: 200"]
-        end
-
-        HPA -->|삭제 순서| Order["1. Pod B (cost: -50)<br>2. Pod C (cost: 0)"]
-
-        Remaining["남은 포드:<br>Pod A, Pod D, Pod E"]
-    end
-
-    subgraph "사용 사례"
-        Cache["캐시 보호<br>(웜 캐시 유지)"]
-        Leader["리더 포드 보호"]
-        LongTask["장시간 작업<br>포드 보호"]
-    end
-
-    %% 스타일 정의
-    classDef hpaComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef useCaseComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class HPA hpaComponent;
-    class Pod1,Pod2,Pod3,Pod4,Pod5 podComponent;
-    class Cache,Leader,LongTask useCaseComponent;
-    class Order,Remaining resultComponent;
-```
+![HPA 스케일다운 시 pod-deletion-cost 어노테이션 값이 낮은 포드부터 먼저 제거되고, 값이 높은 포드는 캐시나 리더처럼 보호할 목적으로 남겨진다는 원리를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-9.png)
 
 ### 어노테이션 형식
 
@@ -1421,44 +939,7 @@ spec:
 
 Descheduler는 실행 중인 클러스터에서 포드를 재분산시키는 도구입니다. 스케줄러는 새 포드를 배치할 때만 동작하지만, Descheduler는 이미 실행 중인 포드를 축출하여 더 나은 분산을 달성할 수 있습니다.
 
-```mermaid
-graph TD
-    subgraph "Descheduler 필요성"
-        Initial["초기 상태<br>(균등 분산)"]
-        NodeAdd["노드 추가"]
-        NodeRemove["노드 제거/장애"]
-        PodChange["포드 변경<br>(레이블, 어피니티 등)"]
-
-        Initial --> NodeAdd
-        Initial --> NodeRemove
-        Initial --> PodChange
-
-        NodeAdd --> Imbalanced["불균형 상태"]
-        NodeRemove --> Imbalanced
-        PodChange --> Imbalanced
-
-        Imbalanced -->|Descheduler| Rebalanced["재균형 상태"]
-    end
-
-    subgraph "Descheduler 전략"
-        RemoveDuplicates["RemoveDuplicates<br>(중복 포드 제거)"]
-        LowNodeUtilization["LowNodeUtilization<br>(저활용 노드로 이동)"]
-        RemovePodsHavingTooManyRestarts["RemovePodsHavingTooManyRestarts<br>(재시작 과다 포드 제거)"]
-        PodLifeTime["PodLifeTime<br>(수명 초과 포드 제거)"]
-        RemovePodsViolatingNodeAffinity["RemovePodsViolatingNodeAffinity<br>(노드 어피니티 위반 제거)"]
-        RemovePodsViolatingTopologySpreadConstraint["RemovePodsViolatingTopologySpreadConstraint<br>(TSC 위반 제거)"]
-    end
-
-    %% 스타일 정의
-    classDef stateComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef eventComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef strategyComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Initial,Imbalanced,Rebalanced stateComponent;
-    class NodeAdd,NodeRemove,PodChange eventComponent;
-    class RemoveDuplicates,LowNodeUtilization,RemovePodsHavingTooManyRestarts,PodLifeTime,RemovePodsViolatingNodeAffinity,RemovePodsViolatingTopologySpreadConstraint strategyComponent;
-```
+![노드 추가·제거나 포드 변경으로 균등 분산이 깨졌을 때 Descheduler가 실행 중인 포드를 재배치해 균형 상태로 되돌리는 과정과 대표 전략을 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-10.png)
 
 ### Helm을 사용한 설치
 
@@ -1610,62 +1091,7 @@ spec:
 
 Amazon EKS에서는 Kubernetes 스케줄링 기능을 활용하여 워크로드를 최적화할 수 있습니다.
 
-```mermaid
-graph TD
-    subgraph "EKS 스케줄링 최적화"
-        NodeGroups["노드 그룹 및<br>인스턴스 유형"]
-        AZSpread["가용 영역 분산"]
-        Karpenter["Karpenter<br>자동 스케일링"]
-        ResourceOpt["리소스 요청 및<br>제한 최적화"]
-    end
-    
-    subgraph "노드 그룹 전략"
-        ComputeOpt["컴퓨팅 최적화<br>인스턴스"]
-        MemoryOpt["메모리 최적화<br>인스턴스"]
-        SpotInst["스팟 인스턴스"]
-        GPUInst["GPU 인스턴스"]
-    end
-    
-    subgraph "가용성 전략"
-        PodAntiAffinity["포드 안티-어피니티"]
-        TopologySpread["토폴로지 스프레드<br>제약 조건"]
-        MultiAZ["다중 가용 영역<br>배포"]
-    end
-    
-    subgraph "자동화 도구"
-        VPA["Vertical Pod<br>Autoscaler"]
-        HPA["Horizontal Pod<br>Autoscaler"]
-        CA["Cluster<br>Autoscaler"]
-        KarpenterProv["Karpenter<br>Provisioner"]
-    end
-    
-    NodeGroups -->|유형| ComputeOpt
-    NodeGroups -->|유형| MemoryOpt
-    NodeGroups -->|유형| SpotInst
-    NodeGroups -->|유형| GPUInst
-    
-    AZSpread -->|방법| PodAntiAffinity
-    AZSpread -->|방법| TopologySpread
-    AZSpread -->|결과| MultiAZ
-    
-    Karpenter -->|사용| KarpenterProv
-    ResourceOpt -->|도구| VPA
-    ResourceOpt -->|도구| HPA
-    NodeGroups -->|도구| CA
-    
-    %% 스타일 정의
-    classDef eksComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef strategyComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef instanceType fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef availabilityStrategy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef autoTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class NodeGroups,AZSpread,Karpenter,ResourceOpt eksComponent;
-    class ComputeOpt,MemoryOpt,SpotInst,GPUInst strategyComponent;
-    class PodAntiAffinity,TopologySpread,MultiAZ availabilityStrategy;
-    class VPA,HPA,CA,KarpenterProv autoTool;
-```
+![EKS에서 노드 그룹 전략, 가용 영역 분산, Karpenter 자동 스케일링, 리소스 최적화라는 네 가지 축이 각각의 자동화 도구로 연결되는 구조를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-11.png)
 
 ### 노드 그룹 및 인스턴스 유형
 

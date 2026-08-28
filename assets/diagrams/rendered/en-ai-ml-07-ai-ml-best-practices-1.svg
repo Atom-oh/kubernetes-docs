@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="metrics-title metrics-desc">
+<title id="metrics-title">LLM inference metrics and their user-experience impact</title>
+<desc id="metrics-desc">A flowchart mapping five LLM inference metrics — time to first token, inter-token latency, tokens per second, end-to-end latency, and throughput — to the three user-experience outcomes they drive, with perceived responsiveness highlighted as the metric pair readers should prioritize.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Header -->
+<text x="40" y="36" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LLM INFERENCE · FLOWCHART</text>
+<text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Metrics that shape user experience</text>
+
+<!-- Zones -->
+<rect x="24" y="88" width="232" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="92" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="68" y="101" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">METRICS</text>
+
+<rect x="664" y="88" width="272" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="672" y="92" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="742" y="101" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">USER EXPERIENCE IMPACT</text>
+
+<!-- ===================== CONNECTORS ===================== -->
+<!-- TTFT(142) -> Responsiveness(168) trunk 264 down -->
+<path d="M 240,142 H 256 Q 264,142 264,150 V 160 Q 264,168 272,168 H 680" fill="none" stroke="#545B64" stroke-width="1"/>
+<!-- E2E(310) -> Responsiveness(200) trunk 280 up -->
+<path d="M 240,310 H 272 Q 280,310 280,302 V 208 Q 280,200 288,200 H 680" fill="none" stroke="#545B64" stroke-width="1"/>
+<!-- ITL(198) -> Streaming(276) trunk 296 down -->
+<path d="M 240,198 H 288 Q 296,198 296,206 V 268 Q 296,276 304,276 H 680" fill="none" stroke="#545B64" stroke-width="1"/>
+<!-- TPS(254) -> Streaming(296) trunk 312 down -->
+<path d="M 240,254 H 304 Q 312,254 312,262 V 288 Q 312,296 320,296 H 680" fill="none" stroke="#545B64" stroke-width="1"/>
+<!-- Throughput(366) -> Capacity(366) straight -->
+<path d="M 240,366 H 680" fill="none" stroke="#545B64" stroke-width="1"/>
+
+<g fill="#545B64">
+  <polygon points="672,165 680,168 672,171"/>
+  <polygon points="672,197 680,200 672,203"/>
+  <polygon points="672,273 680,276 672,279"/>
+  <polygon points="672,293 680,296 672,299"/>
+  <polygon points="672,363 680,366 672,369"/>
+</g>
+
+<!-- ===================== METRIC NODES (left) ===================== -->
+<rect x="40" y="120" width="200" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="138" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TTFT</text>
+<text x="140" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">time to first token</text>
+
+<rect x="40" y="176" width="200" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="194" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ITL</text>
+<text x="140" y="208" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">inter-token latency</text>
+
+<rect x="40" y="232" width="200" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="250" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TPS</text>
+<text x="140" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tokens per second</text>
+
+<rect x="40" y="288" width="200" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">E2E Latency</text>
+<text x="140" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">end-to-end</text>
+
+<rect x="40" y="344" width="200" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="362" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Throughput</text>
+<text x="140" y="376" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">requests / sec</text>
+
+<!-- ===================== UX NODES (right) ===================== -->
+<!-- Responsiveness (FOCAL) -->
+<rect x="680" y="140" width="240" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="800" y="180" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Perceived Responsiveness</text>
+<text x="800" y="198" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DRIVEN BY TTFT + E2E</text>
+
+<rect x="680" y="256" width="240" height="56" rx="6" fill="#F2F3F3" stroke="#545B64" stroke-width="1"/>
+<text x="800" y="288" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Streaming Quality</text>
+
+<rect x="680" y="344" width="240" height="44" rx="6" fill="#F2F3F3" stroke="#545B64" stroke-width="1"/>
+<text x="800" y="370" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">System Capacity</text>
+
+<line x1="40" y1="440" x2="920" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="456" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">TTFT AND E2E LATENCY SET PERCEIVED RESPONSIVENESS — THE METRIC PAIR TO OPTIMIZE FIRST</text>
+
+</svg>

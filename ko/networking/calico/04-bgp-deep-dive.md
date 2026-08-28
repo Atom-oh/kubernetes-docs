@@ -14,36 +14,7 @@ BGP(Border Gateway Protocol)는 Calico의 핵심 차별화 요소입니다. Cili
 
 BGP(Border Gateway Protocol)는 인터넷의 핵심 라우팅 프로토콜로, 자율 시스템(Autonomous System, AS) 간에 라우팅 정보를 교환합니다. 현재 BGP-4가 표준이며, RFC 4271에 정의되어 있습니다.
 
-```mermaid
-graph TB
-    subgraph "인터넷 구조"
-        subgraph "AS 64512"
-            R1[라우터 1]
-            R2[라우터 2]
-            R1 <-->|iBGP| R2
-        end
-
-        subgraph "AS 64513"
-            R3[라우터 3]
-            R4[라우터 4]
-            R3 <-->|iBGP| R4
-        end
-
-        subgraph "AS 64514"
-            R5[라우터 5]
-        end
-    end
-
-    R1 <-->|eBGP| R3
-    R2 <-->|eBGP| R5
-    R4 <-->|eBGP| R5
-
-    style R1 fill:#4fc3f7
-    style R2 fill:#4fc3f7
-    style R3 fill:#81c784
-    style R4 fill:#81c784
-    style R5 fill:#ffb74d
-```
+![세 개의 자율 시스템(AS 64512, AS 64513, AS 64514)에서 같은 AS 내부 라우터는 iBGP로, AS 경계를 넘는 라우터끼리는 eBGP로 연결되어 라우팅 정보를 교환하는 모습을 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-0.png)
 
 ### AS 번호 (Autonomous System Number)
 
@@ -83,65 +54,13 @@ BGP는 두 가지 모드로 운영됩니다:
 | Administrative Distance | 200                 | 20                  |
 | 사용 사례                   | 클러스터 내부             | 외부 라우터 연결           |
 
-```mermaid
-graph LR
-    subgraph "AS 64512 (Kubernetes 클러스터)"
-        N1[Node 1<br/>10.0.1.1]
-        N2[Node 2<br/>10.0.1.2]
-        N3[Node 3<br/>10.0.1.3]
-
-        N1 <-->|iBGP| N2
-        N2 <-->|iBGP| N3
-        N1 <-->|iBGP| N3
-    end
-
-    subgraph "AS 64513 (네트워크 인프라)"
-        ToR[ToR Switch<br/>10.0.0.1]
-    end
-
-    N1 <-->|eBGP| ToR
-    N2 <-->|eBGP| ToR
-    N3 <-->|eBGP| ToR
-
-    style N1 fill:#4fc3f7
-    style N2 fill:#4fc3f7
-    style N3 fill:#4fc3f7
-    style ToR fill:#ff9800
-```
+![AS 64512에 속한 3개의 Kubernetes 노드가 서로 iBGP로 완전 연결되어 있고, 각 노드가 별도의 AS 64513에 속한 ToR 스위치와 개별적으로 eBGP를 맺는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-1.png)
 
 ### BGP 경로 선택 알고리즘
 
 BGP는 여러 경로 중 최적의 경로를 선택하기 위해 다음 순서로 속성을 비교합니다:
 
-```mermaid
-flowchart TD
-    Start[경로 수신] --> W{1. Weight<br/>높을수록 선호}
-    W -->|동일| LP{2. Local Preference<br/>높을수록 선호}
-    LP -->|동일| LO{3. Locally Originated<br/>로컬 경로 선호}
-    LO -->|동일| ASP{4. AS Path Length<br/>짧을수록 선호}
-    ASP -->|동일| ORI{5. Origin Code<br/>IGP > EGP > Incomplete}
-    ORI -->|동일| MED{6. MED<br/>낮을수록 선호}
-    MED -->|동일| EXT{7. eBGP over iBGP<br/>eBGP 선호}
-    EXT -->|동일| IGP{8. IGP Metric<br/>가까운 next-hop}
-    IGP -->|동일| OLD{9. Oldest Path<br/>먼저 학습된 경로}
-    OLD -->|동일| RID{10. Router ID<br/>낮은 ID 선호}
-    RID -->|동일| NIP{11. Neighbor IP<br/>낮은 IP 선호}
-    NIP --> Best[최적 경로 선택]
-
-    W -->|다름| Best
-    LP -->|다름| Best
-    LO -->|다름| Best
-    ASP -->|다름| Best
-    ORI -->|다름| Best
-    MED -->|다름| Best
-    EXT -->|다름| Best
-    IGP -->|다름| Best
-    OLD -->|다름| Best
-    RID -->|다름| Best
-
-    style Start fill:#e3f2fd
-    style Best fill:#c8e6c9
-```
+![BGP 라우터가 경로 수신 후 Weight부터 Neighbor IP까지 11개의 속성을 순서대로 비교하다가 값이 다른 첫 속성에서 최적 경로를 확정하고, 모두 동일하면 다음 속성으로 계속 넘어가는 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-2.png)
 
 **주요 경로 속성 상세:**
 
@@ -164,33 +83,7 @@ flowchart TD
 
 기본적으로 Calico는 모든 노드 간에 iBGP full-mesh를 구성합니다.
 
-```mermaid
-graph TB
-    subgraph "Full-Mesh BGP (5 노드)"
-        N1[Node 1]
-        N2[Node 2]
-        N3[Node 3]
-        N4[Node 4]
-        N5[Node 5]
-
-        N1 <--> N2
-        N1 <--> N3
-        N1 <--> N4
-        N1 <--> N5
-        N2 <--> N3
-        N2 <--> N4
-        N2 <--> N5
-        N3 <--> N4
-        N3 <--> N5
-        N4 <--> N5
-    end
-
-    style N1 fill:#4fc3f7
-    style N2 fill:#4fc3f7
-    style N3 fill:#4fc3f7
-    style N4 fill:#4fc3f7
-    style N5 fill:#4fc3f7
-```
+![5개의 Kubernetes 노드가 서로 모든 쌍에 대해 직접 iBGP 세션을 맺어 10개의 세션으로 완전 연결된 full-mesh 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-3.png)
 
 **Full-Mesh BGP 세션 계산:**
 
@@ -211,41 +104,7 @@ graph TB
 
 Route Reflector(RR)는 iBGP의 full-mesh 요구사항을 해결합니다.
 
-```mermaid
-graph TB
-    subgraph "Route Reflector 토폴로지"
-        subgraph "Route Reflector 클러스터"
-            RR1[Route Reflector 1<br/>Cluster ID: 1.0.0.1]
-            RR2[Route Reflector 2<br/>Cluster ID: 1.0.0.1]
-            RR1 <-->|RR Mesh| RR2
-        end
-
-        subgraph "클라이언트 노드"
-            N1[Node 1]
-            N2[Node 2]
-            N3[Node 3]
-            N4[Node 4]
-            N5[Node 5]
-            N6[Node 6]
-        end
-    end
-
-    N1 --> RR1
-    N2 --> RR1
-    N3 --> RR1
-    N4 --> RR2
-    N5 --> RR2
-    N6 --> RR2
-
-    style RR1 fill:#ff9800
-    style RR2 fill:#ff9800
-    style N1 fill:#4fc3f7
-    style N2 fill:#4fc3f7
-    style N3 fill:#4fc3f7
-    style N4 fill:#4fc3f7
-    style N5 fill:#4fc3f7
-    style N6 fill:#4fc3f7
-```
+![6개의 클라이언트 노드가 각각 자신이 속한 Route Reflector 한 대에만 연결되고, 두 Route Reflector끼리는 서로 mesh로 연결되어, 노드 간 완전 연결 없이도 모든 경로가 전파되는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-4.png)
 
 **Route Reflector 동작 원리:**
 
@@ -657,66 +516,7 @@ ip prefix-list KUBERNETES-PODS
 
 ### Spine-Leaf 아키텍처 통합
 
-```mermaid
-graph TB
-    subgraph "Spine Layer (AS 64510)"
-        S1[Spine 1<br/>10.0.0.1]
-        S2[Spine 2<br/>10.0.0.2]
-    end
-
-    subgraph "Leaf Layer"
-        subgraph "Rack 1 (AS 64520)"
-            L1[Leaf 1<br/>10.0.10.1]
-        end
-        subgraph "Rack 2 (AS 64521)"
-            L2[Leaf 2<br/>10.0.20.1]
-        end
-        subgraph "Rack 3 (AS 64522)"
-            L3[Leaf 3<br/>10.0.30.1]
-        end
-    end
-
-    subgraph "Kubernetes 클러스터 (AS 64512)"
-        subgraph "Rack 1 노드"
-            N1[Node 1<br/>10.0.10.10]
-            N2[Node 2<br/>10.0.10.11]
-        end
-        subgraph "Rack 2 노드"
-            N3[Node 3<br/>10.0.20.10]
-            N4[Node 4<br/>10.0.20.11]
-        end
-        subgraph "Rack 3 노드"
-            N5[Node 5<br/>10.0.30.10]
-            N6[Node 6<br/>10.0.30.11]
-        end
-    end
-
-    S1 <-->|eBGP| L1
-    S1 <-->|eBGP| L2
-    S1 <-->|eBGP| L3
-    S2 <-->|eBGP| L1
-    S2 <-->|eBGP| L2
-    S2 <-->|eBGP| L3
-
-    L1 <-->|eBGP| N1
-    L1 <-->|eBGP| N2
-    L2 <-->|eBGP| N3
-    L2 <-->|eBGP| N4
-    L3 <-->|eBGP| N5
-    L3 <-->|eBGP| N6
-
-    style S1 fill:#9c27b0
-    style S2 fill:#9c27b0
-    style L1 fill:#ff9800
-    style L2 fill:#ff9800
-    style L3 fill:#ff9800
-    style N1 fill:#4fc3f7
-    style N2 fill:#4fc3f7
-    style N3 fill:#4fc3f7
-    style N4 fill:#4fc3f7
-    style N5 fill:#4fc3f7
-    style N6 fill:#4fc3f7
-```
+![2대의 Spine 스위치가 3개 랙의 Leaf 스위치 각각과 eBGP로 연결되고, 각 Leaf는 자기 랙에 속한 Kubernetes 노드들과 다시 eBGP로 연결되어 물리 네트워크와 클러스터가 계층적으로 통합되는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-5.png)
 
 #### Calico 설정 (Spine-Leaf 통합)
 
@@ -1022,60 +822,7 @@ calicoctl get node -o wide
 
 각 랙에 별도의 AS 번호를 할당하여 확장성을 높입니다.
 
-```mermaid
-graph TB
-    subgraph "데이터센터 1"
-        subgraph "DC1 Spine (AS 64500)"
-            DC1S1[Spine 1]
-            DC1S2[Spine 2]
-        end
-
-        subgraph "DC1 Rack 1 (AS 64510)"
-            DC1R1N1[Node 1]
-            DC1R1N2[Node 2]
-        end
-
-        subgraph "DC1 Rack 2 (AS 64511)"
-            DC1R2N1[Node 3]
-            DC1R2N2[Node 4]
-        end
-    end
-
-    subgraph "데이터센터 2"
-        subgraph "DC2 Spine (AS 64600)"
-            DC2S1[Spine 1]
-            DC2S2[Spine 2]
-        end
-
-        subgraph "DC2 Rack 1 (AS 64610)"
-            DC2R1N1[Node 5]
-            DC2R1N2[Node 6]
-        end
-    end
-
-    subgraph "WAN/Internet"
-        WAN[WAN Router<br/>AS 64000]
-    end
-
-    DC1S1 <--> DC1R1N1
-    DC1S1 <--> DC1R1N2
-    DC1S1 <--> DC1R2N1
-    DC1S2 <--> DC1R2N2
-    DC1S1 <--> DC1S2
-
-    DC2S1 <--> DC2R1N1
-    DC2S1 <--> DC2R1N2
-    DC2S1 <--> DC2S2
-
-    DC1S1 <--> WAN
-    DC2S1 <--> WAN
-
-    style DC1S1 fill:#9c27b0
-    style DC1S2 fill:#9c27b0
-    style DC2S1 fill:#9c27b0
-    style DC2S2 fill:#9c27b0
-    style WAN fill:#f44336
-```
+![두 데이터센터가 각각 랙마다 별도의 AS를 두고 Spine이 각 랙과 eBGP로 연결되며, 두 데이터센터의 Spine이 공통 WAN 라우터(AS 64000)를 통해 서로 연결되는 멀티 데이터센터 BGP 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-6.png)
 
 #### AS-per-Rack Calico 설정
 

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="multiprimary-title multiprimary-desc">
+    <title id="multiprimary-title">Istio 멀티 프라이머리, 멀티 네트워크 배포</title>
+    <desc id="multiprimary-desc">us-east-1과 us-west-2 두 클러스터가 각자 자체 프라이머리 컨트롤 플레인을 두고 서비스 검색 정보를 교환하며, 두 클러스터의 파드는 각 클러스터의 East-West 게이트웨이를 거쳐 mTLS로 통신하는 구조를 보여준다.</desc>
+    <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#FFFFFF"/>
+
+    <!-- Zones -->
+    <rect x="40" y="40" width="400" height="360" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.30)" stroke-width="0.8"/>
+    <rect x="52" y="44" width="220" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="162" y="53" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.1em">클러스터 1: US-EAST-1 (PRIMARY)</text>
+
+    <rect x="520" y="40" width="400" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="532" y="44" width="220" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="642" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.1em">클러스터 2: US-WEST-2 (REMOTE)</text>
+
+    <!-- Istiod1 -> Istiod2 (config, accent) -->
+    <line x1="296" y1="76" x2="648" y2="76" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="428" y="58" width="88" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="472" y="67" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">구성 배포</text>
+
+    <!-- Istiod1 -> ServiceA (straight, same x) -->
+    <path d="M220,108 V148" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Istiod1 -> ServiceB (bottom exit, routes below Istiod2, enters left edge) -->
+    <path d="M250,108 V132 Q250,140 258,140 H600 Q608,140 608,148 V192 Q608,200 616,200 H648" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="373" y="120" width="112" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="429" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">서비스 검색</text>
+
+    <!-- PodA <-> EWG1 -->
+    <line x1="232" y1="240" x2="232" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+    <!-- EWG1 <-> EWG2 -->
+    <line x1="360" y1="332" x2="600" y2="332" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+    <rect x="446" y="312" width="66" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="479" y="321" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MTLS</text>
+    <!-- EWG2 <-> PodB -->
+    <line x1="712" y1="288" x2="712" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-start)" marker-start="url(#arrow)"/>
+
+    <!-- Nodes -->
+    <!-- Istiod1 (focal) -->
+    <rect x="168" y="60" width="128" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="168" y="60" width="128" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="232" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+    <text x="232" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">primary CP</text>
+
+    <!-- ServiceA -->
+    <rect x="168" y="148" width="128" height="40" rx="6" fill="#ffffff"/>
+    <rect x="168" y="148" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="232" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+
+    <!-- PodA -->
+    <rect x="168" y="200" width="128" height="40" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="168" y="200" width="128" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="232" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+
+    <!-- EWG1 -->
+    <rect x="168" y="288" width="128" height="44" rx="6" fill="#ffffff"/>
+    <rect x="168" y="288" width="128" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="232" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">East-West</text>
+    <text x="232" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">gateway</text>
+
+    <!-- Istiod2 -->
+    <rect x="648" y="60" width="128" height="48" rx="6" fill="#ffffff"/>
+    <rect x="648" y="60" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="712" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+    <text x="712" y="94" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">remote CP</text>
+
+    <!-- ServiceB -->
+    <rect x="648" y="180" width="128" height="40" rx="6" fill="#ffffff"/>
+    <rect x="648" y="180" width="128" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="712" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+
+    <!-- PodB -->
+    <rect x="648" y="228" width="128" height="40" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="648" y="228" width="128" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="712" y="252" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+    <!-- EWG2 -->
+    <rect x="648" y="288" width="128" height="44" rx="6" fill="#ffffff"/>
+    <rect x="648" y="288" width="128" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="712" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">East-West</text>
+    <text x="712" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">gateway</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="560" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="140" y="550" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="162" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">PRIMARY CONTROL PLANE</text>
+
+    <line x1="400" y1="557" x2="424" y2="557" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="432" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">CONFIG / MTLS DATA PATH</text>
+
+    <line x1="700" y1="557" x2="724" y2="557" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="732" y="561" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">SERVICE DISCOVERY (INDIRECT)</text>
+  </svg>

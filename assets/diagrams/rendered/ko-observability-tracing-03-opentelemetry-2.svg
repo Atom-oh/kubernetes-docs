@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+    <title id="d2-title">계측에서 백엔드까지 데이터 파이프라인</title>
+    <desc id="d2-desc">애플리케이션의 OTel API와 SDK에서 시작해 Receivers, Processors, Exporters 파이프라인을 거쳐 Tempo, Prometheus, Loki, X-Ray, Datadog 등 여러 백엔드로 데이터가 전달됨을 보여주는 다이어그램.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs><defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="20" y="268" width="300" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="118" y="272" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="170" y="281" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">애플리케이션</text>
+
+    <rect x="320" y="268" width="440" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="466" y="272" width="148" height="12" rx="2" fill="#ffffff"/>
+    <text x="540" y="281" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">데이터 파이프라인</text>
+
+    <!-- Arrows (straight, shared y=332) -->
+    <line x1="160" y1="332" x2="180" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="300" y1="332" x2="340" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="332" x2="480" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="600" y1="332" x2="620" y2="332" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="740" y1="332" x2="780" y2="332" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Node: OTel API -->
+    <rect x="40" y="300" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="300" width="120" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="100" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OTel API</text>
+
+    <!-- Node: OTel SDK -->
+    <rect x="180" y="300" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="180" y="300" width="120" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="240" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OTel SDK</text>
+
+    <!-- Node: Receivers -->
+    <rect x="340" y="300" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="340" y="300" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="400" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Receivers</text>
+
+    <!-- Node: Processors -->
+    <rect x="480" y="300" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="480" y="300" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="540" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Processors</text>
+
+    <!-- Node: Exporters (focal) -->
+    <rect x="620" y="300" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="620" y="300" width="120" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="680" y="336" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Exporters</text>
+
+    <!-- Node: Backends (store) -->
+    <rect x="780" y="300" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="780" y="300" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="850" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">백엔드</text>
+    <text x="850" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Tempo·Prom·Loki·XRay·DD</text>
+
+    <!-- Legend -->
+    <line x1="20" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="20" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="20" y="510" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="40" y="518" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주요 내보내기 단계 (focal)</text>
+
+    <rect x="270" y="510" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="290" y="518" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">파이프라인 단계</text>
+
+    <rect x="440" y="510" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="460" y="518" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">저장/관측 백엔드</text>
+  </svg>

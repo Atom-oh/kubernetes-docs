@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="lb-leastreq-title lb-leastreq-desc">
+    <title id="lb-leastreq-title">LEAST_REQUEST 알고리즘이 활성 요청이 가장 적은 파드로 라우팅하는 과정</title>
+    <desc id="lb-leastreq-desc">로드 밸런서가 세 파드의 활성 요청 수를 확인한 뒤, 활성 요청이 가장 적은 Pod 2로 새 요청을 라우팅하는 과정을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zone: 파드 상태 -->
+    <rect x="650" y="108" width="250" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="662" y="112" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="702" y="121" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">파드 상태</text>
+
+    <!-- ===== Arrows ===== -->
+    <!-- Client -> LB -->
+    <line x1="210" y1="300" x2="290" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- LB -> Pod1 (dashed check, right+up elbow) -->
+    <path d="M 470,284 H 562 Q 570,284 570,276 V 168 Q 570,160 578,160 H 670"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="578" y="216" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="598" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">검사</text>
+
+    <!-- LB -> Pod2 (solid select, straight, accent) -->
+    <line x1="470" y1="300" x2="670" y2="300" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="613" y="280" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="633" y="289" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">최소 부하</text>
+
+    <!-- LB -> Pod3 (dashed check, right+down elbow) -->
+    <path d="M 470,316 H 562 Q 570,316 570,324 V 432 Q 570,440 578,440 H 670"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="578" y="372" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="598" y="381" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">검사</text>
+
+    <!-- ===== Nodes ===== -->
+    <rect x="70" y="278" width="140" height="44" rx="6" fill="#ffffff"/>
+    <rect x="70" y="278" width="140" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="140" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+    <text x="140" y="313" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">새 요청</text>
+
+    <rect x="290" y="268" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="290" y="268" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="380" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+    <text x="380" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">LEAST_REQUEST</text>
+
+    <rect x="670" y="136" width="200" height="48" rx="6" fill="#ffffff"/>
+    <rect x="670" y="136" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="770" y="156" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 1</text>
+    <text x="770" y="172" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">활성 요청: 5개</text>
+
+    <rect x="670" y="276" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="670" y="276" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="770" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 2</text>
+    <text x="770" y="312" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">활성 요청: 2개 ✅</text>
+
+    <rect x="670" y="416" width="200" height="48" rx="6" fill="#ffffff"/>
+    <rect x="670" y="416" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="770" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 3</text>
+    <text x="770" y="452" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">활성 요청: 8개</text>
+  </svg>

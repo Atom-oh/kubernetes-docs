@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-3-title ko-eks-12-kubernetes-version-roadmap-3-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-3-title">EKS 버전 지원 체계</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-3-desc">EKS 버전 지원 체계가 Standard Support에서 Extended Support를 거쳐 지원 종료(End of Life)로 이어지는 3단계 흐름과 각 단계의 비용·정책 차이를 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M320 144.0 L352 144.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M612 144.0 L644 144.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="60" y="60" width="260" height="168" rx="8" fill="rgba(76,175,80,0.06)" stroke="#4CAF50" stroke-width="1"/>
+<rect x="72" y="52" width="200" height="16" rx="2" fill="#ffffff"/>
+<text x="80" y="63" fill="#4CAF50" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">STANDARD SUPPORT · 14개월</text>
+<text x="76" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Standard Support</text>
+<text x="76" y="112" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• $0.10/cluster/hour</text>
+<text x="76" y="130" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 정규 보안 패치</text>
+<text x="76" y="148" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 매니지드 애드온 업데이트</text>
+<text x="76" y="166" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• AWS 기술 지원</text>
+<rect x="352" y="60" width="260" height="168" rx="8" fill="rgba(255,152,0,0.06)" stroke="#FF9800" stroke-width="1"/>
+<rect x="364" y="52" width="208" height="16" rx="2" fill="#ffffff"/>
+<text x="372" y="63" fill="#FF9800" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">EXTENDED SUPPORT · +12개월</text>
+<text x="368" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Extended Support</text>
+<text x="368" y="112" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• $0.60/cluster/hour</text>
+<text x="368" y="130" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 중요 보안 패치만</text>
+<text x="368" y="148" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 제한된 애드온 업데이트</text>
+<text x="368" y="166" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 업그레이드 유예 기간</text>
+<rect x="644" y="60" width="260" height="168" rx="8" fill="rgba(244,67,54,0.06)" stroke="#F44336" stroke-width="1"/>
+<rect x="656" y="52" width="104" height="16" rx="2" fill="#ffffff"/>
+<text x="664" y="63" fill="#F44336" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">END OF LIFE</text>
+<text x="660" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">지원 종료</text>
+<text x="660" y="112" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 자동 업그레이드 시작</text>
+<text x="660" y="130" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 60일 사전 알림</text>
+<text x="660" y="148" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">• 컨트롤 플레인 먼저</text>
+
+</svg>

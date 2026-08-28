@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="harbor-arch-title harbor-arch-desc">
+    <title id="harbor-arch-title">Harbor internal architecture</title>
+    <desc id="harbor-arch-desc">Nginx and Portal both front the Core API, which hands work to the Registry; the Registry in turn depends on a metadata/queue data store and writes image layers to the storage backend.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zone: Harbor -->
+    <rect x="40" y="56" width="880" height="488" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="60" y="60" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="92" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">HARBOR</text>
+
+    <!-- Arrows (behind boxes) -->
+    <!-- Nginx -> Core (fan attach at x=376 on Core top edge) -->
+    <path d="M 200,168 V 192 Q 200,200 208,200 H 368 Q 376,200 376,208 V 216"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Portal -> Core (fan attach at x=424 on Core top edge) -->
+    <path d="M 600,168 V 192 Q 600,200 592,200 H 432 Q 424,200 424,208 V 216"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Core -> Registry (straight, shared x) -->
+    <line x1="400" y1="280" x2="400" y2="328" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- Registry -> Data Store (fan attach at x=376 on Registry bottom edge) -->
+    <path d="M 376,392 V 408 Q 376,416 368,416 H 248 Q 240,416 240,424 V 440"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Registry -> Storage Backend (fan attach at x=424 on Registry bottom edge) -->
+    <path d="M 424,392 V 408 Q 424,416 432,416 H 652 Q 660,416 660,424 V 440"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow label: API (Core -> Registry) -->
+    <rect x="382" y="292" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">API</text>
+
+    <!-- Node: Nginx -->
+    <rect x="120" y="104" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="120" y="104" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="128" y="112" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="144" y="121" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NET</text>
+    <text x="200" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Nginx</text>
+    <text x="200" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reverse proxy</text>
+
+    <!-- Node: Portal -->
+    <rect x="520" y="104" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="520" y="104" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="528" y="112" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="542" y="121" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">UI</text>
+    <text x="600" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Portal</text>
+    <text x="600" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">web UI</text>
+
+    <!-- Node: Core (focal) -->
+    <rect x="320" y="216" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="320" y="216" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="328" y="224" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="344" y="233" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+    <text x="400" y="252" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Core</text>
+    <text x="400" y="268" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">central API service</text>
+
+    <!-- Node: Registry -->
+    <rect x="320" y="328" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="320" y="328" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="328" y="336" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="344" y="345" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="400" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Registry</text>
+    <text x="400" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ Job Service, Trivy, Notary</text>
+
+    <!-- Node: Data Store -->
+    <rect x="160" y="440" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="160" y="440" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="168" y="448" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="182" y="457" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+    <text x="240" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data Store</text>
+    <text x="240" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PostgreSQL + Redis</text>
+
+    <!-- Node: Storage Backend -->
+    <rect x="560" y="440" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="560" y="440" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="568" y="448" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+    <text x="586" y="457" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="660" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Storage Backend</text>
+    <text x="660" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Filesystem / S3 / Azure / GCS</text>
+  </svg>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="canary-seq-title canary-seq-desc">
+<title id="canary-seq-title">Canary weighted traffic split during a rollout step</title>
+<desc id="canary-seq-desc">The VirtualService splits each client request by weight, sending most traffic to the stable pod and a small fraction to the canary pod, while Argo Rollouts gradually raises the canary weight from 10% toward 100%.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<!-- Lifelines -->
+<line x1="112" y1="96" x2="112" y2="392" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="344" y1="96" x2="344" y2="392" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="612" y1="96" x2="612" y2="392" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="860" y1="96" x2="860" y2="392" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- 1. Client -> VS: GET /api -->
+<path d="M 112,112 H 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="192" y="92" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="228" y="101" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">GET /api</text>
+
+<!-- alt fragment frame: spans VS, Stable, Canary lifelines -->
+<rect x="300" y="140" width="588" height="204" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="300" y="140" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="320" y="152" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+<text x="350" y="152" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[90% of traffic]</text>
+
+<!-- region 1: VS -> Stable -->
+<path d="M 344,184 H 612" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="440" y="164" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="478" y="173" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">stable-a 90%</text>
+
+<!-- region 1 return -->
+<path d="M 612,212 H 344" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="440" y="216" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="478" y="225" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">response v1</text>
+
+<!-- divider -->
+<line x1="308" y1="248" x2="880" y2="248" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="320" y="264" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">[else 10%]</text>
+
+<!-- region 2: VS -> Canary -->
+<path d="M 344,296 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="580" y="276" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="618" y="285" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">canary-a 10%</text>
+
+<!-- region 2 return -->
+<path d="M 860,324 H 344" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="580" y="328" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="618" y="337" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">response v2</text>
+
+<!-- 4. VS -> Client: Response -->
+<path d="M 344,368 H 112" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="192" y="372" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="226" y="381" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">response</text>
+
+<!-- Activation bars -->
+<rect x="108" y="112" width="8" height="256" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="340" y="112" width="8" height="256" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="608" y="184" width="8" height="28" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="0.8"/>
+<rect x="856" y="296" width="8" height="28" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- Actor labels -->
+<rect x="52" y="72" width="120" height="24" rx="4" fill="#ffffff" stroke="#7D8998" stroke-width="1"/>
+<text x="112" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+<rect x="284" y="72" width="120" height="24" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="344" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VirtualService</text>
+
+<rect x="552" y="72" width="120" height="24" rx="4" fill="#ffffff" stroke="#EC7211" stroke-width="1.2"/>
+<text x="612" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Stable Pod · 90%</text>
+
+<rect x="800" y="72" width="120" height="24" rx="4" fill="#ffffff" stroke="#7D8998" stroke-width="1"/>
+<text x="860" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Canary Pod · 10%</text>
+
+<!-- note: argo rollouts progression -->
+<rect x="700" y="140" width="180" height="40" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+<text x="790" y="153" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Argo Rollouts steps</text>
+<text x="790" y="164" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">weight: 10 -&gt; 20 -&gt; 50</text>
+<text x="790" y="175" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">-&gt; 80 -&gt; 100</text>
+
+<!-- legend -->
+<line x1="24" y1="408" x2="936" y2="408" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="420" x2="50" y2="420" stroke="#EC7211" stroke-width="1.4"/>
+<text x="58" y="423" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">STABLE PATH (90%)</text>
+<line x1="220" y1="420" x2="240" y2="420" stroke="#545B64" stroke-width="1.2"/>
+<text x="248" y="423" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">CANARY PATH (10%)</text>
+</svg>

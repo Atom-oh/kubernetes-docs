@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="inhibition-title inhibition-desc">
+      <title id="inhibition-title">Inhibition Concept</title>
+      <desc id="inhibition-desc">Architecture diagram contrasting alert delivery without inhibition, where three related alerts all reach the receiver, against delivery with inhibition, where a node-down alert still reaches the receiver while the pod and service alerts it implies are suppressed.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Zones -->
+      <rect x="40" y="100" width="400" height="204" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="56" y="104" width="168" height="12" rx="2" fill="#ffffff"/>
+      <text x="140" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WITHOUT INHIBITION</text>
+
+      <rect x="520" y="100" width="400" height="204" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="536" y="104" width="144" height="12" rx="2" fill="#ffffff"/>
+      <text x="608" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WITH INHIBITION</text>
+
+      <!-- Zone A arrows -->
+      <path d="M 204,158 H 280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="214" y="138" width="56" height="12" rx="2" fill="#ffffff"/>
+      <text x="242" y="147" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SENT</text>
+
+      <path d="M 204,214 H 280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="214" y="194" width="56" height="12" rx="2" fill="#ffffff"/>
+      <text x="242" y="203" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SENT</text>
+
+      <path d="M 204,270 H 280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="214" y="250" width="56" height="12" rx="2" fill="#ffffff"/>
+      <text x="242" y="259" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SENT</text>
+
+      <!-- Zone B arrows -->
+      <path d="M 684,158 H 760" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="694" y="138" width="56" height="12" rx="2" fill="#ffffff"/>
+      <text x="722" y="147" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SENT</text>
+
+      <!-- PodNotReady2 -> X (suppressed, dashed) -->
+      <path d="M 684,214 H 736 Q 744,214 744,222 V 226 Q 744,234 752,234 H 804"
+            fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- ServiceUnavailable2 -> X (suppressed, dashed) -->
+      <path d="M 684,270 H 736 Q 744,270 744,262 V 258 Q 744,250 752,250 H 804"
+            fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- Zone A nodes -->
+      <rect x="64" y="140" width="140" height="36" rx="6" fill="#ffffff"/>
+      <rect x="64" y="140" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="134" y="162" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">NodeDown</text>
+
+      <rect x="64" y="196" width="140" height="36" rx="6" fill="#ffffff"/>
+      <rect x="64" y="196" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="134" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PodNotReady</text>
+
+      <rect x="64" y="252" width="140" height="36" rx="6" fill="#ffffff"/>
+      <rect x="64" y="252" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="134" y="274" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ServiceUnavailable</text>
+
+      <rect x="280" y="140" width="120" height="132" rx="6" fill="rgba(35,47,62,0.03)"/>
+      <rect x="280" y="140" width="120" height="132" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="340" y="210" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Receiver</text>
+
+      <!-- Zone B nodes -->
+      <rect x="544" y="140" width="140" height="36" rx="6" fill="#ffffff"/>
+      <rect x="544" y="140" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="614" y="162" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">NodeDown</text>
+
+      <rect x="544" y="196" width="140" height="36" rx="6" fill="#ffffff"/>
+      <rect x="544" y="196" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="614" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PodNotReady</text>
+
+      <rect x="544" y="252" width="140" height="36" rx="6" fill="#ffffff"/>
+      <rect x="544" y="252" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="614" y="274" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ServiceUnavailable</text>
+
+      <rect x="760" y="140" width="120" height="36" rx="6" fill="rgba(35,47,62,0.03)"/>
+      <rect x="760" y="140" width="120" height="36" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="820" y="162" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Receiver</text>
+
+      <!-- X (suppressed sink, focal) -->
+      <circle cx="820" cy="242" r="20" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <line x1="812" y1="234" x2="828" y2="250" stroke="#EC7211" stroke-width="1.2"/>
+      <line x1="828" y1="234" x2="812" y2="250" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="820" y="276" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">suppressed</text>
+
+      <!-- Legend -->
+      <line x1="30" y1="500" x2="930" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="140" y1="512" x2="176" y2="512" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="184" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">DELIVERED</text>
+      <line x1="320" y1="512" x2="356" y2="512" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="364" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SUPPRESSED BY INHIBIT RULE</text>
+    </svg>

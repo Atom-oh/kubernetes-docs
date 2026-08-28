@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+<title id="d2-title">AI/ML 파드 콜드 스타트 시퀀스</title>
+<desc id="d2-desc">쿠버네티스 스케줄러, Kubelet, 컨테이너 레지스트리, 컨테이너 런타임, AI/ML 애플리케이션 사이에서 파드 스케줄링부터 이미지 풀, 컨테이너 생성, 모델 로딩, 헬스 체크까지 이어지는 콜드 스타트 과정과 각 단계의 소요 시간.</desc>
+<defs>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="32" y="32" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">SEQUENCE &#183; AI/ML POD COLD START</text>
+
+<!-- lifelines -->
+<line x1="128" y1="84" x2="128" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="304" y1="84" x2="304" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="84" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="656" y1="84" x2="656" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="832" y1="84" x2="832" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- activation bars -->
+<rect x="300" y="148" width="8" height="208" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="476" y="220" width="8" height="88" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="652" y="356" width="8" height="152" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="828" y="428" width="8" height="80" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- top note spanning all lifelines -->
+<rect x="68" y="96" width="824" height="28" rx="4" fill="#ffffff"/>
+<rect x="68" y="96" width="824" height="28" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="480" y="114" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">총 콜드 스타트 시간: 대규모 AI/ML 이미지의 경우 5&#8211;15분</text>
+
+<!-- message 1: Scheduler -> Kubelet -->
+<rect x="176" y="128" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="216" y="137" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">파드 스케줄링됨</text>
+<line x1="128" y1="148" x2="300" y2="148" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- note over Kubelet -->
+<rect x="234" y="164" width="140" height="24" rx="4" fill="#ffffff"/>
+<rect x="234" y="164" width="140" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="304" y="180" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">노드 선택: &#126;100ms</text>
+
+<!-- message 2: Kubelet -> Registry -->
+<rect x="356" y="200" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="396" y="209" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">이미지 풀 요청</text>
+<line x1="308" y1="220" x2="476" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- note over Kubelet,Registry -->
+<rect x="234" y="236" width="316" height="36" rx="4" fill="#ffffff"/>
+<rect x="234" y="236" width="316" height="36" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="392" y="252" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">이미지 풀: 2&#8211;10분</text>
+<text x="392" y="264" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">(10&#8211;50GB 이미지)</text>
+
+<!-- message 3: Registry to Kubelet (return, dashed) -->
+<rect x="356" y="288" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="297" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">이미지 레이어</text>
+<line x1="476" y1="308" x2="308" y2="308" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+<!-- message 4: Kubelet -> Container -->
+<rect x="440" y="336" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="484" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">컨테이너 생성</text>
+<line x1="308" y1="356" x2="652" y2="356" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- note over Container -->
+<rect x="586" y="372" width="140" height="24" rx="4" fill="#ffffff"/>
+<rect x="586" y="372" width="140" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="656" y="388" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">컨테이너 생성: &#126;5s</text>
+
+<!-- message 5: Container -> App -->
+<rect x="700" y="408" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="744" y="417" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">프로세스 시작</text>
+<line x1="660" y1="428" x2="828" y2="428" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- note over App: model loading -->
+<rect x="742" y="444" width="180" height="36" rx="4" fill="#ffffff"/>
+<rect x="742" y="444" width="180" height="36" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="832" y="460" fill="#232F3E" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">모델 로딩: 1&#8211;5분</text>
+<text x="832" y="472" fill="#232F3E" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">(GPU 메모리에 가중치 로드)</text>
+
+<!-- message 6: App to Container (return, dashed) -->
+<rect x="700" y="488" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="730" y="497" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">준비됨</text>
+<line x1="828" y1="508" x2="660" y2="508" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+<!-- note over App: health check -->
+<rect x="742" y="524" width="180" height="24" rx="4" fill="#ffffff"/>
+<rect x="742" y="524" width="180" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="832" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">헬스 체크 통과: &#126;30s</text>
+
+<!-- actor boxes (drawn last, top of z-order) -->
+<rect x="68" y="48" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="128" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s 스케줄러</text>
+
+<rect x="244" y="48" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="304" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubelet</text>
+
+<rect x="420" y="48" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 레지스트리</text>
+
+<rect x="596" y="48" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="656" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 런타임</text>
+
+<rect x="772" y="48" width="120" height="36" rx="6" fill="#ffffff"/>
+<rect x="772" y="48" width="120" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="832" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AI/ML 애플리케이션</text>
+
+<!-- footer -->
+<text x="32" y="580" fill="#7D8998" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">이미지 풀과 모델 로딩이 콜드 스타트 시간의 대부분을 차지한다.</text>
+</svg>

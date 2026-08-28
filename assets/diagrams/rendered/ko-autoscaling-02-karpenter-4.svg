@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karp-cmp-title karp-cmp-desc">
+    <title id="karp-cmp-title">Cluster Autoscaler와 Karpenter 비교</title>
+    <desc id="karp-cmp-desc">노드 그룹 기반으로 느리게 확장하는 Cluster Autoscaler와, 워크로드 기반으로 다양한 인스턴스 유형과 노드 통합·스팟 활용까지 지원해 더 높은 비용 절감을 이끄는 Karpenter의 특징을 나란히 비교한다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- VS divider -->
+    <line x1="480" y1="120" x2="480" y2="508" stroke="rgba(35,47,62,0.12)" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="480" cy="314" r="20" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <text x="480" y="318" fill="#545B64" font-size="12" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">VS</text>
+
+    <!-- Arrows -->
+    <line x1="240" y1="188" x2="240" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="240" y1="432" x2="240" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="188" x2="720" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="432" x2="720" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Left column: Cluster Autoscaler -->
+    <rect x="100" y="140" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cluster Autoscaler</text>
+
+    <rect x="100" y="216" width="280" height="216" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="128" y="244" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 노드 그룹 기반 스케일링</text>
+    <text x="128" y="268" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 동일한 인스턴스 유형</text>
+    <text x="128" y="292" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 느린 스케일링 속도</text>
+    <text x="128" y="316" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 제한된 빈 패킹</text>
+
+    <rect x="100" y="460" width="280" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="240" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 절감: 중간</text>
+
+    <!-- Right column: Karpenter -->
+    <rect x="580" y="140" width="280" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="720" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter</text>
+
+    <rect x="580" y="216" width="280" height="216" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="608" y="244" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 워크로드 기반 스케일링</text>
+    <text x="608" y="268" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 다양한 인스턴스 유형</text>
+    <text x="608" y="292" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 빠른 스케일링 속도</text>
+    <text x="608" y="316" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 효율적인 빈 패킹</text>
+    <text x="608" y="340" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 노드 통합</text>
+    <text x="608" y="364" fill="#232F3E" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">· 스팟 인스턴스 활용</text>
+
+    <rect x="580" y="460" width="280" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="720" y="488" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 절감: 높음</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="548" width="16" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="164" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">특징 요약</text>
+    <rect x="320" y="548" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="344" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">더 높은 비용 절감</text>
+  </svg>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-advanced-08-argo-rollouts-0-title ko-service-mesh-istio-advanced-08-argo-rollouts-0-desc">
+<title id="ko-service-mesh-istio-advanced-08-argo-rollouts-0-title">수동 대비 자동 Canary 트래픽 전환</title>
+<desc id="ko-service-mesh-istio-advanced-08-argo-rollouts-0-desc">VirtualService를 직접 수정하는 수동 트래픽 조정 방식과, Argo Rollouts가 메트릭을 검증하며 자동으로 트래픽을 전환하는 방식을 좌우로 대비하는 다이어그램.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="40" y="100" width="380" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="104" width="184" height="12" rx="2" fill="#ffffff"/>
+<text x="148" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">수동 트래픽 조정 방식</text>
+
+<rect x="540" y="100" width="380" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="556" y="104" width="204" height="12" rx="2" fill="#ffffff"/>
+<text x="658" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">ARGO ROLLOUTS + ISTIO</text>
+
+<!-- Arrows (drawn before boxes) -->
+<path d="M138,200 V216 Q138,224 146,224 H174 Q182,224 182,232 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M326,200 V216 Q326,224 318,224 H290 Q282,224 282,232 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="720" y1="192" x2="720" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="720" y1="272" x2="720" y2="296" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- Nodes: Zone1 -->
+<rect x="68" y="136" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="68" y="136" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="138" y="162" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Deployment v1</text>
+<text x="138" y="178" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">weight: 100%</text>
+
+<rect x="256" y="136" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="256" y="136" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="326" y="162" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Deployment v2</text>
+<text x="326" y="178" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">weight: 0%</text>
+
+<rect x="132" y="248" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="132" y="248" width="200" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="232" y="274" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">수동 트래픽 조정</text>
+<text x="232" y="290" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">edit VirtualService</text>
+
+<!-- Nodes: Zone2 -->
+<rect x="572" y="136" width="296" height="56" rx="6" fill="#ffffff"/>
+<rect x="572" y="136" width="296" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="720" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rollout</text>
+<text x="720" y="176" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">자동 버전 관리</text>
+
+<rect x="572" y="216" width="296" height="56" rx="6" fill="#ffffff"/>
+<rect x="572" y="216" width="296" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="720" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">자동 트래픽 조정</text>
+<text x="720" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">metric-driven progressive</text>
+
+<rect x="572" y="296" width="296" height="56" rx="6" fill="#ffffff"/>
+<rect x="572" y="296" width="296" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="720" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analysis</text>
+<text x="720" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">성공률 / 레이턴시 검증</text>
+
+<!-- Legend -->
+<line x1="40" y1="420" x2="920" y2="420" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="436" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="40" y="452" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="60" y="460" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">일반 컴포넌트</text>
+<rect x="220" y="452" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="240" y="460" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">자동화 핵심 단계</text>
+</svg>

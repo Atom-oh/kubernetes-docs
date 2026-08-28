@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="bluegreen-switch-title bluegreen-switch-desc">
+      <title id="bluegreen-switch-title">블루/그린 트래픽 전환 전후</title>
+      <desc id="bluegreen-switch-desc">전환 전에는 로드 밸런서가 Blue v1.0.0으로 트래픽을 보내고 Green v2.0.0은 대기 상태이며, 전환 후에는 로드 밸런서가 Green v2.0.0으로 전환되고 이전 버전인 Blue v1.0.0은 삭제 대상이 되는 모습을 보여주는 다이어그램입니다.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Zones -->
+      <rect x="40" y="88" width="400" height="360" rx="8" fill="#f2f3f3" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+      <text x="52" y="104" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">전환 전</text>
+
+      <rect x="520" y="88" width="400" height="360" rx="8" fill="#f2f3f3" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+      <text x="532" y="104" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">전환 후</text>
+
+      <!-- Arrows -->
+      <path d="M240,168 V220" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <path d="M240,268 V320" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <path d="M720,168 V220" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <path d="M720,368 V392" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <!-- Headline transition: Blue1 (active before) -> Green2 (active after) -->
+      <path d="M340,244 H620" fill="none" stroke="#EC7211" stroke-width="1.6" marker-end="url(#arrow-accent)"/>
+
+      <!-- Arrow labels -->
+      <rect x="248" y="288" width="36" height="12" rx="2" fill="#ffffff"/>
+      <text x="266" y="297" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">대기</text>
+
+      <rect x="728" y="374" width="52" height="12" rx="2" fill="#ffffff"/>
+      <text x="754" y="383" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">삭제 예정</text>
+
+      <rect x="462" y="222" width="36" height="12" rx="2" fill="#ffffff"/>
+      <text x="480" y="231" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">전환</text>
+
+      <!-- Zone 1 nodes -->
+      <rect x="140" y="120" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="240" y="149" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+      <rect x="140" y="220" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.4"/>
+      <text x="240" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Blue</text>
+      <text x="240" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">v1.0.0 · active</text>
+
+      <rect x="140" y="320" width="200" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="240" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Green</text>
+      <text x="240" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">v2.0.0 · preview</text>
+
+      <!-- Zone 2 nodes -->
+      <rect x="620" y="120" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="720" y="149" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+      <rect x="620" y="220" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.4"/>
+      <text x="720" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Green</text>
+      <text x="720" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">v2.0.0 · active</text>
+
+      <rect x="620" y="320" width="200" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="720" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Blue</text>
+      <text x="720" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">v1.0.0 · 이전 버전</text>
+
+      <rect x="660" y="392" width="120" height="40" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="720" y="416" fill="#545B64" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">삭제됨</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="488" x2="920" y2="488" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="504" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+
+      <rect x="40" y="520" width="24" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.4"/>
+      <text x="72" y="530" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">현재 활성 (트래픽 수신)</text>
+
+      <rect x="280" y="520" width="24" height="12" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="312" y="530" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">이전 버전</text>
+
+      <rect x="440" y="520" width="24" height="12" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="472" y="530" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">대기 · 삭제 예정</text>
+    </svg>

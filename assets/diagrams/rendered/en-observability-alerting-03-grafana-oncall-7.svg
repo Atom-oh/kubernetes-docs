@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-observability-alerting-03-grafana-oncall-7-title en-observability-alerting-03-grafana-oncall-7-desc">
+<title id="en-observability-alerting-03-grafana-oncall-7-title">Grafana OnCall Notification Channel Priority</title>
+<desc id="en-observability-alerting-03-grafana-oncall-7-desc">Flowchart showing that an important alert fans out to every notification channel — push, phone, SMS, Slack, and email — while a default-priority alert reaches only Slack and email.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 480,56 L 480,100" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400,132 H 252 Q 260,132 260,140 V 228" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M 560,132 H 702 Q 710,132 710,140 V 228" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 208,276 H 92 Q 100,276 100,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 232,276 H 252 Q 260,276 260,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 260,276 H 412 Q 420,276 420,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 288,276 H 550 Q 558,276 558,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 312,276 H 710 Q 718,276 718,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 680,276 H 594 Q 602,276 602,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 740,276 H 754 Q 762,276 762,284 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="299.0" y="112" width="62" height="12" rx="2" fill="#ffffff"/><text x="330" y="121" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">IMPORTANT</text>
+<rect x="605.0" y="112" width="50" height="12" rx="2" fill="#ffffff"/><text x="630" y="121" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DEFAULT</text>
+<ellipse cx="480" cy="36" rx="80.0" ry="20.0" fill="#ffffff"/>
+<ellipse cx="480" cy="36" rx="80.0" ry="20.0" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="480" y="40" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert Fired</text>
+<polygon points="480,100.0 560.0,132 480,164.0 400.0,132" fill="#ffffff"/>
+<polygon points="480,100.0 560.0,132 480,164.0 400.0,132" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="136" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Importance?</text>
+<rect x="180" y="228" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="228" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="260.0" y="256.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">All Channels</text>
+<rect x="620" y="228" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="620" y="228" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="256.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Default Channels Only</text>
+<rect x="35" y="380" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="35" y="380" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Push Notification</text>
+<rect x="195" y="380" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="195" y="380" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Phone Call</text>
+<rect x="355" y="380" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="355" y="380" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">SMS</text>
+<rect x="515" y="380" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="515" y="380" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="580.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Slack</text>
+<rect x="675" y="380" width="130" height="48" rx="6" fill="#ffffff"/>
+<rect x="675" y="380" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="740.0" y="408.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Email</text>
+<line x1="24" y1="460" x2="936" y2="460" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="476" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="300" y="468" width="10" height="10" rx="2" fill="none" stroke="#EC7211" stroke-width="1.4"/>
+<text x="316" y="477" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FOCAL — IMPORTANT PATH (ALL CHANNELS)</text>
+</svg>

@@ -23,30 +23,7 @@ Apache Kafka는 대용량의 실시간 데이터 스트림을 처리하기 위�
 
 ### 프로듀서 → 파티션 → 컨슈머 그룹 흐름
 
-```mermaid
-flowchart LR
-    P1[Producer]
-    subgraph B1[Broker 1]
-        T0[Topic orders - Partition 0 - Leader]
-    end
-    subgraph B2[Broker 2]
-        T1[Topic orders - Partition 1 - Leader]
-    end
-    subgraph B3[Broker 3]
-        T2[Topic orders - Partition 2 - Leader]
-    end
-    P1 --> T0
-    P1 --> T1
-    P1 --> T2
-    subgraph CG[Consumer Group: order-processor]
-        C1[Consumer 1]
-        C2[Consumer 2]
-        C3[Consumer 3]
-    end
-    T0 --> C1
-    T1 --> C2
-    T2 --> C3
-```
+![프로듀서가 orders 토픽의 파티션 3개를 각각 다른 브로커의 리더에 분산 기록하고, order-processor 컨슈머 그룹에 속한 컨슈머 3개가 파티션마다 하나씩 전담으로 읽어가는 Kafka 파티셔닝-컨슈머 그룹 매핑 구조.](../../.gitbook/assets/ko-data-on-eks-kafka-01-kafka-fundamentals-0.png)
 
 프로듀서는 토픽에 메시지를 쓰고, Kafka는 파티션 단위로 메시지를 여러 브로커에 분산 저장합니다. 같은 컨슈머 그룹에 속한 컨슈머들은 파티션을 나눠 가지며(1:1에 가깝게 매핑) 병렬로 메시지를 소비합니다.
 

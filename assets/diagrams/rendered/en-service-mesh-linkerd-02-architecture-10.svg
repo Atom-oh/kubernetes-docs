@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-linkerd-02-architecture-10-title en-service-mesh-linkerd-02-architecture-10-desc">
+<title id="en-service-mesh-linkerd-02-architecture-10-title">Linkerd vs. Istio Control and Data Plane</title>
+<desc id="en-service-mesh-linkerd-02-architecture-10-desc">Side-by-side comparison showing Linkerd's three small, distributed control-plane components and lightweight Rust proxy next to Istio's unified istiod control plane and heavier C++ Envoy proxy.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="80" y="80" width="360" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="92" y="74" width="142" height="12" rx="2" fill="#ffffff"/>
+<text x="163.0" y="83" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LINKERD CONTROL PLANE</text>
+<rect x="520" y="80" width="360" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="532" y="74" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="597.0" y="83" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ISTIO CONTROL PLANE</text>
+<rect x="80" y="280" width="360" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="92" y="274" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="154.0" y="283" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LINKERD DATA PLANE</text>
+<rect x="520" y="280" width="360" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="532" y="274" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="588.0" y="283" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ISTIO DATA PLANE</text>
+<rect x="100" y="132" width="100" height="56" rx="6" fill="#ffffff"/>
+<rect x="100" y="132" width="100" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Destination</text>
+<rect x="212" y="132" width="100" height="56" rx="6" fill="#ffffff"/>
+<rect x="212" y="132" width="100" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="262.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Identity</text>
+<rect x="324" y="132" width="100" height="56" rx="6" fill="#ffffff"/>
+<rect x="324" y="132" width="100" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="374.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Proxy Injector</text>
+<rect x="600" y="132" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="600" y="132" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700.0" y="156.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">istiod</text>
+<text x="700.0" y="172.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pilot + Citadel + Galley</text>
+<rect x="180" y="332" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="180" y="332" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">linkerd-proxy</text>
+<text x="260.0" y="372.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Rust · ~10MB</text>
+<rect x="620" y="332" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="620" y="332" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="700.0" y="356.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy</text>
+<text x="700.0" y="372.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">C++ · ~50-100MB</text>
+</svg>

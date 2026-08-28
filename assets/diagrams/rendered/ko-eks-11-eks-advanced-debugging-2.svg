@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-11-eks-advanced-debugging-2-title ko-eks-11-eks-advanced-debugging-2-desc">
+<title id="ko-eks-11-eks-advanced-debugging-2-title">파드 상태 흐름도</title>
+<desc id="ko-eks-11-eks-advanced-debugging-2-desc">파드가 Pending에서 이미지 풀과 실행을 거쳐 Succeeded로 끝나거나 Failed를 통해 재시작 정책에 따라 다시 Pending으로 돌아가는 생명주기와, 각 단계에서 흔히 발생하는 실패 원인을 보여주는 상태 다이어그램.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<circle cx="14" cy="300.0" r="6" fill="#232F3E"/>
+<line x1="20" y1="300.0" x2="40" y2="300.0" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="300.0" x2="256" y2="300.0" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="196.5" y="280.0" width="43" height="12" rx="2" fill="#ffffff"/>
+<text x="218.0" y="289.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">이미지 풀</text>
+<line x1="424" y1="300.0" x2="510" y2="300.0" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="455.0" y="280.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="467.0" y="289.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">성공</text>
+<line x1="650" y1="300.0" x2="730" y2="300.0" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="678.0" y="280.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="690.0" y="289.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">완료</text>
+<path d="M 340.0,332 V 372.0 Q 340.0,380.0 348.0,380.0 H 398.6666666666667 Q 406.6666666666667,380.0 406.6666666666667,388.0 V 428" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="361.33333333333337" y="360.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="373.33333333333337" y="369.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">실패</text>
+<path d="M 580.0,332 V 372.0 Q 580.0,380.0 572.0,380.0 H 461.3333333333333 Q 453.3333333333333,380.0 453.3333333333333,388.0 V 428" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="502.16666666666663" y="360.0" width="29" height="12" rx="2" fill="#ffffff"/>
+<text x="516.6666666666666" y="369.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">크래시</text>
+<path d="M 360,460.0 H 118.0 Q 110.0,460.0 110.0,452.0 V 332" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="210.0" y="440.0" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="235.0" y="449.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">재시작 정책</text>
+<rect x="40" y="268" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="268" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110.0" y="302.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pending</text>
+<rect x="256" y="268" width="168" height="64" rx="6" fill="#ffffff"/>
+<rect x="256" y="268" width="168" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340.0" y="302.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ContainerCreating</text>
+<rect x="510" y="268" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="510" y="268" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="580.0" y="302.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Running</text>
+<rect x="730" y="268" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="730" y="268" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800.0" y="302.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Succeeded</text>
+<rect x="360" y="428" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="360" y="428" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="430.0" y="462.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Failed</text>
+<rect x="40" y="500" width="880" height="76" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+<rect x="48" y="504" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="108" y="513" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">주요 실패 원인</text>
+<text x="56" y="532" fill="#545B64" font-size="10" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Pending — 리소스 부족, 스케줄링 실패</text>
+<text x="56" y="550" fill="#545B64" font-size="10" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">ContainerCreating — 이미지 풀 실패, 볼륨 마운트 실패</text>
+<text x="56" y="568" fill="#545B64" font-size="10" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Failed — OOMKilled, CrashLoopBackOff</text>
+</svg>

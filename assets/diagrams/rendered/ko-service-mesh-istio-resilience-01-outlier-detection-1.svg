@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="od-process-title od-process-desc">
+<title id="od-process-title">Outlier Detection 감지·제외·복구 순환 흐름</title>
+<desc id="od-process-desc">요청마다 에러 여부를 확인해 연속 에러를 카운트하고, 임계값을 넘으면 인스턴스를 제외한 뒤 대기 후 복구를 시도하여 다시 요청 순환으로 돌아가는 Outlier Detection의 판단 흐름을 보여준다.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- Arrows (before nodes) -->
+<!-- Start -> Check : straight -->
+<path d="M160,120 H220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Check -> Count : straight, label 에러 -->
+<path d="M320,120 H380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="330" y="98" width="40" height="14" rx="2" fill="#FFFFFF"/>
+<text x="350" y="108" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ERROR</text>
+
+<!-- Check -> Normal : straight vertical, label 성공 -->
+<path d="M270,160 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="278" y="228" width="36" height="14" rx="2" fill="#FFFFFF"/>
+<text x="296" y="238" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">OK</text>
+
+<!-- Count -> Threshold : straight -->
+<path d="M500,120 H560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Threshold -> Eject : straight, label YES -->
+<path d="M660,120 H720" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="670" y="98" width="32" height="14" rx="2" fill="#FFFFFF"/>
+<text x="686" y="108" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">YES</text>
+
+<!-- Threshold -> Normal : up-and-over, label NO. From top vertex (610,80) up to y=20, left to x=320, down into Normal top -->
+<path d="M610,80 V28 Q610,20 602,20 H328 Q320,20 320,28 V320"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="440" y="6" width="30" height="14" rx="2" fill="#FFFFFF"/>
+<text x="455" y="16" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NO</text>
+
+<!-- Eject -> Wait : straight vertical -->
+<path d="M780,148 V320" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- Wait -> Retry : straight horizontal (right to left) -->
+<path d="M720,348 H640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Retry -> Start : loop back below, exit Retry bottom, under row2, up into Start bottom -->
+<path d="M580,376 V432 Q580,440 572,440 H108 Q100,440 100,432 V148"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- Nodes -->
+<!-- Start (oval) -->
+<rect x="40" y="92" width="120" height="56" rx="20" fill="#FFFFFF"/>
+<rect x="40" y="92" width="120" height="56" rx="20" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">요청 시작</text>
+
+<!-- Check (diamond) -->
+<path d="M270,80 L320,120 L270,160 L220,120 Z" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="270" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">에러 확인</text>
+
+<!-- Count (rect) -->
+<rect x="380" y="92" width="120" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="440" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">에러 카운트</text>
+<text x="440" y="136" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">increment</text>
+
+<!-- Threshold (diamond, focal) -->
+<path d="M610,80 L660,120 L610,160 L560,120 Z" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="610" y="116" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">임계값</text>
+<text x="610" y="130" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">초과?</text>
+
+<!-- Eject (rect) -->
+<rect x="720" y="92" width="120" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인스턴스 제외</text>
+<text x="780" y="136" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">eject</text>
+
+<!-- Normal (rect, terminal) -->
+<rect x="200" y="320" width="140" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="270" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">정상 처리</text>
+<circle cx="270" cy="386" r="4" fill="#232F3E"/>
+
+<!-- Wait (rect) -->
+<rect x="720" y="320" width="120" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="780" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">대기 시간</text>
+<text x="780" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">baseEjectionTime</text>
+
+<!-- Retry (rect) -->
+<rect x="520" y="320" width="120" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="580" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">복구 시도</text>
+<text x="580" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">retry</text>
+
+<!-- Legend -->
+<line x1="30" y1="500" x2="930" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<path d="M172,505 L188,513 L172,521 L156,513 Z" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="516" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">판단 분기</text>
+<rect x="356" y="506" width="16" height="14" rx="3" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="384" y="516" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">처리 단계</text>
+<rect x="540" y="506" width="16" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="568" y="516" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">제외로 이어지는 경로</text>
+<circle cx="770" cy="513" r="4" fill="#232F3E"/>
+<text x="784" y="516" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">순환 종료</text>
+</svg>

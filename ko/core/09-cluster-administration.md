@@ -65,26 +65,7 @@ Kubernetes 클러스터는 컨트롤 플레인 구성요소와 노드 구성요�
 
 ### 컨트롤 플레인 구성요소 관리
 
-```mermaid
-graph TD
-    A[컨트롤 플레인] --> B[API 서버]
-    A --> C[etcd]
-    A --> D[스케줄러]
-    A --> E[컨트롤러 관리자]
-    A --> F[클라우드 컨트롤러 관리자]
-    
-    B --> G[인증 및 권한 부여]
-    C --> H[데이터 백업]
-    D --> I[스케줄링 정책]
-    E --> J[컨트롤러 상태 모니터링]
-    F --> K[클라우드 리소스 관리]
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef operation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class A,B,C,D,E,F k8sComponent;
-    class G,H,I,J,K operation;
-```
+![컨트롤 플레인이 API 서버, etcd, 스케줄러, 컨트롤러 관리자, 클라우드 컨트롤러 관리자로 구성되며 각 구성요소가 담당하는 운영 작업을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-0.png)
 
 #### API 서버 관리
 
@@ -155,30 +136,7 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-```mermaid
-flowchart TD
-    Admin[클러스터 관리자] --> Setup[클러스터 설정 및 구성]
-    Admin --> Operations[운영 관리]
-    Admin --> Security[보안 관리]
-    Admin --> Upgrade[업그레이드 및 패치]
-    Admin --> Backup[백업 및 복구]
-    
-    Setup --> |도구| SetupTools[kubeadm, kops, eksctl]
-    Operations --> |도구| OpsTools[kubectl, Prometheus, Grafana]
-    Security --> |도구| SecTools[RBAC, NetworkPolicy, PodSecurityPolicy]
-    Upgrade --> |도구| UpgradeTools[kubeadm upgrade, EKS 업데이트]
-    Backup --> |도구| BackupTools[etcd snapshot, Velero]
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Admin userApp;
-    class Setup,Operations,Security,Upgrade,Backup k8sComponent;
-    class SetupTools,OpsTools,SecTools,UpgradeTools,BackupTools default;
-```
+![클러스터 관리자가 설정, 운영, 보안, 업그레이드, 백업 다섯 영역을 관리하며 각 영역마다 사용하는 도구를 매핑한 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-1.png)
 
 ### 클러스터 관리 도구
 
@@ -209,38 +167,7 @@ Kubernetes 클러스터는 여러 구성요소로 이루어져 있으며, 이러
 
 다음 다이어그램은 Kubernetes 컨트롤 플레인 구성요소와 그 상호작용을 보여줍니다:
 
-```mermaid
-flowchart TD
-    API[kube-apiserver] <--> ETCD[(etcd)]
-    API <--> SCH[kube-scheduler]
-    API <--> CM[kube-controller-manager]
-    API <--> CCM[cloud-controller-manager]
-    API <--> Kubelet[kubelet]
-    
-    subgraph "컨트롤 플레인"
-        API
-        ETCD
-        SCH
-        CM
-        CCM
-    end
-    
-    subgraph "워커 노드"
-        Kubelet
-        Proxy[kube-proxy]
-        CRI[컨테이너 런타임]
-    end
-    
-    Kubelet --> CRI
-    Kubelet --> Proxy
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class API,SCH,CM,CCM,Kubelet,Proxy,CRI k8sComponent;
-    class ETCD dataStore;
-```
+![kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저, 클라우드 컨트롤러 매니저가 양방향으로 통신하고, 각 워커 노드의 kubelet이 API 서버와 통신하며 kube-proxy와 컨테이너 런타임을 관리하는 구조를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-2.png)
 
 #### 컨트롤 플레인 구성요소 모니터링
 
@@ -459,36 +386,7 @@ Kubernetes 네트워크 모델의 기본 요구 사항:
 
 다음 다이어그램은 Kubernetes 네트워킹 구성요소와 통신 흐름을 보여줍니다:
 
-```mermaid
-flowchart LR
-    Client[클라이언트] --> Ingress[인그레스]
-    Ingress --> SVC[서비스]
-    SVC --> Pod1[포드 1]
-    SVC --> Pod2[포드 2]
-    
-    subgraph "클러스터 내부"
-        Ingress
-        SVC
-        subgraph "노드 1"
-            Pod1
-        end
-        subgraph "노드 2"
-            Pod2
-        end
-    end
-    
-    Pod1 <--> Pod2
-    Pod1 --> ExtSvc[외부 서비스]
-    Pod2 --> ExtSvc
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Ingress,SVC k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Client,ExtSvc default;
-```
+![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 포드로 전달되고, 포드 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여주는 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-3.png)
 
 ### CNI(Container Network Interface) 플러그인
 
@@ -615,45 +513,7 @@ Kubernetes의 인증 및 권한 관리는 클러스터 보안의 핵심 요소�
 
 다음 다이어그램은 Kubernetes의 인증 및 권한 부여 흐름을 보여줍니다:
 
-```mermaid
-flowchart TD
-    User[사용자/서비스 계정] --> Auth[인증]
-    Auth --> Authz[권한 부여]
-    Authz --> Admit[어드미션 컨트롤]
-    Admit --> API[API 서버]
-    
-    subgraph "인증 방법"
-        Cert[X.509 인증서]
-        Token[서비스 계정 토큰]
-        OIDC[OpenID Connect]
-        Webhook[웹훅 토큰 인증]
-    end
-    
-    subgraph "권한 부여 모드"
-        RBAC[RBAC]
-        ABAC[ABAC]
-        Node[Node]
-        WebhookAuthz[Webhook]
-    end
-    
-    Auth --> Cert
-    Auth --> Token
-    Auth --> OIDC
-    Auth --> Webhook
-    
-    Authz --> RBAC
-    Authz --> ABAC
-    Authz --> Node
-    Authz --> WebhookAuthz
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Auth,Authz,Admit,API k8sComponent;
-    class User userApp;
-    class Cert,Token,OIDC,Webhook,RBAC,ABAC,Node,WebhookAuthz default;
-```
+![사용자 또는 서비스 계정의 요청이 인증, 권한 부여, 어드미션 컨트롤을 차례로 통과해 API 서버에 도달하며, 인증에는 X.509·토큰·OIDC·웹훅 방식이, 권한 부여에는 RBAC·ABAC·Node·Webhook 모드가 쓰인다는 것을 보여주는 흐름도](../.gitbook/assets/ko-core-09-cluster-administration-4.png)
 
 ### 인증(Authentication)
 
@@ -852,30 +712,7 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 성능 개선, 보�
 
 다음 다이어그램은 Kubernetes 클러스터 업그레이드 프로세스를 보여줍니다:
 
-```mermaid
-flowchart TD
-    Start[업그레이드 계획] --> Plan[버전 호환성 확인]
-    Plan --> Backup[etcd 백업]
-    Backup --> CP1[첫 번째 컨트롤 플레인 노드 업그레이드]
-    CP1 --> CPTest[컨트롤 플레인 기능 테스트]
-    CPTest --> CP2[추가 컨트롤 플레인 노드 업그레이드]
-    CP2 --> Worker[워커 노드 업그레이드]
-    Worker --> Validate[클러스터 검증]
-    Validate --> End[업그레이드 완료]
-    
-    Validate -- 문제 발생 --> Rollback[롤백]
-    Rollback --> RestoreBackup[백업에서 복원]
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class CP1,CP2,Worker,Validate k8sComponent;
-    class Backup,RestoreBackup dataStore;
-    class Rollback alerting;
-    class Start,Plan,CPTest,End default;
-```
+![클러스터 업그레이드가 계획, 백업, 컨트롤 플레인 업그레이드와 테스트, 워커 노드 업그레이드, 검증을 거쳐 완료되며, 검증에서 문제가 발생하면 백업에서 복원하는 롤백 경로로 이어지는 순서도](../.gitbook/assets/ko-core-09-cluster-administration-5.png)
 
 ### 업그레이드 계획
 
@@ -963,35 +800,7 @@ Kubernetes 클러스터의 백업 및 복구는 재해 복구 계획의 중요�
 
 다음 다이어그램은 Kubernetes 클러스터의 백업 및 복구 프로세스를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph "백업 프로세스"
-        Schedule[백업 일정 설정] --> ETCDBackup[etcd 스냅샷 생성]
-        Schedule --> ResourceBackup[리소스 YAML 백업]
-        ETCDBackup --> Store[백업 저장소]
-        ResourceBackup --> Store
-    end
-    
-    subgraph "복구 프로세스"
-        Disaster[재해 발생] --> RestoreETCD[etcd 복구]
-        RestoreETCD --> RestartServices[Kubernetes 서비스 재시작]
-        RestartServices --> ValidateCluster[클러스터 검증]
-        ValidateCluster --> RestoreResources[리소스 복구]
-    end
-    
-    Store -.-> RestoreETCD
-    Store -.-> RestoreResources
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class ETCDBackup,ResourceBackup,RestoreETCD,RestartServices,ValidateCluster,RestoreResources k8sComponent;
-    class Store dataStore;
-    class Disaster alerting;
-    class Schedule default;
-```
+![예약된 백업이 etcd 스냅샷과 리소스 YAML을 백업 저장소에 모으고, 재해가 발생하면 그 저장소로부터 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구하는 흐름을 보여주는 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-6.png)
 
 ### etcd 백업
 
@@ -1110,41 +919,7 @@ spec:
 
 다음 다이어그램은 Kubernetes 클러스터의 모니터링 및 로깅 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart LR
-    subgraph "모니터링 스택"
-        Prom[Prometheus] --> Alert[Alertmanager]
-        Prom --> Grafana[Grafana]
-        KSM[kube-state-metrics] --> Prom
-        NE[Node Exporter] --> Prom
-        Alert --> Notify[알림 채널]
-    end
-    
-    subgraph "로깅 스택"
-        Fluentd[Fluentd/Fluent Bit] --> ES[(Elasticsearch)]
-        ES --> Kibana[Kibana]
-        Fluentd --> Loki[(Loki)]
-        Loki --> Grafana
-    end
-    
-    subgraph "Kubernetes 클러스터"
-        API[API 서버] --> KSM
-        Node[노드] --> NE
-        Pod[포드] --> Fluentd
-    end
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class API,Node,Pod k8sComponent;
-    class ES,Loki dataStore;
-    class Prom,Alert,KSM,NE prometheusComponent;
-    class Grafana,Kibana grafana;
-    class Fluentd,Notify default;
-```
+![클러스터의 메트릭이 Prometheus를 거쳐 Alertmanager와 Grafana로, 로그가 Fluentd를 거쳐 Elasticsearch·Kibana와 Loki를 통해 다시 Grafana로 모이는 통합 모니터링·로깅 스택 구조를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-7.png)
 
 ### 모니터링 도구
 
@@ -1353,39 +1128,7 @@ Amazon EKS는 관리형 Kubernetes 서비스로, 클러스터 관리의 많은 �
 
 다음 다이어그램은 Amazon EKS 클러스터 아키텍처와 관리 구성요소를 보여줍니다:
 
-```mermaid
-flowchart TD
-    User[사용자] --> |관리| AWS[AWS Management Console/CLI/API]
-    AWS --> |관리| EKS[Amazon EKS]
-    
-    subgraph "AWS 클라우드"
-        EKS --> CP[EKS 컨트롤 플레인]
-        EKS --> NG[EKS 노드 그룹]
-        EKS --> Fargate[EKS Fargate]
-        
-        CP --> |사용| AWSIAM[AWS IAM]
-        CP --> |사용| AWSVPC[AWS VPC]
-        CP --> |로깅| CW[CloudWatch]
-        
-        NG --> |사용| EC2[EC2 인스턴스]
-        Fargate --> |사용| FargateProfile[Fargate 프로필]
-    end
-    
-    subgraph "추가 기능"
-        EKS --> CNI[Amazon VPC CNI]
-        EKS --> CoreDNS[CoreDNS]
-        EKS --> KubeProxy[kube-proxy]
-    end
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class CP,NG,Fargate,CNI,CoreDNS,KubeProxy k8sComponent;
-    class AWS,EKS,AWSIAM,AWSVPC,CW,EC2,FargateProfile awsService;
-    class User userApp;
-```
+![사용자가 AWS 콘솔·CLI·API를 통해 관리하는 Amazon EKS가 컨트롤 플레인, 노드 그룹, Fargate로 구성되고 컨트롤 플레인은 IAM·VPC·CloudWatch 같은 AWS 관리형 구성요소를 사용하며 VPC CNI·CoreDNS·kube-proxy 같은 부가 기능이 함께 동작하는 구조를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-8.png)
 
 ### EKS 클러스터 구성
 
@@ -1647,24 +1390,7 @@ Kubernetes 클러스터 네트워킹은 파드 간 통신, 서비스 디스커�
 
 ### 네트워크 아키텍처
 
-```mermaid
-graph TD
-    A[클러스터 네트워킹] --> B[파드 네트워크]
-    A --> C[서비스 네트워크]
-    A --> D[인그레스]
-    A --> E[네트워크 정책]
-    
-    B --> F[CNI 플러그인]
-    C --> G[ClusterIP, NodePort, LoadBalancer]
-    D --> H[인그레스 컨트롤러]
-    E --> I[네트워크 보안]
-    
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef networkComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class A,B,C,D,E k8sComponent;
-    class F,G,H,I networkComponent;
-```
+![클러스터 네트워킹이 파드 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입, 인그레스 컨트롤러, 네트워크 보안이라는 구체적 구현 요소로 이어지는 것을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-9.png)
 
 ### CNI 플러그인 관리
 
@@ -1839,24 +1565,7 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 
 ### 업그레이드 계획
 
-```mermaid
-graph TD
-    A[업그레이드 계획] --> B[버전 호환성 확인]
-    A --> C[백업 생성]
-    A --> D[업그레이드 전략 선택]
-    A --> E[다운타임 계획]
-    
-    B --> F[API 변경 사항 검토]
-    C --> G[etcd 백업]
-    D --> H[인플레이스 vs 블루/그린]
-    E --> I[사용자 커뮤니케이션]
-    
-    classDef planning fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class A,B,C,D,E planning;
-    class F,G,H,I action;
-```
+![업그레이드 계획이 버전 호환성 확인, 백업 생성, 업그레이드 전략 선택, 다운타임 계획 네 항목으로 나뉘고 각 항목이 API 변경 검토, etcd 백업, 인플레이스 대 블루/그린 선택, 사용자 커뮤니케이션 같은 구체적 조치로 이어지는 것을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-10.png)
 
 ### 업그레이드 전략 비교
 
@@ -2012,29 +1721,7 @@ velero restore create --from-backup full-cluster-backup
 
 ### 모니터링 아키텍처
 
-```mermaid
-graph TD
-    A[Kubernetes 모니터링] --> B[메트릭 수집]
-    A --> C[로그 수집]
-    A --> D[알림]
-    A --> E[시각화]
-    
-    B --> F[Prometheus]
-    C --> G[Fluentd/Fluent Bit]
-    D --> H[Alertmanager]
-    E --> I[Grafana]
-    
-    F --> J[kube-state-metrics]
-    F --> K[node-exporter]
-    G --> L[Elasticsearch]
-    L --> M[Kibana]
-    
-    classDef monitoring fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class A,B,C,D,E monitoring;
-    class F,G,H,I,J,K,L,M component;
-```
+![Kubernetes 모니터링이 메트릭 수집, 로그 수집, 알림, 시각화 네 기능으로 나뉘고 각각 Prometheus, Fluentd, Alertmanager, Grafana 도구가 맡으며 로그가 Elasticsearch에 쌓여 Kibana로 시각화되는 계층 구조를 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-11.png)
 
 ### Prometheus 및 Grafana 설치
 
@@ -2144,24 +1831,7 @@ Kubernetes 클러스터 문제 해결은 시스템 관리자와 운영자에게 
 
 ### 문제 해결 방법론
 
-```mermaid
-graph TD
-    A[문제 식별] --> B[정보 수집]
-    B --> C[원인 분석]
-    C --> D[해결책 적용]
-    D --> E[검증]
-    E --> F[문서화]
-    
-    B --> G[로그 확인]
-    B --> H[이벤트 확인]
-    B --> I[리소스 상태 확인]
-    
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class A,B,C,D,E,F process;
-    class G,H,I action;
-```
+![클러스터 문제 해결이 문제 식별, 정보 수집, 원인 분석, 해결책 적용, 검증, 문서화 순서로 진행되며 정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉜다는 것을 보여주는 순서도](../.gitbook/assets/ko-core-09-cluster-administration-12.png)
 
 ### 일반적인 문제 및 해결 방법
 
@@ -2236,33 +1906,7 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 관리하는 Kubernetes 서�
 
 ### EKS 클러스터 아키텍처
 
-```mermaid
-graph TD
-    A[Amazon EKS 클러스터] --> B[컨트롤 플레인]
-    A --> C[데이터 플레인]
-    A --> D[네트워킹]
-    A --> E[보안]
-    
-    B --> F[AWS 관리 구성요소]
-    C --> G[관리형 노드 그룹]
-    C --> H[자체 관리형 노드]
-    C --> I[Fargate]
-    D --> J[VPC CNI]
-    E --> K[IAM 인증]
-    
-    F --> L[API 서버, etcd, 스케줄러]
-    G --> M[EC2 Auto Scaling 그룹]
-    J --> N[AWS VPC]
-    K --> O[IAM 역할 및 정책]
-    
-    classDef awsManaged fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userManaged fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    class A,B,F,L awsManaged;
-    class C,G,H,I,E,K,O userManaged;
-    class D,J,N network;
-```
+![Amazon EKS 클러스터가 컨트롤 플레인, 데이터 플레인, 네트워킹, 보안 네 영역으로 구성되며 각 영역이 AWS 관리형 API 서버·etcd, 관리형/자체관리형 노드와 Fargate, VPC CNI 기반 네트워킹, IAM 기반 보안으로 이어지는 것을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-13.png)
 
 ### EKS 클러스터 생성
 

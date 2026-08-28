@@ -38,60 +38,7 @@ Cilium은 eBPF를 활용하여 컨테이너화된 환경을 위한 강력한 보
 
 ### Cilium 보안 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "Cilium 보안 계층"
-        direction TB
-        
-        subgraph "네트워크 보안"
-            L3L4[L3/L4 정책]
-            Encrypt[암호화]
-            Segment[마이크로세그멘테이션]
-        end
-        
-        subgraph "애플리케이션 보안"
-            L7[L7 정책]
-            API[API 인식 필터링]
-            Identity[ID 기반 정책]
-        end
-        
-        subgraph "위협 탐지"
-            Hubble[Hubble 관찰성]
-            Intrusion[침입 탐지]
-            Anomaly[이상 탐지]
-        end
-        
-        subgraph "런타임 보안"
-            Process[프로세스 모니터링]
-            Syscall[시스템 콜 필터링]
-            Container[컨테이너 보안]
-        end
-    end
-    
-    Traffic[트래픽] --> L3L4
-    L3L4 --> Encrypt
-    Encrypt --> Segment
-    Segment --> L7
-    L7 --> API
-    API --> Identity
-    
-    L3L4 & L7 & API --> Hubble
-    Hubble --> Intrusion & Anomaly
-    
-    Identity --> Process & Syscall & Container
-    
-    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef threat fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef runtime fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef traffic fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    
-    class L3L4,Encrypt,Segment network;
-    class L7,API,Identity app;
-    class Hubble,Intrusion,Anomaly threat;
-    class Process,Syscall,Container runtime;
-    class Traffic traffic;
-```
+![Cilium의 보안 계층은 트래픽이 네트워크 보안(L3/L4 정책, 암호화, 마이크로세그멘테이션)과 애플리케이션 보안(L7 정책, API 인식 필터링, ID 기반 정책)을 거치며, 두 계층 모두 Hubble 관찰성을 중심으로 한 위협 탐지로 흘러들고, ID 기반 정책은 별도로 런타임 보안(프로세스·시스템콜·컨테이너 보안)으로 이어짐을 보여준다.](../../.gitbook/assets/ko-networking-cilium-06-security-visibility-0.png)
 
 ### 네트워크 보안 기능:
 

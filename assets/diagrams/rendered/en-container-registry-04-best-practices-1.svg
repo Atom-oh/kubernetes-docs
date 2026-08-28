@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diagram-1-title diagram-1-desc" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">
+  <title id="diagram-1-title">Choosing a caching or mirroring strategy</title>
+  <desc id="diagram-1-desc">A decision tree for choosing a caching or mirroring strategy: it first asks whether the problem is registry rate limits or availability/performance, then routes rate-limit cases by environment (AWS/EKS, self-hosted, or a simple mirror) and performance cases by infrastructure need (air-gapped, multi-region, or edge).</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="48" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">CONTAINER REGISTRY</text>
+  <text x="48" y="66" fill="#232F3E" font-size="24" font-weight="700">Choosing a Caching or Mirroring Strategy</text>
+
+  <!-- ===== Arrows (drawn before boxes) ===== -->
+  <!-- Root -> RL (accent, from the focal decision) -->
+  <path d="M 480,202 V 236 Q 480,244 472,244 H 248 Q 240,244 240,252 V 286"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- Root -> Perf (accent, from the focal decision) -->
+  <path d="M 480,202 V 236 Q 480,244 488,244 H 712 Q 720,244 720,252 V 286"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- RL -> leaf1 (AWS/EKS) -->
+  <path d="M 240,350 V 372 Q 240,380 232,380 H 92 Q 84,380 84,388 V 410"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- RL -> leaf2 (self-hosted), straight -->
+  <path d="M 240,350 V 410" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- RL -> leaf3 (simple mirror) -->
+  <path d="M 240,350 V 372 Q 240,380 248,380 H 388 Q 396,380 396,388 V 410"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Perf -> leaf4 (air-gap) -->
+  <path d="M 720,350 V 372 Q 720,380 712,380 H 572 Q 564,380 564,388 V 410"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Perf -> leaf5 (multi-region), straight -->
+  <path d="M 720,350 V 410" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Perf -> leaf6 (edge) -->
+  <path d="M 720,350 V 372 Q 720,380 728,380 H 868 Q 876,380 876,388 V 410"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Arrow labels (mask + 8px gap above stroke) ===== -->
+  <rect x="332" y="224" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="360" y="233" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RATE LIMIT</text>
+
+  <rect x="572" y="224" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="600" y="233" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AVAIL/PERF</text>
+
+  <rect x="134" y="360" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="162" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS/EKS</text>
+
+  <rect x="248" y="374" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="252" y="383" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.06em">SELF-HOSTED</text>
+
+  <rect x="290" y="360" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="318" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MIRROR</text>
+
+  <rect x="614" y="360" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="642" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AIR-GAP</text>
+
+  <rect x="728" y="374" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="732" y="383" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="start" letter-spacing="0.06em">MULTI-REGION</text>
+
+  <rect x="770" y="360" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="798" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EDGE</text>
+
+  <!-- ===== Root decision diamond (focal) ===== -->
+  <polygon points="480,130 580,166 480,202 380,166" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="162" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Caching / Mirroring</text>
+  <text x="480" y="176" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Required?</text>
+
+  <!-- ===== Branch decision diamonds ===== -->
+  <polygon points="240,286 330,318 240,350 150,318" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="240" y="322" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Your Environment?</text>
+
+  <polygon points="720,286 810,318 720,350 630,318" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="720" y="322" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Infrastructure?</text>
+
+  <!-- ===== Leaf nodes (backend / solution) ===== -->
+  <!-- leaf1: ECR Pull-through Cache -->
+  <rect x="20" y="410" width="128" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="28" y="416" width="36" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="46" y="425" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ECR</text>
+  <text x="84" y="460" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">ECR Pull-through</text>
+  <text x="84" y="476" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Cache</text>
+
+  <!-- leaf2: Harbor Proxy Cache -->
+  <rect x="176" y="410" width="128" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="184" y="416" width="52" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="210" y="425" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HARBOR</text>
+  <text x="240" y="460" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Harbor Proxy</text>
+  <text x="240" y="476" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Cache</text>
+
+  <!-- leaf3: containerd Mirror Config -->
+  <rect x="332" y="410" width="128" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="340" y="416" width="32" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="356" y="425" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">OSS</text>
+  <text x="396" y="460" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">containerd Mirror</text>
+  <text x="396" y="476" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Config</text>
+
+  <!-- leaf4: Harbor Full Mirror -->
+  <rect x="500" y="410" width="128" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="508" y="416" width="52" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="534" y="425" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HARBOR</text>
+  <text x="564" y="460" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Harbor Full</text>
+  <text x="564" y="476" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Mirror</text>
+
+  <!-- leaf5: ECR Cross-region Replication -->
+  <rect x="656" y="410" width="128" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="664" y="416" width="36" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="682" y="425" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ECR</text>
+  <text x="720" y="460" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">ECR Cross-region</text>
+  <text x="720" y="476" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Replication</text>
+
+  <!-- leaf6: Harbor Pull Replication -->
+  <rect x="812" y="410" width="128" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="820" y="416" width="52" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="846" y="425" fill="#232F3E" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HARBOR</text>
+  <text x="876" y="460" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Harbor Pull</text>
+  <text x="876" y="476" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Replication</text>
+
+  <!-- Legend -->
+  <line x1="48" y1="520" x2="912" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="48" y="536" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <polygon points="164,524 176,530 164,536 152,530" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="184" y="533" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">ENTRY DECISION</text>
+  <rect x="356" y="524" width="12" height="12" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="376" y="533" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">TOOL / SOLUTION</text>
+</svg>

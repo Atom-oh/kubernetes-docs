@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="flink-autoscale-title flink-autoscale-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="flink-autoscale-title">Flink autoscaler to Karpenter node lifecycle</title>
+    <desc id="flink-autoscale-desc">Per-vertex metrics feed the autoscaler, which changes vertex parallelism; an increase drives Karpenter to provision a new node when pods become unschedulable, while a decrease drives Karpenter to consolidate and terminate a now-empty node.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+        .name{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;font-size:12px;fill:#232F3E;}
+        .tag{font-family:'Geist Mono',monospace;font-size:7px;letter-spacing:0.08em;text-anchor:middle;}
+        .lbl{font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:0.06em;text-anchor:middle;}
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ===== connectors (drawn before boxes) ===== -->
+
+    <!-- A -> B : straight vertical, shared x=480 -->
+    <line x1="480" y1="160" x2="480" y2="196" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="488" y="170" width="70" height="12" rx="2" fill="#ffffff"/>
+    <text x="523" y="179" class="lbl" fill="#7D8998">EVALUATES</text>
+
+    <!-- B -> C : elbow, accent (increase path) -->
+    <path d="M440,280 L440,312 A8,8 0 0,1 432,320 L288,320 A8,8 0 0,0 280,328 L280,356"
+          fill="none" stroke="#EC7211" stroke-width="1" marker-end="url(#arrow-accent)"/>
+    <rect x="330" y="300" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="309" class="lbl" fill="#EC7211">INCREASES</text>
+
+    <!-- B -> E : elbow, muted (decrease path) -->
+    <path d="M520,280 L520,312 A8,8 0 0,0 528,320 L672,320 A8,8 0 0,1 680,328 L680,356"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="600" y="300" width="66" height="12" rx="2" fill="#ffffff"/>
+    <text x="633" y="309" class="lbl" fill="#7D8998">DECREASES</text>
+
+    <!-- C -> D : straight vertical, shared x=280 -->
+    <line x1="280" y1="440" x2="280" y2="476" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="288" y="450" width="90" height="12" rx="2" fill="#ffffff"/>
+    <text x="333" y="459" class="lbl" fill="#7D8998">UNSCHEDULABLE</text>
+
+    <!-- E -> F : straight vertical, shared x=680 -->
+    <line x1="680" y1="440" x2="680" y2="476" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="688" y="450" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="724" y="459" class="lbl" fill="#7D8998">NODE EMPTY</text>
+
+    <!-- ===== nodes ===== -->
+
+    <!-- A: entry / metrics -->
+    <rect x="360" y="80" width="240" height="80" rx="6" fill="#ffffff"/>
+    <rect x="360" y="80" width="240" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="368" y="88" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text x="398" y="97" class="tag" fill="rgba(35,47,62,0.8)">METRICS</text>
+    <text x="480" y="122" class="name" text-anchor="middle">Per-vertex metrics</text>
+    <text x="480" y="140" class="name" text-anchor="middle">backpressure, busy time, lag</text>
+
+    <!-- B: focal — autoscaler -->
+    <rect x="360" y="200" width="240" height="80" rx="6" fill="#ffffff"/>
+    <rect x="360" y="200" width="240" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="368" y="208" width="76" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.5)" stroke-width="0.8"/>
+    <text x="406" y="217" class="tag" fill="#EC7211">AUTOSCALER</text>
+    <text x="480" y="246" class="name" text-anchor="middle">Autoscaler changes</text>
+    <text x="480" y="264" class="name" text-anchor="middle">vertex parallelism</text>
+
+    <!-- C: scale-up step -->
+    <rect x="160" y="360" width="240" height="80" rx="6" fill="#ffffff"/>
+    <rect x="160" y="360" width="240" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="168" y="368" width="68" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text x="202" y="377" class="tag" fill="rgba(35,47,62,0.8)">SCALE UP</text>
+    <text x="280" y="402" class="name" text-anchor="middle">More TaskManager</text>
+    <text x="280" y="420" class="name" text-anchor="middle">pods requested</text>
+
+    <!-- D: terminal — Karpenter provisions -->
+    <rect x="160" y="480" width="240" height="80" rx="6" fill="#ffffff"/>
+    <rect x="160" y="480" width="240" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="168" y="488" width="76" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text x="206" y="497" class="tag" fill="rgba(35,47,62,0.8)">KARPENTER</text>
+    <text x="280" y="522" class="name" text-anchor="middle">Karpenter provisions</text>
+    <text x="280" y="540" class="name" text-anchor="middle">new EC2 node</text>
+
+    <!-- E: scale-down step -->
+    <rect x="560" y="360" width="240" height="80" rx="6" fill="#ffffff"/>
+    <rect x="560" y="360" width="240" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="568" y="368" width="80" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text x="608" y="377" class="tag" fill="rgba(35,47,62,0.8)">SCALE DOWN</text>
+    <text x="680" y="402" class="name" text-anchor="middle">TaskManager pods</text>
+    <text x="680" y="420" class="name" text-anchor="middle">removed</text>
+
+    <!-- F: terminal — Karpenter consolidates -->
+    <rect x="560" y="480" width="240" height="80" rx="6" fill="#ffffff"/>
+    <rect x="560" y="480" width="240" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="568" y="488" width="76" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+    <text x="606" y="497" class="tag" fill="rgba(35,47,62,0.8)">KARPENTER</text>
+    <text x="680" y="522" class="name" text-anchor="middle">Karpenter consolidates</text>
+    <text x="680" y="540" class="name" text-anchor="middle">and terminates node</text>
+
+    <!-- ===== legend ===== -->
+    <line x1="30" y1="572" x2="930" y2="572" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="588" font-family="'Geist Mono',monospace" font-size="8" letter-spacing="0.14em" fill="#545B64">LEGEND</text>
+    <circle cx="160" cy="584" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="172" y="588" class="lbl" text-anchor="start" fill="#545B64">AUTOSCALER (FOCAL DECISION POINT)</text>
+    <circle cx="450" cy="584" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="462" y="588" class="lbl" text-anchor="start" fill="#545B64">PIPELINE STEP</text>
+    <line x1="700" y1="584" x2="716" y2="584" stroke="#EC7211" stroke-width="1"/>
+    <text x="722" y="588" class="lbl" text-anchor="start" fill="#545B64">SCALE-UP PATH</text>
+  </svg>

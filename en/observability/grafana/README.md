@@ -20,63 +20,7 @@ Grafana is an open-source platform for visualizing and analyzing metrics, logs, 
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph Users["Users"]
-        BROWSER[Web Browser]
-        API_CLIENT[API Client]
-    end
-
-    subgraph Grafana["Grafana Server"]
-        FRONTEND[Frontend<br/>React]
-        BACKEND[Backend<br/>Go]
-        ALERTING[Alerting Engine]
-        PLUGINS[Plugin System]
-    end
-
-    subgraph Storage["Storage"]
-        DB[(PostgreSQL/MySQL)]
-        CACHE[(Redis/Memcached)]
-    end
-
-    subgraph DataSources["Data Sources"]
-        PROM[Prometheus]
-        VM[VictoriaMetrics]
-        LOKI[Loki]
-        TEMPO[Tempo]
-        CW[CloudWatch]
-        ES[Elasticsearch]
-    end
-
-    subgraph Notifications["Notification Channels"]
-        SLACK[Slack]
-        PAGERDUTY[PagerDuty]
-        EMAIL[Email]
-        WEBHOOK[Webhook]
-    end
-
-    BROWSER & API_CLIENT --> FRONTEND
-    FRONTEND --> BACKEND
-    BACKEND --> DB
-    BACKEND --> CACHE
-    BACKEND --> PLUGINS
-
-    PLUGINS --> PROM & VM & LOKI & TEMPO & CW & ES
-
-    ALERTING --> SLACK & PAGERDUTY & EMAIL & WEBHOOK
-
-    classDef user fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef storage fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef datasource fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef notification fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class BROWSER,API_CLIENT user
-    class FRONTEND,BACKEND,ALERTING,PLUGINS grafana
-    class DB,CACHE storage
-    class PROM,VM,LOKI,TEMPO,CW,ES datasource
-    class SLACK,PAGERDUTY,EMAIL,WEBHOOK notification
-```
+![Architecture diagram of Grafana: browsers and API clients hit the Frontend, which calls the Backend; the Backend persists to PostgreSQL/MySQL and Redis/Memcached and drives a Plugin System that queries six data sources (Prometheus, VictoriaMetrics, Loki, Tempo, CloudWatch, Elasticsearch), while a separate Alerting Engine fires notifications to Slack, PagerDuty, Email, and Webhook.](../../.gitbook/assets/en-observability-grafana-README-0.png)
 
 ## Helm Deployment
 

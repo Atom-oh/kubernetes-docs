@@ -9,34 +9,7 @@ Linkerd는 보안을 핵심 가치로 삼아 설정 없이 자동으로 mTLS를 
 
 ## 보안 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Security Components"
-        subgraph "Control Plane"
-            ID[Identity Controller<br/>인증서 발급]
-            POL[Policy Controller<br/>인가 정책]
-        end
-
-        subgraph "Data Plane"
-            P1[Proxy 1<br/>mTLS 종단]
-            P2[Proxy 2<br/>mTLS 종단]
-        end
-    end
-
-    subgraph "Certificate Chain"
-        TA[Trust Anchor<br/>Root CA]
-        II[Identity Issuer<br/>Intermediate CA]
-        WC[Workload Certs<br/>각 프록시]
-    end
-
-    TA --> II
-    II --> WC
-    ID --> P1
-    ID --> P2
-    POL --> P1
-    POL --> P2
-    P1 <-->|mTLS| P2
-```
+![인증서 체인이 Identity Issuer를 통해 워크로드 인증서를 발급하고, Control Plane의 Identity/Policy Controller가 Data Plane의 mTLS 종단 프록시 두 대를 함께 관리하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-0.png)
 
 ## 자동 mTLS
 
@@ -44,25 +17,7 @@ Linkerd의 가장 강력한 보안 기능은 설정 없이 모든 메시 트래�
 
 ### mTLS 동작 방식
 
-```mermaid
-sequenceDiagram
-    participant App1 as Application A
-    participant P1 as Proxy A
-    participant P2 as Proxy B
-    participant App2 as Application B
-
-    App1->>P1: Plain HTTP
-    Note over P1: 대상이 메시 내부인지 확인
-    P1->>P1: 인증서로 TLS 초기화
-    P1->>P2: mTLS Handshake
-    Note over P1,P2: SPIFFE ID 상호 검증
-    P1->>P2: Encrypted Request
-    P2->>P2: TLS 종료
-    P2->>App2: Plain HTTP
-    App2-->>P2: Plain HTTP Response
-    P2-->>P1: Encrypted Response
-    P1-->>App1: Plain HTTP Response
-```
+![애플리케이션이 평문 HTTP를 보내면 양쪽 프록시가 SPIFFE ID로 상호 인증하는 mTLS 핸드셰이크를 수행해 트래픽을 암호화하고, 수신 측 프록시가 복호화해 평문으로 전달하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-1.png)
 
 ### mTLS 특성
 
@@ -95,23 +50,7 @@ linkerd viz tap deploy/web -n my-app
 
 ### 비메시 트래픽 처리
 
-```mermaid
-graph LR
-    subgraph "External"
-        EXT[External Client<br/>메시 외부]
-    end
-
-    subgraph "Mesh"
-        P1[Proxy<br/>메시 내부]
-        APP[Application]
-    end
-
-    EXT -->|Plain HTTP| P1
-    P1 -->|Plain HTTP| APP
-
-    style EXT fill:#ffcdd2
-    style P1 fill:#c8e6c9
-```
+![메시 외부 클라이언트가 평문 HTTP로 프록시에 접속하면, 프록시가 메시 외부 출처를 자동으로 감지해 암호화 없이 그대로 애플리케이션으로 전달하는 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-2.png)
 
 메시 외부에서 오는 트래픽은 자동으로 감지되어 평문으로 처리됩니다:
 
@@ -140,27 +79,7 @@ spiffe://root.linkerd.cluster.local/ns/database/sa/postgres
 
 ### ID 발급 프로세스
 
-```mermaid
-sequenceDiagram
-    participant Pod as Pod/Proxy
-    participant SA as ServiceAccount
-    participant ID as Identity Controller
-    participant CA as Trust Anchor
-
-    Note over Pod: Pod 시작
-    Pod->>SA: ServiceAccount 토큰 획득
-    Pod->>Pod: CSR 생성 (SPIFFE ID 포함)
-    Pod->>ID: CSR + SA 토큰 전송
-
-    ID->>ID: SA 토큰 검증
-    ID->>ID: Pod 정보 검증
-    ID->>ID: SPIFFE ID 생성
-    ID->>CA: 인증서 서명 요청
-    CA-->>ID: 서명된 인증서
-
-    ID-->>Pod: 워크로드 인증서
-    Note over Pod: 24시간 유효
-```
+![Pod가 ServiceAccount 토큰으로 CSR을 만들어 Identity Controller에 보내면, Controller가 요청을 검증하고 Trust Anchor에 서명을 요청해 24시간짜리 워크로드 인증서를 Pod에 발급하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-3.png)
 
 ### ID 확인
 
@@ -183,24 +102,7 @@ Linkerd는 Server, ServerAuthorization, AuthorizationPolicy를 통해 세밀한 
 
 ### 정책 모델
 
-```mermaid
-graph TB
-    subgraph "Authorization Model"
-        SRV[Server<br/>인바운드 포트 정의]
-        SA[ServerAuthorization<br/>접근 권한 정의]
-        AP[AuthorizationPolicy<br/>정책 적용]
-    end
-
-    subgraph "Policy Modes"
-        DENY[default-deny<br/>명시적 허용만]
-        ALLOW[default-allow<br/>명시적 거부만]
-    end
-
-    SRV --> SA
-    SA --> AP
-    AP --> DENY
-    AP --> ALLOW
-```
+![Server가 정의한 인바운드 포트에 ServerAuthorization이 접근 권한을 부여하고, AuthorizationPolicy가 이를 적용해 default-deny 또는 default-allow 모드로 귀결되는 정책 적용 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-4.png)
 
 ### Server 리소스
 
@@ -537,24 +439,7 @@ spec:
 
 ### 인증서 계층 구조
 
-```mermaid
-graph TB
-    subgraph "Certificate Hierarchy"
-        TA[Trust Anchor<br/>Root CA<br/>유효기간: 1-10년]
-        II[Identity Issuer<br/>Intermediate CA<br/>유효기간: 1년]
-        WC1[Workload Cert<br/>유효기간: 24시간]
-        WC2[Workload Cert<br/>유효기간: 24시간]
-    end
-
-    TA --> II
-    II --> WC1
-    II --> WC2
-
-    style TA fill:#ffeb3b
-    style II fill:#03a9f4
-    style WC1 fill:#4caf50
-    style WC2 fill:#4caf50
-```
+![10년 유효한 Root CA가 1년짜리 Intermediate CA를 발급하고, 그 Intermediate CA가 각 프록시의 24시간짜리 워크로드 인증서 두 개를 발급하는 3단 인증서 계층을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-5.png)
 
 ### Trust Anchor 관리
 
@@ -793,26 +678,7 @@ helm install linkerd-control-plane linkerd/linkerd-control-plane \
 
 ### 보안 계층
 
-```mermaid
-graph TB
-    subgraph "Security Layers"
-        subgraph "Network Level (Linkerd)"
-            MTLS[mTLS 암호화]
-            AUTHZ[서비스 인가]
-            ID[워크로드 ID]
-        end
-
-        subgraph "Application Level"
-            JWT[JWT/OAuth]
-            RBAC[애플리케이션 RBAC]
-            INPUT[입력 검증]
-        end
-    end
-
-    MTLS --> JWT
-    AUTHZ --> RBAC
-    ID --> INPUT
-```
+![Linkerd가 담당하는 네트워크 레벨의 mTLS 암호화·서비스 인가·워크로드 ID가 애플리케이션 레벨의 JWT/OAuth·RBAC·입력 검증 각각과 짝을 이루며 심층 방어를 구성하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-04-security-6.png)
 
 | 계층 | Linkerd 역할 | 애플리케이션 역할 |
 |------|-------------|------------------|

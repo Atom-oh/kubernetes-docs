@@ -75,61 +75,7 @@ EOF
 
 ## Kubernetes Security Architecture
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Security Architecture"
-        subgraph "Infrastructure Security"
-            Host["Host Security"]
-            Network["Network Security"]
-            Container["Container Runtime Security"]
-        end
-
-        subgraph "Cluster Security"
-            API["API Server Security"]
-            Auth["Authentication"]
-            Authz["Authorization"]
-            Admission["Admission Control"]
-            Audit["Audit Logging"]
-            Encrypt["Data Encryption"]
-        end
-
-        subgraph "Workload Security"
-            SecCtx["Security Context"]
-            NetPol["Network Policy"]
-            PodSec["Pod Security Standards"]
-            Secret["Secret Management"]
-            ImgSec["Image Security"]
-            RBAC["RBAC"]
-        end
-    end
-
-    Host --> API
-    Network --> API
-    Container --> API
-
-    API --> Auth
-    Auth --> Authz
-    Authz --> Admission
-    Admission --> Audit
-    API --> Encrypt
-
-    Authz --> RBAC
-    Admission --> PodSec
-    Admission --> SecCtx
-    Network --> NetPol
-    API --> Secret
-    Container --> ImgSec
-
-    %% Style definitions
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Host,Network,Container infra;
-    class API,Auth,Authz,Admission,Audit,Encrypt cluster;
-    class SecCtx,NetPol,PodSec,Secret,ImgSec,RBAC workload;
-```
+![Three defense-in-depth layers — infrastructure, cluster, and workload security — feed into the API server's authentication-authorization-admission-audit pipeline, which enforces RBAC, Pod Security Standards, security contexts, and network policy.](../.gitbook/assets/en-core-06-security-0.png)
 
 ## Table of Contents
 1. [Security Overview](#security-overview)
@@ -199,45 +145,7 @@ type: kubernetes.io/service-account-token
 
 To access the Kubernetes API server, you must go through an authentication process. Kubernetes supports various authentication methods:
 
-```mermaid
-graph TD
-    User["User/Service"] -->|Authentication Request| API["API Server"]
-
-    subgraph "Authentication Methods"
-        Cert["X.509 Certificates"]
-        Token["Service Account Tokens"]
-        OIDC["OpenID Connect"]
-        Webhook["Webhook Token Authentication"]
-        Proxy["Authentication Proxy"]
-    end
-
-    API --> Cert
-    API --> Token
-    API --> OIDC
-    API --> Webhook
-    API --> Proxy
-
-    Cert -->|Success/Failure| Result["Authentication Result"]
-    Token -->|Success/Failure| Result
-    OIDC -->|Success/Failure| Result
-    Webhook -->|Success/Failure| Result
-    Proxy -->|Success/Failure| Result
-
-    Result -->|Authentication Success| Authz["Move to Authorization Stage"]
-    Result -->|Authentication Failure| Reject["Request Denied"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authMethod fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class Cert,Token,OIDC,Webhook,Proxy authMethod;
-    class Result,Authz,Reject resultComponent;
-```
+![A user or service sends an authentication request to the API server, which checks it against one of five supported methods, then routes the outcome to either authorization or request denial.](../.gitbook/assets/en-core-06-security-1.png)
 
 ### X.509 Certificates
 
@@ -297,52 +205,7 @@ A method where an authentication proxy is placed in front of the API server to h
 
 If authentication is the process of verifying "who you are," authorization is the process of determining "what you can do." Kubernetes supports various authorization modes:
 
-```mermaid
-graph TD
-    User["Authenticated User/Service"] -->|Authorization Request| API["API Server"]
-
-    subgraph "Authorization Modes"
-        RBAC["RBAC<br>(Role-Based Access Control)"]
-        ABAC["ABAC<br>(Attribute-Based Access Control)"]
-        Node["Node Authorization"]
-        WebhookAuthz["Webhook Authorization"]
-    end
-
-    API --> RBAC
-    API --> ABAC
-    API --> Node
-    API --> WebhookAuthz
-
-    RBAC -->|Evaluate| Decision["Authorization Decision"]
-    ABAC -->|Evaluate| Decision
-    Node -->|Evaluate| Decision
-    WebhookAuthz -->|Evaluate| Decision
-
-    Decision -->|Allow| Allow["Process Request"]
-    Decision -->|Deny| Deny["Deny Request"]
-
-    subgraph "RBAC Components"
-        Role["Role/ClusterRole<br>(Permission Definition)"]
-        Binding["RoleBinding/ClusterRoleBinding<br>(Permission Assignment)"]
-    end
-
-    RBAC --- Role
-    RBAC --- Binding
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authzMode fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef rbacComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class RBAC,ABAC,Node,WebhookAuthz authzMode;
-    class Decision,Allow,Deny resultComponent;
-    class Role,Binding rbacComponent;
-```
+![An authenticated request is evaluated by one of four authorization modes — RBAC, ABAC, Node, or Webhook — and the decision either allows the request or denies it; RBAC itself is built from Roles bound to subjects via RoleBindings.](../.gitbook/assets/en-core-06-security-2.png)
 
 ### RBAC (Role-Based Access Control)
 
@@ -430,50 +293,7 @@ A method where authorization decisions are made through an external service. The
 
 Security context defines security settings at the Pod or container level. This allows fine-grained control over privileges, access control, capabilities, and more.
 
-```mermaid
-graph TD
-    subgraph "Pod Security Context"
-        PSC["Pod Security Context"]
-        PSC -->|Setting| RunAsUser["runAsUser<br>(User ID)"]
-        PSC -->|Setting| RunAsGroup["runAsGroup<br>(Group ID)"]
-        PSC -->|Setting| FSGroup["fsGroup<br>(Filesystem Group)"]
-        PSC -->|Setting| SupGroups["supplementalGroups<br>(Additional Groups)"]
-    end
-
-    subgraph "Container Security Context"
-        CSC["Container Security Context"]
-        CSC -->|Setting| Privilege["privileged<br>(Privileged Mode)"]
-        CSC -->|Setting| AllowPrivEsc["allowPrivilegeEscalation<br>(Allow Privilege Escalation)"]
-        CSC -->|Setting| ReadOnlyFS["readOnlyRootFilesystem<br>(Read-only Filesystem)"]
-        CSC -->|Setting| Capabilities["capabilities<br>(Linux Kernel Capabilities)"]
-        CSC -->|Setting| SELinux["seLinuxOptions<br>(SELinux Options)"]
-    end
-
-    Pod["Pod"] -->|Contains| PSC
-    Pod -->|Contains| Container["Container"]
-    Container -->|Contains| CSC
-
-    subgraph "Pod Security Standards"
-        PSS["Pod Security Standards"]
-        PSS -->|Level| Privileged["Privileged<br>(No Restrictions)"]
-        PSS -->|Level| Baseline["Baseline<br>(Basic Security)"]
-        PSS -->|Level| Restricted["Restricted<br>(Enhanced Security)"]
-    end
-
-    Pod -->|Complies| PSS
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef securitySetting fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Pod,Container k8sComponent;
-    class PSC,CSC,PSS securityComponent;
-    class RunAsUser,RunAsGroup,FSGroup,SupGroups,Privilege,AllowPrivEsc,ReadOnlyFS,Capabilities,SELinux securitySetting;
-    class Privileged,Baseline,Restricted securitySetting;
-```
+![A Pod carries a pod-level security context and a container with its own container-level security context; the Pod as a whole must comply with one of three Pod Security Standards levels.](../.gitbook/assets/en-core-06-security-3.png)
 
 ### Pod Security Context
 
@@ -530,52 +350,7 @@ metadata:
 
 Network policies provide a way to control communication between Pods. By default, all Pods in a Kubernetes cluster can communicate with each other, but this can be restricted using network policies.
 
-```mermaid
-graph TD
-    subgraph "Network Policy Configuration"
-        NP["NetworkPolicy"]
-        NP -->|Selects| PodSelector["podSelector<br>(Target Pods)"]
-        NP -->|Defines| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
-        NP -->|Rules| Ingress["ingress<br>(Inbound Rules)"]
-        NP -->|Rules| Egress["egress<br>(Outbound Rules)"]
-    end
-
-    subgraph "Inbound Rules"
-        Ingress -->|Source| IngressFrom["from<br>(Source Selector)"]
-        Ingress -->|Port| IngressPorts["ports<br>(Allowed Ports)"]
-
-        IngressFrom -->|Selects| IPodSelector["podSelector<br>(Source Pods)"]
-        IngressFrom -->|Selects| INSSelector["namespaceSelector<br>(Source Namespaces)"]
-        IngressFrom -->|Selects| IIPBlock["ipBlock<br>(Source IP Range)"]
-    end
-
-    subgraph "Outbound Rules"
-        Egress -->|Target| EgressTo["to<br>(Destination Selector)"]
-        Egress -->|Port| EgressPorts["ports<br>(Allowed Ports)"]
-
-        EgressTo -->|Selects| EPodSelector["podSelector<br>(Destination Pods)"]
-        EgressTo -->|Selects| ENSSelector["namespaceSelector<br>(Destination Namespaces)"]
-        EgressTo -->|Selects| EIPBlock["ipBlock<br>(Destination IP Range)"]
-    end
-
-    Frontend["Frontend Pod"] -->|Communication| API["API Pod"]
-    API -->|Communication| DB["Database Pod"]
-
-    NP -->|Applies| API
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NP,PodSelector,PolicyTypes,Ingress,Egress networkPolicy;
-    class IngressFrom,IngressPorts,IPodSelector,INSSelector,IIPBlock,EgressTo,EgressPorts,EPodSelector,ENSSelector,EIPBlock policyConfig;
-    class Frontend,API userApp;
-    class DB dataStore;
-```
+![A NetworkPolicy selects a target Pod and defines separate ingress and egress rules, and here it is applied to an API Pod to allow only inbound traffic from a Frontend Pod and only outbound traffic to a Database Pod.](../.gitbook/assets/en-core-06-security-4.png)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -733,57 +508,7 @@ Audit logs can be stored in various backends:
 
 Amazon EKS can enhance security by integrating with AWS security services in addition to Kubernetes' basic security features.
 
-```mermaid
-graph TD
-    subgraph "AWS Security Services"
-        IAM["AWS IAM<br>(Identity and Access Management)"]
-        KMS["AWS KMS<br>(Key Management Service)"]
-        SG["AWS Security Groups"]
-        WAF["AWS WAF<br>(Web Application Firewall)"]
-        GD["AWS GuardDuty<br>(Threat Detection)"]
-        SM["AWS Secrets Manager"]
-    end
-
-    subgraph "EKS Security Integration"
-        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
-        SecEnc["Kubernetes Secret Encryption"]
-        PodSG["Pod Security Groups"]
-        ALB["Application Load Balancer<br>(ALB) Integration"]
-        EKSDetect["EKS Threat Detection"]
-        ExtSecrets["External Secrets Operator"]
-    end
-
-    IAM -->|Integrates| IRSA
-    KMS -->|Integrates| SecEnc
-    SG -->|Integrates| PodSG
-    WAF -->|Integrates| ALB
-    GD -->|Integrates| EKSDetect
-    SM -->|Integrates| ExtSecrets
-
-    subgraph "EKS Cluster"
-        API["API Server"]
-        Node["Worker Node"]
-        Pod["Pod"]
-    end
-
-    IRSA -->|Grants Permissions| Pod
-    SecEnc -->|Encrypts| API
-    PodSG -->|Network Security| Pod
-    ALB -->|Protects Traffic| API
-    EKSDetect -->|Monitors| Node
-    ExtSecrets -->|Provides Secrets| Pod
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef securityIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API,Node,Pod k8sComponent;
-    class IAM,KMS,SG,WAF,GD,SM awsService;
-    class IRSA,SecEnc,PodSG,ALB,EKSDetect,ExtSecrets securityIntegration;
-```
+![Six AWS security services — KMS, WAF, GuardDuty, IAM, Security Groups, and Secrets Manager — each integrate into a specific EKS mechanism and protect the API server, a worker node, or Pods inside the cluster.](../.gitbook/assets/en-core-06-security-5.png)
 
 ### IAM Roles and Service Accounts (IRSA)
 

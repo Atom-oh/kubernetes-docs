@@ -68,91 +68,13 @@ Istio를 적용하면 각 마이크로서비스에 Envoy Proxy가 Sidecar 컨테
 
 ### 의사결정 흐름
 
-```mermaid
-flowchart TD
-    Start[Service Mesh<br/>도입 고려]
-
-    Q1{마이크로서비스<br/>아키텍처?}
-    Q2{10개 이상의<br/>서비스?}
-    Q3{복잡한 트래픽<br/>관리 필요?}
-    Q4{Zero Trust<br/>보안 필요?}
-    Q5{분산 추적/<br/>관찰성 필요?}
-    Q6{운영 리소스<br/>확보?}
-
-    NoNeed[Service Mesh<br/>불필요]
-    Consider[도입 고려<br/>가능]
-    NeedMesh[Service Mesh<br/>권장]
-
-    Alternatives[대안 고려<br/>- Kubernetes NetworkPolicy<br/>- Ingress Controller<br/>- CNI 플러그인<br/>- Application-level 구현]
-
-    Start --> Q1
-    Q1 -->|No| NoNeed
-    Q1 -->|Yes| Q2
-    Q2 -->|No| Alternatives
-    Q2 -->|Yes| Q3
-    Q3 -->|No| Q4
-    Q3 -->|Yes| Q6
-    Q4 -->|No| Q5
-    Q4 -->|Yes| Q6
-    Q5 -->|No| Consider
-    Q5 -->|Yes| Q6
-    Q6 -->|No| Consider
-    Q6 -->|Yes| NeedMesh
-
-    %% 스타일 정의
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef no fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef maybe fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef yes fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef alternative fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Q1,Q2,Q3,Q4,Q5,Q6 question;
-    class NoNeed no;
-    class Consider maybe;
-    class NeedMesh yes;
-    class Alternatives alternative;
-```
+![마이크로서비스 규모, 트래픽·보안·관찰성 요구, 운영 리소스를 차례로 점검해 서비스 메시 도입 여부를 판단하는 의사결정 흐름도.](../../.gitbook/assets/ko-service-mesh-istio-README-0.png)
 
 ### Service Mesh가 필요한 경우 ✅
 
 #### 1. 복잡한 마이크로서비스 환경
 
-```mermaid
-flowchart LR
-    subgraph WithoutMesh["Service Mesh 없이"]
-        A1[Service A] -.->|수동 구현| B1[Service B]
-        A1 -.->|수동 구현| C1[Service C]
-        B1 -.->|수동 구현| D1[Service D]
-        C1 -.->|수동 구현| D1
-
-        Note1[각 서비스마다<br/>- 수동 mTLS 구현<br/>- 재시도 로직<br/>- 로깅/메트릭<br/>- Circuit Breaker<br/>중복 코드 증가]
-    end
-
-    subgraph WithMesh["Service Mesh 사용"]
-        A2[Service A] -->|자동 처리| B2[Service B]
-        A2 -->|자동 처리| C2[Service C]
-        B2 -->|자동 처리| D2[Service D]
-        C2 -->|자동 처리| D2
-
-        SM[Service Mesh<br/>- 자동 mTLS<br/>- 중앙 집중식 정책<br/>- 통합 관찰성<br/>- 표준화된 보안]
-
-        SM -.->|제어| A2
-        SM -.->|제어| B2
-        SM -.->|제어| C2
-        SM -.->|제어| D2
-    end
-
-    %% 스타일 정의
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef mesh fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class A1,B1,C1,D1,A2,B2,C2,D2 service;
-    class SM mesh;
-    class Note1 note;
-```
+![서비스 메시 없이 각 서비스가 mTLS·재시도·관찰성을 직접 구현하는 구조와, 중앙 컨트롤 플레인이 네 서비스의 통신을 자동으로 제어하는 구조를 나란히 비교한 아키텍처 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-1.png)
 
 **권장 기준**:
 
@@ -220,22 +142,7 @@ spec:
 
 #### 1. 단순한 아키텍처
 
-```mermaid
-flowchart LR
-    User[사용자] --> LB[로드 밸런서]
-    LB --> App[모놀리식<br/>애플리케이션]
-    App --> DB[(데이터베이스)]
-
-    Note["Service Mesh 불필요<br/>- 단일 애플리케이션<br/>- 간단한 통신 패턴<br/>- Ingress만으로 충분"]
-
-    %% 스타일 정의
-    classDef simple fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class User,LB,App,DB simple;
-    class Note note;
-```
+![사용자가 로드 밸런서를 거쳐 단일 모놀리식 애플리케이션과 데이터베이스에 접근하는 단순한 구조에서는 Ingress만으로 충분해 서비스 메시가 불필요함을 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-2.png)
 
 **대신 사용**:
 
@@ -315,38 +222,7 @@ spec:
 
 Cilium은 eBPF 기반으로 **네트워크 레벨**에서 많은 기능을 제공합니다:
 
-```mermaid
-flowchart TB
-    subgraph Comparison["기능 비교"]
-        subgraph ServiceMesh["Service Mesh (Istio)"]
-            SM1[L7 프록시 기반<br/>Envoy Sidecar]
-            SM2[애플리케이션 레벨<br/>트래픽 제어]
-            SM3[풍부한 L7 기능<br/>Retry, Timeout, etc.]
-        end
-
-        subgraph CNI["CNI (Cilium)"]
-            CN1[eBPF 기반<br/>커널 레벨]
-            CN2[네트워크 레벨<br/>정책 적용]
-            CN3[높은 성능<br/>낮은 오버헤드]
-        end
-
-        subgraph UseCases["사용 시나리오"]
-            UC1[Service Mesh:<br/>복잡한 L7 로직]
-            UC2[Cilium:<br/>네트워크 정책, 성능]
-            UC3[둘 다:<br/>대규모 엔터프라이즈]
-        end
-    end
-
-    %% 스타일 정의
-    classDef mesh fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef cni fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef usecase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class SM1,SM2,SM3 mesh;
-    class CN1,CN2,CN3 cni;
-    class UC1,UC2,UC3 usecase;
-```
+![L7 프록시 기반의 Istio 서비스 메시와 eBPF 커널 레벨의 Cilium CNI 각각의 특징을 나열하고, 두 접근을 언제 쓰는지 사용 시나리오로 정리한 비교표.](../../.gitbook/assets/ko-service-mesh-istio-README-3.png)
 
 **Cilium이 더 적합한 경우**:
 
@@ -401,23 +277,7 @@ flowchart TB
 
 Service Mesh가 필요하다고 판단되면, 점진적으로 도입하세요:
 
-```mermaid
-flowchart LR
-    Phase1[Phase 1<br/>관찰성<br/>메트릭 수집만]
-    Phase2[Phase 2<br/>보안<br/>mTLS 적용]
-    Phase3[Phase 3<br/>트래픽 관리<br/>Canary 배포]
-    Phase4[Phase 4<br/>고급 기능<br/>모든 기능 활용]
-
-    Phase1 -->|검증 후| Phase2
-    Phase2 -->|검증 후| Phase3
-    Phase3 -->|검증 후| Phase4
-
-    %% 스타일 정의
-    classDef phase fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Phase1,Phase2,Phase3,Phase4 phase;
-```
+![관찰성 확보, mTLS 보안 적용, Canary 트래픽 관리, 전체 기능 활용까지 4단계로 서비스 메시를 점진적으로 도입하는 순서를 보여주는 프로세스 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-4.png)
 
 **권장 순서**:
 
@@ -465,59 +325,7 @@ flowchart LR
 
 Istio는 Control Plane과 Data Plane으로 구성됩니다:
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        Pilot[Pilot<br/>서비스 디스커버리 & 트래픽 관리]
-        Citadel[Citadel<br/>인증서 관리 & 보안]
-        Galley[Galley<br/>구성 관리]
-    end
-
-    subgraph DataPlane["Data Plane"]
-        subgraph Pod1["Pod 1"]
-            App1[애플리케이션]
-            Envoy1[Envoy Proxy]
-        end
-
-        subgraph Pod2["Pod 2"]
-            App2[애플리케이션]
-            Envoy2[Envoy Proxy]
-        end
-
-        subgraph Pod3["Pod 3"]
-            App3[애플리케이션]
-            Envoy3[Envoy Proxy]
-        end
-    end
-
-    Pilot -.->|구성 전달| Envoy1
-    Pilot -.->|구성 전달| Envoy2
-    Pilot -.->|구성 전달| Envoy3
-
-    Citadel -.->|인증서 발급| Envoy1
-    Citadel -.->|인증서 발급| Envoy2
-    Citadel -.->|인증서 발급| Envoy3
-
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy2 <-->|mTLS| Envoy3
-    Envoy1 <-->|mTLS| Envoy3
-
-    App1 -->|요청| Envoy1
-    App2 -->|요청| Envoy2
-    App3 -->|요청| Envoy3
-
-    %% 스타일 정의
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef dataPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Pilot,Citadel,Galley controlPlane;
-    class App1,App2,App3 app;
-    class Envoy1,Envoy2,Envoy3 proxy;
-```
+![istiod의 Pilot·Citadel·Galley가 설정과 인증서를 각 파드의 Envoy 사이드카에 배포하고, 세 Envoy가 서로 mTLS로 암호화 통신하며 애플리케이션의 요청을 가로채는 Istio 아키텍처를 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-istio-README-5.png)
 
 **Control Plane (istiod)**:
 

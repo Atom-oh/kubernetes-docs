@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-05-eks-security-10-title ko-eks-05-eks-security-10-desc">
+<title id="ko-eks-05-eks-security-10-title">Bottlerocket OS의 세 가지 보안 특성</title>
+<desc id="ko-eks-05-eks-security-10-desc">Bottlerocket 운영체제가 API 기반 구성·SELinux·dm-verity·읽기 전용 루트로 구성된 보안 특성, 자동 업데이트/롤백/A-B 파티션 방식의 업데이트 전략, SSH·패키지 관리자·불필요 서비스를 제거한 최소화 전략으로 불변 인프라를 구현함을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="880" height="500" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="48" y="44" width="136" height="14" rx="2" fill="#ffffff"/>
+<text x="52" y="54" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">Bottlerocket OS</text>
+<rect x="80" y="96" width="800" height="130" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="88" y="100" width="56" height="14" rx="2" fill="#ffffff"/>
+<text x="92" y="110" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">보안 특성</text>
+<rect x="80" y="260" width="800" height="100" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="88" y="264" width="48" height="14" rx="2" fill="#ffffff"/>
+<text x="92" y="274" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">업데이트</text>
+<rect x="80" y="394" width="800" height="100" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="88" y="398" width="40" height="14" rx="2" fill="#ffffff"/>
+<text x="92" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">최소화</text>
+<rect x="120" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="120" y="140" width="180" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="210.0" y="176.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API 기반 구성</text>
+<rect x="320" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="320" y="140" width="180" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="410.0" y="176.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">SELinux 적용</text>
+<rect x="520" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="520" y="140" width="180" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="610.0" y="176.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">dm-verity 무결성</text>
+<rect x="720" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="720" y="140" width="180" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="810.0" y="176.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">읽기 전용 루트</text>
+<rect x="120" y="304" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="120" y="304" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220.0" y="336.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">자동 업데이트</text>
+<rect x="400" y="304" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="304" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="500.0" y="336.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">자동 롤백</text>
+<rect x="680" y="304" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="304" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="336.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">A/B 파티션</text>
+<rect x="120" y="438" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="120" y="438" width="200" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="220.0" y="470.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">SSH/셸 비활성화</text>
+<rect x="400" y="438" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="438" width="200" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="500.0" y="470.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">패키지 관리자 없음</text>
+<rect x="680" y="438" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="438" width="200" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="780.0" y="470.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">최소 서비스</text>
+
+</svg>

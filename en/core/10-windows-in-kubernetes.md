@@ -33,38 +33,7 @@ There are two types of Windows containers:
 
 The following diagram shows the architectural differences between the two Windows container types:
 
-```mermaid
-flowchart TD
-    subgraph "Windows Server Containers"
-        WSC1[Windows App 1] --- WSC2[Windows App 2] --- WSC3[Windows App 3]
-        WSC1 --- WSCR[Container Runtime]
-        WSC2 --- WSCR
-        WSC3 --- WSCR
-        WSCR --- WSOS[Windows Server OS]
-        WSOS --- WSHW[Physical Hardware]
-    end
-
-    subgraph "Hyper-V Isolation Containers"
-        HVC1[Windows App 1] --- HVCR1[Container Runtime]
-        HVCR1 --- HVOS1[Windows OS Kernel]
-
-        HVC2[Windows App 2] --- HVCR2[Container Runtime]
-        HVCR2 --- HVOS2[Windows OS Kernel]
-
-        HVOS1 --- HV[Hyper-V Hypervisor]
-        HVOS2 --- HV
-        HV --- HVHOS[Windows Server OS]
-        HVHOS --- HVHW[Physical Hardware]
-    end
-
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class WSC1,WSC2,WSC3,HVC1,HVC2 userApp;
-    class WSCR,HVCR1,HVCR2,HVOS1,HVOS2,HV k8sComponent;
-    class WSOS,WSHW,HVHOS,HVHW default;
-```
+![Comparison of Windows Server Containers, which share one host kernel, against Hyper-V Isolation Containers, where each container gets its own lightweight VM and kernel before reaching the shared hypervisor and hardware.](../.gitbook/assets/en-core-10-windows-in-kubernetes-0.png)
 
 ### Windows Container Images
 
@@ -97,43 +66,7 @@ The Windows support architecture in Kubernetes is as follows:
 2. **Linux Worker Nodes**: Run system components (CoreDNS, metrics-server, etc.).
 3. **Windows Worker Nodes**: Run Windows application workloads.
 
-```mermaid
-flowchart TD
-    subgraph "Linux Control Plane"
-        API[kube-apiserver] --> CM[kube-controller-manager]
-        API --> SCH[kube-scheduler]
-        API --> ETCD[(etcd)]
-    end
-
-    API --> LN[Linux Node]
-    API --> WN1[Windows Node 1]
-    API --> WN2[Windows Node 2]
-
-    subgraph "Linux Worker Node"
-        LN --> CoreDNS[CoreDNS]
-        LN --> Metrics[metrics-server]
-        LN --> Other[Other System Pods]
-    end
-
-    subgraph "Windows Worker Nodes"
-        WN1 --> WK1[kubelet]
-        WN1 --> WP1[kube-proxy]
-        WN1 --> WC1[Windows Containers]
-
-        WN2 --> WK2[kubelet]
-        WN2 --> WP2[kube-proxy]
-        WN2 --> WC2[Windows Containers]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,CM,SCH,LN,WN1,WN2,WK1,WK2,WP1,WP2,CoreDNS,Metrics,Other k8sComponent;
-    class ETCD dataStore;
-    class WC1,WC2 userApp;
-```
+![A single Linux-only control plane manages a mixed cluster, reaching both a Linux worker node and two Windows worker nodes that each run kubelet, kube-proxy, and Windows containers.](../.gitbook/assets/en-core-10-windows-in-kubernetes-1.png)
 
 ### Windows Node Components
 
@@ -367,44 +300,7 @@ Networking on Windows nodes has different characteristics than Linux nodes.
 
 The following diagram shows the networking architecture of a Kubernetes cluster with mixed Windows and Linux nodes:
 
-```mermaid
-flowchart TD
-    subgraph "External Network"
-        Client[Client] --> LB[Load Balancer]
-    end
-
-    LB --> SVC[Kubernetes Service]
-
-    subgraph "Kubernetes Cluster"
-        SVC --> LP1[Linux Pod]
-        SVC --> LP2[Linux Pod]
-        SVC --> WP1[Windows Pod]
-        SVC --> WP2[Windows Pod]
-
-        subgraph "Linux Node"
-            LP1
-            LP2
-        end
-
-        subgraph "Windows Node"
-            WP1
-            WP2
-        end
-
-        LP1 <--> LP2
-        LP1 <--> WP1
-        LP2 <--> WP2
-        WP1 <--> WP2
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SVC k8sComponent;
-    class LP1,LP2,WP1,WP2 userApp;
-    class Client,LB default;
-```
+![A client request reaches a Kubernetes Service, which load-balances to Linux and Windows pods alike, while the pods themselves form one flat mesh network regardless of node OS.](../.gitbook/assets/en-core-10-windows-in-kubernetes-2.png)
 
 ### Supported Network Plugins
 
@@ -534,45 +430,7 @@ Let's explore storage options available on Windows nodes.
 
 The following diagram shows various storage options available on Windows nodes:
 
-```mermaid
-flowchart TD
-    subgraph "Windows Pod"
-        WC[Windows Container]
-    end
-
-    WC --> ED[emptyDir Volume]
-    WC --> HP[hostPath Volume]
-    WC --> CM[ConfigMap Volume]
-    WC --> SC[Secret Volume]
-    WC --> PV[PersistentVolume]
-
-    subgraph "Windows Node"
-        ED
-        HP --> ND[Node Disk]
-    end
-
-    subgraph "Kubernetes API"
-        CM
-        SC
-    end
-
-    PV --> CSI[CSI Driver]
-    CSI --> AZ[Azure Disk/File]
-    CSI --> AWS[AWS EBS]
-    CSI --> SMB[SMB Share]
-
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class WC userApp;
-    class ED,HP,CM,SC,PV,CSI k8sComponent;
-    class ND,SMB dataStore;
-    class AWS awsService;
-    class AZ default;
-```
+![A Windows container can mount emptyDir, hostPath, ConfigMap, Secret, or PersistentVolume storage, with hostPath backed by the node disk and PersistentVolumes reaching Azure Disk/File, AWS EBS, or SMB shares through a CSI driver.](../.gitbook/assets/en-core-10-windows-in-kubernetes-3.png)
 
 ### Supported Volume Types
 
@@ -957,51 +815,7 @@ Let's explore how to run Windows workloads in Amazon EKS.
 
 The following diagram shows the Windows support architecture in Amazon EKS:
 
-```mermaid
-flowchart TD
-    subgraph "AWS Cloud"
-        subgraph "Amazon EKS"
-            CP[EKS Control Plane] --> LNG[Linux Node Group]
-            CP --> WNG[Windows Node Group]
-
-            subgraph "Linux Node Group"
-                LNG --> LN1[Linux Node 1]
-                LNG --> LN2[Linux Node 2]
-
-                LN1 --> LP1[CoreDNS]
-                LN1 --> LP2[VPC CNI]
-                LN2 --> LP3[kube-proxy]
-                LN2 --> LP4[Other System Pods]
-            end
-
-            subgraph "Windows Node Group"
-                WNG --> WN1[Windows Node 1]
-                WNG --> WN2[Windows Node 2]
-
-                WN1 --> WP1[Windows Application Pods]
-                WN2 --> WP2[Windows Application Pods]
-            end
-        end
-
-        CP --> IAM[AWS IAM]
-        CP --> VPC[Amazon VPC]
-        CP --> CW[CloudWatch]
-
-        WP1 --> ELB[Elastic Load Balancer]
-        WP2 --> ELB
-        ELB --> User[User]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP,LNG,WNG,LN1,LN2,WN1,WN2,LP1,LP2,LP3,LP4 k8sComponent;
-    class WP1,WP2 userApp;
-    class IAM,VPC,CW,ELB awsService;
-    class User default;
-```
+![The managed EKS control plane reaches both a Linux node group and a Windows node group, plus AWS IAM, VPC, and CloudWatch, while Windows application pods reach end users through an Elastic Load Balancer.](../.gitbook/assets/en-core-10-windows-in-kubernetes-4.png)
 
 ### Enabling Windows Support in EKS
 

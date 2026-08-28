@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">ACK와 KRO의 역할 분리 아키텍처</title>
+  <desc id="ddesc">KRO로 표현한 WebApp 커스텀 리소스가 Deployment, Service, TargetGroupBinding, ConfigMap을 생성하고, 이 리소스들이 참조를 통해 ACK가 관리하는 AWS 인프라(NLB, Target Group, Route 53, Aurora PostgreSQL)에 연결되는 구조를 보여준다.</desc>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <text x="24" y="28" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.14em">PLATFORM ENGINEERING · EXAMPLE CORP</text>
+  <text x="24" y="54" fill="#232F3E" font-size="20" font-weight="700">ACK ↔ KRO 아키텍처</text>
+  <text x="24" y="72" fill="#545B64" font-size="12">애플리케이션 리소스(KRO)와 AWS 인프라(ACK)의 역할 분리</text>
+
+  <!-- ================= ZONES ================= -->
+  <!-- KRO zone -->
+  <rect x="24" y="100" width="460" height="304" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="40" y="104" width="150" height="12" rx="2" fill="#ffffff"/>
+  <text x="115" y="113" fill="rgba(35,47,62,0.40)" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em">KRO · APPLICATION</text>
+
+  <!-- ACK zone -->
+  <rect x="508" y="100" width="428" height="304" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="524" y="104" width="180" height="12" rx="2" fill="#ffffff"/>
+  <text x="614" y="113" fill="rgba(35,47,62,0.40)" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em">ACK · AWS INFRASTRUCTURE</text>
+
+  <!-- ================= ARROWS (drawn before boxes) ================= -->
+
+  <!-- CR -> D  (up-right elbow, mid_x=210) -->
+  <path d="M180,268 H202 Q210,268 210,260 V168 Q210,160 218,160 H300"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- CR -> S  (up-right elbow, mid_x=234) -->
+  <path d="M180,280 H226 Q234,280 234,272 V252 Q234,244 242,244 H300"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- CR -> TGB (down-right elbow, mid_x=258) -->
+  <path d="M180,292 H250 Q258,292 258,300 V320 Q258,328 266,328 H300"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- CR -> CM (down-right elbow, mid_x=282) -->
+  <path d="M180,304 H274 Q282,304 282,312 V404 Q282,412 290,412 H300"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- D -> CM  envFrom (detour right of column, dashed) -->
+  <path d="M440,160 H462 Q470,160 470,168 V404 Q470,412 462,412 H440"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="480" y="278" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="508" y="287" fill="#7D8998" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.04em">envFrom</text>
+
+  <!-- S -> TGB  serviceRef (straight, adjacent) -->
+  <line x1="370" y1="272" x2="370" y2="300" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="380" y="280" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="412" y="289" fill="#7D8998" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.02em">serviceRef</text>
+
+  <!-- R53 -> NLB (straight vertical) -->
+  <line x1="635" y1="188" x2="635" y2="232" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- NLB -> TG (straight vertical) -->
+  <line x1="635" y1="288" x2="635" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- TGB -> TG   targetGroupARN (cross-zone dashed, down-right) -->
+  <path d="M440,328 H492 Q500,328 500,336 V352 Q500,360 508,360 H560"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="459" y="336" width="86" height="12" rx="2" fill="#ffffff"/>
+  <text x="502" y="345" fill="#7D8998" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.02em">targetGroupARN</text>
+
+  <!-- CM -> Aurora   endpoints (cross-zone dashed, routes clear of NLB/TG) -->
+  <path d="M440,412 H722 Q730,412 730,404 V268 Q730,260 738,260 H750"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="668" y="416" width="62" height="12" rx="2" fill="#ffffff"/>
+  <text x="699" y="425" fill="#7D8998" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.04em">endpoints</text>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- CR — focal -->
+  <rect x="40" y="254" width="140" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="254" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="48" y="260" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+  <text x="62" y="269" fill="#EC7211" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">CR</text>
+  <text x="110" y="282" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">WebApp CR</text>
+  <text x="110" y="298" fill="#545B64" class="mono" font-size="9" text-anchor="middle">단일 애플리케이션 API</text>
+
+  <!-- D: Deployment -->
+  <rect x="300" y="132" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="308" y="138" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="322" y="147" fill="#232F3E" fill-opacity="0.8" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">DEP</text>
+  <text x="370" y="163" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Deployment</text>
+  <text x="370" y="178" fill="#545B64" class="mono" font-size="9" text-anchor="middle">Pod 워크로드</text>
+
+  <!-- S: Service -->
+  <rect x="300" y="216" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="308" y="222" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="322" y="231" fill="#232F3E" fill-opacity="0.8" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">SVC</text>
+  <text x="370" y="247" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service</text>
+  <text x="370" y="262" fill="#545B64" class="mono" font-size="9" text-anchor="middle">클러스터 내부 라우팅</text>
+
+  <!-- TGB: TargetGroupBinding -->
+  <rect x="300" y="300" width="140" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="#232F3E" stroke-opacity="0.20" stroke-width="1" stroke-dasharray="4,3"/>
+  <rect x="308" y="306" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="322" y="315" fill="#232F3E" fill-opacity="0.8" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">TGB</text>
+  <text x="370" y="331" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">TargetGroupBinding</text>
+  <text x="370" y="346" fill="#545B64" class="mono" font-size="9" text-anchor="middle">Pod ↔ Target Group 연결</text>
+
+  <!-- CM: ConfigMap -->
+  <rect x="300" y="384" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="308" y="390" width="28" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="322" y="399" fill="#545B64" fill-opacity="0.8" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">CM</text>
+  <text x="370" y="415" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ConfigMap</text>
+  <text x="370" y="430" fill="#545B64" class="mono" font-size="9" text-anchor="middle">DB endpoint 등 환경값</text>
+
+  <!-- R53: Route 53 Record -->
+  <rect x="560" y="132" width="150" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-opacity="0.30" stroke-width="1"/>
+  <rect x="568" y="138" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.3" stroke-width="0.8"/>
+  <text x="582" y="147" fill="#232F3E" fill-opacity="0.6" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">DNS</text>
+  <text x="635" y="163" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Route 53 Record</text>
+  <text x="635" y="178" fill="#545B64" class="mono" font-size="9" text-anchor="middle">퍼블릭 도메인</text>
+
+  <!-- NLB -->
+  <rect x="560" y="232" width="150" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-opacity="0.30" stroke-width="1"/>
+  <rect x="568" y="238" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.3" stroke-width="0.8"/>
+  <text x="582" y="247" fill="#232F3E" fill-opacity="0.6" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">LB</text>
+  <text x="635" y="263" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">NLB</text>
+  <text x="635" y="278" fill="#545B64" class="mono" font-size="9" text-anchor="middle">Network Load Balancer</text>
+
+  <!-- TG: Target Group -->
+  <rect x="560" y="332" width="150" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-opacity="0.30" stroke-width="1"/>
+  <rect x="568" y="338" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.3" stroke-width="0.8"/>
+  <text x="582" y="347" fill="#232F3E" fill-opacity="0.6" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">TG</text>
+  <text x="635" y="363" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Target Group</text>
+  <text x="635" y="378" fill="#545B64" class="mono" font-size="9" text-anchor="middle">Pod IP 대상 등록</text>
+
+  <!-- Aurora -->
+  <rect x="750" y="232" width="150" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="758" y="238" width="28" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="772" y="247" fill="#545B64" fill-opacity="0.8" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.06em">DB</text>
+  <text x="825" y="263" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Aurora PostgreSQL</text>
+  <text x="825" y="278" fill="#545B64" class="mono" font-size="9" text-anchor="middle">애플리케이션 데이터</text>
+
+  <!-- ================= LEGEND ================= -->
+  <line x1="24" y1="560" x2="936" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="24" y="576" fill="#545B64" class="mono" font-size="8" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="110" y1="572" x2="140" y2="572" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="148" y="576" fill="#545B64" class="mono" font-size="8">리소스 생성</text>
+
+  <line x1="270" y1="572" x2="300" y2="572" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="308" y="576" fill="#545B64" class="mono" font-size="8">필드 참조 (ref)</text>
+
+  <rect x="470" y="564" width="16" height="16" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="494" y="576" fill="#545B64" class="mono" font-size="8">KRO 커스텀 리소스</text>
+</svg>

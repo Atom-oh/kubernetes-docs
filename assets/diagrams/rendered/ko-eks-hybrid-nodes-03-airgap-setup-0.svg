@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">네트워크 연결 유형별 에어갭 구성</title>
+  <desc id="ddesc">완전 에어갭, 프록시를 통한 부분 에어갭, VPN/Direct Connect와 VPC 엔드포인트를 사용하는 프라이빗 연결이라는 세 가지 네트워크 연결 방식을 비교하고, AWS는 하이브리드 노드에 프라이빗 연결 방식을 권장함을 보여준다.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">SCENARIO</text>
+  <text x="40" y="54" fill="#232F3E" font-size="20" font-weight="700">네트워크 연결 유형별 에어갭 구성 방식</text>
+  <text x="40" y="72" fill="#545B64" font-size="12">완전 격리부터 프라이빗 연결까지, 하이브리드 노드가 아티팩트에 접근하는 세 가지 방식</text>
+
+  <!-- ===== Zones (bg -> zones -> arrows -> nodes) ===== -->
+  <!-- Zone 1: 완전 에어갭 -->
+  <rect x="40" y="88" width="880" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="48" y="92" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="52" y="101" fill="rgba(35,47,62,0.45)" font-size="7" class="mono" letter-spacing="0.14em">완전 에어갭</text>
+
+  <!-- Zone 2: 부분 에어갭 - 프록시 -->
+  <rect x="40" y="232" width="880" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="48" y="236" width="168" height="12" rx="2" fill="#ffffff"/>
+  <text x="52" y="245" fill="rgba(35,47,62,0.45)" font-size="7" class="mono" letter-spacing="0.14em">부분 에어갭 · 프록시</text>
+
+  <!-- Zone 3: 프라이빗 연결 (focal / recommended) -->
+  <rect x="40" y="376" width="880" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="48" y="380" width="256" height="12" rx="2" fill="#ffffff"/>
+  <text x="52" y="389" fill="#EC7211" font-size="7" class="mono" letter-spacing="0.14em">프라이빗 연결 · VPN/DX + VPC 엔드포인트</text>
+
+  <!-- ===== Arrows (behind nodes) ===== -->
+  <!-- Zone1 arrows: plain, no labels -->
+  <line x1="332" y1="160" x2="380" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="580" y1="160" x2="628" y2="160" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Zone2 arrows: labeled -->
+  <line x1="332" y1="304" x2="380" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="336" y="284" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="356" y="293" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">허용목록</text>
+
+  <line x1="580" y1="304" x2="628" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="584" y="284" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="604" y="293" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">선별접근</text>
+
+  <!-- Zone3 arrows -->
+  <line x1="332" y1="448" x2="380" y2="448" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="336" y="428" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="356" y="437" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">VPN/DX</text>
+
+  <line x1="580" y1="448" x2="628" y2="448" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Nodes ===== -->
+  <!-- Zone1: A1, A2, A3 (backend) -->
+  <!-- A1 -->
+  <rect x="132" y="120" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="132" y="120" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="232" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">인터넷 연결 없음</text>
+  <!-- A2 -->
+  <rect x="380" y="120" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="380" y="120" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">물리적 미디어 전달</text>
+  <!-- A3 -->
+  <rect x="628" y="120" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="628" y="120" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="728" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">USB / DVD /</text>
+  <text x="728" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">이동식 HDD</text>
+
+  <!-- Zone2: B1 (input), B2 (backend), B3 (external) -->
+  <!-- B1 -->
+  <rect x="132" y="264" width="200" height="80" rx="6" fill="rgba(84,91,100,0.10)"/>
+  <rect x="132" y="264" width="200" height="80" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="232" y="300" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">내부 네트워크</text>
+  <text x="232" y="316" fill="#545B64" font-size="12" font-weight="600" text-anchor="middle">(제한된 접근)</text>
+  <!-- B2 -->
+  <rect x="380" y="264" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="380" y="264" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">프록시 서버</text>
+  <!-- B3 -->
+  <rect x="628" y="264" width="200" height="80" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="628" y="264" width="200" height="80" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="728" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">인터넷</text>
+
+  <!-- Zone3: C1 (external), C2 (backend), C3 (focal) -->
+  <!-- C1 -->
+  <rect x="132" y="408" width="200" height="80" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="132" y="408" width="200" height="80" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="232" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">온프레미스 네트워크</text>
+  <!-- C2 -->
+  <rect x="380" y="408" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="380" y="408" width="200" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">AWS VPC</text>
+  <!-- C3 (focal) -->
+  <rect x="628" y="408" width="200" height="80" rx="6" fill="#ffffff"/>
+  <rect x="628" y="408" width="200" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="728" y="444" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC 엔드포인트</text>
+  <text x="728" y="462" fill="#545B64" font-size="9" class="mono" text-anchor="middle">S3, ECR 등</text>
+
+  <!-- Footer callout -->
+  <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="546" fill="#545B64" font-size="14" font-style="italic">AWS는 EKS 하이브리드 노드에 VPN/Direct Connect와 VPC 엔드포인트를 사용하는 프라이빗 연결을 권장합니다.</text>
+</svg>

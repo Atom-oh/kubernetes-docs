@@ -28,39 +28,7 @@ Istio AuthorizationPolicy는 서비스에 대한 세밀한 접근 제어를 제�
 - **Operation**: HTTP 메서드, 경로, 포트
 - **Conditions**: 커스텀 조건 (헤더, JWT 클레임 등)
 
-```mermaid
-flowchart TB
-    Request[요청]
-    
-    subgraph AuthZ["Authorization Policy"]
-        Check1{Service Account<br/>확인}
-        Check2{Namespace<br/>확인}
-        Check3{HTTP Method<br/>확인}
-    end
-    
-    Allow[허용]
-    Deny[거부]
-    
-    Request --> Check1
-    Check1 -->|일치| Check2
-    Check1 -.->|불일치| Deny
-    Check2 -->|일치| Check3
-    Check2 -.->|불일치| Deny
-    Check3 -->|일치| Allow
-    Check3 -.->|불일치| Deny
-    
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef deny fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class Request request;
-    class Check1,Check2,Check3 check;
-    class Allow result;
-    class Deny deny;
-```
+![요청이 AuthorizationPolicy 안에서 Service Account, Namespace, HTTP Method 순으로 세 가지 조건을 검사하며, 모두 일치하면 허용되고 어느 단계든 불일치하면 즉시 거부로 이동하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-03-authorization-0.png)
 
 ## 기본 정책
 

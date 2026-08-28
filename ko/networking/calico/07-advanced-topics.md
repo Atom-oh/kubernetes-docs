@@ -13,36 +13,7 @@
 
 Calico의 IPAM(IP Address Management)은 블록 기반 할당 방식을 사용하여 효율적인 IP 주소 관리를 제공합니다.
 
-```mermaid
-graph TB
-    subgraph "IPPool: 10.244.0.0/16"
-        subgraph "Node 1 Blocks"
-            B1[Block 10.244.0.0/26<br/>64 IPs]
-            B2[Block 10.244.0.64/26<br/>64 IPs]
-        end
-
-        subgraph "Node 2 Blocks"
-            B3[Block 10.244.1.0/26<br/>64 IPs]
-            B4[Block 10.244.1.64/26<br/>64 IPs]
-        end
-
-        subgraph "Node 3 Blocks"
-            B5[Block 10.244.2.0/26<br/>64 IPs]
-        end
-    end
-
-    N1[Node 1] --> B1
-    N1 --> B2
-    N2[Node 2] --> B3
-    N2 --> B4
-    N3[Node 3] --> B5
-
-    style B1 fill:#4fc3f7
-    style B2 fill:#4fc3f7
-    style B3 fill:#81c784
-    style B4 fill:#81c784
-    style B5 fill:#ffb74d
-```
+![IPPool 내에서 각 노드가 자신에게 할당된 IP 블록에 친화성을 갖고, 여유 IP가 소진되면 새 블록을 추가로 할당받아 확장하는 Block 기반 IPAM 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-0.png)
 
 ### IP Block Affinity
 
@@ -74,26 +45,7 @@ spec:
 
 Calico IPAM의 IP 할당 알고리즘:
 
-```mermaid
-flowchart TD
-    Start[Pod 생성 요청] --> CheckNode{노드에 블록<br/>친화성 있음?}
-
-    CheckNode -->|Yes| CheckSpace{블록에<br/>여유 IP 있음?}
-    CheckNode -->|No| AllocBlock[새 블록 할당]
-
-    CheckSpace -->|Yes| AllocIP[IP 할당]
-    CheckSpace -->|No| CheckOther{다른 친화<br/>블록 있음?}
-
-    CheckOther -->|Yes| UseOther[다른 블록 사용]
-    CheckOther -->|No| AllocBlock
-
-    AllocBlock --> AllocIP
-    UseOther --> AllocIP
-    AllocIP --> Done[완료]
-
-    style Start fill:#4fc3f7
-    style Done fill:#81c784
-```
+![Pod 생성 시 노드의 블록 친화성과 여유 IP 여부를 확인해 기존 블록을 재사용하거나 새 블록을 할당한 뒤 IP를 배정하는 IPAM 할당 알고리즘의 결정 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-1.png)
 
 **blockSize 권장 사항:**
 
@@ -342,29 +294,7 @@ kubectl get blockaffinities -o json | jq -r \
 
 WireGuard는 현대적이고 고성능인 VPN 프로토콜로, Calico에서 노드 간 트래픽을 암호화하는 데 사용됩니다.
 
-```mermaid
-graph TB
-    subgraph "Node 1"
-        P1[Pod A]
-        WG1[WireGuard<br/>Interface]
-        E1[eth0]
-    end
-
-    subgraph "Node 2"
-        P2[Pod B]
-        WG2[WireGuard<br/>Interface]
-        E2[eth0]
-    end
-
-    P1 -->|평문| WG1
-    WG1 -->|암호화| E1
-    E1 -->|WireGuard 터널| E2
-    E2 -->|복호화| WG2
-    WG2 -->|평문| P2
-
-    style WG1 fill:#81c784
-    style WG2 fill:#81c784
-```
+![Pod A의 평문 트래픽이 Node 1의 WireGuard 인터페이스에서 암호화되어 eth0을 통해 터널로 전달되고, Node 2에서 복호화되어 Pod B에 평문으로 도달하는 노드 간 WireGuard 암호화 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-2.png)
 
 ### WireGuard 설정
 
@@ -476,33 +406,7 @@ kubectl exec -n calico-system -it <calico-node-pod> -- \
 
 Egress Gateway는 특정 워크로드의 외부 트래픽이 지정된 게이트웨이 노드를 통해 나가도록 하여, 고정된 소스 IP를 제공합니다.
 
-```mermaid
-graph LR
-    subgraph "Kubernetes Cluster"
-        subgraph "Worker Nodes"
-            P1[Pod A<br/>ns: secure]
-            P2[Pod B<br/>ns: secure]
-            P3[Pod C<br/>ns: default]
-        end
-
-        subgraph "Egress Gateway Nodes"
-            EG1[Egress GW 1<br/>IP: 203.0.113.10]
-            EG2[Egress GW 2<br/>IP: 203.0.113.11]
-        end
-    end
-
-    External[외부 서비스<br/>방화벽: 203.0.113.10-11 허용]
-
-    P1 -->|via EG| EG1
-    P2 -->|via EG| EG2
-    P3 -->|직접| External
-    EG1 --> External
-    EG2 --> External
-
-    style EG1 fill:#ff9800
-    style EG2 fill:#ff9800
-    style External fill:#e1bee7
-```
+![보안 네임스페이스의 Pod들은 지정된 Egress Gateway 노드를 거쳐 고정된 소스 IP로 외부 서비스에 나가고, 일반 Pod는 직접 외부로 나가는 경로 차이를 통해 컴플라이언스 요구사항을 충족하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-3.png)
 
 ### Egress Gateway 설정
 
@@ -606,37 +510,7 @@ spec:
 
 대규모 멀티 클러스터 환경에서 Typha를 활용한 페더레이션:
 
-```mermaid
-graph TB
-    subgraph "Cluster A"
-        TA1[Typha A1]
-        TA2[Typha A2]
-        FA1[Felix A1]
-        FA2[Felix A2]
-    end
-
-    subgraph "Cluster B"
-        TB1[Typha B1]
-        TB2[Typha B2]
-        FB1[Felix B1]
-        FB2[Felix B2]
-    end
-
-    subgraph "Federation Layer"
-        FED[Federation<br/>Controller]
-    end
-
-    TA1 --> FED
-    TB1 --> FED
-    FA1 --> TA1
-    FA2 --> TA2
-    FB1 --> TB1
-    FB2 --> TB2
-
-    style FED fill:#9c27b0
-    style TA1 fill:#ffb74d
-    style TB1 fill:#ffb74d
-```
+![각 클러스터의 Felix 에이전트가 자신의 Typha 인스턴스에 연결되고, 두 클러스터의 대표 Typha가 하나의 Federation Controller로 상태를 취합하는 Typha 기반 멀티 클러스터 페더레이션 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-4.png)
 
 ### 크로스 클러스터 정책
 
@@ -728,32 +602,7 @@ spec:
 
 ### HNS (Host Networking Service) 통합
 
-```mermaid
-graph TB
-    subgraph "Windows Node"
-        subgraph "Container Runtime"
-            C1[Container 1]
-            C2[Container 2]
-        end
-
-        subgraph "Calico Windows"
-            CW[Calico Node<br/>Windows Service]
-            HNS[HNS<br/>Host Network Service]
-            VFP[VFP<br/>Virtual Filtering Platform]
-        end
-
-        NIC[Physical NIC]
-    end
-
-    C1 --> HNS
-    C2 --> HNS
-    CW --> HNS
-    HNS --> VFP
-    VFP --> NIC
-
-    style HNS fill:#0078d4
-    style CW fill:#4fc3f7
-```
+![Windows 노드에서 컨테이너와 Calico Node 서비스의 트래픽이 모두 HNS로 모여 VFP를 거쳐 물리 NIC로 나가는 Calico Windows의 HNS 통합 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-5.png)
 
 ## Calico Enterprise / Tigera 개요
 
@@ -864,42 +713,7 @@ spec:
 
 1000+ 노드에서는 full-mesh BGP 대신 Route Reflector 토폴로지를 사용합니다:
 
-```mermaid
-graph TB
-    subgraph "Tier 1 - Route Reflectors"
-        RR1[RR 1<br/>Cluster ID: 1.0.0.1]
-        RR2[RR 2<br/>Cluster ID: 1.0.0.2]
-        RR3[RR 3<br/>Cluster ID: 1.0.0.3]
-    end
-
-    subgraph "Tier 2 - Rack RRs (Optional)"
-        RR_R1[Rack 1 RR]
-        RR_R2[Rack 2 RR]
-        RR_R3[Rack 3 RR]
-    end
-
-    subgraph "Worker Nodes"
-        N1[Node 1-100]
-        N2[Node 101-200]
-        N3[Node 201-300]
-    end
-
-    RR1 <--> RR2
-    RR2 <--> RR3
-    RR1 <--> RR3
-
-    RR1 --> RR_R1
-    RR2 --> RR_R2
-    RR3 --> RR_R3
-
-    RR_R1 --> N1
-    RR_R2 --> N2
-    RR_R3 --> N3
-
-    style RR1 fill:#ff9800
-    style RR2 fill:#ff9800
-    style RR3 fill:#ff9800
-```
+![Tier 1의 세 Route Reflector가 서로 풀메시로 피어링하고, 각각 자신이 담당하는 랙 RR과 워커 노드 그룹으로 라우트를 전달하는 1000+ 노드용 Route Reflector 계층 토폴로지를 보여준다.](../../.gitbook/assets/ko-networking-calico-07-advanced-topics-6.png)
 
 ```yaml
 # Route Reflector 노드 설정

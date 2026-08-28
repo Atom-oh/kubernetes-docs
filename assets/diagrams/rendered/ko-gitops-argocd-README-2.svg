@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="argocd-gantt-title argocd-gantt-desc">
+    <title id="argocd-gantt-title">ArgoCD 버전별 Kubernetes 지원 기간</title>
+    <desc id="argocd-gantt-desc">ArgoCD 2.11, 2.12, 2.13 세 버전이 각각 어떤 Kubernetes 버전대를 언제부터 언제까지 지원하는지, 지원 기간이 서로 겹치는 구간을 함께 보여준다.</desc><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Time axis: 2023-06 .. 2025-06, pitch per quarter -->
+    <!-- Timeline area x: 200-936, total months = 24 (2023-06 to 2025-06), pitch = 736/24 ≈ 30.67 -> use 4px grid ticks every 3 months (quarter) = 92px -->
+    <text x="200" y="56" fill="#545b64" font-size="8" font-family="'Geist Mono', monospace">2023</text>
+    <text x="384" y="56" fill="#545b64" font-size="8" font-family="'Geist Mono', monospace">2024</text>
+    <text x="568" y="56" fill="#545b64" font-size="8" font-family="'Geist Mono', monospace">2024-Q3</text>
+    <text x="752" y="56" fill="#545b64" font-size="8" font-family="'Geist Mono', monospace">2025</text>
+    <line x1="200" y1="64" x2="936" y2="64" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+
+    <!-- Phase zone: ArgoCD 2.13 -->
+    <rect x="188" y="76" width="760" height="60" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="20" y="112" fill="#232f3e" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ArgoCD 2.13</text>
+
+    <!-- Phase zone: ArgoCD 2.12 -->
+    <rect x="188" y="196" width="760" height="60" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="20" y="232" fill="#232f3e" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ArgoCD 2.12</text>
+
+    <!-- Phase zone: ArgoCD 2.11 -->
+    <rect x="188" y="316" width="760" height="60" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="20" y="352" fill="#232f3e" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ArgoCD 2.11</text>
+
+    <!-- Task bars -->
+    <!-- 2.13: K8s 1.27-1.31, 2024-01 .. 2025-06 (focal / longest, current) -->
+    <rect x="384" y="92" width="384" height="28" rx="4" fill="rgba(255,153,0,0.12)" stroke="#ec7211" stroke-width="1"/>
+    <text x="392" y="110" fill="#ec7211" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">K8s 1.27–1.31</text>
+
+    <!-- 2.12: K8s 1.26-1.30, 2023-09 .. 2025-03 -->
+    <rect x="292" y="212" width="416" height="28" rx="4" fill="rgba(84,91,100,0.15)" stroke="#545b64" stroke-width="1"/>
+    <text x="300" y="230" fill="#232f3e" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">K8s 1.26–1.30</text>
+
+    <!-- 2.11: K8s 1.26-1.30, 2023-06 .. 2024-12 -->
+    <rect x="200" y="332" width="416" height="28" rx="4" fill="rgba(84,91,100,0.15)" stroke="#545b64" stroke-width="1"/>
+    <text x="208" y="350" fill="#232f3e" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">K8s 1.26–1.30</text>
+
+    <!-- Today marker (2024-09, mid-overlap of all three) -->
+    <line x1="568" y1="76" x2="568" y2="376" stroke="#545b64" stroke-width="1" stroke-dasharray="4,3"/>
+    <rect x="536" y="392" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="568" y="402" fill="#545b64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">3버전 중첩</text>
+
+    <!-- Legend -->
+    <line x1="20" y1="440" x2="936" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="20" y="456" width="14" height="10" rx="2" fill="rgba(255,153,0,0.12)" stroke="#ec7211" stroke-width="1"/>
+    <text x="40" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">현재 활성 버전</text>
+
+    <rect x="172" y="456" width="14" height="10" rx="2" fill="rgba(84,91,100,0.15)" stroke="#545b64" stroke-width="1"/>
+    <text x="192" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">지원 종료 버전</text>
+
+    <line x1="332" y1="461" x2="360" y2="461" stroke="#545b64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="368" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">3개 버전 동시 지원 구간</text>
+  </svg>

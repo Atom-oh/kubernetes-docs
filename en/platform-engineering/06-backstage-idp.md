@@ -83,60 +83,7 @@ After completing this document, you will be able to:
 
 ### High-Level Architecture
 
-```mermaid
-graph TB
-    subgraph "Developer Interface"
-        Browser["Browser"]
-    end
-
-    subgraph "Backstage Application"
-        Frontend["Frontend<br/>(React SPA)"]
-        Backend["Backend<br/>(Node.js + Express)"]
-
-        subgraph "Core Plugins"
-            Catalog["Software Catalog"]
-            Templates["Software Templates"]
-            TechDocs["TechDocs"]
-            Search["Search"]
-        end
-
-        subgraph "Integration Plugins"
-            K8sPlugin["Kubernetes Plugin"]
-            ArgoPlugin["ArgoCD Plugin"]
-            GHPlugin["GitHub Plugin"]
-            CostPlugin["Kubecost Plugin"]
-        end
-    end
-
-    subgraph "Data Layer"
-        PostgreSQL["PostgreSQL<br/>(RDS)"]
-        S3["S3 Bucket<br/>(TechDocs)"]
-    end
-
-    subgraph "External Systems"
-        GitHub["GitHub / GitLab"]
-        EKS["EKS Clusters"]
-        ArgoCD["ArgoCD"]
-        OIDC["OIDC Provider<br/>(Cognito / Okta)"]
-    end
-
-    Browser --> Frontend
-    Frontend --> Backend
-    Backend --> Catalog
-    Backend --> Templates
-    Backend --> TechDocs
-    Backend --> Search
-    Backend --> K8sPlugin
-    Backend --> ArgoPlugin
-    Backend --> GHPlugin
-    Backend --> CostPlugin
-    Backend --> PostgreSQL
-    TechDocs --> S3
-    GHPlugin --> GitHub
-    K8sPlugin --> EKS
-    ArgoPlugin --> ArgoCD
-    Backend --> OIDC
-```
+![Architecture diagram showing browser traffic reaching the Backstage backend, which fans out to core and integration plugins, a PostgreSQL store, TechDocs storage in S3, and external systems including GitHub, EKS, ArgoCD, and an OIDC identity provider.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-0.png)
 
 ### Core Concepts
 
@@ -620,18 +567,7 @@ export const authModuleOidc = createBackendModule({
 
 The Backstage Software Catalog uses a well-defined entity model to represent your organization's software ecosystem. Understanding this model is essential for effective catalog management.
 
-```mermaid
-graph TB
-    Domain["Domain<br/>(Business Area)"] --> System["System<br/>(Product/Platform)"]
-    System --> Component["Component<br/>(Service/Library)"]
-    System --> API["API<br/>(gRPC/REST/Event)"]
-    System --> Resource["Resource<br/>(DB/Queue/Bucket)"]
-    Component --> API
-    Component --> Resource
-    Group["Group<br/>(Team)"] --> |owns| System
-    Group --> |owns| Component
-    User["User<br/>(Person)"] --> |memberOf| Group
-```
+![Entity-relationship diagram showing a Domain owning a System, which is built from Components that expose APIs and depend on Resources, with a Group owning the System and Component and a User belonging to that Group.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png)
 
 ### Entity Types
 
@@ -1892,17 +1828,7 @@ export const KedaScalingCard = () => {
 
 Backstage includes a built-in permission framework that controls access to catalog entities, templates, and plugin features. The permission system is policy-based and integrates with the catalog's ownership model.
 
-```mermaid
-graph LR
-    Request["User Request"] --> Policy["Permission Policy"]
-    Policy --> Decision{"Allow / Deny / Conditional"}
-    Decision -->|Allow| Action["Execute Action"]
-    Decision -->|Deny| Reject["403 Forbidden"]
-    Decision -->|Conditional| Filter["Filter Results"]
-
-    Catalog["Catalog Ownership"] --> Policy
-    Groups["Group Membership"] --> Policy
-```
+![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-2.png)
 
 ### Enabling the Permission Framework
 

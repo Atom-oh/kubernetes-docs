@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wci2-title wci2-desc">
+    <title id="wci2-title">Mixed-OS cluster networking</title>
+    <desc id="wci2-desc">A client request reaches a Kubernetes Service, which load-balances to Linux and Windows pods alike, while the pods themselves form one flat mesh network regardless of node OS.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="20" y="60" width="240" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="84" y="64" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="140" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EXTERNAL NETWORK</text>
+
+    <rect x="200" y="220" width="400" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="356" y="224" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="233" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LINUX NODE</text>
+
+    <rect x="200" y="400" width="400" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="348" y="404" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="413" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WINDOWS NODE</text>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="120" y1="118" x2="160" y2="118" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="240" y1="118" x2="280" y2="118" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Service fan-out: straight to LP1/LP2, corridor around the outside to WP1/WP2 -->
+    <line x1="310" y1="140" x2="310" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="530" y1="140" x2="530" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M296,140 V172 Q296,180 288,180 H168 Q160,180 160,188 V420 Q160,428 168,428 H242 Q250,428 250,436" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M544,140 V172 Q544,180 552,180 H632 Q640,180 640,188 V420 Q640,428 632,428 H598 Q590,428 590,436" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Pod mesh (bidirectional) -->
+    <line x1="380" y1="280" x2="460" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <line x1="380" y1="460" x2="460" y2="460" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <line x1="310" y1="304" x2="310" y2="436" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <line x1="530" y1="304" x2="530" y2="436" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+    <!-- Client -->
+    <rect x="40" y="96" width="80" height="44" rx="6" fill="#ffffff"/>
+    <rect x="40" y="96" width="80" height="44" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="80" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+    <!-- Load Balancer -->
+    <rect x="160" y="96" width="80" height="44" rx="6" fill="#ffffff"/>
+    <rect x="160" y="96" width="80" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="200" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+    <!-- Service (focal) -->
+    <rect x="280" y="96" width="320" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="440" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes Service</text>
+
+    <!-- Linux Pods -->
+    <rect x="240" y="256" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="310" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linux Pod 1</text>
+
+    <rect x="460" y="256" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="530" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linux Pod 2</text>
+
+    <!-- Windows Pods -->
+    <rect x="240" y="436" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="310" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows Pod 1</text>
+
+    <rect x="460" y="436" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="530" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows Pod 2</text>
+
+    <!-- Legend -->
+    <line x1="20" y1="556" x2="900" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="20" y="572" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="20" y="580" width="10" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="38" y="589" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">OS-AGNOSTIC ROUTING</text>
+    <rect x="260" y="580" width="10" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="278" y="589" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">POD</text>
+    <line x1="360" y1="585" x2="384" y2="585" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <text x="392" y="589" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">POD-TO-POD MESH</text>
+  </svg>

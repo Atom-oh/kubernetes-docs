@@ -9,129 +9,13 @@
 
 Kubernetes에서의 일반적인 모델 훈련 파이프라인은 데이터 준비부터 모델 평가까지 여러 단계를 포함합니다:
 
-```mermaid
-flowchart LR
-    subgraph DataPrep [데이터 준비]
-        S3Data[(S3 데이터 레이크)]
-        DataLoader[데이터 로더 Pod]
-        Preprocessing[전처리 Job]
-    end
-
-    subgraph Training [분산 훈련]
-        Scheduler[Job 스케줄러]
-        Workers[워커 Pods]
-        PS[파라미터 서버]
-        AllReduce[AllReduce 통신]
-    end
-
-    subgraph Checkpointing [체크포인팅]
-        FSxLustre[(FSx for Lustre)]
-        CheckpointMgr[체크포인트 관리자]
-    end
-
-    subgraph Evaluation [모델 평가]
-        EvalJob[평가 Job]
-        Metrics[메트릭 수집]
-        ModelRegistry[(모델 레지스트리)]
-    end
-
-    S3Data --> DataLoader
-    DataLoader --> Preprocessing
-    Preprocessing --> Scheduler
-    Scheduler --> Workers
-    Workers <--> PS
-    Workers <--> AllReduce
-    Workers --> FSxLustre
-    FSxLustre --> CheckpointMgr
-    CheckpointMgr --> EvalJob
-    EvalJob --> Metrics
-    Metrics --> ModelRegistry
-
-    classDef dataComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef trainingComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evalComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-
-    class S3Data,DataLoader,Preprocessing dataComponent;
-    class Scheduler,Workers,PS,AllReduce trainingComponent;
-    class FSxLustre,CheckpointMgr storageComponent;
-    class EvalJob,Metrics,ModelRegistry evalComponent;
-```
+![S3 데이터 레이크에서 시작해 분산 훈련 워커가 파라미터 서버와 AllReduce로 동기화하고, FSx for Lustre에 체크포인트를 저장한 뒤 평가를 거쳐 모델 레지스트리에 등록되는 4단계 파이프라인을 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-0.png)
 
 ## 분산 훈련 전략
 
 대규모 모델을 훈련하려면 여러 GPU와 노드에 걸쳐 연산을 분산해야 합니다. 다양한 병렬화 전략을 이해하는 것이 효율적인 훈련에 필수적입니다.
 
-```mermaid
-flowchart TD
-    subgraph DataParallelism [데이터 병렬화]
-        DP_Model1[모델 복제본 1]
-        DP_Model2[모델 복제본 2]
-        DP_Model3[모델 복제본 3]
-        DP_Data1[데이터 샤드 1]
-        DP_Data2[데이터 샤드 2]
-        DP_Data3[데이터 샤드 3]
-        DP_Sync[그래디언트 동기화<br/>AllReduce]
-
-        DP_Data1 --> DP_Model1
-        DP_Data2 --> DP_Model2
-        DP_Data3 --> DP_Model3
-        DP_Model1 --> DP_Sync
-        DP_Model2 --> DP_Sync
-        DP_Model3 --> DP_Sync
-    end
-
-    subgraph TensorParallelism [텐서 병렬화]
-        TP_Layer[단일 레이어]
-        TP_GPU1[GPU 1: 열 0-N/2]
-        TP_GPU2[GPU 2: 열 N/2-N]
-        TP_Combine[결과 결합]
-
-        TP_Layer --> TP_GPU1
-        TP_Layer --> TP_GPU2
-        TP_GPU1 --> TP_Combine
-        TP_GPU2 --> TP_Combine
-    end
-
-    subgraph PipelineParallelism [파이프라인 병렬화]
-        PP_Stage1[스테이지 1: 레이어 1-4<br/>GPU 1]
-        PP_Stage2[스테이지 2: 레이어 5-8<br/>GPU 2]
-        PP_Stage3[스테이지 3: 레이어 9-12<br/>GPU 3]
-        PP_Micro[마이크로 배치]
-
-        PP_Micro --> PP_Stage1
-        PP_Stage1 --> PP_Stage2
-        PP_Stage2 --> PP_Stage3
-    end
-
-    subgraph ExpertParallelism [전문가 병렬화 - MoE]
-        EP_Router[라우터/게이팅]
-        EP_Expert1[전문가 1<br/>GPU 1]
-        EP_Expert2[전문가 2<br/>GPU 2]
-        EP_Expert3[전문가 3<br/>GPU 3]
-        EP_Expert4[전문가 4<br/>GPU 4]
-        EP_Output[결합된 출력]
-
-        EP_Router --> EP_Expert1
-        EP_Router --> EP_Expert2
-        EP_Router --> EP_Expert3
-        EP_Router --> EP_Expert4
-        EP_Expert1 --> EP_Output
-        EP_Expert2 --> EP_Output
-        EP_Expert3 --> EP_Output
-        EP_Expert4 --> EP_Output
-    end
-
-    classDef dpComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef tpComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef ppComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef epComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-
-    class DP_Model1,DP_Model2,DP_Model3,DP_Data1,DP_Data2,DP_Data3,DP_Sync dpComponent;
-    class TP_Layer,TP_GPU1,TP_GPU2,TP_Combine tpComponent;
-    class PP_Stage1,PP_Stage2,PP_Stage3,PP_Micro ppComponent;
-    class EP_Router,EP_Expert1,EP_Expert2,EP_Expert3,EP_Expert4,EP_Output epComponent;
-```
+![데이터 병렬화, 텐서 병렬화, 파이프라인 병렬화, 전문가 병렬화(MoE)라는 4가지 독립적인 분산 훈련 전략 각각의 내부 흐름을 2x2로 나란히 비교해서 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-1.png)
 
 ### 병렬화 전략 비교
 
@@ -166,77 +50,7 @@ Slinky는 친숙한 Slurm 워크로드 관리자를 Kubernetes에 도입하여 A
 
 ### Slinky 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph EKSCluster [Amazon EKS 클러스터]
-        subgraph SlurmControl [Slurm 컨트롤 플레인]
-            Slurmctld[slurmctld<br/>컨트롤러 데몬]
-            Slurmdbd[slurmdbd<br/>데이터베이스 데몬]
-            SlurmREST[slurmrestd<br/>REST API]
-        end
-
-        subgraph ComputeNodes [컴퓨트 노드]
-            Slurmd1[slurmd Pod 1<br/>8x A100 GPU]
-            Slurmd2[slurmd Pod 2<br/>8x A100 GPU]
-            Slurmd3[slurmd Pod 3<br/>8x A100 GPU]
-            Slurmd4[slurmd Pod 4<br/>8x A100 GPU]
-        end
-
-        subgraph Access [사용자 접근]
-            LoginPod[로그인 Pod<br/>NLB 통한 SSH]
-            JupyterHub[JupyterHub]
-        end
-
-        subgraph Storage [공유 스토리지]
-            FSxLustre[(FSx for Lustre)]
-        end
-
-        subgraph Scaling [오토 스케일링]
-            Karpenter[Karpenter]
-            NodePool[GPU NodePool]
-        end
-    end
-
-    subgraph External [외부 서비스]
-        ArgoCD[ArgoCD<br/>GitOps 배포]
-        ECR[Amazon ECR<br/>AWS DLC 이미지]
-        NLB[Network Load Balancer]
-    end
-
-    ArgoCD --> SlurmControl
-    ECR --> ComputeNodes
-    NLB --> LoginPod
-
-    Slurmctld --> Slurmdbd
-    Slurmctld --> SlurmREST
-    Slurmctld --> Slurmd1
-    Slurmctld --> Slurmd2
-    Slurmctld --> Slurmd3
-    Slurmctld --> Slurmd4
-
-    LoginPod --> Slurmctld
-    JupyterHub --> SlurmREST
-
-    Slurmd1 --> FSxLustre
-    Slurmd2 --> FSxLustre
-    Slurmd3 --> FSxLustre
-    Slurmd4 --> FSxLustre
-
-    Karpenter --> NodePool
-    NodePool --> ComputeNodes
-
-    classDef controlComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef computeComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef accessComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef storageComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef externalComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    class Slurmctld,Slurmdbd,SlurmREST controlComponent;
-    class Slurmd1,Slurmd2,Slurmd3,Slurmd4 computeComponent;
-    class LoginPod,JupyterHub accessComponent;
-    class FSxLustre storageComponent;
-    class ArgoCD,ECR,NLB,Karpenter,NodePool externalComponent;
-```
+![ArgoCD, Amazon ECR, NLB 같은 외부 서비스가 EKS 클러스터 안의 Slurm 컨트롤 플레인, 사용자 접근(로그인 Pod/JupyterHub), GPU 컴퓨트 노드, 공유 스토리지(FSx for Lustre), Karpenter 오토스케일링과 어떻게 연결되는지 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-2.png)
 
 ### Slinky 컴포넌트
 

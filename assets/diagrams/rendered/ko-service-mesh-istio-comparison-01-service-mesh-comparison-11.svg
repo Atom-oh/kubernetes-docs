@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-01-service-mesh-comparison-11-title ko-service-mesh-istio-comparison-01-service-mesh-comparison-11-desc">
+<title id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-11-title">Service Mesh별 P99 지연 오버헤드</title>
+<desc id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-11-desc">Baseline 대비 각 Service Mesh 프록시가 추가하는 지연 시간을 비교하면 Linkerd가 가장 낮고 Istio·Consul이 가장 높다.</desc>
+
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="20" y="140" width="130" height="64" rx="6" fill="#ffffff"/>
+<rect x="20" y="140" width="130" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="85.0" y="171.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Baseline</text>
+<text x="85.0" y="189.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">0.1ms</text>
+<line x1="150" y1="172.0" x2="214" y2="172.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="150.0" y="152.0" width="64" height="12" rx="2" fill="#ffffff"/><text x="182.0" y="161.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">+0.5-1ms</text>
+<rect x="214" y="140" width="130" height="64" rx="6" fill="#ffffff"/>
+<rect x="214" y="140" width="130" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="279.0" y="171.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Linkerd</text>
+<text x="279.0" y="189.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">+0.5-1ms</text>
+<line x1="150" y1="172.0" x2="408" y2="172.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="247.0" y="152.0" width="64" height="12" rx="2" fill="#ffffff"/><text x="279.0" y="161.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">+1-2.5ms</text>
+<rect x="408" y="140" width="130" height="64" rx="6" fill="#ffffff"/>
+<rect x="408" y="140" width="130" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="473.0" y="171.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Kong Mesh</text>
+<text x="473.0" y="189.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">+1-2.5ms</text>
+<line x1="150" y1="172.0" x2="602" y2="172.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="344.0" y="152.0" width="64" height="12" rx="2" fill="#ffffff"/><text x="376.0" y="161.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">+1-3ms</text>
+<rect x="602" y="140" width="130" height="64" rx="6" fill="#ffffff"/>
+<rect x="602" y="140" width="130" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="667.0" y="171.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Consul</text>
+<text x="667.0" y="189.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">+1-3ms</text>
+<line x1="150" y1="172.0" x2="796" y2="172.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="441.0" y="152.0" width="64" height="12" rx="2" fill="#ffffff"/><text x="473.0" y="161.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">+1-3ms</text>
+<rect x="796" y="140" width="130" height="64" rx="6" fill="#ffffff"/>
+<rect x="796" y="140" width="130" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="861.0" y="171.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Istio</text>
+<text x="861.0" y="189.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">+1-3ms</text>
+</svg>

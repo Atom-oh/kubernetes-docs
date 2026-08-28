@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mesh-decision-title mesh-decision-desc">
+    <title id="mesh-decision-title">Do you need a service mesh?</title>
+    <desc id="mesh-decision-desc">Decision flowchart for whether to adopt a service mesh, based on microservice count, then complex traffic/security/observability needs, then available operations resources.</desc><defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs>
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="480" y1="64" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="184" x2="480" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="288" x2="480" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="392" x2="480" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="496" x2="480" y2="524" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <line x1="556" y1="140" x2="740" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="556" y1="244" x2="740" y2="244" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Q3 No -> Consider (right+down elbow) -->
+    <path d="M 556,348 H 632 Q 640,348 640,356 V 384 Q 640,392 648,392 H 740"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Q6 No -> Consider (right+up elbow) -->
+    <path d="M 556,452 H 648 Q 656,452 656,444 V 416 Q 656,408 664,408 H 740"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="464" y="80" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="89" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">START</text>
+
+    <rect x="648" y="132" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="660" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">NO</text>
+    <rect x="464" y="188" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="197" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">YES</text>
+
+    <rect x="648" y="236" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="660" y="245" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">NO</text>
+    <rect x="464" y="292" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="301" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">YES</text>
+
+    <rect x="596" y="366" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="608" y="375" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">NO</text>
+    <rect x="464" y="396" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">YES</text>
+
+    <rect x="612" y="426" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="624" y="435" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">NO</text>
+    <rect x="452" y="500" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="509" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">YES · ADOPT</text>
+
+    <!-- Start oval -->
+    <rect x="400" y="24" width="160" height="40" rx="20" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="480" y="48" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Consider a Mesh</text>
+
+    <!-- Q1 diamond -->
+    <polygon points="480,96 556,140 480,184 404,140" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="136" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Microservices</text>
+    <text x="480" y="150" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">architecture?</text>
+
+    <!-- Q2 diamond -->
+    <polygon points="480,200 556,244 480,288 404,244" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="240" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">10+</text>
+    <text x="480" y="254" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">microservices?</text>
+
+    <!-- Q3 diamond (combined traffic/security/observability) -->
+    <polygon points="480,304 556,348 480,392 404,348" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="340" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Complex traffic,</text>
+    <text x="480" y="353" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">security or</text>
+    <text x="480" y="366" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">observability need?</text>
+
+    <!-- Q6 diamond -->
+    <polygon points="480,408 556,452 480,496 404,452" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="448" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Ops resources</text>
+    <text x="480" y="462" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">available?</text>
+
+    <!-- Terminal: NoNeed -->
+    <rect x="740" y="120" width="180" height="40" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="830" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Not needed</text>
+    <text x="830" y="150" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">use Ingress / NetworkPolicy</text>
+
+    <!-- Terminal: Alternatives -->
+    <rect x="740" y="224" width="180" height="40" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="830" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Consider alternatives</text>
+    <text x="830" y="254" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CNI, Ingress, app-level</text>
+
+    <!-- Terminal: Consider -->
+    <rect x="740" y="380" width="180" height="40" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="830" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Consider adoption</text>
+    <text x="830" y="410" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">start small · Ambient Mode</text>
+
+    <!-- Terminal: NeedMesh (focal) -->
+    <rect x="400" y="524" width="160" height="40" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="548" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Mesh recommended</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="576" x2="920" y2="576" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="592" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <polygon points="196,586 208,580 220,586 208,592" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="232" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Decision</text>
+    <line x1="336" y1="588" x2="364" y2="588" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="372" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Adopt path</text>
+    <rect x="480" y="582" width="24" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="516" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Recommended outcome</text>
+  </svg>

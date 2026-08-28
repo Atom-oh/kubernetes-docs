@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-advanced-01-ambient-mode-1-title en-service-mesh-istio-advanced-01-ambient-mode-1-desc">
+<title id="en-service-mesh-istio-advanced-01-ambient-mode-1-title">Sidecar mode: one proxy per pod</title>
+<desc id="en-service-mesh-istio-advanced-01-ambient-mode-1-desc">Architecture diagram showing three pods, each pairing an application container with its own Envoy sidecar proxy, with mutual TLS negotiated directly between every pair of sidecars.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="100" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="148" y="104" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="170" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">POD 1</text>
+<rect x="360" y="100" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="468" y="104" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="490" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">POD 2</text>
+<rect x="680" y="100" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="788" y="104" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="810" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">POD 3</text>
+<line x1="170" y1="196" x2="170" y2="240" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<line x1="490" y1="196" x2="490" y2="240" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<line x1="810" y1="196" x2="810" y2="240" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<line x1="260" y1="268" x2="400" y2="268" stroke="#EC7211" stroke-width="1.4" marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+<line x1="580" y1="268" x2="720" y2="268" stroke="#EC7211" stroke-width="1.4" marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+<rect x="314" y="248" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="330" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">mTLS</text>
+<rect x="634" y="248" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">mTLS</text>
+<rect x="80" y="140" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="140" width="180" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="170.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App</text>
+<text x="170.0" y="182.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">container</text>
+<rect x="80" y="240" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="240" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+<text x="170.0" y="282.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">sidecar</text>
+<rect x="400" y="140" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="140" width="180" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="490.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App</text>
+<text x="490.0" y="182.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">container</text>
+<rect x="400" y="240" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="240" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="490.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+<text x="490.0" y="282.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">sidecar</text>
+<rect x="720" y="140" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="720" y="140" width="180" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="810.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App</text>
+<text x="810.0" y="182.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">container</text>
+<rect x="720" y="240" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="720" y="240" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810.0" y="264.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+<text x="810.0" y="282.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">sidecar</text>
+<line x1="30" y1="542" x2="930" y2="542" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="30" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="30" y="570" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="50" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Envoy sidecar</text>
+<line x1="152" y1="575" x2="178" y2="575" stroke="#EC7211" stroke-width="1.3"/>
+<text x="186" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">mTLS between proxies</text>
+</svg>

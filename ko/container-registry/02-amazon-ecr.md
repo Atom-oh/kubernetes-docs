@@ -8,24 +8,7 @@ Amazon Elastic Container Registry(ECR)는 AWS에서 제공하는 완전관리형
 
 ### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Account["AWS Account"]
-        subgraph Private["Amazon ECR Private"]
-            R1["myapp-prod<br/>v1.0.0, v1.1.0, v1.2.0"]
-            R2["myapp-dev<br/>dev-abc123, dev-def456"]
-            R3["backend<br/>2.1.0, 2.2.0, latest"]
-            Features["IAM Auth · Lifecycle Policies<br/>Encryption · Scanning"]
-        end
-        subgraph Public["Amazon ECR Public"]
-            PubDesc["Public repositories<br/>public.ecr.aws/alias/repo"]
-        end
-    end
-
-    style Account fill:#FF9900,stroke:#cc7a00,color:#fff
-    style Private fill:#232F3E,stroke:#1a2332,color:#fff
-    style Public fill:#232F3E,stroke:#1a2332,color:#fff
-```
+![AWS 계정 안에서 Amazon ECR Private가 IAM 인증, 수명주기 정책, 암호화, 스캔 기능으로 비공개 리포지토리를 관리하고, ECR Public이 별도로 공개 리포지토리를 제공하는 구조를 보여준다.](../.gitbook/assets/ko-container-registry-02-amazon-ecr-0.png)
 
 ### Private vs Public ECR
 
@@ -386,23 +369,7 @@ ECR Lifecycle Policy는 이미지 보존 규칙을 자동화하여 스토리지 
 
 ### Lifecycle Policy 동작 원리
 
-```mermaid
-flowchart TD
-    Push["이미지 Push"] --> Eval["Lifecycle Policy 평가"]
-    Eval --> R1{"규칙 1: 태그 패턴<br/>매칭?"}
-    R1 -->|Yes| A1["규칙 1 적용"]
-    R1 -->|No| R2{"규칙 2: 태그 패턴<br/>매칭?"}
-    R2 -->|Yes| A2["규칙 2 적용"]
-    R2 -->|No| R3{"규칙 N: untagged?"}
-    R3 -->|Yes| A3["규칙 N 적용"]
-    R3 -->|No| Keep["보존"]
-
-    A1 --> Decision{"보존 기준 초과?"}
-    A2 --> Decision
-    A3 --> Decision
-    Decision -->|Yes| Delete["삭제"]
-    Decision -->|No| Keep
-```
+![이미지가 Push되면 Lifecycle Policy가 등록된 규칙을 순서대로 평가해 매칭되는 규칙을 적용하고, 보존 기준을 초과한 이미지만 삭제하고 나머지는 보존하는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-02-amazon-ecr-1.png)
 
 **규칙 평가 순서:**
 1. 규칙은 `rulePriority` 숫자가 낮은 것부터 평가
@@ -1062,14 +1029,7 @@ aws ec2 create-vpc-endpoint \
 
 외부 레지스트리를 ECR을 통해 캐싱하여 외부 의존성을 줄이고 pull 성능을 향상시킵니다.
 
-```mermaid
-flowchart LR
-    Pod["kubectl apply<br/>→ kubelet pull"] --> ECR{"ECR Endpoint"}
-    ECR -->|Cache Hit| Serve["캐시된 이미지<br/>즉시 제공"]
-    ECR -->|Cache Miss| Upstream["Upstream Registry<br/>에서 Pull"]
-    Upstream --> Cache["ECR에 캐시 저장"]
-    Cache --> Serve
-```
+![kubelet의 이미지 요청이 ECR 엔드포인트를 거쳐 캐시가 있으면 즉시 제공하고, 캐시가 없으면 업스트림 레지스트리에서 가져와 ECR에 캐시로 저장한 뒤 제공하는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-02-amazon-ecr-2.png)
 
 #### 지원 Upstream 레지스트리
 

@@ -11,34 +11,7 @@ Agentic AI goes beyond simple question-answering to autonomously create plans, u
 
 Agentic AI is an autonomous AI system with the following characteristics:
 
-```mermaid
-flowchart TD
-    subgraph AgenticAI [Agentic AI Characteristics]
-        Planning[Autonomous Planning]
-        Execution[Tool-based Execution]
-        Iteration[Iterative Improvement]
-        Memory[State and Memory Management]
-    end
-
-    subgraph Workflow [Workflow]
-        Goal[Goal Setting] --> Plan[Planning]
-        Plan --> Execute[Execution]
-        Execute --> Evaluate[Evaluation]
-        Evaluate --> |Improvement Needed| Plan
-        Evaluate --> |Complete| Result[Return Result]
-    end
-
-    Planning --> Plan
-    Execution --> Execute
-    Iteration --> Evaluate
-    Memory --> Execute
-
-    classDef agentNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef workflowNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Planning,Execution,Iteration,Memory agentNode;
-    class Goal,Plan,Execute,Evaluate,Result workflowNode;
-```
+![An agentic AI system applies four characteristics -- autonomous planning, tool-based execution, iterative improvement, and state/memory management -- onto a goal-plan-execute-evaluate loop that either returns to planning or completes.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
 
 1. **Autonomous Planning**: Decomposes complex tasks into subtasks and determines execution order.
 2. **Tool-based Execution**: Utilizes various tools including external APIs, databases, and code executors.
@@ -62,26 +35,7 @@ Kubernetes provides the following core capabilities for Agentic AI platforms:
 
 Key challenges to solve when building an Agentic AI platform:
 
-```mermaid
-flowchart LR
-    subgraph Challenges [Key Technical Challenges]
-        GPU[1. GPU Resource Management]
-        LLM[2. Multi-LLM Integration]
-        Workflow[3. Workflow Orchestration]
-        Cost[4. Real-time Cost Optimization]
-    end
-
-    GPU --> |Fragmentation, Sharing, Scheduling| GPUSolution[MIG, Time-Slicing, Karpenter]
-    LLM --> |Routing, Fallback, Load Balancing| LLMSolution[LiteLLM, Inference Gateway]
-    Workflow --> |State Management, Branching, Error Handling| WorkflowSolution[LangGraph, Kagent]
-    Cost --> |Caching, Batching, Tiering| CostSolution[Langfuse, Prompt Cache]
-
-    classDef challenge fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class GPU,LLM,Workflow,Cost challenge;
-    class GPUSolution,LLMSolution,WorkflowSolution,CostSolution solution;
-```
+![Four technical challenges in running agentic AI at scale -- GPU resource management, multi-LLM integration, workflow orchestration, and real-time cost optimization -- each paired with the tools and techniques that address it.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
 
 ---
 
@@ -337,33 +291,7 @@ spec:
 
 vLLM provides high-performance LLM inference through the following core technologies:
 
-```mermaid
-flowchart TD
-    subgraph vLLM [vLLM Core Technologies]
-        PagedAttention[PagedAttention]
-        ContinuousBatching[Continuous Batching]
-        PrefixCaching[Prefix Caching]
-        ChunkedPrefill[Chunked Prefill]
-    end
-
-    subgraph Benefits [Performance Benefits]
-        Memory[Memory Efficiency 95%+]
-        Throughput[Throughput 24x Improvement]
-        Latency[Latency Minimization]
-        Context[Long Context Support]
-    end
-
-    PagedAttention --> Memory
-    ContinuousBatching --> Throughput
-    PrefixCaching --> Latency
-    ChunkedPrefill --> Context
-
-    classDef techNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef benefitNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class PagedAttention,ContinuousBatching,PrefixCaching,ChunkedPrefill techNode;
-    class Memory,Throughput,Latency,Context benefitNode;
-```
+![Four vLLM core technologies -- PagedAttention, continuous batching, prefix caching, and chunked prefill -- each mapped to the performance benefit it delivers: memory efficiency, throughput, latency, or long-context support.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
 
 ### vLLM Deployment Configuration
 
@@ -612,28 +540,7 @@ Extending the Kubernetes Gateway API to efficiently route AI inference workloads
 
 ### Kgateway + InferencePool Architecture
 
-```mermaid
-flowchart TD
-    Client[Client] --> Gateway[Gateway]
-    Gateway --> HTTPRoute[HTTPRoute]
-    HTTPRoute --> InferencePool[InferencePool]
-
-    subgraph Pool [InferencePool]
-        EP1[vLLM Pod 1]
-        EP2[vLLM Pod 2]
-        EP3[vLLM Pod 3]
-    end
-
-    InferencePool --> EndpointPicker[Endpoint Picker]
-    EndpointPicker --> |least-loaded| EP1
-    EndpointPicker --> |prefix-aware| EP2
-
-    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef poolNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Gateway,HTTPRoute gatewayNode;
-    class EP1,EP2,EP3,InferencePool poolNode;
-```
+![A client request travels through a Gateway, an HTTPRoute, and an InferencePool node to an Endpoint Picker, which routes traffic to individual vLLM pods using least-loaded or prefix-aware selection.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
 
 #### InferencePool CRD
 
@@ -1193,36 +1100,7 @@ print(result["result"])
 
 Kagent is a Kubernetes-native AI agent lifecycle management tool.
 
-```mermaid
-flowchart TD
-    subgraph Kagent [Kagent Architecture]
-        Controller[Kagent Controller]
-        CRD[Agent CRD]
-        Runtime[Agent Runtime]
-    end
-
-    subgraph Agent [AI Agent]
-        LLM[LLM Backend]
-        Tools[Tool Set]
-        Memory[Memory Store]
-        State[State Management]
-    end
-
-    Controller --> CRD
-    CRD --> Runtime
-    Runtime --> Agent
-
-    LLM --> |Inference| Runtime
-    Tools --> |Execution| Runtime
-    Memory --> |Store/Query| Runtime
-    State --> |Management| Runtime
-
-    classDef kagentNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef agentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Controller,CRD,Runtime kagentNode;
-    class LLM,Tools,Memory,State agentNode;
-```
+![A Kagent Controller reconciles an Agent CRD into an Agent Runtime, which the agent's LLM backend, tool set, memory store, and state management components all feed via inference, execution, store/query, and management calls.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
 
 ### Agent CRD Definition
 

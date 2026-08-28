@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1120 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-09-cluster-administration-5-title en-core-09-cluster-administration-5-desc">
+<title id="en-core-09-cluster-administration-5-title">Kubernetes Cluster Upgrade Process</title>
+<desc id="en-core-09-cluster-administration-5-desc">Flowchart showing the sequential control-plane and worker-node upgrade steps ending in cluster validation, with a rollback-to-backup path if validation finds a problem.</desc>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+<rect width="1120" height="560" fill="#ffffff"/>
+<line x1="300" y1="88" x2="300" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="300" y1="176" x2="300" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="300" y1="264" x2="300" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="300" y1="352" x2="300" y2="392" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="300" y1="440" x2="300" y2="480" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400.0,504.0 H 472.0 Q 480.0,504.0 480.0,496.0 V 72.0 Q 480.0,64.0 488.0,64.0 H 560.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="88" x2="660" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="176" x2="660" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 760.0,152.0 H 832.0 Q 840.0,152.0 840.0,144.0 V 120.0 Q 840.0,112.0 848.0,112.0 H 920.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="848.0" y="126.0" width="70" height="12" rx="2" fill="#ffffff"/><text x="883.0" y="135.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">PROBLEM</text>
+<line x1="1000" y1="136" x2="1000" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="200.0" y="40" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="200.0" y="40" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="68.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Upgrade Planning</text>
+<rect x="200.0" y="128" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="200.0" y="128" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="156.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Check Version Compatibility</text>
+<rect x="200.0" y="216" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="200.0" y="216" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="244.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd Backup</text>
+<rect x="200.0" y="304" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="200.0" y="304" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="332.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Upgrade First Control Plane Node</text>
+<rect x="200.0" y="392" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="200.0" y="392" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="420.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Test Control Plane Functions</text>
+<rect x="200.0" y="480" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="200.0" y="480" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="508.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Upgrade Additional Control Plane Nodes</text>
+<rect x="560.0" y="40" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="560.0" y="40" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="68.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Upgrade Worker Nodes</text>
+<rect x="560.0" y="128" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="560.0" y="128" width="200" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="660.0" y="156.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cluster Validation</text>
+<rect x="560.0" y="216" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="560.0" y="216" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="244.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Upgrade Complete</text>
+<rect x="920.0" y="88" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="920.0" y="88" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="1000.0" y="116.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rollback</text>
+<rect x="920.0" y="216" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="920.0" y="216" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="1000.0" y="244.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Restore from Backup</text>
+</svg>

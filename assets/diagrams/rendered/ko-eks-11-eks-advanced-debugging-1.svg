@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-11-eks-advanced-debugging-1-title ko-eks-11-eks-advanced-debugging-1-desc">
+<title id="ko-eks-11-eks-advanced-debugging-1-title">NotReady 노드 의사결정 트리</title>
+<desc id="ko-eks-11-eks-advanced-debugging-1-desc">EC2 상태부터 kubelet, 네트워크, 디스크/메모리 압력, 컨테이너 런타임까지 단계적으로 점검해 노드가 NotReady가 된 원인을 좁혀가는 체크리스트형 의사결정 트리.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<circle cx="280" cy="16" r="4" fill="#232F3E"/>
+<line x1="280" y1="20" x2="280" y2="32.0" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="192" y="0" width="176" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="9" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TRIGGER · 노드 NotReady</text>
+<line x1="280" y1="96.0" x2="280" y2="120.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="251.5" y="88.0" width="57" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="97.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RUNNING</text>
+<line x1="280" y1="184.0" x2="280" y2="208.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="265.5" y="176.0" width="29" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="185.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="280" y1="272.0" x2="280" y2="296.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="265.5" y="264.0" width="29" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="273.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="280" y1="360.0" x2="280" y2="384.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="268.0" y="352.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="361.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="280" y1="448.0" x2="280.0" y2="468" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="268.0" y="438.0" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="280" y="447.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="356.0" y1="64" x2="560" y2="64.0" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="429.5" y="44" width="57" height="12" rx="2" fill="#ffffff"/>
+<text x="458.0" y="53" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">STOPPED</text>
+<line x1="356.0" y1="152" x2="560" y2="152.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="446.0" y="132" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="458.0" y="141" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="356.0" y1="240" x2="560" y2="240.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="446.0" y="220" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="458.0" y="229" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="356.0" y1="328" x2="560" y2="328.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="443.5" y="308" width="29" height="12" rx="2" fill="#ffffff"/>
+<text x="458.0" y="317" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="356.0" y1="416" x2="560" y2="416.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="443.5" y="396" width="29" height="12" rx="2" fill="#ffffff"/>
+<text x="458.0" y="405" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<polygon points="280,32.0 356.0,64 280,96.0 204.0,64" fill="#ffffff"/>
+<polygon points="280,32.0 356.0,64 280,96.0 204.0,64" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="280" y="61" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EC2</text>
+<text x="280" y="73" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">상태?</text>
+<polygon points="280,120.0 356.0,152 280,184.0 204.0,152" fill="#ffffff"/>
+<polygon points="280,120.0 356.0,152 280,184.0 204.0,152" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="149" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kubelet</text>
+<text x="280" y="161" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">실행 중?</text>
+<polygon points="280,208.0 356.0,240 280,272.0 204.0,240" fill="#ffffff"/>
+<polygon points="280,208.0 356.0,240 280,272.0 204.0,240" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="237" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">네트워크</text>
+<text x="280" y="249" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">연결?</text>
+<polygon points="280,296.0 356.0,328 280,360.0 204.0,328" fill="#ffffff"/>
+<polygon points="280,296.0 356.0,328 280,360.0 204.0,328" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="325" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">디스크</text>
+<text x="280" y="337" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">압력?</text>
+<polygon points="280,384.0 356.0,416 280,448.0 204.0,416" fill="#ffffff"/>
+<polygon points="280,384.0 356.0,416 280,448.0 204.0,416" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="413" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">메모리</text>
+<text x="280" y="425" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">압력?</text>
+<rect x="196" y="468" width="168" height="72" rx="6" fill="#ffffff"/>
+<rect x="196" y="468" width="168" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="492.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">컨테이너 런타임?</text>
+<text x="280.0" y="506.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">문제있음 → containerd 재시작</text>
+<text x="280.0" y="520.0" fill="#232F3E" font-size="9" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">정상 → kubelet 로그 분석</text>
+<rect x="560" y="36.0" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="560" y="36.0" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="59.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EC2 인스턴스 문제</text>
+<text x="660.0" y="73.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ASG/인스턴스 확인</text>
+<rect x="560" y="124.0" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="560" y="124.0" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="147.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kubelet 시작</text>
+<text x="660.0" y="161.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">systemctl start kubelet</text>
+<rect x="560" y="212.0" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="560" y="212.0" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="235.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">네트워크 문제</text>
+<text x="660.0" y="249.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">보안그룹/라우팅 확인</text>
+<rect x="560" y="300.0" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="560" y="300.0" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="323.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">디스크 정리</text>
+<text x="660.0" y="337.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">crictl rmi --prune</text>
+<rect x="560" y="388.0" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="560" y="388.0" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="411.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">메모리 부족</text>
+<text x="660.0" y="425.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">파드 eviction/스케일업</text>
+<line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<polygon points="200,532 216,548 200,564 184,548" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="228" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">점검 단계 (아래쪽 = 계속 점검)</text>
+<rect x="480" y="536" width="26" height="24" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="518" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">진단 결과 (오른쪽 = 문제 확정)</text>
+</svg>

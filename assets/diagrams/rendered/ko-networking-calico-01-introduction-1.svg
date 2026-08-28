@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+<title id="d1-title">Calico 프로젝트 거버넌스</title>
+<desc id="d1-desc">Tigera, CNCF, 커뮤니티라는 세 관리 주체가 각각 Calico Enterprise, Project Calico 오픈소스, Calico Cloud를 어떻게 지원하는지 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="d1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="d1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: 관리 주체 -->
+<rect x="40" y="64" width="280" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="118" y="68" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="180" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">관리 주체</text>
+
+<!-- Zone: Calico 에코시스템 -->
+<rect x="640" y="64" width="280" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="722" y="68" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="790" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">CALICO 에코시스템</text>
+
+<!-- Arrows -->
+<!-- Tigera(y=138) -> Enterprise(y=138) same y, straight -->
+<line x1="320" y1="138" x2="660" y2="138" stroke="#545B64" stroke-width="1.2" marker-end="url(#d1-arrow)"/>
+<!-- Tigera(y=154 exit lower attach) -> Cloud(y=346) elbow down -->
+<path d="M 320,154 H 480 Q 488,154 488,162 V 338 Q 488,346 496,346 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d1-arrow)"/>
+<!-- CNCF(y=250) -> OSS(y=234, attach point 1) elbow up -->
+<path d="M 320,250 H 520 Q 528,250 528,242 V 218 Q 528,210 536,210 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d1-arrow)"/>
+<!-- 커뮤니티(y=346) -> OSS(y=250, attach point 2) elbow up -->
+<path d="M 320,346 H 552 Q 560,346 560,338 V 258 Q 560,250 568,250 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d1-arrow)"/>
+
+<!-- Node: Tigera Inc. -->
+<rect x="60" y="106" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="106" width="260" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="68" y="114" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="84" y="123" fill="#545B64" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">ORG</text>
+<text x="194" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Tigera Inc.</text>
+<text x="194" y="158" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">creator company</text>
+
+<!-- Node: CNCF -->
+<rect x="60" y="218" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="218" width="260" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="68" y="226" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+<text x="84" y="235" fill="#7D8998" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="194" y="254" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">CNCF</text>
+<text x="194" y="270" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">Incubating</text>
+
+<!-- Node: 커뮤니티 -->
+<rect x="60" y="314" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="314" width="260" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="68" y="322" width="32" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+<text x="84" y="331" fill="#7D8998" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="194" y="350" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">커뮤니티</text>
+<text x="194" y="366" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">contributors</text>
+
+<!-- Node: Project Calico 오픈소스 (focal) -->
+<rect x="660" y="178" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="660" y="178" width="260" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="668" y="186" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="684" y="195" fill="#EC7211" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">OSS</text>
+<text x="794" y="214" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Project Calico</text>
+<text x="794" y="230" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">오픈소스</text>
+
+<!-- Node: Calico Enterprise -->
+<rect x="660" y="106" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="660" y="106" width="260" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="668" y="114" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="684" y="123" fill="#545B64" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">ENT</text>
+<text x="794" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Calico Enterprise</text>
+<text x="794" y="158" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">온프레미스</text>
+
+<!-- Node: Calico Cloud -->
+<rect x="660" y="314" width="260" height="64" rx="6" fill="#ffffff"/>
+<rect x="660" y="314" width="260" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="668" y="322" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="684" y="331" fill="#545B64" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.08em">SAAS</text>
+<text x="794" y="350" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Calico Cloud</text>
+<text x="794" y="366" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">SaaS</text>
+
+<!-- Legend -->
+<line x1="40" y1="472" x2="920" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="488" fill="#545B64" font-size="8" font-family="var(--font-mono)" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="504" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="60" y="512" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">회사 / 제품</text>
+<rect x="200" y="504" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="220" y="512" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">외부 재단</text>
+<rect x="360" y="504" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="380" y="512" fill="#545B64" font-size="8.5" font-family="var(--font-sans)">오픈소스 코어 (focal)</text>
+</svg>

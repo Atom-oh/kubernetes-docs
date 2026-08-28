@@ -40,70 +40,7 @@ The OSI model is a conceptual model that classifies network communication into 7
 
 ### OSI Model Layer Diagram
 
-```mermaid
-flowchart TD
-    subgraph "OSI Model Layers"
-        L7[7. Application Layer]
-        L6[6. Presentation Layer]
-        L5[5. Session Layer]
-        L4[4. Transport Layer]
-        L3[3. Network Layer]
-        L2[2. Data Link Layer]
-        L1[1. Physical Layer]
-
-        L7 --> L6 --> L5 --> L4 --> L3 --> L2 --> L1
-    end
-
-    subgraph "Cilium Features"
-        CL7[L7 Policy\nHTTP, gRPC, Kafka]
-        CL4[L4 Policy\nPort, Protocol]
-        CL3[L3 Policy\nIP, CIDR]
-
-        CL7 --> CL4 --> CL3
-    end
-
-    subgraph "Data Units"
-        D7[Data]
-        D6[Data]
-        D5[Data]
-        D4[Segment]
-        D3[Packet]
-        D2[Frame]
-        D1[Bit]
-    end
-
-    subgraph "Addressing"
-        A7[URL, URI]
-        A4[Port]
-        A3[IP Address]
-        A2[MAC Address]
-    end
-
-    L7 --- D7 --- A7
-    L6 --- D6
-    L5 --- D5
-    L4 --- D4 --- A4
-    L3 --- D3 --- A3
-    L2 --- D2 --- A2
-    L1 --- D1
-
-    L7 -.- CL7
-    L4 -.- CL4
-    L3 -.- CL3
-
-    classDef l7 fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef l4 fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef l3 fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef l2 fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef l1 fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class L7,D7,A7,CL7 l7;
-    class L4,D4,A4,CL4 l4;
-    class L3,D3,A3,CL3 l3;
-    class L2,D2,A2 l2;
-    class L1,D1 l1;
-    class L6,D6,L5,D5 l1;
-```
+![A layer-stack diagram of the OSI model from Application down to Physical, showing each layer's data unit and addressing scheme, with L7 (HTTP/gRPC/Kafka), L4 (port/protocol), and L3 (IP/CIDR) tagged as the layers Cilium enforces policy at, and L7 highlighted as this guide's focus.](../../.gitbook/assets/en-networking-cilium-05-l2-l7-networking-0.png)
 
 ### OSI Model Layers:
 

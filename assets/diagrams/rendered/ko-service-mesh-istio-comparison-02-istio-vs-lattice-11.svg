@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 820" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-11-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-11-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-11-title">Istio 트러블슈팅 실전: 5개 레이어를 30-60분간 확인한 사례</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-11-desc">엔지니어가 애플리케이션 로그부터 Envoy 사이드카, Istiod, Kubernetes Service까지 차례로 확인한 끝에 Backend 배포가 0개 레플리카로 스케일된 것을 istioctl analyze로 발견하고, 스케일을 복구한 뒤 프록시 동기화를 재확인하고서야 트래픽이 정상화되는 실제 디버깅 흐름을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="90" y1="88" x2="90" y2="790" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="320" y1="88" x2="320" y2="790" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="520" y1="88" x2="520" y2="790" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="710" y1="88" x2="710" y2="790" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="880" y1="88" x2="880" y2="790" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="20.0" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="20.0" y="40" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="90" y="68.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">엔지니어</text>
+<rect x="250.0" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="250.0" y="40" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="320" y="61.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<text x="320" y="75.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod</text>
+<rect x="450.0" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="450.0" y="40" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520" y="61.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy</text>
+<text x="520" y="75.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Sidecar</text>
+<rect x="640.0" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="640.0" y="40" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710" y="68.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istiod</text>
+<rect x="810.0" y="40" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="810.0" y="40" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="880" y="61.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Backend</text>
+<text x="880" y="75.0" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service</text>
+<rect x="141.1" y="111" width="127.8" height="12" rx="2" fill="#ffffff"/>
+<text x="205.0" y="120" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">1. kubectl logs app</text>
+<line x1="90" y1="130" x2="320" y2="130" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="271.0" y="150" width="98.0" height="38" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="320.0" y="166" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">정상 로그</text>
+<text x="320.0" y="180" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Backend 호출 성공</text>
+<rect x="241.1" y="196" width="127.8" height="12" rx="2" fill="#ffffff"/>
+<text x="305.0" y="205" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">2. logs istio-proxy</text>
+<line x1="90" y1="215" x2="520" y2="215" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="444.0" y="235" width="152.0" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="520.0" y="251" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">upstream connect error</text>
+<path d="M 90,300 H 136 V 326 H 90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="144" y="307.0" width="184.0" height="12" rx="2" fill="#ffffff"/>
+<text x="236.0" y="316.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">3. proxy-config → cluster 없음!</text>
+<rect x="326.8" y="336" width="146.4" height="12" rx="2" fill="#ffffff"/>
+<text x="400.0" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">4. kubectl logs istiod</text>
+<line x1="90" y1="355" x2="710" y2="355" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="625.0" y="375" width="170.0" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="710.0" y="391" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Service backend not found</text>
+<path d="M 90,440 H 136 V 466 H 90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="144" y="447.0" width="154.0" height="12" rx="2" fill="#ffffff"/>
+<text x="221.0" y="456.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">5. get svc → Service 존재함</text>
+<path d="M 90,495 H 136 V 521 H 90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="144" y="502.0" width="154.0" height="12" rx="2" fill="#ffffff"/>
+<text x="221.0" y="511.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">6. analyze → replicas=0!</text>
+<rect x="414.9" y="531" width="140.20000000000002" height="12" rx="2" fill="#ffffff"/>
+<text x="485.0" y="540" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">7. scale --replicas=1</text>
+<line x1="90" y1="550" x2="880" y2="550" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="840.0" y="570" width="80" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="880.0" y="586" fill="#545B64" font-size="8.5" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">파드 시작됨</text>
+<path d="M 90,635 H 136 V 661 H 90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="144" y="642.0" width="154.0" height="12" rx="2" fill="#ffffff"/>
+<text x="221.0" y="651.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">8. proxy-status → SYNCED</text>
+<rect x="169.0" y="681" width="72.0" height="12" rx="2" fill="#ffffff"/>
+<text x="205.0" y="690" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">9. 트래픽 재시도</text>
+<line x1="90" y1="700" x2="320" y2="700" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="551.6" y="736" width="96.8" height="12" rx="2" fill="#ffffff"/>
+<text x="600.0" y="745" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">정상 연결 (200 OK)</text>
+<line x1="320" y1="755" x2="880" y2="755" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+</svg>

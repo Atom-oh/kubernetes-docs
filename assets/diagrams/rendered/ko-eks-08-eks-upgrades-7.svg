@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-title t-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+      <title id="t-title">업그레이드 모범 사례</title>
+      <desc id="t-desc">업그레이드 모범 사례가 일반, 대규모 클러스터, 금융 서비스 세 범주로 나뉘고 일반 모범 사례는 계획·준비·수행·후속 네 단계로 세분화되는 트리 다이어그램.</desc>
+      <rect width="100%" height="100%" fill="#FFFFFF"/>
+<path d="M 480 78 L 480 104 L 188.0 104 L 188.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 78 L 480.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 480 78 L 480 104 L 772.0 104 L 772.0 150" fill="none" stroke="#545B64" stroke-width="1"/>
+      <rect x="380.0" y="34" width="200" height="44" rx="6" fill="#FFFFFF"/>
+      <rect x="380.0" y="34" width="200" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="388.0" y="45" fill="#EC7211" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">ROOT</text>
+      <text x="480.0" y="56" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 모범 사례</text>
+      <rect x="58.0" y="150" width="260" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="58.0" y="150" width="260" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="66.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="188.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">일반적인 모범 사례</text>
+      <text x="188.0" y="188" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">계획 · 준비 · 수행 · 후속</text>
+      <text x="188.0" y="199" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">(4개 세부 단계)</text>
+      <rect x="350.0" y="150" width="260" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="350.0" y="150" width="260" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="358.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="480.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">대규모 클러스터를 위한 모범 사례</text>
+      <text x="480.0" y="188" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">카나리 배포 · 자동화</text>
+      <text x="480.0" y="199" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">모니터링/통신/롤백 강화</text>
+      <rect x="642.0" y="150" width="260" height="74" rx="6" fill="#FFFFFF"/>
+      <rect x="642.0" y="150" width="260" height="74" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="650.0" y="161" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 1</text>
+      <text x="772.0" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">금융 서비스를 위한 모범 사례</text>
+      <text x="772.0" y="188" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">규제 준수 · 위험 평가</text>
+      <text x="772.0" y="199" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">변경 관리 · 테스트/문서 강화</text>
+      <path d="M 188.0 224 L 188.0 252 L 201.0 252 L 201.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 188.0 224 L 188.0 252 L 387.0 252 L 387.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 188.0 224 L 188.0 252 L 573.0 252 L 573.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <path d="M 188.0 224 L 188.0 252 L 759.0 252 L 759.0 320" fill="none" stroke="#545B64" stroke-width="1"/>
+      <rect x="117.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="117.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="125.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="201.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 계획</text>
+      <text x="201.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">버전 선택 · 일정</text>
+      <text x="201.0" y="369" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">단계적 접근 · 롤백</text>
+      <rect x="303.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="303.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="311.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="387.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 준비</text>
+      <text x="387.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">백업 · 리소스 확보</text>
+      <text x="387.0" y="369" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">호환성 · 중단 API 식별</text>
+      <rect x="489.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="489.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="497.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="573.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 수행</text>
+      <text x="573.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">컨트롤플레인→애드온</text>
+      <text x="573.0" y="369" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">→노드 (점진적)</text>
+      <rect x="675.0" y="320" width="168" height="66" rx="6" fill="#FFFFFF"/>
+      <rect x="675.0" y="320" width="168" height="66" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+      <text x="683.0" y="331" fill="#545B64" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.10em">TIER 2</text>
+      <text x="759.0" y="342" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">업그레이드 후</text>
+      <text x="759.0" y="358" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">검증 · 모니터링</text>
+      <text x="759.0" y="369" fill="#545B64" font-size="8.5" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">문서화 · 학습</text>
+      <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="518" fill="#545B64" font-size="8.5" font-family='"Geist Mono",ui-monospace,monospace'>일반적인 모범 사례는 계획→준비→수행→후속 4단계, 대규모/금융 서비스는 산업별 강화 사례</text>
+    </svg>

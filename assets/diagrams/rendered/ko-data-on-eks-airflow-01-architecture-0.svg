@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Airflow on Kubernetes 컴포넌트 아키텍처</title>
+<desc id="ddesc">Kubernetes 클러스터 안에서 Airflow api-server, scheduler, dag-processor, triggerer 배포가 모두 PostgreSQL 상태 저장소를 공유하고, scheduler가 실행기(Executor) 종류에 따라 CeleryExecutor의 Redis 브로커/워커 풀 또는 KubernetesExecutor의 태스크별 파드 중 하나로 작업을 위임하는 구조를 보여준다.</desc>
+
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    .name{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;font-size:12px;fill:#232F3E;}
+    .sub{font-family:'Geist Mono',ui-monospace,monospace;font-size:9px;fill:#545B64;}
+    .tag{font-family:'Geist Mono',ui-monospace,monospace;font-size:7px;letter-spacing:0.08em;text-anchor:middle;}
+    .eyebrow{font-family:'Geist Mono',ui-monospace,monospace;font-size:8px;font-weight:500;letter-spacing:0.18em;fill:#7D8998;}
+    .title{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;font-size:20px;fill:#232F3E;}
+    .zonelabel{font-family:'Geist Mono',ui-monospace,monospace;font-size:7px;letter-spacing:0.14em;text-anchor:middle;}
+    .arrlabel{font-family:'Geist Mono',ui-monospace,monospace;font-size:8px;letter-spacing:0.06em;text-anchor:middle;fill:#7D8998;}
+    .legend{font-family:'Geist Mono',ui-monospace,monospace;font-size:8px;fill:#545B64;}
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<!-- background -->
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- header -->
+<text x="32" y="24" class="eyebrow">DATA ON EKS · AIRFLOW</text>
+<text x="32" y="48" class="title">Airflow on Kubernetes 컴포넌트 아키텍처</text>
+
+<!-- ===== zones (bg -> zones -> arrows -> nodes) ===== -->
+<rect x="32" y="72" width="896" height="464" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="76" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="114" y="85" class="zonelabel" fill="rgba(35,47,62,0.40)">KUBERNETES CLUSTER</text>
+
+<rect x="160" y="360" width="400" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.35)" stroke-width="0.8" stroke-dasharray="4,4"/>
+<rect x="176" y="364" width="252" height="12" rx="2" fill="#ffffff"/>
+<text x="302" y="373" class="zonelabel" fill="rgba(35,47,62,0.45)">OPTIONAL · CELERYEXECUTOR ONLY</text>
+
+<!-- ===== arrows (drawn before nodes) ===== -->
+
+<!-- API -> PG -->
+<path d="M228,176 V204 Q228,212 236,212 H400 Q408,212 408,220 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="250" y="192" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="284" y="201" class="arrlabel">R/W STATE</text>
+
+<!-- SCH -> PG -->
+<path d="M400,176 V204 Q400,212 408,212 H440 Q448,212 448,220 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="390" y="192" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="424" y="201" class="arrlabel">READ DAG</text>
+
+<!-- DP -> PG -->
+<path d="M564,176 V204 Q564,212 556,212 H504 Q496,212 496,220 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="492" y="192" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="530" y="201" class="arrlabel">WRITE DAGS</text>
+
+<!-- TRG -> PG -->
+<path d="M732,176 V204 Q732,212 724,212 H568 Q560,212 560,220 V248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="602" y="192" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="646" y="201" class="arrlabel">R/W TRIGGER</text>
+
+<!-- SCH -> REDIS (dashed, optional path) -->
+<path d="M360,176 V392" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="294" y="278" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="324" y="287" class="arrlabel">QUEUE TASK</text>
+
+<!-- SCH -> KPOD (dashed, optional path) -->
+<path d="M336,176 V332 Q336,340 344,340 H744 Q752,340 752,348 V392" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="616" y="320" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="329" class="arrlabel">CREATE POD</text>
+
+<!-- REDIS -> W1 (dashed) -->
+<path d="M320,448 V452 Q320,460 312,460 H276 Q268,460 268,468 V472" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- REDIS -> W2 (dashed) -->
+<path d="M400,448 V452 Q400,460 408,460 H428 Q436,460 436,468 V472" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- ===== nodes ===== -->
+
+<!-- API -->
+<rect x="160" y="112" width="136" height="64" rx="6" fill="#ffffff"/>
+<rect x="160" y="112" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="168" y="120" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="183" y="129" class="tag" fill="rgba(35,47,62,0.8)">DEP</text>
+<text x="228" y="150" class="name" text-anchor="middle">api-server</text>
+<text x="228" y="164" class="sub" text-anchor="middle">Deployment</text>
+
+<!-- SCH -->
+<rect x="328" y="112" width="136" height="64" rx="6" fill="#ffffff"/>
+<rect x="328" y="112" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="336" y="120" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="351" y="129" class="tag" fill="rgba(35,47,62,0.8)">DEP</text>
+<text x="396" y="150" class="name" text-anchor="middle">scheduler</text>
+<text x="396" y="164" class="sub" text-anchor="middle">Deployment</text>
+
+<!-- DP -->
+<rect x="496" y="112" width="136" height="64" rx="6" fill="#ffffff"/>
+<rect x="496" y="112" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="504" y="120" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="519" y="129" class="tag" fill="rgba(35,47,62,0.8)">DEP</text>
+<text x="564" y="150" class="name" text-anchor="middle">dag-processor</text>
+<text x="564" y="164" class="sub" text-anchor="middle">Deployment</text>
+
+<!-- TRG -->
+<rect x="664" y="112" width="136" height="64" rx="6" fill="#ffffff"/>
+<rect x="664" y="112" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="672" y="120" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="687" y="129" class="tag" fill="rgba(35,47,62,0.8)">DEP</text>
+<text x="732" y="150" class="name" text-anchor="middle">triggerer</text>
+<text x="732" y="164" class="sub" text-anchor="middle">Deployment</text>
+
+<!-- PG (focal) -->
+<rect x="392" y="248" width="176" height="80" rx="6" fill="#ffffff"/>
+<rect x="392" y="248" width="176" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="400" y="256" width="26" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8"/>
+<text x="413" y="265" class="tag" fill="#EC7211">DB</text>
+<text x="480" y="290" class="name" text-anchor="middle">PostgreSQL</text>
+<text x="480" y="304" class="sub" text-anchor="middle">StatefulSet</text>
+<text x="480" y="318" class="sub" text-anchor="middle" fill="#7D8998">공유 상태 저장소</text>
+
+<!-- REDIS -->
+<rect x="288" y="392" width="144" height="56" rx="6" fill="#ffffff"/>
+<rect x="288" y="392" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="296" y="400" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="311" y="409" class="tag" fill="rgba(35,47,62,0.8)">BRK</text>
+<text x="360" y="429" class="name" text-anchor="middle">Redis broker</text>
+<text x="360" y="442" class="sub" text-anchor="middle">StatefulSet</text>
+
+<!-- W1 -->
+<rect x="200" y="472" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="200" y="472" width="136" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="268" y="493" class="name" text-anchor="middle">celery worker 1</text>
+<text x="268" y="507" class="sub" text-anchor="middle">Pod</text>
+
+<!-- W2 -->
+<rect x="368" y="472" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="368" y="472" width="136" height="48" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="436" y="493" class="name" text-anchor="middle">celery worker 2</text>
+<text x="436" y="507" class="sub" text-anchor="middle">Pod</text>
+
+<!-- KPOD -->
+<rect x="680" y="392" width="144" height="64" rx="6" fill="#ffffff"/>
+<rect x="680" y="392" width="144" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="752" y="418" class="name" text-anchor="middle">per-task worker</text>
+<text x="752" y="432" class="sub" text-anchor="middle">Pod</text>
+<text x="752" y="445" class="sub" text-anchor="middle" fill="#7D8998">KubernetesExecutor</text>
+
+<!-- ===== legend ===== -->
+<line x1="32" y1="560" x2="928" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="580" class="legend" letter-spacing="0.14em">LEGEND</text>
+<line x1="130" y1="577" x2="162" y2="577" stroke="#545B64" stroke-width="1.2"/>
+<text x="170" y="580" class="legend">상시 상태 동기화 (모든 Executor)</text>
+<line x1="450" y1="577" x2="482" y2="577" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="490" y="580" class="legend">선택적 실행기 경로 (Celery / Kubernetes 중 택1)</text>
+
+</svg>

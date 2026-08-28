@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="nodelife-title nodelife-desc">
+    <title id="nodelife-title">노드 만료 처리 흐름</title>
+    <desc id="nodelife-desc">expireAfter 타이머가 만료되면 워크로드 존재 여부에 따라 graceful 종료 또는 즉시 종료를 거쳐 노드를 삭제하고 필요시 새 노드를 프로비저닝하는 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows (behind nodes) ===== -->
+    <!-- A -> B -->
+    <line x1="220" y1="44" x2="220" y2="60" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- B -> C -->
+    <line x1="220" y1="96" x2="220" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- C self-loop: No (jog at y=100, clear of B's box which ends at y=60 above / stays left of B's x=140 to its left, entering C's top vertex from the gap between B and C) -->
+    <path d="M140,144 H108 Q100,144 100,136 V108 Q100,100 108,100 H212 Q220,100 220,108 V112"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- C -> E : Yes -->
+    <line x1="220" y1="176" x2="220" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- E -> F -->
+    <line x1="220" y1="228" x2="220" y2="244" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- F -> G : Yes (graceful happy path, accent) -->
+    <line x1="300" y1="276" x2="620" y2="276" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- G -> H (accent) -->
+    <line x1="700" y1="294" x2="700" y2="310" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- H -> I (accent) -->
+    <line x1="700" y1="346" x2="700" y2="362" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- I -> J -->
+    <line x1="620" y1="380" x2="300" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- F -> J : No -->
+    <line x1="220" y1="308" x2="220" y2="362" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- J -> K -->
+    <line x1="220" y1="398" x2="220" y2="414" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- K -> L -->
+    <line x1="220" y1="450" x2="220" y2="466" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Arrow labels (mask + text, 8-10px gap above stroke) ===== -->
+    <rect x="30" y="110" width="64" height="24" rx="2" fill="#ffffff"/>
+    <text x="62" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+    <text x="62" y="132" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">계속 운영</text>
+
+    <rect x="204" y="180" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="220" y="189" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <rect x="444" y="264" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="460" y="273" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+    <rect x="204" y="326" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="220" y="335" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+    <!-- ===== Nodes ===== -->
+    <!-- A: 노드 생성 (start oval) -->
+    <rect x="140" y="8" width="160" height="36" rx="18" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="220" y="30" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 생성</text>
+
+    <!-- B: expireAfter 타이머 시작 -->
+    <rect x="140" y="60" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="82" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">expireAfter 타이머 시작</text>
+
+    <!-- C: 만료 시간 도달? (diamond) -->
+    <polygon points="220,112 300,144 220,176 140,144" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="148" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">만료 시간 도달?</text>
+
+    <!-- E: 노드 만료 표시 -->
+    <rect x="140" y="192" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="214" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 만료 표시</text>
+
+    <!-- F: 워크로드 존재? (diamond, focal decision) -->
+    <polygon points="220,244 300,276 220,308 140,276" fill="rgba(255,153,0,0.06)" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="280" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">워크로드 존재?</text>
+
+    <!-- G: Pod 퇴거 시작 -->
+    <rect x="620" y="258" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 퇴거 시작</text>
+
+    <!-- H: PDB 확인 -->
+    <rect x="620" y="310" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="332" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PDB 확인</text>
+
+    <!-- I: Graceful 종료 -->
+    <rect x="620" y="362" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Graceful 종료</text>
+
+    <!-- J: 즉시 종료 -->
+    <rect x="140" y="362" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">즉시 종료</text>
+
+    <!-- K: 노드 삭제 -->
+    <rect x="140" y="414" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드 삭제</text>
+
+    <!-- L: 필요시 새 노드 프로비저닝 (end oval) -->
+    <rect x="140" y="466" width="160" height="36" rx="18" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="220" y="486" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">필요시 새 노드</text>
+    <text x="220" y="497" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로비저닝</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="30" y1="548" x2="930" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND · SHAPE CARRIES TYPE</text>
+
+    <rect x="30" y="580" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="62" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">시작/종료</text>
+
+    <rect x="180" y="580" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="212" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">동작 단계</text>
+
+    <polygon points="336,586 348,580 360,586 348,592" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="372" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">판단(결정)</text>
+
+    <line x1="504" y1="586" x2="532" y2="586" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="540" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Graceful 경로</text>
+
+    <line x1="700" y1="586" x2="728" y2="586" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="736" y="590" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">일반 분기</text>
+  </svg>

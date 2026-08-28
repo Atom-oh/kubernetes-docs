@@ -16,20 +16,7 @@ This deep dive covers both Kubernetes standard policies and Calico's extended ca
 
 Kubernetes NetworkPolicy is a namespace-scoped resource that controls traffic to and from pods based on labels, namespaces, and IP blocks.
 
-```mermaid
-flowchart LR
-    subgraph "Without NetworkPolicy"
-        A1[Pod A] <--> B1[Pod B]
-        A1 <--> C1[Pod C]
-        B1 <--> C1
-    end
-
-    subgraph "With NetworkPolicy"
-        A2[Pod A] --> B2[Pod B]
-        A2 -.X.-> C2[Pod C]
-        B2 -.X.-> A2
-    end
-```
+![Comparison showing that without a NetworkPolicy every pod can reach every other pod freely, while a NetworkPolicy narrows that mesh down to one explicitly allowed path and blocks the rest.](../../.gitbook/assets/en-networking-calico-05-network-policy-0.png)
 
 ### Basic NetworkPolicy Structure
 
@@ -440,22 +427,7 @@ Tiers provide hierarchical policy evaluation, enabling separation of concerns be
 
 ### Policy Evaluation Order
 
-```mermaid
-flowchart TD
-    T[Traffic] --> SEC[Security Tier<br/>Order: 100]
-    SEC -->|Pass| PLAT[Platform Tier<br/>Order: 200]
-    PLAT -->|Pass| APP[Application Tier<br/>Order: 500]
-    APP -->|Pass| DEF[Default Tier<br/>Order: 1000]
-    DEF -->|No Match| DENY[Implicit Deny]
-
-    SEC -->|Deny| DROP1[Drop Packet]
-    PLAT -->|Deny| DROP2[Drop Packet]
-    APP -->|Deny| DROP3[Drop Packet]
-
-    SEC -->|Allow| ALLOW1[Allow Packet]
-    PLAT -->|Allow| ALLOW2[Allow Packet]
-    APP -->|Allow| ALLOW3[Allow Packet]
-```
+![Flowchart showing traffic passing in order through the Security, Platform, and Application tiers, where each tier can deny the packet, allow it, or pass it to the next tier, ending in an implicit deny if no tier matches.](../../.gitbook/assets/en-networking-calico-05-network-policy-1.png)
 
 ### Creating Tiers
 

@@ -75,39 +75,7 @@ spec:
     automated: {}  # Enable auto-sync with defaults
 ```
 
-```mermaid
-flowchart LR
-    subgraph DETECT["Change Detection"]
-        GIT["Git Repository"]
-        WEBHOOK["Webhook"]
-        POLL["Polling (3min)"]
-    end
-
-    subgraph SYNC["Sync Process"]
-        COMPARE["Compare States"]
-        APPLY["Apply Changes"]
-    end
-
-    subgraph CLUSTER["Target Cluster"]
-        RESOURCES["K8s Resources"]
-    end
-
-    GIT -->|"push"| WEBHOOK
-    GIT -->|"check"| POLL
-    WEBHOOK --> COMPARE
-    POLL --> COMPARE
-    COMPARE -->|"drift detected"| APPLY
-    APPLY --> RESOURCES
-    RESOURCES -->|"status"| COMPARE
-
-    classDef detect fill:#f9f9f9,stroke:#333,color:black
-    classDef sync fill:#EB6E85,stroke:#333,color:white
-    classDef cluster fill:#326CE5,stroke:#333,color:white
-
-    class GIT,WEBHOOK,POLL detect
-    class COMPARE,APPLY sync
-    class RESOURCES cluster
-```
+![Flow diagram showing Argo CD detecting changes in Git via webhook or polling, comparing desired vs live state, applying changes when drift is detected, and receiving status feedback from the target cluster.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-0.png)
 
 ## Auto-Sync Policies
 
@@ -137,20 +105,7 @@ syncPolicy:
 
 **Use case**: Prevent configuration drift from manual kubectl changes or other tools.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8s as Kubernetes
-    participant ArgoCD
-    participant Git
-
-    User->>K8s: kubectl scale deployment --replicas=5
-    K8s-->>ArgoCD: State changed
-    ArgoCD->>Git: Get desired state
-    Git-->>ArgoCD: replicas: 3
-    ArgoCD->>K8s: Apply replicas: 3
-    Note over K8s: Self-healed back to<br/>desired state
-```
+![Sequence diagram showing a user manually scaling a deployment with kubectl, Argo CD detecting the state change, reading the desired replica count from Git, and reapplying it so Kubernetes self-heals back to the Git-declared state.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-1.png)
 
 ### Allow Empty
 
@@ -288,34 +243,7 @@ Resources are grouped by wave number and synced in order:
 2. Within a wave, hooks run first, then resources
 3. Next wave starts only after previous completes
 
-```mermaid
-flowchart LR
-    subgraph WAVE_N2["Wave -2"]
-        CRD["CRDs"]
-    end
-
-    subgraph WAVE_N1["Wave -1"]
-        NS["Namespaces"]
-        SA["ServiceAccounts"]
-    end
-
-    subgraph WAVE_0["Wave 0 (default)"]
-        CFG["ConfigMaps"]
-        SEC["Secrets"]
-        DEP["Deployments"]
-    end
-
-    subgraph WAVE_1["Wave 1"]
-        SVC["Services"]
-        ING["Ingress"]
-    end
-
-    WAVE_N2 --> WAVE_N1 --> WAVE_0 --> WAVE_1
-
-    classDef wave fill:#f9f9f9,stroke:#333,color:black
-
-    class CRD,NS,SA,CFG,SEC,DEP,SVC,ING wave
-```
+![Layer-stack diagram showing Argo CD sync waves applying resources in order from wave -2 through wave 1: CRDs first, then namespaces and service accounts, then the default wave of config maps, secrets, and deployments, then services and ingress last.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-2.png)
 
 ### Setting Sync Wave
 
@@ -732,28 +660,7 @@ spec:
 
 ### Retry Flow
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant Ctrl as Controller
-    participant K8s as Kubernetes
-
-    Ctrl->>K8s: Sync attempt 1
-    K8s-->>Ctrl: Failed
-    Note over Ctrl: Wait 5s
-
-    Ctrl->>K8s: Sync attempt 2
-    K8s-->>Ctrl: Failed
-    Note over Ctrl: Wait 10s (5s * 2)
-
-    Ctrl->>K8s: Sync attempt 3
-    K8s-->>Ctrl: Failed
-    Note over Ctrl: Wait 20s (10s * 2)
-
-    Ctrl->>K8s: Sync attempt 4
-    K8s-->>Ctrl: Success
-    Ctrl->>App: Update status: Synced
-```
+![Sequence diagram showing a controller retrying a failed sync against Kubernetes with exponential backoff waits of 5, 10, and 20 seconds, succeeding on the fourth attempt and reporting the synced status back to the application.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-3.png)
 
 ### Retry Only on Specific Errors
 

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+<title id="d1-title">LLM 추론 지표가 사용자 경험에 미치는 영향</title>
+<desc id="d1-desc">TTFT, ITL, TPS, 종단간 지연, 처리량 다섯 가지 LLM 추론 지표가 인지된 응답성, 스트리밍 품질, 시스템 용량이라는 세 가지 사용자 경험 요소로 이어지는 관계도.</desc>
+<defs>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="32" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE &#183; LLM INFERENCE METRICS</text>
+<text x="32" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">추론 지표가 체감 경험을 결정한다</text>
+
+<rect x="32" y="140" width="416" height="420" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="144" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="92" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LLM 추론 지표</text>
+
+<rect x="592" y="140" width="288" height="420" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="604" y="144" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="668" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">사용자 경험 영향</text>
+
+<!-- connectors -->
+<path d="M 248,200 H 416 Q 420,200 420,196 V 196 Q 420,192 424,192 H 592" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,428 H 412 Q 420,428 420,420 V 216 Q 420,208 428,208 H 592" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,276 H 412 Q 420,276 420,284 V 292 Q 420,300 428,300 H 592" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,352 H 412 Q 420,352 420,344 V 324 Q 420,316 428,316 H 592" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,504 H 412 Q 420,504 420,496 V 424 Q 420,416 428,416 H 592" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- left metric nodes -->
+<rect x="48" y="172" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="172" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="148" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TTFT</text>
+<text x="148" y="214" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">첫 토큰 생성 시간</text>
+
+<rect x="48" y="248" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="248" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="272" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ITL</text>
+<text x="148" y="290" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">토큰 간 지연 시간</text>
+
+<rect x="48" y="324" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="324" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TPS</text>
+<text x="148" y="366" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">초당 토큰 수</text>
+
+<rect x="48" y="400" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="400" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">E2E 지연 시간</text>
+<text x="148" y="442" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">종단간 지연</text>
+
+<rect x="48" y="476" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="476" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">처리량</text>
+<text x="148" y="518" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">초당 요청 수</text>
+
+<!-- right UX nodes -->
+<rect x="592" y="172" width="264" height="56" rx="6" fill="#ffffff"/>
+<rect x="592" y="172" width="264" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="724" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인지된 응답성</text>
+<text x="724" y="214" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">first &amp; total latency</text>
+
+<rect x="592" y="280" width="264" height="56" rx="6" fill="#ffffff"/>
+<rect x="592" y="280" width="264" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="724" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스트리밍 품질</text>
+<text x="724" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">token cadence</text>
+
+<rect x="592" y="388" width="264" height="56" rx="6" fill="#ffffff"/>
+<rect x="592" y="388" width="264" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="724" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">시스템 용량</text>
+<text x="724" y="430" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">concurrent requests</text>
+
+<!-- legend -->
+<line x1="32" y1="580" x2="928" y2="580" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="32" y="596" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="108" y="590" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="140" y="599" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">첫 반응까지 걸리는 시간 &#8212; 체감 응답성의 핵심 지표</text>
+</svg>

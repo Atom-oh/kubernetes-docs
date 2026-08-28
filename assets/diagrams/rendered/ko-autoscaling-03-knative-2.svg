@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-autoscaling-03-knative-2-title ko-autoscaling-03-knative-2-desc">
+    <title id="ko-autoscaling-03-knative-2-title">Knative Service 리소스 계층과 트래픽 분배</title>
+    <desc id="ko-autoscaling-03-knative-2-desc">Service가 Configuration과 Route를 소유하고, Configuration이 Revision을 생성하며, Route가 최신 Revision에는 트래픽 100%를, 이전 Revision에는 0%를 배분해 유지하는 구조를 보여주는 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 440,96 H 288 Q 280,96 280,104 V 160" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 520,96 H 662 Q 670,96 670,104 V 160" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="280" y1="216" x2="280" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="288" y="252.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="311.0" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CREATE</text>
+<path d="M 340,216 V 242 Q 340,250 348,250 H 572 Q 580,250 580,242 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="432.0" y="230" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="239" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CREATE</text>
+<line x1="670" y1="216" x2="670" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="678" y="252.0" width="34" height="12" rx="2" fill="#ffffff"/>
+<text x="695.0" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">100%</text>
+<path d="M 615,216 V 262 Q 615,270 607,270 H 343 Q 335,270 335,262 V 300" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="447.0" y="278" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="475" y="287" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">0% KEEP</text>
+<rect x="380" y="40" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="40" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service</text>
+<text x="480.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">최상위 리소스</text>
+<rect x="180" y="160" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="180" y="160" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="186.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Configuration</text>
+<text x="280.0" y="202.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">원하는 상태 정의</text>
+<rect x="570" y="160" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="570" y="160" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="186.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route</text>
+<text x="670.0" y="202.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">트래픽 라우팅</text>
+<rect x="170" y="300" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="170" y="300" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="326.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이전</text>
+<text x="280.0" y="340.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Revision</text>
+<text x="280.0" y="352.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">v1 · v2 (불변)</text>
+<rect x="560" y="300" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="560" y="300" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="670.0" y="326.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Revision</text>
+<text x="670.0" y="340.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">v3</text>
+<text x="670.0" y="352.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">최신 · 불변</text>
+  </svg>

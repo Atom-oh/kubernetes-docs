@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-observability-09-observability-optimization-5-title ko-observability-09-observability-optimization-5-desc">
+  <title id="ko-observability-09-observability-optimization-5-title">로그·메트릭 저장 비용 절감 전략</title>
+  <desc id="ko-observability-09-observability-optimization-5-desc">수집된 데이터를 중요도에 따라 분류해 전체 저장, 샘플링, 집계 중 하나로 처리한 뒤 각각 다른 비용의 저장소로 보내는 의사결정 흐름을 보여준다.</desc>
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+    </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="16" y="64" width="936" height="472" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="28" y="68" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="76.0" y="77" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.10em">비용 절감 전략</text>
+<line x1="200" y1="300" x2="284" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 340,260 H 428 Q 436,260 436,252 V 160 Q 436,152 444,152 H 520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="396" y1="300" x2="520" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 340,340 H 428 Q 436,340 436,348 V 440 Q 436,448 444,448 H 520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="388.0" y="214" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="410" y="223" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">HIGH</text>
+<rect x="426.0" y="280" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="458" y="289" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">MEDIUM</text>
+<rect x="390.0" y="374" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="410" y="383" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">LOW</text>
+<line x1="680" y1="152" x2="760" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="680" y1="300" x2="760" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="680" y1="448" x2="760" y2="448" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="60" y="268" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="268" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="130.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">데이터 수집</text>
+<polygon points="340,244 396,300 340,356 284,300" fill="#ffffff"/>
+<polygon points="340,244 396,300 340,356 284,300" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340" y="297" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">중요도</text>
+<text x="340" y="311" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">분류</text>
+<rect x="520" y="120" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="520" y="120" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="600.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">전체 저장</text>
+<text x="600.0" y="162.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">장기 보관</text>
+<rect x="520" y="268" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="520" y="268" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="600.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">샘플링</text>
+<text x="600.0" y="310.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">중기 보관</text>
+<rect x="520" y="416" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="520" y="416" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="600.0" y="444.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">집계만</text>
+<text x="600.0" y="458.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">단기 보관</text>
+<rect x="760" y="120" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="120" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="848.0" y="148.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">S3 Glacier</text>
+<text x="848.0" y="162.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Deep Archive</text>
+<rect x="760" y="268" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="268" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="848.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">S3 Standard-IA</text>
+<rect x="760" y="416" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="416" width="176" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="848.0" y="452.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">메모리/로컬</text>
+<line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="110" y1="560" x2="134" y2="560" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="142" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start">처리 흐름</text>
+<rect x="200" y="554" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="232" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start">권장 기본값</text>
+</svg>

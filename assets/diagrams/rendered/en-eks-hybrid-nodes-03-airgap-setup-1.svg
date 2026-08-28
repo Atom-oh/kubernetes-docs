@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+  <title id="t1">Pre-staging artifacts on a connected host, then pulling them from an air-gapped node</title>
+  <desc id="d1">On an internet-connected host, ekshybrid-download.sh fetches the hybrid nodes manifest, uploads binaries and checksums to a private S3 bucket, and pulls the listed container images into ECR. In the air-gapped environment, an on-premises node resolves hybrid-assets.eks.amazonaws.com through a private hosted zone into an S3 interface VPC endpoint to fetch binaries, and pulls container images through an ECR VPC endpoint — with the pre-staged artifacts feeding the runtime pulls.</desc>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+  </defs>
+
+  <text x="40" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.14em">EKS HYBRID NODES · AIR-GAP ASSET FLOW</text>
+
+  <!-- ===== Zones ===== -->
+  <rect x="40" y="48" width="880" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="52" width="272" height="12" rx="2" fill="#ffffff"/>
+  <text x="192" y="61" fill="rgba(35,47,62,0.55)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.10em">PREPARATION · INTERNET-CONNECTED HOST</text>
+
+  <rect x="40" y="328" width="880" height="216" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="332" width="248" height="12" rx="2" fill="#ffffff"/>
+  <text x="180" y="341" fill="rgba(35,47,62,0.55)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.10em">RUNTIME · AIR-GAPPED ENVIRONMENT</text>
+
+  <!-- ===== Arrows: prep ===== -->
+  <!-- P1 -> P2 -->
+  <line x1="240" y1="156" x2="344" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="264" y="136" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="292" y="145" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">MANIFEST</text>
+
+  <!-- P2 -> P3 (right, up-bend into P3 top) -->
+  <path d="M 520,144 H 588 Q 596,144 596,136 V 116 Q 596,108 604,108 H 616" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="528" y="124" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="556" y="133" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">BINARIES</text>
+
+  <!-- P2 -> P4 (right, down-bend into P4 left) -->
+  <path d="M 520,168 H 588 Q 596,168 596,176 V 244 Q 596,252 604,252 H 616" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="524" y="176" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="548" y="185" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">IMAGES</text>
+
+  <!-- ===== Arrows: runtime ===== -->
+  <!-- R1 -> R2 (right, up-bend) -->
+  <path d="M 240,432 H 296 Q 304,432 304,424 V 396 Q 304,388 312,388 H 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="240" y="412" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="268" y="421" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">PULL BIN</text>
+
+  <!-- R2 -> R3 -->
+  <line x1="520" y1="388" x2="624" y2="388" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- R1 -> R4 (right, down-bend) -->
+  <path d="M 240,456 H 296 Q 304,456 304,464 V 492 Q 304,500 312,500 H 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="240" y="464" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="268" y="473" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">PULL IMG</text>
+
+  <!-- R4 -> R5 -->
+  <line x1="520" y1="500" x2="624" y2="500" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Cross-zone dashed connector: prep -> runtime ===== -->
+  <path d="M 432,184 V 344 Q 432,352 424,352 H 160 Q 152,352 152,360 V 416"
+        fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+  <rect x="68" y="384" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="106" y="393" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">STAGED</text>
+
+  <!-- ===== Nodes: prep ===== -->
+  <!-- P1 -->
+  <rect x="64" y="128" width="176" height="56" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="64" y="128" width="176" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="152" y="152" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">hybrid-assets.eks</text>
+  <text x="152" y="167" fill="#545B64" font-size="9" class="mono" text-anchor="middle">.amazonaws.com</text>
+
+  <!-- P2 (focal) -->
+  <rect x="344" y="128" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="344" y="128" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="432" y="152" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Download Tool</text>
+  <text x="432" y="167" fill="#545B64" font-size="9" class="mono" text-anchor="middle">ekshybrid-download.sh</text>
+
+  <!-- P3 -->
+  <rect x="616" y="80" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="616" y="80" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="704" y="104" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Private S3 Bucket</text>
+  <text x="704" y="119" fill="#545B64" font-size="9" class="mono" text-anchor="middle">upload target</text>
+
+  <!-- P4 -->
+  <rect x="616" y="232" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="616" y="232" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="704" y="256" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ECR</text>
+  <text x="704" y="271" fill="#545B64" font-size="9" class="mono" text-anchor="middle">via VPC endpoint</text>
+
+  <!-- ===== Nodes: runtime ===== -->
+  <!-- R1 -->
+  <rect x="64" y="416" width="176" height="56" rx="6" fill="rgba(84,91,100,0.10)"/>
+  <rect x="64" y="416" width="176" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="152" y="448" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">On-Premises Node</text>
+
+  <!-- R2 -->
+  <rect x="344" y="360" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="344" y="360" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="432" y="384" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">PHZ + S3 Endpoint</text>
+  <text x="432" y="399" fill="#545B64" font-size="9" class="mono" text-anchor="middle">private DNS resolve</text>
+
+  <!-- R3 -->
+  <rect x="624" y="360" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="624" y="360" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="712" y="384" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Private S3 Bucket</text>
+  <text x="712" y="399" fill="#545B64" font-size="9" class="mono" text-anchor="middle">staged binaries</text>
+
+  <!-- R4 -->
+  <rect x="344" y="472" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="344" y="472" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="432" y="496" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ECR VPC Endpoint</text>
+  <text x="432" y="511" fill="#545B64" font-size="9" class="mono" text-anchor="middle">API / DKR</text>
+
+  <!-- R5 -->
+  <rect x="624" y="472" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="624" y="472" width="176" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="712" y="504" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ECR</text>
+
+</svg>

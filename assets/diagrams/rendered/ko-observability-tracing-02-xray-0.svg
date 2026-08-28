@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="xray-arch-title xray-arch-desc">
+<title id="xray-arch-title">EKS의 애플리케이션에서 AWS X-Ray로 이어지는 트레이싱 데이터 흐름</title>
+<desc id="xray-arch-desc">EKS 클러스터의 애플리케이션 Pod가 X-Ray Daemon과 ADOT Collector를 통해 세그먼트를 전송하고, Lambda 등 다른 AWS 서비스의 자동 계측 데이터와 함께 AWS X-Ray로 모여 CloudWatch, ServiceLens, X-Ray Insights로 전달되는 구조를 보여준다.</desc>
+<defs>
+  <style>
+    @import url(https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap);
+    text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}
+    .mono{font-family:'Geist Mono',ui-monospace,monospace;}
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ===== Zones (bg -> zones -> arrows -> nodes) ===== -->
+<rect x="40" y="40" width="460" height="232" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="60" y="44" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="150" y="53" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS 클러스터</text>
+
+<rect x="140" y="340" width="580" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="160" y="344" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="353" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">AWS 서비스</text>
+
+<!-- ===== Arrows (drawn before nodes) ===== -->
+
+<!-- APPS -> DAEMON : straight vertical, x=180 -->
+<path d="M180,132 V192" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="150" y="150" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="180" y="159" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">세그먼트</text>
+
+<!-- APPS -> ADOT : straight vertical, x=360 -->
+<path d="M360,132 V192" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="336" y="150" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="360" y="159" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">OTLP</text>
+
+<!-- DAEMON -> XRAY : down (deep), right, down. turn_y=312, attach x=440 -->
+<path d="M180,256 V304 Q180,312 188,312 H432 Q440,312 440,320 V376"
+      fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="392" y="292" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="424" y="301" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">UDP/TCP</text>
+
+<!-- ADOT -> XRAY : down (shallow), right, down. turn_y=272, attach x=520 -->
+<path d="M360,256 V264 Q360,272 368,272 H512 Q520,272 520,280 V376"
+      fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="484" y="252" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="508" y="261" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">OTLP</text>
+
+<!-- OTHERAWS -> XRAY : straight horizontal, y=408 -->
+<path d="M740,408 H560" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="616" y="388" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="652" y="397" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">자동 계측</text>
+
+<!-- XRAY -> CW : left, down. attach x=440 -->
+<path d="M440,440 H288 Q280,440 280,448 V460"
+      fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- XRAY -> LENS : straight vertical, x=480 -->
+<path d="M480,440 V460" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- XRAY -> INSIGHTS : right, down. attach x=520 -->
+<path d="M520,440 H622 Q630,440 630,448 V460"
+      fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- ===== Nodes ===== -->
+
+<!-- APPS -->
+<rect x="100" y="76" width="340" height="56" rx="6" fill="#ffffff"/>
+<rect x="100" y="76" width="340" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270" y="102" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service A / B / C</text>
+<text x="270" y="118" fill="#545B64" font-size="9" class="mono" text-anchor="middle">X-Ray SDK 계측</text>
+
+<!-- DAEMON -->
+<rect x="100" y="192" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="100" y="192" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180" y="220" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">X-Ray Daemon</text>
+<text x="180" y="236" fill="#545B64" font-size="9" class="mono" text-anchor="middle">DaemonSet</text>
+
+<!-- ADOT -->
+<rect x="280" y="192" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="280" y="192" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="360" y="220" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ADOT Collector</text>
+<text x="360" y="236" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Sidecar / DaemonSet</text>
+
+<!-- OTHERAWS (external) -->
+<rect x="740" y="376" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)"/>
+<rect x="740" y="376" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="840" y="404" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">기타 AWS 서비스</text>
+<text x="840" y="420" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Lambda · APIGW · SQS · SNS</text>
+
+<!-- XRAY (focal) -->
+<rect x="400" y="376" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+<rect x="400" y="376" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="404" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">AWS X-Ray</text>
+<text x="480" y="420" fill="#545B64" font-size="9" class="mono" text-anchor="middle">중앙 트레이싱 서비스</text>
+
+<!-- CW -->
+<rect x="210" y="460" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="210" y="460" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">CloudWatch</text>
+
+<!-- LENS -->
+<rect x="410" y="460" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="410" y="460" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ServiceLens</text>
+
+<!-- INSIGHTS -->
+<rect x="560" y="460" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="560" y="460" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="630" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">X-Ray Insights</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="562" x2="920" y2="562" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<circle cx="48" cy="578" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="58" y="581" fill="#545B64" font-size="8" class="mono" letter-spacing="0.04em">핵심 수집 허브 (AWS X-Ray)</text>
+<circle cx="270" cy="578" r="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="280" y="581" fill="#545B64" font-size="8" class="mono" letter-spacing="0.04em">EKS 외부의 AWS 관리형 서비스</text>
+</svg>

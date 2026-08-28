@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-09-eks-troubleshooting-9-title ko-eks-09-eks-troubleshooting-9-desc">
+<title id="ko-eks-09-eks-troubleshooting-9-title">일반적인 오류 메시지 및 해결 방법</title>
+<desc id="ko-eks-09-eks-troubleshooting-9-desc">클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<style>
+text { font-family: 'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+</style>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 406.6666666666667 88 L 406.6666666666667 116.0 Q 406.6666666666667 124.0 398.6666666666667 124.0 L 128.0 124.0 Q 120.0 124.0 120.0 132.0 L 120.0 160" fill="none" stroke="#545B64" stroke-width="1"/>
+<circle cx="406.6666666666667" cy="88" r="1.6" fill="#545B64"/>
+<path d="M 443.3333333333333 88 L 443.3333333333333 116.0 Q 443.3333333333333 124.0 435.3333333333333 124.0 L 308.0 124.0 Q 300.0 124.0 300.0 132.0 L 300.0 160" fill="none" stroke="#545B64" stroke-width="1"/>
+<circle cx="443.3333333333333" cy="88" r="1.6" fill="#545B64"/>
+<path d="M 480.0 88 L 480.0 160" fill="none" stroke="#545B64" stroke-width="1"/>
+<circle cx="480.0" cy="88" r="1.6" fill="#545B64"/>
+<path d="M 516.6666666666666 88 L 516.6666666666666 116.0 Q 516.6666666666666 124.0 524.6666666666666 124.0 L 652.0 124.0 Q 660.0 124.0 660.0 132.0 L 660.0 160" fill="none" stroke="#545B64" stroke-width="1"/>
+<circle cx="516.6666666666666" cy="88" r="1.6" fill="#545B64"/>
+<path d="M 553.3333333333334 88 L 553.3333333333334 116.0 Q 553.3333333333334 124.0 561.3333333333334 124.0 L 832.0 124.0 Q 840.0 124.0 840.0 132.0 L 840.0 160" fill="none" stroke="#545B64" stroke-width="1"/>
+<circle cx="553.3333333333334" cy="88" r="1.6" fill="#545B64"/>
+<line x1="120.0" y1="204" x2="120.0" y2="240" stroke="#545B64" stroke-width="1"/>
+<polygon points="117.0,234 123.0,234 120.0,240" fill="#545B64"/>
+<line x1="300.0" y1="204" x2="300.0" y2="240" stroke="#545B64" stroke-width="1"/>
+<polygon points="297.0,234 303.0,234 300.0,240" fill="#545B64"/>
+<line x1="480.0" y1="204" x2="480.0" y2="240" stroke="#545B64" stroke-width="1"/>
+<polygon points="477.0,234 483.0,234 480.0,240" fill="#545B64"/>
+<line x1="660.0" y1="204" x2="660.0" y2="240" stroke="#545B64" stroke-width="1"/>
+<polygon points="657.0,234 663.0,234 660.0,240" fill="#545B64"/>
+<line x1="840.0" y1="204" x2="840.0" y2="240" stroke="#545B64" stroke-width="1"/>
+<polygon points="837.0,234 843.0,234 840.0,240" fill="#545B64"/>
+<rect x="370.0" y="40" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="370.0" y="40" width="220" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="69.0" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">일반적인 오류 메시지</text>
+<rect x="40.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff"/>
+<rect x="40.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120.0" y="186.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클러스터 생성/관리 오류</text>
+<rect x="40.0" y="240" width="160.0" height="90" rx="6" fill="#ffffff"/>
+<rect x="40.0" y="240" width="160.0" height="90" rx="6" fill="rgba(35,47,62,0.05)" stroke="#7D8998" stroke-width="0.8"/>
+<circle cx="54.0" cy="259" r="1.6" fill="#545B64"/>
+<text x="62.0" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">UnsupportedAZ</text>
+<circle cx="54.0" cy="275" r="1.6" fill="#545B64"/>
+<text x="62.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">ResourceLimit</text>
+<circle cx="54.0" cy="291" r="1.6" fill="#545B64"/>
+<text x="62.0" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">InvalidParameter</text>
+<circle cx="54.0" cy="307" r="1.6" fill="#545B64"/>
+<text x="62.0" y="310" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">ClusterUnreachable</text>
+<rect x="220.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff"/>
+<rect x="220.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300.0" y="186.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">노드/파드 오류</text>
+<rect x="220.0" y="240" width="160.0" height="90" rx="6" fill="#ffffff"/>
+<rect x="220.0" y="240" width="160.0" height="90" rx="6" fill="rgba(35,47,62,0.05)" stroke="#7D8998" stroke-width="0.8"/>
+<circle cx="234.0" cy="259" r="1.6" fill="#545B64"/>
+<text x="242.0" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">FailedScheduling</text>
+<circle cx="234.0" cy="275" r="1.6" fill="#545B64"/>
+<text x="242.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">CrashLoopBackOff</text>
+<circle cx="234.0" cy="291" r="1.6" fill="#545B64"/>
+<text x="242.0" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">ImagePullBackOff</text>
+<circle cx="234.0" cy="307" r="1.6" fill="#545B64"/>
+<text x="242.0" y="310" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">Evicted</text>
+<rect x="400.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff"/>
+<rect x="400.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="186.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네트워킹 오류</text>
+<rect x="400.0" y="240" width="160.0" height="90" rx="6" fill="#ffffff"/>
+<rect x="400.0" y="240" width="160.0" height="90" rx="6" fill="rgba(35,47,62,0.05)" stroke="#7D8998" stroke-width="0.8"/>
+<circle cx="414.0" cy="259" r="1.6" fill="#545B64"/>
+<text x="422.0" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">FailedSvcEndpoint</text>
+<circle cx="414.0" cy="275" r="1.6" fill="#545B64"/>
+<text x="422.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">EniLimitExceeded</text>
+<circle cx="414.0" cy="291" r="1.6" fill="#545B64"/>
+<text x="422.0" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">FailedLBCreation</text>
+<rect x="580.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff"/>
+<rect x="580.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="186.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">IAM/인증 오류</text>
+<rect x="580.0" y="240" width="160.0" height="90" rx="6" fill="#ffffff"/>
+<rect x="580.0" y="240" width="160.0" height="90" rx="6" fill="rgba(35,47,62,0.05)" stroke="#7D8998" stroke-width="0.8"/>
+<circle cx="594.0" cy="259" r="1.6" fill="#545B64"/>
+<text x="602.0" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">Unauthorized</text>
+<circle cx="594.0" cy="275" r="1.6" fill="#545B64"/>
+<text x="602.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">자격증명 필요</text>
+<circle cx="594.0" cy="291" r="1.6" fill="#545B64"/>
+<text x="602.0" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">PermissionDenied</text>
+<rect x="760.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff"/>
+<rect x="760.0" y="160" width="160.0" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="186.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스토리지 오류</text>
+<rect x="760.0" y="240" width="160.0" height="90" rx="6" fill="#ffffff"/>
+<rect x="760.0" y="240" width="160.0" height="90" rx="6" fill="rgba(35,47,62,0.05)" stroke="#7D8998" stroke-width="0.8"/>
+<circle cx="774.0" cy="259" r="1.6" fill="#545B64"/>
+<text x="782.0" y="262" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">Multi-Attach 오류</text>
+<circle cx="774.0" cy="275" r="1.6" fill="#545B64"/>
+<text x="782.0" y="278" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">FailedMount</text>
+<circle cx="774.0" cy="291" r="1.6" fill="#545B64"/>
+<text x="782.0" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">PVC NotBound</text>
+</svg>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dfTitle dfDesc">
+  <title id="dfTitle">Data on EKS — 파이프라인 구성 요소</title>
+  <desc id="dfDesc">Airflow가 Kafka와 Spark의 작업을 스케줄링하고, Kafka는 실시간 이벤트를 Flink로 공급하는 동시에 원시 데이터를 Spark에 적재하는 데이터 파이프라인 구조를 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" font-weight="500" font-family="'Geist Mono', monospace" letter-spacing="0.18em">DATA ON EKS</text>
+  <text x="40" y="52" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">데이터 파이프라인 구성</text>
+
+  <!-- ============ ARROWS (drawn before boxes) ============ -->
+
+  <!-- Airflow -> Kafka : trigger / scheduling (dashed muted) -->
+  <path d="M450,156 V206 Q450,214 442,214 H158 Q150,214 150,222 V272"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="264" y="194" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="300" y="203" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCHEDULE</text>
+
+  <!-- Airflow -> Spark : trigger / scheduling (dashed muted) -->
+  <path d="M510,156 V206 Q510,214 518,214 H802 Q810,214 810,222 V272"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="624" y="194" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="660" y="203" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCHEDULE</text>
+
+  <!-- Kafka -> Flink : event feed (accent, focal path) -->
+  <line x1="150" y1="352" x2="150" y2="452" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="164" y="392" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="208" y="401" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">EVENT FEED</text>
+
+  <!-- Kafka -> Spark : raw data load (muted) -->
+  <line x1="240" y1="312" x2="720" y2="312" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="424" y="292" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">RAW DATA LOAD</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Airflow (orchestration control-plane) -->
+  <rect x="390" y="76" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="390" y="76" width="180" height="80" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <rect x="398" y="84" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="424" y="94" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTRL</text>
+  <text x="480" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Airflow</text>
+  <text x="480" y="138" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">오케스트레이션</text>
+
+  <!-- Kafka (focal streaming hub) -->
+  <rect x="60" y="272" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="60" y="272" width="180" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="68" y="280" width="52" height="14" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="94" y="290" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HUB</text>
+  <text x="150" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kafka</text>
+  <text x="150" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">스트리밍</text>
+
+  <!-- Spark (batch / analytics) -->
+  <rect x="720" y="272" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="720" y="272" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="728" y="280" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="754" y="290" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+  <text x="810" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Spark</text>
+  <text x="810" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">배치 · 분석</text>
+
+  <!-- Flink (stream processing) -->
+  <rect x="60" y="452" width="180" height="80" rx="6" fill="#ffffff"/>
+  <rect x="60" y="452" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="68" y="460" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="94" y="470" fill="rgba(35,47,62,0.80)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+  <text x="150" y="498" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Flink</text>
+  <text x="150" y="514" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">스트림 처리</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="140" y1="564" x2="172" y2="564" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="180" y="568" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">실시간 데이터 흐름</text>
+
+  <line x1="380" y1="564" x2="412" y2="564" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="420" y="568" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">작업 스케줄링 (제어)</text>
+
+  <rect x="640" y="558" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="664" y="568" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">스트리밍 허브</text>
+</svg>

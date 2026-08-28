@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ig0-title ig0-desc">
+  <title id="ig0-title">Cilium Ingress/Gateway request path</title>
+  <desc id="ig0-desc">An external client's request passes through a cloud load balancer into the Kubernetes cluster, where a Gateway or Ingress resource hands it to the Cilium Envoy L7 proxy, which routes it to one of three backend services.</desc>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- eyebrow / title -->
+  <text x="32" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE</text>
+  <text x="32" y="60" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cilium Ingress / Gateway data path</text>
+
+  <!-- Zones (bg -> zones -> arrows -> nodes) -->
+  <!-- External zone -->
+  <rect x="32" y="96" width="176" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="48" y="100" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="56" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">EXTERNAL</text>
+
+  <!-- Kubernetes Cluster zone -->
+  <rect x="256" y="96" width="672" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="272" y="100" width="130" height="12" rx="2" fill="#ffffff"/>
+  <text x="280" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">KUBERNETES CLUSTER</text>
+
+  <!-- Cilium Ingress/Gateway sub-zone -->
+  <rect x="288" y="140" width="240" height="300" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+  <rect x="304" y="144" width="150" height="12" rx="2" fill="#ffffff"/>
+  <text x="312" y="153" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">CILIUM INGRESS/GATEWAY</text>
+
+  <!-- Backend Services sub-zone -->
+  <rect x="600" y="140" width="300" height="300" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+  <rect x="616" y="144" width="130" height="12" rx="2" fill="#ffffff"/>
+  <text x="624" y="153" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">BACKEND SERVICES</text>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+  <!-- Client -> LB : vertical, same x -->
+  <line x1="120" y1="228" x2="120" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- LB -> Gateway : horizontal, exit right, enter left, elbow (same y roughly, use straight if aligned) -->
+  <path d="M 208,332 H 288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Gateway -> Envoy : vertical, same x -->
+  <line x1="408" y1="292" x2="408" y2="360" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- Envoy -> SvcA / SvcB / SvcC : fan out from Envoy right edge to 3 targets at different y -->
+  <!-- Envoy box: x528..? let's define coordinates below; attach points fanned on Envoy right edge -->
+  <path d="M 528,306 H 584 Q 592,306 592,314 V 208 Q 592,200 600,200 H 640"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 528,332 H 640" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 528,358 H 584 Q 592,358 592,366 V 456 Q 592,464 600,464 H 640"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Nodes ===== -->
+  <!-- Client -->
+  <rect x="64" y="192" width="112" height="36" rx="6" fill="#ffffff"/>
+  <rect x="64" y="192" width="112" height="36" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="120" y="214" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">External Client</text>
+
+  <!-- LB -->
+  <rect x="48" y="296" width="144" height="52" rx="6" fill="#ffffff"/>
+  <rect x="48" y="296" width="144" height="52" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="120" y="317" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud Load Balancer</text>
+  <text x="120" y="333" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">NLB / ALB</text>
+
+  <!-- Gateway -->
+  <rect x="304" y="256" width="208" height="36" rx="6" fill="#ffffff"/>
+  <rect x="304" y="256" width="208" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="408" y="278" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway / Ingress</text>
+
+  <!-- Envoy (focal) -->
+  <rect x="304" y="360" width="224" height="52" rx="6" fill="#ffffff"/>
+  <rect x="304" y="360" width="224" height="52" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="416" y="382" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cilium Envoy</text>
+  <text x="416" y="398" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L7 proxy</text>
+
+  <!-- Backend services: SvcA/B/C -->
+  <rect x="640" y="182" width="176" height="36" rx="6" fill="#ffffff"/>
+  <rect x="640" y="182" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="728" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+
+  <rect x="640" y="314" width="176" height="36" rx="6" fill="#ffffff"/>
+  <rect x="640" y="314" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="728" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+
+  <rect x="640" y="446" width="176" height="36" rx="6" fill="#ffffff"/>
+  <rect x="640" y="446" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="728" y="468" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service C</text>
+
+  <!-- Legend -->
+  <line x1="32" y1="524" x2="928" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="32" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="537" r="4" fill="none" stroke="#545B64" stroke-width="1.2"/>
+  <text x="192" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">REQUEST HOP</text>
+  <circle cx="340" cy="537" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="352" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">L7 PROXY (FOCAL)</text>
+</svg>

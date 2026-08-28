@@ -29,61 +29,7 @@ Istio DNS Proxy는 Envoy가 DNS 서버 역할을 하여 애플리케이션의 DN
 
 ### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Pod[애플리케이션 파드]
-        App[애플리케이션<br/>curl api.example.com]
-
-        subgraph IPTables[iptables NAT]
-            DNS_Rule[DNS 규칙<br/>UDP 53 → 15053]
-            TCP_Rule[TCP 규칙<br/>TCP → 15001]
-        end
-
-        subgraph Envoy[Envoy Proxy]
-            DNS_Listener[DNS Listener<br/>15053]
-            DNS_Table[DNS 테이블<br/>ServiceEntry 기반]
-            HTTP_Listener[HTTP Listener<br/>15001]
-        end
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server<br/>ServiceEntry 구성]
-    end
-
-    subgraph External[외부]
-        API[api.example.com<br/>실제 IP]
-        CoreDNS[CoreDNS<br/>클러스터 DNS]
-    end
-
-    App -->|1. DNS 쿼리<br/>UDP 53| DNS_Rule
-    DNS_Rule -->|2. 리다이렉트<br/>15053| DNS_Listener
-    DNS_Listener -->|3. 조회| DNS_Table
-
-    DNS_Table -->|4. 가상 IP<br/>240.240.0.1| DNS_Listener
-    DNS_Listener -->|5. DNS 응답| App
-
-    App -->|6. HTTP 요청<br/>240.240.0.1| TCP_Rule
-    TCP_Rule -->|7. 리다이렉트| HTTP_Listener
-    HTTP_Listener -->|8. 실제 IP로 변환| API
-
-    XDS -.->|ServiceEntry 푸시| DNS_Table
-
-    DNS_Listener -.->|Istio 외부 도메인| CoreDNS
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class DNS_Rule,TCP_Rule iptables;
-    class DNS_Listener,DNS_Table,HTTP_Listener envoy;
-    class XDS istiod;
-    class API,CoreDNS external;
-```
+![애플리케이션 파드 안에서 iptables가 DNS 쿼리와 HTTP 요청을 각각 Envoy의 DNS Listener와 HTTP Listener로 리다이렉트하고, DNS Listener가 ServiceEntry 기반 DNS 테이블에서 가상 IP를 조회해 응답한 뒤, HTTP Listener가 그 가상 IP를 실제 IP로 변환해 외부 서비스로 보내는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-04-dns-cache-0.png)
 
 ## DNS Proxy vs DNS Caching
 
@@ -103,38 +49,7 @@ flowchart TB
 
 두 기능을 함께 사용하면 최적의 성능을 얻을 수 있습니다:
 
-```mermaid
-flowchart LR
-    App[애플리케이션]
-
-    subgraph Envoy[Envoy Proxy]
-        DNS_Proxy[DNS Proxy<br/>ServiceEntry 서비스]
-        DNS_Cache[DNS Cache<br/>기타 외부 서비스]
-    end
-
-    SE[ServiceEntry<br/>api.example.com]
-    CoreDNS[CoreDNS<br/>google.com]
-
-    App -->|1. api.example.com| DNS_Proxy
-    DNS_Proxy -->|가상 IP| App
-
-    App -->|2. google.com| DNS_Cache
-    DNS_Cache -->|캐시 미스| CoreDNS
-    CoreDNS -->|실제 IP| DNS_Cache
-    DNS_Cache -->|캐시된 IP| App
-
-    SE -.->|등록| DNS_Proxy
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class DNS_Proxy,DNS_Cache envoy;
-    class SE,CoreDNS external;
-```
+![애플리케이션이 ServiceEntry로 등록된 도메인을 조회하면 Envoy의 DNS Proxy가 가상 IP를 즉시 반환하고, 그 외 외부 도메인은 DNS Cache가 CoreDNS에 조회한 뒤 결과를 캐시해 재사용하는 두 경로를 함께 사용하는 구성을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-04-dns-cache-1.png)
 
 ## DNS Proxy 설정
 
@@ -400,29 +315,7 @@ DNS Proxy는 ServiceEntry에 등록된 서비스에 가상 IP를 자동으로 �
 
 ### 자동 할당 동작
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as 애플리케이션
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant Istiod as Istiod
-    participant External as api.example.com<br/>(실제 서버)
-
-    Note over Istiod: ServiceEntry 등록
-    Istiod->>Envoy: xDS 구성 푸시<br/>(가상 IP 할당)
-
-    App->>Envoy: DNS 쿼리<br/>api.example.com
-    Envoy->>Envoy: 가상 IP 조회<br/>240.240.0.1
-    Envoy->>App: DNS 응답<br/>240.240.0.1
-
-    App->>Envoy: HTTP 요청<br/>240.240.0.1:443
-    Envoy->>Envoy: 실제 호스트 매핑<br/>api.example.com
-    Envoy->>External: DNS 조회 (실제 IP)
-    External->>Envoy: 203.0.113.10
-    Envoy->>External: HTTP 요청<br/>203.0.113.10:443
-    External->>Envoy: 응답
-    Envoy->>App: 응답
-```
+![Istiod가 ServiceEntry 등록 시 Envoy에 xDS로 가상 IP 구성을 미리 푸시해 두면, 애플리케이션의 DNS 쿼리에 Envoy가 즉시 가상 IP로 응답하고, 이후 그 가상 IP로 들어온 HTTP 요청을 Envoy가 실제 호스트로 매핑해 외부 서버의 실제 IP를 조회한 뒤 트래픽을 전달하고 응답을 돌려주는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-04-dns-cache-2.png)
 
 ### 주소 범위 설정
 
@@ -596,30 +489,7 @@ wireshark dns.pcap
 
 **권장 접근법**: 단계적 롤아웃
 
-```mermaid
-flowchart TD
-    Start[시작] --> Test[테스트 환경에서<br/>DNS Proxy 활성화]
-    Test --> Validate{검증<br/>성공?}
-    Validate -->|No| Debug[문제 해결]
-    Debug --> Test
-    Validate -->|Yes| Stage[스테이징 환경<br/>적용]
-    Stage --> Monitor{모니터링<br/>정상?}
-    Monitor -->|No| Rollback[롤백]
-    Rollback --> Debug
-    Monitor -->|Yes| Prod[프로덕션<br/>점진적 적용]
-    Prod --> Complete[완료]
-
-    %% 스타일 정의
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef warning fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef error fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Complete success;
-    class Test,Stage,Prod warning;
-    class Debug,Rollback error;
-```
+![테스트 환경에서 DNS Proxy를 활성화해 검증하고, 검증에 실패하면 문제 해결 후 다시 테스트하며, 검증에 성공하면 스테이징에 적용해 모니터링하고, 모니터링에서 문제가 발견되면 롤백 후 문제를 해결하며, 모니터링이 정상이면 프로덕션에 점진적으로 적용해 완료하는 단계적 배포 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-04-dns-cache-3.png)
 
 ### 2. ServiceEntry 관리
 

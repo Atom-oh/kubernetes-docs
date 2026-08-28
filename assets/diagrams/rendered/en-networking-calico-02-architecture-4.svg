@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-4-title en-networking-calico-02-architecture-4-desc">
+      <title id="en-networking-calico-02-architecture-4-title">Route propagation via BGP</title>
+      <desc id="en-networking-calico-02-architecture-4-desc">Sequence diagram showing a new pod's route being allocated by Felix, added to BIRD's local routing table, and propagated to peer nodes over a BGP UPDATE so they install it and route Felix accordingly.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="520" fill="#ffffff"/>
+<line x1="100" y1="80" x2="100" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="380" y1="80" x2="380" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="660" y1="80" x2="660" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="860" y1="80" x2="860" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="100" y1="112" x2="380" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="201.0" y="92" width="78" height="12" rx="2" fill="#ffffff"/>
+<text x="240.0" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Pod Created</text>
+<path d="M 380,144 H 444 V 164 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="388" y="148.0" width="144" height="12" rx="2" fill="#ffffff"/>
+<text x="460.0" y="157.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Allocate IP from block</text>
+<path d="M 380,190 H 444 V 210 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="388" y="194.0" width="126" height="12" rx="2" fill="#ffffff"/>
+<text x="451.0" y="203.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Program local route</text>
+<line x1="380" y1="236" x2="660" y2="236" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="469.0" y="216" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="520.0" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Route available</text>
+<path d="M 660,268 H 724 V 288 H 660" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="668" y="272.0" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="704.0" y="281.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Add to RIB</text>
+<line x1="660" y1="314" x2="860" y2="314" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="700.0" y="294" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="760.0" y="303" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">BGP UPDATE message</text>
+<path d="M 860,346 H 924 V 366 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="868" y="350.0" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="916.0" y="359.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Process UPDATE</text>
+<path d="M 860,392 H 924 V 412 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="868" y="396.0" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="916.0" y="405.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Install in RIB</text>
+<line x1="860" y1="438" x2="380" y2="438" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="578.0" y="418" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="620.0" y="427" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Route update</text>
+<path d="M 380,470 H 444 V 490 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="388" y="474.0" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="433.0" y="483.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Program route</text>
+<rect x="40.0" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">New Pod</text>
+<rect x="320.0" y="40" width="120" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="380.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix</text>
+<rect x="585.0" y="40" width="150" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">BIRD (Local)</text>
+<rect x="785.0" y="40" width="150" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">BIRD (Peer Nodes)</text>
+    </svg>

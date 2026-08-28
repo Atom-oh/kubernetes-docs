@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-2-title ko-networking-calico-02-architecture-2-desc">
+<title id="ko-networking-calico-02-architecture-2-title">Felix 내부 워크플로우</title>
+<desc id="ko-networking-calico-02-architecture-2-desc">Felix가 데이터스토어와 동기화해 초기 규칙을 프로그래밍하고, Watch Loop로 변경을 반영하며, Pod 생성 시 CNI 호출에 대응해 veth·라우트·정책을 구성하는 과정을 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="34" y="40" width="112" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="90" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Datastore/Typha</text>
+<line x1="90" y1="72" x2="90" y2="656" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="224" y="40" width="112" height="32" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="280" y="58" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Felix</text>
+<text x="280" y="71" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">정책 에이전트</text>
+<line x1="280" y1="72" x2="280" y2="656" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="414" y="40" width="112" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">iptables/eBPF</text>
+<line x1="470" y1="72" x2="470" y2="656" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="604" y="40" width="112" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Routing Table</text>
+<line x1="660" y1="72" x2="660" y2="656" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="794" y="40" width="112" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="850" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Network Interface</text>
+<line x1="850" y1="72" x2="850" y2="656" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/><path d="M 280,120 L 90,120" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="153.0" y="100" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="185.0" y="109" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">연결·동기화 시작</text>
+<path d="M 90,156 L 280,156" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="156.0" y="136" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="185.0" y="145" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">초기 상태 수신</text>
+<path d="M 280,188 H 324 V 208 H 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="288" y="192.0" width="55" height="12" rx="2" fill="#ffffff"/>
+<text x="292" y="201.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="start" letter-spacing="0.03em">정책 계산</text>
+<path d="M 280,228 L 470,228" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="346.0" y="208" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="375.0" y="217" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">규칙 프로그래밍</text>
+<path d="M 280,260 L 660,260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="441.0" y="240" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="470.0" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">라우팅 업데이트</text><rect x="22" y="296" width="706" height="172" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="22" y="296" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="42.0" y="308" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.1em">LOOP</text>
+<text x="34" y="320" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" letter-spacing="0.02em">[Watch Loop: 변경 이벤트 감지 시]</text>
+<path d="M 90,364 L 280,364" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="162.0" y="344" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="185.0" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">변경 이벤트</text>
+<path d="M 280,396 H 324 V 416 H 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="288" y="400.0" width="55" height="12" rx="2" fill="#ffffff"/>
+<text x="292" y="409.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="start" letter-spacing="0.03em">델타 계산</text>
+<path d="M 280,444 L 470,444" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="343.0" y="424" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="375.0" y="433" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">규칙·라우트 갱신</text><rect x="760" y="492" width="180" height="20" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="850.0" y="506" fill="#7D8998" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 생성 시</text>
+<path d="M 850,528 L 280,528" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="524.0" y="508" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="565.0" y="517" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">CNI 호출 (ADD)</text>
+<path d="M 280,560 L 850,560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="524.0" y="540" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="565.0" y="549" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">veth pair 생성</text>
+<path d="M 280,592 L 660,592" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="429.0" y="572" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="470.0" y="581" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">라우트·정책 규칙 추가</text>
+<path d="M 280,624 L 850,624" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="536.0" y="604" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="565.0" y="613" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">IP 주소 반환</text><line x1="30" y1="682" x2="930" y2="682" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="694" x2="46" y2="694" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="697" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">동기 호출</text>
+<line x1="110" y1="694" x2="126" y2="694" stroke="#545B64" stroke-width="1.4" stroke-dasharray="4,3"/>
+<text x="132" y="697" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">응답/이벤트</text></svg>

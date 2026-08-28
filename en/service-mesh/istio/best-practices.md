@@ -256,27 +256,7 @@ spec:
 
 #### Gradual Istio Adoption
 
-```mermaid
-flowchart LR
-    Start[Start]
-    Phase1[Phase 1<br/>Observability]
-    Phase2[Phase 2<br/>mTLS PERMISSIVE]
-    Phase3[Phase 3<br/>mTLS STRICT]
-    Phase4[Phase 4<br/>Advanced Features]
-    End[Full Adoption]
-
-    Start --> Phase1
-    Phase1 --> Phase2
-    Phase2 --> Phase3
-    Phase3 --> Phase4
-    Phase4 --> End
-
-    %% Style definition
-    classDef phase fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class application
-    class Start,Phase1,Phase2,Phase3,Phase4,End phase;
-```
+![Flowchart of the five-phase Istio adoption path: starting from observability-only sidecar injection, moving through permissive then strict mutual TLS enforcement, then advanced traffic-management features, ending at full adoption.](../../.gitbook/assets/en-service-mesh-istio-best-practices-0.png)
 
 **Phase 1: Observability (1-2 weeks)**
 ```bash

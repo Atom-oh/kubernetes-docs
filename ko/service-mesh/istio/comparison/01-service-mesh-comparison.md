@@ -24,205 +24,17 @@ Service Mesh는 마이크로서비스 간의 통신을 관리하는 인프라 �
 
 #### Service Mesh의 기본 개념
 
-```mermaid
-flowchart TB
-    subgraph "Without Service Mesh"
-        direction LR
-        AppA1[Service A] -->|직접 호출| AppB1[Service B]
-        AppB1 -->|직접 호출| AppC1[Service C]
-
-        Note1[문제점:<br/>- 재시도 로직 각 서비스에 구현<br/>- 서비스 간 암호화 수동 설정<br/>- 메트릭 수집 일관성 없음<br/>- 트래픽 제어 어려움]
-    end
-
-    subgraph "With Service Mesh"
-        direction LR
-        subgraph PodA["Pod A"]
-            AppA2[Service A]
-            ProxyA[Sidecar<br/>Proxy]
-        end
-        subgraph PodB["Pod B"]
-            AppB2[Service B]
-            ProxyB[Sidecar<br/>Proxy]
-        end
-        subgraph PodC["Pod C"]
-            AppC2[Service C]
-            ProxyC[Sidecar<br/>Proxy]
-        end
-
-        ControlPlane[Control Plane<br/>정책 관리]
-
-        AppA2 --> ProxyA
-        ProxyA <-->|mTLS<br/>자동 암호화| ProxyB
-        AppB2 --> ProxyB
-        ProxyB <-->|mTLS| ProxyC
-        AppC2 --> ProxyC
-
-        ControlPlane -.->|설정 배포| ProxyA
-        ControlPlane -.->|설정 배포| ProxyB
-        ControlPlane -.->|설정 배포| ProxyC
-
-        Note2[장점:<br/>- 자동 재시도 및 타임아웃<br/>- 자동 mTLS 암호화<br/>- 통합 메트릭 및 추적<br/>- 세밀한 트래픽 제어]
-    end
-
-    classDef problem fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef solution fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-
-    class Note1 problem;
-    class Note2 solution;
-    class AppA1,AppB1,AppC1,AppA2,AppB2,AppC2 app;
-    class ProxyA,ProxyB,ProxyC proxy;
-    class ControlPlane control;
-```
+![Service Mesh 도입 전에는 서비스가 직접 통신하며 재시도·암호화·메트릭을 각자 구현하지만, 도입 후에는 사이드카 프록시와 컨트롤 플레인이 mTLS와 정책을 자동으로 처리한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
 
 #### 아키텍처 패턴 비교
 
-```mermaid
-flowchart LR
-    subgraph "Istio - Sidecar Pattern"
-        direction TB
-        I_CP[Istiod<br/>통합 컨트롤 플레인<br/>1개 프로세스]
-
-        subgraph I_Pod1["Pod"]
-            I_App1[App]
-            I_Envoy1[Envoy<br/>Sidecar]
-        end
-
-        I_CP -->|xDS API| I_Envoy1
-        I_App1 -->|localhost| I_Envoy1
-
-        I_Note[특징:<br/>✅ 가장 풍부한 기능<br/>✅ 세밀한 L7 제어<br/>⚠️ 높은 리소스 사용<br/>⚠️ 복잡한 운영]
-    end
-
-    subgraph "Linkerd - Micro-proxy Pattern"
-        direction TB
-        L_CP1[Destination<br/>서비스 디스커버리]
-        L_CP2[Identity<br/>인증서 관리]
-        L_CP3[Proxy Injector<br/>주입 관리]
-
-        subgraph L_Pod1["Pod"]
-            L_App1[App]
-            L_Proxy1[Linkerd2<br/>Rust Proxy]
-        end
-
-        L_CP1 --> L_Proxy1
-        L_CP2 --> L_Proxy1
-        L_CP3 -.-> L_Proxy1
-        L_App1 -->|localhost| L_Proxy1
-
-        L_Note[특징:<br/>✅ 가장 경량<br/>✅ 쉬운 운영<br/>⚠️ 기능 제한적<br/>⚠️ VM 미지원]
-    end
-
-    subgraph "Consul - Universal Pattern"
-        direction TB
-        C_Server[Consul Servers<br/>분산 클러스터<br/>Service Catalog]
-
-        subgraph C_Pod1["Pod"]
-            C_App1[App]
-            C_Client1[Consul<br/>Client]
-            C_Envoy1[Envoy<br/>Proxy]
-        end
-
-        subgraph C_VM["VM"]
-            C_App2[Legacy<br/>App]
-            C_Client2[Consul<br/>Client]
-            C_Envoy2[Envoy<br/>Proxy]
-        end
-
-        C_Client1 --> C_Server
-        C_Client2 --> C_Server
-        C_Server -->|Service Discovery| C_Envoy1
-        C_Server -->|Service Discovery| C_Envoy2
-        C_App1 --> C_Envoy1
-        C_App2 --> C_Envoy2
-
-        C_Note[특징:<br/>✅ VM 우선 지원<br/>✅ 강력한 Service Discovery<br/>⚠️ Consul 인프라 필요<br/>⚠️ 학습 곡선]
-    end
-
-    subgraph "Kong Mesh - Multi-zone Pattern"
-        direction TB
-        K_Global[Global CP<br/>정책 동기화]
-        K_Zone1[Zone CP 1<br/>로컬 관리]
-        K_Zone2[Zone CP 2<br/>로컬 관리]
-
-        subgraph K_Pod1["K8s Pod"]
-            K_App1[App]
-            K_DP1[Kuma DP<br/>Envoy]
-        end
-
-        subgraph K_VM["VM"]
-            K_App2[App]
-            K_DP2[Kuma DP<br/>Envoy]
-        end
-
-        K_Global --> K_Zone1
-        K_Global --> K_Zone2
-        K_Zone1 --> K_DP1
-        K_Zone2 --> K_DP2
-        K_App1 --> K_DP1
-        K_App2 --> K_DP2
-
-        K_Note[특징:<br/>✅ 멀티 클라우드<br/>✅ K8s + VM 동등<br/>⚠️ 엔터프라이즈 유료<br/>⚠️ 작은 커뮤니티]
-    end
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef linkerd fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef consul fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef kong fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class I_CP,I_Envoy1 istio;
-    class L_CP1,L_CP2,L_CP3,L_Proxy1 linkerd;
-    class C_Server,C_Client1,C_Client2,C_Envoy1,C_Envoy2 consul;
-    class K_Global,K_Zone1,K_Zone2,K_DP1,K_DP2 kong;
-    class I_Note,L_Note,C_Note,K_Note note;
-```
+![Istio, Linkerd, Consul, Kong Mesh 네 솔루션의 컨트롤 플레인과 데이터 플레인 구조를 한 화면에서 비교한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-1.png)
 
 ### 상세 아키텍처
 
 #### Istio
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        Istiod[Istiod<br/>통합 컨트롤 플레인]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            Envoy1[Envoy Proxy]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            Envoy2[Envoy Proxy]
-        end
-    end
-
-    subgraph "Configuration"
-        VS[VirtualService]
-        DR[DestinationRule]
-        GW[Gateway]
-        PA[PeerAuthentication]
-        AP[AuthorizationPolicy]
-    end
-
-    Configuration -.->|xDS API| Istiod
-    Istiod -->|Configuration| Envoy1
-    Istiod -->|Configuration| Envoy2
-    Envoy1 <-->|mTLS| Envoy2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef config fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod k8sComponent;
-    class App1,App2 userApp;
-    class Envoy1,Envoy2 userApp;
-    class VS,DR,GW,PA,AP config;
-```
+![Istiod 단일 컨트롤 플레인이 두 파드의 Envoy 사이드카에 xDS 설정을 배포하고, 두 Envoy는 mTLS로 통신한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-2.png)
 
 **특징**:
 
@@ -240,39 +52,7 @@ flowchart TB
 
 ### Linkerd
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        Destination[Destination<br/>Service Discovery]
-        Identity[Identity<br/>Certificate Authority]
-        ProxyInjector[Proxy Injector<br/>Webhook]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            LP1[Linkerd2-proxy<br/>Rust]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            LP2[Linkerd2-proxy<br/>Rust]
-        end
-    end
-
-    ProxyInjector -.->|Inject| LP1
-    ProxyInjector -.->|Inject| LP2
-    Identity -->|Certificates| LP1
-    Identity -->|Certificates| LP2
-    Destination -->|Endpoints| LP1
-    Destination -->|Endpoints| LP2
-    LP1 <-->|mTLS| LP2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Destination,Identity,ProxyInjector k8sComponent;
-    class App1,App2,LP1,LP2 userApp;
-```
+![Destination, Identity, Proxy Injector 세 컨트롤 플레인 컴포넌트가 각 파드의 Rust 프록시에 서비스 정보·인증서를 제공하고, 프록시끼리 mTLS로 통신한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-3.png)
 
 **특징**:
 
@@ -290,46 +70,7 @@ flowchart TB
 
 ### Kong Mesh
 
-```mermaid
-flowchart TB
-    subgraph "Global Control Plane (Optional)"
-        KongGlobal[Kong Mesh<br/>Global Control Plane]
-    end
-
-    subgraph "Zone Control Plane"
-        KongZone[Kong Mesh<br/>Zone Control Plane]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            Envoy1[Envoy/Kuma DP]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            Envoy2[Envoy/Kuma DP]
-        end
-        subgraph "VM"
-            AppVM[Legacy App]
-            EnvoyVM[Kuma DP]
-        end
-    end
-
-    KongGlobal -->|Sync Policies| KongZone
-    KongZone -->|Configuration| Envoy1
-    KongZone -->|Configuration| Envoy2
-    KongZone -->|Configuration| EnvoyVM
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy1 <-->|mTLS| EnvoyVM
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class KongGlobal,KongZone k8sComponent;
-    class App1,App2,Envoy1,Envoy2 userApp;
-    class AppVM,EnvoyVM vm;
-```
+![Zone Control Plane이 Kubernetes 파드와 VM 위의 Kuma DP(Envoy)에 동일하게 설정을 배포하며, 모든 데이터 플레인이 mTLS로 통신한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-4.png)
 
 **특징**:
 
@@ -351,97 +92,7 @@ Kong Mesh는 Kuma를 기반으로 하는 Universal Service Mesh로, 멀티 존 �
 
 **Multi-Zone 배포 아키텍처**
 
-```mermaid
-flowchart TB
-    subgraph Global["Global Control Plane (중앙 관리)"]
-        direction TB
-        GCP[Kong Mesh Global<br/>정책 저장소]
-        GDB[(PostgreSQL<br/>글로벌 상태)]
-    end
-
-    subgraph Zone1["Zone 1 - AWS EKS"]
-        direction TB
-        ZCP1[Zone Control Plane 1]
-        ZDB1[(Local State)]
-
-        subgraph K8s1["Kubernetes Workloads"]
-            direction LR
-            subgraph Pod1["Pod A"]
-                App1[Frontend]
-                DP1[Kuma DP<br/>Envoy]
-            end
-            subgraph Pod2["Pod B"]
-                App2[Backend]
-                DP2[Kuma DP<br/>Envoy]
-            end
-        end
-    end
-
-    subgraph Zone2["Zone 2 - GCP GKE"]
-        direction TB
-        ZCP2[Zone Control Plane 2]
-        ZDB2[(Local State)]
-
-        subgraph K8s2["Kubernetes Workloads"]
-            direction LR
-            subgraph Pod3["Pod C"]
-                App3[API Service]
-                DP3[Kuma DP<br/>Envoy]
-            end
-        end
-    end
-
-    subgraph Zone3["Zone 3 - On-Premises"]
-        direction TB
-        ZCP3[Zone Control Plane 3]
-        ZDB3[(Local State)]
-
-        subgraph VM["Virtual Machines"]
-            direction LR
-            VM1[Legacy App]
-            DPV[Kuma DP<br/>Envoy]
-        end
-    end
-
-    %% Global to Zone 연결
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP1
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP2
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP3
-    GCP --> GDB
-
-    %% Zone 내부 연결
-    ZCP1 --> ZDB1
-    ZCP1 -->|xDS Config| DP1
-    ZCP1 -->|xDS Config| DP2
-
-    ZCP2 --> ZDB2
-    ZCP2 -->|xDS Config| DP3
-
-    ZCP3 --> ZDB3
-    ZCP3 -->|xDS Config| DPV
-
-    %% App 연결
-    App1 --> DP1
-    App2 --> DP2
-    App3 --> DP3
-    VM1 --> DPV
-
-    %% Cross-Zone 트래픽
-    DP1 <-.->|Cross-Zone mTLS| DP3
-    DP2 <-.->|Cross-Zone mTLS| DPV
-
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef dataplane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef db fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class GCP global;
-    class ZCP1,ZCP2,ZCP3 zone;
-    class DP1,DP2,DP3,App1,App2,App3 dataplane;
-    class DPV,VM1 vm;
-    class GDB,ZDB1,ZDB2,ZDB3 db;
-```
+![Global Control Plane이 두 Zone Control Plane에 정책을 동기화하고, 각 Zone의 Kuma DP는 로컬 트래픽을 처리하며 Zone 간 mTLS로 연결된다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-5.png)
 
 **주요 특징**:
 
@@ -452,81 +103,11 @@ flowchart TB
 
 **서비스 연결 및 트래픽 흐름**
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application<br/>(Zone 1)
-    participant DP1 as Kuma DP 1<br/>(Zone 1)
-    participant ZCP1 as Zone CP 1
-    participant GCP as Global CP
-    participant ZCP2 as Zone CP 2
-    participant DP2 as Kuma DP 2<br/>(Zone 2)
-    participant Target as Target Service<br/>(Zone 2)
-
-    Note over App,Target: 초기 설정 단계
-
-    GCP->>ZCP1: 정책 동기화<br/>(TrafficRoute, mTLS)
-    GCP->>ZCP2: 정책 동기화<br/>(TrafficRoute, mTLS)
-
-    ZCP1->>DP1: xDS Configuration<br/>(서비스 엔드포인트, 정책)
-    ZCP2->>DP2: xDS Configuration<br/>(서비스 엔드포인트, 정책)
-
-    Note over App,Target: 서비스 간 통신
-
-    App->>DP1: HTTP 요청 (localhost)
-    DP1->>DP1: 서비스 디스커버리<br/>(Zone 2 엔드포인트 확인)
-    DP1->>DP2: mTLS 암호화 요청<br/>(Cross-Zone)
-    DP2->>Target: 평문 요청 (localhost)
-    Target->>DP2: 응답
-    DP2->>DP1: mTLS 암호화 응답
-    DP1->>App: 평문 응답
-
-    Note over App,Target: 메트릭 및 추적
-
-    DP1->>ZCP1: 메트릭 전송
-    DP2->>ZCP2: 메트릭 전송
-    ZCP1->>GCP: 글로벌 메트릭 집계
-    ZCP2->>GCP: 글로벌 메트릭 집계
-```
+![애플리케이션의 요청이 로컬 Kuma DP를 거쳐 상대 Zone의 DP와 mTLS로 암호화 통신한 뒤 대상 서비스에 도달하고, 응답과 메트릭이 같은 경로로 되돌아온다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
 
 **정책 전파 메커니즘**
 
-```mermaid
-flowchart TD
-    Start[정책 생성/수정]
-    Start --> Apply[kubectl apply -f policy.yaml]
-
-    Apply --> Global{Global CP 적용?}
-
-    Global -->|Yes| GlobalStore[Global Control Plane<br/>정책 저장]
-    Global -->|No| ZoneStore[Zone Control Plane<br/>로컬 정책 저장]
-
-    GlobalStore --> Sync[Policy Sync]
-    Sync --> Zone1[Zone CP 1 수신]
-    Sync --> Zone2[Zone CP 2 수신]
-    Sync --> Zone3[Zone CP 3 수신]
-
-    ZoneStore --> Zone1Apply[해당 Zone CP만<br/>정책 적용]
-
-    Zone1 --> DP1[Data Plane 1<br/>xDS 업데이트]
-    Zone2 --> DP2[Data Plane 2<br/>xDS 업데이트]
-    Zone3 --> DP3[Data Plane 3<br/>xDS 업데이트]
-    Zone1Apply --> DP1
-
-    DP1 --> Enforce1[Envoy 설정 적용<br/>실시간 트래픽 제어]
-    DP2 --> Enforce2[Envoy 설정 적용<br/>실시간 트래픽 제어]
-    DP3 --> Enforce3[Envoy 설정 적용<br/>실시간 트래픽 제어]
-
-    classDef input fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef dataplane fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class Start,Apply input;
-    class GlobalStore,Sync global;
-    class Zone1,Zone2,Zone3,ZoneStore,Zone1Apply zone;
-    class DP1,DP2,DP3,Enforce1,Enforce2,Enforce3 dataplane;
-```
+![정책을 적용하면 스코프에 따라 Global CP 또는 Zone CP에 저장되고, 두 경로 모두 최종적으로 Data Plane의 xDS 설정을 갱신해 Envoy에 실시간으로 반영된다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-7.png)
 
 **정책 유형별 전파 범위**:
 
@@ -540,119 +121,11 @@ flowchart TD
 
 **데이터 플레인 라이프사이클**
 
-```mermaid
-flowchart TB
-    subgraph Init["초기화 단계"]
-        direction TB
-        Start[Kuma DP 시작]
-        Start --> Token[Data Plane Token 획득]
-        Token --> Register[Zone CP에 등록]
-    end
-
-    subgraph Config["설정 수신"]
-        direction TB
-        Register --> Connect[Zone CP와<br/>gRPC 스트림 연결]
-        Connect --> Receive[xDS Configuration 수신:<br/>- Listeners<br/>- Routes<br/>- Clusters<br/>- Endpoints]
-    end
-
-    subgraph Runtime["런타임 동작"]
-        direction TB
-        Receive --> Proxy[Envoy Proxy 설정]
-        Proxy --> Traffic[트래픽 프록시<br/>- mTLS 암호화/복호화<br/>- 로드 밸런싱<br/>- 헬스체크]
-        Traffic --> Metrics[메트릭 수집<br/>- 요청 수<br/>- Latency<br/>- 에러율]
-    end
-
-    subgraph Update["동적 업데이트"]
-        direction TB
-        Metrics --> Watch[Zone CP 변경 감지]
-        Watch --> UpdateConfig[설정 업데이트 수신]
-        UpdateConfig --> HotReload[Hot Reload<br/>무중단 적용]
-        HotReload --> Traffic
-    end
-
-    subgraph Shutdown["종료 단계"]
-        direction TB
-        Signal[SIGTERM 수신]
-        Signal --> Drain[Connection Draining<br/>기존 연결 처리]
-        Drain --> Deregister[Zone CP 등록 해제]
-        Deregister --> Stop[프로세스 종료]
-    end
-
-    Metrics -.-> Signal
-
-    classDef init fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef config fill:#42A5F5,stroke:#333,stroke-width:2px,color:white;
-    classDef runtime fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-    classDef update fill:#AB47BC,stroke:#333,stroke-width:2px,color:white;
-    classDef shutdown fill:#EF5350,stroke:#333,stroke-width:2px,color:white;
-
-    class Start,Token,Register init;
-    class Connect,Receive config;
-    class Proxy,Traffic,Metrics runtime;
-    class Watch,UpdateConfig,HotReload update;
-    class Signal,Drain,Deregister,Stop shutdown;
-```
+![데이터 플레인은 초기화와 설정 수신을 거쳐 런타임에서 트래픽을 처리하고, 변경 감지 시 무중단으로 업데이트를 반복하며 SIGTERM 수신 시에만 드레이닝 후 종료한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-8.png)
 
 **Zone 간 서비스 디스커버리**
 
-```mermaid
-flowchart LR
-    subgraph Zone1["Zone 1 - AWS"]
-        direction TB
-        Service1[Service: api<br/>Tag: version=v1]
-        ZCP1[Zone CP 1]
-        Service1 -.->|등록| ZCP1
-    end
-
-    subgraph Zone2["Zone 2 - GCP"]
-        direction TB
-        Service2[Service: api<br/>Tag: version=v2]
-        ZCP2[Zone CP 2]
-        Service2 -.->|등록| ZCP2
-    end
-
-    subgraph Zone3["Zone 3 - On-Prem"]
-        direction TB
-        Service3[Service: database<br/>Tag: tier=primary]
-        ZCP3[Zone CP 3]
-        Service3 -.->|등록| ZCP3
-    end
-
-    subgraph Global["Global Control Plane"]
-        direction TB
-        ServiceRegistry[통합 서비스 레지스트리<br/>api: [Zone1, Zone2]<br/>database: [Zone3]]
-    end
-
-    ZCP1 -->|서비스 정보 전송| ServiceRegistry
-    ZCP2 -->|서비스 정보 전송| ServiceRegistry
-    ZCP3 -->|서비스 정보 전송| ServiceRegistry
-
-    ServiceRegistry -->|통합 서비스 맵 배포| ZCP1
-    ServiceRegistry -->|통합 서비스 맵 배포| ZCP2
-    ServiceRegistry -->|통합 서비스 맵 배포| ZCP3
-
-    subgraph Client["Client (Zone 1)"]
-        direction TB
-        App[Application]
-        DP[Kuma DP]
-        App --> DP
-    end
-
-    DP -.->|1. api 서비스 요청| ZCP1
-    ZCP1 -.->|2. Endpoints 반환<br/>Zone1: 10.0.1.10<br/>Zone2: 10.1.1.10| DP
-    DP -.->|3. 로컬 우선 라우팅<br/>Zone1: 80%<br/>Zone2: 20%| Service1
-    DP -.->|4. Cross-Zone 라우팅| Service2
-
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class ZCP1,ZCP2,ZCP3 zone;
-    class Service1,Service2,Service3 service;
-    class ServiceRegistry global;
-    class App,DP client;
-```
+![각 Zone Control Plane이 등록한 서비스 정보가 Global Control Plane의 통합 레지스트리에 모이고, 클라이언트는 이 레지스트리를 통해 로컬 Zone을 우선 라우팅한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-9.png)
 
 **서비스 디스커버리 특징**:
 
@@ -775,48 +248,7 @@ spec:
 
 ### Consul Connect
 
-```mermaid
-flowchart TB
-    subgraph "Consul Servers"
-        ConsulServer[Consul Server Cluster<br/>Service Catalog + KV Store]
-    end
-
-    subgraph "Kubernetes Cluster"
-        subgraph "Pod 1"
-            App1[Application]
-            ConsulClient1[Consul Client]
-            EnvoyProxy1[Envoy Sidecar]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            ConsulClient2[Consul Client]
-            EnvoyProxy2[Envoy Sidecar]
-        end
-    end
-
-    subgraph "VM Infrastructure"
-        AppVM[Legacy Application]
-        ConsulClientVM[Consul Client]
-        EnvoyVM[Envoy Proxy]
-    end
-
-    ConsulClient1 -->|Service Registration| ConsulServer
-    ConsulClient2 -->|Service Registration| ConsulServer
-    ConsulClientVM -->|Service Registration| ConsulServer
-    ConsulServer -->|Service Discovery| EnvoyProxy1
-    ConsulServer -->|Service Discovery| EnvoyProxy2
-    ConsulServer -->|Service Discovery| EnvoyVM
-    EnvoyProxy1 <-->|mTLS| EnvoyProxy2
-    EnvoyProxy1 <-->|mTLS| EnvoyVM
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class ConsulServer,ConsulClient1,ConsulClient2 k8sComponent;
-    class App1,App2,EnvoyProxy1,EnvoyProxy2 userApp;
-    class AppVM,ConsulClientVM,EnvoyVM vm;
-```
+![Consul 서버 클러스터가 Kubernetes 파드 두 개와 VM 위의 Envoy 프록시에 서비스 디스커버리 정보를 제공하고, 모든 데이터 플레인이 mTLS로 통신한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-10.png)
 
 **특징**:
 
@@ -836,41 +268,7 @@ flowchart TB
 
 ### Latency 오버헤드
 
-```mermaid
-flowchart LR
-    subgraph "Baseline"
-        B[Direct K8s Service<br/>0.1ms]
-    end
-
-    subgraph "Linkerd"
-        L[Linkerd2-proxy<br/>+0.5-1ms]
-    end
-
-    subgraph "Istio"
-        I[Envoy Proxy<br/>+1-3ms]
-    end
-
-    subgraph "Kong Mesh"
-        K[Kuma DP<br/>+1-2.5ms]
-    end
-
-    subgraph "Consul"
-        C[Envoy/Built-in<br/>+1-3ms]
-    end
-
-    B -.->|경량 프록시| L
-    B -.->|기능 풍부| I
-    B -.->|중간| K
-    B -.->|중간| C
-
-    classDef baseline fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fast fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class B baseline;
-    class L fast;
-    class I,K,C medium;
-```
+![Baseline 대비 각 Service Mesh 프록시가 추가하는 지연 시간을 비교하면 Linkerd가 가장 낮고 Istio·Consul이 가장 높다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-11.png)
 
 **벤치마크 결과** (P99 Latency 증가, 1000 RPS):
 
@@ -905,22 +303,7 @@ flowchart LR
 
 **최대 RPS (Requests Per Second)**:
 
-```mermaid
-flowchart LR
-    subgraph Throughput[처리량 비교]
-        direction TB
-        L[Linkerd<br/>~95-98% of baseline]
-        K[Kong Mesh<br/>~90-95% of baseline]
-        I[Istio<br/>~85-92% of baseline]
-        C[Consul<br/>~85-92% of baseline]
-    end
-
-    classDef high fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class L high;
-    class I,K,C medium;
-```
+![Baseline 대비 처리 가능한 최대 RPS 비율을 랭킹으로 보여주며 Linkerd가 가장 높고 Istio·Consul이 가장 낮다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-12.png)
 
 **결론**:
 
@@ -1370,121 +753,19 @@ ui_config {
 
 **Istio Multi-Primary**:
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Cluster 1 (us-west)"]
-        Istiod1[Istiod]
-        App1[Service A v1]
-        App2[Service B]
-    end
-
-    subgraph Cluster2["Cluster 2 (us-east)"]
-        Istiod2[Istiod]
-        App3[Service A v2]
-        App4[Service C]
-    end
-
-    Istiod1 <-.->|Service Discovery| Istiod2
-    App1 <-->|Cross-cluster mTLS| App3
-    App2 <-->|Cross-cluster mTLS| App4
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod1,Istiod2 k8sComponent;
-    class App1,App2,App3,App4 userApp;
-```
+![두 클러스터가 각자 Istiod를 운영하며 서로 서비스 디스커버리를 교환하고, 애플리케이션 간에는 클러스터 경계를 넘어 mTLS로 직접 통신한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-13.png)
 
 **Linkerd Multi-cluster**:
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Source Cluster"]
-        LinkerdCtl1[Linkerd Control Plane]
-        Gateway1[Gateway]
-        App1[Service A]
-    end
-
-    subgraph Cluster2["Target Cluster"]
-        LinkerdCtl2[Linkerd Control Plane]
-        Gateway2[Gateway]
-        App2[Service A Mirror]
-    end
-
-    App1 -->|통해 라우팅| Gateway1
-    Gateway1 <-->|mTLS| Gateway2
-    Gateway2 --> App2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class LinkerdCtl1,LinkerdCtl2,Gateway1,Gateway2 k8sComponent;
-    class App1,App2 userApp;
-```
+![소스 클러스터의 서비스가 자신의 Gateway를 거쳐 타깃 클러스터 Gateway로 mTLS 연결되고, 그 뒤에서 미러링된 서비스로 라우팅된다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-14.png)
 
 **Kong Mesh Multi-zone**:
 
-```mermaid
-flowchart TB
-    subgraph Global["Global Control Plane"]
-        KongGlobal[Kong Mesh Global]
-    end
-
-    subgraph Zone1["Zone 1 (AWS)"]
-        KongZone1[Zone CP]
-        App1[Services]
-    end
-
-    subgraph Zone2["Zone 2 (Azure)"]
-        KongZone2[Zone CP]
-        App2[Services]
-    end
-
-    subgraph Zone3["Zone 3 (On-prem)"]
-        KongZone3[Zone CP]
-        App3[Services]
-    end
-
-    KongGlobal -->|Sync Policies| KongZone1
-    KongGlobal -->|Sync Policies| KongZone2
-    KongGlobal -->|Sync Policies| KongZone3
-    App1 <-->|Cross-zone| App2
-    App1 <-->|Cross-zone| App3
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class KongGlobal,KongZone1,KongZone2,KongZone3 k8sComponent;
-    class App1,App2,App3 userApp;
-```
+![Global Control Plane이 세 Zone에 정책을 동기화하고, 각 Zone의 서비스는 Zone 경계를 넘어 서로 통신한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-15.png)
 
 **Consul Multi-datacenter**:
 
-```mermaid
-flowchart TB
-    subgraph DC1["Datacenter 1"]
-        ConsulServer1[Consul Servers]
-        Gateway1[Mesh Gateway]
-        App1[Services]
-    end
-
-    subgraph DC2["Datacenter 2"]
-        ConsulServer2[Consul Servers]
-        Gateway2[Mesh Gateway]
-        App2[Services]
-    end
-
-    ConsulServer1 <-.->|WAN Gossip| ConsulServer2
-    Gateway1 <-->|Mesh Gateway| Gateway2
-    App1 -.->|Service Discovery| ConsulServer1
-    App2 -.->|Service Discovery| ConsulServer2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class ConsulServer1,ConsulServer2,Gateway1,Gateway2 k8sComponent;
-    class App1,App2 userApp;
-```
+![두 데이터센터가 각자 Consul 서버를 두고 WAN Gossip으로 서로를 인지하며, Mesh Gateway를 통해 데이터센터 간 트래픽이 오간다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
 
 ### 멀티 클러스터 기능 비교
 
@@ -1619,27 +900,7 @@ kubectl logs <pod> -c consul-connect-envoy-sidecar
 
 ### 학습 곡선
 
-```mermaid
-flowchart LR
-    subgraph "학습 난이도"
-        direction TB
-        Easy[쉬움<br/>Linkerd]
-        Medium[중간<br/>Kong Mesh<br/>Consul]
-        Hard[어려움<br/>Istio]
-    end
-
-    Easy -->|기본 기능만| Use1[빠른 시작]
-    Medium -->|균형잡힌 기능| Use2[중간 규모]
-    Hard -->|모든 기능| Use3[대규모 엔터프라이즈]
-
-    classDef easy fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef hard fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Easy easy;
-    class Medium medium;
-    class Hard hard;
-```
+![Linkerd는 쉬운 학습 곡선으로 빠른 시작에, Kong Mesh와 Consul은 중간 난이도로 중간 규모에, Istio는 가장 높은 난이도로 대규모 엔터프라이즈에 적합하다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-17.png)
 
 ## 비용 분석
 
@@ -1864,35 +1125,7 @@ istioctl install --set profile=demo \
 
 ### 의사 결정 트리
 
-```mermaid
-flowchart TD
-    Start[Service Mesh 선택]
-    Start --> Q1{팀 경험?}
-
-    Q1 -->|Service Mesh 처음| Simple[간단한 솔루션]
-    Q1 -->|경험 있음| Advanced[고급 기능]
-
-    Simple --> Q2{리소스 제약?}
-    Q2 -->|Yes, 효율 중요| Linkerd[✅ Linkerd]
-    Q2 -->|No, 기능 필요| KongSimple[Kong Mesh<br/>또는 Consul]
-
-    Advanced --> Q3{플랫폼?}
-    Q3 -->|K8s만| Q4{기능 요구?}
-    Q3 -->|K8s + VM| Hybrid[Kong/Consul]
-
-    Q4 -->|최대 기능| Istio[✅ Istio]
-    Q4 -->|균형| KongAdv[Kong Mesh]
-
-    Hybrid --> Q5{VM 중심?}
-    Q5 -->|Yes| Consul[✅ Consul]
-    Q5 -->|No, K8s 중심| Kong[✅ Kong Mesh]
-
-    classDef recommended fill:#00C7B7,stroke:#333,stroke-width:3px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Linkerd,Istio,Consul,Kong recommended;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-```
+![팀의 경험 수준, 리소스 제약, 플랫폼 요구(K8s 전용 또는 K8s+VM)를 따라가면 Linkerd, Kong Mesh/Consul, Istio 중 적합한 Service Mesh로 귀결된다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-18.png)
 
 ### 빠른 추천 가이드
 

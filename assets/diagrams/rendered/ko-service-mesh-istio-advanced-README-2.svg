@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mc-title mc-desc">
+    <title id="mc-title">Multi-cluster 토폴로지</title>
+    <desc id="mc-desc">Primary 클러스터의 Istiod 컨트롤 플레인이 두 원격 클러스터에 구성을 푸시하고, Primary의 서비스 A가 각 원격 클러스터의 서비스와 양방향 크로스클러스터 통신을 주고받는 구조를 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="72" width="208" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="64" y="76" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="144" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">PRIMARY · US-EAST-1</text>
+
+    <rect x="680" y="72" width="208" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="700" y="76" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">REMOTE 1 · US-WEST-2</text>
+
+    <rect x="680" y="320" width="208" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="700" y="324" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="333" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">REMOTE 2 · EU-WEST-1</text>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="232" y1="124" x2="696" y2="124" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <path d="M232,148 H412 Q420,148 420,156 V288 a8,8 0 0,0 0,16 V363 Q420,371 428,371 H696"
+          fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <path d="M232,296 H492 Q500,296 500,288 V156 Q500,148 508,148 H696"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+    <path d="M232,320 H392 Q400,320 400,328 V381 Q400,389 408,389 H696"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+
+    <!-- Arrow labels -->
+    <rect x="436" y="110" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="464" y="119" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">구성 푸시</text>
+
+    <rect x="272" y="128" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="137" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">구성 푸시</text>
+
+    <rect x="322" y="276" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="350" y="285" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">CROSS-CL</text>
+
+    <rect x="272" y="300" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">CROSS-CL</text>
+
+    <!-- Node: CP1 -->
+    <rect x="56" y="104" width="176" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="104" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="144" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istiod</text>
+    <text x="144" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">control plane</text>
+
+    <!-- Node: Service1 (focal) -->
+    <rect x="56" y="280" width="176" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="280" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="144" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+    <text x="144" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">primary cluster</text>
+
+    <!-- Node: Service2 -->
+    <rect x="696" y="104" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="696" y="104" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+    <text x="780" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">remote cluster 1</text>
+
+    <!-- Node: Service3 -->
+    <rect x="696" y="352" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="696" y="352" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service C</text>
+    <text x="780" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">remote cluster 2</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="440" x2="920" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="456" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="472" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="480" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주 서비스 (엔트리포인트)</text>
+
+    <line x1="280" y1="477" x2="308" y2="477" stroke="#EC7211" stroke-width="1.4" marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+    <text x="316" y="480" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">크로스클러스터 양방향 통신</text>
+
+    <line x1="620" y1="477" x2="648" y2="477" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="656" y="480" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">컨트롤 플레인 구성 푸시</text>
+  </svg>

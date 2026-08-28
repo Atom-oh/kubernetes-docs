@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wg-path-title wg-path-desc">
+    <title id="wg-path-title">노드 간 WireGuard 암호화 경로</title>
+    <desc id="wg-path-desc">Pod A의 평문 트래픽이 Node 1의 WireGuard 인터페이스에서 암호화되어 eth0을 통해 터널로 전달되고, Node 2에서 복호화되어 Pod B에 평문으로 도달하는 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="60" y="140" width="360" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="204" y="144" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1</text>
+
+    <rect x="540" y="140" width="360" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="684" y="144" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2</text>
+
+    <!-- Arrows first -->
+    <line x1="240" y1="228" x2="240" y2="276" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="240" y1="324" x2="240" y2="372" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="288" y1="396" x2="672" y2="396" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="720" y1="372" x2="720" y2="324" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="720" y1="276" x2="720" y2="228" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="216" y="242" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="251" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">평문</text>
+
+    <rect x="200" y="338" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="347" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">암호화</text>
+
+    <rect x="446" y="378" width="68" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="387" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">WG 터널</text>
+
+    <rect x="680" y="338" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="347" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">복호화</text>
+
+    <rect x="696" y="242" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="251" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">평문</text>
+
+    <!-- Node: Pod A -->
+    <rect x="170" y="180" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+
+    <!-- Node: WireGuard Interface (Node1, focal) -->
+    <rect x="170" y="276" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="240" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">WireGuard</text>
+    <text x="240" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Interface</text>
+
+    <!-- Node: eth0 (Node1) -->
+    <rect x="170" y="372" width="140" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="240" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eth0</text>
+
+    <!-- Node: eth0 (Node2) -->
+    <rect x="650" y="372" width="140" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="720" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eth0</text>
+
+    <!-- Node: WireGuard Interface (Node2, focal) -->
+    <rect x="650" y="276" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="720" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">WireGuard</text>
+    <text x="720" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Interface</text>
+
+    <!-- Node: Pod B -->
+    <rect x="650" y="180" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="720" y="208" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+    <!-- Legend -->
+    <line x1="60" y1="464" x2="900" y2="464" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="60" y="480" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="60" y="496" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="80" y="504" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">WireGuard 인터페이스 (암호화 지점)</text>
+
+    <rect x="360" y="496" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="380" y="504" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">물리 인터페이스</text>
+
+    <line x1="560" y1="501" x2="588" y2="501" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="596" y="504" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">암호화된 트래픽</text>
+  </svg>

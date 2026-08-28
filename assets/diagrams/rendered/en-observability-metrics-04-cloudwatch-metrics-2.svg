@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="costtree-title costtree-desc">
+    <title id="costtree-title">CloudWatch cost optimization strategy tree</title>
+    <desc id="costtree-desc">Tree diagram showing CloudWatch cost optimization branching into metric, log, and dashboard optimization, each listing its specific tactics.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Connectors (drawn before nodes) -->
+    <!-- Root drop -->
+    <line x1="480" y1="96" x2="480" y2="144" stroke="#545B64" stroke-width="1"/>
+    <!-- Bus -->
+    <line x1="160" y1="144" x2="800" y2="144" stroke="#545B64" stroke-width="1"/>
+    <!-- Drops into each branch -->
+    <line x1="160" y1="144" x2="160" y2="176" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="480" y1="144" x2="480" y2="176" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="800" y1="144" x2="800" y2="176" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Node: Root (focal) -->
+    <rect x="380" y="40" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="64" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch Cost</text>
+    <text x="480" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Optimization</text>
+
+    <!-- Node: Metric Optimization -->
+    <rect x="60" y="180" width="200" height="112" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="80" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Metric Optimization</text>
+    <line x1="80" y1="212" x2="240" y2="212" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="80" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; minimize high-res metrics</text>
+    <text x="80" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; remove unneeded dimensions</text>
+    <text x="80" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; widen collection interval</text>
+
+    <!-- Node: Log Optimization -->
+    <rect x="380" y="180" width="200" height="112" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="400" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Log Optimization</text>
+    <line x1="400" y1="212" x2="560" y2="212" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="400" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; set log retention period</text>
+    <text x="400" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; filter logs before ingestion</text>
+    <text x="400" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; use Infrequent Access class</text>
+
+    <!-- Node: Dashboard Optimization -->
+    <rect x="700" y="180" width="200" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="720" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Dashboard Optimization</text>
+    <line x1="720" y1="212" x2="880" y2="212" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+    <text x="720" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; consolidate dashboards</text>
+    <text x="720" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">&#8226; optimize widget queries</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="520" x2="920" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="536" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="552" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="560" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Root objective</text>
+
+    <rect x="220" y="552" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="560" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Strategy area (with tactics listed)</text>
+  </svg>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+  <title id="dtitle">Flink Kubernetes Operator가 관리하는 리소스와 오토스케일링 트리거 흐름</title>
+  <desc id="ddesc">FlinkDeployment CR과 FlinkSessionJob CR을 감시하는 Flink Kubernetes Operator가 JobManager Pod와 TaskManager Pod를 관리하고, 오토스케일러가 vertex별 지표를 읽어 임계값을 초과하면 Operator를 통해 JobManager에 last-state 리스케일을 트리거하는 과정을 보여준다.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="24" fill="#7D8998" font-size="8" font-weight="500" letter-spacing="0.18em" class="mono">FLINK KUBERNETES OPERATOR</text>
+  <text x="40" y="48" fill="#232F3E" font-size="20" font-weight="700">리소스 관리와 오토스케일링 트리거 흐름</text>
+
+  <!-- ===== Arrows (drawn before boxes) ===== -->
+
+  <!-- 1. CR1 -> O 감시 -->
+  <path d="M180,136 V160 Q180,168 188,168 H440 Q448,168 448,176 V200" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="296" y="148" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="314" y="157" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">WATCH</text>
+
+  <!-- 2. CR2 -> O 감시 -->
+  <path d="M780,136 V160 Q780,168 772,168 H520 Q512,168 512,176 V200" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="628" y="148" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="646" y="157" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">WATCH</text>
+
+  <!-- 3. O -> JM (accent, merged: 관리 + last-state 리스케일 트리거) -->
+  <path d="M448,272 V300 Q448,308 440,308 H248 Q240,308 240,316 V352" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="264" y="288" width="160" height="12" rx="2" fill="#ffffff"/>
+  <text x="344" y="297" fill="#EC7211" font-size="8" letter-spacing="0.04em" text-anchor="middle" class="mono">MANAGE + RESCALE(LAST-STATE)</text>
+
+  <!-- 4. O -> TM 관리 -->
+  <path d="M512,272 V300 Q512,308 520,308 H752 Q760,308 760,316 V352" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="616" y="288" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="636" y="297" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">MANAGE</text>
+
+  <!-- 5. JM -> TM (no label) -->
+  <line x1="340" y1="384" x2="660" y2="384" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- 6. AS -> M 읽음 -->
+  <line x1="220" y1="536" x2="328" y2="536" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="256" y="516" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="274" y="525" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">READ</text>
+
+  <!-- 7. AS -> O 임계값 초과 -->
+  <path d="M130,504 V244 Q130,236 138,236 H380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="220" y="216" width="78" height="12" rx="2" fill="#ffffff"/>
+  <text x="259" y="225" fill="#7D8998" font-size="8" letter-spacing="0.04em" text-anchor="middle" class="mono">THRESHOLD EXCEEDED</text>
+
+  <!-- 8. M -> JM dashed 생성 -->
+  <path d="M428,504 V456 Q428,448 420,448 H248 Q240,448 240,440 V416" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="298" y="428" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="324" y="437" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">EMIT</text>
+
+  <!-- 9. M -> TM dashed 생성 -->
+  <path d="M524,504 V456 Q524,448 532,448 H752 Q760,448 760,440 V416" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="616" y="428" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="642" y="437" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">EMIT</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- CR1: FlinkDeployment CR -->
+  <rect x="80" y="80" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="80" y="80" width="200" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+  <rect x="88" y="86" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="108" y="95" fill="#545B64" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">CRD</text>
+  <text x="180" y="114" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">FlinkDeployment CR</text>
+
+  <!-- CR2: FlinkSessionJob CR -->
+  <rect x="680" y="80" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="680" y="80" width="200" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+  <rect x="688" y="86" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="708" y="95" fill="#545B64" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">CRD</text>
+  <text x="780" y="114" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">FlinkSessionJob CR</text>
+
+  <!-- O: Flink Kubernetes Operator (focal) -->
+  <rect x="380" y="200" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="380" y="200" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="388" y="208" width="68" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="422" y="217" fill="#EC7211" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">OPERATOR</text>
+  <text x="480" y="242" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Flink Kubernetes</text>
+  <text x="480" y="258" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Operator</text>
+
+  <!-- JM: JobManager Pod -->
+  <rect x="140" y="352" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="140" y="352" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="148" y="360" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="166" y="369" fill="#545B64" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">POD</text>
+  <text x="240" y="390" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">JobManager Pod</text>
+
+  <!-- TM: TaskManager Pods -->
+  <rect x="660" y="352" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="660" y="352" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="668" y="360" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="686" y="369" fill="#545B64" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">POD</text>
+  <text x="760" y="390" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">TaskManager Pods</text>
+
+  <!-- AS: 오토스케일러 -->
+  <rect x="40" y="504" width="180" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="504" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="48" y="512" width="72" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="84" y="521" fill="#545B64" font-size="7" letter-spacing="0.06em" text-anchor="middle" class="mono">CONTROLLER</text>
+  <text x="130" y="546" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">오토스케일러</text>
+
+  <!-- M: vertex별 지표 -->
+  <rect x="328" y="504" width="296" height="64" rx="6" fill="#ffffff"/>
+  <rect x="328" y="504" width="296" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="336" y="512" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="366" y="521" fill="#545B64" font-size="7" letter-spacing="0.06em" text-anchor="middle" class="mono">METRICS</text>
+  <text x="476" y="542" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">vertex별 지표</text>
+  <text x="476" y="557" fill="#545B64" font-size="9" text-anchor="middle" class="mono">busy time · backlog · 처리 속도</text>
+
+  <!-- Footer caption -->
+  <line x1="40" y1="580" x2="920" y2="580" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="480" y="594" fill="#7D8998" font-size="8" letter-spacing="0.04em" text-anchor="middle" class="mono">실선: 감시 · 관리 · 트리거 관계   /   점선: 지표 생성 관계</text>
+</svg>

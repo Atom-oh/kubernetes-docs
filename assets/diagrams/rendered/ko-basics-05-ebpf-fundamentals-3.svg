@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-basics-05-ebpf-fundamentals-3-title ko-basics-05-ebpf-fundamentals-3-desc">
+    <title id="ko-basics-05-ebpf-fundamentals-3-title">eBPF 프로그램 생명주기 상태</title>
+    <desc id="ko-basics-05-ebpf-fundamentals-3-desc">코드 작성부터 컴파일, 로드, 검증을 거쳐 JIT 컴파일과 훅 연결, 반복 실행에 이르는 eBPF 프로그램의 생명주기를, 검증 실패와 명시적 분리 후 언로드로 종료되는 두 경로와 함께 보여주는 상태 머신.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<circle cx="32" cy="200" r="6" fill="#232F3E"/>
+<line x1="38" y1="200" x2="64" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="168" y1="200" x2="192" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="296" y1="200" x2="320" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="424" y1="200" x2="448" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="552" y1="200" x2="576" y2="200" stroke="#EC7211" stroke-width="1.3" marker-end="url(#arrow-accent)"/>
+<line x1="680" y1="200" x2="704" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="782.0" y1="228.0" x2="782.0" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 730.0,228.0 V 276.0 Q 730.0,284.0 722.0,284.0 H 648.0 Q 640.0,284.0 640.0,276.0 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 750.0,340 C 750.0,308 814.0,308 814.0,340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 500.0,228.0 V 342 Q 500.0,350 508.0,350 H 587 Q 595,350 595,342 V 472" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 640.0,368.0 V 422 Q 640.0,430 632.0,430 H 603 Q 595,430 595,422 V 472" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<circle cx="595" cy="472" r="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<circle cx="595" cy="472" r="5" fill="#232F3E"/>
+<rect x="508.0" y="230.0" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="528.0" y="239.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">검증 성공</text>
+<rect x="452.0" y="344.0" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="472.0" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">검증 실패</text>
+<rect x="790.0" y="306.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="813.0" y="315" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">이벤트 발생</text>
+<rect x="676.0" y="278.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="699.0" y="287.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">명시적 분리</text>
+<rect x="618.0" y="438" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="640.0" y="447" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">언로드</text>
+<rect x="750.0" y="292" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="782.0" y="301" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">반복 실행</text>
+<rect x="64" y="172.0" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="64" y="172.0" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="116.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">작성</text>
+<rect x="192" y="172.0" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="192" y="172.0" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="244.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컴파일</text>
+<rect x="320" y="172.0" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="320" y="172.0" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="372.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로드</text>
+<rect x="448" y="172.0" width="104" height="56" rx="8" fill="#ffffff"/>
+<rect x="448" y="172.0" width="104" height="56" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="500.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">검증</text>
+<rect x="576" y="172.0" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="576" y="172.0" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="628.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">JIT</text>
+<rect x="704" y="172.0" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="704" y="172.0" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="756.0" y="204.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">연결</text>
+<rect x="730.0" y="340" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="730.0" y="340" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="782.0" y="372.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">실행</text>
+<rect x="588" y="340" width="104" height="56" rx="6" fill="#ffffff"/>
+<rect x="588" y="340" width="104" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="640.0" y="372.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">분리</text>
+  </svg>

@@ -13,34 +13,7 @@
 
 ![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
 
-```mermaid
-flowchart TB
-    subgraph Detection["이상 탐지"]
-        Prom["Prometheus<br/>AlertManager"]
-        CW["CloudWatch<br/>Alarms"]
-    end
-    subgraph Routing["알림 라우팅"]
-        OnCall["Grafana OnCall"]
-        SNS["SNS Topic"]
-    end
-    subgraph Analysis["AI 분석"]
-        CWI["CloudWatch<br/>Investigations"]
-        AIOps["AIOps Agent<br/>(Lambda + Bedrock)"]
-    end
-    subgraph Response["대응"]
-        Slack["Slack"]
-        Email["Email"]
-        PagerDuty["PagerDuty"]
-    end
-    Prom --> OnCall
-    Prom --> SNS
-    CW --> SNS
-    OnCall --> Response
-    SNS --> AIOps
-    AIOps --> CWI
-    AIOps --> SNS
-    SNS --> Response
-```
+![Prometheus AlertManager와 CloudWatch Alarms가 이상을 탐지하면 Grafana OnCall과 SNS Topic으로 라우팅되고, SNS가 AIOps Agent(Lambda+Bedrock)를 호출해 CloudWatch Investigations로 근본 원인을 분석한 뒤 Slack·Email·PagerDuty 채널로 결과가 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-0.png)
 
 ***
 
@@ -417,17 +390,7 @@ aws sns list-subscriptions-by-topic --topic-arn ${SNS_ALERTS_TOPIC_ARN}
 
 ### 조사 프로세스
 
-```mermaid
-stateDiagram-v2
-    [*] --> AlertDetected: CloudWatch Alarm 발생
-    AlertDetected --> InvestigationStart: Investigation 시작
-    InvestigationStart --> ResourceScan: 리소스 스캔 및 분석
-    ResourceScan --> KeyFindings: 주요 발견 사항 수집
-    KeyFindings --> Hypothesis: AI 기반 근본 원인 가설 생성
-    Hypothesis --> Suggestions: 제안 조치
-    Suggestions --> IncidentReport: 인시던트 보고서 생성
-    IncidentReport --> [*]
-```
+![CloudWatch 경보 발생부터 리소스 스캔, AI 기반 근본 원인 가설 생성, 제안 조치, 인시던트 보고서 생성까지 CloudWatch Investigations가 거치는 7단계 순차 상태 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-1.png)
 
 **Step 5.5.1: CloudWatch Investigations 활성화**
 
@@ -466,33 +429,7 @@ CloudWatch Console에서:
 
 ### AIOps Agent 아키텍처
 
-```mermaid
-sequenceDiagram
-    participant AM as AlertManager
-    participant APIGW as API Gateway
-    participant Lambda as Lambda (AIOps Agent)
-    participant CWL as CloudWatch Logs
-    participant AMP as AMP (Prometheus)
-    participant XRay as X-Ray
-    participant Bedrock as Bedrock (Claude)
-    participant SNS as SNS
-    AM->>APIGW: Webhook (alert payload)
-    APIGW->>Lambda: Trigger
-    Lambda->>Lambda: Extract: service, metric, time range
-    par Telemetry Collection
-        Lambda->>CWL: Logs Insights query
-        CWL-->>Lambda: Log results
-        Lambda->>AMP: PromQL query
-        AMP-->>Lambda: Metric results
-        Lambda->>XRay: GetTraceSummaries
-        XRay-->>Lambda: Trace results
-    end
-    Lambda->>Bedrock: Claude invoke (alert + metrics + logs + traces)
-    Note over Bedrock: System prompt: SRE expert
-    Bedrock-->>Lambda: Analysis result
-    Lambda->>SNS: Publish structured analysis
-    SNS-->>SNS: Email notification
-```
+![AlertManager의 웹훅으로 트리거된 AIOps Lambda가 로그·지표·트레이스 원격 측정 데이터를 순서대로 수집한 뒤 Bedrock Claude에 분석을 요청하고, 그 결과를 SNS를 통해 이메일로 통지하는 시간순 상호작용을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-2.png)
 
 **Step 5.6.1: Lambda 함수 코드**
 
@@ -953,17 +890,7 @@ aws logs filter-log-events \
 
 ### 멀티 에이전트 아키텍처
 
-```mermaid
-flowchart TB
-    User["운영자 / Alert"] --> Collab["Collaborator Agent"]
-    Collab --> MetricAgent["Metric Agent"]
-    Collab --> LogAgent["Log Agent"]
-    Collab --> TraceAgent["Trace Agent"]
-    MetricAgent --> Collab
-    LogAgent --> Collab
-    TraceAgent --> Collab
-    Collab --> Report["종합 근본 원인 보고서"]
-```
+![운영자 또는 경보가 Collaborator Agent를 트리거하면 Collaborator가 지표·로그·트레이스 세 전문 에이전트와 양방향으로 협의한 뒤 그 결과를 종합해 근본 원인 보고서를 만드는 허브-스포크 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-3.png)
 
 | Agent        | 역할      | 데이터 소스                      |
 | ------------ | ------- | --------------------------- |

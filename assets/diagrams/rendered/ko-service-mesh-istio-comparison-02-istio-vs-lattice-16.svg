@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-16-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-16-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-16-title">Istio 멀티 클라우드: 세 클라우드의 Istiod가 페더레이션된다</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-16-desc">AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서로 서비스 디스커버리 정보를 교환하고, 세 클러스터의 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신함으로써 Istio가 클라우드 중립적인 단일 메시를 구성한다는 것을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="60" y="60" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="70" y="64" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="100.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">AWS</text>
+<rect x="360" y="60" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="370" y="64" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="440.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">GOOGLE CLOUD</text>
+<rect x="660" y="60" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="670" y="64" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="710.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">AZURE</text>
+<line x1="290" y1="125" x2="390" y2="125" stroke="#EC7211" stroke-width="1.3" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="307.2" y="105" width="35.6" height="12" rx="2" fill="#ffffff"/>
+<text x="325" y="114" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">MTLS</text>
+<line x1="590" y1="125" x2="690" y2="125" stroke="#EC7211" stroke-width="1.3" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="607.2" y="105" width="35.6" height="12" rx="2" fill="#ffffff"/>
+<text x="625" y="114" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">MTLS</text>
+<line x1="290" y1="215" x2="390" y2="215" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="291.2" y="195" width="67.6" height="12" rx="2" fill="#ffffff"/>
+<text x="325" y="204" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">DISCOVERY</text>
+<line x1="590" y1="215" x2="690" y2="215" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="591.2" y="195" width="67.6" height="12" rx="2" fill="#ffffff"/>
+<text x="625" y="204" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">DISCOVERY</text>
+<rect x="90" y="100" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="90" y="100" width="200" height="50" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EKS Cluster 1</text>
+<rect x="390" y="100" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="390" y="100" width="200" height="50" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="490.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">GKE Cluster</text>
+<rect x="690" y="100" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="690" y="100" width="200" height="50" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AKS Cluster</text>
+<rect x="90" y="190" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="90" y="190" width="200" height="50" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="190.0" y="219.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istiod</text>
+<rect x="390" y="190" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="390" y="190" width="200" height="50" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="490.0" y="219.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istiod</text>
+<rect x="690" y="190" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="690" y="190" width="200" height="50" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="790.0" y="219.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istiod</text>
+</svg>

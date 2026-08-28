@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lktm-retry-title lktm-retry-desc">
+<title id="lktm-retry-title">Linkerd 재시도 동작 시퀀스</title>
+<desc id="lktm-retry-desc">클라이언트 요청이 linkerd-proxy를 거쳐 백엔드에서 503 오류를 받으면, 재시도 조건을 확인한 뒤 프록시가 요청을 다시 보내 200 OK를 클라이언트에 전달하는 과정을 보여주는 시퀀스 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- Actor boxes -->
+<rect x="80" y="40" width="144" height="40" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="152" y="65" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+<rect x="408" y="40" width="144" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="59" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">linkerd-proxy</text>
+<text x="480" y="72" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar proxy</text>
+
+<rect x="736" y="40" width="144" height="40" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="808" y="65" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend Service</text>
+
+<!-- Lifelines -->
+<line x1="152" y1="80" x2="152" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="80" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="808" y1="80" x2="808" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Activation bars -->
+<rect x="476" y="112" width="8" height="424" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="804" y="152" width="8" height="52" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="804" y="332" width="8" height="52" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- 1. Client -> Proxy: HTTP Request -->
+<line x1="152" y1="112" x2="476" y2="112" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="270" y="92" width="88" height="12" rx="2" fill="#FFFFFF"/>
+<text x="314" y="101" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">HTTP REQUEST</text>
+
+<!-- 2. Proxy -> Backend: Request #1 -->
+<line x1="484" y1="152" x2="804" y2="152" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="602" y="132" width="88" height="12" rx="2" fill="#FFFFFF"/>
+<text x="646" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">REQUEST #1</text>
+
+<!-- 3. Backend --> Proxy: 503 (dashed return) -->
+<line x1="804" y1="196" x2="484" y2="196" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="574" y="176" width="140" height="12" rx="2" fill="#FFFFFF"/>
+<text x="644" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">503 SERVICE UNAVAIL</text>
+
+<!-- Note: retry condition check -->
+<rect x="356" y="228" width="248" height="44" rx="4" fill="#FFFFFF" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="480" y="244" fill="#232F3E" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" font-style="italic">재시도 조건 확인</text>
+<text x="480" y="258" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">isRetryable: true / 예산 여유</text>
+
+<!-- 4. Proxy -> Backend: Request #2 (retry, headline) -->
+<line x1="484" y1="332" x2="804" y2="332" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="562" y="312" width="164" height="12" rx="2" fill="#FFFFFF"/>
+<text x="644" y="321" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">REQUEST #2 (재시도)</text>
+
+<!-- 5. Backend --> Proxy: 200 OK -->
+<line x1="804" y1="384" x2="484" y2="384" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="614" y="364" width="60" height="12" rx="2" fill="#FFFFFF"/>
+<text x="644" y="373" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">200 OK</text>
+
+<!-- 6. Proxy --> Client: 200 OK (headline success) -->
+<line x1="476" y1="440" x2="152" y2="440" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+<rect x="282" y="420" width="60" height="12" rx="2" fill="#FFFFFF"/>
+<text x="312" y="429" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">200 OK</text>
+
+</svg>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="kt-title kt-desc">
+  <title id="kt-title">Kiali-driven troubleshooting loop</title>
+  <desc id="kt-desc">A troubleshooting decision ladder: open the Kiali graph view, classify the problem into one of four categories, diagnose and fix it, then verify — looping back to the start if the fix did not resolve the issue.</desc>
+  <defs>
+    <style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ===== Arrows (behind nodes) ===== -->
+
+  <!-- Start -> Kiali graph -->
+  <line x1="480" y1="72" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Kiali graph -> Problem Type router -->
+  <line x1="480" y1="144" x2="480" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Problem Type -> 4 categories, fanned along its bottom edge, converging on Diagnose & Fix -->
+  <!-- Branch 1: No traffic -->
+  <path d="M 420,224 V 256 Q 420,264 412,264 H 404 Q 396,264 396,272 V 400"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="374" y="244" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="398" y="253" fill="#545B64" font-size="6.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NO TRAFFIC</text>
+
+  <!-- Branch 2: Errors -->
+  <line x1="460" y1="224" x2="460" y2="400" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="436" y="276" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="460" y="285" fill="#545B64" font-size="6.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ERRORS</text>
+
+  <!-- Branch 3: Slow response -->
+  <line x1="500" y1="224" x2="500" y2="400" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="476" y="308" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="317" fill="#545B64" font-size="6.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SLOW RESP.</text>
+
+  <!-- Branch 4: Security denied -->
+  <path d="M 540,224 V 336 Q 540,344 548,344 H 556 Q 564,344 564,352 V 400"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="540" y="340" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="564" y="349" fill="#545B64" font-size="6.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SECURITY</text>
+
+  <!-- Diagnose & Fix -> Resolved? -->
+  <line x1="480" y1="456" x2="480" y2="488" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Resolved? -> Complete (YES, accent happy path) -->
+  <line x1="568" y1="528" x2="680" y2="528" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="600" y="516" width="28" height="12" rx="2" fill="#ffffff"/>
+  <text x="614" y="525" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">YES</text>
+
+  <!-- Resolved? -> back to Start (NO, loop) -->
+  <path d="M 480,568 V 592 H 140 V 48 H 380"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="456" y="572" width="28" height="12" rx="2" fill="#ffffff"/>
+  <text x="470" y="581" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">NO</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- Start (oval) -->
+  <rect x="380" y="24" width="200" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="480" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Problem Occurs</text>
+
+  <!-- Kiali graph view (step) -->
+  <rect x="380" y="96" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Open Kiali Graph View</text>
+
+  <!-- Problem Type router (rect fan-out — 4 categories exceed the 3-exit diamond limit) -->
+  <rect x="380" y="176" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Problem Type?</text>
+
+  <!-- Diagnose & Fix (focal) -->
+  <rect x="340" y="400" width="280" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="426" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Diagnose &amp; Fix</text>
+  <text x="480" y="443" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">config · logs · traces · policy</text>
+
+  <!-- Resolved? (diamond) -->
+  <polygon points="480,488 568,528 480,568 392,528" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="532" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resolved?</text>
+
+  <!-- Complete (oval) -->
+  <rect x="680" y="504" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="760" y="532" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Complete</text>
+</svg>

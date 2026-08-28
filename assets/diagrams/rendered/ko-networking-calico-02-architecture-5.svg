@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-5-title ko-networking-calico-02-architecture-5-desc">
+<title id="ko-networking-calico-02-architecture-5-title">Full Mesh BGP 토폴로지</title>
+<desc id="ko-networking-calico-02-architecture-5-desc">50노드 미만의 소규모 클러스터에서 모든 노드가 서로 iBGP로 직접 연결되는 풀 메시 구조를 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="80" y="40" width="800" height="424" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="92" y="44" width="154" height="12" rx="2" fill="#ffffff"/>
+<text x="169.0" y="53" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">FULL MESH BGP (50노드 미만)</text><path d="M 323.0,100.0 L 600,100" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<path d="M 323.0,392.0 L 600,392" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<path d="M 240.0,147.0 L 240.0,360" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<path d="M 680.0,147.0 L 680.0,360" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<path d="M 323,128 H 452.0 Q 460.0,128 460.0,136 V 400 Q 460.0,408 468.0,408 H 600" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<path d="M 640,147 V 244 Q 640,252 632,252 H 468 A 8,8 0 0,0 452,252 H 288 Q 280,252 280,260 V 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/><rect x="160" y="80" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="160" y="80" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+<text x="240.0" y="123.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AS 64512</text><rect x="600" y="80" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="600" y="80" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680.0" y="108.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+<text x="680.0" y="123.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AS 64512</text><rect x="160" y="360" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="160" y="360" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="388.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+<text x="240.0" y="403.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AS 64512</text><rect x="600" y="360" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="600" y="360" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680.0" y="388.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 4</text>
+<text x="680.0" y="403.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">AS 64512</text><rect x="443.0" y="80" width="34" height="12" rx="2" fill="#ffffff"/>
+<text x="460.0" y="89" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">iBGP</text><line x1="30" y1="492" x2="930" y2="492" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="504" x2="46" y2="504" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="507" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">모든 연결: iBGP (풀 메시, N x (N-1)/2 세션)</text></svg>

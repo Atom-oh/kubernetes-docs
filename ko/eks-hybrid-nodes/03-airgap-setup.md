@@ -22,27 +22,7 @@
 
 ### 에어갭 환경의 유형
 
-```mermaid
-graph TD
-    subgraph type1["완전 에어갭"]
-        A1[인터넷 연결 없음] --> A2[물리적 미디어 전달]
-        A2 --> A3[USB / DVD / 이동식 HDD]
-    end
-
-    subgraph type2["부분 에어갭 - 프록시"]
-        B1[내부 네트워크<br/>제한된 접근] -->|허용 목록| B2[프록시 서버]
-        B2 -->|선별된 접근| B3[인터넷]
-    end
-
-    subgraph type3["프라이빗 연결 - VPN/DX + VPC Endpoint"]
-        C1[온프레미스<br/>네트워크] -->|VPN / Direct Connect| C2[AWS VPC]
-        C2 --> C3[VPC Endpoints<br/>S3, ECR 등]
-    end
-
-    style type1 fill:#fee,stroke:#c00
-    style type2 fill:#ffe,stroke:#cc0
-    style type3 fill:#efe,stroke:#0a0
-```
+![완전 에어갭, 프록시를 통한 부분 에어갭, VPN/Direct Connect와 VPC 엔드포인트를 사용하는 프라이빗 연결이라는 세 가지 네트워크 연결 방식을 비교하고, AWS는 하이브리드 노드에 프라이빗 연결 방식을 권장함을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-03-airgap-setup-0.png)
 
 ---
 
@@ -50,27 +30,7 @@ graph TD
 
 이 문서에서 구성하는 에어갭 아키텍처는 다음과 같습니다:
 
-```mermaid
-graph TD
-    subgraph prep["사전 준비 - 인터넷 접근 가능 호스트"]
-        P1[hybrid-assets.eks.amazonaws.com] -->|manifest.yaml 다운로드| P2[ekshybrid-download.sh]
-        P2 -->|바이너리 + 체크섬| P3[프라이빗 S3 버킷에 업로드]
-        P2 -->|컨테이너 이미지 목록| P4[ECR에서 풀 - VPC Endpoint 경유]
-    end
-
-    subgraph runtime["런타임 - 에어갭 환경"]
-        R1[온프레미스 노드] -->|바이너리 다운로드| R2[PHZ: hybrid-assets.eks.amazonaws.com]
-        R2 --> R3[S3 Interface VPC Endpoint]
-        R3 --> R4[프라이빗 S3 버킷]
-        R1 -->|컨테이너 이미지 풀| R5[ECR API/DKR VPC Endpoint]
-        R5 --> R6[ECR]
-    end
-
-    prep -.->|"아티팩트 사전 배치"| runtime
-
-    style prep fill:#e8f4fd,stroke:#1976d2
-    style runtime fill:#fce4ec,stroke:#c62828
-```
+![인터넷 접근이 가능한 사전 준비 호스트가 hybrid-assets 매니페스트를 내려받아 바이너리와 컨테이너 이미지를 프라이빗 S3 버킷과 ECR에 미리 준비해 두면, 에어갭 환경의 온프레미스 노드는 도메인을 로컬로 해석하고 VPC 엔드포인트를 거쳐 같은 S3 버킷과 ECR에 오프라인으로 접근한다는 것을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-03-airgap-setup-1.png)
 
 ### 아티팩트 저장소 역할 분담
 

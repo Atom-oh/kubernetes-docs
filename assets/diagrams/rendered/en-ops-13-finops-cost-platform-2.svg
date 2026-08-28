@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vpa-flow-title vpa-flow-desc">
+    <title id="vpa-flow-title">VPA rightsizing automation flow</title>
+    <desc id="vpa-flow-desc">Flowchart showing VPA recommendations collected on a schedule, compared to current requests, and — when the change exceeds 20% — turned into a pull request that a team reviews before ArgoCD syncs it; smaller changes are skipped.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows first -->
+    <line x1="172" y1="140" x2="228" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="372" y1="140" x2="428" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="572" y1="140" x2="628" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="772" y1="140" x2="816" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="700" y1="190" x2="700" y2="350" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="628" y1="380" x2="572" y2="380" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="428" y1="380" x2="372" y2="380" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="228" y1="380" x2="172" y2="380" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="768" y="120" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="782" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">NO</text>
+
+    <rect x="684" y="256" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="700" y="265" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">YES</text>
+
+    <!-- VPA Recommendations (start, oval) -->
+    <rect x="30" y="112" width="140" height="56" rx="28" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="100" y="138" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">VPA</text>
+    <text x="100" y="152" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Recommendations</text>
+
+    <!-- CronJob: Collect -->
+    <rect x="230" y="112" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="300" y="138" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">CronJob</text>
+    <text x="300" y="154" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">collect</text>
+
+    <!-- Compare with Current -->
+    <rect x="430" y="112" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="138" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Compare with</text>
+    <text x="500" y="154" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Current</text>
+
+    <!-- Decision diamond -->
+    <polygon points="700,92 772,140 700,188 628,140" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="134" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Change</text>
+    <text x="700" y="148" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">&gt; 20%?</text>
+
+    <!-- Skip (end, oval) -->
+    <rect x="820" y="112" width="120" height="56" rx="28" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="880" y="144" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Skip</text>
+
+    <!-- Generate Patch -->
+    <rect x="630" y="352" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="378" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Generate</text>
+    <text x="700" y="394" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Patch</text>
+
+    <!-- Open Pull Request -->
+    <rect x="430" y="352" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="378" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Open Pull</text>
+    <text x="500" y="394" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Request</text>
+
+    <!-- Team Review -->
+    <rect x="230" y="352" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="300" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Team Review</text>
+
+    <!-- ArgoCD Sync (end, focal, oval) -->
+    <rect x="30" y="352" width="140" height="56" rx="28" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="100" y="378" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">ArgoCD</text>
+    <text x="100" y="394" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Sync</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND · SHAPE CARRIES TYPE</text>
+
+    <rect x="40" y="532" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="72" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Start / end</text>
+
+    <rect x="220" y="532" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="252" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Step</text>
+
+    <polygon points="412,538 424,532 436,538 424,544" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="448" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Decision</text>
+
+    <line x1="604" y1="538" x2="632" y2="538" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="640" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Happy path</text>
+  </svg>

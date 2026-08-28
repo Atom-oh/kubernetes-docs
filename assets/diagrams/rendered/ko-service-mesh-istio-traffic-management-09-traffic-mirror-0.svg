@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="traffic-mirror-title traffic-mirror-desc">
+      <title id="traffic-mirror-title">Traffic Mirroring 개요</title>
+      <desc id="traffic-mirror-desc">클라이언트의 요청이 프로덕션의 Version 1으로 전달되어 실제 응답을 받는 동시에, 동일한 요청이 Shadow 영역의 Version 2로 복제되지만 그 응답은 무시된다는 것을 보여주는 다이어그램입니다.</desc>
+
+      <defs>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+        </style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+        <marker id="arrow-muted-dash" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+        </marker>
+      </defs>
+
+      <!-- background -->
+      <rect width="960" height="600" fill="#ffffff"/>
+
+      <!-- zones (drawn before arrows/nodes) -->
+      <rect x="320" y="96" width="560" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="332" y="100" width="96" height="16" rx="2" fill="#ffffff"/>
+      <text x="380" y="112" fill="rgba(35,47,62,0.55)" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" letter-spacing="0.02em">프로덕션</text>
+
+      <rect x="320" y="344" width="560" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="332" y="348" width="140" height="16" rx="2" fill="#ffffff"/>
+      <text x="402" y="360" fill="rgba(35,47,62,0.55)" font-size="9" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" letter-spacing="0.02em">SHADOW (미러)</text>
+
+      <!-- ============ arrows (drawn before boxes) ============ -->
+
+      <!-- A: Client -> V1, solid accent, "요청" -->
+      <path d="M192,284 H372 Q380,284 380,276 V172 Q380,164 388,164 H600"
+            fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="388" y="220" width="34" height="16" rx="2" fill="#ffffff"/>
+      <text x="405" y="231" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">요청</text>
+
+      <!-- B: V1 -> Client, solid muted, "응답" -->
+      <path d="M600,188 H400 Q392,188 392,196 V288 Q392,296 384,296 H192"
+            fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="400" y="242" width="34" height="16" rx="2" fill="#ffffff"/>
+      <text x="417" y="253" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">응답</text>
+
+      <!-- C: Client -> V2, dashed, "복제" -->
+      <path d="M192,320 H396 Q404,320 404,328 V400 Q404,408 412,408 H600"
+            fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-muted-dash)"/>
+      <rect x="362" y="382" width="34" height="16" rx="2" fill="#ffffff"/>
+      <text x="379" y="393" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">복제</text>
+
+      <!-- D: V2 -> Client, dashed, "무시" -->
+      <path d="M600,432 H424 Q416,432 416,424 V320 Q416,312 408,312 H192"
+            fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-muted-dash)"/>
+      <rect x="424" y="392" width="34" height="16" rx="2" fill="#ffffff"/>
+      <text x="441" y="403" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">무시</text>
+
+      <!-- ============ nodes ============ -->
+
+      <!-- Client (input treatment) -->
+      <rect x="48" y="264" width="144" height="72" rx="6" fill="#ffffff"/>
+      <rect x="48" y="264" width="144" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="120" y="304" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+
+      <!-- V1 (focal / production) -->
+      <rect x="600" y="136" width="200" height="80" rx="6" fill="#ffffff"/>
+      <rect x="600" y="136" width="200" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="700" y="172" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Version 1</text>
+      <text x="700" y="190" fill="#545B64" font-size="9"
+            font-family="'Geist Mono',monospace" text-anchor="middle">실제 응답</text>
+
+      <!-- V2 (optional / shadow, ignored) -->
+      <rect x="600" y="384" width="200" height="80" rx="6" fill="#ffffff"/>
+      <rect x="600" y="384" width="200" height="80" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="700" y="420" fill="#232F3E" font-size="12" font-weight="600"
+            font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Version 2</text>
+      <text x="700" y="438" fill="#545B64" font-size="9"
+            font-family="'Geist Mono',monospace" text-anchor="middle">응답 무시</text>
+
+      <!-- legend -->
+      <line x1="30" y1="536" x2="930" y2="536" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="30" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+      <line x1="140" y1="548" x2="172" y2="548" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="180" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">실선: 실제 요청/응답 트래픽</text>
+
+      <line x1="500" y1="548" x2="532" y2="548" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-muted-dash)"/>
+      <text x="540" y="552" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">점선: 미러링된 트래픽(응답 무시)</text>
+    </svg>

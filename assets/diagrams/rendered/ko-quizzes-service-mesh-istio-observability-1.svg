@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">Kiali를 이용한 서비스 메시 문제 해결 절차</title>
+<desc id="d">문제 발생 시 Kiali 대시보드의 Graph 뷰에서 트래픽 없음, 에러 발생, 느린 응답, 보안 거부 중 어떤 유형인지 분류하고, 각각 Istio Config·Logs·Traces(Jaeger)·Security 정책을 확인해 구성을 수정한 뒤 테스트하며, 해결되지 않으면 처음부터 다시 진단하는 순환 절차를 보여주는 흐름도.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Arrows (behind boxes) ===== -->
+<line x1="480" y1="80" x2="480" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="168" x2="480" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="256" x2="480" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Diamond(Issue) -> 4 branches -->
+<path d="M400,362 V424 Q400,432 392,432 H136 Q128,432 128,440 V480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M440,385 V436 Q440,444 432,444 H360 Q352,444 352,452 V480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M520,386 V442 Q520,450 528,450 H568 Q576,450 576,458 V480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M560,363 V454 Q560,462 568,462 H792 Q800,462 800,470 V480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- 4 branches -> Fix -->
+<path d="M128,544 V552 Q128,560 136,560 H424 Q432,560 432,568 V596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M352,544 V568 Q352,576 360,576 H456 Q464,576 464,584 V596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M576,544 V552 Q576,560 568,560 H504 Q496,560 496,568 V596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M800,544 V564 Q800,572 792,572 H536 Q528,572 528,580 V596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Fix -> Test -->
+<line x1="480" y1="652" x2="480" y2="684" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Test -> Verify -->
+<line x1="480" y1="732" x2="480" y2="744" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Verify YES -> Done (accent, happy path) -->
+<line x1="576" y1="800" x2="680" y2="800" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- Verify NO -> back to Start -->
+<path d="M384,800 H20 Q12,800 12,792 V64 Q12,56 20,56 H400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ===== Arrow labels ===== -->
+<rect x="452" y="242" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="251" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">유형 분류</text>
+
+<rect x="70" y="410" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="102" y="419" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" fill="#232F3E">트래픽 없음</text>
+
+<rect x="256" y="412" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="284" y="421" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" fill="#232F3E">에러 발생</text>
+
+<rect x="530" y="424" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="558" y="433" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" fill="#232F3E">느린 응답</text>
+
+<rect x="760" y="436" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="788" y="445" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" fill="#232F3E">보안 거부</text>
+
+<rect x="600" y="782" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="612" y="791" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">예</text>
+
+<rect x="400" y="782" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="415" y="791" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">아니오</text>
+
+<!-- ===== Nodes ===== -->
+<!-- Start oval -->
+<rect x="400" y="32" width="160" height="48" rx="24" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480" y="60" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">문제 발생</text>
+
+<!-- Kiali -->
+<rect x="400" y="112" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="408" y="120" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="423" y="129" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OBS</text>
+<text x="480" y="146" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kiali 대시보드</text>
+
+<!-- Graph -->
+<rect x="400" y="200" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="234" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Graph 뷰로 이동</text>
+
+<!-- Issue diamond -->
+<polygon points="480,272 600,340 480,408 360,340" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="336" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">문제</text>
+<text x="480" y="350" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">유형?</text>
+
+<!-- Branch 1: 트래픽 없음 -->
+<rect x="24" y="480" width="208" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="128" y="506" fill="#232F3E" font-size="11.5" font-weight="600" text-anchor="middle">Istio Config 확인</text>
+<text x="128" y="522" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">→ 구성 검증</text>
+
+<!-- Branch 2: 에러 발생 -->
+<rect x="248" y="480" width="208" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="352" y="506" fill="#232F3E" font-size="11.5" font-weight="600" text-anchor="middle">Logs 확인</text>
+<text x="352" y="522" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">→ 로그 분석</text>
+
+<!-- Branch 3: 느린 응답 -->
+<rect x="472" y="480" width="208" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="576" y="506" fill="#232F3E" font-size="11.5" font-weight="600" text-anchor="middle">Traces 확인</text>
+<text x="576" y="522" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">→ Jaeger 연동</text>
+
+<!-- Branch 4: 보안 거부 -->
+<rect x="696" y="480" width="208" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800" y="506" fill="#232F3E" font-size="11.5" font-weight="600" text-anchor="middle">Security 확인</text>
+<text x="800" y="522" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">→ 정책 확인</text>
+
+<!-- Fix (focal) -->
+<rect x="400" y="596" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="630" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">구성 수정</text>
+
+<!-- Test -->
+<rect x="400" y="684" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="712" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">테스트</text>
+
+<!-- Verify diamond -->
+<polygon points="480,744 576,800 480,856 384,800" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="796" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">해결</text>
+<text x="480" y="810" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">됐나요?</text>
+
+<!-- Done oval -->
+<rect x="680" y="776" width="160" height="48" rx="24" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="760" y="804" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">완료</text>
+
+<!-- Legend -->
+<line x1="24" y1="868" x2="936" y2="868" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="884" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">범례 · 모양이 유형을 나타냄</text>
+
+</svg>

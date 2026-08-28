@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-05-eks-security-11-title en-eks-05-eks-security-11-desc">
+    <title id="en-eks-05-eks-security-11-title">IAM permission boundary evaluation</title>
+    <desc id="en-eks-05-eks-security-11-desc">Flowchart showing a requested action evaluated against both the identity-based policy and the permission boundary, where the effective permission is the intersection of the two: allowed only if both allow, denied if either denies.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 440,112 V 144 Q 440,152 432,152 H 288.0 Q 280.0,152 280.0,160 V 192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 520,112 V 144 Q 520,152 528,152 H 672.0 Q 680.0,152 680.0,160 V 192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 280.0,240 V 262 Q 280.0,270 288.0,270 H 442 Q 450,270 450,278 V 310" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 680.0,240 V 262 Q 680.0,270 672.0,270 H 518 Q 510,270 510,278 V 310" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 450,360 V 412 Q 450,420 442,420 H 378.0 Q 370.0,420 370.0,428 V 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 510,360 V 412 Q 510,420 518,420 H 622.0 Q 630.0,420 630.0,428 V 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="346" y="404" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="378" y="413" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BOTH ALLOW</text>
+<rect x="582" y="404" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="622" y="413" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EITHER DENIES</text>
+<rect x="400" y="64" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="400" y="64" width="160" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480.0" y="92.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Requested Action</text>
+<rect x="180" y="192" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="192" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="220.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Identity-Based Policy</text>
+<rect x="580" y="192" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="580" y="192" width="200" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="680.0" y="220.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Permission Boundary</text>
+<rect x="300" y="480" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="300" y="480" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="508.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Allow</text>
+<rect x="560" y="480" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="560" y="480" width="140" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="630.0" y="508.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Deny</text>
+<polygon points="480,300.0 570.0,340 480,380.0 390.0,340" fill="#ffffff"/>
+<polygon points="480,300.0 570.0,340 480,380.0 390.0,340" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480" y="344" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Intersection</text>
+<line x1="30" y1="542" x2="930" y2="542" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="30" y1="550" x2="48" y2="550" stroke="#EC7211" stroke-width="1.4"/>
+<text x="54" y="553" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">PERMISSION INTERSECTION</text>
+<line x1="214.79999999999998" y1="550" x2="232.79999999999998" y2="550" stroke="rgba(221,52,76,0.60)" stroke-width="1.4"/>
+<text x="238.79999999999998" y="553" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">DENY WINS</text>
+  </svg>

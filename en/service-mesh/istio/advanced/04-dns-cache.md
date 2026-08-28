@@ -29,61 +29,7 @@ Istio DNS Proxy is a feature where Envoy acts as a DNS server to intercept and p
 
 ### Architecture
 
-```mermaid
-flowchart TB
-    subgraph Pod[Application Pod]
-        App[Application<br/>curl api.example.com]
-
-        subgraph IPTables[iptables NAT]
-            DNS_Rule[DNS Rule<br/>UDP 53 -> 15053]
-            TCP_Rule[TCP Rule<br/>TCP -> 15001]
-        end
-
-        subgraph Envoy[Envoy Proxy]
-            DNS_Listener[DNS Listener<br/>15053]
-            DNS_Table[DNS Table<br/>ServiceEntry based]
-            HTTP_Listener[HTTP Listener<br/>15001]
-        end
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server<br/>ServiceEntry config]
-    end
-
-    subgraph External[External]
-        API[api.example.com<br/>Actual IP]
-        CoreDNS[CoreDNS<br/>Cluster DNS]
-    end
-
-    App -->|1. DNS Query<br/>UDP 53| DNS_Rule
-    DNS_Rule -->|2. Redirect<br/>15053| DNS_Listener
-    DNS_Listener -->|3. Lookup| DNS_Table
-
-    DNS_Table -->|4. Virtual IP<br/>240.240.0.1| DNS_Listener
-    DNS_Listener -->|5. DNS Response| App
-
-    App -->|6. HTTP Request<br/>240.240.0.1| TCP_Rule
-    TCP_Rule -->|7. Redirect| HTTP_Listener
-    HTTP_Listener -->|8. Convert to actual IP| API
-
-    XDS -.->|ServiceEntry push| DNS_Table
-
-    DNS_Listener -.->|Non-Istio domains| CoreDNS
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class DNS_Rule,TCP_Rule iptables;
-    class DNS_Listener,DNS_Table,HTTP_Listener envoy;
-    class XDS istiod;
-    class API,CoreDNS external;
-```
+![Diagram showing how Envoy's DNS proxy intercepts application DNS and HTTP traffic inside a pod, resolves ServiceEntry-registered hosts to a virtual IP via its DNS table, forwards other lookups to CoreDNS, and receives ServiceEntry configuration pushed by Istiod.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-0.png)
 
 ## DNS Proxy vs DNS Caching
 
@@ -103,38 +49,7 @@ These two features have different purposes and behaviors:
 
 Using both features together provides optimal performance:
 
-```mermaid
-flowchart LR
-    App[Application]
-
-    subgraph Envoy[Envoy Proxy]
-        DNS_Proxy[DNS Proxy<br/>ServiceEntry services]
-        DNS_Cache[DNS Cache<br/>Other external services]
-    end
-
-    SE[ServiceEntry<br/>api.example.com]
-    CoreDNS[CoreDNS<br/>google.com]
-
-    App -->|1. api.example.com| DNS_Proxy
-    DNS_Proxy -->|Virtual IP| App
-
-    App -->|2. google.com| DNS_Cache
-    DNS_Cache -->|Cache miss| CoreDNS
-    CoreDNS -->|Actual IP| DNS_Cache
-    DNS_Cache -->|Cached IP| App
-
-    SE -.->|Register| DNS_Proxy
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class DNS_Proxy,DNS_Cache envoy;
-    class SE,CoreDNS external;
-```
+![Diagram showing Envoy routing ServiceEntry-registered lookups through its DNS proxy for an instant virtual IP, while other external lookups fall through to a cached CoreDNS resolution path.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-1.png)
 
 ## DNS Proxy Configuration
 
@@ -400,29 +315,7 @@ DNS Proxy automatically allocates virtual IPs to services registered in ServiceE
 
 ### Automatic Allocation Behavior
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant Istiod as Istiod
-    participant External as api.example.com<br/>(Actual server)
-
-    Note over Istiod: ServiceEntry registration
-    Istiod->>Envoy: xDS config push<br/>(virtual IP allocated)
-
-    App->>Envoy: DNS Query<br/>api.example.com
-    Envoy->>Envoy: Virtual IP lookup<br/>240.240.0.1
-    Envoy->>App: DNS Response<br/>240.240.0.1
-
-    App->>Envoy: HTTP Request<br/>240.240.0.1:443
-    Envoy->>Envoy: Actual host mapping<br/>api.example.com
-    Envoy->>External: DNS lookup (actual IP)
-    External->>Envoy: 203.0.113.10
-    Envoy->>External: HTTP Request<br/>203.0.113.10:443
-    External->>Envoy: Response
-    Envoy->>App: Response
-```
+![Sequence diagram showing an application resolving a ServiceEntry host to an Envoy-assigned virtual IP, then Envoy mapping that virtual IP back to the real external host and completing the HTTP request on the application's behalf.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-2.png)
 
 ### Address Range Configuration
 
@@ -596,30 +489,7 @@ wireshark dns.pcap
 
 **Recommended approach**: Gradual rollout
 
-```mermaid
-flowchart TD
-    Start[Start] --> Test[Enable DNS Proxy<br/>in test environment]
-    Test --> Validate{Validation<br/>successful?}
-    Validate -->|No| Debug[Troubleshoot]
-    Debug --> Test
-    Validate -->|Yes| Stage[Apply to<br/>staging environment]
-    Stage --> Monitor{Monitoring<br/>normal?}
-    Monitor -->|No| Rollback[Rollback]
-    Rollback --> Debug
-    Monitor -->|Yes| Prod[Gradual application<br/>to production]
-    Prod --> Complete[Complete]
-
-    %% Style definitions
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef warning fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef error fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Complete success;
-    class Test,Stage,Prod warning;
-    class Debug,Rollback error;
-```
+![Flowchart showing a gradual rollout of DNS Proxy through test, staging, and production, with validation and monitoring gates that route back to troubleshooting or rollback on failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-3.png)
 
 ### 2. ServiceEntry Management
 

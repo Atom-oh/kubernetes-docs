@@ -27,52 +27,7 @@ WorkloadEntry is an Istio Custom Resource Definition (CRD) that registers worklo
 
 ### Use Scenarios
 
-```mermaid
-flowchart TB
-    subgraph Legacy[Legacy Environment]
-        VM1[VM<br/>Legacy App]
-        VM2[VM<br/>Database]
-        BM[Bare Metal<br/>High-Performance Server]
-    end
-
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Pod1[Pod]
-            App1[New App]
-            Envoy1[Envoy]
-        end
-
-        subgraph Pod2[Pod]
-            App2[Microservice]
-            Envoy2[Envoy]
-        end
-    end
-
-    subgraph Istiod[Control Plane]
-        CP[istiod]
-    end
-
-    VM1 -.->|Mesh Registration| CP
-    VM2 -.->|Mesh Registration| CP
-    BM -.->|Mesh Registration| CP
-
-    CP -.->|Config Delivery| Envoy1
-    CP -.->|Config Delivery| Envoy2
-
-    App1 <-->|mTLS| VM1
-    App2 <-->|mTLS| VM2
-
-    %% Style definitions
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class VM1,VM2,BM vm;
-    class App1,App2 k8sApp;
-    class Envoy1,Envoy2 proxy;
-    class CP controlPlane;
-```
+![Architecture diagram showing legacy VMs and a bare-metal server registering with the istiod control plane while their applications keep talking over mTLS to matching workloads inside a Kubernetes cluster.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-0.png)
 
 **Primary Use Cases**:
 1. **Gradual Migration**: Incrementally migrate legacy applications to Kubernetes
@@ -98,78 +53,13 @@ flowchart TB
 
 ### Traffic Flow Comparison
 
-```mermaid
-flowchart LR
-    subgraph PodFlow[Kubernetes Pod Flow]
-        Client1[Client]
-        K8sService[Service<br/>Auto Discovery]
-        K8sPod[Pod<br/>Auto Envoy Injection]
-
-        Client1 -->|1\. Request| K8sService
-        K8sService -->|2\. Routing| K8sPod
-    end
-
-    subgraph VMFlow[WorkloadEntry Flow]
-        Client2[Client]
-        ServiceEntry[ServiceEntry<br/>Manual Registration]
-        WorkloadEntry[WorkloadEntry<br/>VM + Envoy]
-
-        Client2 -->|1\. Request| ServiceEntry
-        ServiceEntry -->|2\. Routing| WorkloadEntry
-    end
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client1,Client2 client;
-    class K8sService,K8sPod k8s;
-    class ServiceEntry,WorkloadEntry vm;
-```
+![Flowchart comparing how a client request reaches a Kubernetes Pod through automatic Service discovery against how it reaches a VM through a manually registered ServiceEntry and WorkloadEntry.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-1.png)
 
 ## Architecture
 
 ### VM Workload Architecture
 
-```mermaid
-flowchart TB
-    subgraph VM[Virtual Machine]
-        App[Legacy<br/>Application<br/>Port 8080]
-        EnvoyVM[Envoy Sidecar<br/>Manual Install]
-    end
-
-    subgraph K8S[Kubernetes Cluster]
-        subgraph Pod[Pod]
-            PodApp[Application]
-            EnvoyPod[Envoy<br/>Auto Injection]
-        end
-
-        Istiod[istiod<br/>Control Plane]
-    end
-
-    App <-->|Local Communication| EnvoyVM
-    PodApp <-->|Local Communication| EnvoyPod
-
-    EnvoyVM <-->|mTLS Traffic| EnvoyPod
-
-    Istiod -.->|xDS Config<br/>ServiceEntry<br/>DestinationRule| EnvoyVM
-    Istiod -.->|xDS Config| EnvoyPod
-    Istiod -.->|Certificate Issuance<br/>Service Account| EnvoyVM
-
-    %% Style definitions
-    classDef vmApp fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App vmApp;
-    class PodApp k8sApp;
-    class EnvoyVM,EnvoyPod proxy;
-    class Istiod controlPlane;
-```
+![Architecture diagram showing a manually installed Envoy sidecar on a VM exchanging mTLS traffic with a Pod's auto-injected Envoy, while istiod pushes xDS config and certificates to both proxies.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-2.png)
 
 ### Key Components
 
@@ -322,25 +212,7 @@ spec:
 
 ### Operation Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Kubernetes<br/>Pod
-    participant DNS as Istio DNS
-    participant Envoy as Envoy Proxy
-    participant VM as VM<br/>WorkloadEntry
-
-    Client->>DNS: Lookup api.legacy.internal
-    DNS->>Client: 240.240.1.1 (Virtual IP)
-
-    Client->>Envoy: HTTP Request<br/>240.240.1.1:8080
-    Envoy->>Envoy: Lookup ServiceEntry<br/>workloadSelector matching
-    Envoy->>Envoy: Find WorkloadEntry<br/>192.168.1.100
-
-    Envoy->>VM: mTLS Connection<br/>192.168.1.100:8080
-    VM->>Envoy: Response
-    Envoy->>Client: Response
-```
+![Sequence diagram showing a Kubernetes Pod resolving a virtual IP through Istio DNS, then the Envoy proxy matching a ServiceEntry and WorkloadEntry before opening an mTLS connection to the registered VM and returning its response.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-3.png)
 
 ### Load Balancing
 
@@ -1186,19 +1058,7 @@ kubectl apply -f serviceentries-backup.yaml
 
 ### 7. Gradual Migration Strategy
 
-```mermaid
-flowchart TD
-    Phase1[Phase 1:<br/>VM Mesh Registration] --> Phase2[Phase 2:<br/>Traffic Splitting]
-    Phase2 --> Phase3[Phase 3:<br/>Kubernetes Deployment]
-    Phase3 --> Phase4[Phase 4:<br/>Traffic Transition]
-    Phase4 --> Phase5[Phase 5:<br/>VM Removal]
-
-    %% Style definitions
-    classDef phase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Phase1,Phase2,Phase3,Phase4,Phase5 phase;
-```
+![Flowchart of the five-phase path for moving a workload off a VM: register it in the mesh, split traffic, deploy to Kubernetes, transition traffic, then remove the VM.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-4.png)
 
 **Phase 1: VM Mesh Registration**
 ```yaml

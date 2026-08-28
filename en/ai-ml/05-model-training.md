@@ -9,129 +9,13 @@ Model training is one of the most resource-intensive workloads in the AI/ML life
 
 A typical model training pipeline on Kubernetes involves multiple stages from data preparation to model evaluation:
 
-```mermaid
-flowchart LR
-    subgraph DataPrep [Data Preparation]
-        S3Data[(S3 Data Lake)]
-        DataLoader[Data Loader Pod]
-        Preprocessing[Preprocessing Job]
-    end
-
-    subgraph Training [Distributed Training]
-        Scheduler[Job Scheduler]
-        Workers[Worker Pods]
-        PS[Parameter Server]
-        AllReduce[AllReduce Communication]
-    end
-
-    subgraph Checkpointing [Checkpointing]
-        FSxLustre[(FSx for Lustre)]
-        CheckpointMgr[Checkpoint Manager]
-    end
-
-    subgraph Evaluation [Model Evaluation]
-        EvalJob[Evaluation Job]
-        Metrics[Metrics Collection]
-        ModelRegistry[(Model Registry)]
-    end
-
-    S3Data --> DataLoader
-    DataLoader --> Preprocessing
-    Preprocessing --> Scheduler
-    Scheduler --> Workers
-    Workers <--> PS
-    Workers <--> AllReduce
-    Workers --> FSxLustre
-    FSxLustre --> CheckpointMgr
-    CheckpointMgr --> EvalJob
-    EvalJob --> Metrics
-    Metrics --> ModelRegistry
-
-    classDef dataComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef trainingComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evalComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-
-    class S3Data,DataLoader,Preprocessing dataComponent;
-    class Scheduler,Workers,PS,AllReduce trainingComponent;
-    class FSxLustre,CheckpointMgr storageComponent;
-    class EvalJob,Metrics,ModelRegistry evalComponent;
-```
+![Distributed training pipeline flowing from an S3 data lake through preprocessing into worker pods that synchronize gradients via a parameter server and AllReduce, then checkpoint to FSx for Lustre before an evaluation job logs metrics and registers the model.](../.gitbook/assets/en-ai-ml-05-model-training-0.png)
 
 ## Distributed Training Strategies
 
 Training large models requires distributing computation across multiple GPUs and nodes. Understanding the different parallelism strategies is crucial for efficient training.
 
-```mermaid
-flowchart TD
-    subgraph DataParallelism [Data Parallelism]
-        DP_Model1[Model Replica 1]
-        DP_Model2[Model Replica 2]
-        DP_Model3[Model Replica 3]
-        DP_Data1[Data Shard 1]
-        DP_Data2[Data Shard 2]
-        DP_Data3[Data Shard 3]
-        DP_Sync[Gradient Sync<br/>AllReduce]
-
-        DP_Data1 --> DP_Model1
-        DP_Data2 --> DP_Model2
-        DP_Data3 --> DP_Model3
-        DP_Model1 --> DP_Sync
-        DP_Model2 --> DP_Sync
-        DP_Model3 --> DP_Sync
-    end
-
-    subgraph TensorParallelism [Tensor Parallelism]
-        TP_Layer[Single Layer]
-        TP_GPU1[GPU 1: Columns 0-N/2]
-        TP_GPU2[GPU 2: Columns N/2-N]
-        TP_Combine[Combine Results]
-
-        TP_Layer --> TP_GPU1
-        TP_Layer --> TP_GPU2
-        TP_GPU1 --> TP_Combine
-        TP_GPU2 --> TP_Combine
-    end
-
-    subgraph PipelineParallelism [Pipeline Parallelism]
-        PP_Stage1[Stage 1: Layers 1-4<br/>GPU 1]
-        PP_Stage2[Stage 2: Layers 5-8<br/>GPU 2]
-        PP_Stage3[Stage 3: Layers 9-12<br/>GPU 3]
-        PP_Micro[Micro-batches]
-
-        PP_Micro --> PP_Stage1
-        PP_Stage1 --> PP_Stage2
-        PP_Stage2 --> PP_Stage3
-    end
-
-    subgraph ExpertParallelism [Expert Parallelism - MoE]
-        EP_Router[Router/Gating]
-        EP_Expert1[Expert 1<br/>GPU 1]
-        EP_Expert2[Expert 2<br/>GPU 2]
-        EP_Expert3[Expert 3<br/>GPU 3]
-        EP_Expert4[Expert 4<br/>GPU 4]
-        EP_Output[Combined Output]
-
-        EP_Router --> EP_Expert1
-        EP_Router --> EP_Expert2
-        EP_Router --> EP_Expert3
-        EP_Router --> EP_Expert4
-        EP_Expert1 --> EP_Output
-        EP_Expert2 --> EP_Output
-        EP_Expert3 --> EP_Output
-        EP_Expert4 --> EP_Output
-    end
-
-    classDef dpComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef tpComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef ppComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef epComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-
-    class DP_Model1,DP_Model2,DP_Model3,DP_Data1,DP_Data2,DP_Data3,DP_Sync dpComponent;
-    class TP_Layer,TP_GPU1,TP_GPU2,TP_Combine tpComponent;
-    class PP_Stage1,PP_Stage2,PP_Stage3,PP_Micro ppComponent;
-    class EP_Router,EP_Expert1,EP_Expert2,EP_Expert3,EP_Expert4,EP_Output epComponent;
-```
+![Four quadrants compare data, tensor, pipeline, and expert parallelism: splitting data across model replicas, splitting a layer's weights across GPUs, splitting layers into pipeline stages, and routing tokens to a subset of experts, each converging on a combine or sync step.](../.gitbook/assets/en-ai-ml-05-model-training-1.png)
 
 ### Parallelism Strategy Comparison
 
@@ -166,77 +50,7 @@ Slinky brings the familiar Slurm workload manager to Kubernetes, enabling HPC-st
 
 ### Slinky Architecture
 
-```mermaid
-flowchart TD
-    subgraph EKSCluster [Amazon EKS Cluster]
-        subgraph SlurmControl [Slurm Control Plane]
-            Slurmctld[slurmctld<br/>Controller Daemon]
-            Slurmdbd[slurmdbd<br/>Database Daemon]
-            SlurmREST[slurmrestd<br/>REST API]
-        end
-
-        subgraph ComputeNodes [Compute Nodes]
-            Slurmd1[slurmd Pod 1<br/>8x A100 GPU]
-            Slurmd2[slurmd Pod 2<br/>8x A100 GPU]
-            Slurmd3[slurmd Pod 3<br/>8x A100 GPU]
-            Slurmd4[slurmd Pod 4<br/>8x A100 GPU]
-        end
-
-        subgraph Access [User Access]
-            LoginPod[Login Pod<br/>SSH via NLB]
-            JupyterHub[JupyterHub]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSxLustre[(FSx for Lustre)]
-        end
-
-        subgraph Scaling [Auto Scaling]
-            Karpenter[Karpenter]
-            NodePool[GPU NodePool]
-        end
-    end
-
-    subgraph External [External Services]
-        ArgoCD[ArgoCD<br/>GitOps Deployment]
-        ECR[Amazon ECR<br/>AWS DLC Images]
-        NLB[Network Load Balancer]
-    end
-
-    ArgoCD --> SlurmControl
-    ECR --> ComputeNodes
-    NLB --> LoginPod
-
-    Slurmctld --> Slurmdbd
-    Slurmctld --> SlurmREST
-    Slurmctld --> Slurmd1
-    Slurmctld --> Slurmd2
-    Slurmctld --> Slurmd3
-    Slurmctld --> Slurmd4
-
-    LoginPod --> Slurmctld
-    JupyterHub --> SlurmREST
-
-    Slurmd1 --> FSxLustre
-    Slurmd2 --> FSxLustre
-    Slurmd3 --> FSxLustre
-    Slurmd4 --> FSxLustre
-
-    Karpenter --> NodePool
-    NodePool --> ComputeNodes
-
-    classDef controlComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef computeComponent fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef accessComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef storageComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef externalComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    class Slurmctld,Slurmdbd,SlurmREST controlComponent;
-    class Slurmd1,Slurmd2,Slurmd3,Slurmd4 computeComponent;
-    class LoginPod,JupyterHub accessComponent;
-    class FSxLustre storageComponent;
-    class ArgoCD,ECR,NLB,Karpenter,NodePool externalComponent;
-```
+![ArgoCD, ECR, and a network load balancer feed an EKS cluster where the Slurm control plane dispatches GPU pods, user access pods reach the controller and REST API, Karpenter scales a GPU node pool, and all compute pods share FSx for Lustre storage.](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
 
 ### Slinky Components
 

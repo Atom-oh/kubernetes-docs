@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">트레이스 헤더 전파와 Jaeger 스팬 수집</title>
+<desc id="d">사용자 요청이 Ingress Gateway를 거쳐 Service A, B, C로 전달되는 동안 x-request-id와 x-b3-traceid 같은 트레이스 헤더가 반드시 전파되어야 하며, 각 홉이 동시에 Jaeger로 스팬을 전송해 하나의 분산 트레이스로 연결됨을 보여주는 다이어그램.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Arrows (behind boxes) ===== -->
+<!-- Main chain, muted -->
+<line x1="176" y1="152" x2="228" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="364" y1="152" x2="416" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="552" y1="152" x2="604" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="740" y1="152" x2="792" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Dashed span-export arrows to Jaeger, accent (the diagram's focus) -->
+<path d="M296,184 V212 Q296,220 304,220 H396 Q404,220 404,228 V412"
+      fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+<path d="M484,184 V196 Q484,204 492,204 H514 Q522,204 522,212 V412"
+      fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+<path d="M672,184 V196 Q672,204 664,204 H644 Q636,204 636,212 V412"
+      fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+<path d="M860,184 V212 Q860,220 852,220 H758 Q750,220 750,228 V412"
+      fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+
+<!-- ===== Arrow labels ===== -->
+<rect x="368" y="128" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="390" y="137" fill="#545B64" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">TRACE-ID</text>
+
+<rect x="554" y="128" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="578" y="137" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" fill="#232F3E">헤더 전파</text>
+
+<rect x="742" y="128" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="766" y="137" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" fill="#232F3E">헤더 전파</text>
+
+<rect x="316" y="248" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="346" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SPAN</text>
+
+<!-- ===== Nodes ===== -->
+<!-- User (input) -->
+<rect x="40" y="120" width="136" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="120" width="136" height="64" rx="6" fill="rgba(35,47,62,0.06)" stroke="#7D8998" stroke-width="1"/>
+<rect x="48" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+<text x="63" y="137" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="108" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">사용자</text>
+<text x="108" y="171" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">client</text>
+
+<!-- Gateway -->
+<rect x="228" y="120" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="236" y="128" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="249" y="137" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GW</text>
+<text x="296" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Ingress Gateway</text>
+<text x="296" y="171" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">envoy proxy</text>
+
+<!-- Service A -->
+<rect x="416" y="120" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="424" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="439" y="137" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="484" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service A</text>
+<text x="484" y="171" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar</text>
+
+<!-- Service B -->
+<rect x="604" y="120" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="612" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="627" y="137" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="672" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service B</text>
+<text x="672" y="171" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar</text>
+
+<!-- Service C -->
+<rect x="792" y="120" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="800" y="128" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="815" y="137" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="860" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service C</text>
+<text x="860" y="171" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar</text>
+
+<!-- Jaeger (focal) -->
+<rect x="480" y="420" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="480" y="420" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="488" y="428" width="36" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+<text x="506" y="437" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TRACE</text>
+<text x="580" y="456" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Jaeger</text>
+<text x="580" y="471" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">스팬 수집 · 분산 트레이스 조립</text>
+
+</svg>

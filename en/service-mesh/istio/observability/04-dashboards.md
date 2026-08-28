@@ -19,60 +19,7 @@ Comprehensively visualize and monitor Istio service mesh using Grafana, Kiali, a
 
 ### Observability Stack Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Data Plane"
-        Envoy1[Envoy Sidecar]
-        Envoy2[Envoy Sidecar]
-        Envoy3[Envoy Sidecar]
-    end
-
-    subgraph "Control Plane"
-        Istiod[istiod]
-    end
-
-    subgraph "Metrics Backend"
-        Prometheus[Prometheus]
-        Loki[Loki]
-        Jaeger[Jaeger]
-        Tempo[Tempo]
-    end
-
-    subgraph "Visualization"
-        Kiali[Kiali<br/>Service Graph]
-        Grafana[Grafana<br/>Metrics Dashboard]
-        GrafanaLogs[Grafana<br/>Log Dashboard]
-        JaegerUI[Jaeger UI<br/>Tracing]
-    end
-
-    Envoy1 -->|Metrics| Prometheus
-    Envoy2 -->|Metrics| Prometheus
-    Envoy3 -->|Metrics| Prometheus
-
-    Envoy1 -->|Logs| Loki
-    Envoy2 -->|Logs| Loki
-    Envoy3 -->|Logs| Loki
-
-    Envoy1 -->|Traces| Jaeger
-    Envoy2 -->|Traces| Jaeger
-    Envoy3 -->|Traces| Tempo
-
-    Prometheus --> Kiali
-    Prometheus --> Grafana
-    Loki --> GrafanaLogs
-    Jaeger --> JaegerUI
-    Tempo --> Grafana
-
-    Istiod -.->|Config| Kiali
-
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class Envoy1,Envoy2,Envoy3,Istiod istioComponent;
-    class Prometheus,Loki,Jaeger,Tempo backend;
-    class Kiali,Grafana,GrafanaLogs,JaegerUI visualization;
-```
+![Architecture diagram showing Envoy sidecars in the Istio data plane sending metrics, logs, and traces to Prometheus, Loki, Jaeger, and Tempo, which in turn feed the Kiali, Grafana, and Jaeger UI dashboards, while istiod pushes configuration to Kiali for validation.](../../../.gitbook/assets/en-service-mesh-istio-observability-04-dashboards-0.png)
 
 ### Purpose by Tool
 

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+  <title id="t0">ApplicationSet 템플릿 처리 흐름</title>
+  <desc id="d0">Generator와 Template이라는 두 입력이 ApplicationSet Controller의 템플릿 처리 단계로 들어가고, 그 결과 여러 개의 Application 리소스(App1, App2, App3, AppN)가 동시에 생성되는 팬아웃(fan-out) 구조를 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}
+      .mono{font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace;}
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="32" y="28" class="mono" font-size="8" font-weight="500" letter-spacing="0.18em" fill="#7D8998">ARGO CD · APPLICATIONSET</text>
+  <text x="32" y="52" font-size="20" font-weight="700" fill="#232F3E">템플릿 처리 흐름</text>
+
+  <!-- Zones -->
+  <rect x="32" y="88" width="212" height="480" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="1"/>
+  <text x="48" y="108" class="mono" font-size="8" font-weight="500" letter-spacing="0.14em" fill="#7D8998">입력</text>
+
+  <rect x="284" y="88" width="212" height="480" rx="8" fill="rgba(255,153,0,0.04)" stroke="rgba(236,114,17,0.35)" stroke-width="1"/>
+  <text x="300" y="108" class="mono" font-size="8" font-weight="500" letter-spacing="0.14em" fill="#EC7211">APPLICATIONSET CONTROLLER</text>
+
+  <rect x="560" y="88" width="368" height="480" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="1"/>
+  <text x="576" y="108" class="mono" font-size="8" font-weight="500" letter-spacing="0.14em" fill="#7D8998">출력</text>
+
+  <!-- Arrows (drawn before boxes) -->
+  <!-- Generator (228,220) -> Process left attach1 (300,315) -->
+  <path d="M 228 220 L 252 220 Q 260 220 260 228 L 260 307 Q 260 315 268 315 L 300 315"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Template (228,404) -> Process left attach2 (300,341) -->
+  <path d="M 228 404 L 252 404 Q 260 404 260 396 L 260 349 Q 260 341 268 341 L 300 341"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Process (480,304/320/336/352) -> App1..AppN, staggered mid-x to avoid overlap -->
+  <path d="M 480 304 L 496 304 Q 500 304 500 300 L 500 148 Q 500 148 508 148 L 644 148"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <path d="M 480 320 L 512 320 Q 516 320 516 312 L 516 268 Q 516 268 524 268 L 644 268"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 480 336 L 528 336 Q 532 336 532 344 L 532 388 Q 532 388 540 388 L 644 388"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 480 352 L 544 352 Q 548 352 548 360 L 548 508 Q 548 508 556 508 L 644 508"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Input nodes -->
+  <g>
+    <rect x="48" y="188" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="48" y="188" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="138" y="214" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Generator</text>
+    <text x="138" y="230" class="mono" font-size="9" fill="#545B64" text-anchor="middle">list · cluster · git</text>
+  </g>
+  <g>
+    <rect x="48" y="404" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="48" y="404" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="138" y="430" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Template</text>
+    <text x="138" y="446" class="mono" font-size="9" fill="#545B64" text-anchor="middle">Application spec</text>
+  </g>
+
+  <!-- Focal Process node -->
+  <g>
+    <rect x="300" y="288" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="300" y="288" width="180" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="390" y="322" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">템플릿 처리</text>
+    <text x="390" y="340" class="mono" font-size="9" fill="#545B64" text-anchor="middle">render · deep merge</text>
+    <text x="390" y="356" class="mono" font-size="9" fill="#545B64" text-anchor="middle">N × Application</text>
+  </g>
+
+  <!-- Output nodes -->
+  <g>
+    <rect x="644" y="120" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="644" y="120" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="744" y="152" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Application 1</text>
+  </g>
+  <g>
+    <rect x="644" y="240" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="644" y="240" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="744" y="272" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Application 2</text>
+  </g>
+  <g>
+    <rect x="644" y="360" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="644" y="360" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="744" y="392" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Application 3</text>
+  </g>
+  <g>
+    <rect x="644" y="480" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="644" y="480" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="744" y="512" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">Application N</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="32" y1="580" x2="928" y2="580" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="32" y="592" class="mono" font-size="8" letter-spacing="0.14em" fill="#545B64">LEGEND</text>
+  <circle cx="140" cy="589" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="150" y="592" class="mono" font-size="8" fill="#545B64">TEMPLATE PROCESSING (FOCAL)</text>
+</svg>

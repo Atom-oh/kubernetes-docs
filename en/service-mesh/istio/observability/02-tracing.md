@@ -24,40 +24,7 @@ Distributed tracing tracks and visualizes request flows between microservices, e
 
 Istio supports the W3C Trace Context standard to ensure standardized trace propagation.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Frontend
-    participant Client as Client
-    end
-    box rgba(70, 107, 176, 0.1) Service A
-    participant EnvoyA as Envoy Proxy
-    participant AppA as App A
-    end
-    box rgba(70, 107, 176, 0.1) Service B
-    participant EnvoyB as Envoy Proxy
-    participant AppB as App B
-    end
-    box rgba(230, 82, 44, 0.1) Tracing Backend
-    participant Jaeger as Jaeger Collector
-    end
-
-    Client->>EnvoyA: HTTP Request
-    Note over EnvoyA: Generate Trace ID<br/>+ Span ID
-
-    EnvoyA->>AppA: Forward with<br/>traceparent header
-    Note over AppA: Extract context<br/>Create child span
-
-    AppA->>EnvoyB: HTTP Request<br/>with traceparent
-    Note over EnvoyB: Extract parent context<br/>Create new span
-
-    EnvoyB->>AppB: Forward with<br/>updated traceparent
-
-    EnvoyA-->>Jaeger: Export Span
-    EnvoyB-->>Jaeger: Export Span
-    AppA-->>Jaeger: Export Span (optional)
-    AppB-->>Jaeger: Export Span (optional)
-```
+![Sequence diagram showing a client request propagating W3C trace context through Envoy sidecars and app containers in Service A and Service B, with each Envoy sidecar and application exporting spans asynchronously to the Jaeger Collector.](../../../.gitbook/assets/en-service-mesh-istio-observability-02-tracing-0.png)
 
 ### Core Concepts
 

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="en-sm-istio-obs-metrics-0-title en-sm-istio-obs-metrics-0-desc">
+    <title id="en-sm-istio-obs-metrics-0-title">Istio metrics collection architecture</title>
+    <desc id="en-sm-istio-obs-metrics-0-desc">Diagram showing an application pod's Envoy sidecar exporting metrics that istiod's control plane configures, which flow into Prometheus and an OpenTelemetry Collector, and from there into Grafana and Kiali for visualization.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones (bg -> zones -> arrows -> nodes) -->
+    <rect x="40" y="64" width="400" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="68" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="126" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION POD</text>
+
+    <rect x="480" y="64" width="400" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="496" y="68" width="136" height="12" rx="2" fill="#ffffff"/>
+    <text x="564" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE</text>
+
+    <rect x="40" y="280" width="880" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="284" width="148" height="12" rx="2" fill="#ffffff"/>
+    <text x="130" y="293" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">METRICS BACKEND</text>
+
+    <rect x="40" y="456" width="880" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="460" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="122" y="469" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">VISUALIZATION</text>
+
+    <!-- Arrows (drawn before nodes) -->
+
+    <!-- 1. App1 -.-> Envoy1 (colocated) -->
+    <line x1="156" y1="144" x2="156" y2="164" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- 2. Telemetry -.-> Istiod (applied by) -->
+    <line x1="680" y1="144" x2="680" y2="164" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- 3. Istiod --> Envoy1 (configure) -->
+    <path d="M600,192 H236" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="400" y="172" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="418" y="181" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIGURE</text>
+
+    <!-- 4. Envoy1 --> Prometheus (scrape) -->
+    <path d="M116,220 V254 Q116,262 124,262 H212 Q220,262 220,270 V304"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="150" y="242" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="168" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCRAPE</text>
+
+    <!-- 5. Envoy1 --> OTEL (push) -->
+    <path d="M216,220 V254 Q216,262 224,262 H572 Q580,262 580,270 V304"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="380" y="242" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="398" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OTLP PUSH</text>
+
+    <!-- 6. OTEL --> Prometheus (export) -->
+    <path d="M500,332 H300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="382" y="312" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="321" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXPORT</text>
+
+    <!-- 7. Prometheus --> Grafana (query) -->
+    <line x1="220" y1="360" x2="220" y2="480" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="228" y="416" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="252" y="425" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROMQL</text>
+
+    <!-- 8. Prometheus --> Kiali (query) -->
+    <path d="M260,360 V412 Q260,420 268,420 H552 Q560,420 560,428 V480"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="392" y="400" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="416" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROMQL</text>
+
+    <!-- Nodes -->
+
+    <!-- App1 -->
+    <rect x="76" y="88" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="76" y="88" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="156" y="114" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App Container</text>
+    <text x="156" y="130" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">container</text>
+
+    <!-- Envoy1 (focal) -->
+    <rect x="76" y="164" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="76" y="164" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="156" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Sidecar</text>
+    <text x="156" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar proxy</text>
+
+    <!-- Telemetry -->
+    <rect x="600" y="88" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="600" y="88" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="114" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Telemetry Config</text>
+    <text x="680" y="130" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CRD</text>
+
+    <!-- Istiod -->
+    <rect x="600" y="164" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="600" y="164" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="190" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">istiod</text>
+    <text x="680" y="206" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">control plane</text>
+
+    <!-- Prometheus -->
+    <rect x="140" y="304" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="140" y="304" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="220" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+    <text x="220" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">scrape + TSDB</text>
+
+    <!-- OTEL -->
+    <rect x="500" y="304" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="500" y="304" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="580" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OpenTelemetry</text>
+    <text x="580" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OTLP collector</text>
+
+    <!-- Grafana -->
+    <rect x="140" y="480" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="140" y="480" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="220" y="506" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+    <text x="220" y="522" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">dashboards</text>
+
+    <!-- Kiali -->
+    <rect x="480" y="480" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="480" y="480" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="560" y="506" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kiali</text>
+    <text x="560" y="522" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">service graph</text>
+  </svg>

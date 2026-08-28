@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karpcons-title karpcons-desc">
+    <title id="karpcons-title">Node consolidation cycle</title>
+    <desc id="karpcons-desc">Flowchart showing Karpenter analyzing underutilized nodes, provisioning one consolidated node, migrating pods onto it, then draining and terminating the old nodes it replaced.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="180" width="160" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="68" y="184" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="120" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">BEFORE</text>
+
+    <rect x="760" y="180" width="160" height="256" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="784" y="184" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="840" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">AFTER</text>
+
+    <!-- Arrows (behind nodes) -->
+    <!-- before -> P1 straight (shared y=308) -->
+    <line x1="176" y1="308" x2="212" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- P1->P2 -->
+    <line x1="300" y1="308" x2="324" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- P2->P3 -->
+    <line x1="412" y1="308" x2="436" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- P3->P4 -->
+    <line x1="524" y1="308" x2="548" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- P4->P5 -->
+    <line x1="636" y1="308" x2="660" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- P3 -> after: provision (accent, top path) -->
+    <path d="M 480,284 V 224 Q 480,216 488,216 H 832 Q 840,216 840,224 V 260"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- P4 -> after: migrate (bottom path) -->
+    <path d="M 592,332 V 396 Q 592,404 600,404 H 832 Q 840,404 840,396 V 356"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- P5 -> before: drain & terminate (dashed return path, lowest) -->
+    <path d="M 704,332 V 452 Q 704,460 696,460 H 128 Q 120,460 120,452 V 356"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="580" y="188" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="616" y="197" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PROVISIONS</text>
+
+    <rect x="592" y="410" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="624" y="419" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">MIGRATES</text>
+
+    <rect x="366" y="466" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="422" y="475" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">DRAINS &amp; TERMINATES</text>
+
+    <!-- Before node -->
+    <rect x="64" y="268" width="112" height="80" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="120" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Underutilized</text>
+    <text x="120" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Nodes</text>
+    <text x="120" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">3 nodes · 20-50%</text>
+
+    <!-- Process chain nodes -->
+    <rect x="212" y="284" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="256" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analyze</text>
+    <text x="256" y="318" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Utilization</text>
+
+    <rect x="324" y="284" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="368" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Evaluate</text>
+    <text x="368" y="318" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Consolidation</text>
+
+    <rect x="436" y="284" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Provision</text>
+    <text x="480" y="318" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">New Node</text>
+
+    <rect x="548" y="284" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="592" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Migrate</text>
+    <text x="592" y="318" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pods</text>
+
+    <rect x="660" y="284" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="704" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Drain &amp;</text>
+    <text x="704" y="318" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Terminate</text>
+
+    <!-- After node (focal) -->
+    <rect x="784" y="268" width="112" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="840" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Consolidated</text>
+    <text x="840" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node</text>
+    <text x="840" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1 node · 100%</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="504" x2="920" y2="504" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="524" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="520" x2="168" y2="520" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="176" y="524" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CREATES CONSOLIDATED NODE</text>
+    <line x1="440" y1="520" x2="468" y2="520" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="476" y="524" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">REMOVES OLD NODES</text>
+  </svg>

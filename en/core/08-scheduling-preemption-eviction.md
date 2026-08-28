@@ -72,85 +72,7 @@ EOF
 
 ## Kubernetes Scheduling Architecture
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Scheduling System"
-        subgraph "Scheduling Components"
-            Scheduler["kube-scheduler"]
-            Queue["Scheduling Queue"]
-            Cache["Node & Pod Cache"]
-            Plugins["Scheduling Plugins"]
-        end
-
-        subgraph "Scheduling Phases"
-            QueueSort["Queue Sort"]
-            PreFilter["Pre-filtering"]
-            Filter["Filtering"]
-            PreScore["Pre-scoring"]
-            Score["Scoring"]
-            Bind["Binding"]
-            Reserve["Reserve"]
-            Permit["Permit"]
-        end
-
-        subgraph "Scheduling Constraints"
-            NodeSelector["Node Selector"]
-            NodeAffinity["Node Affinity"]
-            PodAffinity["Pod Affinity"]
-            PodAntiAffinity["Pod Anti-Affinity"]
-            Taints["Taints"]
-            Tolerations["Tolerations"]
-            TopologySpread["Topology Spread"]
-        end
-
-        subgraph "Preemption and Eviction"
-            Priority["Priority & Preemption"]
-            PDB["Pod Disruption Budget"]
-            Descheduler["Descheduler"]
-            TaintManager["Taint Manager"]
-        end
-    end
-
-    API[API Server] --> Queue
-    Queue --> Scheduler
-    Scheduler --> Cache
-    Scheduler --> Plugins
-
-    Plugins --> QueueSort
-    QueueSort --> PreFilter
-    PreFilter --> Filter
-    Filter --> PreScore
-    PreScore --> Score
-    Score --> Reserve
-    Reserve --> Permit
-    Permit --> Bind
-
-    NodeSelector --> Filter
-    NodeAffinity --> Filter
-    PodAffinity --> Filter
-    PodAntiAffinity --> Filter
-    Taints --> Filter
-    Tolerations --> Filter
-    TopologySpread --> Filter & Score
-
-    Priority --> Scheduler
-    PDB --> TaintManager
-    Descheduler --> API
-
-    %% Style definitions
-    classDef component fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef constraint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef disruption fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef api fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Scheduler,Queue,Cache,Plugins component;
-    class QueueSort,PreFilter,Filter,PreScore,Score,Reserve,Permit,Bind stage;
-    class NodeSelector,NodeAffinity,PodAffinity,PodAntiAffinity,Taints,Tolerations,TopologySpread constraint;
-    class Priority,PDB,Descheduler,TaintManager disruption;
-    class API api;
-```
+![Architecture diagram showing the kube-scheduler pulling pods from a queue and running them through filtering, scoring, and binding phases, gated by scheduling constraints and backstopped by priority preemption, pod disruption budgets, and the descheduler.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-0.png)
 
 ## Scheduling Concept Comparison
 
@@ -232,56 +154,7 @@ The scheduling process is broadly divided into two phases:
 
 The Kubernetes scheduler operates through the following process:
 
-```mermaid
-graph TD
-    subgraph "Scheduler Operation Process"
-        API["API Server"] -->|1. Pod creation event| Queue["Scheduling Queue"]
-        Queue -->|2. Pod selection| Scheduler["kube-scheduler"]
-        Scheduler -->|3. Filtering| FilterPlugins["Filter Plugins"]
-        FilterPlugins -->|4. Filtered nodes| ScorePlugins["Score Plugins"]
-        ScorePlugins -->|5. Node scores| BestNode["Best Node Selection"]
-        BestNode -->|6. Binding| Binding["Binding Request to API Server"]
-        Binding -->|7. Pod binding| Node["Node"]
-    end
-
-    subgraph "Filter Plugins"
-        FP1["NodeResourcesFit"]
-        FP2["NodeName"]
-        FP3["NodeUnschedulable"]
-        FP4["TaintToleration"]
-        FP5["NodeAffinity"]
-    end
-
-    subgraph "Score Plugins"
-        SP1["NodeResourcesBalancedAllocation"]
-        SP2["ImageLocality"]
-        SP3["InterPodAffinity"]
-        SP4["NodeAffinity"]
-        SP5["TaintToleration"]
-    end
-
-    FilterPlugins --- FP1
-    FilterPlugins --- FP2
-    FilterPlugins --- FP3
-    FilterPlugins --- FP4
-    FilterPlugins --- FP5
-
-    ScorePlugins --- SP1
-    ScorePlugins --- SP2
-    ScorePlugins --- SP3
-    ScorePlugins --- SP4
-    ScorePlugins --- SP5
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef schedulerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pluginComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API,Node k8sComponent;
-    class Queue,Scheduler,FilterPlugins,ScorePlugins,BestNode,Binding schedulerComponent;
-    class FP1,FP2,FP3,FP4,FP5,SP1,SP2,SP3,SP4,SP5 pluginComponent;
-```
+![Pipeline diagram showing a pod creation event moving through the scheduling queue, the kube-scheduler, filter plugins, score plugins, best-node selection, and binding until the pod lands on a node.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-1.png)
 
 1. **Pod Queue Watching**: The scheduler watches the API server for unscheduled pods.
 2. **Node Filtering**: Identifies a set of nodes that can run the pod.
@@ -327,43 +200,7 @@ In the example above, the `schedulerName` field specifies the scheduler to sched
 
 Kubernetes provides several mechanisms to place pods on specific nodes.
 
-```mermaid
-graph TD
-    subgraph "Node Selection Mechanisms"
-        NS["Node Selector<br>(nodeSelector)"]
-        NN["Node Name<br>(nodeName)"]
-        NA["Node Affinity<br>(nodeAffinity)"]
-    end
-
-    subgraph "Node Selector Example"
-        Pod1["Pod"] -->|nodeSelector| Label["Node Labels"]
-        Label -->|match| Node1["Node 1<br>gpu=true"]
-        Label -->|no match| Node2["Node 2<br>gpu=false"]
-    end
-
-    subgraph "Node Affinity Example"
-        Pod2["Pod"] -->|nodeAffinity| Expr["Expression<br>zone in (us-east-1a, us-east-1b)"]
-        Expr -->|match| Node3["Node 3<br>zone=us-east-1a"]
-        Expr -->|match| Node4["Node 4<br>zone=us-east-1b"]
-        Expr -->|no match| Node5["Node 5<br>zone=us-west-1a"]
-    end
-
-    NS -->|simple label matching| Pod1
-    NN -->|direct node specification| DirectNode["Specific Node"]
-    NA -->|complex expressions| Pod2
-
-    %% Style definitions
-    classDef selectionMechanism fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef matchComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NS,NN,NA selectionMechanism;
-    class Pod1,Pod2 k8sComponent;
-    class Label,Expr matchComponent;
-    class Node1,Node2,Node3,Node4,Node5,DirectNode nodeComponent;
-```
+![Diagram comparing three node-placement mechanisms: nodeSelector matching a node label, nodeName pinning to a specific node, and nodeAffinity evaluating an expression against candidate zones.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-2.png)
 
 ### Node Selector
 
@@ -406,58 +243,7 @@ In the example above, the pod is directly placed on the node named `worker-node-
 
 Pod affinity and anti-affinity provide ways to place pods based on relationships between pods.
 
-```mermaid
-graph TD
-    subgraph "Pod Affinity"
-        PA["podAffinity"]
-        PA -->|place on same node/topology| Together["Co-location"]
-
-        subgraph "Affinity Example"
-            WebPod["Web Pod<br>app=web"]
-            CachePod["Cache Pod<br>app=cache"]
-            WebPod -->|co-locate| CachePod
-            Node1["Node 1"] -->|contains| WebPod
-            Node1 -->|contains| CachePod
-        end
-    end
-
-    subgraph "Pod Anti-Affinity"
-        PAA["podAntiAffinity"]
-        PAA -->|place on different node/topology| Apart["Separation"]
-
-        subgraph "Anti-Affinity Example"
-            WebPod1["Web Pod 1<br>app=web"]
-            WebPod2["Web Pod 2<br>app=web"]
-            WebPod1 -->|separate| WebPod2
-            Node2["Node 2"] -->|contains| WebPod1
-            Node3["Node 3"] -->|contains| WebPod2
-        end
-    end
-
-    subgraph "Affinity Types"
-        Required["requiredDuringSchedulingIgnoredDuringExecution<br>(hard requirement)"]
-        Preferred["preferredDuringSchedulingIgnoredDuringExecution<br>(soft requirement)"]
-    end
-
-    PA -->|type| Required
-    PA -->|type| Preferred
-    PAA -->|type| Required
-    PAA -->|type| Preferred
-
-    %% Style definitions
-    classDef affinityType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef affinityResult fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef affinityKind fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class PA,PAA affinityType;
-    class Together,Apart affinityResult;
-    class WebPod,CachePod,WebPod1,WebPod2 k8sComponent;
-    class Node1,Node2,Node3 nodeComponent;
-    class Required,Preferred affinityKind;
-```
+![Diagram contrasting pod affinity, which co-locates a web pod with a cache pod on the same node, against pod anti-affinity, which separates two web pod replicas across different nodes, both configurable as hard or soft requirements.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-3.png)
 
 ### Pod Affinity
 
@@ -544,63 +330,7 @@ In the example above, the `weight` field indicates the weight of this preference
 
 Taints and tolerations are mechanisms that allow nodes to reject specific pods.
 
-```mermaid
-graph TD
-    subgraph "Taints and Tolerations Mechanism"
-        Taint["Taint<br>(applied to node)"]
-        Toleration["Toleration<br>(applied to pod)"]
-
-        Taint -->|reject without| Pod["Pod"]
-        Pod -->|allow with| Toleration
-        Toleration -.->|matches| Taint
-    end
-
-    subgraph "Taint Effects"
-        NoSchedule["NoSchedule<br>(prevent scheduling)"]
-        PreferNoSchedule["PreferNoSchedule<br>(prefer not to schedule)"]
-        NoExecute["NoExecute<br>(evict running pods)"]
-    end
-
-    subgraph "Use Cases"
-        DedicatedNode["Dedicated Nodes"]
-        SpecialHW["Special Hardware"]
-        Maintenance["Node Maintenance"]
-        NodeIssue["Node Issues"]
-    end
-
-    Taint -->|effect type| NoSchedule
-    Taint -->|effect type| PreferNoSchedule
-    Taint -->|effect type| NoExecute
-
-    Taint -->|applied to| DedicatedNode
-    Taint -->|applied to| SpecialHW
-    Taint -->|applied to| Maintenance
-    Taint -->|applied to| NodeIssue
-
-    subgraph "Example"
-        GPUNode["GPU Node<br>key=gpu:NoSchedule"]
-        RegularPod["Regular Pod<br>(no toleration)"]
-        GPUPod["GPU Pod<br>(has toleration)"]
-
-        GPUNode -->|rejects| RegularPod
-        GPUNode -->|allows| GPUPod
-        GPUPod -->|toleration| GPUToleration["key=gpu,effect=NoSchedule"]
-    end
-
-    %% Style definitions
-    classDef taintComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef effectComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef useCaseComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Taint,Toleration taintComponent;
-    class NoSchedule,PreferNoSchedule,NoExecute effectComponent;
-    class DedicatedNode,SpecialHW,Maintenance,NodeIssue useCaseComponent;
-    class Pod,RegularPod,GPUPod,GPUToleration k8sComponent;
-    class GPUNode nodeComponent;
-```
+![Diagram showing a node taint rejecting pods unless they carry a matching toleration, the three taint effects, common taint use cases, and a worked example where a GPU-tainted node rejects a regular pod but admits a pod with a matching toleration.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-4.png)
 
 ### Taints
 
@@ -717,53 +447,7 @@ Node affinity supports various operators:
 
 Kubernetes provides pod priority and preemption features to ensure important workloads can secure cluster resources.
 
-```mermaid
-graph TD
-    subgraph "Priority and Preemption Mechanism"
-        PC["PriorityClass"]
-        Pod["Pod"]
-        Preemption["Preemption"]
-
-        PC -->|assigns priority| Pod
-        Pod -->|when resources are insufficient| Preemption
-        Preemption -->|removes| LowPriorityPod["Lower-priority Pods"]
-    end
-
-    subgraph "Priority Class Examples"
-        SystemCritical["system-cluster-critical<br>(1000000000)"]
-        SystemNodeCritical["system-node-critical<br>(2000000000)"]
-        HighPriority["high-priority<br>(custom, e.g., 100000)"]
-        DefaultPriority["default<br>(0)"]
-    end
-
-    subgraph "Preemption Process"
-        Step1["1. Scheduling Failure<br>(resource shortage)"]
-        Step2["2. Select Preemption Targets"]
-        Step3["3. Terminate Preemption Targets"]
-        Step4["4. Schedule Higher-priority Pod"]
-
-        Step1 -->|triggers| Step2
-        Step2 -->|selects| Step3
-        Step3 -->|completes| Step4
-    end
-
-    PC --- SystemCritical
-    PC --- SystemNodeCritical
-    PC --- HighPriority
-    PC --- DefaultPriority
-
-    %% Style definitions
-    classDef priorityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef priorityClass fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef preemptionStep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class PC,Preemption priorityComponent;
-    class Pod,LowPriorityPod k8sComponent;
-    class SystemCritical,SystemNodeCritical,HighPriority,DefaultPriority priorityClass;
-    class Step1,Step2,Step3,Step4 preemptionStep;
-```
+![Diagram showing a PriorityClass assigning priority to a pod, triggering preemption of lower-priority pods when resources are insufficient, alongside the four-step preemption process and example built-in priority classes.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-5.png)
 
 ### PriorityClass
 
@@ -821,54 +505,7 @@ Things to consider when using preemption:
 
 Pod eviction is the process of safely moving pods when node issues occur. Eviction can happen for various reasons.
 
-```mermaid
-graph TD
-    subgraph "Eviction Types"
-        ControllerEviction["kube-controller-manager<br>Eviction"]
-        KubeletEviction["kubelet Eviction"]
-        UserEviction["User Eviction"]
-    end
-
-    subgraph "Eviction Causes"
-        NodeNotReady["Node NotReady"]
-        NodeUnreachable["Node Unreachable"]
-        ResourcePressure["Resource Shortage<br>(memory, disk, etc.)"]
-        HardwareIssue["Hardware Issues"]
-        Maintenance["Maintenance"]
-    end
-
-    subgraph "kubelet Eviction Signals"
-        MemoryAvailable["memory.available"]
-        NodefsAvailable["nodefs.available"]
-        NodefsInodesFree["nodefs.inodesFree"]
-        ImagefsAvailable["imagefs.available"]
-        ImagefsInodesFree["imagefs.inodesFree"]
-        PidAvailable["pid.available"]
-    end
-
-    ControllerEviction -->|cause| NodeNotReady
-    ControllerEviction -->|cause| NodeUnreachable
-    KubeletEviction -->|cause| ResourcePressure
-    KubeletEviction -->|cause| HardwareIssue
-    UserEviction -->|cause| Maintenance
-
-    KubeletEviction -->|monitors| MemoryAvailable
-    KubeletEviction -->|monitors| NodefsAvailable
-    KubeletEviction -->|monitors| NodefsInodesFree
-    KubeletEviction -->|monitors| ImagefsAvailable
-    KubeletEviction -->|monitors| ImagefsInodesFree
-    KubeletEviction -->|monitors| PidAvailable
-
-    %% Style definitions
-    classDef evictionType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionCause fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionSignal fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ControllerEviction,KubeletEviction,UserEviction evictionType;
-    class NodeNotReady,NodeUnreachable,ResourcePressure,HardwareIssue,Maintenance evictionCause;
-    class MemoryAvailable,NodefsAvailable,NodefsInodesFree,ImagefsAvailable,ImagefsInodesFree,PidAvailable evictionSignal;
-```
+![Diagram grouping pod eviction into three sources -- the controller manager evicting pods from unready or unreachable nodes, kubelet evicting pods under resource or hardware pressure while monitoring memory, filesystem, and PID signals, and users draining nodes for maintenance.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-6.png)
 
 ### Eviction Types
 
@@ -928,50 +565,7 @@ kubelet evicts pods in the following order:
 
 Pod Disruption Budget (PDB) is a way to maintain application availability during voluntary disruptions. PDB limits the number of pods that can be simultaneously disrupted.
 
-```mermaid
-graph TD
-    subgraph "PDB Components"
-        PDB["PodDisruptionBudget"]
-        PDB -->|setting| MinAvailable["minAvailable<br>(minimum available pods)"]
-        PDB -->|setting| MaxUnavailable["maxUnavailable<br>(maximum unavailable pods)"]
-        PDB -->|selects| Selector["selector<br>(target pod selection)"]
-    end
-
-    subgraph "PDB Operation"
-        Disruption["Voluntary Disruption<br>(node drain, etc.)"]
-        Check{{"PDB condition met?"}}
-        Allow["Allow Pod Eviction"]
-        Deny["Deny Pod Eviction"]
-
-        Disruption -->|check| Check
-        Check -->|yes| Allow
-        Check -->|no| Deny
-    end
-
-    subgraph "PDB Example"
-        Deployment["Deployment<br>(replicas: 5)"]
-        PDB1["PDB<br>(minAvailable: 3)"]
-        PDB2["PDB<br>(maxUnavailable: 2)"]
-
-        Deployment -->|applies| PDB1
-        Deployment -->|applies| PDB2
-        PDB1 -.->|same effect| PDB2
-    end
-
-    %% Style definitions
-    classDef pdbComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef pdbSetting fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef disruptionFlow fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class PDB,Selector pdbComponent;
-    class MinAvailable,MaxUnavailable pdbSetting;
-    class Deployment,PDB1,PDB2 k8sComponent;
-    class Disruption,Check disruptionFlow;
-    class Allow,Deny resultComponent;
-```
+![Diagram showing a PodDisruptionBudget's minAvailable, maxUnavailable, and selector settings gating a voluntary disruption such as node drain, allowing or denying eviction, with an example deployment where equivalent minAvailable and maxUnavailable settings produce the same effect.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-7.png)
 
 ### PDB Definition
 
@@ -1064,55 +658,7 @@ In the example above:
 
 TopologySpreadConstraints provide fine-grained control over how pods are distributed across topology domains such as availability zones, nodes, or regions. This feature offers more flexibility than Pod anti-affinity for achieving high availability and efficient resource utilization.
 
-```mermaid
-graph TD
-    subgraph "TopologySpreadConstraints Overview"
-        TSC["TopologySpreadConstraints"]
-        TSC -->|controls| Distribution["Pod Distribution"]
-
-        subgraph "Key Fields"
-            MaxSkew["maxSkew<br>(max difference allowed)"]
-            TopologyKey["topologyKey<br>(topology domain)"]
-            WhenUnsatisfiable["whenUnsatisfiable<br>(scheduling action)"]
-            LabelSelector["labelSelector<br>(target pods)"]
-        end
-
-        subgraph "Optional Fields (1.27+)"
-            MinDomains["minDomains<br>(minimum topology domains)"]
-            MatchLabelKeys["matchLabelKeys<br>(dynamic label matching)"]
-            NodeAffinityPolicy["nodeAffinityPolicy<br>(Honor/Ignore)"]
-            NodeTaintsPolicy["nodeTaintsPolicy<br>(Honor/Ignore)"]
-        end
-    end
-
-    subgraph "Distribution Example"
-        Zone1["Zone A<br>2 pods"]
-        Zone2["Zone B<br>2 pods"]
-        Zone3["Zone C<br>1 pod"]
-
-        Zone1 -.->|maxSkew: 1| Zone3
-        Zone2 -.->|maxSkew: 1| Zone3
-    end
-
-    TSC --> MaxSkew
-    TSC --> TopologyKey
-    TSC --> WhenUnsatisfiable
-    TSC --> LabelSelector
-    TSC --> MinDomains
-    TSC --> MatchLabelKeys
-
-    %% Style definitions
-    classDef tscComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef fieldComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef optionalField fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef zoneComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class TSC,Distribution tscComponent;
-    class MaxSkew,TopologyKey,WhenUnsatisfiable,LabelSelector fieldComponent;
-    class MinDomains,MatchLabelKeys,NodeAffinityPolicy,NodeTaintsPolicy optionalField;
-    class Zone1,Zone2,Zone3 zoneComponent;
-```
+![Diagram showing TopologySpreadConstraints controlling pod distribution through required fields (maxSkew, topologyKey, whenUnsatisfiable, labelSelector) and 1.27+ optional fields, with an example where two zones holding 2 pods each stay within maxSkew 1 of a third zone holding only 1 pod.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-8.png)
 
 ### Key Fields
 
@@ -1328,51 +874,7 @@ spec:
 
 The Descheduler is a Kubernetes component that evicts pods from nodes to allow the scheduler to reschedule them to more appropriate nodes. Unlike the scheduler which only places new pods, the descheduler helps maintain optimal pod placement over time.
 
-```mermaid
-graph TD
-    subgraph "Descheduler Operation"
-        Descheduler["Descheduler"]
-
-        subgraph "Strategies"
-            RemoveDuplicates["RemoveDuplicates"]
-            LowNodeUtilization["LowNodeUtilization"]
-            RemovePodsHavingTooManyRestarts["RemovePodsHavingTooManyRestarts"]
-            PodLifeTime["PodLifeTime"]
-            RemovePodsViolatingInterPodAntiAffinity["RemovePodsViolatingInterPodAntiAffinity"]
-            RemovePodsViolatingNodeAffinity["RemovePodsViolatingNodeAffinity"]
-            RemovePodsViolatingTopologySpreadConstraint["RemovePodsViolatingTopologySpreadConstraint"]
-        end
-
-        subgraph "Process"
-            Analyze["Analyze Cluster State"]
-            Identify["Identify Pods to Evict"]
-            Evict["Evict Pods"]
-            Reschedule["Scheduler Reschedules"]
-        end
-    end
-
-    Descheduler --> RemoveDuplicates
-    Descheduler --> LowNodeUtilization
-    Descheduler --> RemovePodsHavingTooManyRestarts
-    Descheduler --> PodLifeTime
-    Descheduler --> RemovePodsViolatingInterPodAntiAffinity
-    Descheduler --> RemovePodsViolatingNodeAffinity
-    Descheduler --> RemovePodsViolatingTopologySpreadConstraint
-
-    Analyze --> Identify
-    Identify --> Evict
-    Evict --> Reschedule
-
-    %% Style definitions
-    classDef descheduler fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef strategy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Descheduler descheduler;
-    class RemoveDuplicates,LowNodeUtilization,RemovePodsHavingTooManyRestarts,PodLifeTime,RemovePodsViolatingInterPodAntiAffinity,RemovePodsViolatingNodeAffinity,RemovePodsViolatingTopologySpreadConstraint strategy;
-    class Analyze,Identify,Evict,Reschedule process;
-```
+![Diagram showing the descheduler applying one of seven rebalancing strategies while running a four-step loop: analyzing cluster state, identifying pods to evict, evicting them, and letting the scheduler reschedule them onto more suitable nodes.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-9.png)
 
 ### Why Descheduling Is Needed
 
@@ -1512,62 +1014,7 @@ spec:
 
 In Amazon EKS, you can optimize workloads using Kubernetes scheduling features.
 
-```mermaid
-graph TD
-    subgraph "EKS Scheduling Optimization"
-        NodeGroups["Node Groups &<br>Instance Types"]
-        AZSpread["Availability Zone Distribution"]
-        Karpenter["Karpenter<br>Auto Scaling"]
-        ResourceOpt["Resource Request &<br>Limit Optimization"]
-    end
-
-    subgraph "Node Group Strategies"
-        ComputeOpt["Compute Optimized<br>Instances"]
-        MemoryOpt["Memory Optimized<br>Instances"]
-        SpotInst["Spot Instances"]
-        GPUInst["GPU Instances"]
-    end
-
-    subgraph "Availability Strategies"
-        PodAntiAffinity["Pod Anti-Affinity"]
-        TopologySpread["Topology Spread<br>Constraints"]
-        MultiAZ["Multi-AZ<br>Deployment"]
-    end
-
-    subgraph "Automation Tools"
-        VPA["Vertical Pod<br>Autoscaler"]
-        HPA["Horizontal Pod<br>Autoscaler"]
-        CA["Cluster<br>Autoscaler"]
-        KarpenterProv["Karpenter<br>Provisioner"]
-    end
-
-    NodeGroups -->|type| ComputeOpt
-    NodeGroups -->|type| MemoryOpt
-    NodeGroups -->|type| SpotInst
-    NodeGroups -->|type| GPUInst
-
-    AZSpread -->|method| PodAntiAffinity
-    AZSpread -->|method| TopologySpread
-    AZSpread -->|result| MultiAZ
-
-    Karpenter -->|uses| KarpenterProv
-    ResourceOpt -->|tool| VPA
-    ResourceOpt -->|tool| HPA
-    NodeGroups -->|tool| CA
-
-    %% Style definitions
-    classDef eksComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef strategyComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef instanceType fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef availabilityStrategy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef autoTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class NodeGroups,AZSpread,Karpenter,ResourceOpt eksComponent;
-    class ComputeOpt,MemoryOpt,SpotInst,GPUInst strategyComponent;
-    class PodAntiAffinity,TopologySpread,MultiAZ availabilityStrategy;
-    class VPA,HPA,CA,KarpenterProv autoTool;
-```
+![Diagram showing four EKS scheduling levers -- node group instance-type choice, availability-zone spread, Karpenter autoscaling, and resource request tuning -- each mapping to the concrete Kubernetes mechanisms and automation tools that implement them.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-10.png)
 
 ### Node Groups and Instance Types
 

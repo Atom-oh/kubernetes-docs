@@ -35,25 +35,7 @@ Prometheus Alertmanager는 Prometheus 서버에서 전송된 알림을 처리하
 
 ### Prometheus 알림 흐름
 
-```mermaid
-sequenceDiagram
-    participant P as Prometheus
-    participant AM as Alertmanager
-    participant R as Receiver (Slack/PagerDuty)
-
-    P->>P: 알림 규칙 평가
-    Note over P: expr 조건 충족 시<br/>Pending 상태로 전환
-    P->>P: for 기간 대기
-    Note over P: for 기간 동안<br/>조건 유지 시 Firing
-    P->>AM: 알림 전송 (POST /api/v2/alerts)
-    AM->>AM: 중복 제거
-    AM->>AM: 그룹화
-    AM->>AM: 라우팅 결정
-    AM->>AM: Inhibition 확인
-    AM->>AM: Silence 확인
-    AM->>R: 알림 전송
-    R-->>AM: 전송 결과
-```
+![Prometheus가 알림 규칙을 평가해 Pending 상태로 전환하고 for 기간이 지나면 Firing으로 전송하며, Alertmanager가 중복 제거·그룹화·라우팅·억제·Silence 확인의 내부 파이프라인을 거쳐 수신자에게 알림을 보내고 전송 결과를 돌려받는 과정을 보여주는 시퀀스 다이어그램입니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-0.png)
 
 ---
 
@@ -61,46 +43,7 @@ sequenceDiagram
 
 ### Alertmanager 내부 구조
 
-```mermaid
-graph TB
-    subgraph Alertmanager["Alertmanager"]
-        API[API<br/>/api/v2/alerts]
-
-        subgraph Pipeline["알림 파이프라인"]
-            D[Dispatcher<br/>라우팅]
-            I[Inhibitor<br/>억제]
-            S[Silencer<br/>무음]
-            AG[Aggregation Group<br/>그룹화]
-            NP[Notification Pipeline<br/>알림 전송]
-        end
-
-        subgraph Storage["저장소"]
-            NF[nflog<br/>알림 로그]
-            SL[Silences<br/>무음 규칙]
-        end
-
-        subgraph Cluster["클러스터"]
-            GS[Gossip Protocol<br/>상태 동기화]
-        end
-    end
-
-    P[Prometheus] -->|알림| API
-    API --> D
-    D --> I
-    I --> S
-    S --> AG
-    AG --> NP
-    NP --> R[Receivers]
-
-    NP -.->|기록| NF
-    S -.->|조회| SL
-    GS -.->|동기화| NF
-    GS -.->|동기화| SL
-
-    style Pipeline fill:#e3f2fd
-    style Storage fill:#fff3e0
-    style Cluster fill:#e8f5e9
-```
+![Prometheus에서 들어온 알림이 Alertmanager 내부의 API, 라우팅·억제·무음 필터, 그룹화, 알림 전송 단계를 거쳐 수신자에게 전달되고, 전송 기록과 무음 규칙은 저장소에 남으며 클러스터 노드 간 Gossip으로 동기화되는 구조를 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-1.png)
 
 ### 컴포넌트 설명
 
@@ -287,28 +230,7 @@ rules:
 
 ### 알림 상태
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactive: 조건 미충족
-    Inactive --> Pending: expr 조건 충족
-    Pending --> Firing: for 기간 경과
-    Firing --> Inactive: 조건 미충족
-    Pending --> Inactive: for 기간 내 조건 미충족
-
-    note right of Inactive
-        알림이 발생하지 않은 상태
-    end note
-
-    note right of Pending
-        조건은 충족되었지만
-        for 기간 대기 중
-    end note
-
-    note right of Firing
-        알림이 활성화되어
-        Alertmanager로 전송됨
-    end note
-```
+![알림이 Inactive 상태에서 expr 조건이 충족되면 Pending으로, for 기간이 지나면 Firing으로 전환되고, 조건이 사라지면 다시 Inactive로 돌아가는 상태 다이어그램입니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-2.png)
 
 ---
 
@@ -353,21 +275,7 @@ route:
 
 ### 라우팅 흐름
 
-```mermaid
-graph TB
-    A[알림 수신] --> B{Critical?}
-    B -->|Yes| C[critical-receiver]
-    B -->|No| D{service=foo,bar?}
-    D -->|Yes| E{owner=team-a?}
-    D -->|No| F[default-receiver]
-    E -->|Yes| G[team-a]
-    E -->|No| H[service-team]
-
-    style C fill:#ffcdd2
-    style F fill:#e8f5e9
-    style G fill:#bbdefb
-    style H fill:#fff9c4
-```
+![알림이 수신되면 severity가 critical인지, service가 foo/bar인지, owner가 team-a인지를 차례로 판별해 critical-receiver, default-receiver, team-a, service-team 중 하나로 라우팅되는 결정 흐름을 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-3.png)
 
 ### 매처 (Matchers)
 
@@ -593,27 +501,7 @@ receivers:
 
 Inhibition은 특정 알림이 발생했을 때 관련된 다른 알림을 억제하는 기능입니다.
 
-```mermaid
-graph LR
-    subgraph Without_Inhibition["억제 없이"]
-        A1[NodeDown] -->|전송| R1[Receiver]
-        A2[PodNotReady] -->|전송| R1
-        A3[ServiceUnavailable] -->|전송| R1
-    end
-
-    subgraph With_Inhibition["억제 적용"]
-        B1[NodeDown] -->|전송| R2[Receiver]
-        B2[PodNotReady] -.->|억제| X1((X))
-        B3[ServiceUnavailable] -.->|억제| X2((X))
-    end
-
-    style A1 fill:#ffcdd2
-    style A2 fill:#ffcdd2
-    style A3 fill:#ffcdd2
-    style B1 fill:#ffcdd2
-    style B2 fill:#e0e0e0
-    style B3 fill:#e0e0e0
-```
+![억제 규칙이 없으면 NodeDown, PodNotReady, ServiceUnavailable 알림이 모두 수신자에게 전송되지만, 억제를 적용하면 NodeDown만 전송되고 관련된 PodNotReady, ServiceUnavailable 알림은 억제되어 차단되는 것을 좌우 비교로 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-4.png)
 
 ### Inhibition 규칙 구성
 
@@ -723,28 +611,7 @@ curl -X POST http://alertmanager:9093/api/v2/silences \
 
 ### Silence 관리 모범 사례
 
-```mermaid
-graph TB
-    A[Silence 필요] --> B{유형?}
-
-    B -->|유지보수| C[계획된 시간만큼]
-    B -->|배포| D[배포 완료까지]
-    B -->|조사 중| E[최대 4시간]
-    B -->|알려진 이슈| F[수정 완료까지]
-
-    C --> G[명확한 코멘트]
-    D --> G
-    E --> G
-    F --> G
-
-    G --> H[정기 검토]
-    H --> I{만료?}
-    I -->|Yes| J[자동 제거]
-    I -->|No| K[수동 검토]
-
-    style G fill:#fff9c4
-    style H fill:#e8f5e9
-```
+![Silence가 필요할 때 유지보수, 배포, 조사, 알려진 이슈 등 유형에 따라 명확한 코멘트를 남기고, 정기적으로 검토해 만료 여부에 따라 자동 제거되거나 수동 검토로 이어지는 흐름을 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-5.png)
 
 **권장 사항:**
 
@@ -851,24 +718,7 @@ data:
 
 ### 클러스터링 아키텍처
 
-```mermaid
-graph TB
-    P[Prometheus] -->|알림| AM1[Alertmanager 1]
-    P -->|알림| AM2[Alertmanager 2]
-    P -->|알림| AM3[Alertmanager 3]
-
-    subgraph Cluster["Alertmanager Cluster"]
-        AM1 <-->|Gossip| AM2
-        AM2 <-->|Gossip| AM3
-        AM3 <-->|Gossip| AM1
-    end
-
-    AM1 --> R[Receivers]
-    AM2 -.->|중복 제거| AM1
-    AM3 -.->|중복 제거| AM1
-
-    style Cluster fill:#e3f2fd
-```
+![Prometheus가 3개의 Alertmanager 복제본에 동시에 알림을 보내고, 복제본들은 Gossip 프로토콜로 서로 상태를 동기화하며, 그중 한 대가 최종적으로 수신자에게 알림을 전달하는 고가용성 구성을 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-6.png)
 
 ### StatefulSet 구성
 

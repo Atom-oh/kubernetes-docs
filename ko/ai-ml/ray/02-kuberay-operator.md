@@ -31,25 +31,7 @@ KubeRay는 주로 세 가지 CRD(Custom Resource Definition)를 통해 기능을
 
 **RayService**는 프로덕션 모델 서빙을 목표로 합니다. RayCluster와 그 위에 배포된 Ray Serve 애플리케이션을 함께 관리하며, 기반 클러스터와 애플리케이션을 무중단으로 롤링 업그레이드하는 기능도 제공합니다 — 이 업그레이드 경로의 성숙도와 전제 조건은 실제로 의존하기 전에 현재 릴리스 노트에서 확인하세요.
 
-```mermaid
-graph TD
-    RC["RayCluster CR<br/>(head + 워커 그룹 스펙)"] --> OP[KubeRay 오퍼레이터<br/>재조정]
-    OP --> HP[Head Pod]
-    OP --> WG1[CPU 워커 그룹 Pod]
-    OP --> WG2[GPU 워커 그룹 Pod]
-
-    WG1 -.모니터링.-> RA[Ray 오토스케일러]
-    WG2 -.모니터링.-> RA
-    RA -->|replica 증설 요청| RC
-
-    RA -->|Pending Pod| KP[Karpenter]
-    KP -->|EC2 노드 프로비저닝| WG1
-    KP -->|EC2 노드 프로비저닝| WG2
-
-    style RC fill:#4fc3f7
-    style RA fill:#ffb74d
-    style KP fill:#81c784
-```
+![RayCluster CR을 KubeRay 오퍼레이터가 재조정해 Head Pod와 CPU/GPU 워커 그룹 Pod를 생성하고, Ray 오토스케일러가 워커 그룹을 모니터링해 RayCluster에 replica 증설을 요청하며, 대기 중인 Pod가 생기면 Karpenter가 EC2 노드를 프로비저닝해 워커 그룹을 확장하는 순환 구조를 보여주는 다이어그램](../../.gitbook/assets/ko-ai-ml-ray-02-kuberay-operator-0.png)
 
 ## 2단계 오토스케일링: Ray 오토스케일러와 Karpenter
 

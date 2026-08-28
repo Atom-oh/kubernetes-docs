@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="nonmesh-title nonmesh-desc">
+  <title id="nonmesh-title">비메시 트래픽 경로</title>
+  <desc id="nonmesh-desc">메시 외부 클라이언트가 평문 HTTP로 프록시에 접속하면, 프록시가 메시 외부 출처를 자동으로 감지해 암호화 없이 평문 그대로 애플리케이션으로 전달하는 경로를 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Zones -->
+  <rect x="40" y="220" width="220" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="76" y="224" width="148" height="12" rx="2" fill="#ffffff"/>
+  <text x="150" y="233" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EXTERNAL</text>
+
+  <rect x="380" y="220" width="540" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="620" y="224" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="650" y="233" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">MESH</text>
+
+  <!-- Arrows -->
+  <line x1="260" y1="300" x2="460" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="316" y="280" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="360" y="290" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PLAIN HTTP</text>
+
+  <line x1="620" y1="300" x2="740" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="636" y="280" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="680" y="290" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PLAIN HTTP</text>
+
+  <!-- Nodes -->
+  <g>
+    <rect x="80" y="272" width="140" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="150" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">External Client</text>
+    <text x="150" y="312" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">메시 외부</text>
+  </g>
+  <g>
+    <rect x="460" y="272" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="460" y="272" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="540" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Proxy</text>
+    <text x="540" y="312" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">메시 외부 트래픽 자동 감지</text>
+  </g>
+  <g>
+    <rect x="740" y="272" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="810" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Application</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="40" y1="532" x2="920" y2="532" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="548" r="4.5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="232" y="551" fill="#545B64" font-size="10" font-family="'Amazon Ember','Noto Sans KR',sans-serif">메시 외부/내부 트래픽을 자동 판별하는 프록시</text>
+</svg>

@@ -19,75 +19,13 @@ Gateway API는 Kubernetes의 차세대 인그레스 API로, 기존 Ingress API�
 
 ### Gateway API의 장점
 
-```mermaid
-graph TB
-    subgraph "Gateway API 특징"
-        EXP[표현력<br/>다양한 프로토콜 지원]
-        ROLE[역할 기반<br/>권한 분리]
-        PORT[이식성<br/>표준화된 리소스]
-        EXT[확장성<br/>CRD 기반 확장]
-    end
-
-    EXP --> ROLE
-    ROLE --> PORT
-    PORT --> EXT
-
-    style EXP fill:#4fc3f7
-    style ROLE fill:#81c784
-    style PORT fill:#ffb74d
-    style EXT fill:#ce93d8
-```
+![표현력, 역할 기반 권한 분리, 이식성, 확장성이 순서대로 이어지며 Gateway API가 기존 Ingress API의 한계를 보완하는 네 가지 특징을 보여준다.](../.gitbook/assets/ko-networking-04-gateway-api-0.png)
 
 ## 리소스 모델
 
 Gateway API는 계층화된 리소스 모델을 사용합니다.
 
-```mermaid
-graph TB
-    subgraph "인프라 제공자"
-        GC[GatewayClass<br/>인프라 템플릿]
-    end
-
-    subgraph "클러스터 운영자"
-        GW[Gateway<br/>로드밸런서 인스턴스]
-    end
-
-    subgraph "애플리케이션 개발자"
-        HR[HTTPRoute]
-        GR[GRPCRoute]
-        TR[TCPRoute]
-        TLR[TLSRoute]
-        UR[UDPRoute]
-    end
-
-    subgraph "백엔드"
-        SVC1[Service A]
-        SVC2[Service B]
-        SVC3[Service C]
-    end
-
-    GC --> GW
-    GW --> HR
-    GW --> GR
-    GW --> TR
-    GW --> TLR
-    GW --> UR
-
-    HR --> SVC1
-    HR --> SVC2
-    GR --> SVC2
-    TR --> SVC3
-    TLR --> SVC3
-    UR --> SVC3
-
-    style GC fill:#e1f5fe
-    style GW fill:#b3e5fc
-    style HR fill:#c8e6c9
-    style GR fill:#c8e6c9
-    style TR fill:#c8e6c9
-    style TLR fill:#c8e6c9
-    style UR fill:#c8e6c9
-```
+![인프라 제공자가 만드는 GatewayClass에서 클러스터 운영자의 Gateway, 애플리케이션 개발자가 정의하는 HTTPRoute·GRPCRoute·TCPRoute·TLSRoute·UDPRoute를 거쳐 백엔드 Service A/B/C까지 이어지는 Gateway API의 계층화된 리소스 모델과 역할 분리를 보여준다.](../.gitbook/assets/ko-networking-04-gateway-api-1.png)
 
 ### 역할 분리
 

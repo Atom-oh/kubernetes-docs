@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-labs-observability-README-1-title ko-labs-observability-README-1-desc">
+    <title id="ko-labs-observability-README-1-title">실습 진행 로드맵</title>
+    <desc id="ko-labs-observability-README-1-desc">관찰 가능성 실습이 Part 1 인프라 구성부터 Part 6 분산 추적까지 여섯 단계를 순서대로 진행하는 학습 로드맵</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="156" y1="300.0" x2="180" y2="300.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="312" y1="300.0" x2="336" y2="300.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="468" y1="300.0" x2="492" y2="300.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="624" y1="300.0" x2="648" y2="300.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="300.0" x2="804" y2="300.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="24" y="268" width="132" height="64" rx="6" fill="#ffffff"/>
+<rect x="24" y="268" width="132" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="90.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인프라 구성</text>
+<text x="90.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PART 1</text>
+<rect x="180" y="268" width="132" height="64" rx="6" fill="#ffffff"/>
+<rect x="180" y="268" width="132" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="246.0" y="294.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Observability</text>
+<text x="246.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스택</text>
+<text x="246.0" y="320.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PART 2</text>
+<rect x="336" y="268" width="132" height="64" rx="6" fill="#ffffff"/>
+<rect x="336" y="268" width="132" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="402.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">MSA 배포</text>
+<text x="402.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PART 3</text>
+<rect x="492" y="268" width="132" height="64" rx="6" fill="#ffffff"/>
+<rect x="492" y="268" width="132" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="558.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">부하 테스트</text>
+<text x="558.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PART 4</text>
+<rect x="648" y="268" width="132" height="64" rx="6" fill="#ffffff"/>
+<rect x="648" y="268" width="132" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="714.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 및 AIOps</text>
+<text x="714.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PART 5</text>
+<rect x="804" y="268" width="132" height="64" rx="6" fill="#ffffff"/>
+<rect x="804" y="268" width="132" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="870.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">분산 추적</text>
+<text x="870.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PART 6</text>
+  </svg>

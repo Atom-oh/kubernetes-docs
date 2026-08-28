@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="seq-title seq-desc">
+<title id="seq-title">Operator drill-down: metric to trace to logs</title>
+<desc id="seq-desc">Sequence diagram showing an operator using Grafana to pivot from an error-rate metric spike, through a Tempo trace reached via an exemplar, down to correlated Loki logs, ending with the root cause identified.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Lifelines: Op=92, G=292, P=496, T=696, L=900 -->
+<line x1="92"  y1="96" x2="92"  y2="536" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="292" y1="96" x2="292" y2="536" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="496" y1="96" x2="496" y2="536" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="696" y1="96" x2="696" y2="536" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="900" y1="96" x2="900" y2="536" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Grafana activation bar: focal actor holds control across the whole flow -->
+<rect x="288" y="112" width="8" height="320" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- =================== MESSAGES (drawn before labels/boxes) =================== -->
+<!-- M1 Op->G notice spike (muted) y=120 -->
+<line x1="92" y1="120" x2="284" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- M2 G->P query errors (link) y=148 -->
+<line x1="300" y1="148" x2="488" y2="148" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- M3 P-->G metrics w/ exemplar (link dashed return) y=176 -->
+<line x1="496" y1="176" x2="300" y2="176" stroke="#0972D3" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-link)"/>
+<!-- M4 Op->G click exemplar (muted) y=204 -->
+<line x1="92" y1="204" x2="284" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- M5 G->T query trace (link) y=232 -->
+<line x1="300" y1="232" x2="688" y2="232" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- M6 T-->G full trace (link dashed return) y=260 -->
+<line x1="696" y1="260" x2="300" y2="260" stroke="#0972D3" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-link)"/>
+<!-- M7 Op->G view slow span (muted) y=288 -->
+<line x1="92" y1="288" x2="284" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- M8 G->T span details (link) y=316 -->
+<line x1="300" y1="316" x2="688" y2="316" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- M9 Op->G view trace logs (muted) y=344 -->
+<line x1="92" y1="344" x2="284" y2="344" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- M10 G->L query logs (link) y=372 -->
+<line x1="300" y1="372" x2="892" y2="372" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<!-- M11 L-->G correlated logs (link dashed return) y=400 -->
+<line x1="900" y1="400" x2="300" y2="400" stroke="#0972D3" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-link)"/>
+<!-- M12 Op self-message: root cause found (accent, U-loop) y=428-456 -->
+<path d="M 100 428 L 140 428 L 140 456 L 100 456" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+<!-- =================== LABELS (mask + text; 6-10px gap above stroke) =================== -->
+<!-- M1 -->
+<rect x="128" y="104" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="188" y="114" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NOTICE SPIKE</text>
+<!-- M2 -->
+<rect x="336" y="132" width="116" height="12" rx="2" fill="#ffffff"/>
+<text x="394" y="142" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">QUERY ERRORS</text>
+<!-- M3 -->
+<rect x="330" y="160" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="394" y="170" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">METRICS+EXEMPLAR</text>
+<!-- M4 -->
+<rect x="126" y="188" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="188" y="198" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CLICK EXEMPLAR</text>
+<!-- M5 -->
+<rect x="434" y="216" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="490" y="226" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">QUERY TRACE</text>
+<!-- M6 -->
+<rect x="440" y="244" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="490" y="254" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FULL TRACE</text>
+<!-- M7 -->
+<rect x="118" y="272" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="188" y="282" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">VIEW SLOW SPAN</text>
+<!-- M8 -->
+<rect x="434" y="300" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="490" y="310" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SPAN DETAILS</text>
+<!-- M9 -->
+<rect x="112" y="328" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="188" y="338" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">VIEW TRACE LOGS</text>
+<!-- M10 -->
+<rect x="536" y="356" width="104" height="12" rx="2" fill="#ffffff"/>
+<text x="588" y="366" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">QUERY LOGS</text>
+<!-- M11 -->
+<rect x="524" y="384" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="588" y="394" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CORRELATED LOGS</text>
+<!-- M12 (accent, self message) -->
+<rect x="148" y="436" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="208" y="446" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ROOT CAUSE FOUND</text>
+
+<!-- =================== NOTE BAR: complete drill-down =================== -->
+<rect x="92" y="480" width="808" height="40" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.18)" stroke-width="1"/>
+<text x="496" y="496" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.16em">COMPLETE DRILL-DOWN</text>
+<text x="496" y="512" fill="#232F3E" font-style="italic" font-size="13" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metric &#8594; Trace &#8594; Logs</text>
+
+<!-- =================== ACTOR BOXES (drawn last, after arrows/labels) =================== -->
+<!-- Operator: input/user role -->
+<rect x="20" y="40" width="144" height="56" rx="6" fill="#ffffff"/>
+<rect x="20" y="40" width="144" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="28" y="48" width="32" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+<text x="44" y="57" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">USER</text>
+<text x="92" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operator</text>
+<text x="92" y="87" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">on-call</text>
+
+<!-- Grafana: focal actor -->
+<rect x="212" y="40" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="212" y="40" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="220" y="48" width="24" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="232" y="57" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">UI</text>
+<text x="292" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+<text x="292" y="87" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">exemplars</text>
+
+<!-- Prometheus: store -->
+<rect x="424" y="40" width="144" height="56" rx="6" fill="#ffffff"/>
+<rect x="424" y="40" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="432" y="48" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+<text x="450" y="57" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">TSDB</text>
+<text x="496" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+<text x="496" y="87" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">metrics</text>
+
+<!-- Tempo: store -->
+<rect x="624" y="40" width="144" height="56" rx="6" fill="#ffffff"/>
+<rect x="624" y="40" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="632" y="48" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+<text x="652" y="57" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">TRACE</text>
+<text x="696" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tempo</text>
+<text x="696" y="87" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">traces</text>
+
+<!-- Loki: store -->
+<rect x="828" y="40" width="144" height="56" rx="6" fill="#ffffff"/>
+<rect x="828" y="40" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="836" y="48" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+<text x="854" y="57" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">LOGS</text>
+<text x="900" y="72" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loki</text>
+<text x="900" y="87" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">logs</text>
+
+</svg>

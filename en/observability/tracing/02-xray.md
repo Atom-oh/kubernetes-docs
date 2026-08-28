@@ -19,56 +19,7 @@ AWS X-Ray is an AWS native service for tracing and analyzing requests in distrib
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph EKS["Amazon EKS Cluster"]
-        subgraph Apps["Application Pods"]
-            APP1[Service A<br/>X-Ray SDK]
-            APP2[Service B<br/>X-Ray SDK]
-            APP3[Service C<br/>X-Ray SDK]
-        end
-
-        subgraph Collector["Data Collection"]
-            DAEMON[X-Ray Daemon<br/>DaemonSet]
-            ADOT[ADOT Collector<br/>Sidecar/DaemonSet]
-        end
-    end
-
-    subgraph AWS["AWS Services"]
-        XRAY[AWS X-Ray]
-        CW[CloudWatch]
-        LENS[ServiceLens]
-        INSIGHTS[X-Ray Insights]
-    end
-
-    subgraph Other["Other AWS Services"]
-        LAMBDA[Lambda]
-        APIGW[API Gateway]
-        SQS[SQS]
-        SNS[SNS]
-    end
-
-    APP1 & APP2 & APP3 -->|Segments| DAEMON
-    APP1 & APP2 & APP3 -->|OTLP| ADOT
-    DAEMON -->|UDP/TCP| XRAY
-    ADOT -->|OTLP| XRAY
-
-    LAMBDA & APIGW & SQS & SNS -->|Auto instrumentation| XRAY
-
-    XRAY --> CW
-    XRAY --> LENS
-    XRAY --> INSIGHTS
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef other fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-
-    class APP1,APP2,APP3 app
-    class DAEMON,ADOT collector
-    class XRAY,CW,LENS,INSIGHTS aws
-    class LAMBDA,APIGW,SQS,SNS other
-```
+![Application pods in an Amazon EKS cluster, instrumented with the X-Ray SDK, send trace segments to an X-Ray daemon and OTLP data to an ADOT collector, both of which forward traces to AWS X-Ray; X-Ray also receives auto-instrumented traces from Lambda, API Gateway, SQS, and SNS, and in turn feeds CloudWatch, ServiceLens, and X-Ray Insights for analysis.](../../.gitbook/assets/en-observability-tracing-02-xray-0.png)
 
 ## X-Ray Daemon Deployment
 

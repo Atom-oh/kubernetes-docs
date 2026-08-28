@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="keda-arch-title keda-arch-desc">
+  <title id="keda-arch-title">KEDA 아키텍처</title>
+  <desc id="keda-arch-desc">KEDA는 쿠버네티스 클러스터 내부의 오퍼레이터, 메트릭 서버, HPA, ScaledObject/ScaledJob, 워크로드가 협력하여 메시지 큐·데이터베이스·스트리밍 플랫폼·커스텀 메트릭 같은 외부 이벤트 소스를 주기적으로 폴링하고, 그 결과에 따라 HPA를 통해 Deployment/Job을 스케일링하는 구조를 보여준다.</desc>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- ===================== Header ===================== -->
+  <text x="40" y="36" class="mono" font-size="8" letter-spacing="0.18em" fill="#7D8998">KUBERNETES EVENT-DRIVEN AUTOSCALING</text>
+  <text x="40" y="66" class="sans" font-size="24" font-weight="700" fill="#232F3E">KEDA 아키텍처</text>
+
+  <!-- ===================== Zones ===================== -->
+  <!-- Kubernetes Cluster zone -->
+  <rect x="284" y="108" width="572" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="518" y="112" width="104" height="12" rx="2" fill="#ffffff"/>
+  <text x="570" y="121" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em" fill="rgba(35,47,62,0.40)">KUBERNETES CLUSTER</text>
+
+  <!-- External Event Sources zone -->
+  <rect x="148" y="408" width="664" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="410" y="412" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="421" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.14em" fill="rgba(35,47,62,0.40)">EXTERNAL EVENT SOURCES</text>
+
+  <!-- ===================== Arrows (drawn before nodes) ===================== -->
+
+  <!-- A -> D  WATCHES (straight, y=166) -->
+  <path d="M440,166 H500" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="446" y="146" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="470" y="155" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.06em" fill="#EC7211">WATCHES</text>
+
+  <!-- A -> C  UPDATES (elbow, channel x=460, enters C top) -->
+  <path d="M440,186 H452 Q460,186 460,194 V264 Q460,272 468,272 H562 Q570,272 570,280"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="396" y="222" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="424" y="231" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.06em" fill="#7D8998">UPDATES</text>
+
+  <!-- B -> C  METRICS (straight, y=316) -->
+  <path d="M440,316 H500" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="442" y="296" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="470" y="305" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.06em" fill="#7D8998">METRICS</text>
+
+  <!-- D -> E  REFERENCES (straight, y=176) -->
+  <path d="M640,176 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="640" y="156" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="670" y="165" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.06em" fill="#7D8998">REFERENCES</text>
+
+  <!-- C -> E  SCALES (elbow, channel x=660, exits C right, enters E bottom) -->
+  <path d="M640,316 H652 Q660,316 660,308 V228 Q660,220 668,220 H762 Q770,220 770,212"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="689" y="228" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="715" y="237" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.06em" fill="#7D8998">SCALES</text>
+
+  <!-- B -> external sources (dashed, fanned attach points on B bottom edge; -->
+  <!-- hy depths nested (hy4<hy3<hy2) so no vertical crosses another's horizontal jog -->
+  <path d="M412,352 V360 Q412,368 420,368 H718 Q726,368 726,376 V440"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <path d="M384,352 V372 Q384,380 392,380 H554 Q562,380 562,388 V440"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <path d="M356,352 V384 Q356,392 364,392 H390 Q398,392 398,400 V440"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <path d="M328,352 V396 Q328,404 320,404 H242 Q234,404 234,412 V440"
+        fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="140" y="374" width="60" height="14" rx="2" fill="#ffffff"/>
+  <text x="170" y="384" class="mono" font-size="8" text-anchor="middle" letter-spacing="0.06em" fill="#7D8998">POLLS</text>
+
+  <!-- ===================== Nodes ===================== -->
+
+  <!-- A: KEDA Operator (focal) -->
+  <rect x="300" y="140" width="140" height="72" rx="6" fill="#ffffff"/>
+  <rect x="300" y="140" width="140" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="308" y="146" width="52" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.5)" stroke-width="0.8"/>
+  <text x="334" y="155" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="#EC7211">OPERATOR</text>
+  <text x="370" y="185" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">KEDA</text>
+  <text x="370" y="199" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Operator</text>
+
+  <!-- D: ScaledObject / ScaledJob -->
+  <rect x="500" y="140" width="140" height="72" rx="6" fill="#ffffff"/>
+  <rect x="500" y="140" width="140" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="508" y="146" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="522" y="155" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">CRD</text>
+  <text x="570" y="185" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">ScaledObject /</text>
+  <text x="570" y="199" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">ScaledJob</text>
+
+  <!-- E: Deployment / Job -->
+  <rect x="700" y="140" width="140" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="708" y="146" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="738" y="155" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">WORKLOAD</text>
+  <text x="770" y="185" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Deployment /</text>
+  <text x="770" y="199" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Job</text>
+
+  <!-- B: KEDA Metrics Server -->
+  <rect x="300" y="280" width="140" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="308" y="286" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="334" y="295" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">METRICS</text>
+  <text x="370" y="325" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">KEDA Metrics</text>
+  <text x="370" y="339" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Server</text>
+
+  <!-- C: Horizontal Pod Autoscaler -->
+  <rect x="500" y="280" width="140" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="508" y="286" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="522" y="295" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">HPA</text>
+  <text x="570" y="325" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Horizontal Pod</text>
+  <text x="570" y="339" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Autoscaler</text>
+
+  <!-- F: Message Queues -->
+  <rect x="164" y="440" width="140" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="172" y="446" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="192" y="455" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">QUEUE</text>
+  <text x="234" y="483" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Message</text>
+  <text x="234" y="497" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Queues</text>
+
+  <!-- G: Databases -->
+  <rect x="328" y="440" width="140" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="336" y="446" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="348" y="455" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">DB</text>
+  <text x="398" y="483" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Databases</text>
+
+  <!-- H: Streaming Platforms -->
+  <rect x="492" y="440" width="140" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="500" y="446" width="44" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="522" y="455" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">STREAM</text>
+  <text x="562" y="483" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Streaming</text>
+  <text x="562" y="497" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Platforms</text>
+
+  <!-- I: Custom Metrics -->
+  <rect x="656" y="440" width="140" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="664" y="446" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="690" y="455" class="mono" font-size="7" text-anchor="middle" letter-spacing="0.08em" fill="rgba(35,47,62,0.6)">CUSTOM</text>
+  <text x="726" y="483" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Custom</text>
+  <text x="726" y="497" class="sans" font-size="12" font-weight="600" text-anchor="middle" fill="#232F3E">Metrics</text>
+
+  <!-- ===================== Legend ===================== -->
+  <line x1="40" y1="552" x2="920" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="572" class="mono" font-size="8" letter-spacing="0.14em" fill="#545B64">LEGEND</text>
+
+  <line x1="130" y1="569" x2="158" y2="569" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="166" y="573" class="mono" font-size="8" fill="#545B64">직접 상호작용</text>
+
+  <line x1="310" y1="569" x2="338" y2="569" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="346" y="573" class="mono" font-size="8" fill="#545B64">주기적 폴링 (Polling)</text>
+
+  <rect x="560" y="562" width="16" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="584" y="573" class="mono" font-size="8" fill="#545B64">핵심 컴포넌트 (KEDA Operator)</text>
+
+</svg>

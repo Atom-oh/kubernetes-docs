@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+    <title id="d1-title">Argo Rollouts and Istio end-to-end architecture</title>
+    <desc id="d1-desc">Control plane: ArgoCD deploys to Argo Rollouts, which is the automation hub. Rollouts adjusts VirtualService weights, manages stable and canary pods, and creates AnalysisRuns. Istiod pushes xDS configuration into the data plane. In the data plane, the Gateway forwards to the VirtualService, which splits traffic through the DestinationRule to stable and canary services and pods. Pods emit metrics to Prometheus, which AnalysisRun queries; the result feeds back to Rollouts to decide whether to progress or roll back.</desc>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="24" y="32" width="912" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="44" width="112" height="16" rx="2" fill="#ffffff"/>
+    <text x="96" y="56" text-anchor="middle" font-size="8" letter-spacing="0.14em" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace">CONTROL PLANE</text>
+
+    <rect x="24" y="196" width="912" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="208" width="96" height="16" rx="2" fill="#ffffff"/>
+    <text x="88" y="220" text-anchor="middle" font-size="8" letter-spacing="0.14em" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace">DATA PLANE</text>
+
+    <rect x="24" y="360" width="912" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="372" width="104" height="16" rx="2" fill="#ffffff"/>
+    <text x="92" y="384" text-anchor="middle" font-size="8" letter-spacing="0.14em" fill="rgba(35,47,62,0.45)" font-family="'Geist Mono',monospace">OBSERVABILITY</text>
+
+    <!-- ============ ARROWS (before nodes) ============ -->
+    <!-- ArgoCD -> Rollouts -->
+    <line x1="228" y1="104" x2="372" y2="104" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Rollouts -> VirtualService -->
+    <path d="M 415,144 V 184 Q 415,192 407,192 H 268 Q 260,192 260,200 V 228" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Rollouts -> Pods -->
+    <path d="M 545,144 V 184 Q 545,192 553,192 H 807 Q 815,192 815,200 V 228" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Rollouts -> AnalysisRun (create), routed via right margin -->
+    <path d="M 430,144 V 152 Q 430,160 438,160 H 936 Q 944,160 944,168 V 400 Q 944,408 936,408 H 784 Q 776,408 776,416" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="632" y="148" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="676" y="157" text-anchor="middle" font-size="8" letter-spacing="0.06em" fill="#7D8998" font-family="'Geist Mono',monospace">CREATE RUN</text>
+
+    <!-- AnalysisRun -> Rollouts (result), dashed, routed via right margin -->
+    <path d="M 776,440 H 912 Q 920,440 920,432 V 184 Q 920,176 912,176 H 478 Q 470,176 470,168 V 144" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="632" y="164" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="676" y="173" text-anchor="middle" font-size="8" letter-spacing="0.06em" fill="#7D8998" font-family="'Geist Mono',monospace">RESULT</text>
+
+    <!-- Istiod -> VirtualService, dashed (xDS / config sync) -->
+    <path d="M 798,144 V 204 Q 798,212 790,212 H 318 Q 310,212 310,220 V 228" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="500" y="196" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="536" y="205" text-anchor="middle" font-size="8" letter-spacing="0.06em" fill="#7D8998" font-family="'Geist Mono',monospace">XDS SYNC</text>
+
+    <!-- Gateway -> VS -> DR -> Services -> Pods chain -->
+    <line x1="190" y1="264" x2="210" y2="264" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="360" y1="264" x2="400" y2="264" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="362" y="244" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="380" y="253" text-anchor="middle" font-size="8" letter-spacing="0.02em" fill="#7D8998" font-family="'Geist Mono',monospace">90/10</text>
+    <line x1="550" y1="264" x2="570" y2="264" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="264" x2="740" y2="264" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Pods -> Prometheus, dashed (metrics) -->
+    <path d="M 815,300 V 344 Q 815,352 807,352 H 398 Q 390,352 390,360 V 392" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="484" y="336" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="520" y="345" text-anchor="middle" font-size="8" letter-spacing="0.06em" fill="#7D8998" font-family="'Geist Mono',monospace">METRICS</text>
+
+    <!-- Prometheus -> AnalysisRun -->
+    <line x1="480" y1="428" x2="596" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="510" y="412" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="536" y="421" text-anchor="middle" font-size="8" letter-spacing="0.06em" fill="#7D8998" font-family="'Geist Mono',monospace">QUERY</text>
+
+    <!-- ============ NODES ============ -->
+    <rect x="48" y="64" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="48" y="64" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="138" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ArgoCD</text>
+    <text x="138" y="116" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">GitOps deployment</text>
+
+    <rect x="372" y="64" width="216" height="80" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="372" y="64" width="216" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="388" y="76" width="90" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.45)" stroke-width="0.8"/>
+    <text x="433" y="85" text-anchor="middle" font-size="7" letter-spacing="0.08em" fill="rgba(236,114,17,0.90)" font-family="'Geist Mono',monospace">CONTROLLER</text>
+    <text x="480" y="106" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Argo Rollouts</text>
+    <text x="480" y="122" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">automation hub</text>
+
+    <rect x="708" y="64" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="708" y="64" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="798" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Istiod</text>
+    <text x="798" y="116" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">Istio control plane</text>
+
+    <rect x="40" y="228" width="150" height="72" rx="6" fill="#ffffff"/>
+    <rect x="40" y="228" width="150" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="115" y="258" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Gateway</text>
+    <text x="115" y="274" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">external traffic</text>
+
+    <rect x="210" y="228" width="150" height="72" rx="6" fill="#ffffff"/>
+    <rect x="210" y="228" width="150" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="285" y="258" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">VirtualService</text>
+    <text x="285" y="274" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">routing rules</text>
+
+    <rect x="400" y="228" width="150" height="72" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="400" y="228" width="150" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="475" y="258" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">DestinationRule</text>
+    <text x="475" y="274" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">stable / canary subsets</text>
+
+    <rect x="570" y="228" width="150" height="72" rx="6" fill="#ffffff"/>
+    <rect x="570" y="228" width="150" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="645" y="258" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Stable / Canary Svc</text>
+    <text x="645" y="274" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">test-stable, test-canary</text>
+
+    <rect x="740" y="228" width="150" height="72" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="740" y="228" width="150" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="815" y="258" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Stable / Canary Pods</text>
+    <text x="815" y="274" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">v1, v2</text>
+
+    <rect x="300" y="392" width="180" height="72" rx="6" fill="#ffffff"/>
+    <rect x="300" y="392" width="180" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="390" y="422" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Prometheus</text>
+    <text x="390" y="438" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">metric collection</text>
+
+    <rect x="596" y="392" width="180" height="72" rx="6" fill="#ffffff"/>
+    <rect x="596" y="392" width="180" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="686" y="422" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">AnalysisRun</text>
+    <text x="686" y="438" text-anchor="middle" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">metric verification</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="520" x2="920" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="536" font-size="8" letter-spacing="0.14em" fill="#545B64" font-family="'Geist Mono',monospace">LEGEND</text>
+    <line x1="160" y1="533" x2="188" y2="533" stroke="#545B64" stroke-width="1.2"/>
+    <text x="196" y="536" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">control / data flow</text>
+    <line x1="380" y1="533" x2="408" y2="533" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="416" y="536" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">config sync / metrics</text>
+    <circle cx="640" cy="533" r="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="652" y="536" font-size="9" fill="#545B64" font-family="'Geist Mono',monospace">automation hub</text>
+
+    <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+  </svg>

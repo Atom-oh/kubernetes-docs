@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+  <title id="t0">Three connectivity models for air-gapped EKS Hybrid Nodes</title>
+  <desc id="d0">Three ways to run EKS Hybrid Nodes without direct internet access: fully air-gapped delivery by physical media, a partially air-gapped setup routed through an allow-listed proxy, and private connectivity over VPN or Direct Connect into a VPC that exposes AWS services through VPC endpoints, with VPC endpoints highlighted as the AWS-native path.</desc>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- eyebrow -->
+  <text x="40" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.14em">EKS HYBRID NODES · AIR-GAP CONNECTIVITY</text>
+
+  <!-- ===== Zones (bg -> zones) ===== -->
+  <!-- Zone 1 -->
+  <rect x="40" y="48" width="880" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="52" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="126" y="61" fill="rgba(35,47,62,0.55)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.10em">FULLY AIR-GAPPED</text>
+
+  <!-- Zone 2 -->
+  <rect x="40" y="192" width="880" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="196" width="188" height="12" rx="2" fill="#ffffff"/>
+  <text x="150" y="205" fill="rgba(35,47,62,0.55)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.10em">PARTIALLY AIR-GAPPED · PROXY</text>
+
+  <!-- Zone 3 -->
+  <rect x="40" y="336" width="880" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="340" width="252" height="12" rx="2" fill="#ffffff"/>
+  <text x="182" y="349" fill="rgba(35,47,62,0.55)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.10em">PRIVATE CONNECTIVITY · VPN/DX + VPC ENDPOINT</text>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+  </defs>
+
+  <!-- ===== Arrows (row 1: no labels) ===== -->
+  <line x1="264" y1="116" x2="376" y2="116" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="576" y1="116" x2="688" y2="116" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Arrows (row 2) ===== -->
+  <line x1="264" y1="260" x2="376" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="284" y="240" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="320" y="249" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">ALLOW-LISTED</text>
+
+  <line x1="576" y1="260" x2="688" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="600" y="240" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="632" y="249" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">SELECTIVE</text>
+
+  <!-- ===== Arrows (row 3) ===== -->
+  <line x1="264" y1="404" x2="376" y2="404" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="292" y="384" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="320" y="393" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">VPN / DX</text>
+
+  <line x1="576" y1="404" x2="688" y2="404" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- ===== Nodes ===== -->
+  <!-- A1 -->
+  <rect x="64" y="80" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="64" y="80" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="164" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">No Internet Connectivity</text>
+
+  <!-- A2 -->
+  <rect x="376" y="80" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="376" y="80" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="476" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Physical Media Delivery</text>
+
+  <!-- A3 -->
+  <rect x="688" y="80" width="200" height="72" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="688" y="80" width="200" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="788" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">USB / DVD / Removable HDD</text>
+
+  <!-- B1 -->
+  <rect x="64" y="224" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)"/>
+  <rect x="64" y="224" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="164" y="256" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Internal Network</text>
+  <text x="164" y="270" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Restricted Access</text>
+
+  <!-- B2 -->
+  <rect x="376" y="224" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="376" y="224" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="476" y="264" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Proxy Server</text>
+
+  <!-- B3 -->
+  <rect x="688" y="224" width="200" height="72" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="688" y="224" width="200" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="788" y="264" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Internet</text>
+
+  <!-- C1 -->
+  <rect x="64" y="368" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)"/>
+  <rect x="64" y="368" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="164" y="408" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">On-Premises Network</text>
+
+  <!-- C2 -->
+  <rect x="376" y="368" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="376" y="368" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="476" y="408" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">AWS VPC</text>
+
+  <!-- C3 (focal) -->
+  <rect x="688" y="368" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="688" y="368" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="788" y="402" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC Endpoints</text>
+  <text x="788" y="418" fill="#545B64" font-size="9" class="mono" text-anchor="middle">S3, ECR, ETC.</text>
+
+</svg>

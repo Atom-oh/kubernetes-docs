@@ -28,40 +28,7 @@ Istio는 두 가지 유형의 인증을 제공합니다:
    - OAuth/OIDC 제공자 통합
    - RequestAuthentication CRD로 구성
 
-```mermaid
-flowchart TB
-    User[사용자]
-    
-    subgraph AuthProvider["인증 제공자"]
-        OAuth[OAuth/OIDC<br/>Provider]
-    end
-    
-    subgraph Gateway["Istio Gateway"]
-        ReqAuth[Request<br/>Authentication<br/>JWT 검증]
-    end
-    
-    subgraph Services["서비스"]
-        App[애플리케이션]
-    end
-    
-    User -->|1. 로그인| OAuth
-    OAuth -->|2. JWT 토큰| User
-    User -->|3. JWT 포함 요청| ReqAuth
-    ReqAuth -->|4. 검증 성공| App
-    ReqAuth -.->|검증 실패| User
-    
-    %% 스타일 정의
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef auth fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class User user;
-    class OAuth auth;
-    class ReqAuth gateway;
-    class App app;
-```
+![사용자가 OAuth/OIDC 제공자에게 로그인해 JWT 토큰을 받고, 그 토큰을 실은 요청이 Istio Gateway의 Request Authentication에서 검증되어 성공하면 애플리케이션으로 전달되고 실패하면 사용자에게 되돌아가는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-02-authentication-0.png)
 
 ## Request Authentication (JWT)
 

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="tempo-arch-title tempo-arch-desc">
+<title id="tempo-arch-title">Tempo distributed tracing architecture</title>
+<desc id="tempo-arch-desc">Applications send traces through an OTEL Collector into Tempo's distributor, which hands off to the ingester for block storage in S3 and metric generation feeding Grafana; Grafana queries back through the query frontend and querier, which search S3 and cache results in Memcached, while a separate compactor writes retention-managed blocks to S3.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}
+    .mono{font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace;}
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ZONES (painted first) ============ -->
+<!-- Ingestion zone -->
+<rect x="40" y="40" width="248" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="44" width="126" height="12" rx="2" fill="#ffffff"/>
+<text x="119" y="53" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">DATA INGESTION</text>
+
+<!-- Tempo Cluster zone -->
+<rect x="40" y="204" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="208" width="104" height="12" rx="2" fill="#ffffff"/>
+<text x="108" y="217" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">TEMPO CLUSTER</text>
+
+<!-- Storage zone -->
+<rect x="316" y="400" width="336" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="582" y="404" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="612" y="413" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">STORAGE</text>
+
+<!-- ============ ARROWS (painted before nodes) ============ -->
+
+<!-- APP -> OTEL : straight horizontal (short hop, no label — flow order carries the meaning) -->
+<path d="M 164,100 H 188" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- OTEL -> DIST : elbow down-left -->
+<path d="M 238,124 V 180 Q 238,188 230,188 H 128 Q 120,188 120,196 V 248"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="146" y="176" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="161" y="185" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">OTLP</text>
+
+<!-- DIST -> ING : straight horizontal (short hop, no label — flow order carries the meaning) -->
+<path d="M 176,276 H 208" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ING -> METRICS : straight horizontal (short hop, no label) -->
+<path d="M 320,276 H 352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- METRICS -> GRAFANA : elbow up -->
+<path d="M 408,248 V 216 Q 408,208 416,208 H 468 Q 476,208 476,200 V 188"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="422" y="196" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="452" y="205" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">RED METRICS</text>
+
+<!-- GRAFANA -> QFRONT : elbow down -->
+<path d="M 508,188 V 200 Q 508,208 516,208 H 544 Q 552,208 552,216 V 248"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="522" y="220" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="546" y="229" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">TRACEQL</text>
+
+<!-- QFRONT -> QUERY : straight horizontal (short hop, no label) -->
+<path d="M 640,276 H 608" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ING -> S3 : elbow down (leftmost lane, y=392) -->
+<path d="M 264,304 V 384 Q 264,392 272,392 H 364 Q 372,392 372,400 V 444"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="292" y="380" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="328" y="389" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">BLOCK STORAGE</text>
+
+<!-- QUERY -> S3 : elbow (lane y=352, attach x=677) -->
+<path d="M 677,304 V 344 Q 677,352 669,352 H 412 Q 404,352 404,360 V 444"
+      fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="580" y="340" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="603" y="349" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">SEARCH</text>
+
+<!-- QUERY -> CACHE : elbow (lane y=364, attach x=715) -->
+<path d="M 715,304 V 356 Q 715,364 707,364 H 572 Q 564,364 564,372 V 444"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="668" y="352" width="66" height="12" rx="2" fill="#ffffff"/>
+<text x="701" y="361" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">CACHE READ</text>
+
+<!-- COMPACT -> S3 : elbow (lane y=384) with hop bridging QUERY->CACHE's vertical at x=564 -->
+<path d="M 840,304 V 376 Q 840,384 832,384 H 572 a 8,8 0 0,0 -16,0 H 460 Q 436,384 436,392 V 444"
+      fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="440" y="366" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="470" y="375" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">COMPACT</text>
+
+<!-- ============ NODES ============ -->
+
+<!-- APP (input) -->
+<rect x="64" y="76" width="100" height="48" rx="6" fill="#ffffff"/>
+<rect x="64" y="76" width="100" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="114" y="104" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Applications</text>
+
+<!-- OTEL (backend) -->
+<rect x="188" y="76" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="238" y="96" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">OTEL</text>
+<text x="238" y="110" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Collector</text>
+
+<!-- GRAFANA (external) -->
+<rect x="440" y="140" width="104" height="48" rx="6" fill="#ffffff"/>
+<rect x="440" y="140" width="104" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="492" y="168" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Grafana</text>
+
+<!-- DIST (backend) -->
+<rect x="64" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120" y="280" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Distributor</text>
+
+<!-- ING (backend) -->
+<rect x="208" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="264" y="280" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Ingester</text>
+
+<!-- METRICS (backend) -->
+<rect x="352" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="408" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Metrics</text>
+<text x="408" y="286" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Generator</text>
+
+<!-- QFRONT (backend) -->
+<rect x="496" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="552" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Query</text>
+<text x="552" y="286" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Frontend</text>
+
+<!-- QUERY (backend) -->
+<rect x="640" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="696" y="280" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Querier</text>
+
+<!-- COMPACT (backend) -->
+<rect x="784" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="280" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Compactor</text>
+
+<!-- S3 (focal store) -->
+<rect x="340" y="444" width="128" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="444" width="128" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="404" y="468" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">S3 / Object</text>
+<text x="404" y="482" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Storage</text>
+
+<!-- CACHE (store) -->
+<rect x="500" y="444" width="128" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="444" width="128" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="564" y="468" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Memcached</text>
+<text x="564" y="482" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">/ Redis</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="552" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+<rect x="120" y="545" width="12" height="12" rx="3" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="140" y="554" fill="#545B64" font-size="9" class="mono">Application layer</text>
+
+<rect x="292" y="545" width="12" height="12" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="312" y="554" fill="#545B64" font-size="9" class="mono">Tempo component</text>
+
+<rect x="472" y="545" width="12" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="492" y="554" fill="#545B64" font-size="9" class="mono">Primary store</text>
+
+<rect x="616" y="545" width="12" height="12" rx="3" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="636" y="554" fill="#545B64" font-size="9" class="mono">Cache store</text>
+
+<rect x="740" y="545" width="12" height="12" rx="3" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="760" y="554" fill="#545B64" font-size="9" class="mono">External system</text>
+
+</svg>

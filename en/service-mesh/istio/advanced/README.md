@@ -21,46 +21,7 @@ This section covers advanced Istio features and in-depth topics needed for produ
 
 ### Key Topics
 
-```mermaid
-flowchart TB
-    subgraph Deployment["Deployment Modes"]
-        Sidecar[Sidecar Mode<br/>Traditional Approach]
-        Ambient[Ambient Mode<br/>New Architecture]
-    end
-
-    subgraph MultiCluster["Multi-cluster"]
-        Primary[Primary Cluster<br/>Control Plane]
-        Remote[Remote Cluster<br/>Workload Only]
-    end
-
-    subgraph Advanced["Advanced Features"]
-        EnvoyFilter[EnvoyFilter<br/>Customization]
-        DNS[DNS Caching<br/>Performance Optimization]
-        Protocol[gRPC/WebSocket<br/>Protocol Support]
-    end
-
-    subgraph Integration["Integration"]
-        ArgoRollouts[Argo Rollouts<br/>Progressive Delivery]
-    end
-
-    Sidecar --> EnvoyFilter
-    Ambient --> EnvoyFilter
-    Primary --> Remote
-    EnvoyFilter --> Protocol
-    ArgoRollouts -.-> Sidecar
-
-    %% Style definitions
-    classDef deployment fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef multi fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef advanced fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef integration fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class assignments
-    class Sidecar,Ambient deployment;
-    class Primary,Remote multi;
-    class EnvoyFilter,DNS,Protocol advanced;
-    class ArgoRollouts integration;
-```
+![Map of advanced Istio topics: sidecar and ambient deployment modes both feed into EnvoyFilter customization, which unlocks gRPC/WebSocket protocol support; multi-cluster topology and Argo Rollouts integration are related but separate concerns, with Argo Rollouts triggering sidecar-based canary pods.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-0.png)
 
 ## 1. Ambient Mode
 
@@ -78,37 +39,7 @@ A new data plane architecture introduced in Istio 1.28+.
 
 ### Ambient Mode Architecture
 
-```mermaid
-flowchart TB
-    subgraph Pod1["Pod (App Only)"]
-        App1[Application<br/>No Sidecar]
-    end
-
-    subgraph Node["Kubernetes Node"]
-        Ztunnel[ztunnel<br/>L4 Proxy<br/>mTLS, Telemetry]
-    end
-
-    subgraph Waypoint["Waypoint Proxy (Optional)"]
-        WP[Waypoint<br/>L7 Proxy<br/>Advanced Routing]
-    end
-
-    App1 -->|Transparent| Ztunnel
-    Ztunnel -->|L4 only| Service[Service]
-    Ztunnel -.->|L7 needed| WP
-    WP --> Service
-
-    %% Style definitions
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class assignments
-    class App1 pod;
-    class Ztunnel ztunnel;
-    class WP waypoint;
-    class Service service;
-```
+![A sidecar-free application pod sends traffic transparently to the node-level ztunnel, which forwards L4 traffic directly to the service and only detours through an optional waypoint proxy when L7 routing is required.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-1.png)
 
 **More details**: [Ambient Mode Detailed Guide](01-ambient-mode.md)
 
@@ -118,36 +49,7 @@ Connect multiple Kubernetes clusters as a single service mesh.
 
 ### Multi-cluster Topology
 
-```mermaid
-flowchart TB
-    subgraph Primary["Primary Cluster<br/>us-east-1"]
-        CP1[Istiod<br/>Control Plane]
-        Service1[Service A]
-    end
-
-    subgraph Remote1["Remote Cluster 1<br/>us-west-2"]
-        Service2[Service B]
-    end
-
-    subgraph Remote2["Remote Cluster 2<br/>eu-west-1"]
-        Service3[Service C]
-    end
-
-    CP1 -.->|Config Push| Service2
-    CP1 -.->|Config Push| Service3
-    Service1 <-->|Cross-cluster<br/>Communication| Service2
-    Service1 <-->|Cross-cluster<br/>Communication| Service3
-
-    %% Style definitions
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class assignments
-    class CP1 primary;
-    class Service2,Service3 remote;
-    class Service1 service;
-```
+![The primary cluster's control plane pushes configuration to two remote clusters while Service A communicates directly across the mesh with the service in each remote cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-2.png)
 
 **Use Cases**:
 - Multi-region deployment
@@ -289,31 +191,7 @@ Covers sidecar proxy injection mechanisms and customization.
 
 ### Injection Methods
 
-```mermaid
-flowchart TB
-    Pod[Pod Creation]
-    Check{Namespace has<br/>label?}
-    Inject[Sidecar Injection]
-    Deploy[Pod Deployment]
-    Skip[Skip Injection]
-
-    Pod --> Check
-    Check -->|istio-injection=enabled| Inject
-    Check -->|No| Skip
-    Inject --> Deploy
-    Skip --> Deploy
-
-    %% Style definitions
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef inject fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class assignments
-    class Pod,Deploy pod;
-    class Check decision;
-    class Inject inject;
-    class Skip pod;
-```
+![Flowchart showing that a new pod's namespace label determines whether the Envoy sidecar is injected or skipped before the pod is deployed.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-3.png)
 
 **More details**: [Sidecar Injection Guide](07-sidecar-injection.md)
 
@@ -371,46 +249,7 @@ Implement Istio metrics-based autoscaling using KEDA.
 
 ### KEDA Architecture
 
-```mermaid
-flowchart TB
-    subgraph IstioMesh[Istio Service Mesh]
-        Service[Service<br/>with Envoy]
-        Envoy[Envoy Proxy]
-        Service --> Envoy
-    end
-
-    subgraph Observability[Observability Stack]
-        Prometheus[Prometheus<br/>Metrics Collection]
-        CloudWatch[CloudWatch<br/>AWS Metrics]
-    end
-
-    subgraph Autoscaling[Autoscaling]
-        KEDA[KEDA<br/>Operator]
-        HPA[HPA<br/>Controller]
-        ScaledObject[ScaledObject<br/>Policy]
-    end
-
-    Envoy -->|Metrics| Prometheus
-    Envoy -->|Metrics| CloudWatch
-
-    Prometheus -->|Query| KEDA
-    CloudWatch -->|Query| KEDA
-
-    KEDA -->|Create/Manage| HPA
-    ScaledObject -->|Define| KEDA
-
-    HPA -->|Scale| Service
-
-    %% Style definitions
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef observability fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef autoscaling fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% Class assignments
-    class Service,Envoy istio;
-    class Prometheus,CloudWatch observability;
-    class KEDA,HPA,ScaledObject autoscaling;
-```
+![Envoy's metrics flow through Prometheus and CloudWatch to KEDA, which reads a ScaledObject policy and manages the HPA that scales the mesh service back up, closing the autoscaling loop.](../../../.gitbook/assets/en-service-mesh-istio-advanced-README-4.png)
 
 ### Key Scaling Strategies
 

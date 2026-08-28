@@ -10,49 +10,7 @@
 
 ![Observability Architecture Overview](../../.gitbook/assets/architecture-overview.png)
 
-```mermaid
-flowchart TB
-    subgraph MC["Managed Cluster (EKS)"]
-        ArgoCD["ArgoCD + Argo Rollouts"]
-        subgraph ObsStack["Observability Stack"]
-            Metrics["Metrics: Prometheus, VictoriaMetrics, Mimir"]
-            Logs["Logs: Loki, ClickHouse"]
-            Traces["Traces: Tempo, OTel Collector"]
-            Alert["Alert: Alertmanager, Grafana OnCall"]
-            Viz["Viz: Grafana"]
-        end
-        LoadTest["Load Testing: k6 / Locust"]
-    end
-    subgraph SC["Service Cluster (EKS)"]
-        subgraph MSA["MSA Application (OTel Instrumented)"]
-            APIGW["API Gateway (Go)"]
-            Order["Order Service (Python)"]
-            Payment["Payment Service (Java)"]
-            Notif["Notification Service (Node.js)"]
-            Batch["Analytics Batch (Python)"]
-        end
-        Karpenter["Karpenter"]
-        KEDA["KEDA"]
-        OTelAgent["OTel Agent (DaemonSet)"]
-    end
-    subgraph AWS["AWS Managed Services"]
-        AMP & AMG & CW["CloudWatch"] & OS["OpenSearch"]
-        SQS_SNS["SQS/SNS"] & Aurora & MWAA
-    end
-    ArgoCD -->|deploys| MSA
-    APIGW --> Order --> Payment
-    Order --> Aurora
-    Payment --> Aurora
-    Order -->|publish| SQS_SNS
-    SQS_SNS -->|consume| Notif
-    MWAA -->|trigger| Batch
-    OTelAgent -->|send| ObsStack
-    Metrics -->|remote write| AMP
-    Logs -->|ship| OS
-    Logs -->|ship| CW
-    Traces -->|export| CW
-    Alert -->|notify| SQS_SNS
-```
+![EKS 관리 클러스터의 ArgoCD·관측 스택과 EKS 서비스 클러스터의 MSA 애플리케이션이 Aurora, SQS/SNS, 관측 백엔드, MWAA 등 AWS 관리형 서비스와 연동되는 실습 플랫폼 전체 아키텍처](../../.gitbook/assets/ko-labs-observability-README-0.png)
 
 ***
 
@@ -137,14 +95,7 @@ aws sts get-caller-identity --query "Account" --output text 2>/dev/null && echo 
 
 ## 실습 순서
 
-```mermaid
-flowchart LR
-    P1["Part 1<br/>인프라 구성"] --> P2["Part 2<br/>Observability 스택"]
-    P2 --> P3["Part 3<br/>MSA 배포"]
-    P3 --> P4["Part 4<br/>부하 테스트"]
-    P4 --> P5["Part 5<br/>알림 및 AIOps"]
-    P5 --> P6["Part 6<br/>분산 추적"]
-```
+![관찰 가능성 실습이 인프라 구성부터 분산 추적까지 여섯 단계(Part 1~6)를 순서대로 진행하는 학습 로드맵](../../.gitbook/assets/ko-labs-observability-README-1.png)
 
 | Part                                     | 제목                  | 소요 시간 | 주요 내용                                           |
 | ---------------------------------------- | ------------------- | ----- | ----------------------------------------------- |
@@ -171,33 +122,7 @@ flowchart LR
 
 ### MSA 서비스 호출 흐름
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant APIGW as API Gateway (Go)
-    participant Order as Order Service (Python)
-    participant Payment as Payment Service (Java)
-    participant Aurora as Aurora PostgreSQL
-    participant SQS as SQS Queue
-    participant Notif as Notification Service (Node.js)
-    participant SNS as SNS Topic
-    Client->>APIGW: POST /orders
-    APIGW->>Order: Forward request
-    Order->>Aurora: INSERT order
-    Aurora-->>Order: OK
-    Order->>SQS: Publish order_created event
-    Order-->>APIGW: 201 Created
-    APIGW-->>Client: 201 Created
-    SQS->>Notif: Consume message
-    Notif->>Notif: Send notification
-    Client->>APIGW: POST /payments
-    APIGW->>Payment: Forward request
-    Payment->>Aurora: INSERT payment
-    Aurora-->>Payment: OK
-    Payment->>SNS: Publish payment_completed
-    Payment-->>APIGW: 200 OK
-    APIGW-->>Client: 200 OK
-```
+![클라이언트의 주문 생성 요청이 API Gateway와 주문·결제 서비스를 거쳐 Aurora에 기록되고, 이벤트가 SQS/SNS로 발행되어 알림 서비스가 이를 소비하는 흐름을 보여주는 시퀀스 다이어그램](../../.gitbook/assets/ko-labs-observability-README-2.png)
 
 ***
 

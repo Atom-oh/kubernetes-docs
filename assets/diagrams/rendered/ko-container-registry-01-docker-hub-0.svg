@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dh-tiers-title dh-tiers-desc">
+      <title id="dh-tiers-title">Docker Hub 이미지 신뢰 등급</title>
+      <desc id="dh-tiers-desc">Docker Hub에 존재하는 세 가지 이미지 신뢰 등급(공식 이미지, 인증된 게시자, 커뮤니티 이미지)을 나란히 비교하는 다이어그램.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Zone: Docker Hub -->
+      <rect x="48" y="184" width="864" height="188" rx="8"
+            fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="428" y="188" width="104" height="12" rx="2" fill="#ffffff"/>
+      <text x="480" y="197" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">DOCKER HUB</text>
+
+      <!-- Box 1: Official Images (focal) -->
+      <rect x="80" y="216" width="240" height="140" rx="6" fill="#ffffff"/>
+      <rect x="80" y="216" width="240" height="140" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <rect x="92" y="228" width="60" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="122" y="237" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">OFFICIAL</text>
+      <text x="200" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Official Images</text>
+      <text x="200" y="296" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">nginx, postgres,</text>
+      <text x="200" y="310" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">redis</text>
+      <text x="200" y="336" fill="#7D8998" font-size="9" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Docker · 공인 검증</text>
+
+      <!-- Box 2: Verified Publishers (backend) -->
+      <rect x="360" y="216" width="240" height="140" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="372" y="228" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="402" y="237" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VERIFIED</text>
+      <text x="480" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Verified Publishers</text>
+      <text x="480" y="296" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">bitnami/, hashicorp/,</text>
+      <text x="480" y="310" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">datadog/</text>
+      <text x="480" y="336" fill="#7D8998" font-size="9" font-family="'Amazon Ember', sans-serif" text-anchor="middle">벤더 서명 검증</text>
+
+      <!-- Box 3: Community Images (external) -->
+      <rect x="640" y="216" width="240" height="140" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="652" y="228" width="72" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+      <text x="688" y="237" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">COMMUNITY</text>
+      <text x="760" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Community Images</text>
+      <text x="760" y="296" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">user/myapp,</text>
+      <text x="760" y="310" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">org/service</text>
+      <text x="760" y="336" fill="#7D8998" font-size="9" font-family="'Amazon Ember', sans-serif" text-anchor="middle">검증 없는 게시</text>
+
+      <!-- Legend strip -->
+      <line x1="48" y1="452" x2="912" y2="452" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="48" y="468" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND · 신뢰 등급</text>
+
+      <rect x="48" y="484" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="68" y="492" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">공식 · Docker 직접 관리</text>
+
+      <rect x="308" y="484" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="328" y="492" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">인증 · 벤더 서명 확인</text>
+
+      <rect x="568" y="484" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="588" y="492" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">커뮤니티 · 무검증 게시</text>
+    </svg>

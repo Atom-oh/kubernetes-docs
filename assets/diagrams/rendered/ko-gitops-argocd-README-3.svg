@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="argocd-path-title argocd-path-desc">
+    <title id="argocd-path-title">ArgoCD 문서 학습 경로</title>
+    <desc id="argocd-path-desc">초급 설치 문서에서 시작해 중급 단계인 Applications·동기화 전략·RBAC·보안·알림을 거쳐, 고급 단계인 ApplicationSets·트래픽 관리·모범 사례로 이어지는 학습 순서를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545b64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ec7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ============ ZONES (level bands) ============ -->
+    <rect x="24" y="28"  width="180" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="24" y="140" width="856" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="24" y="252" width="572" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+
+    <rect x="52" y="32" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="76" y="41" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">초급</text>
+
+    <rect x="52" y="144" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="76" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">중급</text>
+
+    <rect x="52" y="256" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="76" y="265" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">고급</text>
+
+    <!-- ============ ARROWS ============ -->
+    <!-- A -> B (straight vertical, same column) -->
+    <line x1="116" y1="128" x2="116" y2="176" stroke="#ec7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- B -> C -->
+    <line x1="188" y1="208" x2="208" y2="208" stroke="#545b64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- C -> D -->
+    <line x1="352" y1="208" x2="372" y2="208" stroke="#545b64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- D -> E -->
+    <line x1="516" y1="208" x2="536" y2="208" stroke="#545b64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- E -> F -->
+    <line x1="680" y1="208" x2="700" y2="208" stroke="#545b64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- B -> G (straight vertical, same column) -->
+    <line x1="116" y1="240" x2="116" y2="288" stroke="#545b64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- C -> H (straight vertical, same column) -->
+    <line x1="280" y1="240" x2="280" y2="288" stroke="#545b64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- F -> I (elbow: down, left above row3, down into top edge) -->
+    <path d="M 772,240 V 272 Q 772,280 764,280 H 480 V 288"
+          fill="none" stroke="#545b64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- G -> I (straight, fanned attach y=312) -->
+    <line x1="188" y1="312" x2="372" y2="312" stroke="#545b64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- H -> I (straight, fanned attach y=328) -->
+    <line x1="352" y1="328" x2="372" y2="328" stroke="#545b64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ============ NODES ============ -->
+    <!-- A: 01. 설치 (focal start) -->
+    <rect x="44" y="64" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="64" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#ec7211" stroke-width="1"/>
+    <text x="116" y="90" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">01. 설치</text>
+    <text x="116" y="106" fill="#ec7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">시작</text>
+
+    <!-- B: 02. Applications -->
+    <rect x="44" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232f3e" stroke-width="1"/>
+    <text x="116" y="202" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">02.</text>
+    <text x="116" y="218" fill="#232f3e" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Applications</text>
+
+    <!-- C: 03. 동기화 전략 -->
+    <rect x="208" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232f3e" stroke-width="1"/>
+    <text x="280" y="202" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">03. 동기화</text>
+    <text x="280" y="218" fill="#232f3e" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">전략</text>
+
+    <!-- D: 06. RBAC -->
+    <rect x="372" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232f3e" stroke-width="1"/>
+    <text x="444" y="212" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">06. RBAC</text>
+
+    <!-- E: 07. 보안 -->
+    <rect x="536" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232f3e" stroke-width="1"/>
+    <text x="608" y="212" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">07. 보안</text>
+
+    <!-- F: 08. 알림 -->
+    <rect x="700" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232f3e" stroke-width="1"/>
+    <text x="772" y="212" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">08. 알림</text>
+
+    <!-- G: 04. ApplicationSets -->
+    <rect x="44" y="288" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="288" width="144" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="116" y="314" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">04. Application-</text>
+    <text x="116" y="330" fill="#232f3e" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sets</text>
+
+    <!-- H: 05. 트래픽 관리 -->
+    <rect x="208" y="288" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="208" y="288" width="144" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="280" y="324" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">05. 트래픽 관리</text>
+
+    <!-- I: 09. 모범 사례 (focal end) -->
+    <rect x="372" y="288" width="216" height="64" rx="6" fill="#ffffff"/>
+    <rect x="372" y="288" width="216" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#ec7211" stroke-width="1"/>
+    <text x="480" y="314" fill="#232f3e" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">09. 모범 사례</text>
+    <text x="480" y="330" fill="#ec7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">종합</text>
+
+    <!-- ============ LEGEND ============ -->
+    <line x1="24" y1="440" x2="936" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="24" y="456" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#ec7211" stroke-width="1"/>
+    <text x="44" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">시작 / 종합 문서</text>
+
+    <rect x="196" y="456" width="14" height="10" rx="2" fill="#ffffff" stroke="#232f3e" stroke-width="1"/>
+    <text x="216" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">필수 학습 문서</text>
+
+    <rect x="376" y="456" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="396" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">고급 / 선택 문서</text>
+
+    <line x1="560" y1="461" x2="588" y2="461" stroke="#545b64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="596" y="465" fill="#545b64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">고급 단계로 분기</text>
+  </svg>

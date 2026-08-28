@@ -28,39 +28,7 @@ Istio AuthorizationPolicy provides fine-grained access control for services. The
 - **Operation**: HTTP method, path, port
 - **Conditions**: Custom conditions (headers, JWT claims, etc.)
 
-```mermaid
-flowchart TB
-    Request[Request]
-
-    subgraph AuthZ["Authorization Policy"]
-        Check1{Service Account<br/>Check}
-        Check2{Namespace<br/>Check}
-        Check3{HTTP Method<br/>Check}
-    end
-
-    Allow[Allow]
-    Deny[Deny]
-
-    Request --> Check1
-    Check1 -->|Match| Check2
-    Check1 -.->|No Match| Deny
-    Check2 -->|Match| Check3
-    Check2 -.->|No Match| Deny
-    Check3 -->|Match| Allow
-    Check3 -.->|No Match| Deny
-
-    %% Style definitions
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef result fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef deny fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Request request;
-    class Check1,Check2,Check3 check;
-    class Allow result;
-    class Deny deny;
-```
+![A flowchart showing Istio AuthorizationPolicy evaluating a request through three sequential checks — service account, namespace, and HTTP method — where any failed check immediately denies and audit-logs the request, while passing all three allows it.](../../../.gitbook/assets/en-service-mesh-istio-security-03-authorization-0.png)
 
 ## Basic Policies
 

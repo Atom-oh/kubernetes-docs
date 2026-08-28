@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="ebpf-title ebpf-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="ebpf-title">Traditional code-based instrumentation compared with eBPF kernel-level instrumentation</title>
+    <desc id="ebpf-desc">Traditional instrumentation requires adding an SDK and redeploying code before data collection begins, while eBPF instrumentation reaches the same data collection through kernel-level hooks without any change to the running application.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <text x="320" y="96" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TRADITIONAL INSTRUMENTATION</text>
+    <text x="320" y="228" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EBPF INSTRUMENTATION</text>
+
+    <!-- ===== Connectors: traditional row ===== -->
+    <path d="M 200,152 H 232" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 376,152 H 408" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 552,152 H 584" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Connectors: eBPF row ===== -->
+    <path d="M 200,412 H 232" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 376,412 H 408" fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+    <path d="M 480,312 V 380" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M 552,412 H 584" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- ===== Traditional row nodes ===== -->
+    <rect x="56" y="120" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="56" y="120" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="128" y="148" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application Code</text>
+    <text x="128" y="166" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">unmodified</text>
+
+    <rect x="232" y="120" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="232" y="120" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="304" y="148" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Add SDK</text>
+    <text x="304" y="166" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">per-language</text>
+
+    <rect x="408" y="120" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="408" y="120" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="148" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Modify / Redeploy</text>
+    <text x="480" y="166" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">code change required</text>
+
+    <rect x="584" y="120" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="584" y="120" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="656" y="148" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data Collection</text>
+    <text x="656" y="166" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">app-level only</text>
+
+    <!-- ===== eBPF satellite node ===== -->
+    <rect x="408" y="248" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="408" y="248" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="276" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF Program</text>
+    <text x="480" y="294" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">loaded once, no rebuild</text>
+
+    <!-- ===== eBPF row nodes ===== -->
+    <rect x="56" y="380" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="56" y="380" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="128" y="408" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application Code</text>
+    <text x="128" y="426" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">unmodified</text>
+
+    <rect x="232" y="380" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="232" y="380" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="304" y="408" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">No Changes</text>
+    <text x="304" y="426" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">zero code touch</text>
+
+    <!-- Kernel-level Hooks (focal) -->
+    <rect x="408" y="380" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="408" y="380" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="408" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kernel-Level Hooks</text>
+    <text x="480" y="426" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">very low overhead</text>
+
+    <rect x="584" y="380" width="144" height="64" rx="6" fill="#ffffff"/>
+    <rect x="584" y="380" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="656" y="408" fill="#232F3E" font-size="12" font-weight="600"
+          font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data Collection</text>
+    <text x="656" y="426" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">whole-system view</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="500" x2="936" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="518" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="515" x2="172" y2="515" stroke="#545B64" stroke-width="1.2"/>
+    <text x="182" y="518" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Same-lane data path</text>
+    <line x1="360" y1="515" x2="392" y2="515" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="402" y="518" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Enables (no code changes needed)</text>
+  </svg>

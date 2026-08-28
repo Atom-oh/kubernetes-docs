@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="disttrain-title disttrain-desc">
+    <title id="disttrain-title">Distributed training architecture: MPI job, communication layer, and shared storage</title>
+    <desc id="disttrain-desc">Diagram showing a launcher pod starting four worker pods that exchange gradients bidirectionally over NVIDIA NCCL, which runs over MPI and the Elastic Fabric Adapter; the worker pods also write to FSx for Lustre, which syncs to Amazon S3 and a checkpoint store.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="56" width="232" height="192" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="48" y="60" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="60" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">MPI JOB</text>
+
+    <rect x="344" y="56" width="232" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="352" y="60" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="364" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">COMMUNICATION LAYER</text>
+
+    <rect x="680" y="56" width="232" height="184" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="688" y="60" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="700" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">STORAGE</text>
+
+    <!-- Arrows (behind nodes) -->
+    <line x1="156" y1="144" x2="156" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M 248,200 H 300 Q 308,200 308,192 V 124 Q 308,116 316,116 H 368"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+
+    <line x1="460" y1="144" x2="460" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="224" x2="460" y2="248" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M 248,224 H 276 Q 284,224 284,216 V 60 Q 284,52 292,52 H 788 Q 796,52 796,60 V 88"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M 765,144 V 160 Q 765,168 757,168 H 746" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 827,144 V 160 Q 827,168 835,168 H 846" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow label: SYNC on the bidirectional NCCL link -->
+    <rect x="286" y="140" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="306" y="149" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NCCL</text>
+
+    <!-- Nodes: MPI Job -->
+    <rect x="64" y="88" width="184" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="156" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Launcher Pod</text>
+
+    <rect x="64" y="168" width="184" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="156" y="196" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Worker Pods ×4</text>
+    <text x="156" y="211" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">NCCL-connected</text>
+
+    <!-- Nodes: Communication Layer -->
+    <rect x="368" y="88" width="184" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">NVIDIA NCCL</text>
+
+    <rect x="368" y="168" width="184" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="200" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">MPI</text>
+
+    <rect x="368" y="248" width="184" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="280" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Elastic Fabric Adapter</text>
+
+    <!-- Nodes: Storage -->
+    <rect x="704" y="88" width="184" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="796" y="120" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">FSx for Lustre</text>
+
+    <rect x="704" y="168" width="84" height="56" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+    <text x="746" y="200" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">S3</text>
+
+    <rect x="804" y="168" width="84" height="56" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+    <text x="846" y="193" fill="#232F3E" font-size="10.5" font-weight="600" text-anchor="middle">Check-</text>
+    <text x="846" y="206" fill="#232F3E" font-size="10.5" font-weight="600" text-anchor="middle">points</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="344" x2="920" y2="344" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="360" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="376" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="384" fill="#545B64" font-size="8.5">Focal / shared hub</text>
+
+    <rect x="228" y="376" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="248" y="384" fill="#545B64" font-size="8.5">Pod / component</text>
+
+    <rect x="408" y="376" width="14" height="10" rx="2" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+    <text x="428" y="384" fill="#545B64" font-size="8.5">Store</text>
+
+    <line x1="540" y1="381" x2="568" y2="381" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <text x="576" y="384" fill="#545B64" font-size="8.5">Bidirectional sync</text>
+  </svg>

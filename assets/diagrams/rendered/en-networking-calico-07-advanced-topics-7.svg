@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="calico-hns-title calico-hns-desc">
+    <title id="calico-hns-title">Windows HNS integration data path</title>
+    <desc id="calico-hns-desc">A packet from a Windows container crosses its virtual NIC into the Hyper-V virtual switch, through the Host Networking Service and Virtual Filtering Platform for policy enforcement, while the Calico Windows agent programs both HNS and the VFP directly.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- outer zone: Windows Node -->
+    <rect x="4" y="68" width="952" height="404" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="12" y="72" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="60" y="81" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">WINDOWS NODE</text>
+
+    <!-- inner zone: Windows Container -->
+    <rect x="8" y="218" width="304" height="112" rx="8" fill="rgba(35,47,62,0.035)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+    <rect x="16" y="222" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="72" y="231" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">WINDOWS CONTAINER</text>
+
+    <!-- inner zone: Policy Engine -->
+    <rect x="652" y="218" width="296" height="112" rx="8" fill="rgba(35,47,62,0.035)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+    <rect x="660" y="222" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="704" y="231" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">POLICY ENGINE</text>
+
+    <!-- connectors -->
+    <line x1="140" y1="282" x2="180" y2="282" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="300" y1="282" x2="340" y2="282" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="282" x2="500" y2="282" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="620" y1="282" x2="660" y2="282" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="780" y1="282" x2="820" y2="282" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="400" y1="314" x2="400" y2="400" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 620,156 V 192 Q 620,200 612,200 H 568 Q 560,200 560,208 V 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 660,156 V 192 Q 660,200 668,200 H 712 Q 720,200 720,208 V 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Application -->
+    <rect x="20" y="250" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="20" y="250" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="80" y="286" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Application</text>
+
+    <!-- Virtual NIC -->
+    <rect x="180" y="250" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="180" y="250" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="286" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Virtual NIC</text>
+
+    <!-- Hyper-V Virtual Switch -->
+    <rect x="340" y="250" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="340" y="250" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="400" y="278" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Hyper-V</text>
+    <text x="400" y="292" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Virtual Switch</text>
+
+    <!-- HNS (focal) -->
+    <rect x="500" y="250" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="500" y="250" width="120" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="560" y="282" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">HNS</text>
+    <text x="560" y="298" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">host net. service</text>
+
+    <!-- Virtual Filtering Platform (focal) -->
+    <rect x="660" y="250" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="660" y="250" width="120" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="720" y="278" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Virtual Filtering</text>
+    <text x="720" y="292" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Platform</text>
+
+    <!-- ACL Rules -->
+    <rect x="820" y="250" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="820" y="250" width="120" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="880" y="286" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ACL Rules</text>
+
+    <!-- Calico Windows Agent -->
+    <rect x="580" y="100" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="580" y="100" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="640" y="124" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Calico Windows</text>
+    <text x="640" y="138" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Agent</text>
+
+    <!-- Physical NIC -->
+    <rect x="340" y="400" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="340" y="400" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="400" y="432" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Physical NIC</text>
+  </svg>

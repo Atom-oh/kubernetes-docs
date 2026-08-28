@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" role="img" aria-labelledby="fatigue-title fatigue-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="fatigue-title">알림 피로의 악순환과 해결책 순환</title>
+    <desc id="fatigue-desc">과도한 알림이 무시와 누락, 인시던트, 더 많은 알림으로 이어지는 악순환과, 알림 정제와 그룹화, 정기 리뷰가 서로를 강화하는 해결책 순환을 나란히 대조한다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="460" fill="#ffffff"/>
+
+    <!-- Zone: Problem -->
+    <rect x="24" y="76" width="472" height="276" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="80" width="108" height="14" rx="2" fill="#ffffff"/>
+    <text x="94" y="90" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">PROBLEM · 악순환</text>
+
+    <!-- Zone: Solution -->
+    <rect x="544" y="76" width="312" height="276" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="560" y="80" width="112" height="14" rx="2" fill="#ffffff"/>
+    <text x="616" y="90" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">SOLUTION · 해결책</text>
+
+    <!-- Problem cycle arrows -->
+    <line x1="160" y1="138" x2="200" y2="138" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="320" y1="138" x2="360" y2="138" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="420" y1="166" x2="420" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="360" y1="308" x2="160" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="100" y1="280" x2="100" y2="166" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Solution cycle arrows -->
+    <line x1="680" y1="138" x2="720" y2="138" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="780" y1="166" x2="780" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="720" y1="308" x2="680" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="620" y1="280" x2="620" y2="166" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Problem nodes -->
+    <rect x="40" y="110" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="100" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">과도한 알림</text>
+
+    <rect x="200" y="110" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 무시</text>
+
+    <rect x="360" y="110" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="420" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">중요 알림 누락</text>
+
+    <!-- Focal: 인시던트 발생 -->
+    <rect x="360" y="280" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="420" y="312" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인시던트 발생</text>
+
+    <rect x="40" y="280" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="100" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">더 많은</text>
+    <text x="100" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 추가</text>
+
+    <!-- Solution nodes -->
+    <rect x="560" y="110" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="620" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 정제</text>
+
+    <rect x="720" y="110" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="142" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">적절한 임계값</text>
+
+    <rect x="720" y="280" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 그룹화</text>
+
+    <rect x="560" y="280" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="620" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">정기적 리뷰</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="392" x2="936" y2="392" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <circle cx="220" cy="404" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="232" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">악순환이 사용자에게 드러나는 지점 (초점)</text>
+  </svg>

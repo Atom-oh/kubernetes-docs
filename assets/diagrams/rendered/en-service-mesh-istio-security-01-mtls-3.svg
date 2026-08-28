@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3-title d3-desc">
+    <title id="d3-title">mTLS handoff from client through CloudFront and ALB into the Istio mesh</title>
+    <desc id="d3-desc">A client's certificate is verified at the CloudFront edge, then the request travels over plain TLS through ALB and the Istio Gateway before Envoy mTLS re-encrypts it into the backend service.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs><defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="400" fill="#ffffff"/>
+
+    <!-- Arrows -->
+    <line x1="184" y1="304" x2="224" y2="304" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+    <rect x="188" y="280" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="204" y="289" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+
+    <line x1="368" y1="304" x2="408" y2="304" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <rect x="372" y="280" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="388" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TLS</text>
+
+    <line x1="552" y1="304" x2="592" y2="304" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <rect x="556" y="280" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="572" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TLS</text>
+
+    <line x1="736" y1="304" x2="776" y2="304" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+    <rect x="740" y="280" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="756" y="289" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+
+    <!-- Nodes -->
+    <!-- Client -->
+    <rect x="40" y="260" width="144" height="88" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="112" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+    <text x="112" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">client cert</text>
+
+    <!-- CloudFront (focal) -->
+    <rect x="224" y="260" width="144" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="236" y="270" width="40" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.40)" stroke-width="0.8"/>
+    <text x="256" y="279" fill="rgba(236,114,17,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AWS</text>
+    <text x="296" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudFront</text>
+    <text x="296" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mtls + edge</text>
+
+    <!-- ALB -->
+    <rect x="408" y="260" width="144" height="88" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="480" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ALB</text>
+    <text x="480" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tls forward</text>
+
+    <!-- Gateway -->
+    <rect x="592" y="260" width="144" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="664" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio Gateway</text>
+    <text x="664" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">header check</text>
+
+    <!-- Service -->
+    <rect x="776" y="260" width="144" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="848" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend</text>
+    <text x="848" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">envoy mtls</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="356" x2="920" y2="356" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="372" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <line x1="200" y1="368" x2="232" y2="368" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+    <text x="240" y="372" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Mutual TLS (client cert verified)</text>
+
+    <line x1="560" y1="368" x2="592" y2="368" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <text x="600" y="372" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">One-way TLS + forwarded headers</text>
+  </svg>

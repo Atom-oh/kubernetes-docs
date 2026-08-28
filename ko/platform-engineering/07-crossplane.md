@@ -89,63 +89,7 @@ Graduated 프로젝트는 프로덕션 환경에서의 광범위한 채택, 건�
 
 Crossplane의 아키텍처를 이해하려면 다섯 가지 핵심 개념을 먼저 파악해야 합니다.
 
-```mermaid
-graph TB
-    subgraph control_plane["Crossplane Control Plane"]
-        direction TB
-        XP[Crossplane Core]
-        
-        subgraph providers["Providers"]
-            PAWS[Provider-AWS]
-            PGCP[Provider-GCP]
-            PAZURE[Provider-Azure]
-            PHELM[Provider-Helm]
-            PK8S[Provider-Kubernetes]
-        end
-        
-        subgraph abstractions["추상화 계층"]
-            XRD["CompositeResourceDefinition<br/>(XRD)"]
-            COMP["Composition"]
-            XR["Composite Resource<br/>(XR)"]
-        end
-        
-        subgraph managed["Managed Resources"]
-            MR1["S3 Bucket"]
-            MR2["RDS Instance"]
-            MR3["VPC / Subnet"]
-            MR4["SecurityGroup"]
-        end
-    end
-    
-    subgraph dev_ns["개발자 Namespace"]
-        CLAIM["Claim (XC)"]
-    end
-    
-    subgraph clouds["클라우드 인프라"]
-        AWS["AWS"]
-        GCP["GCP"]
-        AZURE["Azure"]
-    end
-    
-    CLAIM -->|"생성 요청"| XR
-    XR -->|"정의 참조"| XRD
-    XR -->|"Composition 적용"| COMP
-    COMP -->|"Managed Resource 생성"| MR1
-    COMP -->|"Managed Resource 생성"| MR2
-    COMP -->|"Managed Resource 생성"| MR3
-    COMP -->|"Managed Resource 생성"| MR4
-    
-    PAWS -->|"API 호출"| AWS
-    PGCP -->|"API 호출"| GCP
-    PAZURE -->|"API 호출"| AZURE
-    
-    MR1 --> PAWS
-    MR2 --> PAWS
-    MR3 --> PAWS
-    MR4 --> PAWS
-    
-    XP --> providers
-```
+![개발자 Namespace의 Claim이 Crossplane 컨트롤 플레인에서 Composite Resource, XRD, Composition을 거쳐 Managed Resource로 변환되고, Provider가 이를 AWS·GCP·Azure API로 각각 프로비저닝하는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-0.png)
 
 ### 개념별 상세 설명
 
@@ -181,47 +125,7 @@ Claim은 Composite Resource의 **네임스페이스 스코프** 버전입니다.
 
 ### 컨트롤 플레인 아키텍처
 
-```mermaid
-graph LR
-    subgraph k8s["Kubernetes Cluster"]
-        direction TB
-        API[Kubernetes API Server]
-        ETCD[(etcd)]
-        
-        subgraph crossplane_system["crossplane-system Namespace"]
-            CORE["Crossplane Core<br/>Controller"]
-            RBAC_MGR["RBAC Manager"]
-            PKG_MGR["Package Manager"]
-        end
-        
-        subgraph provider_system["Provider Runtime"]
-            P_CTRL["Provider-AWS<br/>Controller"]
-            P_CRD["AWS CRDs<br/>(900+)"]
-        end
-        
-        subgraph user_ns["개발자 Namespace"]
-            CLAIM_RES["Claim"]
-        end
-        
-        subgraph cluster_scope["Cluster Scope"]
-            XR_RES["Composite Resource"]
-            MR_RES["Managed Resources"]
-            COMP_RES["Composition"]
-            XRD_RES["XRD"]
-        end
-    end
-    
-    API --> ETCD
-    CORE --> API
-    PKG_MGR -->|"Provider 설치"| P_CTRL
-    P_CTRL --> P_CRD
-    P_CTRL -->|"AWS API 호출"| AWS_API["AWS API"]
-    
-    CLAIM_RES -->|"XR 생성"| XR_RES
-    XR_RES -->|"Composition 참조"| COMP_RES
-    COMP_RES -->|"MR 생성"| MR_RES
-    MR_RES -->|"Provider가 관리"| P_CTRL
-```
+![쿠버네티스 클러스터 안에서 API 서버·etcd 컨트롤 플레인이 Claim부터 Managed Resource까지의 리소스 체인을 관리하고, Provider Runtime의 Provider-AWS 컨트롤러가 실제 AWS API를 호출하는 구조를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-1.png)
 
 ### 리소스 생명주기
 
@@ -780,40 +684,7 @@ spec:
 
 Composition은 Crossplane의 가장 강력한 기능입니다. 플랫폼 엔지니어가 복잡한 인프라를 **단순한 API**로 추상화하여, 개발자가 클라우드 리소스의 세부 사항을 몰라도 인프라를 프로비저닝할 수 있게 합니다.
 
-```mermaid
-graph TB
-    subgraph platform_team["플랫폼 팀이 정의"]
-        XRD["CompositeResourceDefinition<br/>(XRD)<br/>─────────────<br/>API 스키마 정의"]
-        COMP_DEV["Composition<br/>(dev)<br/>─────────────<br/>t3.medium, 20GB<br/>Single-AZ"]
-        COMP_PROD["Composition<br/>(prod)<br/>─────────────<br/>r6g.xlarge, 100GB<br/>Multi-AZ, 암호화"]
-    end
-    
-    subgraph dev_team["개발팀이 사용"]
-        CLAIM_A["Claim: my-db<br/>size: small"]
-        CLAIM_B["Claim: order-db<br/>size: large"]
-    end
-    
-    subgraph created["자동 생성되는 리소스"]
-        direction TB
-        RDS_A["RDS Instance<br/>(t3.medium)"]
-        SG_A["SecurityGroup"]
-        SUB_A["SubnetGroup"]
-        RDS_B["RDS Instance<br/>(r6g.xlarge)"]
-        SG_B["SecurityGroup"]
-        SUB_B["SubnetGroup"]
-    end
-    
-    XRD --> COMP_DEV
-    XRD --> COMP_PROD
-    CLAIM_A -->|"compositionRef: dev"| COMP_DEV
-    CLAIM_B -->|"compositionRef: prod"| COMP_PROD
-    COMP_DEV --> RDS_A
-    COMP_DEV --> SG_A
-    COMP_DEV --> SUB_A
-    COMP_PROD --> RDS_B
-    COMP_PROD --> SG_B
-    COMP_PROD --> SUB_B
-```
+![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 원하는 Composition을 참조해 서로 다른 사양의 리소스 묶음이 자동 생성되는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-2.png)
 
 ### CompositeResourceDefinition (XRD) 정의
 
@@ -1237,27 +1108,7 @@ spec:
 
 Claim은 Crossplane의 **셀프서비스 인터페이스**입니다. 개발자는 자신의 네임스페이스에서 Claim을 생성하여 인프라를 요청하며, 플랫폼 팀이 정의한 Composition에 따라 실제 클라우드 리소스가 프로비저닝됩니다.
 
-```mermaid
-sequenceDiagram
-    participant DEV as 개발자
-    participant NS as 개발자 Namespace
-    participant XP as Crossplane
-    participant COMP as Composition
-    participant AWS as AWS
-
-    DEV->>NS: kubectl apply -f database-claim.yaml
-    NS->>XP: Claim 생성 감지
-    XP->>XP: XR (Composite Resource) 자동 생성
-    XP->>COMP: Composition 조회
-    COMP->>XP: Managed Resource 목록 반환
-    XP->>AWS: SecurityGroup 생성 API
-    XP->>AWS: SubnetGroup 생성 API
-    XP->>AWS: RDS Instance 생성 API
-    AWS-->>XP: 리소스 생성 완료
-    XP-->>NS: Connection Secret 생성
-    XP-->>NS: Claim 상태 업데이트 (Ready)
-    DEV->>NS: kubectl get database my-db
-```
+![개발자가 database-claim.yaml을 적용하면 Crossplane이 Composite Resource를 만들고 Composition을 조회해 AWS에 SecurityGroup·SubnetGroup·RDS Instance를 순서대로 생성한 뒤 Connection Secret과 Ready 상태를 돌려주는 순서도.](../.gitbook/assets/ko-platform-engineering-07-crossplane-3.png)
 
 ### 데이터베이스 Claim 예제
 
@@ -1470,42 +1321,7 @@ ACK과 Crossplane은 동일 클러스터에서 공존할 수 있습니다. 단, 
 
 [Backstage IDP](./06-backstage-idp.md)와 Crossplane을 통합하면, 개발자가 Backstage UI에서 버튼 클릭만으로 데이터베이스, 캐시, 메시지 큐 등의 인프라를 셀프서비스로 프로비저닝할 수 있습니다.
 
-```mermaid
-graph LR
-    subgraph backstage["Backstage IDP"]
-        UI["Backstage UI"]
-        TPL["Software Template"]
-        SCF["Scaffolder"]
-    end
-    
-    subgraph gitops["GitOps"]
-        REPO["Git Repository"]
-        ARGO["ArgoCD"]
-    end
-    
-    subgraph crossplane["Crossplane"]
-        CLAIM["Claim"]
-        XR["Composite Resource"]
-        MR["Managed Resources"]
-    end
-    
-    subgraph aws["AWS"]
-        RDS["RDS"]
-        S3["S3"]
-        SG["SecurityGroup"]
-    end
-    
-    UI -->|"1. 폼 입력"| TPL
-    TPL -->|"2. Claim YAML 생성"| SCF
-    SCF -->|"3. Git Push"| REPO
-    REPO -->|"4. Sync"| ARGO
-    ARGO -->|"5. Apply"| CLAIM
-    CLAIM -->|"6. 프로비저닝"| XR
-    XR --> MR
-    MR --> RDS
-    MR --> S3
-    MR --> SG
-```
+![개발자가 Backstage 폼에 입력하면 Scaffolder가 Claim YAML을 Git에 커밋하고 ArgoCD가 이를 클러스터에 적용해 Crossplane이 Composite Resource와 Managed Resource를 거쳐 RDS·S3·SecurityGroup을 프로비저닝하는 셀프서비스 흐름을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-4.png)
 
 ### Backstage Template에서 Crossplane Claim 생성
 

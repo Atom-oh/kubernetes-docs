@@ -23,37 +23,7 @@
 
 2010년대 초반, 기업들은 모놀리식 애플리케이션을 마이크로서비스로 분해하기 시작했습니다.
 
-```mermaid
-flowchart TB
-    subgraph Before[모놀리식 시대]
-        M[모놀리식<br/>애플리케이션]
-        M -->|하나의 프로세스| M
-    end
-
-    subgraph After[마이크로서비스 시대]
-        S1[서비스 A]
-        S2[서비스 B]
-        S3[서비스 C]
-        S4[서비스 D]
-        S5[서비스 E]
-
-        S1 --> S2
-        S1 --> S3
-        S2 --> S4
-        S3 --> S4
-        S4 --> S5
-    end
-
-    Before -.->|전환| After
-
-    %% 스타일 정의
-    classDef monolith fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef micro fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class M monolith;
-    class S1,S2,S3,S4,S5 micro;
-```
+![하나의 프로세스로 동작하던 모놀리식 애플리케이션이 서비스 A부터 E까지 서로 호출하는 여러 마이크로서비스로 분해되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-0.png)
 
 **새로운 문제들**:
 
@@ -73,35 +43,7 @@ flowchart TB
 - 업데이트 시 모든 서비스 재배포
 - 버전 관리 복잡
 
-```mermaid
-flowchart LR
-    subgraph App1[Java 서비스]
-        J[애플리케이션 코드]
-        H[Hystrix<br/>Netflix OSS]
-    end
-
-    subgraph App2[Go 서비스]
-        G[애플리케이션 코드]
-        L[Go 라이브러리]
-    end
-
-    subgraph App3[Python 서비스]
-        P[애플리케이션 코드]
-        R[Requests + Retry]
-    end
-
-    J --- H
-    G --- L
-    P --- R
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef lib fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class J,G,P app;
-    class H,L,R lib;
-```
+![Java, Go, Python 서비스가 각각 Hystrix, 자체 라이브러리, Requests+Retry처럼 서로 다른 장애 처리 라이브러리를 애플리케이션 코드에 결합해 사용해 파편화가 발생한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-1.png)
 
 **Service Mesh의 아이디어**: 네트워킹 로직을 애플리케이션에서 분리하여 인프라 레이어로 이동
 
@@ -124,35 +66,7 @@ flowchart LR
 
 **Envoy가 해결한 문제들**:
 
-```mermaid
-flowchart TB
-    subgraph Problems[기존 프록시의 문제]
-        P1[정적 설정<br/>파일 기반]
-        P2[제한적<br/>메트릭]
-        P3[복잡한<br/>재시작]
-        P4[단순한<br/>라우팅]
-    end
-
-    subgraph Solutions[Envoy의 해결책]
-        S1[동적 API<br/>xDS Protocol]
-        S2[풍부한<br/>통계/추적]
-        S3[Hot Restart<br/>무중단]
-        S4[고급 L7<br/>라우팅]
-    end
-
-    P1 -.->|해결| S1
-    P2 -.->|해결| S2
-    P3 -.->|해결| S3
-    P4 -.->|해결| S4
-
-    %% 스타일 정의
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class P1,P2,P3,P4 problem;
-    class S1,S2,S3,S4 solution;
-```
+![기존 프록시가 겪던 정적 설정, 제한적 메트릭, 복잡한 재시작, 단순한 라우팅 문제를 Envoy가 동적 API, 풍부한 통계, Hot Restart, 고급 L7 라우팅으로 각각 해결한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-2.png)
 
 **Envoy의 핵심 특징**:
 
@@ -175,31 +89,7 @@ flowchart TB
 
 **2017년 5월**, Google, IBM, Lyft가 협력하여 Istio를 발표했습니다.
 
-```mermaid
-flowchart LR
-    subgraph Companies[참여 기업]
-        G[Google<br/>Kubernetes 경험]
-        I[IBM<br/>엔터프라이즈 요구사항]
-        L[Lyft<br/>Envoy Proxy]
-    end
-
-    subgraph Istio[Istio Service Mesh]
-        CP[Control Plane<br/>Google 주도]
-        DP[Data Plane<br/>Envoy 기반]
-    end
-
-    G --> CP
-    I --> CP
-    L --> DP
-
-    %% 스타일 정의
-    classDef company fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class G,I,L company;
-    class CP,DP component;
-```
+![Google과 IBM의 경험이 Istio Control Plane으로, Lyft의 Envoy Proxy가 Data Plane으로 이어져 Istio Service Mesh를 이루었다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-3.png)
 
 **각 회사의 기여**:
 
@@ -213,19 +103,7 @@ flowchart LR
 
 **주요 마일스톤**:
 
-```mermaid
-timeline
-    title Istio 주요 버전 역사
-    2017-05 : Istio 0.1 발표
-    2018-07 : Istio 1.0 : 프로덕션 사용 가능
-    2019-03 : Istio 1.1 : 성능 개선
-    2020-03 : Istio 1.5 : Istiod 통합
-    2021-05 : Istio 1.10 : Discovery Selectors
-    2022-02 : Istio 1.13 : Gateway API 지원
-    2023-11 : Istio 1.20 : Ambient Mode
-    2024-05 : Istio 1.22 : 안정성 개선
-    2025-01 : Istio 1.28 : 현재 버전
-```
+![2017년 0.1 발표 이후 2018년 1.0 GA, 2020년 1.5 Istiod 통합, 2023년 Ambient Mode 도입을 거쳐 2025년 1.28에 이르는 Istio의 주요 버전 역사를 시간순으로 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-4.png)
 
 **1.5 버전 (2020년 3월) - 중요한 전환점**:
 
@@ -260,45 +138,7 @@ Kubernetes는 컨테이너 오케스트레이션을 제공하지만, 마이크�
 
 ### 마이크로서비스의 과제
 
-```mermaid
-flowchart TB
-    subgraph Problems["마이크로서비스 과제"]
-        P1[트래픽 관리<br/>복잡한 라우팅]
-        P2[보안<br/>서비스 간 암호화]
-        P3[관찰성<br/>디버깅 어려움]
-        P4[복원력<br/>장애 처리]
-    end
-
-    subgraph Without["Istio 없이"]
-        W1[애플리케이션 코드에<br/>직접 구현]
-        W2[각 서비스마다<br/>중복 코드]
-        W3[일관성 없는<br/>구현]
-        W4[유지보수<br/>어려움]
-    end
-
-    subgraph With["Istio 사용"]
-        I1[인프라 레벨에서<br/>자동 처리]
-        I2[선언적 구성으로<br/>중앙 관리]
-        I3[일관된<br/>정책 적용]
-        I4[코드 변경 없이<br/>기능 추가]
-    end
-
-    P1 & P2 & P3 & P4 -->|기존 방식| W1
-    W1 --> W2 --> W3 --> W4
-
-    P1 & P2 & P3 & P4 -->|Istio| I1
-    I1 --> I2 --> I3 --> I4
-
-    %% 스타일 정의
-    classDef problem fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef without fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef with fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class P1,P2,P3,P4 problem;
-    class W1,W2,W3,W4 without;
-    class I1,I2,I3,I4 with;
-```
+![트래픽 관리, 보안, 관찰성, 복원력이라는 공통 과제를 Istio 없이는 애플리케이션 코드에 직접 구현해 비일관적으로 대응하지만, Istio를 사용하면 인프라 레벨에서 선언적이고 일관되게 해결한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-5.png)
 
 ### Istio가 제공하는 핵심 가치
 
@@ -481,28 +321,7 @@ Istio는 두 가지 배포 모드를 지원합니다: **Sidecar Mode**와 **Ambi
 
 각 애플리케이션 파드에 Envoy 프록시를 사이드카 컨테이너로 주입합니다.
 
-```mermaid
-flowchart LR
-    subgraph Pod["파드"]
-        App[애플리케이션<br/>컨테이너]
-        Envoy[Envoy Proxy<br/>사이드카]
-    end
-
-    External[외부 요청] -->|트래픽| Envoy
-    Envoy -->|로컬| App
-    App -->|외부 호출| Envoy
-    Envoy -->|네트워크| Target[대상 서비스]
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class Envoy proxy;
-    class External,Target default;
-```
+![파드 안의 애플리케이션 컨테이너와 Envoy 사이드카가 로컬 통신을 주고받고, Envoy가 외부 요청을 받아 애플리케이션에 전달하고 애플리케이션의 외부 호출도 다시 대상 서비스로 중계한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-6.png)
 
 **장점:**
 - 성숙하고 안정적
@@ -518,33 +337,7 @@ flowchart LR
 
 사이드카 없이 노드 레벨에서 트래픽을 처리합니다.
 
-```mermaid
-flowchart TB
-    subgraph Node["Worker Node"]
-        subgraph Pod1["파드 1"]
-            App1[애플리케이션<br/>사이드카 없음]
-        end
-
-        subgraph Pod2["파드 2"]
-            App2[애플리케이션<br/>사이드카 없음]
-        end
-
-        Ztunnel[ztunnel<br/>노드당 1개<br/>L4 프록시]
-        Waypoint[Waypoint Proxy<br/>L7 프록시<br/>선택적]
-    end
-
-    App1 <-->|투명한 리다이렉트| Ztunnel
-    App2 <-->|투명한 리다이렉트| Ztunnel
-    Ztunnel <-->|L7 필요시| Waypoint
-
-    %% 스타일 정의
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class App1,App2 userApp;
-    class Ztunnel,Waypoint proxy;
-```
+![사이드카가 없는 두 파드의 트래픽이 노드당 하나씩 존재하는 ztunnel로 투명하게 리다이렉트되고, L7 기능이 필요할 때만 선택적인 Waypoint Proxy로 전달된다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-7.png)
 
 **장점:**
 - 낮은 리소스 사용 (노드당 1개)
@@ -779,27 +572,7 @@ spec:
 
 ### 트래픽 라우팅 흐름
 
-```mermaid
-flowchart LR
-    Client[클라이언트] -->|1. HTTP 요청| Gateway[Gateway<br/>Ingress]
-    Gateway -->|2. VirtualService<br/>라우팅 규칙 적용| VS[VirtualService]
-    VS -->|3. 대상 결정| DR[DestinationRule]
-    DR -->|4. 서브셋 선택<br/>트래픽 정책 적용| Service[Kubernetes<br/>Service]
-    Service -->|5. 엔드포인트<br/>라우팅| Pod1[Pod v1]
-    Service -->|5. 엔드포인트<br/>라우팅| Pod2[Pod v2]
-
-    %% 스타일 정의
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istioResource fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sResource fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Gateway gateway;
-    class VS,DR istioResource;
-    class Service,Pod1,Pod2 k8sResource;
-    class Client default;
-```
+![클라이언트의 HTTP 요청이 Gateway로 들어와 VirtualService의 라우팅 규칙과 DestinationRule의 서브셋 선택을 거쳐 Kubernetes Service를 통해 v1, v2 파드로 각각 라우팅된다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-8.png)
 
 ### 트래픽 분할 (Canary 배포)
 
@@ -852,35 +625,7 @@ spec:
 
 Istio는 서비스 간 통신을 자동으로 암호화합니다.
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[앱]
-        Envoy1[Envoy]
-    end
-
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy]
-        App2[앱]
-    end
-
-    App1 -->|평문| Envoy1
-    Envoy1 <-->|mTLS 암호화| Envoy2
-    Envoy2 -->|평문| App2
-
-    Citadel[istiod<br/>Citadel] -.->|인증서 발급| Envoy1
-    Citadel -.->|인증서 발급| Envoy2
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Citadel controlPlane;
-```
+![Pod A와 Pod B의 앱은 각자의 Envoy와 평문으로 통신하고, 두 Envoy 사이의 트래픽은 istiod Citadel이 발급한 인증서를 이용해 mTLS로 암호화된다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-9.png)
 
 **mTLS 모드**:
 - **STRICT**: mTLS만 허용
@@ -919,37 +664,7 @@ Istio는 자동으로 메트릭, 로그, 트레이스를 생성합니다.
 
 ### 자동 생성되는 메트릭
 
-```mermaid
-flowchart TB
-    subgraph Pod["파드"]
-        App[애플리케이션]
-        Envoy[Envoy Proxy]
-    end
-
-    App <-->|트래픽| Envoy
-
-    Envoy -->|메트릭| Prometheus[Prometheus<br/>메트릭 수집]
-    Envoy -->|트레이스| Jaeger[Jaeger<br/>분산 추적]
-    Envoy -->|로그| Logging[로깅 시스템]
-
-    Prometheus -->|시각화| Grafana[Grafana<br/>대시보드]
-    Jaeger -->|분석| JaegerUI[Jaeger UI]
-
-    Kiali[Kiali<br/>서비스 메시 대시보드] -->|쿼리| Prometheus
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class Envoy proxy;
-    class Prometheus,Jaeger,Logging monitoring;
-    class Grafana,JaegerUI,Kiali visualization;
-```
+![파드의 Envoy Proxy가 메트릭은 Prometheus, 트레이스는 Jaeger, 로그는 로깅 시스템으로 보내고, Prometheus는 Grafana 대시보드로, Jaeger는 Jaeger UI로 이어지며 Kiali는 Prometheus를 조회해 서비스 메시를 시각화한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-10.png)
 
 ### 주요 메트릭
 
@@ -1037,49 +752,7 @@ Istio는 Kubernetes 파드뿐만 아니라 **Virtual Machine (VM) 워크로드**
 
 ### VM 워크로드가 필요한 이유
 
-```mermaid
-flowchart TB
-    subgraph Legacy[레거시 환경]
-        VM1[VM<br/>레거시 앱]
-        VM2[VM<br/>데이터베이스]
-        VM3[VM<br/>외부 서비스]
-    end
-
-    subgraph K8S[Kubernetes 클러스터]
-        subgraph Pod1[파드]
-            App1[신규 앱]
-            Envoy1[Envoy]
-        end
-
-        subgraph Pod2[파드]
-            App2[마이크로서비스]
-            Envoy2[Envoy]
-        end
-    end
-
-    subgraph Istiod[Control Plane]
-        CP[istiod]
-    end
-
-    VM1 -->|마이그레이션 전<br/>직접 통신| App1
-    App1 -.->|메시 등록 후<br/>mTLS, 정책 적용| VM1
-
-    CP -.->|구성 전달| Envoy1
-    CP -.->|구성 전달| Envoy2
-    CP -.->|VM도 등록 가능| VM1
-
-    %% 스타일 정의
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class VM1,VM2,VM3 vm;
-    class App1,App2 k8sApp;
-    class Envoy1,Envoy2 proxy;
-    class CP controlPlane;
-```
+![레거시 VM이 처음에는 신규 앱과 직접 통신하지만 메시에 등록된 뒤에는 mTLS와 정책이 적용되며, istiod가 파드의 Envoy뿐 아니라 VM에도 구성을 전달한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-11.png)
 
 **사용 시나리오**:
 - 레거시 애플리케이션의 점진적 마이그레이션
@@ -1089,43 +762,7 @@ flowchart TB
 
 ### VM 등록 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph VM[Virtual Machine]
-        LegacyApp[레거시<br/>애플리케이션]
-        EnvoyVM[Envoy<br/>Sidecar]
-    end
-
-    subgraph K8S[Kubernetes 클러스터]
-        subgraph Pod[파드]
-            App[애플리케이션]
-            EnvoyPod[Envoy<br/>Sidecar]
-        end
-
-        Istiod[istiod<br/>Control Plane]
-    end
-
-    LegacyApp <-->|로컬 통신| EnvoyVM
-    App <-->|로컬 통신| EnvoyPod
-
-    EnvoyVM <-->|mTLS| EnvoyPod
-
-    Istiod -.->|xDS 구성| EnvoyVM
-    Istiod -.->|xDS 구성| EnvoyPod
-    Istiod -.->|인증서 발급| EnvoyVM
-
-    %% 스타일 정의
-    classDef vmApp fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class LegacyApp vmApp;
-    class App k8sApp;
-    class EnvoyVM,EnvoyPod proxy;
-    class Istiod controlPlane;
-```
+![VM과 Kubernetes 파드 각각에서 애플리케이션이 자신의 Envoy Sidecar와 로컬로 통신하고, 두 Envoy는 istiod가 배포한 xDS 구성과 인증서를 이용해 서로 mTLS로 통신한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-12.png)
 
 ### WorkloadEntry 리소스
 
@@ -1206,39 +843,7 @@ spec:
 
 #### 1. 점진적 마이그레이션
 
-```mermaid
-flowchart LR
-    subgraph Phase1[1단계: 레거시 환경]
-        VM1[VM<br/>모놀리스 앱]
-    end
-
-    subgraph Phase2[2단계: VM 메시 등록]
-        VM2[VM<br/>모놀리스 앱<br/>+ Envoy]
-    end
-
-    subgraph Phase3[3단계: 하이브리드]
-        VM3[VM<br/>레거시 모듈]
-        K8S1[K8s<br/>신규 마이크로서비스]
-        VM3 <-->|mTLS| K8S1
-    end
-
-    subgraph Phase4[4단계: 완전 마이그레이션]
-        K8S2[K8s<br/>전체 마이크로서비스]
-    end
-
-    Phase1 -->|VM 등록| Phase2
-    Phase2 -->|일부 마이그레이션| Phase3
-    Phase3 -->|완료| Phase4
-
-    %% 스타일 정의
-    classDef vm fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class VM1,VM2,VM3 vm;
-    class K8S1,K8S2 k8s;
-```
+![레거시 모놀리스 VM이 메시에 등록된 뒤 일부 기능만 Kubernetes로 옮겨 VM과 신규 마이크로서비스가 mTLS로 통신하는 하이브리드 단계를 거쳐 완전한 마이크로서비스 전환에 이른다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-13.png)
 
 **이점**:
 - 기존 VM 애플리케이션을 수정하지 않고 메시에 통합
@@ -1372,34 +977,7 @@ spec:
 
 ### 워크로드 등록 비교 요약
 
-```mermaid
-flowchart TB
-    subgraph Types[워크로드 유형]
-        K8S[Kubernetes 파드<br/>클러스터 내부]
-        MC[Multi-Cluster<br/>다른 클러스터]
-        VM[Virtual Machine<br/>클러스터 외부]
-    end
-
-    subgraph Features[공통 기능]
-        mTLS[mTLS 암호화]
-        Traffic[트래픽 관리]
-        Policy[보안 정책]
-        Metrics[메트릭 & 추적]
-    end
-
-    K8S & MC & VM --> mTLS
-    K8S & MC & VM --> Traffic
-    K8S & MC & VM --> Policy
-    K8S & MC & VM --> Metrics
-
-    %% 스타일 정의
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef feature fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class K8S,MC,VM workload;
-    class mTLS,Traffic,Policy,Metrics feature;
-```
+![Kubernetes 파드, Multi-Cluster, Virtual Machine이라는 서로 다른 워크로드 유형 모두가 mTLS 암호화, 트래픽 관리, 보안 정책, 메트릭과 추적이라는 동일한 공통 기능을 제공받는다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-14.png)
 
 Istio의 유연한 워크로드 등록 기능을 통해:
 - **Kubernetes 파드**: 클라우드 네이티브 애플리케이션

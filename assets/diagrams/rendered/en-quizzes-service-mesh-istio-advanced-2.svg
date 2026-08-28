@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="canary-title canary-desc">
+  <title id="canary-title">Argo Rollouts canary progression driven by Istio traffic weights</title>
+  <desc id="canary-desc">Diagram showing user traffic entering through an Istio Gateway and VirtualService that splits weight between a stable and canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on success or failure verdicts from an AnalysisTemplate fed by Prometheus metrics.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Arrows (behind boxes) -->
+  <line x1="152" y1="88" x2="192" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="336" y1="88" x2="376" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- VS -> Stable (90%) -->
+  <path d="M 434,120 V 164 Q 434,172 426,172 H 318 Q 310,172 310,180 V 196"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- VS -> Canary (10%) -->
+  <path d="M 493,120 V 164 Q 493,172 501,172 H 582 Q 590,172 590,180 V 196"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- Rollout -> Stable (pod mgmt) -->
+  <path d="M 417,344 V 300 Q 417,292 409,292 H 318 Q 310,292 310,284 V 252"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Rollout -> Canary (pod mgmt) -->
+  <path d="M 483,344 V 300 Q 483,292 491,292 H 582 Q 590,292 590,284 V 252"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Rollout -> VS (weight update), routed clear on the right -->
+  <path d="M 550,376 H 892 Q 900,376 900,368 V 96 Q 900,88 892,88 H 552"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- Prometheus -> Analysis -->
+  <line x1="180" y1="488" x2="280" y2="488" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Analysis -> Rollout (success/failure) -->
+  <path d="M 360,464 V 432 Q 360,424 368,424 H 442 Q 450,424 450,416 V 408"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Labels -->
+  <rect x="264" y="152" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="284" y="161" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">90%</text>
+  <rect x="596" y="152" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="616" y="161" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">10%</text>
+
+  <rect x="264" y="272" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="300" y="281" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD MGMT</text>
+  <rect x="564" y="272" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="600" y="281" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD MGMT</text>
+
+  <rect x="676" y="68" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="724" y="77" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WEIGHT UPDATE</text>
+
+  <rect x="196" y="468" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="226" y="477" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">METRICS</text>
+
+  <rect x="382" y="424" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="418" y="433" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PASS / FAIL</text>
+
+  <!-- Node: User -->
+  <rect x="40" y="56" width="112" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="96" y="90" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+
+  <!-- Node: Gateway -->
+  <rect x="192" y="56" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="264" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio Gateway</text>
+  <text x="264" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ingress</text>
+
+  <!-- Node: VS (focal) -->
+  <rect x="376" y="56" width="176" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="464" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VirtualService</text>
+  <text x="464" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">traffic splitting</text>
+
+  <!-- Node: Stable -->
+  <rect x="240" y="196" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="310" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Stable Pod</text>
+  <text x="310" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">v1</text>
+
+  <!-- Node: Canary -->
+  <rect x="520" y="196" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="590" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Canary Pod</text>
+  <text x="590" y="236" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">v2</text>
+
+  <!-- Node: Rollout (focal) -->
+  <rect x="350" y="344" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="450" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Argo Rollouts</text>
+  <text x="450" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">controller</text>
+
+  <!-- Node: Prometheus -->
+  <rect x="40" y="464" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="110" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+
+  <!-- Node: Analysis -->
+  <rect x="280" y="464" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="360" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AnalysisTemplate</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="564" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="192" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">TRAFFIC WEIGHT CONTROL</text>
+  <circle cx="440" cy="564" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="452" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">SERVICE / PROXY</text>
+  <circle cx="640" cy="564" r="5" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="652" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">EXTERNAL INPUT</text>
+</svg>

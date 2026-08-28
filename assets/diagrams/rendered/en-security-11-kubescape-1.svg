@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="kubescape-workflow-title kubescape-workflow-desc">
+    <title id="kubescape-workflow-title">Kubescape scan workflow</title>
+    <desc id="kubescape-workflow-desc">A single scan run travels from the CLI through framework selection and control evaluation to risk scoring and report generation.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows (drawn before nodes) ===== -->
+    <line x1="220" y1="210" x2="280" y2="210" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="440" y1="210" x2="500" y2="210" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="660" y1="210" x2="720" y2="210" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="800" y1="242" x2="800" y2="358" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="720" y1="390" x2="660" y2="390" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="500" y1="390" x2="440" y2="390" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- ===== Row 1 nodes ===== -->
+    <rect x="60" y="178" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="60" y="178" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="140" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubescape CLI</text>
+    <text x="140" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">scan trigger</text>
+
+    <rect x="280" y="178" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="280" y="178" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="360" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Framework Selection</text>
+    <text x="360" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">NSA-CISA &#183; CIS &#183; MITRE</text>
+
+    <rect x="500" y="178" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="500" y="178" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="580" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resource Collection</text>
+    <text x="580" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">gather cluster resources</text>
+
+    <rect x="720" y="178" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="720" y="178" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="800" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Control Checks</text>
+    <text x="800" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">evaluate each control</text>
+
+    <!-- ===== Row 2 nodes ===== -->
+    <rect x="720" y="358" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="720" y="358" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="800" y="386" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Severity Assessment</text>
+    <text x="800" y="402" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">classify findings</text>
+
+    <rect x="500" y="358" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="500" y="358" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="580" y="386" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Risk Scoring</text>
+    <text x="580" y="402" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">score &#38; prioritize</text>
+
+    <rect x="280" y="358" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="280" y="358" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="360" y="386" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Report Generation</text>
+    <text x="360" y="402" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">console &#183; JSON/SARIF &#183; HTML</text>
+  </svg>

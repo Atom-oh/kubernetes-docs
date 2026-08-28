@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="zoneaware-title zoneaware-desc">
+<title id="zoneaware-title">가용영역 인지 라우팅</title>
+<desc id="zoneaware-desc">클라이언트 파드가 같은 가용영역의 서비스 파드로 트래픽의 80%를 무료로 우선 라우팅하고, 나머지 20%만 크로스 AZ 비용을 지불하며 다른 가용영역으로 장애조치하는 구조를 보여준다.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Header -->
+<text x="40" y="52" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ISTIO · ZONE AWARE ROUTING</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">가용영역 인지 라우팅</text>
+
+<!-- ===== Zones (drawn first, before arrows/nodes) ===== -->
+<!-- Zone A x=80..420 y=128..300 -->
+<rect x="80" y="128" width="340" height="172" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="96" y="132" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="186" y="141" fill="rgba(35,47,62,0.40)" font-size="7" text-anchor="middle" letter-spacing="0.14em" font-family="'Geist Mono', monospace">AVAILABILITY ZONE A</text>
+
+<!-- Zone B x=520..820 y=180..300 -->
+<rect x="520" y="180" width="300" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="536" y="184" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="626" y="193" fill="rgba(35,47,62,0.40)" font-size="7" text-anchor="middle" letter-spacing="0.14em" font-family="'Geist Mono', monospace">AVAILABILITY ZONE B</text>
+
+<!-- Zone C x=520..820 y=336..452 -->
+<rect x="520" y="336" width="300" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="536" y="340" width="180" height="12" rx="2" fill="#ffffff"/>
+<text x="626" y="349" fill="rgba(35,47,62,0.40)" font-size="7" text-anchor="middle" letter-spacing="0.14em" font-family="'Geist Mono', monospace">AVAILABILITY ZONE C</text>
+
+<!-- ===== Arrows (before nodes) ===== -->
+<!-- Client -> Service1 : straight vertical, same x=200 -->
+<line x1="200" y1="200" x2="200" y2="224" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<!-- Client -> Service2 : straight vertical, same x=300 -->
+<line x1="300" y1="200" x2="300" y2="224" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="230" y="204" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="213" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.02em" font-family="'Geist Mono', monospace">80% · 무료</text>
+
+<!-- Client -> Service3 (dashed, cross-AZ, Zone B) : right edge fan point 1 (400,168) -->
+<path d="M 400,168 H 480 Q 488,168 488,176 V 218 Q 488,226 496,226 H 588" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="404" y="148" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="440" y="157" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.02em" font-family="'Geist Mono', monospace">10% · 비용</text>
+
+<!-- Client -> Service5 (dashed, cross-AZ, Zone C) : right edge fan point 2 (400,184) -->
+<path d="M 400,184 H 460 Q 468,184 468,192 V 374 Q 468,382 476,382 H 588" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="396" y="274" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="428" y="283" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.02em" font-family="'Geist Mono', monospace">10% · 비용</text>
+
+<!-- ===== Nodes (Zone A) ===== -->
+<rect x="100" y="152" width="300" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="250" y="174" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">클라이언트 Pod</text>
+<text x="250" y="189" fill="#EC7211" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">Zone A</text>
+
+<rect x="100" y="224" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170" y="244" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service Pod 1</text>
+<text x="170" y="259" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">Zone A</text>
+
+<rect x="260" y="224" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="330" y="244" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service Pod 2</text>
+<text x="330" y="259" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">Zone A</text>
+
+<!-- ===== Nodes (Zone B) ===== -->
+<rect x="588" y="204" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="668" y="224" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service Pod 3</text>
+<text x="668" y="239" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">Zone B</text>
+
+<rect x="588" y="260" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="668" y="280" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service Pod 4</text>
+<text x="668" y="295" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">Zone B</text>
+
+<!-- ===== Nodes (Zone C) ===== -->
+<rect x="588" y="360" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="668" y="380" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Service Pod 5</text>
+<text x="668" y="395" fill="#545B64" font-size="9" text-anchor="middle" font-family="'Geist Mono', monospace">Zone C</text>
+
+<!-- Legend -->
+<line x1="40" y1="512" x2="920" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="176" y1="524" x2="200" y2="524" stroke="#EC7211" stroke-width="1.2"/>
+<text x="212" y="528" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">같은 AZ 우선 라우팅 (80% · 무료)</text>
+<line x1="500" y1="524" x2="524" y2="524" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="536" y="528" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">크로스 AZ 장애조치 (10% · 비용 발생)</text>
+
+</svg>

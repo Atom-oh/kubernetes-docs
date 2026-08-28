@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="jwtflow-title jwtflow-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="jwtflow-title">JWT Validation Flow</title>
+  <desc id="jwtflow-desc">Flowchart showing how a sidecar validates an inbound JWT: it checks the token issuer, audiences, JWKS signature, and expiration in sequence, rejecting the request with 401 Unauthorized if any check fails and allowing it through only once all four checks pass.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <style>
+      text{ font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; }
+      .mono{ font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace; }
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ ARROWS (drawn before boxes) ============ -->
+
+  <!-- E1 Request -> Header -->
+  <line x1="140" y1="60" x2="164" y2="60" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- E2 Header -> NoToken (NO) -->
+  <line x1="252" y1="96" x2="252" y2="184" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="234" y="128" width="36" height="14" rx="2" fill="#ffffff"/>
+  <text x="252" y="138" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">NO</text>
+
+  <!-- E3 Header -> Extract (YES) -->
+  <line x1="340" y1="60" x2="376" y2="60" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="340" y="38" width="36" height="14" rx="2" fill="#ffffff"/>
+  <text x="358" y="48" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">YES</text>
+
+  <!-- E4 Extract -> ValidateIss -->
+  <line x1="552" y1="60" x2="572" y2="60" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- E5 ValidateIss -> ValidateAud (PASS) -->
+  <line x1="660" y1="96" x2="660" y2="156" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="636" y="118" width="48" height="14" rx="2" fill="#ffffff"/>
+  <text x="660" y="128" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">PASS</text>
+
+  <!-- E6 ValidateAud -> ValidateSig (PASS) -->
+  <line x1="660" y1="228" x2="660" y2="288" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="636" y="250" width="48" height="14" rx="2" fill="#ffffff"/>
+  <text x="660" y="260" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">PASS</text>
+
+  <!-- E7 ValidateSig -> ValidateExp (PASS) -->
+  <line x1="660" y1="360" x2="660" y2="420" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="636" y="382" width="48" height="14" rx="2" fill="#ffffff"/>
+  <text x="660" y="392" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">PASS</text>
+
+  <!-- E8 ValidateExp -> Allow (VALID) -->
+  <line x1="660" y1="492" x2="660" y2="528" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="628" y="500" width="64" height="14" rx="2" fill="#ffffff"/>
+  <text x="660" y="510" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">VALID</text>
+
+  <!-- E9 ValidateIss -> trunk (FAIL) -->
+  <line x1="748" y1="60" x2="850" y2="60" stroke="#545B64" stroke-width="1"/>
+  <rect x="781" y="38" width="36" height="14" rx="2" fill="#ffffff"/>
+  <text x="799" y="48" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">FAIL</text>
+
+  <!-- E10 ValidateAud -> trunk (FAIL) -->
+  <line x1="748" y1="192" x2="850" y2="192" stroke="#545B64" stroke-width="1"/>
+  <rect x="781" y="170" width="36" height="14" rx="2" fill="#ffffff"/>
+  <text x="799" y="180" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">FAIL</text>
+  <circle cx="850" cy="192" r="4" fill="#232F3E"/>
+
+  <!-- E11 ValidateSig -> trunk (FAIL) -->
+  <line x1="748" y1="324" x2="850" y2="324" stroke="#545B64" stroke-width="1"/>
+  <rect x="781" y="302" width="36" height="14" rx="2" fill="#ffffff"/>
+  <text x="799" y="312" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">FAIL</text>
+  <circle cx="850" cy="324" r="4" fill="#232F3E"/>
+
+  <!-- E12 ValidateExp -> trunk (EXPIRED) -->
+  <line x1="748" y1="456" x2="850" y2="456" stroke="#545B64" stroke-width="1"/>
+  <rect x="770" y="434" width="60" height="14" rx="2" fill="#ffffff"/>
+  <text x="800" y="444" text-anchor="middle" class="mono" font-size="7" letter-spacing="0.05em" fill="#7D8998">EXPIRED</text>
+  <circle cx="850" cy="456" r="4" fill="#232F3E"/>
+
+  <!-- Trunk: merged fail path down into Reject -->
+  <line x1="850" y1="60" x2="850" y2="524" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- Request (start oval) -->
+  <rect x="20" y="36" width="120" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="80" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Client Request</text>
+
+  <!-- Header (decision diamond) -->
+  <polygon points="252,24 340,60 252,96 164,60" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="252" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Authorization</text>
+  <text x="252" y="68" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">header exists?</text>
+
+  <!-- NoToken (terminal oval) -->
+  <rect x="152" y="184" width="200" height="64" rx="32" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="252" y="212" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">No token</text>
+  <text x="252" y="228" text-anchor="middle" class="mono" font-size="9" fill="#545B64">skip validation</text>
+
+  <!-- Extract (step) -->
+  <rect x="376" y="32" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="464" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Extract &amp; decode JWT</text>
+
+  <!-- ValidateIss -->
+  <polygon points="660,24 748,60 660,96 572,60" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="660" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Validate issuer</text>
+
+  <!-- ValidateAud -->
+  <polygon points="660,156 748,192 660,228 572,192" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="660" y="196" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Validate audiences</text>
+
+  <!-- ValidateSig (FOCAL) -->
+  <polygon points="660,288 748,324 660,360 572,324" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="660" y="320" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Validate signature</text>
+  <text x="660" y="334" text-anchor="middle" class="mono" font-size="9" fill="#545B64">(JWKS)</text>
+
+  <!-- ValidateExp -->
+  <polygon points="660,420 748,456 660,492 572,456" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="660" y="460" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Validate expiration</text>
+
+  <!-- Allow (end oval) -->
+  <rect x="588" y="528" width="144" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="660" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Allow</text>
+
+  <!-- Reject (terminal oval) -->
+  <rect x="770" y="532" width="160" height="56" rx="28" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="850" y="556" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Reject</text>
+  <text x="850" y="572" text-anchor="middle" class="mono" font-size="9" fill="#545B64">401 Unauthorized</text>
+
+</svg>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cb-state-title cb-state-desc">
+    <title id="cb-state-title">Circuit breaker state machine</title>
+    <desc id="cb-state-desc">State machine showing the circuit breaker cycling from Closed, where all requests pass through, to Open once the consecutive-error threshold is exceeded and requests fail immediately, to HalfOpen after the wait time elapses, where a limited test request either succeeds and returns to Closed or fails and returns to Open.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Arrows (behind nodes) -->
+    <!-- start -> Closed -->
+    <line x1="74" y1="280" x2="100" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Closed -> Open -->
+    <line x1="260" y1="280" x2="400" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Open -> HalfOpen -->
+    <line x1="560" y1="280" x2="700" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- HalfOpen -> Closed (success, top arc) -->
+    <path d="M780,248 C780,136 180,136 180,248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- HalfOpen -> Open (failure, bottom arc) -->
+    <path d="M780,312 C780,404 480,404 480,312" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Start dot -->
+    <circle cx="68" cy="280" r="6" fill="#232F3E"/>
+
+    <!-- Arrow labels -->
+    <rect x="280" y="260" width="100" height="12" rx="2" fill="#ffffff"/>
+    <text x="330" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">5X CONSEC ERR</text>
+
+    <rect x="596" y="260" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">WAIT ELAPSED</text>
+
+    <rect x="424" y="130" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="139" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">REQ. SUCCEEDS</text>
+
+    <rect x="576" y="394" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="620" y="403" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">REQ. FAILS</text>
+
+    <!-- Closed -->
+    <rect x="100" y="248" width="160" height="64" rx="8" fill="#ffffff"/>
+    <rect x="100" y="248" width="160" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="274" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Closed</text>
+    <text x="180" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">ALL REQUESTS PASS</text>
+
+    <!-- Open (focal) -->
+    <rect x="400" y="248" width="160" height="64" rx="8" fill="#ffffff"/>
+    <rect x="400" y="248" width="160" height="64" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="274" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Open</text>
+    <text x="480" y="292" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">REQUESTS FAIL FAST</text>
+
+    <!-- HalfOpen -->
+    <rect x="700" y="248" width="160" height="64" rx="8" fill="#ffffff"/>
+    <rect x="700" y="248" width="160" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="274" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HalfOpen</text>
+    <text x="780" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">LIMITED TEST REQ.</text>
+
+    <!-- Legend -->
+    <line x1="24" y1="524" x2="932" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="544" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <circle cx="120" cy="538" r="6" fill="#232F3E"/>
+    <text x="134" y="541" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">INITIAL STATE</text>
+
+    <rect x="284" y="532" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="308" y="541" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">BLOCKED STATE</text>
+  </svg>

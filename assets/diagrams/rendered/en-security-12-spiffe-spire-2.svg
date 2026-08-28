@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spire-attest-title spire-attest-desc">
+<title id="spire-attest-title">Node attestation, from boot to Node SVID</title>
+<desc id="spire-attest-desc">Flowchart showing a SPIRE Agent collecting attestation evidence through one of three methods, sending it to the SPIRE Server for validation, and either receiving a Node SVID or having the connection rejected.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Arrows (drawn before nodes) -->
+<line x1="480" y1="88" x2="480" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<path d="M480,160 V168 Q480,176 472,176 H218 Q210,176 210,184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="160" x2="480" y2="184" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M480,160 V168 Q480,176 488,176 H742 Q750,176 750,184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<path d="M210,232 V240 Q210,248 218,248 H432 Q440,248 440,256" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="232" x2="480" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M750,232 V240 Q750,248 742,248 H528 Q520,248 520,256" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<line x1="480" y1="304" x2="480" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="408" x2="480" y2="432" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<line x1="560" y1="368" x2="680" y2="368" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels -->
+<rect x="452" y="416" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="425" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">VALID</text>
+
+<rect x="592" y="358" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="624" y="367" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">INVALID</text>
+
+<!-- START (oval) -->
+<rect x="400" y="40" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Agent starts</text>
+
+<!-- COLLECT (rect) -->
+<rect x="400" y="112" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Collect attestation data</text>
+
+<!-- PSAT -->
+<rect x="130" y="184" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="210" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s PSAT</text>
+<text x="210" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">projected token</text>
+
+<!-- AWS IID -->
+<rect x="400" y="184" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS IID</text>
+<text x="480" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">instance identity doc</text>
+
+<!-- JOIN TOKEN -->
+<rect x="670" y="184" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="750" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Join token</text>
+<text x="750" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">one-time bootstrap</text>
+
+<!-- SEND -->
+<rect x="400" y="256" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Send to Server</text>
+
+<!-- DECISION diamond -->
+<polygon points="480,328 560,368 480,408 400,368" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="364" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Attestation</text>
+<text x="480" y="378" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">valid?</text>
+
+<!-- SUCCESS end (coral) -->
+<rect x="400" y="432" width="160" height="48" rx="24" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="454" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node SVID issued</text>
+<text x="480" y="468" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">stored on server</text>
+
+<!-- REJECT end -->
+<rect x="680" y="344" width="160" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="760" y="366" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Reject connection</text>
+<text x="760" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">agent not trusted</text>
+
+<!-- Legend -->
+<line x1="40" y1="512" x2="920" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND · SHAPE CARRIES TYPE</text>
+
+<rect x="40" y="544" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="72" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Start / end</text>
+
+<rect x="220" y="544" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="252" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Step</text>
+
+<polygon points="352,550 364,544 376,550 364,556" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="388" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Decision</text>
+
+<line x1="500" y1="552" x2="528" y2="552" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="536" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Happy path</text>
+
+<line x1="656" y1="552" x2="684" y2="552" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="692" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Branch</text>
+
+</svg>

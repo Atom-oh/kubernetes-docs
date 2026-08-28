@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+  <title id="t">Spark Operator 실행 흐름</title>
+  <desc id="d">kubectl apply로 생성된 SparkApplication CR을 Operator Controller가 감시하며, Webhook 주입과 Driver/Executor Pod 생성을 거쳐 Spark 작업이 실행되고, 진행 상황이 CR .status에 기록되어 다시 Controller의 감시 루프로 돌아오는 과정을 보여준다.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+    </marker>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" fill="#7D8998" font-size="8" letter-spacing="0.18em" class="mono">DATA ON EKS · SPARK OPERATOR</text>
+  <text x="40" y="56" fill="#232F3E" font-size="20" font-weight="700">Spark Operator 실행 흐름</text>
+
+  <!-- ===================== Connectors (drawn before boxes) ===================== -->
+
+  <!-- A -> B (row1, straight horizontal) -->
+  <path d="M 260,180 H 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- B -> C -->
+  <path d="M 480,180 H 520" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- C -> D -->
+  <path d="M 700,180 H 740" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- D -> E (vertical, col4) -->
+  <path d="M 830,220 V 400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- E -> F -->
+  <path d="M 740,440 H 700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- F -> G -->
+  <path d="M 520,440 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- G -> B feedback loop (dashed, vertical, col2) -->
+  <path d="M 390,400 V 220" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+  <rect x="398" y="303" width="96" height="14" rx="2" fill="#ffffff"/>
+  <text x="446" y="313" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle" class="mono">컨트롤 루프</text>
+
+  <!-- ===================== Nodes ===================== -->
+
+  <!-- A: kubectl apply -->
+  <g>
+    <rect x="80" y="140" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="80" y="140" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="96" y="152" width="30" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="111" y="162" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">CLI</text>
+    <text x="170" y="188" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">kubectl apply</text>
+    <text x="170" y="204" fill="#545B64" font-size="9" text-anchor="middle" class="mono">SparkApplication</text>
+  </g>
+
+  <!-- B: Controller가 CR 감시 (focal / hub) -->
+  <g>
+    <rect x="300" y="140" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="300" y="140" width="180" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="316" y="152" width="36" height="14" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+    <text x="334" y="162" fill="#EC7211" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">CTRL</text>
+    <text x="390" y="184" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Controller가</text>
+    <text x="390" y="200" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">CR 감시</text>
+    <text x="390" y="214" fill="#545B64" font-size="9" text-anchor="middle" class="mono">reconcile loop</text>
+  </g>
+
+  <!-- C: Admission Webhook -->
+  <g>
+    <rect x="520" y="140" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="520" y="140" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="536" y="152" width="52" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="562" y="162" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">WEBHOOK</text>
+    <text x="610" y="184" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Webhook가</text>
+    <text x="610" y="200" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod 커스터마이징</text>
+    <text x="610" y="214" fill="#545B64" font-size="9" text-anchor="middle" class="mono">mutating</text>
+  </g>
+
+  <!-- D: Driver Pod 생성 -->
+  <g>
+    <rect x="740" y="140" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="740" y="140" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="756" y="152" width="30" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="771" y="162" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">POD</text>
+    <text x="830" y="188" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Driver Pod 생성</text>
+    <text x="830" y="204" fill="#545B64" font-size="9" text-anchor="middle" class="mono">spark-driver</text>
+  </g>
+
+  <!-- E: Executor Pod 요청 -->
+  <g>
+    <rect x="740" y="400" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="740" y="400" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="756" y="412" width="30" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="771" y="422" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">POD</text>
+    <text x="830" y="448" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Executor Pod 요청</text>
+    <text x="830" y="464" fill="#545B64" font-size="9" text-anchor="middle" class="mono">spark-executor</text>
+  </g>
+
+  <!-- F: Spark 작업 실행 -->
+  <g>
+    <rect x="520" y="400" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="520" y="400" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="536" y="412" width="30" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="551" y="422" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">JOB</text>
+    <text x="610" y="448" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Spark 작업 실행</text>
+    <text x="610" y="464" fill="#545B64" font-size="9" text-anchor="middle" class="mono">spark-submit</text>
+  </g>
+
+  <!-- G: CR .status 기록 -->
+  <g>
+    <rect x="300" y="400" width="180" height="80" rx="6" fill="#ffffff"/>
+    <rect x="300" y="400" width="180" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="316" y="412" width="24" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="328" y="422" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.08em" text-anchor="middle" class="mono">CR</text>
+    <text x="390" y="444" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">진행 상황을</text>
+    <text x="390" y="460" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">.status에 기록</text>
+    <text x="390" y="474" fill="#545B64" font-size="9" text-anchor="middle" class="mono">.status</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="546" fill="#545B64" font-size="8" letter-spacing="0.14em" class="mono">LEGEND</text>
+  <line x1="130" y1="542" x2="162" y2="542" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="170" y="546" fill="#545B64" font-size="9" class="mono">실행 흐름</text>
+  <line x1="270" y1="542" x2="302" y2="542" stroke="#7D8998" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-soft)"/>
+  <text x="310" y="546" fill="#545B64" font-size="9" class="mono">상태 감시 루프 (재조정)</text>
+</svg>

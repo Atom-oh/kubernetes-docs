@@ -72,36 +72,7 @@ Istio Envoy 프록시가 제공하는 메트릭을 스케일링에 활용합니�
 
 ### 메트릭 기반 스케일링 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application<br/>Pod
-    participant Envoy as Envoy<br/>Sidecar
-    participant Prom as Prometheus
-    participant KEDA as KEDA<br/>Operator
-    participant HPA as HPA
-    participant K8s as Kubernetes<br/>API
-
-    App->>Envoy: HTTP 요청 처리
-    Envoy->>Envoy: 메트릭 생성<br/>istio_requests_total<br/>istio_request_duration_milliseconds
-
-    Envoy->>Prom: 메트릭 노출<br/>:15090/stats/prometheus
-    Prom->>Prom: 메트릭 수집 및 저장
-
-    Note over KEDA: pollingInterval마다 실행
-
-    KEDA->>Prom: PromQL 쿼리 실행<br/>rate(istio_requests_total[1m])
-    Prom->>KEDA: 현재 RPS 값 반환<br/>예: 1,500 RPS
-
-    KEDA->>KEDA: 임계값 비교<br/>threshold: 1,000 RPS<br/>현재: 1,500 RPS<br/>→ 스케일 아웃 필요
-
-    KEDA->>HPA: 목표 레플리카 계산 및 업데이트<br/>current: 10 → desired: 15
-
-    HPA->>K8s: ReplicaSet 업데이트
-    K8s->>App: 새 Pod 5개 생성
-
-    Note over App,K8s: cooldownPeriod 대기 후<br/>다음 스케일링 평가
-```
+![KEDA가 Prometheus에서 Istio 메트릭을 조회해 임계값과 비교한 뒤 HPA를 통해 Pod 수를 조정하는 시퀀스](../../../.gitbook/assets/ko-service-mesh-istio-advanced-10-keda-autoscaling-0.png)
 
 ### ScaledObject 기본 구조
 
@@ -176,36 +147,7 @@ spec:
 
 #### 동작 방식
 
-```mermaid
-flowchart TD
-    Start[메트릭 수집]
-    Query[PromQL 쿼리<br/>실행]
-    Check{RPS > 100?}
-    ScaleOut[레플리카 증가]
-    Check2{RPS < 50?}
-    ScaleIn[레플리카 감소]
-    Wait[대기]
-
-    Start --> Query
-    Query --> Check
-    Check -->|Yes| ScaleOut
-    Check -->|No| Check2
-    Check2 -->|Yes| ScaleIn
-    Check2 -->|No| Wait
-    ScaleOut --> Wait
-    ScaleIn --> Wait
-    Wait --> Start
-
-    %% 스타일 정의
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef wait fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start,Query,ScaleOut,ScaleIn action;
-    class Check,Check2 decision;
-    class Wait wait;
-```
+![RPS 임계값에 따라 레플리카를 늘리거나 줄이고 다시 대기 상태로 순환하는 KEDA 스케일링 결정 루프](../../../.gitbook/assets/ko-service-mesh-istio-advanced-10-keda-autoscaling-1.png)
 
 ### 2. Latency (지연 시간) 기반 스케일링
 
@@ -774,40 +716,7 @@ spec:
 
 ### 1. 메트릭 선택 가이드
 
-```mermaid
-flowchart TD
-    Start{워크로드<br/>특성}
-
-    Stateless{Stateless<br/>서비스?}
-    Traffic{트래픽<br/>패턴 예측?}
-    Latency{지연 시간<br/>민감?}
-
-    RPSScale[RPS 기반<br/>스케일링]
-    LatencyScale[Latency 기반<br/>스케일링]
-    Composite[복합 메트릭<br/>스케일링]
-    Predictive[예측 스케일링<br/>+ Cron]
-
-    Start --> Stateless
-    Stateless -->|Yes| Traffic
-    Stateless -->|No| LatencyScale
-
-    Traffic -->|Yes| Predictive
-    Traffic -->|No| Latency
-
-    Latency -->|Yes| LatencyScale
-    Latency -->|No| RPSScale
-
-    RPSScale -.->|조합| Composite
-    LatencyScale -.->|조합| Composite
-
-    %% 스타일 정의
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef strategy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Start,Stateless,Traffic,Latency decision;
-    class RPSScale,LatencyScale,Composite,Predictive strategy;
-```
+![워크로드 특성(상태 유무, 트래픽 예측 가능성, 지연 시간 민감도)에 따라 RPS, Latency, 예측, 복합 스케일링 전략을 선택하는 의사결정 트리](../../../.gitbook/assets/ko-service-mesh-istio-advanced-10-keda-autoscaling-2.png)
 
 **권장 메트릭**:
 

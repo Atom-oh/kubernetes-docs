@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="nim-title nim-desc">
+    <title id="nim-title">NVIDIA NIM Deployment on EKS</title>
+    <desc id="nim-desc">Architecture showing a request entering through an Application Load Balancer and Nginx Ingress into a NIM container running a TensorRT-LLM engine on a GPU node pool, with a model-cache path to FSx/S3/NGC storage and a metrics path to Prometheus and Grafana.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows (drawn before boxes) ===== -->
+    <!-- ALB -> Nginx (R1, C1->C2) -->
+    <line x1="200" y1="92" x2="280" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Nginx -> NIM Container (C2, R1->R2) -->
+    <line x1="360" y1="124" x2="360" y2="200" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- NIM Container -> TensorRT-LLM Engine (R2, C2->C3) -->
+    <line x1="440" y1="232" x2="520" y2="232" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- TensorRT-LLM Engine -> Model Cache (R2, C3->C4) -->
+    <line x1="680" y1="232" x2="760" y2="232" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- NIM Container -> GPU Node Pool (C2, R2->R3) -->
+    <line x1="360" y1="264" x2="360" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Model Cache -> FSx (C4, R2->R3) -->
+    <line x1="840" y1="264" x2="840" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- NGC -> FSx (R3, C3->C4) -->
+    <line x1="680" y1="372" x2="760" y2="372" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- FSx -> S3 (C4, R3->R4) -->
+    <line x1="840" y1="404" x2="840" y2="480" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- NIM Metrics Exporter -> Prometheus (R4, C1->C2) -->
+    <line x1="200" y1="512" x2="280" y2="512" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Prometheus -> Grafana (R4, C2->C3) -->
+    <line x1="440" y1="512" x2="520" y2="512" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Arrow labels ===== -->
+    <rect x="212" y="74" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="84" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+
+    <rect x="330" y="152" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="162" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ROUTE</text>
+
+    <rect x="450" y="214" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="224" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">INFER</text>
+
+    <rect x="330" y="292" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="302" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULE</text>
+
+    <rect x="810" y="292" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="840" y="302" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LOAD</text>
+
+    <rect x="810" y="432" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="840" y="442" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ARCHIVE</text>
+
+    <rect x="212" y="494" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="504" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCRAPE</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- ALB -->
+    <rect x="40" y="60" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="60" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="120" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">ALB</text>
+    <text x="120" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">app load balancer</text>
+
+    <!-- Nginx Ingress -->
+    <rect x="280" y="60" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="280" y="60" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="360" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Nginx Ingress</text>
+    <text x="360" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">controller</text>
+
+    <!-- NIM Container (FOCAL) -->
+    <rect x="280" y="200" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="280" y="200" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="360" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">NIM Container</text>
+    <text x="360" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">×N pod replicas</text>
+
+    <!-- TensorRT-LLM Engine -->
+    <rect x="520" y="200" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="520" y="200" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="600" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">TensorRT-LLM</text>
+    <text x="600" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">engine</text>
+
+    <!-- Model Cache -->
+    <rect x="760" y="200" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="760" y="200" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="840" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Model Cache</text>
+    <text x="840" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">per-pod local</text>
+
+    <!-- GPU Node Pool -->
+    <rect x="280" y="340" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="280" y="340" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="360" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">GPU Node Pool</text>
+    <text x="360" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">p4d.24xl · g5.48xl</text>
+
+    <!-- NGC -->
+    <rect x="520" y="340" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="520" y="340" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="600" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">NGC Catalog</text>
+    <text x="600" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">model source</text>
+
+    <!-- FSx -->
+    <rect x="760" y="340" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="760" y="340" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="840" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">FSx for Lustre</text>
+    <text x="840" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared weights</text>
+
+    <!-- NIM Metrics Exporter -->
+    <rect x="40" y="480" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="480" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="120" y="508" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">NIM Metrics</text>
+    <text x="120" y="524" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">exporter</text>
+
+    <!-- Prometheus -->
+    <rect x="280" y="480" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="280" y="480" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="360" y="508" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Prometheus</text>
+    <text x="360" y="524" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">time-series store</text>
+
+    <!-- Grafana -->
+    <rect x="520" y="480" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="520" y="480" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="600" y="508" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Grafana</text>
+    <text x="600" y="524" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">dashboards</text>
+
+    <!-- S3 -->
+    <rect x="760" y="480" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="760" y="480" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="840" y="508" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">Amazon S3</text>
+    <text x="840" y="524" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">model archive</text>
+  </svg>

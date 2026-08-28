@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="investstate-title investstate-desc">
+    <title id="investstate-title">AIOps investigation state machine</title>
+    <desc id="investstate-desc">A linear state machine showing how CloudWatch anomaly detection leads through automatic investigation creation, data collection, correlation, AI hypothesis generation, root-cause proposal, and recommended actions to a completed investigation.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Start dot + first transition -->
+    <circle cx="48" cy="128" r="6" fill="#232F3E"/>
+    <path d="M 54,128 H 96" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="52" y="108" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="72" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">DETECT</text>
+
+    <!-- Row 1 -->
+    <rect x="96" y="96" width="160" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="176" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Anomaly</text>
+    <text x="176" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Detected</text>
+
+    <path d="M 256,128 H 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="256" y="108" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="284" y="117" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">AUTO-CREATE</text>
+
+    <rect x="320" y="96" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="410" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Investigation</text>
+    <text x="410" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Started</text>
+
+    <path d="M 500,128 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="518" y="108" width="84" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">COLLECT</text>
+
+    <rect x="620" y="96" width="160" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data</text>
+    <text x="700" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Collection</text>
+
+    <!-- Row1 -> Row2, straight vertical (both centered on x=700) -->
+    <path d="M 700,160 V 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="708" y="182" width="90" height="12" rx="2" fill="#ffffff"/>
+    <text x="753" y="191" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">CORRELATE</text>
+
+    <!-- Row 2 (right to left) -->
+    <rect x="600" y="216" width="200" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Correlation</text>
+    <text x="700" y="260" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analysis</text>
+
+    <path d="M 600,248 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="484" y="228" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="540" y="237" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">AI GENERATES</text>
+
+    <!-- Hypothesis - FOCAL -->
+    <rect x="280" y="216" width="200" height="64" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="380" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hypothesis</text>
+    <text x="380" y="260" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Generation</text>
+
+    <!-- Row2 -> Row3, straight vertical (both centered on x=380) -->
+    <path d="M 380,280 V 336" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="388" y="302" width="70" height="12" rx="2" fill="#ffffff"/>
+    <text x="423" y="311" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">PROPOSE</text>
+
+    <!-- Row 3 (left to right) -->
+    <rect x="280" y="336" width="200" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="380" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Root Cause</text>
+    <text x="380" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Proposal</text>
+
+    <path d="M 480,368 H 560" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="490" y="348" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="520" y="357" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">SUGGEST</text>
+
+    <rect x="560" y="336" width="200" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="660" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Recommended</text>
+    <text x="660" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Actions</text>
+
+    <path d="M 760,368 H 792" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="746" y="348" width="68" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="357" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">COMPLETE</text>
+
+    <!-- End ring -->
+    <circle cx="808" cy="368" r="8" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+    <circle cx="808" cy="368" r="5" fill="#232F3E"/>
+
+    <!-- ===== LEGEND ===== -->
+    <line x1="32" y1="472" x2="928" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="488" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <circle cx="146" cy="496" r="6" fill="#232F3E"/>
+    <text x="160" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">START</text>
+
+    <circle cx="298" cy="496" r="6" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+    <circle cx="298" cy="496" r="3.5" fill="#232F3E"/>
+    <text x="312" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">END</text>
+
+    <rect x="420" y="489" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="440" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">AI-GENERATED STEP</text>
+  </svg>

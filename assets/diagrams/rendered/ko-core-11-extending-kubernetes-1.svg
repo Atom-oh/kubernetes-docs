@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1title d1desc">
+  <title id="d1title">커스텀 리소스 작동 방식</title>
+  <desc id="d1desc">사용자가 커스텀 리소스 정의와 커스텀 리소스 인스턴스를 생성하면 API 서버 내부에서 등록·검증을 거쳐 etcd에 저장되는 커스텀 리소스의 처리 흐름을 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">ARCHITECTURE · CUSTOM RESOURCE</text>
+  <text x="40" y="50" fill="#232F3E" font-size="16" font-weight="700" class="sans">커스텀 리소스 작동 방식</text>
+  <text x="40" y="66" fill="#545B64" font-size="10" class="sans">커스텀 리소스는 CRD로 스키마를 정의하고, 인스턴스는 검증을 거쳐 etcd에 저장된다</text>
+
+  <!-- ============ Zone ============ -->
+  <rect x="248" y="128" width="464" height="296" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="264" y="132" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="340" y="141" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">KUBERNETES API 서버</text>
+
+  <!-- ============ Arrows ============ -->
+  <!-- User -> CRD (1. 생성/수정) -->
+  <path d="M436,108 V134 Q436,142 428,142 H358 Q350,142 350,150 V176" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="365" y="122" width="56" height="12" fill="#ffffff"/>
+  <text x="393" y="131" fill="#545B64" font-size="8" class="mono" text-anchor="middle">1. 생성/수정</text>
+
+  <!-- User -> CR (2. 생성/수정) -->
+  <path d="M484,108 V134 Q484,142 492,142 H582 Q590,142 590,150 V176" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="509" y="122" width="56" height="12" fill="#ffffff"/>
+  <text x="537" y="131" fill="#545B64" font-size="8" class="mono" text-anchor="middle">2. 생성/수정</text>
+
+  <!-- CRD -> CR (정의) -->
+  <path d="M420,192 H520" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="455" y="172" width="30" height="12" fill="#ffffff"/>
+  <text x="470" y="181" fill="#545B64" font-size="8" class="mono" text-anchor="middle">정의</text>
+
+  <!-- CRD -> API (등록) -->
+  <path d="M350,208 V264" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="356" y="230" width="30" height="12" fill="#ffffff"/>
+  <text x="371" y="239" fill="#545B64" font-size="8" class="mono" text-anchor="middle">등록</text>
+
+  <!-- CR -> VAL (검증) -->
+  <path d="M590,208 V264" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="596" y="230" width="30" height="12" fill="#ffffff"/>
+  <text x="611" y="239" fill="#545B64" font-size="8" class="mono" text-anchor="middle">검증</text>
+
+  <!-- CR -> STOR (저장) -->
+  <path d="M660,200 H672 Q680,200 680,208 V316 Q680,324 672,324 H588 Q580,324 580,332 V352" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="616" y="304" width="28" height="12" fill="#ffffff"/>
+  <text x="630" y="313" fill="#545B64" font-size="8" class="mono" text-anchor="middle">저장</text>
+
+  <!-- ============ Nodes ============ -->
+  <!-- User -->
+  <rect x="392" y="76" width="136" height="32" rx="6" fill="#ffffff"/>
+  <rect x="392" y="76" width="136" height="32" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="460" y="96" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">사용자</text>
+
+  <!-- CRD -->
+  <rect x="280" y="176" width="140" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="350" y="196" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">커스텀 리소스 정의</text>
+
+  <!-- CR (focal) -->
+  <rect x="520" y="176" width="140" height="32" rx="6" fill="#ffffff"/>
+  <rect x="520" y="176" width="140" height="32" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="590" y="192" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">커스텀 리소스</text>
+  <text x="590" y="203" fill="#232F3E" font-size="10" font-weight="600" class="sans" text-anchor="middle">인스턴스</text>
+
+  <!-- API 등록 -->
+  <rect x="280" y="264" width="140" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="350" y="284" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">API 등록</text>
+
+  <!-- VAL 검증 -->
+  <rect x="520" y="264" width="140" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="590" y="284" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">검증</text>
+
+  <!-- STOR etcd (store) -->
+  <rect x="420" y="352" width="200" height="40" rx="6" fill="#ffffff"/>
+  <rect x="420" y="352" width="200" height="40" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="428" y="358" width="24" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+  <text x="440" y="367" fill="#545B64" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.06em">DB</text>
+  <text x="520" y="376" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">etcd 스토리지</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="556" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="552" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="232" y="556" fill="#545B64" font-size="9" class="sans">핵심 리소스 인스턴스</text>
+  <circle cx="420" cy="552" r="4" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="432" y="556" fill="#545B64" font-size="9" class="sans">저장소</text>
+  <circle cx="540" cy="552" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="552" y="556" fill="#545B64" font-size="9" class="sans">API 서버 구성요소</text>
+</svg>

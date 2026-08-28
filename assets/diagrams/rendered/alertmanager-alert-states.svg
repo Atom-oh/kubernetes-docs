@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="alert-states-title alert-states-desc">
+      <title id="alert-states-title">Alert States</title>
+      <desc id="alert-states-desc">State machine showing an alert moving from Inactive to Pending once its PromQL condition is met, then to Firing once the 'for' duration elapses, with paths back to Inactive if the condition clears.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Transitions (before state boxes) -->
+      <!-- start -> Inactive -->
+      <path d="M 96,220 H 152" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <!-- Inactive -> Pending -->
+      <path d="M 296,220 H 372" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="298" y="200" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="334" y="209" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">COND. MET</text>
+
+      <!-- Pending -> Firing (accent, headline) -->
+      <path d="M 536,220 H 612" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="538" y="200" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="574" y="209" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">FOR ELAPSED</text>
+
+      <!-- Firing -> Inactive (long return, top arc) -->
+      <path d="M 692,200 V 116 Q 692,108 684,108 H 232 Q 224,108 224,116 V 200"
+            fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="392" y="88" width="152" height="12" rx="2" fill="#ffffff"/>
+      <text x="468" y="97" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">CONDITION NOT MET</text>
+
+      <!-- Pending -> Inactive (lower arc) -->
+      <path d="M 452,240 V 264 Q 452,272 444,272 H 232 Q 224,272 224,264 V 240"
+            fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <rect x="272" y="276" width="176" height="12" rx="2" fill="#ffffff"/>
+      <text x="360" y="285" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">NOT MET WITHIN 'FOR'</text>
+
+      <!-- Start dot -->
+      <circle cx="80" cy="220" r="6" fill="#232F3E"/>
+
+      <!-- Inactive -->
+      <rect x="152" y="200" width="144" height="40" rx="8" fill="#ffffff"/>
+      <rect x="152" y="200" width="144" height="40" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="224" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Inactive</text>
+
+      <!-- Pending -->
+      <rect x="372" y="200" width="164" height="40" rx="8" fill="#ffffff"/>
+      <rect x="372" y="200" width="164" height="40" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="454" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pending</text>
+
+      <!-- Firing (focal) -->
+      <rect x="612" y="200" width="144" height="40" rx="8" fill="rgba(255,153,0,0.10)"/>
+      <rect x="612" y="200" width="144" height="40" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="684" y="224" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Firing</text>
+
+      <!-- Notes -->
+      <text x="224" y="360" fill="#7D8998" font-size="9" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Alert has not fired</text>
+      <text x="454" y="360" fill="#7D8998" font-size="9" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waiting for 'for' duration</text>
+      <text x="684" y="360" fill="#7D8998" font-size="9" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Active, sent to Alertmanager</text>
+
+      <!-- Legend -->
+      <line x1="30" y1="500" x2="930" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="140" y1="512" x2="176" y2="512" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="184" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">CONDITION RESOLVED</text>
+      <line x1="380" y1="512" x2="416" y2="512" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="424" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">TIMED OUT PENDING</text>
+      <line x1="620" y1="512" x2="656" y2="512" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="664" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">ALERT BECOMES ACTIVE</text>
+    </svg>

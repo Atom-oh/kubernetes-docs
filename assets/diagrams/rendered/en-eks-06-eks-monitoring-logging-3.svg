@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="alert-flow-title alert-flow-desc">
+      <title id="alert-flow-title">Alert sources routed through processors to notification channels</title>
+      <desc id="alert-flow-desc">AWS-native and Kubernetes/open-source signals feed CloudWatch Alarms, EventBridge, Prometheus Alertmanager, and a generic event router, which in turn notify SNS, Lambda, and chat or paging tools.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ================= ZONES ================= -->
+      <rect x="24" y="64" width="192" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="28" y="68" width="96" height="12" rx="2" fill="#ffffff"/>
+      <text x="76" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">SIGNALS</text>
+
+      <rect x="368" y="44" width="232" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="372" y="48" width="112" height="12" rx="2" fill="#ffffff"/>
+      <text x="428" y="57" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">PROCESSING</text>
+
+      <rect x="736" y="64" width="200" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="740" y="68" width="152" height="12" rx="2" fill="#ffffff"/>
+      <text x="816" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">NOTIFICATION CHANNELS</text>
+
+      <!-- ================= ARROWS ================= -->
+      <!-- AWS-native Signals (y=132) -> CW Alarms (y=104), EventBridge (y=284) -->
+      <path d="M200,124 H248 Q256,124 256,116 V112 Q256,104 264,104 H384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M200,140 H280 Q288,140 288,148 V276 Q288,284 296,284 H384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Kubernetes / OSS Signals (y=308) -> Prometheus Alertmanager (y=196), Event Router (y=376) -->
+      <path d="M200,300 H328 Q336,300 336,292 V204 Q336,196 344,196 H384" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <path d="M200,316 H384" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+      <!-- CW Alarms -> SNS -->
+      <path d="M584,104 H620 Q628,104 628,112 V148 Q628,156 636,156 H752" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- EventBridge -> SNS (fanned) -->
+      <path d="M584,268 H652 Q660,268 660,260 V180 Q660,172 668,172 H752" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- EventBridge -> Lambda -->
+      <path d="M584,300 H752" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- Prometheus Alertmanager -> Chat & Paging (FOCAL path) -->
+      <path d="M584,196 H700 Q708,196 708,204 V368 Q708,376 716,376 H752" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <!-- Event Router -> Chat & Paging -->
+      <path d="M584,388 H752" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Arrow label -->
+      <rect x="642" y="352" width="52" height="12" rx="2" fill="#ffffff"/>
+      <text x="668" y="361" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ALERTS</text>
+
+      <!-- ================= NODES ================= -->
+      <!-- Signals -->
+      <rect x="40" y="96" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="40" y="96" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="48" y="102" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="63" y="111" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="120" y="128" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS-native Signals</text>
+      <text x="120" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CW metrics/logs, AWS events</text>
+
+      <rect x="40" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="40" y="280" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <rect x="48" y="286" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="63" y="295" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="120" y="312" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes / OSS Signals</text>
+      <text x="120" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Prometheus, logs, events</text>
+
+      <!-- Processing -->
+      <rect x="384" y="76" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="384" y="76" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="392" y="82" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="407" y="91" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="484" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch Alarms</text>
+      <text x="484" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">metric &amp; log threshold alarms</text>
+
+      <rect x="384" y="168" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="384" y="168" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <rect x="392" y="174" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="407" y="183" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="484" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus Alertmanager</text>
+      <text x="484" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">grouping, routing, silencing</text>
+
+      <rect x="384" y="260" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="384" y="260" width="200" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="392" y="266" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="407" y="275" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="484" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon EventBridge</text>
+      <text x="484" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cluster/node-group state events</text>
+
+      <rect x="384" y="352" width="200" height="56" rx="6" fill="#ffffff"/>
+      <rect x="384" y="352" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="392" y="358" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="407" y="367" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">K8S</text>
+      <text x="484" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Event Router</text>
+      <text x="484" y="400" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">k8s / app event exporter</text>
+
+      <!-- Notification Channels -->
+      <rect x="752" y="128" width="168" height="56" rx="6" fill="#ffffff"/>
+      <rect x="752" y="128" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="760" y="134" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="775" y="143" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="836" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon SNS</text>
+      <text x="836" y="176" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">fans out to email, SQS</text>
+
+      <rect x="752" y="272" width="168" height="56" rx="6" fill="#ffffff"/>
+      <rect x="752" y="272" width="168" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="760" y="278" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="775" y="287" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="836" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS Lambda</text>
+      <text x="836" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">custom automated response</text>
+
+      <rect x="752" y="360" width="168" height="56" rx="6" fill="#ffffff"/>
+      <rect x="752" y="360" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="760" y="366" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="775" y="375" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXT</text>
+      <text x="836" y="392" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Chat &amp; Paging</text>
+      <text x="836" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Slack, PagerDuty, OpsGenie</text>
+
+      <!-- ================= LEGEND ================= -->
+      <line x1="30" y1="448" x2="930" y2="448" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="464" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <circle cx="220" cy="460" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="232" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Focal — Kubernetes-native alerting path</text>
+      <circle cx="560" cy="460" r="5" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="572" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Managed AWS service</text>
+      <circle cx="760" cy="460" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="772" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Cluster / external component</text>
+    </svg>

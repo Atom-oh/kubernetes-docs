@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-cilium-service-mesh-01-architecture-12-title ko-service-mesh-cilium-service-mesh-01-architecture-12-desc">
+<title id="ko-service-mesh-cilium-service-mesh-01-architecture-12-title">L7 처리가 필요한 요청/응답 흐름</title>
+<desc id="ko-service-mesh-cilium-service-mesh-01-architecture-12-desc">L7 정책이 감지된 요청과 응답만 클라이언트·서버 측 eBPF가 노드 Envoy로 왕복 리다이렉트해 HTTP 파싱, 정책 적용, 메트릭·트레이싱을 수행하는 전체 흐름을 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="90" y1="88" x2="90" y2="458" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="280" y1="88" x2="280" y2="458" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="88" x2="480" y2="458" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="680" y1="88" x2="680" y2="458" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="880" y1="88" x2="880" y2="458" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="204" y="148" width="152" height="22" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="280" y="162" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">L7 정책 감지</text>
+<rect x="348" y="214" width="264" height="22" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="480" y="228" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">HTTP 파싱 · L7 정책 적용 · 메트릭 · 트레이싱</text>
+<rect x="384" y="364" width="192" height="22" rx="4" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="480" y="378" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">응답 처리 · 메트릭 업데이트</text>
+<path d="M 90,120 L 280,120" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="155.5" y="100" width="59" height="12" rx="2" fill="#ffffff"/><text x="185" y="109" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTP 요청</text>
+<path d="M 280,186 L 480,186" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="340.0" y="166" width="80" height="12" rx="2" fill="#ffffff"/><text x="380" y="175" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">프록시로 리다이렉트</text>
+<path d="M 480,252 L 680,252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="557.5" y="232" width="45" height="12" rx="2" fill="#ffffff"/><text x="580" y="241" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">요청 전달</text>
+<path d="M 680,280 L 880,280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="757.5" y="260" width="45" height="12" rx="2" fill="#ffffff"/><text x="780" y="269" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">패킷 전달</text>
+<path d="M 880,308 L 680,308" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="750.5" y="316" width="59" height="12" rx="2" fill="#ffffff"/><text x="780" y="325" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTP 응답</text>
+<path d="M 680,336 L 480,336" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="557.5" y="344" width="45" height="12" rx="2" fill="#ffffff"/><text x="580" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">응답 전달</text>
+<path d="M 480,402 L 280,402" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="357.5" y="382" width="45" height="12" rx="2" fill="#ffffff"/><text x="380" y="391" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">응답 전달</text>
+<path d="M 280,430 L 90,430" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="162.5" y="438" width="45" height="12" rx="2" fill="#ffffff"/><text x="185" y="447" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">패킷 전달</text>
+<rect x="30.0" y="48" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="30.0" y="48" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="90.0" y="70.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client Pod</text>
+<rect x="215.0" y="48" width="130" height="40" rx="6" fill="#ffffff"/>
+<rect x="215.0" y="48" width="130" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280.0" y="70.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eBPF (Client)</text>
+<rect x="410.0" y="48" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="410.0" y="48" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="70.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node Envoy</text>
+<rect x="615.0" y="48" width="130" height="40" rx="6" fill="#ffffff"/>
+<rect x="615.0" y="48" width="130" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680.0" y="70.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eBPF (Server)</text>
+<rect x="820.0" y="48" width="120" height="40" rx="6" fill="#ffffff"/>
+<rect x="820.0" y="48" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="880.0" y="70.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Server Pod</text>
+</svg>

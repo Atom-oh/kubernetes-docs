@@ -36,41 +36,7 @@ Kubernetes provides various extension points to extend and customize its base fu
 
 The following diagram shows the main extension points in Kubernetes:
 
-```mermaid
-flowchart TD
-    User[User/Client] --> API[API Server]
-
-    subgraph "API Extensions"
-        API --> CR[Custom Resources]
-        API --> AC[Admission Controllers]
-        API --> AE[API Server Extensions]
-    end
-
-    subgraph "Controller Extensions"
-        CR --> OP[Operators]
-        API --> CCM[Cloud Controller Manager]
-    end
-
-    subgraph "Scheduling Extensions"
-        API --> SCH[Scheduler Extensions]
-    end
-
-    subgraph "Node Extensions"
-        Node[Node] --> CSI[CSI Drivers]
-        Node --> CNI[CNI Plugins]
-        Node --> DP[Device Plugins]
-    end
-
-    API --> Node
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,CR,AC,AE,OP,CCM,SCH,Node k8sComponent;
-    class User userApp;
-    class CSI,CNI,DP default;
-```
+![Architecture diagram showing the API server as the hub for custom resources, admission controllers, API server extensions, operators, the cloud controller manager, and scheduler extensions, with node-level extension points (CSI, CNI, device plugins) attached to each cluster node.](../.gitbook/assets/en-core-11-extending-kubernetes-0.png)
 
 ### Choosing an Extension Method
 
@@ -88,34 +54,7 @@ Custom resources are a way to extend the Kubernetes API to define new object typ
 
 The following diagram shows how custom resources work:
 
-```mermaid
-flowchart TD
-    User[User] --> |1. Create/Update| CRD[Custom Resource Definition]
-    User --> |2. Create/Update| CR[Custom Resource Instance]
-
-    CRD --> |Defines| CR
-
-    subgraph "Kubernetes API Server"
-        CRD
-        CR
-        API[API Registration]
-        VAL[Validation]
-        STOR[(etcd Storage)]
-    end
-
-    CRD --> |Registers| API
-    CR --> |Validates| VAL
-    CR --> |Stores| STOR
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CRD,CR,API,VAL k8sComponent;
-    class User userApp;
-    class STOR dataStore;
-```
+![Architecture diagram showing a user creating a CustomResourceDefinition and a custom resource instance, where the CRD defines and registers the schema, and the API server validates and stores the resulting instance in etcd.](../.gitbook/assets/en-core-11-extending-kubernetes-1.png)
 
 ### Custom Resource Definitions (CRD)
 
@@ -265,36 +204,7 @@ The operator pattern is a way to automate operational knowledge of complex appli
 
 The following diagram shows how the operator pattern works:
 
-```mermaid
-flowchart TD
-    User[User] --> |1. Create/Update| CR[Custom Resource]
-
-    subgraph "Kubernetes API Server"
-        CR
-        STOR[(etcd Storage)]
-    end
-
-    CR --> |Stores| STOR
-
-    subgraph "Operator"
-        CTRL[Controller] --> |2. Watch| CR
-        CTRL --> |3. Check Status| CR
-        CTRL --> |6. Update Status| CR
-    end
-
-    CTRL --> |4. Determine Action| ACT[Action]
-    ACT --> |5. Execute| K8S[Kubernetes Resources]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CR,K8S k8sComponent;
-    class User userApp;
-    class STOR dataStore;
-    class CTRL,ACT default;
-```
+![Architecture diagram showing a controller that watches a custom resource stored in etcd, checks and updates its status, determines an action, and executes that action against Kubernetes resources.](../.gitbook/assets/en-core-11-extending-kubernetes-2.png)
 
 ### Operator Concepts
 
@@ -424,27 +334,7 @@ Admission controllers are plugins that intercept requests to the Kubernetes API 
 
 The following diagram shows how admission controllers work:
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Auth as Authentication<br/>Authorization
-    participant MAC as Mutating<br/>Admission Controller
-    participant MWH as Mutating Webhook
-    participant VAC as Validating<br/>Admission Controller
-    participant VWH as Validating Webhook
-    participant API as API Processing
-    participant STOR as etcd Storage
-
-    User->>Auth: 1. API Request
-    Auth->>MAC: 2. Request Passes
-    MAC-->>MWH: Webhook Call
-    MWH-->>MAC: Response
-    MAC->>VAC: 3. Mutated Request
-    VAC-->>VWH: Webhook Call
-    VWH-->>VAC: Response
-    VAC->>API: 4. Validated Request
-    API->>STOR: 5. Store
-```
+![Sequence diagram showing an API request passing through authentication and authorization, a mutating webhook, and a validating webhook before the API server persists the validated request to etcd.](../.gitbook/assets/en-core-11-extending-kubernetes-3.png)
 
 ### Admission Controller Types
 
@@ -968,39 +858,7 @@ CSI provides a standard interface between Kubernetes and storage systems.
 
 The following diagram shows the architecture and operation of CSI:
 
-```mermaid
-flowchart TD
-    User[User] --> |1. Create| PVC[PersistentVolumeClaim]
-
-    subgraph "Kubernetes Components"
-        PVC --> |References| SC[StorageClass]
-        SC --> |Specifies| PROV[CSI External Provisioner]
-        PROV --> |2. Volume Create Request| CSI[CSI Driver]
-        CSI --> |3. Create Volume| PV[PersistentVolume]
-        PV --> |Binds| PVC
-
-        POD[Pod] --> |Mount Request| PVC
-        CSI --> |4. Mount Volume| POD
-    end
-
-    subgraph "CSI Driver"
-        CSI --> CTRL[Controller Service]
-        CSI --> NODE[Node Service]
-    end
-
-    CTRL --> |5. Volume Management| STOR[(Storage System)]
-    NODE --> |6. Volume Mount| STOR
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class PVC,SC,PROV,PV,POD k8sComponent;
-    class User userApp;
-    class STOR dataStore;
-    class CSI,CTRL,NODE default;
-```
+![Architecture diagram showing a PersistentVolumeClaim referencing a StorageClass and external provisioner that requests a volume from the CSI driver, while the CSI driver's controller and node services manage and mount storage from the underlying storage system, and pods mount the resulting volume.](../.gitbook/assets/en-core-11-extending-kubernetes-4.png)
 
 ### CSI Architecture
 
@@ -1214,31 +1072,7 @@ CNI provides a standard interface between Kubernetes and networking solutions.
 
 The following diagram shows the architecture and operation of CNI:
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes Components"
-        API[API Server] --> |Pod Creation| KUB[kubelet]
-        KUB --> |1. Create Container| CRI[Container Runtime]
-        CRI --> |2. Network Setup Request| CNI[CNI Plugin]
-    end
-
-    subgraph "CNI Plugin"
-        CNI --> |3. IP Allocation Request| IPAM[IPAM Plugin]
-        CNI --> |5. Network Setup| NET[Network Configuration]
-    end
-
-    IPAM --> |4. IP Allocation| IPPOOL[(IP Pool)]
-    NET --> |6. Apply Network Config| POD[Pod Network]
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,KUB,CRI,POD k8sComponent;
-    class IPPOOL dataStore;
-    class CNI,IPAM,NET default;
-```
+![Architecture diagram showing kubelet asking the container runtime to create a container, which requests network setup from the CNI plugin, which in turn allocates an IP from the IPAM plugin's pool and applies network configuration to the pod network.](../.gitbook/assets/en-core-11-extending-kubernetes-5.png)
 
 ### CNI Architecture
 
@@ -1421,37 +1255,7 @@ Amazon EKS supports various extension features to extend Kubernetes cluster func
 
 The following diagram shows the extension feature architecture in Amazon EKS:
 
-```mermaid
-flowchart TD
-    subgraph "Amazon EKS"
-        EKS[EKS Cluster] --> |Manages| CP[Control Plane]
-        EKS --> |Manages| NG[Node Groups]
-
-        subgraph "EKS Add-ons"
-            CP --> VCNI[Amazon VPC CNI]
-            CP --> CDNS[CoreDNS]
-            CP --> KP[kube-proxy]
-            CP --> EBSCSI[Amazon EBS CSI Driver]
-            CP --> ALBC[AWS Load Balancer Controller]
-        end
-    end
-
-    subgraph "AWS Services"
-        VCNI --> VPC[Amazon VPC]
-        EBSCSI --> EBS[Amazon EBS]
-        ALBC --> ELB[Elastic Load Balancing]
-
-        IAM[AWS IAM] --> |IRSA| NG
-        ACK[AWS Controllers for Kubernetes] --> AWS[AWS Services]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class EKS,CP,NG,VCNI,CDNS,KP,EBSCSI,ALBC,ACK k8sComponent;
-    class VPC,EBS,ELB,IAM,AWS awsService;
-```
+![Architecture diagram showing the Amazon EKS cluster managing its control plane and node groups, the control plane running managed add-ons (VPC CNI, CoreDNS, kube-proxy, EBS CSI driver, and the AWS Load Balancer Controller) that integrate with AWS VPC, EBS, and Elastic Load Balancing, plus IAM roles for service accounts and AWS Controllers for Kubernetes as additional AWS integration points.](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
 
 ### EKS Add-ons
 

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+  <title id="d2-title">ALB 기반 Ingress 트래픽 경로</title>
+  <desc id="d2-desc">인터넷 트래픽이 퍼블릭 서브넷의 Application Load Balancer를 거쳐 프라이빗 서브넷 EKS 클러스터의 Ingress 리소스로 들어가고, AWS Load Balancer Controller가 ALB 구성을 갱신하며, Ingress가 두 서비스를 통해 각각의 포드로 라우팅되는 경로를 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="d2-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="d2-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+  <text x="40" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">ARCHITECTURE</text>
+  <text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700">ALB 기반 Ingress 트래픽 경로</text>
+
+  <!-- Zone: Public subnet -->
+  <rect x="160" y="236" width="184" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="200" y="240" width="104" height="12" rx="2" fill="#ffffff"/>
+  <text x="252" y="249" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">PUBLIC SUBNET</text>
+
+  <!-- Zone: Private subnet / EKS cluster -->
+  <rect x="400" y="144" width="544" height="236" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="612" y="148" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="672" y="157" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">PRIVATE SUBNET · EKS</text>
+
+  <!-- Arrows -->
+  <line x1="124" y1="300" x2="180" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+
+  <!-- ALBIC -> ALB -->
+  <path d="M 420,208 H 372 Q 364,208 364,216 V 292 Q 364,300 356,300 H 324"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+
+  <!-- ALB -> Ingress (accent, primary path) -->
+  <path d="M 324,300 H 392 Q 400,300 400,308 V 324 Q 400,332 408,332 H 420"
+        fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#d2-arrow-accent)"/>
+
+  <!-- Ingress -> Service1 -->
+  <path d="M 564,320 H 584 Q 592,320 592,312 V 216 Q 592,208 600,208 H 620"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+  <!-- Ingress -> Service2 -->
+  <line x1="564" y1="332" x2="620" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+
+  <!-- Service1 -> Pod1, Service2 -> Pod2 -->
+  <line x1="764" y1="208" x2="780" y2="208" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+  <line x1="764" y1="332" x2="780" y2="332" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+
+  <!-- Internet -->
+  <circle cx="100" cy="300" r="24" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="100" y="304" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">인터넷</text>
+
+  <!-- ALB (focal) -->
+  <rect x="180" y="268" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="188" y="276" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="202" y="285" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">L7</text>
+  <text x="252" y="304" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ALB</text>
+  <text x="252" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">internet-facing</text>
+
+  <!-- ALBIC -->
+  <rect x="420" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="492" y="204" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">LB Controller</text>
+  <text x="492" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">watches Ingress</text>
+
+  <!-- Ingress -->
+  <rect x="420" y="300" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="492" y="328" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Ingress</text>
+  <text x="492" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">resource</text>
+
+  <!-- Service1 -->
+  <rect x="620" y="176" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="692" y="204" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">서비스 1</text>
+  <text x="692" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ClusterIP</text>
+
+  <!-- Service2 -->
+  <rect x="620" y="300" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="692" y="328" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">서비스 2</text>
+  <text x="692" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ClusterIP</text>
+
+  <!-- Pod1 -->
+  <rect x="780" y="176" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="852" y="204" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">포드 1</text>
+  <text x="852" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">workload</text>
+
+  <!-- Pod2 -->
+  <rect x="780" y="300" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="852" y="328" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">포드 2</text>
+  <text x="852" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">workload</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="440" x2="920" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="460" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+  <rect x="140" y="452" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="164" y="461" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">주요 진입점(ALB)</text>
+  <rect x="340" y="452" width="16" height="12" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="364" y="461" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">K8s 리소스</text>
+</svg>

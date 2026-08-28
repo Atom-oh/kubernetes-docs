@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-4-title ko-networking-calico-02-architecture-4-desc">
+<title id="ko-networking-calico-02-architecture-4-title">BIRD의 역할</title>
+<desc id="ko-networking-calico-02-architecture-4-desc">커널 라우팅 테이블 정보를 받아 BGP 세션을 관리하고, Pod CIDR 라우트를 BGP 피어에게 교환하는 BIRD의 핵심 기능을 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="240" y="188" width="440" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="252" y="192" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="281.0" y="201" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">BIRD 기능</text><path d="M 200,248 L 280,248" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 440,248 H 592.0 Q 600.0,248 600.0,256 V 272 Q 600.0,280 608.0,280 H 760" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 640,248 H 692.0 Q 700.0,248 700.0,256 V 296 Q 700.0,304 708.0,304 H 760" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="40" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="220" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="120.0" y="245.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kernel</text>
+<text x="120.0" y="259.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">라우팅 테이블</text><rect x="280" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="280" y="220" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="360.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">BGP 세션 관리</text>
+<text x="360.0" y="259.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">피어 연결</text><rect x="480" y="220" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="480" y="220" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="560.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">라우트 교환</text>
+<text x="560.0" y="259.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">Pod CIDR 광고</text><rect x="280" y="320" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="280" y="320" width="160" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="360.0" y="344.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector</text>
+<text x="360.0" y="359.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">대규모 클러스터</text><rect x="480" y="320" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="480" y="320" width="160" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="560.0" y="344.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">라우트 필터링</text>
+<text x="560.0" y="359.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">정책 적용</text><rect x="760" y="260" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="260" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="840.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">BGP Peers</text><line x1="30" y1="492" x2="930" y2="492" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="504" x2="46" y2="504" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="507" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">라우트/세션 흐름</text></svg>

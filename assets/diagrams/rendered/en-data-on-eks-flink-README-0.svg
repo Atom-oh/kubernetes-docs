@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+    <title id="dtitle">Flink Kubernetes Operator reconciliation flow</title>
+    <desc id="ddesc">An operator applies a FlinkDeployment or FlinkSessionJob custom resource to the Kubernetes API server. The Flink Kubernetes Operator watches the API server and reconciles by creating a JobManager pod. The JobManager acts as the Flink ResourceManager, requesting and releasing TaskManager pods via the API server, and it schedules subtasks and triggers checkpoints on two TaskManager pods.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== connectors (drawn before boxes) ===== -->
+
+    <!-- U -> API : straight, same y -->
+    <path d="M200,96 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="418" y="76" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="450" y="85" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APPLY CR</text>
+
+    <!-- API -> OP : straight, same x -->
+    <path d="M800,128 V220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="808" y="164" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="836" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCH</text>
+
+    <!-- OP -> JM : accent, orthogonal elbow (exit bottom, enter top) -->
+    <path d="M800,284 V314 Q800,322 792,322 H478 Q470,322 470,330 V360"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="599" y="302" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="635" y="311" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RECONCILE</text>
+
+    <!-- JM -> API : dashed return path, routes right of OP/API to avoid crossing -->
+    <path d="M560,376 H924 Q932,376 932,368 V104 Q932,96 924,96 H900"
+          fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="704" y="356" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="740" y="367" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCALE PODS</text>
+
+    <!-- JM <-> TM1 : bidirectional elbow -->
+    <path d="M440,424 V454 Q440,462 432,462 H218 Q210,462 210,470 V500"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <rect x="297" y="442" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="325" y="451" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULE</text>
+
+    <!-- JM <-> TM2 : bidirectional elbow -->
+    <path d="M500,424 V454 Q500,462 508,462 H642 Q650,462 650,470 V500"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <rect x="547" y="442" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="575" y="451" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULE</text>
+
+    <!-- ===== nodes ===== -->
+
+    <!-- U : Operator/User (input) -->
+    <rect x="40" y="64" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="64" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="48" y="70" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="62" y="79" fill="rgba(125,137,152,0.9)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">USR</text>
+    <text x="120" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operator / User</text>
+    <text x="120" y="114" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubectl apply</text>
+
+    <!-- API : Kubernetes API Server -->
+    <rect x="700" y="64" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="700" y="64" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="70" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="722" y="79" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+    <text x="800" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes API Server</text>
+    <text x="800" y="114" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kube-apiserver</text>
+
+    <!-- OP : Flink Kubernetes Operator (focal) -->
+    <rect x="700" y="220" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="700" y="220" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="708" y="226" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="722" y="235" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTL</text>
+    <text x="800" y="254" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Flink Kubernetes Operator</text>
+    <text x="800" y="270" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">controller-manager</text>
+
+    <!-- JM : JobManager Pod (focal, hub) -->
+    <rect x="380" y="360" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="380" y="360" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="388" y="366" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="402" y="375" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+    <text x="470" y="394" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">JobManager Pod</text>
+    <text x="470" y="410" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ResourceManager</text>
+
+    <!-- TM1 : TaskManager Pod 1 -->
+    <rect x="120" y="500" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="120" y="500" width="180" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="128" y="506" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="142" y="515" fill="rgba(84,91,100,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TSK</text>
+    <text x="210" y="534" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TaskManager Pod 1</text>
+    <text x="210" y="550" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">task-slots</text>
+
+    <!-- TM2 : TaskManager Pod 2 -->
+    <rect x="560" y="500" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="560" y="500" width="180" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="568" y="506" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="582" y="515" fill="rgba(84,91,100,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TSK</text>
+    <text x="650" y="534" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TaskManager Pod 2</text>
+    <text x="650" y="550" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">task-slots</text>
+
+  </svg>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ambient-title ambient-desc">
+    <title id="ambient-title">Ambient mode traffic path</title>
+    <desc id="ambient-desc">A sidecar-free application pod sends traffic transparently to the node-level ztunnel, which forwards L4 traffic directly to the service and only detours through an optional waypoint proxy when L7 routing is required.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="64" width="200" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="76" y="68" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="140" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">POD (APP ONLY)</text>
+
+    <rect x="340" y="64" width="200" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="376" y="68" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="440" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES NODE</text>
+
+    <rect x="640" y="64" width="200" height="112" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.40)" stroke-width="0.8" stroke-dasharray="4,4"/>
+    <rect x="668" y="68" width="144" height="12" rx="2" fill="#ffffff"/>
+    <text x="740" y="77" fill="rgba(236,114,17,0.70)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">WAYPOINT (OPTIONAL)</text>
+
+    <!-- Arrows before nodes -->
+    <!-- App1 -> Ztunnel (straight, shared y) -->
+    <line x1="216" y1="128" x2="364" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Ztunnel -> Waypoint (dashed, straight, shared y) -->
+    <path d="M 516,128 H 664" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- Ztunnel -> Service (straight vertical) -->
+    <line x1="440" y1="160" x2="440" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Waypoint -> Service -->
+    <path d="M 740,160 V 242 Q 740,250 732,250 H 528 Q 520,250 520,258 V 340" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="260" y="108" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="298" y="117" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TRANSPARENT</text>
+
+    <rect x="560" y="108" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="590" y="117" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L7 NEEDED</text>
+
+    <rect x="448" y="244" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="478" y="253" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L4 ONLY</text>
+
+    <!-- Node: Application -->
+    <rect x="64" y="96" width="152" height="64" rx="6" fill="#ffffff"/>
+    <rect x="64" y="96" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="140" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+    <text x="140" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">no sidecar</text>
+
+    <!-- Node: ztunnel (focal) -->
+    <rect x="364" y="96" width="152" height="64" rx="6" fill="#ffffff"/>
+    <rect x="364" y="96" width="152" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="440" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+    <text x="440" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L4 · mTLS · telemetry</text>
+
+    <!-- Node: Waypoint -->
+    <rect x="664" y="96" width="152" height="64" rx="6" fill="#ffffff"/>
+    <rect x="664" y="96" width="152" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="740" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Waypoint</text>
+    <text x="740" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L7 · advanced routing</text>
+
+    <!-- Node: Service -->
+    <rect x="364" y="340" width="232" height="64" rx="6" fill="#ffffff"/>
+    <rect x="364" y="340" width="232" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service</text>
+    <text x="480" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">destination workload</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="556" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Node-level proxy (focal)</text>
+
+    <rect x="240" y="556" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="260" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Optional L7 hop</text>
+
+    <line x1="420" y1="562" x2="448" y2="562" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="456" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Traffic path</text>
+
+    <line x1="600" y1="562" x2="628" y2="562" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="636" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">L7-only detour</text>
+  </svg>

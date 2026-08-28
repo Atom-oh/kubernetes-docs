@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="envoy-arch-title envoy-arch-desc">
+    <title id="envoy-arch-title">Envoy Proxy 데이터 흐름</title>
+    <desc id="envoy-arch-desc">들어오는 요청이 Envoy의 Listener, Filter, Router, Cluster를 순서대로 거쳐 업스트림 서비스로 나가는 아웃바운드 트래픽 처리 경로를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: Envoy Proxy -->
+    <rect x="168" y="216" width="624" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="416" y="220" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="229" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ENVOY PROXY</text>
+
+    <!-- Arrows -->
+    <line x1="168" y1="280" x2="184" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="320" y1="280" x2="336" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="472" y1="280" x2="488" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="624" y1="280" x2="640" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="776" y1="280" x2="792" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Labels for boundary-crossing arrows -->
+    <rect x="112" y="264" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="140" y="273" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">인바운드</text>
+    <rect x="800" y="264" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="828" y="273" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">아웃바운드</text>
+
+    <!-- Node: Incoming (external/input) -->
+    <rect x="32" y="248" width="136" height="64" rx="6" fill="#ffffff"/>
+    <rect x="32" y="248" width="136" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="40" y="256" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="54" y="265" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="100" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">들어오는 요청</text>
+    <text x="100" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">client request</text>
+
+    <!-- Node: Listener -->
+    <rect x="184" y="248" width="136" height="64" rx="6" fill="#ffffff"/>
+    <rect x="184" y="248" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="192" y="256" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="208" y="265" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">L1</text>
+    <text x="252" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Listeners</text>
+    <text x="252" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">포트 수신</text>
+
+    <!-- Node: Filter -->
+    <rect x="336" y="248" width="136" height="64" rx="6" fill="#ffffff"/>
+    <rect x="336" y="248" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="344" y="256" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="360" y="265" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">L2</text>
+    <text x="404" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Filters</text>
+    <text x="404" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">요청 처리</text>
+
+    <!-- Node: Router (focal) -->
+    <rect x="488" y="248" width="136" height="64" rx="6" fill="#ffffff"/>
+    <rect x="488" y="248" width="136" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="496" y="256" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="512" y="265" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">L3</text>
+    <text x="556" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Routers</text>
+    <text x="556" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">라우팅 결정</text>
+
+    <!-- Node: Cluster -->
+    <rect x="640" y="248" width="136" height="64" rx="6" fill="#ffffff"/>
+    <rect x="640" y="248" width="136" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="648" y="256" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="664" y="265" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">L4</text>
+    <text x="708" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Clusters</text>
+    <text x="708" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">업스트림 서비스</text>
+
+    <!-- Node: Outgoing (external) -->
+    <rect x="792" y="248" width="136" height="64" rx="6" fill="#ffffff"/>
+    <rect x="792" y="248" width="136" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="800" y="256" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="814" y="265" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+    <text x="860" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">나가는 요청</text>
+    <text x="860" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">upstream call</text>
+
+    <!-- Legend -->
+    <line x1="32" y1="380" x2="928" y2="380" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="396" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="32" y="408" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="52" y="416" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal · 라우팅 결정</text>
+    <rect x="260" y="408" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="416" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Envoy 내부 단계</text>
+    <rect x="460" y="408" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="480" y="416" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">외부 요청/응답</text>
+  </svg>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vcluster-host-arch-title vcluster-host-arch-desc">
+<title id="vcluster-host-arch-title">vCluster 호스트 아키텍처</title>
+<desc id="vcluster-host-arch-desc">호스트 EKS 클러스터 위에서 두 팀의 vCluster가 각자의 네임스페이스에서 가상 API 서버를 운영하고, Syncer가 이를 호스트 API 서버와 동기화하며 실제 워크로드 Pod를 호스트 노드에 생성하는 구조를 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: host cluster -->
+<rect x="40" y="140" width="880" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="380" y="144" width="200" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">호스트 클러스터 (EKS)</text>
+
+<!-- Arrows (behind boxes) -->
+<!-- Dev A -> vCluster A (kubeconfig) -->
+<path d="M120,96 V180 Q120,188 128,188 H192 Q200,188 200,196 V280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- Dev B -> vCluster B (kubeconfig) - routed below etcd's y-band to avoid passing behind it -->
+<path d="M840,96 V242 Q840,250 832,250 H768 Q760,250 760,258 V280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- vCluster A -> Host API (sync) -->
+<path d="M280,280 V262 Q280,254 288,254 H472 Q480,254 480,246 V228" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<!-- vCluster B -> Host API (sync) -->
+<path d="M640,280 V262 Q640,254 632,254 H528 Q520,254 520,246 V228" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<!-- vCluster A -.-> Host Nodes (pod creation) -->
+<path d="M240,380 V396 Q240,404 248,404 H272 Q280,404 280,412 V428" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<!-- vCluster B -.-> Host Nodes (pod creation) -->
+<path d="M720,380 V396 Q720,404 712,404 H688 Q680,404 680,412 V428" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels -->
+<rect x="128" y="128" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="164" y="137" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">KUBECONFIG</text>
+
+<rect x="760" y="128" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="796" y="137" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">KUBECONFIG</text>
+
+<rect x="356" y="234" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="380" y="243" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">동기화</text>
+
+<rect x="556" y="234" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="580" y="243" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">동기화</text>
+
+<rect x="216" y="398" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="240" y="407" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD 생성</text>
+
+<rect x="696" y="398" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="720" y="407" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD 생성</text>
+
+<!-- Node: Dev A -->
+<rect x="40" y="40" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120" y="64" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">개발자 A</text>
+<text x="120" y="80" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubectl</text>
+
+<!-- Node: Dev B -->
+<rect x="760" y="40" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="840" y="64" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">개발자 B</text>
+<text x="840" y="80" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubectl</text>
+
+<!-- Node: Host API Server (focal) -->
+<rect x="400" y="172" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="500" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">호스트 API Server</text>
+<text x="500" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EKS control plane</text>
+
+<!-- Node: Host etcd (store, unconnected in source) -->
+<rect x="680" y="172" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="750" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">호스트 etcd</text>
+<text x="750" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">state store</text>
+
+<!-- Node: vCluster team-a -->
+<rect x="80" y="280" width="320" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster: team-a</text>
+<text x="240" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API Server · Syncer</text>
+<text x="240" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: vcluster-team-a</text>
+<text x="240" y="360" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Service · ServiceAccount</text>
+
+<!-- Node: vCluster team-b -->
+<rect x="560" y="280" width="320" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="720" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster: team-b</text>
+<text x="720" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API Server · Syncer</text>
+<text x="720" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ns: vcluster-team-b</text>
+<text x="720" y="360" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Service</text>
+
+<!-- Node: Host Nodes (workload pods, collapsed) -->
+<rect x="80" y="428" width="800" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480" y="454" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">호스트 노드 (EC2) · 워크로드 Pod</text>
+<text x="480" y="470" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">team-a-app-x · team-a-app-y · team-b-web</text>
+
+<!-- Legend -->
+<line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+<rect x="40" y="572" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="580" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">호스트 API (focal)</text>
+
+<line x1="220" y1="577" x2="248" y2="577" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="256" y="580" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">개발자 접근</text>
+
+<line x1="360" y1="577" x2="388" y2="577" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<text x="396" y="580" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">리소스 동기화</text>
+
+<line x1="500" y1="577" x2="528" y2="577" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="536" y="580" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Pod 생성 (Syncer)</text>
+</svg>

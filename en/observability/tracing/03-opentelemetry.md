@@ -15,37 +15,7 @@ OpenTelemetry has officially achieved CNCF **graduated** status, the foundation'
 
 OpenTelemetry was born from the merger of OpenTracing and OpenCensus projects:
 
-```mermaid
-flowchart LR
-    subgraph History["History"]
-        OT[OpenTracing<br/>2016]
-        OC[OpenCensus<br/>2017]
-        OTEL[OpenTelemetry<br/>2019]
-    end
-
-    OT --> OTEL
-    OC --> OTEL
-
-    subgraph Components["Components"]
-        SPEC[Specification]
-        SDK[SDKs]
-        COLLECTOR[Collector]
-        PROTO[Protocol]
-    end
-
-    OTEL --> SPEC
-    OTEL --> SDK
-    OTEL --> COLLECTOR
-    OTEL --> PROTO
-
-    classDef history fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-    classDef current fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef component fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class OT,OC history
-    class OTEL current
-    class SPEC,SDK,COLLECTOR,PROTO component
-```
+![OpenTracing and OpenCensus merged in 2019 to form OpenTelemetry, which now defines the specification, SDKs, Collector, and wire protocol used across the observability ecosystem.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
 
 ## Core Concepts
 
@@ -59,41 +29,7 @@ flowchart LR
 
 ### Core Components
 
-```mermaid
-flowchart LR
-    subgraph App["Application"]
-        API[OTel API]
-        SDK[OTel SDK]
-    end
-
-    subgraph Pipeline["Data Pipeline"]
-        RECV[Receivers]
-        PROC[Processors]
-        EXPORT[Exporters]
-    end
-
-    subgraph Backends["Backends"]
-        TEMPO[Tempo]
-        PROM[Prometheus]
-        LOKI[Loki]
-        XRAY[X-Ray]
-        DD[Datadog]
-    end
-
-    API --> SDK
-    SDK --> RECV
-    RECV --> PROC
-    PROC --> EXPORT
-    EXPORT --> TEMPO & PROM & LOKI & XRAY & DD
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef pipeline fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef backend fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class API,SDK app
-    class RECV,PROC,EXPORT pipeline
-    class TEMPO,PROM,LOKI,XRAY,DD backend
-```
+![Application code emits telemetry through the OTel API and SDK into a receive-process-export pipeline that fans out to five observability backends: Tempo, Prometheus, Loki, X-Ray, and Datadog.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-1.png)
 
 ## OpenTelemetry SDK
 
@@ -303,50 +239,7 @@ public class OrderService {
 
 ### Architecture
 
-```mermaid
-flowchart LR
-    subgraph Receivers["Receivers"]
-        OTLP[OTLP]
-        JAEGER[Jaeger]
-        ZIPKIN[Zipkin]
-        PROM_RECV[Prometheus]
-        KAFKA_RECV[Kafka]
-    end
-
-    subgraph Processors["Processors"]
-        BATCH[Batch]
-        MEMORY[Memory Limiter]
-        ATTR[Attributes]
-        FILTER[Filter]
-        TAIL[Tail Sampling]
-        RESOURCE[Resource]
-    end
-
-    subgraph Exporters["Exporters"]
-        OTLP_EXP[OTLP]
-        TEMPO_EXP[Tempo]
-        XRAY_EXP[AWS X-Ray]
-        PROM_EXP[Prometheus]
-        LOKI_EXP[Loki]
-        DD_EXP[Datadog]
-    end
-
-    OTLP & JAEGER & ZIPKIN & PROM_RECV & KAFKA_RECV --> BATCH
-    BATCH --> MEMORY
-    MEMORY --> ATTR
-    ATTR --> FILTER
-    FILTER --> TAIL
-    TAIL --> RESOURCE
-    RESOURCE --> OTLP_EXP & TEMPO_EXP & XRAY_EXP & PROM_EXP & LOKI_EXP & DD_EXP
-
-    classDef receiver fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef processor fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef exporter fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class OTLP,JAEGER,ZIPKIN,PROM_RECV,KAFKA_RECV receiver
-    class BATCH,MEMORY,ATTR,FILTER,TAIL,RESOURCE processor
-    class OTLP_EXP,TEMPO_EXP,XRAY_EXP,PROM_EXP,LOKI_EXP,DD_EXP exporter
-```
+![Five receiver protocols feed a six-stage Collector processor chain — batch, memory limiter, attributes, filter, tail sampling, and resource — before the data fans out to six exporter backends.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
 
 ### Collector Configuration
 

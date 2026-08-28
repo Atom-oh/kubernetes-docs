@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-data-on-eks-airflow-README-0-title ko-data-on-eks-airflow-README-0-desc">
+    <title id="ko-data-on-eks-airflow-README-0-title">Airflow 컴포넌트와 공유 상태 저장소</title>
+    <desc id="ko-data-on-eks-airflow-README-0-desc">dag-processor, scheduler, api-server, triggerer가 모두 PostgreSQL 메타데이터 저장소를 공유 상태로 읽고 쓰며, scheduler가 Executor 종류에 따라 Redis 브로커를 거쳐 Celery worker Pod를 큐잉하거나 KubernetesExecutor Pod를 직접 생성하는 Airflow on EKS 아키텍처.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs>
+    <defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="6" width="592" height="318" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="56" y="10" width="176" height="12" rx="2" fill="#ffffff"/>
+<text x="144.0" y="19" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">AIRFLOW 컨트롤 플레인</text>
+<rect x="680" y="6" width="200" height="478" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="696" y="10" width="170" height="12" rx="2" fill="#ffffff"/>
+<text x="781.0" y="19" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">실행 백엔드 (EXECUTOR)</text>
+<line x1="408" y1="82" x2="408" y2="104" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 280,104 V 101 Q 280,93 288,93 H 772 Q 780,93 780,101 V 82" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 120,168 V 228 Q 120,236 128,236 H 312 Q 320,236 320,228 V 244" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 264,168 V 188 Q 264,196 272,196 H 360 Q 368,196 368,188 V 244" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 552,168 V 204 Q 552,212 544,212 H 464 Q 456,212 456,204 V 244" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="408" y1="168" x2="408" y2="244" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 300,168 V 176 Q 300,184 308,184 H 544 a 8,8 0 0,1 16,0 H 772 Q 780,184 780,192 V 244" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="308" x2="780" y2="404" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="197.0" y="216" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DAG 기록</text>
+<rect x="293.0" y="176" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="316" y="185" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DAG 읽기</text>
+<rect x="481.0" y="192" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="504" y="201" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">트리거 상태</text>
+<rect x="416" y="200.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="439.0" y="209" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">상태 R/W</text>
+<rect x="507.0" y="73" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="530" y="82" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POD 생성</text>
+<rect x="317.0" y="192" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="340" y="201" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">태스크 큐잉</text>
+<rect x="788" y="350.0" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="811.0" y="359" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">태스크 소비</text>
+<rect x="352" y="38" width="112" height="44" rx="6" fill="#ffffff"/>
+<rect x="352" y="38" width="112" height="44" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="408.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용자 / UI</text>
+<rect x="700" y="38" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="700" y="38" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="54.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s Executor</text>
+<text x="780.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod</text>
+<rect x="60" y="104" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="104" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120.0" y="134.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">dag-processor</text>
+<text x="120.0" y="150.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">DAG 파싱</text>
+<rect x="204" y="104" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="204" y="104" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="264.0" y="134.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">scheduler</text>
+<text x="264.0" y="150.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">태스크 스케줄링</text>
+<rect x="348" y="104" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="348" y="104" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="408.0" y="134.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">api-server</text>
+<text x="408.0" y="150.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">REST API</text>
+<rect x="492" y="104" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="492" y="104" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="552.0" y="134.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">triggerer</text>
+<text x="552.0" y="150.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">비동기 트리거</text>
+<rect x="280" y="244" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="280" y="244" width="220" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="390.0" y="274.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PostgreSQL</text>
+<text x="390.0" y="290.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">메타데이터 저장소</text>
+<rect x="700" y="244" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="244" width="160" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="780.0" y="274.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redis</text>
+<text x="780.0" y="290.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Celery 전용 브로커</text>
+<rect x="700" y="404" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="404" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="430.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Celery</text>
+<text x="780.0" y="444.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Worker Pod</text>
+<text x="780.0" y="456.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">브로커 소비</text>
+<line x1="40" y1="504" x2="920" y2="504" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="140" y="512" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="164" y="521" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">공유 메타데이터 저장소 (모든 컴포넌트가 R/W)</text>
+<rect x="480" y="512" width="16" height="12" rx="3" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.35)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="504" y="521" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">특정 Executor에서만 사용되는 경로</text>
+  </svg>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="mode-decision-title mode-decision-desc">
+    <title id="mode-decision-title">Decision flow for selecting a Calico networking mode</title>
+    <desc id="mode-decision-desc">A decision tree starting from cloud-vs-on-premises branches through provider, VPC routing, and BGP/L2 adjacency questions to arrive at VXLAN, IPIP CrossSubnet, or Direct mode, with the on-premises BGP path highlighted as the top-performance route.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Edges (drawn before nodes) -->
+    <!-- E1 Q1->Q2 [CLOUD] -->
+    <path d="M480,140 V158 Q480,166 472,166 H248 Q240,166 240,174 V192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="342" y="174" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="183" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">CLOUD</text>
+
+    <!-- E2 Q1->Q3 [ON-PREM] -->
+    <path d="M480,140 V158 Q480,166 488,166 H692 Q700,166 700,174 V192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="566" y="174" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="590" y="183" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ON-PREM</text>
+
+    <!-- E3 Q2->VXLAN-a [AWS/AZURE] -->
+    <path d="M218,260 V284 Q218,292 210,292 H112 Q104,292 104,300 V324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="123" y="300" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="161" y="309" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">AWS / AZURE</text>
+
+    <!-- E4 Q2->IPIP-a [GCP] -->
+    <path d="M240,272 V290 Q240,298 248,298 H252 Q260,298 260,306 V324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="232" y="306" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="250" y="315" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">GCP</text>
+
+    <!-- E5 Q2->Q4 [OTHER] -->
+    <path d="M262,260 V278 Q262,286 270,286 H432 Q440,286 440,294 V312" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="333" y="294" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="353" y="303" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">OTHER</text>
+
+    <!-- E6 Q3->Direct-a [BGP: YES] (headline path) -->
+    <path d="M680,258 V283 Q680,291 672,291 H608 Q600,291 600,299 V324" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="608" y="299" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="308" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP: YES</text>
+
+    <!-- E7 Q3->Q5 [BGP: NO] -->
+    <path d="M720,258 V277 Q720,285 728,285 H772 Q780,285 780,293 V312" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="688" y="293" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="718" y="302" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP: NO</text>
+
+    <!-- E8 Q4->IPIP-b [VPC ROUTES: YES] -->
+    <path d="M420,378 V412 Q420,420 412,420 H380 Q372,420 372,428 V464" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="296" y="428" width="92" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="437" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">VPC ROUTES: Y</text>
+
+    <!-- E9 Q4->VXLAN-b [VPC ROUTES: NO] -->
+    <path d="M460,378 V412 Q460,420 468,420 H512 Q520,420 520,428 V464" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="448" y="428" width="92" height="12" rx="2" fill="#ffffff"/>
+    <text x="494" y="437" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">VPC ROUTES: N</text>
+
+    <!-- E10 Q5->Direct-b [L2: YES] -->
+    <path d="M760,378 V412 Q760,420 752,420 H688 Q680,420 680,428 V464" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="660" y="428" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="684" y="437" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">L2: YES</text>
+
+    <!-- E11 Q5->VXLAN-c [L2: NO] -->
+    <path d="M800,378 V412 Q800,420 808,420 H832 Q840,420 840,428 V464" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="816" y="428" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="840" y="437" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">L2: NO</text>
+
+    <!-- Decision diamonds -->
+    <polygon points="480,60 552,100 480,140 408,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="96" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud or</text>
+    <text x="480" y="110" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">on-prem?</text>
+
+    <polygon points="240,192 312,232 240,272 168,232" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="228" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Which</text>
+    <text x="240" y="242" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">provider?</text>
+
+    <polygon points="700,192 772,232 700,272 628,232" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="700" y="228" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">BGP</text>
+    <text x="700" y="242" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">available?</text>
+
+    <polygon points="440,312 512,352 440,392 368,352" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="440" y="345" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC IP</text>
+    <text x="440" y="359" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">routing?</text>
+
+    <polygon points="780,312 852,352 780,392 708,352" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="345" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">L2</text>
+    <text x="780" y="359" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">adjacency?</text>
+
+    <!-- Leaf outcomes -->
+    <rect x="40" y="324" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="104" y="356" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VXLAN Mode</text>
+    <text x="104" y="370" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AWS or Azure</text>
+
+    <rect x="196" y="324" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">IPIP</text>
+    <text x="260" y="366" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CrossSubnet</text>
+
+    <rect x="536" y="324" width="128" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="600" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Direct Mode</text>
+    <text x="600" y="366" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">+ BGP</text>
+
+    <rect x="308" y="464" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="372" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">IPIP</text>
+    <text x="372" y="506" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CrossSubnet</text>
+
+    <rect x="456" y="464" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="520" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VXLAN Mode</text>
+
+    <rect x="616" y="464" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Direct Mode</text>
+    <text x="680" y="506" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">+ BGP</text>
+
+    <rect x="776" y="464" width="128" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="840" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VXLAN Mode</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="546" x2="920" y2="546" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="562" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <polygon points="220,546 232,552 220,558 208,552" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">decision</text>
+    <rect x="380" y="546" width="24" height="12" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="412" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">recommended mode</text>
+    <line x1="620" y1="552" x2="656" y2="552" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="664" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">top-performance path</text>
+  </svg>

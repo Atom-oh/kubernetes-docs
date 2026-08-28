@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-9-title ko-networking-calico-02-architecture-9-desc">
+<title id="ko-networking-calico-02-architecture-9-title">Typha 없이 운영할 때의 문제</title>
+<desc id="ko-networking-calico-02-architecture-9-desc">Typha 없이 모든 Felix가 API 서버에 직접 Watch 연결을 맺어 노드 수만큼 커넥션이 늘어나 API 서버 부하가 커지는 문제 상황을 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="20" width="700" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="24" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="117.0" y="33" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">WITHOUT TYPHA (문제점)</text><path d="M 260,208 H 332.0 Q 340.0,208 340.0,200 V 76 Q 340.0,68 348.0,68 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 260,224 H 332.0 Q 340.0,224 340.0,216 V 168 Q 340.0,160 348.0,160 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 260,240 H 332.0 Q 340.0,240 340.0,248 V 244 Q 340.0,252 348.0,252 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 260,256 H 332.0 Q 340.0,256 340.0,264 V 336 Q 340.0,344 348.0,344 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="80" y="192" width="180" height="80" rx="6" fill="#ffffff"/>
+<rect x="80" y="192" width="180" height="80" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="170.0" y="228.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Datastore</text>
+<text x="170.0" y="243.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">API Server</text><rect x="420" y="40" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="40" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520.0" y="72.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Felix 1</text><rect x="420" y="132" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="132" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520.0" y="164.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Felix 2</text><rect x="420" y="224" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="224" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520.0" y="256.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Felix ...</text><rect x="420" y="316" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="316" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520.0" y="348.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Felix N</text><rect x="320.0" y="188" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="340" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">WATCH</text><rect x="460" y="424" width="400" height="64" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.55)" stroke-width="1" stroke-dasharray="4,4"/><text x="476" y="450" fill="#DD344C" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">N개의 Watch 연결</text><text x="476" y="468" fill="#a02338" font-size="10" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">API Server 부하가 노드 수에 비례해 증가</text><line x1="30" y1="472" x2="930" y2="472" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="484" x2="46" y2="484" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="487" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">Watch 연결 (Felix당 1개)</text></svg>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d0-title d0-desc">
+<title id="d0-title">EKS with Calico architecture</title>
+<desc id="d0-desc">The EKS API server reaches into two worker nodes; on each node the VPC CNI wires pod networking while Calico evaluates network policy for the same pods.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <style>text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ZONES (drawn first) ============ -->
+<rect x="264" y="68" width="432" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="392" y="72" width="176" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="81" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE · AWS MANAGED</text>
+
+<rect x="40" y="216" width="304" height="208" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="132" y="220" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="192" y="229" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1 · DATA PLANE</text>
+
+<rect x="620" y="216" width="304" height="208" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="712" y="220" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="772" y="229" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2 · DATA PLANE</text>
+
+<!-- ============ ARROWS (before boxes) ============ -->
+<!-- API fan-out (4 destinations) -->
+<path d="M328,156 V184 Q328,192 320,192 H128 Q120,192 120,200 V248" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M348,156 V196 Q348,204 340,204 H264 Q256,204 256,212 V248" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M372,156 V184 Q372,192 380,192 H692 Q700,192 700,200 V248" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<path d="M394,156 V196 Q394,204 402,204 H828 Q836,204 836,212 V248" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- VPC CNI -> Pods (solid) -->
+<path d="M120,304 V324 Q120,332 128,332 H160 Q168,332 168,340 V360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M700,304 V324 Q700,332 708,332 H740 Q748,332 748,340 V360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Calico -> Pods (dashed, policy) -->
+<path d="M256,304 V324 Q256,332 248,332 H216 Q208,332 208,340 V360" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="262" y="306" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="285" y="315" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POLICY</text>
+
+<path d="M836,304 V324 Q836,332 828,332 H796 Q788,332 788,340 V360" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="842" y="306" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="865" y="315" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POLICY</text>
+
+<!-- ============ NODES ============ -->
+<!-- API (focal) -->
+<rect x="304" y="100" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="304" y="100" width="112" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="312" y="106" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.6"/>
+<text x="326" y="115" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+<text x="360" y="140" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">EKS API Server</text>
+
+<!-- ETCD (store) -->
+<rect x="544" y="100" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="544" y="100" width="112" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="552" y="106" width="28" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-width="0.8" opacity="0.6"/>
+<text x="566" y="115" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">DB</text>
+<text x="600" y="140" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">etcd</text>
+
+<!-- VPC1 -->
+<rect x="64" y="248" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="64" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="72" y="254" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.4"/>
+<text x="86" y="263" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em" opacity="0.8">CNI</text>
+<text x="120" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC CNI</text>
+
+<!-- CAL1 -->
+<rect x="200" y="248" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="200" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="208" y="254" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.4"/>
+<text x="222" y="263" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em" opacity="0.8">NP</text>
+<text x="256" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Calico</text>
+
+<!-- POD1 -->
+<rect x="132" y="360" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="132" y="360" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="140" y="366" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.4"/>
+<text x="154" y="375" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em" opacity="0.8">POD</text>
+<text x="188" y="400" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pods</text>
+
+<!-- VPC2 -->
+<rect x="644" y="248" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="644" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="652" y="254" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.4"/>
+<text x="666" y="263" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em" opacity="0.8">CNI</text>
+<text x="700" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC CNI</text>
+
+<!-- CAL2 -->
+<rect x="780" y="248" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="780" y="248" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="788" y="254" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.4"/>
+<text x="802" y="263" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em" opacity="0.8">NP</text>
+<text x="836" y="288" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Calico</text>
+
+<!-- POD2 -->
+<rect x="712" y="360" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="712" y="360" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="720" y="366" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-width="0.8" opacity="0.4"/>
+<text x="734" y="375" fill="#232F3E" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em" opacity="0.8">POD</text>
+<text x="768" y="400" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pods</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="40" y1="512" x2="920" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="500" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+<line x1="40" y1="536" x2="72" y2="536" stroke="#EC7211" stroke-width="1.2"/>
+<text x="80" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">API server reach</text>
+
+<line x1="260" y1="536" x2="292" y2="536" stroke="#545B64" stroke-width="1.2"/>
+<text x="300" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">pod networking</text>
+
+<line x1="480" y1="536" x2="512" y2="536" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="520" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">policy enforcement</text>
+
+</svg>

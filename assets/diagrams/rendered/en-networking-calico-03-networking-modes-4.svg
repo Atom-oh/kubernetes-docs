@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="direct-topo-title direct-topo-desc">
+    <title id="direct-topo-title">Direct mode BGP topology across two racks</title>
+    <desc id="direct-topo-desc">Nodes in each rack peer over BGP with their rack's top-of-rack switch, and both top-of-rack switches peer with a shared spine switch, so pod routes propagate natively without any overlay.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="240" width="280" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="52" y="244" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="82" y="253" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">RACK 1</text>
+
+    <rect x="640" y="240" width="280" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="652" y="244" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="682" y="253" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">RACK 2</text>
+
+    <rect x="380" y="72" width="200" height="96" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8"/>
+    <rect x="392" y="76" width="90" height="12" rx="2" fill="#ffffff"/>
+    <text x="437" y="85" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CORE NETWORK</text>
+
+    <!-- ToR1 <-> Spine (2-bend elbow, off-axis) -->
+    <path d="M 180,172 V 166 Q 180,158 188,158 H 448 Q 456,158 456,150 V 144"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+    <rect x="300" y="136" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="318" y="145" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP</text>
+
+    <!-- ToR2 <-> Spine -->
+    <path d="M 780,172 V 166 Q 780,158 772,158 H 512 Q 504,158 504,150 V 144"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+    <rect x="624" y="136" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="642" y="145" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP</text>
+
+    <!-- Node1 <-> ToR1 (straight, same x) -->
+    <line x1="120" y1="316" x2="120" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <rect x="128" y="262" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="142" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP</text>
+
+    <!-- Node2 <-> ToR1 (straight, same x) -->
+    <line x1="240" y1="316" x2="240" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <rect x="248" y="262" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="262" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP</text>
+
+    <!-- Node3 <-> ToR2 (straight, same x) -->
+    <line x1="840" y1="316" x2="840" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <rect x="848" y="262" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="862" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP</text>
+
+    <!-- Node4 <-> ToR2 (straight, same x) -->
+    <line x1="720" y1="316" x2="720" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <rect x="728" y="262" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="742" y="271" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">BGP</text>
+
+    <!-- Spine node -->
+    <rect x="420" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Spine Switch</text>
+
+    <!-- ToR1 (wide enough to host both node ports) -->
+    <rect x="60" y="172" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="180" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ToR Switch 1</text>
+
+    <!-- ToR2 -->
+    <rect x="660" y="172" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ToR Switch 2</text>
+
+    <!-- Node1 -->
+    <rect x="60" y="316" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="120" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+    <text x="120" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">192.168.1.0/26</text>
+
+    <!-- Node2 -->
+    <rect x="180" y="316" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="240" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+    <text x="240" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">192.168.1.64/26</text>
+
+    <!-- Node4 -->
+    <rect x="660" y="316" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="720" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 4</text>
+    <text x="720" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">192.168.2.64/26</text>
+
+    <!-- Node3 -->
+    <rect x="780" y="316" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="840" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+    <text x="840" y="356" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">192.168.2.0/26</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="460" x2="920" y2="460" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="476" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="200" y="468" width="12" height="12" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="220" y="477" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">node advertising a pod CIDR</text>
+    <line x1="480" y1="474" x2="520" y2="474" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="528" y="477" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">spine-facing BGP session</text>
+  </svg>

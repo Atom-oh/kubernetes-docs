@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-7-title en-service-mesh-istio-03-architecture-7-desc">
+<title id="en-service-mesh-istio-03-architecture-7-title">Kubernetes DNS: Basic Name Resolution</title>
+<desc id="en-service-mesh-istio-03-architecture-7-desc">Flowchart showing an application's default DNS lookup path: a name resolution request goes through the pod's resolv.conf to CoreDNS, which returns the service's ClusterIP back to the application.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="356" y="220" width="248" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="372" y="224" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="413.0" y="233" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">POD NETWORK</text>
+<rect x="676" y="220" width="248" height="144" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="692" y="224" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="730.0" y="233" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES</text>
+<line x1="220" y1="276" x2="380" y2="276" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="234" y="256" width="107.2" height="12" rx="2" fill="#ffffff"/>
+<text x="234" y="265" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">1. RESOLVE reviews</text>
+<line x1="580" y1="276" x2="700" y2="276" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="594" y="256" width="58.6" height="12" rx="2" fill="#ffffff"/>
+<text x="594" y="265" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">2. UDP 53</text>
+<line x1="700" y1="300" x2="580" y2="300" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="594" y="308" width="74.80000000000001" height="12" rx="2" fill="#ffffff"/>
+<text x="594" y="317" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">3. CLUSTERIP</text>
+<line x1="380" y1="300" x2="220" y2="300" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="234" y="308" width="74.80000000000001" height="12" rx="2" fill="#ffffff"/>
+<text x="234" y="317" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">4. RETURN IP</text>
+<rect x="60" y="260" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="260" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="68" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="82" y="275" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="140.0" y="294.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<rect x="380" y="260" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="380" y="260" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="388" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="402" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DNS</text>
+<text x="480.0" y="288.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">/etc/resolv.conf</text>
+<text x="480.0" y="310.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">nameserver 10.96.0.10</text>
+<rect x="700" y="260" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="260" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="708" y="266" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="722" y="275" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DNS</text>
+<text x="800.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">CoreDNS</text>
+<text x="800.0" y="310.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">kube-dns · 10.96.0.10</text>
+</svg>

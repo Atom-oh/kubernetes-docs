@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 660" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="tier-eval-title tier-eval-desc">
+    <title id="tier-eval-title">Tiered policy evaluation order</title>
+    <desc id="tier-eval-desc">Flowchart showing traffic passing in order through the Security, Platform, and Application tiers, where each tier can deny the packet, allow it, or pass it to the next tier, ending in an implicit deny if no tier matches.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ============ CONNECTORS (drawn before nodes) ============ -->
+
+    <!-- T -> SEC -->
+    <line x1="480" y1="130" x2="480" y2="178" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- SEC -> PLAT (Pass) -->
+    <line x1="480" y1="242" x2="480" y2="278" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="458" y="252" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="261" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PASS</text>
+
+    <!-- PLAT -> APP (Pass) -->
+    <line x1="480" y1="342" x2="480" y2="378" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="458" y="352" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="361" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PASS</text>
+
+    <!-- APP -> DEF (Pass) -->
+    <line x1="480" y1="442" x2="480" y2="466" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="458" y="446" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="455" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PASS</text>
+
+    <!-- DEF -> DENY (No Match) -->
+    <line x1="480" y1="522" x2="480" y2="556" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="440" y="530" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="539" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO MATCH</text>
+
+    <!-- SEC -> DROP (Deny), left tip, one bend -->
+    <path d="M 400 210 L 148 210 A 8 8 0 0 0 140 218 L 140 272"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="220" y="196" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="242" y="205" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DENY</text>
+
+    <!-- SEC -> ALLOW, right tip, one bend -->
+    <path d="M 560 210 L 812 210 A 8 8 0 0 1 820 218 L 820 272"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="700" y="196" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="726" y="205" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ALLOW</text>
+
+    <!-- PLAT -> DROP (Deny), straight -->
+    <line x1="400" y1="310" x2="210" y2="310" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="288" y="296" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="310" y="305" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DENY</text>
+
+    <!-- PLAT -> ALLOW, straight -->
+    <line x1="560" y1="310" x2="750" y2="310" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="624" y="296" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="650" y="305" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ALLOW</text>
+
+    <!-- APP -> DROP (Deny), left tip, one bend (from below) -->
+    <path d="M 400 410 L 148 410 A 8 8 0 0 1 140 402 L 140 328"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="220" y="416" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="242" y="425" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DENY</text>
+
+    <!-- APP -> ALLOW, right tip, one bend (from below) -->
+    <path d="M 560 410 L 812 410 A 8 8 0 0 0 820 402 L 820 328"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="700" y="416" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="726" y="425" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ALLOW</text>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- T: Traffic (start oval, input) -->
+    <ellipse cx="480" cy="106" rx="70" ry="24" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="480" y="110" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Traffic</text>
+
+    <!-- SEC: Security Tier (focal decision diamond) -->
+    <polygon points="480,178 560,210 480,242 400,210" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="206" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Security Tier</text>
+    <text x="480" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order: 100</text>
+
+    <!-- PLAT: Platform Tier (decision diamond) -->
+    <polygon points="480,278 560,310 480,342 400,310" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Platform Tier</text>
+    <text x="480" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order: 200</text>
+
+    <!-- APP: Application Tier (decision diamond) -->
+    <polygon points="480,378 560,410 480,442 400,410" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="406" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application Tier</text>
+    <text x="480" y="420" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order: 500</text>
+
+    <!-- DEF: Default Tier (rectangle, pass-through only) -->
+    <rect x="410" y="466" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="410" y="466" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Default Tier</text>
+    <text x="480" y="507" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">order: 1000</text>
+
+    <!-- DENY: Implicit Deny (end oval) -->
+    <ellipse cx="480" cy="580" rx="70" ry="24" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="480" y="584" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Implicit Deny</text>
+
+    <!-- DROP: Drop Packet (end oval, denied outcomes merged) -->
+    <ellipse cx="140" cy="300" rx="70" ry="28" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="140" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Drop Packet</text>
+
+    <!-- ALLOW: Allow Packet (end oval, allowed outcomes merged) -->
+    <ellipse cx="820" cy="300" rx="70" ry="28" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="820" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Allow Packet</text>
+
+    <!-- legend -->
+    <line x1="30" y1="608" x2="930" y2="608" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="628" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <polygon points="180,616 196,624 180,632 168,624" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="206" y="628" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Highest-priority tier (evaluated first)</text>
+
+    <ellipse cx="580" cy="624" rx="16" ry="10" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="606" y="628" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Start / terminal outcome</text>
+  </svg>

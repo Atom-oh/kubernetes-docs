@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="subset-match-title subset-match-desc">
+    <title id="subset-match-title">Subset의 레이블 기반 파드 매칭</title>
+    <desc id="subset-match-desc">Kubernetes Service가 정의한 Subset v1·v2가 레이블 매칭을 통해 실제 파드들과 연결되는 관계를 보여줍니다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="240" y="172" width="220" height="240" rx="8" fill="rgba(255,153,0,0.04)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8"/>
+    <rect x="310" y="176" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="350" y="185" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SUBSET 정의</text>
+
+    <rect x="660" y="108" width="240" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="740" y="112" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="121" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">실제 파드</text>
+
+    <!-- Arrows (behind boxes) -->
+    <path d="M 200,288 H 216 Q 224,288 224,280 V 244 Q 224,236 232,236 H 260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 200,312 H 236 Q 244,312 244,320 V 356 Q 244,364 252,364 H 260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 440,224 H 552 Q 560,224 560,216 V 176 Q 560,168 568,168 H 680" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <line x1="440" y1="248" x2="680" y2="248" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <line x1="440" y1="364" x2="680" y2="364" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="600" y="148" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="624" y="157" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">레이블 매칭</text>
+
+    <rect x="536" y="228" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="237" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">레이블 매칭</text>
+
+    <rect x="536" y="344" width="48" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">레이블 매칭</text>
+
+    <!-- Node: Service (backend, entry) -->
+    <rect x="40" y="268" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="40" y="268" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="48" y="276" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="62" y="285" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="120" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes Service</text>
+    <text x="120" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reviews</text>
+
+    <!-- Node: S1 Subset v1 (focal) -->
+    <rect x="260" y="204" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="260" y="204" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="268" y="212" width="24" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="280" y="221" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">S1</text>
+    <text x="350" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Subset: v1</text>
+    <text x="350" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">labels: version=v1</text>
+
+    <!-- Node: S2 Subset v2 (backend) -->
+    <rect x="260" y="332" width="180" height="64" rx="6" fill="#ffffff"/>
+    <rect x="260" y="332" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="268" y="340" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="280" y="349" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">S2</text>
+    <text x="350" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Subset: v2</text>
+    <text x="350" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">labels: version=v2</text>
+
+    <!-- Node: P1 -->
+    <rect x="680" y="140" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="680" y="140" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="688" y="148" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="702" y="157" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="790" y="173" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">reviews-v1-abc</text>
+
+    <!-- Node: P2 -->
+    <rect x="680" y="220" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="680" y="220" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="688" y="228" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="702" y="237" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="790" y="253" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">reviews-v1-def</text>
+
+    <!-- Node: P3 -->
+    <rect x="680" y="336" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="680" y="336" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="688" y="344" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="702" y="353" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="790" y="369" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">reviews-v2-xyz</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="454" x2="920" y2="454" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="470" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="486" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="60" y="495" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service / 파드</text>
+
+    <rect x="220" y="486" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="240" y="495" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Subset (초점)</text>
+
+    <line x1="400" y1="491" x2="428" y2="491" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="436" y="495" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">레이블 매칭 (선택)</text>
+  </svg>

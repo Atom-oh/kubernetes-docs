@@ -14,27 +14,7 @@
 
 스케줄러 확장의 워크플로우는 다음과 같습니다:
 
-```mermaid
-sequenceDiagram
-    participant API as API 서버
-    participant Scheduler as 기본 스케줄러
-    participant Extender as 스케줄러 확장
-    participant Node as 노드
-
-    API->>Scheduler: 포드 생성 요청
-    Scheduler->>Scheduler: 내부 필터링
-    Scheduler->>Extender: 필터 요청 (HTTP POST /filter)
-    Extender->>Extender: 커스텀 필터링 로직 적용
-    Extender->>Scheduler: 필터링된 노드 목록 반환
-    Scheduler->>Scheduler: 내부 점수 매기기
-    Scheduler->>Extender: 우선순위 요청 (HTTP POST /prioritize)
-    Extender->>Extender: 커스텀 점수 매기기 로직 적용
-    Extender->>Scheduler: 노드 점수 반환
-    Scheduler->>Scheduler: 최종 노드 선택
-    Scheduler->>API: 바인딩 요청
-    API->>Node: 포드 스케줄링
-
-```
+![API 서버의 포드 생성 요청을 받은 기본 스케줄러가 내부 필터링·점수 매기기 사이에 스케줄러 확장으로 HTTP 필터/우선순위 요청을 보내 커스텀 로직 결과를 반영한 뒤, 최종 노드를 선택해 바인딩 요청을 거쳐 노드에 포드를 스케줄링하는 흐름을 보여준다.](../.gitbook/assets/ko-scheduling-02-custom-scheduler-part2-0.png)
 
 ### 스케줄러 확장 구현
 

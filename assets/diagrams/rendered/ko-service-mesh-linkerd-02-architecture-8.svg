@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-linkerd-02-architecture-8-title ko-service-mesh-linkerd-02-architecture-8-desc">
+<title id="ko-service-mesh-linkerd-02-architecture-8-title">사이드카 주입 워크플로</title>
+<desc id="ko-service-mesh-linkerd-02-architecture-8-desc">Pod 생성 요청이 Admission Webhook과 주입 조건 확인(네임스페이스/Pod 주석/워크로드 타입)을 거쳐 사이드카가 주입된 뒤 Pod가 생성되는 흐름을 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="56" y="300" width="808" height="148" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="72" y="304" width="176" height="12" rx="2" fill="#ffffff"/>
+<text x="160.0" y="313" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.14em">INJECTION CONDITIONS</text>
+
+<line x1="460" y1="96" x2="460" y2="126" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="460" y1="182" x2="460" y2="212" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 390,268 V 290.0 Q 390,298.0 382,298.0 H 188 Q 180,298.0 180,306.0 V 328" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="460" y1="268" x2="460" y2="328" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 530,268 V 290.0 Q 530,298.0 538,298.0 H 732 Q 740,298.0 740,306.0 V 328" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 180,384 V 406.0 Q 180,414.0 188,414.0 H 382 Q 390,414.0 390,422.0 V 444" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="460" y1="384" x2="460" y2="444" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<path d="M 740,384 V 406.0 Q 740,414.0 732,414.0 H 538 Q 530,414.0 530,422.0 V 444" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="460" y1="500" x2="460" y2="530" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="360" y="40" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="40" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="72.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 생성 요청</text>
+<rect x="360" y="126" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="126" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="158.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Webhook 호출</text>
+<rect x="360" y="212" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="212" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">주입 조건 확인</text>
+<rect x="80" y="328" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="328" width="200" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="180.0" y="360.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네임스페이스 주석</text>
+<rect x="360" y="328" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="328" width="200" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="460.0" y="360.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 주석</text>
+<rect x="640" y="328" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="640" y="328" width="200" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="740.0" y="360.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">워크로드 타입</text>
+<rect x="360" y="444" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="444" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="460.0" y="476.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사이드카 주입</text>
+<rect x="360" y="530" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="360" y="530" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="562.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 생성</text>
+<line x1="40" y1="580" x2="920" y2="580" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="596" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="610" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="62" y="618" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">사이드카 주입</text>
+<rect x="142" y="610" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="164" y="618" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주입 조건 판단 기준</text>
+<line x1="276" y1="615" x2="304" y2="615" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="312" y="618" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주입 완료 경로</text>
+</svg>

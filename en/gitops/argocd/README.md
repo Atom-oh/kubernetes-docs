@@ -18,61 +18,7 @@ ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes. It auto
 
 As a CNCF graduated project, ArgoCD has become the de facto standard for GitOps-based Kubernetes deployments, used by thousands of organizations worldwide.
 
-```mermaid
-flowchart LR
-    subgraph SOURCES["Configuration Sources"]
-        GIT[("Git Repository")]
-        HELM[("Helm Registry")]
-        OCI[("OCI Registry")]
-    end
-
-    subgraph ARGOCD["ArgoCD Control Plane"]
-        API["API Server"]
-        REPO["Repo Server"]
-        CTRL["Application Controller"]
-        REDIS["Redis Cache"]
-        DEX["Dex (SSO)"]
-    end
-
-    subgraph UI["User Interfaces"]
-        WEB["Web UI"]
-        CLI["CLI"]
-        GRPC["gRPC API"]
-    end
-
-    subgraph CLUSTERS["Managed Clusters"]
-        C1["Cluster 1"]
-        C2["Cluster 2"]
-        CN["Cluster N"]
-    end
-
-    GIT --> REPO
-    HELM --> REPO
-    OCI --> REPO
-
-    REPO --> CTRL
-    CTRL --> REDIS
-    API --> REDIS
-    DEX --> API
-
-    WEB --> API
-    CLI --> API
-    GRPC --> API
-
-    CTRL -->|"Sync"| C1
-    CTRL -->|"Sync"| C2
-    CTRL -->|"Sync"| CN
-
-    classDef source fill:#f9f9f9,stroke:#333,color:black
-    classDef argo fill:#EB6E85,stroke:#333,color:white
-    classDef ui fill:#6c757d,stroke:#333,color:white
-    classDef cluster fill:#326CE5,stroke:#333,color:white
-
-    class GIT,HELM,OCI source
-    class API,REPO,CTRL,REDIS,DEX argo
-    class WEB,CLI,GRPC ui
-    class C1,C2,CN cluster
-```
+![Architecture diagram showing ArgoCD's control plane fetching manifests from Git, Helm, and OCI sources through its Repo Server, with the Application Controller reconciling and syncing them into managed Kubernetes clusters, while users reach the API Server through the web UI, CLI, or gRPC API.](../../.gitbook/assets/en-gitops-argocd-README-0.png)
 
 ## Key Benefits
 
@@ -119,37 +65,7 @@ flowchart LR
 
 ### Data Flow
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant API as API Server
-    participant Repo as Repo Server
-    participant Ctrl as Controller
-    participant K8s as Kubernetes
-    participant Git as Git Repo
-
-    User->>API: Create Application
-    API->>API: Authenticate & Authorize
-    API->>Repo: Request Manifests
-    Repo->>Git: Clone/Fetch
-    Git-->>Repo: Repository Content
-    Repo->>Repo: Generate Manifests
-    Repo-->>API: Rendered Manifests
-    API-->>User: Application Created
-
-    loop Reconciliation (3 min default)
-        Ctrl->>Repo: Get Desired State
-        Repo-->>Ctrl: Manifests
-        Ctrl->>K8s: Get Actual State
-        K8s-->>Ctrl: Resources
-        Ctrl->>Ctrl: Compare States
-        alt Drift Detected
-            Ctrl->>K8s: Apply Changes
-            K8s-->>Ctrl: Success
-        end
-        Ctrl->>API: Update Status
-    end
-```
+![Sequence diagram showing a user creating an ArgoCD application through the API Server, which renders manifests via the Repo Server, followed by the Application Controller repeatedly comparing desired and actual state against Kubernetes and applying changes on drift in a reconciliation loop.](../../.gitbook/assets/en-gitops-argocd-README-1.png)
 
 ## Core Concepts
 

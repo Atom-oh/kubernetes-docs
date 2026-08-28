@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-05-eks-security-15-title en-eks-05-eks-security-15-desc">
+    <title id="en-eks-05-eks-security-15-title">Financial services EKS VPC architecture</title>
+    <desc id="en-eks-05-eks-security-15-desc">Architecture diagram showing internet traffic filtered by AWS WAF and a load balancer into application pods running on a private-subnet EKS cluster alongside security sidecars, with security tooling monitoring the cluster and KMS-encrypted data services holding RDS, S3, and DynamoDB.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="380" y="196" width="280" height="272" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="392" y="200" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="440" y="209" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">PRIVATE SUBNETS</text>
+<line x1="160" y1="88.0" x2="220" y2="88.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="360" y1="88.0" x2="420" y2="88.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 490.0,112 V 142 Q 490.0,150 498.0,150 H 512.0 Q 520.0,150 520.0,158 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="450.0" y1="276" x2="450.0" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="520.0" y1="364" x2="520.0" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 640,320 H 662 Q 670,320 670,328 V 332.0 Q 670,340.0 678,340.0 H 700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,296.0 H 312 Q 320,296.0 320,288.0 V 256.0 Q 320,248.0 328,248.0 H 400" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 790.0,236 V 262 Q 790.0,270 798.0,270 H 802.0 Q 810.0,270 810.0,278 V 308" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="172" y="68.0" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="190" y="77.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+<rect x="369" y="68.0" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="390" y="77.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FILTER</text>
+<rect x="460" y="238" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="473" y="247" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RUN</text>
+<rect x="530" y="374" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="554" y="383" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SIDECAR</text>
+<rect x="262" y="252" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="286" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">MONITOR</text>
+<rect x="800" y="238" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="824" y="247" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ENCRYPT</text>
+<rect x="40" y="64" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="64" width="120" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="100.0" y="92.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Internet</text>
+<rect x="220" y="64" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="220" y="64" width="140" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="290.0" y="92.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS WAF</text>
+<rect x="420" y="64" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="420" y="64" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="490.0" y="92.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer</text>
+<rect x="400" y="220" width="100" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="220" width="100" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="450.0" y="252.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">EKS Cluster</text>
+<rect x="400" y="308" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="308" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520.0" y="340.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application Pods</text>
+<rect x="400" y="396" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="396" width="240" height="56" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="520.0" y="428.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Security Sidecars</text>
+<rect x="40" y="264" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="264" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="140.0" y="293.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Security Tools</text>
+<text x="140.0" y="309.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">GuardDuty · SecHub · Config · Trail</text>
+<rect x="700" y="308" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="308" width="220" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="810.0" y="337.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Data Services</text>
+<text x="810.0" y="353.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">RDS · S3 · DynamoDB (encrypted)</text>
+<rect x="700" y="180" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="180" width="180" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="790.0" y="212.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS KMS</text>
+<line x1="30" y1="492" x2="930" y2="492" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="30" y1="500" x2="48" y2="500" stroke="#EC7211" stroke-width="1.4"/>
+<text x="54" y="503" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">EKS CLUSTER</text>
+<line x1="147.6" y1="500" x2="165.6" y2="500" stroke="#545B64" stroke-width="1.4"/>
+<text x="171.6" y="503" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.04em">MONITOR (DASHED)</text>
+  </svg>

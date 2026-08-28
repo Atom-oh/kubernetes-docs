@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+  <title id="t1">Kubernetes 인증 흐름</title>
+  <desc id="d1">사용자나 서비스가 API 서버에 인증을 요청하면 X.509 인증서, 서비스 계정 토큰, OIDC 등 다섯 가지 방법으로 검증되고, 성공하면 권한 부여 단계로 넘어가고 실패하면 요청이 거부되는 흐름을 보여주는 다이어그램.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <text x="40" y="32" fill="#7D8998" font-size="8" letter-spacing="0.18em" class="mono">AUTHENTICATION</text>
+  <text x="40" y="58" fill="#232F3E" font-size="24" font-weight="700">인증(Authentication) 흐름</text>
+  <text x="40" y="78" fill="#545B64" font-size="12">API 서버가 다섯 가지 방법 중 하나로 요청자의 신원을 확인하는 과정</text>
+
+  <!-- Arrows -->
+  <line x1="480" y1="88" x2="480" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="494" y="106" width="80" height="14" rx="2" fill="#ffffff"/>
+  <text x="534" y="116" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em" class="mono">인증 요청</text>
+
+  <line x1="480" y1="196" x2="480" y2="252" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="494" y="216" width="80" height="14" rx="2" fill="#ffffff"/>
+  <text x="534" y="226" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em" class="mono">검증 위임</text>
+
+  <line x1="480" y1="332" x2="480" y2="345" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Decision -> Success (right, happy path, accent) -->
+  <line x1="558" y1="380" x2="700" y2="380" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="600" y="360" width="56" height="14" rx="2" fill="#ffffff"/>
+  <text x="628" y="370" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.06em" class="mono">성공</text>
+
+  <!-- Decision -> Fail (down) -->
+  <line x1="480" y1="425" x2="480" y2="500" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="494" y="455" width="60" height="14" rx="2" fill="#ffffff"/>
+  <text x="524" y="465" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em" class="mono">실패</text>
+
+  <!-- User (oval start) -->
+  <rect x="400" y="40" width="160" height="48" rx="24" fill="#ffffff"/>
+  <rect x="400" y="40" width="160" height="48" rx="24" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="68" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">사용자 / 서비스</text>
+
+  <!-- API server rect -->
+  <rect x="380" y="140" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="380" y="140" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">API 서버</text>
+  <text x="480" y="182" fill="#545B64" font-size="9" text-anchor="middle" class="mono">kube-apiserver</text>
+
+  <!-- Auth methods list box -->
+  <rect x="340" y="252" width="280" height="80" rx="6" fill="#ffffff"/>
+  <rect x="340" y="252" width="280" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="276" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">인증 방법 (5종)</text>
+  <text x="480" y="296" fill="#545B64" font-size="9" text-anchor="middle" class="mono">X.509 인증서 · 서비스 계정 토큰 · OIDC</text>
+  <text x="480" y="312" fill="#545B64" font-size="9" text-anchor="middle" class="mono">웹훅 토큰 인증 · 인증 프록시</text>
+
+  <!-- Decision diamond -->
+  <path d="M480,335 L555,380 L480,425 L405,380 Z" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="376" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">인증</text>
+  <text x="480" y="390" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">결과</text>
+
+  <!-- Success (oval end) -->
+  <rect x="700" y="352" width="220" height="56" rx="28" fill="#ffffff"/>
+  <rect x="700" y="352" width="220" height="56" rx="28" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="810" y="376" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">권한 부여 단계로</text>
+  <text x="810" y="392" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">이동</text>
+
+  <!-- Fail (oval end) -->
+  <rect x="380" y="500" width="200" height="56" rx="28" fill="#ffffff"/>
+  <rect x="380" y="500" width="200" height="56" rx="28" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="480" y="532" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">요청 거부</text>
+</svg>

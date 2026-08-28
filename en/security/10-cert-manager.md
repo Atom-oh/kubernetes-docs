@@ -77,61 +77,7 @@ cert-manager is a **CNCF Graduated project**, indicating production-ready maturi
 
 cert-manager consists of three main components that work together to manage certificate lifecycles:
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["cert-manager Control Plane"]
-        CM[cert-manager Controller]
-        WH[Webhook Server]
-        CI[cainjector]
-    end
-
-    subgraph CRDs["Custom Resources"]
-        CERT[Certificate]
-        CR[CertificateRequest]
-        ISS[Issuer]
-        CISS[ClusterIssuer]
-        ORD[Order]
-        CHL[Challenge]
-    end
-
-    subgraph External["External CAs"]
-        LE[Let's Encrypt]
-        VAULT[HashiCorp Vault]
-        PCA[AWS Private CA]
-        SELF[Self-Signed]
-    end
-
-    subgraph K8s["Kubernetes Resources"]
-        SEC[TLS Secret]
-        ING[Ingress]
-        GW[Gateway]
-    end
-
-    API[API Server] --> WH
-    WH --> |Validates| CRDs
-    CM --> |Watches| CERT
-    CM --> |Creates| CR
-    CR --> |Processed by| ISS
-    CR --> |Processed by| CISS
-    ISS --> External
-    CISS --> External
-    CM --> |Creates| SEC
-    CI --> |Injects CA| WH
-    CI --> |Injects CA| API
-
-    ING --> |References| SEC
-    GW --> |References| SEC
-
-    classDef controller fill:#4CAF50,stroke:#333,color:white
-    classDef crd fill:#2196F3,stroke:#333,color:white
-    classDef external fill:#FF9800,stroke:#333,color:white
-    classDef k8s fill:#9C27B0,stroke:#333,color:white
-
-    class CM,WH,CI controller
-    class CERT,CR,ISS,CISS,ORD,CHL crd
-    class LE,VAULT,PCA,SELF external
-    class SEC,ING,GW k8s
-```
+![Architecture diagram showing the cert-manager control plane watching Certificate and Issuer custom resources, requesting signed certificates from an external CA, and writing the result into a TLS Secret that Ingress and Gateway resources reference.](../.gitbook/assets/en-security-10-cert-manager-0.png)
 
 ### Component Responsibilities
 
@@ -143,56 +89,7 @@ flowchart TB
 
 ### Certificate Issuance Flow
 
-```mermaid
-flowchart LR
-    subgraph User["User Action"]
-        U[Create Certificate CR]
-    end
-
-    subgraph Controller["cert-manager Controller"]
-        DETECT[Detect new Certificate]
-        CREATECR[Create CertificateRequest]
-        PROCESS[Process with Issuer]
-        STORE[Store in Secret]
-    end
-
-    subgraph ACME["ACME Flow (if applicable)"]
-        ORDER[Create Order]
-        CHALLENGE[Create Challenge]
-        SOLVE[Solve Challenge]
-        FINALIZE[Finalize Order]
-    end
-
-    subgraph Output["Result"]
-        SECRET[TLS Secret Created]
-        READY[Certificate Ready]
-    end
-
-    U --> DETECT
-    DETECT --> CREATECR
-    CREATECR --> PROCESS
-
-    PROCESS --> |ACME Issuer| ORDER
-    ORDER --> CHALLENGE
-    CHALLENGE --> SOLVE
-    SOLVE --> FINALIZE
-    FINALIZE --> STORE
-
-    PROCESS --> |Non-ACME| STORE
-
-    STORE --> SECRET
-    SECRET --> READY
-
-    classDef user fill:#E1F5FE,stroke:#333
-    classDef controller fill:#4CAF50,stroke:#333,color:white
-    classDef acme fill:#FF9800,stroke:#333,color:white
-    classDef output fill:#C8E6C9,stroke:#333
-
-    class U user
-    class DETECT,CREATECR,PROCESS,STORE controller
-    class ORDER,CHALLENGE,SOLVE,FINALIZE acme
-    class SECRET,READY output
-```
+![Flowchart showing cert-manager creating a CertificateRequest from a Certificate resource, branching into an ACME order-and-challenge sequence for ACME issuers or going straight to storage for non-ACME issuers, and finally writing the TLS Secret.](../.gitbook/assets/en-security-10-cert-manager-1.png)
 
 ---
 
@@ -553,54 +450,7 @@ ACME (Automatic Certificate Management Environment) is used with Let's Encrypt a
 
 #### ACME Challenge Types
 
-```mermaid
-flowchart TB
-    subgraph ACME["ACME Challenge Selection"]
-        START[Certificate Request]
-        HTTP01[HTTP-01 Challenge]
-        DNS01[DNS-01 Challenge]
-    end
-
-    subgraph HTTP["HTTP-01 Flow"]
-        H1[cert-manager creates<br/>challenge token]
-        H2[Expose token at<br/>/.well-known/acme-challenge/]
-        H3[Let's Encrypt verifies<br/>via HTTP request]
-        H4[Challenge completed]
-    end
-
-    subgraph DNS["DNS-01 Flow"]
-        D1[cert-manager creates<br/>challenge token]
-        D2[Create TXT record<br/>_acme-challenge.domain]
-        D3[Let's Encrypt verifies<br/>via DNS query]
-        D4[Challenge completed]
-    end
-
-    subgraph Route53["Route53 DNS-01 with IRSA"]
-        R1[EKS Pod with IRSA]
-        R2[AssumeRoleWithWebIdentity]
-        R3[Route53 API]
-        R4[Create/Delete TXT record]
-    end
-
-    START --> |Port 80 accessible| HTTP01
-    START --> |Wildcard cert OR<br/>Port 80 blocked| DNS01
-
-    HTTP01 --> H1 --> H2 --> H3 --> H4
-    DNS01 --> D1 --> D2 --> D3 --> D4
-
-    D2 --> |AWS| R1
-    R1 --> R2 --> R3 --> R4
-
-    classDef acme fill:#4CAF50,stroke:#333,color:white
-    classDef http fill:#2196F3,stroke:#333,color:white
-    classDef dns fill:#FF9800,stroke:#333,color:white
-    classDef aws fill:#FF5722,stroke:#333,color:white
-
-    class START,HTTP01,DNS01 acme
-    class H1,H2,H3,H4 http
-    class D1,D2,D3,D4 dns
-    class R1,R2,R3,R4 aws
-```
+![Flowchart showing cert-manager choosing between an HTTP-01 challenge when port 80 is reachable and a DNS-01 challenge for wildcard certificates or blocked ports, with the DNS-01 path also creating a Route 53 TXT record through an IRSA-authenticated pod before both paths verify and complete.](../.gitbook/assets/en-security-10-cert-manager-2.png)
 
 #### HTTP-01 Solver
 
@@ -1056,60 +906,7 @@ The two approaches aren't mutually exclusive — for example, public-domain cert
 
 istio-csr is a cert-manager agent that integrates with Istio to provide workload certificates. It replaces the default istiod CA with certificates signed by cert-manager.
 
-```mermaid
-flowchart TB
-    subgraph Workload["Istio Workload Pod"]
-        APP[Application Container]
-        ENVOY[Envoy Sidecar]
-    end
-
-    subgraph IstioCsr["istio-csr"]
-        CSR_AGENT[istio-csr Agent]
-        CSR_QUEUE[CSR Queue]
-    end
-
-    subgraph CertManager["cert-manager"]
-        CM_CTRL[cert-manager Controller]
-        CR[CertificateRequest]
-    end
-
-    subgraph Issuer["Certificate Issuer"]
-        ISS[ClusterIssuer]
-        CA[CA / Vault / PCA]
-    end
-
-    subgraph Output["Result"]
-        SVID[SPIFFE SVID Certificate]
-        MTLS[mTLS Communication]
-    end
-
-    ENVOY --> |1. CSR Request| CSR_AGENT
-    CSR_AGENT --> |2. Queue CSR| CSR_QUEUE
-    CSR_QUEUE --> |3. Create CertificateRequest| CM_CTRL
-    CM_CTRL --> |4. Process| CR
-    CR --> |5. Sign with| ISS
-    ISS --> |6. Request signing| CA
-    CA --> |7. Signed cert| ISS
-    ISS --> |8. Return cert| CR
-    CR --> |9. Certificate| CM_CTRL
-    CM_CTRL --> |10. Return| CSR_AGENT
-    CSR_AGENT --> |11. SVID| ENVOY
-    ENVOY --> |12. Enable| MTLS
-
-    APP <--> ENVOY
-
-    classDef workload fill:#E1F5FE,stroke:#333
-    classDef istiocsr fill:#4CAF50,stroke:#333,color:white
-    classDef certmanager fill:#2196F3,stroke:#333,color:white
-    classDef issuer fill:#FF9800,stroke:#333,color:white
-    classDef output fill:#C8E6C9,stroke:#333
-
-    class APP,ENVOY workload
-    class CSR_AGENT,CSR_QUEUE istiocsr
-    class CM_CTRL,CR certmanager
-    class ISS,CA issuer
-    class SVID,MTLS output
-```
+![Sequence diagram showing an Envoy sidecar requesting a certificate from istio-csr, which forwards a CertificateRequest through cert-manager to a ClusterIssuer for signing, then returns the signed SPIFFE SVID so Envoy can enable mutual TLS.](../.gitbook/assets/en-security-10-cert-manager-3.png)
 
 #### Installing istio-csr
 

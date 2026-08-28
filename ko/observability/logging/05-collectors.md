@@ -19,47 +19,7 @@ Kubernetes 환경에서 로그를 수집하는 다양한 도구들이 있습니�
 
 ### 로그 수집기 역할
 
-```mermaid
-flowchart LR
-    subgraph Sources["로그 소스"]
-        STDOUT[Container stdout]
-        FILE[Log Files]
-        JOURNAL[Systemd Journal]
-    end
-
-    subgraph Collector["로그 수집기"]
-        INPUT[Input/Source]
-        PROCESS[Processing/Transform]
-        OUTPUT[Output/Sink]
-    end
-
-    subgraph Destinations["목적지"]
-        LOKI[Loki]
-        OS[OpenSearch]
-        CW[CloudWatch]
-        S3[S3]
-    end
-
-    STDOUT --> INPUT
-    FILE --> INPUT
-    JOURNAL --> INPUT
-
-    INPUT --> PROCESS
-    PROCESS --> OUTPUT
-
-    OUTPUT --> LOKI
-    OUTPUT --> OS
-    OUTPUT --> CW
-    OUTPUT --> S3
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collector fill:#2196F3,stroke:#333,color:white
-    classDef dest fill:#9C27B0,stroke:#333,color:white
-
-    class STDOUT,FILE,JOURNAL source
-    class INPUT,PROCESS,OUTPUT collector
-    class LOKI,OS,CW,S3 dest
-```
+![로그 소스(Container stdout, Log Files, Systemd Journal)가 로그 수집기의 입력·처리·출력 단계를 거쳐 Loki, OpenSearch, CloudWatch, S3 등 여러 목적지로 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-0.png)
 
 ### 핵심 기능
 
@@ -91,48 +51,7 @@ FluentBit은 CNCF 프로젝트로, C로 작성된 경량 로그 프로세서입�
 
 ### 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph Input["Input Plugins"]
-        TAIL[tail]
-        SYSLOG[syslog]
-        TCP[tcp]
-        SYSTEMD[systemd]
-    end
-
-    subgraph Parser["Parser"]
-        JSON[json]
-        REGEX[regex]
-        DOCKER[docker]
-        CRI[cri]
-    end
-
-    subgraph Filter["Filter Plugins"]
-        K8S[kubernetes]
-        MODIFY[modify]
-        GREP[grep]
-        LUA[lua]
-        MULTILINE[multiline]
-    end
-
-    subgraph Buffer["Buffer"]
-        MEM[Memory]
-        FS[Filesystem]
-    end
-
-    subgraph Output["Output Plugins"]
-        LOKI[loki]
-        ES[opensearch]
-        CW[cloudwatch_logs]
-        S3[s3]
-        KAFKA[kafka]
-    end
-
-    Input --> Parser
-    Parser --> Filter
-    Filter --> Buffer
-    Buffer --> Output
-```
+![FluentBit이 Input, Parser, Filter, Buffer, Output 플러그인 단계를 순서대로 거쳐 로그를 처리하는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-1.png)
 
 ### 전체 설정 예시
 
@@ -547,39 +466,7 @@ Promtail은 Grafana Labs에서 개발한 Loki 전용 로그 수집 에이전트�
 
 ### 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph Discovery["Service Discovery"]
-        K8S_SD[kubernetes_sd]
-        FILE_SD[file_sd]
-        STATIC[static]
-    end
-
-    subgraph Scrape["Scrape Targets"]
-        PODS[Pod Logs]
-        JOURNAL[Journal]
-        SYSLOG[Syslog]
-    end
-
-    subgraph Pipeline["Pipeline Stages"]
-        DOCKER[docker]
-        CRI[cri]
-        JSON[json]
-        REGEX[regex]
-        MULTILINE[multiline]
-        LABELS[labels]
-        TIMESTAMP[timestamp]
-        OUTPUT[output]
-    end
-
-    subgraph Push["Push to Loki"]
-        LOKI[Loki API]
-    end
-
-    Discovery --> Scrape
-    Scrape --> Pipeline
-    Pipeline --> Push
-```
+![Promtail이 서비스 디스커버리로 대상을 찾고 스크랩한 뒤 여러 파이프라인 스테이지를 거쳐 Loki로 전송하는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-2.png)
 
 ### 전체 설정 예시
 
@@ -1239,32 +1126,7 @@ OpenTelemetry Collector는 OTLP(OpenTelemetry Protocol) Proto 인코딩을 사�
 
 ### 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph Receivers["Receivers"]
-        OTLP[otlp]
-        FILELOG[filelog]
-        K8SEVENTS[k8sevents]
-        SYSLOG[syslog]
-    end
-
-    subgraph Processors["Processors"]
-        BATCH[batch]
-        MEMORY[memory_limiter]
-        K8SATTR[k8sattributes]
-        FILTER[filter]
-        TRANSFORM[transform]
-    end
-
-    subgraph Exporters["Exporters"]
-        LOKI_EXP[loki]
-        OTLP_EXP[otlphttp]
-        DEBUG[debug]
-    end
-
-    Receivers --> Processors
-    Processors --> Exporters
-```
+![OpenTelemetry Collector가 여러 리시버로 수집한 로그를 프로세서 단계에서 가공한 뒤 익스포터로 내보내는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-3.png)
 
 ### 전체 설정 예시
 
@@ -1665,28 +1527,7 @@ OTEL Collector 권장:
 
 ### 의사결정 플로우
 
-```mermaid
-flowchart TD
-    START[로그 수집기 선택] --> Q1{목적지가<br/>Loki 전용?}
-
-    Q1 -->|예| Q2{기존<br/>Promtail 사용?}
-    Q1 -->|아니오| Q3{AWS 환경?}
-
-    Q2 -->|예| PROMTAIL[Promtail 유지]
-    Q2 -->|아니오| ALLOY[Grafana Alloy]
-
-    Q3 -->|예| FLUENTBIT[FluentBit]
-    Q3 -->|아니오| Q4{OTEL 표준<br/>필요?}
-
-    Q4 -->|예| OTEL[OTEL Collector]
-    Q4 -->|아니오| FLUENTBIT
-
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4 decision
-    class PROMTAIL,ALLOY,FLUENTBIT,OTEL solution
-```
+![목적지가 Loki 전용인지, AWS 환경인지, OTEL 표준이 필요한지를 순서대로 물어 FluentBit, Promtail, Grafana Alloy, OTEL Collector 중 하나를 선택하도록 안내하는 의사결정 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-4.png)
 
 ---
 

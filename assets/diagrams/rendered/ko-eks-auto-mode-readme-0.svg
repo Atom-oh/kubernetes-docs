@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">EKS Auto Mode 노드 프로비저닝 시퀀스</title>
+  <desc id="ddesc">사용자가 파드를 생성하면 EKS API 서버가 Pending 상태로 두고, Auto Mode Controller가 이를 감지해 NodePool과 최적 인스턴스 타입을 결정한 뒤 EC2 Fleet에 인스턴스 시작을 요청하고, 새로 프로비저닝된 노드가 kubelet으로 등록되어 파드가 스케줄링되고 Running 상태가 되는 과정을 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">SEQUENCE · EKS AUTO MODE</text>
+  <text x="40" y="46" fill="#232F3E" font-size="16" font-weight="700" class="sans">Auto Mode 노드 프로비저닝 흐름</text>
+  <text x="40" y="60" fill="#545B64" font-size="10" class="sans">Pending 파드를 감지한 Auto Mode Controller가 EC2 인스턴스를 요청해 새 노드를 자동으로 준비한다</text>
+
+  <!-- Lifelines -->
+  <line x1="96"  y1="108" x2="96"  y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="288" y1="108" x2="288" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="480" y1="108" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="672" y1="108" x2="672" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="864" y1="108" x2="864" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Activation bars -->
+  <rect x="476" y="252" width="8" height="148" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="0.8"/>
+  <rect x="860" y="412" width="8" height="116" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- ============ Messages ============ -->
+
+  <!-- M1 y=180: 사용자 -> API 서버 : Pod 생성 요청 -->
+  <path d="M96,180 L288,180" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="144" y="160" width="96" height="12" fill="#ffffff"/>
+  <text x="192" y="169" fill="#545B64" font-size="8" class="mono" text-anchor="middle">Pod 생성 요청</text>
+
+  <!-- M2 y=212: API 서버 self : Pod Pending 상태 -->
+  <path d="M288,212 L322,212 A6,6 0 0 1 328,218 L328,230 A6,6 0 0 1 322,236 L294,236"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="334" y="217" width="128" height="12" fill="#ffffff"/>
+  <text x="398" y="226" fill="#545B64" font-size="8" class="mono" text-anchor="middle">Pod Pending 상태</text>
+
+  <!-- M3 y=260: Auto Mode Controller -> API 서버 : Pending Pod 감지 -->
+  <path d="M480,260 L288,260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="314" y="240" width="140" height="12" fill="#ffffff"/>
+  <text x="384" y="249" fill="#545B64" font-size="8" class="mono" text-anchor="middle">Pending Pod 감지</text>
+
+  <!-- M4 y=292: Auto Mode Controller self : NodePool 매칭 -->
+  <path d="M480,292 L514,292 A6,6 0 0 1 520,298 L520,310 A6,6 0 0 1 514,316 L486,316"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="526" y="297" width="100" height="12" fill="#ffffff"/>
+  <text x="576" y="306" fill="#545B64" font-size="8" class="mono" text-anchor="middle">NodePool 매칭</text>
+
+  <!-- M5 y=340: Auto Mode Controller self : 최적 인스턴스 타입 결정 -->
+  <path d="M480,340 L514,340 A6,6 0 0 1 520,346 L520,358 A6,6 0 0 1 514,364 L486,364"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="526" y="345" width="120" height="12" fill="#ffffff"/>
+  <text x="586" y="354" fill="#545B64" font-size="8" class="mono" text-anchor="middle">최적 인스턴스 타입 결정</text>
+
+  <!-- M6 y=388: Auto Mode Controller -> EC2 Fleet : 인스턴스 시작 요청 [AWS API boundary -> link-blue] -->
+  <path d="M480,388 L672,388" fill="none" stroke="#0972D3" stroke-width="1" marker-end="url(#arrow-link)"/>
+  <rect x="524" y="368" width="104" height="12" fill="#ffffff"/>
+  <text x="576" y="377" fill="#0972D3" font-size="8" class="mono" text-anchor="middle">인스턴스 시작 요청</text>
+
+  <!-- M7 y=420: EC2 Fleet -> 신규 노드 : 인스턴스 프로비저닝 [AWS provisioning -> link-blue] -->
+  <path d="M672,420 L864,420" fill="none" stroke="#0972D3" stroke-width="1" marker-end="url(#arrow-link)"/>
+  <rect x="716" y="400" width="104" height="12" fill="#ffffff"/>
+  <text x="768" y="409" fill="#0972D3" font-size="8" class="mono" text-anchor="middle">인스턴스 프로비저닝</text>
+
+  <!-- M8 y=452: 신규 노드 -> API 서버 : 노드 등록 (kubelet) -->
+  <path d="M864,452 L288,452" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="502" y="432" width="148" height="12" fill="#ffffff"/>
+  <text x="576" y="441" fill="#545B64" font-size="8" class="mono" text-anchor="middle">노드 등록 (kubelet)</text>
+
+  <!-- M9 y=484: API 서버 -> 신규 노드 : Pod 스케줄링 -->
+  <path d="M288,484 L864,484" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="534" y="464" width="84" height="12" fill="#ffffff"/>
+  <text x="576" y="473" fill="#545B64" font-size="8" class="mono" text-anchor="middle">Pod 스케줄링</text>
+
+  <!-- M10 y=516: 신규 노드 -> API 서버 : Pod Running (headline success, accent) -->
+  <path d="M864,516 L288,516" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="520" y="496" width="112" height="12" fill="#ffffff"/>
+  <text x="576" y="505" fill="#EC7211" font-size="8" class="mono" text-anchor="middle">Pod Running</text>
+
+  <!-- ============ Actor boxes (painted last) ============ -->
+
+  <!-- 사용자 -->
+  <rect x="28" y="72" width="136" height="36" rx="6" fill="#ffffff"/>
+  <rect x="28" y="72" width="136" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="96" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">사용자</text>
+
+  <!-- EKS API Server -->
+  <rect x="220" y="72" width="136" height="36" rx="6" fill="#ffffff"/>
+  <rect x="220" y="72" width="136" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="288" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">EKS API Server</text>
+
+  <!-- Auto Mode Controller (focal) -->
+  <rect x="412" y="72" width="136" height="36" rx="6" fill="#ffffff"/>
+  <rect x="412" y="72" width="136" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Auto Mode Controller</text>
+
+  <!-- EC2 Fleet -->
+  <rect x="604" y="72" width="136" height="36" rx="6" fill="#ffffff"/>
+  <rect x="604" y="72" width="136" height="36" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="672" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">EC2 Fleet</text>
+
+  <!-- 신규 노드 -->
+  <rect x="796" y="72" width="136" height="36" rx="6" fill="#ffffff"/>
+  <rect x="796" y="72" width="136" height="36" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="864" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">신규 노드</text>
+</svg>

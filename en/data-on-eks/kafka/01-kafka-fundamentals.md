@@ -23,30 +23,7 @@ This document covers the core concepts you need before running Kafka on EKS: bro
 
 ### Producer -> Partitions -> Consumer Group Flow
 
-```mermaid
-flowchart LR
-    P1[Producer]
-    subgraph B1[Broker 1]
-        T0[Topic orders - Partition 0 - Leader]
-    end
-    subgraph B2[Broker 2]
-        T1[Topic orders - Partition 1 - Leader]
-    end
-    subgraph B3[Broker 3]
-        T2[Topic orders - Partition 2 - Leader]
-    end
-    P1 --> T0
-    P1 --> T1
-    P1 --> T2
-    subgraph CG[Consumer Group: order-processor]
-        C1[Consumer 1]
-        C2[Consumer 2]
-        C3[Consumer 3]
-    end
-    T0 --> C1
-    T1 --> C2
-    T2 --> C3
-```
+![A producer writes to three leader partitions of the orders topic spread across a Kafka cluster, and each partition is read by exactly one consumer in the order-processor consumer group, showing the one-to-one partition-to-consumer assignment.](../../.gitbook/assets/en-data-on-eks-kafka-01-kafka-fundamentals-0.png)
 
 Producers write messages to a topic, and Kafka spreads those messages across multiple brokers at the partition level. Consumers that belong to the same consumer group split up the partitions between them (roughly one-to-one) and consume messages in parallel.
 

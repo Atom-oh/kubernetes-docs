@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-autoscaling-03-knative-3-title ko-autoscaling-03-knative-3-desc">
+    <title id="ko-autoscaling-03-knative-3-title">Knative Scale-to-Zero와 콜드 스타트 흐름</title>
+    <desc id="ko-autoscaling-03-knative-3-desc">트래픽이 없으면 Autoscaler가 파드를 0으로 줄이고 Activator가 목적지가 되며, 새 요청이 들어오면 Activator가 요청을 버퍼링한 채 Autoscaler에 스케일업을 요청해 파드를 다시 만들고 응답한 뒤에는 이후 요청이 Gateway에서 파드로 직접 전달되는 콜드 스타트 시퀀스를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="100" y1="88" x2="100" y2="760" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="290" y1="88" x2="290" y2="760" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="88" x2="480" y2="760" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="670" y1="88" x2="670" y2="760" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="860" y1="88" x2="860" y2="760" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="803.0" y="107" width="114" height="22" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="860.0" y="122" fill="#545B64" font-size="9" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">유휴 상태 - 트래픽 없음</text>
+<path d="M 670,150 h 44 v 28 h -44" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="720" y="156.0" width="112" height="16" rx="2" fill="#ffffff"/>
+<text x="726" y="168.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">STABLE-WINDOW 60s</text>
+<line x1="670" y1="206" x2="860" y2="206" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="730.0" y="186" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="765.0" y="195" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCALE TO 0</text>
+<rect x="796.0" y="229" width="128" height="22" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="860.0" y="244" fill="#545B64" font-size="9" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scale-to-Zero 완료</text>
+<line x1="670" y1="272" x2="290" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="421.0" y="252" width="118" height="12" rx="2" fill="#ffffff"/>
+<text x="480.0" y="261" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SET DEST=ACTIVATOR</text>
+<rect x="67.5" y="295" width="65" height="22" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="100.0" y="310" fill="#545B64" font-size="9" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">새 요청 발생</text>
+<line x1="100" y1="338" x2="290" y2="338" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<rect x="154.0" y="318" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="195.0" y="327" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">HTTP REQUEST</text>
+<line x1="290" y1="374" x2="480" y2="374" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="332.0" y="354" width="106" height="12" rx="2" fill="#ffffff"/>
+<text x="385.0" y="363" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FORWARD (NO POD)</text>
+<path d="M 480,406 h 44 v 28 h -44" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="530" y="412.0" width="94" height="16" rx="2" fill="#ffffff"/>
+<text x="536" y="424.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.04em">BUFFER REQUEST</text>
+<line x1="480" y1="462" x2="670" y2="462" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="522.0" y="442" width="106" height="12" rx="2" fill="#ffffff"/>
+<text x="575.0" y="451" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCALE UP REQUEST</text>
+<line x1="670" y1="498" x2="860" y2="498" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="730.0" y="478" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="765.0" y="487" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCALE TO 1</text>
+<rect x="799.5" y="521" width="121" height="22" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="860.0" y="536" fill="#545B64" font-size="9" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 시작 + Ready</text>
+<line x1="480" y1="564" x2="860" y2="564" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="617.0" y="544" width="106" height="12" rx="2" fill="#ffffff"/>
+<text x="670.0" y="553" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">FORWARD BUFFERED</text>
+<line x1="860" y1="606" x2="100" y2="606" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="451.0" y="586" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="480.0" y="595" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">RESPONSE</text>
+<rect x="240.0" y="629" width="100" height="22" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.18)" stroke-width="0.8"/>
+<text x="290.0" y="644" fill="#545B64" font-size="9" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이후 요청은 직접 전달</text>
+<line x1="100" y1="672" x2="290" y2="672" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<rect x="154.0" y="652" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="195.0" y="661" fill="#0972D3" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NEXT REQUEST</text>
+<line x1="290" y1="708" x2="860" y2="708" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="513.0" y="688" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="575.0" y="697" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DIRECT (BYPASS ACT)</text>
+<rect x="32" y="40" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="32" y="40" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+<rect x="222" y="40" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="222" y="40" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="62.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Gateway</text>
+<text x="290.0" y="78.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Kourier</text>
+<rect x="412" y="40" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="412" y="40" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Activator</text>
+<rect x="602" y="40" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="602" y="40" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Autoscaler</text>
+<rect x="792" y="40" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="792" y="40" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="62.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod</text>
+<text x="860.0" y="78.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Queue Proxy + App</text>
+  </svg>

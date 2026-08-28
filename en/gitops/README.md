@@ -17,37 +17,7 @@ GitOps is an operational framework that applies DevOps best practices for infras
 
 At its core, GitOps uses Git repositories as the single source of truth for declarative infrastructure and application configurations. Changes to the desired state are made through Git commits, and automated processes ensure the actual system state matches the declared state.
 
-```mermaid
-flowchart LR
-    subgraph SOURCE["Source of Truth"]
-        GIT[("Git Repository")]
-    end
-
-    subgraph GITOPS["GitOps Engine"]
-        AGENT["GitOps Agent"]
-        RECONCILE["Reconciliation Loop"]
-    end
-
-    subgraph TARGET["Target Environment"]
-        K8S["Kubernetes Cluster"]
-        APPS["Applications"]
-    end
-
-    DEV["Developer"] -->|"git push"| GIT
-    GIT -->|"Watch"| AGENT
-    AGENT -->|"Detect Drift"| RECONCILE
-    RECONCILE -->|"Apply Changes"| K8S
-    K8S --> APPS
-    K8S -->|"Report Status"| AGENT
-
-    classDef git fill:#f05033,stroke:#333,color:white
-    classDef agent fill:#326CE5,stroke:#333,color:white
-    classDef target fill:#28a745,stroke:#333,color:white
-
-    class GIT git
-    class AGENT,RECONCILE agent
-    class K8S,APPS target
-```
+![Architecture diagram showing a developer pushing changes to Git, which a GitOps agent watches and reconciles into a Kubernetes cluster, while the cluster reports status back to the agent.](../.gitbook/assets/gitops-reconciliation-loop.png)
 
 ### History and Evolution
 
@@ -132,25 +102,7 @@ When the actual state drifts from the desired state (manual changes, failures, e
 
 GitOps supports two deployment models:
 
-```mermaid
-flowchart TB
-    subgraph PUSH["Push Model (Traditional CI/CD)"]
-        direction LR
-        P_CI["CI Pipeline"] -->|"kubectl apply"| P_K8S["Cluster"]
-    end
-
-    subgraph PULL["Pull Model (GitOps)"]
-        direction LR
-        PULL_GIT[("Git Repo")] -->|"Watch"| PULL_AGENT["GitOps Agent"]
-        PULL_AGENT -->|"Apply"| PULL_K8S["Cluster"]
-    end
-
-    classDef push fill:#dc3545,stroke:#333,color:white
-    classDef pull fill:#28a745,stroke:#333,color:white
-
-    class P_CI,P_K8S push
-    class PULL_GIT,PULL_AGENT,PULL_K8S pull
-```
+![Flowchart contrasting traditional push-based CI/CD, where a pipeline applies changes directly to the cluster, with the GitOps pull model, where an agent watches Git and applies changes itself.](../.gitbook/assets/gitops-push-vs-pull.png)
 
 ### Push Model
 
@@ -253,32 +205,7 @@ Jenkins X provides CI/CD for cloud-native applications on Kubernetes.
 
 ### Decision Framework
 
-```mermaid
-flowchart TD
-    START["Need GitOps Tool"] --> Q1{"Need Web UI?"}
-    Q1 -->|"Yes"| Q2{"Multi-cluster?"}
-    Q1 -->|"No"| Q3{"Image Automation Priority?"}
-
-    Q2 -->|"Yes"| ARGO["ArgoCD"]
-    Q2 -->|"No"| Q4{"Enterprise RBAC?"}
-
-    Q3 -->|"Yes"| FLUX["FluxCD"]
-    Q3 -->|"No"| Q5{"Lightweight Priority?"}
-
-    Q4 -->|"Yes"| ARGO
-    Q4 -->|"No"| BOTH["Either Works"]
-
-    Q5 -->|"Yes"| FLUX
-    Q5 -->|"No"| BOTH
-
-    classDef argo fill:#EB6E85,stroke:#333,color:white
-    classDef flux fill:#5468FF,stroke:#333,color:white
-    classDef both fill:#28a745,stroke:#333,color:white
-
-    class ARGO argo
-    class FLUX flux
-    class BOTH both
-```
+![Decision tree guiding the choice between ArgoCD, FluxCD, or either tool based on web UI needs, multi-cluster scope, RBAC requirements, image automation priority, and lightweight footprint priority.](../.gitbook/assets/gitops-tool-selection.png)
 
 ## GitOps on Amazon EKS
 
@@ -301,36 +228,7 @@ metadata:
 
 #### Multi-Account Architecture
 
-```mermaid
-flowchart TB
-    subgraph MGMT["Management Account"]
-        ARGO["ArgoCD"]
-        GIT[("Git Repository")]
-    end
-
-    subgraph DEV["Development Account"]
-        DEV_EKS["EKS Dev"]
-    end
-
-    subgraph STAGING["Staging Account"]
-        STG_EKS["EKS Staging"]
-    end
-
-    subgraph PROD["Production Account"]
-        PROD_EKS["EKS Production"]
-    end
-
-    GIT --> ARGO
-    ARGO -->|"Cross-account"| DEV_EKS
-    ARGO -->|"Cross-account"| STG_EKS
-    ARGO -->|"Cross-account"| PROD_EKS
-
-    classDef mgmt fill:#FF9900,stroke:#333,color:white
-    classDef env fill:#326CE5,stroke:#333,color:white
-
-    class ARGO,GIT mgmt
-    class DEV_EKS,STG_EKS,PROD_EKS env
-```
+![Architecture diagram showing ArgoCD in a management account reading from Git and reconciling EKS clusters in separate development, staging, and production accounts over cross-account connections.](../.gitbook/assets/gitops-multi-account-argocd.png)
 
 #### AWS Service Integration
 

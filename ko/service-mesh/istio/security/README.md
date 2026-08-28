@@ -24,59 +24,7 @@ Istio는 **Zero Trust 보안 모델**을 구현하여 서비스 메시 내의 �
 
 ### 보안 아키텍처 계층
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        CA[Certificate Authority<br/>CA 인증서 관리]
-        ConfigAPI[Config API<br/>보안 정책 배포]
-    end
-
-    subgraph DataPlane["Data Plane (Envoy Proxy)"]
-        subgraph Pod1["Pod A"]
-            App1[애플리케이션]
-            Envoy1[Envoy Sidecar<br/>- mTLS 종료<br/>- 정책 적용]
-        end
-
-        subgraph Pod2["Pod B"]
-            Envoy2[Envoy Sidecar<br/>- mTLS 종료<br/>- 정책 적용]
-            App2[애플리케이션]
-        end
-    end
-
-    subgraph SecurityLayers["보안 계층"]
-        Identity[1. Identity<br/>SPIFFE ID 기반]
-        CertMgmt[2. Certificate Management<br/>자동 발급/갱신]
-        PeerAuth[3. Peer Authentication<br/>서비스 간 mTLS]
-        ReqAuth[4. Request Authentication<br/>최종 사용자 JWT]
-        AuthZ[5. Authorization<br/>접근 제어]
-    end
-
-    CA -.->|인증서 발급| Envoy1
-    CA -.->|인증서 발급| Envoy2
-    ConfigAPI -.->|정책 배포| Envoy1
-    ConfigAPI -.->|정책 배포| Envoy2
-
-    App1 -->|평문| Envoy1
-    Envoy1 <-->|mTLS 암호화| Envoy2
-    Envoy2 -->|평문| App2
-
-    Identity --> CertMgmt
-    CertMgmt --> PeerAuth
-    PeerAuth --> ReqAuth
-    ReqAuth --> AuthZ
-
-    %% 스타일 정의
-    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef security fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class CA,ConfigAPI control;
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Identity,CertMgmt,PeerAuth,ReqAuth,AuthZ security;
-```
+![Control Plane(istiod)이 두 Envoy 사이드카에 인증서와 정책을 배포하고, 사이드카 간 mTLS로 파드 간 트래픽을 암호화하며, Identity부터 Authorization까지 5단계 보안 계층이 순서대로 적용되는 Istio 보안 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-README-0.png)
 
 **아키텍처 핵심 구성 요소**:
 

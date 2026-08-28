@@ -12,41 +12,7 @@
 
 ## 아키텍처 개요
 
-```mermaid
-flowchart LR
-    subgraph Sources["Data Sources"]
-        App["MSA Apps (OTel SDK)"]
-        Node["Node Metrics"]
-        K8s["K8s Events"]
-    end
-    subgraph Collector["OTel Collector"]
-        Recv["Receivers: OTLP, Prometheus"]
-        Proc["Processors: batch, k8sattributes"]
-        Exp["Exporters (fan-out)"]
-        Recv --> Proc --> Exp
-    end
-    subgraph Metrics["Metrics Backends"]
-        Prom["Prometheus"] --> AMP["AMP"]
-        VM["VictoriaMetrics"]
-        Mimir["Mimir"]
-        CWM["CloudWatch Metrics"]
-    end
-    subgraph Logging["Logging Backends"]
-        Loki["Loki"]
-        CH["ClickHouse"]
-        OS["OpenSearch"]
-        CWL["CloudWatch Logs"]
-    end
-    subgraph Tracing["Tracing Backends"]
-        Tempo["Tempo"]
-        XRay["X-Ray"]
-    end
-    App --> Collector
-    Node --> Collector
-    Exp -->|metrics| Metrics
-    Exp -->|logs| Logging
-    Exp -->|traces| Tracing
-```
+![MSA 애플리케이션, 노드 메트릭, K8s 이벤트 등 데이터 소스가 OTel Collector에 모여 수신·가공·내보내기 단계를 거친 뒤, 메트릭·로깅·트레이싱 백엔드로 각각 분기되어 전달되는 관측성 파이프라인 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-02-observability-stack-lab-0.png)
 
 ---
 

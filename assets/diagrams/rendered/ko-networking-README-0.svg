@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Kubernetes 네트워킹 계층</title>
+<desc id="ddesc">Pod, Service, Ingress, Network Policy 네트워킹이 아래에서 위로 쌓이는 4단계 계층 구조를 보여주며 Ingress 계층을 외부 진입점으로 강조한다.</desc>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" fill="#FFFFFF"/>
+<text x="40" y="48" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.18em">LAYER STACK &#183; NETWORKING MODEL</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Kubernetes 네트워킹 계층</text>
+<text x="40" y="140" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">기반</text>
+<line x1="64" y1="154" x2="64" y2="466" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<polygon points="60,466 68,466 64,474" fill="#7D8998"/>
+<text x="40" y="486" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">보안 강제</text>
+<line x1="104" y1="152" x2="896" y2="152" stroke="#D5DBDB" stroke-width="1"/>
+<rect x="104" y="152" width="792" height="78" fill="#FFFFFF"/>
+<line x1="104" y1="230" x2="896" y2="230" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<text x="128" y="186" fill="#545B64" font-size="9" font-weight="600" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">L1</text>
+<text x="128" y="210" fill="#232F3E" font-size="15" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Pod 네트워킹</text>
+<text x="872" y="210" fill="#545B64" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.03em">Pod-to-Pod 통신</text>
+<rect x="104" y="230" width="792" height="78" fill="#F2F3F3"/>
+<line x1="104" y1="308" x2="896" y2="308" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<text x="128" y="264" fill="#545B64" font-size="9" font-weight="600" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">L2</text>
+<text x="128" y="288" fill="#232F3E" font-size="15" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service 네트워킹</text>
+<text x="872" y="288" fill="#545B64" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.03em">서비스 디스커버리 &amp; LB</text>
+<rect x="104" y="308" width="792" height="78" fill="rgba(255,153,0,0.10)"/>
+<rect x="104" y="308" width="792" height="78" fill="none" stroke="#EC7211" stroke-width="1"/>
+<line x1="104" y1="386" x2="896" y2="386" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<text x="128" y="342" fill="#EC7211" font-size="9" font-weight="600" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">L3</text>
+<text x="128" y="366" fill="#232F3E" font-size="15" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Ingress 네트워킹</text>
+<text x="872" y="366" fill="#EC7211" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.03em">외부 트래픽 라우팅</text>
+<rect x="104" y="386" width="792" height="78" fill="#F2F3F3"/>
+<line x1="104" y1="464" x2="896" y2="464" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<text x="128" y="420" fill="#545B64" font-size="9" font-weight="600" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">L4</text>
+<text x="128" y="444" fill="#232F3E" font-size="15" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Network Policy</text>
+<text x="872" y="444" fill="#545B64" font-size="10" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.03em">네트워크 보안</text>
+<text x="104" y="504" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.18em">FOCAL LAYER</text>
+<text x="232" y="504" fill="#545B64" font-size="11" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic">Ingress 계층은 외부 트래픽이 클러스터로 들어오는 유일한 관문으로, 라우팅 규칙이 실질적인 진입 정책을 결정합니다.</text>
+</svg>

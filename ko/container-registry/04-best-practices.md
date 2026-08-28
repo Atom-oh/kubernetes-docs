@@ -230,20 +230,7 @@ docker build \
 
 ## 레지스트리 미러링 및 캐싱
 
-```mermaid
-flowchart TD
-    Need{"캐싱/미러링<br/>필요한가?"}
-    Need -->|Rate Limit 이슈| RL{"환경 확인"}
-    Need -->|가용성/성능| Perf{"인프라 확인"}
-
-    RL -->|AWS/EKS| ECR_PTC["ECR Pull-through Cache"]
-    RL -->|자체 인프라| Harbor_Proxy["Harbor Proxy Cache"]
-    RL -->|단순 미러| Containerd["containerd 미러 설정"]
-
-    Perf -->|에어갭| Harbor_Full["Harbor 전체 미러링"]
-    Perf -->|멀티 리전| ECR_Rep["ECR 멀티 리전 복제"]
-    Perf -->|엣지| Harbor_Rep["Harbor Pull Replication"]
-```
+![레이트 리밋 문제인지 가용성/성능 문제인지, 그리고 AWS/EKS 환경인지 자체 인프라인지에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 설정, Harbor 전체 미러링, ECR 멀티 리전 복제, Harbor Pull Replication 중 적합한 캐싱/미러링 전략을 선택하는 의사결정 트리.](../.gitbook/assets/ko-container-registry-04-best-practices-0.png)
 
 ### containerd 레지스트리 미러 설정
 
@@ -813,14 +800,7 @@ deploy:
 
 ### Build-Push-Scan-Deploy 파이프라인
 
-```mermaid
-flowchart LR
-    Commit["Code Commit"] --> Build["Build Image"]
-    Build --> Push["Push to ECR"]
-    Push --> Scan{"Scan<br/>(Trivy)"}
-    Scan -->|Pass| Deploy["Deploy to K8s"]
-    Scan -->|Fail: HIGH/CRITICAL| Block["Alert / Block"]
-```
+![코드 커밋 후 이미지를 빌드해 ECR에 푸시하고 Trivy로 스캔한 뒤, 통과하면 쿠버네티스에 배포하고 HIGH/CRITICAL 취약점이 있으면 배포를 차단하고 알림을 보내는 CI/CD 파이프라인.](../.gitbook/assets/ko-container-registry-04-best-practices-1.png)
 
 ### ArgoCD 이미지 업데이트 자동화
 

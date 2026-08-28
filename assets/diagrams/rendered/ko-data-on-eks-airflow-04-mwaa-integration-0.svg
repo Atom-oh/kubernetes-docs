@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mwaa-eks-integration-title mwaa-eks-integration-desc">
+  <title id="mwaa-eks-integration-title">MWAA에서 외부 EKS 클러스터로 Pod를 실행하는 아키텍처</title>
+  <desc id="mwaa-eks-integration-desc">AWS가 관리하는 MWAA 환경의 DAG가 S3에서 받은 kube_config.yaml로 별도 인프라인 사용자 EKS 클러스터에 접속해 Pod를 생성하고, eksctl로 사전에 부여한 IAM RBAC 매핑이 이 접근을 허용하는 과정을 보여준다.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- ===== Zones (bg -> zones -> arrows -> nodes) ===== -->
+  <rect x="40" y="40" width="380" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8" stroke-dasharray="4,4"/>
+  <rect x="52" y="44" width="168" height="12" rx="2" fill="#ffffff"/>
+  <text x="56" y="53" fill="rgba(35,47,62,0.55)" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">AWS 관리 MWAA 환경</text>
+
+  <rect x="580" y="40" width="340" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8" stroke-dasharray="4,4"/>
+  <rect x="592" y="44" width="288" height="12" rx="2" fill="#ffffff"/>
+  <text x="596" y="53" fill="rgba(35,47,62,0.55)" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.08em">사용자의 EKS 클러스터 (별도 인프라)</text>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+
+  <!-- S3 -> AWS zone (sync) -->
+  <path d="M140,340 V260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="150" y="294" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="178" y="303" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">동기화</text>
+
+  <!-- SCH -> DAG (run) -->
+  <path d="M136,128 V168" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="146" y="142" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="166" y="151" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">실행</text>
+
+  <!-- DAG -> POD (focal, cross-boundary pod creation) -->
+  <path d="M392,206 H506 Q514,206 514,198 V188 Q514,180 522,180 H636"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="417" y="186" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="449" y="195" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">POD 생성</text>
+
+  <!-- IAM -> EKS zone (RBAC grant) -->
+  <path d="M800,340 V260" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="810" y="294" width="100" height="12" rx="2" fill="#ffffff"/>
+  <text x="860" y="303" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">RBAC 권한 부여</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- SCH: MWAA scheduler / worker (backend) -->
+  <rect x="68" y="72" width="136" height="56" rx="6" fill="#ffffff"/>
+  <rect x="68" y="72" width="136" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="76" y="80" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="94" y="89" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MWAA</text>
+  <text x="136" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scheduler / Worker</text>
+  <text x="136" y="120" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">MWAA 실행 엔진</text>
+
+  <!-- DAG: focal node -->
+  <rect x="68" y="168" width="324" height="76" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="68" y="168" width="324" height="76" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="76" y="176" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+  <text x="92" y="185" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DAG</text>
+  <text x="230" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">KubernetesPodOperator</text>
+  <text x="230" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">in_cluster=False</text>
+  <text x="230" y="230" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">config_file=kube_config.yaml</text>
+
+  <!-- POD: pod created by the operator (backend, external cluster) -->
+  <rect x="636" y="148" width="228" height="64" rx="6" fill="#ffffff"/>
+  <rect x="636" y="148" width="228" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="644" y="156" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="660" y="165" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POD</text>
+  <text x="750" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operator가 생성한 Pod</text>
+  <text x="750" y="200" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">사용자 EKS 클러스터 내부</text>
+
+  <!-- S3: store, official service icon -->
+  <rect x="40" y="340" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="40" y="340" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <g transform="translate(56,358) scale(0.375)" aria-hidden="true">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g fill="#7AA116"><rect x="0" y="0" width="64" height="64"></rect></g>
+      <path d="M36.759,23.948 L36.993,22.131 C39.166,23.385 39.842,24.121 40.037,24.424 C39.713,24.485 38.832,24.509 36.759,23.948 L36.759,23.948 Z M19.5,11 C9.125,11 2.382,8.488 2,6.696 L2,6.511 C2.349,5.392 8.14,2 19.5,2 C30.84,2 36.632,5.381 37,6.505 L37,6.616 C36.724,8.446 29.961,11 19.5,11 L19.5,11 Z M34.818,23.362 C30.053,21.797 23.912,18.979 21.594,17.888 C21.535,16.786 20.628,15.906 19.512,15.906 C18.358,15.906 17.418,16.845 17.418,18 C17.418,19.154 18.358,20.094 19.512,20.094 C19.969,20.094 20.389,19.942 20.733,19.693 C23.132,20.822 29.619,23.798 34.558,25.38 L32.837,38.724 C32.583,40.352 27.919,42 19.497,42 C11.072,42 6.405,40.352 6.155,38.751 L2.435,9.814 C5.945,11.915 12.749,13 19.5,13 C26.25,13 33.054,11.915 36.565,9.815 L34.818,23.362 Z M39,6.5 C39,3.431 30.661,0 19.5,0 C8.339,0 -3.55271368e-15,3.431 -3.55271368e-15,6.5 L-3.55271368e-15,7.043 L4.174,39.033 C4.875,43.516 15.123,44 19.497,44 C23.869,44 34.113,43.516 34.818,39.007 L36.501,25.947 C37.778,26.279 38.812,26.456 39.616,26.455 C40.606,26.455 41.273,26.203 41.697,25.697 C42.047,25.281 42.185,24.756 42.085,24.221 C41.857,23 40.403,21.712 37.37,20.044 L37.27,19.989 L39,7.044 L39,6.5 Z" fill="#FFFFFF"></path>
+    </g>
+  </g>
+  <text x="92" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">S3 버킷</text>
+  <text x="92" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">DAG + kube_config.yaml</text>
+
+  <!-- IAM: one-time RBAC mapping config, official service icon, dashed = setup/optional -->
+  <rect x="680" y="340" width="240" height="72" rx="6" fill="rgba(35,47,62,0.02)"/>
+  <rect x="680" y="340" width="240" height="72" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+  <g transform="translate(696,358) scale(0.375)" aria-hidden="true">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <g fill="#DD344C"><rect x="0" y="0" width="64" height="64"></rect></g>
+      <path d="M12,47 L52,47 L52,18 L12,18 L12,47 Z M54,17 L54,48 C54,48.552 53.553,49 53,49 L11,49 C10.447,49 10,48.552 10,48 L10,17 C10,16.448 10.447,16 11,16 L53,16 C53.553,16 54,16.448 54,17 L54,17 Z M35,39 L47,39 L47,37 L35,37 L35,39 Z M45,35 L49,35 L49,33 L45,33 L45,35 Z M35,35 L41,35 L41,33 L35,33 L35,35 Z M22.5,37.5 C22.5,37.776 22.725,38 23,38 C23.275,38 23.5,37.776 23.5,37.5 C23.5,37.224 23.275,37 23,37 C22.725,37 22.5,37.224 22.5,37.5 L22.5,37.5 Z M25.5,37.5 C25.5,38.522 24.882,39.401 24,39.788 L24,42 L22,42 L22,39.788 C21.118,39.401 20.5,38.522 20.5,37.5 C20.5,36.122 21.621,35 23,35 C24.379,35 25.5,36.122 25.5,37.5 L25.5,37.5 Z M16,42.995 L29.995,43 L29.996,41 L27,41 L27,39 L29.997,39 L29.998,37 L27,37 L27,35 L29.999,35 L30,33.005 L16.005,33 L16,42.995 Z M18,31.001 L28.001,31.004 L28.002,26 C28.002,24.976 27.2,24.273 26.722,23.945 C25.847,23.345 24.174,23 23.002,23 L23,23 C20.873,23 18.003,24.232 18.002,26 L18,31.001 Z M14.293,44.701 C14.105,44.513 14,44.259 14,43.994 L14.005,32 C14.005,31.447 14.453,31 15.005,31 L16,31 L16.002,26 C16.003,22.911 19.876,21 23,21 L23.002,21 C24.567,21 26.653,21.473 27.854,22.295 C29.239,23.246 30.003,24.562 30.002,26 L30.001,31.005 L31,31.006 C31.266,31.006 31.52,31.111 31.707,31.299 C31.895,31.487 32,31.741 32,32.006 L31.995,44 C31.995,44.553 31.547,45 30.995,45 L15,44.994 C14.734,44.994 14.48,44.889 14.293,44.701 L14.293,44.701 Z M47,30 L49,30 L49,28 L47,28 L47,30 Z M35,30 L44,30 L44,28 L35,28 L35,30 Z" fill="#FFFFFF"></path>
+    </g>
+  </g>
+  <text x="732" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eksctl iamidentitymapping</text>
+  <text x="732" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">MWAA 실행 역할 → EKS RBAC</text>
+
+  <!-- ===== Legend ===== -->
+  <line x1="40" y1="492" x2="920" y2="492" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+
+  <circle cx="44" cy="508" r="3.5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="56" y="511" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">FOCAL: DAG (KUBERNETESPODOPERATOR)</text>
+
+  <circle cx="304" cy="508" r="3.5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="316" y="511" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">RUNTIME COMPONENT</text>
+
+  <circle cx="524" cy="508" r="3.5" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="2,1.5"/>
+  <text x="536" y="511" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">ONE-TIME SETUP / CONFIG</text>
+
+  <rect x="737" y="504" width="10" height="8" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+  <text x="756" y="511" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">TRUST BOUNDARY / SEPARATE INFRA</text>
+
+</svg>

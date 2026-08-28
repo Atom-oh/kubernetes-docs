@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf-arch-title ebpf-arch-desc">
+    <title id="ebpf-arch-title">eBPF architecture</title>
+    <desc id="ebpf-arch-desc">Diagram showing how a user-space application and compiler toolchain load a program through loader libraries, past the kernel's eBPF verifier and JIT compiler, into a virtual machine that attaches to kernel hook points and exchanges data with eBPF maps.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="56" width="352" height="308" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="152" y="60" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="196" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">USER SPACE</text>
+
+    <rect x="408" y="56" width="524" height="308" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="622" y="60" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="670" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KERNEL SPACE</text>
+
+    <!-- ===== Arrows (before boxes) ===== -->
+
+    <!-- Toolchain -> Loader (right+down, enter left edge) -->
+    <path d="M 200,120 H 208 Q 216,120 216,128 V 192 Q 216,200 224,200 H 232"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- App -> Loader (right+up, enter left edge) -->
+    <path d="M 200,280 H 208 Q 216,280 216,272 V 232 Q 216,224 224,224 H 232"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Loader -> Verifier (straight, shared y) -->
+    <line x1="360" y1="212" x2="440" y2="212" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- Verifier -> JIT (straight) -->
+    <line x1="600" y1="212" x2="632" y2="212" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- JIT -> VM (straight) -->
+    <line x1="772" y1="212" x2="804" y2="212" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- VM -> Hook Points: exit bottom-right, drop into open band, enter top edge -->
+    <path d="M 904,244 H 888 Q 880,244 880,252 V 280"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- VM <-> Maps: exit bottom-left, drop into open band, cross left, enter top edge (bidirectional) -->
+    <path d="M 844,244 V 260 Q 844,268 836,268 H 638 Q 630,268 630,276 V 280"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+    <!-- App <-> Maps (straight, dashed, bidirectional) -->
+    <line x1="200" y1="300" x2="560" y2="300" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+    <!-- ===== Arrow labels ===== -->
+    <rect x="372" y="192" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="201" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LOAD</text>
+
+    <rect x="606" y="192" width="20" height="12" rx="2" fill="#ffffff"/>
+    <text x="616" y="201" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">OK</text>
+
+    <rect x="776" y="192" width="24" height="12" rx="2" fill="#ffffff"/>
+    <text x="788" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RUN</text>
+
+    <rect x="865" y="258" width="50" height="12" rx="2" fill="#ffffff"/>
+    <text x="890" y="267" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ATTACH</text>
+
+    <rect x="709" y="250" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="737" y="259" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MAP I/O</text>
+
+    <rect x="352" y="280" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="380" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MAP I/O</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- Toolchain -->
+    <rect x="72" y="88" width="128" height="64" rx="6" fill="#ffffff"/>
+    <rect x="72" y="88" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="80" y="96" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="96" y="105" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DEV</text>
+    <text x="136" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compiler Toolchain</text>
+    <text x="136" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Clang/LLVM · BTF</text>
+
+    <!-- App -->
+    <rect x="72" y="248" width="128" height="64" rx="6" fill="#ffffff"/>
+    <rect x="72" y="248" width="128" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="80" y="256" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="94" y="265" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="136" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+    <text x="136" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">user process</text>
+
+    <!-- Loader Libraries -->
+    <rect x="232" y="180" width="128" height="64" rx="6" fill="#ffffff"/>
+    <rect x="232" y="180" width="128" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="240" y="188" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="254" y="197" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LIB</text>
+    <text x="296" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Loader Libraries</text>
+    <text x="296" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">libbpf · BCC · bpftrace</text>
+
+    <!-- Verifier (focal) -->
+    <rect x="440" y="180" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="440" y="180" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="448" y="188" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="464" y="197" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CORE</text>
+    <text x="520" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF Verifier</text>
+    <text x="520" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">safety guarantee</text>
+
+    <!-- JIT Compiler -->
+    <rect x="632" y="180" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="632" y="180" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="640" y="188" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="654" y="197" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">JIT</text>
+    <text x="702" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">JIT Compiler</text>
+    <text x="702" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">native machine code</text>
+
+    <!-- eBPF VM -->
+    <rect x="804" y="180" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="804" y="180" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="812" y="188" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="824" y="197" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">VM</text>
+    <text x="864" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF VM</text>
+    <text x="864" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">program execution</text>
+
+    <!-- eBPF Maps -->
+    <rect x="560" y="280" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="560" y="280" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="568" y="288" width="30" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="583" y="297" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MAP</text>
+    <text x="630" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF Maps</text>
+    <text x="630" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">hash · array · ringbuf</text>
+
+    <!-- Hook Points -->
+    <rect x="740" y="280" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="740" y="280" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="748" y="288" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="765" y="297" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">HOOK</text>
+    <text x="820" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Hook Points</text>
+    <text x="820" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">XDP · TC · kprobe · LSM</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="404" x2="920" y2="404" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="420" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="436" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="444" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal / verifier</text>
+
+    <rect x="220" y="436" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="444" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Kernel / runtime component</text>
+
+    <rect x="460" y="436" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="444" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Store</text>
+
+    <rect x="556" y="436" width="14" height="10" rx="2" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="576" y="444" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">User-space input</text>
+
+    <line x1="720" y1="442" x2="748" y2="442" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="756" y="444" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Data exchange</text>
+  </svg>

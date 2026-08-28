@@ -22,36 +22,7 @@
 
 **문제 시나리오**:
 
-```mermaid
-flowchart TD
-    subgraph Before["전체 존 중단 이전"]
-        direction LR
-        ZoneA1[Zone A<br/>3 Pods]
-        ZoneB1[Zone B<br/>3 Pods]
-        ZoneC1[Zone C<br/>3 Pods]
-
-        PDB1[PodDisruptionBudget: 33%<br/>최소 6개 Pod 필요]
-    end
-
-    subgraph After["Zone C 전체 중단 후"]
-        direction LR
-        ZoneA2[Zone A<br/>3 Pods<br/>✅ 정상]
-        ZoneB2[Zone B<br/>3 Pods<br/>✅ 정상]
-        ZoneC2[Zone C<br/>0 Pods<br/>❌ 전체 중단]
-
-        PDB2[PodDisruptionBudget: 33%<br/>실제: 6/9 → 6/6 = 100%<br/>⚠️ 밸런스 무너짐]
-    end
-
-    Before -->|Spot Instance<br/>Interruption| After
-
-    classDef normal fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failed fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef warning fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-
-    class ZoneA1,ZoneB1,ZoneC1,ZoneA2,ZoneB2 normal;
-    class ZoneC2 failed;
-    class PDB2 warning;
-```
+![Spot Instance로 인해 Zone C의 모든 Pod가 중단되기 전과 후를 비교하여, Zone별로 분리된 PodDisruptionBudget이 다른 Zone에는 영향을 주지 않지만 Zone C 자체의 가용성 비율은 무너짐을 보여주는 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.png)
 
 **왜 Zone별 Rollout이 필요한가?**
 
@@ -152,64 +123,7 @@ spec:
 
 ### 전체 구조
 
-```mermaid
-flowchart TB
-    subgraph Clients["클라이언트"]
-        ClientA[Client A<br/>Zone: us-east-1a]
-        ClientB[Client B<br/>Zone: us-east-1b]
-        ClientC[Client C<br/>Zone: us-east-1c]
-    end
-
-    subgraph Istio["Istio Control Plane"]
-        VS[VirtualService: test<br/>단일 VirtualService]
-        DR[DestinationRule: test<br/>locality-aware routing]
-    end
-
-    subgraph ZoneA["Zone A (us-east-1a)"]
-        RolloutA[Rollout: test-a<br/>subset: stable-a/canary-a]
-        StableA[Stable Pods<br/>label: zone=a]
-        CanaryA[Canary Pods<br/>label: zone=a]
-    end
-
-    subgraph ZoneB["Zone B (us-east-1b)"]
-        RolloutB[Rollout: test-b<br/>subset: stable-b/canary-b]
-        StableB[Stable Pods<br/>label: zone=b]
-        CanaryB[Canary Pods<br/>label: zone=b]
-    end
-
-    subgraph ZoneC["Zone C (us-east-1c)"]
-        RolloutC[Rollout: test-c<br/>subset: stable-c/canary-c]
-        StableC[Stable Pods<br/>label: zone=c]
-        CanaryC[Canary Pods<br/>label: zone=c]
-    end
-
-    ClientA -->|test.default| VS
-    ClientB -->|test.default| VS
-    ClientC -->|test.default| VS
-
-    VS -->|90% stable-a| StableA
-    VS -->|10% canary-a| CanaryA
-    VS -->|90% stable-b| StableB
-    VS -->|10% canary-b| CanaryB
-    VS -->|90% stable-c| StableC
-    VS -->|10% canary-c| CanaryC
-
-    DR -.->|localityLbSetting| VS
-
-    RolloutA -.->|manages weights| VS
-    RolloutB -.->|manages weights| VS
-    RolloutC -.->|manages weights| VS
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef rollout fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class VS,DR istio;
-    class RolloutA,RolloutB,RolloutC rollout;
-    class StableA,CanaryA,StableB,CanaryB,StableC,CanaryC pod;
-    class ClientA,ClientB,ClientC client;
-```
+![클라이언트가 단일 VirtualService를 호출하고, DestinationRule의 locality 설정에 따라 각 Zone의 독립적인 Rollout이 관리하는 stable/canary Pod로 트래픽이 분배되는 전체 아키텍처를 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
 
 ### 핵심 컴포넌트
 
@@ -737,101 +651,15 @@ spec:
 
 ### 정상 상태 (Zone-local 트래픽)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: 정상 상태: Zone-local 트래픽만
-
-    ClientA->>EnvoyA: GET /api
-    Note over EnvoyA: Locality-aware routing<br/>distribute: 100% local
-
-    EnvoyA->>PodA: Request (zone-local)
-    Note over EnvoyA,PodA: 같은 zone 내에서 처리
-
-    PodA->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodB: Zone B Pod는<br/>사용되지 않음
-```
+![정상 상태에서 Client A의 요청이 같은 Zone A의 Envoy Sidecar와 Pod만 거쳐 처리되고, 다른 Zone의 Pod는 사용되지 않음을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.png)
 
 ### Failover 시나리오
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A (us-east-1a)
-    participant ClientA as Client A
-    participant EnvoyA as Envoy Sidecar
-    participant PodA as Pod A<br/>(zone=a)<br/>❌ Unhealthy
-    end
-
-    box Zone B (us-east-1b)
-    participant PodB as Pod B<br/>(zone=b)
-    end
-
-    Note over ClientA,PodB: Failover: Zone A → Zone B
-
-    ClientA->>EnvoyA: GET /api
-    EnvoyA->>PodA: Attempt 1
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 2
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    EnvoyA->>PodA: Attempt 3
-    PodA--xEnvoyA: Error (timeout/5xx)
-
-    Note over EnvoyA: Outlier Detection<br/>consecutiveErrors: 3<br/>→ Zone A 제외
-
-    Note over EnvoyA: Failover 규칙 적용<br/>from: us-east-1a<br/>to: us-east-1b
-
-    EnvoyA->>PodB: Request (failover to Zone B)
-    Note over EnvoyA,PodB: Cross-zone 트래픽
-
-    PodB->>EnvoyA: Response
-    EnvoyA->>ClientA: Response
-
-    Note over PodA: Zone A는<br/>baseEjectionTime(30s)동안<br/>제외됨
-```
+![Zone A의 Pod가 3회 연속 오류를 반환하면 Outlier Detection이 해당 엔드포인트를 제외하고, DestinationRule의 failover 규칙에 따라 요청이 Zone B의 Pod로 자동 전환되는 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
 
 ### Canary 배포 중 트래픽 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box Zone A
-    participant Client as Client
-    participant VS as VirtualService
-    participant Stable as Stable Pod<br/>90%
-    participant Canary as Canary Pod<br/>10%
-    end
-
-    Note over Client,Canary: Canary 배포 진행 중<br/>setWeight: 10
-
-    Client->>VS: GET /api
-
-    alt 90% of traffic
-        VS->>Stable: subset: stable-a<br/>weight: 90
-        Stable->>VS: Response (v1)
-    else 10% of traffic
-        VS->>Canary: subset: canary-a<br/>weight: 10
-        Canary->>VS: Response (v2)
-    end
-
-    VS->>Client: Response
-
-    Note over VS: Argo Rollouts가<br/>weight를 점진적으로 변경<br/>10 → 20 → 50 → 80 → 100
-```
+![Argo Rollouts가 점진적으로 조정하는 weight에 따라 VirtualService가 요청의 90%는 stable subset으로, 10%는 canary subset으로 분배하는 Canary 배포 중 트래픽 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.png)
 
 ## 문제 해결
 

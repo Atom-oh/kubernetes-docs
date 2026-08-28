@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-linkerd-02-architecture-0-title en-service-mesh-linkerd-02-architecture-0-desc">
+<title id="en-service-mesh-linkerd-02-architecture-0-title">Linkerd Service Mesh Architecture</title>
+<desc id="en-service-mesh-linkerd-02-architecture-0-desc">Architecture diagram showing Linkerd's control plane (Destination, Identity, Proxy Injector, Policy controllers) configuring the linkerd-proxy sidecars in two application pods, which exchange traffic over mTLS while the Viz extension collects metrics.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="880" height="130" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="34" width="214" height="12" rx="2" fill="#ffffff"/>
+<text x="159.0" y="43" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE (LINKERD NAMESPACE)</text>
+<rect x="40" y="216" width="300" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="210" width="118" height="12" rx="2" fill="#ffffff"/>
+<text x="111.0" y="219" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION POD A</text>
+<rect x="380" y="216" width="300" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="392" y="210" width="118" height="12" rx="2" fill="#ffffff"/>
+<text x="451.0" y="219" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">APPLICATION POD B</text>
+<path d="M 168,132 V 172 Q 168,180 160,180 H 158 Q 150,180 150,188 V 272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 376,132 V 208 Q 376,216 368,216 H 238 Q 230,216 230,224 V 272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 584,132 V 172 Q 584,180 576,180 H 498 Q 490,180 490,188 V 272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 792,132 V 208 Q 792,216 784,216 H 578 Q 570,216 570,224 V 272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 190,372 L 190,328" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 310,300 L 410,300" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<path d="M 530,328 L 530,372" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 760,284 L 650,284" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="127.0" y="160" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="159.0" y="169" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENDPOINTS</text>
+<rect x="265.0" y="196" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="303.0" y="205" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CERTIFICATE</text>
+<rect x="511.0" y="160" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="537.0" y="169" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WEBHOOK</text>
+<rect x="658.0" y="196" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="681.0" y="205" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POLICY</text>
+<rect x="130" y="344.0" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="156.0" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TRAFFIC</text>
+<rect x="343.0" y="280" width="34" height="12" rx="2" fill="#ffffff"/>
+<text x="360" y="289" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+<rect x="538" y="344.0" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="564.0" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TRAFFIC</text>
+<rect x="679.0" y="264" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="705" y="273" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">METRICS</text>
+<rect x="88" y="76" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="88" y="76" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="168.0" y="100.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Destination Controller</text>
+<text x="168.0" y="116.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Service Discovery</text>
+<rect x="296" y="76" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="296" y="76" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="376.0" y="100.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Identity Controller</text>
+<text x="376.0" y="116.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Certificate Issuance</text>
+<rect x="504" y="76" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="504" y="76" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="584.0" y="100.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Proxy Injector</text>
+<text x="584.0" y="116.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Admission Webhook</text>
+<rect x="712" y="76" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="712" y="76" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="792.0" y="100.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Policy Controller</text>
+<text x="792.0" y="116.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Policy Validation</text>
+<rect x="70" y="372" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="70" y="372" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="396.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application Container</text>
+<text x="190.0" y="412.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod A</text>
+<rect x="70" y="272" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="70" y="272" width="240" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="190.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">linkerd-proxy</text>
+<text x="190.0" y="312.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Rust micro-proxy</text>
+<rect x="410" y="272" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="410" y="272" width="240" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="530.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">linkerd-proxy</text>
+<text x="530.0" y="312.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Rust micro-proxy</text>
+<rect x="410" y="372" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="410" y="372" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="530.0" y="396.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application Container</text>
+<text x="530.0" y="412.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod B</text>
+<rect x="760" y="268" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="760" y="268" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="830.0" y="292.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Viz Extension</text>
+<text x="830.0" y="308.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Metrics / Dashboard</text>
+</svg>

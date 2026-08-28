@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+<title id="d2-title">VPC Pod에서 Hybrid Pod로 향하는 패킷 경로</title>
+<desc id="d2-desc">VPC Pod가 보낸 패킷이 VPC 노드, VPC 라우트 테이블을 거쳐 게이트웨이 EC2에서 VXLAN으로 캡슐화되고 Direct Connect/VPN을 지나 하이브리드 노드의 Cilium Agent에서 디캡슐화되어 Hybrid Pod에 전달되는 7단계 경로를 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="d2-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Arrows (row 1, left to right) -->
+<line x1="230" y1="144" x2="290" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+<line x1="470" y1="144" x2="530" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+<line x1="710" y1="144" x2="770" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+<!-- Vertical connector -->
+<line x1="860" y1="176" x2="860" y2="344" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+<!-- Arrows (row 2, right to left) -->
+<line x1="770" y1="376" x2="710" y2="376" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+<line x1="530" y1="376" x2="470" y2="376" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+<line x1="290" y1="376" x2="230" y2="376" stroke="#545B64" stroke-width="1.2" marker-end="url(#d2-arrow)"/>
+
+<!-- Step badges -->
+<circle cx="260" cy="144" r="9" fill="#232F3E"/><text x="260" y="147" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">1</text>
+<circle cx="500" cy="144" r="9" fill="#232F3E"/><text x="500" y="147" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">2</text>
+<circle cx="740" cy="144" r="9" fill="#232F3E"/><text x="740" y="147" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">3</text>
+<circle cx="860" cy="260" r="9" fill="#232F3E"/><text x="860" y="263" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">4</text>
+<circle cx="740" cy="376" r="9" fill="#232F3E"/><text x="740" y="379" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">5</text>
+<circle cx="500" cy="376" r="9" fill="#232F3E"/><text x="500" y="379" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">6</text>
+<circle cx="260" cy="376" r="9" fill="#232F3E"/><text x="260" y="379" fill="#ffffff" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">7</text>
+
+<!-- Node: VPC Pod (start oval) -->
+<rect x="50" y="112" width="180" height="64" rx="32" fill="#ffffff"/>
+<rect x="50" y="112" width="180" height="64" rx="32" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">VPC Pod</text>
+<text x="140" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.50</text>
+
+<!-- Node: VPC Node (CNI) -->
+<rect x="290" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="290" y="112" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">VPC 노드</text>
+<text x="380" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">VPC CNI · 라우트 조회</text>
+
+<!-- Node: VPC Route Table -->
+<rect x="530" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="530" y="112" width="180" height="64" rx="8" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="620" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">VPC 라우트 테이블</text>
+<text x="620" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.85.0.0/16 → GW ENI</text>
+
+<!-- Node: Gateway EC2 (focal) -->
+<rect x="770" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="770" y="112" width="180" height="64" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="860" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">게이트웨이 EC2</text>
+<text x="860" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.100 · 라우트 매칭</text>
+
+<!-- Node: hybrid_vxlan0 -->
+<rect x="770" y="344" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="770" y="344" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">hybrid_vxlan0</text>
+<text x="860" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">VNI 2 · UDP 8472</text>
+
+<!-- Node: Direct Connect / VPN (external) -->
+<rect x="530" y="344" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="530" y="344" width="180" height="64" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="620" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Direct Connect / VPN</text>
+<text x="620" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">캡슐화된 패킷 전달</text>
+
+<!-- Node: Cilium Agent -->
+<rect x="290" y="344" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="290" y="344" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Cilium Agent</text>
+<text x="380" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">VXLAN 디캡슐화</text>
+
+<!-- Node: Hybrid Pod (end oval) -->
+<rect x="50" y="344" width="180" height="64" rx="32" fill="#ffffff"/>
+<rect x="50" y="344" width="180" height="64" rx="32" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Hybrid Pod</text>
+<text x="140" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.85.1.50</text>
+
+<!-- Legend -->
+<line x1="40" y1="468" x2="920" y2="468" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<circle cx="52" cy="484" r="7" fill="#232F3E"/>
+<text x="52" y="487" fill="#ffffff" font-size="7" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">N</text>
+<text x="68" y="487" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">패킷 경로 단계 순번</text>
+<circle cx="280" cy="484" r="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="296" y="487" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">게이트웨이 (핵심 라우팅 지점)</text>
+</svg>

@@ -20,29 +20,7 @@
 
 현대적인 관측성(Observability)은 세 가지 핵심 축으로 구성됩니다:
 
-```mermaid
-graph TB
-    subgraph Observability["관측성 (Observability)"]
-        M[메트릭<br/>Metrics]
-        L[로그<br/>Logs]
-        T[트레이스<br/>Traces]
-    end
-
-    subgraph Alerting["알림 (Alerting)"]
-        A[알림 규칙<br/>Alert Rules]
-        N[알림 전송<br/>Notifications]
-        E[에스컬레이션<br/>Escalation]
-    end
-
-    M --> A
-    L --> A
-    T --> A
-    A --> N
-    N --> E
-
-    style Observability fill:#e1f5fe
-    style Alerting fill:#fff3e0
-```
+![메트릭, 로그, 트레이스라는 관측성의 세 데이터가 모두 알림 규칙으로 모이고, 이어서 알림 전송과 에스컬레이션으로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-0.png)
 
 - **메트릭(Metrics)**: 시스템의 정량적 상태 (CPU, 메모리, 요청 수 등)
 - **로그(Logs)**: 이벤트의 상세한 기록
@@ -74,30 +52,7 @@ graph TB
 
 알림은 다음과 같은 생명주기를 거칩니다:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactive: 정상 상태
-    Inactive --> Pending: 임계값 초과
-    Pending --> Firing: 대기 시간 경과
-    Firing --> Notified: 알림 전송
-    Notified --> Acknowledged: 담당자 확인
-    Acknowledged --> InProgress: 조치 중
-    InProgress --> Resolved: 문제 해결
-    Resolved --> [*]: 종료
-
-    Pending --> Inactive: 임계값 이내로 복귀
-    Firing --> Inactive: 자동 해결
-
-    note right of Pending
-        for 절에서 설정한
-        대기 시간 동안 유지
-    end note
-
-    note right of Firing
-        알림이 발생한 상태
-        수신자에게 전송 대기
-    end note
-```
+![알림이 비활성에서 시작해 대기, 발생, 통보, 확인, 조치, 해결을 거쳐 종료되며, 임계값 이내 복귀나 자동 해결 시 조기에 비활성 상태로 되돌아갈 수 있음을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-1.png)
 
 ### 1. Detection (감지)
 
@@ -134,19 +89,7 @@ groups:
 - **심각도 기반**: 심각도에 따라 다른 에스컬레이션 경로
 - **자동 에스컬레이션**: 정해진 규칙에 따라 자동 상위 보고
 
-```mermaid
-graph LR
-    A[알림 발생] --> B{1차 담당자<br/>응답?}
-    B -->|Yes| C[조치 진행]
-    B -->|No, 15분 경과| D{2차 담당자<br/>응답?}
-    D -->|Yes| C
-    D -->|No, 15분 경과| E{팀 리드<br/>응답?}
-    E -->|Yes| C
-    E -->|No, 15분 경과| F[전체 팀 알림]
-
-    style A fill:#ffcdd2
-    style C fill:#c8e6c9
-```
+![1차 담당자가 15분 내 응답하지 않으면 2차 담당자, 다시 없으면 팀 리드로 순차 상향되고, 끝까지 응답이 없으면 전체 팀에 알리는 시간 기반 에스컬레이션 경로를 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-2.png)
 
 ### 4. Resolution (해결)
 
@@ -178,26 +121,7 @@ Runbook: https://wiki.company.com/db-connection-exhausted
 
 너무 많은 알림은 오히려 중요한 알림을 놓치게 만듭니다.
 
-```mermaid
-graph TB
-    subgraph Problem["알림 피로의 악순환"]
-        A[과도한 알림] --> B[알림 무시]
-        B --> C[중요 알림 누락]
-        C --> D[인시던트 발생]
-        D --> E[더 많은 알림 추가]
-        E --> A
-    end
-
-    subgraph Solution["해결책"]
-        F[알림 정제] --> G[적절한 임계값]
-        G --> H[알림 그룹화]
-        H --> I[정기적 리뷰]
-        I --> F
-    end
-
-    style Problem fill:#ffcdd2
-    style Solution fill:#c8e6c9
-```
+![과도한 알림이 무시와 누락, 인시던트, 더 많은 알림으로 이어지는 악순환과, 알림 정제와 그룹화, 정기 리뷰가 서로를 강화하는 해결책 순환을 나란히 대조한다.](../../.gitbook/assets/ko-observability-alerting-README-3.png)
 
 **알림 피로 방지 전략:**
 
@@ -271,29 +195,7 @@ annotations:
 
 알림은 다양한 기준에 따라 적절한 수신자에게 전달되어야 합니다:
 
-```mermaid
-graph TB
-    A[알림 발생] --> B{심각도?}
-
-    B -->|Critical| C[즉시 전화/SMS]
-    B -->|High| D[Slack + PagerDuty]
-    B -->|Warning| E[Slack 채널]
-    B -->|Info| F[Email]
-
-    C --> G{팀 구분}
-    D --> G
-    E --> G
-
-    G -->|인프라| H[SRE 팀]
-    G -->|애플리케이션| I[개발 팀]
-    G -->|데이터베이스| J[DBA 팀]
-    G -->|보안| K[보안 팀]
-
-    style C fill:#ffcdd2
-    style D fill:#fff3e0
-    style E fill:#fff9c4
-    style F fill:#e8f5e9
-```
+![알림이 심각도에 따라 전화·Slack·이메일 등 채널로 나뉘고, 다시 인프라·애플리케이션·데이터베이스·보안 담당 팀으로 갈라지는 2단계 라우팅 구조를 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-4.png)
 
 ### 라우팅 트리 설계
 
@@ -353,16 +255,7 @@ route:
 
 온콜(On-Call)은 지정된 기간 동안 시스템 문제에 대응할 책임을 가진 담당자를 의미합니다.
 
-```mermaid
-gantt
-    title 주간 온콜 로테이션
-    dateFormat  YYYY-MM-DD
-    section SRE 팀
-    Engineer A    :a1, 2025-02-17, 7d
-    Engineer B    :a2, after a1, 7d
-    Engineer C    :a3, after a2, 7d
-    Engineer D    :a4, after a3, 7d
-```
+![SRE 팀 네 명의 엔지니어가 7일 단위로 온콜을 순차적으로 이어받는 4주 로테이션 일정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-5.png)
 
 ### 온콜 모범 사례
 
@@ -386,40 +279,7 @@ gantt
 
 ### EKS 특화 알림 영역
 
-```mermaid
-graph TB
-    subgraph EKS["Amazon EKS 알림 영역"]
-        subgraph Control["컨트롤 플레인"]
-            API[API Server]
-            ETCD[etcd]
-            SCH[Scheduler]
-            CM[Controller Manager]
-        end
-
-        subgraph Data["데이터 플레인"]
-            Node[노드 상태]
-            Pod[파드 상태]
-            Cont[컨테이너 상태]
-        end
-
-        subgraph Network["네트워킹"]
-            VPC[VPC CNI]
-            SVC[서비스/인그레스]
-            DNS[CoreDNS]
-        end
-
-        subgraph Storage["스토리지"]
-            EBS[EBS CSI]
-            EFS[EFS CSI]
-            PV[PV/PVC]
-        end
-    end
-
-    style Control fill:#e3f2fd
-    style Data fill:#e8f5e9
-    style Network fill:#fff3e0
-    style Storage fill:#fce4ec
-```
+![EKS 클러스터의 알림 대상을 컨트롤 플레인, 데이터 플레인, 네트워킹, 스토리지 네 영역으로 나누고 각 영역의 핵심 감시 대상을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-6.png)
 
 ### 계층별 알림 전략
 
@@ -558,28 +418,7 @@ EKS는 다양한 AWS 서비스와 통합되므로, 이에 대한 알림도 필�
 
 ### 솔루션 선택 가이드
 
-```mermaid
-graph TB
-    A[알림 솔루션 선택] --> B{온콜 관리<br/>필요?}
-
-    B -->|No| C{AWS 네이티브<br/>선호?}
-    B -->|Yes| D{예산?}
-
-    C -->|Yes| E[CloudWatch Alarms]
-    C -->|No| F[Alertmanager]
-
-    D -->|오픈소스| G[Grafana OnCall]
-    D -->|엔터프라이즈| H{기존 도구?}
-
-    H -->|없음| I[PagerDuty]
-    H -->|Atlassian| J[OpsGenie]
-
-    style E fill:#ff9800
-    style F fill:#4caf50
-    style G fill:#2196f3
-    style I fill:#8bc34a
-    style J fill:#03a9f4
-```
+![온콜 관리 필요 여부, AWS 네이티브 선호, 예산과 기존 도구에 따라 CloudWatch Alarms, Alertmanager, Grafana OnCall, PagerDuty, OpsGenie 중 하나로 좁혀가는 선택 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-7.png)
 
 #### 상황별 권장 솔루션
 
@@ -593,43 +432,7 @@ graph TB
 
 대부분의 프로덕션 환경에서는 여러 솔루션을 조합하여 사용합니다:
 
-```mermaid
-graph LR
-    subgraph Sources["알림 소스"]
-        P[Prometheus]
-        CW[CloudWatch]
-    end
-
-    subgraph Routing["라우팅"]
-        AM[Alertmanager]
-    end
-
-    subgraph OnCall["온콜 관리"]
-        GO[Grafana OnCall]
-        PD[PagerDuty]
-    end
-
-    subgraph Notification["알림 채널"]
-        S[Slack]
-        E[Email]
-        SMS[SMS]
-    end
-
-    P --> AM
-    CW --> AM
-    AM --> GO
-    AM --> PD
-    GO --> S
-    GO --> SMS
-    PD --> S
-    PD --> E
-    PD --> SMS
-
-    style Sources fill:#e3f2fd
-    style Routing fill:#fff3e0
-    style OnCall fill:#e8f5e9
-    style Notification fill:#fce4ec
-```
+![Prometheus와 CloudWatch의 알림이 Alertmanager로 모여 Grafana OnCall과 PagerDuty로 나뉘고, 다시 Slack, Email, SMS 채널로 전달되는 프로덕션 알림 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-README-8.png)
 
 **권장 아키텍처:**
 

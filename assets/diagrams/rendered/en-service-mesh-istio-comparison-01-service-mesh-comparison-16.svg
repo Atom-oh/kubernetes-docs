@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-16-title en-service-mesh-istio-comparison-01-service-mesh-comparison-16-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-16-title">Consul Multi-Datacenter Mesh</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-16-desc">Diagram of Consul Connect&#x27;s multi-datacenter model: Consul server clusters in each datacenter gossip over WAN, mesh gateways carry cross-datacenter service traffic, and local services discover through their own Consul servers.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="80" y="100" width="340" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="88" y="94" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="132.0" y="103" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">DATACENTER 1</text>
+<rect x="110" y="140" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="110" y="140" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="200.0" y="166.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Consul Servers</text>
+<rect x="110" y="220" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="110" y="220" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200.0" y="246.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mesh Gateway</text>
+<rect x="110" y="300" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="110" y="300" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200.0" y="326.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Services</text>
+<rect x="540" y="100" width="340" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="548" y="94" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="592.0" y="103" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">DATACENTER 2</text>
+<rect x="570" y="140" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="570" y="140" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="660.0" y="166.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Consul Servers</text>
+<rect x="570" y="220" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="570" y="220" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="246.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mesh Gateway</text>
+<rect x="570" y="300" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="570" y="300" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660.0" y="326.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Services</text>
+<path d="M 290,164 H 570" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="397" y="144" width="66" height="12" rx="2" fill="#ffffff"/>
+<text x="430" y="153" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">WAN GOSSIP</text>
+<path d="M 290,244 H 570" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="391.4" y="224" width="77.2" height="12" rx="2" fill="#ffffff"/>
+<text x="430" y="233" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MESH GATEWAY</text>
+<path d="M 200,300 H 103 Q 95,300 95,292 V 171.5 Q 95,164 102.5,164 H 110" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="64.8" y="212" width="60.4" height="12" rx="2" fill="#ffffff"/>
+<text x="95" y="221" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">DISCOVERY</text>
+<path d="M 660,300 H 837 Q 845,300 845,292 V 172 Q 845,164 837,164 H 750" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="814.8" y="212" width="60.4" height="12" rx="2" fill="#ffffff"/>
+<text x="845" y="221" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">DISCOVERY</text>
+</svg>

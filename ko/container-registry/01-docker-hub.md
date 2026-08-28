@@ -6,19 +6,7 @@
 
 Docker Hub는 세계에서 가장 큰 컨테이너 이미지 저장소로, 수백만 개의 공개 이미지를 호스팅합니다. Docker Official Images, Verified Publishers, 커뮤니티 이미지를 제공하며, 개인 및 팀을 위한 프라이빗 저장소 기능도 지원합니다.
 
-```mermaid
-flowchart TB
-    subgraph DockerHub["Docker Hub"]
-        Official["Official Images<br/>nginx, postgres, redis"]
-        Verified["Verified Publishers<br/>bitnami/, hashicorp/, datadog/"]
-        Community["Community Images<br/>user/myapp, org/service"]
-    end
-
-    style DockerHub fill:#1D63ED,stroke:#0e3d94,color:#fff
-    style Official fill:#2496ED,stroke:#1a6fb5,color:#fff
-    style Verified fill:#2496ED,stroke:#1a6fb5,color:#fff
-    style Community fill:#2496ED,stroke:#1a6fb5,color:#fff
-```
+![Docker Hub의 세 가지 이미지 신뢰 등급인 공식 이미지, 인증된 게시자, 커뮤니티 이미지를 나란히 비교하여 각 등급의 검증 수준과 예시 이미지를 보여주는 다이어그램.](../.gitbook/assets/ko-container-registry-01-docker-hub-0.png)
 
 ---
 
@@ -147,21 +135,7 @@ kubectl create secret docker-registry dockerhub-secret \
 
 ## Docker Hub Rate Limit 대응 전략
 
-```mermaid
-flowchart TD
-    Start{"Rate Limit 발생?"}
-    Start -->|Yes| Check{"환경 확인"}
-    Start -->|No| Auth["인증된 Pull 사용으로<br/>Rate Limit 예방"]
-
-    Check -->|AWS/EKS| ECR["ECR Pull-through Cache"]
-    Check -->|자체 호스팅| Harbor["Harbor Proxy Cache"]
-    Check -->|기타| Mirror["containerd 미러 설정"]
-
-    ECR --> Result["Rate Limit 해소"]
-    Harbor --> Result
-    Mirror --> Result
-    Auth --> Result
-```
+![Docker Hub Rate Limit 발생 여부를 확인한 뒤 환경에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 중 하나를 적용하거나 인증된 Pull로 사전에 예방하여 최종적으로 Rate Limit을 해소하는 의사결정 흐름도.](../.gitbook/assets/ko-container-registry-01-docker-hub-1.png)
 
 ### 전략 1: Pull-through Cache (containerd)
 

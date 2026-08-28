@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-cilium-service-mesh-01-architecture-10-title en-service-mesh-cilium-service-mesh-01-architecture-10-desc">
+      <title id="en-service-mesh-cilium-service-mesh-01-architecture-10-title">Same-node pod-to-pod packet path</title>
+      <desc id="en-service-mesh-cilium-service-mesh-01-architecture-10-desc">Sequence diagram showing a packet moving entirely inside the kernel from a source pod's veth ingress hook, through connection-tracking and policy maps, to the destination pod's egress hook on the same node, bypassing the network stack.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs><defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+        </marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#ffffff"/>
+      <line x1="100" y1="116" x2="100" y2="360" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="290" y1="116" x2="290" y2="360" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="480" y1="116" x2="480" y2="360" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="670" y1="116" x2="670" y2="360" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="860" y1="116" x2="860" y2="360" stroke="rgba(35,47,62,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="100" y1="176" x2="290" y2="176" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <rect x="154.0" y="156" width="82" height="12" rx="2" fill="#ffffff"/>
+      <text x="195.0" y="165" fill="#0972D3" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SEND PACKET</text>
+      <line x1="290" y1="224" x2="480" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="323.0" y="204" width="124" height="12" rx="2" fill="#ffffff"/>
+      <text x="385.0" y="213" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CT + POLICY LOOKUP</text>
+      <line x1="480" y1="272" x2="670" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="545.0" y="252" width="60" height="12" rx="2" fill="#ffffff"/>
+      <text x="575.0" y="261" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ALLOW</text>
+      <line x1="670" y1="320" x2="860" y2="320" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="715.0" y="300" width="100" height="12" rx="2" fill="#ffffff"/>
+      <text x="765.0" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">DELIVER PACKET</text>
+
+      <rect x="20" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="20" y="60" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="100.0" y="84.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod A</text>
+      <text x="100.0" y="100.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">source</text>
+
+      <rect x="210" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="210" y="60" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="290.0" y="84.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ingress Hook</text>
+      <text x="290.0" y="100.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">veth + TC eBPF</text>
+
+      <rect x="400" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="400" y="60" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="480.0" y="84.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Datapath Maps</text>
+      <text x="480.0" y="100.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CT + policy</text>
+
+      <rect x="590" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="590" y="60" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="670.0" y="84.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Egress Hook</text>
+      <text x="670.0" y="100.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">TC eBPF + veth</text>
+
+      <rect x="780" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+      <rect x="780" y="60" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="860.0" y="84.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod B</text>
+      <text x="860.0" y="100.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">destination</text>
+
+      <line x1="60" y1="396" x2="900" y2="396" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="60" y="412" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="220" y1="412" x2="248" y2="412" stroke="#EC7211" stroke-width="1.4"/>
+      <text x="256" y="415" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Headline delivery</text>
+      <line x1="402" y1="412" x2="430" y2="412" stroke="#0972D3" stroke-width="1.4"/>
+      <text x="438" y="415" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Pod-originated send</text>
+      <line x1="596" y1="412" x2="624" y2="412" stroke="#545B64" stroke-width="1.4"/>
+      <text x="632" y="415" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">In-kernel decision</text>    </svg>

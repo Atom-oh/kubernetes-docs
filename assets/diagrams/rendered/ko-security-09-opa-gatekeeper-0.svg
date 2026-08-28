@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="opagk-title opagk-desc">
+  <title id="opagk-title">OPA Gatekeeper 아키텍처</title>
+  <desc id="opagk-desc">OPA Gatekeeper가 API 서버의 어드미션 웹훅 요청을 받아 컨트롤러와 OPA 엔진으로 정책을 평가하고, Constraint Template과 Constraint를 통해 Rego 정책을 실제 리소스에 적용하며 감사 결과를 남기는 흐름을 보여주는 아키텍처 다이어그램.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ============ ZONES (bg -> zones -> arrows -> nodes) ============ -->
+  <rect x="40" y="100" width="880" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="104" width="216" height="14" rx="2" fill="#ffffff"/>
+  <text x="164" y="114" fill="rgba(35,47,62,0.45)" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.14em">OPA GATEKEEPER 아키텍처</text>
+
+  <rect x="40" y="372" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="376" width="150" height="14" rx="2" fill="#ffffff"/>
+  <text x="131" y="386" fill="rgba(35,47,62,0.45)" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.14em">정책 구성요소</text>
+
+  <!-- ============ ARROWS (behind nodes) ============ -->
+
+  <!-- API Server -> Webhook -->
+  <line x1="224" y1="176" x2="252" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Webhook -> Gatekeeper Controller -->
+  <line x1="404" y1="176" x2="432" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Gatekeeper Controller -> OPA Engine (primary path, accent) -->
+  <line x1="584" y1="176" x2="612" y2="176" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+  <!-- OPA Engine -> Constraint Templates (straight, shared x=688) -->
+  <line x1="688" y1="200" x2="688" y2="252" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- OPA Engine -> Constraints (elbow, fanned attach at x=730) -->
+  <path d="M 730,200 V 218 Q 730,226 738,226 H 844 Q 852,226 852,234 V 252"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Gatekeeper Controller -> Audit Results (elbow) -->
+  <path d="M 470,200 V 218 Q 470,226 478,226 H 482 Q 490,226 490,234 V 252"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Constraint Templates -> Rego 정책 (straight, shared x=688) with label -->
+  <line x1="688" y1="300" x2="688" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="662" y="356" width="52" height="14" fill="#ffffff"/>
+  <text x="688" y="366" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">정의</text>
+
+  <!-- Constraints -> 대상 리소스 (straight, shared x=852) with label -->
+  <line x1="852" y1="300" x2="852" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="826" y="356" width="52" height="14" fill="#ffffff"/>
+  <text x="852" y="366" fill="#545B64" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">적용</text>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- 1. API Server (backend) -->
+  <rect x="72" y="152" width="152" height="48" rx="6" fill="#ffffff"/>
+  <rect x="72" y="152" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="148" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">API Server</text>
+  <text x="148" y="186" fill="#545B64" font-size="9" class="mono" text-anchor="middle">kube-apiserver</text>
+
+  <!-- 2. Webhook (backend) -->
+  <rect x="252" y="152" width="152" height="48" rx="6" fill="#ffffff"/>
+  <rect x="252" y="152" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="328" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Webhook</text>
+  <text x="328" y="186" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Admission Webhook</text>
+
+  <!-- 3. Gatekeeper Controller (focal) -->
+  <rect x="432" y="152" width="152" height="48" rx="6" fill="#ffffff"/>
+  <rect x="432" y="152" width="152" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="508" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Gatekeeper Controller</text>
+  <text x="508" y="186" fill="#545B64" font-size="9" class="mono" text-anchor="middle">controller-runtime</text>
+
+  <!-- 4. OPA Engine (focal) -->
+  <rect x="612" y="152" width="152" height="48" rx="6" fill="#ffffff"/>
+  <rect x="612" y="152" width="152" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="688" y="172" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">OPA Engine</text>
+  <text x="688" y="186" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Rego 평가</text>
+
+  <!-- 5. Audit Results (store) -->
+  <rect x="420" y="252" width="140" height="48" rx="6" fill="#ffffff"/>
+  <rect x="420" y="252" width="140" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="490" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Audit Results</text>
+  <text x="490" y="286" fill="#545B64" font-size="9" class="mono" text-anchor="middle">주기적 감사</text>
+
+  <!-- 6. Constraint Templates (store) -->
+  <rect x="612" y="252" width="152" height="48" rx="6" fill="#ffffff"/>
+  <rect x="612" y="252" width="152" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="688" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Constraint Templates</text>
+  <text x="688" y="286" fill="#545B64" font-size="9" class="mono" text-anchor="middle">CRD 스키마</text>
+
+  <!-- 7. Constraints (store) -->
+  <rect x="792" y="252" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="792" y="252" width="120" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="852" y="272" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Constraints</text>
+  <text x="852" y="286" fill="#545B64" font-size="9" class="mono" text-anchor="middle">CR 인스턴스</text>
+
+  <!-- 8. Rego 정책 (external) -->
+  <rect x="612" y="432" width="152" height="48" rx="6" fill="#ffffff"/>
+  <rect x="612" y="432" width="152" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="688" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Rego 정책</text>
+  <text x="688" y="466" fill="#545B64" font-size="9" class="mono" text-anchor="middle">정책 로직</text>
+
+  <!-- 9. 대상 리소스 (external) -->
+  <rect x="792" y="432" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="792" y="432" width="120" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="852" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">대상 리소스</text>
+  <text x="852" y="466" fill="#545B64" font-size="9" class="mono" text-anchor="middle">K8s 리소스</text>
+
+</svg>

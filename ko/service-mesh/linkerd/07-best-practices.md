@@ -621,27 +621,7 @@ linkerd diagnostics proxy-metrics deploy/my-service -n my-app
 
 ### 마이그레이션 전략
 
-```mermaid
-graph TB
-    subgraph "Phase 1: 준비"
-        A[Istio 환경 분석]
-        B[Linkerd 테스트 환경 구축]
-        C[기능 매핑 검토]
-    end
-
-    subgraph "Phase 2: 병행 운영"
-        D[네임스페이스별 마이그레이션]
-        E[트래픽 검증]
-        F[모니터링 통합]
-    end
-
-    subgraph "Phase 3: 완료"
-        G[Istio 제거]
-        H[Linkerd 최적화]
-    end
-
-    A --> B --> C --> D --> E --> F --> G --> H
-```
+![준비, 병행 운영, 완료의 3단계로 진행되는 Istio에서 Linkerd로의 점진적 마이그레이션 절차를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-07-best-practices-0.png)
 
 ### 기능 매핑
 

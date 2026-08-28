@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-17-title en-service-mesh-istio-comparison-01-service-mesh-comparison-17-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-17-title">Learning Curve vs. Recommended Use Case</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-17-desc">Diagram matching each service mesh&#x27;s learning difficulty to the scale of use case it suits: Linkerd for a quick start, Kong Mesh or Consul for medium scale, and Istio for large enterprise deployments.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="200" width="300" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="194" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="113.0" y="203" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">LEARNING DIFFICULTY</text>
+<rect x="80" y="232" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="232" width="220" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="190.0" y="254.5" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Easy</text>
+<text x="190.0" y="268.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Linkerd</text>
+<rect x="80" y="308" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="308" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="330.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Medium</text>
+<text x="190.0" y="344.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Kong Mesh · Consul</text>
+<rect x="80" y="384" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="384" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="190.0" y="406.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Difficult</text>
+<text x="190.0" y="420.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Istio</text>
+<rect x="620" y="232" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="620" y="232" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="730.0" y="258.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Quick Start</text>
+<rect x="620" y="308" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="620" y="308" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="730.0" y="334.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Medium Scale</text>
+<rect x="620" y="384" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="620" y="384" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="730.0" y="410.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Large Enterprise</text>
+<path d="M 300,256 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="415.8" y="236" width="88.4" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="245" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">BASIC FEATURES</text>
+<path d="M 300,332 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="432.6" y="312" width="54.8" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="321" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">BALANCED</text>
+<path d="M 300,408 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="421.4" y="388" width="77.2" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="397" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">ALL FEATURES</text>
+</svg>

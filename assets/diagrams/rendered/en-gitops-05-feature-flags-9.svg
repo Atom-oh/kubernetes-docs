@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lifecycle-title lifecycle-desc">
+<title id="lifecycle-title">Feature flag lifecycle</title>
+<desc id="lifecycle-desc">Flowchart showing a feature flag's life from creation through a flag-off development period, a gradual percentage rollout, a stable fully-on state, to eventual cleanup that removes the flag and its dead code paths.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Arrows -->
+<line x1="200" y1="300" x2="220" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="380" y1="300" x2="400" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="560" y1="300" x2="580" y2="300" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<line x1="740" y1="300" x2="760" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Node: Create Flag -->
+<rect x="40" y="260" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="40" y="260" width="160" height="80" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Create Flag</text>
+<text x="120" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PR + review</text>
+
+<!-- Node: Development -->
+<rect x="220" y="260" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="220" y="260" width="160" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="300" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Development</text>
+<text x="300" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flag off</text>
+
+<!-- Node: Gradual Rollout (focal) -->
+<rect x="400" y="260" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="400" y="260" width="160" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Gradual Rollout</text>
+<text x="480" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">5% → 25% → 100%</text>
+
+<!-- Node: Stable -->
+<rect x="580" y="260" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="580" y="260" width="160" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="660" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Stable</text>
+<text x="660" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">flag on, 100%</text>
+
+<!-- Node: Cleanup (security/removal style) -->
+<rect x="760" y="260" width="160" height="80" rx="6" fill="#ffffff"/>
+<rect x="760" y="260" width="160" height="80" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="840" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Cleanup</text>
+<text x="840" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">remove flag + code</text>
+
+<!-- Legend -->
+<line x1="24" y1="392" x2="936" y2="392" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="24" y="424" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="44" y="433" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Active rollout (focal)</text>
+<rect x="260" y="424" width="14" height="10" rx="2" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="280" y="433" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Flag removal (end of life)</text>
+</svg>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="amb03-title amb03-desc">
+<title id="amb03-title">ztunnel의 트래픽 처리 파이프라인</title>
+<desc id="amb03-desc">애플리케이션 파드에서 들어온 TCP 연결이 ztunnel 내부에서 mTLS 암호화, 텔레메트리 수집, Identity 확인, L4 로드 밸런싱을 순서대로 거쳐 대상 서비스로 전달되는 과정을 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="52" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="52" y="272" width="88" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="96.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<text x="96.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod</text>
+<rect x="180" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="180" y="272" width="88" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="224.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ztunnel</text>
+<text x="224.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">DaemonSet</text>
+<rect x="308" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="308" y="272" width="88" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="352.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">mTLS</text>
+<text x="352.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">암호화</text>
+<rect x="436" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="436" y="272" width="88" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">L4 Telemetry</text>
+<text x="480.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">메트릭 수집</text>
+<rect x="564" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="564" y="272" width="88" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="608.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Identity</text>
+<text x="608.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service Account</text>
+<rect x="692" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="692" y="272" width="88" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="736.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">L4 Load</text>
+<text x="736.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Balancing</text>
+<rect x="820" y="272" width="88" height="60" rx="6" fill="#ffffff"/>
+<rect x="820" y="272" width="88" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="864.0" y="297.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Target</text>
+<text x="864.0" y="311.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service</text>
+<rect x="292" y="240" width="488" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="300" y="244" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="356.0" y="253" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ZTUNNEL FEATURES</text>
+<line x1="140" y1="302.0" x2="180" y2="302.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="268" y1="302.0" x2="308" y2="302.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="396" y1="302.0" x2="436" y2="302.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="524" y1="302.0" x2="564" y2="302.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="652" y1="302.0" x2="692" y2="302.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="302.0" x2="820" y2="302.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="145.5" y="282.0" width="29" height="12" rx="2" fill="#ffffff"/>
+<text x="160.0" y="291.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TCP</text>
+<rect x="782.0" y="282.0" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="800.0" y="291.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SEND</text>
+</svg>

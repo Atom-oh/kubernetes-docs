@@ -29,45 +29,7 @@ ArgoCD Notifications is a component that monitors ArgoCD applications and sends 
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph ARGOCD["ArgoCD"]
-        APPS["Applications"]
-        CTRL["App Controller"]
-    end
-
-    subgraph NOTIFICATIONS["Notifications Controller"]
-        WATCH["Watch Apps"]
-        EVAL["Evaluate Triggers"]
-        SEND["Send Notifications"]
-    end
-
-    subgraph SERVICES["Notification Services"]
-        SLACK["Slack"]
-        TEAMS["Teams"]
-        EMAIL["Email"]
-        WEBHOOK["Webhook"]
-        GITHUB["GitHub"]
-    end
-
-    APPS --> CTRL
-    CTRL --> WATCH
-    WATCH --> EVAL
-    EVAL -->|"trigger matched"| SEND
-    SEND --> SLACK
-    SEND --> TEAMS
-    SEND --> EMAIL
-    SEND --> WEBHOOK
-    SEND --> GITHUB
-
-    classDef argocd fill:#EB6E85,stroke:#333,color:white
-    classDef notif fill:#6c757d,stroke:#333,color:white
-    classDef service fill:#28a745,stroke:#333,color:white
-
-    class APPS,CTRL argocd
-    class WATCH,EVAL,SEND notif
-    class SLACK,TEAMS,EMAIL,WEBHOOK,GITHUB service
-```
+![Flow diagram of ArgoCD's notification pipeline: the Application Controller watches Applications, hands events to the Notifications Controller which watches apps and evaluates trigger conditions, and once a trigger matches, dispatches messages out to Slack, Teams, Email, a webhook, and GitHub.](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
 
 ### Installation
 

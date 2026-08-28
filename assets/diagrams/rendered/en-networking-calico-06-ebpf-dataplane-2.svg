@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf2-title ebpf2-desc">
+    <title id="ebpf2-title">eBPF program types spanning ingress, socket level, and egress</title>
+    <desc id="ebpf2-desc">Diagram showing XDP and TC ingress hooks feeding socket-level sockops and sk_msg programs, which hand off to a TC egress hook, with the cgroup scope program shown as an unconnected socket-level primitive.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="48" y="236" width="304" height="170" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="140" y="240" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="200" y="249" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">INGRESS PATH</text>
+
+    <rect x="368" y="236" width="312" height="208" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="464" y="240" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="524" y="249" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">SOCKET LEVEL</text>
+
+    <rect x="720" y="236" width="168" height="170" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="756" y="240" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="804" y="249" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EGRESS PATH</text>
+
+    <!-- Arrows -->
+    <line x1="192" y1="312" x2="208" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="328" y1="312" x2="392" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="512" y1="312" x2="536" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="656" y1="312" x2="744" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Nodes -->
+    <rect x="72" y="280" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="132" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">XDP</text>
+    <text x="132" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">early drop</text>
+
+    <rect x="208" y="280" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="268" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TC Ingress</text>
+    <text x="268" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">policy / route</text>
+
+    <rect x="392" y="280" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="452" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">sockops</text>
+    <text x="452" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">conn. setup</text>
+
+    <rect x="536" y="280" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="596" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">sk_msg</text>
+    <text x="596" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">socket data</text>
+
+    <rect x="464" y="372" width="120" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="524" y="398" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cgroup</text>
+    <text x="524" y="414" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">container scope</text>
+
+    <rect x="744" y="280" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="804" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TC Egress</text>
+    <text x="804" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">policy / NAT</text>
+
+    <!-- Legend -->
+    <line x1="48" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="48" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="48" y="512" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="68" y="520" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Program on the packet/socket path</text>
+    <rect x="380" y="512" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="400" y="520" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Same-scope program, not chained here</text>
+  </svg>

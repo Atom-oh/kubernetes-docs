@@ -9,56 +9,7 @@ This guide covers comprehensive AI/ML infrastructure patterns on Amazon EKS, inc
 
 Modern AI/ML infrastructure on EKS follows a layered architecture that separates concerns and enables independent scaling of each layer.
 
-```mermaid
-flowchart TB
-    subgraph Workloads ["ML Workloads Layer"]
-        direction LR
-        Training["Model Training<br/>PyTorch, TensorFlow"]
-        Inference["Model Inference<br/>vLLM, TensorRT"]
-        Notebooks["Interactive Dev<br/>JupyterHub"]
-        Pipelines["ML Pipelines<br/>Argo Workflows"]
-        Agents["AI Agents<br/>LangChain, CrewAI"]
-    end
-
-    subgraph Platform ["Platform Services Layer"]
-        direction LR
-        Ray["Ray Cluster<br/>Distributed Compute"]
-        KServe["KServe<br/>Model Serving"]
-        Kubeflow["Kubeflow<br/>ML Platform"]
-        MLflow["MLflow<br/>Experiment Tracking"]
-        VectorDB["Vector DB<br/>Milvus, Pinecone"]
-    end
-
-    subgraph Compute ["Compute Layer"]
-        direction LR
-        GPU["GPU NodePools<br/>p4d, p5, g5"]
-        Neuron["Neuron NodePools<br/>inf2, trn1"]
-        CPU["CPU NodePools<br/>m6i, c6i, r6i"]
-        Spot["Spot Instances<br/>Cost Optimization"]
-    end
-
-    subgraph Base ["EKS Base Layer"]
-        direction LR
-        EKS["EKS Cluster<br/>Control Plane"]
-        Karpenter["Karpenter<br/>Node Provisioning"]
-        Storage["Storage<br/>EFS, FSx, S3"]
-        Network["Networking<br/>VPC, EFA"]
-    end
-
-    Workloads --> Platform
-    Platform --> Compute
-    Compute --> Base
-
-    classDef workload fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef platform fill:#4ECDC4,stroke:#333,stroke-width:2px,color:white;
-    classDef compute fill:#45B7D1,stroke:#333,stroke-width:2px,color:white;
-    classDef base fill:#96CEB4,stroke:#333,stroke-width:2px,color:white;
-
-    class Training,Inference,Notebooks,Pipelines,Agents workload;
-    class Ray,KServe,Kubeflow,MLflow,VectorDB platform;
-    class GPU,Neuron,CPU,Spot compute;
-    class EKS,Karpenter,Storage,Network base;
-```
+![Layer stack showing the EKS AI/ML platform: ML workloads (training, inference, notebooks, pipelines, agents) run on platform services (Ray, KServe, Kubeflow, MLflow, Vector DB), which schedule onto GPU, Neuron, CPU, and Spot compute pools, all provisioned on the EKS base layer's control plane, storage, and networking.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-0.png)
 
 **Layer responsibilities:**
 
@@ -77,88 +28,7 @@ The JARK Stack (JupyterHub + Argo Workflows + Ray + Karpenter) provides a comple
 
 ### JARK Stack Architecture
 
-```mermaid
-flowchart TB
-    subgraph Users ["Data Scientists & ML Engineers"]
-        DS1["Data Scientist 1"]
-        DS2["Data Scientist 2"]
-        MLE["ML Engineer"]
-    end
-
-    subgraph JupyterHub ["JupyterHub"]
-        Hub["Hub Server"]
-        Spawner["KubeSpawner"]
-        Auth["OAuth/Cognito"]
-        subgraph Notebooks ["User Notebooks"]
-            NB1["CPU Notebook"]
-            NB2["GPU Notebook<br/>T4/A10G"]
-            NB3["Multi-GPU Notebook<br/>A100/H100"]
-        end
-    end
-
-    subgraph Argo ["Argo Workflows"]
-        Controller["Workflow Controller"]
-        Server["Argo Server UI"]
-        subgraph Workflows ["ML Workflows"]
-            WF1["Data Preprocessing"]
-            WF2["Model Training"]
-            WF3["Hyperparameter Tuning"]
-            WF4["Model Evaluation"]
-        end
-    end
-
-    subgraph RayCluster ["Ray Cluster"]
-        Head["Ray Head Node"]
-        subgraph Workers ["Ray Workers"]
-            W1["CPU Worker Pool"]
-            W2["GPU Worker Pool"]
-            W3["Neuron Worker Pool"]
-        end
-        subgraph RayApps ["Ray Applications"]
-            RayTrain["Ray Train"]
-            RayTune["Ray Tune"]
-            RayServe["Ray Serve"]
-            RayData["Ray Data"]
-        end
-    end
-
-    subgraph Karpenter ["Karpenter Auto-Scaling"]
-        Provisioner["Node Provisioner"]
-        subgraph NodePools ["NodePools"]
-            CPUPool["CPU NodePool<br/>m6i, c6i"]
-            GPUPool["GPU NodePool<br/>g5, p4d, p5"]
-            NeuronPool["Neuron NodePool<br/>inf2, trn1"]
-        end
-    end
-
-    subgraph Storage ["Shared Storage"]
-        EFS["Amazon EFS<br/>Notebooks & Models"]
-        FSx["FSx for Lustre<br/>Training Data"]
-        S3["Amazon S3<br/>Datasets & Artifacts"]
-    end
-
-    Users --> JupyterHub
-    JupyterHub --> Argo
-    JupyterHub --> RayCluster
-    Argo --> RayCluster
-    RayCluster --> Karpenter
-    JupyterHub --> Storage
-    RayCluster --> Storage
-
-    classDef user fill:#E8E8E8,stroke:#333,stroke-width:1px;
-    classDef jupyter fill:#F37626,stroke:#333,stroke-width:2px,color:white;
-    classDef argo fill:#EF7B4D,stroke:#333,stroke-width:2px,color:white;
-    classDef ray fill:#00A2E8,stroke:#333,stroke-width:2px,color:white;
-    classDef karpenter fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef storage fill:#3F8624,stroke:#333,stroke-width:2px,color:white;
-
-    class DS1,DS2,MLE user;
-    class Hub,Spawner,Auth,NB1,NB2,NB3 jupyter;
-    class Controller,Server,WF1,WF2,WF3,WF4 argo;
-    class Head,W1,W2,W3,RayTrain,RayTune,RayServe,RayData ray;
-    class Provisioner,CPUPool,GPUPool,NeuronPool karpenter;
-    class EFS,FSx,S3 storage;
-```
+![Architecture diagram showing data scientists reaching JupyterHub notebooks that hand off to Argo Workflows and a Ray cluster for training and tuning, with Ray triggering Karpenter to provision GPU/Neuron nodes while JupyterHub and Ray both share EFS/FSx/S3 storage.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-1.png)
 
 ### JARK Stack Components
 
@@ -951,48 +821,7 @@ Dynamic Resource Allocation (DRA) is Kubernetes' next-generation approach to GPU
 
 ### DRA vs Traditional GPU Scheduling
 
-```mermaid
-flowchart TB
-    subgraph Traditional ["Traditional Device Plugin Approach"]
-        direction TB
-        T1["Pod requests<br/>nvidia.com/gpu: 1"]
-        T2["Device Plugin<br/>allocates whole GPU"]
-        T3["Container gets<br/>exclusive GPU access"]
-        T4["No sharing<br/>No fine-grained control"]
-
-        T1 --> T2 --> T3 --> T4
-    end
-
-    subgraph DRA ["DRA Approach (Kubernetes 1.31+)"]
-        direction TB
-        D1["Pod creates<br/>ResourceClaim"]
-        D2["DRA Driver<br/>evaluates claim"]
-        D3["ResourceSlice<br/>tracks GPU topology"]
-        D4["Fine-grained allocation<br/>MIG/MPS/Time-slice"]
-        D5["Topology-aware<br/>NVLink/IMEX scheduling"]
-
-        D1 --> D2 --> D3 --> D4 --> D5
-    end
-
-    subgraph Benefits ["DRA Benefits"]
-        direction TB
-        B1["GPU Memory<br/>Partitioning"]
-        B2["Multi-tenant<br/>GPU Sharing"]
-        B3["NVLink Topology<br/>Awareness"]
-        B4["P6e-GB200<br/>UltraServer Support"]
-    end
-
-    Traditional -.->|"Limited"| Benefits
-    DRA -->|"Enables"| Benefits
-
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef dra fill:#4ECDC4,stroke:#333,stroke-width:2px,color:white;
-    classDef benefit fill:#45B7D1,stroke:#333,stroke-width:2px,color:white;
-
-    class T1,T2,T3,T4 traditional;
-    class D1,D2,D3,D4,D5 dra;
-    class B1,B2,B3,B4 benefit;
-```
+![Flowchart comparing the traditional GPU device-plugin allocation path, which yields exclusive whole-GPU access with no sharing, against the Kubernetes 1.31+ Dynamic Resource Allocation path, which evaluates topology-aware ResourceClaims to unlock fine-grained, multi-tenant GPU benefits.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-2.png)
 
 ### GPU Sharing Strategies with DRA
 

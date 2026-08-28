@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="progressive-delivery-title progressive-delivery-desc">
+<title id="progressive-delivery-title">Progressive Delivery 파이프라인</title>
+<desc id="progressive-delivery-desc">코드 배포부터 카나리, 링 기반 단계적 롤아웃을 거쳐 Flag 제거까지 이어지는 점진적 배포 파이프라인.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="30" y="40" width="900" height="500" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="38" y="44" width="172" height="12" rx="2" fill="#ffffff"/>
+<text x="124.0" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROGRESSIVE DELIVERY 파이프라인</text>
+<rect x="100" y="100" width="220" height="96" rx="6" fill="#ffffff"/>
+<rect x="100" y="100" width="220" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="210.0" y="144.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">코드 배포</text>
+<text x="210.0" y="164.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Feature Flag OFF</text>
+<rect x="100" y="260" width="220" height="96" rx="6" fill="#ffffff"/>
+<rect x="100" y="260" width="220" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="210.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">카나리 릴리스</text>
+<text x="210.0" y="324.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1% 트래픽</text>
+<rect x="100" y="420" width="220" height="96" rx="6" fill="#ffffff"/>
+<rect x="100" y="420" width="220" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="210.0" y="464.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">링 1: 내부 사용자</text>
+<text x="210.0" y="484.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Feature Flag ON</text>
+<rect x="620" y="420" width="220" height="96" rx="6" fill="#ffffff"/>
+<rect x="620" y="420" width="220" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="730.0" y="464.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">링 2: 베타 사용자</text>
+<text x="730.0" y="484.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10% 롤아웃</text>
+<rect x="620" y="260" width="220" height="96" rx="6" fill="#ffffff"/>
+<rect x="620" y="260" width="220" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="730.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">링 3: 전체 사용자</text>
+<text x="730.0" y="324.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">100% 롤아웃</text>
+<rect x="620" y="100" width="220" height="96" rx="6" fill="#ffffff"/>
+<rect x="620" y="100" width="220" height="96" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="730.0" y="144.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Flag 제거</text>
+<text x="730.0" y="164.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">기술 부채 해소</text>
+<line x1="210.0" y1="196" x2="210.0" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="210.0" y1="356" x2="210.0" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="320" y1="468.0" x2="620" y2="468.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="730.0" y1="420" x2="730.0" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="730.0" y1="260" x2="730.0" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+</svg>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hp-title hp-desc">
+  <title id="hp-title">Header propagation across the mesh</title>
+  <desc id="hp-desc">The ingress gateway sets distributed-tracing headers on an incoming request; each downstream service must forward those headers unchanged to the next hop, and every hop in the chain also sends its span to Jaeger.</desc>
+  <defs>
+    <style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+
+  <!-- User -> Gateway -->
+  <line x1="160" y1="152" x2="192" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Gateway -> Service A (accent: headline path where headers are minted) -->
+  <line x1="312" y1="152" x2="368" y2="152" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="318" y="132" width="44" height="12" rx="2" fill="#ffffff"/>
+  <text x="340" y="141" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HEADERS</text>
+
+  <!-- Service A -> Service B -->
+  <line x1="488" y1="152" x2="544" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="491" y="132" width="50" height="12" rx="2" fill="#ffffff"/>
+  <text x="516" y="141" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REQUIRED</text>
+
+  <!-- Service B -> Service C -->
+  <line x1="664" y1="152" x2="720" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="667" y="132" width="50" height="12" rx="2" fill="#ffffff"/>
+  <text x="692" y="141" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REQUIRED</text>
+
+  <!-- Gateway -> Jaeger (dashed span, elbow, labeled) -->
+  <path d="M 252,184 V 200 Q 252,208 260,208 H 372 Q 380,208 380,216 V 340"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="298" y="188" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="316" y="197" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SPAN</text>
+
+  <!-- Service A -> Jaeger (straight, dx=0) -->
+  <line x1="428" y1="184" x2="428" y2="340" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- Service B -> Jaeger (dashed elbow) -->
+  <path d="M 604,184 V 240 Q 604,248 596,248 H 484 Q 476,248 476,256 V 340"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- Service C -> Jaeger (dashed elbow) -->
+  <path d="M 780,184 V 280 Q 780,288 772,288 H 512 Q 504,288 504,296 V 340"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- User (input) -->
+  <rect x="40" y="120" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="120" width="120" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="100" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+  <text x="100" y="166" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">client request</text>
+
+  <!-- Gateway (focal) -->
+  <rect x="192" y="120" width="120" height="64" rx="6" fill="#ffffff"/>
+  <rect x="192" y="120" width="120" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="252" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ingress Gateway</text>
+  <text x="252" y="164" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sets trace headers</text>
+
+  <!-- Service A -->
+  <rect x="368" y="120" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="428" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+  <text x="428" y="166" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">forwards headers</text>
+
+  <!-- Service B -->
+  <rect x="544" y="120" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="604" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+  <text x="604" y="166" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">forwards headers</text>
+
+  <!-- Service C -->
+  <rect x="720" y="120" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="780" y="150" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service C</text>
+  <text x="780" y="166" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">forwards headers</text>
+
+  <!-- Jaeger (store) -->
+  <rect x="360" y="340" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="360" y="340" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="440" y="370" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Jaeger</text>
+  <text x="440" y="386" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">trace backend</text>
+
+  <!-- ===== Legend ===== -->
+  <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+  <line x1="40" y1="540" x2="68" y2="540" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <text x="76" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Headers minted at the gateway</text>
+
+  <line x1="360" y1="540" x2="388" y2="540" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="396" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Must propagate unchanged</text>
+
+  <line x1="672" y1="540" x2="700" y2="540" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="708" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Span sent to Jaeger</text>
+</svg>

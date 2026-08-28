@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">모놀리식에서 마이크로서비스로의 전환</title>
+<desc id="ddesc">모놀리식 애플리케이션이 여러 개의 독립적인 마이크로서비스로 분해되는 전환 과정을 보여주는 다이어그램</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="180" width="240" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="52" y="184" width="47" height="12" rx="2" fill="#ffffff"/>
+<text x="75.5" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">모놀리식 시대</text>
+
+<rect x="360" y="60" width="560" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="372" y="64" width="62" height="12" rx="2" fill="#ffffff"/>
+<text x="403.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">마이크로서비스 시대</text>
+
+<path d="M 720,148 V 166.0 Q 720,174.0 712,174.0 H 624 Q 616,174.0 616,182.0 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 752,148 V 166.0 Q 752,174.0 760,174.0 H 848 Q 856,174.0 856,182.0 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 616,248 V 266.0 Q 616,274.0 624,274.0 H 712 Q 720,274.0 720,282.0 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 856,248 V 266.0 Q 856,274.0 848,274.0 H 760 Q 752,274.0 752,282.0 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 736,348 L 736,400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 280,260 L 360,260" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="307.0" y="240" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="320" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">전환</text>
+
+<rect x="80" y="248" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="80" y="248" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="160.0" y="269.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">모놀리식</text>
+<text x="160.0" y="283.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션</text>
+<text x="160.0" y="299.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">단일 프로세스</text>
+<rect x="688" y="100" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="688" y="100" width="96" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="736.0" y="126.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 A</text>
+<rect x="568" y="200" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="568" y="200" width="96" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="616.0" y="226.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 B</text>
+<rect x="808" y="200" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="808" y="200" width="96" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="856.0" y="226.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 C</text>
+<rect x="688" y="300" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="688" y="300" width="96" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="736.0" y="326.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 D</text>
+<rect x="688" y="400" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="688" y="400" width="96" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="736.0" y="426.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 E</text>
+</svg>

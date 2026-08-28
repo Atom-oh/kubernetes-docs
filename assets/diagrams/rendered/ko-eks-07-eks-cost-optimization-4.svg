@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-07-eks-cost-optimization-4-title ko-eks-07-eks-cost-optimization-4-desc">
+  <title id="ko-eks-07-eks-cost-optimization-4-title">네트워킹 비용 최적화 전략</title>
+  <desc id="ko-eks-07-eks-cost-optimization-4-desc">네트워킹 비용 최적화가 데이터 전송 최적화, 로드 밸런서 최적화, NAT 게이트웨이 최적화 세 갈래로 나뉘는 트리 다이어그램. NAT 게이트웨이 최적화 아래 VPC 엔드포인트 사용이 가장 많은 세부 항목을 갖는다.</desc>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+
+  </defs>
+  <rect width="960" height="380" fill="var(--paper)"/>
+<path d="M 392,96 V 108 Q 392,116 384,116 H 232.0 Q 224.0,116 224.0,124 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 480,96 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 568,96 V 108 Q 568,116 576,116 H 728.0 Q 736.0,116 736.0,124 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="380.0" y="48" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380.0" y="48" width="200" height="48" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="480.0" y="66" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네트워킹 비용 최적화</text>
+<rect x="112.0" y="196" width="224" height="76" rx="6" fill="#ffffff"/>
+<rect x="112.0" y="196" width="224" height="76" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="224.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터 전송 최적화</text>
+<text x="224.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">리전 내 통신</text>
+<text x="224.0" y="245" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">AZ 라우팅 · 압축</text>
+<rect x="368.0" y="196" width="224" height="76" rx="6" fill="#ffffff"/>
+<rect x="368.0" y="196" width="224" height="76" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="480.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로드 밸런서 최적화</text>
+<text x="480.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">유형 선택 · 공유</text>
+<text x="480.0" y="245" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">유휴 LB 제거</text>
+<rect x="624.0" y="196" width="224" height="76" rx="6" fill="#ffffff"/>
+<rect x="624.0" y="196" width="224" height="76" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+<text x="736.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NAT 게이트웨이 최적화</text>
+<text x="736.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">게이트웨이 공유</text>
+<text x="736.0" y="245" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">VPC 엔드포인트</text>
+
+</svg>

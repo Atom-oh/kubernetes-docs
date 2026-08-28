@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 340" role="img" aria-labelledby="staticresp-title staticresp-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="staticresp-title">Envoy proxy short-circuiting requests with a static response</title>
+    <desc id="staticresp-desc">Flowchart showing a client request reaching the Envoy proxy, which returns a static response directly to the client when a match condition is met, and only proxies through to the backend service otherwise.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="8 0, 0 3, 8 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="340" fill="#ffffff"/>
+
+    <!-- 3 nodes width160 h64 y132; x: Client 40, Envoy 400, Backend 760 -->
+    <!-- Client -> Envoy (top lane) -->
+    <path d="M200,150 H400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="264" y="130" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="139" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HTTP REQ</text>
+
+    <!-- Envoy -> Client (return, static response, bottom lane, accent headline) -->
+    <path d="M400,182 H200" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="240" y="188" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="197" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">STATIC RESPONSE</text>
+
+    <!-- Envoy -.-> Backend (dashed, when no match) -->
+    <path d="M560,164 H760" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="606" y="144" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="662" y="153" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO MATCH -&gt; PROXY</text>
+
+    <!-- nodes -->
+    <g>
+      <rect x="40" y="132" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="1"/>
+      <text x="120" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+    </g>
+    <g>
+      <rect x="400" y="132" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="480" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+      <text x="480" y="176" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">directResponse</text>
+    </g>
+    <g>
+      <rect x="760" y="132" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="840" y="168" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend Service</text>
+    </g>
+
+    <!-- legend -->
+    <line x1="30" y1="240" x2="930" y2="240" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="258" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="130" y1="254" x2="160" y2="254" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <text x="168" y="258" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Condition matched: static response, backend never called</text>
+    <line x1="580" y1="254" x2="610" y2="254" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="618" y="258" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Condition not matched: proxied to backend</text>
+  </svg>

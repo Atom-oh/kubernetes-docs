@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-labelledby="ko-observability-logging-01-loki-0-title ko-observability-logging-01-loki-0-desc">
+  <title id="ko-observability-logging-01-loki-0-title">Loki의 쓰기 경로, 읽기 경로, 백엔드 스토리지 구성</title>
+  <desc id="ko-observability-logging-01-loki-0-desc">로그 수집 에이전트가 Distributor를 거쳐 Ingester에 데이터를 쓰고, Grafana의 쿼리가 Query Frontend와 Scheduler를 거쳐 Querier에서 Ingester·S3·캐시를 조회해 결과를 병합하며, Compactor가 S3의 데이터를 최적화하는 흐름을 보여준다.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- ===== Zones (bg -> zones -> arrows -> nodes) ===== -->
+  <rect x="40" y="168" width="224" height="188" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="52" y="172" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="88" y="181" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">쓰기 경로</text>
+
+  <rect x="696" y="168" width="224" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="708" y="172" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="744" y="181" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">읽기 경로</text>
+
+  <rect x="284" y="468" width="416" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="296" y="472" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="324" y="481" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">백엔드</text>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+  <!-- 1 AGENT -> DIST -->
+  <path d="M 152,104 V 200" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- 2 DIST -> ING -->
+  <path d="M 152,256 V 284" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- 3 ING -> S3 -->
+  <path d="M 152,340 L 152,412 Q 152,420 160,420 L 448,420 Q 456,420 456,428 L 456,500"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- 4 GRAFANA -> QF -->
+  <path d="M 808,104 V 200" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- 5 QF -> QS -->
+  <path d="M 808,256 V 280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- 6 QS -> QUERIER -->
+  <path d="M 808,336 V 360" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- 7 QUERIER -> ING -->
+  <path d="M 720,388 L 488,388 Q 480,388 480,380 L 480,320 Q 480,312 472,312 L 240,312"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- 8 QUERIER -> S3 -->
+  <path d="M 744,416 L 744,428 Q 744,436 736,436 L 520,436 Q 512,436 512,444 L 512,500"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- 9 QUERIER -> CACHE -->
+  <path d="M 792,416 L 792,480 Q 792,488 784,488 L 620,488 Q 612,488 612,496 L 612,500"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- 10 COMP -> S3 -->
+  <path d="M 412,528 H 428" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- AGENT (input) -->
+  <rect x="64" y="40" width="176" height="64" rx="6" fill="#ffffff"/>
+  <rect x="64" y="40" width="176" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="152" y="70" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">로그 수집 에이전트</text>
+  <text x="152" y="86" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Promtail · FluentBit · Alloy</text>
+
+  <!-- GRAFANA (external) -->
+  <rect x="720" y="40" width="176" height="64" rx="6" fill="#ffffff"/>
+  <rect x="720" y="40" width="176" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="808" y="76" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+
+  <!-- DIST (backend) -->
+  <rect x="64" y="200" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="64" y="200" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="152" y="232" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Distributor</text>
+
+  <!-- ING (focal) -->
+  <rect x="64" y="284" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="64" y="284" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="152" y="308" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ingester</text>
+  <text x="152" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">chunk buffer</text>
+
+  <!-- QF (backend) -->
+  <rect x="720" y="200" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="720" y="200" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="808" y="232" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Query Frontend</text>
+
+  <!-- QS (backend) -->
+  <rect x="720" y="280" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="720" y="280" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="808" y="312" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Query Scheduler</text>
+
+  <!-- QUERIER (focal) -->
+  <rect x="720" y="360" width="176" height="56" rx="6" fill="#ffffff"/>
+  <rect x="720" y="360" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="808" y="384" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Querier</text>
+  <text x="808" y="400" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">LogQL 실행</text>
+
+  <!-- COMP (backend) -->
+  <rect x="300" y="500" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="300" y="500" width="112" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="356" y="532" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compactor</text>
+
+  <!-- S3 (store) -->
+  <rect x="428" y="500" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="428" y="500" width="112" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="484" y="524" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3 Storage</text>
+  <text x="484" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">object storage</text>
+
+  <!-- CACHE (store) -->
+  <rect x="556" y="500" width="112" height="56" rx="6" fill="#ffffff"/>
+  <rect x="556" y="500" width="112" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="612" y="524" fill="#232F3E" font-size="12" font-weight="600"
+        font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redis/Memcached</text>
+  <text x="612" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">results/chunk cache</text>
+
+</svg>

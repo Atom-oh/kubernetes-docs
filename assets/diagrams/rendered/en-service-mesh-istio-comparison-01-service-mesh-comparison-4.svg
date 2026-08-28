@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-comparison-01-service-mesh-comparison-4-title en-service-mesh-istio-comparison-01-service-mesh-comparison-4-desc">
+<title id="en-service-mesh-istio-comparison-01-service-mesh-comparison-4-title">Kong Mesh Zone Control Plane and Data Plane</title>
+<desc id="en-service-mesh-istio-comparison-01-service-mesh-comparison-4-desc">Diagram of Kong Mesh&#x27;s architecture: an optional global control plane syncs policy to a zone control plane, which configures Kuma DP proxies across Kubernetes pods and VMs that mesh together over mTLS.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 280,88 H 370" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="283.6" y="68" width="82.8" height="12" rx="2" fill="#ffffff"/>
+<text x="325" y="77" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">SYNC POLICIES</text>
+<rect x="60" y="64" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="60" y="64" width="220" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170.0" y="86.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Global CP</text>
+<text x="170.0" y="100.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Optional</text>
+<rect x="370" y="64" width="220" height="48" rx="6" fill="#ffffff"/>
+<rect x="370" y="64" width="220" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="86.5" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Zone CP</text>
+<text x="480.0" y="100.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Local Mgmt</text>
+<rect x="60" y="220" width="240" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="68" y="214" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="91.0" y="223" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">POD 1</text>
+<rect x="360" y="220" width="240" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="368" y="214" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="391.0" y="223" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">POD 2</text>
+<rect x="660" y="220" width="240" height="150" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="668" y="214" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="682.0" y="223" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">VM</text>
+<path d="M 430,112 V 162 Q 430,170 422,170 H 248 Q 240,170 240,178 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="308.2" y="150" width="43.6" height="12" rx="2" fill="#ffffff"/>
+<text x="330" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">CONFIG</text>
+<path d="M 460,112 V 172 Q 460,180 468,180 H 532 Q 540,180 540,188 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 490,112 V 182 Q 490,190 498,190 H 832 Q 840,190 840,198 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 174,286 H 196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 474,286 H 496" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 774,286 H 796" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 284,286 H 384" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="317.8" y="266" width="32.4" height="12" rx="2" fill="#ffffff"/>
+<text x="334" y="275" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MTLS</text>
+<path d="M 584,286 H 684" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="617.8" y="266" width="32.4" height="12" rx="2" fill="#ffffff"/>
+<text x="634" y="275" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">MTLS</text>
+<rect x="84" y="264" width="90" height="44" rx="6" fill="#ffffff"/>
+<rect x="84" y="264" width="90" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="129.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App</text>
+<rect x="196" y="264" width="88" height="44" rx="6" fill="#ffffff"/>
+<rect x="196" y="264" width="88" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="284.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+<text x="240.0" y="298.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Kuma DP</text>
+<rect x="384" y="264" width="90" height="44" rx="6" fill="#ffffff"/>
+<rect x="384" y="264" width="90" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="429.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App</text>
+<rect x="496" y="264" width="88" height="44" rx="6" fill="#ffffff"/>
+<rect x="496" y="264" width="88" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="540.0" y="284.5" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy</text>
+<text x="540.0" y="298.5" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Kuma DP</text>
+<rect x="684" y="264" width="90" height="44" rx="6" fill="#ffffff"/>
+<rect x="684" y="264" width="90" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="729.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Legacy App</text>
+<rect x="796" y="264" width="88" height="44" rx="6" fill="#ffffff"/>
+<rect x="796" y="264" width="88" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="840.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kuma DP</text>
+</svg>

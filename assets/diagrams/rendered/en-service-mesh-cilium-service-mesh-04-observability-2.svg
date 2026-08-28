@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dep-map-title dep-map-desc">
+    <title id="dep-map-title">Service Dependency Map</title>
+    <desc id="dep-map-desc">Diagram showing traffic flowing from an ingress controller through the frontend and API gateway to the User and Order services, with Order Service as the busiest fan-out point into Postgres, Kafka, and the Payment Service, alongside per-service RPS and P99 latency figures.</desc><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+
+    <!-- Arrows (trunk) -->
+    <line x1="480" y1="88" x2="480" y2="124" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="180" x2="480" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- API Gateway -> Users / Orders -->
+    <path d="M450,272 V288 Q450,296 442,296 H233 Q225,296 225,304 V320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M510,272 V288 Q510,296 518,296 H667 Q675,296 675,304 V320" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- Users -> Redis / Postgres -->
+    <line x1="205" y1="384" x2="205" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M280,384 V414 Q280,422 288,422 H375 Q383,422 383,430 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Orders -> Kafka / Postgres / Payments -->
+    <line x1="633" y1="384" x2="633" y2="460" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M652,384 V414 Q652,422 644,422 H435 Q427,422 427,430 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="760" y1="352" x2="800" y2="352" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Payments -> Kafka -->
+    <path d="M860,384 V414 Q860,422 852,422 H685 Q677,422 677,430 V460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: Ingress Controller -->
+    <rect x="390" y="40" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="390" y="40" width="180" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="480" y="68" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ingress Controller</text>
+
+    <!-- Node: Frontend -->
+    <rect x="390" y="124" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="390" y="124" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Frontend</text>
+    <text x="480" y="164" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">1000 rps &#183; 50ms p99</text>
+
+    <!-- Node: API Gateway -->
+    <rect x="390" y="216" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="390" y="216" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Gateway</text>
+    <text x="480" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">800 rps &#183; 100ms p99</text>
+
+    <!-- Node: User Service -->
+    <rect x="140" y="320" width="170" height="64" rx="6" fill="#ffffff"/>
+    <rect x="140" y="320" width="170" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="225" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">User Service</text>
+    <text x="225" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">500 rps &#183; 80ms p99</text>
+
+    <!-- Node: Order Service (focal) -->
+    <rect x="590" y="320" width="170" height="64" rx="6" fill="#ffffff"/>
+    <rect x="590" y="320" width="170" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="675" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Order Service</text>
+    <text x="675" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">300 rps &#183; 120ms p99</text>
+
+    <!-- Node: Payment Service -->
+    <rect x="800" y="320" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="800" y="320" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="860" y="348" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Payment Svc</text>
+    <text x="860" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">100 rps</text>
+
+    <!-- Node: Redis -->
+    <rect x="140" y="460" width="130" height="64" rx="6" fill="#ffffff"/>
+    <rect x="140" y="460" width="130" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="205" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Redis</text>
+
+    <!-- Node: PostgreSQL -->
+    <rect x="340" y="460" width="130" height="64" rx="6" fill="#ffffff"/>
+    <rect x="340" y="460" width="130" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="405" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">PostgreSQL</text>
+
+    <!-- Node: Kafka -->
+    <rect x="590" y="460" width="130" height="64" rx="6" fill="#ffffff"/>
+    <rect x="590" y="460" width="130" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="655" y="492" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kafka</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="564" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="576" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Busiest fan-out</text>
+
+    <rect x="220" y="576" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="240" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Data store</text>
+
+    <rect x="380" y="576" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="400" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">External ingress</text>
+  </svg>

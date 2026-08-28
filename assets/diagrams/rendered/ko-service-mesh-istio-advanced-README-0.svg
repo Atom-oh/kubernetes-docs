@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ov-title ov-desc">
+    <title id="ov-title">Istio 고급 기능 개요</title>
+    <desc id="ov-desc">배포 모드(Sidecar/Ambient)와 Multi-cluster 토폴로지가 EnvoyFilter를 통한 고급 커스터마이제이션으로 이어지고, EnvoyFilter가 gRPC/WebSocket 프로토콜 지원을 가능하게 하며, Argo Rollouts 통합이 Sidecar 배포에 의존하는 관계를 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="72" width="192" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="88" y="76" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="136" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">배포 모드</text>
+
+    <rect x="280" y="72" width="360" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="424" y="76" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="460" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">고급 기능</text>
+
+    <rect x="680" y="72" width="200" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="740" y="76" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">통합</text>
+
+    <rect x="280" y="280" width="360" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="392" y="284" width="136" height="12" rx="2" fill="#ffffff"/>
+    <text x="460" y="293" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">MULTI-CLUSTER</text>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="216" y1="124" x2="296" y2="124" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M216,208 H248 Q256,208 256,200 V156 Q256,148 264,148 H296"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="376" y1="160" x2="376" y2="180" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <line x1="448" y1="340" x2="472" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M696,132 H688 Q680,132 680,124 V60 Q680,52 672,52 H144 Q136,52 136,60 V104"
+          fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Arrow label: EnvoyFilter -> Protocol (accent, headline) -->
+    <rect x="386" y="164" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="406" y="173" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">확장</text>
+
+    <!-- Node: Sidecar -->
+    <rect x="56" y="104" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="104" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="136" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sidecar Mode</text>
+    <text x="136" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">전통적 방식</text>
+
+    <!-- Node: Ambient -->
+    <rect x="56" y="180" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="56" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="136" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ambient Mode</text>
+    <text x="136" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">새로운 아키텍처</text>
+
+    <!-- Node: EnvoyFilter (focal) -->
+    <rect x="296" y="104" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="296" y="104" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="376" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EnvoyFilter</text>
+    <text x="376" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">커스터마이제이션</text>
+
+    <!-- Node: DNS (unconnected) -->
+    <rect x="472" y="104" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="472" y="104" width="152" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="548" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">DNS Caching</text>
+    <text x="548" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">성능 최적화</text>
+
+    <!-- Node: Protocol -->
+    <rect x="296" y="180" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="296" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="376" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">gRPC / WebSocket</text>
+    <text x="376" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">프로토콜 지원</text>
+
+    <!-- Node: ArgoRollouts -->
+    <rect x="696" y="104" width="168" height="56" rx="6" fill="#ffffff"/>
+    <rect x="696" y="104" width="168" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Argo Rollouts</text>
+    <text x="780" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Progressive Delivery</text>
+
+    <!-- Node: Primary -->
+    <rect x="296" y="312" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="296" y="312" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="372" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Primary Cluster</text>
+    <text x="372" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Control Plane</text>
+
+    <!-- Node: Remote -->
+    <rect x="472" y="312" width="152" height="56" rx="6" fill="#ffffff"/>
+    <rect x="472" y="312" width="152" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="548" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Remote Cluster</text>
+    <text x="548" y="352" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Workload Only</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="420" x2="920" y2="420" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="436" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="452" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="460" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">핵심 커스터마이제이션 지점</text>
+
+    <line x1="292" y1="456" x2="320" y2="456" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="328" y="460" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">구성 흐름</text>
+
+    <line x1="440" y1="456" x2="468" y2="456" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <text x="476" y="460" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">의존 관계</text>
+  </svg>

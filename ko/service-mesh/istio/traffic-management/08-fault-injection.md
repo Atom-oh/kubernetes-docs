@@ -24,32 +24,7 @@ Fault Injection은 시스템의 복원력을 테스트하기 위해 의도적으
 
 Netflix의 Chaos Monkey에서 시작된 Chaos Engineering은 **프로덕션 환경에서 장애를 사전에 경험**하고 시스템의 약점을 발견하는 것을 목표로 합니다.
 
-```mermaid
-flowchart TB
-    subgraph Traditional["전통적인 테스트"]
-        DevTest[개발 환경<br/>테스트]
-        StagingTest[스테이징 환경<br/>테스트]
-        ProdIssue[프로덕션<br/>장애 발생 ❌]
-    end
-
-    subgraph ChaosEng["Chaos Engineering"]
-        ContTest[지속적인<br/>장애 주입]
-        Discover[약점 발견]
-        Fix[사전 수정]
-        Resilient[복원력 있는<br/>시스템 ✅]
-    end
-
-    DevTest --> StagingTest --> ProdIssue
-    ContTest --> Discover --> Fix --> Resilient
-
-    %% 스타일 정의
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef chaos fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class DevTest,StagingTest,ProdIssue traditional;
-    class ContTest,Discover,Fix,Resilient chaos;
-```
+![전통적인 테스트는 프로덕션에서 장애를 만나지만, Chaos Engineering은 지속적인 장애 주입으로 약점을 사전에 발견하고 수정해 복원력 있는 시스템을 만든다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-0.png)
 
 #### 2. **실제 프로덕션 시나리오 재현**
 
@@ -67,25 +42,7 @@ flowchart TB
 
 Fault Injection 없이는 Circuit Breaker와 Timeout 설정이 **실제로 작동하는지 확인하기 어렵습니다**.
 
-```mermaid
-flowchart LR
-    Service[서비스 A]
-    Dep[의존 서비스 B<br/>Fault Injection]
-
-    Service -->|1. 요청| Dep
-    Dep -->|2. 지연 or 실패| Service
-    Service -->|3. Circuit Breaker<br/>작동 확인| Monitor[모니터링]
-
-    %% 스타일 정의
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef monitor fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Service service;
-    class Dep fault;
-    class Monitor monitor;
-```
+![서비스 A가 의존 서비스 B에 요청을 보내고, 장애 주입으로 지연되거나 실패한 응답을 받으면 Circuit Breaker 작동을 모니터링으로 확인한다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-1.png)
 
 #### 4. **안전한 배포 검증**
 
@@ -314,32 +271,7 @@ spec:
 
 ## Fault Injection 개요
 
-```mermaid
-flowchart LR
-    Client[클라이언트]
-    
-    subgraph FaultInjection["Fault Injection"]
-        Delay[지연<br/>3초]
-        Abort[중단<br/>HTTP 503]
-    end
-    
-    Service[서비스]
-    
-    Client --> Delay
-    Client --> Abort
-    Delay -.->|느린 응답| Service
-    Abort -->|에러| Client
-    
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class Client client;
-    class Delay,Abort fault;
-    class Service service;
-```
+![클라이언트의 요청이 Fault Injection 구간에서 지연되어 서비스에 느리게 전달되거나, 중단되어 클라이언트에 바로 에러가 반환된다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-2.png)
 
 ## Delay 주입
 
@@ -609,28 +541,7 @@ spec:
 
 **상황**: 한 서비스의 장애가 다른 서비스로 전파되는지 확인
 
-```mermaid
-flowchart LR
-    Frontend[프론트엔드]
-    OrderService[주문 서비스]
-    PaymentService[결제 서비스<br/>Fault Injection]
-    InventoryService[재고 서비스]
-
-    Frontend --> OrderService
-    OrderService --> PaymentService
-    OrderService --> InventoryService
-
-    PaymentService -->|30% 실패| OrderService
-    OrderService -->|Circuit Breaker| Frontend
-
-    %% 스타일 정의
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Frontend,OrderService,InventoryService service;
-    class PaymentService fault;
-```
+![결제 서비스에 주입된 장애로 30% 요청이 실패하면 주문 서비스가 이를 흡수하고, Circuit Breaker로 프론트엔드에 안전하게 전파해 재고 서비스는 영향받지 않는지 확인한다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-3.png)
 
 ```yaml
 # 결제 서비스에 장애 주입
@@ -776,30 +687,7 @@ spec:
 
 점진적으로 장애 비율을 증가시켜 시스템의 한계를 찾습니다:
 
-```mermaid
-flowchart LR
-    Stage1[1단계<br/>1-5% 장애]
-    Stage2[2단계<br/>5-10% 장애]
-    Stage3[3단계<br/>10-20% 장애]
-    Stage4[4단계<br/>20-50% 장애]
-
-    Stage1 -->|모니터링 OK| Stage2
-    Stage2 -->|모니터링 OK| Stage3
-    Stage3 -->|모니터링 OK| Stage4
-
-    Stage1 -.->|문제 발견| Fix[수정 및 개선]
-    Stage2 -.->|문제 발견| Fix
-    Stage3 -.->|문제 발견| Fix
-    Stage4 -.->|문제 발견| Fix
-
-    %% 스타일 정의
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fix fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Stage1,Stage2,Stage3,Stage4 stage;
-    class Fix fix;
-```
+![1%에서 50%까지 장애 비율을 단계적으로 늘리며 모니터링 결과가 정상이면 다음 단계로 진행하고, 문제가 발견되면 즉시 수정 및 개선 단계로 이동한다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-08-fault-injection-4.png)
 
 **단계별 실행**:
 

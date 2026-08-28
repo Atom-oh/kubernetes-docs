@@ -43,55 +43,7 @@ KEDA (Kubernetes Event-driven Autoscaling) is an open-source project that enable
 
 KEDA is based on the Kubernetes operator pattern, monitoring external metric sources and automatically managing Kubernetes HPA.
 
-```mermaid
-flowchart LR
-    %% Node definitions
-    A[KEDA Operator]
-    B[KEDA Metrics Server]
-    C[Horizontal Pod Autoscaler]
-    D[ScaledObject / ScaledJob]
-    E[Deployment / Job]
-
-    F[Message Queues]
-    G[Databases]
-    H[Streaming Platforms]
-    I[Custom Metrics]
-
-    %% Subgraph definitions
-    subgraph K8S["Kubernetes Cluster"]
-        A
-        B
-        C
-        D
-        E
-    end
-
-    subgraph EXT["External Event Sources"]
-        F
-        G
-        H
-        I
-    end
-
-    %% Connection definitions
-    A -->|Watches| D
-    A -->|Creates/Updates| C
-    B -->|Provides Metrics| C
-    D -->|References| E
-    B -->|Polls| F
-    B -->|Polls| G
-    B -->|Polls| H
-    B -->|Polls| I
-    C -->|Scales| E
-
-    %% Style application
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    %% Class application
-    class A,B,C,D,E k8sComponent
-    class F,G,H,I awsService
-```
+![Diagram showing KEDA's Metrics Server polling external event sources (message queues, databases, streaming platforms, custom metrics) and feeding those metrics to the Kubernetes Horizontal Pod Autoscaler, while the KEDA Operator watches ScaledObject/ScaledJob resources and the HPA scales the target Deployment or Job.](../.gitbook/assets/en-autoscaling-01-keda-0.png)
 
 
 ### Key Components

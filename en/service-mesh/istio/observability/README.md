@@ -31,48 +31,7 @@ Istio's observability features follow the **Zero Instrumentation** principle:
 
 ### The Three Elements of Observability
 
-```mermaid
-flowchart TB
-    subgraph Metrics["Metrics"]
-        M1[Golden Signals<br/>Latency, Traffic, Errors, Saturation]
-        M2[Time Series Data<br/>Prometheus, OpenTelemetry]
-        M3[Real-time Monitoring<br/>Grafana, Kiali]
-    end
-
-    subgraph Tracing["Distributed Tracing"]
-        T1[Request Flow Tracking<br/>Service Call Paths]
-        T2[Performance Bottleneck Identification<br/>Latency Analysis]
-        T3[Trace Backend<br/>Jaeger, Zipkin, Tempo]
-    end
-
-    subgraph Logging["Logging"]
-        L1[Access Log<br/>All Request/Response Records]
-        L2[Structured Logs<br/>JSON Format]
-        L3[Log Backend<br/>Loki, Elasticsearch]
-    end
-
-    subgraph Integration["Integrated Observability"]
-        Dashboard[Unified Dashboard<br/>Grafana]
-        Topology[Service Topology<br/>Kiali]
-        Alerting[Alert Management<br/>Prometheus Alertmanager]
-    end
-
-    Metrics --> Integration
-    Tracing --> Integration
-    Logging --> Integration
-
-    %% Style definitions
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef tracing fill:#60D0E4,stroke:#333,stroke-width:2px,color:black;
-    classDef logging fill:#FFB84D,stroke:#333,stroke-width:2px,color:black;
-    classDef integration fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% Class applications
-    class M1,M2,M3 metrics;
-    class T1,T2,T3 tracing;
-    class L1,L2,L3 logging;
-    class Dashboard,Topology,Alerting integration;
-```
+![Diagram showing Istio's three observability pillars — metrics, distributed tracing, and logging, each with their own tools and backends — all feeding into a single integrated observability layer with a unified dashboard, service topology view, and alerting.](../../../.gitbook/assets/en-service-mesh-istio-observability-README-0.png)
 
 ### 1. Metrics
 
@@ -120,88 +79,7 @@ flowchart TB
 
 ### Overall Architecture
 
-```mermaid
-flowchart TB
-    subgraph "Application Layer"
-        direction LR
-
-        subgraph Pod1["Pod A"]
-            App1[App<br/>Container]
-            Envoy1[Envoy<br/>Sidecar]
-        end
-
-        subgraph Pod2["Pod B"]
-            App2[App<br/>Container]
-            Envoy2[Envoy<br/>Sidecar]
-        end
-    end
-
-    subgraph "Control Plane"
-        Istiod[istiod<br/>Telemetry Config]
-    end
-
-    subgraph "Metrics Backend"
-        Prometheus[Prometheus<br/>Metrics Collection]
-        OTEL[OpenTelemetry<br/>Collector]
-    end
-
-    subgraph "Tracing Backend"
-        Jaeger[Jaeger<br/>Distributed Tracing]
-        Tempo[Grafana Tempo<br/>Trace Storage]
-    end
-
-    subgraph "Logging Backend"
-        Loki[Grafana Loki<br/>Log Storage]
-        Fluentd[Fluentd<br/>Log Collection]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana<br/>Unified Dashboard]
-        Kiali[Kiali<br/>Service Topology]
-    end
-
-    App1 --> Envoy1
-    App2 --> Envoy2
-    Envoy1 <-->|mTLS| Envoy2
-
-    Istiod -.->|Config| Envoy1
-    Istiod -.->|Config| Envoy2
-
-    Envoy1 -->|Metrics| Prometheus
-    Envoy2 -->|Metrics| Prometheus
-    Envoy1 -->|Metrics| OTEL
-    Envoy2 -->|Metrics| OTEL
-
-    Envoy1 -->|Traces| Jaeger
-    Envoy2 -->|Traces| Jaeger
-    Jaeger --> Tempo
-
-    Envoy1 -->|Access Logs| Fluentd
-    Envoy2 -->|Access Logs| Fluentd
-    Fluentd --> Loki
-
-    Prometheus --> Grafana
-    Tempo --> Grafana
-    Loki --> Grafana
-    Prometheus --> Kiali
-    Jaeger --> Kiali
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:2px,color:white;
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef tracing fill:#60D0E4,stroke:#333,stroke-width:1px,color:black;
-    classDef logging fill:#FFB84D,stroke:#333,stroke-width:1px,color:black;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% Class applications
-    class App1,App2 app;
-    class Envoy1,Envoy2,Istiod istio;
-    class Prometheus,OTEL metrics;
-    class Jaeger,Tempo tracing;
-    class Loki,Fluentd logging;
-    class Grafana,Kiali visualization;
-```
+![Architecture diagram showing Envoy sidecars configured by istiod, exporting metrics, traces, and access logs to three separate backends (Prometheus/OTel, Jaeger/Tempo, Fluentd/Loki), which all feed a shared Grafana and Kiali visualization layer.](../../../.gitbook/assets/en-service-mesh-istio-observability-README-1.png)
 
 ### Data Flow
 

@@ -34,30 +34,7 @@ This guide builds a complete FinOps cost visibility platform on Kubernetes using
 
 ### 1.1 Inform, Optimize, Operate Cycle
 
-```mermaid
-graph LR
-    A[Inform] -->|Visibility & Allocation| B[Optimize]
-    B -->|Rightsizing & Savings| C[Operate]
-    C -->|Governance & Automation| A
-
-    subgraph Inform
-        A1[Cost Allocation]
-        A2[Showback Dashboards]
-        A3[Tagging & Labels]
-    end
-
-    subgraph Optimize
-        B1[Rightsizing]
-        B2[Spot / Savings Plans]
-        B3[Idle Resource Cleanup]
-    end
-
-    subgraph Operate
-        C1[Budget Alerts]
-        C2[Policy Enforcement]
-        C3[Regular Reviews]
-    end
-```
+![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
 
 **Inform Phase**: Establish visibility by deploying cost monitoring tools, implementing a label strategy, and building showback dashboards. This is the foundation all optimization efforts build on.
 
@@ -600,25 +577,7 @@ spec:
 
 ### 3.3 Shared Cost Distribution
 
-```mermaid
-graph TD
-    A[Total Cluster Cost] --> B[Direct Costs]
-    A --> C[Shared Costs]
-    A --> D[Idle Costs]
-
-    B --> B1[Team A Workloads]
-    B --> B2[Team B Workloads]
-    B --> B3[Team C Workloads]
-
-    C --> C1[kube-system]
-    C --> C2[monitoring]
-    C --> C3[ingress-nginx]
-
-    C1 -->|Weighted by CPU| E[Distributed to Teams]
-    C2 -->|Weighted by Total Cost| E
-    C3 -->|Even Split| E
-    D -->|Weighted Distribution| E
-```
+![Flowchart showing total cluster cost split into direct team costs, shared platform costs, and idle costs, where the shared costs (kube-system, monitoring, ingress-nginx) and idle costs are each distributed back to teams using a different weighting method (CPU, total cost, even split, or weighted distribution).](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
 
 | Distribution Method | When to Use | Pros | Cons |
 |-------------------|-------------|------|------|
@@ -1242,17 +1201,7 @@ kubectl get namespaces -l goldilocks.fairwinds.com/enabled=true
 
 For mature organizations, VPA recommendations can flow into an automated pipeline that creates pull requests for review.
 
-```mermaid
-graph LR
-    A[VPA Recommendations] --> B[CronJob: Collect]
-    B --> C[Compare with Current]
-    C --> D{Change > 20%?}
-    D -->|Yes| E[Generate Patch]
-    E --> F[Open Pull Request]
-    F --> G[Team Review]
-    G --> H[ArgoCD Sync]
-    D -->|No| I[Skip]
-```
+![Flowchart showing VPA recommendations collected on a schedule, compared to current requests, and — when the change exceeds 20% — turned into a pull request that a team reviews before ArgoCD syncs it; smaller changes are skipped.](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
 
 ```yaml
 # rightsizing-pipeline-cronjob.yaml

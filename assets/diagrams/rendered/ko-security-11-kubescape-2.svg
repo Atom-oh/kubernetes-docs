@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-security-11-kubescape-2-title ko-security-11-kubescape-2-desc">
+    <title id="ko-security-11-kubescape-2-title">Kubescape Operator 클러스터 내부 동작</title>
+    <desc id="ko-security-11-kubescape-2-desc">클러스터 안에서 CronJob이 Operator Controller를 트리거해 스캐너들이 배포·파드·서비스·Secret·ServiceAccount를 검사하고, Node Agent의 eBPF 이벤트도 Controller로 모여 그 결과가 CRD로 저장되어 Baseline과 비교되며, 변경이 감지되면 외부 Alerting과 SIEM/SOAR로 이어지는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="24" width="616" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="28" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="108.0" y="37" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">Kubernetes 클러스터</text>
+<rect x="656" y="24" width="280" height="328" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="672" y="28" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="700.0" y="37" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">외부 연동</text>
+<line x1="152" y1="88" x2="168" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 200,112 V 120 Q 200,128 192,128 H 108 Q 100,128 100,120 V 176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="252" y1="112" x2="252" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 312,112 V 132 Q 312,140 320,140 H 396 Q 404,140 404,132 V 176" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 556,176 V 160 Q 556,152 548,152 H 336 Q 328,152 328,160 V 112" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="422.0" y="132" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="442" y="141" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">eBPF</text>
+<path d="M 100,224 V 232 Q 100,240 108,240 H 192 Q 200,240 200,232 V 288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="252" y1="224" x2="252" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 404,224 V 244 Q 404,252 396,252 H 320 Q 312,252 312,244 V 288" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 256,336 V 360 Q 256,368 264,368 H 532 Q 540,368 540,360 V 400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="432" y1="424" x2="464" y2="424" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+<rect x="434.0" y="404" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="448" y="413" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">비교</text>
+<path d="M 616,410 H 636 Q 644,410 644,402 V 96 Q 644,88 652,88 H 672" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 616,438 H 622 Q 630,438 630,430 V 212 Q 630,204 638,204 H 672" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="582" y="314.0" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="602.0" y="323" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">변경 탐지</text>
+<line x1="792" y1="224" x2="792" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="32" y="64" width="120" height="48" rx="6" fill="#ffffff"/>
+<rect x="32" y="64" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="92.0" y="82.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CronJob</text>
+<text x="92.0" y="96.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trigger</text>
+<text x="92.0" y="108.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">스케줄 트리거</text>
+<rect x="168" y="64" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="168" y="64" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="256.0" y="82.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operator</text>
+<text x="256.0" y="96.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller</text>
+<rect x="32" y="176" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="32" y="176" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="100.0" y="194.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Configuration</text>
+<text x="100.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scanner</text>
+<rect x="184" y="176" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="184" y="176" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="252.0" y="194.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Vulnerability</text>
+<text x="252.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scanner</text>
+<rect x="336" y="176" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="336" y="176" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="404.0" y="194.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">RBAC</text>
+<text x="404.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scanner</text>
+<rect x="488" y="176" width="136" height="48" rx="6" fill="#ffffff"/>
+<rect x="488" y="176" width="136" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="556.0" y="194.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node</text>
+<text x="556.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Agents ×3</text>
+<text x="556.0" y="220.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">eBPF 관측</text>
+<rect x="168" y="288" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="168" y="288" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="256.0" y="318.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스캔 대상</text>
+<text x="256.0" y="334.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Deployments · Pods</text>
+<text x="256.0" y="345.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Services · Secrets · SA</text>
+<rect x="464" y="400" width="152" height="48" rx="6" fill="#ffffff"/>
+<rect x="464" y="400" width="152" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="540.0" y="418.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scan</text>
+<text x="540.0" y="432.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Results CRD</text>
+<text x="540.0" y="444.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">스토리지</text>
+<rect x="280" y="400" width="152" height="48" rx="6" fill="#ffffff"/>
+<rect x="280" y="400" width="152" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="356.0" y="422.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Baseline</text>
+<text x="356.0" y="438.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">비교 기준선</text>
+<rect x="672" y="64" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="672" y="64" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="792.0" y="82.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubescape</text>
+<text x="792.0" y="96.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cloud</text>
+<text x="792.0" y="108.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">중앙 대시보드</text>
+<rect x="672" y="176" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="672" y="176" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="792.0" y="198.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alerting</text>
+<text x="792.0" y="214.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">변경 탐지 알림</text>
+<rect x="672" y="288" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="672" y="288" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="792.0" y="306.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SIEM /</text>
+<text x="792.0" y="320.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SOAR</text>
+<text x="792.0" y="332.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">보안 운영 연계</text>
+<line x1="24" y1="496" x2="936" y2="496" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="508" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="100" y="502" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="120" y="510" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">핵심 저장소 (Scan Results CRD)</text>
+<line x1="380" y1="508" x2="408" y2="508" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<text x="416" y="510" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">클라우드 게시</text>
+<line x1="560" y1="508" x2="588" y2="508" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="596" y="510" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eBPF 런타임 이벤트</text>
+  </svg>

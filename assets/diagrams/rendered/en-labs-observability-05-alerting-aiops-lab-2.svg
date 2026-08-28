@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="aiopsseq-title aiopsseq-desc">
+    <title id="aiopsseq-title">AIOps Lambda agent call sequence</title>
+    <desc id="aiopsseq-desc">Alertmanager triggers an API Gateway webhook that invokes a Lambda function, which queries CloudWatch, Loki, and Tempo concurrently, asks Bedrock Claude to analyze the combined context, and publishes the resulting report to SNS.</desc>
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Actor centers, evenly spaced across 5 lifelines (5 = complexity budget max) -->
+    <!-- AM=100  Gateway/Lambda(merged)=280  Telemetry(merged CW/Loki/Tempo)=480  Bedrock=680  SNS=860 -->
+
+    <!-- Lifelines -->
+    <line x1="100" y1="132" x2="100" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="280" y1="132" x2="280" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="480" y1="132" x2="480" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="680" y1="132" x2="680" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="860" y1="132" x2="860" y2="540" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Activation bar: Lambda active from first invoke to final publish -->
+    <rect x="276" y="180" width="8" height="316" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+    <!-- Messages -->
+    <!-- AM -> APIGW: webhook -->
+    <path d="M 100,168 H 276" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="150" y="148" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="188" y="157" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WEBHOOK</text>
+
+
+    <!-- 3 concurrent telemetry queries, fanned from Lambda to CloudWatch/Loki/Tempo -->
+    <text x="284" y="216" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.10em">CONCURRENT</text>
+
+    <path d="M 284,244 H 476" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="322" y="248" width="94" height="12" rx="2" fill="#ffffff"/>
+    <text x="369" y="257" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUERY METRICS</text>
+
+    <path d="M 284,268 H 476" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="330" y="272" width="78" height="12" rx="2" fill="#ffffff"/>
+    <text x="369" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUERY LOGS</text>
+
+    <path d="M 284,292 H 476" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="326" y="296" width="86" height="12" rx="2" fill="#ffffff"/>
+    <text x="369" y="305" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUERY TRACES</text>
+
+    <!-- Telemetry activation ticks (CW/Loki/Tempo represented as short activation marks on shared lifeline) -->
+    <rect x="476" y="240" width="8" height="8" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="476" y="264" width="8" height="8" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="476" y="288" width="8" height="8" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+    <!-- Self-message: Lambda prepares context -->
+    <path d="M 284,340 H 320 V 356 H 284" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="326" y="342" width="98" height="12" rx="2" fill="#ffffff"/>
+    <text x="375" y="351" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PREPARE CONTEXT</text>
+
+    <!-- Lambda -> Bedrock: analyze -->
+    <path d="M 284,392 H 680" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="440" y="372" width="86" height="12" rx="2" fill="#ffffff"/>
+    <text x="483" y="381" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ANALYZE</text>
+
+    <!-- Bedrock --> Lambda: analysis result (return, dashed, filled) -->
+    <path d="M 680,416 H 284" fill="none" stroke="#0972D3" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="420" y="420" width="126" height="12" rx="2" fill="#ffffff"/>
+    <text x="483" y="429" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ANALYSIS RESULT</text>
+
+    <!-- Lambda -> SNS: send report (headline success) -->
+    <path d="M 284,464 H 860" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="520" y="444" width="106" height="12" rx="2" fill="#ffffff"/>
+    <text x="573" y="453" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SEND REPORT</text>
+
+    <!-- SNS self-message: notify teams -->
+    <path d="M 860,488 H 896 V 504 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="768" y="490" width="86" height="12" rx="2" fill="#ffffff"/>
+    <text x="811" y="499" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NOTIFY TEAMS</text>
+
+    <!-- Actor boxes (drawn after lifelines/messages) -->
+    <rect x="20" y="96" width="160" height="36" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="100" y="118" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alertmanager</text>
+
+    <rect x="200" y="96" width="160" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="280" y="118" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Lambda Function</text>
+
+    <rect x="400" y="96" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="112" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch / Loki</text>
+    <text x="480" y="126" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">/ Tempo</text>
+
+    <rect x="600" y="96" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="118" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Bedrock Claude</text>
+
+    <rect x="780" y="96" width="160" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="860" y="118" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SNS</text>
+
+    <!-- ===== LEGEND ===== -->
+    <line x1="32" y1="552" x2="928" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="32" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <path d="M 140,562 H 168" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="180" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CALL</text>
+
+    <path d="M 260,562 H 288" fill="none" stroke="#0972D3" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="300" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">RETURN</text>
+
+    <path d="M 400,562 H 428" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="440" y="566" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">HEADLINE SUCCESS</text>
+  </svg>

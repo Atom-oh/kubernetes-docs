@@ -36,71 +36,7 @@ A Kubernetes cluster consists of a set of nodes (virtual or physical machines) f
 
 ### Cluster Architecture Diagram
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Cluster"
-        subgraph "Control Plane"
-            API[kube-apiserver]
-            ETCD[etcd]
-            SCHED[kube-scheduler]
-            CM[kube-controller-manager]
-            CCM[cloud-controller-manager]
-
-            API <--> ETCD
-            API <--> SCHED
-            API <--> CM
-            API <--> CCM
-        end
-
-        subgraph "Worker Node 1"
-            KUBELET1[kubelet]
-            PROXY1[kube-proxy]
-            CRI1[Container Runtime]
-
-            POD1A[Pod A]
-            POD1B[Pod B]
-
-            KUBELET1 --> CRI1
-            CRI1 --> POD1A
-            CRI1 --> POD1B
-            PROXY1 --> POD1A
-            PROXY1 --> POD1B
-        end
-
-        subgraph "Worker Node 2"
-            KUBELET2[kubelet]
-            PROXY2[kube-proxy]
-            CRI2[Container Runtime]
-
-            POD2A[Pod C]
-            POD2B[Pod D]
-
-            KUBELET2 --> CRI2
-            CRI2 --> POD2A
-            CRI2 --> POD2B
-            PROXY2 --> POD2A
-            PROXY2 --> POD2B
-        end
-
-        API <--> KUBELET1
-        API <--> KUBELET2
-        API <--> PROXY1
-        API <--> PROXY2
-    end
-
-    %% Style definitions
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef nodeComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class API,SCHED,CM,CCM controlPlane;
-    class ETCD dataStore;
-    class KUBELET1,KUBELET2,PROXY1,PROXY2,CRI1,CRI2 nodeComponent;
-    class POD1A,POD1B,POD2A,POD2B pod;
-```
+![Architecture diagram showing the control plane's kube-apiserver coordinating etcd, the scheduler, and controller managers, and reaching across to a worker node's kubelet and kube-proxy, which in turn drive the container runtime and running pods.](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
 **Control Plane Components**:
 - **kube-apiserver**: Frontend that exposes the Kubernetes API
@@ -507,24 +443,7 @@ Container runtime is software that runs containers. Kubernetes supports various 
 
 **Container Runtime Layer Structure**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef cri fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef runtime fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef lowlevel fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-
-    K8S[Kubernetes] --> CRI[Container Runtime Interface]
-    CRI --> CD[containerd]
-    CRI --> CRIO[CRI-O]
-    CD --> RUNC[runc]
-    CRIO --> CRUN[crun]
-
-    class K8S k8s;
-    class CRI cri;
-    class CD,CRIO runtime;
-    class RUNC,CRUN lowlevel;
-```
+![Tree diagram showing Kubernetes calling the Container Runtime Interface, which delegates to containerd or CRI-O, each backed by a low-level runtime (runc or crun).](../.gitbook/assets/en-core-01-cluster-architecture-1.png)
 
 **containerd Configuration Example**:
 ```toml
@@ -660,23 +579,7 @@ Communication between various components occurs within a Kubernetes cluster. Und
 
 ### Control Plane Internal Communication
 
-```mermaid
-graph LR
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-    classDef controller fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef scheduler fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-
-    API[kube-apiserver] <--> ETCD[etcd]
-    SCHED[kube-scheduler] --> API
-    CTRL[kube-controller-manager] --> API
-    CCM[cloud-controller-manager] --> API
-
-    class API apiserver;
-    class ETCD etcd;
-    class CTRL,CCM controller;
-    class SCHED scheduler;
-```
+![Architecture diagram showing the scheduler, controller manager, and cloud controller manager all calling the kube-apiserver, which in turn reads and writes cluster state to etcd over gRPC.](../.gitbook/assets/en-core-01-cluster-architecture-2.png)
 
 Communication between control plane components is as follows:
 
@@ -702,19 +605,7 @@ Communication between control plane components is as follows:
 
 ### Control Plane and Node Communication
 
-```mermaid
-graph TD
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef kubelet fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef proxy fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-
-    API[kube-apiserver] <--> KB[kubelet]
-    API <--> KP[kube-proxy]
-
-    class API apiserver;
-    class KB kubelet;
-    class KP proxy;
-```
+![Architecture diagram showing bidirectional HTTPS communication between the kube-apiserver and each node's kubelet and kube-proxy.](../.gitbook/assets/en-core-01-cluster-architecture-3.png)
 
 Communication between control plane and nodes is as follows:
 
@@ -735,19 +626,7 @@ Communication between control plane and nodes is as follows:
 
 ### Inter-Node Communication
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef cni fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-
-    P1[Pod 1] <--> CNI[CNI Network]
-    P2[Pod 2] <--> CNI
-    P3[Pod 3] <--> CNI
-    P4[Pod 4] <--> CNI
-
-    class P1,P2,P3,P4 pod;
-    class CNI cni;
-```
+![Architecture diagram showing four pods, potentially on different nodes, all communicating with each other bidirectionally through the shared CNI network.](../.gitbook/assets/en-core-01-cluster-architecture-4.png)
 
 Inter-node communication is as follows:
 
@@ -763,22 +642,7 @@ Inter-node communication is as follows:
 
 ### External Communication
 
-```mermaid
-graph LR
-    classDef external fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef service fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-
-    C[External Client] --> API[kube-apiserver]
-    C --> SVC[Service/Ingress]
-    SVC --> P[Pod]
-
-    class C external;
-    class API apiserver;
-    class SVC service;
-    class P pod;
-```
+![Architecture diagram showing an external client reaching the kube-apiserver directly for cluster management, and reaching application traffic through a Service or Ingress into a pod.](../.gitbook/assets/en-core-01-cluster-architecture-5.png)
 
 Communication with external entities is as follows:
 
@@ -830,48 +694,11 @@ High availability of the control plane is implemented through the following meth
 
 **High Availability Control Plane Architecture**:
 
-```mermaid
-graph TD
-    classDef loadbalancer fill:#ffecb3,stroke:#f9a825,stroke-width:2px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef component fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-
-    LB[Load Balancer] --> CP1[Control Plane 1]
-    LB --> CP2[Control Plane 2]
-    LB --> CP3[Control Plane 3]
-
-    CP1 --> API1[kube-apiserver]
-    CP1 --> ETCD1[etcd]
-    CP1 --> SCHED1[kube-scheduler]
-    CP1 --> CTRL1[kube-controller-manager]
-
-    CP2 --> API2[kube-apiserver]
-    CP2 --> ETCD2[etcd]
-    CP2 --> SCHED2[kube-scheduler]
-    CP2 --> CTRL2[kube-controller-manager]
-
-    CP3 --> API3[kube-apiserver]
-    CP3 --> ETCD3[etcd]
-    CP3 --> SCHED3[kube-scheduler]
-    CP3 --> CTRL3[kube-controller-manager]
-
-    class LB loadbalancer;
-    class CP1,CP2,CP3 controlplane;
-    class API1,API2,API3,ETCD1,ETCD2,ETCD3,SCHED1,SCHED2,SCHED3,CTRL1,CTRL2,CTRL3 component;
-```
+![Architecture diagram showing a load balancer distributing traffic across three replicated control plane nodes, each running its own kube-apiserver, etcd, kube-scheduler, and kube-controller-manager.](../.gitbook/assets/en-core-01-cluster-architecture-6.png)
 
 **etcd Cluster Configuration**:
 
-```mermaid
-graph LR
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-
-    E1[etcd Node 1] <==> E2[etcd Node 2]
-    E2 <==> E3[etcd Node 3]
-    E3 <==> E1
-
-    class E1,E2,E3 etcd;
-```
+![Architecture diagram showing three etcd nodes forming a ring, each pair connected bidirectionally to replicate state via the Raft consensus protocol.](../.gitbook/assets/en-core-01-cluster-architecture-7.png)
 
 ### Worker Node High Availability
 
@@ -884,23 +711,7 @@ High availability of worker nodes is implemented through the following methods:
 
 **Worker Node Distributed Deployment**:
 
-```mermaid
-graph TD
-    classDef az fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,stroke-dasharray:5 5;
-    classDef node fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-
-    AZ1[Availability Zone A] --> WN1[Worker Node]
-    AZ1 --> WN2[Worker Node]
-
-    AZ2[Availability Zone B] --> WN3[Worker Node]
-    AZ2 --> WN4[Worker Node]
-
-    AZ3[Availability Zone C] --> WN5[Worker Node]
-    AZ3 --> WN6[Worker Node]
-
-    class AZ1,AZ2,AZ3 az;
-    class WN1,WN2,WN3,WN4,WN5,WN6 node;
-```
+![Architecture diagram showing worker nodes spread two-per-zone across three availability zones for fault isolation.](../.gitbook/assets/en-core-01-cluster-architecture-8.png)
 
 ### Application High Availability
 
@@ -1211,25 +1022,7 @@ Kubernetes storage architecture consists of the following components:
 
 **Storage Architecture Flow**:
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef volume fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-    classDef pvc fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pv fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-
-    POD[Pod] --> VOL[Volume Mount]
-    VOL --> PVC[PVC]
-    PVC --> PV[PV]
-    PV --> STORAGE[Actual Storage<br>CSI Driver]
-
-    class POD pod;
-    class VOL volume;
-    class PVC pvc;
-    class PV pv;
-    class STORAGE storage;
-```
+![Architecture diagram showing a pod's volume mount resolving through a PVC and PV to the actual storage backend via a CSI driver.](../.gitbook/assets/en-core-01-cluster-architecture-9.png)
 
 ### Volume Types
 
@@ -1328,22 +1121,7 @@ CSI provides a standard interface between Kubernetes and storage systems. Throug
 
 **CSI Architecture**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef csi fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef driver fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-
-    K8S[Kubernetes] --> CSI[Container Storage Interface]
-    CSI --> DRIVER[CSI Driver<br>e.g., AWS EBS CSI Driver]
-    DRIVER --> STORAGE[Storage System<br>e.g., AWS EBS]
-
-    class K8S k8s;
-    class CSI csi;
-    class DRIVER driver;
-    class STORAGE storage;
-```
+![Architecture diagram showing Kubernetes calling the Container Storage Interface, which delegates to a vendor CSI driver that provisions the underlying storage system.](../.gitbook/assets/en-core-01-cluster-architecture-10.png)
 
 **CSI Driver Deployment Example**:
 ```yaml
@@ -1797,48 +1575,7 @@ EKS clusters consist of the following components:
 
 **EKS Architecture Diagram**:
 
-```mermaid
-graph TD
-    classDef aws fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px;
-    classDef eks fill:#fce4ec,stroke:#c2185b,stroke-width:1px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef nodes fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef services fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef network fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px;
-
-    AWS[AWS Cloud] --> CP[EKS Control Plane<br>AWS Managed]
-    AWS --> WN[Worker Nodes]
-    AWS --> AWSS[AWS Services]
-    AWS --> VPC[VPC & Networking]
-
-    CP --> API[kube-apiserver]
-    CP --> ETCD[etcd]
-    CP --> SCHED[kube-scheduler]
-    CP --> CTRL[kube-controller-manager]
-
-    WN --> NG1[Node Group 1<br>EC2 instances]
-    WN --> NG2[Node Group 2<br>EC2 instances]
-    WN --> FG[Fargate Profile<br>Serverless]
-
-    AWSS --> IAM[IAM]
-    AWSS --> ECR[ECR]
-    AWSS --> ELB[ELB/ALB/NLB]
-    AWSS --> EBS[EBS/EFS/FSx]
-    AWSS --> CW[CloudWatch]
-
-    VPC --> VPCM[VPC]
-    VPC --> SN[Subnets]
-    VPC --> SG[Security Groups]
-    VPC --> RT[Route Tables]
-    VPC --> CNI[VPC CNI]
-
-    class AWS aws;
-    class CP controlplane;
-    class WN nodes;
-    class AWSS,IAM,ECR,ELB,EBS,CW services;
-    class VPC,VPCM,SN,SG,RT,CNI network;
-    class API,ETCD,SCHED,CTRL,NG1,NG2,FG eks;
-```
+![Architecture diagram showing AWS Cloud hosting a managed EKS control plane, customer-operated worker nodes, and the supporting AWS services and VPC networking that the cluster depends on.](../.gitbook/assets/en-core-01-cluster-architecture-11.png)
 
 ### EKS Control Plane
 

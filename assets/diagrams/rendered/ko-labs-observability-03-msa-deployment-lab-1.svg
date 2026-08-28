@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="canary-state-title canary-state-desc">
+    <title id="canary-state-title">캐너리 롤아웃 상태 머신</title>
+    <desc id="canary-state-desc">v2 배포 후 트래픽 비중을 20%에서 100%까지 단계적으로 올리며 두 지점에서 분석 게이트를 통과해야 다음 단계로 진행하고, 실패하면 즉시 v1으로 롤백하는 흐름을 보여준다.</desc>
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows (before nodes) ===== -->
+
+    <!-- start -> SetWeight20 -->
+    <path d="M50,112 H100" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- SetWeight20 -> Pause30s -->
+    <path d="M268,112 H320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Pause30s -> Analysis1 -->
+    <path d="M488,112 H540" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Analysis1 -> SetWeight40 (pass) -->
+    <path d="M708,112 H760" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Analysis1 -> Rollback (fail, down) -->
+    <path d="M624,144 V236 Q624,244 632,244 H700" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+    <!-- SetWeight40 -> SetWeight60 (down-left, row change) -->
+    <path d="M760,144 V172 Q760,180 752,180 H288 Q280,180 280,188 V212" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- SetWeight60 -> SetWeight80 -->
+    <path d="M168,252 V292" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- SetWeight80 -> Analysis2 -->
+    <path d="M100,364 V388 Q100,396 108,396 H320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Analysis2 -> Promote100 (pass) -->
+    <path d="M488,396 H540" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Analysis2 -> Rollback (fail, up) -->
+    <path d="M624,364 V284 Q624,276 632,276 H700" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+    <!-- Promote100 -> end -->
+    <path d="M708,396 H860 Q868,396 868,388 V320" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- Rollback -> end -->
+    <path d="M868,236 V196 Q868,188 876,188 H900 Q908,188 908,196 V320" fill="none" stroke="#EC7211" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+
+    <!-- ===== Arrow labels ===== -->
+    <rect x="52" y="94" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="72" y="103" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">DEPLOY</text>
+
+    <rect x="270" y="94" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="286" y="103" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">20%</text>
+
+    <rect x="494" y="94" width="44" height="12" rx="2" fill="#ffffff"/>
+    <text x="516" y="103" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">WAIT 30S</text>
+
+    <rect x="712" y="94" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="729" y="103" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PASS</text>
+
+    <rect x="638" y="182" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="654" y="191" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">FAIL</text>
+
+    <rect x="500" y="174" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="516" y="183" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">40%</text>
+
+    <rect x="150" y="264" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="166" y="273" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">60%</text>
+
+    <rect x="120" y="386" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="136" y="395" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">80%</text>
+
+    <rect x="496" y="384" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="513" y="393" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">PASS</text>
+
+    <rect x="638" y="266" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="654" y="275" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">FAIL</text>
+
+    <rect x="792" y="382" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="820" y="391" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">100% V2</text>
+
+    <rect x="878" y="248" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="906" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">100% V1</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- start dot -->
+    <circle cx="40" cy="112" r="6" fill="#232F3E"/>
+
+    <!-- SetWeight20 -->
+    <rect x="100" y="80" width="168" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="184" y="106" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SetWeight20</text>
+    <text x="184" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary weight=20</text>
+
+    <!-- Pause30s -->
+    <rect x="320" y="80" width="168" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="404" y="106" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pause30s</text>
+    <text x="404" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pause: 30s</text>
+
+    <!-- Analysis1 (dashed gate) -->
+    <rect x="540" y="80" width="168" height="64" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="624" y="106" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analysis1</text>
+    <text x="624" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">success&#8805;0.95, p99&lt;2s</text>
+
+    <!-- SetWeight40 -->
+    <rect x="760" y="80" width="168" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="844" y="106" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SetWeight40</text>
+    <text x="844" y="124" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary weight=40</text>
+
+    <!-- SetWeight60 -->
+    <rect x="100" y="188" width="168" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="184" y="214" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SetWeight60</text>
+    <text x="184" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary weight=60</text>
+
+    <!-- SetWeight80 -->
+    <rect x="100" y="300" width="168" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="184" y="326" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SetWeight80</text>
+    <text x="184" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary weight=80</text>
+
+    <!-- Analysis2 (dashed gate) -->
+    <rect x="320" y="364" width="168" height="64" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="404" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Analysis2</text>
+    <text x="404" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AnalysisRun gate</text>
+
+    <!-- Promote100 -->
+    <rect x="540" y="364" width="168" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="624" y="390" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Promote100</text>
+    <text x="624" y="408" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary weight=100</text>
+
+    <!-- Rollback (accent / focal) -->
+    <rect x="700" y="212" width="168" height="64" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="784" y="238" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rollback</text>
+    <text x="784" y="256" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">abort to v1</text>
+
+    <!-- end ring dot -->
+    <circle cx="868" cy="320" r="8" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+    <circle cx="868" cy="320" r="5" fill="#232F3E"/>
+    <circle cx="908" cy="320" r="8" fill="none" stroke="#232F3E" stroke-width="1.2"/>
+    <circle cx="908" cy="320" r="5" fill="#232F3E"/>
+
+    <!-- Legend -->
+    <line x1="30" y1="428" x2="930" y2="428" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="448" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.12em">LEGEND</text>
+
+    <rect x="130" y="440" width="20" height="14" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="158" y="450" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">분석 게이트</text>
+
+    <rect x="330" y="440" width="20" height="14" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="358" y="450" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">롤백 상태</text>
+
+    <line x1="530" y1="447" x2="558" y2="447" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="566" y="450" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">실패 경로</text>
+  </svg>

@@ -71,69 +71,7 @@ spec:
 
 ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 이루어져 있습니다:
 
-```mermaid
-flowchart TB
-    subgraph External ["외부 시스템"]
-        Git[Git Repository]
-        Helm[Helm Repository]
-        OCI[OCI Registry]
-        IDP[Identity Provider]
-    end
-
-    subgraph ArgoCD ["ArgoCD 컴포넌트"]
-        subgraph Core ["Core"]
-            API[API Server]
-            Controller[Application Controller]
-            RepoServer[Repo Server]
-        end
-
-        subgraph UI ["Interface"]
-            WebUI[Web UI]
-            CLI[CLI]
-        end
-
-        subgraph Storage ["Storage"]
-            Redis[Redis Cache]
-        end
-
-        subgraph Optional ["Optional"]
-            Dex[Dex - SSO]
-            Notifications[Notifications Controller]
-            AppSet[ApplicationSet Controller]
-        end
-    end
-
-    subgraph Clusters ["Kubernetes Clusters"]
-        Cluster1[클러스터 1]
-        Cluster2[클러스터 2]
-        ClusterN[클러스터 N]
-    end
-
-    Git --> RepoServer
-    Helm --> RepoServer
-    OCI --> RepoServer
-    IDP --> Dex
-    Dex --> API
-
-    WebUI --> API
-    CLI --> API
-
-    RepoServer --> Redis
-    RepoServer --> Controller
-    Controller --> API
-
-    Controller -->|동기화| Cluster1
-    Controller -->|동기화| Cluster2
-    Controller -->|동기화| ClusterN
-
-    AppSet --> Controller
-    Notifications --> Controller
-
-    style Core fill:#EB6E85,stroke:#333,color:#fff
-    style UI fill:#4A90D9,stroke:#333,color:#fff
-    style Storage fill:#50C878,stroke:#333,color:#fff
-    style Optional fill:#FFB347,stroke:#333,color:#fff
-```
+![외부 Git·Helm·OCI 저장소와 인증 시스템이 ArgoCD의 리포 서버·애플리케이션 컨트롤러·API 서버를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-0.png)
 
 ### 핵심 컴포넌트
 
@@ -149,30 +87,7 @@ flowchart TB
 
 ### 데이터 흐름
 
-```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant API as API Server
-    participant Repo as Repo Server
-    participant Controller as App Controller
-    participant K8s as Kubernetes
-    participant Git as Git Repo
-
-    User->>API: Application 생성/수정
-    API->>Controller: Application 이벤트
-    Controller->>Repo: 매니페스트 요청
-    Repo->>Git: 소스 가져오기
-    Git-->>Repo: 매니페스트
-    Repo->>Repo: 렌더링 (Helm/Kustomize)
-    Repo-->>Controller: 렌더링된 매니페스트
-    Controller->>K8s: 현재 상태 조회
-    K8s-->>Controller: 라이브 상태
-    Controller->>Controller: 차이점 비교
-    Controller->>K8s: 동기화 적용
-    K8s-->>Controller: 결과
-    Controller->>API: 상태 업데이트
-    API-->>User: 동기화 완료
-```
+![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-1.png)
 
 ## 핵심 개념
 
@@ -313,21 +228,7 @@ spec:
 
 ### Kubernetes 호환성
 
-```mermaid
-gantt
-    title ArgoCD 버전별 Kubernetes 지원
-    dateFormat YYYY-MM
-    axisFormat %Y
-
-    section ArgoCD 2.13
-    K8s 1.27-1.31    :2024-01, 2025-06
-
-    section ArgoCD 2.12
-    K8s 1.26-1.30    :2023-09, 2025-03
-
-    section ArgoCD 2.11
-    K8s 1.26-1.30    :2023-06, 2024-12
-```
+![ArgoCD 2.11, 2.12, 2.13 세 버전의 Kubernetes 지원 기간이 2024년 하반기에 세 버전 모두 겹치는 구간을 두고 순차적으로 이어지는 것을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-2.png)
 
 ## 하위 가이드
 
@@ -348,47 +249,7 @@ gantt
 
 ### 학습 경로
 
-```mermaid
-flowchart LR
-    subgraph 초급 ["초급"]
-        A[01. 설치]
-    end
-
-    subgraph 중급 ["중급"]
-        B[02. Applications]
-        C[03. 동기화 전략]
-        D[06. RBAC]
-        E[07. 보안]
-        F[08. 알림]
-    end
-
-    subgraph 고급 ["고급"]
-        G[04. ApplicationSets]
-        H[05. 트래픽 관리]
-        I[09. 모범 사례]
-    end
-
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    B --> G
-    C --> H
-    F --> I
-    G --> I
-    H --> I
-
-    style A fill:#90EE90,stroke:#333
-    style B fill:#FFD700,stroke:#333
-    style C fill:#FFD700,stroke:#333
-    style D fill:#FFD700,stroke:#333
-    style E fill:#FFD700,stroke:#333
-    style F fill:#FFD700,stroke:#333
-    style G fill:#FF6B6B,stroke:#333,color:#fff
-    style H fill:#FF6B6B,stroke:#333,color:#fff
-    style I fill:#FF6B6B,stroke:#333,color:#fff
-```
+![초급 설치 문서에서 시작해 중급 단계인 Applications·동기화 전략·RBAC·보안·알림을 거쳐, 고급 단계인 ApplicationSets·트래픽 관리·모범 사례로 이어지는 ArgoCD 문서 학습 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-3.png)
 
 ## 빠른 시작
 

@@ -19,46 +19,7 @@ NLB는 Layer 4 (TCP/UDP) 로드 밸런서로, 높은 성능과 낮은 지연시�
 
 #### NLB 아키텍처
 
-```mermaid
-flowchart TB
-    Client[클라이언트]
-
-    subgraph AWS["AWS 클라우드"]
-        NLB[Network Load Balancer<br/>Layer 4]
-
-        subgraph EKS["EKS 클러스터"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1<br/>Envoy Proxy]
-                IGW2[Gateway Pod 2<br/>Envoy Proxy]
-            end
-
-            subgraph Apps["애플리케이션"]
-                App1[Service A<br/>Pod]
-                App2[Service B<br/>Pod]
-            end
-        end
-    end
-
-    Client -->|HTTPS 요청| NLB
-    NLB -->|TCP 443| IGW1
-    NLB -->|TCP 443| IGW2
-    IGW1 -->|HTTP/HTTPS| App1
-    IGW1 -->|HTTP/HTTPS| App2
-    IGW2 -->|HTTP/HTTPS| App1
-    IGW2 -->|HTTP/HTTPS| App2
-
-    %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Client default;
-    class NLB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
+![클라이언트의 HTTPS 요청이 Network Load Balancer를 거쳐 Istio Ingress Gateway 두 파드로 분산되고, 각 게이트웨이가 클러스터 내부 서비스로 라우팅되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-0.png)
 
 #### NLB 설정
 
@@ -192,46 +153,7 @@ ALB는 Layer 7 (HTTP/HTTPS) 로드 밸런서로, 고급 라우팅 기능이 필�
 
 #### ALB 아키텍처
 
-```mermaid
-flowchart TB
-    Client[클라이언트]
-
-    subgraph AWS["AWS 클라우드"]
-        ALB[Application Load Balancer<br/>Layer 7]
-
-        subgraph EKS["EKS 클러스터"]
-            subgraph IstioGW["Istio Ingress Gateway"]
-                IGW1[Gateway Pod 1]
-                IGW2[Gateway Pod 2]
-            end
-
-            subgraph Apps["애플리케이션"]
-                App1[Service A]
-                App2[Service B]
-            end
-        end
-    end
-
-    Client -->|HTTPS| ALB
-    ALB -->|HTTP/2| IGW1
-    ALB -->|HTTP/2| IGW2
-    IGW1 -->|내부 라우팅| App1
-    IGW1 -->|내부 라우팅| App2
-    IGW2 -->|내부 라우팅| App1
-    IGW2 -->|내부 라우팅| App2
-
-    %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Client default;
-    class ALB awsService;
-    class IGW1,IGW2 k8sComponent;
-    class App1,App2 userApp;
-```
+![클라이언트의 HTTPS 요청이 Application Load Balancer를 거쳐 Istio Ingress Gateway 두 파드로 분산되고, 각 게이트웨이가 클러스터 내부 서비스로 라우팅되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-1.png)
 
 #### ALB 설정
 
@@ -357,48 +279,7 @@ VPC Lattice는 AWS의 관리형 애플리케이션 네트워킹 서비스입니�
 
 #### 아키텍처 비교
 
-```mermaid
-flowchart TB
-    subgraph Istio["Istio 아키텍처"]
-        direction TB
-        ICP[istiod<br/>Control Plane]
-
-        subgraph IPods["파드들"]
-            IA1[App<br/>+ Envoy]
-            IA2[App<br/>+ Envoy]
-        end
-
-        ICP -.->|구성| IA1
-        ICP -.->|구성| IA2
-        IA1 <-->|mTLS| IA2
-    end
-
-    subgraph VPCLattice["VPC Lattice 아키텍처"]
-        direction TB
-        LSN[Service Network<br/>관리형 서비스]
-
-        subgraph LPods["파드들"]
-            LA1[App<br/>사이드카 없음]
-            LA2[App<br/>사이드카 없음]
-        end
-
-        LA1 -->|HTTP| LSN
-        LA2 -->|HTTP| LSN
-        LSN -->|라우팅| LA1
-        LSN -->|라우팅| LA2
-    end
-
-    %% 스타일 정의
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class ICP controlPlane;
-    class IA1,IA2 k8sComponent;
-    class LSN controlPlane;
-    class LA1,LA2 userApp;
-```
+![Istio는 istiod가 사이드카 Envoy를 구성해 파드 간 mTLS를 직접 맺는 구조이고, VPC Lattice는 사이드카 없이 관리형 Service Network가 애플리케이션 간 트래픽을 중계하는 구조임을 대비해서 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-2.png)
 
 #### 기능 비교
 
@@ -515,44 +396,7 @@ spec:
 
 두 솔루션은 상호 배타적이지 않으며, 함께 사용할 수 있습니다:
 
-```mermaid
-flowchart TB
-    subgraph Account1["AWS 계정 1"]
-        subgraph EKS1["EKS 클러스터 1 (Istio)"]
-            Istiod1[istiod]
-            App1[Service A<br/>+ Envoy]
-            App2[Service B<br/>+ Envoy]
-
-            Istiod1 -.->|구성| App1
-            Istiod1 -.->|구성| App2
-        end
-    end
-
-    subgraph Account2["AWS 계정 2"]
-        subgraph EKS2["EKS 클러스터 2"]
-            App3[Service C<br/>사이드카 없음]
-        end
-
-        Lambda[Lambda<br/>함수]
-    end
-
-    VPCLattice[VPC Lattice<br/>Service Network]
-
-    App1 <-->|내부 mTLS| App2
-    App1 -->|VPC Lattice| VPCLattice
-    VPCLattice -->|라우팅| App3
-    VPCLattice -->|라우팅| Lambda
-
-    %% 스타일 정의
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Istiod1,VPCLattice controlPlane;
-    class App1,App2 k8sComponent;
-    class App3,Lambda userApp;
-```
+![AWS 계정 1의 EKS 클러스터에서는 istiod가 사이드카를 구성해 서비스 간 mTLS를 맺고, 이 클러스터가 VPC Lattice Service Network를 통해 다른 계정의 사이드카 없는 서비스 및 Lambda 함수로 라우팅되는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-04-aws-integration-3.png)
 
 **사용 사례:**
 

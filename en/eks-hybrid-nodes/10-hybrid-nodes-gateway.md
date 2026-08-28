@@ -70,45 +70,7 @@ The gateway transforms what was a complex, error-prone, multi-team networking ch
 
 The EKS Hybrid Nodes Gateway sits at the boundary between your VPC and your on-premises network, acting as a VXLAN-based bridge for Pod traffic. The following diagram illustrates the overall architecture:
 
-```mermaid
-graph TB
-    subgraph AWS Cloud
-        subgraph VPC ["VPC (10.0.0.0/16)"]
-            subgraph EKS_CP ["EKS Control Plane"]
-                API["API Server"]
-                ETCD["etcd"]
-            end
-            subgraph Cloud_Nodes ["Cloud Nodes (VPC CNI)"]
-                CN1["Cloud Node 1<br/>Pod CIDR: 10.0.64.0/24"]
-                CN2["Cloud Node 2<br/>Pod CIDR: 10.0.65.0/24"]
-            end
-            subgraph Gateway_Nodes ["Gateway Nodes (EC2)"]
-                GW1["Gateway Pod (Leader)<br/>hybrid_vxlan0<br/>VNI 2, UDP 8472"]
-                GW2["Gateway Pod (Standby)<br/>hybrid_vxlan0<br/>VNI 2, UDP 8472"]
-            end
-            RT["VPC Route Table<br/>10.100.0.0/24 → GW1 ENI<br/>10.100.1.0/24 → GW1 ENI"]
-        end
-    end
-
-    subgraph On_Premises ["On-Premises Data Center"]
-        subgraph Hybrid_Nodes ["Hybrid Nodes (Cilium CNI)"]
-            HN1["Hybrid Node 1<br/>Pod CIDR: 10.100.0.0/24<br/>cilium_vxlan"]
-            HN2["Hybrid Node 2<br/>Pod CIDR: 10.100.1.0/24<br/>cilium_vxlan"]
-        end
-    end
-
-    API <--> |"Control Plane ENIs"| CN1
-    API <--> |"Control Plane ENIs"| HN1
-    CN1 <--> |"VPC Native"| CN2
-    GW1 <--> |"VXLAN Tunnel<br/>VNI 2, UDP 8472"| HN1
-    GW1 <--> |"VXLAN Tunnel<br/>VNI 2, UDP 8472"| HN2
-    RT --> GW1
-    GW1 -.-> |"Lease Election"| GW2
-
-    style GW1 fill:#ff9900,color:#000
-    style GW2 fill:#ffcc80,color:#000
-    style RT fill:#3F89A1,color:#fff
-```
+![Architecture diagram showing a leader gateway pod in the AWS VPC bridging cloud nodes and the EKS control plane to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering pod traffic to the leader's ENI.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
 
 ### VXLAN Tunnel Mechanics
 
@@ -242,28 +204,7 @@ The standby pod:
 
 One of the gateway's most valuable features is automatic VPC route table management. The leader pod watches for Hybrid Node events and programs routes accordingly.
 
-```mermaid
-sequenceDiagram
-    participant HN as Hybrid Node
-    participant K8s as Kubernetes API
-    participant GW as Gateway (Leader)
-    participant VPC as VPC Route Table
-
-    HN->>K8s: Node joins cluster (NodeReady)
-    K8s->>GW: Watch event: new hybrid node
-    GW->>GW: Program FDB entry for node
-    GW->>GW: Program ARP entry for node
-    GW->>GW: Program local route for node Pod CIDR
-    GW->>VPC: ec2:CreateRoute (Pod CIDR → leader ENI)
-    Note over VPC: Route: 10.100.0.0/24 → eni-abc123
-
-    HN->>K8s: Node leaves cluster
-    K8s->>GW: Watch event: node removed
-    GW->>GW: Remove FDB entry
-    GW->>GW: Remove ARP entry
-    GW->>GW: Remove local route
-    GW->>VPC: ec2:DeleteRoute (Pod CIDR)
-```
+![Sequence diagram showing the leader gateway watching Kubernetes node events, then programming or removing FDB, ARP, and local route entries and reflecting the change into the VPC route table, symmetrically for a hybrid node joining and leaving the cluster.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
 
 The gateway uses the EC2 API to manage routes:
 
@@ -279,33 +220,7 @@ The gateway uses the EC2 API to manage routes:
 
 The following diagram shows how all components interact:
 
-```mermaid
-graph LR
-    subgraph Control_Plane ["Control Plane Interactions"]
-        GW_Pod["Gateway Pod"]
-        K8s_API["Kubernetes API"]
-        Lease["Lease Resource"]
-        VTEP["CiliumVTEPConfig"]
-        Nodes["Node Resources"]
-    end
-
-    subgraph Data_Plane ["Data Plane Interactions"]
-        GW_VXLAN["hybrid_vxlan0"]
-        VPC_RT["VPC Route Table"]
-        Cilium["Cilium Agent<br/>(Hybrid Node)"]
-        EC2_ENI["Gateway EC2 ENI"]
-    end
-
-    GW_Pod --> |"Leader election"| Lease
-    GW_Pod --> |"Watch nodes"| Nodes
-    GW_Pod --> |"Create/update"| VTEP
-    GW_Pod --> |"Manage"| GW_VXLAN
-    GW_Pod --> |"EC2 API"| VPC_RT
-    VTEP --> |"Read by"| Cilium
-    GW_VXLAN <--> |"VXLAN tunnel"| Cilium
-    VPC_RT --> |"Routes traffic to"| EC2_ENI
-    EC2_ENI --> |"Forwards to"| GW_VXLAN
-```
+![Architecture diagram showing the gateway pod as the hub that holds a leader-election lease, watches node resources, and updates CiliumVTEPConfig and the VPC route table, which drive a data plane where the hybrid_vxlan0 interface tunnels to a Cilium agent and an EC2 ENI forwards VPC-routed traffic into that tunnel.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
 
 ---
 
@@ -1093,26 +1008,7 @@ Understanding how traffic flows through the gateway is essential for troubleshoo
 
 This is the most common pattern --- a Pod running on a cloud node in the VPC needs to communicate with a Pod running on a hybrid node on-premises.
 
-```mermaid
-sequenceDiagram
-    participant CP as Cloud Pod<br/>(10.0.64.15)
-    participant VPC_RT as VPC Route Table
-    participant GW_ENI as Gateway ENI<br/>(10.0.1.100)
-    participant GW_VXLAN as Gateway<br/>hybrid_vxlan0
-    participant NET as Direct Connect /<br/>VPN
-    participant HN_VXLAN as Hybrid Node<br/>cilium_vxlan
-    participant HP as Hybrid Pod<br/>(10.100.0.42)
-
-    CP->>VPC_RT: dst: 10.100.0.42
-    Note over VPC_RT: Match: 10.100.0.0/24<br/>→ eni (GW leader)
-    VPC_RT->>GW_ENI: Forward to gateway ENI
-    GW_ENI->>GW_VXLAN: Route via hybrid_vxlan0
-    Note over GW_VXLAN: VXLAN encap:<br/>VNI=2, dst=HN IP<br/>outer UDP 8472
-    GW_VXLAN->>NET: Encapsulated packet
-    NET->>HN_VXLAN: Arrives at hybrid node
-    Note over HN_VXLAN: VXLAN decap:<br/>Inner dst=10.100.0.42
-    HN_VXLAN->>HP: Deliver to Pod
-```
+![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
 
 **Step-by-step packet flow:**
 
@@ -1129,25 +1025,7 @@ sequenceDiagram
 
 When a Pod on a hybrid node needs to reach a Pod (or any IP) in the VPC.
 
-```mermaid
-sequenceDiagram
-    participant HP as Hybrid Pod<br/>(10.100.0.42)
-    participant Cilium as Cilium Agent<br/>(Hybrid Node)
-    participant NET as Direct Connect /<br/>VPN
-    participant GW_VXLAN as Gateway<br/>hybrid_vxlan0
-    participant GW_ENI as Gateway ENI<br/>(10.0.1.100)
-    participant VPC as VPC Network
-    participant CP as Cloud Pod<br/>(10.0.64.15)
-
-    HP->>Cilium: dst: 10.0.64.15
-    Note over Cilium: BPF VTEP lookup:<br/>10.0.0.0/16 → GW IP<br/>VXLAN encap VNI=2
-    Cilium->>NET: Encapsulated packet
-    NET->>GW_VXLAN: Arrives at gateway
-    Note over GW_VXLAN: VXLAN decap:<br/>Inner dst=10.0.64.15
-    GW_VXLAN->>GW_ENI: Forward to VPC via ENI
-    GW_ENI->>VPC: Native VPC routing
-    VPC->>CP: Deliver to Pod
-```
+![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
 
 **Step-by-step packet flow:**
 
@@ -1253,59 +1131,13 @@ VPC Pod → Hybrid Pod:
 
 The recommended production deployment uses 2 gateway replicas spread across Availability Zones:
 
-```mermaid
-graph TB
-    subgraph AZ_A ["Availability Zone A"]
-        GW1["Gateway Pod 1 (Leader)<br/>Node: ip-10-0-1-100<br/>ENI: eni-abc123"]
-    end
-
-    subgraph AZ_B ["Availability Zone B"]
-        GW2["Gateway Pod 2 (Standby)<br/>Node: ip-10-0-2-200<br/>ENI: eni-def456"]
-    end
-
-    Lease["Kubernetes Lease<br/>holder: gateway-pod-1"]
-    VTEP["CiliumVTEPConfig<br/>vtepIPs: [10.0.1.100]"]
-    RT["VPC Route Table<br/>10.100.0.0/20 → eni-abc123"]
-
-    GW1 -->|"Holds"| Lease
-    GW1 -->|"Manages"| VTEP
-    GW1 -->|"Programs"| RT
-    GW2 -.->|"Monitors"| Lease
-
-    style GW1 fill:#ff9900,color:#000
-    style GW2 fill:#ffcc80,color:#000
-```
+![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
 
 ### Failover Sequence
 
 When the leader gateway pod becomes unavailable (node failure, pod crash, network partition), the following failover sequence occurs:
 
-```mermaid
-sequenceDiagram
-    participant GW1 as Gateway Pod 1<br/>(Leader)
-    participant Lease as Kubernetes Lease
-    participant GW2 as Gateway Pod 2<br/>(Standby)
-    participant VTEP as CiliumVTEPConfig
-    participant RT as VPC Route Table
-
-    Note over GW1: Node failure / Pod crash
-    GW1-xLease: Cannot renew lease
-
-    Note over Lease: Lease expires after<br/>leaseDuration (15s)
-
-    GW2->>Lease: Acquire lease (retryPeriod: 2s)
-    Note over GW2: Becomes new leader
-
-    par Update CiliumVTEPConfig
-        GW2->>VTEP: Update vtepIPs to [10.0.2.200]
-        Note over VTEP: Cilium agents update<br/>BPF maps (1-5s)
-    and Update VPC Routes
-        GW2->>RT: ec2:ReplaceRoute<br/>10.100.0.0/20 → eni-def456
-        Note over RT: API call latency (1-3s)
-    end
-
-    Note over GW2: Failover complete<br/>Total time: ~15-25s
-```
+![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
 
 ### Failover Timeline
 

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lc-title lc-desc">
+  <title id="lc-title">ECR lifecycle policy evaluation order</title>
+  <desc id="lc-desc">Flowchart showing how an ECR lifecycle policy evaluates an image against ranked rules (SemVer tags, dev/staging tags, untagged), applies the first matching rule, then expires the image only if it exceeds that rule's retention threshold, otherwise retaining it.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <text x="40" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">CONTAINER REGISTRY</text>
+  <text x="40" y="68" fill="#232F3E" font-size="24" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Lifecycle policy evaluation</text>
+
+  <!-- Arrows (drawn before boxes) -->
+  <!-- Start -> D1 -->
+  <path d="M200,148 V196" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- D1 Yes -> Apply (straight, shared y) -->
+  <path d="M324,252 H444" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="366" y="232" width="36" height="12" rx="2" fill="#ffffff"/>
+  <text x="384" y="241" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MATCH</text>
+
+  <!-- D1 No -> Retained (straight, shared x) -->
+  <path d="M200,308 V412" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="212" y="354" width="66" height="12" rx="2" fill="#ffffff"/>
+  <text x="245" y="363" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO MATCH</text>
+
+  <!-- Apply -> D2 (straight, shared x) -->
+  <path d="M532,276 V316" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- D2 Yes -> Expired (straight, shared x, accent) -->
+  <path d="M532,428 V468" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="544" y="436" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="572" y="445" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXCEEDS</text>
+
+  <!-- D2 No -> Retained (elbow, left then down then left) -->
+  <path d="M408,372 H352 Q344,372 344,380 V428 Q344,436 336,436 H280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="352" y="352" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="388" y="361" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WITHIN LIMIT</text>
+
+  <!-- Start oval -->
+  <rect x="120" y="100" width="160" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="200" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Image evaluated</text>
+
+  <!-- D1 diamond -->
+  <polygon points="200,196 324,252 200,308 76,252" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="200" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rule matches a</text>
+  <text x="200" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">lifecycle policy?</text>
+  <text x="200" y="272" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">SEMVER · DEV/STAGING · UNTAGGED</text>
+
+  <!-- Apply rect -->
+  <rect x="444" y="228" width="176" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="532" y="250" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Apply matched rule</text>
+  <text x="532" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">highest priority wins</text>
+
+  <!-- D2 diamond (accent, most consequential decision) -->
+  <polygon points="532,316 656,372 532,428 408,372" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="532" y="360" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Exceeds retention</text>
+  <text x="532" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">threshold?</text>
+
+  <!-- Retained oval -->
+  <rect x="120" y="412" width="160" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="200" y="440" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Image retained</text>
+
+  <!-- Expired oval (accent end state) -->
+  <rect x="452" y="468" width="160" height="48" rx="24" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="532" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Image expired</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="566" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <polygon points="180,560 190,566 180,572 170,566" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="200" y="569" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">DECISION</text>
+  <rect x="300" y="560" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="324" y="569" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">RETENTION CHECK (MOST CONSEQUENTIAL)</text>
+</svg>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-11-eks-advanced-debugging-1-title en-eks-11-eks-advanced-debugging-1-desc">
+<title id="en-eks-11-eks-advanced-debugging-1-title">NotReady Node Decision Tree</title>
+<desc id="en-eks-11-eks-advanced-debugging-1-desc">Decision-tree flowchart for diagnosing a NotReady EKS node: it walks down through EC2 instance status, kubelet health, network connectivity, and disk/memory pressure, ending at containerd runtime health, routing the responder to the matching remediation action at each step.</desc>
+<defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="240" y1="56" x2="240" y2="92" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="304" y1="124" x2="540" y2="124" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="463.5" y="104" width="61" height="12" rx="2" fill="#ffffff"/>
+<text x="494" y="113" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">STOPPED</text>
+<line x1="240" y1="156" x2="240" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="248" y="162" width="61" height="12" rx="2" fill="#ffffff"/>
+<text x="278.5" y="171" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RUNNING</text>
+<line x1="304" y1="212" x2="540" y2="212" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="481.0" y="192" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="494" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="240" y1="244" x2="240" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="248" y="250" width="33" height="12" rx="2" fill="#ffffff"/>
+<text x="264.5" y="259" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="304" y1="300" x2="540" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="481.0" y="280" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="494" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="240" y1="332" x2="240" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="248" y="338" width="33" height="12" rx="2" fill="#ffffff"/>
+<text x="264.5" y="347" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<path d="M 304,388 H 452 Q 460,388 460,380 V 388 Q 460,380 468,380 H 530" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="443.5" y="368" width="33" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="377" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="240" y1="420" x2="240" y2="444" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="248" y="426" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="261.0" y="435" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<path d="M 304,476 H 452 Q 460,476 460,468 V 428 Q 460,420 468,420 H 530" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="443.5" y="456" width="33" height="12" rx="2" fill="#ffffff"/>
+<text x="460" y="465" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="240" y1="508" x2="240" y2="532" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="248" y="514" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="261.0" y="523" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="280" y1="552" x2="530" y2="552" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="456.5" y="532" width="47" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="541" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ISSUE</text>
+<line x1="280" y1="576" x2="530" y2="576" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="453.0" y="584" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="595" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NORMAL</text>
+<ellipse cx="240" cy="36" rx="90.0" ry="20.0" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="240" y="40" fill="#232F3E" font-size="12" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node NotReady</text>
+<polygon points="240,92 304,124 240,156 176,124" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="240" y="128" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EC2 Status?</text>
+<polygon points="240,180 304,212 240,244 176,212" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="240" y="216" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">kubelet Running?</text>
+<polygon points="240,268 304,300 240,332 176,300" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="240" y="297" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Network</text>
+<text x="240" y="312" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Connected?</text>
+<polygon points="240,356 304,388 240,420 176,388" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="240" y="392" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Disk Pressure?</text>
+<polygon points="240,444 304,476 240,508 176,476" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="240" y="480" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Memory Pressure?</text>
+<polygon points="240,532 304,564 240,596 176,564" fill="#ffffff" stroke="#232F3E" stroke-width="1.2"/>
+<text x="240" y="561" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Container</text>
+<text x="240" y="576" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Runtime?</text>
+<rect x="540" y="92" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="540" y="92" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="550" y="100" width="30" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="565.0" y="109" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">P1</text>
+<text x="640.0" y="130" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EC2 Instance Issue</text>
+<text x="640.0" y="146" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Check ASG / Instance</text>
+<rect x="540" y="180" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="540" y="180" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="550" y="188" width="58" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="579.0" y="197" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">ACTION</text>
+<text x="640.0" y="218" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Start kubelet</text>
+<text x="640.0" y="234" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">systemctl start kubelet</text>
+<rect x="540" y="268" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="540" y="268" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="550" y="276" width="30" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="565.0" y="285" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">P2</text>
+<text x="640.0" y="306" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Network Issue</text>
+<text x="640.0" y="322" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Check SG / Routing</text>
+<rect x="530" y="356" width="220" height="88" rx="6" fill="#ffffff"/>
+<rect x="530" y="356" width="220" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="540" y="364" width="58" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="569.0" y="373" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MERGED</text>
+<text x="640.0" y="394" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resource Pressure</text>
+<text x="640.0" y="410" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">DISK → crictl rmi --prune</text>
+<text x="640.0" y="423" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">MEMORY → evict / scale up</text>
+<rect x="530" y="512" width="220" height="80" rx="6" fill="#ffffff"/>
+<rect x="530" y="512" width="220" height="80" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="540" y="520" width="58" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="569.0" y="529" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MERGED</text>
+<text x="640.0" y="550" fill="#232F3E" font-size="11.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Runtime State</text>
+<text x="640.0" y="566" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">ISSUE → restart containerd</text>
+<text x="640.0" y="579" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">NORMAL → journalctl -u kubelet</text>
+</svg>

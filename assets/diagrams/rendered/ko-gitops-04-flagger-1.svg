@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1-title t1-desc">
+<title id="t1-title">Flagger 컨트롤러 아키텍처</title>
+<desc id="t1-desc">Flagger 컨트롤러가 Canary CRD를 기반으로 쿠버네티스 리소스를 제어하고, 서비스 메시/인그레스로 트래픽을 조정하며, 메트릭 백엔드에서 성공 여부를 판정하고 결과를 알림 채널로 전달하는 구조를 보여준다.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="32" y="240" width="228" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="244" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="118" y="253" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">K8S RESOURCES</text>
+
+<rect x="700" y="48" width="228" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="716" y="52" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="776" y="61" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">METRICS</text>
+
+<rect x="700" y="432" width="228" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="716" y="436" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="776" y="445" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">ALERTING</text>
+
+<!-- Arrows (behind nodes) -->
+<!-- Flagger -> K8s resources zone -->
+<path d="M 344,336 H 320 Q 312,336 312,328 V 264 Q 312,256 304,256 H 260"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Flagger -> Traffic Management (focal) -->
+<line x1="504" y1="336" x2="580" y2="336" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- Flagger -> Metric Loader -> Metrics zone -->
+<path d="M 424,304 V 200 Q 424,192 432,192 H 620 Q 628,192 628,184 V 116 Q 628,108 636,108 H 700"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Flagger -> Webhook Caller -> Alerting zone -->
+<path d="M 424,368 V 472 Q 424,480 432,480 H 620 Q 628,480 628,488 V 496 H 700"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Canary CRD -> Flagger -->
+<path d="M 228,132 V 220 Q 228,228 236,228 H 416 Q 424,228 424,236 V 304"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels -->
+<rect x="514" y="316" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="542" y="325" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">라우팅 규칙</text>
+
+<!-- Node: Canary CRD -->
+<rect x="148" y="68" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="228" y="96" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Canary CRD</text>
+<text x="228" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">target · analysis</text>
+
+<!-- Node: Flagger (focal) -->
+<rect x="344" y="304" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="424" y="332" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Flagger</text>
+<text x="424" y="348" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">controller · loader · hook</text>
+
+<!-- Node: K8s resources (inside zone) -->
+<rect x="48" y="272" width="196" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="146" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">Deployment / SVC</text>
+<text x="146" y="314" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Primary · Canary · HPA</text>
+
+<!-- Node: Traffic Management -->
+<rect x="580" y="304" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">트래픽 관리</text>
+<text x="670" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Istio · Linkerd · Gateway API</text>
+
+<!-- Node: Metrics (inside zone) -->
+<rect x="716" y="80" width="196" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="814" y="106" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">메트릭 백엔드</text>
+<text x="814" y="122" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Prometheus · Datadog · CW</text>
+
+<!-- Node: Alerting (inside zone) -->
+<rect x="716" y="464" width="196" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="814" y="490" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">알림 채널</text>
+<text x="814" y="506" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Slack · Teams · Discord</text>
+
+<!-- Legend -->
+<line x1="32" y1="576" x2="928" y2="576" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="580" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="52" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">중심 컨트롤러 (focal)</text>
+<line x1="220" y1="586" x2="248" y2="586" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="256" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">제어/조회 흐름</text>
+</svg>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mimir-selection-title mimir-selection-desc">
+<title id="mimir-selection-title">Choosing between Mimir and VictoriaMetrics</title>
+<desc id="mimir-selection-desc">A decision tree that routes the choice of a metrics backend through Grafana-ecosystem fit, multi-tenancy needs, operational simplicity, object-storage preference, and cost versus scalability priority, converging on either Mimir or VictoriaMetrics.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ARROWS ============ -->
+
+<!-- A -> B -->
+<line x1="480" y1="64" x2="480" y2="104" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- B -Yes-> C -->
+<path d="M380,140 H298 Q290,140 290,148 V216 Q290,224 282,224 H200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="312" y="164" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="326" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- B -No-> D -->
+<path d="M580,140 H662 Q670,140 670,148 V216 Q670,224 678,224 H760" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="620" y="164" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="632" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- C -No-> F (straight) -->
+<line x1="200" y1="296" x2="200" y2="344" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="212" y="308" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="224" y="317" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- D -No-> H (straight) -->
+<line x1="760" y1="296" x2="760" y2="344" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="724" y="308" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="736" y="317" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- C -Yes-> E (accent, focal path) -->
+<path d="M290,260 H307 Q315,260 315,268 V464 Q315,472 323,472 H340" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="316" y="240" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="330" y="249" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- D -Yes-> G -->
+<path d="M670,260 H653 Q645,260 645,268 V464 Q645,472 653,472 H620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="616" y="240" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="630" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- F -Yes-> E (accent) -->
+<path d="M290,380 H283 Q275,380 275,388 V492 Q275,500 267,500 H260" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="288" y="392" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="302" y="401" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- H -Cost-> G -->
+<path d="M670,380 H677 Q685,380 685,388 V492 Q685,500 693,500 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="700" y="428" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="718" y="437" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">COST</text>
+
+<!-- F -No-> G, routed under the terminal row with a hop over H->E's approach -->
+<path d="M200,416 V544 Q200,552 208,552 H372 a8,8 0 0,1 16,0 H612 Q620,552 620,544 V528" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="256" y="558" width="24" height="12" rx="2" fill="#ffffff"/>
+<text x="268" y="567" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- H -Scale-> E (accent), routed under the terminal row -->
+<path d="M760,416 V560 Q760,568 752,568 H388 Q380,568 380,560 V528" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="620" y="574" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="640" y="583" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCALE</text>
+
+<!-- ============ NODES ============ -->
+
+<!-- A: start -->
+<rect x="380" y="24" width="200" height="40" rx="20" fill="#ffffff"/>
+<rect x="380" y="24" width="200" height="40" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="48" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics storage choice</text>
+
+<!-- B -->
+<polygon points="480,104 580,140 480,176 380,140" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="134" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana-centric</text>
+<text x="480" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ecosystem?</text>
+
+<!-- C -->
+<polygon points="200,224 290,260 200,296 110,260" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="254" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Need enterprise</text>
+<text x="200" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">multi-tenancy?</text>
+
+<!-- D -->
+<polygon points="760,224 850,260 760,296 670,260" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="254" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operational</text>
+<text x="760" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">simplicity first?</text>
+
+<!-- F -->
+<polygon points="200,344 290,380 200,416 110,380" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="374" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Want object</text>
+<text x="200" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">storage?</text>
+
+<!-- H -->
+<polygon points="760,344 850,380 760,416 670,380" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="374" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cost vs.</text>
+<text x="760" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">scalability?</text>
+
+<!-- E: Mimir (focal) -->
+<rect x="260" y="472" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="260" y="472" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="340" y="504" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mimir</text>
+
+<!-- G: VictoriaMetrics -->
+<rect x="540" y="472" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="540" y="472" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="620" y="504" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+
+</svg>

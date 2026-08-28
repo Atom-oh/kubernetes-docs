@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karpseq-title karpseq-desc">
+    <title id="karpseq-title">Karpenter node provisioning sequence</title>
+    <desc id="karpseq-desc">Sequence diagram showing an unschedulable pod triggering the Karpenter controller, which queries the cloud EC2 API for instance options, provisions a new node, and the Kubernetes API then schedules the pod onto that node.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Lifelines: 5 actors evenly spaced, x centers -->
+    <!-- P=100 K=300 KA=500 EC2=700 N=880 -->
+    <line x1="100" y1="104" x2="100" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="300" y1="104" x2="300" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="500" y1="104" x2="500" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="700" y1="104" x2="700" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="880" y1="104" x2="880" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Activation bars -->
+    <rect x="296" y="152" width="8" height="368" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+    <!-- Messages, top->down, y step 40 starting 152 -->
+    <!-- 1 P->KA Pod creation (unschedulable) -->
+    <line x1="100" y1="152" x2="496" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="230" y="132" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">POD CREATION (UNSCHEDULABLE)</text>
+
+    <!-- 2 KA->K Pod event notification -->
+    <line x1="500" y1="184" x2="304" y2="184" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="330" y="164" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="405" y="173" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">POD EVENT NOTIFICATION</text>
+
+    <!-- 3 K self: analyze pod requirements -->
+    <path d="M 304,208 H 340 Q 348,208 348,216 Q 348,224 340,224 H 304"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="352" y="210" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="427" y="219" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ANALYZE POD REQUIREMENTS</text>
+
+    <!-- 4 K self: evaluate provisioner/node template -->
+    <path d="M 304,244 H 340 Q 348,244 348,252 Q 348,260 340,260 H 304"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="352" y="246" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="440" y="255" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">EVALUATE PROVISIONER/TEMPLATE</text>
+
+    <!-- 5 K->EC2 Query instance types and prices -->
+    <line x1="304" y1="284" x2="696" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="440" y="264" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="522" y="273" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">QUERY INSTANCE TYPES/PRICES</text>
+
+    <!-- 6 EC2->K Return instance information (dashed return, filled marker) -->
+    <line x1="700" y1="316" x2="308" y2="316" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="440" y="296" width="130" height="12" rx="2" fill="#ffffff"/>
+    <text x="505" y="305" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">INSTANCE INFO</text>
+
+    <!-- 7 K->EC2 Request node provisioning (headline / accent) -->
+    <line x1="304" y1="348" x2="696" y2="348" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="450" y="328" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="525" y="337" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">REQUEST PROVISIONING</text>
+
+    <!-- 8 EC2->N Create instance -->
+    <line x1="700" y1="380" x2="876" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="748" y="360" width="100" height="12" rx="2" fill="#ffffff"/>
+    <text x="798" y="369" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">CREATE INSTANCE</text>
+
+    <!-- 9 N->KA Node registration -->
+    <line x1="880" y1="412" x2="504" y2="412" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="650" y="392" width="130" height="12" rx="2" fill="#ffffff"/>
+    <text x="715" y="401" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NODE REGISTRATION</text>
+
+    <!-- 10 KA->K Node event notification -->
+    <line x1="500" y1="444" x2="304" y2="444" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="330" y="424" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="405" y="433" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NODE EVENT NOTIFICATION</text>
+
+    <!-- 11 K->KA Set node labels and taints -->
+    <line x1="304" y1="476" x2="496" y2="476" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="320" y="456" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="400" y="465" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">SET LABELS/TAINTS</text>
+
+    <!-- 12 KA->P Schedule pod (headline success, accent) -->
+    <line x1="500" y1="508" x2="104" y2="508" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="250" y="488" width="100" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="497" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCHEDULE POD</text>
+
+    <!-- Actor boxes at top (drawn after lifelines so lifeline starts under them, but actors above arrows so fine to draw now over lines start) -->
+    <rect x="40" y="56" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="100" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod</text>
+
+    <rect x="240" y="56" width="120" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="300" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter</text>
+    <text x="300" y="94" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Controller</text>
+
+    <rect x="440" y="56" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="500" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes</text>
+    <text x="500" y="94" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API</text>
+
+    <rect x="640" y="56" width="120" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="700" y="80" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS EC2</text>
+    <text x="700" y="94" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API</text>
+
+    <rect x="820" y="56" width="120" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="880" y="84" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">New Node</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="552" x2="168" y2="552" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="176" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CALL / RETURN</text>
+    <line x1="380" y1="552" x2="408" y2="552" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="416" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">HEADLINE STEP</text>
+  </svg>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arch-title arch-desc">
+    <title id="arch-title">OpenSearch cluster architecture</title>
+    <desc id="arch-desc">Application, FluentBit, and Kinesis Data Firehose send logs into the data nodes of a multi-AZ OpenSearch cluster coordinated by dedicated master nodes; data nodes write hot data to EBS and roll aging data into UltraWarm, which in turn migrates it to S3-backed cold storage.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (drawn before arrows and nodes) -->
+    <rect x="24" y="100" width="180" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="76" y="104" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="114" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CLIENTS</text>
+
+    <rect x="240" y="64" width="340" height="464" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="330" y="68" width="160" height="12" rx="2" fill="#ffffff"/>
+    <text x="410" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">OPENSEARCH CLUSTER · 3 AZ</text>
+
+    <rect x="640" y="180" width="280" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="732" y="184" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="780" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">STORAGE TIERS</text>
+
+    <!-- Arrows (behind boxes) -->
+    <!-- Clients -> Data Nodes, fanned attach on Data Nodes left edge (y=288,304,320) -->
+    <path d="M 184,160 H 240 Q 248,160 248,168 V 280 Q 248,288 256,288 H 268" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="184" y1="304" x2="268" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 184,384 H 240 Q 248,384 248,376 V 328 Q 248,320 256,320 H 268" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Master Nodes <-> Data Nodes (bidirectional cluster coordination) -->
+    <line x1="410" y1="160" x2="410" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+
+    <!-- Data Nodes -> UltraWarm (same x, straight) -->
+    <line x1="410" y1="336" x2="410" y2="448" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- Data Nodes -> EBS (right+up elbow) -->
+    <path d="M 552,304 H 604 Q 612,304 612,296 V 248 Q 612,240 620,240 H 672" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- UltraWarm -> Cold Storage (right+up elbow) -->
+    <path d="M 552,480 H 604 Q 612,480 612,472 V 408 Q 612,400 620,400 H 672" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="196" y="140" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="226" y="149" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">INGEST</text>
+
+    <rect x="360" y="204" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="396" y="213" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CLUSTER MGMT</text>
+
+    <rect x="360" y="380" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="396" y="389" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ISM POLICY</text>
+
+    <rect x="536" y="260" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="566" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HOT DATA</text>
+
+    <rect x="536" y="424" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="566" y="433" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ROLLOVER</text>
+
+    <!-- Node: Application (input) -->
+    <rect x="44" y="128" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="128" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="52" y="136" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="66" y="145" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="114" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application</text>
+    <text x="114" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">direct writes</text>
+
+    <!-- Node: FluentBit (input) -->
+    <rect x="44" y="232" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="232" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="52" y="240" width="32" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="68" y="249" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DS</text>
+    <text x="114" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">FluentBit</text>
+    <text x="114" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DaemonSet</text>
+
+    <!-- Node: Kinesis Data Firehose (input) -->
+    <rect x="44" y="336" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="336" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="52" y="344" width="32" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.40)" stroke-width="0.8"/>
+    <text x="68" y="353" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">KDF</text>
+    <text x="114" y="372" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kinesis Data</text>
+    <text x="114" y="386" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Firehose</text>
+
+    <!-- Node: Master Nodes (backend) -->
+    <rect x="268" y="96" width="284" height="64" rx="6" fill="#ffffff"/>
+    <rect x="268" y="96" width="284" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="276" y="104" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="294" y="113" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MSTR</text>
+    <text x="410" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Master Nodes (×3, 1 per AZ)</text>
+    <text x="410" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">m6g.large.search · quorum</text>
+
+    <!-- Node: Data Nodes (focal) -->
+    <rect x="268" y="272" width="284" height="64" rx="6" fill="#ffffff"/>
+    <rect x="268" y="272" width="284" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="276" y="280" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="292" y="289" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DATA</text>
+    <text x="410" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Data Nodes (2/AZ across 3 AZs)</text>
+    <text x="410" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">r6g.xlarge.search · index + search</text>
+
+    <!-- Node: UltraWarm Nodes (backend) -->
+    <rect x="268" y="448" width="284" height="64" rx="6" fill="#ffffff"/>
+    <rect x="268" y="448" width="284" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="276" y="456" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="294" y="465" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">WARM</text>
+    <text x="410" y="484" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">UltraWarm Nodes (×2)</text>
+    <text x="410" y="500" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ultrawarm1.medium · read-only</text>
+
+    <!-- Node: EBS (store) -->
+    <rect x="672" y="208" width="216" height="64" rx="6" fill="#ffffff"/>
+    <rect x="672" y="208" width="216" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="680" y="216" width="24" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="692" y="225" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EBS</text>
+    <text x="780" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EBS (Hot)</text>
+    <text x="780" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gp3 · per data node</text>
+
+    <!-- Node: S3 Cold Storage (store) -->
+    <rect x="672" y="368" width="216" height="64" rx="6" fill="#ffffff"/>
+    <rect x="672" y="368" width="216" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="680" y="376" width="20" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="690" y="385" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">S3</text>
+    <text x="780" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cold Storage</text>
+    <text x="780" y="420" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">S3-backed archive</text>
+
+    <!-- Legend -->
+    <line x1="30" y1="560" x2="930" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="140" y="568" width="16" height="8" rx="1" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="164" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">CLIENT / SOURCE</text>
+    <rect x="320" y="568" width="16" height="8" rx="1" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="344" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">CLUSTER NODE</text>
+    <rect x="500" y="568" width="16" height="8" rx="1" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="524" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">FOCAL / HOTTEST TIER</text>
+    <rect x="720" y="568" width="16" height="8" rx="1" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="744" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">STORAGE</text>
+  </svg>

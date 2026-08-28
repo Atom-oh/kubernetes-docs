@@ -49,36 +49,7 @@ A trial that Ray Tune runs does not have to be a single-process function. A comm
 
 This combination matters whenever a model is expensive enough to train that a single trial itself needs distributed training to finish in a reasonable amount of time. Without it, a team would face an awkward choice: tune hyperparameters serially against a distributed training job, or give up distributed training during the search phase. Because both libraries share the same underlying Ray primitives, Tune can drive many concurrent Ray Train runs, each with its own set of distributed workers, without either library needing special-case integration code for the other.
 
-```mermaid
-flowchart TB
-    Driver["Ray Tune Driver<br/>(search algorithm)"]
-
-    subgraph Trial1["Trial 1: Ray Train run"]
-        T1W1["Worker Actor 1"]
-        T1W2["Worker Actor 2"]
-        T1OS[("Object Store")]
-        T1W1 <--> T1OS
-        T1W2 <--> T1OS
-    end
-
-    subgraph Trial2["Trial 2: Ray Train run"]
-        T2W1["Worker Actor 1"]
-        T2W2["Worker Actor 2"]
-        T2OS[("Object Store")]
-        T2W1 <--> T2OS
-        T2W2 <--> T2OS
-    end
-
-    Driver -->|launches with hyperparameter set A| Trial1
-    Driver -->|launches with hyperparameter set B| Trial2
-    Trial1 -->|reports results/checkpoints| Driver
-    Trial2 -->|reports results/checkpoints| Driver
-    Driver -->|decides next round of trials| Driver
-
-    style Driver fill:#4fc3f7
-    style Trial1 fill:#81c784
-    style Trial2 fill:#ffb74d
-```
+![A Ray Tune driver launches two parallel hyperparameter trials, each running its own Ray Train job with worker actors sharing a per-trial object store, and reports results back so the driver can decide the next round of trials.](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
 
 ## Resource Allocation and the Cluster Autoscaler
 

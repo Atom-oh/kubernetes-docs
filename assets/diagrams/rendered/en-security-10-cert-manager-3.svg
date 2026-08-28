@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="csr-seq-title csr-seq-desc">
+    <title id="csr-seq-title">istio-csr certificate request sequence</title>
+    <desc id="csr-seq-desc">Sequence diagram showing an Envoy sidecar requesting a certificate from istio-csr, which forwards a CertificateRequest through cert-manager to a ClusterIssuer for signing, then returns the signed SPIFFE SVID so Envoy can enable mutual TLS.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Actor boxes -->
+    <rect x="88" y="56" width="176" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="176" y="74" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Envoy Sidecar</text>
+    <text x="176" y="90" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">workload pod</text>
+
+    <rect x="368" y="56" width="176" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="456" y="74" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">istio-csr</text>
+    <text x="456" y="90" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CSR agent</text>
+
+    <rect x="648" y="56" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="718" y="74" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">cert-manager</text>
+    <text x="718" y="90" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">controller</text>
+
+    <rect x="836" y="56" width="96" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="884" y="74" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Issuer</text>
+    <text x="884" y="90" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CA / Vault</text>
+
+    <!-- Lifelines -->
+    <line x1="176" y1="100" x2="176" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="456" y1="100" x2="456" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="718" y1="100" x2="718" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="884" y1="100" x2="884" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- Activation bars -->
+    <rect x="452" y="128" width="8" height="316" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="714" y="172" width="8" height="184" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <rect x="880" y="216" width="8" height="96" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+    <!-- Messages -->
+    <!-- 1: Envoy -> istio-csr : CSR request -->
+    <line x1="176" y1="128" x2="448" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="230" y="112" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="286" y="122" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">1. CSR REQUEST</text>
+
+    <!-- 2: istio-csr -> cert-manager : create CertificateRequest -->
+    <line x1="460" y1="172" x2="710" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="500" y="156" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="582" y="166" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">2. CREATE CERTIFICATEREQUEST</text>
+
+    <!-- 3: cert-manager -> Issuer : request signing -->
+    <line x1="726" y1="216" x2="876" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="750" y="200" width="100" height="12" rx="2" fill="#ffffff"/>
+    <text x="800" y="210" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">3. SIGN REQUEST</text>
+
+    <!-- 4 (return): Issuer -> cert-manager : signed cert -->
+    <line x1="880" y1="284" x2="730" y2="284" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+    <rect x="750" y="268" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="806" y="278" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">4. SIGNED CERT</text>
+
+    <!-- 5 (return): cert-manager -> istio-csr : certificate -->
+    <line x1="714" y1="328" x2="464" y2="328" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <rect x="530" y="312" width="118" height="12" rx="2" fill="#ffffff"/>
+    <text x="589" y="322" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">5. CERTIFICATE</text>
+
+    <!-- 6 (return, headline): istio-csr -> Envoy : SPIFFE SVID -->
+    <line x1="452" y1="396" x2="180" y2="396" stroke="#EC7211" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+    <rect x="242" y="380" width="122" height="12" rx="2" fill="#ffffff"/>
+    <text x="303" y="390" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">6. SPIFFE SVID</text>
+
+    <!-- Self-message: Envoy enables mTLS -->
+    <path d="M 176,436 H 260 Q 268,436 268,444 Q 268,452 260,452 H 180"
+          fill="none" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="188" y="420" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="248" y="430" fill="#232F3E" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">ENABLE MTLS</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <line x1="220" y1="504" x2="248" y2="504" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="256" y="507" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Call</text>
+
+    <line x1="360" y1="504" x2="388" y2="504" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-accent)"/>
+    <text x="396" y="507" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Return (headline)</text>
+
+    <rect x="580" y="498" width="8" height="10" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+    <text x="596" y="507" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Activation</text>
+  </svg>

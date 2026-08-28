@@ -23,39 +23,7 @@ Istio의 트래픽 관리 기능은 서비스 메시 내에서 트래픽 흐름�
 
 ### 주요 기능
 
-```mermaid
-flowchart TB
-    Client[클라이언트 요청]
-
-    subgraph Istio["Istio Traffic Management"]
-        Gateway[Gateway<br/>외부 트래픽 진입]
-        VS[VirtualService<br/>라우팅 규칙]
-        DR[DestinationRule<br/>트래픽 정책]
-    end
-
-    subgraph Services["서비스"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-        V3[Version 3<br/>Mirror]
-    end
-
-    Client -->|1. 요청| Gateway
-    Gateway -->|2. 라우팅| VS
-    VS -->|3. 정책 적용| DR
-    DR -->|4a. 주 트래픽| V1
-    DR -->|4b. Canary| V2
-    DR -->|4c. Shadow| V3
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class Gateway,VS,DR istio;
-    class V1,V2,V3 service;
-```
+![클라이언트 요청이 Gateway, VirtualService, DestinationRule을 차례로 거쳐 세 개의 서비스 버전으로 분배되며, 90%는 주 트래픽, 10%는 Canary, 나머지는 Mirror로 전달되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-README-0.png)
 
 ### 1. 지능형 라우팅
 
@@ -273,57 +241,7 @@ spec:
 
 ## 트래픽 흐름
 
-```mermaid
-flowchart LR
-    User[사용자]
-
-    subgraph Ingress["Ingress Gateway"]
-        IGW[Gateway<br/>포트 80/443]
-    end
-
-    subgraph VirtualServices["VirtualService 라우팅"]
-        VS1[Path 매칭]
-        VS2[Header 매칭]
-        VS3[Weight 분배]
-    end
-
-    subgraph DestinationRules["DestinationRule 정책"]
-        DR1[로드 밸런싱]
-        DR2[Circuit Breaker]
-        DR3[Connection Pool]
-    end
-
-    subgraph Pods["파드"]
-        P1[Pod v1-1]
-        P2[Pod v1-2]
-        P3[Pod v2-1]
-    end
-
-    User -->|요청| IGW
-    IGW --> VS1
-    VS1 --> VS2
-    VS2 --> VS3
-    VS3 --> DR1
-    DR1 --> DR2
-    DR2 --> DR3
-    DR3 --> P1
-    DR3 --> P2
-    DR3 --> P3
-
-    %% 스타일 정의
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class User user;
-    class IGW gateway;
-    class VS1,VS2,VS3 routing;
-    class DR1,DR2,DR3 policy;
-    class P1,P2,P3 pod;
-```
+![사용자 요청이 Ingress Gateway를 지나 VirtualService의 라우팅 단계(Path/Header/Weight 매칭)와 DestinationRule의 정책 단계(로드 밸런싱/Circuit Breaker/Connection Pool)를 차례로 통과한 뒤 파드로 전달되는 5단계 파이프라인을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-README-1.png)
 
 ## 학습 순서
 

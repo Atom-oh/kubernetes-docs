@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-basics-05-ebpf-fundamentals-8-title en-basics-05-ebpf-fundamentals-8-desc">
+<title id="en-basics-05-ebpf-fundamentals-8-title">Tetragon architecture</title>
+<desc id="en-basics-05-ebpf-fundamentals-8-desc">Architecture diagram showing a TracingPolicy custom resource configuring the Tetragon agent, which programs eBPF sensors; those sensors trace process execution, network activity, and file access, enforcing policy by killing processes, blocking network connections, or denying file access.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE · TETRAGON</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Tetragon architecture</text>
+<rect x="24" y="116" width="912" height="168" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="120" width="142" height="12" rx="2" fill="#ffffff"/>
+<text x="107.0" y="129" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TETRAGON ARCHITECTURE</text>
+<rect x="24" y="308" width="912" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="312" width="124" height="12" rx="2" fill="#ffffff"/>
+<text x="98.0" y="321" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">POLICY ENFORCEMENT</text>
+<rect x="40" y="156" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="156" width="200" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="140.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TracingPolicy CRD</text>
+<text x="140.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">declarative rules</text>
+<line x1="240" y1="184.0" x2="320" y2="184.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="320" y="156" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="320" y="156" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tetragon Agent</text>
+<text x="420.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">control plane</text>
+<line x1="520" y1="184.0" x2="580" y2="184.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="580" y="156" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="580" y="156" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="680.0" y="180.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF Sensors</text>
+<text x="680.0" y="198.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel observers</text>
+<rect x="40" y="340" width="272" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="340" width="272" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="176.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Process Tracing</text>
+<text x="176.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">-> process kill</text>
+<path d="M 630.0,212 V 244 Q 630.0,252 622.0,252 H 184.0 Q 176.0,252 176.0,260 V 340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="336" y="340" width="272" height="64" rx="6" fill="#ffffff"/>
+<rect x="336" y="340" width="272" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="472.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Network Tracing</text>
+<text x="472.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">-> network block</text>
+<path d="M 680.0,212 V 268 Q 680.0,276 672.0,276 H 480.0 Q 472.0,276 472.0,284 V 340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="632" y="340" width="272" height="64" rx="6" fill="#ffffff"/>
+<rect x="632" y="340" width="272" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="768.0" y="368.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">File Tracing</text>
+<text x="768.0" y="386.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">-> file access deny</text>
+<path d="M 730.0,212 V 292 Q 730.0,300 738.0,300 H 760.0 Q 768.0,300 768.0,308 V 340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="40" y1="544" x2="920" y2="544" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="560" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="116" y="550" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="150" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eBPF sensors (kernel observers)</text>
+<rect x="364" y="550" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="398" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Tracing type -> enforcement</text>
+</svg>

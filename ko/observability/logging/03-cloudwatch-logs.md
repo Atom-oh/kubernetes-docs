@@ -30,64 +30,7 @@ Amazon CloudWatch Logs는 AWS의 완전관리형 로그 모니터링 서비스�
 
 ### 핵심 개념
 
-```mermaid
-flowchart TB
-    subgraph Sources["로그 소스"]
-        EKS[EKS 클러스터]
-        APP[애플리케이션]
-        LAMBDA[Lambda]
-    end
-
-    subgraph CWL["CloudWatch Logs"]
-        LG[Log Group<br/>/aws/eks/cluster/logs]
-        LS1[Log Stream 1]
-        LS2[Log Stream 2]
-        LS3[Log Stream 3]
-    end
-
-    subgraph Features["기능"]
-        INSIGHTS[Logs Insights]
-        METRIC[Metric Filters]
-        SUB[Subscription Filters]
-        ALARM[CloudWatch Alarms]
-    end
-
-    subgraph Destinations["목적지"]
-        S3[(S3)]
-        KDF[Kinesis Data Firehose]
-        LAMBDA2[Lambda]
-        OS[OpenSearch]
-    end
-
-    EKS --> LG
-    APP --> LG
-    LAMBDA --> LG
-
-    LG --> LS1
-    LG --> LS2
-    LG --> LS3
-
-    LG --> INSIGHTS
-    LG --> METRIC
-    LG --> SUB
-
-    METRIC --> ALARM
-
-    SUB --> S3
-    SUB --> KDF
-    SUB --> LAMBDA2
-    KDF --> OS
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef cwl fill:#FF9800,stroke:#333,color:white
-    classDef feature fill:#2196F3,stroke:#333,color:white
-    classDef dest fill:#9C27B0,stroke:#333,color:white
-
-    class EKS,APP,LAMBDA source
-    class LG,LS1,LS2,LS3 cwl
-    class INSIGHTS,METRIC,SUB,ALARM feature
-    class S3,KDF,LAMBDA2,OS dest
-```
+![EKS·애플리케이션·Lambda의 로그가 하나의 CloudWatch Log Group으로 모이고, 여기서 Log Streams 저장, Logs Insights 조회, Metric Filter 기반 알람 생성, Subscription Filters를 통한 S3·Kinesis Firehose(→OpenSearch)·Lambda로의 실시간 전달까지 네 갈래로 분기하는 로그 파이프라인 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-03-cloudwatch-logs-0.png)
 
 ### 용어 정리
 

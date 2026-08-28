@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-05-eks-security-5-title ko-eks-05-eks-security-5-desc">
+<title id="ko-eks-05-eks-security-5-title">클러스터 엔드포인트 접근 구성 3가지</title>
+<desc id="ko-eks-05-eks-security-5-desc">EKS API 서버를 Public Only, Private Only, Public+Private 세 가지 방식으로 구성했을 때 인터넷과 VPC 내부 노드가 각각 어떤 경로로 컨트롤 플레인에 도달하는지 비교한다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="260" height="500" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="48" y="44" width="104" height="14" rx="2" fill="#ffffff"/>
+<text x="52" y="54" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">Public Only</text>
+<rect x="350" y="40" width="260" height="500" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="358" y="44" width="112" height="14" rx="2" fill="#ffffff"/>
+<text x="362" y="54" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">Private Only</text>
+<rect x="660" y="40" width="260" height="500" rx="8" fill="rgba(35,47,62,0.025)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="668" y="44" width="144" height="14" rx="2" fill="#ffffff"/>
+<text x="672" y="54" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">Public + Private</text>
+<path d="M 170.0,140 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 170.0,224 V 264" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 250,380.0 H 278 Q 286,380.0 286,372.0 V 232 Q 286,224 278,224 H 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="296" y="296.0" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="326.0" y="305.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">인터넷 경유</text>
+<path d="M 480.0,160 V 192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480.0,236 V 276" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 330,128.0 H 400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="260.0" y="108.0" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="290" y="117.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VPN/DX</text>
+<path d="M 740.0,140 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="750.0" y="154.0" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="784.0" y="163.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CIDR 제한</text>
+<path d="M 740.0,328 V 360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 810,202.0 H 838 Q 846,202.0 846,210.0 V 458.0 Q 846,466.0 838,466.0 H 810" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 740.0,404 V 444" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="120" y="96" width="100" height="44" rx="6" fill="#ffffff"/>
+<rect x="120" y="96" width="100" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="170.0" y="122.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">인터넷</text>
+<rect x="90" y="180" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="90" y="180" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Public Endpoint</text>
+<rect x="90" y="264" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="90" y="264" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="170.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">컨트롤 플레인</text>
+<rect x="90" y="348" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="90" y="348" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170.0" y="384.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC 내 노드</text>
+<rect x="400" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="96" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="132.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC 내 노드</text>
+<rect x="400" y="192" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="400" y="192" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Private Endpoint</text>
+<rect x="400" y="276" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="400" y="276" width="160" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="302.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">컨트롤 플레인</text>
+<rect x="700" y="96" width="80" height="44" rx="6" fill="#ffffff"/>
+<rect x="700" y="96" width="80" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="740.0" y="122.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">인터넷</text>
+<rect x="670" y="180" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="670" y="180" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="740.0" y="206.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Public Endpoint</text>
+<rect x="670" y="264" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="670" y="264" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="740.0" y="300.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC 내 노드</text>
+<rect x="670" y="360" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="670" y="360" width="140" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="740.0" y="386.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Private Endpoint</text>
+<rect x="670" y="444" width="140" height="44" rx="6" fill="#ffffff"/>
+<rect x="670" y="444" width="140" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="740.0" y="470.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">컨트롤 플레인</text>
+
+</svg>

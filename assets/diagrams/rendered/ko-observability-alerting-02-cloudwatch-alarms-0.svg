@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cwflow-title cwflow-desc">
+    <title id="cwflow-title">CloudWatch Alarms 동작 흐름</title>
+    <desc id="cwflow-desc">여러 AWS 메트릭 소스가 CloudWatch로 모이고, Metrics Math와 Anomaly Detection을 거쳐 Alarms가 판정한 뒤 알림 액션과 알림 채널로 이어지는 전체 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones (bg -> zones -> arrows -> nodes) -->
+    <!-- Sources zone -->
+    <rect x="24" y="248" width="176" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="252" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="88" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">메트릭 소스</text>
+
+    <!-- CloudWatch zone -->
+    <rect x="252" y="80" width="456" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="268" y="84" width="164" height="12" rx="2" fill="#ffffff"/>
+    <text x="350" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON CLOUDWATCH</text>
+
+    <!-- Actions zone -->
+    <rect x="760" y="200" width="176" height="92" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="776" y="204" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="824" y="213" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">알림 액션</text>
+
+    <!-- Notifications zone -->
+    <rect x="760" y="312" width="176" height="92" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="776" y="316" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="824" y="325" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">알림 채널</text>
+
+    <!-- ============ ARROWS (drawn before nodes) ============ -->
+    <!-- Sources(112,300 right edge) -> Metrics(300,120 left edge) -->
+    <path d="M200,300 H236 Q244,300 244,292 V128 Q244,120 252,120 H288"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Metrics(368,120 bottom) -> Alarms(368,240 top) accent -->
+    <path d="M368,152 V208" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Metrics -> Math (right of Metrics box, going down then right) -->
+    <path d="M432,120 H500 Q508,120 508,128 V184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- Math -> Alarms -->
+    <path d="M508,216 V232 Q508,240 500,240 H432" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Metrics -> AD (further right, down) -->
+    <path d="M432,132 H628 Q636,132 636,140 V184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- AD -> Alarms -->
+    <path d="M636,216 V252 Q636,260 628,260 H432" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Alarms(432,264 right edge) -> Actions node (776,264 left edge) accent -->
+    <path d="M432,264 H760" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Actions -> Notifications -->
+    <path d="M848,288 V352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- Sources node (collapsed) -->
+    <rect x="40" y="284" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+    <rect x="40" y="284" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="112" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EC2 · EKS · RDS</text>
+    <text x="112" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Lambda · Custom</text>
+
+    <!-- Metrics -->
+    <rect x="288" y="96" width="144" height="48" rx="6" fill="#ffffff"/>
+    <rect x="288" y="96" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="360" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics</text>
+
+    <!-- Math -->
+    <rect x="436" y="184" width="144" height="48" rx="6" fill="#ffffff"/>
+    <rect x="436" y="184" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="508" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics Math</text>
+
+    <!-- Anomaly Detection -->
+    <rect x="564" y="184" width="144" height="48" rx="6" fill="#ffffff"/>
+    <rect x="564" y="184" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="636" y="205" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Anomaly</text>
+    <text x="636" y="219" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Detection</text>
+
+    <!-- Alarms (focal) -->
+    <rect x="288" y="240" width="144" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="288" y="240" width="144" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="360" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alarms</text>
+
+    <!-- Actions node (collapsed) -->
+    <rect x="776" y="240" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+    <rect x="776" y="240" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="848" y="260" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SNS · Auto Scaling</text>
+    <text x="848" y="276" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EC2 Action · SSM</text>
+
+    <!-- Notifications node (collapsed) -->
+    <rect x="776" y="352" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)"/>
+    <rect x="776" y="352" width="144" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="848" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Email · SMS</text>
+    <text x="848" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Lambda · HTTP</text>
+
+  </svg>

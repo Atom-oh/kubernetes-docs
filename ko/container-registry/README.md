@@ -8,15 +8,7 @@
 
 ### 컨테이너 레지스트리의 역할
 
-```mermaid
-flowchart LR
-    A["CI/CD Pipeline<br/>Build · Test · Push"] --> B["Container Registry<br/>Store · Version · Scan"]
-    B --> C["Kubernetes Cluster<br/>Pull · Run · Scale"]
-
-    style A fill:#2496ED,stroke:#1a6fb5,color:#fff
-    style B fill:#326CE5,stroke:#1e4fa3,color:#fff
-    style C fill:#326CE5,stroke:#1e4fa3,color:#fff
-```
+![에어갭 여부, 주 클라우드, EKS 사용 여부, 멀티 클라우드 여부에 따라 Harbor, Amazon ECR, Docker Hub 등 적합한 컨테이너 레지스트리를 선택하는 의사결정 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-README-0.png)
 
 **핵심 기능:**
 - **이미지 저장**: 컨테이너 이미지 레이어를 효율적으로 저장
@@ -152,22 +144,7 @@ Docker Hub Free → Docker Hub Team → ECR Basic → ECR Enhanced → Harbor + 
 
 ## 의사결정 플로우차트
 
-```mermaid
-flowchart TD
-    Q1{"에어갭/폐쇄망 환경인가?"}
-    Q2{"AWS를 주 클라우드로<br/>사용하는가?"}
-    Q3{"EKS를 사용하는가?"}
-    Q4{"멀티 클라우드인가?"}
-
-    Q1 -->|Yes| Harbor["Harbor"]
-    Q1 -->|No| Q2
-    Q2 -->|Yes| Q3
-    Q2 -->|No| Q4
-    Q3 -->|Yes| ECR["Amazon ECR"]
-    Q3 -->|No| ECR_Harbor["ECR 또는 Harbor"]
-    Q4 -->|Yes| Harbor2["Harbor"]
-    Q4 -->|No| DH["Docker Hub 또는<br/>클라우드 네이티브 레지스트리"]
-```
+![CI/CD 파이프라인이 빌드한 컨테이너 이미지를 컨테이너 레지스트리에 저장·버전관리·스캔한 뒤, 쿠버네티스 클러스터가 이를 가져와 실행·확장하는 파이프라인 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-README-1.png)
 
 ---
 

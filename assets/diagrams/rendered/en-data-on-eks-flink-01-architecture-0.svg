@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flink-arch-title flink-arch-desc" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">
+  <title id="flink-arch-title">Flink JobManager and TaskManager topology on Kubernetes</title>
+  <desc id="flink-arch-desc">The JobManager pod's four components (Job Graph and Scheduler, Checkpoint Coordinator, Kubernetes ResourceManager, REST API and Web UI) coordinate two TaskManager pods. The ResourceManager requests and releases the TaskManager pods; the Job Graph and Scheduler deploys subtasks into each pod's task slots; the Checkpoint Coordinator triggers snapshots on one slot per pod.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      text { font-family: 'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif; }
+      .mono { font-family: 'Geist Mono','Amazon Ember Mono',ui-monospace,monospace; }
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.18em">KUBERNETES CLUSTER</text>
+  <text x="40" y="56" font-size="20" font-weight="700" fill="#232F3E">JobManager &amp; TaskManager Topology</text>
+
+  <!-- ===== Zones ===== -->
+  <!-- JobManager Pod zone -->
+  <rect x="40" y="76" width="880" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="80" width="150" height="12" fill="#ffffff"/>
+  <text x="131" y="89" class="mono" fill="rgba(35,47,62,0.40)" font-size="7" text-anchor="middle" letter-spacing="0.14em">JOBMANAGER POD</text>
+
+  <!-- TaskManager Pod 1 zone -->
+  <rect x="80" y="340" width="380" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="96" y="444" width="160" height="12" fill="#ffffff"/>
+  <text x="176" y="453" class="mono" fill="rgba(35,47,62,0.40)" font-size="7" text-anchor="middle" letter-spacing="0.14em">TASKMANAGER POD 1</text>
+
+  <!-- TaskManager Pod 2 zone -->
+  <rect x="500" y="340" width="380" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="516" y="444" width="160" height="12" fill="#ffffff"/>
+  <text x="596" y="453" class="mono" fill="rgba(35,47,62,0.40)" font-size="7" text-anchor="middle" letter-spacing="0.14em">TASKMANAGER POD 2</text>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+
+  <!-- JG deploys subtasks -> S4 (band 210) -->
+  <path d="M214,180 V202 Q214,210 222,210 H780 Q788,210 788,218 V372" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- JG deploys subtasks -> S3 (band 240) -->
+  <path d="M176,180 V232 Q176,240 184,240 H558 Q566,240 566,248 V372" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- JG deploys subtasks -> S2 (band 270) -->
+  <path d="M138,180 V262 Q138,270 146,270 H360 Q368,270 368,278 V372" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- JG deploys subtasks -> S1 (band 300) -->
+  <path d="M100,180 V292 Q100,300 108,300 H138 Q146,300 146,308 V372" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- CP triggers snapshot -> S1 (band 195, hops over JG->S4 vertical and JG->S2 horizontal) -->
+  <path d="M340,180 V187 Q340,195 332,195 H222 a8,8 0 0,0 -16,0 H205 Q197,195 197,203 V262 a8,8 0 0,0 0,16 V372"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <!-- CP triggers snapshot -> S3 (band 195) -->
+  <path d="M404,180 V187 Q404,195 412,195 H609 Q617,195 617,203 V372"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- RM requests/releases pods -> TaskManager Pod 1 (band 250, hops over CP->S3 horizontal) -->
+  <path d="M556,180 V191 a8,8 0 0,0 0,16 V242 Q556,250 548,250 H428 Q420,250 420,258 V340"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- RM requests/releases pods -> TaskManager Pod 2 (band 250) -->
+  <path d="M620,180 V242 Q620,250 628,250 H682 Q690,250 690,258 V340"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels (masked, 6-10px gap above their line) -->
+  <rect x="223" y="250" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="253" y="259" class="mono" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.06em">DEPLOYS</text>
+
+  <rect x="549" y="274" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="579" y="283" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">CHECKPOINT</text>
+
+  <rect x="458" y="230" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="488" y="239" class="mono" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">POD REQ</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- Job Graph and Scheduler (focal) -->
+  <rect x="60" y="108" width="192" height="72" rx="6" fill="#ffffff"/>
+  <rect x="60" y="108" width="192" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="68" y="114" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.5)" stroke-width="0.8"/>
+  <text x="83" y="123" class="mono" fill="#EC7211" font-size="7" text-anchor="middle" letter-spacing="0.08em">JOB</text>
+  <text x="156" y="150" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Job Graph &amp; Scheduler</text>
+  <text x="156" y="166" class="mono" fill="#545B64" font-size="9" text-anchor="middle">deploys subtasks</text>
+
+  <!-- Checkpoint Coordinator -->
+  <rect x="276" y="108" width="192" height="72" rx="6" fill="#ffffff"/>
+  <rect x="276" y="108" width="192" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="284" y="114" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="301" y="123" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" text-anchor="middle" letter-spacing="0.08em">CKPT</text>
+  <text x="372" y="150" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Checkpoint Coordinator</text>
+  <text x="372" y="166" class="mono" fill="#545B64" font-size="9" text-anchor="middle">triggers snapshots</text>
+
+  <!-- Kubernetes ResourceManager -->
+  <rect x="492" y="108" width="192" height="72" rx="6" fill="#ffffff"/>
+  <rect x="492" y="108" width="192" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="500" y="114" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="514" y="123" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" text-anchor="middle" letter-spacing="0.08em">RM</text>
+  <text x="588" y="150" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">K8s ResourceManager</text>
+  <text x="588" y="166" class="mono" fill="#545B64" font-size="9" text-anchor="middle">requests/releases pods</text>
+
+  <!-- REST API and Web UI -->
+  <rect x="708" y="108" width="192" height="72" rx="6" fill="#ffffff"/>
+  <rect x="708" y="108" width="192" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="716" y="114" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="730" y="123" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" text-anchor="middle" letter-spacing="0.08em">API</text>
+  <text x="804" y="150" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">REST API &amp; Web UI</text>
+  <text x="804" y="166" class="mono" fill="#545B64" font-size="9" text-anchor="middle">cluster status</text>
+
+  <!-- Task Slot 1 (TM1) -->
+  <rect x="96" y="372" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="96" y="372" width="152" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="172" y="404" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 1</text>
+  <text x="172" y="420" class="mono" fill="#545B64" font-size="9" text-anchor="middle">subtask worker</text>
+
+  <!-- Task Slot 2 (TM1) -->
+  <rect x="292" y="372" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="292" y="372" width="152" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="368" y="404" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 2</text>
+  <text x="368" y="420" class="mono" fill="#545B64" font-size="9" text-anchor="middle">subtask worker</text>
+
+  <!-- Task Slot 1 (TM2) -->
+  <rect x="516" y="372" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="516" y="372" width="152" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="592" y="404" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 1</text>
+  <text x="592" y="420" class="mono" fill="#545B64" font-size="9" text-anchor="middle">subtask worker</text>
+
+  <!-- Task Slot 2 (TM2) -->
+  <rect x="712" y="372" width="152" height="64" rx="6" fill="#ffffff"/>
+  <rect x="712" y="372" width="152" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="788" y="404" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Task Slot 2</text>
+  <text x="788" y="420" class="mono" fill="#545B64" font-size="9" text-anchor="middle">subtask worker</text>
+
+  <!-- ===== Legend ===== -->
+  <line x1="40" y1="572" x2="920" y2="572" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="588" class="mono" fill="#545B64" font-size="8" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="140" y1="584" x2="172" y2="584" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="180" y="588" class="mono" fill="#545B64" font-size="8">Subtask deployment</text>
+
+  <line x1="380" y1="584" x2="412" y2="584" stroke="#545B64" stroke-width="1.2"/>
+  <text x="420" y="588" class="mono" fill="#545B64" font-size="8">Pod lifecycle (RM)</text>
+
+  <line x1="620" y1="584" x2="652" y2="584" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="660" y="588" class="mono" fill="#545B64" font-size="8">Checkpoint trigger</text>
+
+</svg>

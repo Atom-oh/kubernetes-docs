@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="katib-loop-title katib-loop-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="katib-loop-title">Katib hyperparameter tuning loop</title>
+    <desc id="katib-loop-desc">An Experiment CRD drives the Katib controller to create a Suggestion service, which proposes hyperparameter sets for parallel Trial training jobs; a metrics-collector sidecar reports each Trial's objective metric back to the Suggestion service, which either proposes another round or, once maxTrialCount or the target objective is reached, marks the Experiment Succeeded and records the best Trial's hyperparameters on its status.</desc>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <defs>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <!-- ===================== CONNECTORS (drawn before boxes) ===================== -->
+
+    <!-- A -> B -->
+    <path d="M340,56 L340,84" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- B -> C -->
+    <path d="M340,132 L340,156" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- C -> D (happy path, straight) -->
+    <path d="M340,220 L340,252" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- D -> E1 (elbow) -->
+    <path d="M278,308 L278,324 A8,8 0 0 1 270,332 L156,332 A8,8 0 0 0 148,340 L148,340"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- D -> E2 (straight) -->
+    <path d="M340,308 L340,340" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- D -> E3 (elbow) -->
+    <path d="M402,308 L402,324 A8,8 0 0 0 410,332 L524,332 A8,8 0 0 1 532,340 L532,340"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- E1 -> F (elbow) -->
+    <path d="M148,396 L148,404 A8,8 0 0 0 156,412 L262,412 A8,8 0 0 1 270,420 L270,428"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- E2 -> F (straight) -->
+    <path d="M340,396 L340,428" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- E3 -> F (elbow) -->
+    <path d="M532,396 L532,404 A8,8 0 0 1 524,412 L418,412 A8,8 0 0 0 410,420 L410,428"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- F -> C loop-back (right lane) -->
+    <path d="M480,460 L792,460 A8,8 0 0 0 800,452 L800,196 A8,8 0 0 0 792,188 L464,188"
+          fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- C -> G exit (left lane, accent — most consequential branch) -->
+    <path d="M216,188 L56,188 A8,8 0 0 0 48,196 L48,540 A8,8 0 0 0 56,548 L112,548"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- G -> H -->
+    <path d="M332,548 L400,548" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Arrow label: C -> G exit condition, in the clear C/D gap row -->
+    <rect x="56" y="228" width="184" height="28" rx="2" fill="#ffffff"/>
+    <text x="148" y="239" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">MAXTRIALCOUNT REACHED</text>
+    <text x="148" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">OR TARGET OBJECTIVE HIT</text>
+
+    <!-- ===================== NODES ===================== -->
+
+    <!-- A: start (oval) -->
+    <ellipse cx="340" cy="32" rx="112" ry="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="36" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Experiment CRD created</text>
+
+    <!-- B: step -->
+    <rect x="228" y="84" width="224" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="112" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Katib controller</text>
+
+    <!-- C: focal hub -->
+    <rect x="216" y="156" width="248" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="340" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Suggestion service created</text>
+    <text x="340" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">for the chosen algorithm</text>
+
+    <!-- D: step -->
+    <rect x="216" y="252" width="248" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Suggestion proposes</text>
+    <text x="340" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">hyperparameter set(s)</text>
+
+    <!-- E1/E2/E3: trial jobs -->
+    <rect x="68" y="340" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="148" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trial 1</text>
+    <text x="148" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">training job</text>
+
+    <rect x="260" y="340" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="340" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trial 2</text>
+    <text x="340" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">training job</text>
+
+    <rect x="452" y="340" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="532" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trial N</text>
+    <text x="532" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">training job</text>
+
+    <!-- F: merge point -->
+    <rect x="200" y="428" width="280" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="340" y="456" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metrics collector sidecar</text>
+    <text x="340" y="472" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">reports objective metric</text>
+
+    <!-- G: penultimate step -->
+    <rect x="112" y="516" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="222" y="544" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Experiment marked</text>
+    <text x="222" y="560" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Succeeded</text>
+
+    <!-- H: end (oval) -->
+    <ellipse cx="580" cy="548" rx="180" ry="32" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="580" y="544" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Best Trial &amp; hyperparameters</text>
+    <text x="580" y="560" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">recorded on Experiment status</text>
+
+  </svg>

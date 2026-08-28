@@ -83,91 +83,13 @@ VPC Lattice는 다음과 같은 주요 구성 요소로 이루어져 있습니�
 5. **규칙(Rule)**: 리스너가 트래픽을 라우팅하는 방법을 정의
 6. **VPC 연결(VPC Association)**: VPC를 서비스 네트워크에 연결
 
-```mermaid
-flowchart TD
-    Client[클라이언트] -->|요청| ServiceNetwork[VPC Lattice 서비스 네트워크]
-    ServiceNetwork -->|라우팅 규칙| Service1[서비스 1]
-    ServiceNetwork -->|라우팅 규칙| Service2[서비스 2]
-    ServiceNetwork -->|라우팅 규칙| Service3[서비스 3]
-
-    Service1 -->|대상 그룹| Target11[파드 1.1]
-    Service1 -->|대상 그룹| Target12[파드 1.2]
-
-    Service2 -->|대상 그룹| Target21[파드 2.1]
-
-    Service3 -->|대상 그룹| Target31[파드 3.1]
-    Service3 -->|대상 그룹| Target32[파드 3.2]
-
-    subgraph VPC1[VPC 1]
-        Target11
-        Target12
-    end
-
-    subgraph VPC2[VPC 2]
-        Target21
-    end
-
-    subgraph VPC3[VPC 3]
-        Target31
-        Target32
-    end
-
-    %% 클래스 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Client userApp;
-    class ServiceNetwork,Service1,Service2,Service3 awsService;
-    class Target11,Target12,Target21,Target31,Target32 k8sComponent;
-```
+![클라이언트의 요청이 VPC Lattice 서비스 네트워크를 거쳐 라우팅 규칙에 따라 세 서비스로 분산되고, 각 서비스는 자신의 대상 그룹을 통해 서로 다른 VPC의 파드로 트래픽을 전달하는 구조를 보여준다.](../.gitbook/assets/ko-networking-02-vpc-lattice-0.png)
 
 ### 서비스 네트워크 아키텍처
 
 서비스 네트워크는 VPC Lattice의 핵심 구성 요소로, 여러 VPC와 계정에 걸쳐 있는 서비스들을 연결합니다.
 
-```mermaid
-flowchart LR
-    subgraph AccountA["계정 A"]
-        A[VPC 1]
-        B[VPC 2]
-    end
-
-    subgraph AccountB["계정 B"]
-        C[VPC 3]
-    end
-
-    A -->|VPC 연결| SN[서비스 네트워크]
-    B -->|VPC 연결| SN
-    C -->|VPC 연결| SN
-
-    SN -->|서비스 등록| S1[서비스 1]
-    SN -->|서비스 등록| S2[서비스 2]
-    SN -->|서비스 등록| S3[서비스 3]
-
-    S1 -->|대상 그룹| TG1[대상 그룹 1]
-    S2 -->|대상 그룹| TG2[대상 그룹 2]
-    S3 -->|대상 그룹| TG3[대상 그룹 3]
-
-    TG1 -->|대상| T1[EC2 인스턴스]
-    TG2 -->|대상| T2[EKS 파드]
-    TG3 -->|대상| T3[Lambda 함수]
-
-    %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class A,B,C default;
-    class SN,S1,S2,S3,TG1,TG2,TG3,T1,T3 awsService;
-    class T2 k8sComponent;
-```
+![두 계정에 걸친 세 VPC가 하나의 서비스 네트워크에 연결되고, 서비스 네트워크에 등록된 세 서비스가 각자의 대상 그룹을 통해 EC2 인스턴스, EKS 파드, Lambda 함수로 트래픽을 전달하는 멀티 계정·하이브리드 워크로드 구조를 보여준다.](../.gitbook/assets/ko-networking-02-vpc-lattice-1.png)
 
 ### 트래픽 흐름
 
@@ -179,23 +101,7 @@ VPC Lattice에서 트래픽이 흐르는 방식은 다음과 같습니다:
 4. 대상 그룹이 요청을 등록된 대상(EC2, EKS 파드, Lambda 등)으로 전달
 5. 대상이 응답을 처리하고 클라이언트에게 반환
 
-```mermaid
-sequenceDiagram
-    participant Client as 클라이언트
-    participant VPCLattice as VPC Lattice
-    participant Service as 서비스
-    participant TargetGroup as 대상 그룹
-    participant Target as 대상(EKS 파드)
-
-    Client->>VPCLattice: 요청 (service-name.vpc-lattice-svcs.region.on.aws)
-    VPCLattice->>Service: 요청 처리 및 리스너 규칙 적용
-    Service->>TargetGroup: 적절한 대상 그룹으로 라우팅
-    TargetGroup->>Target: 요청을 대상으로 전달
-    Target->>TargetGroup: 응답 반환
-    TargetGroup->>Service: 응답 전달
-    Service->>VPCLattice: 응답 처리
-    VPCLattice->>Client: 응답 반환
-```
+![클라이언트의 요청이 VPC Lattice, 서비스, 대상 그룹을 차례로 거쳐 EKS 파드에 도달하고, 응답이 동일한 경로를 역순으로 되돌아오는 왕복 처리 과정을 보여준다.](../.gitbook/assets/ko-networking-02-vpc-lattice-2.png)
 
 ### 서비스 디스커버리
 
@@ -228,44 +134,7 @@ Amazon EKS와 VPC Lattice의 통합은 다음과 같은 구성 요소로 이루�
 4. **VPC Lattice 서비스**: Kubernetes 서비스에 매핑되는 VPC Lattice 서비스
 5. **VPC Lattice 대상 그룹**: Kubernetes 파드에 매핑되는 대상 그룹
 
-```mermaid
-flowchart LR
-    subgraph EKS["EKS 클러스터"]
-        A[Gateway API Controller]
-        B[Gateway API 리소스]
-        C[Kubernetes 서비스]
-        D[Kubernetes 파드]
-
-        A -->|변환| B
-        B -->|참조| C
-        C -->|선택| D
-    end
-
-    subgraph Client["다른 VPC의 클라이언트"]
-        H[애플리케이션]
-    end
-
-    G[VPC Lattice<br/>서비스 네트워크]
-    E[VPC Lattice 서비스]
-    F[VPC Lattice 대상 그룹]
-
-    A -->|생성/관리| E
-    E -->|라우팅| F
-    F -->|등록| D
-    G -->|포함| E
-    H -->|요청| E
-
-    %% 스타일 정의
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class A,B,C,D k8sComponent;
-    class G,E,F awsService;
-    class H userApp;
-```
+![EKS 클러스터의 Gateway API Controller가 Gateway API 리소스를 VPC Lattice 서비스와 대상 그룹으로 변환하여 Kubernetes 파드를 등록하고, 다른 VPC의 클라이언트가 서비스 네트워크를 통해 그 파드에 도달하는 구조를 보여준다.](../.gitbook/assets/ko-networking-02-vpc-lattice-3.png)
 
 ### 통합의 이점
 

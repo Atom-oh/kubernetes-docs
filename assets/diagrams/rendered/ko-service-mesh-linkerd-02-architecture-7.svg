@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 692" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-linkerd-02-architecture-7-title ko-service-mesh-linkerd-02-architecture-7-desc">
+<title id="ko-service-mesh-linkerd-02-architecture-7-title">워크로드 인증서 발급과 자동 갱신</title>
+<desc id="ko-service-mesh-linkerd-02-architecture-7-desc">linkerd-proxy가 ServiceAccount 토큰과 CSR을 Identity Controller에 보내 SPIFFE ID가 검증된 24시간짜리 인증서를 발급받고, 만료 2시간 전 자동으로 갱신하는 흐름을 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="140" y1="96" x2="140" y2="592" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="500" y1="96" x2="500" y2="592" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="860" y1="96" x2="860" y2="592" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="97.0" y="120" width="86" height="20" rx="2" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="140" y="133" fill="#545B64" font-size="8" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod 시작</text>
+<line x1="140" y1="152" x2="860" y2="152" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="474.0" y="132" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="500.0" y="141" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">토큰 획득</text>
+<path d="M 140 192 L 196 192 L 196 216 L 140 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="204" y="198.0" width="156" height="12" rx="2" fill="#ffffff"/>
+<text x="282.0" y="207.0" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">CSR 생성 (SPIFFE ID)</text>
+<line x1="140" y1="240" x2="500" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="270.0" y="220" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="320.0" y="229" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">CSR + SA 토큰</text>
+<path d="M 500 280 L 556 280 L 556 304 L 500 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="564" y="286.0" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="602.0" y="295.0" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">SA 토큰 검증</text>
+<path d="M 500 328 L 556 328 L 556 352 L 500 352" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="564" y="334.0" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="618.0" y="343.0" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">SPIFFE ID 검증</text>
+<path d="M 500 376 L 556 376 L 556 400 L 500 400" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="564" y="382.0" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="618.0" y="391.0" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">Issuer 키로 서명</text>
+<line x1="500" y1="424" x2="140" y2="424" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="266.0" y="404" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="320.0" y="413" fill="#EC7211" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">서명된 인증서(24h)</text>
+<rect x="36.5" y="464" width="207" height="20" rx="2" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="140" y="477" fill="#545B64" font-size="8" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">22시간 후 (만료 2시간 전)</text>
+<line x1="140" y1="496" x2="500" y2="496" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="290.0" y="476" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="320.0" y="485" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">갱신 CSR</text>
+<line x1="500" y1="536" x2="140" y2="536" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="294.0" y="516" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="320.0" y="525" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">새 인증서</text>
+<rect x="68.0" y="48" width="144" height="48" rx="6" fill="#ffffff"/>
+<rect x="68.0" y="48" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">linkerd-proxy</text>
+<rect x="428.0" y="48" width="144" height="48" rx="6" fill="#ffffff"/>
+<rect x="428.0" y="48" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="500.0" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Identity Controller</text>
+<rect x="788.0" y="48" width="144" height="48" rx="6" fill="#ffffff"/>
+<rect x="788.0" y="48" width="144" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="76.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ServiceAccount</text>
+<line x1="40" y1="604" x2="920" y2="604" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="620" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.18em">LEGEND</text>
+<line x1="40" y1="639" x2="68" y2="639" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="76" y="642" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">요청</text>
+<line x1="116" y1="639" x2="144" y2="639" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="152" y="642" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">반환</text>
+<line x1="192" y1="639" x2="220" y2="639" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="228" y="642" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">최초 발급(핵심)</text>
+</svg>

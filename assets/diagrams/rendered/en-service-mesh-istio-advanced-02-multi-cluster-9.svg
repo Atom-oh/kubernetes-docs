@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mc-seq-title mc-seq-desc">
+<title id="mc-seq-title">Cross-cluster Lattice call</title>
+<desc id="mc-seq-desc">Cluster 1's Service A calls its local Envoy, which routes through VPC Lattice DNS to Cluster 2's Service B; the response returns the same way, with Istio collecting metrics independently inside each cluster.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<text x="495" y="50" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-style="italic" text-anchor="middle">Cross-cluster call</text>
+
+<!-- lifelines -->
+<line x1="140" y1="106" x2="140" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="380" y1="106" x2="380" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="620" y1="106" x2="620" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="850" y1="106" x2="850" y2="480" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- activation bars -->
+<rect x="376" y="140" width="8" height="300" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="616" y="200" width="8" height="180" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="846" y="260" width="8" height="60" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- messages -->
+<line x1="140" y1="140" x2="380" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="215" y="120" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="129" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">1. HTTP REQUEST</text>
+
+<line x1="380" y1="200" x2="620" y2="200" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="430" y="180" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="189" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">2. ROUTE TO LATTICE DNS</text>
+
+<line x1="620" y1="260" x2="850" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="670" y="240" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="735" y="249" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">3. FORWARD TO SERVICE</text>
+
+<line x1="850" y1="320" x2="620" y2="320" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="700" y="300" width="70" height="12" rx="2" fill="#ffffff"/>
+<text x="735" y="309" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">4. RESPONSE</text>
+
+<line x1="620" y1="380" x2="380" y2="380" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="440" y="360" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="369" fill="#7D8998" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">5. FORWARD RESPONSE</text>
+
+<line x1="380" y1="440" x2="140" y2="440" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="220" y="420" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="429" fill="#EC7211" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle" letter-spacing="0.02em">6. RESPONSE</text>
+
+<!-- editorial notes -->
+<text x="392" y="163" fill="#7D8998" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="8" font-style="italic">Istio collects metrics locally</text>
+<text x="632" y="223" fill="#7D8998" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="8" font-style="italic">AWS-managed service discovery</text>
+<text x="838" y="283" fill="#7D8998" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="8" font-style="italic" text-anchor="end">Istio collects metrics in cluster 2</text>
+
+<!-- actor boxes (painted after lines/labels) -->
+<rect x="80" y="70" width="120" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="90" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Cluster 1</text>
+<text x="140" y="101" fill="#545B64" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle">service a</text>
+
+<rect x="310" y="70" width="140" height="36" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="380" y="90" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Envoy</text>
+<text x="380" y="101" fill="#545B64" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle">cluster 1 sidecar</text>
+
+<rect x="550" y="70" width="140" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="620" y="93" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" text-anchor="middle">VPC Lattice</text>
+
+<rect x="782" y="70" width="136" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="850" y="90" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" text-anchor="middle">Cluster 2</text>
+<text x="850" y="101" fill="#545B64" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle">service b</text>
+
+<!-- legend -->
+<line x1="30" y1="516" x2="930" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="130" y1="529" x2="154" y2="529" stroke="#545B64" stroke-width="1.2"/>
+<text x="162" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">REQUEST</text>
+<line x1="280" y1="529" x2="304" y2="529" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+<text x="312" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">RETURN</text>
+<line x1="440" y1="529" x2="464" y2="529" stroke="#EC7211" stroke-width="1.4"/>
+<text x="472" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">HEADLINE RESPONSE</text>
+<rect x="700" y="524" width="14" height="10" rx="0" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="720" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">AWS-MANAGED</text>
+</svg>

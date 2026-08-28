@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="load-scale-seq-title load-scale-seq-desc">
+    <title id="load-scale-seq-title">k6 Load Test Sequence: KEDA Pod Scaling and Karpenter Node Scaling</title>
+    <desc id="load-scale-seq-desc">Sequence diagram showing a k6 load test ramping virtual users against an API Gateway across four phases, with KEDA scaling pod counts in response to metrics and Karpenter provisioning or consolidating nodes when pod capacity demands it.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ===================== LIFELINES (drawn first, behind everything) ===================== -->
+    <line x1="120" y1="44" x2="120" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="360" y1="44" x2="360" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="600" y1="44" x2="600" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="840" y1="44" x2="840" y2="580" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <!-- ===================== PHASE DIVIDERS ===================== -->
+    <!-- Phase 1 -->
+    <rect x="40" y="44" width="256" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="48" y="56" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">PHASE 1 · RAMP-UP (0–5 MIN)</text>
+    <line x1="40" y1="60" x2="920" y2="60" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Phase 2 -->
+    <rect x="40" y="180" width="292" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="48" y="192" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">PHASE 2 · SUSTAINED LOAD (5–15 MIN)</text>
+    <line x1="40" y1="196" x2="920" y2="196" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Phase 3 -->
+    <rect x="40" y="240" width="212" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="48" y="252" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">PHASE 3 · SPIKE (15–20 MIN)</text>
+    <line x1="40" y1="256" x2="920" y2="256" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- Phase 4 -->
+    <rect x="40" y="452" width="232" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+    <text x="48" y="464" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">PHASE 4 · COOL-DOWN (20–30 MIN)</text>
+    <line x1="40" y1="468" x2="920" y2="468" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+
+    <!-- ===================== MESSAGES (drawn before actor boxes) ===================== -->
+
+    <!-- msg1: k6 -> API sync, solid muted -->
+    <line x1="120" y1="88" x2="352" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="196" y="68" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="236" y="77" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">10 → 100 VUS</text>
+
+    <!-- msg2: API -->> KEDA async, dashed open -->
+    <line x1="360" y1="116" x2="592" y2="116" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+    <rect x="416" y="96" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="105" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">METRICS INCREASE</text>
+
+    <!-- msg3: KEDA self-loop -->
+    <path d="M 600 140 L 632 140 Q 640 140 640 148 L 640 152 Q 640 160 632 160 L 600 160"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="644" y="142" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="708" y="151" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCALE PODS 2 → 8</text>
+
+    <!-- msg4: k6 -> API sync (sustained) -->
+    <line x1="120" y1="224" x2="352" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="176" y="204" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="236" y="213" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">100 VUS SUSTAINED</text>
+
+    <!-- msg5: k6 -> API sync (spike) -->
+    <line x1="120" y1="284" x2="352" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="188" y="264" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="236" y="273" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">100 → 500 VUS</text>
+
+    <!-- msg6: API -->> KEDA async (spike) -->
+    <line x1="360" y1="316" x2="592" y2="316" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+    <rect x="424" y="296" width="104" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="305" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">METRICS SPIKE</text>
+
+    <!-- msg7: KEDA self-loop (spike scale) -->
+    <path d="M 600 340 L 632 340 Q 640 340 640 348 L 640 352 Q 640 360 632 360 L 600 360"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="644" y="342" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="710" y="351" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCALE PODS 8 → 30</text>
+
+    <!-- msg8: KEDA -> Karpenter, headline handoff, solid accent -->
+    <line x1="600" y1="392" x2="832" y2="392" stroke="#EC7211" stroke-width="1.6" marker-end="url(#arrow-accent)"/>
+    <rect x="644" y="372" width="144" height="12" rx="2" fill="#ffffff"/>
+    <text x="716" y="381" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NODE CAPACITY NEEDED</text>
+
+    <!-- msg9: Karpenter self-loop (provision) -->
+    <path d="M 840 416 L 872 416 Q 880 416 880 424 L 880 428 Q 880 436 872 436 L 840 436"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="884" y="418" width="12" height="12" rx="2" fill="#ffffff" opacity="0"/>
+    <text x="758" y="410" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.04em">PROVISION NEW NODES</text>
+
+    <!-- msg10: k6 -> API sync (cool-down) -->
+    <line x1="120" y1="496" x2="352" y2="496" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="188" y="476" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="236" y="485" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">500 → 0 VUS</text>
+
+    <!-- msg11: KEDA self-loop (scale down) -->
+    <path d="M 600 520 L 632 520 Q 640 520 640 528 L 640 532 Q 640 540 632 540 L 600 540"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="644" y="522" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="710" y="531" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">SCALE PODS 30 → 2</text>
+
+    <!-- msg12: Karpenter self-loop (consolidate) -->
+    <path d="M 840 520 L 872 520 Q 880 520 880 528 L 880 532 Q 880 540 872 540 L 840 540"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="758" y="514" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.04em">CONSOLIDATE / TERMINATE</text>
+
+    <!-- ===================== ACTOR BOXES ===================== -->
+    <!-- k6 -->
+    <rect x="50" y="8" width="140" height="36" rx="6" fill="#ffffff"/>
+    <rect x="50" y="8" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="120" y="24" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">k6</text>
+    <text x="120" y="37" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">LOAD TEST</text>
+
+    <!-- API Gateway -->
+    <rect x="290" y="8" width="140" height="36" rx="6" fill="#ffffff"/>
+    <rect x="290" y="8" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="360" y="24" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API Gateway</text>
+    <text x="360" y="37" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">INGRESS</text>
+
+    <!-- KEDA (focal) -->
+    <rect x="530" y="8" width="140" height="36" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="530" y="8" width="140" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.4"/>
+    <text x="600" y="24" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">KEDA</text>
+    <text x="600" y="37" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">POD AUTOSCALER</text>
+
+    <!-- Karpenter -->
+    <rect x="770" y="8" width="140" height="36" rx="6" fill="#ffffff"/>
+    <rect x="770" y="8" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="840" y="24" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter</text>
+    <text x="840" y="37" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">NODE AUTOSCALER</text>
+
+    <!-- ===================== LEGEND ===================== -->
+    <line x1="40" y1="584" x2="920" y2="584" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="596" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.10em">LEGEND</text>
+
+    <line x1="112" y1="592" x2="140" y2="592" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="148" y="596" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SYNC CALL</text>
+
+    <line x1="252" y1="592" x2="280" y2="592" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+    <text x="288" y="596" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">ASYNC EVENT</text>
+
+    <line x1="428" y1="592" x2="456" y2="592" stroke="#EC7211" stroke-width="1.6" marker-end="url(#arrow-accent)"/>
+    <text x="464" y="596" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">CRITICAL HANDOFF</text>
+
+    <path d="M 664 588 L 680 588 Q 686 588 686 594 L 664 594" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="692" y="596" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace">SELF-ACTION</text>
+  </svg>

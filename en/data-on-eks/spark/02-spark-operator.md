@@ -172,16 +172,7 @@ spec:
 
 ## How It Works
 
-```mermaid
-graph LR
-    A[kubectl apply<br/>SparkApplication CR] --> B[Operator Controller<br/>watches the CR]
-    B --> C[Mutating Admission Webhook<br/>injects driver/executor pod customizations]
-    C --> D[Operator creates<br/>Driver Pod]
-    D --> E[Driver requests<br/>Executor Pods]
-    E --> F[Spark job runs]
-    F --> G[Operator writes progress<br/>back to CR .status]
-    G --> B
-```
+![A cyclic flowchart of the Spark Operator control loop: a kubectl apply of a SparkApplication CR is watched by the Operator Controller, which routes through a mutating admission webhook to create a driver pod that requests executor pods to run the Spark job, after which the operator writes progress back to the CR's status field and the controller reconciles again.](../../.gitbook/assets/en-data-on-eks-spark-02-spark-operator-0.png)
 
 The Operator's control loop only ever touches the driver Pod directly; the driver itself talks to the Kubernetes API to request its own executors, exactly as it would under plain `spark-submit`. The Operator's value-add is the layer around that: submission, the webhook-driven pod customization, restart handling, and status reporting.
 

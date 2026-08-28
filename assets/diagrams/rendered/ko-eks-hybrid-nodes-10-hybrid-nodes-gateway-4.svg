@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d4-title d4-desc">
+<title id="d4-title">EKS 어드미션 웹훅 호출의 왕복 경로</title>
+<desc id="d4-desc">EKS API 서버가 하이브리드 노드에서 실행되는 웹훅 Pod를 호출할 때 ENI, VPC 라우트 테이블, 게이트웨이 EC2, VXLAN 터널을 거쳐 요청이 전달되고 동일한 경로로 응답이 그대로 되돌아오는 왕복 구조를 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="d4-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="d4-arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="d4-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="d4-arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Bidirectional connectors (request out / response back, same physical path) -->
+<line x1="230" y1="144" x2="290" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)" marker-start="url(#d4-arrow-start)"/>
+<line x1="470" y1="144" x2="530" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)" marker-start="url(#d4-arrow-start)"/>
+<line x1="710" y1="144" x2="770" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)" marker-start="url(#d4-arrow-start)"/>
+<line x1="860" y1="176" x2="860" y2="344" stroke="#EC7211" stroke-width="1.4" marker-end="url(#d4-arrow-accent)" marker-start="url(#d4-arrow-accent-start)"/>
+<line x1="770" y1="376" x2="710" y2="376" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)" marker-start="url(#d4-arrow-start)"/>
+
+<!-- Arrow labels -->
+<rect x="230" y="120" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">API 요청</text>
+
+<rect x="470" y="120" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="500" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">라우트 조회</text>
+
+<rect x="710" y="120" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="740" y="129" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">패킷 전달</text>
+
+<rect x="868" y="248" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="898" y="257" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VXLAN</text>
+
+<rect x="710" y="352" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="740" y="361" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">디캡슐화</text>
+
+<!-- Node: API Server -->
+<rect x="50" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="50" y="112" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">EKS API Server</text>
+<text x="140" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">리소스 생성 요청</text>
+
+<!-- Node: ENI -->
+<rect x="290" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="290" y="112" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">ENI</text>
+<text x="380" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Webhook 호출</text>
+
+<!-- Node: VPC Route Table -->
+<rect x="530" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="530" y="112" width="180" height="64" rx="8" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="620" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">VPC 라우트 테이블</text>
+<text x="620" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.85.0.0/16 → GW ENI</text>
+
+<!-- Node: Gateway EC2 (focal) -->
+<rect x="770" y="112" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="770" y="112" width="180" height="64" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="860" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">게이트웨이 EC2</text>
+<text x="860" y="156" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">VXLAN 터널</text>
+
+<!-- Node: Hybrid Node (Cilium) -->
+<rect x="770" y="344" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="770" y="344" width="180" height="64" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="860" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Hybrid Node</text>
+<text x="860" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Cilium Agent</text>
+
+<!-- Node: Webhook Pod -->
+<rect x="530" y="344" width="180" height="64" rx="8" fill="#ffffff"/>
+<rect x="530" y="344" width="180" height="64" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="620" y="372" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Webhook Pod</text>
+<text x="620" y="388" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.85.1.80</text>
+
+<!-- Legend -->
+<line x1="40" y1="468" x2="920" y2="468" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="48" y1="484" x2="72" y2="484" stroke="#545B64" stroke-width="1.2"/>
+<text x="80" y="487" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">요청 / 응답 왕복</text>
+<circle cx="320" cy="484" r="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="336" y="487" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">게이트웨이 (핵심 라우팅 지점)</text>
+</svg>

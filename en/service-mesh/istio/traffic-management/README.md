@@ -23,39 +23,7 @@ Traffic management is one of Istio's core features, enabling the following opera
 
 ### Key Features
 
-```mermaid
-flowchart TB
-    Client[Client Request]
-
-    subgraph Istio["Istio Traffic Management"]
-        Gateway[Gateway<br/>External Traffic Entry]
-        VS[VirtualService<br/>Routing Rules]
-        DR[DestinationRule<br/>Traffic Policy]
-    end
-
-    subgraph Services["Services"]
-        V1[Version 1<br/>90%]
-        V2[Version 2<br/>10%]
-        V3[Version 3<br/>Mirror]
-    end
-
-    Client -->|1. Request| Gateway
-    Gateway -->|2. Routing| VS
-    VS -->|3. Apply Policy| DR
-    DR -->|4a. Main Traffic| V1
-    DR -->|4b. Canary| V2
-    DR -->|4c. Shadow| V3
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Gateway,VS,DR istio;
-    class V1,V2,V3 service;
-```
+![A client request enters through the Gateway, is routed by the VirtualService, has traffic policy applied by the DestinationRule, and is then split across three service versions: the main version, a canary, and a mirrored copy for shadow testing.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-README-0.png)
 
 ### 1. Intelligent Routing
 
@@ -273,57 +241,7 @@ spec:
 
 ## Traffic Flow
 
-```mermaid
-flowchart LR
-    User[User]
-
-    subgraph Ingress["Ingress Gateway"]
-        IGW[Gateway<br/>Port 80/443]
-    end
-
-    subgraph VirtualServices["VirtualService Routing"]
-        VS1[Path Matching]
-        VS2[Header Matching]
-        VS3[Weight Distribution]
-    end
-
-    subgraph DestinationRules["DestinationRule Policies"]
-        DR1[Load Balancing]
-        DR2[Circuit Breaker]
-        DR3[Connection Pool]
-    end
-
-    subgraph Pods["Pods"]
-        P1[Pod v1-1]
-        P2[Pod v1-2]
-        P3[Pod v2-1]
-    end
-
-    User -->|Request| IGW
-    IGW --> VS1
-    VS1 --> VS2
-    VS2 --> VS3
-    VS3 --> DR1
-    DR1 --> DR2
-    DR2 --> DR3
-    DR3 --> P1
-    DR3 --> P2
-    DR3 --> P3
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class User user;
-    class IGW gateway;
-    class VS1,VS2,VS3 routing;
-    class DR1,DR2,DR3 policy;
-    class P1,P2,P3 pod;
-```
+![A user request enters the ingress Gateway, passes through VirtualService routing (path, header, then weight matching), is shaped by DestinationRule policies (load balancing, circuit breaking, connection pooling), and is finally delivered to one of three backing pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-README-1.png)
 
 ## Learning Path
 

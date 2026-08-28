@@ -9,52 +9,7 @@ The architecture of Cilium Service Mesh is fundamentally different from traditio
 
 ## Overall Architecture
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Node"
-        subgraph "User Space"
-            CA[Cilium Agent]
-            CO[Cilium Operator]
-            NE[Node Envoy<br/>L7 Proxy]
-            HR[Hubble Relay]
-        end
-
-        subgraph "Kernel Space"
-            eBPF[eBPF Programs]
-            TC[TC/XDP Hooks]
-            CT[Connection Tracking]
-            LB[Load Balancer Maps]
-            Policy[Policy Maps]
-        end
-
-        subgraph "Pods"
-            P1[Pod A]
-            P2[Pod B]
-            P3[Pod C]
-        end
-
-        CA --> eBPF
-        CA --> NE
-        eBPF --> TC
-        eBPF --> CT
-        eBPF --> LB
-        eBPF --> Policy
-
-        P1 --> TC
-        P2 --> TC
-        P3 --> TC
-        TC --> NE
-    end
-
-    subgraph "Control Plane"
-        API[Kubernetes API Server]
-        CRD[Cilium CRDs]
-    end
-
-    API --> CA
-    API --> CO
-    CRD --> CA
-```
+![Architecture diagram showing how the Kubernetes control plane drives the per-node Cilium Agent and Operator, which program eBPF kernel datapath maps that intercept pod traffic and redirect L7 flows to a shared node-local Envoy proxy.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-0.png)
 
 ## eBPF Datapath
 
@@ -62,20 +17,7 @@ graph TB
 
 eBPF (extended Berkeley Packet Filter) is a technology that enables running sandboxed programs within the Linux kernel. It allows implementing networking, security, and observability features without modifying the kernel.
 
-```mermaid
-graph LR
-    subgraph "Traditional Networking"
-        App1[Application] --> Kernel1[Kernel<br/>Network Stack]
-        Kernel1 --> NIC1[NIC]
-    end
-
-    subgraph "eBPF Networking"
-        App2[Application] --> eBPF2[eBPF<br/>Programs]
-        eBPF2 --> Kernel2[Kernel<br/>Network Stack]
-        Kernel2 --> NIC2[NIC]
-        eBPF2 -.-> |"Bypass"| NIC2
-    end
-```
+![Diagram contrasting a traditional application-to-NIC path that always traverses the kernel network stack with an eBPF-based path where kernel-attached programs process packets directly and can bypass the stack.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-1.png)
 
 ### eBPF Hook Points
 
@@ -88,54 +30,13 @@ Cilium utilizes multiple eBPF hook points:
 | **Socket Operations** | Socket Level | Socket connection acceleration |
 | **cgroup** | Process Group | Resource control, policy enforcement |
 
-```mermaid
-graph TB
-    subgraph "Packet Flow with eBPF Hooks"
-        NIC[NIC] --> XDP[XDP Hook]
-        XDP --> TC_IN[TC Ingress]
-        TC_IN --> Stack[Network Stack]
-        Stack --> Socket[Socket Layer]
-        Socket --> App[Application]
-
-        App --> Socket
-        Socket --> Stack
-        Stack --> TC_OUT[TC Egress]
-        TC_OUT --> NIC
-    end
-
-    style XDP fill:#e1f5fe
-    style TC_IN fill:#e1f5fe
-    style TC_OUT fill:#e1f5fe
-    style Socket fill:#e1f5fe
-```
+![Diagram showing a packet's ingress path from the NIC through the XDP and TC eBPF hooks up to the application, and the mirrored egress path back down through the TC hook to the NIC.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-2.png)
 
 ### L3/L4 Processing
 
 L3/L4 processing in eBPF works as follows:
 
-```mermaid
-sequenceDiagram
-    participant Pod as Source Pod
-    participant TC as TC eBPF
-    participant CT as Connection Tracker
-    participant LB as Load Balancer
-    participant Policy as Policy Engine
-    participant Dest as Destination Pod
-
-    Pod->>TC: Send Packet
-    TC->>CT: Lookup Connection State
-
-    alt New Connection
-        CT->>LB: Check Service IP
-        LB->>CT: Return Backend Pod IP
-        CT->>Policy: Evaluate Policy
-        Policy->>CT: Allow/Deny
-    else Existing Connection
-        CT->>TC: Return Cached Decision
-    end
-
-    TC->>Dest: Deliver Packet
-```
+![Sequence diagram showing a packet moving from a source pod through the TC eBPF hook and connection tracker, which either evaluates the service and policy maps for a new connection or reuses a cached decision, before the packet is delivered to the destination pod.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-3.png)
 
 #### eBPF Map Structure
 
@@ -197,32 +98,7 @@ loadBalancer:
 
 ### Sidecar vs Node Proxy
 
-```mermaid
-graph TB
-    subgraph "Sidecar Model"
-        subgraph "Pod A"
-            AppA1[App]
-            ProxyA1[Envoy<br/>50MB RAM]
-        end
-        subgraph "Pod B"
-            AppB1[App]
-            ProxyB1[Envoy<br/>50MB RAM]
-        end
-        subgraph "Pod C"
-            AppC1[App]
-            ProxyC1[Envoy<br/>50MB RAM]
-        end
-    end
-
-    subgraph "Node Proxy Model"
-        subgraph "Node"
-            AppA2[Pod A<br/>App]
-            AppB2[Pod B<br/>App]
-            AppC2[Pod C<br/>App]
-            NodeProxy[Shared Envoy<br/>100MB RAM]
-        end
-    end
-```
+![Side-by-side diagram contrasting the sidecar model, where each pod runs its own 50MB Envoy proxy, with the node proxy model, where three pods on a node share a single 100MB Envoy instance.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-4.png)
 
 ### Envoy Deployment Method
 
@@ -239,32 +115,7 @@ cilium-envoy   3         3         3       3            3
 
 ### L7 Processing Flow
 
-```mermaid
-sequenceDiagram
-    participant Client as Client Pod
-    participant eBPF as eBPF Datapath
-    participant Envoy as Node Envoy
-    participant Server as Server Pod
-
-    Client->>eBPF: HTTP Request
-    Note over eBPF: Check L4 Policy
-
-    alt L7 Policy Required
-        eBPF->>Envoy: Redirect Traffic
-        Note over Envoy: HTTP Parsing<br/>L7 Policy Enforcement<br/>Header Manipulation
-        Envoy->>eBPF: Processed Request
-    end
-
-    eBPF->>Server: Deliver Packet
-    Server->>eBPF: HTTP Response
-
-    alt L7 Policy Required
-        eBPF->>Envoy: Redirect Response
-        Envoy->>eBPF: Processed Response
-    end
-
-    eBPF->>Client: Deliver Response
-```
+![Sequence diagram showing a client HTTP request passing through the eBPF datapath, which conditionally redirects traffic to the node Envoy for L7 policy enforcement on both the request and response legs before the response reaches the client.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-5.png)
 
 ### Envoy Resource Configuration
 
@@ -297,34 +148,7 @@ envoy:
 
 ### Cilium CRD Structure
 
-```mermaid
-graph TB
-    subgraph "Network Policy CRDs"
-        CNP[CiliumNetworkPolicy]
-        CCNP[CiliumClusterwideNetworkPolicy]
-    end
-
-    subgraph "Envoy Configuration CRDs"
-        CEC[CiliumEnvoyConfig]
-        CCEC[CiliumClusterwideEnvoyConfig]
-    end
-
-    subgraph "Service Mesh CRDs"
-        CLB[CiliumLoadBalancerIPPool]
-        CBGP[CiliumBGPPeeringPolicy]
-        CEG[CiliumEgressGateway]
-    end
-
-    subgraph "Identity CRDs"
-        CID[CiliumIdentity]
-        CEP[CiliumEndpoint]
-    end
-
-    CNP --> CEP
-    CCNP --> CEP
-    CEC --> CEP
-    CCEC --> CEP
-```
+![Architecture diagram grouping Cilium's custom resources into network policy, Envoy configuration, and service mesh CRDs, all of which resolve down to a per-pod CiliumEndpoint identity record alongside the cluster-wide CiliumIdentity.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-6.png)
 
 ### CiliumEnvoyConfig
 
@@ -455,48 +279,7 @@ spec:
 
 ### Cilium Agent Role
 
-```mermaid
-graph TB
-    subgraph "Cilium Agent Responsibilities"
-        direction TB
-
-        subgraph "Network Management"
-            IPAM[IPAM<br/>IP Address Management]
-            Routing[Routing<br/>Table Management]
-            LB[Load Balancing<br/>Service Management]
-        end
-
-        subgraph "Policy Management"
-            Policy[Policy Compilation]
-            Identity[Identity Management]
-            Endpoint[Endpoint<br/>Management]
-        end
-
-        subgraph "Proxy Management"
-            EnvoyConfig[Envoy Config<br/>Generation]
-            EnvoySync[Envoy Sync]
-            L7Policy[L7 Policy<br/>Translation]
-        end
-
-        subgraph "Observability"
-            FlowLog[Flow Logging]
-            Metrics[Metrics Collection]
-            Events[Event Generation]
-        end
-    end
-
-    API[K8s API] --> IPAM
-    API --> Policy
-    API --> EnvoyConfig
-
-    IPAM --> Routing
-    Policy --> Identity
-    Identity --> Endpoint
-    EnvoyConfig --> EnvoySync
-
-    Endpoint --> FlowLog
-    LB --> Metrics
-```
+![Architecture diagram showing the Kubernetes API server driving the Cilium Agent's network management, policy management, and proxy management responsibilities, with policy and network state feeding the agent's observability output.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-7.png)
 
 ### Agent Configuration
 
@@ -536,24 +319,7 @@ data:
 
 Cilium assigns a unique identity to each workload:
 
-```mermaid
-graph TB
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Identity[Cilium Identity<br/>Numeric ID]
-        Identity --> SecurityContext[Security Context]
-    end
-
-    subgraph "Identity Components"
-        Namespace[Namespace]
-        ServiceAccount[Service Account]
-        PodLabels[Pod Labels]
-    end
-
-    Namespace --> Identity
-    ServiceAccount --> Identity
-    PodLabels --> Identity
-```
+![Diagram showing a pod's labels combining with its namespace and service account to derive a numeric Cilium Identity, which in turn sets the workload's security context.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-8.png)
 
 ### Identity-based Policy
 
@@ -589,16 +355,7 @@ ID      LABELS
 
 Workload identity through SPIFFE (Secure Production Identity Framework for Everyone):
 
-```mermaid
-graph LR
-    subgraph "SPIFFE Integration"
-        Workload[Workload] --> Agent[SPIRE Agent]
-        Agent --> Server[SPIRE Server]
-        Server --> CA[Certificate Authority]
-        CA --> SVID[SVID<br/>X.509 Certificate]
-        SVID --> Workload
-    end
-```
+![Diagram showing a workload requesting identity through the SPIRE agent and server, which uses a certificate authority to issue an X.509 SVID that is delivered back to the workload.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-9.png)
 
 ```yaml
 # SPIRE integration configuration
@@ -624,73 +381,15 @@ spiffe://cluster.local/ns/<namespace>/sa/<service-account>
 
 ### Pod-to-Pod Communication (Same Node)
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant VethA as veth (Pod A)
-    participant eBPF_In as eBPF Ingress
-    participant CT as CT Map
-    participant Policy as Policy Map
-    participant eBPF_Out as eBPF Egress
-    participant VethB as veth (Pod B)
-    participant PodB as Pod B
-
-    PodA->>VethA: Send Packet
-    VethA->>eBPF_In: TC Ingress
-    eBPF_In->>CT: Connection Lookup
-    CT->>Policy: Policy Check
-    Policy->>eBPF_Out: Allow
-    eBPF_Out->>VethB: Direct Forward
-    VethB->>PodB: Receive Packet
-
-    Note over eBPF_In,eBPF_Out: Direct path in kernel<br/>Bypass network stack
-```
+![Sequence diagram showing a packet moving entirely inside the kernel from a source pod's veth ingress hook, through connection-tracking and policy maps, to the destination pod's egress hook on the same node, bypassing the network stack.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-10.png)
 
 ### Pod-to-Pod Communication (Different Nodes)
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A (Node 1)
-    participant eBPF1 as eBPF (Node 1)
-    participant Tunnel as Tunnel/Native
-    participant eBPF2 as eBPF (Node 2)
-    participant PodB as Pod B (Node 2)
-
-    PodA->>eBPF1: Send Packet
-    Note over eBPF1: Policy Evaluation<br/>Tunnel Encapsulation
-    eBPF1->>Tunnel: VXLAN/Geneve/Native
-    Tunnel->>eBPF2: Receive Packet
-    Note over eBPF2: Policy Evaluation<br/>Tunnel Decapsulation
-    eBPF2->>PodB: Deliver Packet
-```
+![Sequence diagram showing a packet leaving a pod on one node, being policy-evaluated and tunnel-encapsulated by eBPF, carried over VXLAN, Geneve, or native routing, then decapsulated and policy-evaluated again by eBPF on the destination node before delivery.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-11.png)
 
 ### When L7 Processing is Required
 
-```mermaid
-sequenceDiagram
-    participant Client as Client Pod
-    participant eBPF_C as eBPF (Client)
-    participant Envoy as Node Envoy
-    participant eBPF_S as eBPF (Server)
-    participant Server as Server Pod
-
-    Client->>eBPF_C: HTTP Request
-    Note over eBPF_C: Detect L7 Policy
-    eBPF_C->>Envoy: Redirect to Proxy
-
-    Note over Envoy: HTTP Parsing<br/>L7 Policy Enforcement<br/>Metrics Collection<br/>Tracing
-
-    Envoy->>eBPF_S: Forward Request
-    eBPF_S->>Server: Deliver Packet
-
-    Server->>eBPF_S: HTTP Response
-    eBPF_S->>Envoy: Forward Response
-
-    Note over Envoy: Response Processing<br/>Metrics Update
-
-    Envoy->>eBPF_C: Forward Response
-    eBPF_C->>Client: Deliver Packet
-```
+![Sequence diagram showing a client request that requires L7 policy enforcement being redirected by the client-side eBPF hook to the node Envoy proxy, forwarded to the server through the server-side eBPF hook, and the response taking the same detour back through Envoy to the client.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-12.png)
 
 ## Comparison with Istio Sidecar Architecture
 
@@ -711,51 +410,13 @@ sequenceDiagram
 
 ### Latency Analysis
 
-```mermaid
-graph TB
-    subgraph "Istio Latency Components"
-        I1[App → Sidecar] --> I2[Sidecar Processing]
-        I2 --> I3[Network]
-        I3 --> I4[Sidecar Processing]
-        I4 --> I5[Sidecar → App]
-
-        I1 -.- |"~0.2ms"| I1
-        I2 -.- |"~0.5ms"| I2
-        I3 -.- |"~0.1ms"| I3
-        I4 -.- |"~0.5ms"| I4
-        I5 -.- |"~0.2ms"| I5
-    end
-
-    subgraph "Cilium Latency Components"
-        C1[App → eBPF] --> C2[eBPF Processing]
-        C2 --> C3[Network]
-        C3 --> C4[eBPF Processing]
-        C4 --> C5[eBPF → App]
-
-        C1 -.- |"~0.02ms"| C1
-        C2 -.- |"~0.05ms"| C2
-        C3 -.- |"~0.1ms"| C3
-        C4 -.- |"~0.05ms"| C4
-        C5 -.- |"~0.02ms"| C5
-    end
-```
+![Diagram breaking down end-to-end request latency into per-hop components, showing Istio's sidecar model spending roughly 1.5 milliseconds across two userspace proxy hops versus Cilium's eBPF model completing the same round trip in about a quarter of a millisecond, with the network hop itself costing the same in both.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-13.png)
 
 ### Resource Efficiency Analysis
 
 For a 100 Pod cluster:
 
-```mermaid
-graph LR
-    subgraph "Memory Usage"
-        Istio[Istio<br/>100 pods × 50MB<br/>= 5GB]
-        Cilium[Cilium<br/>5 nodes × 100MB<br/>= 500MB]
-    end
-
-    subgraph "CPU Overhead"
-        IstioC[Istio<br/>100 sidecars<br/>High CPU overhead]
-        CiliumC[Cilium<br/>5 Node Envoys<br/>Low CPU overhead]
-    end
-```
+![Diagram comparing Istio and Cilium resource consumption on a 100-pod cluster: Istio's per-pod sidecars total roughly 5GB of memory with high aggregate CPU overhead, while Cilium's five node-level Envoy proxies total about 500MB with low CPU overhead.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-14.png)
 
 ## Scalability Considerations
 

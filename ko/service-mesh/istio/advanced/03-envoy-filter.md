@@ -149,26 +149,7 @@ spec:
 
 ### X-Forwarded-For 개요
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as 클라이언트<br/>IP: 203.0.113.5
-    participant LB as 로드 밸런서<br/>IP: 10.0.1.100
-    participant Gateway as Istio Gateway<br/>IP: 10.0.2.50
-    participant Envoy as Envoy Sidecar<br/>IP: 10.244.1.10
-    participant App as 애플리케이션
-
-    Client->>LB: HTTP 요청
-    Note over LB: X-Forwarded-For: 203.0.113.5
-
-    LB->>Gateway: X-Forwarded-For: 203.0.113.5
-    Note over Gateway: X-Forwarded-For: 203.0.113.5, 10.0.1.100
-
-    Gateway->>Envoy: X-Forwarded-For: 203.0.113.5, 10.0.1.100
-    Note over Envoy: use_remote_address 설정에 따라<br/>XFF 처리 방식 결정
-
-    Envoy->>App: X-Forwarded-For 헤더 전달
-```
+![클라이언트의 요청이 로드 밸런서와 Istio Gateway를 거쳐 Envoy Sidecar에 도달하는 과정에서 X-Forwarded-For 헤더에 각 홉의 IP가 누적되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-0.png)
 
 ### XFF 설정 옵션
 
@@ -265,29 +246,7 @@ xff_num_trusted_hops: 3 → 마지막 3개 신뢰
 
 #### 시나리오 1: AWS ALB + Istio Gateway
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>203.0.113.5]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[애플리케이션]
-
-    Client -->|"XFF: (없음)"| ALB
-    ALB -->|"XFF: 203.0.113.5"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 10.0.1.100"| App
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![클라이언트 요청이 AWS ALB를 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 ALB의 IP 한 홉만 추가되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-1.png)
 
 **설정**:
 
@@ -326,31 +285,7 @@ spec:
 
 #### 시나리오 2: Client → CloudFront → ALB → Gateway
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>203.0.113.5]
-    CF[CloudFront<br/>172.64.0.1]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[애플리케이션]
-
-    Client -->|"XFF: (없음)"| CF
-    CF -->|"XFF: 203.0.113.5"| ALB
-    ALB -->|"XFF: 203.0.113.5, 172.64.0.1"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100"| App
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class CF,ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![클라이언트 요청이 CloudFront와 AWS ALB를 차례로 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 두 홉의 IP가 누적되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-2.png)
 
 **설정**:
 
@@ -393,33 +328,7 @@ xff_num_trusted_hops: 2 → 마지막 2개(CloudFront, ALB) 신뢰
 
 #### 시나리오 3: Client → CloudFront → NLB → ALB → Gateway
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>203.0.113.5]
-    CF[CloudFront<br/>172.64.0.1]
-    NLB[AWS NLB<br/>10.0.1.50]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[애플리케이션]
-
-    Client -->|"XFF: (없음)"| CF
-    CF -->|"XFF: 203.0.113.5"| NLB
-    NLB -->|"XFF: 203.0.113.5<br/>(L4, 수정 안함)"| ALB
-    ALB -->|"XFF: 203.0.113.5, 172.64.0.1"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100"| App
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class CF,NLB,ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![클라이언트 요청이 CloudFront, L4인 NLB, ALB를 차례로 거쳐 Istio Gateway에 도달하며, NLB는 XFF 헤더를 읽거나 수정하지 않아 체인에 영향을 주지 않는다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-3.png)
 
 **설정**:
 
@@ -465,29 +374,7 @@ xff_num_trusted_hops: 2 → 마지막 2개(CloudFront, ALB) 신뢰
 
 #### 시나리오 4: Client → ALB → Gateway (직접 연결)
 
-```mermaid
-flowchart LR
-    Client[클라이언트<br/>203.0.113.5]
-    ALB[AWS ALB<br/>10.0.1.100]
-    Gateway[Istio Gateway<br/>10.0.2.50]
-    App[애플리케이션]
-
-    Client -->|"XFF: (없음)"| ALB
-    ALB -->|"XFF: 203.0.113.5"| Gateway
-    Gateway -->|"XFF: 203.0.113.5, 10.0.1.100"| App
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class ALB aws;
-    class Gateway istio;
-    class App app;
-```
+![중간 CDN 없이 클라이언트가 AWS ALB에 직접 연결되어 Istio Gateway에 도달하며, ALB의 IP 한 홉만 XFF 헤더에 추가되는 가장 단순한 구성을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-4.png)
 
 **설정**:
 
@@ -790,64 +677,7 @@ spec:
 
 #### 아키텍처 개요
 
-```mermaid
-flowchart TB
-    subgraph Internet[인터넷]
-        Client1[일반 사용자<br/>1.2.3.4]
-        Client2[회사 사용자<br/>203.0.113.10]
-    end
-
-    subgraph AWS[AWS]
-        ALB[Application<br/>Load Balancer]
-    end
-
-    subgraph K8S[Kubernetes 클러스터]
-        subgraph Gateway[Istio Gateway]
-            EnvoyGW[Envoy<br/>XFF 처리<br/>xff_num_trusted_hops: 1]
-        end
-
-        subgraph NoRestriction[제한 없는 앱]
-            AppA[App A]
-            AppB[App B]
-            AppC[App C]
-        end
-
-        subgraph Restricted[IP 제한 앱]
-            AppF[App F<br/>AuthorizationPolicy]
-            AppG[App G<br/>AuthorizationPolicy]
-        end
-    end
-
-    Client1 -->|XFF: 1.2.3.4| ALB
-    Client2 -->|XFF: 203.0.113.10| ALB
-
-    ALB -->|XFF: 1.2.3.4, ALB_IP| EnvoyGW
-    ALB -->|XFF: 203.0.113.10, ALB_IP| EnvoyGW
-
-    EnvoyGW -->|원본 IP: 1.2.3.4<br/>✅ 허용| AppA
-    EnvoyGW -->|원본 IP: 1.2.3.4<br/>✅ 허용| AppB
-    EnvoyGW -->|원본 IP: 1.2.3.4<br/>✅ 허용| AppC
-
-    EnvoyGW -->|원본 IP: 1.2.3.4<br/>❌ 거부| AppF
-    EnvoyGW -->|원본 IP: 203.0.113.10<br/>✅ 허용| AppF
-
-    EnvoyGW -->|원본 IP: 1.2.3.4<br/>❌ 거부| AppG
-    EnvoyGW -->|원본 IP: 203.0.113.10<br/>✅ 허용| AppG
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#466BB0,stroke:#333,stroke-width:2px,color:white;
-    classDef appNormal fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef appRestricted fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class Client1,Client2 client;
-    class ALB aws;
-    class EnvoyGW gateway;
-    class AppA,AppB,AppC appNormal;
-    class AppF,AppG appRestricted;
-```
+![인터넷의 일반 사용자와 회사 사용자가 AWS ALB를 거쳐 Istio Gateway의 Envoy에 도달하고, Envoy가 추출한 원본 IP를 바탕으로 App A-C는 모든 클라이언트를 허용하지만 App F-G는 AuthorizationPolicy로 회사 IP만 허용하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-5.png)
 
 #### 핵심 원리
 
@@ -945,31 +775,7 @@ spec:
 
 #### 동작 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as 클라이언트<br/>1.2.3.4
-    participant ALB as ALB
-    participant Gateway as Istio Gateway<br/>(XFF 추출)
-    participant AppA as App A<br/>(제한 없음)
-    participant AppF as App F<br/>(IP 제한)
-
-    Note over Gateway: EnvoyFilter로<br/>XFF 처리 설정
-
-    Client->>ALB: HTTP 요청
-    Note over ALB: XFF: 1.2.3.4
-
-    ALB->>Gateway: XFF: 1.2.3.4, ALB_IP
-    Note over Gateway: xff_num_trusted_hops: 1<br/>→ 원본 IP: 1.2.3.4
-
-    Gateway->>AppA: 원본 IP: 1.2.3.4
-    Note over AppA: ✅ AuthorizationPolicy 없음<br/>→ 모든 IP 허용
-    AppA->>Gateway: 200 OK
-
-    Gateway->>AppF: 원본 IP: 1.2.3.4
-    Note over AppF: ❌ AuthorizationPolicy 있음<br/>remoteIpBlocks: 203.0.113.0/24<br/>→ 1.2.3.4는 거부
-    AppF->>Gateway: 403 Forbidden
-```
+![동일한 클라이언트 IP가 Gateway를 거쳐 제한 없는 App A에는 200 OK로 허용되지만, AuthorizationPolicy가 걸린 App F에는 403 Forbidden으로 거부되는 시퀀스를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-6.png)
 
 #### 왜 Gateway 설정이 필요한가?
 
@@ -1287,26 +1093,7 @@ spec:
 
 ### 정적 응답 개요
 
-```mermaid
-flowchart LR
-    Client[클라이언트]
-    Envoy[Envoy Proxy]
-    Backend[백엔드 서비스]
-
-    Client -->|HTTP 요청| Envoy
-    Envoy -->|조건 일치 시<br/>정적 응답| Client
-    Envoy -.->|조건 불일치 시<br/>프록시| Backend
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client client;
-    class Envoy envoy;
-    class Backend backend;
-```
+![클라이언트 요청이 Envoy Proxy에 도달했을 때 조건이 일치하면 백엔드 서비스를 거치지 않고 Envoy가 직접 정적 응답을 반환하고, 조건이 일치하지 않으면 백엔드로 프록시된다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-7.png)
 
 ### 사용 사례
 

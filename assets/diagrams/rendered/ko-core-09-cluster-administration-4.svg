@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">인증 및 권한 부여 흐름</title>
+<desc id="d">사용자 또는 서비스 계정의 요청이 인증, 권한 부여, 어드미션 컨트롤을 차례로 통과해 API 서버에 도달하며, 인증에는 X.509·토큰·OIDC·웹훅 방식이, 권한 부여에는 RBAC·ABAC·Node·Webhook 모드가 쓰인다는 것을 보여주는 흐름도</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="170" y1="104" x2="220" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="360" y1="104" x2="410" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="550" y1="104" x2="600" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="740" y1="104" x2="790" y2="104" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="290" y1="128" x2="290" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="128" x2="480" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="30" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="30" y="80" width="140" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="100.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용자/서비스 계정</text>
+<rect x="220" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="220" y="80" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="228" y="86" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.4"/>
+<text x="242" y="95" fill="#EC7211" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">AUTHN</text>
+<text x="290.0" y="106.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인증</text>
+<rect x="410" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="410" y="80" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="418" y="86" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.4"/>
+<text x="432" y="95" fill="#EC7211" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.08em">AUTHZ</text>
+<text x="480.0" y="106.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">권한 부여</text>
+<rect x="600" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="600" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="670.0" y="106.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">어드미션 컨트롤</text>
+<rect x="790" y="80" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="790" y="80" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="106.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API 서버</text>
+<rect x="190" y="220" width="200" height="76" rx="6" fill="#ffffff"/>
+<rect x="190" y="220" width="200" height="76" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="290.0" y="238" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인증 방법</text>
+<text x="290.0" y="254" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">X.509 인증서</text>
+<text x="290.0" y="267" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">서비스 계정 토큰</text>
+<text x="290.0" y="280" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">OpenID Connect</text>
+<text x="290.0" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">웹훅 토큰 인증</text>
+<rect x="380" y="220" width="200" height="76" rx="6" fill="#ffffff"/>
+<rect x="380" y="220" width="200" height="76" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="480.0" y="238" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">권한 부여 모드</text>
+<text x="480.0" y="254" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">RBAC</text>
+<text x="480.0" y="267" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">ABAC</text>
+<text x="480.0" y="280" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Node</text>
+<text x="480.0" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Webhook</text>
+</svg>

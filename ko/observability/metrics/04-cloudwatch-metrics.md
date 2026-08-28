@@ -33,28 +33,7 @@ Amazon CloudWatch는 AWS의 네이티브 모니터링 및 관측성 서비스입
 
 ### CloudWatch vs 오픈소스 솔루션
 
-```mermaid
-flowchart LR
-    subgraph CW["CloudWatch"]
-        C1[완전 관리형]
-        C2[AWS 네이티브]
-        C3[사용량 기반 비용]
-        C4[15개월 보존]
-    end
-
-    subgraph OS["오픈소스<br/>Prometheus/VM"]
-        O1[자체 운영]
-        O2[클라우드 중립]
-        O3[인프라 비용만]
-        O4[무제한 보존]
-    end
-
-    classDef cw fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef os fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class C1,C2,C3,C4 cw
-    class O1,O2,O3,O4 os
-```
+![CloudWatch는 완전 관리형·AWS 네이티브·사용량 기반 비용·15개월 보존을 제공하고, 오픈소스 Prometheus/VictoriaMetrics 스택은 자체 운영·클라우드 중립·인프라 비용만·무제한 보존이라는 상반된 특성을 가진다는 것을 보여주는 비교 다이어그램.](../../.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-0.png)
 
 | 항목 | CloudWatch | Prometheus/VM |
 |------|------------|---------------|
@@ -71,37 +50,7 @@ Container Insights는 EKS 클러스터의 컨테이너화된 워크로드를 모
 
 ### 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph EKS["EKS Cluster"]
-        subgraph NODES["Worker Nodes"]
-            CW1[CloudWatch Agent<br/>DaemonSet]
-            FB[Fluent Bit<br/>DaemonSet]
-            APP[Applications]
-        end
-    end
-
-    subgraph CLOUDWATCH["CloudWatch"]
-        CI[Container Insights<br/>Metrics]
-        CL[CloudWatch Logs]
-        PM[Performance Monitoring]
-    end
-
-    CW1 -->|메트릭| CI
-    FB -->|로그| CL
-    CI --> PM
-    CL --> PM
-    APP -.->|expose| CW1
-    APP -.->|stdout/stderr| FB
-
-    classDef eks fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef cw fill:#146EB4,stroke:#333,stroke-width:1px,color:white
-    classDef agent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class EKS,NODES eks
-    class CI,CL,PM cw
-    class CW1,FB,APP agent
-```
+![워커 노드의 애플리케이션이 CloudWatch Agent와 Fluent Bit DaemonSet에 각각 메트릭·로그를 노출하고, 두 에이전트가 Container Insights 메트릭과 CloudWatch Logs로 전송된 뒤 Performance Monitoring에서 합쳐지는 수집 경로를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-1.png)
 
 ### 수집되는 메트릭
 
@@ -1046,29 +995,7 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 
 ### 비용 최적화 전략
 
-```mermaid
-flowchart TD
-    A[CloudWatch 비용 최적화] --> B[메트릭 최적화]
-    A --> C[로그 최적화]
-    A --> D[대시보드 최적화]
-
-    B --> B1[고해상도 메트릭 최소화]
-    B --> B2[불필요한 차원 제거]
-    B --> B3[수집 간격 조정]
-
-    C --> C1[로그 보존 기간 설정]
-    C --> C2[로그 필터링]
-    C --> C3[로그 클래스 활용]
-
-    D --> D1[대시보드 통합]
-    D --> D2[쿼리 최적화]
-
-    classDef main fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef strategy fill:#146EB4,stroke:#333,stroke-width:1px,color:white
-
-    class A main
-    class B,C,D,B1,B2,B3,C1,C2,C3,D1,D2 strategy
-```
+![CloudWatch 비용 최적화가 메트릭·로그·대시보드 세 갈래로 나뉘고, 각 갈래마다 고해상도 메트릭 최소화, 로그 보존 기간 설정 같은 구체적인 실행 항목으로 이어지는 트리 다이어그램.](../../.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-2.png)
 
 ### 1. 메트릭 수집 최적화
 

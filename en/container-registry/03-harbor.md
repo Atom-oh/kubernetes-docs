@@ -23,40 +23,7 @@ Harbor is an open-source, cloud-native container registry that provides enterpri
 
 ### Architecture
 
-```mermaid
-flowchart TB
-    subgraph Harbor["Harbor"]
-        Nginx["Nginx (Proxy)"]
-        Portal["Portal (Web UI)"]
-        Core["Core (API)"]
-        Nginx --> Core
-        Portal --> Core
-
-        subgraph Services["Core Services"]
-            Registry["Registry<br/>(Docker Registry)"]
-            JobService["Job Service<br/>(Async Tasks)"]
-            Trivy["Trivy<br/>(Vuln Scanner)"]
-            Notary["Notary<br/>(Signing)"]
-        end
-
-        subgraph DataLayer["Data Services"]
-            PG["PostgreSQL<br/>(Metadata Store)"]
-            Redis["Redis<br/>(Job Queue/Cache)"]
-        end
-
-        subgraph Storage["Storage Backend"]
-            Backend["Filesystem / S3 / Azure Blob / GCS"]
-        end
-
-        Core --> Services
-        Services --> DataLayer
-        Registry --> Storage
-    end
-
-    style Harbor fill:#60B932,stroke:#3d7a1f,color:#fff
-    style Services fill:#4a9028,stroke:#3d7a1f,color:#fff
-    style DataLayer fill:#4a9028,stroke:#3d7a1f,color:#fff
-```
+![Nginx and Portal both front Harbor's Core API, which hands work to the Registry service, which in turn depends on a metadata/queue data store and writes image layers to the storage backend.](../.gitbook/assets/en-container-registry-03-harbor-0.png)
 
 ### Component Responsibilities
 
@@ -440,18 +407,7 @@ docker push harbor.example.com/myapp/app:v1.0.0
 
 ## Image Replication
 
-```mermaid
-flowchart LR
-    subgraph Pull["Pull Replication (Mirror)"]
-        direction LR
-        ExtReg["External Registry<br/>Docker Hub / ECR"] -->|Pull| HarborLocal["Harbor (Local)"]
-    end
-
-    subgraph Push["Push Replication (Distribute)"]
-        direction LR
-        HarborSrc["Harbor (Source)"] -->|Push| RemoteReg["Remote Registry<br/>ECR / Harbor DR"]
-    end
-```
+![Harbor supports two replication directions: pulling images in from an external registry to mirror them locally, and pushing images out from a source Harbor to a remote registry to distribute them.](../.gitbook/assets/en-container-registry-03-harbor-1.png)
 
 Harbor supports bidirectional replication between registries.
 
@@ -991,14 +947,7 @@ spec:
 
 ### Proxy Cache Configuration
 
-```mermaid
-flowchart LR
-    Client["Docker/containerd"] --> Harbor{"Harbor<br/>Proxy Cache"}
-    Harbor -->|Cache Hit| Return["Return cached image"]
-    Harbor -->|Cache Miss| Upstream["Upstream Registry<br/>(Docker Hub, etc.)"]
-    Upstream --> Store["Cache in Harbor"]
-    Store --> Return
-```
+![A client pull request hits Harbor's proxy cache; a cache hit returns the cached image directly, while a cache miss fetches the image from the upstream registry, stores it in Harbor, and then returns it to the client.](../.gitbook/assets/en-container-registry-03-harbor-2.png)
 
 Configure Harbor as a proxy cache for external registries:
 

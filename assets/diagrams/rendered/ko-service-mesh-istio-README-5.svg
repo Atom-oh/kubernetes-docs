@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="istio-arch-title istio-arch-desc">
+    <title id="istio-arch-title">Istio 컨트롤 플레인과 데이터 플레인 구조</title>
+    <desc id="istio-arch-desc">istiod의 Pilot·Citadel·Galley가 설정과 인증서를 각 파드의 Envoy 사이드카에 배포하고, 세 Envoy가 서로 mTLS로 암호화 통신하며 애플리케이션의 요청을 가로채는 Istio 아키텍처를 보여주는 다이어그램.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="d5-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="d5-arrow-accent-end" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="d5-arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="80" width="880" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="88" width="220" height="14" fill="#ffffff"/>
+    <text x="60" y="99" fill="rgba(35,47,62,0.55)" font-size="8" font-family="var(--font-mono)" letter-spacing="0.1em">CONTROL PLANE (ISTIOD)</text>
+
+    <rect x="40" y="228" width="880" height="170" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="236" width="140" height="14" fill="#ffffff"/>
+    <text x="60" y="247" fill="rgba(35,47,62,0.55)" font-size="8" font-family="var(--font-mono)" letter-spacing="0.1em">DATA PLANE</text>
+
+    <!-- Control-plane distribution bus (dashed) -->
+    <line x1="164" y1="210" x2="860" y2="210" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="164" y1="172" x2="164" y2="210" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="480" y1="172" x2="480" y2="210" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="190" y1="210" x2="190" y2="276" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d5-arrow)"/>
+    <line x1="525" y1="210" x2="525" y2="276" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d5-arrow)"/>
+    <line x1="860" y1="210" x2="860" y2="276" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d5-arrow)"/>
+    <circle cx="164" cy="210" r="3" fill="#232F3E"/>
+    <circle cx="480" cy="210" r="3" fill="#232F3E"/>
+    <circle cx="190" cy="210" r="3" fill="#232F3E"/>
+    <circle cx="525" cy="210" r="3" fill="#232F3E"/>
+    <circle cx="860" cy="210" r="3" fill="#232F3E"/>
+
+    <rect x="248" y="192" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="312" y="201" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.04em">구성 전달 · 인증서 발급</text>
+
+    <!-- App -> Envoy (same row) -->
+    <line x1="120" y1="300" x2="130" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+    <line x1="455" y1="300" x2="465" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+    <line x1="790" y1="300" x2="800" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+
+    <!-- mTLS mesh (accent, bidirectional) -->
+    <path d="M 178,324 V 332 Q 178,340 186,340 H 505 Q 513,340 513,332 V 324"
+          fill="none" stroke="#EC7211" stroke-width="1.2" stroke-dasharray="none"
+          marker-start="url(#d5-arrow-accent-start)" marker-end="url(#d5-arrow-accent-end)"/>
+    <path d="M 537,324 V 332 Q 537,340 545,340 H 840 Q 848,340 848,332 V 324"
+          fill="none" stroke="#EC7211" stroke-width="1.2"
+          marker-start="url(#d5-arrow-accent-start)" marker-end="url(#d5-arrow-accent-end)"/>
+    <path d="M 202,324 V 352 Q 202,360 210,360 H 864 Q 872,360 872,352 V 324"
+          fill="none" stroke="#EC7211" stroke-width="1.2"
+          marker-start="url(#d5-arrow-accent-start)" marker-end="url(#d5-arrow-accent-end)"/>
+    <rect x="296" y="326" width="34" height="12" rx="2" fill="#ffffff"/>
+    <text x="313" y="335" fill="#EC7211" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+
+    <!-- Control-plane nodes -->
+    <rect x="64" y="116" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="164" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Pilot</text>
+    <text x="164" y="156" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">서비스 디스커버리·트래픽 관리</text>
+
+    <rect x="380" y="116" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Citadel</text>
+    <text x="480" y="156" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">인증서 관리·보안</text>
+
+    <rect x="696" y="116" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="796" y="140" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Galley</text>
+    <text x="796" y="156" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">구성 관리</text>
+
+    <!-- Pod 1 -->
+    <rect x="40" y="280" width="80" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="80" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">애플리케이션</text>
+    <rect x="130" y="276" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="140" y="282" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="166" y="291" fill="rgba(35,47,62,0.7)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">POD 1</text>
+    <text x="190" y="308" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Envoy Proxy</text>
+    <text x="190" y="319" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle">sidecar</text>
+
+    <!-- Pod 2 -->
+    <rect x="375" y="280" width="80" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="415" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">애플리케이션</text>
+    <rect x="465" y="276" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="475" y="282" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="501" y="291" fill="rgba(35,47,62,0.7)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">POD 2</text>
+    <text x="525" y="308" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Envoy Proxy</text>
+    <text x="525" y="319" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle">sidecar</text>
+
+    <!-- Pod 3 -->
+    <rect x="710" y="280" width="80" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="750" y="304" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">애플리케이션</text>
+    <rect x="800" y="276" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="810" y="282" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="836" y="291" fill="rgba(35,47,62,0.7)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">POD 3</text>
+    <text x="860" y="308" fill="#232F3E" font-size="11" font-weight="600" font-family="var(--font-cjk)" text-anchor="middle">Envoy Proxy</text>
+    <text x="860" y="319" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle">sidecar</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="440" x2="920" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="456" fill="#545B64" font-size="8" font-family="var(--font-mono)" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="450" x2="168" y2="450" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d5-arrow)"/>
+    <text x="176" y="454" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">컨트롤 플레인 배포</text>
+    <line x1="340" y1="450" x2="368" y2="450" stroke="#EC7211" stroke-width="1.2" marker-start="url(#d5-arrow-accent-start)" marker-end="url(#d5-arrow-accent-end)"/>
+    <text x="376" y="454" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">Envoy 간 mTLS</text>
+    <line x1="540" y1="450" x2="568" y2="450" stroke="#545B64" stroke-width="1.2" marker-end="url(#d5-arrow)"/>
+    <text x="576" y="454" fill="#545B64" font-size="8.5" font-family="var(--font-cjk)">애플리케이션 요청</text>
+  </svg>

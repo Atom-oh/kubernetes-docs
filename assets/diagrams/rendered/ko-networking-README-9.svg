@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Worker Node의 ENI-Pod IP 매핑</title>
+<desc id="ddesc">AWS VPC CNI가 Worker Node의 각 ENI에 할당된 보조 IP를 Pod에 직접 매핑하여 Pod가 VPC 네이티브 IP를 갖게 되는 구조를 보여준다.</desc>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" fill="#FFFFFF"/>
+<text x="40" y="40" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.18em">ARCHITECTURE &#183; VPC CNI ENI MAPPING</text>
+<text x="40" y="68" fill="#232F3E" font-size="17" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Worker Node의 ENI-Pod IP 매핑</text>
+<rect x="80" y="92" width="800" height="420" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="96" y="96" width="168" height="12" rx="2" fill="#FFFFFF"/>
+<text x="180" y="105" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">EC2 INSTANCE (WORKER NODE)</text>
+<rect x="200" y="268" width="560" height="172" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="216" y="272" width="36" height="12" rx="2" fill="#FFFFFF"/>
+<text x="234" y="281" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">PODS</text>
+<path d="M 200,196 V 242 Q 200,250 208,250 H 267 Q 275,250 275,258 V 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 240,196 V 258 Q 240,266 248,266 H 397 Q 405,266 405,274 V 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 420,196 V 242 Q 420,250 428,250 H 537 Q 545,250 545,258 V 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 460,196 V 258 Q 460,266 468,266 H 667 Q 675,266 675,274 V 320" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="140" y="140" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="140" y="140" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="220" y="165" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Primary ENI</text>
+<text x="220" y="181" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">eth0</text>
+<rect x="400" y="140" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="400" y="140" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="165" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Secondary ENI</text>
+<text x="480" y="181" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">eth1</text>
+<rect x="660" y="140" width="160" height="56" rx="6" fill="#FFFFFF"/>
+<rect x="660" y="140" width="160" height="56" rx="6" fill="#F2F3F3" stroke="#7D8998" stroke-width="1"/>
+<text x="740" y="165" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Secondary ENI</text>
+<text x="740" y="181" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">eth2</text>
+<rect x="220" y="320" width="110" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="220" y="320" width="110" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="275" y="349" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 1</text>
+<text x="275" y="365" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Secondary IP</text>
+<rect x="350" y="320" width="110" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="350" y="320" width="110" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="405" y="349" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 2</text>
+<text x="405" y="365" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Secondary IP</text>
+<rect x="490" y="320" width="110" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="490" y="320" width="110" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="545" y="349" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 3</text>
+<text x="545" y="365" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Secondary IP</text>
+<rect x="620" y="320" width="110" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="620" y="320" width="110" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="675" y="349" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 4</text>
+<text x="675" y="365" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Secondary IP</text>
+<text x="80" y="546" fill="#545B64" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic">각 ENI의 보조(Secondary) IP가 Pod에 직접 할당되어, Pod가 VPC 네이티브 IP로 통신한다. eth2(Secondary ENI)는 여유 용량으로 대기 중이다.</text>
+</svg>

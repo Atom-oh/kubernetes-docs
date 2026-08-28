@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-cilium-networking-concepts-6-title en-networking-cilium-networking-concepts-6-desc">
+<title id="en-networking-cilium-networking-concepts-6-title">Source NAT (SNAT)</title>
+<desc id="en-networking-cilium-networking-concepts-6-desc">Diagram showing a client on an internal network sending traffic through a NAT router that rewrites the source address, reaching a server on the internet with a public source IP.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="176" width="208" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="180" width="108" height="12" rx="2" fill="#ffffff"/>
+<text x="90.0" y="189" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">INTERNAL NETWORK</text>
+<rect x="360" y="176" width="208" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="372" y="180" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="408.0" y="189" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">NAT ROUTER</text>
+<rect x="696" y="176" width="240" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="708" y="180" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="738.0" y="189" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">INTERNET</text>
+<line x1="200" y1="256" x2="400" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="560" y1="256" x2="760" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="249.5" y="236" width="101" height="12" rx="2" fill="#ffffff"/>
+<text x="300" y="245" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">10.0.0.2:1234</text>
+<rect x="595.5" y="236" width="129" height="12" rx="2" fill="#ffffff"/>
+<text x="660" y="245" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">198.51.100.1:5678</text>
+<rect x="40" y="224" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="224" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client</text>
+<text x="120.0" y="266.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">10.0.0.2</text>
+<rect x="400" y="224" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="224" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="258.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">SNAT</text>
+<rect x="760" y="224" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="760" y="224" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="840.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Server</text>
+<text x="840.0" y="266.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">203.0.113.5</text>
+</svg>

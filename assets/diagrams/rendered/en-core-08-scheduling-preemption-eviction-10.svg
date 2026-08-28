@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-08-scheduling-preemption-eviction-10-title en-core-08-scheduling-preemption-eviction-10-desc">
+    <title id="en-core-08-scheduling-preemption-eviction-10-title">EKS scheduling optimization</title>
+    <desc id="en-core-08-scheduling-preemption-eviction-10-desc">Diagram showing four EKS scheduling levers -- node group instance-type choice, availability-zone spread, Karpenter autoscaling, and resource request tuning -- each mapping to the concrete Kubernetes mechanisms and automation tools that implement them.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 130,146 V 212 Q 130,220 138,220 H 162 Q 170,220 170,228 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 365,146 V 212 Q 365,220 373,220 H 482 Q 490,220 490,228 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 130,146 V 192 Q 130,200 138,200 H 720 Q 728,200 728,208 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 590,146 V 232 Q 590,240 598,240 H 787 Q 795,240 795,248 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 820,146 V 232 Q 820,240 828,240 H 854 Q 862,240 862,248 V 300" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="180" y="217" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="226" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">INSTANCE TYPE</text>
+<rect x="500" y="217" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="540" y="226" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SPREAD METHOD</text>
+<rect x="677" y="220" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="692" y="229" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">USES</text>
+<rect x="863" y="248" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="881" y="257" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">TUNES</text>
+<rect x="30" y="90" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="30" y="90" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="130.0" y="115.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node Groups</text>
+<text x="130.0" y="131.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">instance types</text>
+<rect x="260" y="90" width="210" height="56" rx="6" fill="#ffffff"/>
+<rect x="260" y="90" width="210" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="365.0" y="122.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AZ Distribution</text>
+<rect x="500" y="90" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="90" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="590.0" y="115.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Karpenter</text>
+<text x="590.0" y="131.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">auto scaling</text>
+<rect x="710" y="90" width="220" height="56" rx="6" fill="#ffffff"/>
+<rect x="710" y="90" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820.0" y="115.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Resource Requests</text>
+<text x="820.0" y="131.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">&amp; limits</text>
+<rect x="30" y="300" width="280" height="56" rx="6" fill="#ffffff"/>
+<rect x="30" y="300" width="280" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="170.0" y="325.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Compute · Memory · Spot · GPU</text>
+<text x="170.0" y="341.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">instance-type strategies</text>
+<rect x="350" y="300" width="280" height="56" rx="6" fill="#ffffff"/>
+<rect x="350" y="300" width="280" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="490.0" y="325.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod Anti-Affinity · Topology Spread</text>
+<text x="490.0" y="341.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">-&gt; Multi-AZ deployment</text>
+<rect x="660" y="300" width="270" height="56" rx="6" fill="#ffffff"/>
+<rect x="660" y="300" width="270" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="795.0" y="325.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPA · HPA · Cluster Autoscaler</text>
+<text x="795.0" y="341.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Karpenter provisioner</text>
+  </svg>

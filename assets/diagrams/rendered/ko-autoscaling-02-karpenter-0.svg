@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="karp-arch-title karp-arch-desc">
+    <title id="karp-arch-title">Karpenter 아키텍처</title>
+    <desc id="karp-arch-desc">Karpenter 컨트롤러가 쿠버네티스 클러스터 내부의 프로비저너·노드 템플릿·미스케줄 파드를 감시하고, Kubernetes API와 클라우드 제공자의 인스턴스 API를 호출해 컴퓨트 인스턴스를 직접 프로비저닝하는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="96" width="580" height="396" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="264" y="100" width="132" height="12" rx="2" fill="#ffffff"/>
+    <text x="330" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES CLUSTER</text>
+
+    <rect x="660" y="204" width="260" height="220" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="734" y="208" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="790" y="217" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CLOUD PROVIDER</text>
+
+    <!-- Arrows (drawn before nodes) -->
+    <!-- A -> E : Watches (A top port x=265 -> E bottom center x=164) -->
+    <path d="M 265,204 V 196 Q 265,188 257,188 H 172 Q 164,188 164,180 V 172" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- A -> C : Uses (A bottom attach x=265 -> C top center x=200) -->
+    <path d="M 265,268 V 288 Q 265,296 257,296 H 208 Q 200,296 200,304 V 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- A -> F : Calls (A bottom attach x=330 -> F top center x=330, straight) -->
+    <line x1="330" y1="268" x2="330" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- A -> D : Uses (A bottom attach x=392 -> D top center x=480) -->
+    <path d="M 392,268 V 280 Q 392,288 400,288 H 472 Q 480,288 480,296 V 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- A -> G : Calls (A right port y=236 -> G left port y=252) -->
+    <path d="M 460,236 H 668 Q 676,236 676,244 V 244 Q 676,252 684,252 H 684" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- F -> H : Creates (F right port y=420 -> H left port y=368) -->
+    <path d="M 460,420 H 668 Q 676,420 676,412 V 376 Q 676,368 684,368 H 684" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- G -> H : Provisions (straight, shared center x=790) -->
+    <line x1="790" y1="276" x2="790" y2="340" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- B -> C : Validates (routes left of KC, around its left edge, to avoid crossing it) -->
+    <path d="M 400,172 V 192 Q 400,200 392,200 H 188 Q 180,200 180,208 V 304" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <!-- B -> D : Validates (routes right of KC, around its right edge, to avoid crossing it) -->
+    <path d="M 440,172 V 180 Q 440,188 448,188 H 488 Q 496,188 496,196 V 296 Q 496,304 488,304 H 480" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels -->
+    <rect x="240" y="176" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="266" y="185" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCHES</text>
+
+    <rect x="200" y="272" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="218" y="281" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">USES</text>
+
+    <rect x="312" y="320" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="332" y="329" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CALLS</text>
+
+    <rect x="418" y="270" width="36" height="12" rx="2" fill="#ffffff"/>
+    <text x="436" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">USES</text>
+
+    <rect x="540" y="216" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="560" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CALLS</text>
+
+    <rect x="540" y="400" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="566" y="409" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CREATES</text>
+
+    <rect x="756" y="300" width="68" height="12" rx="2" fill="#ffffff"/>
+    <text x="790" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROVISIONS</text>
+
+    <rect x="100" y="240" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="132" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VALIDATES</text>
+
+    <!-- Nodes: row1 -->
+    <rect x="64" y="124" width="200" height="48" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="164" y="152" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Unschedulable Pods</text>
+
+    <rect x="360" y="124" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="152" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter Webhook</text>
+
+    <!-- focal -->
+    <rect x="200" y="204" width="260" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="330" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter Controller</text>
+    <text x="330" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">core-loop</text>
+
+    <rect x="100" y="304" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="332" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Provisioner CRD</text>
+
+    <rect x="380" y="304" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="332" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NodeTemplate CRD</text>
+
+    <rect x="200" y="396" width="260" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="330" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubernetes API</text>
+
+    <rect x="684" y="228" width="212" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="790" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Instance API</text>
+
+    <rect x="684" y="340" width="212" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="790" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compute Instances</text>
+    <text x="790" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">EC2</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="558" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="554" x2="164" y2="554" stroke="#EC7211" stroke-width="1.4"/>
+    <text x="172" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">감시(watch)</text>
+    <line x1="300" y1="554" x2="324" y2="554" stroke="#545B64" stroke-width="1.2"/>
+    <text x="332" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">호출/사용</text>
+    <line x1="460" y1="554" x2="484" y2="554" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="492" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">검증(validate)</text>
+  </svg>

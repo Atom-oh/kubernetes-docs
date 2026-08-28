@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 508" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-12-kubernetes-version-roadmap-1-title ko-eks-12-kubernetes-version-roadmap-1-desc">
+<title id="ko-eks-12-kubernetes-version-roadmap-1-title">Kubernetes 연간 릴리스 사이클</title>
+<desc id="ko-eks-12-kubernetes-version-roadmap-1-desc">Kubernetes 연간 릴리스 사이클이 Enhancement Freeze, Code Freeze, 테스트 및 안정화 단계를 거쳐 약 4개월마다 세 차례 릴리스되는 반복 주기를 보여준다.</desc>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style><defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="196" y1="48" x2="196" y2="48" stroke="none"/>
+<text x="200.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-01</text>
+<text x="323.3" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-03</text>
+<text x="446.7" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-05</text>
+<text x="570.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-07</text>
+<text x="693.3" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-09</text>
+<text x="816.7" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2025-11</text>
+<text x="940.0" y="40" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">2026-01</text>
+<line x1="200" y1="48" x2="940.0" y2="48" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<line x1="385.0" y1="48" x2="385.0" y2="484" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3"/>
+<polygon points="379.0,36 385.0,30 391.0,36 385.0,42" fill="#EC7211"/>
+<line x1="631.7" y1="48" x2="631.7" y2="484" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3"/>
+<polygon points="625.7,36 631.7,30 637.7,36 631.7,42" fill="#EC7211"/>
+<line x1="878.3" y1="48" x2="878.3" y2="484" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3"/>
+<polygon points="872.3,36 878.3,30 884.3,36 878.3,42" fill="#EC7211"/>
+<rect x="8" y="64" width="924" height="128" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="76" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">릴리스 1</text>
+<rect x="200.0" y="88" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="105" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Enhancement Freeze</text>
+<rect x="261.7" y="128" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="145" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Code Freeze</text>
+<rect x="323.3" y="168" width="61.7" height="24" rx="4" fill="rgba(255,153,0,0.14)" stroke="#EC7211" stroke-width="1"/>
+<text x="20" y="185" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">테스트 및 안정화</text>
+<rect x="8" y="204" width="924" height="128" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="216" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">릴리스 2</text>
+<rect x="446.7" y="228" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="245" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Enhancement Freeze</text>
+<rect x="508.3" y="268" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="285" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Code Freeze</text>
+<rect x="570.0" y="308" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="325" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">테스트 및 안정화</text>
+<rect x="8" y="344" width="924" height="128" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="16" y="356" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.12em">릴리스 3</text>
+<rect x="693.3" y="368" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="385" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Enhancement Freeze</text>
+<rect x="755.0" y="408" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="425" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Code Freeze</text>
+<rect x="816.7" y="448" width="61.7" height="24" rx="4" fill="rgba(84,91,100,0.12)" stroke="#545B64" stroke-width="1"/>
+<text x="20" y="465" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">테스트 및 안정화</text>
+
+</svg>

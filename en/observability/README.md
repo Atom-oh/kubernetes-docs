@@ -18,76 +18,13 @@ Observability and monitoring are often used interchangeably, but there are funda
 | **Flexibility** | Predefined dashboards | Dynamic queries and exploration |
 | **Complexity** | Suitable for simple systems | Essential for complex distributed systems |
 
-```mermaid
-flowchart LR
-    subgraph Monitoring["Monitoring"]
-        M1[Predefined Metrics]
-        M2[Threshold Alerts]
-        M3[Dashboards]
-    end
-
-    subgraph Observability["Observability"]
-        O1[Logs]
-        O2[Metrics]
-        O3[Traces]
-    end
-
-    M1 --> M2
-    M2 --> M3
-
-    O1 <--> O2
-    O2 <--> O3
-    O3 <--> O1
-
-    Monitoring -->|Evolution| Observability
-
-    classDef monitoring fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef observability fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class M1,M2,M3 monitoring
-    class O1,O2,O3 observability
-```
+![Monitoring's predefined metrics feed threshold alerts and fixed dashboards in a one-way chain, while observability's logs, metrics, and traces cross-reference each other in a closed loop, with monitoring evolving into observability.](../.gitbook/assets/en-observability-README-0.png)
 
 ## The Three Pillars of Observability
 
 Observability consists of three core data types:
 
-```mermaid
-flowchart TD
-    subgraph Pillars["Three Pillars of Observability"]
-        direction TB
-
-        subgraph Logs["Logs"]
-            L1[Event Records]
-            L2[Structured Data]
-            L3[Context Information]
-        end
-
-        subgraph Metrics["Metrics"]
-            M1[Numeric Measurements]
-            M2[Time Series Data]
-            M3[Aggregatable]
-        end
-
-        subgraph Traces["Traces"]
-            T1[Request Path]
-            T2[Inter-service Flow]
-            T3[Latency Analysis]
-        end
-    end
-
-    Logs <-->|TraceID Linking| Traces
-    Metrics <-->|Exemplar| Traces
-    Logs <-->|Label Matching| Metrics
-
-    classDef logs fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef traces fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class L1,L2,L3 logs
-    class M1,M2,M3 metrics
-    class T1,T2,T3 traces
-```
+![Logs, metrics, and traces each break into three concrete data forms, and the three pillar groups correlate pairwise through label matching, exemplars, and a shared trace ID.](../.gitbook/assets/en-observability-README-1.png)
 
 ### 1. Logs
 
@@ -146,47 +83,7 @@ Traces track the complete path of requests across distributed systems.
 
 The three pillars are not independent but interconnected, providing powerful analytical capabilities:
 
-```mermaid
-flowchart TD
-    subgraph Request["User Request"]
-        R[HTTP Request]
-    end
-
-    subgraph Services["Microservices"]
-        S1[API Gateway]
-        S2[User Service]
-        S3[Order Service]
-        S4[Payment Service]
-    end
-
-    subgraph Correlation["Correlation"]
-        C1[TraceID: abc123]
-        C2[Metric Exemplar]
-        C3[Log Correlation]
-    end
-
-    R --> S1
-    S1 --> S2
-    S1 --> S3
-    S3 --> S4
-
-    S1 -.->|Logs/Metrics/Traces| C1
-    S2 -.->|Logs/Metrics/Traces| C1
-    S3 -.->|Logs/Metrics/Traces| C1
-    S4 -.->|Logs/Metrics/Traces| C1
-
-    C1 <--> C2
-    C2 <--> C3
-    C3 <--> C1
-
-    classDef request fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef correlation fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class R request
-    class S1,S2,S3,S4 service
-    class C1,C2,C3 correlation
-```
+![An HTTP request fans out from an API gateway through user, order, and payment services; each service emits telemetry tagged with one shared trace ID, which links to a metric exemplar and a correlated log entry in a closed loop.](../.gitbook/assets/en-observability-README-2.png)
 
 ### Trace-to-Log Correlation
 
@@ -216,50 +113,7 @@ http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
 
 OpenTelemetry (OTel) is the industry standard for observability data collection:
 
-```mermaid
-flowchart TD
-    subgraph Apps["Applications"]
-        A1[Java App]
-        A2[Python App]
-        A3[Node.js App]
-        A4[Go App]
-    end
-
-    subgraph SDK["OpenTelemetry SDK"]
-        SDK1[Auto-instrumentation]
-        SDK2[Manual instrumentation]
-    end
-
-    subgraph Collector["OTEL Collector"]
-        C1[Receivers]
-        C2[Processors]
-        C3[Exporters]
-    end
-
-    subgraph Backends["Backends"]
-        B1[Tempo]
-        B2[Prometheus]
-        B3[Loki]
-        B4[X-Ray]
-        B5[Datadog]
-    end
-
-    A1 & A2 & A3 & A4 --> SDK1 & SDK2
-    SDK1 & SDK2 --> C1
-    C1 --> C2
-    C2 --> C3
-    C3 --> B1 & B2 & B3 & B4 & B5
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef sdk fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef backend fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-
-    class A1,A2,A3,A4 app
-    class SDK1,SDK2 sdk
-    class C1,C2,C3 collector
-    class B1,B2,B3,B4,B5 backend
-```
+![Applications in any of four languages instrument via auto- or manual instrumentation, send data through the OpenTelemetry collector's receive, process, and export stages, and land in one of five observability backends.](../.gitbook/assets/en-observability-README-3.png)
 
 **Benefits of OpenTelemetry:**
 - Vendor-neutral standard
@@ -274,49 +128,7 @@ Strategies for implementing effective observability in Amazon EKS:
 
 ### 1. Layer-based Observability
 
-```mermaid
-flowchart TD
-    subgraph Infra["Infrastructure Layer"]
-        I1[EC2/Fargate Metrics]
-        I2[VPC Flow Logs]
-        I3[EBS Performance]
-    end
-
-    subgraph K8s["Kubernetes Layer"]
-        K1[kube-state-metrics]
-        K2[Node Exporter]
-        K3[API Server Metrics]
-    end
-
-    subgraph App["Application Layer"]
-        A1[Business Metrics]
-        A2[Application Logs]
-        A3[Distributed Tracing]
-    end
-
-    subgraph Tools["Observability Tools"]
-        T1[CloudWatch]
-        T2[Prometheus/Grafana]
-        T3[Tempo/X-Ray]
-        T4[Loki]
-    end
-
-    I1 & I2 & I3 --> T1
-    K1 & K2 & K3 --> T2
-    A1 --> T2
-    A2 --> T4
-    A3 --> T3
-
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef tools fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class I1,I2,I3 infra
-    class K1,K2,K3 k8s
-    class A1,A2,A3 app
-    class T1,T2,T3,T4 tools
-```
+![Infrastructure, Kubernetes, and application layers each feed their signals into a matching observability tool: infrastructure metrics go to CloudWatch, cluster and business metrics go to Prometheus/Grafana, and application logs and traces go to Loki and Tempo/X-Ray.](../.gitbook/assets/en-observability-README-4.png)
 
 ### 2. Recommended Tool Stack
 
@@ -336,27 +148,7 @@ flowchart TD
 
 ## Observability Maturity Model
 
-```mermaid
-flowchart LR
-    L1[Level 1<br/>Basic Monitoring]
-    L2[Level 2<br/>Centralization]
-    L3[Level 3<br/>Correlation]
-    L4[Level 4<br/>AIOps]
-
-    L1 -->|Log/Metric Collection| L2
-    L2 -->|TraceID Linking| L3
-    L3 -->|ML-based Analysis| L4
-
-    classDef level1 fill:#E8E8E8,stroke:#333,stroke-width:1px,color:black
-    classDef level2 fill:#B8D4E3,stroke:#333,stroke-width:1px,color:black
-    classDef level3 fill:#7FB3D3,stroke:#333,stroke-width:1px,color:white
-    classDef level4 fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-
-    class L1 level1
-    class L2 level2
-    class L3 level3
-    class L4 level4
-```
+![Organizations progress from basic monitoring, to centralized log/metric collection, to trace-ID-linked correlation across the three pillars, and finally to AIOps with ML-based anomaly analysis.](../.gitbook/assets/en-observability-README-5.png)
 
 | Level | Characteristics | Example Tools |
 |-------|-----------------|---------------|

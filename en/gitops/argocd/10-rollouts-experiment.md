@@ -35,16 +35,7 @@ An Experiment can be created as a standalone resource, but in practice it is alm
 
 When a Rollout reaches an experiment step, resources are created along this chain:
 
-```mermaid
-flowchart TB
-    R["Rollout<br/>(experiment step in canary steps)"] -->|creates| E[Experiment]
-    E -->|spec.templates| B[ReplicaSet: baseline]
-    E -->|spec.templates| C[ReplicaSet: canary]
-    E -->|spec.analyses| AR[AnalysisRun]
-    AT[AnalysisTemplate] -.->|templateName reference| AR
-
-    style E fill:#EB6E85,stroke:#333,color:#fff
-```
+![A Rollout creates an Experiment, the central resource that spins up baseline and canary ReplicaSets from its spec.templates and starts an AnalysisRun from its spec.analyses, with an AnalysisTemplate supplying the AnalysisRun's definition by reference.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-0.png)
 
 The sequence is:
 
@@ -124,13 +115,7 @@ Metric "success-rate" assessed Failed due to failed (2) > failureLimit (1)
 
 The AnalysisRun's final status propagates through the Experiment up to the Rollout.
 
-```mermaid
-flowchart LR
-    AR[AnalysisRun status] -->|Successful| OK["Experiment Successful<br/>→ Rollout proceeds to next step"]
-    AR -->|"Failed / Inconclusive / Error"| NG["Experiment Failed<br/>→ Rollout aborted (Degraded)"]
-
-    style NG fill:#EB6E85,stroke:#333,color:#fff
-```
+![The AnalysisRun status decides the Experiment's outcome: a Successful result lets the Rollout proceed to its next canary step, while a Failed, Inconclusive, or Error result fails the Experiment and aborts the Rollout into a Degraded state.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
 
 - **Successful**: once both the `duration` has elapsed and the analysis succeeded, the Experiment becomes Successful and the Rollout proceeds to the next step.
 - **Failed / Inconclusive**: the Experiment ends as failed and the Rollout is aborted. The Rollout status becomes `Degraded` and the stable version stays in place.

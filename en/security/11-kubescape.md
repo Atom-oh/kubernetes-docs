@@ -56,51 +56,7 @@ Kubescape joined the CNCF Sandbox in 2022, demonstrating its commitment to open-
 
 ### Kubescape Architecture
 
-```mermaid
-flowchart TB
-    subgraph Input["Input Sources"]
-        CLI[Kubescape CLI]
-        OP[Kubescape Operator]
-        CICD[CI/CD Pipeline]
-    end
-
-    subgraph Frameworks["Security Frameworks"]
-        NSA[NSA-CISA]
-        CIS[CIS Benchmark]
-        MITRE[MITRE ATT&CK]
-        CUSTOM[Custom Framework]
-    end
-
-    subgraph Engine["Scan Engine"]
-        CTRL[Control Evaluation]
-        RISK[Risk Calculator]
-        VULN[Vulnerability Scanner]
-    end
-
-    subgraph Output["Output"]
-        JSON[JSON Report]
-        SARIF[SARIF Format]
-        HTML[HTML Report]
-        PROM[Prometheus Metrics]
-    end
-
-    CLI --> Engine
-    OP --> Engine
-    CICD --> Engine
-
-    Frameworks --> CTRL
-    CTRL --> RISK
-    VULN --> RISK
-
-    RISK --> Output
-
-    style CLI fill:#e3f2fd
-    style OP fill:#e3f2fd
-    style NSA fill:#fff3e0
-    style CIS fill:#fff3e0
-    style MITRE fill:#fff3e0
-    style RISK fill:#e8f5e9
-```
+![Diagram showing Kubescape input sources and security frameworks feeding control evaluation and vulnerability scanning, which converge on a risk calculator before producing reports and metrics.](../.gitbook/assets/en-security-11-kubescape-0.png)
 
 ---
 
@@ -348,49 +304,7 @@ kubescape list controls
 
 ### Scanning Pipeline Flow
 
-```mermaid
-flowchart LR
-    subgraph Input["Input"]
-        A[Kubescape CLI]
-    end
-
-    subgraph Framework["Framework Selection"]
-        B[NSA-CISA]
-        C[CIS Benchmark]
-        D[MITRE ATT&CK]
-        E[Custom]
-    end
-
-    subgraph Evaluation["Control Evaluation"]
-        F[Resource Collection]
-        G[Control Checks]
-        H[Severity Assessment]
-    end
-
-    subgraph Scoring["Risk Scoring"]
-        I[Calculate Score]
-        J[Prioritize Findings]
-    end
-
-    subgraph Report["Report Generation"]
-        K[Console Output]
-        L[JSON/SARIF]
-        M[HTML Report]
-    end
-
-    A --> Framework
-    B --> F
-    C --> F
-    D --> F
-    E --> F
-    F --> G --> H
-    H --> I --> J
-    J --> Report
-
-    style A fill:#e3f2fd
-    style I fill:#e8f5e9
-    style K fill:#fff3e0
-```
+![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../.gitbook/assets/en-security-11-kubescape-1.png)
 
 ### Cluster Scanning
 
@@ -563,54 +477,7 @@ RBAC analysis capabilities:
 
 ### Continuous Scanning Architecture
 
-```mermaid
-flowchart TB
-    subgraph Cluster["Kubernetes Cluster"]
-        subgraph Operator["Kubescape Operator"]
-            CRON[CronJob Scheduler]
-            SCANNER[Scanner Pod]
-            STORAGE[Results Storage]
-        end
-
-        subgraph Workloads["Cluster Workloads"]
-            DEP[Deployments]
-            SVC[Services]
-            CFG[ConfigMaps]
-            SEC[Secrets]
-        end
-
-        subgraph NodeAgent["Node Agent DaemonSet"]
-            EBPF[eBPF Probes]
-            PROC[Process Monitor]
-            NET[Network Monitor]
-        end
-    end
-
-    subgraph Output["Outputs"]
-        PROM[Prometheus Metrics]
-        ALERT[Alertmanager]
-        DASH[Dashboard]
-        API[Kubescape API]
-    end
-
-    CRON -->|"Trigger Scan"| SCANNER
-    SCANNER -->|"Collect Resources"| Workloads
-    SCANNER -->|"Store Results"| STORAGE
-    SCANNER -->|"Compare Baseline"| STORAGE
-
-    NodeAgent -->|"Runtime Events"| SCANNER
-    EBPF --> PROC
-    PROC --> NET
-
-    STORAGE --> PROM
-    PROM --> ALERT
-    STORAGE --> DASH
-    STORAGE --> API
-
-    style CRON fill:#e3f2fd
-    style SCANNER fill:#e8f5e9
-    style EBPF fill:#fff3e0
-```
+![Architecture diagram showing a scheduled scanner pod inside a Kubernetes cluster collecting workload resources and runtime events into results storage, which feeds Prometheus, a dashboard, and the Kubescape API outside the cluster.](../.gitbook/assets/en-security-11-kubescape-2.png)
 
 ### Operator Components
 
@@ -857,37 +724,7 @@ kubescape scan framework nsa --format json | \
 
 ### CI/CD Integration Workflow
 
-```mermaid
-flowchart LR
-    subgraph Developer["Developer"]
-        A[Git Push]
-    end
-
-    subgraph CI["CI Pipeline"]
-        B[Checkout Code]
-        C[kubescape scan]
-        D{Threshold Check}
-    end
-
-    subgraph Gate["Security Gate"]
-        E[Pass]
-        F[Fail]
-    end
-
-    subgraph Deploy["Deployment"]
-        G[Deploy to Cluster]
-        H[Block Deployment]
-    end
-
-    A --> B --> C --> D
-    D -->|"Score < Threshold"| E --> G
-    D -->|"Score >= Threshold"| F --> H
-
-    style A fill:#e3f2fd
-    style C fill:#fff3e0
-    style E fill:#e8f5e9
-    style F fill:#ffebee
-```
+![Flowchart showing a CI pipeline checking out code, running a Kubescape scan, and evaluating the risk score against a threshold to either deploy to the cluster or block the deployment.](../.gitbook/assets/en-security-11-kubescape-3.png)
 
 ### GitHub Actions Workflow
 

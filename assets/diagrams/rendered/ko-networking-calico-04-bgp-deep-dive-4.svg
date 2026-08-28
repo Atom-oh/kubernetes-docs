@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t4 d4">
+<title id="t4">Route Reflector 토폴로지</title>
+<desc id="d4">6개의 클라이언트 노드가 각각 자신이 속한 Route Reflector 한 대에만 연결되고, 두 Route Reflector끼리는 서로 mesh로 연결되어, 노드 간 완전 연결 없이도 모든 경로가 전파되는 구조를 보여준다.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<text x="32" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">BGP TOPOLOGY</text>
+<text x="32" y="60" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Route Reflector 토폴로지</text>
+
+<!-- Outer boundary -->
+<rect x="32" y="88" width="896" height="420" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+
+<!-- Zone: RR cluster -->
+<rect x="180" y="100" width="580" height="132" rx="8" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.45)" stroke-width="0.8"/>
+<rect x="332" y="110" width="176" height="16" rx="2" fill="#ffffff"/>
+<text x="420" y="122" fill="#EC7211" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" letter-spacing="0.06em">ROUTE REFLECTOR 클러스터</text>
+
+<!-- Zone: client nodes -->
+<rect x="64" y="288" width="832" height="180" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8"/>
+<rect x="88" y="298" width="112" height="16" rx="2" fill="#ffffff"/>
+<text x="144" y="310" fill="#545B64" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" letter-spacing="0.06em">클라이언트 노드</text>
+
+<!-- RR mesh -->
+<line x1="332" y1="188" x2="620" y2="188" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<rect x="448" y="168" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="476" y="177" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">RR MESH</text>
+
+<!-- Node 1 -> RR1 -->
+<path d="M136,360 V248 Q136,240 144,240 H234 Q242,240 242,232 V216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Node 2 -> RR1 -->
+<line x1="272" y1="360" x2="272" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Node 3 -> RR1 -->
+<path d="M408,360 V248 Q408,240 400,240 H310 Q302,240 302,232 V216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Node 4 -> RR2 -->
+<path d="M544,360 V248 Q544,240 552,240 H642 Q650,240 650,232 V216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Node 5 -> RR2 -->
+<line x1="680" y1="360" x2="680" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Node 6 -> RR2 -->
+<path d="M816,360 V248 Q816,240 808,240 H718 Q710,240 710,232 V216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- RR1 -->
+<rect x="212" y="160" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="272" y="183" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 1</text>
+<text x="272" y="200" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Cluster ID 1.0.0.1</text>
+
+<!-- RR2 -->
+<rect x="620" y="160" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="680" y="183" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 2</text>
+<text x="680" y="200" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Cluster ID 1.0.0.1</text>
+
+<!-- Client nodes -->
+<rect x="88" y="360" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="136" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+
+<rect x="224" y="360" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="272" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+
+<rect x="360" y="360" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="408" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+
+<rect x="496" y="360" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="544" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 4</text>
+
+<rect x="632" y="360" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 5</text>
+
+<rect x="768" y="360" width="96" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="816" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 6</text>
+
+<!-- Legend -->
+<line x1="32" y1="528" x2="928" y2="528" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="546" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="140" y1="542" x2="172" y2="542" stroke="#545B64" stroke-width="1.2"/>
+<text x="180" y="546" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">클라이언트 → RR 피어링</text>
+<line x1="420" y1="542" x2="452" y2="542" stroke="#EC7211" stroke-width="1.2"/>
+<text x="460" y="546" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">RR ↔ RR mesh</text>
+</svg>

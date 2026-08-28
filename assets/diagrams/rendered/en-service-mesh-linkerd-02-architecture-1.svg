@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-linkerd-02-architecture-1-title en-service-mesh-linkerd-02-architecture-1-desc">
+<title id="en-service-mesh-linkerd-02-architecture-1-title">Destination Controller Data Flow</title>
+<desc id="en-service-mesh-linkerd-02-architecture-1-desc">Architecture diagram showing the Destination controller reading Kubernetes Services, Endpoints, ServiceProfiles, and TrafficSplits, then streaming service-discovery, routing, and traffic-split data to proxies over its gRPC API.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="140" width="200" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="134" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="90.0" y="143" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES</text>
+<rect x="320" y="80" width="280" height="420" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="332" y="74" width="148" height="12" rx="2" fill="#ffffff"/>
+<text x="406.0" y="83" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DESTINATION CONTROLLER</text>
+<rect x="680" y="200" width="200" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="692" y="194" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="721.0" y="203" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PROXIES</text>
+<path d="M 220,232 L 340,232" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,324 L 340,324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,416 L 340,416" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 580,128 H 608 Q 616,128 616,136 V 248 Q 616,256 624,256 H 700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 580,152 H 656 Q 664,152 664,160 V 332 Q 664,340 672,340 H 700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="60" y="204" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="204" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="228.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Services + Endpoints</text>
+<text x="140.0" y="244.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Kubernetes API</text>
+<rect x="60" y="296" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="296" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="320.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ServiceProfiles</text>
+<text x="140.0" y="336.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Kubernetes CRD</text>
+<rect x="60" y="388" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="388" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="412.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">TrafficSplits</text>
+<text x="140.0" y="428.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Kubernetes CRD</text>
+<rect x="340" y="112" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="112" width="240" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="460.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Destination API</text>
+<text x="460.0" y="152.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC Server</text>
+<rect x="340" y="204" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="204" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="228.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service Discovery</text>
+<text x="460.0" y="244.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Endpoint Lookup</text>
+<rect x="340" y="296" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="296" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="320.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ServiceProfile</text>
+<text x="460.0" y="336.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Routing Info</text>
+<rect x="340" y="388" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="340" y="388" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="460.0" y="412.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">TrafficSplit</text>
+<text x="460.0" y="428.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Traffic Distribution</text>
+<rect x="700" y="228" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="228" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="252.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Proxy 1</text>
+<text x="780.0" y="268.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">linkerd-proxy</text>
+<rect x="700" y="312" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="700" y="312" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="336.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Proxy 2</text>
+<text x="780.0" y="352.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">linkerd-proxy</text>
+</svg>

@@ -115,18 +115,7 @@ KafkaSink<String> sink = KafkaSink.<String>builder()
 
 이 사이트에서 EKS의 Kafka와 가장 흔하게 짝을 이루는 패턴은 MSK에서 Flink를 거쳐 다운스트림 분석용으로 S3 위의 Apache Iceberg 테이블에 데이터를 적재하는 것입니다.
 
-```mermaid
-flowchart LR
-    A[MSK / Kafka 소스 토픽] --> B[Flink Job]
-    subgraph B1[TaskManagers]
-        C[(RocksDB 상태 백엔드)]
-    end
-    B --- B1
-    B -.주기적 체크포인트.-> D[(S3 체크포인트 스토리지)]
-    B --> E{싱크}
-    E -->|KafkaSink - EXACTLY_ONCE 2PC| F[Kafka 출력 토픽]
-    E -->|Dynamic Iceberg Sink| G[(S3 / Iceberg 테이블)]
-```
+![Kafka 소스 토픽에서 유입된 데이터가 Flink Job의 TaskManager(RocksDB 상태 백엔드)에서 처리되며 주기적으로 S3에 체크포인트를 남기고, 싱크 단계에서 KafkaSink(EXACTLY_ONCE 2PC)와 Dynamic Iceberg Sink 두 갈래로 결과가 나가는 스트리밍 상태 관리 흐름도.](../../.gitbook/assets/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.png)
 
 ### Dynamic Iceberg Sink
 

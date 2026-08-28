@@ -46,24 +46,7 @@ Because a running notebook pod holds its requested CPU, memory, and — most exp
 
 ## Notebook Reconciliation Flow
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Dash as Central Dashboard
-    participant CRD as Notebook CR (in Profile namespace)
-    participant Ctrl as Notebook Controller
-    participant K8s as StatefulSet / Pod
-    participant Istio as Istio Sidecar
-
-    User->>Dash: Choose image, CPU/mem, GPU count, PVC
-    Dash->>CRD: Create Notebook custom resource
-    Ctrl->>CRD: Watch for create/update events
-    Ctrl->>K8s: Reconcile into StatefulSet + Pod spec
-    K8s->>K8s: Mount PVC at home directory
-    K8s->>K8s: Request nvidia.com/gpu (if selected)
-    K8s->>Istio: Inject sidecar for namespace-scoped routing
-    Istio->>User: Expose notebook UI through Dashboard proxy
-```
+![Sequence diagram showing a user configuring a notebook in the Central Dashboard, which creates a Notebook custom resource watched by the Notebook Controller; the controller reconciles a StatefulSet and Pod that mounts its PVC and requests a GPU, gets an Istio sidecar injected for namespace-scoped routing, and then the notebook UI is exposed back to the user through the Dashboard proxy.](../../.gitbook/assets/en-ai-ml-kubeflow-03-notebooks-0.png)
 
 The controller's reconciliation loop is the same pattern used elsewhere in Kubernetes: it doesn't create the pod directly on every dashboard interaction, it continuously reconciles the live `StatefulSet` toward whatever the `Notebook` custom resource currently declares. A dashboard-driven stop, for instance, updates the custom resource's desired state to zero replicas rather than issuing an imperative pod delete, so the controller — not the dashboard UI — is the single source of truth for whether a notebook pod should be running.
 

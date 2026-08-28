@@ -21,53 +21,7 @@ FluxCD implements the GitOps principles by using Git repositories as the source 
 
 FluxCD consists of a set of specialized controllers that work together to implement GitOps workflows:
 
-```mermaid
-graph TB
-    subgraph "Git Repository"
-        GR[GitRepository]
-        HR[HelmRepository]
-        OR[OCIRepository]
-        B[Bucket]
-    end
-
-    subgraph "FluxCD Controllers"
-        SC[Source Controller]
-        KC[Kustomize Controller]
-        HC[Helm Controller]
-        NC[Notification Controller]
-        IAC[Image Automation Controller]
-    end
-
-    subgraph "Kubernetes Cluster"
-        NS[Namespaces]
-        DEP[Deployments]
-        SVC[Services]
-        CM[ConfigMaps]
-    end
-
-    GR --> SC
-    HR --> SC
-    OR --> SC
-    B --> SC
-
-    SC --> KC
-    SC --> HC
-
-    KC --> NS
-    KC --> DEP
-    KC --> SVC
-    KC --> CM
-
-    HC --> NS
-    HC --> DEP
-    HC --> SVC
-
-    NC --> SC
-    NC --> KC
-    NC --> HC
-
-    IAC --> GR
-```
+![Diagram showing how FluxCD reconciles a Kubernetes cluster: Git, Helm, OCI, and bucket source definitions feed the Source Controller, which drives the Kustomize and Helm controllers to apply and release resources into the cluster, while the Notification Controller watches all three controllers and the Image Automation Controller writes updated image tags back to the source definitions.](../.gitbook/assets/en-gitops-02-fluxcd-0.png)
 
 ## Core Components
 

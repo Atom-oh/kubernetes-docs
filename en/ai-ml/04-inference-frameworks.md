@@ -9,76 +9,7 @@ This chapter covers the diverse inference framework ecosystem for deploying Larg
 
 The LLM inference ecosystem has evolved rapidly, with multiple frameworks addressing different aspects of production deployment. The following diagram shows the relationship between these frameworks:
 
-```mermaid
-flowchart TD
-    subgraph Ecosystem [LLM Inference Framework Ecosystem]
-        subgraph NVIDIAStack [NVIDIA Stack]
-            NIM[NVIDIA NIM]
-            Dynamo[NVIDIA Dynamo]
-            TensorRTLLM[TensorRT-LLM]
-            Triton[Triton Inference Server]
-        end
-
-        subgraph OpenSource [Open Source Frameworks]
-            vLLM[vLLM]
-            SGLang[SGLang]
-            TGI[HuggingFace TGI]
-            AIBrix[AIBrix]
-            RayServe[Ray Serve]
-        end
-
-        subgraph DevTools [Dev / Gateway Tools]
-            Ollama[Ollama]
-            LiteLLM[LiteLLM]
-            LlamaCpp[llama.cpp]
-        end
-
-        subgraph AWSNative [AWS Native]
-            Neuron[AWS Neuron SDK]
-            Inferentia[Inferentia2]
-            SageMaker[SageMaker]
-        end
-
-        subgraph Orchestration [Orchestration Layer]
-            KubeRay[KubeRay Operator]
-            Karpenter[Karpenter]
-            KEDA[KEDA]
-        end
-    end
-
-    NIM --> TensorRTLLM
-    Dynamo --> vLLM
-    Dynamo --> SGLang
-    Dynamo --> TensorRTLLM
-    RayServe --> vLLM
-    AIBrix --> vLLM
-    AIBrix --> SGLang
-
-    Neuron --> Inferentia
-    LiteLLM --> vLLM
-    LiteLLM --> SGLang
-    LiteLLM --> NIM
-    Ollama --> LlamaCpp
-
-    KubeRay --> RayServe
-    Karpenter --> NVIDIAStack
-    Karpenter --> OpenSource
-    Karpenter --> AWSNative
-
-    classDef nvidiaNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef ossNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef orchNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef devToolNode fill:#9B59B6,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class NIM,Dynamo,TensorRTLLM,Triton,NVIDIAStack nvidiaNode;
-    class vLLM,SGLang,TGI,AIBrix,RayServe,OpenSource ossNode;
-    class Neuron,Inferentia,SageMaker,AWSNative awsNode;
-    class KubeRay,Karpenter,KEDA,Orchestration orchNode;
-    class Ollama,LiteLLM,LlamaCpp,DevTools devToolNode;
-    class Ecosystem default;
-```
+![Map of the LLM inference framework ecosystem showing NVIDIA's stack, dev/gateway tools, and the orchestration layer all feeding workloads into the open-source inference frameworks, with AWS Native services provisioned alongside them.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-0.png)
 
 ### Framework Selection Guide
 
@@ -101,80 +32,7 @@ NVIDIA NIM (NVIDIA Inference Microservices) provides production-ready, container
 
 ### NIM Architecture
 
-```mermaid
-flowchart TD
-    subgraph NIMDeployment [NVIDIA NIM Deployment on EKS]
-        subgraph Ingress [Ingress Layer]
-            ALB[Application Load Balancer]
-            NginxIngress[Nginx Ingress Controller]
-        end
-
-        subgraph NIMPods [NIM Pods]
-            subgraph Pod1 [NIM Pod 1]
-                NIMContainer1[NIM Container]
-                TensorRTEngine1[TensorRT-LLM Engine]
-                ModelCache1[Model Cache]
-            end
-            subgraph Pod2 [NIM Pod 2]
-                NIMContainer2[NIM Container]
-                TensorRTEngine2[TensorRT-LLM Engine]
-                ModelCache2[Model Cache]
-            end
-        end
-
-        subgraph GPUNodes [GPU Node Pool]
-            Node1[p4d.24xlarge - 8x A100]
-            Node2[g5.48xlarge - 8x A10G]
-        end
-
-        subgraph Monitoring [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            Grafana[Grafana Dashboards]
-            NIMMetrics[NIM Metrics Exporter]
-        end
-
-        subgraph Storage [Model Storage]
-            NGC[NGC Catalog]
-            S3[Amazon S3]
-            FSx[FSx for Lustre]
-        end
-    end
-
-    ALB --> NginxIngress
-    NginxIngress --> Pod1
-    NginxIngress --> Pod2
-
-    Pod1 --> Node1
-    Pod2 --> Node2
-
-    NIMContainer1 --> TensorRTEngine1
-    NIMContainer2 --> TensorRTEngine2
-
-    TensorRTEngine1 --> ModelCache1
-    TensorRTEngine2 --> ModelCache2
-
-    ModelCache1 --> FSx
-    ModelCache2 --> FSx
-    FSx --> S3
-    NGC --> FSx
-
-    NIMMetrics --> Prometheus
-    Prometheus --> Grafana
-
-    classDef ingressNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef nimNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef monitorNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef storageNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ALB,NginxIngress,Ingress ingressNode;
-    class NIMContainer1,NIMContainer2,TensorRTEngine1,TensorRTEngine2,ModelCache1,ModelCache2,Pod1,Pod2,NIMPods nimNode;
-    class Node1,Node2,GPUNodes gpuNode;
-    class Prometheus,Grafana,NIMMetrics,Monitoring monitorNode;
-    class NGC,S3,FSx,Storage storageNode;
-    class NIMDeployment default;
-```
+![Architecture of an NVIDIA NIM deployment on EKS: a request enters through an ALB and Nginx Ingress into a replicated NIM container running a TensorRT-LLM engine on a GPU node pool, with a model-cache path to FSx, NGC, and S3 storage, and a metrics path through Prometheus to Grafana.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-1.png)
 
 ### Prerequisites
 
@@ -782,83 +640,7 @@ NVIDIA Dynamo is an inference graph orchestration framework that enables disaggr
 
 ### Dynamo Architecture
 
-```mermaid
-flowchart TD
-    subgraph DynamoCluster [NVIDIA Dynamo Deployment]
-        subgraph Router [Dynamo Router]
-            RouterPod[Router Pod]
-            KVRouter[KV-Aware Router]
-            LoadBalancer[Request Load Balancer]
-        end
-
-        subgraph PrefillPool [Prefill Workers]
-            Prefill1[Prefill Worker 1]
-            Prefill2[Prefill Worker 2]
-            PrefillGPU1[8x A100 - High Memory BW]
-            PrefillGPU2[8x A100 - High Memory BW]
-        end
-
-        subgraph DecodePool [Decode Workers]
-            Decode1[Decode Worker 1]
-            Decode2[Decode Worker 2]
-            Decode3[Decode Worker 3]
-            DecodeGPU1[4x A10G - Cost Optimized]
-            DecodeGPU2[4x A10G - Cost Optimized]
-            DecodeGPU3[4x A10G - Cost Optimized]
-        end
-
-        subgraph KVCache [Distributed KV Cache]
-            KVStore[(KV Cache Store)]
-            KVTransfer[KV Transfer Service]
-        end
-
-        subgraph Backends [Inference Backends]
-            vLLMBackend[vLLM]
-            SGLangBackend[SGLang]
-            TRTLLMBackend[TensorRT-LLM]
-        end
-    end
-
-    Client[Client Request] --> RouterPod
-    RouterPod --> KVRouter
-    KVRouter --> LoadBalancer
-
-    LoadBalancer -->|Prefill Request| Prefill1
-    LoadBalancer -->|Prefill Request| Prefill2
-
-    Prefill1 --> PrefillGPU1
-    Prefill2 --> PrefillGPU2
-
-    Prefill1 -->|KV Cache| KVStore
-    Prefill2 -->|KV Cache| KVStore
-
-    KVStore --> KVTransfer
-    KVTransfer --> Decode1
-    KVTransfer --> Decode2
-    KVTransfer --> Decode3
-
-    Decode1 --> DecodeGPU1
-    Decode2 --> DecodeGPU2
-    Decode3 --> DecodeGPU3
-
-    Prefill1 --> vLLMBackend
-    Decode1 --> SGLangBackend
-    Decode2 --> TRTLLMBackend
-
-    classDef routerNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prefillNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef decodeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef kvNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef backendNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class RouterPod,KVRouter,LoadBalancer,Router routerNode;
-    class Prefill1,Prefill2,PrefillGPU1,PrefillGPU2,PrefillPool prefillNode;
-    class Decode1,Decode2,Decode3,DecodeGPU1,DecodeGPU2,DecodeGPU3,DecodePool decodeNode;
-    class KVStore,KVTransfer,KVCache kvNode;
-    class vLLMBackend,SGLangBackend,TRTLLMBackend,Backends backendNode;
-    class DynamoCluster,Client default;
-```
+![Pipeline showing NVIDIA Dynamo's disaggregated serving: a client request routed through a KV-aware router to a prefill worker pool, which writes to a shared KV cache store that a decode worker pool reads from, with both pools executing on pluggable vLLM, SGLang, and TensorRT-LLM backends.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-2.png)
 
 ### Key Concepts
 
@@ -1934,44 +1716,7 @@ SGLang (Structured Generation Language) is a high-performance LLM serving framew
 
 ### SGLang Core Technology
 
-```mermaid
-flowchart TD
-    subgraph SGLangArch [SGLang Architecture]
-        subgraph Frontend [Frontend]
-            SGLangDSL[SGLang DSL]
-            OpenAICompat[OpenAI Compatible API]
-            NativeAPI[Native API]
-        end
-
-        subgraph Runtime [Runtime Engine]
-            RadixAttention[RadixAttention]
-            CompressedFSM[Compressed FSM Structured Output]
-            ChunkedPrefill[Chunked Prefill]
-            FlashInfer[FlashInfer Kernels]
-        end
-
-        subgraph Optimization [Optimization]
-            KVCacheReuse[KV Cache Reuse]
-            OverlapSchedule[Schedule Overlapping]
-            DataParallel[Data Parallelism]
-        end
-    end
-
-    SGLangDSL --> Runtime
-    OpenAICompat --> Runtime
-    RadixAttention --> KVCacheReuse
-    CompressedFSM --> OverlapSchedule
-
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef runtimeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef optNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SGLangDSL,OpenAICompat,NativeAPI,Frontend featureNode;
-    class RadixAttention,CompressedFSM,ChunkedPrefill,FlashInfer,Runtime runtimeNode;
-    class KVCacheReuse,OverlapSchedule,DataParallel,Optimization optNode;
-    class SGLangArch default;
-```
+![Three-tier view of SGLang showing its frontend APIs feeding a RadixAttention runtime engine, which drives KV-cache reuse and schedule-overlap optimizations.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-3.png)
 
 1. **RadixAttention**: Radix tree-based KV cache reuse that goes beyond prefix caching, efficiently sharing cache across partially overlapping prompts.
 2. **Compressed FSM Structured Output**: Compresses finite state machines for structured output (JSON Schema, regex, etc.), delivering up to 10x faster structured decoding vs vLLM.

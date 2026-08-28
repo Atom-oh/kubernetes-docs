@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf4-title ebpf4-desc">
+    <title id="ebpf4-title">Without DSR versus with DSR response path</title>
+    <desc id="ebpf4-desc">Diagram comparing a normal load-balanced flow, where the server response returns through the load balancer to the client, with a Direct Server Return flow, where the response bypasses the load balancer and goes straight from server to client.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="56" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="424" y="60" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WITHOUT DSR</text>
+
+    <rect x="40" y="236" width="880" height="164" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="440" y="240" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="249" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WITH DSR</text>
+
+    <!-- Zone1 arrows -->
+    <line x1="320" y1="116" x2="400" y2="116" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="560" y1="116" x2="640" y2="116" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="640" y1="140" x2="560" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="400" y1="140" x2="320" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <rect x="574" y="122" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="600" y="131" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESPONSE</text>
+    <rect x="334" y="122" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="360" y="131" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RESPONSE</text>
+
+    <!-- Zone2 arrows -->
+    <line x1="320" y1="296" x2="400" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="560" y1="296" x2="640" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M 720,340 V 372 Q 720,380 712,380 H 248 Q 240,380 240,372 V 340"
+          fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="440" y="368" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="377" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DIRECT RESP.</text>
+
+    <!-- Zone1 nodes -->
+    <rect x="160" y="96" width="160" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="240" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+    <rect x="400" y="96" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+    <rect x="640" y="96" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="720" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Server</text>
+
+    <!-- Zone2 nodes -->
+    <rect x="160" y="276" width="160" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="240" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+    <rect x="400" y="276" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+    <rect x="640" y="276" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="720" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Server</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="452" x2="920" y2="452" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="468" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="40" y1="486" x2="68" y2="486" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="76" y="489" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Routed through load balancer</text>
+    <line x1="340" y1="486" x2="368" y2="486" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <text x="376" y="489" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Direct return (focal, DSR benefit)</text>
+  </svg>

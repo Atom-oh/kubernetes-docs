@@ -36,54 +36,7 @@ IPAM은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니�
 
 ### Cilium IPAM 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph "Cilium IPAM 모드"
-        direction TB
-        
-        subgraph "클러스터 범위 IPAM"
-            ClusterPool[클러스터 풀]
-            MultiPool[다중 풀]
-        end
-        
-        subgraph "노드 범위 IPAM"
-            HostScope[쿠버네티스 호스트 범위]
-        end
-        
-        subgraph "클라우드 제공업체 IPAM"
-            AWS_ENI[AWS ENI]
-            Azure_IPAM[Azure IPAM]
-            GKE_IPAM[GKE IPAM]
-        end
-        
-        subgraph "사용자 정의 IPAM"
-            CRD_IPAM[CRD 기반 IPAM]
-        end
-    end
-    
-    ClusterPool -->|"단일 풀에서 할당"| Central[중앙 집중식 할당]
-    MultiPool -->|"여러 풀에서 할당"| Central
-    
-    HostScope -->|"노드별 할당"| Distributed[분산 할당]
-    
-    AWS_ENI -->|"AWS VPC IP 할당"| Cloud[클라우드 네이티브 할당]
-    Azure_IPAM -->|"Azure VNET IP 할당"| Cloud
-    GKE_IPAM -->|"GCP VPC IP 할당"| Cloud
-    
-    CRD_IPAM -->|"사용자 정의 할당"| Custom[사용자 정의 할당]
-    
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef node fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef cloud fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef custom fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef alloc fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    
-    class ClusterPool,MultiPool cluster;
-    class HostScope node;
-    class AWS_ENI,Azure_IPAM,GKE_IPAM cloud;
-    class CRD_IPAM custom;
-    class Central,Distributed,Cloud,Custom alloc;
-```
+![클러스터 범위, 노드 범위, 클라우드 제공업체, 사용자 정의라는 네 가지 Cilium IPAM 구현 방식이 각각 중앙 집중식, 분산, 클라우드 네이티브, 사용자 정의 할당 결과로 이어지는 것을 보여주는 다이어그램으로, 여러 퍼블릭 클라우드의 VPC/VNET IP를 그대로 쓰는 클라우드 네이티브 할당 경로가 강조되어 있다.](../../.gitbook/assets/ko-networking-cilium-04-ipam-policy-0.png)
 
 ### Cilium IPAM 모드:
 

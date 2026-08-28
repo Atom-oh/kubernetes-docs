@@ -34,36 +34,7 @@ HTTP 503 Service Unavailable
 
 ### 발생 원인
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8s as Kubernetes
-    participant App as Application
-    participant Envoy as Envoy Proxy
-    participant Client as Client
-
-    Note over K8s,Client: 파드 종료 시작 (kubectl delete pod)
-
-    K8s->>App: SIGTERM 전송
-    K8s->>Envoy: SIGTERM 전송
-
-    rect rgb(255, 200, 200)
-        Note over Envoy: ❌ 문제: Envoy가 먼저 종료
-        Envoy->>Envoy: 즉시 종료 시작
-    end
-
-    Client->>Envoy: 요청 전송
-    Envoy-->>Client: ❌ Connection refused
-
-    rect rgb(200, 255, 200)
-        Note over App: App은 아직 실행 중
-        App->>App: 요청 처리 중...
-    end
-
-    Note over K8s: 30초 후 (terminationGracePeriodSeconds)
-    K8s->>App: SIGKILL (강제 종료)
-    K8s->>Envoy: SIGKILL (강제 종료)
-```
+![쿠버네티스가 파드 종료 시 애플리케이션과 Envoy 사이드카에 동시에 SIGTERM을 보내면 Envoy가 애플리케이션보다 먼저 종료되어, 아직 처리 중인 클라이언트 요청이 연결 거부로 실패하는 문제를 보여주는 시퀀스 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-0.png)
 
 **근본 원인**:
 1. Envoy와 애플리케이션이 동시에 SIGTERM을 받음
@@ -98,35 +69,7 @@ spec:
 ```
 
 **동작 방식**:
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8s as Kubernetes
-    participant App as Application
-    participant Envoy as Envoy Proxy
-    participant Client as Client
-
-    Note over K8s,Client: 파드 종료 시작
-
-    K8s->>App: SIGTERM 전송
-    K8s->>Envoy: SIGTERM 전송
-
-    rect rgb(200, 255, 200)
-        Note over Envoy: ✅ Drain 모드 진입
-        Envoy->>Envoy: 새 연결 거부<br/>기존 연결 유지<br/>30초 대기
-    end
-
-    Client->>Envoy: 요청 전송
-    Envoy->>App: 요청 전달
-    App->>Envoy: 응답
-    Envoy->>Client: ✅ 정상 응답
-
-    Note over Envoy: 활성 연결 종료 확인
-    Envoy->>Envoy: 정상 종료
-
-    Note over App: App도 정상 종료
-    App->>App: Graceful Shutdown
-```
+![Envoy에 terminationDrainDuration을 설정하면 SIGTERM 이후 새 연결만 거부하고 기존 연결은 유지하는 Drain 모드로 진입해, 진행 중인 요청이 정상 응답을 받은 뒤 애플리케이션과 Envoy가 함께 정상 종료됨을 보여주는 시퀀스 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-1.png)
 
 #### 방법 2: Pod Annotation으로 Envoy 종료 동작 제어
 
@@ -357,21 +300,7 @@ SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
 
 ### 원인 1: PeerAuthentication 모드 불일치
 
-```mermaid
-flowchart TD
-    Client[Client Service<br/>mTLS STRICT]
-    Server[Server Service<br/>mTLS DISABLE]
-
-    Client -->|mTLS 연결 시도| Server
-    Server -.->|평문 연결 필요| Client
-
-    Error[❌ 503 Error<br/>upstream connect error]
-
-    Server -.-> Error
-
-    classDef error fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    class Error error;
-```
+![mTLS STRICT 모드인 클라이언트 서비스가 mTLS DISABLE 모드인 서버 서비스로 연결을 시도하면 서버가 평문 연결을 요구하며 실패하고 결국 503 업스트림 연결 오류로 이어지는 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-2.png)
 
 **해결**:
 

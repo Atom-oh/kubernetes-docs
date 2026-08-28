@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="d3-title d3-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="d3-title">Backstage 권한 프레임워크 흐름</title>
+    <desc id="d3-desc">사용자 요청이 Permission Framework와 Permission Policy를 거쳐 허용, 거부, 조건부 허용 중 하나로 판정되며, platform-team 전체 권한, backend-team 소유 서비스 수정, viewer 읽기 전용 같은 정책 예시가 참조된다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- arrows: drawn before nodes -->
+    <path d="M460,136 V180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M460,236 V260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M540,300 H680" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <path d="M428,324 V372 Q428,380 420,380 H228 Q220,380 220,388 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M460,340 V372 Q460,380 468,380 H472 Q480,380 480,388 V420" fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M508,324 V372 Q508,380 516,380 H732 Q740,380 740,388 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- arrow labels -->
+    <rect x="164" y="392" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="194" y="401" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">허용</text>
+    <rect x="450" y="392" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="401" fill="#DD344C" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">거부</text>
+    <rect x="656" y="392" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="700" y="401" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">조건부 허용</text>
+    <rect x="560" y="272" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="590" y="281" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">참조</text>
+
+    <!-- nodes: REQ (oval / start) -->
+    <rect x="360" y="80" width="200" height="56" rx="28" fill="#ffffff"/>
+    <rect x="360" y="80" width="200" height="56" rx="28" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+    <text x="460" y="112" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용자 요청</text>
+
+    <!-- nodes: PF (rect / step, focal) -->
+    <rect x="360" y="180" width="200" height="56" rx="6" fill="#ffffff"/>
+    <rect x="360" y="180" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="460" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Permission</text>
+    <text x="460" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Framework</text>
+
+    <!-- nodes: PP (diamond / decision) -->
+    <polygon points="460,260 540,300 460,340 380,300" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="460" y="296" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Permission</text>
+    <text x="460" y="310" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Policy</text>
+
+    <!-- nodes: outcomes (ovals) -->
+    <rect x="140" y="420" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="140" y="420" width="160" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="452" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">허용</text>
+
+    <rect x="400" y="420" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="400" y="420" width="160" height="56" rx="28" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+    <text x="480" y="452" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">거부</text>
+
+    <rect x="660" y="420" width="160" height="56" rx="28" fill="#ffffff"/>
+    <rect x="660" y="420" width="160" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="740" y="452" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">조건부 허용</text>
+
+    <!-- nodes: policy examples (single list node) -->
+    <rect x="680" y="220" width="240" height="160" rx="6" fill="#ffffff"/>
+    <rect x="680" y="220" width="240" height="160" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="800" y="240" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">정책 예시</text>
+    <text x="696" y="268" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">platform-team</text>
+    <text x="696" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">모든 권한</text>
+    <text x="696" y="312" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">backend-team</text>
+    <text x="696" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">소유 서비스만 수정</text>
+    <text x="696" y="356" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">viewer</text>
+    <text x="696" y="372" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">읽기 전용</text>
+
+    <!-- legend -->
+    <line x1="24" y1="510" x2="936" y2="510" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <circle cx="30" cy="530" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="40" y="534" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">FOCAL: PERMISSION FRAMEWORK</text>
+    <circle cx="320" cy="530" r="4" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+    <text x="330" y="534" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.06em">DENY OUTCOME</text>
+  </svg>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="pick-title pick-desc">
+    <title id="pick-title">Mimir와 VictoriaMetrics 선택 기준</title>
+    <desc id="pick-desc">Grafana 에코시스템 활용 여부, 엔터프라이즈 멀티테넌시 필요성, 운영 단순성 우선도, 객체 스토리지 활용 의향, 클라우드 스토리지 비용 민감도를 차례로 물어 Mimir 또는 VictoriaMetrics 중 하나를 선택하도록 안내하는 의사결정 플로차트.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Arrows first -->
+    <line x1="160" y1="88" x2="160" y2="136" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="216" y1="168" x2="424" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="160" y1="200" x2="160" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- C -> E (예) -->
+    <path d="M 536,168 H 568 Q 576,168 576,160 V 116"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- C -> F (아니오) -->
+    <line x1="480" y1="200" x2="480" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- D -> G (예), routed below F -->
+    <path d="M 216,304 V 344 Q 216,352 224,352 H 572 Q 580,352 580,344 V 320"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- D -> H (아니오) -->
+    <line x1="160" y1="336" x2="160" y2="384" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- F -> E (예), routed via right trunk -->
+    <path d="M 480,272 V 264 Q 480,256 488,256 H 732 Q 740,256 740,248 V 108 Q 740,100 732,100 H 700"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- F -> G (아니오) -->
+    <line x1="536" y1="304" x2="560" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- H -> G (비용 중요) -->
+    <path d="M 216,416 H 602 Q 610,416 610,408 V 320"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- H -> E (확장성 중요), routed around the far right/top perimeter -->
+    <path d="M 160,448 V 464 Q 160,472 168,472 H 792 Q 800,472 800,464 V 48 Q 800,40 792,40 H 638 Q 630,40 630,48 V 84"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Edge labels -->
+    <rect x="284" y="148" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="300" y="157" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+
+    <rect x="168" y="230" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="196" y="239" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+
+    <rect x="540" y="148" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="554" y="157" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+
+    <rect x="488" y="230" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="516" y="239" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+
+    <rect x="260" y="332" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="274" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+
+    <rect x="168" y="352" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="196" y="361" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+
+    <rect x="706" y="80" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="720" y="89" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">예</text>
+
+    <rect x="520" y="284" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="534" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">아니오</text>
+
+    <rect x="280" y="396" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="310" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">비용 중요</text>
+
+    <rect x="200" y="452" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="236" y="461" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">확장성 중요</text>
+
+    <!-- Node: A start (oval) -->
+    <rect x="80" y="56" width="160" height="32" rx="16" fill="#ffffff"/>
+    <rect x="80" y="56" width="160" height="32" rx="16" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="160" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">메트릭 저장소 선택</text>
+
+    <!-- Node: B diamond (Grafana 에코시스템 중심?) -->
+    <polygon points="160,136 216,168 160,200 104,168" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="160" y="164" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+    <text x="160" y="176" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">중심?</text>
+
+    <!-- Node: C diamond (엔터프라이즈 멀티테넌시 필요?) -->
+    <polygon points="480,136 536,168 480,200 424,168" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="164" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">멀티테넌시</text>
+    <text x="480" y="176" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">필요?</text>
+
+    <!-- Node: D diamond (운영 단순성 우선?) -->
+    <polygon points="160,272 216,304 160,336 104,304" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="160" y="300" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">운영 단순성</text>
+    <text x="160" y="312" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">우선?</text>
+
+    <!-- Node: F diamond (객체 스토리지 활용 원함?) -->
+    <polygon points="480,272 536,304 480,336 424,304" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="300" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">객체 스토리지</text>
+    <text x="480" y="312" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">활용?</text>
+
+    <!-- Node: H diamond (클라우드 스토리지 비용?) -->
+    <polygon points="160,384 216,416 160,448 104,416" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="160" y="412" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라우드</text>
+    <text x="160" y="424" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용?</text>
+
+    <!-- Node: E Mimir (focal, end) -->
+    <rect x="560" y="84" width="140" height="32" rx="16" fill="#ffffff"/>
+    <rect x="560" y="84" width="140" height="32" rx="16" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="630" y="104" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mimir</text>
+
+    <!-- Node: G VictoriaMetrics (end) -->
+    <rect x="560" y="288" width="140" height="32" rx="16" fill="#ffffff"/>
+    <rect x="560" y="288" width="140" height="32" rx="16" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="630" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="520" x2="920" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="536" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="200" y="528" width="16" height="16" rx="16" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="224" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">시작 / 결과</text>
+
+    <polygon points="376,528 384,536 376,544 368,536" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="396" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">결정 지점</text>
+
+    <rect x="520" y="528" width="16" height="16" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="544" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">추천 결과(초점)</text>
+  </svg>

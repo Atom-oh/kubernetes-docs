@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-labelledby="dtitle ddesc">
+  <title id="dtitle">KEDA event-driven autoscaling architecture</title>
+  <desc id="ddesc">Diagram showing how the KEDA Metrics Server polls external event sources — message queues, databases, streaming platforms, and custom metrics — and feeds that data to the Kubernetes Horizontal Pod Autoscaler, while the KEDA Operator watches ScaledObject and ScaledJob resources and wires the HPA to the target Deployment or Job.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="24" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">AUTOSCALING · KEDA</text>
+  <text x="24" y="52" fill="#232F3E" font-size="20" font-weight="700">Event-driven autoscaling with KEDA</text>
+
+  <!-- ================= ZONES (bg, painted before arrows/nodes) ================= -->
+  <rect x="24" y="100" width="180" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="44" y="104" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="114" y="113" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">EXTERNAL EVENT SOURCES</text>
+
+  <rect x="260" y="100" width="680" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="280" y="104" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="356" y="113" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">KUBERNETES CLUSTER</text>
+
+  <!-- ================= ARROWS (drawn before nodes) ================= -->
+
+  <!-- A -> D : Watches (straight, same row) -->
+  <path d="M444,160 H524" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="464" y="140" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="484" y="149" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">WATCHES</text>
+
+  <!-- A -> C : Creates/Updates (elbow, bottom-of-A to top-of-C at x=620) -->
+  <path d="M364,188 V200 Q364,208 372,208 H612 Q620,208 620,216 V228" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="470" y="196" width="66" height="12" rx="2" fill="#ffffff"/>
+  <text x="503" y="205" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">CREATES/UPDATES</text>
+
+  <!-- B -> C : Provides Metrics (straight, same row) — accent, this is the focal hand-off -->
+  <path d="M476,256 H560" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="486" y="236" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="518" y="245" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">METRICS</text>
+
+  <!-- D -> E : References (straight, same row) -->
+  <path d="M724,160 H780" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="732" y="140" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="752" y="149" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">REFS</text>
+
+  <!-- C -> E : Scales (elbow, top-of-C at x=700 to bottom-of-E) -->
+  <path d="M700,228 H824 Q832,228 832,220 V188" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="748" y="196" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="768" y="205" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">SCALES</text>
+
+  <!-- B -> F,G,H,I : Polls (fanned attach points on B's left edge, accent — the polling loop is the focal behavior) -->
+  <path d="M284,232 H244 Q236,232 236,224 V168 Q236,160 244,160 H204" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <path d="M284,248 H250 Q244,248 244,242 V238 Q244,232 250,232 H204" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <path d="M284,264 H260 Q252,264 252,272 V296 Q252,304 260,304 H204" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <path d="M284,280 H268 Q260,280 260,288 V368 Q260,376 268,376 H204" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="206" y="330" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="226" y="339" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">POLLS</text>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- F Message Queues -->
+  <rect x="34" y="132" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="34" y="132" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="42" y="138" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="56" y="147" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">MQ</text>
+  <text x="114" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Message Queues</text>
+  <text x="114" y="180" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Kafka, RabbitMQ, SQS</text>
+
+  <!-- G Databases -->
+  <rect x="34" y="204" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="34" y="204" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="42" y="210" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="56" y="219" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">DB</text>
+  <text x="114" y="236" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Databases</text>
+  <text x="114" y="252" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Postgres, Redis, Mongo</text>
+
+  <!-- H Streaming Platforms -->
+  <rect x="34" y="276" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="34" y="276" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="42" y="282" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="60" y="291" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">STRM</text>
+  <text x="114" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Streaming Platforms</text>
+  <text x="114" y="324" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Kinesis, Kafka Streams</text>
+
+  <!-- I Custom Metrics -->
+  <rect x="34" y="348" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="34" y="348" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="42" y="354" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="56" y="363" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">CM</text>
+  <text x="114" y="380" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Custom Metrics</text>
+  <text x="114" y="396" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Prometheus, CloudWatch</text>
+
+  <!-- A KEDA Operator -->
+  <rect x="284" y="132" width="160" height="56" rx="6" fill="#ffffff"/>
+  <rect x="284" y="132" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="292" y="138" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="306" y="147" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">OP</text>
+  <text x="364" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KEDA Operator</text>
+  <text x="364" y="180" fill="#545B64" font-size="9" class="mono" text-anchor="middle">controller</text>
+
+  <!-- D ScaledObject / ScaledJob -->
+  <rect x="524" y="132" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="524" y="132" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="532" y="138" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="546" y="147" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">CRD</text>
+  <text x="624" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ScaledObject / ScaledJob</text>
+  <text x="624" y="180" fill="#545B64" font-size="9" class="mono" text-anchor="middle">scaling spec</text>
+
+  <!-- E Deployment / Job -->
+  <rect x="780" y="132" width="144" height="56" rx="6" fill="#ffffff"/>
+  <rect x="780" y="132" width="144" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="788" y="138" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="802" y="147" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="852" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Deployment / Job</text>
+  <text x="852" y="180" fill="#545B64" font-size="9" class="mono" text-anchor="middle">workload</text>
+
+  <!-- B KEDA Metrics Server (FOCAL) -->
+  <rect x="284" y="228" width="192" height="56" rx="6" fill="#ffffff"/>
+  <rect x="284" y="228" width="192" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="292" y="234" width="40" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="312" y="243" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">METRICS</text>
+  <text x="380" y="260" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KEDA Metrics Server</text>
+  <text x="380" y="276" fill="#545B64" font-size="9" class="mono" text-anchor="middle">custom metrics adapter</text>
+
+  <!-- C Horizontal Pod Autoscaler -->
+  <rect x="560" y="228" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="560" y="228" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="568" y="234" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="582" y="243" fill="rgba(35,47,62,0.80)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">HPA</text>
+  <text x="660" y="260" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Horizontal Pod Autoscaler</text>
+  <text x="660" y="276" fill="#545B64" font-size="9" class="mono" text-anchor="middle">autoscaling/v2</text>
+
+  <!-- ================= LEGEND ================= -->
+  <line x1="24" y1="444" x2="936" y2="444" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="24" y="460" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+  <path d="M144,480 H184" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="192" y="484" fill="#545B64" font-size="9">KEDA's polling loop — external metric feeding the HPA</text>
+
+  <rect x="536" y="472" width="16" height="16" rx="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="560" y="484" fill="#545B64" font-size="9">Focal component — bridges external events into Kubernetes-native scaling</text>
+</svg>

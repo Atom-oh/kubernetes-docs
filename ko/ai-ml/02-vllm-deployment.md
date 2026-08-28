@@ -30,52 +30,7 @@ kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable
 
 vLLM은 다음과 같은 특징을 가진 LLM 추론 엔진입니다:
 
-```mermaid
-flowchart TD
-    subgraph vLLM [vLLM 아키텍처]
-        subgraph Features [주요 특징]
-            PagedAttention[PagedAttention]
-            ContinuousBatching[연속 배치 처리]
-            DistributedInference[분산 추론]
-            Quantization[양자화]
-            OpenAIAPI[OpenAI 호환 API]
-        end
-        
-        subgraph Components [핵심 구성 요소]
-            Engine[추론 엔진]
-            Scheduler[요청 스케줄러]
-            KVCache[KV 캐시 관리자]
-            ModelLoader[모델 로더]
-            APIServer[API 서버]
-        end
-        
-        subgraph Benefits [주요 이점]
-            MemoryEfficiency[메모리 효율성]
-            HighThroughput[높은 처리량]
-            LowLatency[낮은 지연 시간]
-            Scalability[확장성]
-        end
-    end
-    
-    PagedAttention --> MemoryEfficiency
-    ContinuousBatching --> HighThroughput
-    DistributedInference --> Scalability
-    Quantization --> MemoryEfficiency
-    
-    Engine --> KVCache
-    Scheduler --> Engine
-    ModelLoader --> Engine
-    Engine --> APIServer
-    
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
-    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
-    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
-    class vLLM default;
-```
+![PagedAttention과 연속 배치 처리 등 vLLM의 핵심 특징이 요청 스케줄러·추론 엔진·KV 캐시 관리자로 이어지는 파이프라인을 거쳐 메모리 효율성, 높은 처리량, 확장성이라는 이점으로 이어지는 관계를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-0.png)
 
 ### vLLM의 주요 기능
 
@@ -252,41 +207,7 @@ response = client.chat.completions.create(
 
 vLLM을 EKS에 배포하기 위한 시스템 요구 사항은 다음과 같습니다:
 
-```mermaid
-flowchart TD
-    subgraph Requirements [시스템 요구 사항]
-        subgraph Hardware [하드웨어]
-            GPU[NVIDIA GPU]
-            Memory[GPU 메모리]
-            CPU[CPU 코어]
-        end
-        
-        subgraph Software [소프트웨어]
-            CUDA[CUDA 12.1+]
-            Python[Python 3.9+]
-            PyTorch[PyTorch 2.4.0+]
-        end
-        
-        subgraph ModelSize [모델 크기별 요구 사항]
-            Model7B[7B 모델: 16GB+ GPU 메모리]
-            Model13B[13B 모델: 24GB+ GPU 메모리]
-            Model70B[70B 모델: 80GB+ GPU 메모리]
-        end
-    end
-    
-    GPU --> Memory
-    Memory --> ModelSize
-    
-    classDef hardwareNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef softwareNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef modelNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class GPU,Memory,CPU,Hardware hardwareNode;
-    class CUDA,Python,PyTorch,Software softwareNode;
-    class Model7B,Model13B,Model70B,ModelSize modelNode;
-    class Requirements default;
-```
+![GPU 메모리를 중심으로 하드웨어, 소프트웨어 스택, 모델 크기별 GPU 메모리 요구량의 관계를 보여주는 시스템 요구 사항 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-1.png)
 
 1. **하드웨어**:
    - NVIDIA GPU(Volta, Turing, Ampere, Hopper 아키텍처)
@@ -310,69 +231,7 @@ flowchart TD
 
 ## EKS 인프라 구성
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS 클라우드]
-        subgraph EKS [Amazon EKS]
-            subgraph ControlPlane [컨트롤 플레인]
-                APIServer[API 서버]
-                Scheduler[스케줄러]
-                ControllerManager[컨트롤러 매니저]
-            end
-            
-            subgraph NodeGroups [노드 그룹]
-                subgraph GPUNodes [GPU 노드]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.12xlarge]
-                end
-                
-                subgraph CPUNodes [CPU 노드]
-                    C5[c5.4xlarge]
-                    M5[m5.4xlarge]
-                end
-            end
-            
-            subgraph Storage [스토리지]
-                FSx[FSx for Lustre]
-                EBS[Amazon EBS]
-                S3[Amazon S3]
-            end
-            
-            subgraph Networking [네트워킹]
-                VPC[VPC]
-                Subnet[서브넷]
-                SecurityGroup[보안 그룹]
-                EFA[Elastic Fabric Adapter]
-            end
-        end
-        
-        subgraph Services [AWS 서비스]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-            IAM[IAM]
-        end
-    end
-    
-    GPUNodes --> Storage
-    GPUNodes --> Networking
-    CPUNodes --> Storage
-    CPUNodes --> Networking
-    
-    EKS --> Services
-    
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class ECR,CloudWatch,IAM,FSx,EBS,S3 awsService;
-    class APIServer,Scheduler,ControllerManager,ControlPlane,Networking,VPC,Subnet,SecurityGroup,EFA k8sComponent;
-    class P4d,P3,G5,GPUNodes gpuNode;
-    class C5,M5,CPUNodes cpuNode;
-    class AWS,EKS,NodeGroups,Storage default;
-```
+![EKS 컨트롤 플레인이 GPU/CPU 노드 그룹에 워크로드를 스케줄링하고, GPU와 CPU 노드가 FSx for Lustre에서 모델을 불러오며 ECR과 CloudWatch 같은 AWS 관리형 서비스가 이를 지원하는 인프라 구조를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-2.png)
 
 ## 스토리지 구성
 
@@ -467,106 +326,7 @@ spec:
 
 다음 다이어그램은 EKS에서 vLLM을 배포하는 두 가지 주요 아키텍처를 보여줍니다:
 
-```mermaid
-flowchart TD
-    subgraph Deployment [vLLM 배포 아키텍처]
-        subgraph SingleNode [단일 노드 배포]
-            Pod1[vLLM 파드]
-            
-            subgraph Pod1Components [파드 구성 요소]
-                Container1[vLLM 컨테이너]
-                Volume1[모델 볼륨]
-            end
-            
-            subgraph GPUs1 [GPU]
-                GPU1[GPU 0]
-                GPU2[GPU 1]
-                GPU3["..."]
-                GPU4[GPU 7]
-            end
-        end
-        
-        subgraph MultiNode [다중 노드 배포]
-            Pod2[vLLM 파드 0]
-            Pod3[vLLM 파드 1]
-            
-            subgraph Pod2Components [파드 0 구성 요소]
-                Container2[vLLM 컨테이너]
-                Volume2[모델 볼륨]
-            end
-            
-            subgraph Pod3Components [파드 1 구성 요소]
-                Container3[vLLM 컨테이너]
-                Volume3[모델 볼륨]
-            end
-            
-            subgraph GPUs2 [노드 0 GPU]
-                GPU5[GPU 0]
-                GPU6[GPU 1]
-                GPU7["..."]
-                GPU8[GPU 7]
-            end
-            
-            subgraph GPUs3 [노드 1 GPU]
-                GPU9[GPU 0]
-                GPU10[GPU 1]
-                GPU11["..."]
-                GPU12[GPU 7]
-            end
-            
-            NCCL[NCCL 통신]
-        end
-        
-        subgraph Storage [공유 스토리지]
-            FSx[FSx for Lustre]
-            S3[Amazon S3]
-        end
-        
-        subgraph Networking [네트워킹]
-            Service[Kubernetes Service]
-            LoadBalancer[Load Balancer]
-            Client[클라이언트]
-        end
-    end
-    
-    Pod1 --> Pod1Components
-    Pod1Components --> GPUs1
-    Container1 --> Volume1
-    
-    Pod2 --> Pod2Components
-    Pod3 --> Pod3Components
-    Pod2Components --> GPUs2
-    Pod3Components --> GPUs3
-    Container2 --> Volume2
-    Container3 --> Volume3
-    
-    Pod2 <--> NCCL
-    Pod3 <--> NCCL
-    
-    Volume1 --> FSx
-    Volume2 --> FSx
-    Volume3 --> FSx
-    FSx --> S3
-    
-    Client --> LoadBalancer
-    LoadBalancer --> Service
-    Service --> Pod1
-    Service --> Pod2
-    
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef containerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef networkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Pod1,Pod2,Pod3,Pod1Components,Pod2Components,Pod3Components podComponent;
-    class Container1,Container2,Container3,Volume1,Volume2,Volume3,NCCL containerComponent;
-    class GPU1,GPU2,GPU3,GPU4,GPU5,GPU6,GPU7,GPU8,GPU9,GPU10,GPU11,GPU12,GPUs1,GPUs2,GPUs3 gpuComponent;
-    class FSx,S3,Storage storageComponent;
-    class Service,LoadBalancer,Client,Networking networkComponent;
-    class Deployment,SingleNode,MultiNode default;
-```
+![클라이언트 요청이 로드 밸런서를 거쳐 GPU 8개짜리 단일 노드 파드나 NCCL로 통신하는 다중 노드 파드로 전달되고, 두 방식 모두 FSx for Lustre 공유 스토리지에서 모델을 불러오는 vLLM 배포 구조를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-3.png)
 
 ### 단일 노드 배포
 
@@ -758,52 +518,7 @@ spec:
 
 ## 성능 최적화
 
-```mermaid
-flowchart TD
-    subgraph Optimization [성능 최적화]
-        subgraph GPUMemory [GPU 메모리 최적화]
-            MemoryUtil[GPU 메모리 사용률 조정]
-            Quantization[양자화 적용]
-            SwapSpace[스왑 공간 활용]
-        end
-        
-        subgraph Throughput [처리량 최적화]
-            BatchSize[배치 크기 조정]
-            KVCache[KV 캐시 최적화]
-            TensorParallel[텐서 병렬 처리]
-        end
-        
-        subgraph NetworkOpt [네트워크 최적화]
-            EFA[EFA 활용]
-            NCCLSettings[NCCL 설정 최적화]
-            NodePlacement[노드 배치 최적화]
-        end
-    end
-    
-    MemoryUtil -->|--gpu-memory-utilization=0.9| Performance([성능 향상])
-    Quantization -->|--quantization awq| Performance
-    SwapSpace -->|--swap-space=16| Performance
-    
-    BatchSize -->|--max-num-batched-tokens=8192| Performance
-    KVCache -->|--block-size=16| Performance
-    TensorParallel -->|--tensor-parallel-size=8| Performance
-    
-    EFA -->|vpc.amazonaws.com/efa: 1| Performance
-    NCCLSettings -->|NCCL_DEBUG=INFO| Performance
-    NodePlacement -->|topology.kubernetes.io/zone| Performance
-    
-    classDef gpuMemNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef throughputNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef performanceNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class MemoryUtil,Quantization,SwapSpace,GPUMemory gpuMemNode;
-    class BatchSize,KVCache,TensorParallel,Throughput throughputNode;
-    class EFA,NCCLSettings,NodePlacement,NetworkOpt networkNode;
-    class Performance performanceNode;
-    class Optimization default;
-```
+![GPU 메모리, 처리량, 네트워크 세 영역의 vLLM 튜닝 옵션들이 모두 하나의 성능 향상 결과로 수렴하는 관계를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-4.png)
 
 ### GPU 메모리 최적화
 
@@ -892,72 +607,7 @@ affinity:
 
 ## 모니터링 및 로깅
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [모니터링 및 로깅]
-        subgraph MetricsCollection [메트릭 수집]
-            vLLMMetrics[vLLM 메트릭]
-            GPUMetrics[GPU 메트릭]
-            KubeMetrics[Kubernetes 메트릭]
-        end
-        
-        subgraph MonitoringStack [모니터링 스택]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
-        
-        subgraph LoggingStack [로깅 스택]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
-        
-        subgraph Dashboards [대시보드]
-            GPUUtilization[GPU 사용률]
-            Throughput[처리량]
-            Latency[지연 시간]
-            ErrorRate[오류율]
-        end
-        
-        subgraph Alerts [알림]
-            HighLatency[높은 지연 시간]
-            LowThroughput[낮은 처리량]
-            GPUError[GPU 오류]
-            OOMError[메모리 부족 오류]
-        end
-    end
-    
-    vLLMMetrics --> Prometheus
-    GPUMetrics --> Prometheus
-    KubeMetrics --> Prometheus
-    
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-    
-    AlertManager --> Alerts
-    Grafana --> Dashboards
-    
-    vLLMMetrics --> Fluentd
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-    
-    classDef metricsNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class vLLMMetrics,GPUMetrics,KubeMetrics,MetricsCollection metricsNode;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringNode;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingNode;
-    class GPUUtilization,Throughput,Latency,ErrorRate,Dashboards dashboardNode;
-    class HighLatency,LowThroughput,GPUError,OOMError,Alerts alertNode;
-    class Monitoring default;
-```
+![vLLM·GPU·Kubernetes 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 이어지고, 로그는 별도로 Fluentd를 거쳐 CloudWatch에 전달되는 관찰 가능성 파이프라인을 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-5.png)
 
 ### Prometheus 메트릭
 
@@ -1033,50 +683,7 @@ data:
 
 ## 오토스케일링
 
-```mermaid
-flowchart TD
-    subgraph Autoscaling [오토스케일링]
-        subgraph PodScaling [파드 스케일링]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            CustomMetrics[커스텀 메트릭]
-        end
-        
-        subgraph NodeScaling [노드 스케일링]
-            Karpenter[Karpenter]
-            ClusterAutoscaler[Cluster Autoscaler]
-            SpotInstances[Spot 인스턴스]
-        end
-        
-        subgraph ScalingTriggers [스케일링 트리거]
-            CPUUtilization[CPU 사용률]
-            GPUUtilization[GPU 사용률]
-            RequestsPerSecond[초당 요청 수]
-            QueueLength[큐 길이]
-        end
-    end
-    
-    CPUUtilization --> HPA
-    GPUUtilization --> CustomMetrics
-    RequestsPerSecond --> KEDA
-    QueueLength --> KEDA
-    
-    HPA --> Karpenter
-    KEDA --> Karpenter
-    CustomMetrics --> ClusterAutoscaler
-    
-    Karpenter --> SpotInstances
-    
-    classDef podScalingNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeScalingNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef triggerNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class HPA,KEDA,CustomMetrics,PodScaling podScalingNode;
-    class Karpenter,ClusterAutoscaler,SpotInstances,NodeScaling nodeScalingNode;
-    class CPUUtilization,GPUUtilization,RequestsPerSecond,QueueLength,ScalingTriggers triggerNode;
-    class Autoscaling default;
-```
+![CPU·GPU 사용률과 요청량 같은 트리거가 HPA·KEDA·커스텀 메트릭을 통해 Karpenter와 Cluster Autoscaler의 노드 스케일링으로 이어지고 Spot 인스턴스로 비용을 절감하는 vLLM 오토스케일링 구조를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-6.png)
 
 ### HPA(Horizontal Pod Autoscaler)
 
@@ -1221,63 +828,7 @@ securityContext:
 
 ## 클라이언트 통합
 
-```mermaid
-flowchart TD
-    subgraph ClientIntegration [클라이언트 통합]
-        subgraph Gateway [API 게이트웨이]
-            Nginx[Nginx]
-            APIGateway[API Gateway]
-            Envoy[Envoy Proxy]
-        end
-        
-        subgraph Clients [클라이언트]
-            PythonClient[Python 클라이언트]
-            JavaScriptClient[JavaScript 클라이언트]
-            CurlClient[Curl 클라이언트]
-        end
-        
-        subgraph Security [보안]
-            Auth[인증]
-            RateLimit[속도 제한]
-            CORS[CORS]
-        end
-        
-        subgraph Backend [백엔드]
-            vLLMService[vLLM 서비스]
-            LoadBalancer[로드 밸런서]
-        end
-    end
-    
-    Clients --> Gateway
-    Gateway --> Security
-    Security --> Backend
-    
-    PythonClient -->|HTTP 요청| Nginx
-    JavaScriptClient -->|HTTP 요청| APIGateway
-    CurlClient -->|HTTP 요청| Envoy
-    
-    Nginx --> Auth
-    APIGateway --> RateLimit
-    Envoy --> CORS
-    
-    Auth --> LoadBalancer
-    RateLimit --> LoadBalancer
-    CORS --> LoadBalancer
-    
-    LoadBalancer --> vLLMService
-    
-    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef clientNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef backendNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    class Nginx,APIGateway,Envoy,Gateway gatewayNode;
-    class PythonClient,JavaScriptClient,CurlClient,Clients clientNode;
-    class Auth,RateLimit,CORS,Security securityNode;
-    class vLLMService,LoadBalancer,Backend backendNode;
-    class ClientIntegration default;
-```
+![Python·JavaScript·Curl 클라이언트가 Nginx·API Gateway·Envoy 게이트웨이를 거쳐 인증·속도 제한·CORS 보안 계층을 통과한 뒤 로드 밸런서를 거쳐 vLLM 서비스에 도달하는 요청 경로를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-7.png)
 
 ### API 게이트웨이
 

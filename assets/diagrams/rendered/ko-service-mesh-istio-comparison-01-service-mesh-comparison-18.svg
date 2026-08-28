@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-01-service-mesh-comparison-18-title ko-service-mesh-istio-comparison-01-service-mesh-comparison-18-desc">
+<title id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-18-title">Service Mesh 선택 의사 결정 트리</title>
+<desc id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-18-desc">팀의 경험 수준, 리소스 제약, 플랫폼 요구(K8s 전용 또는 K8s+VM)를 따라가면 Linkerd, Kong Mesh/Consul, Istio 중 적합한 Service Mesh로 귀결된다.</desc>
+
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="480.0" y1="64" x2="480.0" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 480.0,148 V 192 Q 480.0,200 472.0,200 H 200.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="364.0" y="150" width="32" height="12" rx="2" fill="#ffffff"/><text x="380" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">미숙</text>
+<path d="M 480.0,148 V 192 Q 480.0,200 488.0,200 H 760.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="564.0" y="150" width="32" height="12" rx="2" fill="#ffffff"/><text x="580" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">숙련</text>
+<path d="M 200.0,248 V 312 Q 200.0,320 192.0,320 H 120.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="68.0" y="270" width="44" height="12" rx="2" fill="#ffffff"/><text x="90" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">제약O</text>
+<path d="M 200.0,248 V 312 Q 200.0,320 208.0,320 H 350.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="288.0" y="270" width="44" height="12" rx="2" fill="#ffffff"/><text x="310" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">제약X</text>
+<path d="M 760.0,248 V 312 Q 760.0,320 752.0,320 H 640.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="608.0" y="270" width="44" height="12" rx="2" fill="#ffffff"/><text x="630" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">K8s만</text>
+<path d="M 760.0,248 V 312 Q 760.0,320 768.0,320 H 870.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="674.0" y="270" width="52" height="12" rx="2" fill="#ffffff"/><text x="700" y="279" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">K8s+VM</text>
+<path d="M 870.0,368 V 432 Q 870.0,440 862.0,440 H 780.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="744.0" y="390" width="52" height="12" rx="2" fill="#ffffff"/><text x="770" y="399" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">VM 중심</text>
+<path d="M 870.0,368 V 432 Q 870.0,440 878.0,440 H 970.0" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="822.0" y="390" width="56" height="12" rx="2" fill="#ffffff"/><text x="850" y="399" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">K8s 중심</text>
+<rect x="400" y="20" width="160" height="44" rx="6" fill="#ffffff"/>
+<rect x="400" y="20" width="160" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="46.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Service Mesh 선택</text>
+<rect x="380" y="100" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380" y="100" width="200" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="480.0" y="128.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">팀 경험?</text>
+<rect x="100" y="200" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="100" y="200" width="200" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="200.0" y="228.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">리소스 제약?</text>
+<rect x="660" y="200" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="660" y="200" width="200" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="760.0" y="228.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">플랫폼?</text>
+<rect x="40" y="320" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="320" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="120.0" y="348.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Linkerd</text>
+<rect x="260" y="320" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="260" y="320" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350.0" y="348.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Kong Mesh / Consul</text>
+<rect x="560" y="320" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="560" y="320" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="640.0" y="348.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Istio</text>
+<rect x="780" y="320" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="780" y="320" width="180" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="870.0" y="348.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">VM 중심?</text>
+<rect x="700" y="440" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="700" y="440" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="780.0" y="468.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Consul</text>
+<rect x="900" y="440" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="900" y="440" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="970.0" y="468.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Kong Mesh</text>
+</svg>

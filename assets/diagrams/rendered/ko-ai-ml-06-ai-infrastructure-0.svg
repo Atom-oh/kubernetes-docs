@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+      <title id="t0">AI/ML 인프라 레이어 구조</title>
+      <desc id="d0">ML 워크로드, 플랫폼 서비스, 컴퓨팅, EKS 기반의 4개 레이어가 위에서 아래로 의존하는 스택 구조를 보여주는 다이어그램. 컴퓨팅 레이어는 GPU/Neuron/CPU NodePool과 스팟 인스턴스로 구성되어 강조되어 있다.</desc>
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+        </marker>
+      </defs>
+
+      <rect width="960" height="600" fill="#FFFFFF"/>
+
+      <!-- direction indicator, left margin -->
+      <line x1="60" y1="112" x2="60" y2="464" stroke="#7D8998" stroke-width="1"/>
+      <path d="M60,464 L60,472" stroke="#7D8998" stroke-width="1" marker-end="url(#arrow-soft)"/>
+      <text x="60" y="96" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">DEPENDS</text>
+      <text x="60" y="488" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ON ↓</text>
+
+      <!-- stack: x=100..900, bands 96px, no gap, hairline dividers -->
+      <!-- Layer 1: Workloads -->
+      <rect x="100" y="96" width="800" height="96" fill="#FFFFFF" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="116" y="120" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">L1</text>
+      <text x="116" y="142" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ML 워크로드 레이어</text>
+
+      <g font-family="'Geist Mono',monospace" font-size="8">
+        <rect x="252" y="152" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="296" y="167" text-anchor="middle" fill="#545B64">모델 훈련</text>
+        <rect x="348" y="152" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="392" y="167" text-anchor="middle" fill="#545B64">모델 추론</text>
+        <rect x="444" y="152" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="488" y="167" text-anchor="middle" fill="#545B64">대화형 개발</text>
+        <rect x="540" y="152" width="112" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="596" y="167" text-anchor="middle" fill="#545B64">ML 파이프라인</text>
+        <rect x="660" y="152" width="112" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="716" y="167" text-anchor="middle" fill="#545B64">AI 에이전트</text>
+      </g>
+
+      <!-- Layer 2: Platform -->
+      <rect x="100" y="192" width="800" height="96" fill="#FFFFFF" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="116" y="216" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">L2</text>
+      <text x="116" y="238" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">플랫폼 서비스 레이어</text>
+
+      <g font-family="'Geist Mono',monospace" font-size="8">
+        <rect x="292" y="248" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="336" y="263" text-anchor="middle" fill="#545B64">Ray 클러스터</text>
+        <rect x="388" y="248" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="432" y="263" text-anchor="middle" fill="#545B64">KServe</text>
+        <rect x="484" y="248" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="528" y="263" text-anchor="middle" fill="#545B64">Kubeflow</text>
+        <rect x="580" y="248" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="624" y="263" text-anchor="middle" fill="#545B64">MLflow</text>
+        <rect x="676" y="248" width="96" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="724" y="263" text-anchor="middle" fill="#545B64">벡터 DB</text>
+      </g>
+
+      <!-- Layer 3: Compute (FOCAL) -->
+      <rect x="100" y="288" width="800" height="96" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="116" y="312" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">L3</text>
+      <text x="116" y="334" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">컴퓨팅 레이어</text>
+
+      <g font-family="'Geist Mono',monospace" font-size="8">
+        <rect x="292" y="344" width="112" height="24" rx="4" fill="#FFFFFF" stroke="#EC7211" stroke-width="0.8"/>
+        <text x="348" y="359" text-anchor="middle" fill="#232F3E">GPU NodePools</text>
+        <rect x="416" y="344" width="120" height="24" rx="4" fill="#FFFFFF" stroke="#EC7211" stroke-width="0.8"/>
+        <text x="476" y="359" text-anchor="middle" fill="#232F3E">Neuron NodePools</text>
+        <rect x="548" y="344" width="112" height="24" rx="4" fill="#FFFFFF" stroke="#EC7211" stroke-width="0.8"/>
+        <text x="604" y="359" text-anchor="middle" fill="#232F3E">CPU NodePools</text>
+        <rect x="672" y="344" width="100" height="24" rx="4" fill="#FFFFFF" stroke="#EC7211" stroke-width="0.8"/>
+        <text x="722" y="359" text-anchor="middle" fill="#232F3E">스팟 인스턴스</text>
+      </g>
+
+      <!-- Layer 4: Base -->
+      <rect x="100" y="384" width="800" height="96" fill="#FFFFFF" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="116" y="408" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">L4</text>
+      <text x="116" y="430" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">EKS 기반 레이어</text>
+
+      <g font-family="'Geist Mono',monospace" font-size="8">
+        <rect x="292" y="440" width="96" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="340" y="455" text-anchor="middle" fill="#545B64">EKS 클러스터</text>
+        <rect x="404" y="440" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="448" y="455" text-anchor="middle" fill="#545B64">Karpenter</text>
+        <rect x="500" y="440" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="544" y="455" text-anchor="middle" fill="#545B64">스토리지</text>
+        <rect x="596" y="440" width="88" height="24" rx="4" fill="rgba(35,47,62,0.03)" stroke="#7D8998" stroke-width="0.8"/>
+        <text x="640" y="455" text-anchor="middle" fill="#545B64">네트워킹</text>
+      </g>
+
+      <!-- outer silhouette -->
+      <rect x="100" y="96" width="800" height="384" fill="none" stroke="#232F3E" stroke-width="1"/>
+
+      <!-- legend -->
+      <line x1="100" y1="524" x2="900" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="100" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="220" y="530" width="12" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="240" y="540" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">가속기 컴퓨팅 — GPU/Neuron 자원 배치가 핵심 결정 지점</text>
+    </svg>

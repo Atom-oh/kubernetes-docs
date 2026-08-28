@@ -45,37 +45,7 @@ spiffe://cluster.local/ns/default/sa/productpage
 5. Agent delivers certificate to Envoy (SDS protocol)
 6. Automatic certificate renewal (default TTL: 24 hours)
 
-```mermaid
-flowchart LR
-    subgraph Pod1["Pod A"]
-        App1[Application]
-        Envoy1[Envoy<br/>Proxy]
-    end
-
-    subgraph Pod2["Pod B"]
-        Envoy2[Envoy<br/>Proxy]
-        App2[Application]
-    end
-
-    Istiod[istiod<br/>Certificate Issuance]
-
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
-
-    Istiod -.->|Certificate| Envoy1
-    Istiod -.->|Certificate| Envoy2
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class applications
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Istiod control;
-```
+![Each pod's Envoy sidecar receives an X.509 certificate from istiod, then encrypts pod-to-pod traffic with mTLS while application traffic to and from each sidecar stays local plaintext.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-0.png)
 
 ## mTLS Modes
 
@@ -132,32 +102,7 @@ Istio automatically generates a self-signed root CA during installation. The dia
 - **Intermediate CA**: Intermediate CA for issuing workload certificates
 - **Workload Certificates**: mTLS certificates for each service (auto-renewed)
 
-```mermaid
-flowchart TD
-    subgraph IstioCA["Istio CA (istiod)"]
-        RootCA[Root CA<br/>Self-signed]
-        IntermediateCA[Intermediate CA<br/>Workload Certificate Issuance]
-    end
-
-    subgraph Workloads["Workloads"]
-        Cert1[Service A<br/>Certificate]
-        Cert2[Service B<br/>Certificate]
-        Cert3[Service C<br/>Certificate]
-    end
-
-    RootCA -->|Sign| IntermediateCA
-    IntermediateCA -->|Issue| Cert1
-    IntermediateCA -->|Issue| Cert2
-    IntermediateCA -->|Issue| Cert3
-
-    %% Style definitions
-    classDef ca fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef cert fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class RootCA,IntermediateCA ca;
-    class Cert1,Cert2,Cert3 cert;
-```
+![A self-signed root CA inside istiod signs an intermediate CA, which issues and auto-renews the mTLS workload certificate for every service in the mesh.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-1.png)
 
 **Default Certificate Properties**:
 - Validity period: **90 days** (auto-renewal: 24 hours before expiration)
@@ -460,27 +405,7 @@ spec:
 
 ALB supports client certificate-based mTLS.
 
-```mermaid
-flowchart LR
-    Client[Client<br/>Client Cert]
-    ALB[ALB<br/>mTLS Termination]
-    Gateway[Istio Gateway<br/>TLS]
-    Service[Backend Service<br/>Envoy mTLS]
-
-    Client <-->|mTLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
-
-    %% Style definitions
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class ALB aws;
-    class Gateway,Service istio;
-```
+![A client presents a certificate that AWS ALB terminates and verifies, then ALB forwards over TLS to the Istio Gateway, which re-encrypts with Envoy mTLS into the backend service.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-2.png)
 
 #### Step 1: Configure mTLS on ALB
 
@@ -605,29 +530,7 @@ spec:
 
 CloudFront supports client certificate verification.
 
-```mermaid
-flowchart LR
-    Client[Client<br/>Client Cert]
-    CloudFront[CloudFront<br/>mTLS + Edge]
-    ALB[ALB<br/>TLS]
-    Gateway[Istio Gateway]
-    Service[Backend Service<br/>Envoy mTLS]
-
-    Client <-->|mTLS| CloudFront
-    CloudFront <-->|TLS| ALB
-    ALB <-->|TLS| Gateway
-    Gateway <-->|mTLS| Service
-
-    %% Style definitions
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client client;
-    class CloudFront,ALB aws;
-    class Gateway,Service istio;
-```
+![A client's certificate is verified at the CloudFront edge, then the request travels over plain TLS through ALB and the Istio Gateway before Envoy mTLS re-encrypts it into the backend service.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-3.png)
 
 #### Step 1: Create CloudFront Distribution
 
@@ -766,42 +669,7 @@ spec:
 
 mTLS across the entire path from client to backend:
 
-```mermaid
-flowchart TB
-    Client[Client<br/>Client Cert]
-
-    subgraph AWS ["AWS Edge"]
-        CF[CloudFront<br/>mTLS Verification]
-        ALB[ALB<br/>Header Forwarding]
-    end
-
-    subgraph EKS ["EKS Cluster"]
-        Gateway[Istio Gateway<br/>Header Validation]
-
-        subgraph Mesh ["Service Mesh"]
-            ServiceA[Service A<br/>Envoy mTLS]
-            ServiceB[Service B<br/>Envoy mTLS]
-            ServiceC[Service C<br/>Envoy mTLS]
-        end
-    end
-
-    Client <-->|1\. mTLS| CF
-    CF -->|2\. TLS + Headers| ALB
-    ALB -->|3\. TLS + Headers| Gateway
-    Gateway <-->|4\. mTLS| ServiceA
-    ServiceA <-->|5\. mTLS| ServiceB
-    ServiceB <-->|6\. mTLS| ServiceC
-
-    %% Style definitions
-    classDef client fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% Class applications
-    class Client client;
-    class CF,ALB aws;
-    class Gateway,ServiceA,ServiceB,ServiceC istio;
-```
+![A client's mTLS connection to CloudFront hands off to plain TLS across ALB and the Istio Gateway, then the Istio mesh re-establishes Envoy mTLS hop by hop across three backend services.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-4.png)
 
 **Security per segment**:
 1. **Client -> CloudFront**: mTLS (client certificate verification)

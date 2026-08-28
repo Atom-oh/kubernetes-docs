@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" role="img" aria-labelledby="en-ops-14-tekton-pipelines-1-title en-ops-14-tekton-pipelines-1-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="en-ops-14-tekton-pipelines-1-title">Tekton control-plane components and what they watch or write</title>
+    <desc id="en-ops-14-tekton-pipelines-1-desc">Shows the Tekton Pipelines, Chains, Triggers, and Dashboard controllers all reconciling against the Kubernetes API server, which persists CRD state to etcd, while Chains additionally signs and attests images to an OCI registry, and users reach the system via kubectl or webhook events.</desc>
+    <defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+      </marker>
+    </defs>
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="40" width="360" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="44" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="131" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TEKTON COMPONENTS</text>
+
+    <rect x="560" y="40" width="360" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="576" y="44" width="180" height="12" rx="2" fill="#ffffff"/>
+    <text x="666" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES API SERVER</text>
+
+    <rect x="560" y="300" width="360" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="576" y="304" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="616" y="313" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">STORAGE</text>
+
+    <!-- ===== Arrows ===== -->
+    <!-- API -> ETCD (straight) -->
+    <path d="M 624,148 V 356" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="596" y="240" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="624" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PERSISTS</text>
+
+    <!-- Controller -> API (watches CRDs), top entry -->
+    <path d="M 400,104 H 592 Q 600,104 600,112 V 120" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="440" y="90" width="76" height="12" rx="2" fill="#ffffff"/>
+    <text x="478" y="99" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCHES CRDS</text>
+
+    <!-- Webhook -> API (validates CRDs), bottom entry col 612 -->
+    <path d="M 400,168 H 604 Q 612,168 612,160 V 148" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="440" y="172" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="476" y="181" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VALIDATES</text>
+
+    <!-- Chains -> API (watches TaskRuns), bottom entry col 672 -->
+    <path d="M 400,232 H 664 Q 672,232 672,224 V 148" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="428" y="216" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="472" y="225" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">WATCHES RUNS</text>
+
+    <!-- Chains -> OCI (signs + attests), stays clear above storage row -->
+    <path d="M 400,248 H 736 Q 744,248 744,256 V 356" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="700" y="300" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="744" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SIGNS + ATTESTS</text>
+
+    <!-- Triggers -> API (creates PipelineRuns), bottom entry col 732, stays above storage row (y=324 < 356) -->
+    <path d="M 400,324 H 724 Q 732,324 732,316 V 148" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="428" y="328" width="94" height="12" rx="2" fill="#ffffff"/>
+    <text x="475" y="337" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CREATES RUNS</text>
+
+    <!-- Dashboard -> API (reads CRDs). Routes through the empty x=400-560 corridor (never enters the storage
+         zone's x-range) then up to a right-edge entry on API, so it never crosses the storage row. -->
+    <path d="M 400,388 H 532 Q 540,388 540,380 V 142 Q 540,134 548,134 H 920" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="434" y="368" width="64" height="12" rx="2" fill="#ffffff"/>
+    <text x="466" y="377" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">READS CRDS</text>
+
+    <!-- User -> Triggers (POST event) -->
+    <path d="M 130,500 V 356" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <rect x="94" y="418" width="70" height="12" rx="2" fill="#ffffff"/>
+    <text x="129" y="427" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">POST EVENT</text>
+
+    <!-- User -> API (kubectl apply). Same empty-corridor strategy, offset column (552) and entry y (140,
+         12px from Dashboard's 128) so the two right-edge arrivals stay independently traceable. -->
+    <path d="M 250,500 V 484 H 544 Q 552,484 552,476 V 148 Q 552,140 560,140 H 920" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+    <rect x="352" y="464" width="90" height="12" rx="2" fill="#ffffff"/>
+    <text x="397" y="473" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">KUBECTL APPLY</text>
+
+    <!-- ===== Nodes ===== -->
+    <!-- User -->
+    <g>
+      <rect x="80" y="500" width="140" height="56" rx="6" fill="rgba(35,47,62,0.10)"/>
+      <rect x="80" y="500" width="140" height="56" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <text x="150" y="524" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User / Webhook</text>
+      <text x="150" y="538" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">operator + CI</text>
+    </g>
+
+    <!-- Controller -->
+    <g>
+      <rect x="64" y="76" width="336" height="56" rx="6" fill="#ffffff"/>
+      <rect x="64" y="76" width="336" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="232" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">tekton-pipelines-controller</text>
+      <text x="232" y="114" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reconciliation loop</text>
+    </g>
+    <!-- Webhook -->
+    <g>
+      <rect x="64" y="140" width="336" height="56" rx="6" fill="#ffffff"/>
+      <rect x="64" y="140" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="232" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">tekton-pipelines-webhook</text>
+      <text x="232" y="178" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">admission + validation</text>
+    </g>
+    <!-- Chains -->
+    <g>
+      <rect x="64" y="204" width="336" height="56" rx="6" fill="#ffffff"/>
+      <rect x="64" y="204" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="232" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">tekton-chains-controller</text>
+      <text x="232" y="242" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">signing + attestation</text>
+    </g>
+    <!-- Triggers -->
+    <g>
+      <rect x="64" y="296" width="336" height="56" rx="6" fill="#ffffff"/>
+      <rect x="64" y="296" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="232" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">tekton-triggers-controller</text>
+      <text x="232" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">event processing</text>
+    </g>
+    <!-- Dashboard -->
+    <g>
+      <rect x="64" y="360" width="336" height="56" rx="6" fill="#ffffff"/>
+      <rect x="64" y="360" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="232" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">tekton-dashboard</text>
+      <text x="232" y="398" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">web UI</text>
+    </g>
+
+    <!-- kube-apiserver -->
+    <g>
+      <rect x="560" y="120" width="360" height="28" rx="6" fill="#ffffff"/>
+      <rect x="560" y="120" width="360" height="28" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="740" y="138" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">kube-apiserver</text>
+    </g>
+
+    <!-- ETCD -->
+    <g>
+      <rect x="576" y="356" width="96" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+      <rect x="576" y="356" width="96" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+      <text x="624" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">etcd</text>
+      <text x="624" y="394" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CRD state</text>
+    </g>
+    <!-- OCI -->
+    <g>
+      <rect x="684" y="356" width="112" height="56" rx="6" fill="rgba(35,47,62,0.03)"/>
+      <rect x="684" y="356" width="112" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="740" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OCI Registry</text>
+      <text x="740" y="394" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">signed images</text>
+    </g>
+    <!-- S3 -->
+    <g>
+      <rect x="808" y="356" width="112" height="56" rx="6" fill="rgba(35,47,62,0.02)"/>
+      <rect x="808" y="356" width="112" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <text x="864" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3 / Cloud</text>
+      <text x="864" y="394" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">logs, artifacts</text>
+    </g>
+
+    <!-- Legend -->
+    <line x1="40" y1="570" x2="920" y2="570" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="580" width="16" height="2" fill="#EC7211"/>
+    <text x="64" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">SIGNING PATH</text>
+    <rect x="200" y="580" width="16" height="2" fill="#0972D3"/>
+    <text x="224" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">EXTERNAL ENTRY</text>
+    <rect x="380" y="580" width="16" height="2" fill="#545B64"/>
+    <text x="404" y="587" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">RECONCILE / READ</text>
+  </svg>

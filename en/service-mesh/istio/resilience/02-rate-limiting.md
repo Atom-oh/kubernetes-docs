@@ -16,41 +16,7 @@ Rate Limiting is a feature that limits request rates to protect services from ov
 
 Rate Limiting is needed in the following situations:
 
-```mermaid
-flowchart TB
-    Client1[Client 1<br/>100 req/s]
-    Client2[Client 2<br/>50 req/s]
-    Client3[Client 3<br/>200 req/s]
-
-    subgraph RateLimiter["Rate Limiter"]
-        RL[Token Bucket<br/>100 req/s Limit]
-    end
-
-    subgraph Service["Service"]
-        S1[Pod 1<br/>Capacity: 50 req/s]
-        S2[Pod 2<br/>Capacity: 50 req/s]
-    end
-
-    Client1 -->|100 req/s| RL
-    Client2 -->|50 req/s| RL
-    Client3 -->|200 req/s| RL
-
-    RL -->|100 req/s<br/>Allowed| S1
-    RL -->|100 req/s<br/>Allowed| S2
-    RL -.->|250 req/s<br/>Blocked| Reject[429 Too Many Requests]
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef limiter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Client1,Client2,Client3 client;
-    class RL limiter;
-    class S1,S2 service;
-    class Reject reject;
-```
+![Diagram showing three clients sending traffic through a token-bucket rate limiter that forwards allowed requests to two service pods and rejects excess traffic with a 429 response.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-0.png)
 
 ### Purpose of Rate Limiting
 
@@ -98,34 +64,7 @@ flowchart TB
 
 ### Token Bucket Algorithm
 
-```mermaid
-flowchart TB
-    Bucket[Token Bucket<br/>Max: 100 tokens]
-    Refill[Refill<br/>10 tokens/sec]
-    Request[Request Arrives]
-    Check{Token<br/>Available?}
-    Allow[Allow Request<br/>Consume 1 token]
-    Reject[Reject Request<br/>Return 429]
-
-    Refill -.->|Add 10 every second| Bucket
-    Request --> Check
-    Bucket --> Check
-    Check -->|Yes| Allow
-    Check -->|No| Reject
-    Allow -.->|Decrease tokens| Bucket
-
-    %% Style definitions
-    classDef bucket fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class Bucket,Refill bucket;
-    class Request,Allow process;
-    class Check decision;
-    class Reject reject;
-```
+![Flowchart showing a token bucket refilled at a steady rate, checked on each incoming request, and either allowing the request while consuming a token or rejecting it with a 429 when empty.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-1.png)
 
 ### Basic Configuration
 
@@ -291,51 +230,7 @@ Global Rate Limiting uses a centralized Rate Limit service to apply accurate rat
 
 ### Architecture
 
-```mermaid
-flowchart TB
-    subgraph Clients["Clients"]
-        C1[Client 1]
-        C2[Client 2]
-        C3[Client 3]
-    end
-
-    subgraph Gateway["Istio Gateway"]
-        IG[Ingress Gateway<br/>Envoy Proxy]
-    end
-
-    subgraph RateLimitService["Rate Limit Service"]
-        RLS[Rate Limit Server<br/>envoyproxy/ratelimit]
-        Cache[In-Memory Cache]
-    end
-
-    subgraph Backend["Backend Services"]
-        S1[Service A]
-        S2[Service B]
-    end
-
-    C1 -->|Request| IG
-    C2 -->|Request| IG
-    C3 -->|Request| IG
-
-    IG -->|"1. Check Rate Limit<br/>(gRPC)"| RLS
-    RLS -->|"2. Allow/Deny Response"| IG
-    RLS -.->|Cache Lookup/Update| Cache
-
-    IG -->|"3. Forward Only<br/>Allowed Requests"| S1
-    IG -->|"3. Forward Only<br/>Allowed Requests"| S2
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef ratelimit fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class C1,C2,C3 client;
-    class IG gateway;
-    class RLS,Cache ratelimit;
-    class S1,S2 service;
-```
+![Architecture diagram showing clients sending requests through an Istio ingress gateway that checks a centralized rate limit server backed by an in-memory cache before forwarding allowed traffic to backend services.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
 
 ### Configuration Method
 

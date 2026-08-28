@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="drift-title drift-desc">
+    <title id="drift-title">Drift 감지 및 조치 흐름</title>
+    <desc id="drift-desc">NodePool, NodeClass, AMI, 보안 그룹 등 네 가지 변경이 Auto Mode Controller로 모여 감지되면 Drift 표시, 순차적 교체, 새 노드 프로비저닝 순으로 조치가 이어지는 흐름을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Zones (bg -> zones -> arrows -> nodes) ===== -->
+    <rect x="24" y="64" width="220" height="302" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="40" y="68" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="46" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">DRIFT 트리거</text>
+
+    <rect x="392" y="214" width="176" height="124" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="408" y="218" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="414" y="227" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">감지</text>
+
+    <rect x="716" y="210" width="220" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="732" y="214" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="738" y="223" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">조치</text>
+
+    <!-- ===== Arrows (behind nodes) ===== -->
+    <!-- fan-in: 4 triggers -> E's left edge (x=392, edge 246-282), fanned attach points 8px apart: 250,258,266,274 -->
+    <path d="M244,116 H292 Q300,116 300,124 V242 Q300,250 308,250 H392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M244,180 H316 Q324,180 324,188 V250 Q324,258 332,258 H392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M244,244 H340 Q348,244 348,252 V258 Q348,266 356,266 H392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M244,308 H364 Q372,308 372,300 V282 Q372,274 380,274 H392" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- E -> F (accent, primary flow into action chain) -->
+    <line x1="568" y1="264" x2="716" y2="264" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- F -> G -->
+    <line x1="856" y1="282" x2="856" y2="330" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- G -> H -->
+    <line x1="856" y1="366" x2="856" y2="406" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Nodes: Triggers ===== -->
+    <rect x="44" y="98" width="200" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="144" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NodePool 변경</text>
+
+    <rect x="44" y="162" width="200" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="144" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">NodeClass 변경</text>
+
+    <rect x="44" y="226" width="200" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="144" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AMI 업데이트</text>
+
+    <rect x="44" y="290" width="200" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="144" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">보안 그룹 변경</text>
+
+    <!-- ===== Node: Detection (focal) ===== -->
+    <rect x="392" y="246" width="176" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="480" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Auto Mode Controller</text>
+
+    <!-- ===== Nodes: Action chain ===== -->
+    <rect x="768" y="246" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="856" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Drift 표시</text>
+
+    <rect x="768" y="330" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="856" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">순차적 교체</text>
+
+    <rect x="768" y="406" width="176" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="856" y="424" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">새 노드</text>
+    <text x="856" y="436" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로비저닝</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="24" y1="500" x2="936" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="24" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+
+    <rect x="24" y="532" width="24" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="56" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">감지 허브(focal)</text>
+
+    <line x1="220" y1="538" x2="248" y2="538" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="256" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">트리거 유입</text>
+
+    <line x1="404" y1="538" x2="432" y2="538" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="440" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">조치 시작</text>
+  </svg>

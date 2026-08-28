@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-cilium-networking-concepts-1-title en-networking-cilium-networking-concepts-1-desc">
+<title id="en-networking-cilium-networking-concepts-1-title">Bridge Networking</title>
+<desc id="en-networking-cilium-networking-concepts-1-desc">Diagram showing two containers each connected through a veth pair to a shared Linux bridge, which forwards traffic onto the host network.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="64" width="392" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="68" width="78" height="12" rx="2" fill="#ffffff"/>
+<text x="75.0" y="77" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">CONTAINER A</text>
+<rect x="24" y="264" width="392" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="268" width="78" height="12" rx="2" fill="#ffffff"/>
+<text x="75.0" y="277" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">CONTAINER B</text>
+<line x1="200" y1="112" x2="280" y2="112" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="200" y1="312" x2="280" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400,112 H 432 Q 440,112 440,120 V 200 Q 440,208 448,208 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400,312 H 432 Q 440,312 440,304 V 248 Q 440,240 448,240 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="640" y1="224" x2="720" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="40" y="80" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="80" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120.0" y="106.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Container A</text>
+<text x="120.0" y="122.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">IP: 172.17.0.2</text>
+<rect x="280" y="80" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="280" y="80" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340.0" y="114.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">veth0</text>
+<rect x="40" y="280" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="280" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120.0" y="306.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Container B</text>
+<text x="120.0" y="322.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">IP: 172.17.0.3</text>
+<rect x="280" y="280" width="120" height="64" rx="6" fill="#ffffff"/>
+<rect x="280" y="280" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340.0" y="314.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">veth1</text>
+<rect x="480" y="192" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="480" y="192" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="560.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">docker0</text>
+<text x="560.0" y="234.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">bridge 172.17.0.1/24</text>
+<rect x="720" y="192" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="720" y="192" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="800.0" y="218.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Host Network</text>
+<text x="800.0" y="234.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">eth0 192.168.1.10</text>
+</svg>

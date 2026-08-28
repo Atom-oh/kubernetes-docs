@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="bs-er-title bs-er-desc">
+    <title id="bs-er-title">Backstage catalog entity model</title>
+    <desc id="bs-er-desc">Entity-relationship diagram showing a Domain owning a System, which is built from Components that expose APIs and depend on Resources, with a Group owning the System and Component and a User belonging to that Group.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Relationship lines (before nodes) -->
+    <path d="M700,84 H580" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M244,228 H280" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <path d="M420,120 V148 Q420,156 412,156 H388 Q380,156 380,164 V192" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M540,120 V148 Q540,156 548,156 H612 Q620,156 620,164 V192" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <path d="M380,264 V356" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <path d="M620,264 V356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <path d="M440,264 V292 Q440,300 448,300 H552 a8,8 0 0,1 16,0 H572 Q580,300 580,308 V356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M560,264 V328 Q560,336 552,336 H428 Q420,336 420,344 V356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Relationship labels -->
+    <rect x="604" y="64" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="640" y="73" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">MEMBER OF</text>
+
+    <rect x="424" y="128" width="42" height="12" rx="2" fill="#ffffff"/>
+    <text x="445" y="137" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">OWNS</text>
+
+    <!-- Entity: Group -->
+    <rect x="380" y="48" width="200" height="72" rx="6" fill="#ffffff"/>
+    <rect x="380" y="48" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="388" y="56" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="404" y="65" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">GRP</text>
+    <text x="480" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Group</text>
+    <text x="480" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Team</text>
+
+    <!-- Entity: User -->
+    <rect x="700" y="48" width="160" height="72" rx="6" fill="#ffffff"/>
+    <rect x="700" y="48" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="56" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="724" y="65" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">USR</text>
+    <text x="780" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+    <text x="780" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Person</text>
+
+    <!-- Entity: Domain -->
+    <rect x="64" y="192" width="180" height="72" rx="6" fill="#ffffff"/>
+    <rect x="64" y="192" width="180" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="72" y="200" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="88" y="209" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DOM</text>
+    <text x="154" y="230" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Domain</text>
+    <text x="154" y="246" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Business area</text>
+
+    <!-- Entity: System (focal / aggregate root) -->
+    <rect x="280" y="192" width="200" height="72" rx="6" fill="#ffffff"/>
+    <rect x="280" y="192" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="288" y="200" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="304" y="209" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SYS</text>
+    <text x="380" y="230" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">System</text>
+    <text x="380" y="246" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Product / platform</text>
+
+    <!-- Entity: Component -->
+    <rect x="520" y="192" width="200" height="72" rx="6" fill="#ffffff"/>
+    <rect x="520" y="192" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="528" y="200" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="544" y="209" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CMP</text>
+    <text x="620" y="230" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Component</text>
+    <text x="620" y="246" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Service / library</text>
+
+    <!-- Entity: API -->
+    <rect x="290" y="356" width="180" height="72" rx="6" fill="#ffffff"/>
+    <rect x="290" y="356" width="180" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="298" y="364" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="314" y="373" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+    <text x="380" y="394" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API</text>
+    <text x="380" y="410" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC / REST / Event</text>
+
+    <!-- Entity: Resource -->
+    <rect x="530" y="356" width="180" height="72" rx="6" fill="#ffffff"/>
+    <rect x="530" y="356" width="180" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="538" y="364" width="32" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="554" y="373" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RES</text>
+    <text x="620" y="394" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resource</text>
+    <text x="620" y="410" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DB / Queue / Bucket</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="528" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Aggregate root</text>
+
+    <rect x="220" y="528" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Entity</text>
+
+    <rect x="360" y="528" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="380" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Resource entity</text>
+  </svg>

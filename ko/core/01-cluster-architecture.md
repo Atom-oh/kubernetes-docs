@@ -36,71 +36,7 @@ Kubernetes 클러스터는 컨테이너화된 애플리케이션을 실행하기
 
 ### 클러스터 아키텍처 다이어그램
 
-```mermaid
-graph TD
-    subgraph "Kubernetes 클러스터"
-        subgraph "컨트롤 플레인"
-            API[kube-apiserver]
-            ETCD[etcd]
-            SCHED[kube-scheduler]
-            CM[kube-controller-manager]
-            CCM[cloud-controller-manager]
-            
-            API <--> ETCD
-            API <--> SCHED
-            API <--> CM
-            API <--> CCM
-        end
-        
-        subgraph "워커 노드 1"
-            KUBELET1[kubelet]
-            PROXY1[kube-proxy]
-            CRI1[컨테이너 런타임]
-            
-            POD1A[Pod A]
-            POD1B[Pod B]
-            
-            KUBELET1 --> CRI1
-            CRI1 --> POD1A
-            CRI1 --> POD1B
-            PROXY1 --> POD1A
-            PROXY1 --> POD1B
-        end
-        
-        subgraph "워커 노드 2"
-            KUBELET2[kubelet]
-            PROXY2[kube-proxy]
-            CRI2[컨테이너 런타임]
-            
-            POD2A[Pod C]
-            POD2B[Pod D]
-            
-            KUBELET2 --> CRI2
-            CRI2 --> POD2A
-            CRI2 --> POD2B
-            PROXY2 --> POD2A
-            PROXY2 --> POD2B
-        end
-        
-        API <--> KUBELET1
-        API <--> KUBELET2
-        API <--> PROXY1
-        API <--> PROXY2
-    end
-    
-    %% 스타일 정의
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef nodeComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    
-    %% 클래스 적용
-    class API,SCHED,CM,CCM controlPlane;
-    class ETCD dataStore;
-    class KUBELET1,KUBELET2,PROXY1,PROXY2,CRI1,CRI2 nodeComponent;
-    class POD1A,POD1B,POD2A,POD2B pod;
-```
+![컨트롤 플레인의 kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저가 연결되고 각 워커 노드의 kubelet, kube-proxy, 컨테이너 런타임이 파드를 실행하는 구조를 보여준다.](../.gitbook/assets/cluster-overview.png)
 
 **컨트롤 플레인 구성 요소**:
 - **kube-apiserver**: Kubernetes API를 노출하는 프론트엔드
@@ -506,24 +442,7 @@ mode: "iptables"
 
 **컨테이너 런타임 계층 구조**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef cri fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef runtime fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef lowlevel fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-    
-    K8S[Kubernetes] --> CRI[Container Runtime Interface]
-    CRI --> CD[containerd]
-    CRI --> CRIO[CRI-O]
-    CD --> RUNC[runc]
-    CRIO --> CRUN[crun]
-    
-    class K8S k8s;
-    class CRI cri;
-    class CD,CRIO runtime;
-    class RUNC,CRUN lowlevel;
-```
+![Kubernetes가 CRI(Container Runtime Interface)를 통해 containerd와 CRI-O 같은 컨테이너 런타임을 호출하고, 이들이 각각 runc와 crun을 사용해 컨테이너를 실행하는 계층 구조를 보여준다.](../.gitbook/assets/cri-hierarchy.png)
 
 **containerd 구성 예시**:
 ```toml
@@ -658,23 +577,7 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 컨트롤 플레인 내부 통신
 
-```mermaid
-graph LR
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-    classDef controller fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef scheduler fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    
-    API[kube-apiserver] <--> ETCD[etcd]
-    SCHED[kube-scheduler] --> API
-    CTRL[kube-controller-manager] --> API
-    CCM[cloud-controller-manager] --> API
-    
-    class API apiserver;
-    class ETCD etcd;
-    class CTRL,CCM controller;
-    class SCHED scheduler;
-```
+![kube-scheduler, kube-controller-manager, cloud-controller-manager가 모두 kube-apiserver를 통해 클러스터 상태를 읽고 쓰며, kube-apiserver만이 etcd와 직접 통신하는 구조를 보여준다.](../.gitbook/assets/control-plane-internal-comm.png)
 
 컨트롤 플레인 구성 요소 간의 통신은 다음과 같습니다:
 
@@ -700,19 +603,7 @@ graph LR
 
 ### 컨트롤 플레인과 노드 간 통신
 
-```mermaid
-graph TD
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef kubelet fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef proxy fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    
-    API[kube-apiserver] <--> KB[kubelet]
-    API <--> KP[kube-proxy]
-    
-    class API apiserver;
-    class KB kubelet;
-    class KP proxy;
-```
+![kube-apiserver가 각 노드의 kubelet 및 kube-proxy와 양방향 HTTPS 통신을 유지하며 노드 상태와 서비스 정보를 주고받는 구조를 보여준다.](../.gitbook/assets/control-plane-node-comm.png)
 
 컨트롤 플레인과 노드 간의 통신은 다음과 같습니다:
 
@@ -733,19 +624,7 @@ graph TD
 
 ### 노드 간 통신
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef cni fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    
-    P1[Pod 1] <--> CNI[CNI 네트워크]
-    P2[Pod 2] <--> CNI
-    P3[Pod 3] <--> CNI
-    P4[Pod 4] <--> CNI
-    
-    class P1,P2,P3,P4 pod;
-    class CNI cni;
-```
+![서로 다른 노드에 배치된 파드들이 CNI 네트워크 플러그인을 통해 NAT 없이 서로 통신하는 구조를 보여준다.](../.gitbook/assets/inter-node-pod-comm.png)
 
 노드 간의 통신은 다음과 같습니다:
 
@@ -761,22 +640,7 @@ graph LR
 
 ### 외부 통신
 
-```mermaid
-graph LR
-    classDef external fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef service fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    
-    C[외부 클라이언트] --> API[kube-apiserver]
-    C --> SVC[Service/Ingress]
-    SVC --> P[Pod]
-    
-    class C external;
-    class API apiserver;
-    class SVC service;
-    class P pod;
-```
+![클러스터 외부의 클라이언트가 kube-apiserver를 통해 클러스터를 제어하거나, Service/Ingress를 거쳐 파드에 도달하는 두 가지 외부 접근 경로를 보여준다.](../.gitbook/assets/external-comm.png)
 
 클러스터 외부와의 통신은 다음과 같습니다:
 
@@ -828,48 +692,11 @@ resources:
 
 **고가용성 컨트롤 플레인 아키텍처**:
 
-```mermaid
-graph TD
-    classDef loadbalancer fill:#ffecb3,stroke:#f9a825,stroke-width:2px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef component fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    
-    LB[Load Balancer] --> CP1[Control Plane 1]
-    LB --> CP2[Control Plane 2]
-    LB --> CP3[Control Plane 3]
-    
-    CP1 --> API1[kube-apiserver]
-    CP1 --> ETCD1[etcd]
-    CP1 --> SCHED1[kube-scheduler]
-    CP1 --> CTRL1[kube-controller-manager]
-    
-    CP2 --> API2[kube-apiserver]
-    CP2 --> ETCD2[etcd]
-    CP2 --> SCHED2[kube-scheduler]
-    CP2 --> CTRL2[kube-controller-manager]
-    
-    CP3 --> API3[kube-apiserver]
-    CP3 --> ETCD3[etcd]
-    CP3 --> SCHED3[kube-scheduler]
-    CP3 --> CTRL3[kube-controller-manager]
-    
-    class LB loadbalancer;
-    class CP1,CP2,CP3 controlplane;
-    class API1,API2,API3,ETCD1,ETCD2,ETCD3,SCHED1,SCHED2,SCHED3,CTRL1,CTRL2,CTRL3 component;
-```
+![로드 밸런서가 3개의 컨트롤 플레인 노드로 트래픽을 분산하고, 각 노드가 kube-apiserver, etcd, kube-scheduler, kube-controller-manager를 동일하게 갖춰 단일 장애점을 없애는 구조를 보여준다.](../.gitbook/assets/ha-control-plane.png)
 
 **etcd 클러스터 구성**:
 
-```mermaid
-graph LR
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-    
-    E1[etcd Node 1] <==> E2[etcd Node 2]
-    E2 <==> E3[etcd Node 3]
-    E3 <==> E1
-    
-    class E1,E2,E3 etcd;
-```
+![3개의 etcd 노드가 서로 완전 연결(mesh)되어 Raft 합의로 데이터 일관성을 유지하는 etcd 클러스터 구성을 보여준다.](../.gitbook/assets/etcd-cluster-mesh.png)
 
 ### 워커 노드 고가용성
 
@@ -882,23 +709,7 @@ graph LR
 
 **워커 노드 분산 배포**:
 
-```mermaid
-graph TD
-    classDef az fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,stroke-dasharray:5 5;
-    classDef node fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    
-    AZ1[Availability Zone A] --> WN1[Worker Node]
-    AZ1 --> WN2[Worker Node]
-    
-    AZ2[Availability Zone B] --> WN3[Worker Node]
-    AZ2 --> WN4[Worker Node]
-    
-    AZ3[Availability Zone C] --> WN5[Worker Node]
-    AZ3 --> WN6[Worker Node]
-    
-    class AZ1,AZ2,AZ3 az;
-    class WN1,WN2,WN3,WN4,WN5,WN6 node;
-```
+![여러 워커 노드를 3개의 가용 영역에 나누어 배치함으로써 하나의 가용 영역 장애가 전체 클러스터에 영향을 주지 않도록 하는 구조를 보여준다.](../.gitbook/assets/worker-node-az-distribution.png)
 
 ### 애플리케이션 고가용성
 
@@ -1208,25 +1019,7 @@ Kubernetes 스토리지 아키텍처는 다음과 같은 구성 요소로 이루
 
 **스토리지 아키텍처 흐름**:
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef volume fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-    classDef pvc fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pv fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-    
-    POD[파드] --> VOL[볼륨 마운트]
-    VOL --> PVC[PVC]
-    PVC --> PV[PV]
-    PV --> STORAGE[실제 스토리지<br>CSI 드라이버]
-    
-    class POD pod;
-    class VOL volume;
-    class PVC pvc;
-    class PV pv;
-    class STORAGE storage;
-```
+![파드가 볼륨 마운트, PVC, PV를 거쳐 실제 CSI 스토리지 드라이버에 도달하는 쿠버네티스 스토리지 추상화 흐름을 보여준다.](../.gitbook/assets/storage-architecture-flow.png)
 
 ### 볼륨 유형
 
@@ -1325,22 +1118,7 @@ CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제
 
 **CSI 아키텍처**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef csi fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef driver fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-    
-    K8S[Kubernetes] --> CSI[Container Storage Interface]
-    CSI --> DRIVER[CSI Driver<br>e.g., AWS EBS CSI Driver]
-    DRIVER --> STORAGE[Storage System<br>e.g., AWS EBS]
-    
-    class K8S k8s;
-    class CSI csi;
-    class DRIVER driver;
-    class STORAGE storage;
-```
+![Kubernetes가 표준 인터페이스인 CSI를 통해 CSI 드라이버를 호출하고, 드라이버가 실제 스토리지 시스템과 통신하는 구조를 보여준다.](../.gitbook/assets/csi-architecture.png)
 
 **CSI 드라이버 배포 예시**:
 ```yaml
@@ -1793,48 +1571,7 @@ EKS 클러스터는 다음과 같은 구성 요소로 이루어져 있습니다:
 
 **EKS 아키텍처 다이어그램**:
 
-```mermaid
-graph TD
-    classDef aws fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px;
-    classDef eks fill:#fce4ec,stroke:#c2185b,stroke-width:1px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef nodes fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef services fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef network fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px;
-    
-    AWS[AWS Cloud] --> CP[EKS Control Plane<br>AWS Managed]
-    AWS --> WN[Worker Nodes]
-    AWS --> AWSS[AWS Services]
-    AWS --> VPC[VPC & Networking]
-    
-    CP --> API[kube-apiserver]
-    CP --> ETCD[etcd]
-    CP --> SCHED[kube-scheduler]
-    CP --> CTRL[kube-controller-manager]
-    
-    WN --> NG1[Node Group 1<br>EC2 instances]
-    WN --> NG2[Node Group 2<br>EC2 instances]
-    WN --> FG[Fargate Profile<br>Serverless]
-    
-    AWSS --> IAM[IAM]
-    AWSS --> ECR[ECR]
-    AWSS --> ELB[ELB/ALB/NLB]
-    AWSS --> EBS[EBS/EFS/FSx]
-    AWSS --> CW[CloudWatch]
-    
-    VPC --> VPCM[VPC]
-    VPC --> SN[Subnets]
-    VPC --> SG[Security Groups]
-    VPC --> RT[Route Tables]
-    VPC --> CNI[VPC CNI]
-    
-    class AWS aws;
-    class CP controlplane;
-    class WN nodes;
-    class AWSS,IAM,ECR,ELB,EBS,CW services;
-    class VPC,VPCM,SN,SG,RT,CNI network;
-    class API,ETCD,SCHED,CTRL,NG1,NG2,FG eks;
-```
+![AWS가 관리하는 EKS 컨트롤 플레인(kube-apiserver, etcd, 스케줄러)과 사용자가 운영하는 워커 노드, 그리고 IAM/ECR/CloudWatch 등 AWS 서비스 및 VPC 네트워킹이 연동되는 구조를 보여준다.](../.gitbook/assets/eks-aws-architecture.png)
 
 ### EKS 컨트롤 플레인
 

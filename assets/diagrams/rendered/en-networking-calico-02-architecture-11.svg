@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-11-title en-networking-calico-02-architecture-11-desc">
+      <title id="en-networking-calico-02-architecture-11-title">End-to-end component interaction</title>
+      <desc id="en-networking-calico-02-architecture-11-desc">Sequence diagram tracing a NetworkPolicy and a Pod creation from the Kubernetes API through kube-controllers and Typha to Felix, which programs the local data plane and updates BGP routes.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="620" fill="#ffffff"/>
+<line x1="90" y1="80" x2="90" y2="600" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="290" y1="80" x2="290" y2="600" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="490" y1="80" x2="490" y2="600" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="690" y1="80" x2="690" y2="600" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="880" y1="80" x2="880" y2="600" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<path d="M 90,112 H 154 V 132 H 90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="98" y="116.0" width="114" height="12" rx="2" fill="#ffffff"/>
+<text x="155.0" y="125.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">New NetworkPolicy</text>
+<line x1="90" y1="158" x2="290" y2="158" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="151.0" y="138" width="78" height="12" rx="2" fill="#ffffff"/>
+<text x="190.0" y="147" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">SYNC POLICY</text>
+<line x1="90" y1="190" x2="490" y2="190" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="245.0" y="170" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="290.0" y="179" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Policy update</text>
+<line x1="490" y1="222" x2="690" y2="222" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="533.0" y="202" width="114" height="12" rx="2" fill="#ffffff"/>
+<text x="590.0" y="211" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Distribute policy</text>
+<path d="M 690,254 H 754 V 274 H 690" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="698" y="258.0" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="749.0" y="267.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Calculate rules</text>
+<line x1="690" y1="300" x2="880" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="740.0" y="280" width="90" height="12" rx="2" fill="#ffffff"/>
+<text x="785.0" y="289" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Program rules</text>
+<path d="M 90,356 H 154 V 376 H 90" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="98" y="360.0" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="149.0" y="369.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">New Pod created</text>
+<line x1="90" y1="402" x2="290" y2="402" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="160.0" y="382" width="60" height="12" rx="2" fill="#ffffff"/>
+<text x="190.0" y="391" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">SYNC POD</text>
+<line x1="90" y1="434" x2="490" y2="434" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="239.0" y="414" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="290.0" y="423" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Endpoint update</text>
+<line x1="490" y1="466" x2="690" y2="466" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="527.0" y="446" width="126" height="12" rx="2" fill="#ffffff"/>
+<text x="590.0" y="455" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Distribute endpoint</text>
+<line x1="690" y1="498" x2="880" y2="498" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="713.0" y="478" width="144" height="12" rx="2" fill="#ffffff"/>
+<text x="785.0" y="487" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Program endpoint rules</text>
+<path d="M 690,530 H 754 V 550 H 690" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="698" y="534.0" width="114" height="12" rx="2" fill="#ffffff"/>
+<text x="755.0" y="543.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">Update BGP routes</text>
+<rect x="15.0" y="40" width="150" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="90.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes API</text>
+<rect x="215.0" y="40" width="150" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">kube-controllers</text>
+<rect x="430.0" y="40" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="490.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Typha</text>
+<rect x="630.0" y="40" width="120" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="690.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix</text>
+<rect x="805.0" y="40" width="150" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="880.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">iptables/eBPF</text>
+    </svg>

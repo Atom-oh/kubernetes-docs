@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Katib Experiment 실행 흐름</title>
+  <desc id="ddesc">Experiment CRD가 생성되면 Katib 컨트롤러가 Suggestion 서비스를 만들고, Suggestion 서비스는 반복적으로 하이퍼파라미터 조합을 제안해 여러 Trial 학습 잡을 실행시키며, 각 Trial의 메트릭 사이드카가 결과를 Suggestion 서비스로 다시 보고해 루프를 이루다가, 종료 조건이 충족되면 Experiment가 Succeeded 상태가 되고 최적 결과가 status에 기록된다.</desc>
+
+  <rect width="960" height="600" fill="var(--paper)"/>
+
+  <!-- Header -->
+  <text x="40" y="28" class="mono" fill="var(--soft)" font-size="8" letter-spacing="0.18em" font-weight="500">KATIB · HYPERPARAMETER TUNING</text>
+  <text x="40" y="52" class="sans" fill="var(--ink)" font-size="20" font-weight="700">Experiment 실행 흐름</text>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- ============ CONNECTORS (drawn before boxes) ============ -->
+
+  <!-- A -> B -->
+  <path d="M480,116 V148" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- B -> C -->
+  <path d="M480,204 V236" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- C -> D -->
+  <path d="M480,300 V332" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- D -> E1 (elbow) -->
+  <path d="M420,388 V396 Q420,404 412,404 H306 Q298,404 298,412 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- D -> E2 (straight) -->
+  <path d="M480,388 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- D -> E3 (elbow) -->
+  <path d="M540,388 V396 Q540,404 548,404 H654 Q662,404 662,412 V420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- E1 -> F (elbow) -->
+  <path d="M298,476 V484 Q298,492 306,492 H402 Q410,492 410,500 V508" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- E2 -> F (straight) -->
+  <path d="M480,476 V508" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- E3 -> F (elbow) -->
+  <path d="M662,476 V484 Q662,492 654,492 H558 Q550,492 550,500 V508" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- F -> C (loop back, routed via left margin to avoid D / E boxes) -->
+  <path d="M340,536 H116 Q108,536 108,528 V268 Q108,260 116,260 H360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- C -> G (accent: happy-path exit) -->
+  <path d="M600,268 H700" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="613" y="240" width="76" height="14" rx="2" fill="#ffffff"/>
+  <text x="651" y="250" class="mono" fill="#7D8998" font-size="8" letter-spacing="0.06em" text-anchor="middle">종료 조건 충족</text>
+
+  <!-- G -> H -->
+  <path d="M780,300 V332" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ============ NODES ============ -->
+
+  <!-- A: start oval -->
+  <rect x="400" y="64" width="160" height="52" rx="26" fill="#ffffff"/>
+  <rect x="400" y="64" width="160" height="52" rx="26" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="86" class="mono" fill="#232F3E" font-size="7" letter-spacing="0.14em" text-anchor="middle" opacity="0.55">CRD</text>
+  <text x="480" y="99" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Experiment CRD 생성</text>
+
+  <!-- B: controller -->
+  <rect x="380" y="148" width="200" height="56" rx="6" fill="#ffffff"/>
+  <rect x="380" y="148" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="388" y="156" width="76" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="426" y="165" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.06em" text-anchor="middle">CONTROLLER</text>
+  <text x="480" y="182" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Katib 컨트롤러</text>
+  <text x="480" y="196" class="mono" fill="#545B64" font-size="9" text-anchor="middle">experiment-controller</text>
+
+  <!-- C: FOCAL - Suggestion service -->
+  <rect x="360" y="236" width="240" height="64" rx="6" fill="#ffffff"/>
+  <rect x="360" y="236" width="240" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="368" y="244" width="70" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+  <text x="403" y="253" class="mono" fill="#EC7211" font-size="7" letter-spacing="0.06em" text-anchor="middle">SUGGESTION</text>
+  <text x="480" y="272" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Suggestion 서비스 생성</text>
+  <text x="480" y="288" class="mono" fill="#545B64" font-size="9" text-anchor="middle">선택된 알고리즘용 · 반복 허브</text>
+
+  <!-- D: propose -->
+  <rect x="360" y="332" width="240" height="56" rx="6" fill="#ffffff"/>
+  <rect x="360" y="332" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="368" y="340" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="398" y="349" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.06em" text-anchor="middle">PROPOSE</text>
+  <text x="480" y="366" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">하이퍼파라미터 조합 제안</text>
+  <text x="480" y="380" class="mono" fill="#545B64" font-size="9" text-anchor="middle">Suggestion 알고리즘</text>
+
+  <!-- E1/E2/E3: trials -->
+  <rect x="228" y="420" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="228" y="420" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="298" y="443" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Trial 1</text>
+  <text x="298" y="458" class="mono" fill="#545B64" font-size="9" text-anchor="middle">학습 잡</text>
+
+  <rect x="408" y="420" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="408" y="420" width="144" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="480" y="443" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Trial 2</text>
+  <text x="480" y="458" class="mono" fill="#545B64" font-size="9" text-anchor="middle">학습 잡</text>
+
+  <rect x="592" y="420" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="592" y="420" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="662" y="443" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Trial N</text>
+  <text x="662" y="458" class="mono" fill="#545B64" font-size="9" text-anchor="middle">학습 잡</text>
+
+  <!-- F: sidecar report -->
+  <rect x="340" y="508" width="280" height="56" rx="6" fill="#ffffff"/>
+  <rect x="340" y="508" width="280" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="348" y="516" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="378" y="525" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.06em" text-anchor="middle">SIDECAR</text>
+  <text x="480" y="542" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">목표 메트릭 보고</text>
+  <text x="480" y="556" class="mono" fill="#545B64" font-size="9" text-anchor="middle">메트릭 수집 사이드카</text>
+
+  <!-- G: succeeded state -->
+  <rect x="700" y="236" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="700" y="236" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="708" y="244" width="48" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="732" y="253" class="mono" fill="rgba(35,47,62,0.8)" font-size="7" letter-spacing="0.06em" text-anchor="middle">STATE</text>
+  <text x="780" y="272" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Experiment</text>
+  <text x="780" y="286" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Succeeded</text>
+
+  <!-- H: record result (end) -->
+  <rect x="700" y="332" width="160" height="56" rx="28" fill="#ffffff"/>
+  <rect x="700" y="332" width="160" height="56" rx="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="780" y="356" class="sans" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">최적 결과 기록</text>
+  <text x="780" y="370" class="mono" fill="#545B64" font-size="9" text-anchor="middle">status에 기록</text>
+
+</svg>

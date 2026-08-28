@@ -20,32 +20,7 @@
 
 Application은 ArgoCD의 핵심 Custom Resource입니다. Git 저장소의 매니페스트를 특정 Kubernetes 클러스터와 네임스페이스에 배포하는 방법을 정의합니다.
 
-```mermaid
-flowchart LR
-    subgraph Source ["소스 (Source)"]
-        Git[Git Repository]
-        Helm[Helm Repository]
-        OCI[OCI Registry]
-    end
-
-    subgraph Application ["Application CRD"]
-        Spec[Spec]
-        Status[Status]
-    end
-
-    subgraph Destination ["대상 (Destination)"]
-        Cluster[Kubernetes Cluster]
-        NS[Namespace]
-    end
-
-    Git --> Spec
-    Helm --> Spec
-    OCI --> Spec
-    Spec --> Cluster
-    Spec --> NS
-
-    style Application fill:#EB6E85,stroke:#333,color:#fff
-```
+![ArgoCD Application CRD가 Git·Helm·OCI 저장소를 소스로 받아 Kubernetes 클러스터와 네임스페이스에 배포하는 구조를 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-02-applications-0.png)
 
 ### 기본 구조
 
@@ -610,23 +585,7 @@ argocd app rollback my-app
 
 ### 롤백 동작
 
-```mermaid
-sequenceDiagram
-    participant User as 사용자
-    participant ArgoCD as ArgoCD
-    participant Git as Git Repo
-    participant K8s as Kubernetes
-
-    User->>ArgoCD: 롤백 요청 (리비전 3)
-    ArgoCD->>ArgoCD: 히스토리에서 리비전 3 조회
-    ArgoCD->>Git: 해당 커밋의 매니페스트 가져오기
-    Git-->>ArgoCD: 이전 버전 매니페스트
-    ArgoCD->>K8s: 이전 버전 적용
-    K8s-->>ArgoCD: 적용 완료
-    ArgoCD-->>User: 롤백 성공
-
-    Note over ArgoCD,Git: 주의: 롤백은 Git을 변경하지 않음<br/>다음 동기화 시 최신 Git 상태로 복구됨
-```
+![사용자의 롤백 요청을 ArgoCD가 처리해 Kubernetes에 이전 버전을 적용하지만 Git 저장소는 변경하지 않는 시퀀스를 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-02-applications-1.png)
 
 ## 헬스 체크
 
@@ -745,20 +704,7 @@ resource.customizations.health.cert-manager.io_Certificate: |
 
 리소스 훅은 동기화 과정의 특정 시점에 실행되는 작업입니다:
 
-```mermaid
-flowchart LR
-    subgraph Sync ["동기화 프로세스"]
-        PreSync[PreSync Hook] --> Sync1[Sync]
-        Sync1 --> PostSync[PostSync Hook]
-        Sync1 -.->|실패 시| SyncFail[SyncFail Hook]
-        PostSync -.->|실패 시| SyncFail
-    end
-
-    style PreSync fill:#FFD700,stroke:#333
-    style Sync1 fill:#90EE90,stroke:#333
-    style PostSync fill:#87CEEB,stroke:#333
-    style SyncFail fill:#FF6B6B,stroke:#333,color:#fff
-```
+![ArgoCD가 PreSync, Sync, PostSync 훅을 순서대로 실행하고 실패 시 SyncFail 훅으로 전환되는 흐름을 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-02-applications-2.png)
 
 ### 훅 유형
 
@@ -1018,41 +964,7 @@ data:
 
 App of Apps 패턴은 여러 Application을 관리하는 상위 Application을 생성하는 패턴입니다:
 
-```mermaid
-flowchart TB
-    subgraph Root ["Root Application"]
-        RootApp[apps-of-apps]
-    end
-
-    subgraph Children ["Child Applications"]
-        App1[app-1]
-        App2[app-2]
-        App3[app-3]
-        App4[app-4]
-    end
-
-    subgraph Clusters ["Kubernetes Resources"]
-        R1[Deployments]
-        R2[Services]
-        R3[ConfigMaps]
-    end
-
-    RootApp --> App1
-    RootApp --> App2
-    RootApp --> App3
-    RootApp --> App4
-
-    App1 --> R1
-    App2 --> R1
-    App3 --> R2
-    App4 --> R3
-
-    style RootApp fill:#EB6E85,stroke:#333,color:#fff
-    style App1 fill:#4A90D9,stroke:#333,color:#fff
-    style App2 fill:#4A90D9,stroke:#333,color:#fff
-    style App3 fill:#4A90D9,stroke:#333,color:#fff
-    style App4 fill:#4A90D9,stroke:#333,color:#fff
-```
+![루트 Application이 네 개의 자식 Application을 관리하고 각 자식이 Kubernetes 리소스를 생성하는 앱 오브 앱스 계층 구조를 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-02-applications-3.png)
 
 ### 구현 예시
 

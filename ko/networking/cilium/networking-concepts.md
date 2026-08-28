@@ -31,60 +31,7 @@ OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추�
 
 ### OSI 모델과 TCP/IP 모델 비교
 
-```mermaid
-flowchart LR
-    subgraph "OSI 모델"
-        OSI7[7. 응용 계층]
-        OSI6[6. 표현 계층]
-        OSI5[5. 세션 계층]
-        OSI4[4. 전송 계층]
-        OSI3[3. 네트워크 계층]
-        OSI2[2. 데이터 링크 계층]
-        OSI1[1. 물리 계층]
-    end
-    
-    subgraph "TCP/IP 모델"
-        TCP4[4. 응용 계층]
-        TCP3[3. 전송 계층]
-        TCP2[2. 인터넷 계층]
-        TCP1[1. 네트워크 액세스 계층]
-    end
-    
-    OSI7 & OSI6 & OSI5 --- TCP4
-    OSI4 --- TCP3
-    OSI3 --- TCP2
-    OSI2 & OSI1 --- TCP1
-    
-    subgraph "프로토콜 예시"
-        P7[HTTP, FTP, SMTP, DNS]
-        P6[SSL/TLS, JPEG, ASCII]
-        P5[NetBIOS, RPC]
-        P4[TCP, UDP]
-        P3[IP, ICMP, IGMP]
-        P2[Ethernet, PPP, ARP]
-        P1[RS-232, Ethernet]
-    end
-    
-    OSI7 --- P7
-    OSI6 --- P6
-    OSI5 --- P5
-    OSI4 --- P4
-    OSI3 --- P3
-    OSI2 --- P2
-    OSI1 --- P1
-    
-    classDef app fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef transport fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef link fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef physical fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    
-    class OSI7,OSI6,OSI5,TCP4,P7,P6,P5 app;
-    class OSI4,TCP3,P4 transport;
-    class OSI3,TCP2,P3 network;
-    class OSI2,P2 link;
-    class OSI1,TCP1,P1 physical;
-```
+![OSI 7계층 모델의 각 계층이 TCP/IP 4계층 모델로 어떻게 그룹핑되어 매핑되는지, 그리고 각 계층에서 사용하는 대표 프로토콜을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-0.png)
 
 ### OSI 7계층 모델
 
@@ -217,25 +164,7 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 - 동일한 호스트의 컨테이너 간 통신이 효율적
 - Docker의 기본 네트워킹 모드
 
-```mermaid
-graph TD
-    subgraph "Container A"
-        A["Container A<br>IP: 172.17.0.2"]
-        vethA[veth0]
-    end
-    
-    subgraph "Container B"
-        B["Container B<br>IP: 172.17.0.3"]
-        vethB[veth1]
-    end
-    
-    bridge["docker0<br>Bridge (172.17.0.1/24)"]
-    host["Host Network<br>eth0, 192.168.1.10"]
-    
-    vethA --> bridge
-    vethB --> bridge
-    bridge --> host
-```
+![veth 페어로 연결된 두 컨테이너가 docker0 가상 브리지를 통해 호스트의 물리 네트워크로 나가는 기본 브리지 네트워킹 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-1.png)
 
 #### 2. 호스트 네트워킹
 
@@ -244,23 +173,7 @@ graph TD
 - 최상의 네트워크 성능 제공
 - 포트 충돌 가능성 있음
 
-```mermaid
-graph TD
-    subgraph "Host"
-        subgraph "Container A"
-            A[Container A]
-        end
-        
-        subgraph "Container B"
-            B[Container B]
-        end
-        
-        network[Host Network Stack<br>eth0, 192.168.1.10]
-        
-        A --> network
-        B --> network
-    end
-```
+![두 컨테이너가 별도의 네트워크 네임스페이스 없이 호스트의 네트워크 스택을 그대로 공유하는 호스트 네트워크 모드 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-2.png)
 
 #### 3. 오버레이 네트워킹
 
@@ -269,28 +182,7 @@ graph TD
 - 대규모 클러스터에 적합
 - Cilium, Calico, Flannel 등이 이 모델 지원
 
-```mermaid
-graph TD
-    subgraph "Host A"
-        A[Container A<br>IP: 10.0.0.2]
-        overlayA[Overlay Network<br>10.0.0.0/24]
-        ethA[eth0: 192.168.1.10]
-        
-        A --> overlayA
-        overlayA --> ethA
-    end
-    
-    subgraph "Host B"
-        B[Container B<br>IP: 10.0.0.3]
-        overlayB[Overlay Network<br>10.0.0.0/24]
-        ethB[eth0: 192.168.1.11]
-        
-        B --> overlayB
-        overlayB --> ethB
-    end
-    
-    ethA <-->|VXLAN| ethB
-```
+![서로 다른 호스트에 있는 두 컨테이너가 오버레이 네트워크와 VXLAN 캡슐화를 통해 물리 네트워크(eth0) 위에서 통신하는 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-3.png)
 
 #### 4. 언더레이 네트워킹(직접 라우팅)
 
@@ -299,28 +191,7 @@ graph TD
 - 네트워크 인프라에 대한 제어가 필요
 - BGP와 같은 라우팅 프로토콜과 통합 가능
 
-```mermaid
-graph TD
-    subgraph "Host A"
-        A[Container A<br>IP: 10.0.0.2]
-        routeA[Route:<br>10.0.0.2 -> local<br>10.0.0.3 -> Host B]
-        ethA[eth0: 192.168.1.10]
-        
-        A --> routeA
-        routeA --> ethA
-    end
-    
-    subgraph "Host B"
-        B[Container B<br>IP: 10.0.0.3]
-        routeB[Route:<br>10.0.0.3 -> local<br>10.0.0.2 -> Host A]
-        ethB[eth0: 192.168.1.11]
-        
-        B --> routeB
-        routeB --> ethB
-    end
-    
-    ethA <-->|Physical Network| ethB
-```
+![캡슐화 없이 각 호스트의 라우팅 테이블 항목을 이용해 컨테이너 IP 대역을 직접 상대 호스트로 전달하는 라우팅 기반 네트워킹 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-4.png)
 
 ### Kubernetes 네트워킹 모델
 
@@ -372,27 +243,7 @@ VXLAN은 컨테이너 네트워킹에서 가장 널리 사용되는 오버레이
 - **MAC-in-UDP 캡슐화**: 원본 L2 프레임을 UDP 패킷으로 캡슐화
 
 VXLAN 패킷 구조:
-```mermaid
-graph TD
-    outerEth[Outer Ethernet]
-    outerIP[Outer IP]
-    outerUDP[Outer UDP]
-    vxlanHeader["VXLAN Header<br>VNI(VXLAN Network Identifier)"]
-    origEth[Original Ethernet]
-    origIP[Original IP]
-    origTCP[Original TCP/UDP]
-    payload[Payload]
-    
-    outerEth --> outerIP
-    outerIP --> outerUDP
-    outerUDP --> vxlanHeader
-    vxlanHeader --> origEth
-    origEth --> origIP
-    origIP --> origTCP
-    origTCP --> payload
-    
-    style vxlanHeader fill:#f9f,stroke:#333,stroke-width:2px
-```
+![원본 이더넷/IP/TCP 패킷이 VXLAN 헤더와 외부 UDP·IP·이더넷 헤더로 감싸여 캡슐화되는 VXLAN 패킷 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-5.png)
 
 #### GENEVE(Generic Network Virtualization Encapsulation)
 
@@ -466,26 +317,7 @@ data:
 - **사용 사례**: 인터넷 액세스, 아웃바운드 연결
 - **추적**: NAT 테이블에 연결 상태 저장
 
-```mermaid
-graph LR
-    subgraph "내부 네트워크"
-        client[클라이언트<br>10.0.0.2]
-    end
-    
-    subgraph "NAT 라우터"
-        snat[SNAT]
-    end
-    
-    subgraph "인터넷"
-        server[서버<br>203.0.113.5]
-    end
-    
-    client -->|10.0.0.2:1234| snat
-    snat -->|198.51.100.1:5678| server
-    
-    note1[사설 IP를 공용 IP로 변환]
-    snat --- note1
-```
+![내부 네트워크의 클라이언트가 NAT 라우터를 거치면서 출발지 주소가 사설 IP에서 공용 IP로 변환되어 인터넷의 서버와 통신하는 SNAT 동작을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-6.png)
 
 #### 2. 목적지 NAT(DNAT)
 
@@ -495,26 +327,7 @@ graph LR
 - **사용 사례**: 포트 포워딩, 로드 밸런싱, 인바운드 연결
 - **구성**: 특정 포트 또는 포트 범위에 대한 매핑 정의
 
-```mermaid
-graph LR
-    subgraph "인터넷"
-        client[클라이언트<br>203.0.113.5]
-    end
-    
-    subgraph "NAT 라우터"
-        dnat[DNAT]
-    end
-    
-    subgraph "내부 네트워크"
-        server[서버<br>10.0.0.3]
-    end
-    
-    client -->|198.51.100.1:80| dnat
-    dnat -->|10.0.0.3:8080| server
-    
-    note1[공용 IP를 사설 IP로 변환]
-    dnat --- note1
-```
+![인터넷의 클라이언트가 NAT 라우터를 거치면서 목적지 주소가 공용 IP에서 사설 IP로 변환되어 내부 네트워크의 서버로 전달되는 DNAT 동작을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-7.png)
 
 #### 3. 포트 주소 변환(PAT)
 
@@ -524,30 +337,7 @@ PAT는 IP 주소와 포트 번호를 모두 수정합니다. 이를 통해 여�
 - **사용 사례**: IP 주소 보존, 다수의 내부 호스트 지원
 - **제한 사항**: 사용 가능한 포트 수에 의해 제한됨(약 65,000개)
 
-```mermaid
-graph LR
-    subgraph "내부 네트워크"
-        hostA[호스트 A<br>10.0.0.2:1234]
-        hostB[호스트 B<br>10.0.0.3:1234]
-    end
-    
-    subgraph "NAT 라우터(PAT)"
-        pat[198.51.100.1]
-    end
-    
-    subgraph "인터넷"
-        serverA[서버<br>203.0.113.5:80]
-        serverB[서버<br>203.0.113.5:80]
-    end
-    
-    hostA --> pat
-    hostB --> pat
-    pat -->|198.51.100.1:5000| serverA
-    pat -->|198.51.100.1:5001| serverB
-    
-    note1[여러 내부 호스트가 단일 공용 IP 공유]
-    pat --- note1
-```
+![서로 다른 내부 호스트가 포트 번호로 구분되어 하나의 공용 IP(198.51.100.1)를 공유해 인터넷의 서버와 통신하는 PAT 동작을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-8.png)
 
 #### 4. 양방향 NAT(Bi-directional NAT)
 
@@ -698,28 +488,7 @@ Cilium은 eBPF를 활용하여 효율적인 라우팅을 구현하며, 다양한
 - **요구 사항**: 노드 간 라우팅 가능한 네트워크
 - **사용 사례**: 성능이 중요한 워크로드, 단일 서브넷 클러스터
 
-```mermaid
-graph TD
-    subgraph "노드 A"
-        podA[포드 A<br>10.0.0.2]
-        routeA[라우팅 테이블:<br>10.0.0.0/24 -> local<br>10.0.1.0/24 -> 노드 B]
-        ethA[eth0: 192.168.1.10]
-        
-        podA --> routeA
-        routeA --> ethA
-    end
-    
-    subgraph "노드 B"
-        podB[포드 B<br>10.0.1.2]
-        routeB[라우팅 테이블:<br>10.0.1.0/24 -> local<br>10.0.0.0/24 -> 노드 A]
-        ethB[eth0: 192.168.1.11]
-        
-        podB --> routeB
-        routeB --> ethB
-    end
-    
-    ethA <-->|물리적 네트워크| ethB
-```
+![서로 다른 노드에 있는 두 포드가 각 노드의 라우팅 테이블 항목을 이용해 캡슐화 없이 물리 네트워크로 직접 통신하는 CNI 라우팅 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-9.png)
 
 #### 2. BGP 라우팅
 
@@ -817,18 +586,7 @@ DNS는 사람이 읽을 수 있는 도메인 이름을 IP 주소로 변환하는
 
 #### DNS 해석 과정
 
-```mermaid
-sequenceDiagram
-    participant Client as 클라이언트
-    participant Root as 루트 DNS 서버
-    participant TLD as .com DNS 서버
-    participant Auth as example.com DNS 서버
-    
-    Client->>Root: 1. www.example.com 조회
-    Root->>TLD: 2. .com DNS 서버 참조
-    TLD->>Auth: 3. example.com DNS 서버 참조
-    Auth->>Client: 4. www.example.com = 192.0.2.1
-```
+![클라이언트가 루트, .com, example.com DNS 서버를 순서대로 거쳐 참조받으며 최종적으로 www.example.com의 IP 주소를 응답받는 반복(iterative) DNS 해석 과정을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-10.png)
 
 ### 컨테이너 환경에서의 서비스 디스커버리
 
@@ -881,19 +639,7 @@ Kubernetes는 클러스터 내 DNS 서비스(일반적으로 CoreDNS)를 실행�
 - **포드 DNS**: `<pod-ip>.<namespace>.pod.cluster.local`
 - **헤드리스 서비스**: 서비스 이름이 모든 포드 IP의 DNS 레코드로 확인됨
 
-```mermaid
-sequenceDiagram
-    participant PodA as 포드 A
-    participant CoreDNS as CoreDNS
-    participant ServiceB as 서비스 B<br>ClusterIP: 10.0.0.1
-    
-    PodA->>CoreDNS: 1. service-b 조회
-    CoreDNS->>ServiceB: 2. service-b 확인
-    ServiceB->>CoreDNS: 3. 백엔드 포드 선택
-    CoreDNS->>PodA: 4. 10.0.0.1 수신
-    
-    note right of ServiceB: 포드 B1, B2, B3
-```
+![포드가 CoreDNS에 서비스 이름을 조회하면 CoreDNS가 서비스의 ClusterIP를 확인하고 백엔드 포드 중 하나를 선택해 최종 ClusterIP를 응답하는 쿠버네티스 서비스 디스커버리 과정을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-11.png)
 
 #### Kubernetes 서비스 디스커버리 메커니즘
 
@@ -990,17 +736,7 @@ L4 로드 밸런싱은 IP 주소와 포트 번호와 같은 전송 계층 정보
 - **단점**: 애플리케이션 계층 정보에 기반한 고급 라우팅 불가
 - **사용 사례**: TCP/UDP 기반 서비스, 고성능 요구 사항
 
-```mermaid
-graph LR
-    client[클라이언트<br>203.0.113.1:12345]
-    lb[L4 로드 밸런서<br>TCP/UDP 헤더 분석]
-    serverA[서버 A<br>10.0.0.1:8080]
-    serverB[서버 B<br>10.0.0.2:8080]
-    
-    client -->|요청| lb
-    lb --> serverA
-    lb --> serverB
-```
+![클라이언트의 요청이 L4 로드 밸런서에서 TCP/UDP 헤더만 분석되어 두 백엔드 서버 중 하나로 분배되는 전송 계층(L4) 로드 밸런싱 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-12.png)
 
 #### 2. L7(애플리케이션 계층) 로드 밸런싱
 
@@ -1011,17 +747,7 @@ L7 로드 밸런싱은 HTTP 헤더, URL, 쿠키 등과 같은 애플리케이션
 - **단점**: 더 높은 처리 오버헤드, 암호화된 트래픽의 경우 SSL 종료 필요
 - **사용 사례**: 웹 애플리케이션, 마이크로서비스, API 게이트웨이
 
-```mermaid
-graph LR
-    client[클라이언트<br>GET /api/users]
-    lb[L7 로드 밸런서<br>URL 경로 분석<br>헤더 검사]
-    apiServer[API 서버<br>/api/*]
-    webServer[웹 서버<br>/web/*]
-    
-    client -->|HTTP 요청| lb
-    lb --> apiServer
-    lb --> webServer
-```
+![클라이언트의 HTTP 요청이 L7 로드 밸런서에서 URL 경로와 헤더까지 검사되어 API 서버와 웹 서버 중 알맞은 백엔드로 분배되는 애플리케이션 계층(L7) 로드 밸런싱 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-13.png)
 
 ### 로드 밸런싱 알고리즘
 
@@ -1126,30 +852,7 @@ Cilium은 eBPF를 활용하여 효율적인 로드 밸런싱을 구현합니다:
 - **확장성**: 대규모 서비스 및 엔드포인트 지원
 - **연결 추적 최적화**: 효율적인 상태 관리
 
-```mermaid
-graph TD
-    subgraph "포드 A (클라이언트)"
-        client[포드 A]
-    end
-    
-    subgraph "커널 + eBPF 프로그램"
-        intercept[1. 패킷 인터셉트]
-        lookup[2. 서비스 맵 조회]
-        select[3. 백엔드 선택]
-        forward[4. 패킷 전달]
-        
-        intercept --> lookup
-        lookup --> select
-        select --> forward
-    end
-    
-    subgraph "포드 B (서버)"
-        server[포드 B]
-    end
-    
-    client --> intercept
-    forward --> server
-```
+![포드 A가 보낸 패킷이 커널의 eBPF 프로그램에서 인터셉트·서비스 맵 조회·백엔드 선택·전달의 4단계를 거쳐 kube-proxy 없이 곧바로 포드 B로 전달되는 Cilium eBPF 처리 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-14.png)
 
 #### 2. 로드 밸런싱 알고리즘
 

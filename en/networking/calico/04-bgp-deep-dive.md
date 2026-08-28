@@ -42,20 +42,7 @@ Calico typically uses ASNs in the `64512-65534` range for cluster-internal BGP.
 
 When a BGP speaker receives multiple routes to the same destination, it selects the best route using the following criteria (in order):
 
-```mermaid
-flowchart TD
-    A[Receive Multiple Routes] --> B{Highest Weight?}
-    B -->|Tie| C{Highest LOCAL_PREF?}
-    C -->|Tie| D{Locally Originated?}
-    D -->|Tie| E{Shortest AS_PATH?}
-    E -->|Tie| F{Lowest Origin Type?}
-    F -->|Tie| G{Lowest MED?}
-    G -->|Tie| H{eBGP over iBGP?}
-    H -->|Tie| I{Lowest IGP Metric?}
-    I -->|Tie| J{Oldest Route?}
-    J -->|Tie| K{Lowest Router ID}
-    K --> L[Select Best Route]
-```
+![A BGP speaker with multiple routes to the same destination evaluates seven tie-breaking criteria in order, moving to the next criterion on a tie, until one route is selected as best.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-0.png)
 
 ### iBGP vs eBGP Behavior
 
@@ -77,18 +64,7 @@ flowchart TD
 
 Calico uses BIRD (BIRD Internet Routing Daemon) as its BGP implementation. BIRD runs as part of the `calico-node` DaemonSet on every node.
 
-```mermaid
-graph TB
-    subgraph "Calico Node"
-        FV[Felix] --> DT[Dataplane<br/>iptables/eBPF]
-        BIRD[BIRD BGP] --> RT[Routing Table]
-        CONFD[confd] --> BIRD
-        API[Calico API] --> CONFD
-    end
-
-    BIRD <--> EXT[External Router]
-    BIRD <--> OTHER[Other Calico Nodes]
-```
+![Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png)
 
 ### BGP Topology Options
 
@@ -105,21 +81,7 @@ Calico supports two primary BGP topologies:
 
 In the default full-mesh configuration, every Calico node establishes a BGP peering session with every other node in the cluster.
 
-```mermaid
-graph TB
-    subgraph "Full-Mesh BGP (5 Nodes)"
-        N1[Node 1<br/>AS 64512] <--> N2[Node 2<br/>AS 64512]
-        N1 <--> N3[Node 3<br/>AS 64512]
-        N1 <--> N4[Node 4<br/>AS 64512]
-        N1 <--> N5[Node 5<br/>AS 64512]
-        N2 <--> N3
-        N2 <--> N4
-        N2 <--> N5
-        N3 <--> N4
-        N3 <--> N5
-        N4 <--> N5
-    end
-```
+![In the default full-mesh configuration every Calico node peers with every other node, shown from Node 1's perspective connecting to the four others; the same holds symmetrically for all five nodes, producing 10 total BGP sessions.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-2.png)
 
 ### Session Count Formula
 
@@ -172,40 +134,7 @@ spec:
 
 Route Reflectors (RRs) solve the iBGP scalability problem by allowing a subset of nodes to reflect routes to other nodes. This eliminates the need for a full mesh.
 
-```mermaid
-graph TB
-    subgraph "Route Reflector Topology"
-        subgraph "Route Reflectors"
-            RR1[RR Node 1<br/>Cluster ID: 1.0.0.1]
-            RR2[RR Node 2<br/>Cluster ID: 1.0.0.1]
-        end
-
-        subgraph "Client Nodes"
-            C1[Client 1]
-            C2[Client 2]
-            C3[Client 3]
-            C4[Client 4]
-            C5[Client 5]
-            C6[Client 6]
-        end
-
-        RR1 <--> RR2
-
-        C1 --> RR1
-        C2 --> RR1
-        C3 --> RR1
-        C1 --> RR2
-        C2 --> RR2
-        C3 --> RR2
-
-        C4 --> RR1
-        C5 --> RR1
-        C6 --> RR1
-        C4 --> RR2
-        C5 --> RR2
-        C6 --> RR2
-    end
-```
+![Two route reflectors peer with each other and with every client node, letting client nodes learn routes without peering directly with one another, eliminating the need for a full mesh.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-3.png)
 
 ### Route Reflector Key Attributes
 
@@ -300,67 +229,11 @@ spec:
 
 **Pattern 1: Dual Route Reflectors (Small/Medium Clusters)**
 
-```mermaid
-graph TB
-    subgraph "Availability Zone 1"
-        RR1[Route Reflector 1]
-        N1[Node 1]
-        N2[Node 2]
-        N3[Node 3]
-    end
-
-    subgraph "Availability Zone 2"
-        RR2[Route Reflector 2]
-        N4[Node 4]
-        N5[Node 5]
-        N6[Node 6]
-    end
-
-    RR1 <--> RR2
-    N1 & N2 & N3 --> RR1
-    N1 & N2 & N3 --> RR2
-    N4 & N5 & N6 --> RR1
-    N4 & N5 & N6 --> RR2
-```
+![Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-4.png)
 
 **Pattern 2: Hierarchical Route Reflectors (Large Clusters)**
 
-```mermaid
-graph TB
-    subgraph "Tier 1 - Global RRs"
-        GRR1[Global RR 1]
-        GRR2[Global RR 2]
-    end
-
-    subgraph "Tier 2 - Rack RRs"
-        RRR1[Rack 1 RR]
-        RRR2[Rack 2 RR]
-        RRR3[Rack 3 RR]
-    end
-
-    subgraph "Rack 1 Nodes"
-        R1N1[Node]
-        R1N2[Node]
-    end
-
-    subgraph "Rack 2 Nodes"
-        R2N1[Node]
-        R2N2[Node]
-    end
-
-    subgraph "Rack 3 Nodes"
-        R3N1[Node]
-        R3N2[Node]
-    end
-
-    GRR1 <--> GRR2
-    GRR1 <--> RRR1 & RRR2 & RRR3
-    GRR2 <--> RRR1 & RRR2 & RRR3
-
-    R1N1 & R1N2 --> RRR1
-    R2N1 & R2N2 --> RRR2
-    R3N1 & R3N2 --> RRR3
-```
+![A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-5.png)
 
 ***
 
@@ -767,40 +640,7 @@ policy-options {
 
 ### Spine-Leaf Architecture Integration
 
-```mermaid
-graph TB
-    subgraph "Spine Layer (AS 65000)"
-        S1[Spine 1<br/>10.0.0.1]
-        S2[Spine 2<br/>10.0.0.2]
-    end
-
-    subgraph "Leaf Layer"
-        subgraph "Rack 1 (AS 65001)"
-            L1[Leaf 1<br/>10.0.1.1]
-            K1[K8s Node 1<br/>AS 64512]
-            K2[K8s Node 2<br/>AS 64512]
-        end
-
-        subgraph "Rack 2 (AS 65002)"
-            L2[Leaf 2<br/>10.0.2.1]
-            K3[K8s Node 3<br/>AS 64512]
-            K4[K8s Node 4<br/>AS 64512]
-        end
-
-        subgraph "Rack 3 (AS 65003)"
-            L3[Leaf 3<br/>10.0.3.1]
-            K5[K8s Node 5<br/>AS 64512]
-            K6[K8s Node 6<br/>AS 64512]
-        end
-    end
-
-    S1 <--> L1 & L2 & L3
-    S2 <--> L1 & L2 & L3
-
-    K1 & K2 --> L1
-    K3 & K4 --> L2
-    K5 & K6 --> L3
-```
+![In a spine-leaf fabric each leaf switch peers with both spine switches for redundancy, and the Kubernetes nodes in each rack peer only with their rack's leaf switch, so BGP routes flow from nodes up through the leaf and spine layers.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-6.png)
 
 Calico configuration for spine-leaf:
 
@@ -1107,77 +947,11 @@ ip route show | grep bird
 
 ### Multi-Rack with Route Reflectors
 
-```mermaid
-graph TB
-    subgraph "Datacenter"
-        subgraph "Management Rack"
-            RR1[Route Reflector 1<br/>Cluster ID: 1.0.0.1]
-            RR2[Route Reflector 2<br/>Cluster ID: 1.0.0.1]
-        end
-
-        subgraph "Compute Rack 1"
-            N1[Node 1]
-            N2[Node 2]
-            N3[Node 3]
-        end
-
-        subgraph "Compute Rack 2"
-            N4[Node 4]
-            N5[Node 5]
-            N6[Node 6]
-        end
-
-        subgraph "Compute Rack 3"
-            N7[Node 7]
-            N8[Node 8]
-            N9[Node 9]
-        end
-    end
-
-    RR1 <--> RR2
-
-    N1 & N2 & N3 --> RR1
-    N1 & N2 & N3 --> RR2
-    N4 & N5 & N6 --> RR1
-    N4 & N5 & N6 --> RR2
-    N7 & N8 & N9 --> RR1
-    N7 & N8 & N9 --> RR2
-```
+![Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png)
 
 ### Multi-Datacenter BGP Design
 
-```mermaid
-graph TB
-    subgraph "DC1 (AS 64512)"
-        subgraph "DC1 RRs"
-            DC1_RR1[DC1 RR1]
-            DC1_RR2[DC1 RR2]
-        end
-        DC1_N1[DC1 Nodes]
-
-        DC1_RR1 <--> DC1_RR2
-        DC1_N1 --> DC1_RR1 & DC1_RR2
-    end
-
-    subgraph "DC2 (AS 64513)"
-        subgraph "DC2 RRs"
-            DC2_RR1[DC2 RR1]
-            DC2_RR2[DC2 RR2]
-        end
-        DC2_N1[DC2 Nodes]
-
-        DC2_RR1 <--> DC2_RR2
-        DC2_N1 --> DC2_RR1 & DC2_RR2
-    end
-
-    subgraph "WAN Edge (AS 65000)"
-        WAN1[WAN Router 1]
-        WAN2[WAN Router 2]
-    end
-
-    DC1_RR1 & DC1_RR2 <--> WAN1 & WAN2
-    DC2_RR1 & DC2_RR2 <--> WAN1 & WAN2
-```
+![Each datacenter runs its own AS with its own route reflectors peering internally with its nodes, and each datacenter's route reflectors peer over eBGP with a shared WAN edge, connecting the two datacenters.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-8.png)
 
 Configuration for multi-datacenter:
 

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-labelledby="ka0-title ka0-desc">
+  <title id="ka0-title">Istio Request Authentication 흐름</title>
+  <desc id="ka0-desc">사용자가 OAuth/OIDC 제공자에게 로그인해 JWT 토큰을 받고, 그 토큰을 실은 요청이 Istio Gateway의 Request Authentication에서 검증된 뒤 애플리케이션으로 전달되거나, 검증에 실패하면 사용자에게 되돌아가는 흐름을 보여준다.</desc>
+
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="ka0-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="ka0-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="48" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">SERVICE MESH · ISTIO SECURITY</text>
+  <text x="48" y="52" fill="#232F3E" font-size="20" font-weight="700" class="sans">Request Authentication 흐름</text>
+
+  <!-- ===================== ZONES (painted first) ===================== -->
+  <!-- AuthProvider zone -->
+  <rect x="336" y="100" width="200" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="356" y="104" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="360" y="113" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" letter-spacing="0.10em">인증 제공자</text>
+
+  <!-- Gateway zone -->
+  <rect x="336" y="272" width="200" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="356" y="276" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="360" y="285" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" letter-spacing="0.10em">ISTIO GATEWAY</text>
+
+  <!-- Services zone -->
+  <rect x="696" y="272" width="200" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="716" y="276" width="48" height="12" rx="2" fill="#ffffff"/>
+  <text x="720" y="285" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" letter-spacing="0.10em">서비스</text>
+
+  <!-- ===================== ARROWS (painted before nodes) ===================== -->
+
+  <!-- Edge 1: User -> OAuth  "1. 로그인" -->
+  <path d="M96,308 V240 Q96,232 104,232 H388 Q396,232 396,224 V196"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#ka0-arrow)"/>
+  <rect x="176" y="216" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="206" y="225" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">1. 로그인</text>
+
+  <!-- Edge 2: OAuth -> User  "2. JWT 토큰" -->
+  <path d="M476,196 V248 Q476,256 468,256 H152 Q144,256 144,264 V308"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#ka0-arrow)"/>
+  <rect x="256" y="260" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="292" y="269" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">2. JWT 토큰</text>
+
+  <!-- Edge 3: User -> ReqAuth  "3. JWT 포함 요청" (straight, same y) -->
+  <path d="M192,344 H356" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#ka0-arrow-accent)"/>
+  <rect x="196" y="324" width="100" height="12" rx="2" fill="#ffffff"/>
+  <text x="246" y="333" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">3. JWT 포함 요청</text>
+
+  <!-- Edge 4: ReqAuth -> App  "4. 검증 성공" (straight, same y) -->
+  <path d="M516,344 H716" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#ka0-arrow-accent)"/>
+  <rect x="566" y="324" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="604" y="333" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">4. 검증 성공</text>
+
+  <!-- Edge 5: ReqAuth -> User  "검증 실패" (dashed, routed below the row) -->
+  <path d="M436,380 V412 Q436,420 428,420 H128 Q120,420 120,412 V380"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ka0-arrow)"/>
+  <rect x="242" y="424" width="60" height="12" rx="2" fill="#ffffff"/>
+  <text x="272" y="433" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.04em">검증 실패</text>
+
+  <!-- ===================== NODES ===================== -->
+
+  <!-- User (input type) -->
+  <rect x="48" y="308" width="144" height="72" rx="6" fill="#ffffff"/>
+  <rect x="48" y="308" width="144" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <rect x="56" y="314" width="36" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.6)" stroke-width="0.8"/>
+  <text x="74" y="323" fill="#545B64" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">USER</text>
+  <text x="120" y="350" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">사용자</text>
+
+  <!-- OAuth/OIDC Provider (external type) -->
+  <rect x="356" y="132" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="356" y="132" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="364" y="138" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="378" y="147" fill="#232F3E" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">IDP</text>
+  <text x="436" y="168" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">OAuth/OIDC</text>
+  <text x="436" y="182" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Provider</text>
+
+  <!-- Request Authentication (focal) -->
+  <rect x="356" y="308" width="160" height="72" rx="6" fill="#ffffff"/>
+  <rect x="356" y="308" width="160" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="364" y="314" width="48" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.6)" stroke-width="0.8"/>
+  <text x="388" y="323" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">AUTHN</text>
+  <text x="436" y="346" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">Request Authentication</text>
+  <text x="436" y="362" fill="#545B64" font-size="9" class="mono" text-anchor="middle">JWT 검증</text>
+
+  <!-- Application (backend) -->
+  <rect x="716" y="308" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="724" y="314" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="740" y="323" fill="#232F3E" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="796" y="350" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">애플리케이션</text>
+
+  <!-- ===================== LEGEND ===================== -->
+  <line x1="48" y1="468" x2="912" y2="468" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+
+  <rect x="48" y="484" width="12" height="12" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="68" y="493" fill="#545B64" font-size="8" class="mono" letter-spacing="0.02em">입력 — 사용자</text>
+
+  <rect x="280" y="484" width="12" height="12" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="300" y="493" fill="#545B64" font-size="8" class="mono" letter-spacing="0.02em">외부 시스템 — OAuth/OIDC</text>
+
+  <rect x="512" y="484" width="12" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="532" y="493" fill="#545B64" font-size="8" class="mono" letter-spacing="0.02em">핵심 처리 — JWT 검증</text>
+
+  <line x1="744" y1="490" x2="764" y2="490" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="772" y="493" fill="#545B64" font-size="8" class="mono" letter-spacing="0.02em">검증 실패 흐름</text>
+
+</svg>

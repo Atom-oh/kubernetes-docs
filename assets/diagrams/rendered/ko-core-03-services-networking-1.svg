@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+    <title id="t1">인그레스 트래픽 경로</title>
+    <desc id="d1">외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 라우팅 규칙에 따라 서비스 A 또는 서비스 B로, 그리고 각 서비스의 백엔드 포드로 분기되는 경로를 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows ===== -->
+    <!-- Client -> LB -->
+    <line x1="176" y1="140" x2="220" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- LB -> IC -->
+    <line x1="376" y1="140" x2="420" y2="140" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- IC -> Ingress (focal) -->
+    <line x1="576" y1="140" x2="620" y2="140" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- Ingress -> S1 (fan top attach 780, 20px apart from S2 attach) -->
+    <path d="M 700,168 V 200 Q 700,208 692,208 H 268 Q 260,208 260,216 V 280" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- Ingress -> S2 -->
+    <path d="M 740,168 V 200 Q 740,208 732,208 H 668 Q 660,208 660,216 V 280" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <!-- S1 -> PodA -->
+    <line x1="260" y1="336" x2="260" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- S2 -> PodB -->
+    <line x1="660" y1="336" x2="660" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Nodes ===== -->
+    <!-- Client -->
+    <rect x="40" y="112" width="136" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="112" width="136" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="108" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">외부 클라이언트</text>
+    <text x="108" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">https request</text>
+
+    <!-- LB -->
+    <rect x="220" y="112" width="156" height="56" rx="6" fill="#ffffff"/>
+    <rect x="220" y="112" width="156" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="298" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">로드 밸런서</text>
+    <text x="298" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cloud lb</text>
+
+    <!-- IC -->
+    <rect x="420" y="112" width="156" height="56" rx="6" fill="#ffffff"/>
+    <rect x="420" y="112" width="156" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="498" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">인그레스 컨트롤러</text>
+    <text x="498" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">nginx · alb</text>
+
+    <!-- Ingress (focal) -->
+    <rect x="620" y="112" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="620" y="112" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="700" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">인그레스 리소스</text>
+    <text x="700" y="152" fill="#EC7211" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">host · path rules</text>
+
+    <!-- S1 -->
+    <rect x="180" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="180" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="260" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">서비스 A</text>
+    <text x="260" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ClusterIP</text>
+
+    <!-- S2 -->
+    <rect x="580" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="580" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="660" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">서비스 B</text>
+    <text x="660" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ClusterIP</text>
+
+    <!-- PodA -->
+    <rect x="180" y="380" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="180" y="380" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="260" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Pod A</text>
+    <text x="260" y="420" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">A-1 · A-2</text>
+
+    <!-- PodB -->
+    <rect x="580" y="380" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="580" y="380" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="660" y="404" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Pod B</text>
+    <text x="660" y="420" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">B-1 · B-2</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="180" y="486" width="12" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="198" y="496" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">라우팅 규칙이 정의되는 지점</text>
+  </svg>

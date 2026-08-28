@@ -16,42 +16,7 @@ Outlier Detection은 비정상적으로 동작하는 서비스 인스턴스를 �
 
 Outlier Detection은 다음과 같은 상황에서 자동으로 인스턴스를 제외합니다:
 
-```mermaid
-flowchart TB
-    Request[클라이언트 요청]
-
-    subgraph LoadBalancer["로드 밸런서"]
-        LB[Envoy Proxy<br/>Outlier Detection]
-    end
-
-    subgraph HealthyPods["정상 파드"]
-        P1[Pod 1<br/>응답 시간: 50ms<br/>에러율: 0%]
-        P2[Pod 2<br/>응답 시간: 60ms<br/>에러율: 1%]
-    end
-
-    subgraph UnhealthyPods["비정상 파드"]
-        P3[Pod 3<br/>응답 시간: 5000ms<br/>에러율: 80%]
-    end
-
-    Request --> LB
-    LB -->|트래픽 전송| P1
-    LB -->|트래픽 전송| P2
-    LB -.->|제외됨| P3
-
-    P3 -.->|30초 후 복구 시도| LB
-
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef healthy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Request request;
-    class LB lb;
-    class P1,P2 healthy;
-    class P3 unhealthy;
-```
+![클라이언트 요청이 Envoy Proxy의 Outlier Detection을 거쳐 정상 파드(Pod 1, Pod 2)로만 전달되고, 지연시간과 에러율이 높은 비정상 파드(Pod 3)는 트래픽에서 제외되었다가 30초 후 복구를 시도하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-0.png)
 
 ### 주요 기능
 
@@ -63,40 +28,7 @@ flowchart TB
 
 ### Outlier Detection 프로세스
 
-```mermaid
-flowchart LR
-    Start[요청 시작]
-    Check{에러 확인}
-    Count[에러 카운트<br/>증가]
-    Threshold{임계값<br/>초과?}
-    Eject[인스턴스<br/>제외]
-    Normal[정상 처리]
-    Wait[대기 시간]
-    Retry[복구 시도]
-
-    Start --> Check
-    Check -->|에러| Count
-    Check -->|성공| Normal
-    Count --> Threshold
-    Threshold -->|Yes| Eject
-    Threshold -->|No| Normal
-    Eject --> Wait
-    Wait --> Retry
-    Retry --> Start
-
-    %% 스타일 정의
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef eject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Start start;
-    class Check,Threshold decision;
-    class Count,Wait,Retry process;
-    class Eject eject;
-    class Normal process;
-```
+![요청마다 에러 여부를 확인해 연속 에러를 카운트하고, 임계값을 넘으면 인스턴스를 제외한 뒤 대기 시간 후 복구를 시도하여 다시 요청 순환으로 돌아가는 Outlier Detection의 판단 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-1.png)
 
 ### 감지 방식
 
@@ -307,34 +239,7 @@ spec:
 
 ### 외부 API 보호 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph "Kubernetes Cluster"
-        App[Application Pod]
-        Envoy[Envoy Proxy<br/>Outlier Detection]
-    end
-
-    subgraph "External Services"
-        API1[External API<br/>Instance 1<br/>정상]
-        API2[External API<br/>Instance 2<br/>에러 발생]
-        API3[External API<br/>Instance 3<br/>정상]
-    end
-
-    App --> Envoy
-    Envoy -->|트래픽 전송| API1
-    Envoy -.->|제외됨| API2
-    Envoy -->|트래픽 전송| API3
-
-    %% 스타일 정의
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef unhealthy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class App,Envoy k8sComponent;
-    class API1,API3 external;
-    class API2 unhealthy;
-```
+![클러스터 안의 애플리케이션 파드가 Envoy Proxy를 통해 여러 외부 API 인스턴스로 트래픽을 보내는데, 에러가 발생한 인스턴스는 Outlier Detection에 의해 트래픽에서 제외되고 정상 인스턴스만 계속 트래픽을 받는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-2.png)
 
 ### 예제 1: 단일 외부 API (DNS 기반)
 

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-basics-05-ebpf-fundamentals-0-title en-basics-05-ebpf-fundamentals-0-desc">
+<title id="en-basics-05-ebpf-fundamentals-0-title">eBPF program lifecycle</title>
+<desc id="en-basics-05-ebpf-fundamentals-0-desc">Architecture diagram showing an eBPF program moving from user-space authoring and compilation through kernel-space loading, verification, JIT compilation, and execution, ending at an event hook point that fires on network packets, system calls, function calls, and tracepoints.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE · EBPF LIFECYCLE</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eBPF program lifecycle</text>
+<rect x="32" y="148" width="384" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="152" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="82.0" y="161" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">USER SPACE</text>
+<rect x="416" y="148" width="512" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="428" y="152" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="472.0" y="161" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KERNEL SPACE</text>
+<line x1="152" y1="212.0" x2="168" y2="212.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="280" y1="212.0" x2="296" y2="212.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="408" y1="212.0" x2="424" y2="212.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="536" y1="212.0" x2="552" y2="212.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="664" y1="212.0" x2="680" y2="212.0" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="792" y1="212.0" x2="808" y2="212.0" stroke="#EC7211" stroke-width="1" marker-end="url(#arrow-accent)"/>
+<rect x="40" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="180" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="96.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Write Program</text>
+<text x="96.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">C / Rust source</text>
+<rect x="168" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="168" y="180" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="224.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compile</text>
+<text x="224.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Clang / LLVM</text>
+<rect x="296" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="296" y="180" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="352.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load</text>
+<text x="352.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">bpf() syscall</text>
+<rect x="424" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="424" y="180" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Verifier</text>
+<text x="480.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">safety check</text>
+<rect x="552" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="552" y="180" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="608.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">JIT Compile</text>
+<text x="608.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">native code</text>
+<rect x="680" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="680" y="180" width="112" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="736.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Execution</text>
+<text x="736.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel context</text>
+<rect x="808" y="180" width="112" height="64" rx="6" fill="#ffffff"/>
+<rect x="808" y="180" width="112" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="864.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Event Hook</text>
+<text x="864.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">net · syscall · trace</text>
+<line x1="40" y1="544" x2="920" y2="544" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="560" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="116" y="550" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="150" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Fan-out hook point</text>
+<rect x="286" y="550" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="320" y="559" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Pipeline step</text>
+<text x="40" y="540" fill="#7D8998" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">A user-space program is compiled to bytecode, verified for safety, then JIT-compiled into native code the kernel runs at an event hook.</text>
+</svg>

@@ -13,24 +13,7 @@
 
 ## 분석 워크플로우
 
-```mermaid
-sequenceDiagram
-    participant User as 운영자
-    participant Grafana as Grafana Dashboard
-    participant Prom as Prometheus (Metrics)
-    participant Tempo as Tempo (Traces)
-    participant Loki as Loki (Logs)
-    User->>Grafana: RED 대시보드에서 latency spike 발견
-    Grafana->>Prom: p99 latency 그래프 확인
-    User->>Grafana: Exemplar 점 클릭
-    Grafana->>Tempo: TraceID로 트레이스 조회
-    Tempo-->>Grafana: Span 타임라인 표시
-    User->>Grafana: 느린 Span 식별 (DB query 800ms)
-    User->>Grafana: Span → Logs 클릭
-    Grafana->>Loki: TraceID + 시간 범위로 로그 조회
-    Loki-->>Grafana: 관련 에러/슬로우 쿼리 로그 표시
-    User->>User: 근본 원인 식별 (missing index)
-```
+![운영자가 Grafana 대시보드에서 지연 급증을 발견한 뒤 Exemplar를 눌러 Tempo의 트레이스로, 다시 Loki의 로그로 이동하며 근본 원인을 찾아가는 순서를 보여준다.](../../.gitbook/assets/ko-labs-observability-06-distributed-tracing-lab-0.png)
 
 ---
 
@@ -249,12 +232,7 @@ Exemplar는 메트릭 데이터 포인트에 연결된 트레이스 ID로, 집�
 
 ### Exemplar 워크플로우
 
-```mermaid
-flowchart LR
-    M["메트릭 그래프<br/>(p99 latency spike)"] --> E["Exemplar 점<br/>(특정 요청)"]
-    E --> T["트레이스<br/>(상세 분석)"]
-    T --> L["로그<br/>(에러 메시지)"]
-```
+![메트릭 그래프의 p99 지연 급증 지점을 Exemplar로 클릭하면 트레이스로, 트레이스에서 다시 로그로 드릴다운하는 4단계 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-06-distributed-tracing-lab-1.png)
 
 **Step 6.5.1: Exemplar가 있는 메트릭 쿼리**
 

@@ -301,54 +301,7 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 ### HA Architecture
 
-```mermaid
-flowchart TB
-    subgraph LB["Load Balancer"]
-        ALB["AWS ALB / NGINX"]
-    end
-
-    subgraph API["API Server (2+ replicas)"]
-        API1["argocd-server-1"]
-        API2["argocd-server-2"]
-    end
-
-    subgraph CTRL["Controller (2+ sharded)"]
-        CTRL1["controller-1"]
-        CTRL2["controller-2"]
-    end
-
-    subgraph REPO["Repo Server (2+ replicas)"]
-        REPO1["repo-server-1"]
-        REPO2["repo-server-2"]
-    end
-
-    subgraph REDIS["Redis HA (3 nodes)"]
-        R1["redis-1"]
-        R2["redis-2"]
-        R3["redis-3"]
-    end
-
-    ALB --> API1
-    ALB --> API2
-    API1 --> REDIS
-    API2 --> REDIS
-    CTRL1 --> REDIS
-    CTRL2 --> REDIS
-    REPO1 --> REDIS
-    REPO2 --> REDIS
-
-    classDef lb fill:#FF9900,stroke:#333,color:white
-    classDef api fill:#EB6E85,stroke:#333,color:white
-    classDef ctrl fill:#6f42c1,stroke:#333,color:white
-    classDef repo fill:#28a745,stroke:#333,color:white
-    classDef redis fill:#dc3545,stroke:#333,color:white
-
-    class ALB lb
-    class API1,API2 api
-    class CTRL1,CTRL2 ctrl
-    class REPO1,REPO2 repo
-    class R1,R2,R3 redis
-```
+![Diagram showing an Argo CD high-availability control plane: a load balancer fans traffic into redundant API server, application controller, and repo server tiers, all of which share state through a three-node Redis HA cluster at the center of the topology.](../../.gitbook/assets/en-gitops-argocd-01-installation-0.png)
 
 ### Controller Sharding
 

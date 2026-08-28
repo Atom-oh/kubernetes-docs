@@ -37,33 +37,7 @@ Grafana Mimir는 Grafana Labs에서 개발한 오픈소스, 수평 확장 가능
 
 Mimir는 Cortex의 후속 프로젝트로, 더 나은 성능과 운영성을 제공합니다:
 
-```mermaid
-flowchart LR
-    subgraph HISTORY["발전 과정"]
-        direction TB
-        C[Cortex<br/>2016]
-        M[Mimir<br/>2022]
-        T[Thanos<br/>2017]
-    end
-
-    subgraph APPROACH["접근 방식"]
-        CA[중앙 집중식<br/>원격 쓰기]
-        TA[사이드카 기반<br/>연합 쿼리]
-    end
-
-    C --> M
-    C -.-> CA
-    T -.-> TA
-    M -.-> CA
-
-    classDef legacy fill:#95A5A6,stroke:#333,stroke-width:1px,color:white
-    classDef current fill:#3498DB,stroke:#333,stroke-width:1px,color:white
-    classDef approach fill:#27AE60,stroke:#333,stroke-width:1px,color:white
-
-    class C legacy
-    class M,T current
-    class CA,TA approach
-```
+![Cortex에서 파생된 Mimir와 독립적으로 발전한 Thanos가 각각 중앙 집중식 원격 쓰기 방식과 사이드카 기반 연합 쿼리 방식을 사용함을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-03-mimir-0.png)
 
 | 항목 | Mimir | Cortex | Thanos |
 |------|-------|--------|--------|
@@ -78,73 +52,7 @@ flowchart LR
 
 ### 전체 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph WRITE["쓰기 경로"]
-        P1[Prometheus 1]
-        P2[Prometheus 2]
-        P3[Prometheus 3]
-    end
-
-    subgraph MIMIR["Grafana Mimir"]
-        subgraph DIST["Distributor"]
-            D1[Distributor 1]
-            D2[Distributor 2]
-        end
-
-        subgraph ING["Ingester"]
-            I1[Ingester 1]
-            I2[Ingester 2]
-            I3[Ingester 3]
-        end
-
-        subgraph STORE["Store-gateway"]
-            SG1[Store-gateway 1]
-            SG2[Store-gateway 2]
-        end
-
-        subgraph COMPACT["Compactor"]
-            C1[Compactor]
-        end
-
-        subgraph QUERY["Querier"]
-            Q1[Querier 1]
-            Q2[Querier 2]
-        end
-
-        subgraph QF["Query-frontend"]
-            QF1[Query-frontend]
-        end
-    end
-
-    subgraph STORAGE["객체 스토리지"]
-        S3[(S3/GCS/Azure)]
-    end
-
-    subgraph READ["읽기 경로"]
-        G[Grafana]
-    end
-
-    P1 & P2 & P3 -->|remote_write| D1 & D2
-    D1 & D2 --> I1 & I2 & I3
-    I1 & I2 & I3 -->|블록 업로드| S3
-    C1 -->|컴팩션| S3
-    SG1 & SG2 -->|블록 읽기| S3
-    Q1 & Q2 --> I1 & I2 & I3
-    Q1 & Q2 --> SG1 & SG2
-    QF1 --> Q1 & Q2
-    G --> QF1
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef mimir fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class P1,P2,P3 prometheus
-    class D1,D2,I1,I2,I3,SG1,SG2,C1,Q1,Q2,QF1 mimir
-    class S3 storage
-    class G client
-```
+![Prometheus가 Distributor를 거쳐 Ingester에 메트릭을 쓰고, Ingester·Compactor·Store-gateway가 객체 스토리지에 블록을 저장하며, Grafana가 Query-frontend와 Querier를 통해 데이터를 읽어오는 Mimir의 쓰기·읽기 경로를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-03-mimir-1.png)
 
 ### 데이터 흐름
 
@@ -354,40 +262,7 @@ overrides:
 
 ### 테넌트 격리
 
-```mermaid
-flowchart TD
-    subgraph TENANTS["테넌트"]
-        T1[Tenant A<br/>팀 A]
-        T2[Tenant B<br/>팀 B]
-        T3[Tenant C<br/>팀 C]
-    end
-
-    subgraph MIMIR["Mimir"]
-        D[Distributor]
-        I[Ingester]
-    end
-
-    subgraph STORAGE["객체 스토리지"]
-        B1[tenant-a/blocks/]
-        B2[tenant-b/blocks/]
-        B3[tenant-c/blocks/]
-    end
-
-    T1 -->|X-Scope-OrgID: tenant-a| D
-    T2 -->|X-Scope-OrgID: tenant-b| D
-    T3 -->|X-Scope-OrgID: tenant-c| D
-
-    D --> I
-    I --> B1 & B2 & B3
-
-    classDef tenant fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef mimir fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class T1,T2,T3 tenant
-    class D,I mimir
-    class B1,B2,B3 storage
-```
+![세 테넌트가 각자의 X-Scope-OrgID 헤더로 Distributor에 메트릭을 보내고, Ingester를 거쳐 객체 스토리지의 서로 다른 테넌트별 블록 경로에 격리 저장됨을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-03-mimir-2.png)
 
 ## Helm 설치
 
@@ -716,27 +591,7 @@ mimir:
 
 ### 쿼리 캐싱 전략
 
-```mermaid
-flowchart LR
-    Q[Query] --> QF[Query-frontend]
-    QF --> RC{결과 캐시?}
-    RC -->|Hit| R1[캐시된 결과]
-    RC -->|Miss| QR[Querier]
-    QR --> MC{메타데이터<br/>캐시?}
-    MC -->|Hit| M1[캐시된 메타]
-    MC -->|Miss| SG[Store-gateway]
-    SG --> CC{청크 캐시?}
-    CC -->|Hit| C1[캐시된 청크]
-    CC -->|Miss| S3[S3]
-
-    classDef cache fill:#27AE60,stroke:#333,stroke-width:1px,color:white
-    classDef component fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class RC,MC,CC cache
-    class Q,QF,QR,SG component
-    class R1,M1,C1,S3 storage
-```
+![쿼리가 Query-frontend의 결과 캐시, Querier의 메타데이터 캐시, Store-gateway의 청크 캐시를 순서대로 거치며, 캐시가 있으면 즉시 응답하고 없을 때만 다음 단계로 내려가 최종적으로 S3까지 도달하는 3단계 캐시 확인 흐름을 보여주는 플로차트.](../../.gitbook/assets/ko-observability-metrics-03-mimir-3.png)
 
 ## VictoriaMetrics와 비교
 
@@ -757,31 +612,7 @@ flowchart LR
 
 ### 선택 기준
 
-```mermaid
-flowchart TD
-    A[메트릭 저장소 선택] --> B{Grafana 에코시스템<br/>중심?}
-
-    B -->|예| C{엔터프라이즈<br/>멀티테넌시 필요?}
-    B -->|아니오| D{운영 단순성<br/>우선?}
-
-    C -->|예| E[Mimir]
-    C -->|아니오| F{객체 스토리지<br/>활용 원함?}
-
-    D -->|예| G[VictoriaMetrics]
-    D -->|아니오| H{클라우드<br/>스토리지 비용?}
-
-    F -->|예| E
-    F -->|아니오| G
-
-    H -->|비용 중요| G
-    H -->|확장성 중요| E
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#3498DB,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,F,H decision
-    class E,G solution
-```
+![Grafana 에코시스템 활용 여부, 엔터프라이즈 멀티테넌시 필요성, 운영 단순성 우선도, 객체 스토리지 활용 의향, 클라우드 스토리지 비용 민감도를 차례로 물어 Mimir 또는 VictoriaMetrics 중 하나를 선택하도록 안내하는 의사결정 플로차트.](../../.gitbook/assets/ko-observability-metrics-03-mimir-4.png)
 
 **Mimir 선택 시**:
 - Grafana Cloud 또는 Grafana 에코시스템 사용

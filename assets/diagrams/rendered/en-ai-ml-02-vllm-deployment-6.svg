@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-ai-ml-02-vllm-deployment-6-title en-ai-ml-02-vllm-deployment-6-desc">
+<title id="en-ai-ml-02-vllm-deployment-6-title">vLLM Autoscaling Chain</title>
+<desc id="en-ai-ml-02-vllm-deployment-6-desc">Diagram showing CPU, GPU, request-rate, and queue-length signals driving pod-level autoscaling, which in turn drives GPU node autoscaling and spot capacity.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="48" y="184" width="240" height="128" rx="8" fill="#ffffff"/>
+<rect x="48" y="184" width="240" height="128" rx="8" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="60" y="196" width="64" height="14" rx="2" fill="transparent" stroke="#7D899866" stroke-width="0.8"/>
+<text x="92.0" y="206" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SIGNAL</text>
+<text x="168.0" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Scaling Triggers</text>
+<circle cx="68" cy="245" r="1.6" fill="#545B64"/>
+<text x="76" y="248" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">CPU Utilization</text>
+<circle cx="68" cy="261" r="1.6" fill="#545B64"/>
+<text x="76" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">GPU Utilization</text>
+<circle cx="68" cy="277" r="1.6" fill="#545B64"/>
+<text x="76" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Requests / sec</text>
+<circle cx="68" cy="293" r="1.6" fill="#545B64"/>
+<text x="76" y="296" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Queue Length</text>
+<rect x="344" y="192" width="240" height="112" rx="8" fill="#ffffff"/>
+<rect x="344" y="192" width="240" height="112" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="356" y="204" width="40" height="14" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+<text x="376.0" y="214" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="464.0" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod Scaling</text>
+<circle cx="364" cy="253" r="1.6" fill="#545B64"/>
+<text x="372" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">HorizontalPodAutoscaler</text>
+<circle cx="364" cy="269" r="1.6" fill="#545B64"/>
+<text x="372" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">KEDA</text>
+<circle cx="364" cy="285" r="1.6" fill="#545B64"/>
+<text x="372" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Custom Metrics</text>
+<rect x="640" y="192" width="240" height="112" rx="8" fill="#ffffff"/>
+<rect x="640" y="192" width="240" height="112" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="652" y="204" width="48" height="14" rx="2" fill="transparent" stroke="#EC721166" stroke-width="0.8"/>
+<text x="676.0" y="214" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NODE</text>
+<text x="760.0" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node Scaling</text>
+<circle cx="660" cy="253" r="1.6" fill="#545B64"/>
+<text x="668" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Karpenter</text>
+<circle cx="660" cy="269" r="1.6" fill="#545B64"/>
+<text x="668" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Cluster Autoscaler</text>
+<circle cx="660" cy="285" r="1.6" fill="#545B64"/>
+<text x="668" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Spot Instances</text>
+<line x1="288" y1="248" x2="344" y2="248" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<line x1="584" y1="248" x2="640" y2="248" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<line x1="32" y1="508" x2="928" y2="508" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="32" y="524" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="32" y="535" width="16" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="54" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Trigger signal</text>
+<rect x="194" y="535" width="16" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="216" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Pod scaling</text>
+<rect x="332" y="535" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="354" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Node scaling (focal)</text>
+</svg>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="modelserve-title modelserve-desc">
+    <title id="modelserve-title">Model serving architecture from client request to model storage</title>
+    <desc id="modelserve-desc">Diagram showing a client sending requests through networking (Ingress, ALB, API Gateway) to inference services (KServe, TorchServe, Triton), which read from model storage (S3, ECR, EFS) and are scaled by HPA, KEDA, and VPA.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: Model Serving Architecture -->
+    <rect x="224" y="100" width="696" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="232" y="104" width="184" height="12" rx="2" fill="#ffffff"/>
+    <text x="244" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">MODEL SERVING ARCHITECTURE</text>
+
+    <!-- Arrows (behind nodes) -->
+    <line x1="204" y1="280" x2="248" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="428" y1="280" x2="472" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="672" y1="280" x2="716" y2="280" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="572" y1="196" x2="572" y2="252" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: Client -->
+    <rect x="64" y="252" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="134" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Client</text>
+
+    <!-- Node: Scaling -->
+    <rect x="472" y="140" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="572" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Autoscaling</text>
+    <text x="572" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">HPA · KEDA · VPA</text>
+
+    <!-- Node: Networking -->
+    <rect x="248" y="252" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="338" y="276" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Networking</text>
+    <text x="338" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Ingress · ALB · API GW</text>
+
+    <!-- Node: Inference Services (focal) -->
+    <rect x="472" y="252" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="572" y="276" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Inference Services</text>
+    <text x="572" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">KServe · TorchServe · Triton</text>
+
+    <!-- Node: Model Storage -->
+    <rect x="716" y="252" width="180" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="806" y="276" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Model Storage</text>
+    <text x="806" y="292" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">S3 · ECR · EFS</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="356" x2="920" y2="356" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="372" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="388" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="396" fill="#545B64" font-size="8.5">Focal / primary path</text>
+
+    <rect x="240" y="388" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="260" y="396" fill="#545B64" font-size="8.5">External / user</text>
+
+    <rect x="416" y="388" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="436" y="396" fill="#545B64" font-size="8.5">Store</text>
+
+    <rect x="536" y="388" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="556" y="396" fill="#545B64" font-size="8.5">Optional / horizontal control</text>
+  </svg>

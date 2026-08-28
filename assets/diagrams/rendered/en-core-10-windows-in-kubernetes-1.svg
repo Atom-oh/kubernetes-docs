@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wci1-title wci1-desc">
+    <title id="wci1-title">Kubernetes Windows support architecture</title>
+    <desc id="wci1-desc">A single Linux-only control plane manages a mixed cluster, reaching both a Linux worker node and two Windows worker nodes that each run kubelet, kube-proxy, and Windows containers.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="60" y="60" width="320" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="192" y="64" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="220" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">LINUX</text>
+
+    <rect x="440" y="60" width="460" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="640" y="64" width="60" height="12" rx="2" fill="#ffffff"/>
+    <text x="670" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WINDOWS</text>
+
+    <!-- Arrows (behind boxes) -->
+    <line x1="220" y1="168" x2="220" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M320,168 Q320,176 328,176 H782 Q790,176 790,184 V280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M280,168 V192 Q280,200 288,200 H562 Q570,200 570,208 V280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Control Plane (focal) -->
+    <rect x="100" y="104" width="240" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="220" y="130" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linux Control Plane</text>
+    <text x="220" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">apiserver · ctrl-mgr</text>
+    <text x="220" y="160" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">scheduler · etcd</text>
+
+    <!-- Linux Worker Node -->
+    <rect x="100" y="280" width="240" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="220" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linux Worker Node</text>
+    <text x="220" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CoreDNS · metrics-server</text>
+    <text x="220" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">system pods</text>
+
+    <!-- Windows Worker Node 1 -->
+    <rect x="480" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="570" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows Node 1</text>
+    <text x="570" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubelet · kube-proxy</text>
+    <text x="570" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Windows containers</text>
+
+    <!-- Windows Worker Node 2 -->
+    <rect x="700" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="790" y="306" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows Node 2</text>
+    <text x="790" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubelet · kube-proxy</text>
+    <text x="790" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Windows containers</text>
+
+    <!-- Legend -->
+    <line x1="60" y1="404" x2="900" y2="404" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="60" y="424" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="60" y="436" width="10" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="78" y="445" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">LINUX-ONLY CONTROL PLANE</text>
+    <rect x="340" y="436" width="10" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="358" y="445" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">WORKER NODE</text>
+  </svg>

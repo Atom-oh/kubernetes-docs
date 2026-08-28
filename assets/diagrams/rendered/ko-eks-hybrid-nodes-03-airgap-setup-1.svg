@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">에어갭 아티팩트 사전 배치 흐름</title>
+  <desc id="ddesc">인터넷 접근이 가능한 사전 준비 호스트가 hybrid-assets 매니페스트를 내려받아 바이너리와 컨테이너 이미지를 프라이빗 S3 버킷과 ECR에 미리 준비해 두면, 에어갭 환경의 온프레미스 노드는 도메인을 로컬로 해석하고 VPC 엔드포인트를 거쳐 같은 S3 버킷과 ECR에 오프라인으로 접근한다는 것을 보여준다.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">WORKFLOW</text>
+  <text x="40" y="54" fill="#232F3E" font-size="20" font-weight="700">에어갭 아티팩트 사전 배치 흐름</text>
+  <text x="40" y="72" fill="#545B64" font-size="12">인터넷 접근 호스트가 준비한 아티팩트를 에어갭 환경이 동일한 S3 · ECR에서 가져온다</text>
+
+  <!-- ===== Zones ===== -->
+  <rect x="88" y="92" width="288" height="408" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="96" y="96" width="176" height="12" rx="2" fill="#ffffff"/>
+  <text x="100" y="105" fill="rgba(35,47,62,0.45)" font-size="7" class="mono" letter-spacing="0.12em">사전 준비 · 인터넷 접근</text>
+
+  <rect x="584" y="92" width="288" height="396" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="592" y="96" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="596" y="105" fill="rgba(35,47,62,0.45)" font-size="7" class="mono" letter-spacing="0.12em">런타임 · 에어갭 환경</text>
+
+  <!-- ===== Arrows (behind nodes) ===== -->
+  <!-- Prep lane, vertical, straight (same x) -->
+  <line x1="232" y1="220" x2="232" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="248" y="234" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="280" y="243" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">매니페스트</text>
+
+  <line x1="232" y1="356" x2="232" y2="388" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="248" y="366" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="280" y="375" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">S3 · ECR</text>
+
+  <!-- Runtime lane, vertical, straight -->
+  <line x1="728" y1="196" x2="728" y2="216" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="664" y="200" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="692" y="209" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">요청</text>
+
+  <line x1="728" y1="288" x2="728" y2="308" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="728" y1="380" x2="728" y2="400" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Cross-phase bridge: prep artifact store -> runtime store (dashed, accent) -->
+  <line x1="332" y1="436" x2="628" y2="436" stroke="#EC7211" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-accent)"/>
+  <rect x="440" y="416" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="496" y="425" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">아티팩트 사전 배치</text>
+
+  <!-- ===== Nodes ===== -->
+  <!-- P1: manifest source (external) -->
+  <rect x="132" y="124" width="200" height="96" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="132" y="124" width="200" height="96" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="232" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">아티팩트 매니페스트</text>
+  <text x="232" y="192" fill="#545B64" font-size="9" class="mono" text-anchor="middle">hybrid-assets.eks.amazonaws.com</text>
+
+  <!-- P2: download script (backend) -->
+  <rect x="132" y="260" width="200" height="96" rx="6" fill="#ffffff"/>
+  <rect x="132" y="260" width="200" height="96" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="232" y="300" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">다운로드 스크립트</text>
+  <text x="232" y="328" fill="#545B64" font-size="9" class="mono" text-anchor="middle">ekshybrid-download.sh</text>
+
+  <!-- P3: staged artifacts (store) -->
+  <rect x="132" y="388" width="200" height="96" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="132" y="388" width="200" height="96" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="232" y="428" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">프라이빗 S3 버킷 업로드</text>
+  <text x="232" y="444" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ECR 이미지 접근 확인</text>
+
+  <!-- R1: on-prem node (input) -->
+  <rect x="628" y="124" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)"/>
+  <rect x="628" y="124" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="728" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">온프레미스 노드</text>
+
+  <!-- R2: PHZ resolution (backend) -->
+  <rect x="628" y="216" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="628" y="216" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="728" y="248" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">PHZ 도메인 해석</text>
+  <text x="728" y="264" fill="#545B64" font-size="9" class="mono" text-anchor="middle">hybrid-assets.eks…</text>
+
+  <!-- R3: VPC endpoints (backend) -->
+  <rect x="628" y="308" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="628" y="308" width="200" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="728" y="340" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">VPC 엔드포인트</text>
+  <text x="728" y="356" fill="#545B64" font-size="9" class="mono" text-anchor="middle">S3 Interface · ECR API/DKR</text>
+
+  <!-- R4: shared store (focal) -->
+  <rect x="628" y="400" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="628" y="400" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="728" y="436" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">프라이빗 S3 버킷</text>
+  <text x="728" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">· ECR (동일 저장소)</text>
+
+  <!-- Footer callout -->
+  <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="546" fill="#545B64" font-size="14" font-style="italic">S3 아티팩트는 사전 업로드가 필요하지만, ECR 이미지는 VPC 엔드포인트만으로 동일하게 접근합니다.</text>
+</svg>

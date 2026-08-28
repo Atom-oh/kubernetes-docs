@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-8-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-8-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-8-title">Sidecar Mode vs Ambient Mode: 파드당 프록시에서 노드당 프록시로</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-8-desc">Sidecar Mode에서는 각 파드마다 Envoy 프록시가 붙어 파드 수만큼 리소스가 늘어나지만, Ambient Mode에서는 노드당 하나의 ztunnel이 eBPF로 트래픽을 가로채 mTLS를 처리하고 L7 기능이 필요할 때만 선택적 Waypoint Proxy를 거치면서, 100파드 환경 기준 메모리 사용량이 12.8GB에서 300MB로 약 97% 줄어든다는 것을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="60" y="60" width="380" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="70" y="64" width="250" height="12" rx="2" fill="#ffffff"/>
+<text x="195.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">SIDECAR MODE · 파드당 프록시</text>
+<rect x="520" y="60" width="380" height="380" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="530" y="64" width="250" height="12" rx="2" fill="#ffffff"/>
+<text x="655.0" y="73" fill="rgba(35,47,62,0.42)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.13em">AMBIENT MODE · 노드당 프록시</text>
+<path d="M 230,150 V 164 Q 230,172 238,172 H 332 Q 340,172 340,180 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="348" y="180.0" width="47.2" height="12" rx="2" fill="#ffffff"/>
+<text x="371.6" y="189.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">CONFIG</text>
+<line x1="210" y1="230" x2="270" y2="230" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="219.0" y="210" width="42.0" height="12" rx="2" fill="#ffffff"/>
+<text x="240" y="219" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">LOCAL</text>
+<path d="M 660,150 V 157 Q 660,165 652,165 H 613 Q 605,165 605,173 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 770,150 V 157 Q 770,165 778,165 H 807 Q 815,165 815,173 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="604.8" y="172.0" width="47.2" height="12" rx="2" fill="#ffffff"/>
+<text x="628.4" y="181.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">CONFIG</text>
+<line x1="710" y1="150" x2="710" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="235" x2="760" y2="235" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="682.6" y="215" width="54.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="710" y="224" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">MTLS L4</text>
+<path d="M 605,270 V 312 Q 605,320 613,320 H 665" fill="none" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 815,270 V 312 Q 815,320 807,320 H 775" fill="none" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="823" y="294.0" width="47.2" height="12" rx="2" fill="#ffffff"/>
+<text x="846.6" y="303.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">L7 필요시</text>
+<rect x="150" y="100" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="150" y="100" width="200" height="50" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="250.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istiod</text>
+<rect x="100" y="200" width="110" height="60" rx="6" fill="#ffffff"/>
+<rect x="100" y="200" width="110" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="155.0" y="228.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">App</text>
+<text x="155.0" y="245.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">256MB ×3</text>
+<rect x="270" y="200" width="140" height="60" rx="6" fill="#ffffff"/>
+<rect x="270" y="200" width="140" height="60" rx="6" fill="rgba(221,52,76,0.08)" stroke="#DD344C" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="340.0" y="228.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy Sidecar</text>
+<text x="340.0" y="245.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">128MB · 100m ×3</text>
+<rect x="610" y="100" width="200" height="50" rx="6" fill="#ffffff"/>
+<rect x="610" y="100" width="200" height="50" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="710.0" y="129.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istiod</text>
+<rect x="550" y="200" width="110" height="70" rx="6" fill="#ffffff"/>
+<rect x="550" y="200" width="110" height="70" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="605.0" y="233.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 1</text>
+<text x="605.0" y="250.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">App×2 + ztunnel 100MB</text>
+<rect x="760" y="200" width="110" height="70" rx="6" fill="#ffffff"/>
+<rect x="760" y="200" width="110" height="70" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="815.0" y="233.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Node 2</text>
+<text x="815.0" y="250.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">App + ztunnel 100MB</text>
+<rect x="630" y="320" width="160" height="50" rx="6" fill="#ffffff"/>
+<rect x="630" y="320" width="160" height="50" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="710.0" y="343.0" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Waypoint (L7)</text>
+<text x="710.0" y="360.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">선택적</text>
+<rect x="150" y="480" width="660" height="70" rx="6" fill="#ffffff"/>
+<rect x="150" y="480" width="660" height="70" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="513.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">리소스 비교 (100파드 환경)</text>
+<text x="480.0" y="530.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Sidecar 12.8GB  vs  Ambient 300MB (3 nodes)  →  절감 97%</text>
+</svg>

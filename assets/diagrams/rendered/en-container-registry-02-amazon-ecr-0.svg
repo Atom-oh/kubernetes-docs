@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ecr-title ecr-desc">
+  <title id="ecr-title">Amazon ECR: private vs public registries</title>
+  <desc id="ecr-desc">Architecture diagram contrasting Amazon ECR Private, a regionally scoped registry with IAM-based access control and cross-region replication, against Amazon ECR Public, a globally hosted registry offering anonymous read access and gallery discovery.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">CONTAINER REGISTRY</text>
+  <text x="40" y="80" fill="#232F3E" font-size="24" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Amazon ECR: two registry scopes</text>
+
+  <!-- Outer zone: Amazon ECR -->
+  <rect x="40" y="108" width="880" height="428" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="424" y="112" width="112" height="16" rx="2" fill="#ffffff"/>
+  <text x="480" y="124" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON ECR</text>
+
+  <!-- ECR Private box (focal) -->
+  <rect x="72" y="152" width="392" height="360" rx="6" fill="#ffffff"/>
+  <rect x="72" y="152" width="392" height="360" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="96" y="176" width="76" height="16" rx="2" fill="transparent" stroke="#EC721166" stroke-width="0.8"/>
+  <text x="134" y="188" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PRIVATE</text>
+  <text x="96" y="228" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ECR Private</text>
+
+  <!-- Private bullets -->
+  <g font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E">
+    <circle cx="100" cy="272" r="3" fill="#EC7211"/>
+    <text x="116" y="276">Private repositories</text>
+    <circle cx="100" cy="312" r="3" fill="#EC7211"/>
+    <text x="116" y="316">IAM-based access control</text>
+    <circle cx="100" cy="352" r="3" fill="#EC7211"/>
+    <text x="116" y="356">Regional scope</text>
+    <circle cx="100" cy="392" r="3" fill="#EC7211"/>
+    <text x="116" y="396">Cross-region replication</text>
+  </g>
+  <g font-family="'Geist Mono', monospace" font-size="9" fill="#545B64">
+    <text x="116" y="292">Restricted to your account</text>
+    <text x="116" y="332">Repository policies + IAM roles</text>
+    <text x="116" y="372">One registry per region</text>
+    <text x="116" y="412">Push once, replicate to N regions</text>
+  </g>
+
+  <!-- ECR Public box -->
+  <rect x="496" y="152" width="392" height="360" rx="6" fill="#ffffff"/>
+  <rect x="496" y="152" width="392" height="360" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="520" y="176" width="72" height="16" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+  <text x="556" y="188" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PUBLIC</text>
+  <text x="520" y="228" fill="#232F3E" font-size="16" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ECR Public</text>
+
+  <!-- Public bullets -->
+  <g font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#232F3E">
+    <circle cx="524" cy="272" r="3" fill="#545B64"/>
+    <text x="540" y="276">Public repositories</text>
+    <circle cx="524" cy="312" r="3" fill="#545B64"/>
+    <text x="540" y="316">Anonymous read access</text>
+    <circle cx="524" cy="352" r="3" fill="#545B64"/>
+    <text x="540" y="356">Global (us-east-1 hosted)</text>
+    <circle cx="524" cy="392" r="3" fill="#545B64"/>
+    <text x="540" y="396">Public gallery discovery</text>
+  </g>
+  <g font-family="'Geist Mono', monospace" font-size="9" fill="#545B64">
+    <text x="540" y="292">No auth required to pull</text>
+    <text x="540" y="332">One registry, all regions</text>
+    <text x="540" y="372">gallery.ecr.aws catalog</text>
+  </g>
+
+  <!-- Legend -->
+  <line x1="40" y1="556" x2="920" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="576" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="573" r="3" fill="#EC7211"/>
+  <text x="192" y="577" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">PRIMARY REGISTRY (SCOPED, AUTHENTICATED)</text>
+  <circle cx="500" cy="573" r="3" fill="#545B64"/>
+  <text x="512" y="577" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">OPEN DISTRIBUTION REGISTRY</text>
+</svg>

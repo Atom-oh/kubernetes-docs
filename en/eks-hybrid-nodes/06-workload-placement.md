@@ -427,19 +427,7 @@ spec:
 
 End-to-end scale-down flow:
 
-```mermaid
-graph LR
-    A[Traffic Decrease] --> B[HPA Scale Down]
-    B --> C{Pod Deletion Order}
-    C -->|"deletion-cost=0"| D[Cloud Pods Deleted First]
-    C -->|"deletion-cost=1000"| E[On-Prem Pods Retained]
-    D --> F[Cloud Nodes Empty]
-    F --> G[Karpenter Removes Empty Nodes]
-
-    style D fill:#fee,stroke:#c00
-    style E fill:#efe,stroke:#0a0
-    style G fill:#e8f4fd,stroke:#1976d2
-```
+![Flowchart showing that when traffic drops and HPA scales down, the pod-deletion-cost annotation decides which pods die first: cloud pods with a low deletion cost are removed, while on-prem pods with a high deletion cost are retained, and the emptied cloud nodes are then reclaimed by Karpenter.](../.gitbook/assets/en-eks-hybrid-nodes-06-workload-placement-0.png)
 
 ---
 

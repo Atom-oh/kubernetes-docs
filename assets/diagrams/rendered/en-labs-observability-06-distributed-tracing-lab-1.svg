@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fc-title fc-desc">
+<title id="fc-title">Metric, exemplar, and trace linking chain</title>
+<desc id="fc-desc">Flowchart showing how a metric data point contains an exemplar, which links onward to the full distributed trace for that request.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- eyebrow -->
+<text x="80" y="96" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">EXEMPLAR-LINKED OBSERVABILITY</text>
+
+<!-- ============ CONNECTORS (drawn before boxes) ============ -->
+<!-- Metric -> Exemplar: straight (shares y-axis), muted, label "CONTAINS" -->
+<line x1="316" y1="300" x2="404" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Exemplar -> Trace: straight (shares y-axis), accent headline link, label "LINKS TO" -->
+<line x1="596" y1="300" x2="684" y2="300" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+<!-- ============ ARROW LABELS (masked, 8px gap above stroke) ============ -->
+<rect x="322" y="272" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="358" y="282" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CONTAINS</text>
+
+<rect x="600" y="272" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="640" y="282" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">LINKS TO</text>
+
+<!-- ============ NODES (drawn after connectors/labels) ============ -->
+
+<!-- Node 1: Metric Point (backend/step) -->
+<rect x="80" y="256" width="236" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="92" y="270" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+<text x="112" y="279" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">METRIC</text>
+<text x="198" y="304" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metric Point</text>
+<text x="198" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">latency=1.2s</text>
+
+<!-- Node 2: Exemplar (focal) -->
+<rect x="404" y="248" width="192" height="104" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="416" y="262" width="52" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="442" y="271" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EXEMPLAR</text>
+<text x="500" y="300" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Exemplar</text>
+<text x="500" y="318" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">traceId=abc123</text>
+<text x="500" y="333" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">sampled point</text>
+
+<!-- Node 3: Trace (store) -->
+<rect x="684" y="256" width="236" height="88" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="696" y="270" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+<text x="713" y="279" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">TRACE</text>
+<text x="802" y="304" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trace</text>
+<text x="802" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">full request path</text>
+
+</svg>

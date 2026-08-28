@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ebpf0-title ebpf0-desc">
+    <title id="ebpf0-title">iptables에서 eBPF 데이터플레인으로 전환</title>
+    <desc id="ebpf0-desc">Calico가 제공하는 두 가지 데이터플레인 옵션인 전통적인 iptables 모드와 고성능 eBPF 모드, 그리고 그 사이의 마이그레이션 경로를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone -->
+    <rect x="200" y="248" width="560" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="220" y="252" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="290" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">데이터플레인 옵션</text>
+
+    <!-- Arrow: IPT -> BPF (accent, headline migration path) -->
+    <line x1="420" y1="312" x2="540" y2="312" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="452" y="292" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="301" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">마이그레이션</text>
+
+    <!-- Node: iptables 모드 -->
+    <rect x="220" y="280" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="220" y="280" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="228" y="288" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="246" y="297" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MODE</text>
+    <text x="320" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">iptables 모드</text>
+    <text x="320" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">전통적, 안정적</text>
+
+    <!-- Node: eBPF 모드 (focal) -->
+    <rect x="540" y="280" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="540" y="280" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="548" y="288" width="36" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="566" y="297" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MODE</text>
+    <text x="640" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif" text-anchor="middle">eBPF 모드</text>
+    <text x="640" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">고성능, 현대적</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="556" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif">권장 모드</text>
+
+    <line x1="220" y1="561" x2="248" y2="561" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="256" y="564" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Apple SD Gothic Neo','Malgun Gothic',sans-serif">전환 경로</text>
+  </svg>

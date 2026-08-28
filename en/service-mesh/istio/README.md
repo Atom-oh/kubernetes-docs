@@ -68,91 +68,13 @@ A service mesh is a powerful tool, but it's not suitable for every situation. Ca
 
 ### Decision Flow
 
-```mermaid
-flowchart TD
-    Start[Consider Service Mesh<br/>Adoption]
-
-    Q1{Microservices<br/>Architecture?}
-    Q2{More than<br/>10 services?}
-    Q3{Complex traffic<br/>management needed?}
-    Q4{Zero Trust<br/>security needed?}
-    Q5{Distributed tracing/<br/>observability needed?}
-    Q6{Operations resources<br/>available?}
-
-    NoNeed[Service Mesh<br/>Not Needed]
-    Consider[Consider<br/>Adoption]
-    NeedMesh[Service Mesh<br/>Recommended]
-
-    Alternatives[Consider Alternatives<br/>- Kubernetes NetworkPolicy<br/>- Ingress Controller<br/>- CNI plugins<br/>- Application-level implementation]
-
-    Start --> Q1
-    Q1 -->|No| NoNeed
-    Q1 -->|Yes| Q2
-    Q2 -->|No| Alternatives
-    Q2 -->|Yes| Q3
-    Q3 -->|No| Q4
-    Q3 -->|Yes| Q6
-    Q4 -->|No| Q5
-    Q4 -->|Yes| Q6
-    Q5 -->|No| Consider
-    Q5 -->|Yes| Q6
-    Q6 -->|No| Consider
-    Q6 -->|Yes| NeedMesh
-
-    %% Style definitions
-    classDef question fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef no fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef maybe fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef yes fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef alternative fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Q1,Q2,Q3,Q4,Q5,Q6 question;
-    class NoNeed no;
-    class Consider maybe;
-    class NeedMesh yes;
-    class Alternatives alternative;
-```
+![Decision flowchart for whether to adopt a service mesh, based on microservice count, then complex traffic/security/observability needs, then available operations resources.](../../.gitbook/assets/en-service-mesh-istio-README-0.png)
 
 ### When Service Mesh is Needed ✅
 
 #### 1. Complex Microservices Environment
 
-```mermaid
-flowchart LR
-    subgraph WithoutMesh["Without Service Mesh"]
-        A1[Service A] -.->|Manual implementation| B1[Service B]
-        A1 -.->|Manual implementation| C1[Service C]
-        B1 -.->|Manual implementation| D1[Service D]
-        C1 -.->|Manual implementation| D1
-
-        Note1[For each service<br/>- Manual mTLS implementation<br/>- Retry logic<br/>- Logging/metrics<br/>- Circuit Breaker<br/>Increased duplicate code]
-    end
-
-    subgraph WithMesh["With Service Mesh"]
-        A2[Service A] -->|Automatic handling| B2[Service B]
-        A2 -->|Automatic handling| C2[Service C]
-        B2 -->|Automatic handling| D2[Service D]
-        C2 -->|Automatic handling| D2
-
-        SM[Service Mesh<br/>- Automatic mTLS<br/>- Centralized policies<br/>- Unified observability<br/>- Standardized security]
-
-        SM -.->|Control| A2
-        SM -.->|Control| B2
-        SM -.->|Control| C2
-        SM -.->|Control| D2
-    end
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef mesh fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class A1,B1,C1,D1,A2,B2,C2,D2 service;
-    class SM mesh;
-    class Note1 note;
-```
+![Comparison showing four services wiring mTLS, retries, and logging by hand without a mesh, versus a single service mesh applying those controls automatically to the same four services.](../../.gitbook/assets/en-service-mesh-istio-README-1.png)
 
 **Recommended Criteria**:
 
@@ -220,22 +142,7 @@ spec:
 
 #### 1. Simple Architecture
 
-```mermaid
-flowchart LR
-    User[User] --> LB[Load Balancer]
-    LB --> App[Monolithic<br/>Application]
-    App --> DB[(Database)]
-
-    Note["Service Mesh Not Needed<br/>- Single application<br/>- Simple communication patterns<br/>- Ingress is sufficient"]
-
-    %% Style definitions
-    classDef simple fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class User,LB,App,DB simple;
-    class Note note;
-```
+![A user request passing through a load balancer to a single monolithic application and its database — simple enough that an ingress controller suffices without a service mesh.](../../.gitbook/assets/en-service-mesh-istio-README-2.png)
 
 **Use Instead**:
 
@@ -315,38 +222,7 @@ spec:
 
 Cilium provides many features at the **network level** based on eBPF:
 
-```mermaid
-flowchart TB
-    subgraph Comparison["Feature Comparison"]
-        subgraph ServiceMesh["Service Mesh (Istio)"]
-            SM1[L7 Proxy-based<br/>Envoy Sidecar]
-            SM2[Application-level<br/>Traffic Control]
-            SM3[Rich L7 Features<br/>Retry, Timeout, etc.]
-        end
-
-        subgraph CNI["CNI (Cilium)"]
-            CN1[eBPF-based<br/>Kernel Level]
-            CN2[Network-level<br/>Policy Enforcement]
-            CN3[High Performance<br/>Low Overhead]
-        end
-
-        subgraph UseCases["Usage Scenarios"]
-            UC1[Service Mesh:<br/>Complex L7 Logic]
-            UC2[Cilium:<br/>Network Policy, Performance]
-            UC3[Both:<br/>Large-scale Enterprise]
-        end
-    end
-
-    %% Style definitions
-    classDef mesh fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef cni fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-    classDef usecase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class SM1,SM2,SM3 mesh;
-    class CN1,CN2,CN3 cni;
-    class UC1,UC2,UC3 usecase;
-```
+![Three-way comparison of Istio's L7 proxy-based traffic control, Cilium's eBPF kernel-level networking, and the usage scenarios where each — or both together — is the right choice.](../../.gitbook/assets/en-service-mesh-istio-README-3.png)
 
 **When Cilium is More Suitable**:
 
@@ -401,23 +277,7 @@ Answer the following questions before adoption:
 
 If you determine that a Service Mesh is needed, adopt it gradually:
 
-```mermaid
-flowchart LR
-    Phase1[Phase 1<br/>Observability<br/>Metric collection only]
-    Phase2[Phase 2<br/>Security<br/>Apply mTLS]
-    Phase3[Phase 3<br/>Traffic Management<br/>Canary Deployment]
-    Phase4[Phase 4<br/>Advanced Features<br/>Utilize all features]
-
-    Phase1 -->|After validation| Phase2
-    Phase2 -->|After validation| Phase3
-    Phase3 -->|After validation| Phase4
-
-    %% Style definitions
-    classDef phase fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    %% Apply classes
-    class Phase1,Phase2,Phase3,Phase4 phase;
-```
+![Four-phase rollout moving from observability-only metric collection, to mTLS security, to canary traffic management, and finally to the full advanced feature set — each phase gated by validation.](../../.gitbook/assets/en-service-mesh-istio-README-4.png)
 
 **Recommended Order**:
 
@@ -465,59 +325,7 @@ flowchart LR
 
 Istio consists of a Control Plane and a Data Plane:
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        Pilot[Pilot<br/>Service Discovery & Traffic Management]
-        Citadel[Citadel<br/>Certificate Management & Security]
-        Galley[Galley<br/>Configuration Management]
-    end
-
-    subgraph DataPlane["Data Plane"]
-        subgraph Pod1["Pod 1"]
-            App1[Application]
-            Envoy1[Envoy Proxy]
-        end
-
-        subgraph Pod2["Pod 2"]
-            App2[Application]
-            Envoy2[Envoy Proxy]
-        end
-
-        subgraph Pod3["Pod 3"]
-            App3[Application]
-            Envoy3[Envoy Proxy]
-        end
-    end
-
-    Pilot -.->|Configuration delivery| Envoy1
-    Pilot -.->|Configuration delivery| Envoy2
-    Pilot -.->|Configuration delivery| Envoy3
-
-    Citadel -.->|Certificate issuance| Envoy1
-    Citadel -.->|Certificate issuance| Envoy2
-    Citadel -.->|Certificate issuance| Envoy3
-
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy2 <-->|mTLS| Envoy3
-    Envoy1 <-->|mTLS| Envoy3
-
-    App1 -->|Request| Envoy1
-    App2 -->|Request| Envoy2
-    App3 -->|Request| Envoy3
-
-    %% Style definitions
-    classDef controlPlane fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef dataPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Pilot,Citadel,Galley controlPlane;
-    class App1,App2,App3 app;
-    class Envoy1,Envoy2,Envoy3 proxy;
-```
+![Architecture showing istiod's Pilot and Citadel pushing configuration and certificates down to Envoy sidecar proxies, which carry each application's requests and exchange mTLS-encrypted traffic between pods.](../../.gitbook/assets/en-service-mesh-istio-README-5.png)
 
 **Control Plane (istiod)**:
 

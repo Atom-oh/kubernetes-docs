@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">Service 유형별 트래픽 진입</title>
+<desc id="ddesc">ClusterIP, NodePort, LoadBalancer, ExternalName 네 가지 Service 유형이 각각 어떤 트래픽 소스로부터 진입을 받는지 보여준다.</desc>
+
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" fill="#FFFFFF"/>
+<text x="40" y="48" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.18em">ARCHITECTURE &#183; SERVICE TYPES</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service 유형별 트래픽 진입</text>
+<rect x="60" y="340" width="840" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="76" y="344" width="90" height="12" rx="2" fill="#FFFFFF"/>
+<text x="121" y="353" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">SERVICE TYPES</text>
+<path d="M 166,204 L 166,380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 432,204 V 276 Q 432,284 424,284 H 378 Q 370,284 370,292 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 512,204 V 276 Q 512,284 520,284 H 566 Q 574,284 574,292 V 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 778,204 L 778,380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="96" y="140" width="140" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="96" y="140" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="166" y="169" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">클라이언트</text>
+<text x="166" y="185" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">cluster-internal</text>
+<rect x="392" y="140" width="160" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="392" y="140" width="160" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="472" y="169" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">외부 트래픽</text>
+<text x="472" y="185" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">internet</text>
+<rect x="708" y="140" width="140" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="708" y="140" width="140" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="778" y="169" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션</text>
+<text x="778" y="185" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">in-cluster</text>
+<rect x="76" y="380" width="180" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="76" y="380" width="180" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="166" y="409" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ClusterIP</text>
+<text x="166" y="425" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">클러스터 내부 전용</text>
+<rect x="280" y="380" width="180" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="280" y="380" width="180" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="370" y="409" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">NodePort</text>
+<text x="370" y="425" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">30000-32767</text>
+<rect x="484" y="380" width="180" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="484" y="380" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="574" y="409" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">LoadBalancer</text>
+<text x="574" y="425" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">외부 LB 연동</text>
+<rect x="688" y="380" width="180" height="64" rx="6" fill="#FFFFFF"/>
+<rect x="688" y="380" width="180" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+<text x="778" y="409" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">ExternalName</text>
+<text x="778" y="425" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">외부 DNS 매핑</text>
+<line x1="40" y1="530" x2="920" y2="530" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="546" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="40" y="560" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">가장 흔한 외부 노출 방식</text>
+</svg>

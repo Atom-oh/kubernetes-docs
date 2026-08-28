@@ -30,58 +30,7 @@ FinOps는 클라우드 비용을 엔지니어링 조직이 주도적으로 관�
 
 FinOps Foundation에서 정의한 FinOps 프레임워크는 세 가지 반복적 단계로 구성됩니다. 이 사이클은 한 번으로 끝나는 것이 아니라, 조직의 성숙도가 높아짐에 따라 점점 정교해지는 **지속적 개선 루프**입니다.
 
-```mermaid
-graph LR
-    subgraph "FinOps 라이프사이클"
-        Inform["📊 Inform<br/>가시성 확보"]
-        Optimize["⚡ Optimize<br/>비용 최적화"]
-        Operate["🔄 Operate<br/>운영 체계화"]
-        
-        Inform --> Optimize
-        Optimize --> Operate
-        Operate --> Inform
-    end
-    
-    subgraph "Inform 활동"
-        I1["비용 할당"]
-        I2["태깅 전략"]
-        I3["대시보드"]
-        I4["리포팅"]
-    end
-    
-    subgraph "Optimize 활동"
-        O1["라이트사이징"]
-        O2["Spot 활용"]
-        O3["유휴 리소스 제거"]
-        O4["예약 인스턴스"]
-    end
-    
-    subgraph "Operate 활동"
-        P1["예산 관리"]
-        P2["정책 자동화"]
-        P3["비용 리뷰"]
-        P4["거버넌스"]
-    end
-    
-    Inform --> I1
-    Inform --> I2
-    Inform --> I3
-    Inform --> I4
-    
-    Optimize --> O1
-    Optimize --> O2
-    Optimize --> O3
-    Optimize --> O4
-    
-    Operate --> P1
-    Operate --> P2
-    Operate --> P3
-    Operate --> P4
-    
-    style Inform fill:#3498DB,color:#fff
-    style Optimize fill:#E67E22,color:#fff
-    style Operate fill:#2ECC71,color:#fff
-```
+![Inform, Optimize, Operate 세 단계가 순환하며 각 단계의 핵심 활동을 보여주는 FinOps 라이프사이클 흐름도로, 비용 최적화 단계를 중심으로 강조한다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-0.png)
 
 ### 1.1 각 단계의 핵심 활동
 
@@ -1037,42 +986,7 @@ Kubernetes 클러스터에는 모든 팀이 공유하는 인프라 비용이 존
 | 보안 | cert-manager, OPA, Falco | 균등 분배 | 모든 팀이 동일하게 혜택 |
 | 유휴 비용 | 미사용 노드 리소스 | 노드별 가중치 | 노드 사용량에 비례 |
 
-```mermaid
-graph TB
-    subgraph "공유 비용 분배 흐름"
-        Total["총 클러스터 비용<br/>$10,000/월"]
-        
-        Direct["직접 비용<br/>$6,500 (65%)"]
-        Shared["공유 비용<br/>$2,500 (25%)"]
-        Idle["유휴 비용<br/>$1,000 (10%)"]
-        
-        Total --> Direct
-        Total --> Shared
-        Total --> Idle
-        
-        TeamA["팀 A<br/>$3,000 + $800 + $320<br/>= $4,120"]
-        TeamB["팀 B<br/>$2,000 + $600 + $240<br/>= $2,840"]
-        TeamC["팀 C<br/>$1,500 + $1,100 + $440<br/>= $3,040"]
-        
-        Direct --> TeamA
-        Direct --> TeamB
-        Direct --> TeamC
-        Shared --> TeamA
-        Shared --> TeamB
-        Shared --> TeamC
-        Idle --> TeamA
-        Idle --> TeamB
-        Idle --> TeamC
-    end
-    
-    style Total fill:#E74C3C,color:#fff
-    style Direct fill:#3498DB,color:#fff
-    style Shared fill:#E67E22,color:#fff
-    style Idle fill:#95A5A6,color:#fff
-    style TeamA fill:#2ECC71,color:#fff
-    style TeamB fill:#2ECC71,color:#fff
-    style TeamC fill:#2ECC71,color:#fff
-```
+![총 1만 달러의 클러스터 비용을 직접·공유·유휴 비용으로 나눠 팀 A, B, C에 배분한 누적 막대 그래프로, 유휴 비용을 최적화 대상으로 강조한다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-1.png)
 
 ### 3.4 Grafana Showback 대시보드
 
@@ -2568,28 +2482,7 @@ kubectl get vpa -n data-production
 
 VPA 추천을 수동으로 적용하는 대신, CI/CD 파이프라인을 통해 추천값을 PR로 생성하고 리뷰 후 적용하는 자동화 워크플로우를 구축합니다.
 
-```mermaid
-sequenceDiagram
-    participant CronJob as CronJob<br/>(주간 실행)
-    participant VPA as VPA<br/>(추천 엔진)
-    participant Script as 라이트사이징<br/>스크립트
-    participant Git as Git Repository
-    participant CI as CI/CD Pipeline
-    participant Reviewer as 팀 리더<br/>(리뷰어)
-    
-    CronJob->>VPA: VPA 추천값 조회
-    VPA->>Script: 추천 데이터 반환
-    Script->>Script: 현재 리소스 vs 추천 비교
-    Script->>Script: 임계값 초과 시 변경 생성
-    Script->>Git: 변경된 매니페스트 PR 생성
-    Git->>CI: PR 트리거
-    CI->>CI: 린트 + 검증 실행
-    Git->>Reviewer: PR 리뷰 요청
-    Reviewer->>Git: 승인 + 머지
-    Git->>CI: ArgoCD 동기화
-    
-    Note over CronJob,CI: 주간 자동 실행 → PR 기반 리뷰 → 안전한 적용
-```
+![CronJob이 매주 VPA 추천값을 조회해 스크립트가 PR을 생성하고, Git/CI가 검증 후 팀 리더의 승인·머지를 거쳐 ArgoCD로 안전하게 배포하는 시퀀스 다이어그램이다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-2.png)
 
 **라이트사이징 자동화 CronJob:**
 

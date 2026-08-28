@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="log-viz-title log-viz-desc">
+      <title id="log-viz-title">Log analysis and visualization pipeline for an EKS cluster</title>
+      <desc id="log-viz-desc">Cluster and application logs pass through a collector into four storage backends, each with its own analysis and visualization tool: CloudWatch, OpenSearch, S3/Athena, and Grafana Loki.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ================= ZONES ================= -->
+      <rect x="24" y="44" width="216" height="504" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="28" y="48" width="112" height="12" rx="2" fill="#ffffff"/>
+      <text x="84" y="57" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">INGESTION</text>
+
+      <rect x="352" y="44" width="180" height="504" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="356" y="48" width="80" height="12" rx="2" fill="#ffffff"/>
+      <text x="396" y="57" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">STORAGE</text>
+
+      <rect x="644" y="44" width="292" height="504" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="648" y="48" width="184" height="12" rx="2" fill="#ffffff"/>
+      <text x="740" y="57" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">ANALYSIS &amp; VISUALIZATION</text>
+
+      <!-- ================= ARROWS ================= -->
+      <!-- Log Sources -> Log Collectors -->
+      <path d="M128,148 V180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Log Collectors (FOCAL, right edge x=216, fanned) -> 4 storage backends -->
+      <path d="M216,182 H244 Q252,182 252,174 V104 Q252,96 260,96 H368" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <path d="M216,198 H368" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <path d="M216,214 H276 Q284,214 284,222 V312 Q284,320 292,320 H368" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <path d="M216,230 H308 Q316,230 316,238 V424 Q316,432 324,432 H368" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+      <!-- 4 storage backends -> matching analysis/viz tool (same row, straight) -->
+      <path d="M532,96 H660" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M532,208 H660" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M532,320 H660" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M532,432 H660" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- ================= NODES ================= -->
+      <!-- Log Sources -->
+      <rect x="40" y="76" width="176" height="72" rx="6" fill="#ffffff"/>
+      <rect x="40" y="76" width="176" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+      <rect x="48" y="82" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="63" y="91" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SRC</text>
+      <text x="128" y="112" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Log Sources</text>
+      <text x="128" y="128" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">control plane, containers,</text>
+      <text x="128" y="140" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">apps, AWS service logs</text>
+
+      <!-- Log Collectors (FOCAL) -->
+      <rect x="40" y="180" width="176" height="64" rx="6" fill="#ffffff"/>
+      <rect x="40" y="180" width="176" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <rect x="48" y="186" width="30" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+      <text x="63" y="195" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="128" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Log Collectors</text>
+      <text x="128" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Fluent Bit / Fluentd / Vector</text>
+
+      <!-- Storage: CloudWatch Logs -->
+      <rect x="368" y="68" width="164" height="56" rx="6" fill="#ffffff"/>
+      <rect x="368" y="68" width="164" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="376" y="74" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="391" y="83" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="450" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch Logs</text>
+      <text x="450" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">log groups</text>
+
+      <!-- Storage: OpenSearch -->
+      <rect x="368" y="180" width="164" height="56" rx="6" fill="#ffffff"/>
+      <rect x="368" y="180" width="164" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="376" y="186" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="391" y="195" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="450" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon OpenSearch</text>
+      <text x="450" y="228" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">indices</text>
+
+      <!-- Storage: S3 -->
+      <rect x="368" y="292" width="164" height="56" rx="6" fill="#ffffff"/>
+      <rect x="368" y="292" width="164" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="376" y="298" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="391" y="307" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="450" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon S3</text>
+      <text x="450" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">long-term archive</text>
+
+      <!-- Storage: Loki -->
+      <rect x="368" y="404" width="164" height="56" rx="6" fill="#ffffff"/>
+      <rect x="368" y="404" width="164" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="376" y="410" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="391" y="419" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="450" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana Loki</text>
+      <text x="450" y="452" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">label-indexed logs</text>
+
+      <!-- Analysis+Viz: CloudWatch -->
+      <rect x="660" y="68" width="256" height="56" rx="6" fill="#ffffff"/>
+      <rect x="660" y="68" width="256" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="668" y="74" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="683" y="83" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="788" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Logs Insights → Custom Dashboards</text>
+      <text x="788" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">query language, saved widgets</text>
+
+      <!-- Analysis+Viz: OpenSearch -->
+      <rect x="660" y="180" width="256" height="56" rx="6" fill="#ffffff"/>
+      <rect x="660" y="180" width="256" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="668" y="186" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="683" y="195" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="788" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OpenSearch Dashboards</text>
+      <text x="788" y="228" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">discover, visualize</text>
+
+      <!-- Analysis+Viz: Athena -->
+      <rect x="660" y="292" width="256" height="56" rx="6" fill="#ffffff"/>
+      <rect x="660" y="292" width="256" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <rect x="668" y="298" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="683" y="307" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">AWS</text>
+      <text x="788" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Athena → QuickSight</text>
+      <text x="788" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">SQL over S3, BI dashboards</text>
+
+      <!-- Analysis+Viz: Grafana Explore -->
+      <rect x="660" y="404" width="256" height="56" rx="6" fill="#ffffff"/>
+      <rect x="660" y="404" width="256" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <rect x="668" y="410" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+      <text x="683" y="419" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">OSS</text>
+      <text x="788" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana Explore → Dashboards</text>
+      <text x="788" y="452" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">LogQL queries</text>
+
+      <!-- ================= LEGEND ================= -->
+      <line x1="30" y1="504" x2="930" y2="504" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="30" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+      <circle cx="220" cy="516" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="232" y="520" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Focal — shared log collector</text>
+      <circle cx="500" cy="516" r="5" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="512" y="520" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Managed AWS service</text>
+      <circle cx="720" cy="516" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="732" y="520" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Open-source component</text>
+    </svg>

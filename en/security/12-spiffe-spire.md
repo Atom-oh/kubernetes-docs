@@ -188,40 +188,7 @@ A trust domain is an administrative boundary of trust. All workloads within a tr
 
 SPIRE implements the SPIFFE specification with a server-agent architecture:
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane"]
-        SERVER[SPIRE Server]
-        DATASTORE[(Data Store<br/>SQLite/PostgreSQL)]
-        SERVER --> DATASTORE
-    end
-
-    subgraph Node1["Kubernetes Node 1"]
-        AGENT1[SPIRE Agent]
-        WORKLOAD1[Workload Pod A]
-        WORKLOAD2[Workload Pod B]
-        WORKLOAD1 -->|Workload API| AGENT1
-        WORKLOAD2 -->|Workload API| AGENT1
-    end
-
-    subgraph Node2["Kubernetes Node 2"]
-        AGENT2[SPIRE Agent]
-        WORKLOAD3[Workload Pod C]
-        WORKLOAD3 -->|Workload API| AGENT2
-    end
-
-    AGENT1 -->|Node Attestation<br/>SVID Requests| SERVER
-    AGENT2 -->|Node Attestation<br/>SVID Requests| SERVER
-
-    subgraph External["External Components"]
-        REGISTRAR[K8s Registrar]
-        CSI[SPIFFE CSI Driver]
-    end
-
-    REGISTRAR -->|Auto-registration| SERVER
-    CSI -->|Mount SVIDs| Node1
-    CSI -->|Mount SVIDs| Node2
-```
+![Architecture diagram showing the SPIRE Server and its data store issuing identities to SPIRE Agents on two Kubernetes nodes, fed by a Kubernetes registrar and a SPIFFE CSI driver that mounts SVIDs onto each node.](../.gitbook/assets/en-security-12-spiffe-spire-0.png)
 
 ### SPIRE Server
 
@@ -338,33 +305,7 @@ plugins {
 
 The following diagram shows how a workload obtains its SVID:
 
-```mermaid
-flowchart LR
-    subgraph Workload["Workload Pod"]
-        APP[Application]
-    end
-
-    subgraph Agent["SPIRE Agent"]
-        WAPI[Workload API]
-        ATTESTOR[Workload Attestor]
-        CACHE[SVID Cache]
-    end
-
-    subgraph Server["SPIRE Server"]
-        CA[Certificate Authority]
-        REGISTRY[Registration Entries]
-    end
-
-    APP -->|1. Request SVID<br/>via Unix Socket| WAPI
-    WAPI -->|2. Get caller info<br/>PID, UID, container| ATTESTOR
-    ATTESTOR -->|3. Query K8s API<br/>for pod metadata| K8S[(Kubernetes API)]
-    ATTESTOR -->|4. Match against<br/>registration entries| WAPI
-    WAPI -->|5. Request SVID<br/>for matched identity| Server
-    CA -->|6. Validate request<br/>sign certificate| CA
-    Server -->|7. Return signed<br/>X.509-SVID| WAPI
-    WAPI -->|8. Cache SVID| CACHE
-    CACHE -->|9. Return SVID<br/>to workload| APP
-```
+![Sequence diagram of a workload requesting an identity from the SPIRE Agent, which attests the caller against the Kubernetes API, forwards the matched request to the SPIRE Server, and returns a signed X.509-SVID to the workload.](../.gitbook/assets/en-security-12-spiffe-spire-1.png)
 
 ---
 
@@ -501,43 +442,7 @@ Node attestation establishes trust between SPIRE Agents and the SPIRE Server. Th
 
 ### Attestation Flow
 
-```mermaid
-flowchart TB
-    subgraph NodeAttestation["Node Attestation Methods"]
-        direction TB
-        PSAT[K8s PSAT<br/>Projected Service Account Token]
-        AWSIID[AWS IID<br/>Instance Identity Document]
-        JOIN[Join Token<br/>One-time Bootstrap]
-    end
-
-    subgraph Agent["SPIRE Agent Bootstrap"]
-        AGENT_START[Agent Starts]
-        COLLECT[Collect Attestation Data]
-        SEND[Send to Server]
-    end
-
-    subgraph Server["SPIRE Server"]
-        VALIDATE[Validate Attestation]
-        ISSUE_NODE[Issue Node SVID]
-        STORE[Store Node Record]
-    end
-
-    AGENT_START --> COLLECT
-    COLLECT --> PSAT
-    COLLECT --> AWSIID
-    COLLECT --> JOIN
-
-    PSAT --> SEND
-    AWSIID --> SEND
-    JOIN --> SEND
-
-    SEND --> VALIDATE
-    VALIDATE -->|Valid| ISSUE_NODE
-    ISSUE_NODE --> STORE
-    STORE -->|Node SVID| Agent
-
-    VALIDATE -->|Invalid| REJECT[Reject Connection]
-```
+![Flowchart showing a SPIRE Agent collecting attestation evidence through one of three methods, sending it to the SPIRE Server for validation, and either receiving a Node SVID or having the connection rejected.](../.gitbook/assets/en-security-12-spiffe-spire-2.png)
 
 ### Kubernetes PSAT (Projected Service Account Token)
 
@@ -1092,38 +997,7 @@ Federation enables workloads in different trust domains to establish mutual trus
 
 ### Federation Trust Establishment
 
-```mermaid
-flowchart LR
-    subgraph TrustDomainA["Trust Domain A<br/>us-east.example.com"]
-        SERVER_A[SPIRE Server A]
-        AGENT_A[SPIRE Agent A]
-        WORKLOAD_A[Workload A]
-    end
-
-    subgraph TrustDomainB["Trust Domain B<br/>eu-west.example.com"]
-        SERVER_B[SPIRE Server B]
-        AGENT_B[SPIRE Agent B]
-        WORKLOAD_B[Workload B]
-    end
-
-    subgraph BundleExchange["Bundle Exchange"]
-        ENDPOINT_A[Bundle Endpoint A<br/>:8443/bundle]
-        ENDPOINT_B[Bundle Endpoint B<br/>:8443/bundle]
-    end
-
-    SERVER_A -->|Publish Bundle| ENDPOINT_A
-    SERVER_B -->|Publish Bundle| ENDPOINT_B
-
-    SERVER_A -->|Fetch Bundle B| ENDPOINT_B
-    SERVER_B -->|Fetch Bundle A| ENDPOINT_A
-
-    WORKLOAD_A <-->|mTLS with<br/>Cross-Domain Trust| WORKLOAD_B
-
-    AGENT_A --> SERVER_A
-    AGENT_B --> SERVER_B
-    WORKLOAD_A --> AGENT_A
-    WORKLOAD_B --> AGENT_B
-```
+![Architecture diagram showing two independent SPIRE trust domains exchanging trust bundles through published endpoints, so a workload in one domain can establish mutual TLS directly with a workload in the other.](../.gitbook/assets/en-security-12-spiffe-spire-3.png)
 
 ### Configuring Federation
 

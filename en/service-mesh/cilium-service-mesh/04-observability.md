@@ -9,44 +9,7 @@ Cilium Service Mesh provides powerful network observability through Hubble. Hubb
 
 ## Hubble Architecture
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Cluster"
-        subgraph "Node 1"
-            eBPF1[eBPF Programs]
-            Agent1[Cilium Agent]
-            Hubble1[Hubble Observer]
-        end
-
-        subgraph "Node 2"
-            eBPF2[eBPF Programs]
-            Agent2[Cilium Agent]
-            Hubble2[Hubble Observer]
-        end
-
-        Relay[Hubble Relay]
-        UI[Hubble UI]
-    end
-
-    subgraph "External"
-        CLI[Hubble CLI]
-        Prometheus[Prometheus]
-        Grafana[Grafana]
-    end
-
-    eBPF1 --> Agent1
-    Agent1 --> Hubble1
-    eBPF2 --> Agent2
-    Agent2 --> Hubble2
-
-    Hubble1 --> Relay
-    Hubble2 --> Relay
-    Relay --> UI
-    Relay --> CLI
-    Hubble1 --> Prometheus
-    Hubble2 --> Prometheus
-    Prometheus --> Grafana
-```
+![Diagram showing each cluster node's eBPF programs feeding the Cilium Agent and Hubble Observer, which forwards flow data to Hubble Relay for the UI and CLI, and separately to Prometheus and Grafana for metrics dashboards.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-0.png)
 
 ### Components
 
@@ -252,15 +215,7 @@ hubble observe --http-method "POST|PUT"
 
 Hubble UI visually shows service dependencies:
 
-```mermaid
-graph LR
-    subgraph "Service Map View"
-        FE[Frontend<br/>3 pods] --> BE[Backend<br/>5 pods]
-        BE --> DB[(Database<br/>2 pods)]
-        BE --> Cache[(Redis<br/>3 pods)]
-        FE --> Static[Static Assets<br/>CDN]
-    end
-```
+![Diagram showing Hubble UI's service map: the frontend calls the backend and a CDN for static assets, while the backend reads and writes to a database and a Redis cache.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-1.png)
 
 ### UI Features
 
@@ -508,45 +463,13 @@ hubble observe --namespace production -o json | \
 
 ### Service Map Example
 
-```mermaid
-graph TB
-    subgraph "Production Namespace"
-        ingress[Ingress Controller]
-        frontend[Frontend<br/>RPS: 1000<br/>P99: 50ms]
-        api[API Gateway<br/>RPS: 800<br/>P99: 100ms]
-        users[User Service<br/>RPS: 500<br/>P99: 80ms]
-        orders[Order Service<br/>RPS: 300<br/>P99: 120ms]
-        payments[Payment Service<br/>RPS: 100<br/>P99: 200ms]
-        db[(PostgreSQL)]
-        redis[(Redis)]
-        kafka[Kafka]
-    end
-
-    ingress --> frontend
-    frontend --> api
-    api --> users
-    api --> orders
-    users --> db
-    users --> redis
-    orders --> db
-    orders --> kafka
-    orders --> payments
-    payments --> kafka
-```
+![Diagram showing traffic flowing from an ingress controller through the frontend and API gateway to the User and Order services, with Order Service as the busiest fan-out point into Postgres, Kafka, and the Payment Service, alongside per-service RPS and P99 latency figures.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-2.png)
 
 ## Golden Signals Monitoring
 
 ### Four Golden Signals
 
-```mermaid
-graph LR
-    subgraph "Golden Signals"
-        Latency[Latency<br/>Response Time]
-        Traffic[Traffic<br/>Throughput]
-        Errors[Errors<br/>Error Rate]
-        Saturation[Saturation<br/>Resource Usage]
-    end
-```
+![Diagram presenting the four golden signals of monitoring side by side: latency (response time), traffic (throughput), errors (error rate), and saturation (resource usage).](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-04-observability-3.png)
 
 ### PromQL Queries
 

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+<title id="t0">GitOps continuous reconciliation loop</title>
+<desc id="d0">Flow diagram showing Argo CD detecting changes in Git via webhook or polling, comparing desired vs live state, applying changes when drift is detected, and receiving status feedback from the target cluster.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="16" y="56" width="372" height="240" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="60" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="112" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">CHANGE DETECTION</text>
+
+<rect x="92" y="324" width="512" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="112" y="328" width="104" height="12" rx="2" fill="#ffffff"/>
+<text x="164" y="337" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">SYNC PROCESS</text>
+
+<rect x="660" y="324" width="200" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="700" y="328" width="120" height="12" rx="2" fill="#ffffff"/>
+<text x="760" y="337" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">TARGET CLUSTER</text>
+
+<!-- Arrows (drawn before nodes) -->
+<!-- GIT -> WEBHOOK -->
+<path d="M168,146 V176 Q168,184 160,184 H112 Q104,184 104,192 V220" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="118" y="164" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="136" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PUSH</text>
+
+<!-- GIT -> POLL -->
+<path d="M232,146 V176 Q232,184 240,184 H288 Q296,184 296,192 V220" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="246" y="164" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="264" y="173" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CHECK</text>
+
+<!-- WEBHOOK -> COMPARE -->
+<path d="M104,276 V312 Q104,320 112,320 H168 Q176,320 176,328 V356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- POLL -> COMPARE -->
+<path d="M296,276 V312 Q296,320 288,320 H232 Q224,320 224,328 V356" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- COMPARE -> APPLY (focal-in) -->
+<path d="M324,384 H420" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="326" y="366" width="92" height="12" rx="2" fill="#ffffff"/>
+<text x="372" y="375" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DRIFT DETECTED</text>
+
+<!-- APPLY -> RESOURCES (focal-out) -->
+<path d="M580,384 H680" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- RESOURCES -> COMPARE (status, dashed transit above zones) -->
+<path d="M760,356 V318 Q760,310 752,310 H280 Q272,310 272,318 V356" fill="none" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="484" y="290" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="508" y="299" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">STATUS</text>
+
+<!-- Nodes -->
+<!-- GIT (store) -->
+<rect x="100" y="90" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="200" y="122" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Git Repository</text>
+
+<!-- WEBHOOK (input) -->
+<rect x="34" y="220" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+<text x="104" y="252" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Webhook</text>
+
+<!-- POLL (input) -->
+<rect x="226" y="220" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+<text x="296" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Polling</text>
+<text x="296" y="260" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">(3 min)</text>
+
+<!-- COMPARE (backend) -->
+<rect x="124" y="356" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="224" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compare</text>
+<text x="224" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">States</text>
+
+<!-- APPLY (focal) -->
+<rect x="420" y="356" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="500" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Apply</text>
+<text x="500" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Changes</text>
+
+<!-- RESOURCES (store) -->
+<rect x="680" y="356" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="760" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s</text>
+<text x="760" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resources</text>
+
+<!-- Legend -->
+<line x1="80" y1="484" x2="880" y2="484" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="80" y="504" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+<rect x="80" y="516" width="14" height="14" rx="3" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="0.8"/>
+<text x="102" y="527" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">TRIGGER</text>
+
+<rect x="240" y="516" width="14" height="14" rx="3" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="262" y="527" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">SOURCE / STATE STORE</text>
+
+<rect x="480" y="516" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="502" y="527" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">RECONCILE (FOCAL)</text>
+
+<line x1="700" y1="523" x2="736" y2="523" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="746" y="527" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">STATUS FEEDBACK</text>
+</svg>

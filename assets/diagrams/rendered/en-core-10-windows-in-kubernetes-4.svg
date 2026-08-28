@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="wci4-title wci4-desc">
+    <title id="wci4-title">Windows support in Amazon EKS</title>
+    <desc id="wci4-desc">The managed EKS control plane reaches both a Linux node group and a Windows node group, plus AWS IAM, VPC, and CloudWatch, while Windows application pods reach end users through an Elastic Load Balancer.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="60" width="880" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="440" y="64" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS CLOUD</text>
+
+    <rect x="80" y="100" width="480" height="280" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="248" y="104" width="144" height="12" rx="2" fill="#ffffff"/>
+    <text x="320" y="113" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON EKS</text>
+
+    <!-- Arrows -->
+    <path d="M240,180 H233 Q225,180 225,188 V272 Q225,280 217,280 H210" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M400,180 H407 Q415,180 415,188 V272 Q415,280 423,280 H430" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path d="M440,148 H492 Q500,148 500,140 V128 Q500,120 508,120 H620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M440,160 H522 Q530,160 530,168 V206 Q530,214 538,214 H620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M440,172 H522 a8,8 0 0,1 16,0 H552 Q560,172 560,180 V274 Q560,282 568,282 H620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <line x1="430" y1="336" x2="430" y2="400" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="430" y1="444" x2="430" y2="468" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- EKS Control Plane (focal) -->
+    <rect x="200" y="136" width="240" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="320" y="162" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EKS Control Plane</text>
+
+    <!-- Linux Node Group -->
+    <rect x="120" y="280" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="210" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Linux Node Group</text>
+    <text x="210" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CoreDNS · VPC CNI</text>
+
+    <!-- Windows Node Group -->
+    <rect x="340" y="280" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="430" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Windows Node Group</text>
+    <text x="430" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Windows app pods</text>
+
+    <!-- IAM / VPC / CloudWatch -->
+    <rect x="620" y="98" width="160" height="44" rx="6" fill="#ffffff"/>
+    <rect x="620" y="98" width="160" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="700" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS IAM</text>
+
+    <rect x="620" y="192" width="160" height="44" rx="6" fill="#ffffff"/>
+    <rect x="620" y="192" width="160" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="700" y="218" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon VPC</text>
+
+    <rect x="620" y="260" width="160" height="44" rx="6" fill="#ffffff"/>
+    <rect x="620" y="260" width="160" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="700" y="286" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">CloudWatch</text>
+
+    <!-- ELB -->
+    <rect x="360" y="400" width="140" height="44" rx="6" fill="#ffffff"/>
+    <rect x="360" y="400" width="140" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="430" y="426" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Load Balancer</text>
+
+    <!-- User -->
+    <rect x="360" y="468" width="140" height="44" rx="6" fill="#ffffff"/>
+    <rect x="360" y="468" width="140" height="44" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="430" y="494" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="546" x2="900" y2="546" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="562" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <rect x="40" y="570" width="10" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="58" y="579" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">MANAGED CONTROL PLANE</text>
+    <rect x="300" y="570" width="10" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="318" y="579" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">NODE GROUP</text>
+    <rect x="460" y="570" width="10" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="478" y="579" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">AWS SERVICE</text>
+  </svg>

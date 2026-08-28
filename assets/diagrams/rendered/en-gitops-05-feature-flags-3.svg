@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flagdproc-title flagdproc-desc">
+<title id="flagdproc-title">flagd process internals</title>
+<desc id="flagdproc-desc">Architecture diagram showing flagd loading flag configuration from CRDs, ConfigMaps, files, or HTTP into a sync engine and flag state store, then evaluating rules and serving results to application pods over gRPC and HTTP.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: flagd process -->
+<rect x="360" y="164" width="240" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="416" y="168" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="177" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">FLAGD PROCESS</text>
+
+<!-- Vertical connectors (straight, same x) -->
+<line x1="480" y1="128" x2="480" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="236" x2="480" y2="268" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="324" x2="480" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="412" x2="480" y2="444" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- App connectors -->
+<line x1="260" y1="476" x2="400" y2="476" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="700" y1="476" x2="560" y2="476" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Connector labels -->
+<rect x="286" y="460" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="310" y="470" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">GRPC</text>
+<rect x="626" y="460" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="650" y="470" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP</text>
+
+<!-- Node: Config Sources -->
+<rect x="400" y="64" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="64" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="408" y="72" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+<text x="422" y="81" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SRC</text>
+<text x="480" y="100" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Config Sources</text>
+<text x="480" y="116" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">CRD · CM · file · HTTP</text>
+
+<!-- Node: Sync Engine -->
+<rect x="400" y="180" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Sync Engine</text>
+<text x="480" y="220" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">watches sources</text>
+
+<!-- Node: Flag State Store -->
+<rect x="400" y="268" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="268" width="160" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Flag State Store</text>
+<text x="480" y="308" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">in-memory</text>
+
+<!-- Node: Evaluation Engine (focal) -->
+<rect x="400" y="356" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="356" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">Evaluation Engine</text>
+<text x="480" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">targeting rules</text>
+
+<!-- Node: API Endpoints -->
+<rect x="400" y="444" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="400" y="444" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="468" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">API Endpoints</text>
+<text x="480" y="484" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">:8013 · :8016 · :8014</text>
+
+<!-- Node: App Pod 1 -->
+<rect x="120" y="444" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="120" y="444" width="140" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="190" y="472" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">App Pod</text>
+<text x="190" y="488" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OF SDK</text>
+
+<!-- Node: App Pod 2 -->
+<rect x="700" y="444" width="140" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="444" width="140" height="64" rx="6" fill="rgba(35,47,62,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="770" y="472" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">App Pod</text>
+<text x="770" y="488" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OF SDK</text>
+
+<!-- Legend -->
+<line x1="24" y1="536" x2="936" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="24" y="568" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="44" y="577" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Input / external</text>
+<rect x="220" y="568" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240" y="577" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',sans-serif">flagd internals</text>
+<rect x="420" y="568" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="440" y="577" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',sans-serif">Evaluation (focal)</text>
+</svg>

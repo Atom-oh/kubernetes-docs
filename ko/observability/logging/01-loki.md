@@ -59,63 +59,7 @@ Loki는 "Prometheus처럼 로그를 다룬다"는 철학으로 설계되었습�
 
 ### 컴포넌트 개요
 
-```mermaid
-flowchart TB
-    subgraph Clients["클라이언트"]
-        PROMTAIL[Promtail]
-        FLUENTBIT[FluentBit]
-        ALLOY[Grafana Alloy]
-    end
-
-    subgraph Write["쓰기 경로"]
-        DIST[Distributor]
-        ING[Ingester]
-    end
-
-    subgraph Read["읽기 경로"]
-        QF[Query Frontend]
-        QS[Query Scheduler]
-        QUERIER[Querier]
-    end
-
-    subgraph Backend["백엔드"]
-        COMP[Compactor]
-        S3[(S3 Storage)]
-        CACHE[(Redis/Memcached)]
-    end
-
-    subgraph Viz["시각화"]
-        GRAFANA[Grafana]
-    end
-
-    PROMTAIL --> DIST
-    FLUENTBIT --> DIST
-    ALLOY --> DIST
-
-    DIST --> ING
-    ING --> S3
-
-    GRAFANA --> QF
-    QF --> QS
-    QS --> QUERIER
-    QUERIER --> ING
-    QUERIER --> S3
-    QUERIER --> CACHE
-
-    COMP --> S3
-
-    classDef client fill:#4CAF50,stroke:#333,color:white
-    classDef write fill:#2196F3,stroke:#333,color:white
-    classDef read fill:#FF9800,stroke:#333,color:white
-    classDef backend fill:#9C27B0,stroke:#333,color:white
-    classDef viz fill:#F44336,stroke:#333,color:white
-
-    class PROMTAIL,FLUENTBIT,ALLOY client
-    class DIST,ING write
-    class QF,QS,QUERIER read
-    class COMP,S3,CACHE backend
-    class GRAFANA viz
-```
+![로그 수집 에이전트가 Distributor를 거쳐 Ingester에 데이터를 쓰고, Grafana의 쿼리가 Query Frontend와 Scheduler를 거쳐 Querier에서 Ingester·S3·캐시를 조회해 결과를 병합하며, Compactor가 S3의 데이터를 최적화하는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-01-loki-0.png)
 
 ### 컴포넌트 상세
 
@@ -886,16 +830,7 @@ labels:
 
 ### 카디널리티 관리
 
-```mermaid
-graph LR
-    A[라벨 수] --> B{총 스트림 수}
-    C[라벨값 종류] --> B
-    B --> D[인덱스 크기]
-    B --> E[쿼리 성능]
-    B --> F[메모리 사용량]
-
-    style B fill:#FF9800,stroke:#333
-```
+![라벨 수와 라벨값 종류가 곱해져 총 스트림 수를 만들고, 그 스트림 수가 인덱스 크기·쿼리 성능·메모리 사용량을 함께 좌우한다는 것을 보여준다.](../../.gitbook/assets/ko-observability-logging-01-loki-1.png)
 
 **스트림 수 계산:**
 ```

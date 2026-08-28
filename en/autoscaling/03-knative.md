@@ -84,56 +84,7 @@ By the end of this document you will be able to:
 
 Knative Serving deploys five key components inside the `knative-serving` namespace. Together they manage the full lifecycle of a serverless workload, from receiving an initial request to scaling the application and routing traffic.
 
-```mermaid
-flowchart TD
-    Client([Client Request])
-
-    subgraph INGRESS["Ingress Layer (Kourier / Istio)"]
-        GW[Gateway]
-    end
-
-    subgraph KS["knative-serving Namespace"]
-        AC[Activator]
-        AS[Autoscaler]
-        CT[Controller]
-        WH[Webhook]
-    end
-
-    subgraph APP["Application Namespace"]
-        QP1["Queue Proxy
-        (sidecar)"]
-        C1["User Container
-        Revision v1"]
-        QP2["Queue Proxy
-        (sidecar)"]
-        C2["User Container
-        Revision v2"]
-    end
-
-    Client --> GW
-    GW -->|"Scale > 0"| QP1
-    GW -->|"Scale = 0"| AC
-    AC -->|"Buffer & activate"| QP1
-    AC -->|"Report metrics"| AS
-    QP1 --> C1
-    QP2 --> C2
-    QP1 -->|"Concurrency metrics"| AS
-    QP2 -->|"Concurrency metrics"| AS
-    AS -->|"Scale decision"| CT
-    CT -->|"Manage Deployments"| APP
-    WH -->|"Validate & default"| CT
-
-    style Client fill:#e1f5fe
-    style GW fill:#fff3e0
-    style AC fill:#f3e5f5
-    style AS fill:#f3e5f5
-    style CT fill:#f3e5f5
-    style WH fill:#f3e5f5
-    style QP1 fill:#e8f5e9
-    style QP2 fill:#e8f5e9
-    style C1 fill:#e8f5e9
-    style C2 fill:#e8f5e9
-```
+![Diagram of a Knative request path: a client request enters through a Kourier/Istio gateway, either flowing directly to a running revision's queue-proxy and container when scaled above zero, or being buffered by the Activator and forwarded once the Autoscaler brings a pod up from zero, with concurrency metrics feeding the Autoscaler's scaling decisions to the Controller.](../.gitbook/assets/en-autoscaling-03-knative-0.png)
 
 **Component responsibilities:**
 
@@ -149,56 +100,7 @@ flowchart TD
 
 Knative Eventing provides a declarative way to bind event sources to consumers. It supports two delivery patterns: **Broker/Trigger** (content-based routing) and **Channel/Subscription** (direct pub-sub).
 
-```mermaid
-flowchart LR
-    subgraph SOURCES["Event Sources"]
-        S1[ApiServerSource]
-        S2[KafkaSource]
-        S3[SinkBinding]
-        S4[SQSSource]
-    end
-
-    subgraph BROKER_PATTERN["Broker / Trigger Pattern"]
-        BR[Broker]
-        T1["Trigger
-        filter: type=order.created"]
-        T2["Trigger
-        filter: type=payment.processed"]
-        DLS[Dead Letter Sink]
-    end
-
-    subgraph CHANNEL_PATTERN["Channel / Subscription Pattern"]
-        CH[Channel]
-        SUB1[Subscription 1]
-        SUB2[Subscription 2]
-    end
-
-    subgraph CONSUMERS["Consumers (Knative Services)"]
-        KS1[Order Service]
-        KS2[Payment Service]
-        KS3[Notification Service]
-        KS4[Analytics Service]
-    end
-
-    S1 & S2 --> BR
-    S3 --> CH
-    S4 --> BR
-    BR --> T1
-    BR --> T2
-    T1 --> KS1
-    T2 --> KS2
-    T1 -.->|"delivery failure"| DLS
-    T2 -.->|"delivery failure"| DLS
-
-    CH --> SUB1
-    CH --> SUB2
-    SUB1 --> KS3
-    SUB2 --> KS4
-
-    style BR fill:#fff3e0
-    style CH fill:#e1f5fe
-    style DLS fill:#ffebee
-```
+![Diagram contrasting Knative's Broker/Trigger eventing pattern (sources feeding a Broker that routes filtered events through Triggers to consumer services, with failed deliveries going to a dead letter sink) against its Channel/Subscription pattern (a source feeding a Channel that fans out to Subscriptions and their consumer services).](../.gitbook/assets/en-autoscaling-03-knative-1.png)
 
 **Eventing core concepts:**
 
@@ -494,35 +396,7 @@ kubectl wait --for=condition=Ready pods --all -n knative-eventing --timeout=300s
 
 Knative Serving introduces four primary custom resources that work together to manage the complete lifecycle of a serverless workload.
 
-```mermaid
-flowchart TD
-    SVC["Knative Service
-    (ksvc)"]
-    CFG[Configuration]
-    RT[Route]
-    REV1["Revision v1
-    (immutable)"]
-    REV2["Revision v2
-    (immutable)"]
-    REV3["Revision v3
-    (latest)"]
-
-    SVC --> CFG
-    SVC --> RT
-    CFG -->|"creates on change"| REV1
-    CFG -->|"creates on change"| REV2
-    CFG -->|"creates on change"| REV3
-    RT -->|"100% traffic"| REV3
-    RT -.->|"0% (available for rollback)"| REV2
-    RT -.->|"0% (available for rollback)"| REV1
-
-    style SVC fill:#e1f5fe
-    style CFG fill:#fff3e0
-    style RT fill:#f3e5f5
-    style REV1 fill:#e8f5e9
-    style REV2 fill:#e8f5e9
-    style REV3 fill:#e8f5e9
-```
+![Diagram of Knative resource ownership: a Knative Service owns a Configuration and a Route; the Configuration creates a new immutable Revision on every change, while the Route sends all live traffic to the latest revision and keeps older revisions available at zero percent for rollback.](../.gitbook/assets/en-autoscaling-03-knative-2.png)
 
 | Resource | Description |
 |----------|-------------|
@@ -705,27 +579,7 @@ spec:
 
 Scale-to-zero is a defining feature of Knative Serving. When a Revision receives no traffic, its pods are terminated after a configurable grace period. When a new request arrives, the Activator buffers it, triggers a scale-up, and proxies the request once a pod is ready.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Activator
-    participant Autoscaler
-    participant Pod as Queue Proxy + App
-
-    Note over Pod: No traffic for 60s
-    Autoscaler->>Pod: Scale to 0
-    Note over Pod: Pods terminated
-
-    Client->>Activator: HTTP Request
-    Note over Activator: Revision at 0 replicas
-    Activator->>Autoscaler: Request scale-up
-    Autoscaler->>Pod: Scale to 1
-    Note over Pod: Pod starting...
-    Pod-->>Activator: Ready
-    Activator->>Pod: Forward buffered request
-    Pod-->>Client: HTTP Response
-    Note over Pod: Subsequent requests go directly
-```
+![Sequence diagram of Knative's scale-to-zero and cold-start flow: after 60 seconds without traffic the Autoscaler scales the pod to zero and it terminates, then a new client request causes the Activator to request a scale-up, buffer the request while the pod starts, forward it once the pod reports ready, and return the response, after which later requests go directly to the pod.](../.gitbook/assets/en-autoscaling-03-knative-3.png)
 
 Key parameters controlling scale-to-zero:
 
@@ -1296,36 +1150,7 @@ Both KEDA and Knative enable event-driven scaling on Kubernetes, but they operat
 
 ### Roles in Event-Driven Architecture
 
-```mermaid
-flowchart LR
-    subgraph EVENTS["Event Sources"]
-        SQS[Amazon SQS]
-        KAFKA[Apache Kafka]
-        HTTP[HTTP Requests]
-    end
-
-    subgraph KEDA_DOMAIN["KEDA Domain"]
-        SO[ScaledObject]
-        HPA[HPA]
-        WORKER[Worker Deployment]
-    end
-
-    subgraph KNATIVE_DOMAIN["Knative Domain"]
-        BR[Broker]
-        TR[Trigger]
-        KSVC[Knative Service]
-    end
-
-    SQS -->|"Queue depth metric"| SO
-    SO --> HPA --> WORKER
-
-    KAFKA -->|"CloudEvents"| BR
-    HTTP -->|"CloudEvents"| BR
-    BR --> TR --> KSVC
-
-    style KEDA_DOMAIN fill:#e1f5fe
-    style KNATIVE_DOMAIN fill:#e8f5e9
-```
+![Diagram comparing two parallel scaling paths from shared event sources: Amazon SQS queue depth driving a KEDA ScaledObject through the HPA to scale a Worker Deployment, versus Kafka and HTTP CloudEvents flowing into a Knative Broker that routes through a Trigger to a Knative Service.](../.gitbook/assets/en-autoscaling-03-knative-4.png)
 
 ### When to Use KEDA vs Knative
 

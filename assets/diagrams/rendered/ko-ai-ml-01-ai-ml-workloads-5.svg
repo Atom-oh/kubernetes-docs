@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+    <title id="t">AI/ML 워크로드 최적화</title>
+    <desc id="d">GPU 최적화, 훈련 최적화, 스토리지 최적화가 성능 향상으로 이어지고 비용 최적화가 비용 절감으로 이어지는, 네 가지 최적화 영역과 그 결과를 보여주는 다이어그램.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#FFFFFF"/>
+
+    <!-- Zone: Optimization areas -->
+    <rect x="40" y="56" width="504" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="60" y="60" width="176" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="148" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">OPTIMIZATION AREAS</text>
+
+    <!-- Arrows -->
+    <path d="M 544,136 H 592 Q 600,136 600,144 V 232 Q 600,240 608,240" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 544,272 H 608" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 544,408 H 592 Q 600,408 600,400 V 304 Q 600,296 608,296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 544,504 H 608" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- Node: GPU 최적화 -->
+    <rect x="80" y="96" width="464" height="80" rx="6" fill="#FFFFFF"/>
+    <rect x="80" y="96" width="464" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="312" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">GPU 최적화</text>
+    <text x="312" y="146" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">메모리 오버커밋 · GPU 공유 · NVIDIA MPS</text>
+
+    <!-- Node: 훈련 최적화 -->
+    <rect x="80" y="232" width="464" height="80" rx="6" fill="#FFFFFF"/>
+    <rect x="80" y="232" width="464" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="312" y="264" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">훈련 최적화</text>
+    <text x="312" y="282" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">노드 어피니티 · 토폴로지 인식 · 배치 그룹</text>
+
+    <!-- Node: 스토리지 최적화 -->
+    <rect x="80" y="368" width="464" height="80" rx="6" fill="#FFFFFF"/>
+    <rect x="80" y="368" width="464" height="80" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="312" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">스토리지 최적화</text>
+    <text x="312" y="418" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Lustre 구성 · 데이터 캐싱 · S3 통합</text>
+
+    <!-- Node: 비용 최적화 (focal) -->
+    <rect x="80" y="464" width="464" height="80" rx="6" fill="#FFFFFF"/>
+    <rect x="80" y="464" width="464" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="312" y="496" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">비용 최적화</text>
+    <text x="312" y="514" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Spot 인스턴스 · 자동 스케일링 · 하이브리드 노드</text>
+
+    <!-- Node: Performance outcome -->
+    <rect x="608" y="216" width="256" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="608" y="216" width="256" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="736" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">성능 향상</text>
+    <text x="736" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">throughput ↑ · latency ↓</text>
+
+    <!-- Node: Cost reduction outcome (focal) -->
+    <rect x="608" y="472" width="256" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="608" y="472" width="256" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="736" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',sans-serif" text-anchor="middle">비용 절감</text>
+    <text x="736" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$/training-hour ↓</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="556" x2="544" y2="556" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="572" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <rect x="40" y="580" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">비용 절감 결과 (focal)</text>
+    <rect x="260" y="580" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="280" y="588" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',sans-serif">최적화 영역</text>
+  </svg>

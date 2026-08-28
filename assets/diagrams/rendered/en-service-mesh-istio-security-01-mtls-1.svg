@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d1-title d1-desc">
+    <title id="d1-title">Istio CA certificate hierarchy</title>
+    <desc id="d1-desc">A self-signed root CA inside istiod signs an intermediate CA, which issues and auto-renews the mTLS workload certificate for every service in the mesh.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs><defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="320" y="40" width="320" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="332" y="44" width="140" height="12" rx="2" fill="#ffffff"/>
+    <text x="402" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ISTIO CA (ISTIOD)</text>
+
+    <rect x="120" y="352" width="720" height="152" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="132" y="356" width="100" height="12" rx="2" fill="#ffffff"/>
+    <text x="182" y="365" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WORKLOADS</text>
+
+    <!-- Arrows -->
+    <!-- RootCA -> IntermediateCA (same x, straight vertical) -->
+    <line x1="480" y1="120" x2="480" y2="152" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="452" y="126" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="135" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SIGN</text>
+
+    <!-- IntermediateCA -> Cert1/2/3 (fanned attach points, elbow) -->
+    <path d="M420,192 V240 Q420,248 412,248 H240 Q232,248 232,256 V392" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M480,192 V352" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <path d="M540,192 V240 Q540,248 548,248 H728 Q736,248 736,256 V392" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <rect x="120" y="234" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="146" y="243" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ISSUE</text>
+    <rect x="454" y="264" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="273" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ISSUE</text>
+    <rect x="788" y="234" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="814" y="243" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ISSUE</text>
+
+    <!-- Nodes -->
+    <!-- RootCA (focal) -->
+    <rect x="380" y="64" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Root CA</text>
+    <text x="480" y="104" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">self-signed</text>
+
+    <!-- IntermediateCA -->
+    <rect x="360" y="152" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Intermediate CA</text>
+    <text x="480" y="192" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">issues workload certs</text>
+
+    <!-- Cert1 -->
+    <rect x="152" y="392" width="160" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="232" y="426" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service A</text>
+    <text x="232" y="442" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">certificate</text>
+
+    <!-- Cert2 -->
+    <rect x="400" y="392" width="160" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="426" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service B</text>
+    <text x="480" y="442" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">certificate</text>
+
+    <!-- Cert3 -->
+    <rect x="648" y="392" width="160" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="728" y="426" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service C</text>
+    <text x="728" y="442" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">certificate</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="160" y="530" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="184" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Root CA (trust anchor)</text>
+
+    <rect x="420" y="530" width="16" height="12" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="444" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Issuing CA</text>
+
+    <rect x="620" y="530" width="16" height="12" rx="3" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="644" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Workload certificate</text>
+  </svg>

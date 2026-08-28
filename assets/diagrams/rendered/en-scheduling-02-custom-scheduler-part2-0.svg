@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="960" height="600" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-labelledby="scheduler-extender-seq-title scheduler-extender-seq-desc">
+  <title id="scheduler-extender-seq-title">Scheduler Extender Call Flow</title>
+  <desc id="scheduler-extender-seq-desc">Sequence diagram of a Kubernetes pod being scheduled through a Scheduler Extender: the API server hands the pod to the default scheduler, which runs its own filtering and scoring, delegates a filter and a prioritize call to the extender over HTTP, then combines the results to pick a node, bind the pod, and hand it off for scheduling.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- header -->
+  <text x="40" y="28" class="mono" font-size="8" letter-spacing="0.18em" fill="#7D8998">SEQUENCE · SCHEDULING</text>
+  <text x="40" y="52" font-size="20" font-weight="700" fill="#232F3E">Scheduler Extender Call Flow</text>
+
+  <!-- lifelines -->
+  <line x1="140" y1="116" x2="140" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="380" y1="116" x2="380" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="620" y1="116" x2="620" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="860" y1="116" x2="860" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- activation bars -->
+  <rect x="376" y="132" width="8" height="380" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="616" y="204" width="8" height="236" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- ===================== messages ===================== -->
+
+  <!-- row1 y=140: API -> Scheduler : POD CREATE -->
+  <line x1="140" y1="140" x2="376" y2="140" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="222" y="120" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="260" y="129" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#7D8998">POD CREATE</text>
+
+  <!-- row2 y=176: Scheduler self : INTERNAL FILTER -->
+  <path d="M380 176 H412 V196 H380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="420" y="180" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="424" y="189" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">INTERNAL FILTER</text>
+
+  <!-- row3 y=212: Scheduler -> Extender : POST /filter -->
+  <line x1="384" y1="212" x2="616" y2="212" stroke="#0972D3" stroke-width="1" marker-end="url(#arrow-link)"/>
+  <rect x="462" y="192" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="201" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.02em" fill="#0972D3">POST /filter</text>
+
+  <!-- row4 y=248: Extender self : FILTER LOGIC -->
+  <path d="M620 248 H652 V268 H620" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="660" y="252" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="664" y="261" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">FILTER LOGIC</text>
+
+  <!-- row5 y=284: Extender -> Scheduler : FILTERED NODES (dashed return) -->
+  <line x1="616" y1="284" x2="384" y2="284" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="440" y="264" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="273" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">FILTERED NODES</text>
+
+  <!-- row6 y=320: Scheduler self : INTERNAL SCORE -->
+  <path d="M380 320 H412 V340 H380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="420" y="324" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="424" y="333" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">INTERNAL SCORE</text>
+
+  <!-- row7 y=356: Scheduler -> Extender : POST /prioritize -->
+  <line x1="384" y1="356" x2="616" y2="356" stroke="#0972D3" stroke-width="1" marker-end="url(#arrow-link)"/>
+  <rect x="440" y="336" width="120" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="345" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.02em" fill="#0972D3">POST /prioritize</text>
+
+  <!-- row8 y=392: Extender self : SCORE LOGIC -->
+  <path d="M620 392 H652 V412 H620" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="660" y="396" width="84" height="12" rx="2" fill="#ffffff"/>
+  <text x="664" y="405" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">SCORE LOGIC</text>
+
+  <!-- row9 y=428: Extender -> Scheduler : NODE SCORES (dashed return) -->
+  <line x1="616" y1="428" x2="384" y2="428" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="446" y="408" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="417" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">NODE SCORES</text>
+
+  <!-- row10 y=464: Scheduler self : FINAL SELECT -->
+  <path d="M380 464 H412 V484 H380" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="420" y="468" width="100" height="12" rx="2" fill="#ffffff"/>
+  <text x="424" y="477" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">FINAL SELECT</text>
+
+  <!-- row11 y=500: Scheduler -> API : BIND REQUEST -->
+  <line x1="376" y1="500" x2="144" y2="500" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="212" y="480" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="260" y="489" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.04em" fill="#7D8998">BIND REQUEST</text>
+
+  <!-- row12 y=536: API -> Node : SCHEDULE POD (headline success, accent) -->
+  <line x1="140" y1="536" x2="856" y2="536" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <rect x="452" y="516" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="500" y="525" text-anchor="middle" class="mono" font-size="8" letter-spacing="0.06em" fill="#EC7211">SCHEDULE POD</text>
+
+  <!-- ===================== actor boxes (drawn after arrows, top layer) ===================== -->
+
+  <!-- API Server -->
+  <rect x="60" y="76" width="160" height="40" rx="6" fill="#ffffff"/>
+  <rect x="60" y="76" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="140" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">API Server</text>
+
+  <!-- Default Scheduler (focal) -->
+  <rect x="300" y="76" width="160" height="40" rx="6" fill="#ffffff"/>
+  <rect x="300" y="76" width="160" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="380" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Default Scheduler</text>
+
+  <!-- Scheduler Extender -->
+  <rect x="540" y="76" width="160" height="40" rx="6" fill="#ffffff"/>
+  <rect x="540" y="76" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="620" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Scheduler Extender</text>
+
+  <!-- Node -->
+  <rect x="780" y="76" width="160" height="40" rx="6" fill="#ffffff"/>
+  <rect x="780" y="76" width="160" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="860" y="100" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Node</text>
+
+  <!-- ===================== legend ===================== -->
+  <line x1="40" y1="568" x2="920" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="588" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">— SOLID = CALL</text>
+  <text x="220" y="588" class="mono" font-size="8" letter-spacing="0.06em" fill="#545B64">– – DASHED = RETURN</text>
+  <text x="440" y="588" class="mono" font-size="8" letter-spacing="0.06em" fill="#0972D3">BLUE = HTTP EXTENDER CALL</text>
+  <text x="700" y="588" class="mono" font-size="8" letter-spacing="0.06em" fill="#EC7211">ORANGE = FINAL HANDOFF</text>
+</svg>

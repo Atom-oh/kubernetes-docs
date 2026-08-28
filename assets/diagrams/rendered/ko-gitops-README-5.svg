@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arch5-title arch5-desc">
+      <title id="arch5-title">Amazon EKS GitOps 아키텍처</title>
+      <desc id="arch5-desc">외부 Git 저장소가 Amazon EKS 안의 GitOps Controller에 변경을 전달하고, IAM 역할(IRSA), Amazon ECR, Secrets Manager, Application Load Balancer가 각각 인증, 컨테이너 이미지, 시크릿, 트래픽 유입을 애플리케이션에 공급하는 구조를 보여준다.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="s5-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="s5-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Zones (painted before arrows/nodes) -->
+      <rect x="40" y="176" width="200" height="128" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="52" y="180" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="88" y="189" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">외부</text>
+
+      <rect x="300" y="40" width="620" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="312" y="44" width="96" height="12" rx="2" fill="#ffffff"/>
+      <text x="360" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">AWS 환경</text>
+
+      <rect x="340" y="180" width="280" height="220" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+      <rect x="352" y="184" width="112" height="12" rx="2" fill="#ffffff"/>
+      <text x="408" y="193" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">AMAZON EKS</text>
+
+      <!-- Arrows -->
+      <line x1="216" y1="240" x2="364" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#s5-arrow)"/>
+      <line x1="480" y1="264" x2="480" y2="316" stroke="#EC7211" stroke-width="1.2" marker-end="url(#s5-arrow-accent)"/>
+
+      <path d="M700,108 H668 Q660,108 660,116 V232 Q660,240 652,240 H596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#s5-arrow)"/>
+      <path d="M790,224 V320 Q790,328 782,328 H596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#s5-arrow)"/>
+      <path d="M700,284 V332 Q700,340 692,340 H596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#s5-arrow)"/>
+      <path d="M700,372 V360 Q700,352 692,352 H596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#s5-arrow)"/>
+
+      <!-- Arrow labels -->
+      <rect x="272" y="220" width="80" height="14" rx="2" fill="#ffffff"/>
+      <text x="312" y="230" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">GIT 변경 감지</text>
+
+      <rect x="604" y="220" width="40" height="14" rx="2" fill="#ffffff"/>
+      <text x="624" y="230" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">IRSA</text>
+
+      <!-- External: Git repository -->
+      <rect x="64" y="216" width="152" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <text x="140" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Git Repository</text>
+      <text x="140" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">source of truth</text>
+
+      <!-- GitOps Controller (focal) -->
+      <rect x="364" y="216" width="232" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="480" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">GitOps Controller</text>
+      <text x="480" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">in-cluster reconciler</text>
+
+      <!-- Apps -->
+      <rect x="364" y="316" width="232" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="345" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">애플리케이션</text>
+
+      <!-- IAM Roles (IRSA) -->
+      <rect x="700" y="80" width="180" height="56" rx="6" fill="#ffffff"/>
+      <rect x="700" y="80" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <g transform="translate(712, 96) scale(0.375)" aria-hidden="true">
+        <g fill="#DD344C">
+          <rect x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M12,47 L52,47 L52,18 L12,18 L12,47 Z M54,17 L54,48 C54,48.552 53.553,49 53,49 L11,49 C10.447,49 10,48.552 10,48 L10,17 C10,16.448 10.447,16 11,16 L53,16 C53.553,16 54,16.448 54,17 L54,17 Z M35,39 L47,39 L47,37 L35,37 L35,39 Z M45,35 L49,35 L49,33 L45,33 L45,35 Z M35,35 L41,35 L41,33 L35,33 L35,35 Z M22.5,37.5 C22.5,37.776 22.725,38 23,38 C23.275,38 23.5,37.776 23.5,37.5 C23.5,37.224 23.275,37 23,37 C22.725,37 22.5,37.224 22.5,37.5 L22.5,37.5 Z M25.5,37.5 C25.5,38.522 24.882,39.401 24,39.788 L24,42 L22,42 L22,39.788 C21.118,39.401 20.5,38.522 20.5,37.5 C20.5,36.122 21.621,35 23,35 C24.379,35 25.5,36.122 25.5,37.5 L25.5,37.5 Z M16,42.995 L29.995,43 L29.996,41 L27,41 L27,39 L29.997,39 L29.998,37 L27,37 L27,35 L29.999,35 L30,33.005 L16.005,33 L16,42.995 Z M18,31.001 L28.001,31.004 L28.002,26 C28.002,24.976 27.2,24.273 26.722,23.945 C25.847,23.345 24.174,23 23.002,23 L23,23 C20.873,23 18.003,24.232 18.002,26 L18,31.001 Z M14.293,44.701 C14.105,44.513 14,44.259 14,43.994 L14.005,32 C14.005,31.447 14.453,31 15.005,31 L16,31 L16.002,26 C16.003,22.911 19.876,21 23,21 L23.002,21 C24.567,21 26.653,21.473 27.854,22.295 C29.239,23.246 30.003,24.562 30.002,26 L30.001,31.005 L31,31.006 C31.266,31.006 31.52,31.111 31.707,31.299 C31.895,31.487 32,31.741 32,32.006 L31.995,44 C31.995,44.553 31.547,45 30.995,45 L15,44.994 C14.734,44.994 14.48,44.889 14.293,44.701 L14.293,44.701 Z M47,30 L49,30 L49,28 L47,28 L47,30 Z M35,30 L44,30 L44,28 L35,28 L35,30 Z" fill="#FFFFFF"></path>
+      </g>
+      <text x="748" y="103" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif">IAM Roles</text>
+      <text x="748" y="119" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">IRSA</text>
+
+      <!-- Amazon ECR -->
+      <rect x="700" y="168" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <g transform="translate(712, 184) scale(0.375)" aria-hidden="true">
+        <g fill="#ED7100">
+          <rect x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M30.726,29.9221953 C30.279,30.1827125 30,30.6666734 30,31.1847019 L30,51.5341041 L15,42.8578781 L15,23.0114745 L32.172,13.0777519 L47.088,20.4574036 L30.726,29.9221953 Z M49.704,20.42033 C49.704,19.9023015 49.426,19.4203446 48.921,19.1317717 L32.879,11.1960158 C32.433,10.9354986 31.876,10.9344966 31.428,11.1940118 L13.729,21.4333413 C13.28,21.6928565 13,22.1768174 13,22.6968499 L13,43.1725028 C13,43.6905313 13.279,44.1744922 13.728,44.4350094 L29.816,53.7414867 C30.04,53.8717454 30.292,53.9368747 30.545,53.9368747 C30.796,53.9368747 31.047,53.8727473 31.272,53.7424887 C31.721,53.4829735 32,52.9990126 32,52.4789801 L32,31.4993265 L48.978,21.6778267 C49.426,21.4193134 49.704,20.9373565 49.704,20.42033 L49.704,20.42033 Z M50,42.9410432 L37.004,51.5331022 L37.004,44.4099597 L43.603,39.4160446 C43.853,39.2266686 44,38.9300798 44,38.6164571 L44,30.4803034 L50,27.0064062 L50,42.9410432 Z M51.273,24.7990236 C50.825,24.5385063 50.267,24.5375044 49.817,24.7990236 L42.879,28.812993 C42.639,28.9422497 42,29.287936 42,30.0304101 L42,38.1174664 L35.663,42.9129875 C35.255,43.1805187 35.004,43.6414338 35.004,44.1344126 L35.004,52.5461134 C35.004,53.0661459 35.284,53.5501068 35.733,53.809622 C35.951,53.9348707 36.195,54 36.445,54 C36.709,54 36.982,53.9278568 37.239,53.7775584 L51.275,44.4971327 C51.722,44.2376175 52,43.7536566 52,43.2356281 L52,26.0625322 C52,25.5424997 51.721,25.0585388 51.273,24.7990236 L51.273,24.7990236 Z" fill="#FFFFFF"></path>
+      </g>
+      <text x="748" y="191" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif">Amazon ECR</text>
+      <text x="748" y="207" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">container images</text>
+
+      <!-- Secrets Manager -->
+      <rect x="700" y="256" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <g transform="translate(712, 272) scale(0.375)" aria-hidden="true">
+        <g fill="#DD344C">
+          <rect x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M31.24,34.64 C31.24,35.059 31.581,35.4 32,35.4 C32.419,35.4 32.76,35.059 32.76,34.64 C32.76,34.221 32.419,33.88 32,33.88 C31.581,33.88 31.24,34.221 31.24,34.64 L31.24,34.64 Z M29.24,34.64 C29.24,33.118 30.478,31.88 32,31.88 C33.521,31.88 34.76,33.118 34.76,34.64 C34.76,35.808 34.027,36.804 33,37.205 L33,40 L31,40 L31,37.205 C29.972,36.803 29.24,35.808 29.24,34.64 L29.24,34.64 Z M39,31 L25,31 L25,41 L39,41 L39,39 L37,39 L37,37 L39,37 L39,35 L37,35 L37,33 L39,33 L39,31 Z M27,29 L36.999,29 L37,25 C37,24.135 36.424,23.141 35.457,22.341 C34.443,21.501 33.152,21 32.003,21 L32.001,21 C29.618,21 27.001,23.093 27,25 L27,29 Z M39,25 L38.999,29 L40,29 C40.553,29 41,29.448 41,30 L41,42 C41,42.552 40.553,43 40,43 L24,43 C23.447,43 23,42.552 23,42 L23,30 C23,29.448 23.447,29 24,29 L25,29 L25,25 C25.001,21.971 28.469,19 32.001,19 L32.003,19 C33.628,19 35.351,19.657 36.732,20.801 C38.174,21.994 39.001,23.525 39,25 L39,25 Z M15.489,43.95 L17.11,42.777 C15.029,39.902 13.859,36.538 13.676,33 L16,33 L16,31 L13.678,31 C13.871,27.483 15.04,24.14 17.11,21.281 L15.489,20.108 C13.172,23.311 11.873,27.058 11.678,31 L10,31 L10,33 L11.676,33 C11.861,36.962 13.16,40.731 15.489,43.95 L15.489,43.95 Z M42.747,46.918 C39.88,48.993 36.527,50.162 33,50.35 L33,48 L31,48 L31,50.35 C27.471,50.162 24.118,48.994 21.25,46.918 L20.078,48.538 C23.289,50.862 27.049,52.161 31,52.35 L31,54 L33,54 L33,52.35 C36.951,52.16 40.709,50.862 43.919,48.538 L42.747,46.918 Z M21.25,17.14 C24.118,15.064 27.471,13.895 31,13.707 L31,16 L33,16 L33,13.707 C36.527,13.896 39.88,15.065 42.747,17.14 L43.919,15.52 C40.709,13.196 36.951,11.897 33,11.707 L33,10 L31,10 L31,11.707 C27.048,11.897 23.289,13.196 20.078,15.52 L21.25,17.14 Z M52.319,31 C52.125,27.058 50.826,23.311 48.509,20.108 L46.887,21.281 C48.958,24.14 50.127,27.483 50.319,31 L48,31 L48,33 L50.322,33 C50.138,36.538 48.969,39.902 46.887,42.777 L48.509,43.95 C50.838,40.731 52.136,36.962 52.322,33 L54,33 L54,31 L52.319,31 Z M45.026,20.416 L51.185,14.256 L49.771,12.842 L43.612,19.002 L45.026,20.416 Z M18.971,43.642 L12.811,49.802 L14.225,51.216 L20.386,45.056 L18.971,43.642 Z M23.246,21.833 L11.586,10.173 L10.172,11.587 L21.832,23.247 L23.246,21.833 Z M43.303,41.89 L53.826,52.413 L52.412,53.827 L41.888,43.304 L43.303,41.89 Z" fill="#FFFFFF"></path>
+      </g>
+      <text x="748" y="279" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif">Secrets Manager</text>
+      <text x="748" y="295" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">app secrets</text>
+
+      <!-- Application Load Balancer -->
+      <rect x="700" y="344" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <g transform="translate(712, 360) scale(0.375)" aria-hidden="true">
+        <g fill="#8C4FFF">
+          <rect x="0" y="0" width="64" height="64"></rect>
+        </g>
+        <path d="M23.5,42 C17.71,42 13,37.29 13,31.5 C13,25.71 17.71,21 23.5,21 C29.29,21 34,25.71 34,31.5 C34,37.29 29.29,42 23.5,42 M48,48 C48,49.654 46.654,51 45,51 C43.346,51 42,49.654 42,48 C42,46.346 43.346,45 45,45 C46.654,45 48,46.346 48,48 M45,13 C46.654,13 48,14.346 48,16 C48,17.654 46.654,19 45,19 C43.346,19 42,17.654 42,16 C42,14.346 43.346,13 45,13 M48,29 C49.654,29 51,30.346 51,32 C51,33.654 49.654,35 48,35 C46.346,35 45,33.654 45,32 C45,30.346 46.346,29 48,29 M35.901,33 L43.102,33 C43.565,35.279 45.586,37 48,37 C50.757,37 53,34.757 53,32 C53,29.243 50.757,27 48,27 C45.586,27 43.565,28.721 43.102,31 L35.975,31 C35.916,29.541 35.614,28.146 35.096,26.856 L42.799,20.467 C43.466,20.797 44.206,21 45,21 C47.757,21 50,18.757 50,16 C50,13.243 47.757,11 45,11 C42.243,11 40,13.243 40,16 C40,17.224 40.459,18.331 41.191,19.201 L34.172,25.024 C31.977,21.42 28.021,19 23.5,19 C16.607,19 11,24.607 11,31.5 C11,38.393 16.607,44 23.5,44 C27.743,44 31.493,41.871 33.754,38.629 L41.191,44.799 C40.459,45.669 40,46.776 40,48 C40,50.757 42.243,53 45,53 C47.757,53 50,50.757 50,48 C50,45.243 47.757,43 45,43 C44.206,43 43.466,43.203 42.799,43.533 L34.77,36.873 C35.344,35.673 35.736,34.373 35.901,33" fill="#FFFFFF"></path>
+      </g>
+      <text x="748" y="367" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif">Application LB</text>
+      <text x="748" y="383" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">ingress</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="40" y="572" width="16" height="16" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="66" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">조정 주체 (핵심)</text>
+      <rect x="220" y="572" width="16" height="16" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="246" y="584" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">AWS 서비스 / 구성 요소</text>
+    </svg>

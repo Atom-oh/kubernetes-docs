@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="calico-timeline-title calico-timeline-desc">
+    <title id="calico-timeline-title">Calico project evolution, 2014-2025</title>
+    <desc id="calico-timeline-desc">Timeline showing Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI adoption and Tigera's founding, to a Kubernetes-native datastore in 2018 and full eBPF data-plane feature parity in 2025.</desc>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Baseline -->
+    <line x1="80" y1="340" x2="920" y2="340" stroke="#D5DBDB" stroke-width="1"/>
+    <line x1="80" y1="332" x2="80" y2="348" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+    <line x1="920" y1="332" x2="920" y2="348" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+
+    <!-- 2014 Project Calico founded (below) -->
+    <line x1="80" y1="340" x2="80" y2="392" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <circle cx="80" cy="340" r="4" fill="#232F3E"/>
+    <text x="80" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2014</text>
+    <text x="80" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Calico founded</text>
+    <text x="80" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OpenStack focus</text>
+
+    <!-- 2016 Kubernetes CNI support (above) -->
+    <line x1="232" y1="288" x2="232" y2="340" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <circle cx="232" cy="340" r="4" fill="#232F3E"/>
+    <text x="232" y="244" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2016</text>
+    <text x="232" y="260" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">K8s CNI support</text>
+    <text x="232" y="276" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">first prod use</text>
+
+    <!-- 2017 Tigera founded (below) -->
+    <line x1="308" y1="340" x2="308" y2="392" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <circle cx="308" cy="340" r="4" fill="#232F3E"/>
+    <text x="308" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2017</text>
+    <text x="308" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tigera founded</text>
+    <text x="308" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">commercial arm</text>
+
+    <!-- 2018 Calico 3.0 (major) (above, accent) -->
+    <line x1="384" y1="284" x2="384" y2="340" stroke="#EC7211" stroke-width="1.2"/>
+    <circle cx="384" cy="340" r="6" fill="#EC7211"/>
+    <text x="384" y="240" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2018</text>
+    <text x="384" y="260" fill="#232F3E" font-size="14" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Calico 3.0</text>
+    <text x="384" y="276" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">k8s-native datastore</text>
+
+    <!-- 2020 Calico Enterprise GA (below) -->
+    <line x1="536" y1="340" x2="536" y2="392" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <circle cx="536" cy="340" r="4" fill="#232F3E"/>
+    <text x="536" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2020</text>
+    <text x="536" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Enterprise GA</text>
+    <text x="536" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">observability</text>
+
+    <!-- 2022 eBPF data plane GA (above) -->
+    <line x1="692" y1="288" x2="692" y2="340" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <circle cx="692" cy="340" r="4" fill="#232F3E"/>
+    <text x="692" y="244" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2022</text>
+    <text x="692" y="260" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF data plane GA</text>
+    <text x="692" y="276" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel bypass</text>
+
+    <!-- 2024 nftables backend (below) -->
+    <line x1="844" y1="340" x2="844" y2="392" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <circle cx="844" cy="340" r="4" fill="#232F3E"/>
+    <text x="844" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2024</text>
+    <text x="844" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">nftables backend</text>
+    <text x="844" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">next-gen Linux fw</text>
+
+    <!-- 2025 Calico 3.29 (major) (above, accent) -->
+    <line x1="920" y1="284" x2="920" y2="340" stroke="#EC7211" stroke-width="1.2"/>
+    <circle cx="920" cy="340" r="6" fill="#EC7211"/>
+    <text x="920" y="240" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">2025</text>
+    <text x="920" y="260" fill="#232F3E" font-size="14" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Calico 3.29</text>
+    <text x="920" y="276" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">full eBPF parity</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <circle cx="52" cy="536" r="4" fill="#232F3E"/>
+    <text x="68" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Milestone</text>
+    <circle cx="180" cy="536" r="6" fill="#EC7211"/>
+    <text x="196" y="540" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Major release</text>
+    <text x="336" y="540" fill="#7D8998" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">Spacing is proportional to real elapsed time.</text>
+  </svg>

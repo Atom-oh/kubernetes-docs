@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cwlogs-title cwlogs-desc">
+  <title id="cwlogs-title">CloudWatch Logs 파이프라인</title>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+  <desc id="cwlogs-desc">CloudWatch Logs가 EKS·애플리케이션·Lambda의 로그를 하나의 Log Group으로 모으고, 여기서 Log Streams 저장, Logs Insights 조회, Metric Filter 기반 알람, Subscription Filters를 통한 S3·Kinesis Firehose(→OpenSearch)·Lambda 실시간 전달까지 네 갈래로 분기하는 로그 파이프라인.</desc>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="32" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.14em">OBSERVABILITY / LOGGING</text>
+  <text x="32" y="48" fill="#232F3E" font-size="20" font-weight="700">CloudWatch Logs 파이프라인</text>
+
+  <!-- ================= ARROWS (drawn before boxes) ================= -->
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <!-- 로그 소스 -> Log Group (straight, shared x) -->
+  <line x1="480" y1="136" x2="480" y2="176" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Log Group -> 4 children (fan-out, staggered bend levels 264 / 280) -->
+  <!-- A: Log Group -> Log Streams -->
+  <path d="M420,248 V256 Q420,264 412,264 H182 Q174,264 174,272 V328"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- B: Log Group -> Logs Insights -->
+  <path d="M460,248 V272 Q460,280 452,280 H386 Q378,280 378,288 V328"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- C: Log Group -> Metric Filter -->
+  <path d="M500,248 V272 Q500,280 508,280 H574 Q582,280 582,288 V328"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- D: Log Group -> Subscription Filters -->
+  <path d="M540,248 V256 Q540,264 548,264 H778 Q786,264 786,272 V328"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Metric Filter -> CloudWatch Alarm is folded into node 5's sublabel (merged node) -->
+
+  <!-- Subscription Filters -> 3 destinations (shared bend 448) -->
+  <path d="M741,416 V440 Q741,448 733,448 H596 Q588,448 588,456 V480"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M786,416 V440 Q786,448 778,448 H740 Q732,448 732,456 V480"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M831,416 V440 Q831,448 839,448 H868 Q876,448 876,456 V480"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- 1. 로그 소스 (input) -->
+  <rect x="380" y="64" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="380" y="64" width="200" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <rect x="388" y="70" width="28" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.6)" stroke-width="0.8"/>
+  <text x="402" y="79" fill="#7D8998" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SRC</text>
+  <text x="480" y="102" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">로그 소스</text>
+  <text x="480" y="118" fill="#545B64" font-size="9" class="mono" text-anchor="middle">EKS · 앱 · Lambda</text>
+
+  <!-- 2. Log Group (focal) -->
+  <rect x="380" y="176" width="200" height="72" rx="6" fill="#ffffff"/>
+  <rect x="380" y="176" width="200" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="214" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Log Group</text>
+  <text x="480" y="230" fill="#545B64" font-size="9" class="mono" text-anchor="middle">/aws/eks/cluster/logs</text>
+
+  <!-- 3. Log Streams (store) -->
+  <rect x="84" y="328" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="84" y="328" width="180" height="88" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="92" y="334" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="108" y="343" fill="#545B64" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">STORE</text>
+  <text x="174" y="350" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Log Streams</text>
+  <text x="174" y="366" fill="#545B64" font-size="9" class="mono" text-anchor="middle">스트림 1~3</text>
+
+  <!-- 4. Logs Insights (backend) -->
+  <rect x="288" y="328" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="288" y="328" width="180" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="296" y="334" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="313" y="343" fill="#232F3E" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">QUERY</text>
+  <text x="378" y="350" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Logs Insights</text>
+  <text x="378" y="366" fill="#545B64" font-size="9" class="mono" text-anchor="middle">쿼리 분석</text>
+
+  <!-- 5. Metric Filter -> CloudWatch Alarm (merged, backend) -->
+  <rect x="492" y="328" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="492" y="328" width="180" height="88" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="500" y="334" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.4)" stroke-width="0.8"/>
+  <text x="516" y="343" fill="#232F3E" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">ALERT</text>
+  <text x="582" y="350" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Metric Filter</text>
+  <text x="582" y="366" fill="#545B64" font-size="9" class="mono" text-anchor="middle">→ CloudWatch Alarm</text>
+
+  <!-- 6. Subscription Filters (focal) -->
+  <rect x="696" y="328" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="696" y="328" width="180" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="786" y="350" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Subscription Filters</text>
+  <text x="786" y="366" fill="#545B64" font-size="9" class="mono" text-anchor="middle">실시간 스트리밍</text>
+
+  <!-- 7. S3 (store) -->
+  <rect x="524" y="480" width="128" height="72" rx="6" fill="#ffffff"/>
+  <rect x="524" y="480" width="128" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="588" y="512" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">S3</text>
+  <text x="588" y="528" fill="#545B64" font-size="9" class="mono" text-anchor="middle">장기 보관</text>
+
+  <!-- 8. Kinesis Firehose -> OpenSearch (merged, external) -->
+  <rect x="668" y="480" width="128" height="72" rx="6" fill="#ffffff"/>
+  <rect x="668" y="480" width="128" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="732" y="512" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kinesis Firehose</text>
+  <text x="732" y="528" fill="#545B64" font-size="9" class="mono" text-anchor="middle">→ OpenSearch</text>
+
+  <!-- 9. Lambda destination (backend) -->
+  <rect x="812" y="480" width="128" height="72" rx="6" fill="#ffffff"/>
+  <rect x="812" y="480" width="128" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="876" y="512" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Lambda</text>
+  <text x="876" y="528" fill="#545B64" font-size="9" class="mono" text-anchor="middle">실시간 처리</text>
+
+  <!-- ================= LEGEND ================= -->
+  <line x1="32" y1="568" x2="928" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="32" y="580" width="10" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="48" y="589" fill="#545B64" font-size="8" class="mono" letter-spacing="0.06em">핵심 허브</text>
+  <rect x="152" y="580" width="10" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="168" y="589" fill="#545B64" font-size="8" class="mono" letter-spacing="0.06em">처리 / 알림</text>
+  <rect x="296" y="580" width="10" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="312" y="589" fill="#545B64" font-size="8" class="mono" letter-spacing="0.06em">저장소</text>
+  <rect x="416" y="580" width="10" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="432" y="589" fill="#545B64" font-size="8" class="mono" letter-spacing="0.06em">외부 목적지</text>
+</svg>

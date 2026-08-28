@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d4-title d4-desc">
+  <title id="d4-title">네트워크 정책이 포드 간 통신을 제어하는 방식</title>
+  <desc id="d4-desc">네임스페이스 격리, 특정 포드 간 통신 허용, 외부 트래픽 제한, 이그레스 제한이라는 네 가지 네트워크 정책이 프론트엔드·백엔드·데이터베이스 포드 사이의 통신과 외부 서비스로의 접근을 각각 어떻게 제어하는지 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="d4-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="d4-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+  <text x="40" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">ARCHITECTURE</text>
+  <text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700">네트워크 정책 시행 구조</text>
+
+  <!-- Zones -->
+  <rect x="136" y="108" width="688" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="424" y="112" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="121" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NETWORK POLICIES</text>
+
+  <rect x="180" y="308" width="680" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="468" y="312" width="104" height="12" rx="2" fill="#ffffff"/>
+  <text x="520" y="321" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NAMESPACES</text>
+
+  <!-- Arrows (behind boxes) -->
+  <!-- NP1 -> namespace zone (isolation applies at namespace boundary), routed around the left -->
+  <path d="M 156,180 H 116 Q 108,180 108,188 V 328 Q 108,336 116,336 H 180"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+
+  <!-- NP2 -> Pod1, NP2 -> Pod2 -->
+  <path d="M 388,204 V 216 Q 388,224 380,224 H 292 Q 284,224 284,232 V 340"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+  <path d="M 404,204 V 220 Q 404,228 412,228 H 472 Q 480,228 480,236 V 340"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+
+  <!-- NP3 -> Pod1 (bridged over NP2->Pod2's vertical at x=480) -->
+  <path d="M 564,204 V 240 Q 564,248 556,248 H 488 a 8,8 0 0,1 -16,0 H 312 Q 304,248 304,256 V 340"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+
+  <!-- NP4 -> Pod2 -->
+  <path d="M 732,204 V 264 Q 732,272 724,272 H 508 Q 500,272 500,280 V 340"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+
+  <!-- Pod1 -> Pod2 (frontend to backend, accent — the primary in-cluster path) -->
+  <line x1="364" y1="372" x2="420" y2="372" stroke="#EC7211" stroke-width="1.4" marker-end="url(#d4-arrow-accent)"/>
+  <!-- Pod2 -> Pod3 -->
+  <line x1="564" y1="372" x2="680" y2="372" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+
+  <!-- External -> Pod1 -->
+  <line x1="108" y1="372" x2="220" y2="372" stroke="#545B64" stroke-width="1.2" marker-end="url(#d4-arrow)"/>
+  <!-- Pod2 -> External (egress, routed below the row to avoid passing behind Pod1) -->
+  <path d="M 492,404 V 424 Q 492,432 484,432 H 116 Q 108,432 108,424 V 400"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#d4-arrow)"/>
+
+  <!-- NP1 -->
+  <rect x="156" y="140" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="228" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">네임스페이스</text>
+  <text x="228" y="180" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">격리 정책</text>
+
+  <!-- NP2 -->
+  <rect x="324" y="140" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="396" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">포드 간 통신</text>
+  <text x="396" y="180" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">허용 정책</text>
+
+  <!-- NP3 -->
+  <rect x="492" y="140" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="564" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">외부 트래픽</text>
+  <text x="564" y="180" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">제한 정책</text>
+
+  <!-- NP4 -->
+  <rect x="660" y="140" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="732" y="164" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">이그레스</text>
+  <text x="732" y="180" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">제한 정책</text>
+
+  <!-- External -->
+  <circle cx="80" cy="372" r="28" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="80" y="368" fill="#232F3E" font-size="10" font-weight="600" text-anchor="middle">외부</text>
+  <text x="80" y="380" fill="#232F3E" font-size="10" font-weight="600" text-anchor="middle">서비스</text>
+
+  <!-- Pod1 -->
+  <rect x="220" y="340" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="292" y="368" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">프론트엔드</text>
+  <text x="292" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ns: my-namespace</text>
+
+  <!-- Pod2 (focal — highest degree) -->
+  <rect x="420" y="340" width="144" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="492" y="368" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">백엔드</text>
+  <text x="492" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ns: my-namespace</text>
+
+  <!-- Pod3 -->
+  <rect x="680" y="340" width="144" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="752" y="368" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">데이터베이스</text>
+  <text x="752" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">ns: data</text>
+</svg>

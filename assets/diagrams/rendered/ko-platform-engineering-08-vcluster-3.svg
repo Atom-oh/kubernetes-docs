@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vcluster-teams-title vcluster-teams-desc">
+<title id="vcluster-teams-title">팀별 vCluster 분리</title>
+<desc id="vcluster-teams-desc">호스트 EKS 클러스터 안에서 프론트엔드·백엔드·데이터 세 팀이 각각 다른 쿠버네티스 버전의 vCluster를 소유하고, ALB Controller·EBS CSI·Prometheus 같은 공유 인프라를 함께 사용하는 구조를 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style></defs><defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Zone: host cluster -->
+<rect x="240" y="40" width="680" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="480" y="44" width="200" height="12" rx="2" fill="#ffffff"/>
+<text x="580" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">호스트 EKS 클러스터</text>
+
+<!-- Sub-zone: shared infra -->
+<rect x="640" y="76" width="248" height="372" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+<rect x="700" y="80" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="764" y="89" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.10em">공유 인프라</text>
+
+<!-- Arrows: team -> vCluster -->
+<path d="M160,120 H240" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M160,260 H280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M160,400 H280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- Node: FE team -->
+<rect x="24" y="92" width="136" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="92" y="116" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프론트엔드 팀</text>
+
+<!-- Node: BE team -->
+<rect x="24" y="232" width="136" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="92" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">백엔드 팀</text>
+
+<!-- Node: Data team -->
+<rect x="24" y="372" width="136" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="92" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터 팀</text>
+
+<!-- Node: vCluster frontend (focal - shared runtime with Istio) -->
+<rect x="280" y="92" width="248" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="404" y="116" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster: frontend</text>
+<text x="404" y="132" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">K8s v1.31 · Istio 설치됨</text>
+
+<!-- Node: vCluster backend -->
+<rect x="280" y="232" width="248" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="404" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster: backend</text>
+<text x="404" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">K8s v1.30 · Custom CRD</text>
+
+<!-- Node: vCluster data -->
+<rect x="280" y="372" width="248" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="404" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vCluster: data</text>
+<text x="404" y="412" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">K8s v1.31 · Spark Operator</text>
+
+<!-- Node: ALB Controller -->
+<rect x="664" y="104" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="764" y="128" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ALB Controller</text>
+<text x="764" y="144" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared ingress</text>
+
+<!-- Node: EBS CSI -->
+<rect x="664" y="224" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="764" y="248" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">EBS CSI</text>
+<text x="764" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared storage</text>
+
+<!-- Node: Prometheus Stack -->
+<rect x="664" y="344" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="764" y="368" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus Stack</text>
+<text x="764" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared monitoring</text>
+
+<!-- Legend -->
+<line x1="24" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="24" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+<rect x="24" y="528" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="44" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Istio 설치된 vCluster (focal)</text>
+
+<line x1="260" y1="533" x2="288" y2="533" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="296" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">팀 소유</text>
+
+<rect x="380" y="528" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="400" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">공유 인프라 컴포넌트</text>
+</svg>

@@ -78,47 +78,7 @@ Istio는 강력한 트래픽 관리 기능을 제공합니다:
 
 Istio는 **Control Plane**과 **Data Plane**으로 구성됩니다.
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane[Control Plane]
-        Istiod[istiod<br/>서비스 검색, 구성 관리, 인증서 관리]
-    end
-
-    subgraph DataPlane[Data Plane]
-        subgraph Pod1[Pod A]
-            App1[App Container]
-            Proxy1[Envoy Proxy]
-        end
-
-        subgraph Pod2[Pod B]
-            App2[App Container]
-            Proxy2[Envoy Proxy]
-        end
-
-        subgraph Pod3[Pod C]
-            App3[App Container]
-            Proxy3[Envoy Proxy]
-        end
-    end
-
-    Istiod -->|구성 배포| Proxy1
-    Istiod -->|구성 배포| Proxy2
-    Istiod -->|구성 배포| Proxy3
-
-    Proxy1 <-->|mTLS| Proxy2
-    Proxy2 <-->|mTLS| Proxy3
-    Proxy1 <-->|mTLS| Proxy3
-
-    %% 스타일 정의
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataPlane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef app fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Istiod controlPlane;
-    class Proxy1,Proxy2,Proxy3 dataPlane;
-    class App1,App2,App3 app;
-```
+![istiod가 Control Plane에서 각 파드의 Envoy 사이드카 프록시로 구성을 배포하고, Data Plane의 세 사이드카(Pod A, B, C)는 서로 mTLS로 암호화된 트래픽을 주고받는 Istio 아키텍처를 보여준다.](../.gitbook/assets/ko-service-mesh-02-istio-0.png)
 
 ### Control Plane (istiod)
 

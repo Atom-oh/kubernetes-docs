@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="ekscomp-title ekscomp-desc">
+    <title id="ekscomp-title">Key EKS components for AI/ML: NVIDIA GPU Operator, Kubeflow, MPI Operator, and KServe</title>
+    <desc id="ekscomp-desc">Diagram showing the NVIDIA GPU Operator expanding into driver, container toolkit, device plugin, and DCGM exporter; Kubeflow expanding into notebooks, training jobs, pipelines, and Katib; the MPI Operator as a standalone component; and KServe expanding into a model serving stack of KServe, TorchServe, and Triton Inference Server.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: Amazon EKS -->
+    <rect x="40" y="56" width="880" height="216" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="48" y="60" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="60" y="69" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">AMAZON EKS</text>
+
+    <!-- arrows behind nodes -->
+    <line x1="174" y1="128" x2="174" y2="192" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="378" y1="128" x2="378" y2="192" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="786" y1="128" x2="786" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Row 1: component chips -->
+    <rect x="80" y="88" width="188" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="174" y="112" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">NVIDIA GPU Operator</text>
+
+    <rect x="284" y="88" width="188" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="378" y="112" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubeflow</text>
+
+    <rect x="488" y="88" width="188" height="40" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="582" y="112" fill="#545B64" font-size="12" font-weight="600" text-anchor="middle">MPI Operator</text>
+
+    <rect x="692" y="88" width="188" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="786" y="112" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KServe</text>
+
+    <!-- Row 2: collapsed detail nodes -->
+    <rect x="80" y="192" width="188" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="174" y="217" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">GPU Operator Stack</text>
+    <text x="174" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Driver · Toolkit · Device Plugin</text>
+    <text x="174" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DCGM Exporter</text>
+
+    <rect x="284" y="192" width="188" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="378" y="217" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubeflow Components</text>
+    <text x="378" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Notebooks · Training Jobs</text>
+    <text x="378" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pipelines · Katib</text>
+
+    <rect x="692" y="192" width="188" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="786" y="217" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Model Serving</text>
+    <text x="786" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">KServe · TorchServe</text>
+    <text x="786" y="244" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Triton Inference Server</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="308" x2="920" y2="308" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="324" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="340" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="348" fill="#545B64" font-size="8.5">Focal component</text>
+
+    <rect x="220" y="340" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="348" fill="#545B64" font-size="8.5">Component / detail stack</text>
+
+    <rect x="440" y="340" width="14" height="10" rx="2" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8" stroke-dasharray="4,3"/>
+    <text x="460" y="348" fill="#545B64" font-size="8.5">Standalone (no expansion)</text>
+  </svg>

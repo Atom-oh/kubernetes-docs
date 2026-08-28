@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dia-title dia-desc"><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <title id="dia-title">OTel Collector 기반 관측성 파이프라인</title>
+    <desc id="dia-desc">MSA 애플리케이션, 노드 메트릭, K8s 이벤트 같은 데이터 소스가 OTel Collector로 모이고, Collector는 수신·가공·내보내기 단계를 거쳐 메트릭·로깅·트레이싱 백엔드로 데이터를 각각 분기 전달하는 구조를 보여준다.</desc>
+    <defs>
+      <marker id="arr" markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#545B64"/>
+      </marker>
+      <marker id="arr-accent" markerWidth="7" markerHeight="6" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#FFFFFF"/>
+
+    <!-- Zone: Sources -->
+    <rect x="40" y="140" width="200" height="328" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="96" y="144" width="88" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="140" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">데이터 소스</text>
+
+    <!-- Zone: Backends -->
+    <rect x="700" y="60" width="220" height="460" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="765" y="64" width="90" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="810" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">백엔드</text>
+
+    <!-- Arrows: sources -> collector (fan-in), drawn before node rects -->
+    <path d="M230,208 H307 Q315,208 315,216 V236 Q315,244 323,244 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M230,292 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M230,376 H307 Q315,376 315,368 V348 Q315,340 323,340 H400" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+
+    <!-- Arrows: collector -> backends (fan-out), labeled -->
+    <path d="M620,252 H665 Q673,252 673,244 V150 Q673,142 681,142 H710" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M620,300 H710" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+    <path d="M620,348 H665 Q673,348 673,356 V450 Q673,458 681,458 H710" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+
+    <!-- fan-out arrow labels -->
+    <rect x="640" y="176" width="46" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="663" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">metrics</text>
+
+    <rect x="640" y="294" width="34" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="657" y="303" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">logs</text>
+
+    <rect x="640" y="404" width="38" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="659" y="413" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">traces</text>
+
+    <!-- Node: MSA Apps (source / input treatment) -->
+    <rect x="50" y="176" width="180" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="58" y="184" width="34" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+    <text x="75" y="193" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+    <text x="140" y="210" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">MSA 앱</text>
+    <text x="140" y="226" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">OTel SDK 계측</text>
+
+    <!-- Node: Node Metrics -->
+    <rect x="50" y="260" width="180" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="58" y="268" width="34" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+    <text x="75" y="277" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NODE</text>
+    <text x="140" y="294" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">노드 메트릭</text>
+    <text x="140" y="310" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cAdvisor · kubelet</text>
+
+    <!-- Node: K8s Events -->
+    <rect x="50" y="344" width="180" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <rect x="58" y="352" width="34" height="12" rx="2" fill="transparent" stroke="rgba(125,137,152,0.50)" stroke-width="0.8"/>
+    <text x="75" y="361" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="140" y="378" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">K8s 이벤트</text>
+    <text x="140" y="394" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">API 서버 이벤트</text>
+
+    <!-- Node: OTel Collector (focal) -->
+    <rect x="400" y="228" width="220" height="144" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="408" y="236" width="44" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+    <text x="430" y="245" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">OTEL</text>
+    <text x="510" y="258" fill="#232F3E" font-size="13" font-weight="700" font-family="'Amazon Ember', sans-serif" text-anchor="middle">OTel Collector</text>
+
+    <line x1="440" y1="272" x2="580" y2="272" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+
+    <text x="420" y="288" fill="#232F3E" font-size="8.5" font-weight="600" font-family="'Amazon Ember', sans-serif">Receivers</text>
+    <text x="600" y="288" fill="#545B64" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="end">OTLP · Prometheus</text>
+
+    <path d="M420,296 H600" fill="none" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" marker-end="url(#arr)"/>
+
+    <text x="420" y="315" fill="#232F3E" font-size="8.5" font-weight="600" font-family="'Amazon Ember', sans-serif">Processors</text>
+    <text x="600" y="315" fill="#545B64" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="end">batch · k8sattributes</text>
+
+    <path d="M420,323 H600" fill="none" stroke="rgba(35,47,62,0.30)" stroke-width="0.8" marker-end="url(#arr)"/>
+
+    <text x="420" y="342" fill="#232F3E" font-size="8.5" font-weight="600" font-family="'Amazon Ember', sans-serif">Exporters</text>
+    <text x="600" y="342" fill="#545B64" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="end">fan-out</text>
+
+    <text x="510" y="360" fill="#7D8998" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">metrics · logs · traces로 분기</text>
+
+    <!-- Node: Metrics Backends (store treatment) -->
+    <rect x="710" y="96" width="200" height="76" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="718" y="104" width="30" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="733" y="113" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MET</text>
+    <text x="810" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">메트릭 백엔드</text>
+    <text x="810" y="148" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Prometheus → AMP</text>
+    <text x="810" y="160" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">VictoriaMetrics · Mimir · CW</text>
+
+    <!-- Node: Logging Backends -->
+    <rect x="710" y="260" width="200" height="76" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="718" y="268" width="30" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="733" y="277" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LOG</text>
+    <text x="810" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">로깅 백엔드</text>
+    <text x="810" y="312" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Loki · ClickHouse</text>
+    <text x="810" y="324" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">OpenSearch · CloudWatch Logs</text>
+
+    <!-- Node: Tracing Backends -->
+    <rect x="710" y="424" width="200" height="76" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="718" y="432" width="30" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.50)" stroke-width="0.8"/>
+    <text x="733" y="441" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TRC</text>
+    <text x="810" y="460" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">트레이싱 백엔드</text>
+    <text x="810" y="476" fill="#545B64" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Tempo · X-Ray</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="570" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">수집·가공 (Collector)</text>
+
+    <rect x="230" y="570" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="250" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">데이터 소스</text>
+
+    <rect x="380" y="570" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="400" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">저장 백엔드</text>
+
+    <line x1="540" y1="576" x2="568" y2="576" stroke="#545B64" stroke-width="1" marker-end="url(#arr)"/>
+    <text x="576" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">데이터 흐름</text>
+  </svg>

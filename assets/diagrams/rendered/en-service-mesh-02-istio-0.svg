@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="istio-arch-title istio-arch-desc">
+  <title id="istio-arch-title">Istio service mesh architecture</title>
+  <desc id="istio-arch-desc">Istiod in the control plane pushes configuration down to the Envoy sidecar proxies running alongside application containers in three data-plane pods, and those proxies establish mutual TLS connections directly with one another.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-mtls" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#232F3E"/>
+    </marker>
+    <marker id="arrow-mtls-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="8 0, 0 3, 8 6" fill="#232F3E"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- section eyebrows -->
+  <text x="480" y="24" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CONTROL PLANE</text>
+  <text x="80" y="168" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">DATA PLANE</text>
+
+  <!-- pod zones (drawn before arrows/nodes) -->
+  <rect x="80" y="180" width="240" height="156" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="164" y="184" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="200" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">POD A</text>
+
+  <rect x="360" y="180" width="240" height="156" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="444" y="184" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">POD B</text>
+
+  <rect x="640" y="180" width="240" height="156" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="724" y="184" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="760" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">POD C</text>
+
+  <!-- ===== arrows (behind nodes) ===== -->
+
+  <!-- config distribution: istiod -> pod A -->
+  <path d="M416,108 V136 Q416,144 408,144 H208 Q200,144 200,152 V180"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <!-- config distribution: istiod -> pod B (straight) -->
+  <path d="M480,108 V180" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <!-- config distribution: istiod -> pod C -->
+  <path d="M544,108 V136 Q544,144 552,144 H752 Q760,144 760,152 V180"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- config label (single label represents all three pushes) -->
+  <rect x="290" y="124" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="334" y="133" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CONFIG PUSH</text>
+
+  <!-- mTLS: proxy1 <-> proxy2 -->
+  <path d="M296,294 H384" fill="none" stroke="#232F3E" stroke-width="1.2"
+        marker-end="url(#arrow-mtls)" marker-start="url(#arrow-mtls-start)"/>
+  <!-- mTLS: proxy2 <-> proxy3 -->
+  <path d="M576,294 H664" fill="none" stroke="#232F3E" stroke-width="1.2"
+        marker-end="url(#arrow-mtls)" marker-start="url(#arrow-mtls-start)"/>
+  <!-- mTLS: proxy1 <-> proxy3 (routed below the pod row to clear pod B) -->
+  <path d="M200,316 V348 Q200,356 208,356 H752 Q760,356 760,348 V316"
+        fill="none" stroke="#232F3E" stroke-width="1.2"
+        marker-end="url(#arrow-mtls)" marker-start="url(#arrow-mtls-start)"/>
+  <rect x="446" y="336" width="68" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="345" fill="#232F3E" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MTLS (ALL PAIRS)</text>
+
+  <!-- ===== nodes ===== -->
+
+  <!-- Istiod (focal) -->
+  <rect x="350" y="44" width="260" height="64" rx="6" fill="#ffffff"/>
+  <rect x="350" y="44" width="260" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="480" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">istiod</text>
+  <text x="480" y="86" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">discovery · config · certs</text>
+
+  <!-- Pod A: App1 + Proxy1 -->
+  <rect x="104" y="216" width="192" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="112" y="222" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="132" y="231" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APP</text>
+  <text x="216" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App Container</text>
+
+  <rect x="104" y="272" width="192" height="44" rx="6" fill="rgba(35,47,62,0.04)" stroke="#545B64" stroke-width="1"/>
+  <rect x="112" y="278" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="138" y="287" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENVOY</text>
+  <text x="216" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+
+  <!-- Pod B: App2 + Proxy2 -->
+  <rect x="384" y="216" width="192" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="392" y="222" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="412" y="231" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APP</text>
+  <text x="496" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App Container</text>
+
+  <rect x="384" y="272" width="192" height="44" rx="6" fill="rgba(35,47,62,0.04)" stroke="#545B64" stroke-width="1"/>
+  <rect x="392" y="278" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="418" y="287" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENVOY</text>
+  <text x="496" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+
+  <!-- Pod C: App3 + Proxy3 -->
+  <rect x="664" y="216" width="192" height="44" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="672" y="222" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="692" y="231" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">APP</text>
+  <text x="760" y="242" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App Container</text>
+
+  <rect x="664" y="272" width="192" height="44" rx="6" fill="rgba(35,47,62,0.04)" stroke="#545B64" stroke-width="1"/>
+  <rect x="672" y="278" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="698" y="287" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENVOY</text>
+  <text x="760" y="298" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+
+  <!-- legend -->
+  <line x1="80" y1="392" x2="880" y2="392" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="80" y="408" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <path d="M240,410 H280" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="288" y="413" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Config distribution (istiod → sidecar)</text>
+
+  <path d="M600,410 H640" fill="none" stroke="#232F3E" stroke-width="1.2" marker-end="url(#arrow-mtls)" marker-start="url(#arrow-mtls-start)"/>
+  <text x="648" y="413" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Mutual TLS (proxy ↔ proxy)</text>
+</svg>

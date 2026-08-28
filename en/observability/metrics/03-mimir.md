@@ -37,33 +37,7 @@ Grafana Mimir is an open-source, horizontally scalable long-term metrics storage
 
 Mimir is the successor to Cortex, offering better performance and operability:
 
-```mermaid
-flowchart LR
-    subgraph HISTORY["Evolution"]
-        direction TB
-        C[Cortex<br/>2016]
-        M[Mimir<br/>2022]
-        T[Thanos<br/>2017]
-    end
-
-    subgraph APPROACH["Approach"]
-        CA[Centralized<br/>Remote Write]
-        TA[Sidecar-based<br/>Federated Query]
-    end
-
-    C --> M
-    C -.-> CA
-    T -.-> TA
-    M -.-> CA
-
-    classDef legacy fill:#95A5A6,stroke:#333,stroke-width:1px,color:white
-    classDef current fill:#3498DB,stroke:#333,stroke-width:1px,color:white
-    classDef approach fill:#27AE60,stroke:#333,stroke-width:1px,color:white
-
-    class C legacy
-    class M,T current
-    class CA,TA approach
-```
+![Mimir evolved from Cortex and shares its centralized remote-write approach, while Thanos took a separate sidecar-based federated-query path.](../../.gitbook/assets/en-observability-metrics-03-mimir-0.png)
 
 | Item | Mimir | Cortex | Thanos |
 |------|-------|--------|--------|
@@ -78,73 +52,7 @@ flowchart LR
 
 ### Overall Architecture
 
-```mermaid
-flowchart TB
-    subgraph WRITE["Write Path"]
-        P1[Prometheus 1]
-        P2[Prometheus 2]
-        P3[Prometheus 3]
-    end
-
-    subgraph MIMIR["Grafana Mimir"]
-        subgraph DIST["Distributor"]
-            D1[Distributor 1]
-            D2[Distributor 2]
-        end
-
-        subgraph ING["Ingester"]
-            I1[Ingester 1]
-            I2[Ingester 2]
-            I3[Ingester 3]
-        end
-
-        subgraph STORE["Store-gateway"]
-            SG1[Store-gateway 1]
-            SG2[Store-gateway 2]
-        end
-
-        subgraph COMPACT["Compactor"]
-            C1[Compactor]
-        end
-
-        subgraph QUERY["Querier"]
-            Q1[Querier 1]
-            Q2[Querier 2]
-        end
-
-        subgraph QF["Query-frontend"]
-            QF1[Query-frontend]
-        end
-    end
-
-    subgraph STORAGE["Object Storage"]
-        S3[(S3/GCS/Azure)]
-    end
-
-    subgraph READ["Read Path"]
-        G[Grafana]
-    end
-
-    P1 & P2 & P3 -->|remote_write| D1 & D2
-    D1 & D2 --> I1 & I2 & I3
-    I1 & I2 & I3 -->|Block upload| S3
-    C1 -->|Compaction| S3
-    SG1 & SG2 -->|Block read| S3
-    Q1 & Q2 --> I1 & I2 & I3
-    Q1 & Q2 --> SG1 & SG2
-    QF1 --> Q1 & Q2
-    G --> QF1
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef mimir fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class P1,P2,P3 prometheus
-    class D1,D2,I1,I2,I3,SG1,SG2,C1,Q1,Q2,QF1 mimir
-    class S3 storage
-    class G client
-```
+![Prometheus writes through the Distributor into Ingesters, which upload blocks to object storage; the Compactor merges those blocks, while Grafana's queries flow through the Query-frontend and Querier to read recent data from the Ingester and historical data from the Store-gateway, both backed by the same object storage.](../../.gitbook/assets/en-observability-metrics-03-mimir-1.png)
 
 ### Data Flow
 
@@ -354,40 +262,7 @@ overrides:
 
 ### Tenant Isolation
 
-```mermaid
-flowchart TD
-    subgraph TENANTS["Tenants"]
-        T1[Tenant A<br/>Team A]
-        T2[Tenant B<br/>Team B]
-        T3[Tenant C<br/>Team C]
-    end
-
-    subgraph MIMIR["Mimir"]
-        D[Distributor]
-        I[Ingester]
-    end
-
-    subgraph STORAGE["Object Storage"]
-        B1[tenant-a/blocks/]
-        B2[tenant-b/blocks/]
-        B3[tenant-c/blocks/]
-    end
-
-    T1 -->|X-Scope-OrgID: tenant-a| D
-    T2 -->|X-Scope-OrgID: tenant-b| D
-    T3 -->|X-Scope-OrgID: tenant-c| D
-
-    D --> I
-    I --> B1 & B2 & B3
-
-    classDef tenant fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef mimir fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class T1,T2,T3 tenant
-    class D,I mimir
-    class B1,B2,B3 storage
-```
+![Each tenant's samples carry an X-Scope-OrgID header through a shared Distributor and Ingester, which write to a separate object-storage prefix per tenant so data never mixes across tenants.](../../.gitbook/assets/en-observability-metrics-03-mimir-2.png)
 
 ## Helm Installation
 
@@ -716,27 +591,7 @@ mimir:
 
 ### Query Caching Strategy
 
-```mermaid
-flowchart LR
-    Q[Query] --> QF[Query-frontend]
-    QF --> RC{Result Cache?}
-    RC -->|Hit| R1[Cached Result]
-    RC -->|Miss| QR[Querier]
-    QR --> MC{Metadata<br/>Cache?}
-    MC -->|Hit| M1[Cached Metadata]
-    MC -->|Miss| SG[Store-gateway]
-    SG --> CC{Chunk Cache?}
-    CC -->|Hit| C1[Cached Chunk]
-    CC -->|Miss| S3[S3]
-
-    classDef cache fill:#27AE60,stroke:#333,stroke-width:1px,color:white
-    classDef component fill:#F46800,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class RC,MC,CC cache
-    class Q,QF,QR,SG component
-    class R1,M1,C1,S3 storage
-```
+![A query descends through the Query-frontend, Querier, and Store-gateway, checking a result, metadata, and chunk cache at each stage, and only reaches S3 when all three caches miss.](../../.gitbook/assets/en-observability-metrics-03-mimir-3.png)
 
 ## Comparison with VictoriaMetrics
 
@@ -757,31 +612,7 @@ flowchart LR
 
 ### Selection Criteria
 
-```mermaid
-flowchart TD
-    A[Metrics Storage Selection] --> B{Grafana ecosystem<br/>centric?}
-
-    B -->|Yes| C{Need enterprise<br/>multi-tenancy?}
-    B -->|No| D{Operational simplicity<br/>priority?}
-
-    C -->|Yes| E[Mimir]
-    C -->|No| F{Want to use<br/>object storage?}
-
-    D -->|Yes| G[VictoriaMetrics]
-    D -->|No| H{Cloud storage<br/>cost?}
-
-    F -->|Yes| E
-    F -->|No| G
-
-    H -->|Cost important| G
-    H -->|Scalability important| E
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#3498DB,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,F,H decision
-    class E,G solution
-```
+![A decision tree that routes the choice of a metrics backend through Grafana-ecosystem fit, multi-tenancy needs, operational simplicity, object-storage preference, and cost versus scalability priority, converging on either Mimir or VictoriaMetrics.](../../.gitbook/assets/en-observability-metrics-03-mimir-4.png)
 
 **Choose Mimir when**:
 - Using Grafana Cloud or Grafana ecosystem

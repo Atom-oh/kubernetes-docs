@@ -19,25 +19,7 @@
 | **워크플로우 오케스트레이션 (Orchestration)** | 여러 데이터 작업 간의 의존성과 스케줄을 정의하고 실행을 관리 | Apache Airflow | ✅ [Airflow on EKS](airflow/README.md) |
 | **스트림 처리 (Stream Processing)** | 스트리밍 데이터에 대해 실시간으로 집계·변환·상태 기반 연산을 수행 | Apache Flink | ✅ [Flink on EKS](flink/README.md) |
 
-```mermaid
-graph LR
-    subgraph "Data on EKS"
-        K[Kafka<br/>스트리밍]
-        S[Spark<br/>배치/분석]
-        A[Airflow<br/>오케스트레이션]
-        F[Flink<br/>스트림 처리]
-    end
-
-    K -->|이벤트 공급| F
-    K -->|원시 데이터 적재| S
-    A -->|작업 스케줄링| S
-    A -->|작업 스케줄링| K
-
-    style K fill:#4fc3f7
-    style S fill:#81c784
-    style A fill:#ffb74d
-    style F fill:#ce93d8
-```
+![Airflow가 Kafka와 Spark의 작업 스케줄링을 담당하고, Kafka는 실시간 이벤트를 Flink에 공급하는 동시에 원시 데이터를 Spark에 적재하는 Data on EKS 파이프라인 구성을 보여준다.](../.gitbook/assets/ko-data-on-eks-README-0.png)
 
 ## 왜 EKS에서 직접 운영하는가
 

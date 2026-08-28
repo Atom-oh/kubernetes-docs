@@ -14,73 +14,11 @@
 
 EKS에서는 AWS VPC CNI가 Pod 네트워킹을 담당하고, Calico는 Network Policy 적용을 담당하는 하이브리드 구성이 일반적입니다.
 
-```mermaid
-graph TB
-    subgraph "Amazon EKS Cluster"
-        subgraph "Control Plane (AWS Managed)"
-            API[Kubernetes API Server]
-            ETCD[etcd]
-        end
-
-        subgraph "Data Plane (Customer Managed)"
-            subgraph "Worker Node"
-                subgraph "Pod"
-                    App[Application<br/>Container]
-                    Pause[Pause Container]
-                end
-
-                subgraph "VPC CNI"
-                    IPAMD[aws-node<br/>IPAMD]
-                    CNI[CNI Plugin]
-                end
-
-                subgraph "Calico"
-                    Felix[Felix<br/>Policy Agent]
-                    IPT[iptables/eBPF<br/>Rules]
-                end
-
-                ENI[EC2 ENI<br/>Secondary IP]
-            end
-        end
-
-        VPC[AWS VPC<br/>Subnet CIDR]
-    end
-
-    App --> Pause
-    Pause --> ENI
-    IPAMD --> ENI
-    CNI --> ENI
-    Felix --> IPT
-    IPT --> ENI
-    ENI --> VPC
-
-    style IPAMD fill:#ff9800
-    style Felix fill:#4fc3f7
-    style ENI fill:#81c784
-```
+![EKS 클러스터의 Worker Node에서 Pod, VPC CNI, Calico가 각각 EC2 ENI로 트래픽을 전달하고, ENI가 다시 AWS VPC로 라우팅하는 하이브리드 네트워킹 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-0.png)
 
 ### 트래픽 흐름
 
-```mermaid
-sequenceDiagram
-    participant Pod as Source Pod
-    participant Felix as Calico Felix
-    participant IPT as iptables
-    participant ENI as VPC ENI
-    participant VPC as AWS VPC
-    participant Dest as Destination
-
-    Pod->>Felix: 아웃바운드 패킷
-    Felix->>IPT: Policy 평가
-
-    alt Policy 허용
-        IPT->>ENI: 패킷 전달
-        ENI->>VPC: VPC 라우팅
-        VPC->>Dest: 목적지 전달
-    else Policy 거부
-        IPT-->>Pod: 패킷 드롭
-    end
-```
+![Source Pod가 보낸 패킷을 Calico Felix가 iptables로 Policy를 평가해 허용 시 VPC ENI를 거쳐 목적지에 도달시키고, 거부 시 iptables가 패킷을 드롭해 Pod로 되돌리는 시퀀스를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-1.png)
 
 ## 설치 방법 비교
 
@@ -264,27 +202,7 @@ helm upgrade calico projectcalico/tigera-operator \
 
 EKS v1.25+에서는 AWS가 자체 Network Policy Controller를 제공합니다. 이것은 Calico와 별개의 구현입니다.
 
-```mermaid
-graph TB
-    subgraph "EKS Network Policy 옵션"
-        subgraph "AWS Native"
-            NPC[Network Policy<br/>Controller]
-            eBPF1[eBPF<br/>Dataplane]
-        end
-
-        subgraph "Calico"
-            Felix[Felix Agent]
-            eBPF2[iptables/eBPF]
-        end
-    end
-
-    K8sNP[Kubernetes<br/>NetworkPolicy] --> NPC
-    K8sNP --> Felix
-    CalNP[Calico<br/>NetworkPolicy] --> Felix
-
-    style NPC fill:#ff9800
-    style Felix fill:#4fc3f7
-```
+![Kubernetes NetworkPolicy는 AWS Native Network Policy Controller와 Calico Felix 양쪽에서 처리될 수 있지만, Calico 전용 NetworkPolicy는 Felix에서만 처리됨을 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-2.png)
 
 ### 기능 비교
 
@@ -438,38 +356,7 @@ eksctl create iamserviceaccount \
 
 ### 계층형 보안 모델
 
-```mermaid
-graph TB
-    subgraph "보안 계층"
-        subgraph "Layer 1: AWS 레벨"
-            NACL[Network ACL<br/>서브넷 레벨]
-            SG[Security Group<br/>ENI 레벨]
-        end
-
-        subgraph "Layer 2: Kubernetes 레벨"
-            CNP[Calico NetworkPolicy<br/>Pod 레벨]
-            GNP[GlobalNetworkPolicy<br/>클러스터 레벨]
-        end
-
-        subgraph "Layer 3: Application 레벨"
-            TLS[mTLS<br/>서비스 간]
-            AUTHZ[Authorization<br/>애플리케이션]
-        end
-    end
-
-    Internet[인터넷] --> NACL
-    NACL --> SG
-    SG --> CNP
-    CNP --> GNP
-    GNP --> TLS
-    TLS --> AUTHZ
-    AUTHZ --> App[Application]
-
-    style NACL fill:#ff9800
-    style SG fill:#ff9800
-    style CNP fill:#4fc3f7
-    style GNP fill:#4fc3f7
-```
+![인터넷에서 들어온 트래픽이 AWS 레벨의 Network ACL과 Security Group, Kubernetes 레벨의 Calico NetworkPolicy와 GlobalNetworkPolicy, Application 레벨의 mTLS와 Authorization을 차례로 거쳐 애플리케이션에 도달하는 계층형 보안 체계를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-3.png)
 
 ### 사용 가이드
 

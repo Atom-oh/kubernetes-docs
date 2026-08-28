@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 740" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-ai-ml-02-vllm-deployment-3-title ko-ai-ml-02-vllm-deployment-3-desc">
+<title id="ko-ai-ml-02-vllm-deployment-3-title">vLLM 배포 아키텍처</title>
+<desc id="ko-ai-ml-02-vllm-deployment-3-desc">클라이언트 요청이 로드 밸런서를 거쳐 GPU 8개짜리 단일 노드 파드나 NCCL로 통신하는 다중 노드 파드로 전달되고, 두 방식 모두 FSx for Lustre 공유 스토리지에서 모델을 불러오는 구조를 보여주는 다이어그램</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="380" y="80" width="240" height="176" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="396" y="84" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="440.0" y="93" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">클라이언트 &amp; 네트워킹</text>
+<rect x="40" y="300" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="56" y="304" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="85.0" y="313" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">vLLM 배포</text>
+<rect x="300" y="500" width="360" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="316" y="504" width="58" height="12" rx="2" fill="#ffffff"/>
+<text x="345.0" y="513" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">공유 스토리지</text>
+<line x1="500" y1="168" x2="500" y2="184" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 473,240 V 286 Q 473,294 465,294 H 188 Q 180,294 180,302 V 348" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<path d="M 527,240 V 286 Q 527,294 519,294 H 488 Q 480,294 480,302 V 348" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<line x1="580" y1="376" x2="660" y2="376" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-rev)" marker-end="url(#arrow)"/>
+<path d="M 180,404 V 452 Q 180,460 188,460 H 422 Q 430,460 430,468 V 548" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="404" x2="480" y2="548" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 760,404 V 462 Q 760,470 752,470 H 538 Q 530,470 530,478 V 548" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="603.0" y="356" width="34" height="12" rx="2" fill="#ffffff"/>
+<text x="620" y="365" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NCCL</text>
+<rect x="420" y="112" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="112" width="160" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="500.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">클라이언트</text>
+<text x="500.0" y="152.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">HTTP 요청</text>
+<rect x="420" y="184" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="420" y="184" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="500.0" y="208.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer</text>
+<text x="500.0" y="224.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">K8s Service</text>
+<rect x="60" y="348" width="240" height="56" rx="6" fill="#ffffff"/>
+<rect x="60" y="348" width="240" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="180.0" y="372.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">vLLM 파드 (단일 노드)</text>
+<text x="180.0" y="388.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GPU x8</text>
+<rect x="380" y="348" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="348" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="372.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">vLLM 파드 0</text>
+<text x="480.0" y="388.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GPU x8 · 노드 0</text>
+<rect x="660" y="348" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="660" y="348" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760.0" y="372.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">vLLM 파드 1</text>
+<text x="760.0" y="388.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GPU x8 · 노드 1</text>
+<rect x="380" y="548" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="380" y="548" width="200" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="480.0" y="572.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">FSx for Lustre</text>
+<text x="480.0" y="588.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">모델 가중치 공유</text>
+<line x1="30" y1="664" x2="930" y2="664" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="30" y="680" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="130" y="674" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="150" y="682" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">단일 노드 (GPU 8개)</text>
+<rect x="264" y="674" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="284" y="682" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">다중 노드 파드</text>
+<rect x="362" y="674" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="382" y="682" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">네트워크 진입점</text>
+</svg>

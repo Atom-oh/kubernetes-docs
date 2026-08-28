@@ -57,65 +57,7 @@ cert-manager는 2022년 CNCF Graduated 프로젝트로 승격되었습니다. �
 
 ### 구성요소
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["cert-manager 컨트롤 플레인"]
-        Controller[cert-manager-controller<br/>인증서 수명주기 관리]
-        Webhook[cert-manager-webhook<br/>리소스 검증/변환]
-        CAInjector[cert-manager-cainjector<br/>CA 번들 자동 주입]
-    end
-
-    subgraph CRDs["Custom Resources"]
-        Cert[Certificate]
-        CertReq[CertificateRequest]
-        Issuer[Issuer/ClusterIssuer]
-        Order[Order]
-        Challenge[Challenge]
-    end
-
-    subgraph External["외부 발급자"]
-        LE[Let's Encrypt]
-        Vault[HashiCorp Vault]
-        PCA[AWS PCA]
-        SelfSign[Self-Signed CA]
-    end
-
-    subgraph K8s["Kubernetes 리소스"]
-        Secret[(Secret<br/>tls.crt, tls.key)]
-        Ingress[Ingress]
-        Gateway[Gateway]
-    end
-
-    Controller --> Cert
-    Controller --> CertReq
-    Controller --> Issuer
-    Controller --> Order
-    Controller --> Challenge
-
-    Webhook --> Cert
-    Webhook --> Issuer
-
-    CAInjector --> Secret
-
-    CertReq --> LE
-    CertReq --> Vault
-    CertReq --> PCA
-    CertReq --> SelfSign
-
-    Cert --> Secret
-    Ingress --> Cert
-    Gateway --> Cert
-
-    classDef controller fill:#326CE5,stroke:#333,color:white
-    classDef crd fill:#FF9800,stroke:#333,color:white
-    classDef external fill:#4CAF50,stroke:#333,color:white
-    classDef k8s fill:#9C27B0,stroke:#333,color:white
-
-    class Controller,Webhook,CAInjector controller
-    class Cert,CertReq,Issuer,Order,Challenge crd
-    class LE,Vault,PCA,SelfSign external
-    class Secret,Ingress,Gateway k8s
-```
+![cert-manager 컨트롤 플레인(컨트롤러·웹훅·CA 인젝터)이 Certificate·CertificateRequest·Issuer 커스텀 리소스를 관리하고, 외부 발급자와 통신해 인증서를 발급한 뒤 Kubernetes Secret에 저장하며 Ingress·Gateway가 이를 참조하는 전체 아키텍처를 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-0.png)
 
 ### 구성요소 상세
 
@@ -247,43 +189,7 @@ kubectl api-resources --api-group=cert-manager.io
 
 ### 리소스 관계도
 
-```mermaid
-flowchart TB
-    subgraph User["사용자 정의"]
-        Certificate[Certificate<br/>인증서 요청 명세]
-        Issuer[Issuer<br/>네임스페이스 범위]
-        ClusterIssuer[ClusterIssuer<br/>클러스터 범위]
-    end
-
-    subgraph Auto["자동 생성"]
-        CertReq[CertificateRequest<br/>발급 요청]
-        Order[Order<br/>ACME 주문]
-        Challenge[Challenge<br/>도메인 검증]
-    end
-
-    subgraph Output["결과물"]
-        Secret[(Secret<br/>tls.crt + tls.key)]
-    end
-
-    Certificate -->|참조| Issuer
-    Certificate -->|참조| ClusterIssuer
-    Certificate -->|생성| CertReq
-    CertReq -->|ACME 발급자인 경우| Order
-    Order -->|생성| Challenge
-
-    Issuer -->|발급| CertReq
-    ClusterIssuer -->|발급| CertReq
-
-    CertReq -->|저장| Secret
-
-    classDef user fill:#2196F3,stroke:#333,color:white
-    classDef auto fill:#FF9800,stroke:#333,color:white
-    classDef output fill:#4CAF50,stroke:#333,color:white
-
-    class Certificate,Issuer,ClusterIssuer user
-    class CertReq,Order,Challenge auto
-    class Secret output
-```
+![사용자가 정의한 Certificate와 Issuer/ClusterIssuer로부터 CertificateRequest, ACME Order, Challenge가 자동 생성되고 최종적으로 인증서가 Kubernetes Secret에 저장되는 리소스 관계를 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-1.png)
 
 ### Certificate
 
@@ -492,68 +398,7 @@ spec:
 
 #### 인증서 발급 흐름
 
-```mermaid
-flowchart TB
-    subgraph User["1. 사용자"]
-        CreateCert[Certificate CR 생성]
-    end
-
-    subgraph CertManager["2. cert-manager"]
-        Controller[Controller<br/>Certificate 감지]
-        CertReq[CertificateRequest 생성]
-    end
-
-    subgraph ACME["3. ACME 프로토콜"]
-        Order[Order 생성<br/>도메인 목록]
-        Authorization[Authorization<br/>도메인별 인증]
-        Challenge[Challenge<br/>소유권 증명]
-        Finalize[Finalize<br/>인증서 발급]
-    end
-
-    subgraph Solvers["4. Challenge 솔버"]
-        HTTP01[HTTP-01<br/>/.well-known/acme-challenge/]
-        DNS01[DNS-01<br/>_acme-challenge TXT 레코드]
-    end
-
-    subgraph LE["5. Let's Encrypt"]
-        Verify[도메인 소유권 검증]
-        Issue[인증서 발급]
-    end
-
-    subgraph Output["6. 결과"]
-        Secret[(Secret 저장<br/>tls.crt + tls.key)]
-    end
-
-    CreateCert --> Controller
-    Controller --> CertReq
-    CertReq --> Order
-    Order --> Authorization
-    Authorization --> Challenge
-
-    Challenge --> HTTP01
-    Challenge --> DNS01
-
-    HTTP01 --> Verify
-    DNS01 --> Verify
-
-    Verify -->|성공| Finalize
-    Finalize --> Issue
-    Issue --> Secret
-
-    classDef user fill:#2196F3,stroke:#333,color:white
-    classDef cm fill:#326CE5,stroke:#333,color:white
-    classDef acme fill:#FF9800,stroke:#333,color:white
-    classDef solver fill:#9C27B0,stroke:#333,color:white
-    classDef le fill:#4CAF50,stroke:#333,color:white
-    classDef output fill:#00BCD4,stroke:#333,color:white
-
-    class CreateCert user
-    class Controller,CertReq cm
-    class Order,Authorization,Challenge,Finalize acme
-    class HTTP01,DNS01 solver
-    class Verify,Issue le
-    class Secret output
-```
+![사용자가 Certificate를 생성하면 cert-manager가 ACME Order·Authorization·Challenge를 거쳐 HTTP-01 또는 DNS-01 솔버로 도메인 소유권을 검증하고, Let's Encrypt가 인증서를 발급해 Secret에 저장하는 단계별 흐름을 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-2.png)
 
 #### HTTP-01 솔버
 
@@ -1025,56 +870,7 @@ istio-csr는 Istio의 워크로드 인증서를 cert-manager를 통해 발급합
 
 #### istio-csr 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Workload["워크로드 Pod"]
-        App[애플리케이션]
-        Envoy[Envoy Sidecar]
-    end
-
-    subgraph IstioCsr["istio-csr"]
-        CSRAgent[CSR Agent<br/>gRPC 서버]
-    end
-
-    subgraph CertManager["cert-manager"]
-        CMController[Controller]
-        CertReq[CertificateRequest]
-    end
-
-    subgraph Issuer["발급자"]
-        CA[CA Issuer]
-        Vault[Vault PKI]
-        PCA[AWS PCA]
-    end
-
-    subgraph Output["결과"]
-        SVID[SVID 인증서<br/>spiffe://cluster.local/ns/.../sa/...]
-    end
-
-    Envoy -->|1. CSR 요청| CSRAgent
-    CSRAgent -->|2. CertificateRequest 생성| CMController
-    CMController --> CertReq
-    CertReq -->|3. 발급 요청| CA
-    CertReq -->|3. 발급 요청| Vault
-    CertReq -->|3. 발급 요청| PCA
-    CA -->|4. SVID 발급| SVID
-    Vault -->|4. SVID 발급| SVID
-    PCA -->|4. SVID 발급| SVID
-    SVID -->|5. 인증서 반환| Envoy
-    Envoy -->|mTLS| App
-
-    classDef workload fill:#E8F5E9,stroke:#333
-    classDef csr fill:#E3F2FD,stroke:#333
-    classDef cm fill:#326CE5,stroke:#333,color:white
-    classDef issuer fill:#FF9800,stroke:#333,color:white
-    classDef output fill:#4CAF50,stroke:#333,color:white
-
-    class App,Envoy workload
-    class CSRAgent csr
-    class CMController,CertReq cm
-    class CA,Vault,PCA issuer
-    class SVID output
-```
+![Envoy 사이드카가 istio-csr로 인증서 서명 요청을 보내면 cert-manager가 CertificateRequest를 생성해 발급자(CA/Vault/AWS PCA)에 요청하고, 발급된 SVID 인증서가 Envoy로 반환되어 애플리케이션과 mTLS를 맺는 흐름을 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-3.png)
 
 #### istio-csr 설치
 

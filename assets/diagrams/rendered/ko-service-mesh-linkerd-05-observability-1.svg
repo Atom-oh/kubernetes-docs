@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="obs-dash-title obs-dash-desc">
+    <title id="obs-dash-title">Linkerd Viz 대시보드 뷰 구조</title>
+    <desc id="obs-dash-desc">Namespace Overview에서 시작해 Deployments 뷰로 좁혀지고, 다시 Pods·Routes·Tap 세부 뷰와 Topology 뷰로 갈라지는 Viz 대시보드의 탐색 구조를 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#FFFFFF"/>
+
+    <!-- Zone: Dashboard Views -->
+    <rect x="60" y="72" width="840" height="404" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="80" y="76" width="128" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="144" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DASHBOARD VIEWS</text>
+
+    <!-- Arrows -->
+    <!-- NS -> DEPLOY (straight, same x) -->
+    <line x1="480" y1="192" x2="480" y2="240" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- NS -> TOPO -->
+    <path d="M420,160 H300 Q292,160 292,168 V296"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- DEPLOY -> PODS -->
+    <path d="M420,296 H300 Q292,296 292,304 V400"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- DEPLOY -> TAP -->
+    <path d="M540,296 H680 Q688,296 688,304 V400"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- DEPLOY -> ROUTES (straight, same x) -->
+    <line x1="480" y1="328" x2="480" y2="400" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node: Namespace Overview (focal) -->
+    <rect x="400" y="128" width="160" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="400" y="128" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="408" y="136" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="422" y="145" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NS</text>
+    <text x="480" y="164" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Namespace Overview</text>
+    <text x="480" y="180" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">네임스페이스별 상태</text>
+
+    <!-- Node: Deployments -->
+    <rect x="400" y="264" width="160" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="400" y="264" width="160" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="408" y="272" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="422" y="281" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">DEP</text>
+    <text x="480" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Deployments</text>
+    <text x="480" y="316" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">배포 상태</text>
+
+    <!-- Node: Topology -->
+    <rect x="212" y="296" width="160" height="56" rx="6" fill="#FFFFFF"/>
+    <rect x="212" y="296" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="220" y="304" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="234" y="313" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TOPO</text>
+    <text x="292" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Topology</text>
+    <text x="292" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">서비스 토폴로지</text>
+
+    <!-- Node: Pods -->
+    <rect x="212" y="400" width="160" height="56" rx="6" fill="#FFFFFF"/>
+    <rect x="212" y="400" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="220" y="408" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="234" y="417" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+    <text x="292" y="428" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pods</text>
+    <text x="292" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod 상태</text>
+
+    <!-- Node: Routes -->
+    <rect x="400" y="400" width="160" height="56" rx="6" fill="#FFFFFF"/>
+    <rect x="400" y="400" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="408" y="408" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="422" y="417" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RT</text>
+    <text x="480" y="428" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Routes</text>
+    <text x="480" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">라우트별 메트릭</text>
+
+    <!-- Node: Tap -->
+    <rect x="608" y="400" width="160" height="56" rx="6" fill="#FFFFFF"/>
+    <rect x="608" y="400" width="160" height="56" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="616" y="408" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="630" y="417" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">TAP</text>
+    <text x="688" y="428" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Tap</text>
+    <text x="688" y="444" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">실시간 요청</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="530" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="538" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">진입 지점 (Namespace)</text>
+
+    <rect x="280" y="530" width="14" height="10" rx="2" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <text x="300" y="538" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">대시보드 뷰</text>
+
+    <line x1="460" y1="535" x2="488" y2="535" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <text x="496" y="538" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">주요 탐색 경로</text>
+  </svg>

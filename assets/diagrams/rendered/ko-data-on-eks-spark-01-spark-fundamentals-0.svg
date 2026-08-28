@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spark-lifecycle-title spark-lifecycle-desc">
+  <title id="spark-lifecycle-title">Spark on Kubernetes 실행 흐름</title>
+  <desc id="spark-lifecycle-desc">spark-submit 사용자가 Kubernetes API 서버를 통해 Driver Pod를 생성하고, Driver Pod가 다시 API 서버에 요청해 Executor Pod들을 생성하며, Executor Pod가 Driver에 등록하고 작업을 할당받는 순서를 보여준다.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow-filled" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-filled-accent" markerWidth="9" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" fill="var(--paper)"/>
+
+  <!-- Actor boxes -->
+  <!-- x centers: 140, 380, 620, 860 -->
+
+  <!-- User -->
+  <rect x="60" y="40" width="160" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="140" y="59" text-anchor="middle" font-size="12" font-weight="600">사용자</text>
+  <text x="140" y="74" text-anchor="middle" class="mono" font-size="9" fill="#545B64">spark-submit</text>
+
+  <!-- API server -->
+  <rect x="300" y="40" width="160" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="380" y="59" text-anchor="middle" font-size="12" font-weight="600">Kubernetes</text>
+  <text x="380" y="74" text-anchor="middle" font-size="12" font-weight="600">API 서버</text>
+
+  <!-- Driver Pod (focal) -->
+  <rect x="540" y="40" width="160" height="44" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+  <text x="620" y="65" text-anchor="middle" font-size="12" font-weight="600">Driver Pod</text>
+
+  <!-- Executor Pods -->
+  <rect x="780" y="40" width="160" height="44" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="860" y="65" text-anchor="middle" font-size="12" font-weight="600">Executor Pods</text>
+
+  <!-- Lifelines -->
+  <line x1="140" y1="84" x2="140" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="380" y1="84" x2="380" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="620" y1="84" x2="620" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="860" y1="84" x2="860" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Activation bars -->
+  <!-- API server active while brokering: 130 to 430 -->
+  <rect x="376" y="130" width="8" height="300" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <!-- Driver Pod active from 190 to 560 -->
+  <rect x="616" y="190" width="8" height="360" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <!-- Executor active from 320 to 500 -->
+  <rect x="856" y="320" width="8" height="180" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- Message 1: User -> API : Driver Pod 생성 요청 -->
+  <line x1="140" y1="130" x2="376" y2="130" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-filled)"/>
+  <text x="258" y="122" text-anchor="middle" class="mono" font-size="8" fill="#232F3E">Driver Pod 생성 요청</text>
+  <text x="258" y="142" text-anchor="middle" class="mono" font-size="8" fill="#7D8998">k8s://&lt;endpoint&gt;</text>
+
+  <!-- Message 2: API -> Driver : Driver Pod 스케줄링 및 시작 -->
+  <line x1="384" y1="190" x2="616" y2="190" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-filled)"/>
+  <text x="500" y="182" text-anchor="middle" class="mono" font-size="8" fill="#232F3E">Driver Pod 스케줄링 및 시작</text>
+
+  <!-- Message 3: Driver -> API : Executor Pod 생성 요청 -->
+  <line x1="616" y1="250" x2="384" y2="250" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-filled)"/>
+  <text x="500" y="242" text-anchor="middle" class="mono" font-size="8" fill="#232F3E">Executor Pod 생성 요청</text>
+
+  <!-- Message 4: API -> Exec : Executor Pod 스케줄링 및 시작 -->
+  <line x1="384" y1="320" x2="856" y2="320" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-filled)"/>
+  <text x="620" y="312" text-anchor="middle" class="mono" font-size="8" fill="#232F3E">Executor Pod 스케줄링 및 시작</text>
+
+  <!-- Message 5: Exec -> Driver : 등록, 상태 보고, 작업 결과 전송 -->
+  <line x1="856" y1="400" x2="624" y2="400" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#arrow-filled-accent)"/>
+  <text x="740" y="392" text-anchor="middle" class="mono" font-size="8" fill="#232F3E">등록, 상태 보고, 작업 결과 전송</text>
+
+  <!-- Message 6: Driver -> Exec : 작업(Task) 할당 -->
+  <line x1="624" y1="460" x2="856" y2="460" stroke="#545B64" stroke-width="1" marker-end="url(#arrow-filled)"/>
+  <text x="740" y="452" text-anchor="middle" class="mono" font-size="8" fill="#232F3E">작업(Task) 할당</text>
+
+</svg>

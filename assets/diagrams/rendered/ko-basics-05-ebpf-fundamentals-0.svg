@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-basics-05-ebpf-fundamentals-0-title ko-basics-05-ebpf-fundamentals-0-desc">
+    <title id="ko-basics-05-ebpf-fundamentals-0-title">eBPF 프로그램 실행 흐름</title>
+    <desc id="ko-basics-05-ebpf-fundamentals-0-desc">사용자 공간에서 작성한 eBPF 프로그램이 컴파일과 검증, JIT 컴파일을 거쳐 커널 공간에서 실행되며 네트워크 패킷, 시스템 콜 등 다양한 이벤트 훅 포인트에 연결되는 과정을 보여주는 아키텍처 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="180" y="68" width="600" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="196" y="72" width="200" height="12" rx="2" fill="#ffffff"/>
+<text x="296.0" y="81" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">USER SPACE / 사용자 공간</text>
+<rect x="68" y="220" width="824" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="84" y="224" width="200" height="12" rx="2" fill="#ffffff"/>
+<text x="184.0" y="233" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">KERNEL SPACE / 커널 공간</text>
+<line x1="372" y1="132" x2="396" y2="132" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="564" y1="132" x2="588" y2="132" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 672,164 V 192 Q 672,200 664,200 H 188 Q 180,200 180,192 V 252" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="268" y1="284" x2="292" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="468" y1="284" x2="492" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="668" y1="284" x2="692" y2="284" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 780,316 V 348 Q 780,356 772,356 H 488 Q 480,356 480,348 V 420" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="204" y="100" width="168" height="64" rx="6" fill="#ffffff"/>
+<rect x="204" y="100" width="168" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="288.0" y="126.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF</text>
+<text x="288.0" y="140.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로그램 작성</text>
+<rect x="396" y="100" width="168" height="64" rx="6" fill="#ffffff"/>
+<rect x="396" y="100" width="168" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="136.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컴파일</text>
+<rect x="588" y="100" width="168" height="64" rx="6" fill="#ffffff"/>
+<rect x="588" y="100" width="168" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="672.0" y="126.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">시스템 콜로</text>
+<text x="672.0" y="140.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">커널에 로드</text>
+<rect x="92" y="252" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="92" y="252" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180.0" y="278.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">검증기</text>
+<text x="180.0" y="292.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Verifier</text>
+<rect x="292" y="252" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="292" y="252" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">JIT 컴파일</text>
+<rect x="492" y="252" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="492" y="252" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="580.0" y="278.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF</text>
+<text x="580.0" y="292.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로그램 실행</text>
+<rect x="692" y="252" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="692" y="252" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="780.0" y="288.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이벤트 훅 포인트</text>
+<rect x="300" y="420" width="360" height="80" rx="6" fill="#ffffff"/>
+<rect x="300" y="420" width="360" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="480.0" y="458.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">이벤트 훅 대상</text>
+<text x="480.0" y="474.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">네트워크 패킷 · 시스템 콜</text>
+<text x="480.0" y="485.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">함수 호출 · 트레이스포인트</text>
+  </svg>

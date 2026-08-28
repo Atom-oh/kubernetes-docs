@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d2-title d2-desc">
+<title id="d2-title">ROUND_ROBIN request sequence</title>
+<desc id="d2-desc">Four sequential client requests are routed by the load balancer to pod 1, pod 2, pod 3, and then back to pod 1, cycling through the endpoints in order under the ROUND_ROBIN algorithm.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Lifelines -->
+<line x1="120" y1="80" x2="120" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="320" y1="80" x2="320" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="520" y1="80" x2="520" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="680" y1="80" x2="680" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="840" y1="80" x2="840" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Activation bars -->
+<rect x="316" y="100" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="516" y="132" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="316" y="196" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="676" y="228" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="316" y="292" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="836" y="324" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="316" y="388" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="516" y="420" width="8" height="32" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+<!-- Cycle 1: Request 1 -->
+<line x1="120" y1="100" x2="320" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="188" y="80" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="89" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">REQUEST 1</text>
+
+<line x1="324" y1="132" x2="520" y2="132" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="406" y="112" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="424" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ROUTE</text>
+
+<line x1="516" y1="164" x2="120" y2="164" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="292" y="144" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="320" y="153" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RESPONSE</text>
+
+<!-- Cycle 2: Request 2 -->
+<line x1="120" y1="196" x2="320" y2="196" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="188" y="176" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="185" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">REQUEST 2</text>
+
+<line x1="324" y1="228" x2="680" y2="228" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="484" y="208" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="502" y="217" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ROUTE</text>
+
+<line x1="676" y1="260" x2="120" y2="260" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="372" y="240" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="249" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RESPONSE</text>
+
+<!-- Cycle 3: Request 3 -->
+<line x1="120" y1="292" x2="320" y2="292" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="188" y="272" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">REQUEST 3</text>
+
+<line x1="324" y1="324" x2="840" y2="324" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="564" y="304" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="582" y="313" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ROUTE</text>
+
+<line x1="836" y1="356" x2="120" y2="356" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="452" y="336" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="345" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RESPONSE</text>
+
+<!-- Cycle 4: Request 4 (cycles back to Pod 1) -->
+<line x1="120" y1="388" x2="320" y2="388" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="188" y="368" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="220" y="377" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">REQUEST 4</text>
+
+<line x1="324" y1="420" x2="520" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="380" y="400" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="424" y="409" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ROUTE (CYCLE)</text>
+
+<line x1="516" y1="452" x2="120" y2="452" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="292" y="432" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="320" y="441" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">RESPONSE</text>
+
+<!-- Actor boxes (drawn after messages so labels stay legible) -->
+<rect x="76" y="32" width="88" height="48" rx="6" fill="#ffffff"/>
+<rect x="76" y="32" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client</text>
+
+<rect x="228" y="32" width="184" height="48" rx="6" fill="#ffffff"/>
+<rect x="228" y="32" width="184" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="320" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer</text>
+<text x="320" y="68" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ROUND_ROBIN</text>
+
+<rect x="476" y="32" width="88" height="48" rx="6" fill="#ffffff"/>
+<rect x="476" y="32" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="520" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 1</text>
+
+<rect x="636" y="32" width="88" height="48" rx="6" fill="#ffffff"/>
+<rect x="636" y="32" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 2</text>
+
+<rect x="796" y="32" width="88" height="48" rx="6" fill="#ffffff"/>
+<rect x="796" y="32" width="88" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod 3</text>
+
+<text x="480" y="536" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Request 4 cycles back to Pod 1 — the endpoint order repeats.</text>
+</svg>

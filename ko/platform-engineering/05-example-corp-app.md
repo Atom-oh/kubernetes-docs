@@ -18,26 +18,7 @@ ACK는 [ACK 문서](./02-ack.md)에서 설명한 ELBv2, Route 53, RDS 컨트롤�
 
 ## 아키텍처 다이어그램
 
-```mermaid
-graph LR
-    subgraph ack["ACK (AWS Infrastructure)"]
-        NLB[NLB] --> TG[Target Group]
-        R53[Route 53 Record] --> NLB
-        Aurora[Aurora PostgreSQL]
-    end
-
-    subgraph kro["KRO (Application)"]
-        CR[WebApp CR] --> D[Deployment]
-        CR --> S[Service]
-        CR --> TGB[TargetGroupBinding]
-        CR --> CM[ConfigMap]
-    end
-
-    TGB -.->|targetGroupARN| TG
-    CM -.->|endpoints| Aurora
-    D -.->|envFrom| CM
-    S -.->|serviceRef| TGB
-```
+![KRO로 정의한 WebApp 커스텀 리소스가 Deployment, Service, TargetGroupBinding, ConfigMap을 생성하고, 이 리소스들의 참조 필드(serviceRef, targetGroupARN, endpoints, envFrom)를 통해 ACK가 관리하는 AWS 인프라(NLB, Target Group, Route 53, Aurora PostgreSQL)와 연결되는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png)
 
 ## Step 1: ACK로 인프라 프로비저닝
 

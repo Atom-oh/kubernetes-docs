@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-networking-calico-02-architecture-6-title en-networking-calico-02-architecture-6-desc">
+      <title id="en-networking-calico-02-architecture-6-title">Why Typha exists</title>
+      <desc id="en-networking-calico-02-architecture-6-desc">Comparison diagram showing every Felix watching the Kubernetes API directly in a small cluster versus Typha pods fanning out cached updates to hundreds of Felix agents in a large cluster.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+
+      </defs>
+      <rect width="960" height="380" fill="#ffffff"/>
+<rect x="20" y="60" width="420" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="64" width="190" height="12" rx="2" fill="#ffffff"/>
+<text x="127.0" y="73" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">WITHOUT TYPHA - SMALL CLUSTER</text>
+<rect x="480" y="60" width="460" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="492" y="64" width="172" height="12" rx="2" fill="#ffffff"/>
+<text x="578.0" y="73" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">WITH TYPHA - LARGE CLUSTER</text>
+<path d="M 215,136 V 170.0 Q 215,178.0 207,178.0 H 118 Q 110,178.0 110,186.0 V 220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="250" y1="136" x2="250" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="258" y="172.0" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="279.0" y="181" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">WATCH</text>
+<path d="M 285,136 V 170.0 Q 285,178.0 293,178.0 H 362 Q 370,178.0 370,186.0 V 220" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 727,136 V 160.0 Q 727,168.0 719,168.0 H 638 Q 630,168.0 630,176.0 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 773,136 V 160.0 Q 773,168.0 781,168.0 H 812 Q 820,168.0 820,176.0 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="758" y="162.0" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="779.0" y="171" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">WATCH</text>
+<line x1="630" y1="240" x2="630" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="820" y1="240" x2="820" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="638" y="264.0" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="665.0" y="273" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">FAN-OUT</text>
+<rect x="180" y="96" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="180" y="96" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250.0" y="120.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes API</text>
+<rect x="60" y="220" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="60" y="220" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix 1</text>
+<rect x="200" y="220" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="200" y="220" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix 2</text>
+<rect x="320" y="220" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="320" y="220" width="100" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="370.0" y="244.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix 3</text>
+<rect x="680" y="96" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="680" y="96" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="750.0" y="120.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Kubernetes API</text>
+<rect x="580" y="200" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="580" y="200" width="100" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="630.0" y="224.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Typha 1</text>
+<rect x="770" y="200" width="100" height="40" rx="6" fill="#ffffff"/>
+<rect x="770" y="200" width="100" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="820.0" y="224.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Typha 2</text>
+<rect x="560" y="300" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="560" y="300" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="630.0" y="324.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix 1-100</text>
+<rect x="750" y="300" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="750" y="300" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="820.0" y="324.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Felix 101-200</text>
+    </svg>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+  <title id="t">Extract-orders task: pod lifecycle and identity</title>
+  <desc id="d">A DAG task invokes the KubernetesPodOperator, which builds and launches a pod from a pod template. The pod runs under a dedicated IRSA-annotated service account, is scheduled onto a tainted dedicated node pool, and reports its completion status back to the operator, which in turn reports task success or failure to the Airflow scheduler and metadata database.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Eyebrow / title -->
+  <text x="40" y="36" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">DATA-ON-EKS · AIRFLOW</text>
+  <text x="40" y="58" fill="#232F3E" font-size="20" font-weight="700">extract_orders task lifecycle</text>
+
+  <!-- ================= ARROWS (drawn before boxes) ================= -->
+
+  <!-- 1. DAGCODE -> KPO (straight vertical, shared x) -->
+  <path d="M 480,148 V 200" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- 2. KPO -> POD (straight vertical, shared x) - accent, primary path -->
+  <path d="M 480,296 V 348" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="418" y="312" width="124" height="14" rx="2" fill="#ffffff"/>
+  <text x="480" y="322" fill="#EC7211" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">BUILDS POD</text>
+
+  <!-- 3. POD -> SA : bottom-left fan point (427,412) elbow down-left into SA top (272,460) -->
+  <path d="M 427,412 V 436 Q 427,444 419,444 H 280 Q 272,444 272,452 V 460"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="303" y="412" width="60" height="14" rx="2" fill="#ffffff"/>
+  <text x="333" y="422" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">RUNS AS</text>
+
+  <!-- 4. POD -> NODE : bottom-right fan point (533,412) elbow down-right into NODE top (688,460) -->
+  <path d="M 533,412 V 436 Q 533,444 541,444 H 680 Q 688,444 688,452 V 460"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="558" y="412" width="88" height="14" rx="2" fill="#ffffff"/>
+  <text x="602" y="422" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">SCHEDULED ONTO</text>
+
+  <!-- 5. POD -> KPO feedback : left edge of POD (320,368) out to x=176, up, into KPO left edge (320,264) -->
+  <path d="M 320,368 H 184 Q 176,368 176,360 V 272 Q 176,264 184,264 H 320"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="112" y="308" width="88" height="14" rx="2" fill="#ffffff"/>
+  <text x="156" y="318" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">COMPLETION</text>
+
+  <!-- 6. KPO -> AF : straight horizontal, shared y -->
+  <path d="M 640,264 H 720" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <rect x="652" y="240" width="56" height="14" rx="2" fill="#ffffff"/>
+  <text x="680" y="250" fill="#0972D3" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">REPORTS</text>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- DAGCODE -->
+  <rect x="320" y="92" width="320" height="56" rx="6" fill="#ffffff"/>
+  <rect x="320" y="92" width="320" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="332" y="100" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="358" y="109" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">DAG</text>
+  <text x="480" y="124" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">DAG code</text>
+  <text x="480" y="140" fill="#545B64" font-size="9" class="mono" text-anchor="middle">extract_orders task</text>
+
+  <!-- KPO (focal) -->
+  <rect x="320" y="200" width="320" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="320" y="200" width="320" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="332" y="208" width="52" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="358" y="217" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">OP</text>
+  <text x="480" y="232" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">KubernetesPodOperator</text>
+  <text x="480" y="248" fill="#545B64" font-size="9" class="mono" text-anchor="middle">.execute()</text>
+
+  <!-- POD (focal) -->
+  <rect x="320" y="348" width="320" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="320" y="348" width="320" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="332" y="356" width="52" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="358" y="365" fill="#EC7211" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">POD</text>
+  <text x="480" y="380" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod</text>
+  <text x="480" y="396" fill="#545B64" font-size="9" class="mono" text-anchor="middle">from pod_template_file</text>
+
+  <!-- SA -->
+  <rect x="120" y="460" width="240" height="72" rx="6" fill="rgba(35,47,62,0.05)"/>
+  <rect x="120" y="460" width="240" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="132" y="468" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="158" y="477" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">IAM</text>
+  <text x="240" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ServiceAccount</text>
+  <text x="240" y="508" fill="#545B64" font-size="9" class="mono" text-anchor="middle">orders-extractor-sa</text>
+  <text x="240" y="520" fill="#7D8998" font-size="9" class="mono" text-anchor="middle">(IRSA role annotation)</text>
+
+  <!-- NODE -->
+  <rect x="600" y="460" width="240" height="72" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="600" y="460" width="240" height="72" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="612" y="468" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="642" y="477" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">NODE</text>
+  <text x="720" y="492" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Tainted node pool</text>
+  <text x="720" y="508" fill="#545B64" font-size="9" class="mono" text-anchor="middle">dedicated NodeGroup /</text>
+  <text x="720" y="520" fill="#545B64" font-size="9" class="mono" text-anchor="middle">NodePool</text>
+
+  <!-- AF -->
+  <rect x="720" y="200" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="720" y="200" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <rect x="732" y="208" width="52" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="758" y="217" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">AF</text>
+  <text x="820" y="232" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Airflow scheduler</text>
+  <text x="820" y="248" fill="#545B64" font-size="9" class="mono" text-anchor="middle">metadata DB</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="560" x2="920" y2="560" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="578" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <line x1="140" y1="574" x2="172" y2="574" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="180" y="578" fill="#545B64" font-size="9" class="mono">pod build (primary)</text>
+  <line x1="360" y1="574" x2="392" y2="574" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="400" y="578" fill="#545B64" font-size="9" class="mono">status feedback</text>
+  <line x1="560" y1="574" x2="592" y2="574" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+  <text x="600" y="578" fill="#545B64" font-size="9" class="mono">reports to Airflow</text>
+</svg>

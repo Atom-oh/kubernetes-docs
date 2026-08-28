@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="trace-title trace-desc">
+    <title id="trace-title">One trace, five spans, 500ms</title>
+    <desc id="trace-desc">Flowchart showing a trace as a container of five timed spans across an API gateway, user, order, payment, and notification service, whose branching durations sum to a total request duration of 500 milliseconds.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Trace container -->
+    <rect x="60" y="76" width="840" height="308" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <rect x="76" y="88" width="150" height="16" rx="2" fill="#ffffff"/>
+    <text x="80" y="100" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">TRACE · abc123def456</text>
+
+    <!-- connectors -->
+    <line x1="230" y1="180" x2="252" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="230" y1="180" x2="230" y2="300" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="230" y1="300" x2="252" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="482" y1="300" x2="504" y2="300" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="504" y1="300" x2="504" y2="180" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="504" y1="180" x2="526" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="504" y1="300" x2="504" y2="356" stroke="#545B64" stroke-width="1.2"/>
+    <line x1="504" y1="356" x2="526" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- trace -> total (accent, outside container) -->
+    <line x1="480" y1="384" x2="480" y2="452" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- S1: API Gateway -->
+    <rect x="100" y="156" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="165" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">API Gateway</text>
+    <text x="165" y="192" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">150ms</text>
+
+    <!-- S2: User Service -->
+    <rect x="100" y="276" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="165" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">User Service</text>
+    <text x="165" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">50ms</text>
+
+    <!-- S3: Order Service (focal - branches into payment + notification) -->
+    <rect x="352" y="276" width="130" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="417" y="296" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Order Service</text>
+    <text x="417" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">200ms</text>
+
+    <!-- S4: Payment Service -->
+    <rect x="526" y="156" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="591" y="176" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Payment Service</text>
+    <text x="591" y="192" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">300ms</text>
+
+    <!-- S5: Notification -->
+    <rect x="526" y="332" width="130" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="591" y="352" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Notification</text>
+    <text x="591" y="368" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">100ms</text>
+
+    <!-- Total Duration node -->
+    <rect x="400" y="452" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="480" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Total Duration: 500ms</text>
+  </svg>

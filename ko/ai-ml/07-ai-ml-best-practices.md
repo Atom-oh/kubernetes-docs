@@ -9,45 +9,7 @@
 
 Kubernetes에서 AI/ML 워크로드를 효율적으로 실행하려면 여러 차원에서 신중한 고려가 필요합니다:
 
-```mermaid
-flowchart TD
-    subgraph BestPractices [EKS AI/ML 모범 사례]
-        Benchmarking[벤치마킹 & 성능]
-        Container[컨테이너 최적화]
-        GPU[GPU 선택]
-        Network[네트워킹]
-        Storage[스토리지]
-        Observability[관측성]
-        Cost[비용 최적화]
-        Security[보안]
-    end
-
-    subgraph Outcomes [기대 결과]
-        Performance[고성능]
-        Efficiency[리소스 효율성]
-        Reliability[안정성]
-        CostSavings[비용 절감]
-    end
-
-    Benchmarking --> Performance
-    Container --> Performance
-    GPU --> Performance
-    Network --> Performance
-    Storage --> Performance
-    Observability --> Reliability
-    Cost --> CostSavings
-    Security --> Reliability
-    Container --> Efficiency
-    GPU --> Efficiency
-
-    classDef practiceNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef outcomeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Benchmarking,Container,GPU,Network,Storage,Observability,Cost,Security practiceNode;
-    class Performance,Efficiency,Reliability,CostSavings outcomeNode;
-    class BestPractices,Outcomes default;
-```
+![EKS AI/ML 모범 사례 8개 영역(벤치마킹, 컨테이너 최적화, GPU 선택, 네트워킹, 스토리지, 관측성, 비용 최적화, 보안)이 고성능, 리소스 효율성, 안정성, 비용 절감이라는 4가지 기대 결과로 이어지는 관계를 보여주는 아키텍처형 다이어그램.](../.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-0.png)
 
 ## LLM 추론 벤치마킹
 
@@ -57,34 +19,7 @@ flowchart TD
 
 LLM 추론 성능을 평가하기 위한 핵심 지표를 이해하는 것이 중요합니다:
 
-```mermaid
-flowchart LR
-    subgraph Metrics [LLM 추론 지표]
-        TTFT[TTFT<br/>첫 토큰 생성 시간]
-        ITL[ITL<br/>토큰 간 지연 시간]
-        TPS[TPS<br/>초당 토큰 수]
-        E2E[E2E 지연 시간<br/>종단간 지연]
-        Throughput[처리량<br/>초당 요청 수]
-    end
-
-    subgraph UserExperience [사용자 경험 영향]
-        Responsiveness[인지된 응답성]
-        Streaming[스트리밍 품질]
-        Capacity[시스템 용량]
-    end
-
-    TTFT --> Responsiveness
-    ITL --> Streaming
-    TPS --> Streaming
-    E2E --> Responsiveness
-    Throughput --> Capacity
-
-    classDef metricNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef uxNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class TTFT,ITL,TPS,E2E,Throughput metricNode;
-    class Responsiveness,Streaming,Capacity uxNode;
-```
+![TTFT, ITL, TPS, 종단간 지연, 처리량이라는 5가지 LLM 추론 지표가 인지된 응답성, 스트리밍 품질, 시스템 용량이라는 3가지 사용자 경험 요소에 미치는 영향을 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-1.png)
 
 | 지표 | 설명 | 공식 | 목표 범위 |
 |------|------|------|----------|
@@ -284,32 +219,7 @@ AI/ML 컨테이너는 큰 이미지 크기와 모델 로딩 요구 사항으로 
 
 ### 콜드 스타트 타임라인 분석
 
-```mermaid
-sequenceDiagram
-    participant Scheduler as K8s 스케줄러
-    participant Kubelet as Kubelet
-    participant Registry as 컨테이너 레지스트리
-    participant Container as 컨테이너 런타임
-    participant App as AI/ML 애플리케이션
-
-    Note over Scheduler,App: 총 콜드 스타트 시간: 대규모 AI/ML 이미지의 경우 5-15분
-
-    Scheduler->>Kubelet: 파드 스케줄링됨
-    Note over Kubelet: 노드 선택: ~100ms
-
-    Kubelet->>Registry: 이미지 풀 요청
-    Note over Registry,Kubelet: 이미지 풀: 2-10분<br/>(10-50GB 이미지)
-    Registry-->>Kubelet: 이미지 레이어
-
-    Kubelet->>Container: 컨테이너 생성
-    Note over Container: 컨테이너 생성: ~5s
-
-    Container->>App: 프로세스 시작
-    Note over App: 모델 로딩: 1-5분<br/>(GPU 메모리에 가중치 로드)
-
-    App-->>Container: 준비됨
-    Note over App: 헬스 체크 통과: ~30s
-```
+![쿠버네티스 스케줄러, Kubelet, 컨테이너 레지스트리, 컨테이너 런타임, AI/ML 애플리케이션 5개 참여자 사이에서 파드 스케줄링, 이미지 풀, 컨테이너 생성, 모델 로딩, 헬스 체크로 이어지는 콜드 스타트 시퀀스와 각 단계의 소요 시간을 보여주는 시퀀스 다이어그램.](../.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-2.png)
 
 ### 이미지 크기 분석
 

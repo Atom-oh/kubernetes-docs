@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-01-service-mesh-comparison-14-title ko-service-mesh-istio-comparison-01-service-mesh-comparison-14-desc">
+<title id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-14-title">Linkerd Multi-cluster 아키텍처</title>
+<desc id="ko-service-mesh-istio-comparison-01-service-mesh-comparison-14-desc">소스 클러스터의 서비스가 자신의 Gateway를 거쳐 타깃 클러스터 Gateway로 mTLS 연결되고, 그 뒤에서 미러링된 서비스로 라우팅된다.</desc>
+
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="60" width="420" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/><rect x="50" y="64" width="70" height="12" rx="2" fill="#ffffff"/><text x="85.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.14em">CLUSTER 1</text>
+<rect x="500" y="60" width="420" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/><rect x="510" y="64" width="70" height="12" rx="2" fill="#ffffff"/><text x="545.0" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.14em">CLUSTER 2</text>
+<rect x="80" y="110" width="320" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="110" width="320" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="240.0" y="133.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Linkerd Control Plane</text>
+<text x="240.0" y="151.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">Source Cluster</text>
+<rect x="80" y="180" width="320" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="180" width="320" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="240.0" y="203.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Gateway</text>
+<text x="240.0" y="221.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">Service A</text>
+<rect x="540" y="110" width="320" height="48" rx="6" fill="#ffffff"/>
+<rect x="540" y="110" width="320" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700.0" y="133.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Linkerd Control Plane</text>
+<text x="700.0" y="151.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">Target Cluster</text>
+<rect x="540" y="180" width="320" height="48" rx="6" fill="#ffffff"/>
+<rect x="540" y="180" width="320" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="700.0" y="203.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,'Noto Sans CJK KR',sans-serif" text-anchor="middle">Gateway</text>
+<text x="700.0" y="221.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle">Service A Mirror</text>
+<line x1="240.0" y1="158" x2="240.0" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="700.0" y1="158" x2="700.0" y2="180" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="400" y1="134.0" x2="540" y2="134.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+<rect x="454.0" y="114.0" width="32" height="12" rx="2" fill="#ffffff"/><text x="470.0" y="123.0" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono','Noto Sans CJK KR',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+</svg>

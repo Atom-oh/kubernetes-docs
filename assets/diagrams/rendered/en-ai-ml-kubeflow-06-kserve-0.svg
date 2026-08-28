@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+  <title id="t">KServe InferenceService request flow</title>
+  <desc id="d">A client request reaches a KServe InferenceService, which may route through an optional transformer and/or explainer before a deployment-mode decision picks a serverless Knative pod or a raw Kubernetes Deployment with HPA; either way the model server loads the artifact and returns a response.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- ================= ARROWS (behind nodes) ================= -->
+
+  <!-- Start -> InferenceService -->
+  <line x1="480" y1="64" x2="480" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- InferenceService -> Transformer (elbow) -->
+  <path d="M425,144 V160 Q425,168 417,168 H248 Q240,168 240,176 V192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- InferenceService -> Explainer (elbow) -->
+  <path d="M535,144 V160 Q535,168 543,168 H712 Q720,168 720,176 V192" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- InferenceService -> merge dot (direct predictor-only path) -->
+  <line x1="480" y1="144" x2="480" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Transformer -> merge dot (elbow) -->
+  <path d="M240,248 V264 Q240,272 248,272 H472 Q480,272 480,280 V296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Explainer -> merge dot (elbow) -->
+  <path d="M720,248 V264 Q720,272 712,272 H488 Q480,272 480,280 V296" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- merge dot -> Deployment mode diamond (accent: guaranteed onward path) -->
+  <line x1="480" y1="296" x2="480" y2="320" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+  <!-- Diamond -> Serverless box -->
+  <line x1="580" y1="364" x2="660" y2="364" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Diamond -> Raw box -->
+  <line x1="380" y1="364" x2="300" y2="364" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Serverless -> Model server (elbow) -->
+  <path d="M780,392 V408 Q780,416 772,416 H528 Q520,416 520,424 V440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Raw -> Model server (elbow) -->
+  <path d="M180,392 V408 Q180,416 188,416 H432 Q440,416 440,424 V440" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Model server -> End -->
+  <line x1="480" y1="496" x2="480" y2="520" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels (masked, 8px gap above their line) -->
+  <rect x="588" y="344" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="620" y="353" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SERVERLESS</text>
+
+  <rect x="322" y="344" width="42" height="12" rx="2" fill="#ffffff"/>
+  <text x="343" y="353" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RAW</text>
+
+  <!-- ================= NODES ================= -->
+
+  <!-- Start oval -->
+  <rect x="390" y="16" width="180" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="480" y="44" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client request</text>
+
+  <!-- InferenceService (focal) -->
+  <rect x="370" y="88" width="220" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.4"/>
+  <text x="480" y="112" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">InferenceService</text>
+  <text x="480" y="128" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">predictor spec (CRD)</text>
+
+  <!-- Transformer (optional, dashed) -->
+  <rect x="140" y="192" width="200" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="240" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Transformer</text>
+  <text x="240" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">pre/post-process (optional)</text>
+
+  <!-- Explainer (optional, dashed) -->
+  <rect x="620" y="192" width="200" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="720" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Explainer</text>
+  <text x="720" y="232" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">predictions (optional)</text>
+
+  <!-- Merge dot -->
+  <circle cx="480" cy="296" r="4" fill="#232F3E"/>
+
+  <!-- Diamond: Deployment mode? -->
+  <polygon points="480,320 580,364 480,408 380,364" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="360" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Deployment</text>
+  <text x="480" y="374" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">mode?</text>
+
+  <!-- Serverless box -->
+  <rect x="660" y="336" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="780" y="360" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Knative-managed pod</text>
+  <text x="780" y="376" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">scale-to-zero capable</text>
+
+  <!-- Raw box -->
+  <rect x="60" y="336" width="240" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="180" y="360" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Deployment + Service</text>
+  <text x="180" y="376" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">+ HPA, no scale-to-zero</text>
+
+  <!-- Model server -->
+  <rect x="370" y="440" width="220" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Model server</text>
+  <text x="480" y="480" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">loads artifact, runs inference</text>
+
+  <!-- End oval -->
+  <rect x="390" y="520" width="180" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="480" y="548" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Response to client</text>
+</svg>

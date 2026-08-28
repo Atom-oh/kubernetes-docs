@@ -18,26 +18,7 @@ ACK uses the ELBv2, Route 53, and RDS controllers described in the [ACK document
 
 ## Architecture Diagram
 
-```mermaid
-graph LR
-    subgraph ack["ACK (AWS Infrastructure)"]
-        NLB[NLB] --> TG[Target Group]
-        R53[Route 53 Record] --> NLB
-        Aurora[Aurora PostgreSQL]
-    end
-
-    subgraph kro["KRO (Application)"]
-        CR[WebApp CR] --> D[Deployment]
-        CR --> S[Service]
-        CR --> TGB[TargetGroupBinding]
-        CR --> CM[ConfigMap]
-    end
-
-    TGB -.->|targetGroupARN| TG
-    CM -.->|endpoints| Aurora
-    D -.->|envFrom| CM
-    S -.->|serviceRef| TGB
-```
+![A WebApp custom resource in the KRO application layer creates a Deployment, Service, TargetGroupBinding, and ConfigMap; the TargetGroupBinding references an ACK-managed Target Group behind an NLB and Route 53 record, and the ConfigMap carries the endpoint of an ACK-managed Aurora PostgreSQL database, tying the Kubernetes application layer to real AWS infrastructure.](../.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png)
 
 ## Step 1: Infrastructure Provisioning with ACK
 

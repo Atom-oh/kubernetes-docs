@@ -6,24 +6,7 @@
 
 Network Policy는 Calico의 두 번째 핵심 차별화 요소입니다. Calico는 Kubernetes 표준 NetworkPolicy를 완벽히 지원하면서, 더 강력한 확장 기능을 제공합니다. 이 문서에서는 Kubernetes 표준 정책의 한계를 이해하고, Calico가 제공하는 고급 정책 기능을 심층적으로 다룹니다.
 
-```mermaid
-graph TB
-    subgraph "Network Policy 계층"
-        K8S[Kubernetes NetworkPolicy<br/>기본 L3/L4 정책]
-        CAL[Calico NetworkPolicy<br/>확장된 L3/L4/L7 정책]
-        GLOBAL[GlobalNetworkPolicy<br/>클러스터 전역 정책]
-        TIER[Tier 기반 정책<br/>계층화된 정책 관리]
-    end
-
-    K8S --> CAL
-    CAL --> GLOBAL
-    GLOBAL --> TIER
-
-    style K8S fill:#90caf9
-    style CAL fill:#4fc3f7
-    style GLOBAL fill:#26c6da
-    style TIER fill:#00acc1
-```
+![Kubernetes 표준 NetworkPolicy를 기반으로 Calico NetworkPolicy, GlobalNetworkPolicy, Tier 기반 정책이 차례로 쌓이며 정책의 적용 범위와 기능이 점점 넓어지는 4단계 계층 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-05-network-policy-0.png)
 
 ## Kubernetes NetworkPolicy 기본
 
@@ -596,51 +579,7 @@ spec:
 
 ### Tier 평가 흐름
 
-```mermaid
-flowchart TD
-    Traffic[들어오는 트래픽] --> Security
-
-    subgraph Security["Security Tier (order: 100)"]
-        S1[악성 IP 차단]
-        S2[규정 준수 검사]
-        S1 --> S2
-    end
-
-    subgraph Platform["Platform Tier (order: 200)"]
-        P1[모니터링 허용]
-        P2[로깅 시스템 허용]
-        P1 --> P2
-    end
-
-    subgraph Application["Application Tier (order: 300)"]
-        A1[마이크로서비스 정책]
-        A2[데이터베이스 접근]
-        A1 --> A2
-    end
-
-    subgraph Default["Default Tier"]
-        D1[K8s NetworkPolicy]
-    end
-
-    Security -->|Pass| Platform
-    Platform -->|Pass| Application
-    Application -->|Pass| Default
-
-    Security -->|Deny| Drop1[Drop]
-    Platform -->|Deny| Drop2[Drop]
-    Application -->|Deny| Drop3[Drop]
-    Default -->|No Match| Drop4[Default Deny]
-
-    Security -->|Allow| Accept1[Accept]
-    Platform -->|Allow| Accept2[Accept]
-    Application -->|Allow| Accept3[Accept]
-    Default -->|Allow| Accept4[Accept]
-
-    style Security fill:#ef5350
-    style Platform fill:#42a5f5
-    style Application fill:#66bb6a
-    style Default fill:#ffb74d
-```
+![들어오는 트래픽이 Security, Platform, Application, Default 네 개의 Tier를 order 순서로 통과하며, 각 Tier에서 규칙에 매치되면 즉시 Drop 또는 Accept로 보내고 매치되지 않으면 Pass로 다음 Tier에 넘어가는 정책 평가 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-05-network-policy-1.png)
 
 ### Tier 정책 예시
 

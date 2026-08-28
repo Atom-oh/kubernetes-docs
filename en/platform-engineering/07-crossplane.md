@@ -85,49 +85,7 @@ After completing this document, you will be able to:
 
 Crossplane introduces five fundamental concepts that work together to provide infrastructure abstraction:
 
-```mermaid
-graph TB
-    subgraph "Developer Interface"
-        XC[Claim - XC<br/>Namespace-scoped]
-    end
-
-    subgraph "Platform Abstraction Layer"
-        XR[Composite Resource - XR<br/>Cluster-scoped]
-        XRD[CompositeResourceDefinition - XRD<br/>Defines schema for XR and XC]
-        COMP[Composition<br/>Maps XR to Managed Resources]
-    end
-
-    subgraph "Cloud Provider Layer"
-        MR1[Managed Resource<br/>S3 Bucket]
-        MR2[Managed Resource<br/>RDS Instance]
-        MR3[Managed Resource<br/>Security Group]
-    end
-
-    subgraph "AWS Account"
-        S3[S3 Bucket]
-        RDS[RDS Instance]
-        SG[Security Group]
-    end
-
-    XC -->|"creates"| XR
-    XRD -->|"defines schema"| XR
-    XRD -->|"defines schema"| XC
-    COMP -->|"maps to"| MR1
-    COMP -->|"maps to"| MR2
-    COMP -->|"maps to"| MR3
-    XR -->|"selects"| COMP
-    MR1 -->|"reconciles"| S3
-    MR2 -->|"reconciles"| RDS
-    MR3 -->|"reconciles"| SG
-
-    style XC fill:#4CAF50,color:#fff
-    style XR fill:#2196F3,color:#fff
-    style XRD fill:#FF9800,color:#fff
-    style COMP fill:#FF9800,color:#fff
-    style MR1 fill:#9C27B0,color:#fff
-    style MR2 fill:#9C27B0,color:#fff
-    style MR3 fill:#9C27B0,color:#fff
-```
+![Architecture diagram showing a developer's namespaced Claim creating a cluster-scoped Composite Resource, which a Composition maps to Managed Resources that Crossplane reconciles into real S3, RDS, and Security Group objects in the AWS account.](../.gitbook/assets/en-platform-engineering-07-crossplane-0.png)
 
 **1. Provider**: A Crossplane package that installs CRDs and controllers for a specific cloud provider. For example, `provider-aws` installs CRDs for every AWS service (S3, RDS, VPC, IAM, etc.) and runs controllers that know how to create, update, and delete those AWS resources.
 
@@ -143,37 +101,7 @@ graph TB
 
 Crossplane runs as a set of controllers inside your Kubernetes cluster:
 
-```mermaid
-graph LR
-    subgraph "Kubernetes Cluster"
-        subgraph "crossplane-system namespace"
-            CP[Crossplane<br/>Core Controller]
-            RBAC[RBAC Manager]
-            PKG[Package Manager]
-        end
-
-        subgraph "Provider Runtime"
-            PAWS[provider-aws<br/>Controller Pod]
-        end
-
-        subgraph "etcd"
-            CRD[CRDs<br/>Managed Resources<br/>XRDs, Compositions]
-        end
-    end
-
-    subgraph "AWS"
-        API[AWS APIs]
-    end
-
-    CP -->|"manages"| RBAC
-    CP -->|"manages"| PKG
-    PKG -->|"installs"| PAWS
-    PAWS -->|"watches"| CRD
-    PAWS -->|"reconciles"| API
-
-    style CP fill:#1565C0,color:#fff
-    style PAWS fill:#6A1B9A,color:#fff
-```
+![Architecture diagram of the Crossplane runtime, showing the core controller managing RBAC and the package manager, which installs a provider-aws pod that watches CRDs in etcd and reconciles them against the AWS APIs.](../.gitbook/assets/en-platform-engineering-07-crossplane-1.png)
 
 - **Crossplane Core Controller**: Manages the lifecycle of Compositions, XRDs, and the mapping between XRs and Managed Resources
 - **RBAC Manager**: Automatically generates Kubernetes RBAC ClusterRoles for XRDs so that Claims can be used in namespaces
@@ -683,21 +611,7 @@ Compositions are the heart of Crossplane's value proposition. They allow platfor
 
 ### Workflow Overview
 
-```mermaid
-graph LR
-    A[Platform Team<br/>Defines XRD] --> B[Platform Team<br/>Writes Composition]
-    B --> C[Developer<br/>Creates Claim]
-    C --> D[Crossplane<br/>Creates XR]
-    D --> E[Composition<br/>Maps to MRs]
-    E --> F[Provider<br/>Provisions AWS]
-
-    style A fill:#FF9800,color:#fff
-    style B fill:#FF9800,color:#fff
-    style C fill:#4CAF50,color:#fff
-    style D fill:#2196F3,color:#fff
-    style E fill:#2196F3,color:#fff
-    style F fill:#9C27B0,color:#fff
-```
+![Linear flow showing the platform team defining an XRD and writing a Composition, then a developer creating a Claim that Crossplane turns into a Composite Resource, mapped by the Composition into managed resources a provider provisions in AWS.](../.gitbook/assets/en-platform-engineering-07-crossplane-2.png)
 
 ### Step 1: Define a CompositeResourceDefinition (XRD)
 
@@ -1231,29 +1145,7 @@ spec:
 
 ### Claim Lifecycle
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant K8s as Kubernetes API
-    participant XR as Composite Resource
-    participant Comp as Composition
-    participant MR as Managed Resources
-    participant AWS as AWS API
-
-    Dev->>K8s: kubectl apply Claim
-    K8s->>XR: Create XR from Claim
-    XR->>Comp: Select Composition
-    Comp->>MR: Create SecurityGroup, SubnetGroup, RDS
-    MR->>AWS: Provision resources via AWS API
-    AWS-->>MR: Return resource status
-    MR-->>XR: Propagate status (endpoint, port)
-    XR-->>K8s: Update Claim status
-    K8s-->>Dev: Secret with connection details
-
-    Note over Dev,AWS: Continuous reconciliation loop
-    AWS-->>MR: Drift detected
-    MR->>AWS: Correct drift automatically
-```
+![Sequence diagram showing a developer's kubectl apply flowing through Kubernetes, a Composite Resource, and managed resources into AWS to provision infrastructure and return a connection secret, followed by a continuous loop that detects and corrects configuration drift.](../.gitbook/assets/en-platform-engineering-07-crossplane-3.png)
 
 ---
 
@@ -1317,40 +1209,7 @@ Combining [Backstage](./06-backstage-idp.md) as the developer portal with Crossp
 
 ### Architecture Overview
 
-```mermaid
-graph LR
-    subgraph "Developer Portal"
-        BS[Backstage<br/>Software Template]
-    end
-
-    subgraph "GitOps"
-        GH[GitHub<br/>Repository]
-        ARGO[ArgoCD<br/>GitOps Controller]
-    end
-
-    subgraph "Kubernetes Cluster"
-        XC[Crossplane Claim]
-        XR[Composite Resource]
-        MR[Managed Resources]
-    end
-
-    subgraph "AWS"
-        RDS[(RDS)]
-        S3[(S3)]
-    end
-
-    BS -->|"1. Generate Claim YAML"| GH
-    GH -->|"2. Sync"| ARGO
-    ARGO -->|"3. Apply"| XC
-    XC --> XR
-    XR --> MR
-    MR -->|"4. Provision"| RDS
-    MR -->|"4. Provision"| S3
-
-    style BS fill:#4CAF50,color:#fff
-    style ARGO fill:#EF6C00,color:#fff
-    style XC fill:#2196F3,color:#fff
-```
+![Architecture diagram showing a Backstage software template generating a Claim into GitHub, ArgoCD syncing and applying it to the cluster, and Crossplane turning it into a Composite Resource and managed resources that provision RDS and S3 in AWS.](../.gitbook/assets/en-platform-engineering-07-crossplane-4.png)
 
 ### Backstage Software Template for Crossplane Claims
 

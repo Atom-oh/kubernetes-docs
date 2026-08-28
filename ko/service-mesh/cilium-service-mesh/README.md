@@ -19,54 +19,11 @@ Cilium Service Mesh의 핵심 가치는 **통합된 네트워킹과 서비스 �
 
 ## 사이드카 vs 사이드카리스 아키텍처
 
-```mermaid
-graph TB
-    subgraph "전통적인 사이드카 방식 (Istio)"
-        direction TB
-        P1A[Pod A]
-        S1A[Sidecar Proxy A]
-        P1B[Pod B]
-        S1B[Sidecar Proxy B]
-
-        P1A --> S1A
-        S1A --> S1B
-        S1B --> P1B
-    end
-
-    subgraph "Cilium Service Mesh 방식"
-        direction TB
-        P2A[Pod A]
-        P2B[Pod B]
-        eBPF1[eBPF Datapath]
-        NodeEnvoy[Node Envoy<br/>L7 처리]
-
-        P2A --> eBPF1
-        eBPF1 --> NodeEnvoy
-        NodeEnvoy --> eBPF1
-        eBPF1 --> P2B
-    end
-```
+![Istio의 Pod당 사이드카 프록시 체인과 Cilium이 노드당 하나의 공유 Envoy로 L7 처리를 넘겨주는 eBPF 데이터패스를 나란히 비교하는 아키텍처 다이어그램입니다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-README-0.png)
 
 ### 아키텍처 비교 다이어그램
 
-```mermaid
-flowchart LR
-    subgraph "Sidecar-based (Istio)"
-        direction TB
-        AppA1[App Container] --> ProxyA1[Envoy Sidecar]
-        ProxyA1 --> Network1[Network]
-        Network1 --> ProxyB1[Envoy Sidecar]
-        ProxyB1 --> AppB1[App Container]
-    end
-
-    subgraph "eBPF-based (Cilium)"
-        direction TB
-        AppA2[App Container] --> eBPF2[eBPF<br/>L3/L4]
-        eBPF2 --> SharedProxy[Shared Envoy<br/>L7 Only]
-        SharedProxy --> eBPF3[eBPF<br/>L3/L4]
-        eBPF3 --> AppB2[App Container]
-    end
-```
+![Istio의 사이드카 방식은 각 Envoy가 L3/L4와 L7을 모두 처리하지만, Cilium eBPF 방식은 커널의 eBPF가 L3/L4를 처리하고 L7만 공유 Envoy로 넘기는 구조적 차이를 보여주는 아키텍처 다이어그램입니다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-README-1.png)
 
 ## 서비스 메시 비교
 
@@ -88,15 +45,7 @@ flowchart LR
 
 ### 리소스 사용량 비교
 
-```mermaid
-graph LR
-    subgraph "100 Pod 클러스터 메모리 사용량"
-        direction TB
-        Cilium["Cilium SM<br/>~500MB total<br/>(노드당 ~100MB)"]
-        Istio["Istio<br/>~5GB total<br/>(Pod당 ~50MB)"]
-        Linkerd["Linkerd<br/>~2GB total<br/>(Pod당 ~20MB)"]
-    end
-```
+![노드당 공유 Envoy를 쓰는 Cilium Service Mesh는 총 약 500MB만 사용하는 반면, Pod마다 사이드카를 두는 Istio는 약 5GB, Linkerd는 약 2GB를 사용해 사이드카리스 구조의 메모리 효율성을 보여주는 막대 그래프입니다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-README-2.png)
 
 ## Cilium Service Mesh를 선택해야 할 때
 

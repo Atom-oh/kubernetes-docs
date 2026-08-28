@@ -307,43 +307,13 @@ spec:
 
 ### 벤치마크 결과
 
-```mermaid
-graph LR
-    subgraph "지연 시간 비교 (P99)"
-        Native["Native<br/>0.1ms"]
-        Cilium["Cilium SM<br/>0.3ms"]
-        Istio["Istio<br/>2.5ms"]
-    end
-```
+![Native, Cilium 서비스 메시, Istio의 P99 지연 시간을 비교하는 막대 그래프로, Cilium 서비스 메시가 Native에 근접한 낮은 지연을 보이는 반면 Istio는 훨씬 높은 지연을 보인다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-0.png)
 
 ## 사이드카 메시에서 마이그레이션
 
 ### 마이그레이션 전략
 
-```mermaid
-graph TB
-    subgraph "Phase 1: 준비"
-        A1[Cilium CNI 설치]
-        A2[기존 CNI와 공존]
-        A3[테스트 워크로드로 검증]
-    end
-
-    subgraph "Phase 2: 점진적 전환"
-        B1[네임스페이스별 전환]
-        B2[사이드카 인젝션 비활성화]
-        B3[Cilium L7 정책 적용]
-    end
-
-    subgraph "Phase 3: 완전 전환"
-        C1[모든 워크로드 전환]
-        C2[Istio/Linkerd 제거]
-        C3[정리 및 최적화]
-    end
-
-    A1 --> A2 --> A3
-    A3 --> B1 --> B2 --> B3
-    B3 --> C1 --> C2 --> C3
-```
+![사이드카 서비스 메시에서 Cilium으로 전환하는 3단계(준비, 점진적 전환, 완전 전환) 마이그레이션 전략을 보여주는 순서도.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-1.png)
 
 ### Istio에서 마이그레이션
 
@@ -521,22 +491,7 @@ envoy:
 
 ### 점진적 L7 전환
 
-```mermaid
-graph LR
-    subgraph "Phase 1"
-        P1[L3/L4: Cilium<br/>L7: Istio]
-    end
-
-    subgraph "Phase 2"
-        P2[L3/L4: Cilium<br/>L7: Cilium + Istio 혼합]
-    end
-
-    subgraph "Phase 3"
-        P3[L3/L4: Cilium<br/>L7: Cilium]
-    end
-
-    P1 --> P2 --> P3
-```
+![L3/L4는 Cilium이 담당하고 L7 소유권을 Istio에서 Cilium으로 점진적으로 이관하는 3단계 전환 과정을 보여주는 순서도.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-2.png)
 
 ## 모니터링 및 알림 설정
 

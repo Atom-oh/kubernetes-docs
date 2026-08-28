@@ -39,31 +39,7 @@ dag-processor를 필수로 만들고 파싱을 스케줄러의 루프에서 완�
 
 ## 2. Kubernetes 위 컴포넌트 구성도
 
-```mermaid
-flowchart TB
-    subgraph K8s[Kubernetes Cluster]
-        API[Deployment: airflow api-server]
-        SCH[Deployment: airflow scheduler]
-        DP[Deployment: airflow dag-processor]
-        TRG[Deployment: airflow triggerer]
-        PG[(StatefulSet: PostgreSQL)]
-        subgraph Celery[Optional - CeleryExecutor only]
-            REDIS[(Redis broker)]
-            W1[Pod: celery worker 1]
-            W2[Pod: celery worker 2]
-        end
-        KPOD[Pod: per-task worker - KubernetesExecutor]
-    end
-
-    DP -- "writes parsed DAGs" --> PG
-    SCH -- "reads serialized_dag" --> PG
-    API -- "reads/writes state" --> PG
-    TRG -- "reads/writes trigger state" --> PG
-    SCH -- "queues task via broker" --> REDIS
-    REDIS --> W1
-    REDIS --> W2
-    SCH -- "creates pod per task" --> KPOD
-```
+![Kubernetes 클러스터 안에서 Airflow api-server, scheduler, dag-processor, triggerer 배포가 모두 PostgreSQL 상태 저장소를 공유하고, scheduler가 실행기(Executor) 종류에 따라 CeleryExecutor의 Redis 브로커/워커 풀 또는 KubernetesExecutor의 태스크별 파드 중 하나로 작업을 위임하는 구조를 보여준다.](../../.gitbook/assets/ko-data-on-eks-airflow-01-architecture-0.png)
 
 dag-processor는 Postgres에 쓰기만 하고, 스케줄러는 Postgres에서 DAG 구조를 읽기만 합니다. 스케줄러와 api-server 어느 쪽도 DAG 파일을 직접 파싱하지 않으며, DAG 파일 접근은 dag-processor Pod로 완전히 격리됩니다. 즉 DAG 작성자의 코드는 오직 이 하나의 컴포넌트의 파일시스템(또는 마운트된 볼륨)에서만 읽힐 수 있으면 됩니다.
 

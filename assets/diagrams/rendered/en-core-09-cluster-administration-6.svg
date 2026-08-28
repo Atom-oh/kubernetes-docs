@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-core-09-cluster-administration-6-title en-core-09-cluster-administration-6-desc">
+<title id="en-core-09-cluster-administration-6-title">Kubernetes Backup and Recovery Process</title>
+<desc id="en-core-09-cluster-administration-6-desc">Architecture diagram showing scheduled etcd snapshots and resource-YAML backups both landing in backup storage, which later feeds an etcd restore and a resource restore during disaster recovery.</desc>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+<rect width="960" height="460" fill="#ffffff"/>
+
+  <rect x="20" y="32" width="620" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+  <rect x="32" y="36" width="100" height="12" rx="2" fill="#ffffff"/>
+  <text x="82.0" y="45" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace"
+        text-anchor="middle" letter-spacing="0.12em">BACKUP PROCESS</text>
+
+  <rect x="20" y="264" width="900" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+  <rect x="32" y="268" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="88.0" y="277" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace"
+        text-anchor="middle" letter-spacing="0.12em">RECOVERY PROCESS</text>
+<path d="M 190,116.0 H 212.0 Q 220.0,116.0 220.0,108.0 V 92.0 Q 220.0,84.0 228.0,84.0 H 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 190,132.0 H 212.0 Q 220.0,132.0 220.0,140.0 V 176.0 Q 220.0,184.0 228.0,184.0 H 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400,84.0 H 422.0 Q 430.0,84.0 430.0,92.0 V 108.0 Q 430.0,116.0 438.0,116.0 H 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 400,184.0 H 422.0 Q 430.0,184.0 430.0,176.0 V 140.0 Q 430.0,132.0 438.0,132.0 H 460" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="324.0" x2="220" y2="324.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="360" y1="324.0" x2="400" y2="324.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="540" y1="324.0" x2="580" y2="324.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="720" y1="324.0" x2="760" y2="324.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 506.6666666666667,148 V 216.0 Q 506.6666666666667,224.0 498.6666666666667,224.0 H 298.0 Q 290.0,224.0 290.0,232.0 V 300" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 553.3333333333334,148 V 216.0 Q 553.3333333333334,224.0 561.3333333333334,224.0 H 822.0 Q 830.0,224.0 830.0,232.0 V 300" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="40" y="100" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="100" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="115.0" y="128.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Set Backup Schedule</text>
+<rect x="250" y="60" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="250" y="60" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="325.0" y="88.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Create etcd Snapshot</text>
+<rect x="250" y="160" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="250" y="160" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="325.0" y="188.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backup Resource YAMLs</text>
+<rect x="460" y="100" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="460" y="100" width="140" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="530.0" y="128.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backup Storage</text>
+<rect x="40" y="300" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="40" y="300" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="110.0" y="328.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Disaster Occurs</text>
+<rect x="220" y="300" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="220" y="300" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="290.0" y="328.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Restore etcd</text>
+<rect x="400" y="300" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="400" y="300" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="470.0" y="328.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Restart K8s Services</text>
+<rect x="580" y="300" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="580" y="300" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="650.0" y="328.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Validate Cluster</text>
+<rect x="760" y="300" width="140" height="48" rx="6" fill="#ffffff"/>
+<rect x="760" y="300" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="830.0" y="328.0" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Restore Resources</text>
+</svg>

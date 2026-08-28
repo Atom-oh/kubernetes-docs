@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="calico-node-arch-title calico-node-arch-desc">
+    <title id="calico-node-arch-title">calico-node Internal Architecture</title>
+    <desc id="calico-node-arch-desc">Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zone: Calico Node -->
+    <rect x="48" y="104" width="560" height="302" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="60" y="108" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="116" y="117" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">CALICO NODE</text>
+
+    <!-- ===== connectors ===== -->
+    <line x1="210" y1="170" x2="260" y2="170" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="400" y1="170" x2="450" y2="170" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="210" y1="330" x2="260" y2="330" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="520" y1="202" x2="520" y2="298" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- BIRD BGP <-> External Router (fan attach at y=155) -->
+    <line x1="590" y1="155" x2="730" y2="155" stroke="#EC7211" stroke-width="1.2"
+          marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+
+    <!-- BIRD BGP <-> Other Calico Nodes (fan attach at y=185, elbow r=8) -->
+    <path d="M590,185 H652 Q660,185 660,193 V322 Q660,330 668,330 H730"
+          fill="none" stroke="#EC7211" stroke-width="1.2"
+          marker-start="url(#arrow-accent-start)" marker-end="url(#arrow-accent)"/>
+
+    <!-- ===== internal nodes ===== -->
+    <!-- Calico API -->
+    <rect x="70" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="70" y="138" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="140" y="174" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Calico API</text>
+
+    <!-- confd -->
+    <rect x="260" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="260" y="138" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="330" y="174" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">confd</text>
+
+    <!-- BIRD BGP (focal) -->
+    <rect x="450" y="138" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="450" y="138" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="520" y="174" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">BIRD BGP</text>
+
+    <!-- Felix -->
+    <rect x="70" y="298" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="70" y="298" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="140" y="334" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Felix</text>
+
+    <!-- Dataplane -->
+    <rect x="260" y="298" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="260" y="298" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="330" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Dataplane</text>
+    <text x="330" y="346" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">iptables/eBPF</text>
+
+    <!-- Routing Table -->
+    <rect x="450" y="298" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="450" y="298" width="140" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="520" y="334" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Routing Table</text>
+
+    <!-- External Router -->
+    <rect x="730" y="123" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="730" y="123" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="800" y="159" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">External Router</text>
+
+    <!-- Other Calico Nodes -->
+    <rect x="730" y="298" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="730" y="298" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="800" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Other Calico</text>
+    <text x="800" y="344" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Nodes</text>
+
+    <!-- ===== legend ===== -->
+    <line x1="30" y1="440" x2="930" y2="440" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="460" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="220" y1="458" x2="248" y2="458" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="258" y="461" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Internal control call</text>
+    <line x1="500" y1="458" x2="528" y2="458" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <text x="538" y="461" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">BGP route distribution</text>
+
+  </svg>

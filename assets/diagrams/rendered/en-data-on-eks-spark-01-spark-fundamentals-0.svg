@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="seq-title seq-desc">
+      <title id="seq-title">Spark on Kubernetes: driver and executor pod lifecycle</title>
+      <desc id="seq-desc">Sequence diagram showing spark-submit asking the Kubernetes API server to create a Driver Pod, the Driver Pod requesting Executor Pods through the same API server, the executors registering back with the driver, and the driver finally assigning tasks to the executors.</desc>
+
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+        </marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+        </marker>
+      </defs>
+
+      <!-- Background -->
+      <rect width="960" height="600" fill="#FFFFFF"/>
+
+      <!-- Eyebrow + title -->
+      <text x="44" y="20" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">SEQUENCE · SPARK ON KUBERNETES</text>
+      <text x="44" y="38" fill="#232F3E" font-size="15" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Driver and executor pod lifecycle</text>
+
+      <!-- =========================================================
+           LIFELINES — dashed, centers: 120, 380, 620, 860
+           ========================================================= -->
+      <line x1="120" y1="96" x2="120" y2="468" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="380" y1="96" x2="380" y2="468" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="620" y1="96" x2="620" y2="468" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="860" y1="96" x2="860" y2="468" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- =========================================================
+           MESSAGE ARROWS — time flows top -> down.
+           ========================================================= -->
+
+      <!-- M1: User -> API Server (spark-submit talks to the k8s API · link) -->
+      <line x1="120" y1="128" x2="380" y2="128" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+      <!-- M2: API Server -> Driver Pod (control plane schedules the driver · muted) -->
+      <line x1="380" y1="184" x2="620" y2="184" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-muted)"/>
+
+      <!-- M3: Driver Pod -> API Server (driver asks for executors · muted) -->
+      <line x1="620" y1="240" x2="380" y2="240" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-muted)"/>
+
+      <!-- M4: API Server -> Executor Pods (control plane schedules executors · muted, passes behind Driver lifeline) -->
+      <line x1="380" y1="296" x2="860" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-muted)"/>
+
+      <!-- M5: Executor Pods -> Driver Pod (executors register + report status · muted) -->
+      <line x1="860" y1="352" x2="620" y2="352" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-muted)"/>
+
+      <!-- M6: Driver Pod -> Executor Pods (driver assigns tasks · headline accent) -->
+      <line x1="620" y1="408" x2="860" y2="408" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- =========================================================
+           MESSAGE LABELS — opaque paper mask + mono caption.
+           ========================================================= -->
+
+      <!-- M1 label -->
+      <rect x="188" y="112" width="124" height="12" rx="2" fill="#FFFFFF"/>
+      <text x="250" y="122" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CREATE DRIVER POD</text>
+
+      <!-- M2 label -->
+      <rect x="412" y="168" width="176" height="12" rx="2" fill="#FFFFFF"/>
+      <text x="500" y="178" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULE + START DRIVER</text>
+
+      <!-- M3 label -->
+      <rect x="412" y="224" width="176" height="12" rx="2" fill="#FFFFFF"/>
+      <text x="500" y="234" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REQUEST EXECUTOR PODS</text>
+
+      <!-- M4 label — biased toward the API side so the mask clears the Driver lifeline at x=620 -->
+      <rect x="392" y="280" width="184" height="12" rx="2" fill="#FFFFFF"/>
+      <text x="484" y="290" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULE + START EXECUTORS</text>
+
+      <!-- M5 label -->
+      <rect x="656" y="336" width="176" height="12" rx="2" fill="#FFFFFF"/>
+      <text x="744" y="346" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">REGISTER + REPORT STATUS</text>
+
+      <!-- M6 label (headline) -->
+      <rect x="696" y="392" width="88" height="12" rx="2" fill="#FFFFFF"/>
+      <text x="740" y="402" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ASSIGN TASKS</text>
+
+      <!-- =========================================================
+           ACTOR BOXES — drawn after arrows/labels. Centers: 120, 380, 620, 860
+           ========================================================= -->
+
+      <!-- Actor 1: User (spark-submit) -->
+      <rect x="44" y="48" width="152" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="120" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">User</text>
+      <text x="120" y="85" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">spark-submit</text>
+
+      <!-- Actor 2: Kubernetes API Server -->
+      <rect x="292" y="48" width="176" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="380" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+      <text x="380" y="85" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Kubernetes control plane</text>
+
+      <!-- Actor 3: Driver Pod (focal) -->
+      <rect x="544" y="48" width="152" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+      <text x="620" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Driver Pod</text>
+      <text x="620" y="85" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Spark driver</text>
+
+      <!-- Actor 4: Executor Pods -->
+      <rect x="784" y="48" width="152" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+      <text x="860" y="70" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Executor Pods</text>
+      <text x="860" y="85" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Task execution</text>
+
+      <!-- =========================================================
+           LEGEND
+           ========================================================= -->
+      <line x1="44" y1="488" x2="936" y2="488" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+      <text x="44" y="504" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <line x1="176" y1="530" x2="204" y2="530" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <text x="212" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">API call from client</text>
+
+      <line x1="396" y1="530" x2="424" y2="530" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-muted)"/>
+      <text x="432" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Control-plane action</text>
+
+      <line x1="628" y1="530" x2="656" y2="530" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="664" y="533" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Headline: task assignment</text>
+
+    </svg>

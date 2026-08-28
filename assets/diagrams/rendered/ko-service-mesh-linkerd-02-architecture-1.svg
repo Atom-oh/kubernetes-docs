@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-linkerd-02-architecture-1-title ko-service-mesh-linkerd-02-architecture-1-desc">
+<title id="ko-service-mesh-linkerd-02-architecture-1-title">Destination Controller 내부 구조</title>
+<desc id="ko-service-mesh-linkerd-02-architecture-1-desc">Kubernetes의 서비스/엔드포인트와 라우팅 리소스를 감시해 Destination API가 gRPC 스트림으로 프록시에 전달하는 구조를 보여준다.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="108" width="232" height="248" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="40" y="112" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="88.0" y="121" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES</text>
+
+<rect x="320" y="108" width="300" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="336" y="112" width="192" height="12" rx="2" fill="#ffffff"/>
+<text x="432.0" y="121" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.14em">DESTINATION CONTROLLER</text>
+
+<rect x="700" y="388" width="232" height="108" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="716" y="392" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="752.0" y="401" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.14em">PROXIES</text>
+
+<rect x="48" y="140" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="48" y="140" width="176" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="136.0" y="170.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Services / Endpoints</text>
+<text x="136.0" y="188.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">SVC · EP</text>
+<rect x="48" y="280" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="48" y="280" width="176" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="136.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SP / TrafficSplits</text>
+<text x="136.0" y="328.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">SP · TS</text>
+<rect x="344" y="140" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="344" y="140" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="444.0" y="170.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Discovery</text>
+<text x="444.0" y="188.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">엔드포인트 조회</text>
+<rect x="344" y="228" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="344" y="228" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="444.0" y="258.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ServiceProfile</text>
+<text x="444.0" y="276.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">라우팅 정보</text>
+<rect x="344" y="316" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="344" y="316" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="444.0" y="346.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">TrafficSplit</text>
+<text x="444.0" y="364.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">트래픽 분할</text>
+<rect x="344" y="404" width="200" height="64" rx="6" fill="#ffffff"/>
+<rect x="344" y="404" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="444.0" y="434.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Destination API</text>
+<text x="444.0" y="452.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">gRPC 서버</text>
+<rect x="724" y="404" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="724" y="404" width="176" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="812.0" y="434.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Proxies</text>
+<text x="812.0" y="452.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Proxy 1 · Proxy 2</text>
+<line x1="224" y1="172" x2="344" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 224,312 H 276.0 Q 284.0,312 284.0,304 V 268 Q 284.0,260 292.0,260 H 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 224,312 H 276.0 Q 284.0,312 284.0,320 V 340 Q 284.0,348 292.0,348 H 344" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="544" y1="436" x2="724" y2="436" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="584.0" y="416" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="634" y="425" fill="#EC7211" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.06em">gRPC STREAM</text>
+<line x1="40" y1="504" x2="920" y2="504" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="534" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="62" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Destination API</text>
+<rect x="206" y="534" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="228" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">컨트롤 컴포넌트</text>
+<rect x="316" y="534" width="14" height="10" rx="2" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="338" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">K8s 리소스</text>
+<line x1="418" y1="539" x2="446" y2="539" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="454" y="542" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">프록시로 전달</text>
+</svg>

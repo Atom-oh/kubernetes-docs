@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ecraccount-title ecraccount-desc">
+<title id="ecraccount-title">Amazon ECR Private/Public 구성</title>
+<desc id="ecraccount-desc">AWS 계정 안에서 Amazon ECR Private가 IAM 인증, 수명주기 정책, 암호화, 스캔 기능으로 비공개 리포지토리를 관리하고, ECR Public이 별도로 공개 리포지토리를 제공하는 구조를 보여준다.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Zones (painted first) ===== -->
+<!-- Outer: AWS Account -->
+<rect x="40" y="40" width="880" height="436" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.14)" stroke-width="1"/>
+<rect x="392" y="44" width="176" height="16" rx="2" fill="#ffffff"/>
+<text x="480" y="56" fill="rgba(35,47,62,0.45)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.16em">AWS ACCOUNT</text>
+
+<!-- Inner: ECR Private -->
+<rect x="64" y="76" width="552" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="228" y="80" width="224" height="14" rx="2" fill="#ffffff"/>
+<text x="340" y="91" fill="rgba(35,47,62,0.45)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON ECR PRIVATE</text>
+
+<!-- Inner: ECR Public -->
+<rect x="640" y="76" width="256" height="372" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="700" y="80" width="136" height="14" rx="2" fill="#ffffff"/>
+<text x="768" y="91" fill="rgba(35,47,62,0.45)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AMAZON ECR PUBLIC</text>
+
+<!-- ===== Nodes: repos (focal = myapp-prod) ===== -->
+<!-- myapp-prod (focal) -->
+<rect x="88" y="108" width="504" height="64" rx="6" fill="#ffffff"/>
+<rect x="88" y="108" width="504" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="100" y="120" width="32" height="14" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+<text x="116" y="130" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REPO</text>
+<text x="152" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">myapp-prod</text>
+<text x="152" y="160" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">v1.0.0 · v1.1.0 · v1.2.0</text>
+
+<!-- myapp-dev -->
+<rect x="88" y="196" width="504" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="100" y="208" width="32" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="116" y="218" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REPO</text>
+<text x="152" y="234" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">myapp-dev</text>
+<text x="152" y="248" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">dev-abc123 · dev-def456</text>
+
+<!-- backend -->
+<rect x="88" y="284" width="504" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="100" y="296" width="32" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="116" y="306" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REPO</text>
+<text x="152" y="322" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="start">backend</text>
+<text x="152" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="start">2.1.0 · 2.2.0 · latest</text>
+
+<!-- shared features strip -->
+<rect x="88" y="372" width="504" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.22)" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="340" y="392" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">공통 기능</text>
+<text x="340" y="406" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IAM Auth · Lifecycle Policies · Encryption · Scanning</text>
+
+<!-- Public repo -->
+<rect x="672" y="216" width="192" height="80" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="684" y="228" width="28" height="14" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+<text x="698" y="238" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PUB</text>
+<text x="768" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">공개 리포지토리</text>
+<text x="768" y="272" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">public.ecr.aws/</text>
+<text x="768" y="284" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">alias/repo</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="504" x2="920" y2="504" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+
+<rect x="40" y="536" width="24" height="14" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="72" y="547" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">프로덕션 리포지토리</text>
+
+<rect x="240" y="536" width="24" height="14" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="272" y="547" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">일반 리포지토리</text>
+
+<rect x="420" y="536" width="24" height="14" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.22)" stroke-width="0.8" stroke-dasharray="4,3"/>
+<text x="452" y="547" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">공통 정책/기능</text>
+
+<rect x="620" y="536" width="24" height="14" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="652" y="547" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Public 리포지토리</text>
+</svg>

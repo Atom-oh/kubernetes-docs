@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-ops-12-event-capacity-planning-2-title ko-ops-12-event-capacity-planning-2-desc">
+    <title id="ko-ops-12-event-capacity-planning-2-title">KEDA-Karpenter 사전/실시간 노드 프로비저닝</title>
+    <desc id="ko-ops-12-event-capacity-planning-2-desc">이벤트 30분 전 Cron 트리거로 KEDA가 200개 Pod를 요청해 Scheduler가 Pending을 감지하면 Karpenter가 AWS EC2에 노드 20대를 프로비저닝하고, 이벤트 시작 후 메트릭 트리거가 250개로 목표를 올려 5대를 추가로 확보하는 과정을 보여주는 시퀀스 다이어그램.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+</defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="96" y1="96" x2="96" y2="812" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="288" y1="96" x2="288" y2="812" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="96" x2="480" y2="812" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="672" y1="96" x2="672" y2="812" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="864" y1="96" x2="864" y2="812" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="76.0" y="108" width="808" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="480.0" y="124" fill="#7D8998" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic" text-anchor="middle">이벤트 30분 전 (Cron 트리거)</text>
+<path d="M 100,160 H 284" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="148.0" y="140" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="192.0" y="149" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">REPLICAS 200</text>
+<path d="M 292,208 H 476" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="340.0" y="188" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="384.0" y="197" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POD x195 요청</text>
+<path d="M 480,256 H 512 Q 520,256 520,264 V 280 Q 520,288 512,288 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="528" y="266.0" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="569.0" y="275.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">PENDING 배치불가</text>
+<path d="M 484,336 H 668" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="534.0" y="316" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="576.0" y="325" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">PENDING 감지</text>
+<path d="M 676,384 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="724.0" y="364" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="768.0" y="373" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NODE x20 요청</text>
+<path d="M 860,432 H 676" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="726.0" y="412" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="768.0" y="421" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NODE READY</text>
+<path d="M 668,480 H 484" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="538.0" y="460" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="576.0" y="469" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NODE 등록</text>
+<path d="M 480,528 H 512 Q 520,528 520,536 V 552 Q 520,560 512,560 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="528" y="538.0" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="569.0" y="547.0" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">PENDING 스케줄링</text>
+<rect x="76.0" y="588" width="808" height="24" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+<text x="480.0" y="604" fill="#7D8998" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic" text-anchor="middle">이벤트 시작 (메트릭 트리거)</text>
+<path d="M 100,644 H 284" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="148.0" y="624" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="192.0" y="633" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">REPLICAS 250</text>
+<path d="M 292,692 H 476" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="342.0" y="672" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="384.0" y="681" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">POD x50 추가</text>
+<path d="M 484,740 H 668" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="532.0" y="720" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="576.0" y="729" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">추가 PENDING</text>
+<path d="M 676,788 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="726.0" y="768" width="84" height="12" rx="2" fill="#ffffff"/>
+<text x="768.0" y="777" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">NODE x5 추가</text>
+<rect x="18.0" y="40" width="156" height="56" rx="6" fill="#ffffff"/>
+<rect x="18.0" y="40" width="156" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="96.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">KEDA</text>
+<text x="96.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">이벤트 트리거</text>
+<rect x="26.0" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="40.0" y="57" fill="#7D8998" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">TRG</text>
+<rect x="210.0" y="40" width="156" height="56" rx="6" fill="#ffffff"/>
+<rect x="210.0" y="40" width="156" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="288.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HPA</text>
+<text x="288.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">오토스케일러</text>
+<rect x="218.0" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="232.0" y="57" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">CTRL</text>
+<rect x="402.0" y="40" width="156" height="56" rx="6" fill="#ffffff"/>
+<rect x="402.0" y="40" width="156" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scheduler</text>
+<text x="480.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">K8s Scheduler</text>
+<rect x="410.0" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="424.0" y="57" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SCH</text>
+<rect x="594.0" y="40" width="156" height="56" rx="6" fill="#ffffff"/>
+<rect x="594.0" y="40" width="156" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="672.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Karpenter</text>
+<text x="672.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">노드 프로비저너</text>
+<rect x="602.0" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,113,17,0.50)" stroke-width="0.8"/>
+<text x="616.0" y="57" fill="#EC7211" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">PROV</text>
+<rect x="786.0" y="40" width="156" height="56" rx="6" fill="#ffffff"/>
+<rect x="786.0" y="40" width="156" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="864.0" y="66.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS</text>
+<text x="864.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">EC2</text>
+<rect x="794.0" y="48" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="808.0" y="57" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EC2</text>
+<line x1="40" y1="828" x2="920" y2="828" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="844" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="856" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="864" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Karpenter (focal)</text>
+<line x1="220" y1="862" x2="248" y2="862" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="256" y="864" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">요청/감지</text>
+<line x1="380" y1="862" x2="408" y2="862" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<text x="416" y="864" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">응답/완료</text>
+<line x1="540" y1="862" x2="568" y2="862" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="576" y="864" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">노드 확보 완료</text>
+  </svg>

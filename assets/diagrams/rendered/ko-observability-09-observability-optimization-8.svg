@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-observability-09-observability-optimization-8-title ko-observability-09-observability-optimization-8-desc">
+  <title id="ko-observability-09-observability-optimization-8-title">EKS 관측성 단계별 도입 전략</title>
+  <desc id="ko-observability-09-observability-optimization-8-desc">CloudWatch 기본 구성에서 시작해 Prometheus/Grafana 스택을 거쳐 OpenTelemetry와 eBPF 기반 고급 관측성으로 단계적으로 성장하는 도입 경로를 보여준다.</desc>
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      </style>
+    </defs>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="24" y="160" width="280" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="164" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="74.0" y="173" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.10em">1단계: 기본</text>
+<rect x="296" y="160" width="280" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="308" y="164" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="346.0" y="173" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.10em">2단계: 중급</text>
+<rect x="568" y="160" width="280" height="264" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="580" y="164" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="618.0" y="173" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.10em">3단계: 고급</text>
+<line x1="288" y1="294" x2="352" y2="294" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="584" y1="294" x2="648" y2="294" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="56" y="224" width="232" height="140" rx="6" fill="#ffffff"/>
+<rect x="56" y="224" width="232" height="140" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="172.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">1단계: 기본</text>
+<text x="172.0" y="304.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CloudWatch Logs</text>
+<text x="172.0" y="315.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">CloudWatch Metrics</text>
+<text x="172.0" y="326.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Container Insights</text>
+<rect x="352" y="224" width="232" height="140" rx="6" fill="#ffffff"/>
+<rect x="352" y="224" width="232" height="140" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="468.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">2단계: 중급</text>
+<text x="468.0" y="304.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Prometheus + Grafana</text>
+<text x="468.0" y="315.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Fluent Bit + Loki</text>
+<text x="468.0" y="326.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">X-Ray 트레이싱</text>
+<rect x="648" y="224" width="232" height="140" rx="6" fill="#ffffff"/>
+<rect x="648" y="224" width="232" height="140" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="764.0" y="290.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">3단계: 고급</text>
+<text x="764.0" y="304.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">VictoriaMetrics/AMP</text>
+<text x="764.0" y="315.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">OpenTelemetry</text>
+<text x="764.0" y="326.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">eBPF · 비용 모니터링</text>
+<line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="110" y1="560" x2="134" y2="560" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="142" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start">성숙도 발전 경로</text>
+<rect x="224" y="554" width="16" height="12" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="256" y="563" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start">목표 단계</text>
+</svg>

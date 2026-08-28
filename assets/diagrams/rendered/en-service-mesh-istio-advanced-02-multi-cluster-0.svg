@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mc-decision-title mc-decision-desc">
+<title id="mc-decision-title">Multi-cluster decision flow</title>
+<desc id="mc-decision-desc">A five-question decision cascade that routes a team from wanting multi-cluster toward single-cluster Istio, AWS VPC Lattice, or a hybrid Istio-plus-Lattice approach based on existing clusters, regional separation, DR needs, L7 requirements, and operational capacity.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<style>text{font-family:'Geist Mono',monospace;}</style>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ARROWS (drawn before boxes) ============ -->
+<!-- Start -> Q1 -->
+<line x1="112" y1="100" x2="144" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Q1 -> Q2 (YES) -->
+<line x1="256" y1="100" x2="284" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="255" y="80" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="270" y="89" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- Q2 -> Q3 (YES) -->
+<line x1="396" y1="100" x2="424" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="395" y="80" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="410" y="89" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- Q3 -> Q4 (YES) -->
+<line x1="536" y1="100" x2="564" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="535" y="80" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="550" y="89" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- Q4 -> Q5 (YES) -->
+<line x1="676" y1="100" x2="704" y2="100" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="675" y="80" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="690" y="89" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- Q5 -> Hybrid (YES, accent) -->
+<line x1="816" y1="100" x2="844" y2="100" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="812" y="80" width="30" height="12" rx="2" fill="#ffffff"/>
+<text x="827" y="89" fill="#EC7211" font-size="8" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+<!-- Q1 -> SingleCluster (NO, vertical) -->
+<line x1="200" y1="136" x2="200" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="185" y="190" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="199" y="199" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- Q2 -> SingleCluster (NO, vertical) -->
+<line x1="340" y1="136" x2="340" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="325" y="190" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="339" y="199" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- Q3 -> VPCLattice (NO, vertical) -->
+<line x1="480" y1="136" x2="480" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="465" y="190" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="479" y="199" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- Q4 -> VPCLattice (NO, vertical) -->
+<line x1="620" y1="136" x2="620" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="605" y="190" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="619" y="199" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- Q5 -> VPCLattice (NO, vertical) -->
+<line x1="760" y1="136" x2="760" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="745" y="190" width="28" height="12" rx="2" fill="#ffffff"/>
+<text x="759" y="199" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+<!-- Hybrid -.-> MultiClusterIstio (OPTION, dashed vertical) -->
+<line x1="882" y1="120" x2="882" y2="400" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="850" y="252" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="876" y="261" fill="#7D8998" font-size="8" text-anchor="middle" letter-spacing="0.06em">OPTION</text>
+
+<!-- ============ NODES ============ -->
+<!-- Start -->
+<rect x="24" y="82" width="88" height="36" rx="18" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="68" y="97" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" font-weight="600" text-anchor="middle">Multi-cluster</text>
+<text x="68" y="109" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" font-weight="600" text-anchor="middle">consideration</text>
+
+<!-- Q1 -->
+<polygon points="200,64 256,100 200,136 144,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="200" y="96" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">Multiple clusters</text>
+<text x="200" y="107" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">already?</text>
+
+<!-- Q2 -->
+<polygon points="340,64 396,100 340,136 284,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="340" y="96" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">Regional</text>
+<text x="340" y="107" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">separation needed?</text>
+
+<!-- Q3 -->
+<polygon points="480,64 536,100 480,136 424,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="96" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">DR / HA</text>
+<text x="480" y="107" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">required?</text>
+
+<!-- Q4 -->
+<polygon points="620,64 676,100 620,136 564,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="620" y="96" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">Strong L7</text>
+<text x="620" y="107" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">features needed?</text>
+
+<!-- Q5 -->
+<polygon points="760,64 816,100 760,136 704,100" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="96" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">Can handle the</text>
+<text x="760" y="107" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="600" text-anchor="middle">complexity?</text>
+
+<!-- Hybrid (focal) -->
+<rect x="844" y="80" width="76" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="882" y="96" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Hybrid</text>
+<text x="882" y="108" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="9" font-weight="700" text-anchor="middle">(best of both)</text>
+
+<!-- SingleCluster -->
+<rect x="170" y="260" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="270" y="282" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">Single-cluster Istio</text>
+<text x="270" y="298" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">simplest option</text>
+
+<!-- VPCLattice (external) -->
+<rect x="450" y="260" width="340" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="620" y="282" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" text-anchor="middle">AWS VPC Lattice</text>
+<text x="620" y="298" fill="#545B64" font-family="'Geist Mono',monospace" font-size="9" text-anchor="middle">aws-managed connectivity</text>
+
+<!-- MultiClusterIstio -->
+<rect x="790" y="400" width="140" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860" y="420" fill="#232F3E" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="10" font-weight="600" text-anchor="middle">Multi-cluster Istio</text>
+<text x="860" y="434" fill="#545B64" font-family="'Geist Mono',monospace" font-size="8" text-anchor="middle">full control</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="30" y1="500" x2="930" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="516" fill="#545B64" font-size="8" letter-spacing="0.14em">LEGEND</text>
+<rect x="130" y="508" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="150" y="516" fill="#545B64" font-size="8">DECISION OUTCOME</text>
+<rect x="330" y="508" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="350" y="516" fill="#545B64" font-size="8">AWS MANAGED</text>
+<rect x="510" y="508" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="530" y="516" fill="#545B64" font-size="8">RECOMMENDED PATH</text>
+<line x1="710" y1="513" x2="734" y2="513" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4"/>
+<text x="742" y="516" fill="#545B64" font-size="8">OPTIONAL ROUTE</text>
+</svg>

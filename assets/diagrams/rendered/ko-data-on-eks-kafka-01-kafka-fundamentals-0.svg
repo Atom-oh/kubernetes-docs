@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="kafka-title kafka-desc">
+    <title id="kafka-title">Kafka 파티션 분산과 컨슈머 그룹 매핑</title>
+    <desc id="kafka-desc">프로듀서가 orders 토픽의 파티션 3개를 각기 다른 브로커의 리더에 분산 기록하고, order-processor 컨슈머 그룹의 컨슈머 3개가 파티션마다 하나씩 전담으로 읽어가는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#FFFFFF"/>
+
+    <!-- Zone: Consumer Group (drawn before arrows and nodes) -->
+    <rect x="680" y="75" width="240" height="460" rx="8"
+          fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="734" y="79" width="132" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="800" y="88" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+          text-anchor="middle" letter-spacing="0.10em">CONSUMER GROUP</text>
+
+    <!-- Arrows: Producer -> Brokers (drawn before boxes) -->
+    <!-- to Broker 1 (up) -->
+    <path d="M 210,294 H 272 Q 280,294 280,286 V 158 Q 280,150 288,150 H 350"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- to Broker 2 (straight) -->
+    <line x1="210" y1="310" x2="350" y2="310" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <!-- to Broker 3 (down) -->
+    <path d="M 210,326 H 272 Q 280,326 280,334 V 462 Q 280,470 288,470 H 350"
+          fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+    <!-- Arrows: Broker -> Consumer (straight, aligned rows) -->
+    <line x1="540" y1="150" x2="700" y2="150" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="540" y1="310" x2="700" y2="310" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="540" y1="470" x2="700" y2="470" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Arrow labels: Producer fan-out (mask + 6-10px gap above the line) -->
+    <rect x="238" y="264" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="268" y="273" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PARTITION 0</text>
+
+    <rect x="252" y="290" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="282" y="299" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PARTITION 1</text>
+
+    <rect x="238" y="440" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="268" y="449" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PARTITION 2</text>
+
+    <!-- Arrow labels: Broker -> Consumer -->
+    <rect x="590" y="134" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="620" y="143" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FETCH</text>
+
+    <rect x="590" y="294" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="620" y="303" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FETCH</text>
+
+    <rect x="590" y="454" width="60" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="620" y="463" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FETCH</text>
+
+    <!-- Node: Producer (focal) -->
+    <rect x="70" y="278" width="140" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="70" y="278" width="140" height="64" rx="6" fill="var(--color-accent-tint)" stroke="#EC7211" stroke-width="1.2"/>
+    <rect x="78" y="286" width="34" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="95" y="295" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PROD</text>
+    <text x="140" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프로듀서</text>
+    <text x="140" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">topic: orders</text>
+
+    <!-- Node: Broker 1 -->
+    <rect x="350" y="118" width="190" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="350" y="118" width="190" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="358" y="126" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="373" y="135" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">B01</text>
+    <text x="445" y="156" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">브로커 1</text>
+    <text x="445" y="172" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">orders:P0 · Leader</text>
+
+    <!-- Node: Broker 2 -->
+    <rect x="350" y="278" width="190" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="350" y="278" width="190" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="358" y="286" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="373" y="295" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">B02</text>
+    <text x="445" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">브로커 2</text>
+    <text x="445" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">orders:P1 · Leader</text>
+
+    <!-- Node: Broker 3 -->
+    <rect x="350" y="438" width="190" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="350" y="438" width="190" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="358" y="446" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="373" y="455" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">B03</text>
+    <text x="445" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">브로커 3</text>
+    <text x="445" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">orders:P2 · Leader</text>
+
+    <!-- Node: Consumer 1 -->
+    <rect x="700" y="118" width="170" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="700" y="118" width="170" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="126" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="723" y="135" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CON</text>
+    <text x="785" y="156" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨슈머 1</text>
+    <text x="785" y="172" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">assigned: P0</text>
+
+    <!-- Node: Consumer 2 -->
+    <rect x="700" y="278" width="170" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="700" y="278" width="170" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="286" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="723" y="295" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CON</text>
+    <text x="785" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨슈머 2</text>
+    <text x="785" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">assigned: P1</text>
+
+    <!-- Node: Consumer 3 -->
+    <rect x="700" y="438" width="170" height="64" rx="6" fill="#FFFFFF"/>
+    <rect x="700" y="438" width="170" height="64" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="446" width="30" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="723" y="455" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CON</text>
+    <text x="785" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨슈머 3</text>
+    <text x="785" y="492" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">assigned: P2</text>
+
+    <!-- Footnote: consumer group id -->
+    <text x="800" y="560" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">group.id: order-processor</text>
+  </svg>

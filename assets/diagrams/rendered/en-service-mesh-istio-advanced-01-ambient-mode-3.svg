@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-advanced-01-ambient-mode-3-title en-service-mesh-istio-advanced-01-ambient-mode-3-desc">
+<title id="en-service-mesh-istio-advanced-01-ambient-mode-3-title">ztunnel per-connection pipeline</title>
+<desc id="en-service-mesh-istio-advanced-01-ambient-mode-3-desc">Flowchart showing a single TCP connection moving through ztunnel's built-in pipeline of mTLS encryption, telemetry collection, identity verification, and load balancing before reaching the target service.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="20" y="100" width="920" height="300" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="427" y="104" width="106" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="113" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.12em">ztunnel FEATURES</text>
+<line x1="220" y1="172" x2="260" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="440" y1="172" x2="480" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="660" y1="172" x2="700" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="790" y1="204" x2="790" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="700" y1="312" x2="660" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="312" x2="440" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="137" y="152" width="26" height="12" rx="2" fill="#ffffff"/>
+<text x="150" y="161" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">TCP</text>
+<rect x="352" y="152" width="37" height="12" rx="2" fill="#ffffff"/>
+<text x="370" y="161" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">APPLY</text>
+<rect x="569" y="152" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="590" y="161" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">REPORT</text>
+<rect x="798" y="236" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="819" y="245" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">VERIFY</text>
+<rect x="566" y="292" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="590" y="301" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">BALANCE</text>
+<rect x="354" y="292" width="32" height="12" rx="2" fill="#ffffff"/>
+<text x="370" y="301" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">SEND</text>
+<rect x="40" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="140" width="180" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="130.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Application Pod</text>
+<text x="130.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">workload</text>
+<rect x="260" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="260" y="140" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="350.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+<text x="350.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">DaemonSet</text>
+<rect x="480" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="480" y="140" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="570.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">mTLS</text>
+<text x="570.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">encryption</text>
+<rect x="700" y="140" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="140" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="168.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">L4 Telemetry</text>
+<text x="790.0" y="186.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">metrics</text>
+<rect x="700" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="790.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Identity</text>
+<text x="790.0" y="326.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">SPIFFE SVID</text>
+<rect x="480" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="480" y="280" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="570.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">L4 Load Balancing</text>
+<text x="570.0" y="326.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">endpoint select</text>
+<rect x="260" y="280" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="260" y="280" width="180" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="350.0" y="308.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Target Service</text>
+<text x="350.0" y="326.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">destination</text>
+<line x1="30" y1="542" x2="930" y2="542" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="30" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.16em">LEGEND</text>
+<rect x="30" y="570" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="50" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ztunnel</text>
+<rect x="116" y="570" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="136" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">ztunnel feature</text>
+<rect x="250" y="570" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="270" y="578" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">destination</text>
+</svg>

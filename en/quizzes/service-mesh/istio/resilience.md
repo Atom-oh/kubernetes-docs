@@ -24,40 +24,7 @@ Outlier Detection **does not delete instances** but temporarily removes them fro
 
 **How Outlier Detection Works:**
 
-```mermaid
-flowchart LR
-    Start[Request Start]
-    Check{Error Check}
-    Count[Increment Error Count]
-    Threshold{Threshold Exceeded?}
-    Eject[Eject Instance]
-    Normal[Normal Processing]
-    Wait[Wait Time]
-    Retry[Recovery Attempt]
-
-    Start --> Check
-    Check -->|Error| Count
-    Check -->|Success| Normal
-    Count --> Threshold
-    Threshold -->|Yes| Eject
-    Threshold -->|No| Normal
-    Eject --> Wait
-    Wait --> Retry
-    Retry --> Start
-
-    %% Style definitions
-    classDef start fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef eject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Start start;
-    class Check,Threshold decision;
-    class Count,Wait,Retry process;
-    class Eject eject;
-    class Normal process;
-```
+![Flowchart of the outlier-detection cycle: a request that fails an error check increments an error counter, and once the failure threshold is exceeded the instance is ejected, waits, and is later retried and reintroduced, while successful or under-threshold requests flow to normal processing.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-0.png)
 
 **Key Features:**
 
@@ -143,34 +110,7 @@ spec:
 
 **Token Bucket Algorithm:**
 
-```mermaid
-flowchart TB
-    Bucket[Token Bucket<br/>Max: 100 tokens]
-    Refill[Refill<br/>10 tokens/sec]
-    Request[Request Arrives]
-    Check{Tokens<br/>Available?}
-    Allow[Allow Request<br/>Consume 1 token]
-    Reject[Reject Request<br/>Return 429]
-
-    Refill -.->|Add 10 per second| Bucket
-    Request --> Check
-    Bucket --> Check
-    Check -->|Yes| Allow
-    Check -->|No| Reject
-    Allow -.->|Decrease tokens| Bucket
-
-    %% Style definitions
-    classDef bucket fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef reject fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Bucket,Refill bucket;
-    class Request,Allow process;
-    class Check decision;
-    class Reject reject;
-```
+![Flowchart of a token-bucket rate limiter: a bucket capped at 100 tokens is refilled at 10 tokens per second, and each arriving request checks token availability, consuming one to be allowed or getting rejected with HTTP 429 when none remain.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-1.png)
 
 **Reference:**
 
@@ -198,38 +138,7 @@ Zone Aware Routing **does not concentrate traffic to a single AZ**, but rather p
 
 **Correct Behavior of Zone Aware Routing:**
 
-```mermaid
-flowchart TB
-    subgraph AZ1["Availability Zone A"]
-        Client1[Client Pod<br/>Zone A]
-        Service1[Service Pod 1<br/>Zone A]
-        Service2[Service Pod 2<br/>Zone A]
-    end
-
-    subgraph AZ2["Availability Zone B"]
-        Service3[Service Pod 3<br/>Zone B]
-        Service4[Service Pod 4<br/>Zone B]
-    end
-
-    subgraph AZ3["Availability Zone C"]
-        Service5[Service Pod 5<br/>Zone C]
-    end
-
-    Client1 -->|80%<br/>Same AZ Priority<br/>Free| Service1
-    Client1 -->|80%<br/>Same AZ Priority<br/>Free| Service2
-    Client1 -.->|10%<br/>Failover<br/>Cross-AZ Cost| Service3
-    Client1 -.->|10%<br/>Failover<br/>Cross-AZ Cost| Service5
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
+![Diagram showing a client pod sending 80% of its traffic to two same-zone service pods at no cost, and failing over 10% each to service pods in two other availability zones at a cross-AZ cost, with a fourth service pod present in zone B but not targeted.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-2.png)
 
 **Actual Benefits of Zone Aware Routing:**
 
@@ -1013,38 +922,7 @@ us-east-1/us-east-1c/*
 
 **3. Traffic Flow Diagram**
 
-```mermaid
-flowchart TB
-    subgraph AZ1["us-east-1a"]
-        Client1[Client Pod<br/>Zone A]
-        Service1[Order Service<br/>Pod 1]
-        Service2[Order Service<br/>Pod 2]
-    end
-
-    subgraph AZ2["us-east-1b"]
-        Service3[Order Service<br/>Pod 3]
-        Service4[Order Service<br/>Pod 4]
-    end
-
-    subgraph AZ3["us-east-1c"]
-        Service5[Order Service<br/>Pod 5]
-    end
-
-    Client1 -->|70%<br/>Free| Service1
-    Client1 -->|70%<br/>Free| Service2
-    Client1 -.->|15%<br/>$0.01/GB| Service3
-    Client1 -.->|15%<br/>$0.01/GB| Service5
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
+![Diagram showing an Order Service client pod in us-east-1a sending 70% of traffic to two same-zone Order Service pods for free, and failing over 15% each to Order Service pods in us-east-1b and us-east-1c at $0.01 per GB, with a fourth pod present in us-east-1b but not targeted.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-3.png)
 
 **4. Cost Savings Calculation**
 

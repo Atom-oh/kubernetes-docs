@@ -51,41 +51,7 @@ Savings rate: 98.6% (memory), 98.5% (CPU)
 
 **Ambient Mode Architecture:**
 
-```mermaid
-flowchart TB
-    subgraph Node1[Node 1]
-        Pod1[Pod A]
-        Pod2[Pod B]
-        ztunnel1[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Node2[Node 2]
-        Pod3[Pod C]
-        Pod4[Pod D]
-        ztunnel2[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Waypoint[Waypoint Proxy]
-        waypoint[waypoint<br/>L7 Proxy<br/>Optional]
-    end
-
-    Pod1 --> ztunnel1
-    Pod2 --> ztunnel1
-    Pod3 --> ztunnel2
-    Pod4 --> ztunnel2
-
-    ztunnel1 <-->|mTLS| ztunnel2
-    ztunnel1 -->|When L7 needed| waypoint
-    ztunnel2 -->|When L7 needed| waypoint
-
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class ztunnel1,ztunnel2 ztunnel;
-    class waypoint waypoint;
-```
+![Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-0.png)
 
 **Enabling Ambient Mode:**
 
@@ -132,40 +98,7 @@ D. Service Entry
 
 **Multi-cluster Mesh Architecture:**
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[Cluster 1]
-        Istiod1[Istiod<br/>Primary]
-        Service1[Service A]
-        Pod1[Pod A]
-    end
-
-    subgraph Cluster2[Cluster 2]
-        Istiod2[Istiod<br/>Remote]
-        Service2[Service B]
-        Pod2[Pod B]
-    end
-
-    subgraph SharedCP[Shared Control Plane]
-        PrimaryIstiod[Primary Istiod<br/>Service Discovery Manager]
-    end
-
-    PrimaryIstiod -->|Config Distribution| Istiod1
-    PrimaryIstiod -->|Config Distribution| Istiod2
-
-    Istiod1 -->|Service Info Collection| Service1
-    Istiod2 -->|Service Info Collection| Service2
-
-    Pod1 <-->|Cross-cluster| Pod2
-
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod1,Istiod2 istiod;
-    class Service1,Service2 service;
-    class PrimaryIstiod primary;
-```
+![Diagram showing a shared primary Istiod distributing configuration to each cluster's local Istiod, which discovers its own services, while pods in the two clusters communicate directly across the cluster boundary.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-1.png)
 
 **Istiod's Roles:**
 
@@ -529,32 +462,7 @@ D. Istio Gateway
 
 **Argo Rollouts + Istio Integration Architecture:**
 
-```mermaid
-flowchart TB
-    User[User] --> Gateway[Istio Gateway]
-    Gateway --> VS[VirtualService<br/>Traffic Splitting]
-
-    VS -->|90% weight| Stable[Stable Pod<br/>v1]
-    VS -->|10% weight| Canary[Canary Pod<br/>v2]
-
-    Rollout[Argo Rollouts<br/>Controller] -->|weight update| VS
-    Rollout -->|Pod management| Stable
-    Rollout -->|Pod management| Canary
-
-    Prometheus[Prometheus] -->|metrics| Analysis[AnalysisTemplate]
-    Analysis -->|success/failure| Rollout
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway,VS istio;
-    class Rollout,Analysis argo;
-    class Stable,Canary pod;
-    class Prometheus argo;
-```
+![Diagram showing user traffic entering through an Istio Gateway and VirtualService that splits weight between a stable and canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on success or failure verdicts from an AnalysisTemplate fed by Prometheus metrics.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-2.png)
 
 **VirtualService Role:**
 
@@ -880,37 +788,7 @@ Explain how to integrate 2 EKS clusters (us-east-1, us-west-2) into **a single I
 
 **1. Architecture Overview**
 
-```mermaid
-flowchart TB
-    subgraph USEast1[Cluster 1: us-east-1<br/>Primary]
-        Istiod1[Istiod<br/>Primary Control Plane]
-        ServiceA[Service A]
-        PodA[Pod A]
-        EWG1[East-West Gateway]
-    end
-
-    subgraph USWest2[Cluster 2: us-west-2<br/>Remote]
-        Istiod2[Istiod<br/>Remote Control Plane]
-        ServiceB[Service B]
-        PodB[Pod B]
-        EWG2[East-West Gateway]
-    end
-
-    Istiod1 -->|Config Distribution| Istiod2
-    Istiod1 -->|Service Discovery| ServiceA
-    Istiod1 -->|Service Discovery| ServiceB
-
-    PodA <-->|mTLS| EWG1
-    EWG1 <-->|Cross-cluster| EWG2
-    EWG2 <-->|mTLS| PodB
-
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod1,ServiceA,PodA,EWG1 primary;
-    class Istiod2,ServiceB,PodB,EWG2 remote;
-```
+![Diagram showing a primary Istiod in one region distributing configuration and service discovery to a remote cluster's Istiod, while workload pods in each cluster reach each other only through mutually authenticated east-west gateways.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-3.png)
 
 ---
 
@@ -1270,23 +1148,7 @@ Implement **per-user Rate Limiting** (100 requests per minute) using EnvoyFilter
 
 **1. Architecture Overview**
 
-```mermaid
-flowchart LR
-    Client[Client] --> Envoy[Envoy Proxy]
-    Envoy -->|Rate Limit Check| Redis[(Redis<br/>Rate Limit Store)]
-    Envoy -->|Allowed Request| Backend[Backend Service]
-    Envoy -->|Rejected Request| Reject[429 Too Many Requests]
-
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    class Client client;
-    class Envoy envoy;
-    class Backend backend;
-    class Reject,Redis reject;
-```
+![Diagram showing a client request passing through the Envoy proxy, which checks a Redis-backed rate-limit store before forwarding an allowed request to the backend service or rejecting it with a 429 response.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-4.png)
 
 ---
 
@@ -1598,31 +1460,7 @@ Implement **Blue/Green deployment** using Argo Rollouts and Istio. Include **aut
 
 **1. Blue/Green Deployment Concept**
 
-```mermaid
-flowchart TB
-    User[User] --> Gateway[Istio Gateway]
-    Gateway --> ActiveService[Active Service<br/>Production Traffic]
-    Gateway -.->|Preview| PreviewService[Preview Service<br/>Test Traffic]
-
-    ActiveService --> Blue[Blue<br/>Current Version v1]
-    PreviewService --> Green[Green<br/>New Version v2]
-
-    Analysis[AnalysisTemplate] -->|Metric Analysis| Green
-    Analysis -->|Success| Promote[Traffic Switch]
-    Analysis -->|Failure| Rollback[Rollback]
-
-    Promote --> Swap[Active <-> Preview Swap]
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class User user;
-    class Gateway,ActiveService,PreviewService istio;
-    class Blue,Green version;
-    class Analysis,Promote,Rollback,Swap argo;
-```
+![Diagram showing an Istio Gateway sending production traffic to an active service backed by the current blue version, and preview traffic to a preview service backed by the new green version, while an AnalysisTemplate gates whether the rollout promotes to a traffic switch that swaps active and preview, or rolls back.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-5.png)
 
 ---
 

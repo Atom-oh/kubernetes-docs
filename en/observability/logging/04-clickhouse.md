@@ -66,102 +66,11 @@ ClickHouse is an open-source columnar database optimized for OLAP (Online Analyt
 
 ### ClickHouse Cluster Architecture
 
-```mermaid
-flowchart TB
-    subgraph Collectors["Collectors"]
-        FB[FluentBit]
-        VECTOR[Vector]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Kafka["Message Queue (Optional)"]
-        KAFKA_TOPIC[Kafka Topic]
-    end
-
-    subgraph ClickHouse["ClickHouse Cluster"]
-        subgraph Shard1["Shard 1"]
-            R1_1[Replica 1]
-            R1_2[Replica 2]
-        end
-        subgraph Shard2["Shard 2"]
-            R2_1[Replica 1]
-            R2_2[Replica 2]
-        end
-        subgraph Shard3["Shard 3"]
-            R3_1[Replica 1]
-            R3_2[Replica 2]
-        end
-        ZK[ZooKeeper/ClickHouse Keeper]
-    end
-
-    subgraph Storage["Storage"]
-        S3[(S3 - Cold Data)]
-        EBS[(EBS - Hot Data)]
-    end
-
-    subgraph Visualization["Visualization"]
-        GRAFANA[Grafana]
-        SUPERSET[Apache Superset]
-    end
-
-    FB --> KAFKA_TOPIC
-    VECTOR --> KAFKA_TOPIC
-    OTEL --> KAFKA_TOPIC
-
-    KAFKA_TOPIC --> R1_1
-    KAFKA_TOPIC --> R2_1
-    KAFKA_TOPIC --> R3_1
-
-    R1_1 <--> R1_2
-    R2_1 <--> R2_2
-    R3_1 <--> R3_2
-
-    ZK --> Shard1
-    ZK --> Shard2
-    ZK --> Shard3
-
-    R1_1 --> EBS
-    R2_1 --> EBS
-    R3_1 --> EBS
-
-    EBS --> S3
-
-    GRAFANA --> R1_1
-    GRAFANA --> R2_1
-    SUPERSET --> R3_1
-
-    classDef collector fill:#4CAF50,stroke:#333,color:white
-    classDef queue fill:#FF9800,stroke:#333,color:white
-    classDef ch fill:#FFEB3B,stroke:#333
-    classDef storage fill:#2196F3,stroke:#333,color:white
-    classDef viz fill:#9C27B0,stroke:#333,color:white
-
-    class FB,VECTOR,OTEL collector
-    class KAFKA_TOPIC queue
-    class R1_1,R1_2,R2_1,R2_2,R3_1,R3_2,ZK ch
-    class S3,EBS storage
-    class GRAFANA,SUPERSET viz
-```
+![Architecture diagram of a ClickHouse log pipeline: log collectors buffer through an optional Kafka topic into a ZooKeeper-coordinated ClickHouse cluster, which writes to EBS, tiers cold data to S3, and serves Grafana and Superset queries.](../../.gitbook/assets/en-observability-logging-04-clickhouse-0.png)
 
 ### Data Flow
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant FB as FluentBit
-    participant Kafka as Kafka (Optional)
-    participant CH as ClickHouse
-    participant S3 as S3 (Cold)
-
-    App->>FB: Generate logs
-    FB->>Kafka: Buffering
-    Kafka->>CH: Kafka Engine ingestion
-    CH->>CH: Store in MergeTree table
-
-    Note over CH: Based on TTL policy
-
-    CH->>S3: Move cold data
-```
+![Sequence diagram showing a log's path from an application through FluentBit and an optional Kafka buffer into ClickHouse, which stores it in a MergeTree table and, on a TTL policy, asynchronously moves cold data to S3.](../../.gitbook/assets/en-observability-logging-04-clickhouse-1.png)
 
 ***
 

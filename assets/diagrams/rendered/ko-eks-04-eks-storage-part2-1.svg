@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ma-title ma-desc">
+  <title id="ma-title">다중 연결 EBS (Multi-Attach) 구성</title>
+  <desc id="ma-desc">동일 가용 영역 내 세 개의 노드가 하나의 io2 Block Express EBS 볼륨에 블록 디바이스로 동시 연결되며 파일시스템 동시 쓰기는 지원되지 않음을 보여주는 다이어그램</desc>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+      <polygon points="8 0, 0 3, 8 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- Header -->
+  <text x="40" y="44" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.18em">EBS CSI · IO2 BLOCK EXPRESS</text>
+  <text x="40" y="74" font-size="28" font-weight="700" fill="#232F3E">다중 연결 EBS (Multi-Attach)</text>
+  <text x="40" y="98" font-size="14" fill="#545B64" font-style="italic">동일 가용 영역 내 여러 인스턴스가 Block 모드로 하나의 볼륨을 동시에 연결합니다.</text>
+
+  <!-- Outer zone: MultiAttach -->
+  <rect x="60" y="140" width="840" height="330" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="76" y="144" width="140" height="14" rx="2" fill="#ffffff"/>
+  <text x="146" y="154" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">다중 연결 EBS</text>
+
+  <!-- Inner zone: AZ -->
+  <rect x="480" y="330" width="380" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.14)" stroke-width="0.8"/>
+  <rect x="496" y="334" width="118" height="14" rx="2" fill="#ffffff"/>
+  <text x="555" y="344" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">동일 가용 영역</text>
+
+  <!-- Bidirectional connectors: EBS (focal, at x=200,y=250) to Node1/2/3 (fanned attach points on EBS right edge) -->
+  <!-- EBS box: x=140 y=210 w=140 h=80 -> right edge x=280, y range 210-290 -->
+  <!-- 3 attach points along right edge, offset L*k/(N+1): L=80 -> 20,40,60 from top(210) -->
+  <!-- Node1 center (560,366) top edge y=366; Node2 (700,366); Node3 (840,366) -->
+  <!-- route: exit EBS right edge -> elbow -> enter node top edge -->
+
+  <path d="M 280,230 H 520 Q 528,230 528,238 V 358"
+        fill="none" stroke="#EC7211" stroke-width="1.4"
+        marker-start="url(#arrow-accent-rev)" marker-end="url(#arrow-accent)"/>
+  <path d="M 280,250 H 660 Q 668,250 668,258 V 358"
+        fill="none" stroke="#EC7211" stroke-width="1.4"
+        marker-start="url(#arrow-accent-rev)" marker-end="url(#arrow-accent)"/>
+  <path d="M 280,270 H 800 Q 808,270 808,278 V 358"
+        fill="none" stroke="#EC7211" stroke-width="1.4"
+        marker-start="url(#arrow-accent-rev)" marker-end="url(#arrow-accent)"/>
+
+  <!-- Arrow label: Block device -->
+  <rect x="368" y="216" width="96" height="14" rx="2" fill="#ffffff"/>
+  <text x="416" y="226" class="mono" font-size="8" fill="#EC7211" text-anchor="middle" letter-spacing="0.05em">BLOCK 디바이스</text>
+
+  <!-- EBS focal node -->
+  <rect x="140" y="210" width="140" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <rect x="150" y="218" width="34" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.5)" stroke-width="0.8"/>
+  <text x="167" y="227" class="mono" font-size="7" fill="#EC7211" text-anchor="middle" letter-spacing="0.06em">EBS</text>
+  <text x="210" y="252" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">io2 Block Express</text>
+  <text x="210" y="268" class="mono" font-size="9" fill="#545B64" text-anchor="middle">volumeMode: Block</text>
+
+  <!-- Node1/2/3 -->
+  <rect x="500" y="366" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="508" y="372" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="525" y="381" class="mono" font-size="7" fill="rgba(35,47,62,0.8)" text-anchor="middle" letter-spacing="0.06em">노드</text>
+  <text x="560" y="404" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">노드 1</text>
+
+  <rect x="640" y="366" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="648" y="372" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="665" y="381" class="mono" font-size="7" fill="rgba(35,47,62,0.8)" text-anchor="middle" letter-spacing="0.06em">노드</text>
+  <text x="700" y="404" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">노드 2</text>
+
+  <rect x="780" y="366" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="788" y="372" width="34" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="805" y="381" class="mono" font-size="7" fill="rgba(35,47,62,0.8)" text-anchor="middle" letter-spacing="0.06em">노드</text>
+  <text x="840" y="404" font-size="12" font-weight="600" fill="#232F3E" text-anchor="middle">노드 3</text>
+
+  <!-- Warning callout -->
+  <rect x="140" y="330" width="300" height="80" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.5)" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="156" y="354" font-size="11" font-weight="600" fill="#DD344C">주의: 파일시스템 동시 쓰기 불가</text>
+  <text x="156" y="374" class="mono" font-size="9" fill="#545B64">클러스터 파일시스템 필요</text>
+  <text x="156" y="390" class="mono" font-size="9" fill="#545B64">(GFS2, OCFS2)</text>
+
+  <!-- Legend -->
+  <line x1="60" y1="500" x2="900" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="60" y="518" class="mono" font-size="8" fill="#545B64" letter-spacing="0.14em">LEGEND</text>
+  <line x1="160" y1="514" x2="196" y2="514" stroke="#EC7211" stroke-width="1.4"/>
+  <text x="204" y="518" font-size="11" fill="#545B64">Block 디바이스 동시 연결 (최대 16개 인스턴스)</text>
+</svg>

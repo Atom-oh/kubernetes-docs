@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="crosssubnet-logic-title crosssubnet-logic-desc">
+    <title id="crosssubnet-logic-title">CrossSubnet 모드의 캡슐화 여부 판단 흐름</title>
+    <desc id="crosssubnet-logic-desc">패킷 전송 시 출발지와 목적지가 같은 서브넷이면 캡슐화 없이 직접 전송하고, 다른 서브넷이면 IPIP 또는 VXLAN으로 캡슐화한 뒤 두 경로 모두 패킷 전달로 합쳐지는 판단 흐름을 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Arrows (before boxes) -->
+    <!-- START -> CHECK -->
+    <line x1="480" y1="128" x2="480" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- CHECK -> DIRECT (Yes) -->
+    <path d="M570,204 H672 Q680,204 680,212 V292" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="600" y="184" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="620" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <!-- CHECK -> ENCAP (No) -->
+    <path d="M390,204 H288 Q280,204 280,212 V292" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="310" y="184" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="330" y="193" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <!-- DIRECT -> merge dot -->
+    <path d="M680,348 V396 Q680,404 672,404 H488" fill="none" stroke="#545B64" stroke-width="1.2"/>
+    <!-- ENCAP -> merge dot -->
+    <path d="M280,348 V396 Q280,404 288,404 H472" fill="none" stroke="#545B64" stroke-width="1.2"/>
+    <!-- merge dot -> DELIVER -->
+    <line x1="480" y1="408" x2="480" y2="436" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- START (oval) -->
+    <ellipse cx="480" cy="104" rx="90" ry="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">패킷 전송</text>
+
+    <!-- CHECK (decision diamond, focal) -->
+    <polygon points="480,156 570,204 480,252 390,204" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="200" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">같은 서브넷?</text>
+    <text x="480" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">SRC vs DST</text>
+
+    <!-- DIRECT (rect) -->
+    <rect x="610" y="292" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="610" y="292" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Direct 전송</text>
+    <text x="680" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">캡슐화 없음</text>
+
+    <!-- ENCAP (rect) -->
+    <rect x="210" y="292" width="140" height="56" rx="6" fill="#ffffff"/>
+    <rect x="210" y="292" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">캡슐화</text>
+    <text x="280" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">IPIP/VXLAN</text>
+
+    <!-- merge dot -->
+    <circle cx="480" cy="404" r="4" fill="#232F3E"/>
+
+    <!-- DELIVER (end oval) -->
+    <ellipse cx="480" cy="460" rx="90" ry="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="464" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">패킷 전달</text>
+
+    <!-- Legend -->
+    <line x1="120" y1="540" x2="840" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="120" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <ellipse cx="300" cy="552" rx="10" ry="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="318" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">시작/종료</text>
+    <polygon points="450,546 462,552 450,558 438,552" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="472" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">판단(결정)</text>
+    <rect x="600" y="546" width="20" height="12" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="630" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">동작</text>
+    <circle cx="700" cy="552" r="4" fill="#232F3E"/>
+    <text x="714" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">합류점</text>
+  </svg>

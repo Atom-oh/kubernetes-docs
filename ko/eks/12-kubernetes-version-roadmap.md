@@ -54,34 +54,7 @@ Kubernetes 생태계는 빠르게 변화하고 있으며, 매 릴리스마다 �
 - 새로운 기능 채택 시점을 결정하는 DevOps 리드
 - 버전 지원 정책을 관리하는 운영팀
 
-```mermaid
-mindmap
-  root((Kubernetes<br>버전 관리))
-    릴리스 사이클
-      연 3회 릴리스
-      alpha/beta/GA 모델
-      Feature Gate
-      SIG 거버넌스
-    버전별 기능
-      1.29 Mandala
-      1.30 Uwubernetes
-      1.31 Elli
-      1.32 Penelope
-      1.33 Octarine
-      1.34 Of Wind & Will
-      1.35 Timbernetes
-      1.36 ハル Haru
-    EKS 지원
-      Standard Support
-      Extended Support
-      매니지드 애드온
-      Auto Mode
-    업그레이드 전략
-      호환성 검증
-      Feature Gate 테스트
-      롤백 계획
-      애드온 정렬
-```
+![Kubernetes 버전 관리를 중심으로 릴리스 사이클, 버전별 기능, EKS 지원, 업그레이드 전략의 네 가지 관리 축이 뻗어나가는 마인드맵 구조를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-0.png)
 
 ---
 
@@ -91,30 +64,7 @@ mindmap
 
 Kubernetes는 매년 3회 메이저 릴리스를 발행합니다. 각 릴리스 주기는 약 15주(약 4개월)이며, 체계적인 개발-테스트-릴리스 파이프라인을 통해 진행됩니다.
 
-```mermaid
-gantt
-    title Kubernetes 연간 릴리스 사이클 (예시)
-    dateFormat  YYYY-MM
-    axisFormat  %Y-%m
-
-    section 릴리스 1
-    Enhancement Freeze     :a1, 2025-01, 1M
-    Code Freeze            :a2, 2025-02, 1M
-    테스트 및 안정화          :a3, 2025-03, 1M
-    릴리스                  :milestone, 2025-04, 0d
-
-    section 릴리스 2
-    Enhancement Freeze     :b1, 2025-05, 1M
-    Code Freeze            :b2, 2025-06, 1M
-    테스트 및 안정화          :b3, 2025-07, 1M
-    릴리스                  :milestone, 2025-08, 0d
-
-    section 릴리스 3
-    Enhancement Freeze     :c1, 2025-09, 1M
-    Code Freeze            :c2, 2025-10, 1M
-    테스트 및 안정화          :c3, 2025-11, 1M
-    릴리스                  :milestone, 2025-12, 0d
-```
+![Kubernetes 연간 릴리스 사이클이 Enhancement Freeze, Code Freeze, 테스트 및 안정화 단계를 거쳐 약 4개월마다 세 차례 릴리스되는 반복 주기를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-1.png)
 
 ### 2.2 릴리스 주기 상세
 
@@ -220,24 +170,7 @@ Kubernetes의 개발은 약 30개 이상의 SIG(Special Interest Group)에 의�
 
 모든 주요 기능 변경은 KEP를 통해 제안, 검토, 승인됩니다.
 
-```mermaid
-flowchart LR
-    A[아이디어] --> B[KEP 초안 작성]
-    B --> C[SIG 리뷰]
-    C --> D{승인?}
-    D -->|Yes| E[Implementable]
-    D -->|No| F[수정 요청]
-    F --> C
-    E --> G[Alpha 구현]
-    G --> H[Beta 승격]
-    H --> I[GA 졸업]
-    I --> J[Feature Gate 제거]
-    
-    style E fill:#4CAF50,color:white
-    style G fill:#FFC107,color:black
-    style H fill:#2196F3,color:white
-    style I fill:#9C27B0,color:white
-```
+![KEP(Kubernetes Enhancement Proposal)가 아이디어에서 초안 작성, SIG 리뷰, 승인 심사를 거쳐 Alpha에서 Beta, GA로 졸업하고 최종적으로 Feature Gate가 제거되기까지의 절차를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-2.png)
 
 KEP 문서에는 다음이 포함됩니다:
 
@@ -255,44 +188,7 @@ KEP 문서에는 다음이 포함됩니다:
 
 Amazon EKS는 Kubernetes 업스트림 릴리스를 기반으로 매니지드 환경을 제공하며, 자체적인 버전 지원 정책을 운영합니다.
 
-```mermaid
-flowchart TB
-    subgraph support["EKS 버전 지원 체계"]
-        direction TB
-        
-        subgraph standard["Standard Support (14개월)"]
-            S1["$0.10/cluster/hour"]
-            S2["정규 보안 패치"]
-            S3["매니지드 애드온 업데이트"]
-            S4["AWS 기술 지원"]
-        end
-        
-        subgraph extended["Extended Support (추가 12개월)"]
-            E1["$0.60/cluster/hour"]
-            E2["중요 보안 패치만"]
-            E3["제한된 애드온 업데이트"]
-            E4["업그레이드 유예 기간"]
-        end
-        
-        standard --> extended
-    end
-    
-    subgraph eol["지원 종료 (End of Life)"]
-        EOL1["자동 업그레이드 시작"]
-        EOL2["60일 사전 알림"]
-        EOL3["컨트롤 플레인 먼저"]
-    end
-    
-    extended --> eol
-    
-    classDef stdClass fill:#4CAF50,stroke:#333,color:white;
-    classDef extClass fill:#FF9800,stroke:#333,color:white;
-    classDef eolClass fill:#F44336,stroke:#333,color:white;
-    
-    class S1,S2,S3,S4 stdClass;
-    class E1,E2,E3,E4 extClass;
-    class EOL1,EOL2,EOL3 eolClass;
-```
+![EKS 버전 지원 체계가 Standard Support에서 Extended Support를 거쳐 지원 종료(End of Life)로 이어지는 3단계 흐름과 각 단계의 비용·정책 차이를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-3.png)
 
 ### 3.2 현재 지원 버전 상태 (2026년 6월 기준)
 
@@ -311,44 +207,7 @@ flowchart TB
 
 ### 3.3 버전 라이프사이클 다이어그램
 
-```mermaid
-gantt
-    title EKS 버전 라이프사이클 (2024-2028)
-    dateFormat  YYYY-MM
-    axisFormat  %Y-%m
-
-    section 1.29
-    Standard Support    :active, v29s, 2024-03, 2025-03
-    Extended Support    :crit,   v29e, 2025-03, 2026-03
-    
-    section 1.30
-    Standard Support    :active, v30s, 2024-07, 2025-07
-    Extended Support    :crit,   v30e, 2025-07, 2026-07
-
-    section 1.31
-    Standard Support    :active, v31s, 2024-10, 2025-10
-    Extended Support    :crit,   v31e, 2025-10, 2026-10
-
-    section 1.32
-    Standard Support    :active, v32s, 2025-01, 2026-01
-    Extended Support    :crit,   v32e, 2026-01, 2027-01
-
-    section 1.33
-    Standard Support    :active, v33s, 2025-06, 2026-08
-    Extended Support    :crit,   v33e, 2026-08, 2027-08
-
-    section 1.34
-    Standard Support    :active, v34s, 2025-10, 2026-12
-    Extended Support    :crit,   v34e, 2026-12, 2027-12
-
-    section 1.35
-    Standard Support    :active, v35s, 2026-02, 2027-04
-    Extended Support    :crit,   v35e, 2027-04, 2028-04
-
-    section 1.36
-    Standard Support    :active, v36s, 2026-06, 2027-08
-    Extended Support    :crit,   v36e, 2027-08, 2028-08
-```
+![Kubernetes 1.29부터 1.36까지 각 버전이 Standard Support에서 Extended Support로 이어지는 EKS 버전 라이프사이클을 2024년부터 2028년까지 시간 축 위에 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-4.png)
 
 ### 3.4 Standard Support vs Extended Support 비용 비교
 
@@ -375,28 +234,7 @@ gantt
 
 Extended Support 기간이 종료되면 EKS는 자동으로 클러스터를 다음 지원 버전으로 업그레이드합니다.
 
-```mermaid
-sequenceDiagram
-    participant AWS as AWS EKS
-    participant Admin as 클러스터 관리자
-    participant CP as 컨트롤 플레인
-    participant NG as 노드 그룹
-    
-    AWS->>Admin: 60일 전 이메일 알림<br>"Extended Support 종료 예정"
-    AWS->>Admin: 30일 전 추가 알림
-    AWS->>Admin: 7일 전 최종 경고
-    
-    Note over AWS,NG: Extended Support 종료일 도달
-    
-    AWS->>CP: 컨트롤 플레인 자동 업그레이드 시작
-    CP-->>AWS: 업그레이드 완료
-    
-    Note over NG: ⚠️ 노드 그룹은 자동 업그레이드되지 않음
-    Note over NG: 관리자가 수동으로 업데이트 필요
-    
-    AWS->>Admin: 컨트롤 플레인 업그레이드 완료 알림
-    Admin->>NG: 노드 그룹 수동 업그레이드
-```
+![Extended Support 종료 시점이 다가오면 AWS EKS가 관리자에게 단계적으로 알림을 보내고, 종료일에 컨트롤 플레인만 자동 업그레이드되며 노드 그룹은 관리자가 수동으로 업그레이드해야 함을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-5.png)
 
 **자동 업그레이드의 위험성:**
 
@@ -450,12 +288,7 @@ Amazon EKS와 EKS Distro가 Kubernetes 1.35 지원을 시작하며 다음 기능
 
 Kubernetes 1.29는 코드네임 "Mandala"(Universe)로, 49개의 Enhancement를 포함합니다. 이 중 11개가 Stable(GA), 19개가 Beta, 19개가 Alpha로 졸업했습니다.
 
-```mermaid
-pie title "Kubernetes 1.29 Enhancement 분포"
-    "Stable (GA)" : 11
-    "Beta" : 19
-    "Alpha" : 19
-```
+![Kubernetes 1.29 릴리스의 전체 49개 Enhancement가 Stable(GA) 11개, Beta 19개, Alpha 19개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-6.png)
 
 #### 핵심 GA 기능
 
@@ -555,12 +388,7 @@ spec:
 
 Kubernetes 1.30은 커뮤니티 문화를 반영한 유머러스한 코드네임 "Uwubernetes"로 릴리스되었습니다. 58개의 Enhancement가 포함되며, 특히 보안과 스케줄링 영역에서 중요한 기능들이 GA로 졸업했습니다.
 
-```mermaid
-pie title "Kubernetes 1.30 Enhancement 분포"
-    "Stable (GA)" : 17
-    "Beta" : 18
-    "Alpha" : 23
-```
+![Kubernetes 1.30 릴리스의 전체 58개 Enhancement가 Stable(GA) 17개, Beta 18개, Alpha 23개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-7.png)
 
 #### 핵심 GA 기능
 
@@ -724,12 +552,7 @@ spec:
 
 Kubernetes 1.31 "Elli"는 보안 강화에 중점을 둔 릴리스로, 45개의 Enhancement를 포함합니다.
 
-```mermaid
-pie title "Kubernetes 1.31 Enhancement 분포"
-    "Stable (GA)" : 11
-    "Beta" : 22
-    "Alpha" : 12
-```
+![Kubernetes 1.31 릴리스의 전체 45개 Enhancement가 Stable(GA) 11개, Beta 22개, Alpha 12개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-8.png)
 
 #### 핵심 GA 기능
 
@@ -832,12 +655,7 @@ spec:
 
 Kubernetes 1.32 "Penelope"는 인가(Authorization)와 스토리지 관리에 중요한 발전이 있었습니다. 44개의 Enhancement가 포함됩니다.
 
-```mermaid
-pie title "Kubernetes 1.32 Enhancement 분포"
-    "Stable (GA)" : 13
-    "Beta" : 12
-    "Alpha" : 19
-```
+![Kubernetes 1.32 릴리스의 전체 44개 Enhancement가 Stable(GA) 13개, Beta 12개, Alpha 19개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-9.png)
 
 #### 핵심 GA 기능
 
@@ -957,12 +775,7 @@ kubectl patch pvc database-pvc \
 
 Kubernetes 1.33 "Octarine"은 Terry Pratchett의 Discworld에서 영감을 받은 코드네임으로, **64개의 Enhancement**를 포함하는 대형 릴리스입니다. Sidecar Containers GA, In-Place Pod Resize beta 등 오랫동안 기다려온 기능들이 포함되어 있습니다.
 
-```mermaid
-pie title "Kubernetes 1.33 Enhancement 분포 (64개)"
-    "Stable (GA)" : 18
-    "Beta" : 20
-    "Alpha" : 24
-```
+![Kubernetes 1.33 릴리스의 전체 64개 Enhancement가 Stable(GA) 18개, Beta 20개, Alpha 24개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-10.png)
 
 > **중요**: 1.33은 2024-2025년 릴리스 중 가장 많은 Enhancement를 포함하며, 운영 환경에 미치는 영향이 큰 릴리스입니다.
 
@@ -1266,12 +1079,7 @@ spec:
 
 Kubernetes 1.34는 DRA(Dynamic Resource Allocation)의 Core API가 GA로 졸업한 중요한 릴리스입니다. AI/ML 워크로드를 위한 GPU 자원 관리의 기반이 완성됩니다.
 
-```mermaid
-pie title "Kubernetes 1.34 Enhancement 분포"
-    "Stable (GA)" : 15
-    "Beta" : 17
-    "Alpha" : 20
-```
+![Kubernetes 1.34 릴리스의 전체 52개 Enhancement가 Stable(GA) 15개, Beta 17개, Alpha 20개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-11.png)
 
 #### 핵심 GA 기능
 
@@ -1508,12 +1316,7 @@ data:
 
 Kubernetes 1.35 "Timbernetes"는 In-Place Pod Resize GA를 포함하여 워크로드 관리의 큰 진전을 이룬 릴리스입니다.
 
-```mermaid
-pie title "Kubernetes 1.35 Enhancement 분포"
-    "Stable (GA)" : 16
-    "Beta" : 18
-    "Alpha" : 22
-```
+![Kubernetes 1.35 릴리스의 전체 56개 Enhancement가 Stable(GA) 16개, Beta 18개, Alpha 22개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-12.png)
 
 #### 핵심 GA 기능
 
@@ -1717,12 +1520,7 @@ spec:
 
 Kubernetes 1.36은 일본어 "ハル"(봄, Haru)을 코드네임으로 사용한 릴리스입니다. **보안 강화, AI/ML 워크로드 지원, API 확장성**을 핵심 테마로, 18개 Stable(GA) / 25개 Beta / 25개 Alpha 기능이 포함되었습니다. EKS는 GovCloud(US)를 포함한 모든 가용 리전에서 1.36을 지원합니다.
 
-```mermaid
-pie title "Kubernetes 1.36 Enhancement 분포"
-    "Stable (GA)" : 18
-    "Beta" : 25
-    "Alpha" : 25
-```
+![Kubernetes 1.36 릴리스의 전체 68개 Enhancement가 Stable(GA) 18개, Beta 25개, Alpha 25개로 나뉘어 성숙도 단계별로 분포한 것을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-13.png)
 
 #### 한눈에 보기
 
@@ -2328,41 +2126,7 @@ DRA(Dynamic Resource Allocation)에서 GPU 등 디바이스의 헬스 상태를 
 
 ### 5.3 기능 성숙도 진행 시각화
 
-```mermaid
-gantt
-    title 주요 기능 성숙도 타임라인
-    dateFormat  YYYY-MM
-    axisFormat  %Y-%m
-
-    section Sidecar Containers
-    Alpha (1.28)     :a_sc, 2023-08, 2023-12
-    Beta (1.29)      :active, b_sc, 2023-12, 2025-04
-    GA (1.33)        :crit, g_sc, 2025-04, 2025-08
-
-    section In-Place Pod Resize
-    Alpha (1.27)     :a_ip, 2023-04, 2025-04
-    Beta (1.33)      :active, b_ip, 2025-04, 2025-12
-    GA (1.35)        :crit, g_ip, 2025-12, 2026-04
-
-    section DRA Core APIs
-    Alpha (1.26)     :a_dra, 2022-12, 2024-08
-    Beta (1.31)      :active, b_dra, 2024-08, 2025-08
-    GA (1.34)        :crit, g_dra, 2025-08, 2025-12
-
-    section ValidatingAdmissionPolicy
-    Alpha (1.26)     :a_vap, 2022-12, 2024-04
-    Beta (1.28)      :active, b_vap, 2023-08, 2024-04
-    GA (1.30)        :crit, g_vap, 2024-04, 2024-08
-
-    section MutatingAdmissionPolicy
-    Alpha (1.33)     :a_map, 2025-04, 2025-08
-    Beta (1.34-1.35) :active, b_map, 2025-08, 2026-04
-    GA (1.36)        :crit, g_map, 2026-04, 2026-08
-
-    section Gang Scheduling
-    Alpha (1.35)     :a_gs, 2025-12, 2026-04
-    GA (1.36)         :crit, g_gs, 2026-04, 2026-08
-```
+![Sidecar Containers, In-Place Pod Resize, DRA Core APIs 등 주요 기능이 Alpha에서 Beta, GA로 졸업해 가는 시점을 버전별 시간 축 위에 비교해서 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-14.png)
 
 ---
 
@@ -2451,32 +2215,7 @@ Kubernetes는 명확한 Deprecation 정책을 따릅니다.
 
 인트리(in-tree) 볼륨 플러그인의 CSI 마이그레이션은 오랫동안 진행되어 왔으며, 1.29~1.36 사이에 대부분이 완료됩니다.
 
-```mermaid
-gantt
-    title 인트리 볼륨 플러그인 → CSI 마이그레이션 타임라인
-    dateFormat  YYYY-MM
-    axisFormat  %Y-%m
-
-    section AWS EBS
-    CSI Migration GA    :done, ebs, 2022-12, 2023-04
-    In-tree Removed     :done, ebs_r, 2023-04, 2023-08
-
-    section GCE PD
-    CSI Migration GA    :done, gce, 2022-12, 2023-04
-    In-tree Removed     :done, gce_r, 2023-08, 2024-04
-
-    section CephFS/RBD
-    Deprecated          :active, ceph_d, 2024-04, 2024-08
-    Removed (1.31)      :crit, ceph_r, 2024-08, 2024-12
-
-    section Azure File/Disk
-    Deprecated          :active, az_d, 2024-04, 2024-12
-    Removed (1.32)      :crit, az_r, 2024-12, 2025-04
-
-    section vSphere
-    CSI Migration GA    :done, vs, 2024-04, 2024-08
-    In-tree Deprecated  :active, vs_d, 2024-08, 2025-08
-```
+![AWS EBS, GCE PD, CephFS/RBD, Azure File/Disk, vSphere 등 인트리 볼륨 플러그인이 CSI로 마이그레이션되어 Deprecated, Removed 단계로 이어지는 일정을 스토리지 드라이버별로 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-15.png)
 
 ### 6.4 Deprecation 대응 체크리스트
 
@@ -2617,37 +2356,7 @@ autoModeConfig:
 
 Extended Support는 Standard 대비 6배의 비용이 발생하므로, 체계적인 업그레이드 계획이 필수입니다.
 
-```mermaid
-flowchart TD
-    Start[현재 버전 확인] --> Check{Standard Support<br>종료까지 남은 기간?}
-    
-    Check -->|6개월 이상| Plan[업그레이드 계획 수립]
-    Check -->|3-6개월| Urgent[긴급 업그레이드 계획]
-    Check -->|3개월 미만| Critical[⚠️ 즉시 업그레이드 필요]
-    Check -->|이미 Extended| Extended[Extended Support 중]
-    
-    Plan --> Test[비프로덕션 환경 테스트]
-    Urgent --> Test
-    Critical --> DirectUpgrade[프로덕션 직접 업그레이드]
-    
-    Extended --> CostCalc[월간 추가 비용 계산]
-    CostCalc --> Decision{비용 vs<br>업그레이드 리스크}
-    Decision -->|업그레이드| Test
-    Decision -->|유지| ExtendedStay[Extended 유지<br>비용 수용]
-    
-    Test --> Staging[스테이징 업그레이드]
-    Staging --> Validate[호환성 검증]
-    Validate --> Production[프로덕션 업그레이드]
-    DirectUpgrade --> Production
-    
-    classDef critical fill:#F44336,color:white;
-    classDef warning fill:#FF9800,color:white;
-    classDef good fill:#4CAF50,color:white;
-    
-    class Critical critical;
-    class Urgent,CostCalc warning;
-    class Plan,Production good;
-```
+![Standard Support 종료까지 남은 기간에 따라 계획적 업그레이드, 즉시 업그레이드, 또는 Extended Support 비용 검토 경로로 분기해 최종적으로 프로덕션 업그레이드 또는 Extended 유지로 이어지는 의사결정 흐름을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-16.png)
 
 **월간 비용 계산 예시:**
 
@@ -2750,47 +2459,7 @@ pre_upgrade_checklist:
 
 ### 8.2 단계별 업그레이드 프로세스
 
-```mermaid
-flowchart TD
-    A[1단계: 사전 준비] --> B[2단계: 비프로덕션 테스트]
-    B --> C[3단계: 프로덕션 업그레이드]
-    C --> D[4단계: 검증 및 안정화]
-    
-    subgraph prep["1단계: 사전 준비 (1~2주)"]
-        A1[릴리스 노트 검토]
-        A2[Deprecated API 스캔]
-        A3[애드온 호환성 확인]
-        A4[업그레이드 런북 작성]
-        A5[롤백 계획 수립]
-    end
-    
-    subgraph test["2단계: 비프로덕션 테스트 (1~2주)"]
-        B1[개발 환경 업그레이드]
-        B2[기능 테스트 실행]
-        B3[성능 테스트 실행]
-        B4[카오스 테스트]
-        B5[스테이징 환경 업그레이드]
-    end
-    
-    subgraph prod["3단계: 프로덕션 업그레이드 (1~2일)"]
-        C1[컨트롤 플레인 업그레이드]
-        C2[매니지드 애드온 업데이트]
-        C3[노드 그룹 업그레이드]
-        C4[자체 관리 애드온 업데이트]
-    end
-    
-    subgraph verify["4단계: 검증 및 안정화 (1주)"]
-        D1[워크로드 상태 확인]
-        D2[메트릭/알림 모니터링]
-        D3[사용자 피드백 수집]
-        D4[문서 업데이트]
-    end
-    
-    A --> A1 & A2 & A3 & A4 & A5
-    B --> B1 --> B2 --> B3 --> B4 --> B5
-    C --> C1 --> C2 --> C3 --> C4
-    D --> D1 & D2 & D3 & D4
-```
+![EKS 버전 업그레이드가 사전 준비, 비프로덕션 테스트, 프로덕션 업그레이드, 검증 및 안정화의 4단계를 순서대로 거치며 각 단계의 세부 작업을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-17.png)
 
 ### 8.3 Feature Gate 테스트 방법
 
@@ -3038,40 +2707,7 @@ resource "aws_eks_addon" "coredns" {
 
 ### 9.2 CNCF 생태계 트렌드
 
-```mermaid
-mindmap
-  root((CNCF<br>트렌드))
-    AI/ML 네이티브
-      DRA를 통한 GPU 관리
-      Gang Scheduling
-      LLM 추론 오토스케일링
-      KubeRay/Kueue
-    플랫폼 엔지니어링
-      Internal Developer Platform
-      Backstage
-      Crossplane
-      Score
-    보안 강화
-      Supply Chain Security
-      Sigstore
-      SPIFFE/SPIRE
-      VEX/SBOM
-    eBPF 확산
-      Cilium CNI
-      Tetragon 보안
-      Falco
-      L4/L7 관찰성
-    Gateway API
-      Ingress 대체
-      GAMMA (Mesh)
-      gRPC 라우팅
-      정책 첨부
-    서버리스/Edge
-      WASM on Kubernetes
-      Spin/Fermyon
-      KWasm
-      Edge 워크로드
-```
+![CNCF 트렌드를 중심으로 AI/ML 네이티브, 플랫폼 엔지니어링, 보안 강화, eBPF 확산, Gateway API, 서버리스/Edge 여섯 갈래의 기술 흐름이 뻗어나가는 마인드맵 구조를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-18.png)
 
 ### 9.3 AI/ML 워크로드를 위한 Kubernetes 진화 방향
 

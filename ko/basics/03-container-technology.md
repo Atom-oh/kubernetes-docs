@@ -194,21 +194,7 @@ Kubernetes는 CRI(Container Runtime Interface)를 통해 다양한 컨테이너 
 
 ![컨테이너 레이어](../.gitbook/assets/container-layers.webp)
 
-```mermaid
-flowchart TB
-    app["응용 프로그램 레이어<br/>애플리케이션 코드"]
-    dep["의존성 레이어<br/>npm 패키지, pip 패키지 등"]
-    runtime["런타임 레이어<br/>Node.js, Python 등"]
-    os["OS 레이어<br/>Ubuntu, Alpine 등"]
-
-    app --> dep --> runtime --> os
-
-    style app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    style dep fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style runtime fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    style os fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-
-```
+![컨테이너 이미지는 응용 프로그램, 의존성, 런타임, OS 순서로 쌓인 4개 레이어로 구성되며, 런타임 레이어가 애플리케이션 코드와 OS를 잇는 핵심 계층임을 보여준다.](../.gitbook/assets/ko-basics-03-container-technology-0.png)
 
 ### 이미지 레지스트리
 

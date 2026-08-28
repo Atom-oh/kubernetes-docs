@@ -31,32 +31,7 @@ Argo Rollouts is a Progressive Delivery controller for Kubernetes that provides 
 
 ### Benefits of Istio Integration
 
-```mermaid
-flowchart LR
-    subgraph "Without Argo Rollouts"
-        direction TB
-        D1[Deployment v1<br/>100%]
-        D2[Deployment v2<br/>0%]
-        Manual[Manual traffic adjustment<br/>Direct VirtualService modification]
-        D1 --> Manual
-        D2 --> Manual
-    end
-
-    subgraph "With Argo Rollouts + Istio"
-        direction TB
-        R1[Rollout<br/>Automatic version management]
-        Auto[Automatic traffic adjustment<br/>Metric-based progression]
-        Analysis[Analysis<br/>Success rate/latency verification]
-        R1 --> Auto
-        Auto --> Analysis
-    end
-
-    classDef manual fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef auto fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class Manual manual;
-    class R1,Auto,Analysis auto;
-```
+![Side-by-side comparison showing that without Argo Rollouts, two static Deployments require a person to hand-edit the VirtualService, while with Argo Rollouts and Istio a single Rollout resource drives automatic, metric-verified traffic adjustment through an Analysis step.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-0.png)
 
 **Key Benefits**:
 - ✅ **Automated Canary deployment**: Automatic VirtualService weight adjustment
@@ -77,122 +52,11 @@ flowchart LR
 
 ### Overall Architecture
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        ArgoCD[ArgoCD<br/>GitOps Deployment]
-        Rollouts[Argo Rollouts<br/>Controller]
-        Istiod[Istiod<br/>Istio Control Plane]
-    end
-
-    subgraph "Data Plane"
-        direction TB
-
-        subgraph "Istio Ingress Gateway"
-            Gateway[Gateway<br/>External Traffic]
-        end
-
-        subgraph "VirtualService (test)"
-            VS[VirtualService<br/>Routing Rules]
-        end
-
-        subgraph "Services"
-            StableService[test-stable<br/>Service]
-            CanaryService[test-canary<br/>Service]
-        end
-
-        subgraph "Rollout Managed Pods"
-            StablePods[Stable Pods<br/>v1]
-            CanaryPods[Canary Pods<br/>v2]
-        end
-
-        subgraph "DestinationRule"
-            DR[DestinationRule<br/>Subsets]
-        end
-    end
-
-    subgraph "Observability"
-        Prometheus[Prometheus<br/>Metric Collection]
-        AnalysisRun[AnalysisRun<br/>Metric Verification]
-    end
-
-    ArgoCD -->|Deployment| Rollouts
-    Rollouts -->|VirtualService weight adjustment| VS
-    Rollouts -->|ReplicaSet management| StablePods
-    Rollouts -->|ReplicaSet management| CanaryPods
-    Rollouts -->|AnalysisRun creation| AnalysisRun
-
-    Gateway --> VS
-    VS -->|90% stable subset| DR
-    VS -->|10% canary subset| DR
-    DR --> StableService
-    DR --> CanaryService
-    StableService --> StablePods
-    CanaryService --> CanaryPods
-
-    Istiod -.->|xDS Config| Gateway
-    Istiod -.->|Configuration sync| VS
-    Istiod -.->|Configuration sync| DR
-
-    StablePods -.->|Metrics| Prometheus
-    CanaryPods -.->|Metrics| Prometheus
-    Prometheus -->|Query| AnalysisRun
-    AnalysisRun -.->|Success/Failure| Rollouts
-
-    classDef control fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef routing fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef observ fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-
-    class ArgoCD,Rollouts,Istiod control;
-    class Gateway,VS,DR,StableService,CanaryService routing;
-    class StablePods,CanaryPods app;
-    class Prometheus,AnalysisRun observ;
-```
+![End-to-end architecture showing Argo Rollouts as the automation hub that adjusts VirtualService weights and pod counts, Istiod syncing config into the data plane, traffic flowing Gateway to VirtualService to DestinationRule to stable/canary services and pods, and Prometheus/AnalysisRun closing the feedback loop back to Rollouts.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-1.png)
 
 ### Traffic Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User as User
-    participant Gateway as Istio Gateway
-    participant VS as VirtualService
-    participant Stable as Stable Pod (v1)
-    participant Canary as Canary Pod (v2)
-    participant Rollouts as Argo Rollouts
-    participant Prom as Prometheus
-
-    Note over User,Prom: Initial state: v1 100%
-
-    Rollouts->>VS: setWeight: 10<br/>stable: 90%, canary: 10%
-
-    User->>Gateway: HTTP Request
-    Gateway->>VS: Traffic forwarding
-
-    alt 90% traffic
-        VS->>Stable: subset: stable
-        Stable->>VS: Response
-    else 10% traffic
-        VS->>Canary: subset: canary
-        Canary->>VS: Response
-    end
-
-    VS->>Gateway: Response
-    Gateway->>User: Response
-
-    Stable->>Prom: Metrics (success rate, latency)
-    Canary->>Prom: Metrics (success rate, latency)
-
-    Rollouts->>Prom: Analysis query<br/>(Canary success rate >= 95%?)
-    Prom->>Rollouts: Metric result
-
-    alt Success rate >= 95%
-        Rollouts->>VS: setWeight: 50<br/>Auto progress
-    else Success rate < 95%
-        Rollouts->>VS: setWeight: 0<br/>Auto rollback
-    end
-```
+![Sequence diagram of one request during a 90/10 canary split: Argo Rollouts sets the VirtualService weight, a user request is routed by the Gateway and VirtualService to either the stable or canary pod inside an alt fragment, the response returns, and pod metrics feed back into Rollouts' decision to progress or roll back the weight.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-2.png)
 
 ## Core Concepts
 
@@ -361,39 +225,7 @@ spec:
 ```
 
 **AnalysisRun**:
-```mermaid
-flowchart TD
-    Start[AnalysisRun Start]
-    Start --> M1[Measurement 1: Wait 30s]
-    M1 --> C1{Success rate >= 95%?}
-    C1 -->|Yes| M2[Measurement 2: Wait 30s]
-    C1 -->|No| Fail1[Failure count 1]
-
-    M2 --> C2{Success rate >= 95%?}
-    C2 -->|Yes| M3[Measurement 3: Wait 30s]
-    C2 -->|No| Fail2[Failure count 2<br/>Total failure!]
-
-    M3 --> C3{Success rate >= 95%?}
-    C3 -->|Yes| M4[Measurement 4: Wait 30s]
-    C3 -->|No| Fail3[Failure count 2<br/>Total failure!]
-
-    M4 --> C4{Success rate >= 95%?}
-    C4 -->|Yes| M5[Measurement 5: Wait 30s]
-    M5 --> C5{Success rate >= 95%?}
-    C5 -->|Yes| Success[Total success!<br/>Proceed to next step]
-
-    Fail1 --> M2
-    Fail2 --> Rollback[Automatic rollback]
-    Fail3 --> Rollback
-
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Success success;
-    class Fail2,Fail3,Rollback failure;
-    class C1,C2,C3,C4,C5 check;
-```
+![Flowchart of an AnalysisRun's decision loop: it waits and measures success rate repeatedly, checking whether the rate is at least 95 percent and whether five measurements are complete before proceeding, or counting failures toward an automatic rollback after two consecutive misses.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-3.png)
 
 ## Setup and Configuration
 
@@ -612,17 +444,7 @@ spec:
 ```
 
 **Traffic transition graph**:
-```mermaid
-flowchart LR
-    T0[0%<br/>Canary] --> T1[10%<br/>Wait 5m]
-    T1 --> T2[30%<br/>Wait 5m]
-    T2 --> T3[50%<br/>Wait 10m]
-    T3 --> T4[80%<br/>Wait 10m]
-    T4 --> T5[100%<br/>Complete]
-
-    classDef current fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    class T3 current;
-```
+![Linear progression of six canary weight steps from 0% to 100%, each holding for a wait window before the next weight increase.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-4.png)
 
 ### 2. Header-based Routing
 
@@ -817,28 +639,7 @@ spec:
 ```
 
 **Behavior**:
-```mermaid
-flowchart TD
-    S1[Step 1: setWeight 10<br/>Wait 2m]
-    S2[Step 2: setWeight 30<br/>Wait 2m]
-    S3[Step 3: setWeight 50]
-
-    A1[Analysis Start]
-    A2[Measure every 30s]
-    A3[Immediate rollback on failure]
-
-    S1 --> S2
-    S2 --> S3
-    S2 --> A1
-    A1 --> A2
-    A2 --> A3
-
-    classDef steps fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef analysis fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-
-    class S1,S2,S3 steps;
-    class A1,A2,A3 analysis;
-```
+![Flowchart showing rollout step 2 launching a background AnalysisRun that samples every 30 seconds and can trigger an immediate rollback, while the main rollout path continues on to step 3 independently.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-5.png)
 
 ### 3. Composite Metric Analysis
 
@@ -1002,31 +803,7 @@ spec:
 ```
 
 **Operation flow**:
-```mermaid
-flowchart TD
-    Start[Start new version deployment]
-    Start --> Preview[Deploy to Preview environment]
-    Preview --> PreAnalysis{Pre-analysis<br/>smoke-test}
-
-    PreAnalysis -->|Failure| Abort1[Deployment abort]
-    PreAnalysis -->|Success| Wait[Wait for manual approval<br/>autoPromotion=false]
-
-    Wait -->|promote command| Switch[Active Service switch<br/>Blue → Green]
-    Switch --> PostAnalysis{Post-analysis<br/>comprehensive}
-
-    PostAnalysis -->|Failure| Rollback[Rollback to previous version<br/>Green → Blue]
-    PostAnalysis -->|Success| Scale[Delete previous version after 10m]
-
-    Scale --> End[Deployment complete]
-
-    classDef success fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef failure fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-
-    class End success;
-    class Abort1,Rollback failure;
-    class PreAnalysis,PostAnalysis check;
-```
+![Flowchart of a blue/green deployment: a new version is smoke-tested in Preview, gated by manual approval, switched from blue to green, verified by a comprehensive post-analysis, and either rolled back or completed with delayed cleanup of the old version.](../../../.gitbook/assets/en-service-mesh-istio-advanced-08-argo-rollouts-6.png)
 
 ### 2. Canary with Experiment
 

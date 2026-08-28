@@ -31,48 +31,7 @@ Istio automatically collects Golden Signals following Google's SRE principles:
 
 ### Metrics Collection Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Application Pods"
-        App1[App Container]
-        Envoy1[Envoy Sidecar]
-        App1 -.-> Envoy1
-    end
-
-    subgraph "Istio Control Plane"
-        Istiod[istiod]
-        Telemetry[Telemetry Config]
-    end
-
-    subgraph "Metrics Backend"
-        Prometheus[Prometheus]
-        OTEL[OpenTelemetry<br/>Collector]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana]
-        Kiali[Kiali]
-    end
-
-    Envoy1 -->|Scrape /stats/prometheus| Prometheus
-    Envoy1 -->|Push Metrics| OTEL
-    Istiod -->|Configure| Envoy1
-    Telemetry -.->|Applied by| Istiod
-
-    Prometheus --> Grafana
-    Prometheus --> Kiali
-    OTEL --> Prometheus
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istioComponent fill:#466BB0,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoring fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    class App1 k8sComponent;
-    class Envoy1,Istiod,Telemetry istioComponent;
-    class Prometheus,OTEL monitoring;
-    class Grafana,Kiali visualization;
-```
+![Diagram showing an application pod's Envoy sidecar exporting metrics that istiod's control plane configures, which flow into Prometheus and an OpenTelemetry Collector, and from there into Grafana and Kiali for visualization.](../../../.gitbook/assets/en-service-mesh-istio-observability-01-metrics-0.png)
 
 ## Istio Standard Metrics
 

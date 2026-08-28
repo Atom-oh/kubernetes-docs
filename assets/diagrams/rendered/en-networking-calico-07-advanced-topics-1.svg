@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="calico-ipam-arch-title calico-ipam-arch-desc">
+    <title id="calico-ipam-arch-title">Block-based IPAM architecture</title>
+    <desc id="calico-ipam-arch-desc">A central datastore hands out fixed-size IP blocks to each node, and each node's Felix agent allocates individual pod IPs out of its own affine blocks.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="16" y="148" width="300" height="192" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="24" y="152" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="52" y="161" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1</text>
+
+    <rect x="348" y="148" width="284" height="192" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="356" y="152" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="384" y="161" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2</text>
+
+    <rect x="660" y="148" width="296" height="192" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="668" y="152" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="696" y="161" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">NODE 3</text>
+
+    <!-- DS fan-out connectors (drawn before boxes) -->
+    <path d="M 428,96 V 100 Q 428,108 420,108 H 108 Q 100,108 100,116 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 452,96 V 112 Q 452,120 444,120 H 260 Q 252,120 252,128 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 480,96 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 508,96 V 112 Q 508,120 516,120 H 736 Q 744,120 744,128 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 532,96 V 100 Q 532,108 540,108 H 868 Q 876,108 876,116 V 180" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- block -> pod connectors -->
+    <path d="M 80,236 V 250 Q 80,258 88,258 H 92 Q 100,258 100,266 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 120,236 V 250 Q 120,258 128,258 H 244 Q 252,258 252,266 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 460,236 V 250 Q 460,258 452,258 H 436 Q 428,258 428,266 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 500,236 V 250 Q 500,258 508,258 H 552 Q 560,258 560,266 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 744,236 V 280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Datastore (focal) -->
+    <rect x="400" y="40" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="400" y="40" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="63" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Datastore</text>
+    <text x="480" y="79" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">etcd / kubernetes</text>
+
+    <!-- Blocks -->
+    <rect x="40" y="180" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="40" y="180" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="100" y="203" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Block A</text>
+    <text x="100" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.244.0.0/26</text>
+
+    <rect x="192" y="180" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="192" y="180" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="252" y="203" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Block B</text>
+    <text x="252" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.244.0.64/26</text>
+
+    <rect x="420" y="180" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="420" y="180" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="480" y="203" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Block C</text>
+    <text x="480" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.244.1.0/26</text>
+
+    <rect x="684" y="180" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="684" y="180" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="744" y="203" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Block D</text>
+    <text x="744" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.244.2.0/26</text>
+
+    <rect x="816" y="180" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="816" y="180" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="876" y="203" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Block E</text>
+    <text x="876" y="219" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">10.244.2.64/26</text>
+
+    <!-- Pods -->
+    <rect x="40" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="40" y="280" width="120" height="48" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="100" y="308" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Pod 10.244.0.5</text>
+
+    <rect x="192" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="192" y="280" width="120" height="48" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="252" y="308" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Pod 10.244.0.10</text>
+
+    <rect x="368" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="368" y="280" width="120" height="48" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="428" y="308" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Pod 10.244.1.5</text>
+
+    <rect x="500" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="500" y="280" width="120" height="48" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="560" y="308" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Pod 10.244.1.15</text>
+
+    <rect x="684" y="280" width="120" height="48" rx="6" fill="#ffffff"/>
+    <rect x="684" y="280" width="120" height="48" rx="6" fill="#ffffff" stroke="rgba(35,47,62,0.30)" stroke-width="0.8"/>
+    <text x="744" y="308" fill="#232F3E" font-size="11" font-weight="600" text-anchor="middle">Pod 10.244.2.20</text>
+  </svg>

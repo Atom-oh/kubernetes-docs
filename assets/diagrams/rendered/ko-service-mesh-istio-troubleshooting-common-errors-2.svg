@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fc2-title fc2-desc">
+    <title id="fc2-title">PeerAuthentication 모드 불일치 흐름도</title>
+    <desc id="fc2-desc">mTLS STRICT 모드인 클라이언트 서비스가 mTLS DISABLE 모드인 서버 서비스로 연결을 시도하면 서버가 평문 연결을 요구하며 연결에 실패해, 결국 503 업스트림 연결 오류가 발생함을 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-error" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#DD344C"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#FFFFFF"/>
+
+    <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+    <!-- e1: Client -> Server, mTLS attempt -->
+    <line x1="320" y1="204" x2="640" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- e2: Server -> Client, plaintext required (dashed return, offset 32px below e1) -->
+    <line x1="640" y1="236" x2="320" y2="236" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <!-- e3: Server -> Error, dashed vertical -->
+    <line x1="740" y1="248" x2="740" y2="380" stroke="#DD344C" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-error)"/>
+
+    <!-- ===================== LABELS ===================== -->
+    <rect x="424" y="180" width="112" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="480" y="190" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MTLS 연결 시도</text>
+
+    <rect x="416" y="212" width="128" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="480" y="222" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">평문 연결 필요</text>
+
+    <rect x="700" y="304" width="80" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="740" y="314" fill="#DD344C" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">❌ 503 ERROR</text>
+
+    <!-- ===================== NODE: Client Service ===================== -->
+    <rect x="120" y="160" width="200" height="88" rx="6" fill="#FFFFFF"/>
+    <rect x="120" y="160" width="200" height="88" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="132" y="172" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="148" y="181" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="220" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--sans)" text-anchor="middle">Client Service</text>
+    <text x="220" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PeerAuthentication: STRICT</text>
+
+    <!-- ===================== NODE: Server Service ===================== -->
+    <rect x="640" y="160" width="200" height="88" rx="6" fill="#FFFFFF"/>
+    <rect x="640" y="160" width="200" height="88" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+    <rect x="652" y="172" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="668" y="181" fill="#545B64" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+    <text x="740" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--sans)" text-anchor="middle">Server Service</text>
+    <text x="740" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">PeerAuthentication: DISABLE</text>
+
+    <!-- ===================== NODE: Error (focal / security-red) ===================== -->
+    <rect x="640" y="380" width="200" height="88" rx="6" fill="#FFFFFF"/>
+    <rect x="640" y="380" width="200" height="88" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+    <rect x="652" y="392" width="32" height="12" rx="2" fill="transparent" stroke="rgba(221,52,76,0.50)" stroke-width="0.8"/>
+    <text x="668" y="401" fill="#DD344C" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">ERR</text>
+    <text x="740" y="424" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--sans)" text-anchor="middle">503 Service Unavailable</text>
+    <text x="740" y="442" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">upstream connect error</text>
+
+    <!-- ===================== LEGEND ===================== -->
+    <line x1="48" y1="512" x2="912" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="48" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <line x1="140" y1="552" x2="168" y2="552" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="176" y="555" fill="#545B64" font-size="8.5" font-family="var(--sans)">연결 시도</text>
+
+    <line x1="316" y1="552" x2="344" y2="552" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="352" y="555" fill="#545B64" font-size="8.5" font-family="var(--sans)">거부 / 실패 응답</text>
+
+    <rect x="540" y="544" width="14" height="14" rx="3" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+    <text x="562" y="555" fill="#545B64" font-size="8.5" font-family="var(--sans)">오류 상태</text>
+
+  </svg>

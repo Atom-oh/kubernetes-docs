@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="diagram" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mlflow-eks-title mlflow-eks-desc">
+  <title id="mlflow-eks-title">MLflow EKS 배포 아키텍처</title>
+  <desc id="mlflow-eks-desc">MLflow 트래킹 서버가 ALB 뒤 Kubernetes Service로 노출되고, 두 개의 트래킹 서버 Pod가 ServiceAccount(IRSA/Pod Identity)를 통해 부여된 권한으로 RDS/Aurora PostgreSQL 백엔드 저장소와 S3 아티팩트 저장소에 접근하는 EKS 배포 구조.</desc>
+  <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7D8998"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- eyebrow -->
+  <text x="40" y="28" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">ARCHITECTURE</text>
+  <text x="40" y="44" fill="#232F3E" font-size="14" font-weight="700">MLflow on EKS — 트래킹 서버 배포 구조</text>
+
+  <!-- zone: tracking server pods -->
+  <rect x="380" y="180" width="344" height="124" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="474" y="184" width="156" height="12" rx="2" fill="#ffffff"/>
+  <text x="552" y="193" fill="rgba(35,47,62,0.40)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">TRACKING SERVER PODS</text>
+
+  <!-- ===== connectors (drawn before nodes) ===== -->
+
+  <!-- User -> ALB -->
+  <path d="M216,84 H280" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="222" y="60" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="248" y="69" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">HTTPS</text>
+
+  <!-- ALB -> Service -->
+  <path d="M416,84 H480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Service -> Pod1 -->
+  <path d="M532,120 V168 Q532,176 524,176 H482 Q474,176 474,184 V216"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Service -> Pod2 -->
+  <path d="M580,120 V168 Q580,176 588,176 H646 Q654,176 654,184 V216"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ServiceAccount -> Tracking Server Pods zone (grants S3/DB access to both pods) -->
+  <path d="M800,200 H724" fill="none" stroke="#8D99A8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+  <rect x="726" y="176" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="762" y="185" fill="#7D8998" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.02em">S3 권한 부여</text>
+
+  <!-- Pod1 -> RDS (near, straight, accent) -->
+  <path d="M452,288 V420" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- Pod2 -> S3 (near, straight, accent) -->
+  <path d="M676,288 V420" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- Pod1 -> S3 (far, elbow, accent) -->
+  <path d="M496,288 V392 Q496,400 504,400 H648 Q656,400 656,408 V420"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <!-- Pod2 -> RDS (far, elbow, accent, hops over Pod1->S3 horizontal at the crossing) -->
+  <path d="M632,288 V304 Q632,312 624,312 H544 Q536,312 536,320 V392 a8,8 0 0,0 0,16 V420"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+  <!-- ===== nodes ===== -->
+
+  <!-- User -->
+  <rect x="40" y="48" width="176" height="72" rx="6" fill="#ffffff"/>
+  <rect x="40" y="48" width="176" height="72" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <text x="128" y="80" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">학습 스크립트 /</text>
+  <text x="128" y="96" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">MLflow UI 사용자</text>
+
+  <!-- ALB -->
+  <rect x="280" y="48" width="136" height="72" rx="6" fill="#ffffff"/>
+  <rect x="280" y="48" width="136" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="288" y="54" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="302" y="63" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">LB</text>
+  <text x="348" y="90" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ALB / Ingress</text>
+
+  <!-- Service -->
+  <rect x="480" y="48" width="152" height="72" rx="6" fill="#ffffff"/>
+  <rect x="480" y="48" width="152" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="488" y="54" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="502" y="63" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+  <text x="556" y="90" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Kubernetes</text>
+  <text x="556" y="104" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Service</text>
+
+  <!-- Pod1 -->
+  <rect x="404" y="216" width="140" height="72" rx="6" fill="#ffffff"/>
+  <rect x="404" y="216" width="140" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="474" y="248" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">트래킹 서버</text>
+  <text x="474" y="262" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod</text>
+  <text x="474" y="278" fill="#545B64" font-size="9" class="mono" text-anchor="middle">replica 1</text>
+
+  <!-- Pod2 -->
+  <rect x="584" y="216" width="140" height="72" rx="6" fill="#ffffff"/>
+  <rect x="584" y="216" width="140" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="654" y="248" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">트래킹 서버</text>
+  <text x="654" y="262" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Pod</text>
+  <text x="654" y="278" fill="#545B64" font-size="9" class="mono" text-anchor="middle">replica 2</text>
+
+  <!-- ServiceAccount -->
+  <rect x="800" y="180" width="140" height="72" rx="6" fill="rgba(35,47,62,0.02)"/>
+  <rect x="800" y="180" width="140" height="72" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="870" y="208" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">ServiceAccount</text>
+  <text x="870" y="224" fill="#545B64" font-size="9" class="mono" text-anchor="middle">IRSA /</text>
+  <text x="870" y="236" fill="#545B64" font-size="9" class="mono" text-anchor="middle">Pod Identity</text>
+
+  <!-- RDS / Aurora (focal) -->
+  <rect x="404" y="420" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="404" y="420" width="180" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="494" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">RDS / Aurora</text>
+  <text x="494" y="466" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">PostgreSQL</text>
+  <text x="494" y="482" fill="#545B64" font-size="9" class="mono" text-anchor="middle">backend-store</text>
+
+  <!-- S3 (focal) -->
+  <rect x="624" y="420" width="180" height="88" rx="6" fill="#ffffff"/>
+  <rect x="624" y="420" width="180" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="714" y="452" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">S3 버킷</text>
+  <text x="714" y="466" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">아티팩트 저장소</text>
+  <text x="714" y="482" fill="#545B64" font-size="9" class="mono" text-anchor="middle">artifact-store</text>
+
+  <!-- legend -->
+  <line x1="40" y1="548" x2="920" y2="548" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="568" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="140" y1="564" x2="176" y2="564" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="184" y="568" fill="#545B64" font-size="9" class="mono">요청 흐름</text>
+
+  <line x1="300" y1="564" x2="336" y2="564" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="344" y="568" fill="#545B64" font-size="9" class="mono">데이터 쓰기</text>
+
+  <line x1="460" y1="564" x2="496" y2="564" stroke="#8D99A8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-soft)"/>
+  <text x="504" y="568" fill="#545B64" font-size="9" class="mono">IAM 권한 부여 (IRSA / Pod Identity)</text>
+</svg>

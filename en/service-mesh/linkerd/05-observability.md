@@ -9,41 +9,7 @@ Linkerd provides powerful observability features out of the box. Without any ins
 
 ## Observability Architecture
 
-```mermaid
-graph TB
-    subgraph "Data Plane"
-        P1[Proxy 1<br/>Metrics Collection]
-        P2[Proxy 2<br/>Metrics Collection]
-        P3[Proxy 3<br/>Metrics Collection]
-    end
-
-    subgraph "Viz Extension"
-        PROM[Prometheus<br/>Metrics Storage]
-        GRAF[Grafana<br/>Visualization]
-        WEB[Web Dashboard<br/>UI]
-        TAP[Tap API<br/>Real-time Stream]
-        METRICS[Metrics API<br/>Aggregation]
-    end
-
-    subgraph "External (Optional)"
-        EXT_PROM[External Prometheus]
-        EXT_GRAF[External Grafana]
-        JAEGER[Jaeger<br/>Distributed Tracing]
-    end
-
-    P1 -->|:4191| PROM
-    P2 -->|:4191| PROM
-    P3 -->|:4191| PROM
-
-    PROM --> GRAF
-    PROM --> METRICS
-    METRICS --> WEB
-    TAP --> WEB
-
-    PROM --> EXT_PROM
-    EXT_PROM --> EXT_GRAF
-    P1 --> JAEGER
-```
+![Data-plane proxies export metrics to the Viz extension's Prometheus, which feeds Grafana and the web dashboard while forwarding to an optional external Prometheus/Grafana pair, and proxies also stream spans directly to Jaeger for distributed tracing.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-0.png)
 
 ## Golden Metrics
 
@@ -101,23 +67,7 @@ linkerd viz dashboard --address 0.0.0.0
 
 ### Dashboard Features
 
-```mermaid
-graph TB
-    subgraph "Dashboard Views"
-        NS[Namespace Overview<br/>Per-namespace Status]
-        DEPLOY[Deployments<br/>Deployment Status]
-        PODS[Pods<br/>Pod Status]
-        TOPO[Topology<br/>Service Topology]
-        ROUTES[Routes<br/>Per-route Metrics]
-        TAP[Tap<br/>Real-time Requests]
-    end
-
-    NS --> DEPLOY
-    DEPLOY --> PODS
-    DEPLOY --> ROUTES
-    NS --> TOPO
-    DEPLOY --> TAP
-```
+![From the Namespace Overview, operators drill into the Deployments view, which branches to per-Pod status, per-route metrics, and the live Tap request stream, while the namespace level also links directly to the service Topology view.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-1.png)
 
 **Dashboard Views:**
 
@@ -789,29 +739,7 @@ spec:
 
 ### Troubleshooting Workflow
 
-```mermaid
-graph TB
-    START[Issue Detected] --> STAT[linkerd viz stat]
-    STAT --> CHECK{Low Success<br/>Rate?}
-
-    CHECK -->|Yes| TOP[linkerd viz top]
-    CHECK -->|No| LATENCY{High<br/>Latency?}
-
-    TOP --> TAP[linkerd viz tap]
-    TAP --> LOGS[Check Proxy Logs]
-
-    LATENCY -->|Yes| ROUTES[linkerd viz routes]
-    LATENCY -->|No| EDGES[linkerd viz edges]
-
-    ROUTES --> TAP
-    EDGES --> CHECK_TLS{mTLS<br/>Issue?}
-
-    CHECK_TLS -->|Yes| CERT[Check Certificates]
-    CHECK_TLS -->|No| END[Issue Resolved]
-
-    LOGS --> END
-    CERT --> END
-```
+![Starting from a detected issue, checking success rate routes to viz top then a shared tap-and-logs step for low success, or on to a latency check, edge check, and mTLS/certificate check when success is normal, all converging on Issue Resolved.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-2.png)
 
 ## Next Steps
 

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fluentbit-arch-title fluentbit-arch-desc">
+    <title id="fluentbit-arch-title">FluentBit plugin pipeline architecture</title>
+    <desc id="fluentbit-arch-desc">FluentBit processes logs through five sequential plugin stages: input plugins that tail sources, parsers that structure raw text, filters that enrich and drop noise, an in-memory or filesystem buffer, and output plugins that ship to one or more destinations.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ============ ZONE ============ -->
+    <rect x="24" y="220" width="912" height="216" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="392" y="224" width="176" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="233" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">PLUGIN PIPELINE</text>
+
+    <!-- ============ ARROWS ============ -->
+    <line x1="196" y1="336" x2="220" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="372" y1="336" x2="396" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="548" y1="336" x2="572" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="724" y1="336" x2="748" y2="336" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ============ NODES ============ -->
+
+    <!-- Input Plugins -->
+    <rect x="20" y="272" width="176" height="128" rx="6" fill="#ffffff"/>
+    <rect x="20" y="272" width="176" height="128" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="108" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Input Plugins</text>
+    <text x="108" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tail &#183; syslog</text>
+    <text x="108" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tcp &#183; systemd</text>
+
+    <!-- Parser -->
+    <rect x="220" y="272" width="152" height="128" rx="6" fill="#ffffff"/>
+    <rect x="220" y="272" width="152" height="128" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="296" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Parser</text>
+    <text x="296" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">json &#183; regex</text>
+    <text x="296" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">docker &#183; cri</text>
+
+    <!-- Filter Plugins (focal: richest processing surface) -->
+    <rect x="396" y="272" width="152" height="128" rx="6" fill="#ffffff"/>
+    <rect x="396" y="272" width="152" height="128" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="472" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Filter Plugins</text>
+    <text x="472" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kubernetes &#183; modify</text>
+    <text x="472" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">grep &#183; lua &#183; multiline</text>
+
+    <!-- Buffer -->
+    <rect x="572" y="272" width="152" height="128" rx="6" fill="#ffffff"/>
+    <rect x="572" y="272" width="152" height="128" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="648" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Buffer</text>
+    <text x="648" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">memory</text>
+    <text x="648" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">filesystem</text>
+
+    <!-- Output Plugins -->
+    <rect x="748" y="272" width="192" height="128" rx="6" fill="#ffffff"/>
+    <rect x="748" y="272" width="192" height="128" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="844" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Output Plugins</text>
+    <text x="844" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">loki &#183; opensearch</text>
+    <text x="844" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">cloudwatch_logs &#183; s3 &#183; kafka</text>
+  </svg>

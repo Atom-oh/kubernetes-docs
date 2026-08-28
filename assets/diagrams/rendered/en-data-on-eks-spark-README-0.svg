@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Spark on Kubernetes pod scheduling flow</title>
+  <desc id="ddesc">spark-submit asks the Kubernetes API Server to create a driver pod; the driver pod then asks the API Server to schedule three executor pods, and each executor registers back with the driver directly once running.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+      .name{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:600;font-size:12px;fill:#232F3E;}
+      .sub{font-family:'Geist Mono',ui-monospace,monospace;font-size:9px;fill:#545B64;}
+      .tag{font-family:'Geist Mono',ui-monospace,monospace;font-size:7px;letter-spacing:0.08em;}
+      .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:8px;letter-spacing:0.06em;fill:#7D8998;}
+      .eyebrow{font-family:'Geist Mono',ui-monospace,monospace;font-size:8px;letter-spacing:0.14em;fill:#7D8998;}
+      .h1{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;fill:#232F3E;}
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="24" class="eyebrow">SPARK ON EKS</text>
+  <text x="40" y="42" class="h1" font-size="18">Driver &amp; Executor Pod Scheduling</text>
+
+  <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+
+  <!-- S -> API : create driver pod -->
+  <line x1="200" y1="96" x2="392" y2="96" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="264" y="76" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="300" y="85" class="lbl" text-anchor="middle" fill="#EC7211">CREATE POD</text>
+
+  <!-- API -> D : (implicit schedule, unlabeled in source) -->
+  <path d="M540,128 H712 Q720,128 720,136 V224" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- D -> API : request executor pods -->
+  <path d="M680,240 H588 Q580,240 580,232 V128" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="588" y="176" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="632" y="185" class="lbl" text-anchor="middle">REQUEST PODS</text>
+
+  <!-- API -> E1 : schedule -->
+  <path d="M420,128 H288 Q280,128 280,136 V444" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="246" y="268" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="278" y="277" class="lbl" text-anchor="middle">SCHEDULE</text>
+
+  <!-- API -> E2 : schedule -->
+  <path d="M460,128 H472 Q480,128 480,136 V444" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="446" y="268" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="478" y="277" class="lbl" text-anchor="middle">SCHEDULE</text>
+
+  <!-- API -> E3 : schedule (routed around Driver pod) -->
+  <path d="M500,128 H612 Q620,128 620,136 V396 Q620,404 628,404 H672 Q680,404 680,412 V444"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="588" y="336" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="620" y="345" class="lbl" text-anchor="middle">SCHEDULE</text>
+
+  <!-- E1 -> D : register -->
+  <path d="M280,444 V332 Q280,324 288,324 H712 Q720,324 720,316 V288"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="380" y="312" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="412" y="321" class="lbl" text-anchor="middle">REGISTER</text>
+
+  <!-- E2 -> D : register -->
+  <path d="M480,444 V372 Q480,364 488,364 H752 Q760,364 760,356 V288"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="580" y="352" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="612" y="361" class="lbl" text-anchor="middle">REGISTER</text>
+
+  <!-- E3 -> D : register -->
+  <path d="M680,444 V412 Q680,404 688,404 H792 Q800,404 800,396 V288"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="720" y="424" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="752" y="433" class="lbl" text-anchor="middle">REGISTER</text>
+
+  <!-- ===================== NODES ===================== -->
+
+  <!-- S: spark-submit (input) -->
+  <rect x="40" y="64" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="40" y="64" width="160" height="64" rx="6" fill="#8D99A81A" stroke="#7D8998" stroke-width="1"/>
+  <rect x="48" y="70" width="34" height="12" rx="2" fill="transparent" stroke="#7D899866" stroke-width="0.8"/>
+  <text x="65" y="79" class="tag" fill="#7D8998" text-anchor="middle">CLI</text>
+  <text x="120" y="100" class="name" text-anchor="middle">spark-submit</text>
+  <text x="120" y="116" class="sub" text-anchor="middle">client process</text>
+
+  <!-- API: Kubernetes API Server (focal) -->
+  <rect x="400" y="64" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="400" y="64" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="408" y="70" width="36" height="12" rx="2" fill="transparent" stroke="#EC721166" stroke-width="0.8"/>
+  <text x="426" y="79" class="tag" fill="#EC7211" text-anchor="middle">K8S</text>
+  <text x="500" y="100" class="name" text-anchor="middle">Kubernetes API Server</text>
+  <text x="500" y="116" class="sub" text-anchor="middle">kube-apiserver</text>
+
+  <!-- D: Driver Pod -->
+  <rect x="680" y="224" width="160" height="64" rx="6" fill="#ffffff"/>
+  <rect x="680" y="224" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="688" y="230" width="36" height="12" rx="2" fill="transparent" stroke="#545B6466" stroke-width="0.8"/>
+  <text x="706" y="239" class="tag" fill="#545B64" text-anchor="middle">POD</text>
+  <text x="760" y="260" class="name" text-anchor="middle">Driver Pod</text>
+  <text x="760" y="276" class="sub" text-anchor="middle">spark-driver</text>
+
+  <!-- E1, E2, E3: Executor Pods -->
+  <rect x="200" y="444" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="208" y="450" width="36" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+  <text x="226" y="459" class="tag" fill="#232F3E" text-anchor="middle">POD</text>
+  <text x="280" y="480" class="name" text-anchor="middle">Executor Pod 1</text>
+  <text x="280" y="496" class="sub" text-anchor="middle">spark-executor</text>
+
+  <rect x="400" y="444" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="408" y="450" width="36" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+  <text x="426" y="459" class="tag" fill="#232F3E" text-anchor="middle">POD</text>
+  <text x="480" y="480" class="name" text-anchor="middle">Executor Pod 2</text>
+  <text x="480" y="496" class="sub" text-anchor="middle">spark-executor</text>
+
+  <rect x="600" y="444" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="608" y="450" width="36" height="12" rx="2" fill="transparent" stroke="#232F3E66" stroke-width="0.8"/>
+  <text x="626" y="459" class="tag" fill="#232F3E" text-anchor="middle">POD</text>
+  <text x="680" y="480" class="name" text-anchor="middle">Executor Pod 3</text>
+  <text x="680" y="496" class="sub" text-anchor="middle">spark-executor</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="536" x2="930" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="552" class="eyebrow">LEGEND</text>
+  <line x1="120" y1="548" x2="140" y2="548" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <text x="148" y="552" class="sub" fill="#545B64">submit request</text>
+  <line x1="300" y1="548" x2="320" y2="548" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="328" y="552" class="sub" fill="#545B64">control-plane call</text>
+  <rect x="520" y="540" width="14" height="14" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="542" y="552" class="sub" fill="#545B64">focal node</text>
+</svg>

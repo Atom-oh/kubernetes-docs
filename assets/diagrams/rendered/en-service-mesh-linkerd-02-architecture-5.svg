@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-linkerd-02-architecture-5-title en-service-mesh-linkerd-02-architecture-5-desc">
+<title id="en-service-mesh-linkerd-02-architecture-5-title">Proxy-to-Proxy Traffic Flow</title>
+<desc id="en-service-mesh-linkerd-02-architecture-5-desc">Sequence diagram showing a client app's request transparently redirected into its linkerd-proxy, which resolves and load-balances the destination and opens an mTLS connection to the server's proxy, which verifies the connection and policy before forwarding to the server app and returning the response.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="140" y1="100" x2="140" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="380" y1="100" x2="380" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="620" y1="100" x2="620" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="860" y1="100" x2="860" y2="520" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<path d="M 140,140 L 380,140" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="219.0" y="120" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="260.0" y="129" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP REQUEST</text>
+<rect x="321.0" y="158" width="118" height="20" rx="3" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.15)" stroke-width="0.8"/>
+<text x="380" y="172" fill="#545B64" font-size="9" font-style="italic" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">iptables redirect</text>
+<path d="M 380,196 H 416 Q 424,196 424,204 V 212 Q 424,220 416,220 H 380" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="432" y="202.0" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="476.0" y="211.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ROUTE+LB+MTLS</text>
+<path d="M 380,260 L 620,260" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="468.0" y="240" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="500.0" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENCRYPTED</text>
+<path d="M 620,292 H 656 Q 664,292 664,300 V 308 Q 664,316 656,316 H 620" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="672" y="298.0" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="716.0" y="307.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">VERIFY+POLICY</text>
+<path d="M 620,356 L 860,356" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="699.0" y="336" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="740.0" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP REQUEST</text>
+<path d="M 860,396 L 620,396" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="696.0" y="376" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="740.0" y="385" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP RESPONSE</text>
+<path d="M 620,436 L 380,436" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="453.0" y="416" width="94" height="12" rx="2" fill="#ffffff"/>
+<text x="500.0" y="425" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENCRYPTED RESP</text>
+<path d="M 380,476 L 140,476" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="216.0" y="456" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="260.0" y="465" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP RESPONSE</text>
+<rect x="65" y="40" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="65" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client App</text>
+<rect x="290" y="40" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="290" y="40" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="380.0" y="60.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Client Proxy</text>
+<text x="380.0" y="76.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">outbound</text>
+<rect x="530" y="40" width="180" height="48" rx="6" fill="#ffffff"/>
+<rect x="530" y="40" width="180" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="620.0" y="60.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Server Proxy</text>
+<text x="620.0" y="76.0" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">inbound</text>
+<rect x="785" y="40" width="150" height="48" rx="6" fill="#ffffff"/>
+<rect x="785" y="40" width="150" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="860.0" y="68.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Server App</text>
+</svg>

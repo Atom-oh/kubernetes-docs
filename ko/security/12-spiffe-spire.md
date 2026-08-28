@@ -129,46 +129,7 @@ Trust Bundle은 특정 Trust Domain의 루트 CA 인증서들을 포함하는 �
 
 ### 컴포넌트 개요
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["컨트롤 플레인"]
-        SERVER[SPIRE Server]
-        DS[(데이터스토어<br/>SQLite/PostgreSQL)]
-        CA[내장 CA 또는<br/>Upstream CA]
-
-        SERVER --> DS
-        SERVER --> CA
-    end
-
-    subgraph Node1["노드 1"]
-        AGENT1[SPIRE Agent]
-        WL1A[워크로드 A]
-        WL1B[워크로드 B]
-
-        WL1A -->|Workload API| AGENT1
-        WL1B -->|Workload API| AGENT1
-    end
-
-    subgraph Node2["노드 2"]
-        AGENT2[SPIRE Agent]
-        WL2A[워크로드 C]
-        WL2B[워크로드 D]
-
-        WL2A -->|Workload API| AGENT2
-        WL2B -->|Workload API| AGENT2
-    end
-
-    AGENT1 -->|노드 어테스테이션<br/>SVID 요청| SERVER
-    AGENT2 -->|노드 어테스테이션<br/>SVID 요청| SERVER
-
-    REGISTRAR[SPIRE Controller Manager]
-    REGISTRAR -->|등록 엔트리 관리| SERVER
-
-    style SERVER fill:#e3f2fd
-    style AGENT1 fill:#fff3e0
-    style AGENT2 fill:#fff3e0
-    style REGISTRAR fill:#e8f5e9
-```
+![SPIRE Server가 데이터스토어와 CA를 관리하며 각 노드의 SPIRE Agent로부터 노드 어테스테이션과 SVID 요청을 받고, Agent는 자신이 실행 중인 노드의 워크로드들에 Workload API로 SVID를 전달하며, Controller Manager가 등록 엔트리를 관리하는 구조를 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-0.png)
 
 ### SPIRE Server
 
@@ -190,38 +151,7 @@ SPIRE Agent는 각 노드에서 실행되며 다음 기능을 수행합니다:
 
 ### SVID 발급 플로우
 
-```mermaid
-flowchart LR
-    subgraph Workload["워크로드"]
-        APP[애플리케이션]
-    end
-
-    subgraph Agent["SPIRE Agent"]
-        WA[Workload API<br/>Unix Socket]
-        ATTEST[워크로드<br/>어테스테이터]
-        CACHE[SVID 캐시]
-    end
-
-    subgraph Server["SPIRE Server"]
-        SVC[Node API]
-        SIGN[CA 서명]
-        REG[(등록 엔트리)]
-    end
-
-    APP -->|1. SVID 요청| WA
-    WA -->|2. 프로세스 정보 수집| ATTEST
-    ATTEST -->|3. 셀렉터 매칭| REG
-    WA -->|4. SVID 요청| SVC
-    SVC -->|5. 등록 확인| REG
-    SVC -->|6. SVID 서명| SIGN
-    SIGN -->|7. X.509-SVID| SVC
-    SVC -->|8. SVID 반환| WA
-    WA -->|9. 캐시 저장| CACHE
-    WA -->|10. SVID 전달| APP
-
-    style APP fill:#e1f5fe
-    style SIGN fill:#fff3e0
-```
+![애플리케이션이 Workload API로 SVID를 요청하면 Agent가 프로세스 정보로 어테스테이션 셀렉터를 매칭하고 Server의 Node API가 등록 엔트리를 확인해 CA로 서명한 X.509-SVID를 발급, Agent가 캐시에 저장한 뒤 애플리케이션에 전달하는 과정을 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-1.png)
 
 ---
 
@@ -339,47 +269,7 @@ kubectl exec -n spire-system spire-server-0 -- \
 
 ### 노드 및 워크로드 어테스테이션 플로우
 
-```mermaid
-flowchart TB
-    subgraph NodeAttestation["노드 어테스테이션"]
-        direction TB
-        NA1[SPIRE Agent 시작]
-        NA2[k8s_psat: ServiceAccount Token 획득]
-        NA3[aws_iid: Instance Identity Document 획득]
-        NA4[Server로 어테스테이션 요청]
-        NA5[Server: 토큰/문서 검증]
-        NA6[Node SVID 발급]
-
-        NA1 --> NA2
-        NA1 --> NA3
-        NA2 --> NA4
-        NA3 --> NA4
-        NA4 --> NA5
-        NA5 --> NA6
-    end
-
-    subgraph WorkloadAttestation["워크로드 어테스테이션"]
-        direction TB
-        WA1[워크로드가 Workload API 호출]
-        WA2[Agent: 프로세스 정보 수집]
-        WA3[k8s: Pod 메타데이터 조회]
-        WA4[unix: UID/GID 확인]
-        WA5[셀렉터와 등록 엔트리 매칭]
-        WA6[Workload SVID 발급]
-
-        WA1 --> WA2
-        WA2 --> WA3
-        WA2 --> WA4
-        WA3 --> WA5
-        WA4 --> WA5
-        WA5 --> WA6
-    end
-
-    NA6 -->|Node SVID 사용| WA1
-
-    style NA6 fill:#c8e6c9
-    style WA6 fill:#c8e6c9
-```
+![SPIRE Agent가 k8s_psat 토큰 또는 aws_iid 문서로 노드 어테스테이션을 거쳐 Node SVID를 발급받은 뒤, 이를 이용해 워크로드의 Pod 메타데이터와 UID/GID를 확인하고 등록 엔트리와 매칭해 Workload SVID를 발급하는 두 단계 절차를 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-2.png)
 
 ### Kubernetes PSAT 어테스테이션 구성
 
@@ -847,46 +737,7 @@ linkerd install --identity-external-issuer \
 
 ### 페더레이션 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph TrustDomainA["Trust Domain A<br/>prod.us.example.com"]
-        SERVER_A[SPIRE Server A]
-        BUNDLE_A[(Trust Bundle A)]
-        WL_A[워크로드 A]
-
-        SERVER_A --> BUNDLE_A
-        WL_A -.->|SVID| SERVER_A
-    end
-
-    subgraph TrustDomainB["Trust Domain B<br/>prod.eu.example.com"]
-        SERVER_B[SPIRE Server B]
-        BUNDLE_B[(Trust Bundle B)]
-        WL_B[워크로드 B]
-
-        SERVER_B --> BUNDLE_B
-        WL_B -.->|SVID| SERVER_B
-    end
-
-    subgraph Federation["페더레이션 설정"]
-        BE_A[Bundle Endpoint A<br/>:8443]
-        BE_B[Bundle Endpoint B<br/>:8443]
-    end
-
-    SERVER_A --> BE_A
-    SERVER_B --> BE_B
-
-    BE_A <-->|Trust Bundle 교환| BE_B
-
-    BUNDLE_A -.->|B의 Bundle 저장| SERVER_A
-    BUNDLE_B -.->|A의 Bundle 저장| SERVER_B
-
-    WL_A <-->|mTLS 통신| WL_B
-
-    style SERVER_A fill:#e3f2fd
-    style SERVER_B fill:#fff3e0
-    style BE_A fill:#e8f5e9
-    style BE_B fill:#e8f5e9
-```
+![서로 다른 트러스트 도메인의 SPIRE Server가 각각 Bundle Endpoint를 통해 상대방의 Trust Bundle을 주기적으로 교환·저장하고, 이를 신뢰 기반으로 두 도메인의 워크로드가 직접 mTLS로 통신하는 구조를 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-3.png)
 
 ### 페더레이션 구성
 

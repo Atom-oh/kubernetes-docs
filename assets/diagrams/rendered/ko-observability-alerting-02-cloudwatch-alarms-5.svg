@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="costopt-title costopt-desc">
+    <title id="costopt-title">CloudWatch Alarms 비용 최적화 전략</title>
+    <desc id="costopt-desc">알림 수 최소화, 해상도 적정화, Composite Alarm 활용, 불필요한 알림 제거라는 네 가지 방향으로 CloudWatch Alarms 비용을 최적화하는 전략 트리.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- ============ ARROWS (root -> 4 children), fanned attach points on root's edges ============ -->
+    <!-- root right edge (y 264..312), 4 pts at k/5 * 48 -> 273.6,283.2,... but simpler: exit bottom of root, fan via distinct x -->
+    <path d="M300,300 H316 Q324,300 324,292 V152 Q324,144 332,144 H420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M300,284 H346 Q354,284 354,276 V260 Q354,252 362,252 H420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M300,316 H346 Q354,316 354,324 V344 Q354,352 362,352 H420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M300,300 H316 Q324,300 324,308 V448 Q324,456 332,456 H420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ============ NODES ============ -->
+    <!-- Root (focal) -->
+    <rect x="140" y="264" width="160" height="72" rx="8" fill="rgba(255,153,0,0.10)"/>
+    <rect x="140" y="264" width="160" height="72" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="220" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 최적화</text>
+
+    <!-- Child B: 알림 수 최소화 -->
+    <rect x="420" y="112" width="380" height="64" rx="6" fill="#ffffff"/>
+    <rect x="420" y="112" width="380" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="440" y="136" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">알림 수 최소화</text>
+    <text x="440" y="152" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">중복 알림 통합 · Composite로 대체</text>
+
+    <!-- Child C: 해상도 적정화 -->
+    <rect x="420" y="220" width="380" height="64" rx="6" fill="#ffffff"/>
+    <rect x="420" y="220" width="380" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="440" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">해상도 적정화</text>
+    <text x="440" y="260" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">중요도별 해상도 · High Res 최소화</text>
+
+    <!-- Child D: Composite Alarm 활용 -->
+    <rect x="420" y="320" width="380" height="64" rx="6" fill="#ffffff"/>
+    <rect x="420" y="320" width="380" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="440" y="344" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Composite Alarm 활용</text>
+    <text x="440" y="360" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">여러 Metric Alarm을 하나로 통합</text>
+
+    <!-- Child E: 불필요한 알림 제거 -->
+    <rect x="420" y="424" width="380" height="64" rx="6" fill="#ffffff"/>
+    <rect x="420" y="424" width="380" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="440" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">불필요한 알림 제거</text>
+    <text x="440" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">미사용 알림 삭제 · 정기적 리뷰</text>
+
+  </svg>

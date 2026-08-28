@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="tl-title tl-desc">
+      <title id="tl-title">PSP to PSS Transition Timeline</title>
+      <desc id="tl-desc">Timeline across Kubernetes releases showing PodSecurityPolicy deprecated in 1.21, Pod Security Admission moving from alpha in 1.22 to beta in 1.23, PSP removed and PSA reaching general availability in 1.25, and Pod Security Standards stabilizing by 1.28 and later.</desc>
+
+      <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+        <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="11" cy="11" r="0.8" fill="rgba(35,47,62,0.10)"/>
+        </pattern>
+      </defs>
+
+      <rect width="960" height="600" fill="#ffffff"/>
+      <rect width="960" height="600" fill="url(#dots)" opacity="0.55"/>
+
+      <!-- Baseline -->
+      <line x1="80" y1="300" x2="880" y2="300" stroke="#D5DBDB" stroke-width="1"/>
+      <line x1="80" y1="292" x2="80" y2="308" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+      <line x1="880" y1="292" x2="880" y2="308" stroke="rgba(35,47,62,0.20)" stroke-width="1"/>
+
+      <!-- Event 1: 1.21 · PSP Deprecation Announced (below) -->
+      <line x1="180" y1="300" x2="180" y2="352" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <circle cx="180" cy="300" r="4" fill="#232F3E"/>
+      <text x="180" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">v1.21</text>
+      <text x="180" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">PSP deprecation</text>
+      <text x="180" y="400" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">announced</text>
+
+      <!-- Event 2: 1.22 · PSA Alpha (above) -->
+      <line x1="340" y1="248" x2="340" y2="300" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <circle cx="340" cy="300" r="4" fill="#232F3E"/>
+      <text x="340" y="220" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">v1.22</text>
+      <text x="340" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">PSA · alpha</text>
+
+      <!-- Event 3: 1.23 · PSA Beta (below) -->
+      <line x1="500" y1="300" x2="500" y2="352" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <circle cx="500" cy="300" r="4" fill="#232F3E"/>
+      <text x="500" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">v1.23</text>
+      <text x="500" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">PSA · beta</text>
+
+      <!-- Event 4: 1.25 · PSP Removed, PSA GA (above, major/accent) -->
+      <line x1="660" y1="224" x2="660" y2="300" stroke="#EC7211" stroke-width="1"/>
+      <circle cx="660" cy="300" r="6" fill="#EC7211"/>
+      <text x="660" y="192" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">v1.25</text>
+      <text x="660" y="208" fill="#232F3E" font-size="14" font-weight="700" font-family="'Amazon Ember', sans-serif" text-anchor="middle">PSP removed</text>
+      <rect x="628" y="336" width="64" height="12" rx="2" fill="#ffffff"/>
+      <text x="660" y="345" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">PSA · GA</text>
+
+      <!-- Event 5: 1.28+ · PSS/PSA Stabilized (below) -->
+      <line x1="820" y1="300" x2="820" y2="352" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <circle cx="820" cy="300" r="4" fill="#232F3E"/>
+      <text x="820" y="368" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">v1.28+</text>
+      <text x="820" y="384" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', sans-serif" text-anchor="middle">PSS stabilized</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="480" x2="920" y2="480" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="496" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <circle cx="52" cy="516" r="4" fill="#232F3E"/>
+      <text x="68" y="520" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Release milestone</text>
+
+      <circle cx="220" cy="516" r="6" fill="#EC7211"/>
+      <text x="236" y="520" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', sans-serif">Breaking change (GA)</text>
+
+      <text x="420" y="520" fill="#7D8998" font-size="8.5" font-family="'Amazon Ember', sans-serif" font-style="italic">Spacing follows release order, not calendar time.</text>
+    </svg>

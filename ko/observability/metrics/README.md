@@ -154,38 +154,7 @@ http_request_duration_seconds{quantile="0.99"}           # p99 지연시간 (직
 
 메트릭 수집에는 두 가지 주요 모델이 있습니다:
 
-```mermaid
-flowchart LR
-    subgraph PULL["Pull 모델 (Prometheus)"]
-        direction TB
-        P[Prometheus Server]
-        A1[App 1 /metrics]
-        A2[App 2 /metrics]
-        A3[App 3 /metrics]
-        P -->|HTTP GET| A1
-        P -->|HTTP GET| A2
-        P -->|HTTP GET| A3
-    end
-
-    subgraph PUSH["Push 모델 (Datadog, CloudWatch)"]
-        direction TB
-        C[Collector/Gateway]
-        B1[App 1]
-        B2[App 2]
-        B3[App 3]
-        B1 -->|HTTP POST| C
-        B2 -->|HTTP POST| C
-        B3 -->|HTTP POST| C
-    end
-
-    classDef server fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class P server
-    class A1,A2,A3,B1,B2,B3 app
-    class C collector
-```
+![Prometheus가 애플리케이션의 /metrics 엔드포인트를 직접 가져오는 Pull 모델과, 애플리케이션이 Datadog·CloudWatch 같은 수집기로 메트릭을 직접 전송하는 Push 모델을 나란히 비교하는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-README-0.png)
 
 ### Pull 모델
 
@@ -335,40 +304,7 @@ count(count by (endpoint)(http_requests_total))
 
 Prometheus는 뛰어난 실시간 모니터링 도구이지만, 장기 데이터 저장에는 몇 가지 한계가 있습니다:
 
-```mermaid
-flowchart TD
-    subgraph SHORT["단기 저장 (Prometheus)"]
-        P[Prometheus<br/>15-30일 보존]
-        R1[실시간 알림]
-        R2[최근 트렌드]
-        R3[즉각적 디버깅]
-    end
-
-    subgraph LONG["장기 저장 (Remote Storage)"]
-        L[VictoriaMetrics<br/>Mimir / Thanos<br/>1년+ 보존]
-        L1[용량 계획]
-        L2[연간 트렌드]
-        L3[규정 준수]
-        L4[비용 분석]
-    end
-
-    P --> L
-    P --> R1
-    P --> R2
-    P --> R3
-    L --> L1
-    L --> L2
-    L --> L3
-    L --> L4
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef remote fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef usecase fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class P prometheus
-    class L remote
-    class R1,R2,R3,L1,L2,L3,L4 usecase
-```
+![15~30일 보존하는 Prometheus의 단기 저장이 실시간 알림·최근 트렌드·즉각적 디버깅을 담당하고, 그 데이터를 VictoriaMetrics 등 장기 저장으로 remote_write 해 용량 계획·연간 트렌드·규정 준수·비용 분석에 쓰는 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-README-1.png)
 
 **Prometheus 장기 저장의 문제점**:
 
@@ -443,79 +379,13 @@ remote_write:
 
 ### 선택 가이드
 
-```mermaid
-flowchart TD
-    A[메트릭 솔루션 선택] --> B{팀 규모와<br/>운영 역량?}
-
-    B -->|소규모/제한적| C{AWS 환경?}
-    B -->|중간| D{비용 우선?}
-    B -->|대규모/전문| E{멀티클라우드?}
-
-    C -->|예| F[CloudWatch<br/>Container Insights]
-    C -->|아니오| G[Datadog]
-
-    D -->|예| H[VictoriaMetrics]
-    D -->|아니오| I[Amazon Managed<br/>Prometheus]
-
-    E -->|예| J[VictoriaMetrics<br/>or Mimir]
-    E -->|아니오| K[AMP + Grafana<br/>Managed Service]
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,D,E decision
-    class F,G,H,I,J,K solution
-```
+![팀 규모와 운영 역량, AWS 환경 여부, 비용 우선순위, 멀티클라우드 여부를 차례로 물어 CloudWatch, Datadog, VictoriaMetrics/Mimir, Amazon Managed Prometheus, AMP+Grafana 중 하나로 안내하는 메트릭 솔루션 선택 흐름도.](../../.gitbook/assets/ko-observability-metrics-README-2.png)
 
 ## 메트릭 수집 아키텍처
 
 ### Kubernetes 환경의 메트릭 수집 구조
 
-```mermaid
-flowchart TB
-    subgraph TARGETS["메트릭 소스"]
-        N[node-exporter<br/>노드 메트릭]
-        K[kube-state-metrics<br/>K8s 객체 메트릭]
-        C[cAdvisor<br/>컨테이너 메트릭]
-        A[애플리케이션<br/>/metrics]
-    end
-
-    subgraph COLLECT["수집 계층"]
-        P[Prometheus<br/>또는 vmagent]
-    end
-
-    subgraph STORE["저장 계층"]
-        S1[Prometheus TSDB<br/>단기 저장]
-        S2[VictoriaMetrics<br/>장기 저장]
-    end
-
-    subgraph QUERY["쿼리/시각화"]
-        G[Grafana]
-        AL[Alertmanager]
-    end
-
-    N --> P
-    K --> P
-    C --> P
-    A --> P
-
-    P --> S1
-    P -->|remote_write| S2
-
-    S1 --> G
-    S2 --> G
-    S1 --> AL
-
-    classDef source fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef collector fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef query fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class N,K,C,A source
-    class P collector
-    class S1,S2 storage
-    class G,AL query
-```
+![node-exporter, kube-state-metrics, cAdvisor, 애플리케이션의 /metrics를 Prometheus(또는 vmagent)가 모두 수집해 Prometheus TSDB와 VictoriaMetrics 두 저장 계층으로 나눠 쓰고, 이 데이터를 Grafana와 Alertmanager가 조회하는 4단 Kubernetes 메트릭 아키텍처.](../../.gitbook/assets/ko-observability-metrics-README-3.png)
 
 ### 주요 메트릭 소스
 

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ratelimit-title ratelimit-desc">
+    <title id="ratelimit-title">Envoy 기반 Rate Limiting 처리 흐름</title>
+    <desc id="ratelimit-desc">클라이언트 요청이 Envoy 프록시를 거치며 Redis에 저장된 Rate Limit 카운터를 확인하고, 한도 내이면 백엔드 서비스로 전달하고 한도를 초과하면 429 Too Many Requests로 거부하는 흐름을 보여준다.</desc>
+    <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-reject" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#DD344C"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#FFFFFF"/>
+
+    <!-- Client -> Envoy -->
+    <line x1="176" y1="280" x2="336" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Envoy -> Redis (rate limit check) -->
+    <path d="M464,268 H520 Q528,268 528,260 V172 Q528,164 536,164 H592" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="440" y="204" width="112" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="496" y="213" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">RATE LIMIT 체크</text>
+
+    <!-- Envoy -> Backend (allowed) -->
+    <path d="M464,280 H700" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="512" y="260" width="88" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="556" y="269" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">허용된 요청</text>
+
+    <!-- Envoy -> Reject (denied) -->
+    <path d="M464,292 H520 Q528,292 528,300 V388 Q528,396 536,396 H592" fill="none" stroke="#DD344C" stroke-width="1.2" marker-end="url(#arrow-reject)"/>
+    <rect x="440" y="332" width="88" height="12" rx="2" fill="#FFFFFF"/>
+    <text x="484" y="341" fill="#DD344C" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">거부된 요청</text>
+
+    <!-- Nodes -->
+    <!-- Client -->
+    <rect x="40" y="260" width="136" height="40" rx="6" fill="rgba(84,91,100,0.10)"/>
+    <rect x="40" y="260" width="136" height="40" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+    <text x="108" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">클라이언트</text>
+
+    <!-- Envoy (focal) -->
+    <rect x="336" y="256" width="128" height="48" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="336" y="256" width="128" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="400" y="276" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+    <text x="400" y="290" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">sidecar</text>
+
+    <!-- Redis (store, cylinder-ish rect) -->
+    <rect x="592" y="140" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="592" y="140" width="160" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="672" y="160" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redis</text>
+    <text x="672" y="174" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">rate limit store</text>
+
+    <!-- Backend -->
+    <rect x="700" y="260" width="160" height="40" rx="6" fill="#ffffff"/>
+    <rect x="700" y="260" width="160" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="780" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend Service</text>
+
+    <!-- Reject -->
+    <rect x="592" y="372" width="160" height="48" rx="6" fill="rgba(221,52,76,0.05)"/>
+    <rect x="592" y="372" width="160" height="48" rx="6" fill="rgba(221,52,76,0.05)" stroke="#DD344C" stroke-width="1"/>
+    <text x="672" y="392" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">429 Too Many</text>
+    <text x="672" y="406" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Requests</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <line x1="140" y1="517" x2="164" y2="517" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="172" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">RATE LIMIT CHECK</text>
+
+    <line x1="380" y1="517" x2="404" y2="517" stroke="#545B64" stroke-width="1.2"/>
+    <text x="412" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">ALLOWED</text>
+
+    <line x1="560" y1="517" x2="584" y2="517" stroke="#DD344C" stroke-width="1.2"/>
+    <text x="592" y="521" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">REJECTED (429)</text>
+  </svg>

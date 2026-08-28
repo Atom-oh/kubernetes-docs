@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vps-title vps-desc">
+      <title id="vps-title">VXLAN 패킷 구조</title>
+      <desc id="vps-desc">VXLAN 캡슐화 패킷이 외부 이더넷 헤더, 외부 IP 헤더, VNI를 담은 VXLAN 헤더, 그리고 그 안에 담긴 원래 이더넷 프레임 순으로 4개 층을 겹겹이 감싸는 구조임을 보여주는 레이어 스택.</desc>
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Direction column -->
+      <text x="60" y="112" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">외부</text>
+      <line x1="88" y1="128" x2="88" y2="424" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+      <polygon points="84,424 92,424 88,432" fill="#545B64"/>
+      <text x="60" y="448" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">내부</text>
+
+      <!-- Stack outline -->
+      <line x1="128" y1="128" x2="880" y2="128" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+      <line x1="128" y1="368" x2="880" y2="368" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+
+      <!-- L1 outer ethernet -->
+      <rect x="128" y="128" width="752" height="60" fill="#ffffff"/>
+      <line x1="128" y1="188" x2="880" y2="188" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+      <text x="148" y="162" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.12em">L1</text>
+      <text x="256" y="164" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">외부 이더넷 헤더</text>
+      <text x="860" y="164" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">OUTER MAC</text>
+
+      <!-- L2 outer IP -->
+      <rect x="128" y="188" width="752" height="60" fill="#F2F3F3"/>
+      <line x1="128" y1="248" x2="880" y2="248" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+      <text x="148" y="222" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.12em">L2</text>
+      <text x="256" y="224" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">외부 IP 헤더 (보통 IPv4)</text>
+      <text x="860" y="224" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">UDP 8472</text>
+
+      <!-- L3 VXLAN header (FOCAL) -->
+      <rect x="128" y="248" width="752" height="60" fill="var(--accent-tint)"/>
+      <rect x="128" y="248" width="752" height="60" fill="none" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="148" y="282" fill="#EC7211" font-size="8" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.12em">L3</text>
+      <text x="256" y="284" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">VXLAN 헤더 (VNI 포함)</text>
+      <text x="860" y="284" fill="#EC7211" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">VNI · 2^24</text>
+
+      <!-- L4 original ethernet frame -->
+      <rect x="128" y="308" width="752" height="60" fill="#F2F3F3"/>
+      <text x="148" y="342" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.12em">L4</text>
+      <text x="256" y="344" fill="#232F3E" font-size="14" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">원래 이더넷 프레임</text>
+      <text x="860" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">PAYLOAD</text>
+
+      <!-- Caption -->
+      <text x="128" y="428" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">FOCAL LAYER</text>
+      <text x="228" y="428" fill="#545B64" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">VXLAN 헤더의 VNI가 최대 16,777,216개의 논리적 세그먼트를 구분해, 원래 프레임 전체를 UDP 패킷 하나로 감싼다.</text>
+    </svg>

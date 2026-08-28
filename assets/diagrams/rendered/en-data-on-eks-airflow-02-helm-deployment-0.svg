@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="executors-title executors-desc">
+  <title id="executors-title">KubernetesExecutor vs. CeleryExecutor</title>
+  <desc id="executors-desc">Side-by-side comparison of two Apache Airflow task-execution models: KubernetesExecutor, where the scheduler launches one dedicated pod per task, versus CeleryExecutor, where the scheduler enqueues tasks onto a Redis broker that is pulled by a pool of warm, reusable celery workers.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="24" y="28" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">AIRFLOW &#183; TASK EXECUTION MODELS</text>
+  <text x="24" y="50" fill="#232F3E" font-size="18" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">KubernetesExecutor vs. CeleryExecutor</text>
+
+  <!-- Zones -->
+  <rect x="24" y="60" width="448" height="500" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="488" y="60" width="448" height="500" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+
+  <!-- Zone labels -->
+  <rect x="144" y="64" width="176" height="12" rx="2" fill="#ffffff"/>
+  <text x="232" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETESEXECUTOR</text>
+
+  <rect x="562" y="64" width="140" height="12" rx="2" fill="#ffffff"/>
+  <text x="632" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CELERYEXECUTOR</text>
+
+  <!-- ===== Arrows (drawn before nodes) ===== -->
+
+  <!-- K8s: scheduler fan-out to 3 pods -->
+  <path d="M220,144 V172 Q220,180 212,180 H116 Q108,180 108,188 V220" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="248" y1="144" x2="248" y2="220" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M276,144 V172 Q276,180 284,180 H380 Q388,180 388,188 V220" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <rect x="256" y="176" width="40" height="12" rx="2" fill="#ffffff"/>
+  <text x="276" y="185" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SPAWN</text>
+
+  <!-- Celery: scheduler to broker -->
+  <line x1="712" y1="144" x2="712" y2="192" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="720" y="162" width="52" height="12" rx="2" fill="#ffffff"/>
+  <text x="746" y="171" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">ENQUEUE</text>
+
+  <!-- Celery: broker fan-out to 2 workers -->
+  <path d="M688,240 V256 Q688,264 680,264 H648 Q640,264 640,272 V288" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <path d="M736,240 V256 Q736,264 744,264 H776 Q784,264 784,272 V288" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <rect x="650" y="244" width="28" height="12" rx="2" fill="#ffffff"/>
+  <text x="664" y="253" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PULL</text>
+
+  <!-- ===== Nodes ===== -->
+
+  <!-- K8s Scheduler -->
+  <rect x="188" y="96" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="188" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="248" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Scheduler</text>
+
+  <!-- K8s pods -->
+  <rect x="48" y="220" width="120" height="56" rx="6" fill="#ffffff"/>
+  <rect x="48" y="220" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="108" y="250" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Task A</text>
+  <text x="108" y="266" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">(pod)</text>
+
+  <rect x="188" y="220" width="120" height="56" rx="6" fill="#ffffff"/>
+  <rect x="188" y="220" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="248" y="250" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Task B</text>
+  <text x="248" y="266" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">(pod)</text>
+
+  <rect x="328" y="220" width="120" height="56" rx="6" fill="#ffffff"/>
+  <rect x="328" y="220" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="388" y="250" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Task C</text>
+  <text x="388" y="266" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">(pod)</text>
+
+  <!-- Celery Scheduler -->
+  <rect x="652" y="96" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="652" y="96" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="712" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Scheduler</text>
+
+  <!-- Redis broker (focal) -->
+  <rect x="640" y="192" width="144" height="48" rx="6" fill="#ffffff"/>
+  <rect x="640" y="192" width="144" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="648" y="198" width="34" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8" opacity="0.6"/>
+  <text x="665" y="207" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">QUEUE</text>
+  <text x="712" y="230" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Redis broker</text>
+
+  <!-- Celery workers -->
+  <rect x="580" y="288" width="120" height="56" rx="6" fill="#ffffff"/>
+  <rect x="580" y="288" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="640" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker 1</text>
+  <text x="640" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">(celery)</text>
+
+  <rect x="724" y="288" width="120" height="56" rx="6" fill="#ffffff"/>
+  <rect x="724" y="288" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="784" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Worker 2</text>
+  <text x="784" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">(celery)</text>
+
+</svg>

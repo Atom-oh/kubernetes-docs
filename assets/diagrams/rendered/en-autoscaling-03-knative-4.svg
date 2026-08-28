@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
+<title id="t">KEDA versus Knative scaling paths from shared event sources</title>
+<desc id="d">Amazon SQS queue depth drives a KEDA ScaledObject through the HPA to scale a worker Deployment, while Kafka and HTTP CloudEvents flow into a Knative Broker that routes through a Trigger to a Knative Service — two parallel scaling domains fed by overlapping event sources.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Zones -->
+<rect x="40" y="180" width="192" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="72" y="184" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="136" y="193" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EVENT SOURCES</text>
+
+<rect x="368" y="160" width="248" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="416" y="164" width="152" height="12" rx="2" fill="#ffffff"/>
+<text x="492" y="173" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KEDA DOMAIN</text>
+
+<rect x="368" y="340" width="248" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="404" y="344" width="176" height="12" rx="2" fill="#ffffff"/>
+<text x="492" y="353" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KNATIVE DOMAIN</text>
+
+<!-- Arrows -->
+<!-- SQS -> ScaledObject (accent headline) -->
+<path d="M 232,236 H 300 Q 308,236 308,228 V 220 Q 308,212 316,212 H 368"
+      fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="248" y="192" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="292" y="201" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">QUEUE DEPTH</text>
+
+<!-- ScaledObject -> HPA -> Worker -->
+<line x1="480" y1="236" x2="480" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="292" x2="480" y2="316" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Kafka -> Broker -->
+<path d="M 232,320 H 280 Q 288,320 288,328 V 380 Q 288,388 296,388 H 368"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- HTTP -> Broker -->
+<path d="M 232,392 H 368" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="252" y="352" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="361" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">CLOUDEVENTS</text>
+
+<!-- Nodes: Sources -->
+<rect x="56" y="212" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Amazon SQS</text>
+
+<rect x="56" y="296" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Apache Kafka</text>
+
+<rect x="56" y="368" width="176" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="144" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HTTP Requests</text>
+
+<!-- Nodes: KEDA domain -->
+<rect x="384" y="196" width="192" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480" y="220" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ScaledObject</text>
+
+<rect x="440" y="260" width="80" height="32" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HPA</text>
+
+<rect x="384" y="316" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="336" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Worker</text>
+<text x="480" y="350" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Deployment</text>
+
+<!-- Nodes: Knative domain -->
+<rect x="384" y="376" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Broker</text>
+
+<rect x="616" y="376" width="112" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="672" y="400" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trigger</text>
+
+<rect x="748" y="376" width="152" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="824" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Knative</text>
+<text x="824" y="410" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service</text>
+
+<!-- Broker -> Trigger, Trigger -> Knative Service -->
+<line x1="576" y1="396" x2="616" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="728" y1="396" x2="748" y2="396" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Legend -->
+<line x1="40" y1="504" x2="920" y2="504" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="520" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="40" y="536" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal — metric-driven scale trigger</text>
+<line x1="316" y1="540" x2="344" y2="540" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<text x="352" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">KEDA scaling path</text>
+<line x1="536" y1="540" x2="564" y2="540" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="572" y="544" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Knative eventing path</text>
+</svg>

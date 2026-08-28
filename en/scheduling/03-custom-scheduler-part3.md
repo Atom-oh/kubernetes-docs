@@ -188,51 +188,7 @@ Pod Deletion Cost assigns a cost value to each pod through the `controller.kuber
 
 The following diagram shows how Pod Deletion Cost works during scale-down:
 
-```mermaid
-flowchart TB
-    subgraph "ReplicaSet Controller"
-        Controller[ReplicaSet Controller]
-        ScaleDown[Scale-down Request]
-    end
-
-    subgraph "Pod Selection Process"
-        GetPods[Get Pod List]
-        CheckCost{Check Pod Deletion Cost<br/>Annotation}
-        SortPods[Sort by Cost]
-        SelectPods[Select Low Cost Pods]
-    end
-
-    subgraph "Pods"
-        Pod1["Pod-1<br/>cost: 100"]
-        Pod2["Pod-2<br/>cost: 50"]
-        Pod3["Pod-3<br/>cost: -10"]
-        Pod4["Pod-4<br/>cost: 0"]
-    end
-
-    Deleted[Deleted Pods]
-
-    ScaleDown --> Controller
-    Controller --> GetPods
-    GetPods --> CheckCost
-    CheckCost --> SortPods
-    SortPods --> SelectPods
-
-    Pod1 & Pod2 & Pod3 & Pod4 --> CheckCost
-    SelectPods -->|Delete first| Pod3
-    SelectPods -->|Delete next| Pod4
-    Pod3 --> Deleted
-    Pod4 --> Deleted
-
-    classDef controller fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef deleted fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    class Controller,ScaleDown controller;
-    class GetPods,CheckCost,SortPods,SelectPods process;
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class Deleted deleted;
-```
+![The ReplicaSet controller sorts pods by their pod-deletion-cost annotation and deletes the lowest-cost pods first — Pod-3 (cost -10) before Pod-4 (cost 0) — while higher-cost Pod-1 and Pod-2 survive the scale-down.](../.gitbook/assets/en-scheduling-03-custom-scheduler-part3-0.png)
 
 ### Use Cases
 

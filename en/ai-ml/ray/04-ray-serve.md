@@ -20,29 +20,7 @@ To follow along with the examples in this document, you will need the following 
 
 A single deployment scales horizontally simply by adding more actor replicas behind Ray Serve's request router, the same way any actor-backed service scales in Ray. More interestingly, Ray Serve lets multiple deployments compose into one serving pipeline, called an application. A common example is a two-step pipeline: one deployment handles preprocessing (tokenization, image resizing, feature extraction) and hands its output to a second deployment that runs the actual model inference. Each deployment in that pipeline can be scaled, versioned, and resourced independently, because each is still just a group of actor replicas underneath.
 
-```mermaid
-graph LR
-    C[Client] -->|HTTP / gRPC| ING[Ray Serve<br/>Ingress]
-    ING --> D1
-
-    subgraph APP["Application"]
-        D1["Deployment: Preprocess<br/>(actor replicas)"] --> D2["Deployment: Model Inference<br/>(actor replicas)"]
-    end
-
-    D2 --> RESP[Response]
-
-    SA["Ray Serve Autoscaler<br/>(per-deployment replica count)"] -.watches queue depth /<br/>ongoing requests.-> D1
-    SA -.-> D2
-
-    RA["Ray / KubeRay Autoscaler<br/>(worker Pod count)"] -.watches pending<br/>actor placement.-> SA
-    KP["Karpenter<br/>(node count)"] -.provisions nodes for<br/>pending worker Pods.-> RA
-
-    style D1 fill:#4fc3f7
-    style D2 fill:#ce93d8
-    style SA fill:#ffb74d
-    style RA fill:#ffb74d
-    style KP fill:#81c784
-```
+![A client request flows through Ray Serve Ingress into Preprocess and Model Inference actor deployments and back as a response, while a bottom-up autoscaling chain of the Ray Serve Autoscaler, the Ray/KubeRay Autoscaler, and Karpenter watches queue depth and pending Pods to scale replicas, worker Pods, and nodes in turn.](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
 
 ## Ray Serve LLM
 

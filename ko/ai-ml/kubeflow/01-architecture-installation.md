@@ -53,52 +53,7 @@ Kubeflow 프로젝트 자체가 유지하는 레퍼런스 배포판인 **Kubeflo
 
 Kubeflow의 아키텍처는 모든 컴포넌트가 컨트롤러와 CRD 집합으로서 대화하는 공유 Kubernetes API 서버를 중심으로 하며, Istio 기반의 멀티테넌시 계층이 네임스페이스 격리를 제공하고 Central Dashboard가 단일 UI 진입점을 제공합니다.
 
-```mermaid
-graph TB
-    subgraph "Ingress / Auth"
-        IG[Istio Ingress Gateway]
-        AUTH[AuthN/AuthZ<br/>Dex 또는 Cognito OIDC]
-    end
-
-    subgraph "Central Dashboard"
-        DASH[Kubeflow Central Dashboard]
-    end
-
-    subgraph "멀티테넌시 계층"
-        PC[Profile Controller]
-        NS1[Kubeflow Profile<br/>네임스페이스: team-a]
-        NS2[Kubeflow Profile<br/>네임스페이스: team-b]
-    end
-
-    subgraph "컴포넌트 컨트롤러 / CRD"
-        KFP[Kubeflow Pipelines<br/>Controller]
-        NB[Notebook<br/>Controller]
-        KATIB[Katib<br/>Controller]
-        TRAIN[Kubeflow Trainer /<br/>Training Operator]
-        KSERVE[KServe<br/>Controller]
-    end
-
-    K8S[Kubernetes API Server]
-
-    IG --> AUTH
-    AUTH --> DASH
-    DASH --> PC
-    PC --> NS1
-    PC --> NS2
-    DASH --> KFP
-    DASH --> NB
-    DASH --> KATIB
-    DASH --> TRAIN
-    DASH --> KSERVE
-    KFP --> K8S
-    NB --> K8S
-    KATIB --> K8S
-    TRAIN --> K8S
-    KSERVE --> K8S
-    NS1 -.범위 지정된 리소스.- KFP
-    NS1 -.범위 지정된 리소스.- NB
-    NS2 -.범위 지정된 리소스.- KATIB
-```
+![Istio Ingress Gateway와 AuthN/AuthZ를 통과한 요청이 Kubeflow Central Dashboard에 도달하고, 대시보드가 프로필 컨트롤러 기반 멀티테넌시 계층(team-a/team-b 네임스페이스)과 여러 컴포넌트 컨트롤러(Pipelines, Notebook, Katib, Trainer, KServe)를 각각 호출하며 두 경로 모두 Kubernetes API Server로 수렴하는 Kubeflow 아키텍처를 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-01-architecture-installation-0.png)
 
 몇 가지 짚어둘 점이 있습니다.
 

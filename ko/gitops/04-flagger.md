@@ -27,25 +27,7 @@ Flagger는 Kubernetes를 위한 점진적 배포(Progressive Delivery) 도구로
 
 Progressive Delivery는 기존의 롤링 업데이트를 넘어서, 새로운 버전을 소수의 사용자에게 먼저 노출한 후 메트릭을 분석하여 점진적으로 트래픽을 확장하는 배포 방법론입니다. 배포 과정에서 문제가 감지되면 자동으로 롤백이 수행됩니다.
 
-```mermaid
-flowchart LR
-    subgraph Traditional ["전통적 배포"]
-        T1[롤링 업데이트] --> T2[전체 트래픽 전환]
-        T2 --> T3[수동 모니터링]
-        T3 --> T4[수동 롤백]
-    end
-
-    subgraph Progressive ["점진적 배포"]
-        P1[소량 트래픽 전환] --> P2[메트릭 자동 분석]
-        P2 -->|성공| P3[트래픽 비율 증가]
-        P2 -->|실패| P4[자동 롤백]
-        P3 --> P2
-    end
-
-    style T4 fill:#E74C3C,stroke:#333,color:#fff
-    style P4 fill:#E74C3C,stroke:#333,color:#fff
-    style P3 fill:#27AE60,stroke:#333,color:#fff
-```
+![전통적 배포는 전체 트래픽을 한번에 전환한 뒤 수동으로 모니터링하고 수동 롤백하지만, 점진적 배포는 소량의 트래픽부터 시작해 메트릭을 자동 분석하며 성공 시 트래픽 비율을 늘리고 실패 시 자동으로 롤백하는 순환 구조를 비교해서 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-0.png)
 
 ### 주요 배포 전략 비교
 
@@ -87,104 +69,13 @@ flowchart LR
 
 Flagger는 Kubernetes 컨트롤러로 동작하며, Canary Custom Resource를 감시하고 배포 프로세스를 자동으로 관리합니다.
 
-```mermaid
-graph TB
-    subgraph "Flagger Controller"
-        FL[Flagger]
-        ML[Metric Loader]
-        WH[Webhook Caller]
-    end
-
-    subgraph "Kubernetes Resources"
-        CAN[Canary CRD]
-        DEP[Deployment / DaemonSet]
-        PRIM[Primary Service]
-        CANSVC[Canary Service]
-        HPA[HorizontalPodAutoscaler]
-    end
-
-    subgraph "Traffic Management"
-        ISTIO[Istio VirtualService]
-        LINK[Linkerd TrafficSplit]
-        GW[Gateway API HTTPRoute]
-        NGINX[Nginx Ingress]
-        APPMESH[AWS App Mesh VirtualRouter]
-    end
-
-    subgraph "Metrics & Analysis"
-        PROM[Prometheus]
-        DD[Datadog]
-        CW[CloudWatch]
-    end
-
-    subgraph "Alerting"
-        SLACK[Slack]
-        TEAMS[Microsoft Teams]
-        DISCORD[Discord]
-    end
-
-    CAN --> FL
-    FL --> DEP
-    FL --> PRIM
-    FL --> CANSVC
-    FL --> HPA
-
-    FL --> ISTIO
-    FL --> LINK
-    FL --> GW
-    FL --> NGINX
-    FL --> APPMESH
-
-    ML --> PROM
-    ML --> DD
-    ML --> CW
-
-    WH --> SLACK
-    WH --> TEAMS
-    WH --> DISCORD
-
-    style FL fill:#326CE5,stroke:#333,color:#fff
-    style CAN fill:#F39C12,stroke:#333,color:#fff
-    style PROM fill:#E6522C,stroke:#333,color:#fff
-```
+![Flagger 컨트롤러가 Canary CRD를 기반으로 쿠버네티스 리소스를 제어하고, 서비스 메시/인그레스로 트래픽을 조정하며, 메트릭 백엔드에서 성공 여부를 판정하고 결과를 알림 채널로 전달하는 구조를 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-1.png)
 
 ### 제어 루프 (Control Loop)
 
 Flagger의 핵심은 지속적으로 실행되는 제어 루프입니다. 새로운 배포가 감지되면 다음 순서로 점진적 배포를 수행합니다:
 
-```mermaid
-sequenceDiagram
-    participant Dev as 개발자
-    participant Git as Git Repository
-    participant Flux as FluxCD
-    participant K8s as Kubernetes
-    participant FL as Flagger
-    participant Mesh as Service Mesh
-    participant Prom as Prometheus
-
-    Dev->>Git: 이미지 태그 업데이트
-    Git->>Flux: 변경 감지
-    Flux->>K8s: Deployment 업데이트
-    K8s->>FL: Deployment 변경 감지
-
-    loop 각 단계 (stepWeight 만큼)
-        FL->>Mesh: 트래픽 비율 증가
-        FL->>Prom: 메트릭 쿼리
-        alt 메트릭 정상
-            Prom-->>FL: 성공 응답
-            FL->>FL: 다음 단계로 진행
-        else 메트릭 이상
-            Prom-->>FL: 실패 응답
-            FL->>Mesh: 트래픽 원복 (0%)
-            FL->>K8s: Canary Deployment 롤백
-            FL-->>Dev: 롤백 알림
-        end
-    end
-
-    FL->>K8s: Primary Deployment 업데이트
-    FL->>Mesh: 트래픽 100% Primary로 전환
-    FL-->>Dev: 배포 완료 알림
-```
+![개발자의 이미지 태그 업데이트가 FluxCD를 거쳐 쿠버네티스 배포를 갱신하면 Flagger가 트래픽 비율을 늘리며 메트릭을 조회하고, 메트릭이 정상이면 승격하지만 이상이면 롤백한 뒤 결과를 개발자에게 알리는 과정을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-2.png)
 
 ### Flagger가 생성하는 리소스
 
@@ -380,35 +271,7 @@ Canary 배포는 Flagger의 가장 기본적이고 널리 사용되는 점진적
 
 ### Canary CRD 상세 설명
 
-```mermaid
-flowchart TD
-    subgraph Canary ["Canary CRD"]
-        TARGET[targetRef: Deployment]
-        SVC[service: 포트, 프로토콜]
-        ANALYSIS[analysis: 메트릭, 임계값]
-        PROVIDER[provider: mesh/ingress]
-    end
-
-    subgraph Process ["배포 프로세스"]
-        INIT[초기화 - Primary 생성]
-        DETECT[변경 감지]
-        SCALE[Canary 스케일 업]
-        ROUTE[트래픽 전환]
-        METRIC[메트릭 분석]
-        PROMOTE[승격]
-    end
-
-    TARGET --> INIT
-    INIT --> DETECT
-    DETECT --> SCALE
-    SCALE --> ROUTE
-    ROUTE --> METRIC
-    METRIC -->|성공| PROMOTE
-    METRIC -->|실패| INIT
-
-    style PROMOTE fill:#27AE60,stroke:#333,color:#fff
-    style METRIC fill:#F39C12,stroke:#333,color:#fff
-```
+![Canary CRD의 대상 리소스 정의가 초기화, 변경 감지, 카나리 스케일업, 트래픽 전환, 메트릭 분석 단계를 거치며, 분석에 성공하면 승격되고 실패하면 초기화 단계로 되돌아가는 순환을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-3.png)
 
 ### 완전한 Canary YAML 예제
 
@@ -574,30 +437,7 @@ Blue-Green 배포는 새로운 버전(Green)을 완전히 준비한 후, 트래�
 
 ### Blue-Green 동작 원리
 
-```mermaid
-flowchart LR
-    subgraph Before ["전환 전"]
-        LB1[Load Balancer] --> BLUE1[Blue - v1 ✅]
-        GREEN1[Green - v2 준비 중]
-    end
-
-    subgraph Testing ["테스트 단계"]
-        LB2[Load Balancer] --> BLUE2[Blue - v1 ✅]
-        LB2 -.->|미러 트래픽| GREEN2[Green - v2 테스트]
-    end
-
-    subgraph After ["전환 후"]
-        LB3[Load Balancer] --> GREEN3[Green - v2 ✅]
-        BLUE3[Blue - v1 대기]
-    end
-
-    style BLUE1 fill:#3498DB,stroke:#333,color:#fff
-    style GREEN1 fill:#95A5A6,stroke:#333,color:#fff
-    style BLUE2 fill:#3498DB,stroke:#333,color:#fff
-    style GREEN2 fill:#F39C12,stroke:#333,color:#fff
-    style GREEN3 fill:#27AE60,stroke:#333,color:#fff
-    style BLUE3 fill:#95A5A6,stroke:#333,color:#fff
-```
+![전환 전에는 로드밸런서가 Blue v1로만 트래픽을 보내고 Green v2는 준비 상태이며, 테스트 단계에서는 실제 트래픽은 Blue로 가면서 미러 트래픽만 Green으로 보내 검증하고, 전환 후에는 로드밸런서가 Green v2로 전환되고 Blue v1은 대기 상태가 되는 3단계 과정을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-4.png)
 
 ### 완전한 Blue-Green YAML 예제
 
@@ -713,27 +553,7 @@ A/B Testing은 특정 조건(HTTP 헤더, 쿠키, 쿼리 파라미터 등)에 �
 
 ### A/B Testing 동작 원리
 
-```mermaid
-flowchart TD
-    USER[사용자 요청] --> LB[Load Balancer]
-
-    LB --> CHECK{라우팅 조건 확인}
-
-    CHECK -->|"x-canary: true"| CANARY[Canary 버전 - v2]
-    CHECK -->|"조건 미충족"| PRIMARY[Primary 버전 - v1]
-
-    CANARY --> METRIC[메트릭 수집]
-    PRIMARY --> METRIC
-
-    METRIC --> ANALYSIS{분석 결과}
-    ANALYSIS -->|성공| PROMOTE[전체 승격]
-    ANALYSIS -->|실패| ROLLBACK[롤백]
-
-    style CANARY fill:#F39C12,stroke:#333,color:#fff
-    style PRIMARY fill:#3498DB,stroke:#333,color:#fff
-    style PROMOTE fill:#27AE60,stroke:#333,color:#fff
-    style ROLLBACK fill:#E74C3C,stroke:#333,color:#fff
-```
+![사용자 요청이 로드밸런서를 지나 라우팅 조건을 확인해 x-canary 헤더가 있으면 Canary v2로, 조건을 만족하지 않으면 Primary v1로 보내진 뒤 두 버전 모두 메트릭을 수집하고, 분석 결과가 성공이면 전체 승격, 실패면 롤백되는 과정을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-5.png)
 
 ### Header/Cookie 기반 라우팅
 
@@ -1089,42 +909,7 @@ Flagger는 Flux 에코시스템의 핵심 도구로, FluxCD와 결합하면 완�
 
 ### FluxCD HelmRelease + Flagger Canary 워크플로우
 
-```mermaid
-flowchart TD
-    subgraph "Git Repository"
-        HR[HelmRelease YAML]
-        CV[Canary Values]
-    end
-
-    subgraph "FluxCD"
-        SC[Source Controller]
-        HC[Helm Controller]
-    end
-
-    subgraph "Kubernetes Cluster"
-        DEP[Deployment]
-        CAN[Canary CRD]
-        FL[Flagger]
-    end
-
-    subgraph "Progressive Delivery"
-        PRIMARY[Primary Service]
-        CANARY[Canary Service]
-        MESH[Service Mesh]
-    end
-
-    HR --> SC
-    SC --> HC
-    HC --> DEP
-    CAN --> FL
-    FL --> DEP
-    FL --> PRIMARY
-    FL --> CANARY
-    FL --> MESH
-
-    style FL fill:#326CE5,stroke:#333,color:#fff
-    style HC fill:#5468FF,stroke:#333,color:#fff
-```
+![Git 저장소의 HelmRelease가 FluxCD의 Source·Helm 컨트롤러를 거쳐 쿠버네티스 Deployment에 적용되고, Canary CRD를 감시하는 Flagger가 Primary/Canary 서비스와 서비스 메시를 제어하며 점진적 배포를 수행하는 구조를 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-6.png)
 
 #### Flux로 Flagger 자체 설치
 
@@ -1355,24 +1140,7 @@ spec:
 
 Flux Image Automation과 Flagger를 결합하면, 컨테이너 이미지가 업데이트될 때 자동으로 Git 리포지토리를 업데이트하고 Canary 배포를 트리거하는 완전 자동화 파이프라인을 구축할 수 있습니다:
 
-```mermaid
-sequenceDiagram
-    participant CI as CI/CD (GitHub Actions)
-    participant ECR as Amazon ECR
-    participant Flux as Flux Image Automation
-    participant Git as Git Repository
-    participant K8s as Kubernetes
-    participant FL as Flagger
-
-    CI->>ECR: 1. 새 이미지 Push (v2.0.0)
-    Flux->>ECR: 2. 이미지 태그 스캔
-    Flux->>Git: 3. 이미지 태그 자동 업데이트 커밋
-    Git->>Flux: 4. Git 변경 감지
-    Flux->>K8s: 5. Deployment 업데이트
-    K8s->>FL: 6. Pod 변경 감지
-    FL->>FL: 7. Canary 점진적 배포 시작
-    FL-->>K8s: 8. 배포 완료 또는 롤백
-```
+![CI/CD가 새 이미지를 ECR에 푸시하면 Flux 이미지 자동화가 이를 스캔해 Git 저장소에 태그 갱신 커밋을 만들고, 이 변경을 감지한 쿠버네티스가 Deployment를 갱신하면 Flagger가 카나리 점진적 배포를 시작해 완료 또는 롤백으로 마무리하는 과정을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-7.png)
 
 ```yaml
 # Image automation 설정
@@ -1704,38 +1472,7 @@ kubectl annotate canary/podinfo flagger.app/suspend- -n default
 
 여러 EKS 클러스터에서 Flagger를 운영하는 패턴입니다:
 
-```mermaid
-flowchart TD
-    subgraph "Management Cluster"
-        FLUX[FluxCD]
-        GIT[Git Repository]
-    end
-
-    subgraph "Production Cluster A (ap-northeast-2)"
-        FLA[Flagger A]
-        APPA[App Primary/Canary]
-    end
-
-    subgraph "Production Cluster B (us-west-2)"
-        FLB[Flagger B]
-        APPB[App Primary/Canary]
-    end
-
-    subgraph "Staging Cluster"
-        FLS[Flagger S]
-        APPS[App Primary/Canary]
-    end
-
-    GIT --> FLUX
-    FLUX --> FLA
-    FLUX --> FLB
-    FLUX --> FLS
-
-    style FLUX fill:#5468FF,stroke:#333,color:#fff
-    style FLA fill:#326CE5,stroke:#333,color:#fff
-    style FLB fill:#326CE5,stroke:#333,color:#fff
-    style FLS fill:#326CE5,stroke:#333,color:#fff
-```
+![관리 클러스터의 FluxCD가 하나의 Git 저장소를 기준으로 서울과 오리건의 운영 클러스터, 그리고 스테이징 클러스터에 있는 각 Flagger 인스턴스로 배포를 전파해 클러스터별로 독립적인 카나리 승격/롤백을 수행하는 구조를 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-8.png)
 
 클러스터별 Canary 설정 분리:
 

@@ -460,30 +460,7 @@ policy.csv: |
 
 ### Namespace-per-Team
 
-```mermaid
-flowchart TB
-    subgraph ARGOCD["ArgoCD"]
-        PROJ_A["Project: team-a"]
-        PROJ_B["Project: team-b"]
-        PROJ_P["Project: platform"]
-    end
-
-    subgraph CLUSTER["Kubernetes Cluster"]
-        NS_A["Namespace: team-a"]
-        NS_B["Namespace: team-b"]
-        NS_P["Namespaces: kube-system, monitoring"]
-    end
-
-    PROJ_A -->|"can deploy to"| NS_A
-    PROJ_B -->|"can deploy to"| NS_B
-    PROJ_P -->|"can deploy to"| NS_P
-
-    classDef project fill:#EB6E85,stroke:#333,color:white
-    classDef namespace fill:#326CE5,stroke:#333,color:white
-
-    class PROJ_A,PROJ_B,PROJ_P project
-    class NS_A,NS_B,NS_P namespace
-```
+![Diagram showing three ArgoCD AppProjects (team-a, team-b, platform) each restricted to deploy only into its designated Kubernetes namespace, with the platform project scoped to the shared kube-system and monitoring namespaces.](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
 
 Implementation:
 

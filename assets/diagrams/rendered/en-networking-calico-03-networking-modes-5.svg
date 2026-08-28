@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="flow-compare-title flow-compare-desc">
+    <title id="flow-compare-title">Comparison of Direct, IPIP, and VXLAN packet paths</title>
+    <desc id="flow-compare-desc">Three lanes trace the same Pod A to Pod B hop under Direct, IPIP, and VXLAN mode, showing that only the encapsulation step at the physical network boundary differs between them.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone 1: Direct (focal — best performance reference lane) -->
+    <rect x="40" y="70" width="880" height="140" rx="8" fill="rgba(255,153,0,0.05)" stroke="rgba(236,114,17,0.35)" stroke-width="0.8"/>
+    <rect x="52" y="74" width="100" height="12" rx="2" fill="#ffffff"/>
+    <text x="102" y="83" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">DIRECT MODE</text>
+
+    <!-- Zone 2: IPIP -->
+    <rect x="40" y="222" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="52" y="226" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="92" y="235" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">IPIP MODE</text>
+
+    <!-- Zone 3: VXLAN -->
+    <rect x="40" y="374" width="880" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="52" y="378" width="92" height="12" rx="2" fill="#ffffff"/>
+    <text x="98" y="387" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">VXLAN MODE</text>
+
+    <!-- Row 1 (Direct) arrows -->
+    <line x1="220" y1="136" x2="400" y2="136" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <rect x="264" y="116" width="92" height="12" rx="2" fill="#ffffff"/>
+    <text x="310" y="125" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NO ENCAP</text>
+    <line x1="560" y1="136" x2="740" y2="136" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+    <!-- Row 2 (IPIP) arrows -->
+    <line x1="220" y1="288" x2="400" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="252" y="268" width="116" height="12" rx="2" fill="#ffffff"/>
+    <text x="310" y="277" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">TUNL0 ENCAP +20B</text>
+    <line x1="560" y1="288" x2="740" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="592" y="268" width="116" height="12" rx="2" fill="#ffffff"/>
+    <text x="650" y="277" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">TUNL0 DECAP</text>
+
+    <!-- Row 3 (VXLAN) arrows -->
+    <line x1="220" y1="440" x2="400" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="248" y="420" width="124" height="12" rx="2" fill="#ffffff"/>
+    <text x="310" y="429" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">VTEP ENCAP +50B</text>
+    <line x1="560" y1="440" x2="740" y2="440" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="592" y="420" width="116" height="12" rx="2" fill="#ffffff"/>
+    <text x="650" y="429" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">VTEP DECAP</text>
+
+    <!-- Row 1 nodes -->
+    <rect x="80" y="104" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="150" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    <rect x="400" y="104" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Physical Network</text>
+    <text x="480" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">MTU 1500</text>
+    <rect x="740" y="104" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="810" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+    <!-- Row 2 nodes -->
+    <rect x="80" y="256" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="150" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    <rect x="400" y="256" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Physical Network</text>
+    <text x="480" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">MTU 1480</text>
+    <rect x="740" y="256" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="810" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+    <!-- Row 3 nodes -->
+    <rect x="80" y="408" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="150" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    <rect x="400" y="408" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Physical Network</text>
+    <text x="480" y="452" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">MTU 1450</text>
+    <rect x="740" y="408" width="140" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="810" y="436" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="556" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="240" y1="551" x2="280" y2="551" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="288" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">fastest path — no overlay</text>
+    <line x1="560" y1="551" x2="600" y2="551" stroke="#545B64" stroke-width="1.2"/>
+    <text x="608" y="556" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">overlay path — encap/decap adds a hop</text>
+  </svg>

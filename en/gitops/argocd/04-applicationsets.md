@@ -358,35 +358,7 @@ spec:
 
 #### Matrix Visualization
 
-```mermaid
-flowchart TB
-    subgraph GEN1["Generator 1: Clusters"]
-        C1["prod-us-west"]
-        C2["prod-us-east"]
-        C3["prod-eu-west"]
-    end
-
-    subgraph GEN2["Generator 2: Apps"]
-        A1["frontend"]
-        A2["backend"]
-        A3["api"]
-    end
-
-    subgraph RESULT["Generated Applications (3x3=9)"]
-        R1["prod-us-west-frontend"]
-        R2["prod-us-west-backend"]
-        R3["prod-us-west-api"]
-        R4["prod-us-east-frontend"]
-        R5["prod-us-east-backend"]
-        R6["prod-us-east-api"]
-        R7["prod-eu-west-frontend"]
-        R8["prod-eu-west-backend"]
-        R9["prod-eu-west-api"]
-    end
-
-    GEN1 --> RESULT
-    GEN2 --> RESULT
-```
+![Diagram showing an ArgoCD ApplicationSet's matrix generator combining a cluster list and an app list so every cluster-app pair produces one generated Application, three clusters by three apps yielding nine Applications.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-0.png)
 
 ### 6. Merge Generator
 
@@ -781,40 +753,7 @@ spec:
 
 ### Progressive Sync Flow
 
-```mermaid
-flowchart TB
-    subgraph STEP1["Step 1: Canary"]
-        CANARY["canary-cluster"]
-    end
-
-    subgraph STEP2["Step 2: Manual Gate"]
-        PAUSE["⏸️ Paused"]
-    end
-
-    subgraph STEP3["Step 3: 25% Rollout"]
-        P1["prod-1"]
-        P2["prod-2"]
-    end
-
-    subgraph STEP4["Step 4: Full Rollout"]
-        P3["prod-3"]
-        P4["prod-4"]
-        P5["prod-5"]
-        P6["prod-6"]
-    end
-
-    STEP1 -->|"Success"| STEP2
-    STEP2 -->|"Approved"| STEP3
-    STEP3 -->|"Success"| STEP4
-
-    classDef canary fill:#ffc107,stroke:#333,color:black
-    classDef pause fill:#6c757d,stroke:#333,color:white
-    classDef prod fill:#28a745,stroke:#333,color:white
-
-    class CANARY canary
-    class PAUSE pause
-    class P1,P2,P3,P4,P5,P6 prod
-```
+![Diagram showing a progressive-rollout ApplicationSet strategy that promotes a change through a canary cluster, a manual approval gate, a 25% rollout to two production clusters, and finally a full rollout to all six production clusters.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-1.png)
 
 ## Multi-Cluster Patterns
 

@@ -12,33 +12,7 @@ Session Affinity(또는 Sticky Session)는 동일한 사용자의 요청을 같�
 
 ## Session Affinity 개요
 
-```mermaid
-flowchart TB
-    User[사용자 A]
-    
-    subgraph LB["Load Balancer"]
-        Hash[Consistent Hash<br/>User ID 기반]
-    end
-    
-    subgraph Pods["파드"]
-        Pod1[Pod 1<br/>세션 A]
-        Pod2[Pod 2]
-        Pod3[Pod 3]
-    end
-    
-    User -->|user_id=123| Hash
-    Hash -->|항상 동일| Pod1
-    
-    %% 스타일 정의
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef lb fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    
-    %% 클래스 적용
-    class User user;
-    class Hash lb;
-    class Pod1,Pod2,Pod3 pod;
-```
+![사용자 A의 요청이 Load Balancer의 Consistent Hash 로직을 거쳐 항상 동일한 Pod 1로 라우팅되고, Pod 2와 Pod 3는 같은 파드 풀에 있지만 이 사용자의 요청을 받지 않는다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-10-session-affinity-0.png)
 
 ## Consistent Hash 기반
 

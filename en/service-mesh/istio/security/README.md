@@ -24,59 +24,7 @@ Istio implements a **Zero Trust security model** to protect all communication wi
 
 ### Security Architecture Layers
 
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane (istiod)"]
-        CA[Certificate Authority<br/>CA Certificate Management]
-        ConfigAPI[Config API<br/>Security Policy Distribution]
-    end
-
-    subgraph DataPlane["Data Plane (Envoy Proxy)"]
-        subgraph Pod1["Pod A"]
-            App1[Application]
-            Envoy1[Envoy Sidecar<br/>- mTLS Termination<br/>- Policy Enforcement]
-        end
-
-        subgraph Pod2["Pod B"]
-            Envoy2[Envoy Sidecar<br/>- mTLS Termination<br/>- Policy Enforcement]
-            App2[Application]
-        end
-    end
-
-    subgraph SecurityLayers["Security Layers"]
-        Identity[1. Identity<br/>SPIFFE ID Based]
-        CertMgmt[2. Certificate Management<br/>Auto Issuance/Renewal]
-        PeerAuth[3. Peer Authentication<br/>Service-to-Service mTLS]
-        ReqAuth[4. Request Authentication<br/>End-User JWT]
-        AuthZ[5. Authorization<br/>Access Control]
-    end
-
-    CA -.->|Certificate Issuance| Envoy1
-    CA -.->|Certificate Issuance| Envoy2
-    ConfigAPI -.->|Policy Distribution| Envoy1
-    ConfigAPI -.->|Policy Distribution| Envoy2
-
-    App1 -->|Plaintext| Envoy1
-    Envoy1 <-->|mTLS Encrypted| Envoy2
-    Envoy2 -->|Plaintext| App2
-
-    Identity --> CertMgmt
-    CertMgmt --> PeerAuth
-    PeerAuth --> ReqAuth
-    ReqAuth --> AuthZ
-
-    %% Style definitions
-    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#3B48CC,stroke:#333,stroke-width:2px,color:white;
-    classDef security fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class applications
-    class CA,ConfigAPI control;
-    class App1,App2 app;
-    class Envoy1,Envoy2 proxy;
-    class Identity,CertMgmt,PeerAuth,ReqAuth,AuthZ security;
-```
+![Diagram showing Istiod distributing certificates and policy to Envoy sidecars in two pods, which terminate mutual TLS between plaintext application traffic, framed above a five-step security-layer chain from identity to authorization.](../../../.gitbook/assets/en-service-mesh-istio-security-README-0.png)
 
 **Core Architecture Components**:
 

@@ -31,48 +31,7 @@ Istio의 관찰성 기능은 **Zero Instrumentation** 원칙을 따릅니다:
 
 ### 관찰성의 3요소
 
-```mermaid
-flowchart TB
-    subgraph Metrics["📊 메트릭 (Metrics)"]
-        M1[Golden Signals<br/>Latency, Traffic, Errors, Saturation]
-        M2[시계열 데이터<br/>Prometheus, OpenTelemetry]
-        M3[실시간 모니터링<br/>Grafana, Kiali]
-    end
-
-    subgraph Tracing["🔍 분산 추적 (Distributed Tracing)"]
-        T1[요청 흐름 추적<br/>서비스 간 호출 경로]
-        T2[성능 병목 식별<br/>레이턴시 분석]
-        T3[Trace Backend<br/>Jaeger, Zipkin, Tempo]
-    end
-
-    subgraph Logging["📝 로깅 (Logging)"]
-        L1[Access Log<br/>모든 요청/응답 기록]
-        L2[구조화된 로그<br/>JSON 포맷]
-        L3[Log Backend<br/>Loki, Elasticsearch]
-    end
-
-    subgraph Integration["통합 관찰성"]
-        Dashboard[Unified Dashboard<br/>Grafana]
-        Topology[Service Topology<br/>Kiali]
-        Alerting[Alert Management<br/>Prometheus Alertmanager]
-    end
-
-    Metrics --> Integration
-    Tracing --> Integration
-    Logging --> Integration
-
-    %% 스타일 정의
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef tracing fill:#60D0E4,stroke:#333,stroke-width:2px,color:black;
-    classDef logging fill:#FFB84D,stroke:#333,stroke-width:2px,color:black;
-    classDef integration fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    %% 클래스 적용
-    class M1,M2,M3 metrics;
-    class T1,T2,T3 tracing;
-    class L1,L2,L3 logging;
-    class Dashboard,Topology,Alerting integration;
-```
+![메트릭, 분산 추적, 로깅이라는 관찰성의 3요소가 각자의 도구로 데이터를 수집한 뒤 Grafana·Kiali·Alertmanager로 구성된 통합 관찰성 계층으로 모이는 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-observability-README-0.png)
 
 ### 1. 메트릭 (Metrics)
 
@@ -120,88 +79,7 @@ flowchart TB
 
 ### 전체 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph "Application Layer"
-        direction LR
-
-        subgraph Pod1["Pod A"]
-            App1[App<br/>Container]
-            Envoy1[Envoy<br/>Sidecar]
-        end
-
-        subgraph Pod2["Pod B"]
-            App2[App<br/>Container]
-            Envoy2[Envoy<br/>Sidecar]
-        end
-    end
-
-    subgraph "Control Plane"
-        Istiod[istiod<br/>Telemetry Config]
-    end
-
-    subgraph "Metrics Backend"
-        Prometheus[Prometheus<br/>메트릭 수집]
-        OTEL[OpenTelemetry<br/>Collector]
-    end
-
-    subgraph "Tracing Backend"
-        Jaeger[Jaeger<br/>분산 추적]
-        Tempo[Grafana Tempo<br/>트레이스 저장]
-    end
-
-    subgraph "Logging Backend"
-        Loki[Grafana Loki<br/>로그 저장]
-        Fluentd[Fluentd<br/>로그 수집]
-    end
-
-    subgraph "Visualization"
-        Grafana[Grafana<br/>통합 대시보드]
-        Kiali[Kiali<br/>서비스 토폴로지]
-    end
-
-    App1 --> Envoy1
-    App2 --> Envoy2
-    Envoy1 <-->|mTLS| Envoy2
-
-    Istiod -.->|Config| Envoy1
-    Istiod -.->|Config| Envoy2
-
-    Envoy1 -->|Metrics| Prometheus
-    Envoy2 -->|Metrics| Prometheus
-    Envoy1 -->|Metrics| OTEL
-    Envoy2 -->|Metrics| OTEL
-
-    Envoy1 -->|Traces| Jaeger
-    Envoy2 -->|Traces| Jaeger
-    Jaeger --> Tempo
-
-    Envoy1 -->|Access Logs| Fluentd
-    Envoy2 -->|Access Logs| Fluentd
-    Fluentd --> Loki
-
-    Prometheus --> Grafana
-    Tempo --> Grafana
-    Loki --> Grafana
-    Prometheus --> Kiali
-    Jaeger --> Kiali
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#466BB0,stroke:#333,stroke-width:2px,color:white;
-    classDef metrics fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef tracing fill:#60D0E4,stroke:#333,stroke-width:1px,color:black;
-    classDef logging fill:#FFB84D,stroke:#333,stroke-width:1px,color:black;
-    classDef visualization fill:#F8B52A,stroke:#333,stroke-width:2px,color:black;
-
-    %% 클래스 적용
-    class App1,App2 app;
-    class Envoy1,Envoy2,Istiod istio;
-    class Prometheus,OTEL metrics;
-    class Jaeger,Tempo tracing;
-    class Loki,Fluentd logging;
-    class Grafana,Kiali visualization;
-```
+![Envoy 사이드카가 애플리케이션 트래픽에서 메트릭·트레이스·액세스 로그를 수집해 Prometheus, Jaeger, Fluentd/Loki 백엔드로 전달하고 이들이 다시 Grafana와 Kiali로 모여 시각화되며, istiod가 사이드카에 설정을 전파하는 관찰성 아키텍처를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-observability-README-1.png)
 
 ### 데이터 흐름
 

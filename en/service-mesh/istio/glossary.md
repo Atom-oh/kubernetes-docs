@@ -495,23 +495,7 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 #### 1. Sidecar Mode - Outbound Request
 
-```mermaid
-flowchart LR
-    App[Application<br/>Downstream]
-    Envoy[Envoy Sidecar]
-    Backend[Backend Service<br/>Upstream]
-
-    App -->|"Send Request<br/>(Downstream -> Envoy)"| Envoy
-    Envoy -->|"Forward Request<br/>(Envoy -> Upstream)"| Backend
-
-    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class App downstream;
-    class Envoy proxy;
-    class Backend upstream;
-```
+![From the Envoy sidecar's perspective, the application sending the request is the downstream side and the backend service receiving it is the upstream side.](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
 
 **Perspective**:
 - **From Envoy's view**: Application is Downstream (sending requests)
@@ -519,23 +503,7 @@ flowchart LR
 
 #### 2. Ingress Gateway - External Request
 
-```mermaid
-flowchart LR
-    Client[External Client<br/>Downstream]
-    Gateway[Ingress Gateway<br/>Envoy]
-    Service[Internal Service<br/>Upstream]
-
-    Client -->|"HTTP Request<br/>(Downstream -> Envoy)"| Gateway
-    Gateway -->|"Routing<br/>(Envoy -> Upstream)"| Service
-
-    classDef downstream fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef upstream fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Client downstream;
-    class Gateway proxy;
-    class Service upstream;
-```
+![From the Ingress Gateway's Envoy perspective, an external client is the downstream side and the internal service it routes to is the upstream side.](../../.gitbook/assets/en-service-mesh-istio-glossary-1.png)
 
 **Downstream-related Envoy Configuration**:
 
@@ -905,21 +873,7 @@ A signature protocol for authenticating AWS API requests.
 
 **How It Works**:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client
-    participant Envoy as Envoy Proxy
-    participant AWS as AWS Service
-
-    Client->>Envoy: HTTP Request
-    Envoy->>Envoy: Load AWS Credentials
-    Envoy->>Envoy: Generate SigV4 Signature<br/>HMAC-SHA256
-    Envoy->>AWS: Add Authorization Header<br/>AWS4-HMAC-SHA256
-    AWS->>AWS: Verify Signature
-    AWS->>Envoy: Response
-    Envoy->>Client: Response
-```
+![Sequence diagram showing Envoy transparently signing an outbound client request with AWS SigV4 credentials before forwarding it to an AWS service and returning the response.](../../.gitbook/assets/en-service-mesh-istio-glossary-2.png)
 
 **Signature Components**:
 

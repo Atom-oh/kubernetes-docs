@@ -12,27 +12,7 @@ The following diagram shows the architecture of the scheduler extender approach:
 
 The scheduler extender workflow is as follows:
 
-```mermaid
-sequenceDiagram
-    participant API as API Server
-    participant Scheduler as Default Scheduler
-    participant Extender as Scheduler Extender
-    participant Node as Node
-
-    API->>Scheduler: Pod creation request
-    Scheduler->>Scheduler: Internal filtering
-    Scheduler->>Extender: Filter request (HTTP POST /filter)
-    Extender->>Extender: Apply custom filtering logic
-    Extender->>Scheduler: Return filtered node list
-    Scheduler->>Scheduler: Internal scoring
-    Scheduler->>Extender: Prioritize request (HTTP POST /prioritize)
-    Extender->>Extender: Apply custom scoring logic
-    Extender->>Scheduler: Return node scores
-    Scheduler->>Scheduler: Final node selection
-    Scheduler->>API: Binding request
-    API->>Node: Schedule pod
-
-```
+![Sequence diagram showing the API server handing a pod to the default Kubernetes scheduler, which runs its own internal filtering and scoring, delegates a filter and a prioritize HTTP call to a scheduler extender, then combines the results to select a node, bind the pod, and hand it off for scheduling on that node.](../.gitbook/assets/en-scheduling-02-custom-scheduler-part2-0.png)
 
 ### Scheduler Extender Implementation
 

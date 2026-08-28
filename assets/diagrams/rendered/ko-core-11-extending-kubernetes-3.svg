@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d3title d3desc">
+  <title id="d3title">어드미션 컨트롤러 요청 처리 흐름</title>
+  <desc id="d3desc">사용자의 API 요청이 인증·권한 부여를 거쳐 변형 어드미션 컨트롤러와 검증 어드미션 컨트롤러에서 각각 웹훅을 호출한 뒤, 검증된 요청이 API 처리 단계에서 etcd에 저장되기까지의 순서를 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">SEQUENCE · ADMISSION CONTROL</text>
+  <text x="40" y="46" fill="#232F3E" font-size="16" font-weight="700" class="sans">어드미션 컨트롤러 요청 처리 흐름</text>
+  <text x="40" y="60" fill="#545B64" font-size="10" class="sans">변형·검증 단계에서 각각 웹훅을 호출한 뒤 검증된 요청만 저장된다</text>
+
+  <!-- Lifelines -->
+  <line x1="100" y1="112" x2="100" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="296" y1="112" x2="296" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="492" y1="112" x2="492" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="684" y1="112" x2="684" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="880" y1="112" x2="880" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Activation bars -->
+  <rect x="488" y="188" width="8" height="92" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="680" y="280" width="8" height="92" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="876" y="372" width="8" height="64" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="0.8"/>
+
+  <!-- ============ Messages ============ -->
+
+  <!-- M1: User -> Auth : 1. API 요청 -->
+  <path d="M100,148 L296,148" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="166" y="128" width="64" height="12" fill="#ffffff"/>
+  <text x="198" y="137" fill="#545B64" font-size="8" class="mono" text-anchor="middle">1. API 요청</text>
+
+  <!-- M2: Auth -> MAC : 2. 요청 통과 -->
+  <path d="M296,188 L492,188" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="362" y="168" width="64" height="12" fill="#ffffff"/>
+  <text x="394" y="177" fill="#545B64" font-size="8" class="mono" text-anchor="middle">2. 요청 통과</text>
+
+  <!-- M3: MAC self : 웹훅 호출 · 응답 -->
+  <path d="M492,228 L526,228 A6,6 0 0 1 532,234 L532,246 A6,6 0 0 1 526,252 L498,252"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="538" y="233" width="90" height="12" fill="#ffffff"/>
+  <text x="583" y="242" fill="#545B64" font-size="8" class="mono" text-anchor="middle">웹훅 호출 · 응답</text>
+
+  <!-- M4: MAC -> VAC : 3. 변형된 요청 -->
+  <path d="M492,280 L684,280" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="552" y="260" width="72" height="12" fill="#ffffff"/>
+  <text x="588" y="269" fill="#545B64" font-size="8" class="mono" text-anchor="middle">3. 변형된 요청</text>
+
+  <!-- M5: VAC self : 웹훅 호출 · 응답 -->
+  <path d="M684,320 L718,320 A6,6 0 0 1 724,326 L724,338 A6,6 0 0 1 718,344 L690,344"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="730" y="325" width="90" height="12" fill="#ffffff"/>
+  <text x="775" y="334" fill="#545B64" font-size="8" class="mono" text-anchor="middle">웹훅 호출 · 응답</text>
+
+  <!-- M6: VAC -> API : 4. 검증된 요청 -->
+  <path d="M684,372 L880,372" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="746" y="352" width="72" height="12" fill="#ffffff"/>
+  <text x="782" y="361" fill="#545B64" font-size="8" class="mono" text-anchor="middle">4. 검증된 요청</text>
+
+  <!-- M7: API self : 5. 저장(etcd) — headline success, accent -->
+  <path d="M880,412 L914,412 A6,6 0 0 1 920,418 L920,430 A6,6 0 0 1 914,436 L886,436"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="756" y="417" width="112" height="12" fill="#ffffff"/>
+  <text x="812" y="426" fill="#EC7211" font-size="8" class="mono" text-anchor="middle">5. 저장(etcd)</text>
+
+  <!-- ============ Actor boxes ============ -->
+
+  <!-- User -->
+  <rect x="30" y="76" width="140" height="36" rx="6" fill="#ffffff"/>
+  <rect x="30" y="76" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="100" y="98" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">사용자</text>
+
+  <!-- Auth -->
+  <rect x="226" y="76" width="140" height="36" rx="6" fill="#ffffff"/>
+  <rect x="226" y="76" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="296" y="90" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">인증</text>
+  <text x="296" y="103" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">권한 부여</text>
+
+  <!-- MAC -->
+  <rect x="422" y="76" width="140" height="36" rx="6" fill="#ffffff"/>
+  <rect x="422" y="76" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="492" y="90" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">변형 어드미션</text>
+  <text x="492" y="103" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">컨트롤러</text>
+
+  <!-- VAC -->
+  <rect x="614" y="76" width="140" height="36" rx="6" fill="#ffffff"/>
+  <rect x="614" y="76" width="140" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="684" y="90" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">검증 어드미션</text>
+  <text x="684" y="103" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">컨트롤러</text>
+
+  <!-- API (focal) -->
+  <rect x="810" y="76" width="140" height="36" rx="6" fill="#ffffff"/>
+  <rect x="810" y="76" width="140" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="880" y="90" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">API 처리</text>
+  <text x="880" y="103" fill="#232F3E" font-size="11" font-weight="600" class="sans" text-anchor="middle">etcd 저장</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="552" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="220" cy="548" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="232" y="552" fill="#545B64" font-size="9" class="sans">검증 통과 후 저장(성공 경로)</text>
+  <circle cx="460" cy="548" r="4" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <text x="472" y="552" fill="#545B64" font-size="9" class="sans">활성 처리 구간</text>
+</svg>

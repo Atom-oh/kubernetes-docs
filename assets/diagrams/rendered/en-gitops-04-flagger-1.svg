@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="canary-state-title canary-state-desc">
+<title id="canary-state-title">Canary State Machine</title>
+<desc id="canary-state-desc">A canary progresses from initialized through step-wise traffic increases to waiting for promotion, promoting, and finalising into a successful rollout, or diverts to a failed state and rolls back to initialized if metrics or a timeout fail along the way.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Arrows (before nodes) ===== -->
+<circle cx="280" cy="56" r="6" fill="#232F3E"/>
+<path d="M280,62 V96" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M280,144 V184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M280,232 V272" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M280,320 V360" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M280,408 V448" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M280,496 V536" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- self loop on Progressing -->
+<path d="M300,184 Q300,150 330,150 Q360,150 360,184" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Progressing -> Failed -->
+<path d="M370,200 H472 Q480,200 480,208 V232 Q480,240 488,240 H600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- WaitingPromotion -> Failed -->
+<path d="M370,296 H472 Q480,296 480,288 V272 Q480,264 488,264 H600" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Failed -> Initialized (rollback) -->
+<path d="M680,228 V28 Q680,20 672,20 H108 Q100,20 100,28 V100 Q100,108 108,108 H190" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<!-- Succeeded -> Initialized -->
+<path d="M190,560 H108 Q100,560 100,552 V140 Q100,132 108,132 H190" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- ===== Arrow labels ===== -->
+<rect x="290" y="72" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="81" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">canary created</text>
+
+<rect x="290" y="158" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="167" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">deployment change detected</text>
+
+<rect x="290" y="246" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="255" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">all steps passed</text>
+
+<rect x="290" y="334" width="130" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="343" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">auto or manual gate</text>
+
+<rect x="290" y="422" width="118" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="431" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">traffic shifted</text>
+
+<rect x="290" y="510" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="296" y="519" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">primary updated</text>
+
+<rect x="284" y="159" width="94" height="12" rx="2" fill="#ffffff"/>
+<text x="331" y="168" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.02em">advance step</text>
+
+<rect x="396" y="182" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="402" y="191" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">metrics check failed</text>
+
+<rect x="396" y="278" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="402" y="287" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">timeout exceeded</text>
+
+<rect x="690" y="122" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="696" y="131" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">rollback complete</text>
+
+<rect x="108" y="336" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="114" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.02em">waiting next change</text>
+
+<!-- ===== Nodes ===== -->
+<rect x="190" y="96" width="180" height="48" rx="8" fill="#ffffff"/>
+<rect x="190" y="96" width="180" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="124" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Initialized</text>
+
+<rect x="190" y="184" width="180" height="48" rx="8" fill="#ffffff"/>
+<rect x="190" y="184" width="180" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="212" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Progressing</text>
+
+<rect x="190" y="272" width="180" height="48" rx="8" fill="#ffffff"/>
+<rect x="190" y="272" width="180" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="300" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">WaitingPromotion</text>
+
+<rect x="190" y="360" width="180" height="48" rx="8" fill="#ffffff"/>
+<rect x="190" y="360" width="180" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Promoting</text>
+
+<rect x="190" y="448" width="180" height="48" rx="8" fill="#ffffff"/>
+<rect x="190" y="448" width="180" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="476" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Finalising</text>
+
+<rect x="190" y="536" width="180" height="48" rx="8" fill="rgba(255,153,0,0.10)"/>
+<rect x="190" y="536" width="180" height="48" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="280" y="564" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Succeeded</text>
+
+<rect x="600" y="228" width="160" height="48" rx="8" fill="#ffffff"/>
+<rect x="600" y="228" width="160" height="48" rx="8" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="680" y="256" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Failed</text>
+</svg>

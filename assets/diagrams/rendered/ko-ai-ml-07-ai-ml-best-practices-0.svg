@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d0-title d0-desc">
+<title id="d0-title">EKS AI/ML 모범 사례와 기대 결과</title>
+<desc id="d0-desc">여덜 가지 EKS AI/ML 모범 사례 영역이 고성능, 리소스 효율성, 안정성, 비용 절감이라는 네 가지 기대 결과로 이어지는 관계도.</desc>
+<defs>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+<text x="32" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ARCHITECTURE &#183; EKS AI/ML BEST PRACTICES</text>
+<text x="32" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">모범 사례가 만드는 결과</text>
+
+<!-- zones -->
+<rect x="32" y="140" width="456" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="44" y="144" width="140" height="12" rx="2" fill="#ffffff"/>
+<text x="114" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">EKS AI/ML 모범 사례</text>
+
+<rect x="560" y="140" width="368" height="320" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="572" y="144" width="80" height="12" rx="2" fill="#ffffff"/>
+<text x="612" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">기대 결과</text>
+
+<!-- connectors (behind nodes) -->
+<path d="M 248,200 H 404 Q 412,200 412,192 V 192 Q 412,184 420,184 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 464,200 H 518 Q 520,200 520,198 V 198 Q 520,196 522,196 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 464,208 H 512 Q 520,208 520,216 V 272 Q 520,280 528,280 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,264 H 404 Q 412,264 412,256 V 216 Q 412,208 420,208 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,280 H 404 Q 412,280 412,288 V 288 Q 412,296 420,296 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 464,272 H 512 Q 520,272 520,264 V 228 Q 520,220 528,220 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,344 H 404 Q 412,344 412,336 V 240 Q 412,232 420,232 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 464,344 H 516 Q 520,344 520,348 V 348 Q 520,352 524,352 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 248,416 H 404 Q 412,416 412,424 V 424 Q 412,432 420,432 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 464,416 H 512 Q 520,416 520,408 V 376 Q 520,368 528,368 H 576" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- left col1: x=48 w=200 -->
+<rect x="48" y="172" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="172" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">벤치마킹 &amp; 성능</text>
+<text x="148" y="214" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">latency &#183; throughput</text>
+
+<rect x="48" y="244" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="244" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">GPU 선택</text>
+<text x="148" y="286" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">instance type fit</text>
+
+<rect x="48" y="316" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="316" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">스토리지</text>
+<text x="148" y="358" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">model artifact I/O</text>
+
+<rect x="48" y="388" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="48" y="388" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="148" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 최적화</text>
+<text x="148" y="430" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">spot &#183; right-sizing</text>
+
+<!-- left col2: x=264 w=200 -->
+<rect x="264" y="172" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="264" y="172" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="364" y="196" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨테이너 최적화</text>
+<text x="364" y="214" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">image size &#183; layers</text>
+
+<rect x="264" y="244" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="264" y="244" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="364" y="268" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네트워킹</text>
+<text x="364" y="286" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">RDMA &#183; topology</text>
+
+<rect x="264" y="316" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="264" y="316" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="364" y="340" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">관측성</text>
+<text x="364" y="358" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">GPU &#183; queue metrics</text>
+
+<rect x="264" y="388" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="264" y="388" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="364" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">보안</text>
+<text x="364" y="430" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">isolation &#183; supply chain</text>
+
+<!-- right outcomes -->
+<rect x="576" y="172" width="336" height="72" rx="6" fill="#ffffff"/>
+<rect x="576" y="172" width="336" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="744" y="204" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">고성능</text>
+<text x="744" y="222" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">5개 사례가 기여하는 핵심 지표</text>
+
+<rect x="576" y="260" width="336" height="56" rx="6" fill="#ffffff"/>
+<rect x="576" y="260" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="744" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">리소스 효율성</text>
+<text x="744" y="302" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">utilization &#183; density</text>
+
+<rect x="576" y="332" width="336" height="56" rx="6" fill="#ffffff"/>
+<rect x="576" y="332" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="744" y="356" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">안정성</text>
+<text x="744" y="374" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">MTTR &#183; incident rate</text>
+
+<rect x="576" y="404" width="336" height="56" rx="6" fill="#ffffff"/>
+<rect x="576" y="404" width="336" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="744" y="428" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 절감</text>
+<text x="744" y="446" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">$/token &#183; $/epoch</text>
+
+<!-- legend -->
+<line x1="32" y1="484" x2="928" y2="484" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="32" y="500" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+<rect x="108" y="494" width="16" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="140" y="503" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">가장 많은 사례가 기여하는 결과</text>
+
+<text x="32" y="524" fill="#7D8998" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">벤치마킹, 컨테이너, GPU, 네트워킹, 스토리지 최적화가 함께 성능을 끌어올리고, 관측성과 보안은 안정성을, 비용 최적화는 절감을 만든다.</text>
+</svg>

@@ -63,63 +63,7 @@ Loki was designed with the philosophy of "handling logs like Prometheus":
 
 ### Component Overview
 
-```mermaid
-flowchart TB
-    subgraph Clients["Clients"]
-        PROMTAIL[Promtail]
-        FLUENTBIT[FluentBit]
-        ALLOY[Grafana Alloy]
-    end
-
-    subgraph Write["Write Path"]
-        DIST[Distributor]
-        ING[Ingester]
-    end
-
-    subgraph Read["Read Path"]
-        QF[Query Frontend]
-        QS[Query Scheduler]
-        QUERIER[Querier]
-    end
-
-    subgraph Backend["Backend"]
-        COMP[Compactor]
-        S3[(S3 Storage)]
-        CACHE[(Redis/Memcached)]
-    end
-
-    subgraph Viz["Visualization"]
-        GRAFANA[Grafana]
-    end
-
-    PROMTAIL --> DIST
-    FLUENTBIT --> DIST
-    ALLOY --> DIST
-
-    DIST --> ING
-    ING --> S3
-
-    GRAFANA --> QF
-    QF --> QS
-    QS --> QUERIER
-    QUERIER --> ING
-    QUERIER --> S3
-    QUERIER --> CACHE
-
-    COMP --> S3
-
-    classDef client fill:#4CAF50,stroke:#333,color:white
-    classDef write fill:#2196F3,stroke:#333,color:white
-    classDef read fill:#FF9800,stroke:#333,color:white
-    classDef backend fill:#9C27B0,stroke:#333,color:white
-    classDef viz fill:#F44336,stroke:#333,color:white
-
-    class PROMTAIL,FLUENTBIT,ALLOY client
-    class DIST,ING write
-    class QF,QS,QUERIER read
-    class COMP,S3,CACHE backend
-    class GRAFANA viz
-```
+![Diagram of Loki's write path (log agents through the distributor and ingester into S3 object storage) and read path (Grafana through the query frontend into the querier, which merges live data from the ingester, historical data from S3, and cached results from Redis/Memcached, while a compactor optimizes S3's indexes).](../../.gitbook/assets/en-observability-logging-01-loki-0.png)
 
 ### Component Details
 
@@ -890,16 +834,7 @@ labels:
 
 ### Cardinality Management
 
-```mermaid
-graph LR
-    A[Number of Labels] --> B{Total Streams}
-    C[Label Value Types] --> B
-    B --> D[Index Size]
-    B --> E[Query Performance]
-    B --> F[Memory Usage]
-
-    style B fill:#FF9800,stroke:#333
-```
+![Flowchart showing how the number of labels and the cardinality of each label's values multiply into total stream count, which is the single factor driving index size, query performance, and memory usage.](../../.gitbook/assets/en-observability-logging-01-loki-1.png)
 
 **Stream Count Calculation:**
 ```

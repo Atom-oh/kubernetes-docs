@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="grafana-arch-title grafana-arch-desc">
+    <title id="grafana-arch-title">Grafana 아키텍처 구성도</title>
+    <desc id="grafana-arch-desc">사용자의 요청이 Grafana 서버 내부의 Frontend·Backend를 거쳐 PostgreSQL/Redis 저장소에 기록되고, Plugin System을 통해 여러 데이터 소스를 조회하며, Alerting Engine이 별도로 알림 채널로 알림을 전송하는 흐름을 보여준다.</desc><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Zones (drawn before arrows/nodes) ===== -->
+    <rect x="180" y="128" width="600" height="132" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="196" y="132" width="128" height="12" rx="2" fill="#ffffff"/>
+    <text x="260" y="141" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">GRAFANA SERVER</text>
+
+    <rect x="188" y="320" width="296" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="204" y="324" width="72" height="12" rx="2" fill="#ffffff"/>
+    <text x="240" y="333" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">스토리지</text>
+
+    <!-- ===== Arrows (before nodes) ===== -->
+
+    <!-- User -> Frontend (elbow, off-axis) -->
+    <path d="M480,88 V116 Q480,124 472,124 H272 Q264,124 264,132 V164"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Frontend -> Backend (straight horizontal) -->
+    <line x1="324" y1="192" x2="348" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Backend -> Plugins (straight horizontal) -->
+    <line x1="468" y1="192" x2="492" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Backend -> DB (fan attach x=388, elbow) -->
+    <path d="M388,220 V280 Q388,288 380,288 H272 Q264,288 264,296 V356"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Backend -> Cache (fan attach x=408, straight vertical) -->
+    <line x1="408" y1="220" x2="408" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Plugins -> Data Sources (straight vertical) -->
+    <line x1="552" y1="220" x2="552" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Alerting -> Notifications (straight vertical) -->
+    <line x1="696" y1="220" x2="696" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- Users -->
+    <rect x="400" y="40" width="160" height="48" rx="6" fill="#ffffff"/>
+    <rect x="400" y="40" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="60" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용자</text>
+    <text x="480" y="76" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">브라우저 · API 클라이언트</text>
+
+    <!-- Frontend -->
+    <rect x="204" y="164" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="204" y="164" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="264" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Frontend</text>
+    <text x="264" y="204" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">react</text>
+
+    <!-- Backend (FOCAL) -->
+    <rect x="348" y="164" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="348" y="164" width="120" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="408" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Backend</text>
+    <text x="408" y="204" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">go</text>
+
+    <!-- Plugins -->
+    <rect x="492" y="164" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="492" y="164" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="552" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Plugin System</text>
+    <text x="552" y="204" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">데이터 소스 연동</text>
+
+    <!-- Alerting -->
+    <rect x="636" y="164" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="636" y="164" width="120" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="696" y="188" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Alerting Engine</text>
+    <text x="696" y="204" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">알림 평가</text>
+
+    <!-- DB -->
+    <rect x="204" y="356" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="204" y="356" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="264" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">PostgreSQL/MySQL</text>
+    <text x="264" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">메타데이터</text>
+
+    <!-- Cache -->
+    <rect x="348" y="356" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="348" y="356" width="120" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="408" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Redis/Memcached</text>
+    <text x="408" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">세션 캐시</text>
+
+    <!-- Data Sources (grouped) -->
+    <rect x="492" y="356" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="492" y="356" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="552" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터 소스</text>
+    <text x="552" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Prom·Loki·Tempo +3</text>
+
+    <!-- Notifications (grouped) -->
+    <rect x="636" y="356" width="120" height="56" rx="6" fill="#ffffff"/>
+    <rect x="636" y="356" width="120" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="696" y="380" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">알림 채널</text>
+    <text x="696" y="396" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Slack·PagerDuty +2</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="40" y1="452" x2="920" y2="452" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="468" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="40" y="480" width="7" height="7" rx="1.5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="52" y="486" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">CORE — 요청 처리 허브</text>
+
+    <rect x="220" y="480" width="7" height="7" rx="1.5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="232" y="486" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">COMPONENT — 내부 구성 요소</text>
+
+    <rect x="440" y="480" width="7" height="7" rx="1.5" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="452" y="486" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">STORE — 영구 저장소</text>
+
+    <rect x="620" y="480" width="7" height="7" rx="1.5" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+    <text x="632" y="486" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace">EXTERNAL — 외부 연동 그룹</text>
+  </svg>

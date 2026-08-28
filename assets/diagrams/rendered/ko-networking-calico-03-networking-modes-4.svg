@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="direct-flow-title direct-flow-desc">
+    <title id="direct-flow-title">Direct 모드 무캡슐화 라우팅 경로</title>
+    <desc id="direct-flow-desc">Pod A의 패킷이 캡슐화 없이 라우팅 테이블과 BGP로 광고된 경로를 통해 라우터를 거쳐 Pod B로 직접 전달되는 경로를 보여준다.</desc>
+    <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Zones (drawn before arrows and nodes) -->
+    <rect x="28" y="248" width="376" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="132" y="252" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="216" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1 · 10.0.1.10</text>
+
+    <rect x="436" y="248" width="112" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="452" y="252" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="492" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NETWORK</text>
+
+    <rect x="580" y="248" width="352" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="684" y="252" width="168" height="12" rx="2" fill="#ffffff"/>
+    <text x="768" y="261" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2 · 10.0.1.11</text>
+
+    <!-- Arrows (before boxes) -->
+    <!-- POD1 -> RT1 (no label) -->
+    <line x1="124" y1="312" x2="164" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- RT1 -> ETH1 -->
+    <line x1="244" y1="312" x2="308" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="248" y="284" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="276" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NATIVE IP</text>
+
+    <!-- ETH1 -> ROUTER -->
+    <line x1="388" y1="312" x2="436" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="398" y="284" width="28" height="12" rx="2" fill="#ffffff"/>
+    <text x="412" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">BGP</text>
+
+    <!-- ROUTER -> ETH2 -->
+    <line x1="532" y1="312" x2="596" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="536" y="284" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="564" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">BGP ROUTE</text>
+
+    <!-- ETH2 -> RT2 (no label) -->
+    <line x1="676" y1="312" x2="716" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- RT2 -> POD2 (no label) -->
+    <line x1="796" y1="312" x2="836" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Node boxes: POD1 -->
+    <rect x="44" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="44" y="280" width="80" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="84" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod A</text>
+    <text x="84" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.244.1.5</text>
+
+    <!-- RT1 -->
+    <rect x="164" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="164" y="280" width="80" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="204" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Routing</text>
+    <text x="204" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Table</text>
+
+    <!-- ETH1 -->
+    <rect x="308" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="308" y="280" width="80" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="348" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eth0</text>
+    <text x="348" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.10</text>
+
+    <!-- ROUTER (focal) -->
+    <rect x="436" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="436" y="280" width="80" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="476" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Router</text>
+    <text x="476" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">BGP Peer</text>
+
+    <!-- ETH2 -->
+    <rect x="596" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="596" y="280" width="80" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="636" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">eth0</text>
+    <text x="636" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.11</text>
+
+    <!-- RT2 -->
+    <rect x="716" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="716" y="280" width="80" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="756" y="304" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Routing</text>
+    <text x="756" y="322" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Table</text>
+
+    <!-- POD2 -->
+    <rect x="836" y="280" width="80" height="64" rx="6" fill="#ffffff"/>
+    <rect x="836" y="280" width="80" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="876" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod B</text>
+    <text x="876" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.244.2.8</text>
+
+    <!-- Legend -->
+    <line x1="28" y1="512" x2="932" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="28" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <circle cx="208" cy="524" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="222" y="528" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">Router — BGP로 Pod CIDR 학습·광고</text>
+    <text x="560" y="528" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">캡슐화 없음 · MTU 1500 그대로 사용</text>
+  </svg>

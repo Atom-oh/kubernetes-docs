@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="d5-title d5-desc">
+  <title id="d5-title">네트워크 정책 모범 사례</title>
+  <desc id="d5-desc">네트워크 정책 모범 사례라는 원칙 하나에서 기본 거부 정책 적용, 네임스페이스 격리, 최소 권한 원칙, 이그레스 트래픽 제한, 정책 테스트라는 다섯 가지 실천 항목이 뻗어나가는 구조를 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="d5-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  </defs>
+
+  <rect width="960" height="560" fill="#ffffff"/>
+  <text x="40" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">TREE</text>
+  <text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700">네트워크 정책 모범 사례</text>
+
+  <!-- Connectors -->
+  <line x1="120" y1="216" x2="840" y2="216" stroke="#545B64" stroke-width="1"/>
+  <line x1="480" y1="184" x2="480" y2="216" stroke="#545B64" stroke-width="1"/>
+  <line x1="120" y1="216" x2="120" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#d5-arrow)"/>
+  <line x1="300" y1="216" x2="300" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#d5-arrow)"/>
+  <line x1="480" y1="216" x2="480" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#d5-arrow)"/>
+  <line x1="660" y1="216" x2="660" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#d5-arrow)"/>
+  <line x1="840" y1="216" x2="840" y2="280" stroke="#545B64" stroke-width="1" marker-end="url(#d5-arrow)"/>
+  <circle cx="120" cy="216" r="3" fill="#232F3E"/>
+  <circle cx="300" cy="216" r="3" fill="#232F3E"/>
+  <circle cx="480" cy="216" r="3" fill="#232F3E"/>
+  <circle cx="660" cy="216" r="3" fill="#232F3E"/>
+  <circle cx="840" cy="216" r="3" fill="#232F3E"/>
+
+  <!-- Root (focal) -->
+  <rect x="340" y="104" width="280" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="480" y="140" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">네트워크 정책</text>
+  <text x="480" y="156" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">모범 사례</text>
+  <text x="480" y="172" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">5 practices</text>
+
+  <!-- Leaves -->
+  <rect x="48" y="280" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="120" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">기본 거부</text>
+  <text x="120" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">deny-all 기본값</text>
+
+  <rect x="228" y="280" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="300" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">네임스페이스</text>
+  <text x="300" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">격리</text>
+
+  <rect x="408" y="280" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="480" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">최소 권한</text>
+  <text x="480" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">원칙 적용</text>
+
+  <rect x="588" y="280" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="660" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">이그레스</text>
+  <text x="660" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">트래픽 제한</text>
+
+  <rect x="768" y="280" width="144" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="840" y="308" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">정책 테스트</text>
+  <text x="840" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">적용 전 검증</text>
+</svg>

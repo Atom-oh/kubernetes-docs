@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="sidecarless-title sidecarless-desc">
+    <title id="sidecarless-title">Sidecar vs. sidecarless architecture</title>
+    <desc id="sidecarless-desc">Comparison showing traditional sidecar proxies handling every pod-to-pod hop versus Cilium routing pod traffic through the kernel eBPF datapath, which calls out to a single shared node-level Envoy only for L7 processing.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+      <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones (bg -> zones -> arrows -> nodes) -->
+    <rect x="40" y="64" width="880" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="356" y="68" width="248" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="77" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TRADITIONAL SIDECAR (ISTIO)</text>
+
+    <rect x="40" y="216" width="880" height="216" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="368" y="220" width="224" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="229" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">CILIUM SERVICE MESH (SIDECAR-FREE)</text>
+
+    <!-- Zone 1 arrows -->
+    <line x1="260" y1="128" x2="300" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="460" y1="128" x2="500" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="660" y1="128" x2="700" y2="128" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Zone 2 arrows: PodA -> eBPF (focal), eBPF -> PodB, eBPF <-> Node Envoy (bidirectional) -->
+    <line x1="360" y1="384" x2="400" y2="384" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+    <line x1="560" y1="384" x2="600" y2="384" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="480" y1="344" x2="480" y2="312" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+
+    <!-- Arrow label: L7 lookup -->
+    <rect x="452" y="316" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="325" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">L7 ONLY</text>
+
+    <!-- Zone 1 nodes -->
+    <!-- Pod A -->
+    <rect x="100" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="100" y="96" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="108" y="104" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="120" y="113" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="180" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    <text x="180" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">app container</text>
+
+    <!-- Sidecar Proxy A -->
+    <rect x="300" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="300" y="96" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="308" y="104" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="322" y="113" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PXY</text>
+    <text x="380" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sidecar Proxy A</text>
+    <text x="380" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Envoy · per pod</text>
+
+    <!-- Sidecar Proxy B -->
+    <rect x="500" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="500" y="96" width="160" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="508" y="104" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="522" y="113" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PXY</text>
+    <text x="580" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sidecar Proxy B</text>
+    <text x="580" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Envoy · per pod</text>
+
+    <!-- Pod B -->
+    <rect x="700" y="96" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="700" y="96" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="708" y="104" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="720" y="113" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="780" y="132" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+    <text x="780" y="148" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">app container</text>
+
+    <!-- Zone 2 nodes -->
+    <!-- Pod A2 -->
+    <rect x="200" y="352" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="200" y="352" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="208" y="360" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="220" y="369" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="280" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+    <text x="280" y="404" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">app container</text>
+
+    <!-- eBPF Datapath (focal) -->
+    <rect x="400" y="352" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="400" y="352" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="408" y="360" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="424" y="369" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BPF</text>
+    <text x="480" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">eBPF Datapath</text>
+    <text x="480" y="404" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">kernel · 1 per node</text>
+
+    <!-- Node Envoy -->
+    <rect x="380" y="248" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="380" y="248" width="200" height="64" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <rect x="388" y="256" width="28" height="12" rx="2" fill="transparent" stroke="rgba(84,91,100,0.40)" stroke-width="0.8"/>
+    <text x="402" y="265" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PXY</text>
+    <text x="480" y="284" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node Envoy</text>
+    <text x="480" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L7 processing · 1 per node</text>
+
+    <!-- Pod B2 -->
+    <rect x="600" y="352" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="600" y="352" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="608" y="360" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="620" y="369" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+    <text x="680" y="388" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+    <text x="680" y="404" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">app container</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="460" x2="920" y2="460" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="476" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="492" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal · kernel datapath</text>
+
+    <rect x="248" y="492" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="268" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Pod / app container</text>
+
+    <rect x="440" y="492" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="460" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Proxy component</text>
+
+    <line x1="620" y1="497" x2="648" y2="497" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="656" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Packet path</text>
+
+    <line x1="792" y1="497" x2="820" y2="497" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-rev)"/>
+    <text x="828" y="500" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">L7 handoff</text>
+  </svg>

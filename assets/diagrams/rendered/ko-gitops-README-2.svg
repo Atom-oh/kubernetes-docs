@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arch2-title arch2-desc">
+      <title id="arch2-title">Push 기반 배포 아키텍처</title>
+      <desc id="arch2-desc">외부 CI/CD 파이프라인이 Kubernetes API Server에 직접 kubectl apply를 실행해 애플리케이션을 배포하는 push 기반 구조를 보여준다.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="s2-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="s2-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Zones (drawn before arrows/nodes) -->
+      <rect x="40" y="252" width="220" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="52" y="256" width="120" height="12" rx="2" fill="#ffffff"/>
+      <text x="112" y="265" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">외부 시스템</text>
+
+      <rect x="340" y="140" width="580" height="340" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <rect x="352" y="144" width="180" height="12" rx="2" fill="#ffffff"/>
+      <text x="442" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">KUBERNETES 클러스터</text>
+
+      <!-- Arrows -->
+      <line x1="232" y1="312" x2="580" y2="312" stroke="#545B64" stroke-width="1.2" marker-end="url(#s2-arrow)"/>
+      <rect x="360" y="284" width="90" height="14" rx="2" fill="#ffffff"/>
+      <text x="405" y="295" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">KUBECTL APPLY</text>
+
+      <line x1="660" y1="336" x2="660" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#s2-arrow)"/>
+
+      <!-- CI node -->
+      <rect x="72" y="288" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="152" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">CI/CD 파이프라인</text>
+      <text x="152" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">external</text>
+
+      <!-- API Server node (focal) -->
+      <rect x="580" y="288" width="160" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="660" y="308" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">API Server</text>
+      <text x="660" y="324" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">control plane</text>
+
+      <!-- Apps node -->
+      <rect x="580" y="420" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="660" y="444" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">애플리케이션</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+      <rect x="40" y="556" width="16" height="16" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="66" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">배포 진입점 (핵심)</text>
+      <rect x="220" y="556" width="16" height="16" rx="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="246" y="568" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">구성 요소</text>
+    </svg>

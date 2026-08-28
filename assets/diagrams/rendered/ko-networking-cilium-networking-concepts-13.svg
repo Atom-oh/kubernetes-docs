@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-cilium-networking-concepts-13-title ko-networking-cilium-networking-concepts-13-desc">
+<title id="ko-networking-cilium-networking-concepts-13-title">L7 로드 밸런서 트래픽 분배 구조</title>
+<desc id="ko-networking-cilium-networking-concepts-13-desc">클라이언트의 HTTP 요청이 L7 로드 밸런서에서 URL 경로와 헤더까지 검사되어 API 서버와 웹 서버 중 알맞은 백엔드로 분배되는 애플리케이션 계층(L7) 로드 밸런싱 구조를 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="240" y1="300.0" x2="380" y2="300.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="282.3" y="280.0" width="55.4" height="12" rx="2" fill="#ffffff"/>
+<text x="310.0" y="289.0" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">HTTP 요청</text>
+<path d="M 580,300.0 H 628 Q 636,300.0 636,292.0 V 198.0 Q 636,190.0 644,190.0 H 716" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 580,300.0 H 628 Q 636,300.0 636,308.0 V 402.0 Q 636,410.0 644,410.0 H 716" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="40" y="250" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="40" y="250" width="200" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">클라이언트</text>
+<text x="140.0" y="320.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">GET /api/users</text>
+<rect x="380" y="250" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="380" y="250" width="200" height="100" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">L7 로드 밸런서</text>
+<text x="480.0" y="320.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">URL 경로 · 헤더 검사</text>
+<rect x="716" y="140" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="716" y="140" width="200" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="816.0" y="194.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">API 서버</text>
+<text x="816.0" y="210.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">/api/*</text>
+<rect x="716" y="360" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="716" y="360" width="200" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="816.0" y="414.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">웹 서버</text>
+<text x="816.0" y="430.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">/web/*</text>
+
+</svg>

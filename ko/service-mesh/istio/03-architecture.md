@@ -45,64 +45,7 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 **중요**: Istio 1.5 이후 Pilot, Citadel, Galley는 **별도 컴포넌트가 아닌 Istiod 내부 기능**입니다.
 
-```mermaid
-flowchart TB
-    subgraph Istiod[Istiod 단일 프로세스]
-        subgraph PilotFunc[Pilot 기능]
-            SD[Service Discovery<br/>서비스 감지]
-            TR[Traffic Management<br/>트래픽 규칙]
-            xDS[xDS Server<br/>구성 배포]
-        end
-
-        subgraph CitadelFunc[Citadel 기능]
-            CA[Certificate Authority<br/>CA 관리]
-            ID[Identity Management<br/>SPIFFE ID]
-        end
-
-        subgraph GalleyFunc[Galley 기능]
-            Val[Configuration Validation<br/>구성 검증]
-            Proc[Configuration Processing<br/>구성 처리]
-        end
-    end
-
-    subgraph K8S[Kubernetes API]
-        API[API Server]
-        CRD[Istio CRDs<br/>VirtualService, DestinationRule 등]
-    end
-
-    subgraph Envoys[Envoy Proxies]
-        E1[Envoy 1]
-        E2[Envoy 2]
-        E3[Envoy N]
-    end
-
-    API --> Val
-    CRD --> Val
-    Val --> SD
-    Val --> CA
-
-    SD --> xDS
-    TR --> xDS
-    CA --> xDS
-
-    xDS -->|xDS API<br/>구성 푸시| E1
-    xDS -->|xDS API<br/>구성 푸시| E2
-    xDS -->|xDS API<br/>구성 푸시| E3
-
-    CA -->|X.509 인증서<br/>SDS API| E1
-    CA -->|X.509 인증서<br/>SDS API| E2
-    CA -->|X.509 인증서<br/>SDS API| E3
-
-    %% 스타일 정의
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class SD,TR,xDS,CA,ID,Val,Proc istiod;
-    class API,CRD k8s;
-    class E1,E2,E3 envoy;
-```
+![Kubernetes API에서 검증된 구성이 Istiod의 Galley·Citadel·Pilot 기능을 거쳐 xDS API와 X.509 인증서로 Envoy 사이드카들에 전달되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-0.png)
 
 ### Istiod의 주요 기능
 
@@ -172,24 +115,7 @@ spec:
 
 #### 3. Certificate Management (Citadel 기능)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy
-    participant Istiod
-    participant SPIFFE
-
-    Envoy->>Istiod: CSR 요청<br/>(Certificate Signing Request)
-    Istiod->>SPIFFE: Identity 검증<br/>(ServiceAccount)
-    SPIFFE->>Istiod: 검증 완료
-    Istiod->>Istiod: 인증서 서명
-    Istiod->>Envoy: X.509 인증서 발급<br/>(TTL: 24시간)
-
-    Note over Envoy: 인증서 사용<br/>mTLS 통신
-
-    Envoy->>Istiod: 인증서 갱신 요청<br/>(만료 전)
-    Istiod->>Envoy: 새 인증서 발급
-```
+![Envoy가 Istiod에 CSR을 보내면 Istiod가 SPIFFE Identity를 검증하고 서명한 뒤 X.509 인증서를 발급하며, 만료 전 동일한 절차로 인증서를 갱신하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-1.png)
 
 **SPIFFE ID 형식**:
 
@@ -290,35 +216,7 @@ spec:
 
 ### Envoy 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph EnvoyProxy[Envoy Proxy]
-        Listener[Listeners<br/>포트 수신]
-        Filter[Filters<br/>요청 처리]
-        Router[Routers<br/>라우팅 결정]
-        Cluster[Clusters<br/>업스트림 서비스]
-
-        Listener --> Filter
-        Filter --> Router
-        Router --> Cluster
-    end
-
-    subgraph External[외부]
-        Incoming[들어오는 요청]
-        Outgoing[나가는 요청]
-    end
-
-    Incoming -->|인바운드| Listener
-    Cluster -->|아웃바운드| Outgoing
-
-    %% 스타일 정의
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class Listener,Filter,Router,Cluster envoy;
-    class Incoming,Outgoing external;
-```
+![들어오는 요청이 Envoy의 Listener, Filter, Router, Cluster를 순서대로 거쳐 업스트림 서비스로 나가는 아웃바운드 트래픽 처리 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-2.png)
 
 ### Envoy의 주요 구성 요소
 
@@ -350,30 +248,7 @@ flowchart TB
 
 **요청/응답을 처리하는 플러그인**:
 
-```mermaid
-flowchart LR
-    Request[HTTP 요청]
-
-    subgraph Filters[Filter Chain]
-        F1[JWT 인증]
-        F2[Rate Limiting]
-        F3[RBAC 검증]
-        F4[Stats 수집]
-        F5[Router]
-    end
-
-    Response[HTTP 응답]
-
-    Request --> F1 --> F2 --> F3 --> F4 --> F5 --> Response
-
-    %% 스타일 정의
-    classDef req fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef filter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Request,Response req;
-    class F1,F2,F3,F4,F5 filter;
-```
+![HTTP 요청이 JWT 인증, Rate Limiting, RBAC 검증, Stats 수집을 거쳐 Router에 도달한 뒤 HTTP 응답으로 반환되는 Envoy 필터 체인 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-3.png)
 
 #### 3. Clusters
 
@@ -422,48 +297,7 @@ flowchart LR
 
 ### Injection 방식
 
-```mermaid
-flowchart TB
-    subgraph User[사용자]
-        Deploy[Deployment 생성]
-    end
-
-    subgraph K8S[Kubernetes]
-        API[API Server]
-        Webhook[Mutating Webhook]
-    end
-
-    subgraph Istio[Istio]
-        Injector[Sidecar Injector]
-    end
-
-    subgraph Pod[생성된 파드]
-        Init[istio-init<br/>init container]
-        App[애플리케이션<br/>container]
-        Proxy[istio-proxy<br/>sidecar container]
-    end
-
-    Deploy -->|1\. POST| API
-    API -->|2\. Webhook 호출| Webhook
-    Webhook -->|3\. Injection 요청| Injector
-    Injector -->|4\. 수정된 Pod Spec| Webhook
-    Webhook -->|5\. 반환| API
-    API -->|6\. 파드 생성| Init
-    Init -->|7\. 완료| App
-    Init -->|7\. 완료| Proxy
-
-    %% 스타일 정의
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Deploy user;
-    class API,Webhook k8s;
-    class Injector istio;
-    class Init,App,Proxy container;
-```
+![사용자의 Deployment 생성 요청이 API Server와 Mutating Webhook을 거쳐 Sidecar Injector에서 Pod Spec을 수정한 뒤, 수정된 스펙으로 istio-init·애플리케이션·istio-proxy 컨테이너를 가진 파드가 생성되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-4.png)
 
 ### 원본 vs Injection 후
 
@@ -563,29 +397,7 @@ kubectl apply -f deployment-injected.yaml
 
 **역할**: 파드의 네트워크 트래픽을 Envoy Proxy로 리다이렉트하는 iptables 규칙 설정
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8S as Kubernetes
-    participant Init as istio-init
-    participant IPTables as iptables
-    participant App as 애플리케이션
-    participant Envoy as Envoy Proxy
-
-    K8S->>Init: Init Container 시작
-    Init->>IPTables: iptables 규칙 설정
-    Note over IPTables: 모든 트래픽을<br/>Envoy로 리다이렉트
-
-    Init->>K8S: 완료 (Exit 0)
-    K8S->>App: 애플리케이션 시작
-    K8S->>Envoy: Envoy 시작
-
-    App->>IPTables: 아웃바운드 요청<br/>(예: curl reviews:9080)
-    IPTables->>Envoy: 리다이렉트 (15001)
-    Envoy->>Envoy: 라우팅 결정
-    Envoy->>IPTables: 실제 요청 전송
-    Note over IPTables: Envoy UID는<br/>iptables 우회
-```
+![파드 시작 시 istio-init이 iptables 규칙을 설정해 모든 트래픽을 Envoy로 리다이렉트하고, 이후 애플리케이션의 아웃바운드 요청이 iptables를 거쳐 Envoy로 전달되며 Envoy 자신의 요청만 iptables를 우회하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-5.png)
 
 ### iptables 규칙 상세
 
@@ -617,48 +429,7 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### 트래픽 흐름 (iptables 적용 후)
 
-```mermaid
-flowchart TB
-    subgraph Pod[파드 Network Namespace]
-        App[애플리케이션<br/>localhost:8080]
-
-        subgraph IPTables[iptables NAT]
-            Output[OUTPUT 체인]
-            PreRouting[PREROUTING 체인]
-        end
-
-        subgraph Envoy[Envoy Proxy<br/>UID: 1337]
-            L15001[Listener<br/>15001<br/>아웃바운드]
-            L15006[Listener<br/>15006<br/>인바운드]
-        end
-    end
-
-    External[외부 서비스<br/>reviews:9080]
-
-    %% 아웃바운드 흐름
-    App -->|1\. curl reviews:9080| Output
-    Output -->|2\. REDIRECT| L15001
-    L15001 -->|3\. 라우팅| L15001
-    L15001 -->|4\. UID 1337<br/>iptables 우회| External
-
-    %% 인바운드 흐름
-    External -->|5\. 들어오는 요청| PreRouting
-    PreRouting -->|6\. REDIRECT| L15006
-    L15006 -->|7\. mTLS 검증| L15006
-    L15006 -->|8\. localhost| App
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% 클래스 적용
-    class App app;
-    class Output,PreRouting iptables;
-    class L15001,L15006 envoy;
-    class External external;
-```
+![애플리케이션의 아웃바운드 요청이 OUTPUT 체인을 거쳐 Envoy의 15001 리스너로 리다이렉트되어 외부 서비스로 나가고, 외부 서비스의 응답은 PREROUTING 체인을 거쳐 15006 리스너에서 mTLS 검증 후 애플리케이션으로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-6.png)
 
 ### iptables 규칙 확인
 
@@ -704,31 +475,7 @@ Istio는 두 가지 트래픽 가로채기 방식을 지원합니다:
 
 ### Kubernetes DNS 기본 동작
 
-```mermaid
-flowchart LR
-    App[애플리케이션]
-
-    subgraph Pod[파드 Network]
-        Resolve["/etc/resolv.conf<br/>nameserver 10.96.0.10"]
-    end
-
-    subgraph K8S[Kubernetes]
-        CoreDNS["CoreDNS<br/>Service: kube-dns<br/>ClusterIP: 10.96.0.10"]
-    end
-
-    App -->|"1\. 이름 해석 요청<br/>(reviews)"| Resolve
-    Resolve -->|"2\. DNS 쿼리<br/>(UDP 53 → 10.96.0.10)"| CoreDNS
-    CoreDNS -->|"3\. ClusterIP 반환<br/>(reviews = 10.100.1.5)"| Resolve
-    Resolve -->|"4\. IP 반환<br/>(10.100.1.5)"| App
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dns fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class App app;
-    class Resolve,CoreDNS dns;
-```
+![애플리케이션의 이름 해석 요청이 파드 내부의 resolv.conf를 거쳐 CoreDNS로 전달되고, ClusterIP가 반환되어 애플리케이션에 전달되는 기본 DNS 조회 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-7.png)
 
 **/etc/resolv.conf** (파드 내부):
 
@@ -742,39 +489,7 @@ options ndots:5
 
 **Istio에서는 Envoy가 DNS를 처리**합니다:
 
-```mermaid
-flowchart TB
-    App[애플리케이션<br/>curl reviews:9080]
-
-    subgraph Envoy[Envoy Proxy]
-        Listener[Listener<br/>15001]
-        DNS[DNS Filter]
-        Route[Route Match]
-        Cluster["Cluster<br/>outbound:9080::reviews"]
-        EDS[Endpoint Discovery]
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server]
-    end
-
-    App -->|1\. TCP 연결| Listener
-    Listener -->|2\. Host 헤더 검사| DNS
-    DNS -->|3\. 이름 해석| Route
-    Route -->|4\. Cluster 선택| Cluster
-    Cluster -->|5\. Endpoint 조회| EDS
-    EDS <-->|6\. EDS API| XDS
-
-    %% 스타일 정의
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class App app;
-    class Listener,DNS,Route,Cluster,EDS envoy;
-    class XDS istiod;
-```
+![애플리케이션의 TCP 연결이 Envoy의 Listener, DNS Filter, Route Match, Cluster를 거쳐 Endpoint Discovery에서 Istiod의 xDS Server와 EDS API로 통신하며 CoreDNS 호출 없이 엔드포인트를 해석하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-8.png)
 
 **장점**:
 
@@ -798,28 +513,7 @@ spec:
 
 **동작 방식**:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as 애플리케이션
-    participant IPT as iptables
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant CoreDNS as CoreDNS
-    participant Istiod as Istiod
-
-    App->>IPT: DNS 쿼리<br/>reviews (UDP 53)
-    IPT->>Envoy: 리다이렉트 (15053)
-
-    alt Istio Service
-        Envoy->>Istiod: Service 정보 조회<br/>(xDS)
-        Istiod->>Envoy: ClusterIP 반환
-        Envoy->>App: 10.96.0.10
-    else 외부 DNS
-        Envoy->>CoreDNS: DNS 쿼리
-        CoreDNS->>Envoy: IP 반환
-        Envoy->>App: IP 반환
-    end
-```
+![애플리케이션의 DNS 쿼리가 iptables를 거쳐 Envoy DNS Proxy로 리다이렉트된 뒤, 메시 내부 서비스면 Istiod에 xDS로 조회하고 외부 도메인이면 CoreDNS에 위임해 IP를 반환받아 애플리케이션에 전달하는 분기 처리를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-9.png)
 
 **DNS Proxy iptables 규칙**:
 
@@ -836,34 +530,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 **xDS**: Discovery Service의 약자로, Envoy의 동적 구성 프로토콜입니다.
 
-```mermaid
-flowchart LR
-    subgraph Istiod[Istiod]
-        Pilot[Pilot<br/>xDS Server]
-    end
-
-    subgraph Envoy[Envoy Proxy]
-        LDS[Listener DS]
-        RDS[Route DS]
-        CDS[Cluster DS]
-        EDS[Endpoint DS]
-        SDS[Secret DS]
-    end
-
-    Pilot <-->|gRPC<br/>Stream| LDS
-    Pilot <-->|gRPC<br/>Stream| RDS
-    Pilot <-->|gRPC<br/>Stream| CDS
-    Pilot <-->|gRPC<br/>Stream| EDS
-    Pilot <-->|gRPC<br/>Stream| SDS
-
-    %% 스타일 정의
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef xds fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Pilot istiod;
-    class LDS,RDS,CDS,EDS,SDS xds;
-```
+![Istiod의 xDS Server(Pilot)가 gRPC 스트림으로 Envoy의 Listener·Route·Cluster·Endpoint·Secret Discovery Service 다섯 채널에 동적 구성을 동시에 공급하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-10.png)
 
 ### xDS API 종류
 
@@ -877,38 +544,7 @@ flowchart LR
 
 ### xDS 통신 흐름
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy as Envoy Proxy
-    participant Istiod as Istiod<br/>(xDS Server)
-    participant K8S as Kubernetes API
-
-    Note over Envoy: 파드 시작
-
-    Envoy->>Istiod: 1. 연결 (gRPC :15012)
-    Istiod->>Envoy: 2. mTLS 인증
-
-    Envoy->>Istiod: 3. LDS 요청
-    Istiod->>Envoy: 4. Listeners 반환
-
-    Envoy->>Istiod: 5. CDS 요청
-    Istiod->>Envoy: 6. Clusters 반환
-
-    Envoy->>Istiod: 7. EDS 요청
-    Istiod->>Envoy: 8. Endpoints 반환
-
-    Envoy->>Istiod: 9. RDS 요청
-    Istiod->>Envoy: 10. Routes 반환
-
-    Envoy->>Istiod: 11. SDS 요청
-    Istiod->>Envoy: 12. 인증서 반환
-
-    Note over Envoy: 구성 완료<br/>트래픽 처리 준비
-
-    K8S->>Istiod: 13. Service 변경 감지
-    Istiod->>Envoy: 14. EDS 푸시 (새 Endpoint)
-```
+![파드가 시작되면 Envoy가 Istiod에 연결해 mTLS 인증 후 LDS·CDS·EDS·RDS·SDS 리소스를 순회 요청해 구성을 완료하고, 이후 Kubernetes API의 서비스 변경을 감지한 Istiod가 새 Endpoint를 Envoy에 푸시하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-11.png)
 
 ### xDS 통신 확인
 
@@ -957,30 +593,7 @@ istioctl proxy-config routes <pod-name> -n default
 
 기본적으로 각 Envoy는 **메시 전체의 모든 서비스 정보**를 받습니다:
 
-```mermaid
-flowchart TB
-    subgraph Mesh[Service Mesh - 1000개 서비스]
-        S1[Service 1]
-        S2[Service 2]
-        S3[Service 3]
-        Sn[Service 1000]
-    end
-
-    subgraph Pod[단일 파드]
-        App[애플리케이션<br/>사용: Service 1, 2만]
-        Envoy[Envoy Proxy<br/>수신: 1000개 전부]
-    end
-
-    Mesh -.->|모든 정보 푸시| Envoy
-
-    %% 스타일 정의
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class S1,S2,S3,Sn service;
-    class Envoy envoy;
-```
+![1000개 서비스로 이루어진 메시 전체의 구성 정보가 단일 파드의 Envoy Proxy에 모두 푸시되어, 애플리케이션이 실제 사용하는 서비스가 2개뿐인데도 Envoy가 1000개 전부를 수신하는 자원 낭비 문제를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-12.png)
 
 **문제점**:
 

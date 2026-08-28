@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="decisiontree-title decisiontree-desc">
+<title id="decisiontree-title">Service networking solution decision tree</title>
+<desc id="decisiontree-desc">Flowchart walking from platform choice through workload type, feature requirements, and operational resources to a recommendation of either Istio or VPC Lattice, with VPC Lattice reached by three different simpler paths.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- Arrows (behind nodes) -->
+<!-- Start -> Q1 -->
+<line x1="220" y1="88" x2="220" y2="120" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Q1 -> Q2 (AWS Only, down) -->
+<line x1="220" y1="188" x2="220" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Q1 -> Istio (Multi-cloud, right, accent) -->
+<path d="M 280,152 H 700 Q 708,152 708,160 V 216" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- Q2 -> Q3 (K8s Only, down) -->
+<line x1="220" y1="288" x2="220" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Q2 -> Lattice (EKS+ECS+Lambda, right) — bridges Q4→Istio's horizontal below -->
+<path d="M 280,252 H 412 Q 420,252 420,260 V 444 a 8,8 0 0,0 0,16 V 496" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Q3 -> Q4 (Advanced, down) -->
+<line x1="220" y1="388" x2="220" y2="420" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Q3 -> Lattice (Basic, right) — bridges Q4→Istio's horizontal below -->
+<path d="M 280,352 H 500 Q 508,352 508,360 V 444 a 8,8 0 0,0 0,16 V 496" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<!-- Q4 -> Istio (Sufficient, right, accent) -->
+<path d="M 280,452 H 700 Q 708,452 708,444 V 264" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<!-- Q4 -> Lattice (Limited, down then right) -->
+<path d="M 220,488 V 512 Q 220,520 228,520 H 388" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels: vertical segments get a side label with horizontal gap -->
+<rect x="228" y="98" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="256" y="107" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">START</text>
+
+<rect x="392" y="132" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="436" y="141" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MULTI-CLOUD</text>
+
+<rect x="228" y="198" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="207" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">AWS ONLY</text>
+
+<rect x="332" y="232" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="380" y="241" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">EKS+ECS+LMBD</text>
+
+<rect x="228" y="298" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="307" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">K8S ONLY</text>
+
+<rect x="360" y="332" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="396" y="341" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">BASIC FEAT</text>
+
+<rect x="228" y="398" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="260" y="407" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">ADVANCED</text>
+
+<rect x="596" y="432" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="632" y="441" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">SUFFICIENT</text>
+
+<rect x="228" y="494" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="256" y="503" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">LIMITED</text>
+
+<!-- Nodes -->
+<!-- Start (oval) -->
+<rect x="60" y="40" width="320" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="220" y="64" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Service Networking Selection</text>
+<text x="220" y="78" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">start</text>
+
+<!-- Q1 diamond -->
+<polygon points="220,120 280,152 220,188 160,152" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="156" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Platform?</text>
+
+<!-- Q2 diamond -->
+<polygon points="220,220 280,252 220,288 160,252" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="248" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload</text>
+<text x="220" y="262" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Type?</text>
+
+<!-- Q3 diamond -->
+<polygon points="220,320 280,352 220,388 160,352" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="348" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Feature</text>
+<text x="220" y="362" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Requirements?</text>
+
+<!-- Q4 diamond -->
+<polygon points="220,420 280,452 220,488 160,452" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="220" y="448" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Operational</text>
+<text x="220" y="462" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Resources?</text>
+
+<!-- Istio outcome (merged, focal) -->
+<rect x="628" y="216" width="160" height="48" rx="24" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="708" y="240" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Istio</text>
+<text x="708" y="254" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">recommended</text>
+
+<!-- VPC Lattice outcome (merged) -->
+<rect x="388" y="496" width="160" height="48" rx="24" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="468" y="520" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VPC Lattice</text>
+<text x="468" y="534" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">recommended</text>
+
+<!-- Legend -->
+<line x1="40" y1="568" x2="920" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="40" y="580" width="24" height="12" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="72" y="589" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Start / outcome</text>
+<polygon points="232,580 244,586 232,592 220,586" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="256" y="589" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Decision</text>
+<rect x="380" y="580" width="24" height="12" rx="12" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="412" y="589" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Multi-cloud path (focal)</text>
+</svg>

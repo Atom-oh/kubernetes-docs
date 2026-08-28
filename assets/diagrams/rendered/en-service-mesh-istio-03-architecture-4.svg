@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-03-architecture-4-title en-service-mesh-istio-03-architecture-4-desc">
+<title id="en-service-mesh-istio-03-architecture-4-title">Sidecar Injection Process</title>
+<desc id="en-service-mesh-istio-03-architecture-4-desc">Flowchart showing a Deployment's pod creation call to the Kubernetes API triggering a mutating webhook that asks Istio's sidecar injector to modify the pod spec, resulting in a pod with an istio-init container and an istio-proxy sidecar alongside the application container.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+  
+</defs>
+<rect x="20" y="56" width="180" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="36" y="60" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="56.0" y="69" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">USER</text>
+<rect x="240" y="56" width="440" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="256" y="60" width="76" height="12" rx="2" fill="#ffffff"/>
+<text x="294.0" y="69" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">KUBERNETES</text>
+<rect x="730" y="56" width="210" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="746" y="60" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="769.0" y="69" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">ISTIO</text>
+<rect x="240" y="340" width="650" height="180" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="256" y="344" width="82" height="12" rx="2" fill="#ffffff"/>
+<text x="297.0" y="353" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">CREATED POD</text>
+<line x1="180" y1="124.0" x2="260" y2="124.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="196.1" y="104.0" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="220.0" y="113.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">1. POST</text>
+<line x1="410" y1="114" x2="500" y2="114" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="424" y="94" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="424" y="103" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">2. CALL</text>
+<line x1="660" y1="114" x2="750" y2="114" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="664.9" y="94" width="80.2" height="12" rx="2" fill="#ffffff"/>
+<text x="705.0" y="103" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">3. INJECT REQ</text>
+<line x1="750" y1="136" x2="660" y2="136" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="670.3" y="138" width="69.4" height="12" rx="2" fill="#ffffff"/>
+<text x="705.0" y="147" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">4. MOD SPEC</text>
+<line x1="500" y1="136" x2="410" y2="136" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="425.7" y="138" width="58.6" height="12" rx="2" fill="#ffffff"/>
+<text x="455.0" y="147" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">5. RETURN</text>
+<line x1="335.0" y1="152" x2="335.0" y2="380" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="349.0" y="260.0" width="80.2" height="12" rx="2" fill="#ffffff"/>
+<text x="349.0" y="269.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">6. CREATE POD</text>
+<line x1="405" y1="408.0" x2="470" y2="408.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="413.6" y="388.0" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="437.5" y="397.0" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">7. DONE</text>
+<path d="M 335.0,436 V 472 Q 335.0,480 343.0,480 H 772.0 Q 780.0,480 780.0,472 V 436" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="836.0" y="474" width="47.800000000000004" height="12" rx="2" fill="#ffffff"/>
+<text x="836.0" y="483" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.05em">7. DONE</text>
+<rect x="40" y="96" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="40" y="96" width="140" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<rect x="48" y="102" width="28" height="12" rx="2" fill="transparent" stroke="#7D8998" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="62" y="111" fill="#7D8998" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">USR</text>
+<text x="110.0" y="119.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Create</text>
+<text x="110.0" y="133.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Deployment</text>
+<rect x="260" y="96" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="260" y="96" width="150" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="268" y="102" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="282" y="111" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="335.0" y="126.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">API Server</text>
+<rect x="500" y="96" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="500" y="96" width="160" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="508" y="102" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.30)" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="522" y="111" fill="rgba(35,47,62,0.30)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">K8S</text>
+<text x="580.0" y="119.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Mutating</text>
+<text x="580.0" y="133.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Webhook</text>
+<rect x="750" y="96" width="170" height="56" rx="6" fill="#ffffff"/>
+<rect x="750" y="96" width="170" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="758" y="102" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="772" y="111" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">IST</text>
+<text x="835.0" y="119.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Sidecar</text>
+<text x="835.0" y="133.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Injector</text>
+<rect x="265" y="380" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="265" y="380" width="140" height="56" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="273" y="386" width="28" height="12" rx="2" fill="transparent" stroke="#545B64" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="287" y="395" fill="#545B64" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">INI</text>
+<text x="335.0" y="404.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">istio-init</text>
+<text x="335.0" y="426.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">init container</text>
+<rect x="470" y="380" width="140" height="56" rx="6" fill="#ffffff"/>
+<rect x="470" y="380" width="140" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="478" y="386" width="28" height="12" rx="2" fill="transparent" stroke="#232F3E" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="492" y="395" fill="#232F3E" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+<text x="540.0" y="404.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Application</text>
+<text x="540.0" y="426.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">app container</text>
+<rect x="690" y="380" width="180" height="56" rx="6" fill="#ffffff"/>
+<rect x="690" y="380" width="180" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="698" y="386" width="28" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-opacity="0.5" stroke-width="0.8"/>
+<text x="712" y="395" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SDC</text>
+<text x="780.0" y="404.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">istio-proxy</text>
+<text x="780.0" y="426.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">sidecar container</text>
+</svg>

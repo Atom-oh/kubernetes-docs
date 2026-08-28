@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="se-cmp-title se-cmp-desc">
+  <title id="se-cmp-title">ServiceEntry before/after comparison</title>
+  <desc id="se-cmp-desc">Without a ServiceEntry, mesh-internal traffic to an external API is unmanaged and unmonitored; with a ServiceEntry registering the external API, the same traffic gains monitoring, policy enforcement, and a circuit breaker.</desc>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <!-- Zones -->
+  <rect x="40" y="72" width="400" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="76" width="220" height="12" rx="2" fill="#ffffff"/>
+  <text x="60" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">WITHOUT SERVICEENTRY</text>
+
+  <rect x="520" y="72" width="400" height="480" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="536" y="76" width="188" height="12" rx="2" fill="#ffffff"/>
+  <text x="540" y="85" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.14em">WITH SERVICEENTRY</text>
+
+  <!-- ===== LEFT: without ===== -->
+  <!-- connector: A1 bottom -> E1 top, straight vertical, dashed muted -->
+  <path d="M 240,204 V 340" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="204" y="262" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="240" y="271" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UNMANAGED</text>
+
+  <!-- A1: Mesh Internal Service -->
+  <rect x="140" y="140" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="140" y="140" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="240" y="167" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mesh Internal Service</text>
+  <text x="240" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar-proxy</text>
+
+  <!-- E1: External API (unknown / uncontrolled) -->
+  <rect x="140" y="340" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)"/>
+  <rect x="140" y="340" width="200" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="240" y="367" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">External API</text>
+  <text x="240" y="384" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">unregistered host</text>
+
+  <!-- capability card, without -->
+  <rect x="140" y="428" width="200" height="104" rx="6" fill="none" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+  <text x="164" y="448" fill="#DD344C" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&#10007;</text>
+  <text x="180" y="448" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Monitoring</text>
+  <text x="164" y="472" fill="#DD344C" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&#10007;</text>
+  <text x="180" y="472" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Policy enforcement</text>
+  <text x="164" y="496" fill="#DD344C" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&#10007;</text>
+  <text x="180" y="496" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Circuit breaker</text>
+
+  <!-- ===== RIGHT: with ===== -->
+  <path d="M 720,204 V 340" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="676" y="262" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="720" y="271" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MANAGED</text>
+
+  <!-- A2: Mesh Internal Service -->
+  <rect x="620" y="140" width="200" height="64" rx="6" fill="#ffffff"/>
+  <rect x="620" y="140" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="720" y="167" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mesh Internal Service</text>
+  <text x="720" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">sidecar-proxy</text>
+
+  <!-- E2: External API · ServiceEntry (focal) -->
+  <rect x="620" y="340" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)"/>
+  <rect x="620" y="340" width="200" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="720" y="364" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">External API</text>
+  <text x="720" y="380" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">registered via ServiceEntry</text>
+
+  <!-- capability card, with -->
+  <rect x="620" y="428" width="200" height="104" rx="6" fill="none" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+  <text x="644" y="448" fill="#EC7211" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&#10003;</text>
+  <text x="660" y="448" fill="#232F3E" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Monitoring</text>
+  <text x="644" y="472" fill="#EC7211" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&#10003;</text>
+  <text x="660" y="472" fill="#232F3E" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Policy enforcement</text>
+  <text x="644" y="496" fill="#EC7211" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">&#10003;</text>
+  <text x="660" y="496" fill="#232F3E" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Circuit breaker</text>
+</svg>

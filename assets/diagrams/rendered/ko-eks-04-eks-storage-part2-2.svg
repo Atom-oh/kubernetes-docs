@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="perf-title perf-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+  <title id="perf-title">Mountpoint for S3 성능 특성</title>
+  <desc id="perf-desc">Mountpoint for S3가 순차 읽기, 대용량 파일, 스트리밍 읽기에서는 높은 성능을 내지만 랜덤 쓰기, 작은 파일 다수, 파일 추가 쓰기에서는 제한적임을 대비해 보여주는 다이어그램</desc>
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="44" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.18em">MOUNTPOINT FOR AMAZON S3</text>
+  <text x="40" y="74" font-size="28" font-weight="700" fill="#232F3E">S3 마운트의 성능 특성</text>
+  <text x="40" y="98" font-size="14" fill="#545B64" font-style="italic">순차·대용량 읽기 워크로드에 최적화되어 있으며, 랜덤 쓰기 및 소규모 파일 패턴은 제한됩니다.</text>
+
+  <!-- Optimized zone -->
+  <rect x="60" y="140" width="400" height="380" rx="8" fill="rgba(35,164,0,0.04)" stroke="rgba(0,153,0,0.30)" stroke-width="0.8"/>
+  <rect x="76" y="144" width="128" height="14" rx="2" fill="#ffffff"/>
+  <text x="140" y="154" fill="#009900" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">최적화된 작업</text>
+
+  <!-- Limited zone -->
+  <rect x="500" y="140" width="400" height="380" rx="8" fill="rgba(221,52,76,0.04)" stroke="rgba(221,52,76,0.35)" stroke-width="0.8"/>
+  <rect x="516" y="144" width="128" height="14" rx="2" fill="#ffffff"/>
+  <text x="580" y="154" fill="#DD344C" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.14em">제한된 작업</text>
+
+  <!-- Optimized nodes (3) -->
+  <rect x="92" y="184" width="336" height="88" rx="6" fill="#ffffff" stroke="#009900" stroke-width="1"/>
+  <rect x="100" y="192" width="18" height="18" rx="9" fill="rgba(0,153,0,0.12)"/>
+  <text x="109" y="205" text-anchor="middle" font-size="11" fill="#009900">✓</text>
+  <text x="128" y="208" font-size="13" font-weight="600" fill="#232F3E">순차 읽기</text>
+  <text x="128" y="228" class="mono" font-size="9" fill="#545B64">멀티파트 다운로드 · 높은 처리량</text>
+
+  <rect x="92" y="284" width="336" height="88" rx="6" fill="#ffffff" stroke="#009900" stroke-width="1"/>
+  <rect x="100" y="292" width="18" height="18" rx="9" fill="rgba(0,153,0,0.12)"/>
+  <text x="109" y="305" text-anchor="middle" font-size="11" fill="#009900">✓</text>
+  <text x="128" y="308" font-size="13" font-weight="600" fill="#232F3E">대용량 파일</text>
+  <text x="128" y="328" class="mono" font-size="9" fill="#545B64">효율적인 전송</text>
+
+  <rect x="92" y="384" width="336" height="88" rx="6" fill="#ffffff" stroke="#009900" stroke-width="1"/>
+  <rect x="100" y="392" width="18" height="18" rx="9" fill="rgba(0,153,0,0.12)"/>
+  <text x="109" y="405" text-anchor="middle" font-size="11" fill="#009900">✓</text>
+  <text x="128" y="408" font-size="13" font-weight="600" fill="#232F3E">스트리밍 읽기</text>
+  <text x="128" y="428" class="mono" font-size="9" fill="#545B64">최적화된 순차 액세스 패턴</text>
+
+  <!-- Limited nodes (3) -->
+  <rect x="532" y="184" width="336" height="88" rx="6" fill="#ffffff" stroke="#DD344C" stroke-width="1"/>
+  <rect x="540" y="192" width="18" height="18" rx="9" fill="rgba(221,52,76,0.12)"/>
+  <text x="549" y="205" text-anchor="middle" font-size="11" fill="#DD344C">✕</text>
+  <text x="568" y="208" font-size="13" font-weight="600" fill="#232F3E">랜덤 쓰기</text>
+  <text x="568" y="228" class="mono" font-size="9" fill="#545B64">지원 안 됨 · S3 객체 특성상 불가</text>
+
+  <rect x="532" y="284" width="336" height="88" rx="6" fill="#ffffff" stroke="#DD344C" stroke-width="1"/>
+  <rect x="540" y="292" width="18" height="18" rx="9" fill="rgba(221,52,76,0.12)"/>
+  <text x="549" y="305" text-anchor="middle" font-size="11" fill="#DD344C">△</text>
+  <text x="568" y="308" font-size="13" font-weight="600" fill="#232F3E">작은 파일 많음</text>
+  <text x="568" y="328" class="mono" font-size="9" fill="#545B64">요청 수 증가로 오버헤드 발생</text>
+
+  <rect x="532" y="384" width="336" height="88" rx="6" fill="#ffffff" stroke="#DD344C" stroke-width="1"/>
+  <rect x="540" y="392" width="18" height="18" rx="9" fill="rgba(221,52,76,0.12)"/>
+  <text x="549" y="405" text-anchor="middle" font-size="11" fill="#DD344C">✕</text>
+  <text x="568" y="408" font-size="13" font-weight="600" fill="#232F3E">파일 추가 쓰기</text>
+  <text x="568" y="428" class="mono" font-size="9" fill="#545B64">지원 안 됨 · 덮어쓰기만 가능</text>
+
+  <!-- Legend -->
+  <line x1="60" y1="544" x2="900" y2="544" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="60" y="562" class="mono" font-size="8" fill="#545B64" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="176" cy="558" r="6" fill="rgba(0,153,0,0.12)"/>
+  <text x="184" y="562" text-anchor="middle" font-size="9" fill="#009900">✓</text>
+  <text x="196" y="562" font-size="11" fill="#545B64">높은 처리량으로 지원</text>
+  <circle cx="416" cy="558" r="6" fill="rgba(221,52,76,0.12)"/>
+  <text x="424" y="562" text-anchor="middle" font-size="9" fill="#DD344C">✕/△</text>
+  <text x="452" y="562" font-size="11" fill="#545B64">미지원 또는 오버헤드 발생</text>
+</svg>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="spire-fed-title spire-fed-desc">
+<title id="spire-fed-title">Federating two trust domains</title>
+<desc id="spire-fed-desc">Architecture diagram showing two independent SPIRE trust domains exchanging trust bundles through published endpoints, so a workload in one domain can establish mutual TLS directly with a workload in the other.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Zones ===== -->
+<rect x="40" y="140" width="280" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="112" y="144" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="180" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TRUST DOMAIN A</text>
+
+<rect x="640" y="140" width="280" height="360" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="712" y="144" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="780" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">TRUST DOMAIN B</text>
+
+<rect x="340" y="140" width="280" height="100" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="424" y="144" width="112" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">BUNDLE EXCHANGE</text>
+
+<!-- ===== Arrows (drawn before nodes) ===== -->
+
+<!-- Local: agent <-> server, workload <-> agent (straight, shared x) -->
+<line x1="180" y1="300" x2="180" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="180" y1="420" x2="180" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="300" x2="780" y2="220" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="780" y1="420" x2="780" y2="356" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Publish: server -> own endpoint (straight, shared y) -->
+<line x1="280" y1="192" x2="364" y2="192" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="680" y1="192" x2="604" y2="192" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Fetch: server A -> endpoint B, routed below both endpoints -->
+<path d="M250,220 V228 Q250,236 258,236 H540 Q548,236 548,228 V220" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<!-- Fetch: server B -> endpoint A, routed above the zone in open canvas -->
+<path d="M710,164 V126 Q710,118 702,118 H428 Q420,118 420,126 V164" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+<!-- Cross-domain mTLS (focal, bidirectional) -->
+<line x1="280" y1="448" x2="680" y2="448" stroke="#EC7211" stroke-width="1.6" marker-start="url(#arrow-accent-rev)" marker-end="url(#arrow-accent)"/>
+
+<!-- ===== Arrow labels ===== -->
+<rect x="298" y="176" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="322" y="185" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PUBLISH</text>
+
+<rect x="618" y="176" width="48" height="12" rx="2" fill="#ffffff"/>
+<text x="642" y="185" fill="#0972D3" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PUBLISH</text>
+
+<rect x="376" y="240" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="402" y="249" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FETCH B</text>
+
+<rect x="536" y="102" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="562" y="111" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">FETCH A</text>
+
+<rect x="452" y="432" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="441" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MTLS</text>
+
+<!-- ===== Nodes ===== -->
+
+<!-- SERVER_A (backend) -->
+<rect x="80" y="164" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="164" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="88" y="172" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="102" y="181" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="180" y="198" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Server A</text>
+<text x="180" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">us-east.example.com</text>
+
+<!-- AGENT_A (backend) -->
+<rect x="80" y="300" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="300" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="88" y="308" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="102" y="317" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AGT</text>
+<text x="180" y="334" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Agent A</text>
+<text x="180" y="348" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node attestor</text>
+
+<!-- WORKLOAD_A (focal) -->
+<rect x="80" y="420" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="420" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="88" y="428" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="102" y="437" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="180" y="454" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload A</text>
+<text x="180" y="468" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mTLS client/server</text>
+
+<!-- SERVER_B (backend) -->
+<rect x="680" y="164" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="164" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="688" y="172" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="702" y="181" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="780" y="198" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Server B</text>
+<text x="780" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">eu-west.example.com</text>
+
+<!-- AGENT_B (backend) -->
+<rect x="680" y="300" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="300" width="200" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="688" y="308" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="702" y="317" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">AGT</text>
+<text x="780" y="334" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">SPIRE Agent B</text>
+<text x="780" y="348" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">node attestor</text>
+
+<!-- WORKLOAD_B (focal) -->
+<rect x="680" y="420" width="200" height="56" rx="6" fill="#ffffff"/>
+<rect x="680" y="420" width="200" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<rect x="688" y="428" width="28" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+<text x="702" y="437" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="780" y="454" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Workload B</text>
+<text x="780" y="468" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mTLS client/server</text>
+
+<!-- ENDPOINT_A (external / link) -->
+<rect x="364" y="164" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="364" y="164" width="112" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="372" y="172" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+<text x="386" y="181" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="420" y="198" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint A</text>
+<text x="420" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">:8443/bundle</text>
+
+<!-- ENDPOINT_B (external / link) -->
+<rect x="492" y="164" width="112" height="56" rx="6" fill="#ffffff"/>
+<rect x="492" y="164" width="112" height="56" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<rect x="500" y="172" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.22)" stroke-width="0.8"/>
+<text x="514" y="181" fill="#545B64" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+<text x="548" y="198" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint B</text>
+<text x="548" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">:8443/bundle</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="512" x2="920" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="528" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+<rect x="40" y="544" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="60" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Focal workload</text>
+
+<rect x="190" y="544" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="210" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Server / agent</text>
+
+<rect x="330" y="544" width="14" height="10" rx="2" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="350" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Bundle endpoint</text>
+
+<line x1="470" y1="550" x2="498" y2="550" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="506" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Publish bundle</text>
+
+<line x1="616" y1="550" x2="644" y2="550" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<text x="652" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Fetch peer bundle</text>
+
+<line x1="772" y1="550" x2="800" y2="550" stroke="#EC7211" stroke-width="1.6" marker-start="url(#arrow-accent-rev)" marker-end="url(#arrow-accent)"/>
+<text x="808" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cross-domain mTLS</text>
+
+</svg>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vm-cluster-title vm-cluster-desc">
+    <title id="vm-cluster-title">VictoriaMetrics cluster-mode data flow</title>
+    <desc id="vm-cluster-desc">vmagent and Prometheus write into vminsert, which routes into the vmstorage cluster; Grafana and vmalert query vmselect, which reads from the same vmstorage cluster, making vmstorage the shared hub for both the write and read paths.</desc>
+    <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- zone: write path -->
+    <rect x="40" y="24" width="880" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="28" width="88" height="16" rx="2" fill="#ffffff"/>
+    <text x="100" y="40" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WRITE PATH</text>
+
+    <!-- zone: read path -->
+    <rect x="40" y="464" width="880" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="56" y="468" width="84" height="16" rx="2" fill="#ffffff"/>
+    <text x="98" y="480" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">READ PATH</text>
+
+    <!-- connectors, drawn before nodes -->
+    <!-- vmagent -> vminsert -->
+    <path d="M340,140 V180 Q340,188 348,188 H392" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- prometheus -> vminsert -->
+    <path d="M620,140 V180 Q620,188 612,188 H568" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- vminsert -> vmstorage -->
+    <line x1="480" y1="216" x2="480" y2="256" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="440" y="224" width="80" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="233" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">3 REPLICAS</text>
+    <!-- vmselect -> vmstorage (query, arrow points up into storage) -->
+    <line x1="480" y1="384" x2="480" y2="344" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="452" y="352" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="361" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">QUERY</text>
+    <!-- grafana -> vmselect -->
+    <path d="M340,460 V420 Q340,412 348,412 H392" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <!-- vmalert -> vmselect -->
+    <path d="M620,460 V420 Q620,412 612,412 H568" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- write path nodes -->
+    <rect x="260" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="260" y="60" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmagent</text>
+    <text x="340" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">scrape + forward</text>
+
+    <rect x="540" y="60" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="540" y="60" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="620" y="88" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Prometheus</text>
+    <text x="620" y="102" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">remote_write</text>
+
+    <!-- vminsert -->
+    <rect x="392" y="188" width="176" height="56" rx="6" fill="#ffffff"/>
+    <rect x="392" y="188" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="216" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vminsert</text>
+    <text x="480" y="230" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">routing · x3</text>
+
+    <!-- vmstorage (focal hub) -->
+    <rect x="376" y="256" width="208" height="88" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="376" y="256" width="208" height="88" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="292" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmstorage</text>
+    <text x="480" y="306" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">storage · x3, anti-affinity</text>
+    <text x="480" y="320" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">retentionPeriod: 1y</text>
+    <text x="480" y="334" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">replicationFactor: 2</text>
+
+    <!-- vmselect -->
+    <rect x="392" y="384" width="176" height="56" rx="6" fill="#ffffff"/>
+    <rect x="392" y="384" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmselect</text>
+    <text x="480" y="426" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">query · x3</text>
+
+    <!-- read path nodes -->
+    <rect x="260" y="484" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="260" y="484" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="340" y="512" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Grafana</text>
+    <text x="340" y="526" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">dashboards</text>
+
+    <rect x="540" y="484" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="540" y="484" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="620" y="512" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmalert</text>
+    <text x="620" y="526" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">alert rules</text>
+  </svg>

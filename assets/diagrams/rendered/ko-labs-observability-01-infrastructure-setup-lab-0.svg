@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="obs-infra-title obs-infra-desc">
+  <title id="obs-infra-title">관측성 랩 인프라 아키텍처</title>
+  <desc id="obs-infra-desc">관리형 클러스터가 ArgoCD로 서비스 클러스터의 워크로드를 배포하고, 두 클러스터는 각각 AWS 관리형 관측성 서비스와 데이터·메시징 서비스를 사용하는 구조를 보여준다.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <text x="40" y="32" class="mono" font-size="8" font-weight="500" fill="#7D8998" letter-spacing="0.18em">ARCHITECTURE</text>
+  <text x="40" y="56" font-size="20" font-weight="700" fill="#232F3E">관측성 실습 인프라 구성</text>
+
+  <!-- Zones (bg, painted before arrows/nodes) -->
+  <rect x="40" y="96" width="380" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="52" y="100" width="164" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="134" y="109" text-anchor="middle" class="mono" font-size="7" fill="rgba(35,47,62,0.40)" letter-spacing="0.14em">EKS MANAGED CLUSTER</text>
+
+  <rect x="540" y="96" width="380" height="224" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="552" y="100" width="160" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="632" y="109" text-anchor="middle" class="mono" font-size="7" fill="rgba(35,47,62,0.40)" letter-spacing="0.14em">EKS SERVICE CLUSTER</text>
+
+  <rect x="40" y="360" width="880" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="52" y="364" width="168" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="136" y="373" text-anchor="middle" class="mono" font-size="7" fill="rgba(35,47,62,0.40)" letter-spacing="0.14em">AWS MANAGED SERVICES</text>
+
+  <!-- Arrows (behind nodes) -->
+  <!-- ArgoCD -> Karpenter (horizontal, same y) -->
+  <line x1="404" y1="216" x2="556" y2="216" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="452" y="196" width="56" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="480" y="205" text-anchor="middle" class="mono" font-size="8" fill="#EC7211" letter-spacing="0.06em">GITOPS</text>
+
+  <!-- Observability Stack -> AWS Observability summary (vertical) -->
+  <line x1="232" y1="304" x2="232" y2="392" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="196" y="336" width="72" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="232" y="345" text-anchor="middle" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.06em">METRICS</text>
+
+  <!-- MSA Apps -> AWS Data & Messaging summary (vertical) -->
+  <line x1="732" y1="304" x2="732" y2="392" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="704" y="336" width="56" height="12" rx="2" fill="#FFFFFF"/>
+  <text x="732" y="345" text-anchor="middle" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.06em">DATA</text>
+
+  <!-- === Managed Cluster nodes === -->
+  <!-- Node Group -->
+  <rect x="56" y="128" width="348" height="48" rx="6" fill="#FFFFFF"/>
+  <rect x="56" y="128" width="348" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="230" y="150" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Node Group</text>
+  <text x="230" y="164" text-anchor="middle" class="mono" font-size="9" fill="#545B64">3x m5.large</text>
+
+  <!-- ArgoCD (focal) -->
+  <rect x="56" y="192" width="348" height="48" rx="6" fill="#FFFFFF"/>
+  <rect x="56" y="192" width="348" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="230" y="214" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">ArgoCD</text>
+  <text x="230" y="228" text-anchor="middle" class="mono" font-size="9" fill="#545B64">GitOps CD</text>
+
+  <!-- Observability Stack -->
+  <rect x="56" y="256" width="348" height="48" rx="6" fill="#FFFFFF"/>
+  <rect x="56" y="256" width="348" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="230" y="278" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Observability Stack</text>
+  <text x="230" y="292" text-anchor="middle" class="mono" font-size="9" fill="#545B64">on-cluster stack</text>
+
+  <!-- === Service Cluster nodes === -->
+  <!-- Node Group -->
+  <rect x="556" y="128" width="348" height="48" rx="6" fill="#FFFFFF"/>
+  <rect x="556" y="128" width="348" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="730" y="150" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Node Group</text>
+  <text x="730" y="164" text-anchor="middle" class="mono" font-size="9" fill="#545B64">3x m5.large</text>
+
+  <!-- Karpenter -->
+  <rect x="556" y="192" width="348" height="48" rx="6" fill="#FFFFFF"/>
+  <rect x="556" y="192" width="348" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="730" y="214" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Karpenter</text>
+  <text x="730" y="228" text-anchor="middle" class="mono" font-size="9" fill="#545B64">autoscaler</text>
+
+  <!-- MSA Apps -->
+  <rect x="556" y="256" width="348" height="48" rx="6" fill="#FFFFFF"/>
+  <rect x="556" y="256" width="348" height="48" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="1"/>
+  <text x="730" y="278" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">MSA Apps</text>
+  <text x="730" y="292" text-anchor="middle" class="mono" font-size="9" fill="#545B64">microservices</text>
+
+  <!-- === AWS Managed Services (collapsed summary nodes) === -->
+  <rect x="56" y="392" width="412" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="56" y="392" width="412" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="262" y="416" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Observability</text>
+  <text x="262" y="432" text-anchor="middle" class="mono" font-size="9" fill="#545B64">AMP · AMG · OpenSearch</text>
+
+  <rect x="492" y="392" width="412" height="64" rx="6" fill="#FFFFFF"/>
+  <rect x="492" y="392" width="412" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+  <text x="698" y="416" text-anchor="middle" font-size="12" font-weight="600" fill="#232F3E">Data &amp; Messaging</text>
+  <text x="698" y="432" text-anchor="middle" class="mono" font-size="9" fill="#545B64">Aurora · SQS · SNS · MWAA</text>
+</svg>

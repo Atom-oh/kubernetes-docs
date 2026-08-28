@@ -24,32 +24,7 @@ In microservice architecture, numerous services depend on each other, and **a si
 
 Chaos Engineering, which originated from Netflix's Chaos Monkey, aims to **experience failures proactively in production environments** and discover system weaknesses.
 
-```mermaid
-flowchart TB
-    subgraph Traditional["Traditional Testing"]
-        DevTest[Development<br/>Environment Testing]
-        StagingTest[Staging<br/>Environment Testing]
-        ProdIssue[Production<br/>Failure Occurs]
-    end
-
-    subgraph ChaosEng["Chaos Engineering"]
-        ContTest[Continuous<br/>Fault Injection]
-        Discover[Discover<br/>Weaknesses]
-        Fix[Proactive<br/>Fixes]
-        Resilient[Resilient<br/>System]
-    end
-
-    DevTest --> StagingTest --> ProdIssue
-    ContTest --> Discover --> Fix --> Resilient
-
-    %% Style definitions
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef chaos fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class DevTest,StagingTest,ProdIssue traditional;
-    class ContTest,Discover,Fix,Resilient chaos;
-```
+![Comparison flowchart showing how traditional testing only surfaces failures in production, while chaos engineering continuously injects faults to discover weaknesses and build a resilient system.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-0.png)
 
 #### 2. **Reproducing Real Production Scenarios**
 
@@ -67,25 +42,7 @@ In production environments, the following problems can occur:
 
 Without Fault Injection, it's **difficult to confirm whether Circuit Breaker and Timeout settings actually work**.
 
-```mermaid
-flowchart LR
-    Service[Service A]
-    Dep[Dependent Service B<br/>Fault Injection]
-
-    Service -->|1. Request| Dep
-    Dep -->|2. Delay or Failure| Service
-    Service -->|3. Verify Circuit Breaker<br/>Activation| Monitor[Monitoring]
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef monitor fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Service service;
-    class Dep fault;
-    class Monitor monitor;
-```
+![Flowchart showing a service sending a request into a fault-injected dependency, receiving delay or failure back, and reporting to monitoring to confirm the circuit breaker activated.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-1.png)
 
 #### 4. **Validating Safe Deployments**
 
@@ -314,32 +271,7 @@ spec:
 
 ## Fault Injection Overview
 
-```mermaid
-flowchart LR
-    Client[Client]
-
-    subgraph FaultInjection["Fault Injection"]
-        Delay[Delay<br/>3 seconds]
-        Abort[Abort<br/>HTTP 503]
-    end
-
-    Service[Service]
-
-    Client --> Delay
-    Client --> Abort
-    Delay -.->|Slow Response| Service
-    Abort -->|Error| Client
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Client client;
-    class Delay,Abort fault;
-    class Service service;
-```
+![Flowchart showing a client's request split into a delay path that reaches the service slowly and an abort path that returns an immediate error, both defined inside a fault injection zone.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-2.png)
 
 ## Delay Injection
 
@@ -609,28 +541,7 @@ spec:
 
 **Situation**: Verify if one service failure propagates to other services
 
-```mermaid
-flowchart LR
-    Frontend[Frontend]
-    OrderService[Order Service]
-    PaymentService[Payment Service<br/>Fault Injection]
-    InventoryService[Inventory Service]
-
-    Frontend --> OrderService
-    OrderService --> PaymentService
-    OrderService --> InventoryService
-
-    PaymentService -->|30% Failure| OrderService
-    OrderService -->|Circuit Breaker| Frontend
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fault fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Frontend,OrderService,InventoryService service;
-    class PaymentService fault;
-```
+![Flowchart showing a request path from frontend through order service to a fault-injected payment service, where a 30% failure rate trips a circuit breaker that protects the frontend and lets inventory service keep operating normally.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-3.png)
 
 ```yaml
 # Inject faults into payment service
@@ -776,30 +687,7 @@ spec:
 
 Gradually increase fault rate to find system limits:
 
-```mermaid
-flowchart LR
-    Stage1[Stage 1<br/>1-5% Faults]
-    Stage2[Stage 2<br/>5-10% Faults]
-    Stage3[Stage 3<br/>10-20% Faults]
-    Stage4[Stage 4<br/>20-50% Faults]
-
-    Stage1 -->|Monitoring OK| Stage2
-    Stage2 -->|Monitoring OK| Stage3
-    Stage3 -->|Monitoring OK| Stage4
-
-    Stage1 -.->|Issue Found| Fix[Fix and Improve]
-    Stage2 -.->|Issue Found| Fix
-    Stage3 -.->|Issue Found| Fix
-    Stage4 -.->|Issue Found| Fix
-
-    %% Style definitions
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef fix fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Stage1,Stage2,Stage3,Stage4 stage;
-    class Fix fix;
-```
+![Flowchart showing four escalating fault-injection stages, each proceeding to the next once monitoring is clean, and each rolling back to a shared fix-and-improve step whenever an issue is found.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-4.png)
 
 **Step-by-step execution**:
 

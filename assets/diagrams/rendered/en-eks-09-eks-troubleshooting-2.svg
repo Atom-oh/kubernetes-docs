@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-eks-09-eks-troubleshooting-2-title en-eks-09-eks-troubleshooting-2-desc">
+<title id="en-eks-09-eks-troubleshooting-2-title">EKS networking issues</title>
+<desc id="en-eks-09-eks-troubleshooting-2-desc">Tree diagram showing pod-to-pod communication, service access, and load balancer issues each branching into their most common root causes, alongside DNS and VPC CNI issue categories.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 480.0 84 L 480.0 174.33333333333331" fill="none" stroke="#545B64" stroke-width="1"/>
+<path d="M 120.0 174.33333333333331 L 840.0 174.33333333333331" fill="none" stroke="#545B64" stroke-width="1"/>
+<path d="M 120.0 174.33333333333331 L 120.0 256.66666666666663" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 300.0 174.33333333333331 L 300.0 256.66666666666663" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 480.0 174.33333333333331 L 480.0 256.66666666666663" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 660.0 174.33333333333331 L 660.0 256.66666666666663" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 840.0 174.33333333333331 L 840.0 256.66666666666663" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 120.0 328.66666666666663 L 120.0 418.99999999999994" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 300.0 328.66666666666663 L 300.0 418.99999999999994" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 480.0 328.66666666666663 L 480.0 418.99999999999994" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="372.0" y="40" width="216" height="44" rx="6" fill="#ffffff"/>
+<rect x="372.0" y="40" width="216" height="44" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<rect x="380.0" y="46" width="32" height="12" rx="2" fill="transparent" stroke="#EC7211" stroke-width="0.8"/>
+<text x="396.0" y="55" fill="#EC7211" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ROOT</text>
+<text x="480.0" y="71" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Networking Issues</text>
+<rect x="40" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff"/>
+<rect x="40" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="48" y="262.66666666666663" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="61.0" y="271.66666666666663" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">POD</text>
+<text x="120.0" y="296.66666666666663" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Pod-to-Pod</text>
+<text x="120.0" y="311.66666666666663" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Communication Issues</text>
+<rect x="220" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff"/>
+<rect x="220" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="228" y="262.66666666666663" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="241.0" y="271.66666666666663" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SVC</text>
+<text x="300.0" y="296.16666666666663" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Service Access Issues</text>
+<rect x="400" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff"/>
+<rect x="400" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="408" y="262.66666666666663" width="24" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="420.0" y="271.66666666666663" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">LB</text>
+<text x="480.0" y="296.16666666666663" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Load Balancer Issues</text>
+<rect x="580" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff"/>
+<rect x="580" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="588" y="262.66666666666663" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="601.0" y="271.66666666666663" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DNS</text>
+<text x="660.0" y="296.16666666666663" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">DNS Issues</text>
+<rect x="760" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff"/>
+<rect x="760" y="256.66666666666663" width="160" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="768" y="262.66666666666663" width="26" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.55)" stroke-width="0.8"/>
+<text x="781.0" y="271.66666666666663" fill="rgba(35,47,62,0.55)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CNI</text>
+<text x="840.0" y="296.16666666666663" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC CNI Issues</text>
+<rect x="40" y="418.99999999999994" width="160" height="109" rx="6" fill="#ffffff"/>
+<rect x="40" y="418.99999999999994" width="160" height="109" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="52" y="436.99999999999994" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.1em">COMMON CAUSES</text>
+<line x1="52" y1="442.99999999999994" x2="188" y2="442.99999999999994" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="54" y="456.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="70" y="456.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Network Policies</text>
+<text x="54" y="471.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="70" y="471.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Security Group Rules</text>
+<text x="54" y="486.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="70" y="486.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">CNI Plugin Issues</text>
+<text x="54" y="501.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="70" y="501.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Pod CIDR Conflict</text>
+<text x="54" y="517.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="70" y="517.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">MTU Mismatch</text>
+<rect x="220" y="418.99999999999994" width="160" height="109" rx="6" fill="#ffffff"/>
+<rect x="220" y="418.99999999999994" width="160" height="109" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="232" y="436.99999999999994" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.1em">COMMON CAUSES</text>
+<line x1="232" y1="442.99999999999994" x2="368" y2="442.99999999999994" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="234" y="456.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="250" y="456.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service Selector Mismatch</text>
+<text x="234" y="471.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="250" y="471.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Endpoint Issues</text>
+<text x="234" y="486.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="250" y="486.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Pod Status Issues</text>
+<text x="234" y="501.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="250" y="501.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service Port Mismatch</text>
+<text x="234" y="517.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="250" y="517.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">kube-proxy Issues</text>
+<rect x="400" y="418.99999999999994" width="160" height="109" rx="6" fill="#ffffff"/>
+<rect x="400" y="418.99999999999994" width="160" height="109" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="412" y="436.99999999999994" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.1em">COMMON CAUSES</text>
+<line x1="412" y1="442.99999999999994" x2="548" y2="442.99999999999994" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="414" y="456.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="430" y="456.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Missing Subnet Tags</text>
+<text x="414" y="471.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="430" y="471.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Security Group Rule Restrictions</text>
+<text x="414" y="486.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="430" y="486.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Health Check Failure</text>
+<text x="414" y="501.99999999999994" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="430" y="501.99999999999994" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Service Annotation Issues</text>
+<text x="414" y="517.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace">•</text>
+<text x="430" y="517.0" fill="#232F3E" font-size="10" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Quota Exceeded</text>
+<line x1="40" y1="536" x2="920" y2="536" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="110" y="546" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="130" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Root topic</text>
+<rect x="230" y="546" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="250" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Issue category</text>
+<rect x="370" y="546" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="0.8"/>
+<text x="390" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Detail list</text>
+<text x="510" y="554" fill="#545B64" font-size="8.5" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-style="italic">Each expandable category also has Troubleshooting Steps + Common Solutions (omitted).</text>
+</svg>

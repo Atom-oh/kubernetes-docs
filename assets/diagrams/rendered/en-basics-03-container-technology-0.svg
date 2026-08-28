@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="layers-title layers-desc">
+<title id="layers-title">Container image layers</title>
+<desc id="layers-desc">A layer stack showing how a container image is built from an OS layer up through a runtime layer and a dependencies layer to the application layer, with the application layer highlighted as the layer developers actually change.</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- Header -->
+<text x="40" y="52" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">CONTAINER IMAGE · LAYER STACK</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">How a container image is built</text>
+
+<!-- Direction column (left margin) -->
+<text x="40" y="140" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">CHANGES OFTEN</text>
+<line x1="60" y1="152" x2="60" y2="452" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<polygon points="56,152 64,152 60,144" fill="#545B64"/>
+<text x="40" y="468" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">SHARED BASE</text>
+
+<!-- Stack outer hairlines -->
+<line x1="100" y1="152" x2="900" y2="152" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<line x1="100" y1="452" x2="900" y2="452" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+
+<!-- L4 Application (top, FOCAL) -->
+<rect x="100" y="152" width="800" height="72" fill="rgba(255,153,0,0.10)"/>
+<rect x="100" y="152" width="800" height="72" fill="none" stroke="#EC7211" stroke-width="1"/>
+<text x="124" y="184" fill="#EC7211" font-size="9" font-weight="600" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L4</text>
+<text x="164" y="188" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Application layer</text>
+<text x="876" y="188" fill="#EC7211" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">application code</text>
+
+<!-- L3 Dependencies -->
+<rect x="100" y="224" width="800" height="72" fill="#F2F3F3"/>
+<line x1="100" y1="296" x2="900" y2="296" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<text x="124" y="256" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L3</text>
+<text x="164" y="260" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Dependencies layer</text>
+<text x="876" y="260" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">npm, pip packages</text>
+
+<!-- L2 Runtime -->
+<rect x="100" y="296" width="800" height="72" fill="#ffffff"/>
+<line x1="100" y1="368" x2="900" y2="368" stroke="rgba(35,47,62,0.12)" stroke-width="1"/>
+<text x="124" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L2</text>
+<text x="164" y="332" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Runtime layer</text>
+<text x="876" y="332" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">Node.js, Python</text>
+
+<!-- L1 OS (bottom) -->
+<rect x="100" y="368" width="800" height="84" fill="#F2F3F3"/>
+<text x="124" y="404" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L1</text>
+<text x="164" y="408" fill="#232F3E" font-size="16" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">OS layer</text>
+<text x="876" y="408" fill="#545B64" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">Ubuntu, Alpine</text>
+
+<!-- Caption -->
+<text x="100" y="504" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">FOCAL LAYER</text>
+<text x="212" y="504" fill="#545B64" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" font-style="italic">Only the top application layer changes on every build — the layers beneath it are cached and reused across images.</text>
+
+<line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="560" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">EACH LAYER IS READ-ONLY AND SHARED ACROSS IMAGES WITH THE SAME BASE</text>
+
+</svg>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-02-basic-concepts-13-title en-service-mesh-istio-02-basic-concepts-13-desc">
+<title id="en-service-mesh-istio-02-basic-concepts-13-title">Gradual Migration from VM to Kubernetes</title>
+<desc id="en-service-mesh-istio-02-basic-concepts-13-desc">Diagram showing a four-phase migration: a standalone legacy VM, the same VM registered into the mesh with Envoy, a hybrid phase where the remaining legacy VM module talks over mTLS to new Kubernetes microservices, and a final phase fully migrated to Kubernetes.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="232" width="176" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="52" y="236" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="79.0" y="245" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">PHASE 1</text>
+<rect x="256" y="232" width="176" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="268" y="236" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="295.0" y="245" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">PHASE 2</text>
+<rect x="472" y="152" width="240" height="296" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="484" y="156" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="511.0" y="165" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">PHASE 3</text>
+<rect x="752" y="232" width="176" height="136" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="764" y="236" width="54" height="12" rx="2" fill="#ffffff"/>
+<text x="791.0" y="245" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">PHASE 4</text>
+<line x1="192" y1="304" x2="256" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="408" y1="304" x2="472" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="544.0" y1="240" x2="544.0" y2="336" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+<line x1="712" y1="304" x2="752" y2="304" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="198.0" y="284" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="224" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">VM REG.</text>
+<rect x="412.0" y="284" width="56" height="12" rx="2" fill="#ffffff"/>
+<text x="440" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PARTIAL</text>
+<rect x="536.0" y="264" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="556.0" y="273" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">mTLS</text>
+<rect x="700.0" y="284" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="732" y="293" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">COMPLETE</text>
+<rect x="64" y="280" width="128" height="48" rx="6" fill="#ffffff"/>
+<rect x="64" y="280" width="128" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="128.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VM</text>
+<text x="128.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">monolith app</text>
+<rect x="280" y="280" width="128" height="48" rx="6" fill="#ffffff"/>
+<rect x="280" y="280" width="128" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="344.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VM</text>
+<text x="344.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">monolith + Envoy</text>
+<rect x="496" y="192" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="496" y="192" width="96" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="544.0" y="210.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VM</text>
+<text x="544.0" y="226.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">legacy module</text>
+<rect x="496" y="336" width="96" height="48" rx="6" fill="#ffffff"/>
+<rect x="496" y="336" width="96" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="544.0" y="354.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">K8s</text>
+<text x="544.0" y="370.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">new microservices</text>
+<rect x="776" y="280" width="128" height="48" rx="6" fill="#ffffff"/>
+<rect x="776" y="280" width="128" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="840.0" y="298.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">K8s</text>
+<text x="840.0" y="314.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">all microservices</text>
+</svg>

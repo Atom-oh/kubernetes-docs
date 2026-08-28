@@ -50,41 +50,7 @@ Ambient Mode (10개 노드):
 
 **Ambient Mode 아키텍처:**
 
-```mermaid
-flowchart TB
-    subgraph Node1[Node 1]
-        Pod1[Pod A]
-        Pod2[Pod B]
-        ztunnel1[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Node2[Node 2]
-        Pod3[Pod C]
-        Pod4[Pod D]
-        ztunnel2[ztunnel<br/>L4 Proxy]
-    end
-
-    subgraph Waypoint[Waypoint Proxy]
-        waypoint[waypoint<br/>L7 Proxy<br/>선택적]
-    end
-
-    Pod1 --> ztunnel1
-    Pod2 --> ztunnel1
-    Pod3 --> ztunnel2
-    Pod4 --> ztunnel2
-
-    ztunnel1 <-->|mTLS| ztunnel2
-    ztunnel1 -->|L7 필요시| waypoint
-    ztunnel2 -->|L7 필요시| waypoint
-
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef ztunnel fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef waypoint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod4 pod;
-    class ztunnel1,ztunnel2 ztunnel;
-    class waypoint waypoint;
-```
+![두 노드의 파드가 각 노드의 ztunnel L4 프록시로 연결되고, 두 ztunnel이 mTLS로 직접 통신하며 필요할 때만 선택적으로 waypoint L7 프록시를 거치는 Istio 앰비언트 메시 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-0.png)
 
 **Ambient Mode 활성화:**
 
@@ -135,40 +101,7 @@ D. Service Entry
 
 **Multi-cluster Mesh 아키텍처:**
 
-```mermaid
-flowchart TB
-    subgraph Cluster1[클러스터 1]
-        Istiod1[Istiod<br/>Primary]
-        Service1[Service A]
-        Pod1[Pod A]
-    end
-
-    subgraph Cluster2[클러스터 2]
-        Istiod2[Istiod<br/>Remote]
-        Service2[Service B]
-        Pod2[Pod B]
-    end
-
-    subgraph SharedCP[Shared Control Plane]
-        PrimaryIstiod[Primary Istiod<br/>서비스 검색 총괄]
-    end
-
-    PrimaryIstiod -->|구성 배포| Istiod1
-    PrimaryIstiod -->|구성 배포| Istiod2
-
-    Istiod1 -->|서비스 정보 수집| Service1
-    Istiod2 -->|서비스 정보 수집| Service2
-
-    Pod1 <-->|Cross-cluster| Pod2
-
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod1,Istiod2 istiod;
-    class Service1,Service2 service;
-    class PrimaryIstiod primary;
-```
+![하나의 Primary Istiod가 두 클러스터의 서비스 검색을 총괄하고, 각 클러스터의 Istiod가 자기 클러스터의 서비스 정보를 수집하며 두 클러스터의 파드가 크로스 클러스터로 통신하는 공유 컨트롤 플레인 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-1.png)
 
 **Istiod의 역할:**
 
@@ -544,32 +477,7 @@ A. Argo Rollouts Controller B. Istio VirtualService C. Kubernetes Service D. Ist
 
 **Argo Rollouts + Istio 통합 아키텍처:**
 
-```mermaid
-flowchart TB
-    User[사용자] --> Gateway[Istio Gateway]
-    Gateway --> VS[VirtualService<br/>트래픽 분할]
-
-    VS -->|90% weight| Stable[Stable Pod<br/>v1]
-    VS -->|10% weight| Canary[Canary Pod<br/>v2]
-
-    Rollout[Argo Rollouts<br/>Controller] -->|weight 업데이트| VS
-    Rollout -->|Pod 관리| Stable
-    Rollout -->|Pod 관리| Canary
-
-    Prometheus[Prometheus] -->|메트릭| Analysis[AnalysisTemplate]
-    Analysis -->|성공/실패| Rollout
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway,VS istio;
-    class Rollout,Analysis argo;
-    class Stable,Canary pod;
-    class Prometheus argo;
-```
+![사용자 요청이 Istio Gateway와 VirtualService를 거쳐 안정 파드와 카나리 파드로 가중치 분할되고, Argo Rollouts 컨트롤러가 Prometheus 메트릭 분석 결과에 따라 가중치와 파드 수를 자동 조정하는 카나리 배포 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-2.png)
 
 **VirtualService 역할:**
 
@@ -907,37 +815,7 @@ Ambient Mode 전환 비용 (1회):
 
 **1. 아키텍처 개요**
 
-```mermaid
-flowchart TB
-    subgraph USEast1[클러스터 1: us-east-1<br/>Primary]
-        Istiod1[Istiod<br/>Primary Control Plane]
-        ServiceA[Service A]
-        PodA[Pod A]
-        EWG1[East-West Gateway]
-    end
-
-    subgraph USWest2[클러스터 2: us-west-2<br/>Remote]
-        Istiod2[Istiod<br/>Remote Control Plane]
-        ServiceB[Service B]
-        PodB[Pod B]
-        EWG2[East-West Gateway]
-    end
-
-    Istiod1 -->|구성 배포| Istiod2
-    Istiod1 -->|서비스 검색| ServiceA
-    Istiod1 -->|서비스 검색| ServiceB
-
-    PodA <-->|mTLS| EWG1
-    EWG1 <-->|Cross-cluster| EWG2
-    EWG2 <-->|mTLS| PodB
-
-    classDef primary fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef remote fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod1,ServiceA,PodA,EWG1 primary;
-    class Istiod2,ServiceB,PodB,EWG2 remote;
-```
+![us-east-1과 us-west-2 두 클러스터가 각자 프라이머리 컨트롤 플레인을 두고 서비스 검색 정보를 교환하며, 두 클러스터의 파드가 East-West 게이트웨이를 거쳐 mTLS로 통신하는 멀티 프라이머리 멀티 네트워크 구조를 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-3.png)
 
 ***
 
@@ -1302,23 +1180,7 @@ EnvoyFilter를 사용하여 특정 경로(`/api/premium/*`)에만 **사용자별
 
 **1. 아키텍처 개요**
 
-```mermaid
-flowchart LR
-    Client[클라이언트] --> Envoy[Envoy Proxy]
-    Envoy -->|Rate Limit 체크| Redis[(Redis<br/>Rate Limit Store)]
-    Envoy -->|허용된 요청| Backend[Backend Service]
-    Envoy -->|거부된 요청| Reject[429 Too Many Requests]
-
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef backend fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef reject fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    class Client client;
-    class Envoy envoy;
-    class Backend backend;
-    class Reject,Redis reject;
-```
+![클라이언트 요청이 Envoy 프록시를 거쳐 Redis의 Rate Limit 카운터를 확인하고, 한도 내이면 백엔드로 전달하고 초과하면 429 Too Many Requests로 거부하는 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-4.png)
 
 ***
 
@@ -1752,31 +1614,7 @@ Argo Rollouts와 Istio를 사용하여 **Blue/Green 배포**를 구현하세요.
 
 **1. Blue/Green 배포 개념**
 
-```mermaid
-flowchart TB
-    User[사용자] --> Gateway[Istio Gateway]
-    Gateway --> ActiveService[Active Service<br/>프로덕션 트래픽]
-    Gateway -.->|미리보기| PreviewService[Preview Service<br/>테스트 트래픽]
-
-    ActiveService --> Blue[Blue<br/>현재 버전 v1]
-    PreviewService --> Green[Green<br/>새 버전 v2]
-
-    Analysis[AnalysisTemplate] -->|메트릭 분석| Green
-    Analysis -->|성공| Promote[트래픽 전환]
-    Analysis -->|실패| Rollback[롤백]
-
-    Promote --> Swap[Active ↔ Preview 교체]
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef argo fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class User user;
-    class Gateway,ActiveService,PreviewService istio;
-    class Blue,Green version;
-    class Analysis,Promote,Rollback,Swap argo;
-```
+![사용자 트래픽은 Gateway를 거쳐 Active Service의 Blue 버전으로 가고 Preview Service는 미리보기 트래픽만 Green 버전으로 보내며, AnalysisTemplate이 Green을 분석해 성공하면 트래픽을 전환하고 실패하면 롤백하는 블루-그린 배포 흐름을 보여준다.](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-advanced-5.png)
 
 ***
 

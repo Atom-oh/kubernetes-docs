@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+       aria-labelledby="ko-storage-p3-2-title ko-storage-p3-2-desc">
+    <title id="ko-storage-p3-2-title">EKS 스토리지 비용 최적화 전략</title>
+    <desc id="ko-storage-p3-2-desc">EBS, EFS, FSx, S3 네 가지 스토리지 유형이 각자의 최적화 전략을 거쳐 비용 모니터링으로 수렴하는 구조를 보여준다.</desc>
+    <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;family=Noto+Sans+KR:wght@400;500;600;700&amp;display=swap");</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zones -->
+    <rect x="40" y="32" width="204" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="86" y="36" width="112" height="12" rx="2" fill="#ffffff"/>
+    <text x="142" y="45" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">스토리지 유형</text>
+
+    <rect x="284" y="32" width="360" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="404" y="36" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="464" y="45" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">최적화 전략</text>
+
+    <rect x="684" y="32" width="236" height="440" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="726" y="36" width="152" height="12" rx="2" fill="#ffffff"/>
+    <text x="802" y="45" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">비용 모니터링</text>
+
+    <!-- ===== Arrows ===== -->
+    <!-- EBS -> Volume_Optimization (straight), EBS -> Lifecycle_Management (long corridor, clear of all boxes) -->
+    <line x1="244" y1="88" x2="304" y2="88" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 244,100 H 270 Q 278,100 278,108 V 416 Q 278,424 286,424 H 304" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- EFS -> EFS_Optimization -->
+    <line x1="244" y1="204" x2="304" y2="204" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- FSx -> FSx_Optimization -->
+    <line x1="244" y1="320" x2="304" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <!-- S3 -> Lifecycle_Management (same row, straight) -->
+    <line x1="244" y1="448" x2="304" y2="448" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- Optimization groups -> Cost Monitoring (focal), fanned attach on left edge of focal box (216/240/264/288, each >=12px apart) -->
+    <path d="M 604,88 H 636 Q 644,88 644,96 V 208 Q 644,216 652,216 H 704" fill="none" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <path d="M 604,204 H 652 Q 660,204 660,212 V 232 Q 660,240 668,240 H 704" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 604,320 H 660 Q 668,320 668,312 V 272 Q 668,264 676,264 H 704" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 604,436 H 636 Q 644,436 644,428 V 296 Q 644,288 652,288 H 704" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- ===== Nodes: storage types ===== -->
+    <rect x="64" y="64" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="64" y="64" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="154" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Amazon EBS</text>
+    <text x="154" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">블록 스토리지</text>
+
+    <rect x="64" y="180" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="64" y="180" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="154" y="202" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Amazon EFS</text>
+    <text x="154" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">파일 스토리지</text>
+
+    <rect x="64" y="296" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="64" y="296" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="154" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Amazon FSx for Lustre</text>
+    <text x="154" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">고성능 파일 스토리지</text>
+
+    <rect x="64" y="412" width="180" height="48" rx="6" fill="#ffffff"/>
+    <rect x="64" y="412" width="180" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="154" y="434" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">Amazon S3</text>
+    <text x="154" y="448" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">객체 스토리지</text>
+
+    <!-- ===== Nodes: optimization groups ===== -->
+    <rect x="304" y="64" width="300" height="48" rx="6" fill="#ffffff"/>
+    <rect x="304" y="64" width="300" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="454" y="86" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">볼륨 최적화</text>
+    <text x="454" y="100" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">유형 선택·크기 조정·gp3 전환</text>
+
+    <rect x="304" y="180" width="300" height="48" rx="6" fill="#ffffff"/>
+    <rect x="304" y="180" width="300" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="454" y="202" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">EFS 최적화</text>
+    <text x="454" y="216" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">처리량 모드·IA·액세스 포인트</text>
+
+    <rect x="304" y="296" width="300" height="48" rx="6" fill="#ffffff"/>
+    <rect x="304" y="296" width="300" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="454" y="318" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">FSx 최적화</text>
+    <text x="454" y="332" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">배포 유형·압축·S3 통합</text>
+
+    <rect x="304" y="412" width="300" height="48" rx="6" fill="rgba(35,47,62,0.05)"/>
+    <rect x="304" y="412" width="300" height="48" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="454" y="434" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">수명 주기 관리</text>
+    <text x="454" y="448" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">데이터 계층화·스냅샷·재확보 정책</text>
+
+    <!-- ===== Node: Cost Monitoring (FOCAL) ===== -->
+    <rect x="704" y="200" width="196" height="104" rx="6" fill="#ffffff"/>
+    <rect x="704" y="200" width="196" height="104" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="802" y="228" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Noto Sans KR',sans-serif" text-anchor="middle">비용 모니터링</text>
+    <text x="802" y="248" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">AWS Cost Explorer</text>
+    <text x="802" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Kubernetes 비용 할당</text>
+    <text x="802" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">비용 이상 탐지</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="496" x2="920" y2="496" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="512" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+    <rect x="40" y="528" width="14" height="10" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="60" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Noto Sans KR',sans-serif">비용 수렴 지점</text>
+
+    <rect x="220" y="528" width="14" height="10" rx="2" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="240" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Noto Sans KR',sans-serif">스토리지·최적화 전략</text>
+
+    <rect x="440" y="528" width="14" height="10" rx="2" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+    <text x="460" y="536" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Noto Sans KR',sans-serif">여러 유형이 공유하는 전략</text>
+  </svg>

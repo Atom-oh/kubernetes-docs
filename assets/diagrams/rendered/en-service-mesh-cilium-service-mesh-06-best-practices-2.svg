@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ttl2 desc2">
+  <title id="ttl2">Gradual L7 routing hand-off from Istio to Cilium</title>
+  <desc id="desc2">Flowchart showing the gradual adoption of Cilium for L7 traffic while keeping Cilium for L3/L4 the whole time: Phase 1 has Cilium at L3/L4 and Istio at L7, Phase 2 mixes Cilium and Istio at L7, and Phase 3 ends with Cilium handling both L3/L4 and L7.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="var(--paper)"/>
+
+  <!-- Header -->
+  <text x="40" y="56" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.18em">GRADUAL ADOPTION</text>
+  <text x="40" y="82" fill="var(--ink)" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">L7 hand-off from Istio to Cilium</text>
+  <text x="40" y="104" fill="var(--muted)" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Cilium owns L3/L4 network policy throughout; only the L7 routing layer moves in stages</text>
+
+  <!-- 3 nodes, w=240 h=120, gap 100. Centered vertically ~ y=260..380 -->
+  <!-- x: 60, 400, 740 (60+240+100=400; 400+240+100=740; 740+240=980 -> too wide, adjust) -->
+  <!-- recompute: total width 3*240 + 2*gap = 720+2g = must fit 40..920 (880) -> gap = (880-720)/2 = 80 -->
+  <!-- x: 40, 360, 680 -->
+
+  <!-- Arrows drawn before nodes -->
+  <line x1="280" y1="320" x2="360" y2="320" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="600" y1="320" x2="680" y2="320" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Arrow labels -->
+  <rect x="284" y="304" width="72" height="12" rx="2" fill="var(--paper)"/>
+  <text x="320" y="313" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MIGRATE L7</text>
+  <rect x="604" y="304" width="72" height="12" rx="2" fill="var(--paper)"/>
+  <text x="640" y="313" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MIGRATE L7</text>
+
+  <!-- Phase 1 node -->
+  <g>
+    <rect x="40" y="260" width="240" height="120" rx="6" fill="#ffffff"/>
+    <rect x="40" y="260" width="240" height="120" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <rect x="52" y="272" width="52" height="16" rx="8" fill="rgba(35,47,62,0.12)"/>
+    <text x="78" y="284" fill="var(--ink)" font-size="9" font-weight="700" font-family="'Geist Mono',monospace" text-anchor="middle">P1</text>
+    <text x="160" y="320" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Baseline</text>
+    <text x="160" y="342" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L3/L4: Cilium</text>
+    <text x="160" y="356" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L7: Istio</text>
+  </g>
+
+  <!-- Phase 2 node -->
+  <g>
+    <rect x="360" y="260" width="240" height="120" rx="6" fill="#ffffff"/>
+    <rect x="360" y="260" width="240" height="120" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+    <rect x="372" y="272" width="52" height="16" rx="8" fill="rgba(35,47,62,0.12)"/>
+    <text x="398" y="284" fill="var(--ink)" font-size="9" font-weight="700" font-family="'Geist Mono',monospace" text-anchor="middle">P2</text>
+    <text x="480" y="320" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mixed L7</text>
+    <text x="480" y="342" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L3/L4: Cilium</text>
+    <text x="480" y="356" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">L7: Cilium + Istio</text>
+  </g>
+
+  <!-- Phase 3 node (focal — end state) -->
+  <g>
+    <rect x="680" y="260" width="240" height="120" rx="6" fill="#ffffff"/>
+    <rect x="680" y="260" width="240" height="120" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+    <rect x="692" y="272" width="52" height="16" rx="8" fill="rgba(255,153,0,0.20)"/>
+    <text x="718" y="284" fill="var(--accent)" font-size="9" font-weight="700" font-family="'Geist Mono',monospace" text-anchor="middle">P3</text>
+    <text x="800" y="320" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cilium-only</text>
+    <text x="800" y="342" fill="var(--accent)" font-size="9" font-weight="600" font-family="'Geist Mono',monospace" text-anchor="middle">L3/L4: Cilium</text>
+    <text x="800" y="356" fill="var(--accent)" font-size="9" font-weight="600" font-family="'Geist Mono',monospace" text-anchor="middle">L7: Cilium</text>
+  </g>
+
+  <!-- Footer -->
+  <line x1="40" y1="480" x2="920" y2="480" stroke="var(--rule)" stroke-width="0.8"/>
+  <text x="40" y="500" fill="var(--soft)" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.1em">NOTE</text>
+  <text x="40" y="518" fill="var(--muted)" font-size="11" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Each phase is reversible — L3/L4 network policy stays on Cilium end to end, so only the L7 routing ownership shifts.</text>
+</svg>

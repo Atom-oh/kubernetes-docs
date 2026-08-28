@@ -19,51 +19,7 @@ Dynatrace는 AI 기반의 풀스택 관측성 플랫폼입니다. OneAgent 기�
 
 ## 아키텍처
 
-```mermaid
-flowchart TD
-    subgraph EKS["Amazon EKS 클러스터"]
-        subgraph Nodes["워커 노드"]
-            OA1[OneAgent<br/>DaemonSet]
-            OA2[OneAgent<br/>DaemonSet]
-        end
-
-        subgraph Apps["애플리케이션"]
-            APP1[Service A]
-            APP2[Service B]
-            APP3[Service C]
-        end
-
-        subgraph Operator["Dynatrace Operator"]
-            DYN_OP[Operator Pod]
-            WEBHOOK[Webhook]
-        end
-
-        ACTIVEGATE[ActiveGate<br/>StatefulSet]
-    end
-
-    subgraph Dynatrace["Dynatrace Platform"]
-        SaaS[Dynatrace SaaS]
-        DAVIS[Davis AI Engine]
-        GRAIL[Grail Data Lakehouse]
-    end
-
-    OA1 & OA2 -->|메트릭/트레이스/로그| ACTIVEGATE
-    ACTIVEGATE -->|암호화된 연결| SaaS
-    SaaS --> DAVIS
-    SaaS --> GRAIL
-
-    APP1 & APP2 & APP3 -.->|자동 계측| OA1 & OA2
-
-    classDef node fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef dynatrace fill:#6F2DA8,stroke:#333,stroke-width:1px,color:white
-    classDef operator fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class OA1,OA2,ACTIVEGATE node
-    class APP1,APP2,APP3 app
-    class SaaS,DAVIS,GRAIL dynatrace
-    class DYN_OP,WEBHOOK operator
-```
+![EKS 클러스터 안의 Service A/B/C가 OneAgent DaemonSet에 자동 계측되고, OneAgent가 ActiveGate를 거쳐 Dynatrace SaaS로 전송한 데이터가 Davis AI 엔진과 Grail 데이터 레이크하우스로 나뉘어 공급되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-tracing-04-dynatrace-0.png)
 
 ## Helm을 통한 EKS 배포
 
@@ -361,43 +317,7 @@ spec:
 
 ### Davis AI 작동 방식
 
-```mermaid
-flowchart TD
-    subgraph DataCollection["데이터 수집"]
-        METRICS[메트릭]
-        TRACES[트레이스]
-        LOGS[로그]
-        EVENTS[이벤트]
-        TOPO[토폴로지]
-    end
-
-    subgraph DavisAI["Davis AI 엔진"]
-        BASELINE[기준선 학습]
-        ANOMALY[이상 탐지]
-        CORRELATE[상관관계 분석]
-        ROOT[근본 원인 식별]
-    end
-
-    subgraph Output["분석 결과"]
-        PROBLEM[문제 카드]
-        IMPACT[영향 분석]
-        REMEDIATION[해결 제안]
-    end
-
-    METRICS & TRACES & LOGS & EVENTS & TOPO --> BASELINE
-    BASELINE --> ANOMALY
-    ANOMALY --> CORRELATE
-    CORRELATE --> ROOT
-    ROOT --> PROBLEM & IMPACT & REMEDIATION
-
-    classDef data fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef ai fill:#6F2DA8,stroke:#333,stroke-width:1px,color:white
-    classDef output fill:#34A853,stroke:#333,stroke-width:1px,color:white
-
-    class METRICS,TRACES,LOGS,EVENTS,TOPO data
-    class BASELINE,ANOMALY,CORRELATE,ROOT ai
-    class PROBLEM,IMPACT,REMEDIATION output
-```
+![수집된 텔레메트리 데이터가 기준선 학습, 이상 탐지, 상관관계 분석을 거쳐 근본 원인을 식별하고, 그 결과가 문제 카드·영향 분석·해결 제안 세 가지 출력으로 나뉘어 전달되는 Davis AI 처리 단계를 보여준다.](../../.gitbook/assets/ko-observability-tracing-04-dynatrace-1.png)
 
 ### 문제 알림 구성
 

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-core-07-policies-2-title ko-core-07-policies-2-desc">
+      <title id="ko-core-07-policies-2-title">포드 보안 표준과 어드미션</title>
+      <desc id="ko-core-07-policies-2-desc">네임스페이스 레이블로 지정된 포드 보안 표준 수준을 포드 보안 어드미션이 검증하여 포드 생성 요청을 허용하거나 거부하는 과정을 보여준다.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+      </defs>
+      <rect width="100%" height="100%" fill="#ffffff"/>
+      <rect x="20" y="132" width="220" height="324" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="32" y="136" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="68.0" y="145" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">포드 보안 표준</text>
+<rect x="300" y="204" width="240" height="288" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="312" y="208" width="86" height="12" rx="2" fill="#ffffff"/>
+<text x="355.0" y="217" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.10em">포드 보안 어드미션</text>
+<path d="M 452,152.0 H 380 Q 388,152.0 388,160.0 V 244.0 Q 388,252.0 396,252.0 H 324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="400" y="196" width="50" height="12" rx="2" fill="#ffffff"/>
+<text x="425.0" y="205" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">레이블 설정</text>
+<path d="M 324,242 H 262 Q 270,242 270,234 V 188.0 Q 270,180.0 278,180.0 H 216" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="236" y="205" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="247.0" y="214" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">참조</text>
+<path d="M 216,170 H 122 Q 130,170 130,178 V 244.0 Q 130,252.0 138,252.0 H 44" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="142" y="205" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="153.0" y="214" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">수준</text>
+<path d="M 216,180 H 122 Q 130,180 130,188 V 316.0 Q 130,324.0 138,324.0 H 44" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="142" y="246" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="153.0" y="255" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">수준</text>
+<path d="M 216,190 H 122 Q 130,190 130,198 V 388.0 Q 130,396.0 138,396.0 H 44" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="142" y="287" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="153.0" y="296" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">수준</text>
+<path d="M 516,244 H 412 Q 420,244 420,252 V 316.0 Q 420,324.0 428,324.0 H 324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="432" y="278" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="443.0" y="287" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">모드</text>
+<path d="M 516,256 H 412 Q 420,256 420,264 V 388.0 Q 420,396.0 428,396.0 H 324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="432" y="320" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="443.0" y="329" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">모드</text>
+<path d="M 516,268 H 412 Q 420,268 420,276 V 460.0 Q 420,468.0 428,468.0 H 324" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="432" y="362" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="443.0" y="371" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">모드</text>
+<path d="M 516,268 H 548 Q 556,268 556,276 V 308.0 Q 556,316.0 564,316.0 H 596" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="568" y="286" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="579.0" y="295" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">검증</text>
+<path d="M 736,308 H 788 Q 796,308 796,300 V 288.0 Q 796,280.0 804,280.0 H 856" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="808" y="288" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="819.0" y="297" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">준수</text>
+<path d="M 736,324 H 788 Q 796,324 796,332 V 352.0 Q 796,360.0 804,360.0 H 856" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="808" y="336" width="22" height="12" rx="2" fill="#ffffff"/>
+<text x="819.0" y="345" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.04em">위반</text>
+<rect x="44" y="160" width="172" height="40" rx="6" fill="#ffffff"/>
+<rect x="44" y="160" width="172" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="130.0" y="177.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod Security</text>
+<text x="130.0" y="191.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Standards</text>
+<rect x="44" y="232" width="172" height="40" rx="6" fill="#ffffff"/>
+<rect x="44" y="232" width="172" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="130.0" y="249.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Privileged</text>
+<text x="130.0" y="265.0" fill="#7D8998" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">제한 없음</text>
+<rect x="44" y="304" width="172" height="40" rx="6" fill="#ffffff"/>
+<rect x="44" y="304" width="172" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="130.0" y="321.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Baseline</text>
+<text x="130.0" y="337.0" fill="#7D8998" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">기본 보안</text>
+<rect x="44" y="376" width="172" height="40" rx="6" fill="#ffffff"/>
+<rect x="44" y="376" width="172" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="130.0" y="393.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Restricted</text>
+<text x="130.0" y="409.0" fill="#7D8998" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">강화된 보안</text>
+<rect x="300" y="132" width="152" height="40" rx="6" fill="#ffffff"/>
+<rect x="300" y="132" width="152" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="376.0" y="156.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">네임스페이스</text>
+<rect x="324" y="232" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="324" y="232" width="192" height="40" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="420.0" y="249.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod Security</text>
+<text x="420.0" y="263.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Admission</text>
+<rect x="324" y="304" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="324" y="304" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="321.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">enforce</text>
+<text x="420.0" y="337.0" fill="#7D8998" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">위반 시 차단</text>
+<rect x="324" y="376" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="324" y="376" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="393.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">audit</text>
+<text x="420.0" y="409.0" fill="#7D8998" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">위반 시 로깅</text>
+<rect x="324" y="448" width="192" height="40" rx="6" fill="#ffffff"/>
+<rect x="324" y="448" width="192" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="420.0" y="465.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">warn</text>
+<text x="420.0" y="481.0" fill="#7D8998" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">위반 시 경고</text>
+<rect x="596" y="296" width="140" height="40" rx="6" fill="#ffffff"/>
+<rect x="596" y="296" width="140" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="666.0" y="320.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">포드 생성 요청</text>
+<rect x="856" y="260" width="88" height="40" rx="6" fill="#ffffff"/>
+<rect x="856" y="260" width="88" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="900.0" y="284.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">허용</text>
+<rect x="856" y="340" width="88" height="40" rx="6" fill="#ffffff"/>
+<rect x="856" y="340" width="88" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="900.0" y="364.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">거부</text>
+    </svg>

@@ -9,35 +9,7 @@ Linkerd는 ServiceProfile, TrafficSplit, HTTPRoute 등을 통해 서비스 간 �
 
 ## 트래픽 관리 아키텍처
 
-```mermaid
-graph TB
-    subgraph "Traffic Management Components"
-        SP[ServiceProfile<br/>라우트별 설정]
-        TS[TrafficSplit<br/>트래픽 분할]
-        HR[HTTPRoute<br/>Gateway API]
-    end
-
-    subgraph "Proxy Features"
-        LB[Load Balancing<br/>EWMA]
-        RT[Retries<br/>재시도]
-        TO[Timeouts<br/>타임아웃]
-        CB[Circuit Breaking<br/>장애 격리]
-    end
-
-    subgraph "Destination Controller"
-        DEST[Endpoint Discovery]
-        POLICY[Policy Distribution]
-    end
-
-    SP --> DEST
-    TS --> DEST
-    HR --> DEST
-    DEST --> POLICY
-    POLICY --> LB
-    POLICY --> RT
-    POLICY --> TO
-    POLICY --> CB
-```
+![ServiceProfile, TrafficSplit, HTTPRoute가 Destination Controller를 거쳐 정책을 배포하고, 그 정책이 로드밸런싱·재시도·타임아웃·서킷브레이킹 등 프록시 기능으로 분배되는 흐름을 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-0.png)
 
 ## ServiceProfile
 
@@ -191,22 +163,7 @@ Linkerd는 실패한 요청을 자동으로 재시도하여 일시적인 장애�
 
 ### 재시도 동작 방식
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Proxy as linkerd-proxy
-    participant Service as Backend Service
-
-    Client->>Proxy: HTTP Request
-    Proxy->>Service: Request #1
-    Service-->>Proxy: 503 Service Unavailable
-
-    Note over Proxy: 재시도 조건 확인<br/>- isRetryable: true<br/>- 예산 여유 있음
-
-    Proxy->>Service: Request #2 (재시도)
-    Service-->>Proxy: 200 OK
-    Proxy-->>Client: 200 OK
-```
+![클라이언트 요청이 linkerd-proxy를 거쳐 백엔드에서 503 오류를 받으면, 재시도 조건을 확인한 뒤 프록시가 요청을 다시 보내 200 OK를 클라이언트에 전달하는 과정을 보여주는 시퀀스 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-1.png)
 
 ### 재시도 조건
 
@@ -308,25 +265,7 @@ spec:
 
 ### 타임아웃 동작
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Proxy as linkerd-proxy
-    participant Service as Backend Service
-
-    Client->>Proxy: HTTP Request
-    Note over Proxy: timeout: 5s 시작
-    Proxy->>Service: Request
-
-    alt 정상 응답 (5초 이내)
-        Service-->>Proxy: 200 OK
-        Proxy-->>Client: 200 OK
-    else 타임아웃 (5초 초과)
-        Note over Proxy: 5초 경과
-        Proxy-->>Client: 504 Gateway Timeout
-        Note over Service: 요청은 계속 처리될 수 있음
-    end
-```
+![linkerd-proxy가 요청에 5초 타임아웃을 적용해, 정상 응답이면 200 OK를 반환하고 5초를 넘기면 백엔드 처리와 무관하게 클라이언트에 504 Gateway Timeout을 반환하는 두 가지 경로를 보여주는 시퀀스 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-2.png)
 
 ## 로드 밸런싱
 
@@ -334,21 +273,7 @@ Linkerd는 EWMA(Exponentially Weighted Moving Average) 알고리즘을 사용하
 
 ### EWMA 알고리즘
 
-```mermaid
-graph LR
-    subgraph "EWMA Load Balancing"
-        REQ[New Request]
-        LB[Load Balancer]
-        E1[Endpoint 1<br/>Latency: 10ms<br/>Score: 0.1]
-        E2[Endpoint 2<br/>Latency: 50ms<br/>Score: 0.5]
-        E3[Endpoint 3<br/>Latency: 20ms<br/>Score: 0.2]
-    end
-
-    REQ --> LB
-    LB -->|선택| E1
-    LB -.->|대기| E2
-    LB -.->|대기| E3
-```
+![새 요청을 받은 로드 밸런서가 지연 시간 기반 EWMA 점수에 따라 가장 응답이 빠른 엔드포인트를 선택하고, 느린 엔드포인트는 대기시키는 흐름을 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-3.png)
 
 **EWMA 특성:**
 
@@ -398,17 +323,7 @@ spec:
 
 ### 카나리 배포
 
-```mermaid
-graph TB
-    subgraph "Canary Deployment"
-        SVC[my-service<br/>트래픽 진입점]
-        V1[my-service-v1<br/>Stable: 90%]
-        V2[my-service-v2<br/>Canary: 10%]
-    end
-
-    SVC -->|90%| V1
-    SVC -->|10%| V2
-```
+![TrafficSplit이 트래픽 진입점인 my-service에서 안정 버전에 90%, 카나리 버전에 10%의 트래픽을 가중치로 분배하는 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-4.png)
 
 **단계적 카나리 배포:**
 
@@ -704,14 +619,7 @@ Linkerd는 failure accrual을 통해 서킷 브레이커 패턴을 구현합니�
 
 ### Failure Accrual 동작
 
-```mermaid
-stateDiagram-v2
-    [*] --> Closed: 정상 상태
-    Closed --> Open: 연속 실패 임계값 초과
-    Open --> HalfOpen: 백오프 시간 경과
-    HalfOpen --> Closed: 프로브 성공
-    HalfOpen --> Open: 프로브 실패
-```
+![연속 실패 임계값을 넘으면 정상(Closed) 상태의 엔드포인트가 차단(Open) 상태로 바뀌고, 백오프 시간이 지나면 절반 개방(Half-Open) 상태에서 프로브를 보내 성공하면 다시 정상으로, 실패하면 다시 차단 상태로 돌아가는 흐름을 보여주는 상태 머신 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-5.png)
 
 **동작 방식:**
 
@@ -821,29 +729,7 @@ spec:
 
 ### Flagger 배포 흐름
 
-```mermaid
-graph TB
-    subgraph "Flagger Canary Flow"
-        START[Deployment 변경 감지]
-        INIT[Canary 초기화<br/>0% 트래픽]
-        ANALYZE[메트릭 분석]
-        STEP[트래픽 증가<br/>+10%]
-        CHECK{성공 기준<br/>충족?}
-        PROMOTE[프로모션<br/>100% 카나리]
-        ROLLBACK[롤백<br/>0% 카나리]
-        END[완료]
-    end
-
-    START --> INIT
-    INIT --> ANALYZE
-    ANALYZE --> CHECK
-    CHECK -->|예| STEP
-    CHECK -->|아니오| ROLLBACK
-    STEP --> |50% 미만| ANALYZE
-    STEP --> |50% 도달| PROMOTE
-    PROMOTE --> END
-    ROLLBACK --> END
-```
+![Flagger가 배포 변경을 감지해 카나리를 초기화하고, 메트릭 분석 결과 성공 기준을 충족하면 트래픽을 단계적으로 늘려 50%에 도달하면 프로모션하고, 기준을 충족하지 못하면 롤백하는 의사결정 흐름을 보여주는 플로차트.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-6.png)
 
 ### Flagger 메트릭 템플릿
 

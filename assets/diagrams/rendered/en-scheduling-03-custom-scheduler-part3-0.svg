@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 584" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pdc-title pdc-desc"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style></defs>
+<title id="pdc-title">Pod deletion cost ordering during ReplicaSet scale-down</title>
+<desc id="pdc-desc">The ReplicaSet controller sorts pods by their pod-deletion-cost annotation and deletes the lowest-cost pods first: Pod-3 (cost -10) is deleted before Pod-4 (cost 0), while Pod-1 (cost 100) and Pod-2 (cost 50) survive.</desc>
+<defs>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ============ CONNECTORS (drawn before boxes) ============ -->
+<!-- Start -> Controller -->
+<line x1="480" y1="60" x2="480" y2="92" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- Controller -> Sort -->
+<line x1="480" y1="140" x2="480" y2="172" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- Sort -> Pods zone -->
+<line x1="480" y1="220" x2="480" y2="260" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- Pod-3 -> Deleted (1st) -->
+<path d="M582,356 L582,392 Q582,400 574,400 L456,400 Q448,400 448,408 L448,456"
+      fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<!-- Pod-4 -> Deleted (2nd) -->
+<path d="M786,356 L786,408 Q786,416 778,416 L520,416 Q512,416 512,424 L512,456"
+      fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+<!-- Arrow labels: masked, 8px gap above their stroke -->
+<rect x="479" y="380" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="515" y="389" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">1ST</text>
+
+<rect x="613" y="396" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="649" y="405" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">2ND</text>
+
+<!-- ============ NODES ============ -->
+
+<!-- Start -->
+<rect x="380" y="20" width="200" height="40" rx="20" fill="#ffffff"/>
+<rect x="380" y="20" width="200" height="40" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="44" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Scale-down Request</text>
+
+<!-- Controller -->
+<rect x="360" y="92" width="240" height="48" rx="6" fill="#ffffff"/>
+<rect x="360" y="92" width="240" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="120" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ReplicaSet Controller</text>
+
+<!-- Sort -->
+<rect x="340" y="172" width="280" height="48" rx="6" fill="#ffffff"/>
+<rect x="340" y="172" width="280" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="194" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Sort Pods by Deletion Cost</text>
+<text x="480" y="210" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">pod-deletion-cost annotation</text>
+
+<!-- Pods zone -->
+<rect x="64" y="260" width="832" height="112" rx="8" fill="#F2F3F3" stroke="#D5DBDB" stroke-width="1"/>
+<text x="84" y="280" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">PODS — SORTED BY COST</text>
+
+<!-- Pod-1 (kept) -->
+<rect x="84" y="292" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="84" y="292" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="174" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod-1</text>
+<text x="174" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cost: 100</text>
+
+<!-- Pod-2 (kept) -->
+<rect x="288" y="292" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="288" y="292" width="180" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="378" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod-2</text>
+<text x="378" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cost: 50</text>
+
+<!-- Pod-3 (deleted first — focal) -->
+<rect x="492" y="292" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="492" y="292" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="582" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod-3</text>
+<text x="582" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cost: -10</text>
+
+<!-- Pod-4 (deleted second — focal) -->
+<rect x="696" y="292" width="180" height="64" rx="6" fill="#ffffff"/>
+<rect x="696" y="292" width="180" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="786" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod-4</text>
+<text x="786" y="336" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cost: 0</text>
+
+<!-- End -->
+<rect x="380" y="456" width="200" height="48" rx="20" fill="#ffffff"/>
+<rect x="380" y="456" width="200" height="48" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="478" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pods Deleted</text>
+<text x="480" y="494" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">graceful termination</text>
+
+<!-- ============ LEGEND ============ -->
+<line x1="30" y1="520" x2="930" y2="520" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="30" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+
+<circle cx="160" cy="537" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="172" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">STANDARD STEP / SURVIVING POD</text>
+
+<circle cx="500" cy="537" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="512" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">SELECTED FOR DELETION (LOWEST COST)</text>
+
+</svg>

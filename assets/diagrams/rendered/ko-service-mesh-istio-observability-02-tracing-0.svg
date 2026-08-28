@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-tracing-seq-title ko-tracing-seq-desc">
+  <title id="ko-tracing-seq-title">W3C Trace Context 전파 시퀀스</title>
+  <desc id="ko-tracing-seq-desc">클라이언트 요청이 두 서비스의 Envoy 프록시와 애플리케이션을 거치며 traceparent 헤더로 trace context가 전파되고, 각 홉이 생성한 스팬을 Jaeger Collector로 내보내는 분산 추적 흐름을 보여준다.</desc>
+  <defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+    <marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- ============ LIFELINES (drawn first, behind everything) ============ -->
+  <line x1="88"  y1="64" x2="88"  y2="492" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="256" y1="64" x2="256" y2="492" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="424" y1="64" x2="424" y2="492" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="592" y1="64" x2="592" y2="492" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="760" y1="64" x2="760" y2="492" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- ============ CALL MESSAGES (solid, filled arrow) ============ -->
+  <!-- 1: Client -> Envoy A -->
+  <line x1="88" y1="112" x2="248" y2="112" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="132" y="92" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="176" y="101" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">HTTP REQUEST</text>
+
+  <!-- note: Envoy A generates trace/span id -->
+  <rect x="176" y="128" width="160" height="16" rx="2" fill="#ffffff"/>
+  <text x="256" y="140" fill="#545B64" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Trace ID·Span ID 생성</text>
+
+  <!-- 2: Envoy A -> App A -->
+  <line x1="256" y1="176" x2="416" y2="176" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="292" y="156" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="336" y="165" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">TRACEPARENT</text>
+
+  <!-- note: App A extracts context -->
+  <rect x="336" y="192" width="176" height="16" rx="2" fill="#ffffff"/>
+  <text x="424" y="204" fill="#545B64" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">컨텍스트 추출 → 자식 스팬</text>
+
+  <!-- 3: App A -> Envoy B -->
+  <line x1="424" y1="240" x2="584" y2="240" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="460" y="220" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="504" y="229" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">W/ TRACEPARENT</text>
+
+  <!-- note: Envoy B extracts parent context -->
+  <rect x="500" y="256" width="184" height="16" rx="2" fill="#ffffff"/>
+  <text x="592" y="268" fill="#545B64" font-size="12" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">부모 컨텍스트 추출 → 신규 스팬</text>
+
+  <!-- 4: Envoy B -> App B -->
+  <line x1="592" y1="304" x2="752" y2="304" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="628" y="284" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="676" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">UPDATED HEADER</text>
+
+  <!-- ============ ACTIVATION BARS ============ -->
+  <rect x="252" y="112" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="420" y="176" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="588" y="240" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="756" y="304" width="8" height="24" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- ============ EXPORT MESSAGES (async, dashed, open arrowhead) ============ -->
+  <!-- Envoy A -> Jaeger -->
+  <line x1="256" y1="372" x2="820" y2="372" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+  <rect x="512" y="360" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="548" y="369" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXPORT SPAN</text>
+
+  <!-- Envoy B -> Jaeger -->
+  <line x1="592" y1="396" x2="820" y2="396" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+  <rect x="672" y="384" width="72" height="12" rx="2" fill="#ffffff"/>
+  <text x="708" y="393" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXPORT SPAN</text>
+
+  <!-- App A -> Jaeger (optional) -->
+  <line x1="424" y1="420" x2="820" y2="420" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+  <rect x="588" y="408" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="626" y="417" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXPORT (OPT)</text>
+
+  <!-- App B -> Jaeger (optional) -->
+  <line x1="760" y1="444" x2="820" y2="444" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+  <rect x="744" y="424" width="76" height="12" rx="2" fill="#ffffff"/>
+  <text x="782" y="433" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">EXPORT (OPT)</text>
+
+  <!-- ============ ACTOR BOXES (top row) — drawn after lines so they sit on top ============ -->
+  <!-- Client (input treatment) -->
+  <rect x="28" y="16" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="28" y="16" width="120" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+  <rect x="36" y="22" width="32" height="12" rx="2" fill="transparent" stroke="#7D8998" stroke-width="0.8"/>
+  <text x="52" y="31" fill="#7D8998" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">USER</text>
+  <text x="88" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client</text>
+
+  <!-- Envoy A -->
+  <rect x="196" y="16" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="196" y="16" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="204" y="22" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="222" y="31" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PROXY</text>
+  <text x="256" y="46" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+  <text x="256" y="58" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">svc: A</text>
+
+  <!-- App A -->
+  <rect x="364" y="16" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="364" y="16" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="372" y="22" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="386" y="31" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="424" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App A</text>
+
+  <!-- Envoy B -->
+  <rect x="532" y="16" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="532" y="16" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="540" y="22" width="36" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="558" y="31" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PROXY</text>
+  <text x="592" y="46" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Envoy Proxy</text>
+  <text x="592" y="58" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">svc: B</text>
+
+  <!-- App B -->
+  <rect x="700" y="16" width="120" height="48" rx="6" fill="#ffffff"/>
+  <rect x="700" y="16" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="708" y="22" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="722" y="31" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APP</text>
+  <text x="760" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">App B</text>
+
+  <!-- Jaeger Collector (focal / accent) -->
+  <rect x="824" y="360" width="96" height="96" rx="6" fill="#ffffff"/>
+  <rect x="824" y="360" width="96" height="96" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="832" y="368" width="60" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.55)" stroke-width="0.8"/>
+  <text x="862" y="377" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">BACKEND</text>
+  <text x="872" y="410" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Jaeger</text>
+  <text x="872" y="426" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Collector</text>
+  <text x="872" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">:14250</text>
+
+  <!-- ============ LEGEND ============ -->
+  <line x1="30" y1="516" x2="930" y2="516" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <line x1="132" y1="529" x2="164" y2="529" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <text x="172" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">SYNC CALL (traceparent propagation)</text>
+
+  <line x1="452" y1="529" x2="484" y2="529" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-open)"/>
+  <text x="492" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">ASYNC EXPORT (span → collector)</text>
+
+  <rect x="808" y="523" width="14" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="830" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.04em">TRACING BACKEND</text>
+</svg>

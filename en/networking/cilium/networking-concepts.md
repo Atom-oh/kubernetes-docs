@@ -31,60 +31,7 @@ The OSI (Open Systems Interconnection) model is a conceptual framework that clas
 
 ### OSI Model and TCP/IP Model Comparison
 
-```mermaid
-flowchart LR
-    subgraph "OSI Model"
-        OSI7[7. Application Layer]
-        OSI6[6. Presentation Layer]
-        OSI5[5. Session Layer]
-        OSI4[4. Transport Layer]
-        OSI3[3. Network Layer]
-        OSI2[2. Data Link Layer]
-        OSI1[1. Physical Layer]
-    end
-
-    subgraph "TCP/IP Model"
-        TCP4[4. Application Layer]
-        TCP3[3. Transport Layer]
-        TCP2[2. Internet Layer]
-        TCP1[1. Network Access Layer]
-    end
-
-    OSI7 & OSI6 & OSI5 --- TCP4
-    OSI4 --- TCP3
-    OSI3 --- TCP2
-    OSI2 & OSI1 --- TCP1
-
-    subgraph "Protocol Examples"
-        P7[HTTP, FTP, SMTP, DNS]
-        P6[SSL/TLS, JPEG, ASCII]
-        P5[NetBIOS, RPC]
-        P4[TCP, UDP]
-        P3[IP, ICMP, IGMP]
-        P2[Ethernet, PPP, ARP]
-        P1[RS-232, Ethernet]
-    end
-
-    OSI7 --- P7
-    OSI6 --- P6
-    OSI5 --- P5
-    OSI4 --- P4
-    OSI3 --- P3
-    OSI2 --- P2
-    OSI1 --- P1
-
-    classDef app fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef transport fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef link fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef physical fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    class OSI7,OSI6,OSI5,TCP4,P7,P6,P5 app;
-    class OSI4,TCP3,P4 transport;
-    class OSI3,TCP2,P3 network;
-    class OSI2,P2 link;
-    class OSI1,TCP1,P1 physical;
-```
+![Diagram mapping the seven OSI reference layers to the four TCP/IP stack layers, with representative protocols shown under each layer.](../../.gitbook/assets/en-networking-cilium-networking-concepts-0.png)
 
 ### OSI 7-Layer Model
 
@@ -206,25 +153,7 @@ There are several container networking models, each suitable for different use c
 - Efficient communication between containers on the same host
 - Default networking mode for Docker
 
-```mermaid
-graph TD
-    subgraph "Container A"
-        A["Container A<br>IP: 172.17.0.2"]
-        vethA[veth0]
-    end
-
-    subgraph "Container B"
-        B["Container B<br>IP: 172.17.0.3"]
-        vethB[veth1]
-    end
-
-    bridge["docker0<br>Bridge (172.17.0.1/24)"]
-    host["Host Network<br>eth0, 192.168.1.10"]
-
-    vethA --> bridge
-    vethB --> bridge
-    bridge --> host
-```
+![Diagram showing two containers each connected through a veth pair to a shared Linux bridge, which forwards traffic onto the host network.](../../.gitbook/assets/en-networking-cilium-networking-concepts-1.png)
 
 #### 2. Host Networking
 
@@ -233,23 +162,7 @@ graph TD
 - Provides best network performance
 - Potential for port conflicts
 
-```mermaid
-graph TD
-    subgraph "Host"
-        subgraph "Container A"
-            A[Container A]
-        end
-
-        subgraph "Container B"
-            B[Container B]
-        end
-
-        network[Host Network Stack<br>eth0, 192.168.1.10]
-
-        A --> network
-        B --> network
-    end
-```
+![Diagram showing two containers sharing the host's network namespace directly, with no bridge or isolation layer between them.](../../.gitbook/assets/en-networking-cilium-networking-concepts-2.png)
 
 #### 3. Overlay Networking
 
@@ -258,28 +171,7 @@ graph TD
 - Suitable for large-scale clusters
 - Supported by Cilium, Calico, Flannel, etc.
 
-```mermaid
-graph TD
-    subgraph "Host A"
-        A[Container A<br>IP: 10.0.0.2]
-        overlayA[Overlay Network<br>10.0.0.0/24]
-        ethA[eth0: 192.168.1.10]
-
-        A --> overlayA
-        overlayA --> ethA
-    end
-
-    subgraph "Host B"
-        B[Container B<br>IP: 10.0.0.3]
-        overlayB[Overlay Network<br>10.0.0.0/24]
-        ethB[eth0: 192.168.1.11]
-
-        B --> overlayB
-        overlayB --> ethB
-    end
-
-    ethA <-->|VXLAN| ethB
-```
+![Diagram showing two hosts, each running a container on a virtual overlay segment, tunneled to each other over VXLAN across the physical network.](../../.gitbook/assets/en-networking-cilium-networking-concepts-3.png)
 
 #### 4. Underlay Networking (Direct Routing)
 
@@ -288,28 +180,7 @@ graph TD
 - Requires control over network infrastructure
 - Can integrate with routing protocols like BGP
 
-```mermaid
-graph TD
-    subgraph "Host A"
-        A[Container A<br>IP: 10.0.0.2]
-        routeA[Route:<br>10.0.0.2 -> local<br>10.0.0.3 -> Host B]
-        ethA[eth0: 192.168.1.10]
-
-        A --> routeA
-        routeA --> ethA
-    end
-
-    subgraph "Host B"
-        B[Container B<br>IP: 10.0.0.3]
-        routeB[Route:<br>10.0.0.3 -> local<br>10.0.0.2 -> Host A]
-        ethB[eth0: 192.168.1.11]
-
-        B --> routeB
-        routeB --> ethB
-    end
-
-    ethA <-->|Physical Network| ethB
-```
+![Diagram showing two hosts, each routing container traffic through a local routing table directly onto the physical network with no encapsulation.](../../.gitbook/assets/en-networking-cilium-networking-concepts-4.png)
 
 ### Kubernetes Networking Model
 
@@ -361,27 +232,7 @@ VXLAN is one of the most widely used overlay protocols in container networking.
 - **MAC-in-UDP Encapsulation**: Encapsulates original L2 frames into UDP packets
 
 VXLAN Packet Structure:
-```mermaid
-graph TD
-    outerEth[Outer Ethernet]
-    outerIP[Outer IP]
-    outerUDP[Outer UDP]
-    vxlanHeader["VXLAN Header<br>VNI(VXLAN Network Identifier)"]
-    origEth[Original Ethernet]
-    origIP[Original IP]
-    origTCP[Original TCP/UDP]
-    payload[Payload]
-
-    outerEth --> outerIP
-    outerIP --> outerUDP
-    outerUDP --> vxlanHeader
-    vxlanHeader --> origEth
-    origEth --> origIP
-    origIP --> origTCP
-    origTCP --> payload
-
-    style vxlanHeader fill:#f9f,stroke:#333,stroke-width:2px
-```
+![Diagram of a VXLAN-encapsulated packet, showing the outer Ethernet, IP, and UDP headers wrapping a VXLAN header, which itself wraps the original Ethernet frame, IP header, TCP/UDP header, and payload.](../../.gitbook/assets/en-networking-cilium-networking-concepts-5.png)
 
 #### GENEVE (Generic Network Virtualization Encapsulation)
 
@@ -456,26 +307,7 @@ Source NAT modifies the source IP address of packets. It is typically used when 
 - **Use Cases**: Internet access, outbound connections
 - **Tracking**: Stores connection state in NAT table
 
-```mermaid
-graph LR
-    subgraph "Internal Network"
-        client[Client<br>10.0.0.2]
-    end
-
-    subgraph "NAT Router"
-        snat[SNAT]
-    end
-
-    subgraph "Internet"
-        server[Server<br>203.0.113.5]
-    end
-
-    client -->|10.0.0.2:1234| snat
-    snat -->|198.51.100.1:5678| server
-
-    note1[Translates private IP to public IP]
-    snat --- note1
-```
+![Diagram showing a client on an internal network sending traffic through a NAT router that rewrites the source address, reaching a server on the internet with a public source IP.](../../.gitbook/assets/en-networking-cilium-networking-concepts-6.png)
 
 #### 2. Destination NAT (DNAT)
 
@@ -485,26 +317,7 @@ Destination NAT modifies the destination IP address of packets. It is typically 
 - **Use Cases**: Port forwarding, load balancing, inbound connections
 - **Configuration**: Defines mappings for specific ports or port ranges
 
-```mermaid
-graph LR
-    subgraph "Internet"
-        client[Client<br>203.0.113.5]
-    end
-
-    subgraph "NAT Router"
-        dnat[DNAT]
-    end
-
-    subgraph "Internal Network"
-        server[Server<br>10.0.0.3]
-    end
-
-    client -->|198.51.100.1:80| dnat
-    dnat -->|10.0.0.3:8080| server
-
-    note1[Translates public IP to private IP]
-    dnat --- note1
-```
+![Diagram showing a client on the internet sending traffic through a NAT router that rewrites the destination address, reaching a server on the internal network at its private IP.](../../.gitbook/assets/en-networking-cilium-networking-concepts-7.png)
 
 #### 3. Port Address Translation (PAT)
 
@@ -514,30 +327,7 @@ PAT modifies both IP addresses and port numbers. This allows multiple internal h
 - **Use Cases**: IP address conservation, support for many internal hosts
 - **Limitations**: Limited by the number of available ports (approximately 65,000)
 
-```mermaid
-graph LR
-    subgraph "Internal Network"
-        hostA[Host A<br>10.0.0.2:1234]
-        hostB[Host B<br>10.0.0.3:1234]
-    end
-
-    subgraph "NAT Router (PAT)"
-        pat[198.51.100.1]
-    end
-
-    subgraph "Internet"
-        serverA[Server<br>203.0.113.5:80]
-        serverB[Server<br>203.0.113.5:80]
-    end
-
-    hostA --> pat
-    hostB --> pat
-    pat -->|198.51.100.1:5000| serverA
-    pat -->|198.51.100.1:5001| serverB
-
-    note1[Multiple internal hosts share a single public IP]
-    pat --- note1
-```
+![Diagram showing two internal hosts sharing a single public IP through a PAT router, which assigns each host a distinct public port when reaching separate internet servers.](../../.gitbook/assets/en-networking-cilium-networking-concepts-8.png)
 
 #### 4. Bi-directional NAT
 
@@ -689,28 +479,7 @@ In native routing mode, Cilium routes pod IPs directly without overlay encapsula
 - **Requirements**: Routable network between nodes
 - **Use Cases**: Performance-critical workloads, single-subnet clusters
 
-```mermaid
-graph TD
-    subgraph "Node A"
-        podA[Pod A<br>10.0.0.2]
-        routeA[Routing Table:<br>10.0.0.0/24 -> local<br>10.0.1.0/24 -> Node B]
-        ethA[eth0: 192.168.1.10]
-
-        podA --> routeA
-        routeA --> ethA
-    end
-
-    subgraph "Node B"
-        podB[Pod B<br>10.0.1.2]
-        routeB[Routing Table:<br>10.0.1.0/24 -> local<br>10.0.0.0/24 -> Node A]
-        ethB[eth0: 192.168.1.11]
-
-        podB --> routeB
-        routeB --> ethB
-    end
-
-    ethA <-->|Physical Network| ethB
-```
+![Diagram showing two Kubernetes nodes, each routing pod traffic through a local routing table directly onto the physical network with no overlay encapsulation.](../../.gitbook/assets/en-networking-cilium-networking-concepts-9.png)
 
 #### 2. BGP Routing
 
@@ -809,18 +578,7 @@ DNS is a distributed system that translates human-readable domain names into IP 
 
 #### DNS Resolution Process
 
-```mermaid
-sequenceDiagram
-    participant Client as Client
-    participant Root as Root DNS Server
-    participant TLD as .com DNS Server
-    participant Auth as example.com DNS Server
-
-    Client->>Root: 1. Query www.example.com
-    Root->>TLD: 2. Refer to .com DNS Server
-    TLD->>Auth: 3. Refer to example.com DNS Server
-    Auth->>Client: 4. www.example.com = 192.0.2.1
-```
+![Sequence diagram showing a client's iterative DNS query walking from the root DNS server to the .com TLD server to the example.com authoritative server, which returns the final IP address.](../../.gitbook/assets/en-networking-cilium-networking-concepts-10.png)
 
 ### Service Discovery in Container Environments
 
@@ -873,19 +631,7 @@ Kubernetes runs a cluster DNS service (typically CoreDNS) to support service dis
 - **Pod DNS**: `<pod-ip>.<namespace>.pod.cluster.local`
 - **Headless Services**: Service name resolves to DNS records of all pod IPs
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CoreDNS as CoreDNS
-    participant ServiceB as Service B<br>ClusterIP: 10.0.0.1
-
-    PodA->>CoreDNS: 1. Query service-b
-    CoreDNS->>ServiceB: 2. Resolve service-b
-    ServiceB->>CoreDNS: 3. Select backend pod
-    CoreDNS->>PodA: 4. Receive 10.0.0.1
-
-    note right of ServiceB: Pod B1, B2, B3
-```
+![Sequence diagram showing Pod A querying CoreDNS for a service name, CoreDNS resolving it against the Service's ClusterIP and selecting a backend pod, then returning the resolved IP to Pod A.](../../.gitbook/assets/en-networking-cilium-networking-concepts-11.png)
 
 #### Kubernetes Service Discovery Mechanisms
 
@@ -983,17 +729,7 @@ L4 load balancing distributes traffic based on transport layer information such 
 - **Disadvantages**: Cannot perform advanced routing based on application layer information
 - **Use Cases**: TCP/UDP-based services, high-performance requirements
 
-```mermaid
-graph LR
-    client[Client<br>203.0.113.1:12345]
-    lb[L4 Load Balancer<br>TCP/UDP Header Analysis]
-    serverA[Server A<br>10.0.0.1:8080]
-    serverB[Server B<br>10.0.0.2:8080]
-
-    client -->|Request| lb
-    lb --> serverA
-    lb --> serverB
-```
+![Diagram showing a client request routed by a transport-layer load balancer to one of two backend servers, based only on TCP/UDP header information.](../../.gitbook/assets/en-networking-cilium-networking-concepts-12.png)
 
 #### 2. L7 (Application Layer) Load Balancing
 
@@ -1004,17 +740,7 @@ L7 load balancing distributes traffic based on application layer information suc
 - **Disadvantages**: Higher processing overhead, SSL termination required for encrypted traffic
 - **Use Cases**: Web applications, microservices, API gateways
 
-```mermaid
-graph LR
-    client[Client<br>GET /api/users]
-    lb[L7 Load Balancer<br>URL Path Analysis<br>Header Inspection]
-    apiServer[API Server<br>/api/*]
-    webServer[Web Server<br>/web/*]
-
-    client -->|HTTP Request| lb
-    lb --> apiServer
-    lb --> webServer
-```
+![Diagram showing a client HTTP request routed by an application-layer load balancer to one of two backend services, based on URL path and header inspection.](../../.gitbook/assets/en-networking-cilium-networking-concepts-13.png)
 
 ### Load Balancing Algorithms
 
@@ -1119,30 +845,7 @@ Cilium implements efficient load balancing using eBPF:
 - **Scalability**: Supports large-scale services and endpoints
 - **Connection Tracking Optimization**: Efficient state management
 
-```mermaid
-graph TD
-    subgraph "Pod A (Client)"
-        client[Pod A]
-    end
-
-    subgraph "Kernel + eBPF Program"
-        intercept[1. Packet Intercept]
-        lookup[2. Service Map Lookup]
-        select[3. Backend Selection]
-        forward[4. Packet Forwarding]
-
-        intercept --> lookup
-        lookup --> select
-        select --> forward
-    end
-
-    subgraph "Pod B (Server)"
-        server[Pod B]
-    end
-
-    client --> intercept
-    forward --> server
-```
+![Diagram showing a packet from Pod A moving through a four-step eBPF pipeline in the kernel — intercept, service lookup, backend selection, forwarding — before reaching Pod B, replacing kube-proxy.](../../.gitbook/assets/en-networking-cilium-networking-concepts-14.png)
 
 #### 2. Load Balancing Algorithms
 

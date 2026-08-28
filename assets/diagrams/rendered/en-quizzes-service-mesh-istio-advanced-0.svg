@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ztunnel-title ztunnel-desc">
+  <title id="ztunnel-title">Ambient mesh ztunnel and waypoint proxy</title>
+  <desc id="ztunnel-desc">Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.</desc>
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <!-- Zones -->
+  <rect x="40" y="40" width="240" height="248" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="112" y="44" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="160" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 1</text>
+
+  <rect x="680" y="40" width="240" height="248" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="752" y="44" width="96" height="12" rx="2" fill="#ffffff"/>
+  <text x="800" y="53" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">NODE 2</text>
+
+  <rect x="360" y="380" width="240" height="140" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="416" y="384" width="128" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="393" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">WAYPOINT PROXY</text>
+
+  <!-- Arrows (behind boxes) -->
+  <!-- Pod A -> ztunnel1 -->
+  <line x1="106" y1="124" x2="106" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Pod B -> ztunnel1 -->
+  <line x1="218" y1="124" x2="218" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Pod C -> ztunnel2 -->
+  <line x1="746" y1="124" x2="746" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <!-- Pod D -> ztunnel2 -->
+  <line x1="854" y1="124" x2="854" y2="156" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- ztunnel1 <-> ztunnel2 mTLS -->
+  <line x1="264" y1="188" x2="696" y2="188" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+  <rect x="452" y="168" width="56" height="12" rx="2" fill="#ffffff"/>
+  <text x="480" y="177" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">MTLS</text>
+
+  <!-- ztunnel1 -> waypoint (dashed, when L7 needed) -->
+  <path d="M 160,220 V 312 Q 160,320 168,320 H 396 Q 404,320 404,328 V 420"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="240" y="300" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="284" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">IF L7 NEEDED</text>
+
+  <!-- ztunnel2 -> waypoint (dashed, when L7 needed) -->
+  <path d="M 800,220 V 312 Q 800,320 792,320 H 564 Q 556,320 556,328 V 420"
+        fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="632" y="300" width="88" height="12" rx="2" fill="#ffffff"/>
+  <text x="676" y="309" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">IF L7 NEEDED</text>
+
+  <!-- Node: Pod A -->
+  <rect x="56" y="76" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="106" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod A</text>
+  <text x="106" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">workload</text>
+
+  <!-- Node: Pod B -->
+  <rect x="164" y="76" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="214" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod B</text>
+  <text x="214" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">workload</text>
+
+  <!-- Node: ztunnel1 (focal) -->
+  <rect x="56" y="156" width="208" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="160" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+  <text x="160" y="200" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L4 proxy</text>
+
+  <!-- Node: Pod C -->
+  <rect x="696" y="76" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="746" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod C</text>
+  <text x="746" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">workload</text>
+
+  <!-- Node: Pod D -->
+  <rect x="804" y="76" width="100" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="854" y="98" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pod D</text>
+  <text x="854" y="112" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">workload</text>
+
+  <!-- Node: ztunnel2 (focal) -->
+  <rect x="696" y="156" width="208" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="800" y="184" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ztunnel</text>
+  <text x="800" y="200" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L4 proxy</text>
+
+  <!-- Node: waypoint (optional) -->
+  <rect x="380" y="420" width="200" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="480" y="448" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">waypoint</text>
+  <text x="480" y="464" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">L7 proxy · optional</text>
+
+  <!-- Legend -->
+  <line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="30" y="568" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+  <circle cx="180" cy="564" r="5" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="192" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">L4 PROXY (ZTUNNEL)</text>
+  <circle cx="380" cy="564" r="5" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="392" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">WORKLOAD POD</text>
+  <line x1="560" y1="564" x2="588" y2="564" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="596" y="568" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">OPTIONAL L7 PATH</text>
+</svg>

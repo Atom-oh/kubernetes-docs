@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-calico-02-architecture-1-title ko-networking-calico-02-architecture-1-desc">
+<title id="ko-networking-calico-02-architecture-1-title">Felix 핵심 기능</title>
+<desc id="ko-networking-calico-02-architecture-1-desc">데이터스토어의 상태 변화를 받아 Felix가 인터페이스·라우팅·방화벽·정책 적용을 수행하는 네 가지 핵심 책임을 보여준다.</desc>
+<defs>
+<style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+</marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/>
+</marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<path d="M 220,280.8 H 312.0 Q 320.0,280.8 320.0,272.8 V 116.0 Q 320.0,108.0 328.0,108.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,293.6 H 312.0 Q 320.0,293.6 320.0,285.6 V 212.0 Q 320.0,204.0 328.0,204.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,306.4 H 312.0 Q 320.0,306.4 320.0,298.4 V 308.0 Q 320.0,300.0 328.0,300.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 220,319.2 H 312.0 Q 320.0,319.2 320.0,327.2 V 388.0 Q 320.0,396.0 328.0,396.0 H 420" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="60" y="268" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="60" y="268" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="140.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">데이터스토어</text>
+<text x="140.0" y="311.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">Typha / API Server</text><rect x="420" y="76" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="420" y="76" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="530.0" y="104.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">인터페이스 관리</text>
+<text x="530.0" y="119.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">veth pair 생성</text><rect x="420" y="172" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="420" y="172" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="530.0" y="200.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">라우팅 테이블</text>
+<text x="530.0" y="215.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">Pod 라우트 설정</text><rect x="420" y="268" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="420" y="268" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="530.0" y="296.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">방화벽 규칙</text>
+<text x="530.0" y="311.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">iptables/eBPF</text><rect x="420" y="364" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="420" y="364" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="530.0" y="392.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">정책 적용</text>
+<text x="530.0" y="407.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">NetworkPolicy</text><rect x="420" y="460" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="420" y="460" width="220" height="64" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="530.0" y="488.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">헬스체크</text>
+<text x="530.0" y="503.0" fill="#545B64" font-size="9" font-family="'Geist Mono',ui-monospace,monospace" text-anchor="middle">상태 보고</text><line x1="30" y1="552" x2="930" y2="552" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<line x1="30" y1="564" x2="46" y2="564" stroke="#545B64" stroke-width="1.4"/>
+<text x="52" y="567" fill="#545B64" font-size="8" font-family="'Geist Mono',ui-monospace,monospace">상태 반영</text></svg>

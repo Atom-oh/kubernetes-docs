@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-comparison-02-istio-vs-lattice-20-title ko-service-mesh-istio-comparison-02-istio-vs-lattice-20-desc">
+<title id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-20-title">최종 추천: 예산과 인력, 멀티 클라우드 여부로 정리한 결정 트리</title>
+<desc id="ko-service-mesh-istio-comparison-02-istio-vs-lattice-20-desc">예산과 인력이 충분하면 멀티 클라우드 여부에 따라 Istio+Ambient Mode 또는 AWS 한정 시 VPC Lattice·그 외에는 Istio를 선택하고, 예산과 인력이 제한적이면 AWS 환경인지에 따라 VPC Lattice 또는 Linkerd 같은 더 가벼운 솔루션을 선택하라는 최종 권장 흐름을 보여준다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-open" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polyline points="0 0, 8 3, 0 6" fill="none" stroke="#545B64" stroke-width="1.2"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="350" y1="90" x2="350" y2="130" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="350" y1="210" x2="350" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="313.4" y="229.0" width="28.6" height="12" rx="2" fill="#ffffff"/>
+<text x="327.7" y="238.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">충분함</text>
+<path d="M 440,170 H 667 Q 675,170 675,178 V 250" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="520.9" y="150.0" width="28.6" height="12" rx="2" fill="#ffffff"/>
+<text x="535.1999999999999" y="159.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">제한적</text>
+<line x1="350" y1="340" x2="350" y2="444" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="313.4" y="386.0" width="28.6" height="12" rx="2" fill="#ffffff"/>
+<text x="327.7" y="395.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">아니오</text>
+<line x1="675" y1="310" x2="675" y2="354" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="440" y1="300" x2="780" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="470.8" y="280" width="48.400000000000006" height="12" rx="2" fill="#ffffff"/>
+<text x="495" y="289" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">멀티클라우드</text>
+<line x1="440" y1="480" x2="780" y2="480" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="454.4" y="460" width="61.2" height="12" rx="2" fill="#ffffff"/>
+<text x="485" y="469" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">AWS ONLY</text>
+<path d="M 350,516 V 652 Q 350,660 358,660 H 780" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="358" y="529.0" width="28.6" height="12" rx="2" fill="#ffffff"/>
+<text x="372.3" y="538.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">아니오</text>
+<line x1="755" y1="390" x2="780" y2="390" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="780.4" y="370" width="29.200000000000003" height="12" rx="2" fill="#ffffff"/>
+<text x="795" y="379" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">AWS</text>
+<path d="M 675,426 V 562 Q 675,570 683,570 H 780" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="683" y="439.0" width="28.6" height="12" rx="2" fill="#ffffff"/>
+<text x="697.3" y="448.0" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.05em">아니오</text>
+<rect x="250" y="40" width="200" height="50" rx="25.0" fill="#ffffff"/>
+<rect x="250" y="40" width="200" height="50" rx="25.0" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350.0" y="69.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">서비스 네트워킹 필요</text>
+<polygon points="350,130 440,170 350,210 260,170" fill="#ffffff"/>
+<polygon points="350,130 440,170 350,210 260,170" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="350" y="174" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">예산 및 인력</text>
+<polygon points="350,260 440,300 350,340 260,300" fill="#ffffff"/>
+<polygon points="350,260 440,300 350,340 260,300" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350" y="297" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">멀티</text>
+<text x="350" y="310" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">클라우드?</text>
+<polygon points="350,444 440,480 350,516 260,480" fill="#ffffff"/>
+<polygon points="350,444 440,480 350,516 260,480" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="350" y="484" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS Only?</text>
+<rect x="600" y="250" width="150" height="60" rx="6" fill="#ffffff"/>
+<rect x="600" y="250" width="150" height="60" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="675.0" y="284.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">간단한 솔루션</text>
+<polygon points="675,354 755,390 675,426 595,390" fill="#ffffff"/>
+<polygon points="675,354 755,390 675,426 595,390" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="675" y="394" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">AWS?</text>
+<rect x="780" y="270" width="170" height="60" rx="6" fill="#ffffff"/>
+<rect x="780" y="270" width="170" height="60" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="865.0" y="298.0" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio</text>
+<text x="865.0" y="315.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">+ Ambient Mode</text>
+<rect x="780" y="450" width="170" height="60" rx="6" fill="#ffffff"/>
+<rect x="780" y="450" width="170" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="865.0" y="484.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC Lattice</text>
+<rect x="780" y="630" width="170" height="60" rx="6" fill="#ffffff"/>
+<rect x="780" y="630" width="170" height="60" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="865.0" y="664.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Istio</text>
+<rect x="780" y="360" width="170" height="60" rx="6" fill="#ffffff"/>
+<rect x="780" y="360" width="170" height="60" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="865.0" y="394.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">VPC Lattice</text>
+<rect x="780" y="540" width="170" height="60" rx="6" fill="#ffffff"/>
+<rect x="780" y="540" width="170" height="60" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<text x="865.0" y="574.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Linkerd</text>
+</svg>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="argocd-projects-rbac-title argocd-projects-rbac-desc">
+  <title id="argocd-projects-rbac-title">ArgoCD project to namespace scoping</title>
+  <desc id="argocd-projects-rbac-desc">Diagram showing three ArgoCD AppProjects — team-a, team-b, and platform — each restricted to deploy only into its designated Kubernetes namespace or namespace set, with the platform project scoped to the shared kube-system and monitoring namespaces.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="32" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">ARGOCD RBAC</text>
+  <text x="40" y="60" fill="#232F3E" font-size="20" font-weight="700">Project-Scoped Deploy Permissions</text>
+  <text x="40" y="84" fill="#545B64" font-size="12">Each AppProject restricts which cluster namespaces its applications may target.</text>
+
+  <!-- Zone A: ArgoCD -->
+  <rect x="40" y="96" width="880" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="100" width="64" height="12" rx="2" fill="#ffffff"/>
+  <text x="88" y="109" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ARGOCD</text>
+
+  <!-- Zone B: Kubernetes Cluster -->
+  <rect x="40" y="344" width="880" height="120" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <rect x="56" y="348" width="152" height="12" rx="2" fill="#ffffff"/>
+  <text x="132" y="357" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">KUBERNETES CLUSTER</text>
+
+  <!-- Arrows: drawn before nodes -->
+  <!-- Column A: x=192 -->
+  <path d="M 192,200 V 376" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="200" y="281" width="92" height="14" rx="2" fill="#ffffff"/>
+  <text x="246" y="291" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">DEPLOYS TO</text>
+
+  <!-- Column B: x=480 -->
+  <path d="M 480,200 V 376" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="488" y="281" width="92" height="14" rx="2" fill="#ffffff"/>
+  <text x="534" y="291" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">DEPLOYS TO</text>
+
+  <!-- Column C (focal): x=768 -->
+  <path d="M 768,200 V 376" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="776" y="281" width="92" height="14" rx="2" fill="#ffffff"/>
+  <text x="822" y="291" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">DEPLOYS TO</text>
+
+  <!-- PROJ_A node: x=64,y=128,w=256,h=72 -->
+  <rect x="64" y="128" width="256" height="72" rx="6" fill="#ffffff"/>
+  <rect x="64" y="128" width="256" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="76" y="140" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="106" y="149" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROJECT</text>
+  <text x="192" y="176" fill="#232F3E" font-size="14" font-weight="600" text-anchor="middle">team-a</text>
+
+  <!-- PROJ_B node: x=352,y=128,w=256,h=72 -->
+  <rect x="352" y="128" width="256" height="72" rx="6" fill="#ffffff"/>
+  <rect x="352" y="128" width="256" height="72" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <rect x="364" y="140" width="60" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="394" y="149" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROJECT</text>
+  <text x="480" y="176" fill="#232F3E" font-size="14" font-weight="600" text-anchor="middle">team-b</text>
+
+  <!-- PROJ_P node (focal): x=640,y=128,w=256,h=72 -->
+  <rect x="640" y="128" width="256" height="72" rx="6" fill="#ffffff"/>
+  <rect x="640" y="128" width="256" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="652" y="140" width="60" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="682" y="149" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PROJECT</text>
+  <text x="768" y="176" fill="#232F3E" font-size="14" font-weight="600" text-anchor="middle">platform</text>
+
+  <!-- NS_A node: x=64,y=376,w=256,h=72 -->
+  <rect x="64" y="376" width="256" height="72" rx="6" fill="#ffffff"/>
+  <rect x="64" y="376" width="256" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="76" y="388" width="76" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="114" y="397" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NAMESPACE</text>
+  <text x="192" y="424" fill="#232F3E" font-size="14" font-weight="600" text-anchor="middle">team-a</text>
+
+  <!-- NS_B node: x=352,y=376,w=256,h=72 -->
+  <rect x="352" y="376" width="256" height="72" rx="6" fill="#ffffff"/>
+  <rect x="352" y="376" width="256" height="72" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <rect x="364" y="388" width="76" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+  <text x="402" y="397" fill="rgba(35,47,62,0.8)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">NAMESPACE</text>
+  <text x="480" y="424" fill="#232F3E" font-size="14" font-weight="600" text-anchor="middle">team-b</text>
+
+  <!-- NS_P node (focal): x=640,y=376,w=256,h=72 -->
+  <rect x="640" y="376" width="256" height="72" rx="6" fill="#ffffff"/>
+  <rect x="640" y="376" width="256" height="72" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <rect x="652" y="388" width="88" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+  <text x="696" y="397" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.02em">NAMESPACES</text>
+  <text x="768" y="418" fill="#232F3E" font-size="13" font-weight="600" text-anchor="middle">kube-system + monitoring</text>
+  <text x="768" y="436" fill="#7D8998" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">shared platform namespaces</text>
+
+  <!-- Legend -->
+  <line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+  <text x="40" y="516" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <rect x="40" y="524" width="14" height="14" rx="3" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="62" y="534" fill="#545B64" font-size="10">Single-namespace project</text>
+
+  <rect x="260" y="524" width="14" height="14" rx="3" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="282" y="534" fill="#545B64" font-size="10">Cross-namespace (platform) project</text>
+</svg>

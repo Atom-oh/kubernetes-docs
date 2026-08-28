@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-advanced-01-ambient-mode-6-title en-service-mesh-istio-advanced-01-ambient-mode-6-desc">
+<title id="en-service-mesh-istio-advanced-01-ambient-mode-6-title">Ambient mode traffic flow, L4 and L7</title>
+<desc id="en-service-mesh-istio-advanced-01-ambient-mode-6-desc">Sequence diagram tracing a request from an unsidecarred client app through client and server ztunnels for the plain L4 path, and, in an optional branch, through a waypoint proxy for L7 routing before reaching the server app.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+<marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="60" y1="96" x2="60" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="280" y1="96" x2="280" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="480" y1="96" x2="480" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="680" y1="96" x2="680" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="880" y1="96" x2="880" y2="560" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="-15.0" y="40" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="-15.0" y="40" width="150" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="60.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client App</text>
+<text x="60.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">no sidecar</text>
+<rect x="205.0" y="40" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="205.0" y="40" width="150" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="280.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Client ztunnel</text>
+<text x="280.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">node proxy</text>
+<rect x="405.0" y="40" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="405.0" y="40" width="150" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="480.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Waypoint</text>
+<text x="480.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">L7 optional</text>
+<rect x="605.0" y="40" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="605.0" y="40" width="150" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="680.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Server ztunnel</text>
+<text x="680.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">node proxy</text>
+<rect x="805.0" y="40" width="150" height="56" rx="6" fill="#ffffff"/>
+<rect x="805.0" y="40" width="150" height="56" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="880.0" y="64.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Server App</text>
+<text x="880.0" y="82.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">no sidecar</text>
+<rect x="220" y="376" width="520" height="184" rx="4" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<rect x="220" y="376" width="40" height="16" rx="2" fill="#ffffff" stroke="rgba(35,47,62,0.22)" stroke-width="1"/>
+<text x="240" y="388" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.1em">OPT</text>
+<text x="272" y="388" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" letter-spacing="0.02em">[L7 routing needed]</text>
+<rect x="56" y="124" width="8" height="216" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="276" y="124" width="8" height="420" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="476" y="408" width="8" height="136" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="676" y="164" width="8" height="340" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<rect x="876" y="204" width="8" height="56" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+<line x1="60" y1="132" x2="280" y2="132" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="127" y="112" width="86" height="12" rx="2" fill="#ffffff"/>
+<text x="170" y="121" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">1. TCP request</text>
+<line x1="280" y1="172" x2="680" y2="172" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="426" y="152" width="107" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="161" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">2. mTLS connection</text>
+<line x1="680" y1="212" x2="880" y2="212" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="743" y="192" width="75" height="12" rx="2" fill="#ffffff"/>
+<text x="780" y="201" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">3. plain TCP</text>
+<line x1="880" y1="252" x2="680" y2="252" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="745" y="232" width="69" height="12" rx="2" fill="#ffffff"/>
+<text x="780" y="241" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">4. response</text>
+<line x1="680" y1="292" x2="280" y2="292" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="432" y="272" width="96" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">5. mTLS response</text>
+<line x1="280" y1="332" x2="60" y2="332" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="119" y="312" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="170" y="321" fill="#EC7211" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">6. plain response</text>
+<line x1="280" y1="416" x2="480" y2="416" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="334" y="396" width="91" height="12" rx="2" fill="#ffffff"/>
+<text x="380" y="405" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">7. HBONE tunnel</text>
+<line x1="480" y1="456" x2="680" y2="456" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="529" y="436" width="102" height="12" rx="2" fill="#ffffff"/>
+<text x="580" y="445" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">8. mTLS to target</text>
+<line x1="680" y1="496" x2="480" y2="496" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="545" y="476" width="69" height="12" rx="2" fill="#ffffff"/>
+<text x="580" y="485" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">9. response</text>
+<line x1="480" y1="536" x2="280" y2="536" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<rect x="343" y="516" width="75" height="12" rx="2" fill="#ffffff"/>
+<text x="380" y="525" fill="#545B64" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">10. response</text>
+</svg>

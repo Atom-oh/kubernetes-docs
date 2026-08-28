@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vm-flow-title vm-flow-desc">
+    <title id="vm-flow-title">VictoriaMetrics deployment-mode decision flow</title>
+    <desc id="vm-flow-desc">Decision flow choosing single-node vs cluster VictoriaMetrics: high ingestion routes straight to Cluster Mode, otherwise availability and complexity tolerance decide between vmsingle, vmsingle with replicated storage, or Cluster Mode.</desc>
+    <defs>
+      <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- connectors, drawn before nodes -->
+    <!-- A -> B straight -->
+    <line x1="480" y1="84" x2="480" y2="132" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- B -> C : exit B left-bottom edge (436,198), enter C top vertex (248,272) -->
+    <path d="M436,198 H256 Q248,198 248,206 V272" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="304" y="182" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="348" y="191" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">&lt;100M/DAY</text>
+
+    <!-- B -> D : exit B right-bottom edge (524,198), enter D left edge (720,316) -->
+    <path d="M524,198 H614 Q622,198 622,206 V308 Q622,316 630,316 H720" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="586" y="182" width="88" height="12" rx="2" fill="#ffffff"/>
+    <text x="630" y="191" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">&gt;100M/DAY</text>
+
+    <!-- C -> E : exit C left-bottom edge (204,338), enter E top (154,472) -->
+    <path d="M204,338 H162 Q154,338 154,346 V472" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="160" y="392" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="176" y="401" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <!-- C -> F : exit C right-bottom edge (292,338), enter F top vertex (480,412) -->
+    <path d="M292,338 H472 Q480,338 480,346 V412" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="356" y="322" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="372" y="331" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <!-- F -> D : exit F right vertex (568,456), enter D bottom (800,344) -->
+    <path d="M568,456 H676 Q684,456 684,448 V352 Q684,344 692,344 H720" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <rect x="612" y="424" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="628" y="433" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+
+    <!-- F -> G straight, same x -->
+    <line x1="480" y1="500" x2="480" y2="540" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+    <rect x="464" y="508" width="32" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="517" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+
+    <!-- Nodes -->
+    <!-- A: oval start -->
+    <ellipse cx="480" cy="56" rx="140" ry="28" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="52" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">VictoriaMetrics</text>
+    <text x="480" y="66" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Mode Selection</text>
+
+    <!-- B: diamond -->
+    <polygon points="480,132 568,176 480,220 392,176" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Daily</text>
+    <text x="480" y="186" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ingestion?</text>
+
+    <!-- C: diamond -->
+    <polygon points="248,272 336,316 248,360 160,316" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="248" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Need</text>
+    <text x="248" y="326" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">HA?</text>
+
+    <!-- F: diamond -->
+    <polygon points="480,412 568,456 480,500 392,456" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="452" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Accept</text>
+    <text x="480" y="466" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">complexity?</text>
+
+    <!-- D: rect terminal, focal (reached two ways) -->
+    <rect x="720" y="288" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="720" y="288" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="800" y="320" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cluster Mode</text>
+
+    <!-- E: rect terminal -->
+    <rect x="64" y="472" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="64" y="472" width="180" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="154" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmsingle</text>
+    <text x="154" y="514" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">single node</text>
+
+    <!-- G: rect terminal -->
+    <rect x="380" y="540" width="200" height="48" rx="6" fill="#ffffff"/>
+    <rect x="380" y="540" width="200" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="562" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">vmsingle +</text>
+    <text x="480" y="576" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">replicated storage</text>
+  </svg>

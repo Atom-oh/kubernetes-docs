@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="xds-family-title xds-family-desc">
+    <title id="xds-family-title">xDS 프로토콜 계열</title>
+    <desc id="xds-family-desc">Istiod의 xDS Server(Pilot)가 gRPC 스트림으로 Envoy의 Listener·Route·Cluster·Endpoint·Secret Discovery Service 다섯 채널에 동적 구성을 동시에 공급하는 구조를 보여준다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- Zone: Envoy Proxy -->
+    <rect x="444" y="88" width="192" height="464" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="480" y="92" width="120" height="12" rx="2" fill="#ffffff"/>
+    <text x="540" y="101" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ENVOY PROXY</text>
+
+    <!-- Arrows (bidir) -->
+    <line x1="244" y1="144" x2="460" y2="144" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+    <line x1="244" y1="232" x2="460" y2="232" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+    <line x1="244" y1="320" x2="460" y2="320" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+    <line x1="244" y1="408" x2="460" y2="408" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+    <line x1="244" y1="496" x2="460" y2="496" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-start)"/>
+
+    <!-- Labels -->
+    <rect x="322" y="126" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="135" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC</text>
+    <rect x="322" y="214" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="223" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC</text>
+    <rect x="322" y="302" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="311" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC</text>
+    <rect x="322" y="390" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="399" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC</text>
+    <rect x="322" y="478" width="40" height="12" rx="2" fill="#ffffff"/>
+    <text x="342" y="487" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">gRPC</text>
+
+    <!-- Node: Pilot / xDS Server (focal) -->
+    <rect x="64" y="96" width="180" height="448" rx="6" fill="#ffffff"/>
+    <rect x="64" y="96" width="180" height="448" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <rect x="72" y="104" width="32" height="12" rx="2" fill="transparent" stroke="rgba(236,114,17,0.50)" stroke-width="0.8"/>
+    <text x="88" y="113" fill="#EC7211" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CTRL</text>
+    <text x="154" y="312" fill="#232F3E" font-size="13" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Pilot</text>
+    <text x="154" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">xDS Server</text>
+    <text x="154" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Istiod</text>
+
+    <!-- Node: LDS -->
+    <rect x="460" y="112" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="460" y="112" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="468" y="120" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="482" y="129" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">LDS</text>
+    <text x="540" y="148" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Listener DS</text>
+    <text x="540" y="164" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">15001, 15006</text>
+
+    <!-- Node: RDS -->
+    <rect x="460" y="200" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="460" y="200" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="468" y="208" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="482" y="217" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">RDS</text>
+    <text x="540" y="236" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route DS</text>
+    <text x="540" y="252" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">VirtualService</text>
+
+    <!-- Node: CDS -->
+    <rect x="460" y="288" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="460" y="288" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="468" y="296" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="482" y="305" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CDS</text>
+    <text x="540" y="324" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cluster DS</text>
+    <text x="540" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DestinationRule</text>
+
+    <!-- Node: EDS -->
+    <rect x="460" y="376" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="460" y="376" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="468" y="384" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="482" y="393" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EDS</text>
+    <text x="540" y="412" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Endpoint DS</text>
+    <text x="540" y="428" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Pod IPs</text>
+
+    <!-- Node: SDS -->
+    <rect x="460" y="464" width="160" height="64" rx="6" fill="#ffffff"/>
+    <rect x="460" y="464" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <rect x="468" y="472" width="28" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+    <text x="482" y="481" fill="#232F3E" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SDS</text>
+    <text x="540" y="500" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Secret DS</text>
+    <text x="540" y="516" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">mTLS 인증서</text>
+
+    <!-- Legend -->
+    <line x1="64" y1="568" x2="920" y2="568" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="64" y="584" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+    <line x1="64" y1="596" x2="92" y2="596" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+    <text x="100" y="599" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">LDS · 초기 부트스트랩(focal)</text>
+  </svg>

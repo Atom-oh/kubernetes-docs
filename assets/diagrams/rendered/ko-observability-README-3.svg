@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" role="img" aria-labelledby="otel-title otel-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="otel-title">OpenTelemetry 데이터 수집 파이프라인</title>
+    <desc id="otel-desc">여러 언어의 애플리케이션이 OpenTelemetry SDK로 계측되고, 수집기가 수신·가공·내보내기 단계를 거쳐 다양한 관측성 백엔드로 데이터를 전달하는 흐름을 보여준다.</desc>
+    <defs><style>@import url(https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap);</style>
+      <marker id="o-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+      </marker>
+      <marker id="o-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+      </marker>
+    </defs>
+
+    <rect width="960" height="600" fill="#ffffff"/>
+
+    <!-- Arrows (before boxes) -->
+    <line x1="196" y1="280" x2="248" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#o-arrow)"/>
+    <line x1="396" y1="280" x2="448" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#o-arrow)"/>
+
+    <!-- Collector internal chain -->
+    <line x1="576" y1="280" x2="592" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#o-arrow)"/>
+    <line x1="668" y1="280" x2="684" y2="280" stroke="#545B64" stroke-width="1.2" marker-end="url(#o-arrow)"/>
+
+    <line x1="756" y1="280" x2="800" y2="280" stroke="#EC7211" stroke-width="1.2" marker-end="url(#o-arrow-accent)"/>
+
+    <!-- Apps node -->
+    <rect x="76" y="248" width="120" height="64" rx="6" fill="#ffffff"/>
+    <rect x="76" y="248" width="120" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="136" y="272" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">애플리케이션</text>
+    <text x="136" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Java·Python</text>
+    <text x="136" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Node.js·Go</text>
+
+    <!-- SDK node -->
+    <rect x="248" y="248" width="148" height="64" rx="6" fill="#ffffff"/>
+    <rect x="248" y="248" width="148" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="322" y="272" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">OTel SDK</text>
+    <text x="322" y="288" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">auto-instrument</text>
+    <text x="322" y="300" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">manual-instrument</text>
+
+    <!-- Collector zone: 3 stages -->
+    <rect x="448" y="228" width="308" height="104" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="464" y="232" width="130" height="12" rx="2" fill="#ffffff"/>
+    <text x="529" y="241" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">OTEL COLLECTOR</text>
+
+    <rect x="464" y="256" width="112" height="48" rx="6" fill="#ffffff"/>
+    <rect x="464" y="256" width="112" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="520" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Receivers</text>
+    <text x="520" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">수신</text>
+
+    <rect x="592" y="256" width="76" height="48" rx="6" fill="#ffffff"/>
+    <rect x="592" y="256" width="76" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="630" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Processors</text>
+    <text x="630" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">가공</text>
+
+    <rect x="684" y="256" width="60" height="48" rx="6" fill="#ffffff"/>
+    <rect x="684" y="256" width="60" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="714" y="280" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Exporters</text>
+    <text x="714" y="294" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">전송</text>
+
+    <!-- Backends node (focal) -->
+    <rect x="800" y="220" width="120" height="120" rx="6" fill="rgba(255,153,0,0.10)"/>
+    <rect x="800" y="220" width="120" height="120" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+    <text x="860" y="244" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">관측성 백엔드</text>
+    <text x="860" y="264" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Tempo</text>
+    <text x="860" y="280" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Prometheus</text>
+    <text x="860" y="296" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Loki</text>
+    <text x="860" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">X-Ray</text>
+    <text x="860" y="328" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Datadog</text>
+
+    <!-- Legend -->
+    <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="140" y1="536" x2="164" y2="536" stroke="#545B64" stroke-width="1.2" marker-end="url(#o-arrow)"/>
+    <text x="172" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">계측/전달 흐름</text>
+    <line x1="360" y1="536" x2="384" y2="536" stroke="#EC7211" stroke-width="1.2" marker-end="url(#o-arrow-accent)"/>
+    <text x="392" y="540" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">다중 백엔드 내보내기</text>
+  </svg>

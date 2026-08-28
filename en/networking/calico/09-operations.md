@@ -7,32 +7,7 @@
 
 This chapter provides comprehensive operational guidance for Calico deployments, covering installation, monitoring, troubleshooting, upgrades, and best practices for production environments.
 
-```mermaid
-graph TB
-    subgraph "Calico Operations Lifecycle"
-        INSTALL[Installation<br/>Deploy Calico]
-        CONFIG[Configuration<br/>Tune Settings]
-        MONITOR[Monitoring<br/>Metrics & Logs]
-        TROUBLE[Troubleshooting<br/>Debug Issues]
-        UPGRADE[Upgrades<br/>Version Updates]
-        BACKUP[Backup & DR<br/>Data Protection]
-    end
-
-    INSTALL --> CONFIG
-    CONFIG --> MONITOR
-    MONITOR --> TROUBLE
-    TROUBLE --> CONFIG
-    MONITOR --> UPGRADE
-    UPGRADE --> CONFIG
-    CONFIG --> BACKUP
-
-    style INSTALL fill:#4fc3f7
-    style CONFIG fill:#81c784
-    style MONITOR fill:#ffb74d
-    style TROUBLE fill:#ef5350
-    style UPGRADE fill:#ce93d8
-    style BACKUP fill:#90a4ae
-```
+![Flowchart of the Calico operations lifecycle showing installation leading into configuration, which drives monitoring, troubleshooting, upgrades, and backup, with troubleshooting and upgrades both feeding fixes back into configuration as the shared hub.](../../.gitbook/assets/en-networking-calico-09-operations-0.png)
 
 ## Installation Guide
 

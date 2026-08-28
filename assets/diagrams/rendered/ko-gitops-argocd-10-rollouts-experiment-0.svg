@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t0 d0">
+    <title id="t0">Rollout이 생성하는 Experiment 리소스 구조</title>
+    <desc id="d0">Rollout이 Experiment를 생성하고, Experiment는 baseline·canary ReplicaSet과 AnalysisRun을 각각 생성하며 AnalysisTemplate은 templateName으로 AnalysisRun에 참조된다.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- ===== Arrows (behind nodes) ===== -->
+
+    <!-- Rollout -> Experiment (accent, straight vertical, shared x=480) -->
+    <line x1="480" y1="152" x2="480" y2="204" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+    <rect x="452" y="164" width="56" height="12" rx="2" fill="#ffffff"/>
+    <text x="480" y="173" fill="#EC7211" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">생성</text>
+
+    <!-- Experiment bottom edge fan: 3 attach points at x=440,480,520 (L=160,N=3 -> 40,80,120 offset from x=400) -->
+    <!-- Experiment(440,260) -> down to 292 -> left to 280 -> down to baseline(280,320) -->
+    <path d="M440,260 V284 A8,8 0 0 1 432,292 H288 A8,8 0 0 0 280,300 V320" fill="none" stroke="#545B64" stroke-width="1"/>
+    <rect x="322" y="272" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="370" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">spec.templates</text>
+
+    <!-- Experiment(520,260) -> down to 292 -> right to 680 -> down to canary(680,320) -->
+    <path d="M520,260 V284 A8,8 0 0 0 528,292 H672 A8,8 0 0 1 680,300 V320" fill="none" stroke="#545B64" stroke-width="1"/>
+    <rect x="542" y="272" width="96" height="12" rx="2" fill="#ffffff"/>
+    <text x="590" y="281" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">spec.templates</text>
+
+    <!-- Experiment(480,260) -> straight down -> AnalysisRun(480,440) -->
+    <line x1="480" y1="260" x2="480" y2="440" stroke="#545B64" stroke-width="1"/>
+    <rect x="489" y="342" width="78" height="12" rx="2" fill="#ffffff"/>
+    <text x="528" y="351" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">spec.analyses</text>
+
+    <!-- AnalysisTemplate -.-> AnalysisRun (dashed, straight horizontal, shared y=468) -->
+    <line x1="660" y1="468" x2="560" y2="468" stroke="#7D8998" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+    <rect x="584" y="480" width="52" height="12" rx="2" fill="#ffffff"/>
+    <text x="610" y="489" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.05em">참조</text>
+
+    <!-- ===== Nodes ===== -->
+
+    <!-- Rollout -->
+    <rect x="340" y="88" width="280" height="64" rx="6" fill="#ffffff"/>
+    <rect x="340" y="88" width="280" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="114" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Rollout</text>
+    <text x="480" y="132" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary steps 中 experiment step</text>
+
+    <!-- Experiment (focal) -->
+    <rect x="400" y="204" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="400" y="204" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="238" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Experiment</text>
+
+    <!-- ReplicaSet: baseline -->
+    <rect x="180" y="320" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="180" y="320" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="280" y="346" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ReplicaSet</text>
+    <text x="280" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">baseline</text>
+
+    <!-- ReplicaSet: canary -->
+    <rect x="580" y="320" width="200" height="64" rx="6" fill="#ffffff"/>
+    <rect x="580" y="320" width="200" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="680" y="346" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ReplicaSet</text>
+    <text x="680" y="364" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">canary</text>
+
+    <!-- AnalysisRun -->
+    <rect x="400" y="440" width="160" height="56" rx="6" fill="#ffffff"/>
+    <rect x="400" y="440" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="480" y="474" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AnalysisRun</text>
+
+    <!-- AnalysisTemplate (optional/reference treatment) -->
+    <rect x="660" y="440" width="180" height="56" rx="6" fill="#ffffff"/>
+    <rect x="660" y="440" width="180" height="56" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="750" y="474" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AnalysisTemplate</text>
+
+    <!-- ===== Legend ===== -->
+    <line x1="30" y1="536" x2="930" y2="536" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="552" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+
+    <rect x="120" y="542" width="24" height="12" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="152" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Experiment (핵심 리소스)</text>
+
+    <rect x="360" y="542" width="24" height="12" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="392" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">직접 생성되는 리소스</text>
+
+    <rect x="580" y="542" width="24" height="12" rx="6" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="612" y="552" fill="#545B64" font-size="8.5" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">templateName으로 참조</text>
+  </svg>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-networking-cilium-networking-concepts-7-title ko-networking-cilium-networking-concepts-7-desc">
+<title id="ko-networking-cilium-networking-concepts-7-title">DNAT(목적지 NAT) 동작 구조</title>
+<desc id="ko-networking-cilium-networking-concepts-7-desc">인터넷의 클라이언트가 NAT 라우터를 거치면서 목적지 주소가 공용 IP에서 사설 IP로 변환되어 내부 네트워크의 서버로 전달되는 DNAT 동작을 보여주는 다이어그램.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="10" y="170" width="260" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="22" y="164" width="35.5" height="12" rx="2" fill="#ffffff"/>
+<text x="39.75" y="173" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">인터넷</text>
+<rect x="350" y="170" width="260" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="362" y="164" width="61.5" height="12" rx="2" fill="#ffffff"/>
+<text x="392.75" y="173" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">NAT 라우터</text>
+<rect x="686" y="170" width="264" height="200" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="698" y="164" width="61.5" height="12" rx="2" fill="#ffffff"/>
+<text x="728.75" y="173" fill="rgba(35,47,62,0.45)" font-size="7" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.14em">내부 네트워크</text>
+<line x1="240" y1="270.0" x2="380" y2="270.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="580" y1="270.0" x2="716" y2="270.0" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="257.5" y="250.0" width="105.0" height="12" rx="2" fill="#ffffff"/>
+<text x="310.0" y="259.0" fill="#545B64" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">198.51.100.1:80</text>
+<rect x="601.7" y="250.0" width="92.60000000000001" height="12" rx="2" fill="#ffffff"/>
+<text x="648.0" y="259.0" fill="#EC7211" font-size="8" font-family="var(--font-mono)" text-anchor="middle" letter-spacing="0.06em">10.0.0.3:8080</text>
+<rect x="40" y="220" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="40" y="220" width="200" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="140.0" y="274.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">클라이언트</text>
+<text x="140.0" y="290.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">203.0.113.5</text>
+<rect x="380" y="220" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="380" y="220" width="200" height="100" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="480.0" y="274.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">DNAT</text>
+<text x="480.0" y="290.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">공용 → 사설 IP 변환</text>
+<rect x="716" y="220" width="200" height="100" rx="6" fill="#ffffff"/>
+<rect x="716" y="220" width="200" height="100" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="816.0" y="274.0" fill="#232F3E" font-size="12" font-weight="600" font-family="var(--font-sans)" text-anchor="middle">서버</text>
+<text x="816.0" y="290.0" fill="#545B64" font-size="9" font-family="var(--font-mono)" text-anchor="middle">10.0.0.3</text>
+<text x="480" y="404" fill="#232F3E" font-size="14" font-style="italic" font-family="var(--font-sans)" text-anchor="middle">목적지 주소를 공용 IP에서 사설 IP로 바꿔 내부로 전달한다</text>
+
+</svg>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="seq-title seq-desc">
+      <title id="seq-title">GitOps 워크플로우 시퀀스</title>
+      <desc id="seq-desc">개발자가 커밋한 코드가 CI 시스템의 빌드·테스트를 거쳐 Git에 매니페스트로 반영되고, GitOps 도구가 이를 감지해 Kubernetes에 자동으로 배포하는 순서를 보여준다.</desc>
+      <defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style>
+        <marker id="s1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+        <marker id="s1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- Lifelines -->
+      <line x1="100" y1="92" x2="100" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="290" y1="92" x2="290" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="480" y1="92" x2="480" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="670" y1="92" x2="670" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="860" y1="92" x2="860" y2="500" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- Actor boxes -->
+      <rect x="40" y="52" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="100" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">개발자</text>
+
+      <rect x="230" y="52" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="290" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Git 저장소</text>
+
+      <rect x="420" y="52" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="480" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">CI 시스템</text>
+
+      <rect x="610" y="52" width="120" height="40" rx="8" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+      <text x="670" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">GitOps 도구</text>
+
+      <rect x="800" y="52" width="120" height="40" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+      <text x="860" y="76" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember',sans-serif" text-anchor="middle">Kubernetes</text>
+
+      <!-- 1. Dev -> Git: 코드 커밋 -->
+      <line x1="100" y1="132" x2="290" y2="132" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <rect x="155" y="112" width="80" height="14" rx="2" fill="#ffffff"/>
+      <text x="195" y="123" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">코드 커밋</text>
+
+      <!-- 2. Git -> CI: Webhook 트리거 -->
+      <line x1="290" y1="168" x2="480" y2="168" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <rect x="330" y="148" width="110" height="14" rx="2" fill="#ffffff"/>
+      <text x="385" y="159" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">WEBHOOK 트리거</text>
+
+      <!-- 3. CI self-loop: 빌드 & 테스트 -->
+      <path d="M 480,204 H 540 V 224 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <rect x="548" y="207" width="90" height="14" rx="2" fill="#ffffff"/>
+      <text x="593" y="218" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">빌드 &amp; 테스트</text>
+
+      <!-- 4. CI -> Git: 매니페스트 업데이트 -->
+      <line x1="480" y1="260" x2="290" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <rect x="320" y="240" width="130" height="14" rx="2" fill="#ffffff"/>
+      <text x="385" y="251" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">매니페스트 업데이트</text>
+
+      <!-- 5. Git -> GitOps: 변경 감지 -->
+      <line x1="290" y1="316" x2="670" y2="316" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <rect x="450" y="296" width="80" height="14" rx="2" fill="#ffffff"/>
+      <text x="490" y="307" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">변경 감지</text>
+
+      <!-- 6. GitOps -> K8s: 자동 배포 (headline / accent) -->
+      <line x1="670" y1="372" x2="860" y2="372" stroke="#EC7211" stroke-width="1.4" marker-end="url(#s1-arrow-accent)"/>
+      <rect x="720" y="352" width="80" height="14" rx="2" fill="#ffffff"/>
+      <text x="760" y="363" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">자동 배포</text>
+
+      <!-- 7. GitOps -> Git: 상태 업데이트 -->
+      <line x1="670" y1="428" x2="290" y2="428" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <rect x="420" y="408" width="100" height="14" rx="2" fill="#ffffff"/>
+      <text x="470" y="419" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle">상태 업데이트</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="524" x2="920" y2="524" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+      <text x="40" y="540" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+      <line x1="40" y1="558" x2="70" y2="558" stroke="#545B64" stroke-width="1.2" marker-end="url(#s1-arrow)"/>
+      <text x="78" y="562" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">일반 호출</text>
+      <line x1="220" y1="558" x2="250" y2="558" stroke="#EC7211" stroke-width="1.4" marker-end="url(#s1-arrow-accent)"/>
+      <text x="258" y="562" fill="#545B64" font-size="8.5" font-family="'Amazon Ember',sans-serif">핵심 배포 이벤트</text>
+    </svg>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t1 d1">
+<title id="t1">Kubernetes 클러스터 노드의 iBGP mesh와 ToR 스위치로의 eBGP</title>
+<desc id="d1">AS 64512에 속한 3개의 Kubernetes 노드가 서로 iBGP로 완전 연결되어 있고, 각 노드가 별도의 AS 64513에 속한 ToR 스위치와 개별적으로 eBGP를 맺는 구조를 보여준다.</desc>
+<defs>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<text x="32" y="36" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">BGP BASICS</text>
+<text x="32" y="60" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">클러스터 노드 iBGP와 ToR eBGP</text>
+
+<!-- Zone: AS 64512 cluster -->
+<rect x="48" y="120" width="400" height="300" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8"/>
+<rect x="64" y="130" width="248" height="16" rx="2" fill="#ffffff"/>
+<text x="188" y="142" fill="#545B64" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" letter-spacing="0.04em">AS 64512 (Kubernetes 클러스터)</text>
+
+<!-- Zone: AS 64513 infra -->
+<rect x="672" y="248" width="240" height="144" rx="8" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.16)" stroke-width="0.8"/>
+<rect x="688" y="258" width="208" height="16" rx="2" fill="#ffffff"/>
+<text x="792" y="270" fill="#545B64" font-size="8" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle" letter-spacing="0.04em">AS 64513 (네트워크 인프라)</text>
+
+<!-- iBGP: N1 -> N2 -->
+<path d="M248,224 V296 Q248,304 240,304 H196 Q188,304 188,312 V340"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<rect x="196" y="284" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="218" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">iBGP</text>
+
+<!-- iBGP: N1 -> N3 -->
+<path d="M288,224 V296 Q288,304 296,304 H340 Q348,304 348,312 V340"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<rect x="296" y="284" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="318" y="293" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">iBGP</text>
+
+<!-- iBGP: N2 -> N3 -->
+<line x1="248" y1="364" x2="288" y2="364" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<rect x="250" y="344" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="268" y="353" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">iBGP</text>
+
+<!-- eBGP: N1 -> ToR -->
+<path d="M328,200 H652 Q660,200 660,208 V306 Q660,314 668,314 H712"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+<rect x="480" y="180" width="44" height="12" rx="2" fill="#ffffff"/>
+<text x="502" y="189" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">eBGP</text>
+
+<!-- eBGP: N2 -> ToR -->
+<path d="M248,364 H668 Q676,364 676,356 V336 Q676,328 684,328 H712"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+<!-- eBGP: N3 -> ToR -->
+<path d="M408,376 H684 Q692,376 692,368 V350 Q692,342 700,342 H712"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)" marker-start="url(#arrow-rev)"/>
+
+<!-- Nodes -->
+<rect x="208" y="176" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="268" y="197" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 1</text>
+<text x="268" y="212" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.1</text>
+
+<rect x="128" y="340" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="188" y="361" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 2</text>
+<text x="188" y="376" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.2</text>
+
+<rect x="288" y="340" width="120" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="348" y="361" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Node 3</text>
+<text x="348" y="376" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.1.3</text>
+
+<!-- ToR: focal (aggregation point for all 3 eBGP sessions) -->
+<rect x="712" y="300" width="160" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="792" y="323" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">ToR Switch</text>
+<text x="792" y="340" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">10.0.0.1</text>
+
+<!-- Legend -->
+<line x1="32" y1="500" x2="928" y2="500" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="518" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="140" y1="514" x2="172" y2="514" stroke="#545B64" stroke-width="1.2"/>
+<text x="180" y="518" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">iBGP · 노드 간 완전 연결</text>
+<line x1="440" y1="514" x2="472" y2="514" stroke="#545B64" stroke-width="1.2"/>
+<text x="480" y="518" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">eBGP · 노드 → ToR (개별 세션 3개)</text>
+</svg>

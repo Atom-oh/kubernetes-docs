@@ -63,54 +63,7 @@
 
 ### Istio 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph "Kubernetes Cluster"
-        subgraph "Control Plane (istio-system)"
-            Istiod[Istiod<br/>통합 컨트롤 플레인]
-        end
-
-        subgraph "Namespace: production"
-            subgraph "Pod: frontend"
-                FrontendApp[Frontend App]
-                FrontendProxy[Envoy Sidecar<br/>50-150MB]
-            end
-
-            subgraph "Pod: backend"
-                BackendApp[Backend App]
-                BackendProxy[Envoy Sidecar<br/>50-150MB]
-            end
-        end
-
-        subgraph "Observability"
-            Prometheus[Prometheus]
-            Jaeger[Jaeger]
-            Kiali[Kiali]
-        end
-    end
-
-    FrontendApp --> FrontendProxy
-    FrontendProxy -->|mTLS| BackendProxy
-    BackendProxy --> BackendApp
-
-    Istiod -->|xDS Config| FrontendProxy
-    Istiod -->|xDS Config| BackendProxy
-
-    FrontendProxy -.->|Metrics| Prometheus
-    BackendProxy -.->|Metrics| Prometheus
-    FrontendProxy -.->|Traces| Jaeger
-    BackendProxy -.->|Traces| Jaeger
-
-    Kiali -.->|Query| Prometheus
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef observability fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-
-    class Istiod k8sComponent;
-    class FrontendApp,BackendApp,FrontendProxy,BackendProxy userApp;
-    class Prometheus,Jaeger,Kiali observability;
-```
+![Kubernetes 클러스터 안에서 Istiod가 Envoy 사이드카에 xDS 설정을 배포하고, frontend와 backend 파드가 사이드카를 거쳐 mTLS로 통신하며 Prometheus·Jaeger·Kiali로 메트릭과 트레이스를 보내는 Istio 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
 
 **특징**:
 
@@ -121,56 +74,7 @@ flowchart TB
 
 ### VPC Lattice 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph AWS["AWS Account"]
-        subgraph VPC1["VPC 1"]
-            subgraph EKS["EKS Cluster"]
-                Frontend[Frontend Pod<br/>No Sidecar]
-            end
-        end
-
-        subgraph VPC2["VPC 2"]
-            ECS[ECS Task<br/>Backend Service]
-            Lambda[Lambda Function<br/>Payment Service]
-        end
-
-        subgraph VPC3["VPC 3"]
-            EC2[EC2 Instance<br/>Legacy Service]
-        end
-
-        subgraph VPCLattice["VPC Lattice (AWS Managed)"]
-            ServiceNetwork[Service Network]
-            ServiceA[Service A]
-            ServiceB[Service B]
-            TargetGroup1[Target Group<br/>ECS]
-            TargetGroup2[Target Group<br/>Lambda]
-            TargetGroup3[Target Group<br/>EC2]
-        end
-    end
-
-    Frontend -->|PrivateLink| ServiceNetwork
-    ServiceNetwork --> ServiceA
-    ServiceNetwork --> ServiceB
-    ServiceA --> TargetGroup1
-    ServiceA --> TargetGroup2
-    ServiceB --> TargetGroup3
-    TargetGroup1 --> ECS
-    TargetGroup2 --> Lambda
-    TargetGroup3 --> EC2
-
-    VPC1 -.->|VPC Association| ServiceNetwork
-    VPC2 -.->|VPC Association| ServiceNetwork
-    VPC3 -.->|VPC Association| ServiceNetwork
-
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef vpc fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Frontend,ECS,Lambda,EC2 userApp;
-    class ServiceNetwork,ServiceA,ServiceB,TargetGroup1,TargetGroup2,TargetGroup3 awsService;
-    class VPC1,VPC2,VPC3 vpc;
-```
+![사이드카 없는 EKS 파드, ECS 태스크, Lambda 함수, EC2 인스턴스가 VPC Lattice의 Service Network와 Service, Target Group을 거쳐 PrivateLink로 연결되는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
 
 **특징**:
 
@@ -630,32 +534,7 @@ spec:
 
 ### 보안 기능 종합 비교
 
-```mermaid
-flowchart LR
-    subgraph Istio Security
-        direction TB
-        I1[mTLS<br/>자동 인증서]
-        I2[L7 Authorization<br/>매우 세밀함]
-        I3[JWT 인증<br/>통합 지원]
-        I4[External CA<br/>통합 가능]
-        I5[Rate Limiting<br/>EnvoyFilter]
-    end
-
-    subgraph VPC Lattice Security
-        direction TB
-        L1[TLS<br/>ACM 통합]
-        L2[IAM 기반<br/>Service 레벨]
-        L3[SigV4<br/>AWS 네이티브]
-        L4[AWS PrivateLink<br/>네트워크 격리]
-        L5[WAF 통합<br/>가능]
-    end
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class I1,I2,I3,I4,I5 istio;
-    class L1,L2,L3,L4,L5 lattice;
-```
+![Istio는 자동 mTLS·L7 Authorization·JWT·External CA·Rate Limiting을, VPC Lattice는 ACM 기반 TLS·IAM·SigV4·PrivateLink·WAF를 제공한다는 보안 기능을 나란히 비교한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.png)
 
 **결론**: 보안 측면에서 **Istio가 더 세밀한 제어 제공**, VPC Lattice는 AWS IAM 통합에서 강점
 
@@ -909,37 +788,7 @@ Istio는 강력한 기능을 제공하지만, 프로덕션 환경에서 운영�
 
 #### 주요 운영 과제
 
-```mermaid
-flowchart TB
-    subgraph "Istio 운영 복잡도"
-        direction TB
-        Challenge1[Sidecar 관리<br/>모든 파드에 프록시 주입]
-        Challenge2[업그레이드 복잡도<br/>수동 Canary 프로세스]
-        Challenge3[리소스 오버헤드<br/>CPU/Memory 2배 증가]
-        Challenge4[트러블슈팅<br/>복잡한 디버깅]
-        Challenge5[설정 검증<br/>CRD 간 의존성]
-        Challenge6[인증서 관리<br/>CA 및 갱신]
-    end
-
-    subgraph "영향"
-        Impact1[운영 비용 증가<br/>전문 인력 필요]
-        Impact2[장애 위험 증가<br/>복잡한 아키텍처]
-        Impact3[배포 시간 증가<br/>파드 재시작 필요]
-    end
-
-    Challenge1 --> Impact1
-    Challenge2 --> Impact2
-    Challenge3 --> Impact1
-    Challenge4 --> Impact2
-    Challenge5 --> Impact2
-    Challenge6 --> Impact3
-
-    classDef challenge fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef impact fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-
-    class Challenge1,Challenge2,Challenge3,Challenge4,Challenge5,Challenge6 challenge;
-    class Impact1,Impact2,Impact3 impact;
-```
+![사이드카 관리, 업그레이드 복잡도, 리소스 오버헤드, 트러블슈팅, 설정 검증, 인증서 관리라는 여섯 운영 과제가 운영 비용 증가, 장애 위험 증가, 배포 시간 증가로 이어지는 인과관계를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
 
 ### 설치 및 초기 설정
 
@@ -1041,88 +890,13 @@ aws vpc-lattice create-listener \
 
 Istio 업그레이드는 프로덕션 환경에서 가장 위험하고 복잡한 작업 중 하나입니다.
 
-```mermaid
-flowchart TB
-    Start[업그레이드 시작]
-    Start --> Step1[새 Revision 설치]
-    Step1 --> Step2[Control Plane 동시 실행<br/>1-23-0 + 1-24-0]
-    Step2 --> Step3{네임스페이스별 전환}
-    Step3 -->|NS 1| Pod1[파드 재시작<br/>다운타임 발생]
-    Step3 -->|NS 2| Pod2[파드 재시작<br/>다운타임 발생]
-    Step3 -->|NS 3| Pod3[파드 재시작<br/>다운타임 발생]
-    Pod1 --> Verify1[검증<br/>트래픽 정상?]
-    Pod2 --> Verify2[검증<br/>트래픽 정상?]
-    Pod3 --> Verify3[검증<br/>트래픽 정상?]
-    Verify1 --> AllDone{모두 완료?}
-    Verify2 --> AllDone
-    Verify3 --> AllDone
-    AllDone -->|Yes| Cleanup[이전 버전 제거]
-    AllDone -->|No| Rollback[롤백 필요]
-    Cleanup --> End[업그레이드 완료]
-    Rollback --> ManualFix[수동 복구]
-
-    classDef risk fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef manual fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-    classDef normal fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Pod1,Pod2,Pod3,Rollback,ManualFix risk;
-    class Step1,Step2,Step3,Verify1,Verify2,Verify3 manual;
-    class Start,AllDone,Cleanup,End normal;
-```
+![새 Control Plane Revision 설치, 두 버전 동시 실행, 네임스페이스별 파드 재시작과 트래픽 검증을 거쳐 모두 완료되면 정리하고 문제가 있으면 롤백하는 Istio 업그레이드 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-4.png)
 
 #### Istio Revision 기반 Canary 업그레이드
 
 **업그레이드 아키텍처**:
 
-```mermaid
-flowchart TB
-    subgraph "Phase 1: 두 버전 공존"
-        OldCP[Istiod 1.23.0<br/>기존 Control Plane]
-        NewCP[Istiod 1.24.0<br/>새 Control Plane]
-
-        subgraph "Namespace: production"
-            OldPod1[Pod A<br/>Envoy 1.23.0]
-            OldPod2[Pod B<br/>Envoy 1.23.0]
-        end
-
-        subgraph "Namespace: staging"
-            NewPod1[Pod C<br/>Envoy 1.24.0]
-            NewPod2[Pod D<br/>Envoy 1.24.0]
-        end
-    end
-
-    OldCP -->|xDS Config| OldPod1
-    OldCP -->|xDS Config| OldPod2
-    NewCP -->|xDS Config| NewPod1
-    NewCP -->|xDS Config| NewPod2
-
-    subgraph "Phase 2: 순차적 전환"
-        Step1[1. staging 전환<br/>파드 재시작]
-        Step2[2. 검증<br/>트래픽/메트릭 확인]
-        Step3[3. production 전환<br/>점진적 롤아웃]
-        Step4[4. 이전 버전 제거]
-    end
-
-    Step1 --> Step2
-    Step2 --> Step3
-    Step3 --> Step4
-
-    subgraph "리스크"
-        Risk1[⚠️ 두 Control Plane 동시 실행<br/>리소스 2배]
-        Risk2[⚠️ 모든 파드 재시작 필요<br/>순간적 연결 끊김]
-        Risk3[⚠️ 설정 호환성 문제<br/>수동 수정 필요]
-    end
-
-    classDef old fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef new fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef risk fill:#EF5350,stroke:#333,stroke-width:2px,color:white;
-    classDef step fill:#42A5F5,stroke:#333,stroke-width:1px,color:white;
-
-    class OldCP,OldPod1,OldPod2 old;
-    class NewCP,NewPod1,NewPod2 new;
-    class Risk1,Risk2,Risk3 risk;
-    class Step1,Step2,Step3,Step4 step;
-```
+![기존 Istiod 1.23.0과 새 Istiod 1.24.0이 각각 production, staging 네임스페이스 파드에 xDS를 배포하며 동시에 실행되고, 순차 전환 단계와 리소스·연결 끊김·설정 호환성 리스크를 함께 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-5.png)
 
 **전체 프로세스** (프로덕션 환경 기준):
 
@@ -1250,32 +1024,7 @@ istioctl proxy-status
 
 **업그레이드 복잡도 비교**:
 
-```mermaid
-flowchart LR
-    subgraph "Istio 업그레이드"
-        direction TB
-        I1[사전 준비<br/>1-2시간]
-        I2[Control Plane 설치<br/>30분]
-        I3[Canary 전환<br/>2-3시간]
-        I4[검증<br/>1-2시간]
-        I5[정리<br/>1시간]
-        I6[총 6-10시간]
-    end
-
-    subgraph "VPC Lattice 업그레이드"
-        direction TB
-        L1[자동 업그레이드<br/>AWS 관리]
-        L2[다운타임 없음]
-        L3[사용자 작업 없음]
-        L4[총 0시간]
-    end
-
-    classDef istio fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class I1,I2,I3,I4,I5,I6 istio;
-    class L1,L2,L3,L4 lattice;
-```
+![Istio 업그레이드는 사전 준비부터 정리까지 총 6-10시간이 걸리지만 VPC Lattice는 AWS가 자동으로 업그레이드해 총 0시간이 걸린다는 것을 대조한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.png)
 
 **주요 과제**:
 
@@ -1297,40 +1046,7 @@ flowchart LR
 
 #### Sidecar 모델의 문제점
 
-```mermaid
-flowchart TB
-    subgraph "Without Istio"
-        direction TB
-        AppOnly[Application Container<br/>CPU: 100m<br/>Memory: 256MB]
-    end
-
-    subgraph "With Istio Sidecar"
-        direction TB
-        App[Application Container<br/>CPU: 100m<br/>Memory: 256MB]
-        Sidecar[Envoy Sidecar<br/>CPU: 100-500m<br/>Memory: 50-150MB]
-        App -.->|모든 트래픽| Sidecar
-    end
-
-    subgraph "Impact"
-        Impact1[리소스 2배 증가]
-        Impact2[파드 시작 시간 증가<br/>+5-10초]
-        Impact3[네트워크 Hop 추가<br/>Latency 증가]
-        Impact4[복잡한 트러블슈팅]
-    end
-
-    Sidecar --> Impact1
-    Sidecar --> Impact2
-    Sidecar --> Impact3
-    Sidecar --> Impact4
-
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef sidecar fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef impact fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-
-    class AppOnly,App app;
-    class Sidecar sidecar;
-    class Impact1,Impact2,Impact3,Impact4 impact;
-```
+![Istio 없이는 애플리케이션 컨테이너만 필요하지만 Envoy 사이드카를 붙이면 리소스 2배 증가, 파드 시작 시간 증가, 네트워크 홉 지연, 트러블슈팅 복잡화라는 네 영향이 생긴다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-7.png)
 
 #### 실제 리소스 오버헤드
 
@@ -1385,121 +1101,11 @@ Istio 1.24+ 부터 **Ambient Mode**가 정식 지원되어, Sidecar 없이도 Se
 
 **아키텍처 비교 (상세)**:
 
-```mermaid
-flowchart TB
-    subgraph "Sidecar Mode - 파드당 프록시"
-        direction LR
-
-        subgraph Pod1S["Pod A (256MB + 128MB)"]
-            App1S[App<br/>256MB]
-            Proxy1S[Envoy<br/>128MB<br/>100m CPU]
-        end
-
-        subgraph Pod2S["Pod B (256MB + 128MB)"]
-            App2S[App<br/>256MB]
-            Proxy2S[Envoy<br/>128MB<br/>100m CPU]
-        end
-
-        subgraph Pod3S["Pod C (256MB + 128MB)"]
-            App3S[App<br/>256MB]
-            Proxy3S[Envoy<br/>128MB<br/>100m CPU]
-        end
-
-        IstiodS[Istiod<br/>Control Plane]
-
-        IstiodS -->|Config| Proxy1S
-        IstiodS -->|Config| Proxy2S
-        IstiodS -->|Config| Proxy3S
-
-        App1S -->|localhost| Proxy1S
-        App2S -->|localhost| Proxy2S
-        App3S -->|localhost| Proxy3S
-
-        Proxy1S <-->|mTLS| Proxy2S
-        Proxy2S <-->|mTLS| Proxy3S
-    end
-
-    subgraph "Ambient Mode - 노드당 프록시"
-        direction LR
-
-        subgraph Node1["Node 1"]
-            subgraph Pod1A["Pod A (256MB)"]
-                App1A[App<br/>256MB<br/>Sidecar 없음!]
-            end
-
-            subgraph Pod2A["Pod B (256MB)"]
-                App2A[App<br/>256MB<br/>Sidecar 없음!]
-            end
-
-            Ztunnel1[ztunnel<br/>L4 Proxy<br/>100MB, 50m CPU<br/>노드당 1개]
-        end
-
-        subgraph Node2["Node 2"]
-            subgraph Pod3A["Pod C (256MB)"]
-                App3A[App<br/>256MB<br/>Sidecar 없음!]
-            end
-
-            Ztunnel2[ztunnel<br/>L4 Proxy<br/>100MB, 50m CPU<br/>노드당 1개]
-        end
-
-        subgraph L7Layer["L7 계층 (선택적)"]
-            Waypoint[Waypoint Proxy<br/>VirtualService<br/>AuthorizationPolicy]
-        end
-
-        IstiodA[Istiod<br/>Control Plane]
-
-        IstiodA -->|Config| Ztunnel1
-        IstiodA -->|Config| Ztunnel2
-        IstiodA -->|Config| Waypoint
-
-        App1A -.->|eBPF redirect| Ztunnel1
-        App2A -.->|eBPF redirect| Ztunnel1
-        App3A -.->|eBPF redirect| Ztunnel2
-
-        Ztunnel1 <-->|mTLS L4| Ztunnel2
-        Ztunnel1 -->|L7 필요 시| Waypoint
-        Ztunnel2 -->|L7 필요 시| Waypoint
-    end
-
-    subgraph "리소스 비교 (100 파드)"
-        comparison[Sidecar: 100 × 128MB = 12.8GB<br/>Ambient: 3 nodes × 100MB = 300MB<br/>절감: 97%]
-    end
-
-    classDef sidecar fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef ambient fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef savings fill:#4CAF50,stroke:#333,stroke-width:3px,color:white;
-    classDef control fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class Pod1S,Pod2S,Pod3S,Proxy1S,Proxy2S,Proxy3S sidecar;
-    class Pod1A,Pod2A,Pod3A,Ztunnel1,Ztunnel2,Waypoint,Node1,Node2 ambient;
-    class comparison savings;
-    class IstiodS,IstiodA control;
-```
+![Sidecar Mode는 파드마다 Envoy가 붙어 리소스가 파드 수만큼 늘어나지만, Ambient Mode는 노드당 하나의 ztunnel이 eBPF로 mTLS를 처리하고 필요할 때만 Waypoint를 거쳐 메모리 사용량이 97% 줄어든다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.png)
 
 **Ambient Mode 트래픽 흐름 (eBPF 기반)**:
 
-```mermaid
-sequenceDiagram
-    participant App as Application Pod
-    participant eBPF as eBPF Hook
-    participant ztunnel as ztunnel (L4)
-    participant waypoint as Waypoint (L7)
-    participant Target as Target Service
-
-    Note over App,Target: L4만 필요한 경우 (mTLS, Metrics)
-    App->>eBPF: 1. 패킷 전송
-    eBPF->>ztunnel: 2. 투명하게 리다이렉트
-    Note over ztunnel: mTLS 암호화<br/>L4 메트릭 수집
-    ztunnel->>Target: 3. mTLS 트래픽 전송
-
-    Note over App,Target: L7 필요한 경우 (VirtualService, Authorization)
-    App->>eBPF: 1. 패킷 전송
-    eBPF->>ztunnel: 2. 투명하게 리다이렉트
-    ztunnel->>waypoint: 3. L7 처리 필요
-    Note over waypoint: VirtualService 라우팅<br/>AuthorizationPolicy 검증<br/>L7 메트릭 수집
-    waypoint->>ztunnel: 4. 처리된 트래픽
-    ztunnel->>Target: 5. mTLS 트래픽 전송
-```
+![애플리케이션 파드의 패킷을 eBPF가 ztunnel로 리다이렉트하며, mTLS·메트릭만 필요하면 곧바로 대상으로 보내지만 L7 처리가 필요하면 Waypoint Proxy를 거쳤다가 다시 대상으로 전송한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-9.png)
 
 **Ambient Mode 리소스 비교**:
 
@@ -1569,96 +1175,11 @@ istioctl waypoint apply --namespace default
 
 **문제 발생 시 확인해야 할 레이어**:
 
-```mermaid
-flowchart TB
-    subgraph "Problem"
-        Issue[🔥 트래픽 실패<br/>503 Service Unavailable]
-    end
-
-    Issue --> Layer1{1. Application 문제?}
-    Layer1 -->|Yes| Fix1[Application 로그 확인]
-    Layer1 -->|No| Layer2{2. Sidecar 문제?}
-
-    Layer2 -->|Yes| Check2[Envoy 설정 확인]
-    Layer2 -->|No| Layer3{3. Control Plane 문제?}
-
-    Check2 --> Detail2A[istioctl proxy-config routes]
-    Check2 --> Detail2B[istioctl proxy-config clusters]
-    Check2 --> Detail2C[istioctl proxy-config listeners]
-    Check2 --> Detail2D[Envoy 로그 확인]
-
-    Layer3 -->|Yes| Check3[Istiod 상태 확인]
-    Layer3 -->|No| Layer4{4. Network 문제?}
-
-    Check3 --> Detail3A[xDS 동기화 확인]
-    Check3 --> Detail3B[Istiod 로그]
-    Check3 --> Detail3C[Certificate 확인]
-
-    Layer4 -->|Yes| Check4[NetworkPolicy 확인]
-    Layer4 -->|No| Layer5{5. CRD 설정 문제?}
-
-    Check4 --> Detail4A[파드 간 연결 테스트]
-    Check4 --> Detail4B[mTLS 인증서 확인]
-
-    Layer5 -->|Yes| Check5[VirtualService/DestinationRule]
-    Check5 --> Detail5A[istioctl analyze]
-    Check5 --> Detail5B[설정 검증]
-
-    Layer5 -->|No| Unknown[알 수 없는 문제<br/>Support 티켓]
-
-    classDef problem fill:#EF5350,stroke:#333,stroke-width:3px,color:white;
-    classDef layer fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-    classDef check fill:#42A5F5,stroke:#333,stroke-width:2px,color:white;
-    classDef detail fill:#66BB6A,stroke:#333,stroke-width:1px,color:white;
-
-    class Issue problem;
-    class Layer1,Layer2,Layer3,Layer4,Layer5 layer;
-    class Check2,Check3,Check4,Check5 check;
-    class Detail2A,Detail2B,Detail2C,Detail2D,Detail3A,Detail3B,Detail3C,Detail4A,Detail4B,Detail5A,Detail5B detail;
-```
+![503 오류 발생 시 Application, Sidecar, Control Plane, Network, CRD 설정 순으로 다섯 레이어를 점검하고 원인이 없으면 Support 티켓으로 넘어가는 Istio 트러블슈팅 절차를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-10.png)
 
 **실제 트러블슈팅 예시**:
 
-```mermaid
-sequenceDiagram
-    participant User as 엔지니어
-    participant App as Application Pod
-    participant Sidecar as Envoy Sidecar
-    participant Istiod as Istiod
-    participant Backend as Backend Service
-
-    User->>App: 1. kubectl logs app
-    Note over App: 정상 로그<br/>Backend 호출 성공
-
-    User->>Sidecar: 2. kubectl logs app -c istio-proxy
-    Note over Sidecar: ⚠️ upstream connect error<br/>cluster: outbound|8080||backend
-
-    User->>User: 3. istioctl proxy-config cluster app
-    Note over User: Backend cluster 존재하지 않음!
-
-    User->>Istiod: 4. kubectl logs -n istio-system istiod-xxx
-    Note over Istiod: ⚠️ Service backend not found<br/>in namespace default
-
-    User->>User: 5. kubectl get svc backend
-    Note over User: Service 존재함<br/>왜 Istiod가 못 찾지?
-
-    User->>User: 6. istioctl analyze
-    Note over User: ✅ Info: Backend service has no pods<br/>Deployment 스케일 0!
-
-    User->>Backend: 7. kubectl scale deployment backend --replicas=1
-    Note over Backend: 파드 시작됨
-
-    User->>User: 8. istioctl proxy-status
-    Note over User: ✅ SYNCED - 모든 프록시 동기화됨
-
-    User->>App: 9. 트래픽 재시도
-    App->>Sidecar: 요청
-    Sidecar->>Backend: 정상 연결
-    Backend-->>Sidecar: 200 OK
-    Sidecar-->>App: 200 OK
-
-    Note over User,Backend: 총 소요 시간: 30-60분<br/>확인한 레이어: 5개
-```
+![엔지니어가 애플리케이션 로그부터 사이드카, Istiod, Service 상태까지 확인해 Backend 배포가 0개 레플리카로 스케일된 것을 발견하고 복구한 뒤 트래픽이 정상화되는 실제 디버깅 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-11.png)
 
 **Istio 트러블슈팅 명령어**:
 
@@ -1729,69 +1250,11 @@ kubectl exec <pod> -c istio-proxy -- tcpdump -i any -w /tmp/capture.pcap
 
 **문제 발생 시 확인 레이어 (3단계만)**:
 
-```mermaid
-flowchart TB
-    subgraph "Problem"
-        Issue[🔥 트래픽 실패<br/>503 Service Unavailable]
-    end
-
-    Issue --> Layer1{1. Target 헬스?}
-    Layer1 -->|Unhealthy| Fix1[Target 상태 확인<br/>Auto Healing]
-    Layer1 -->|Healthy| Layer2{2. Service 설정?}
-
-    Layer2 -->|잘못됨| Fix2[Listener 규칙 확인<br/>AWS Console에서 수정]
-    Layer2 -->|정상| Layer3{3. 네트워크?}
-
-    Layer3 -->|문제| Fix3[Security Group<br/>VPC Association 확인]
-    Layer3 -->|정상| Unknown[AWS Support 티켓]
-
-    subgraph "간편한 도구"
-        Tool1[CloudWatch Dashboard<br/>모든 메트릭 한눈에]
-        Tool2[AWS Console<br/>GUI 클릭으로 해결]
-        Tool3[VPC Reachability Analyzer<br/>자동 진단]
-    end
-
-    classDef problem fill:#EF5350,stroke:#333,stroke-width:3px,color:white;
-    classDef layer fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-    classDef fix fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef tool fill:#42A5F5,stroke:#333,stroke-width:2px,color:white;
-
-    class Issue problem;
-    class Layer1,Layer2,Layer3 layer;
-    class Fix1,Fix2,Fix3 fix;
-    class Tool1,Tool2,Tool3 tool;
-```
+![VPC Lattice에서 트래픽 실패 시 Target 헬스, Service 설정, 네트워크라는 세 레이어만 확인하면 되고 CloudWatch·AWS Console·VPC Reachability Analyzer로 바로 해결한다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-12.png)
 
 **실제 트러블슈팅 예시 (VPC Lattice)**:
 
-```mermaid
-sequenceDiagram
-    participant User as 엔지니어
-    participant Console as AWS Console
-    participant CW as CloudWatch
-    participant Lattice as VPC Lattice
-
-    User->>Console: 1. VPC Lattice 콘솔 열기
-    User->>CW: 2. CloudWatch Metrics 확인
-    Note over CW: ✅ RequestCount: 정상<br/>⚠️ UnhealthyTargetCount: 2
-
-    User->>Console: 3. Target Group 선택
-    Note over Console: 2개 Target Unhealthy 확인<br/>원인: Health check 실패
-
-    User->>Console: 4. Health Check 설정 확인
-    Note over Console: Path: /health (잘못됨)<br/>올바른 Path: /healthz
-
-    User->>Console: 5. Health Check 경로 수정
-    Note over Console: /health → /healthz 변경<br/>저장 클릭
-
-    User->>Console: 6. 30초 대기
-    Note over Lattice: Auto Healing 실행<br/>Target 상태 변경: Unhealthy → Healthy
-
-    User->>CW: 7. 메트릭 재확인
-    Note over CW: ✅ UnhealthyTargetCount: 0<br/>✅ 트래픽 정상
-
-    Note over User,Lattice: 총 소요 시간: 5-10분<br/>확인한 레이어: 2개<br/>도구: AWS Console + CloudWatch
-```
+![엔지니어가 CloudWatch에서 UnhealthyTargetCount 이상을 확인하고 잘못된 Health Check 경로를 AWS Console에서 수정하면 Auto Healing이 Target을 정상화해 트래픽이 회복되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-13.png)
 
 **VPC Lattice 트러블슈팅 명령어** (간단함):
 
@@ -1868,51 +1331,7 @@ aws ec2 start-network-insights-analysis \
 
 ### 운영 복잡도 종합 비교
 
-```mermaid
-flowchart TB
-    subgraph "Istio 운영 현실"
-        direction TB
-        I1[초기 설정<br/>30-60분<br/>⭐⭐⭐⭐]
-        I2[일상 운영<br/>15-25h/월<br/>⭐⭐⭐⭐⭐]
-        I3[업그레이드<br/>6-10시간<br/>⭐⭐⭐⭐⭐]
-        I4[Sidecar 오버헤드<br/>리소스 2배<br/>⭐⭐⭐⭐⭐]
-        I5[트러블슈팅<br/>복잡함<br/>⭐⭐⭐⭐]
-        I6[전문 인력 필요<br/>고급 Kubernetes<br/>⭐⭐⭐⭐⭐]
-    end
-
-    subgraph "VPC Lattice 운영 현실"
-        direction TB
-        L1[초기 설정<br/>10-20분<br/>⭐]
-        L2[일상 운영<br/>2-5h/월<br/>⭐]
-        L3[업그레이드<br/>자동<br/>⭐]
-        L4[리소스 오버헤드<br/>0<br/>⭐]
-        L5[트러블슈팅<br/>간단함<br/>⭐⭐]
-        L6[AWS 지식만<br/>일반 엔지니어<br/>⭐⭐]
-    end
-
-    subgraph "비용 영향"
-        Cost1[Istio:<br/>연간 $31,600<br/>높은 인프라 + 운영 비용]
-        Cost2[VPC Lattice:<br/>연간 $7,608<br/>낮은 사용량 + 운영 비용]
-    end
-
-    I1 -.-> Cost1
-    I2 -.-> Cost1
-    I3 -.-> Cost1
-    I4 -.-> Cost1
-
-    L1 -.-> Cost2
-    L2 -.-> Cost2
-    L3 -.-> Cost2
-    L4 -.-> Cost2
-
-    classDef istio fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef cost fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-
-    class I1,I2,I3,I4,I5,I6 istio;
-    class L1,L2,L3,L4,L5,L6 lattice;
-    class Cost1,Cost2 cost;
-```
+![Istio는 초기 설정부터 전문 인력까지 여섯 항목 모두 부담이 커 연간 약 3만1600달러로, VPC Lattice는 같은 여섯 항목이 모두 가벼워 연간 약 7608달러로 귀결된다는 것을 대조한다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.png)
 
 #### 운영 복잡도 상세 비교
 
@@ -2045,47 +1464,7 @@ Ambient Mode로 전환 시 절감 효과:
 
 ### 비용 비교 종합
 
-```mermaid
-flowchart TB
-    subgraph "연간 총 비용 비교"
-        Istio[Istio Sidecar<br/>$49,500/년]
-        Ambient[Istio Ambient<br/>$46,380/년]
-        Lattice[VPC Lattice<br/>$7,608/년]
-    end
-
-    subgraph "Istio Sidecar 비용 구성"
-        direction TB
-        I1[인프라<br/>$10,500/년<br/>Sidecar 오버헤드 포함]
-        I2[운영<br/>$39,000/년<br/>전문 인력 필요]
-    end
-
-    subgraph "VPC Lattice 비용 구성"
-        direction TB
-        L1[사용량<br/>$2,508/년<br/>오버헤드 없음]
-        L2[운영<br/>$5,100/년<br/>일반 엔지니어]
-    end
-
-    Istio -.-> I1
-    Istio -.-> I2
-    Lattice -.-> L1
-    Lattice -.-> L2
-
-    subgraph "5년 TCO"
-        TCO1[Istio: $297,500]
-        TCO2[VPC Lattice: $38,040]
-        Savings[절감: $259,460<br/>약 87% 저렴]
-    end
-
-    classDef istio fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef ambient fill:#FFA500,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef savings fill:#4CAF50,stroke:#333,stroke-width:3px,color:white;
-
-    class Istio,I1,I2,TCO1 istio;
-    class Ambient ambient;
-    class Lattice,L1,L2,TCO2 lattice;
-    class Savings savings;
-```
+![Istio Sidecar는 연간 $49,500, Ambient Mode는 $46,380, VPC Lattice는 연간 $7,608이 들어 5년 TCO 기준 Istio $297,500 대 VPC Lattice $38,040으로 약 87% 비용 차이가 난다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-15.png)
 
 #### 비용 비교 상세표
 
@@ -2163,36 +1542,7 @@ flowchart TB
 
 ### Istio 멀티 클라우드
 
-```mermaid
-flowchart TB
-    subgraph AWS["AWS"]
-        EKS1[EKS Cluster 1]
-        Istiod1[Istiod]
-    end
-
-    subgraph GCP["Google Cloud"]
-        GKE[GKE Cluster]
-        Istiod2[Istiod]
-    end
-
-    subgraph Azure["Azure"]
-        AKS[AKS Cluster]
-        Istiod3[Istiod]
-    end
-
-    Istiod1 <-.->|Service Discovery| Istiod2
-    Istiod2 <-.->|Service Discovery| Istiod3
-    EKS1 <-->|mTLS| GKE
-    GKE <-->|mTLS| AKS
-
-    classDef aws fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef gcp fill:#4285F4,stroke:#333,stroke-width:2px,color:white;
-    classDef azure fill:#0078D4,stroke:#333,stroke-width:2px,color:white;
-
-    class AWS,EKS1,Istiod1 aws;
-    class GCP,GKE,Istiod2 gcp;
-    class Azure,AKS,Istiod3 azure;
-```
+![AWS EKS, Google Cloud GKE, Azure AKS 각각의 Istiod가 서비스 디스커버리 정보를 교환하고 워크로드가 클라우드 경계를 넘어 mTLS로 직접 통신하는 Istio 멀티 클라우드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-16.png)
 
 **장점**:
 
@@ -2215,47 +1565,7 @@ flowchart TB
 
 ### Istio + VPC Lattice 함께 사용
 
-```mermaid
-flowchart TB
-    subgraph "VPC 1 - EKS Cluster"
-        subgraph "Istio Mesh"
-            Frontend[Frontend]
-            Backend[Backend]
-            FrontendProxy[Envoy]
-            BackendProxy[Envoy]
-        end
-    end
-
-    subgraph "VPC 2 - ECS"
-        Payment[Payment Service<br/>ECS Task]
-    end
-
-    subgraph "VPC 3 - Lambda"
-        Notification[Notification<br/>Lambda]
-    end
-
-    subgraph "VPC Lattice"
-        ServiceNetwork[Service Network]
-        PaymentService[Payment Service]
-        NotificationService[Notification Service]
-    end
-
-    Frontend --> FrontendProxy
-    FrontendProxy -->|Istio mTLS| BackendProxy
-    BackendProxy --> Backend
-
-    Backend -->|Egress Gateway| ServiceNetwork
-    ServiceNetwork --> PaymentService
-    ServiceNetwork --> NotificationService
-    PaymentService --> Payment
-    NotificationService --> Notification
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Frontend,Backend,FrontendProxy,BackendProxy istio;
-    class ServiceNetwork,PaymentService,NotificationService,Payment,Notification lattice;
-```
+![EKS 클러스터 내부는 Envoy 사이드카를 거친 Istio mTLS로 통신하고, Backend가 Egress Gateway로 VPC Lattice Service Network에 나가 ECS Payment와 Lambda Notification에 도달하는 하이브리드 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
 
 **사용 사례**:
 
@@ -2301,29 +1611,7 @@ spec:
 
 ### 의사 결정 트리
 
-```mermaid
-flowchart TD
-    Start[서비스 네트워킹 솔루션 선택]
-    Start --> Q1{플랫폼?}
-
-    Q1 -->|AWS Only| Q2{워크로드 유형?}
-    Q1 -->|멀티 클라우드| Istio[✅ Istio]
-
-    Q2 -->|K8s Only| Q3{기능 요구?}
-    Q2 -->|EKS+ECS+Lambda| Lattice[✅ VPC Lattice]
-
-    Q3 -->|고급 기능| Q4{운영 리소스?}
-    Q3 -->|기본 기능| LatticeSimple[✅ VPC Lattice]
-
-    Q4 -->|충분함| IstioAdvanced[✅ Istio]
-    Q4 -->|부족함| LatticePractical[✅ VPC Lattice]
-
-    classDef recommended fill:#00C7B7,stroke:#333,stroke-width:3px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Istio,Lattice,LatticeSimple,IstioAdvanced,LatticePractical recommended;
-    class Start,Q1,Q2,Q3,Q4 decision;
-```
+![멀티 클라우드면 Istio, AWS 전용이면 워크로드 유형과 기능 요구, 운영 리소스를 순서대로 따져 Istio 또는 VPC Lattice를 추천하는 의사 결정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-18.png)
 
 ### 사용 사례별 권장
 
@@ -2469,30 +1757,7 @@ flowchart TD
 
 ### 핵심 요약
 
-```mermaid
-flowchart TB
-    subgraph Istio Strengths
-        direction TB
-        IS1[풍부한 기능<br/>⭐⭐⭐⭐⭐]
-        IS2[세밀한 제어<br/>⭐⭐⭐⭐⭐]
-        IS3[강력한 관찰성<br/>⭐⭐⭐⭐⭐]
-        IS4[멀티 클라우드<br/>⭐⭐⭐⭐⭐]
-    end
-
-    subgraph Lattice Strengths
-        direction TB
-        LS1[운영 간편성<br/>⭐⭐⭐⭐⭐]
-        LS2[낮은 비용<br/>⭐⭐⭐⭐⭐]
-        LS3[빠른 시작<br/>⭐⭐⭐⭐⭐]
-        LS4[AWS 통합<br/>⭐⭐⭐⭐⭐]
-    end
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef lattice fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class IS1,IS2,IS3,IS4 istio;
-    class LS1,LS2,LS3,LS4 lattice;
-```
+![Istio는 풍부한 기능, 세밀한 제어, 강력한 관찰성, 멀티 클라우드에서 강점을 갖고 VPC Lattice는 운영 간편성, 낮은 비용, 빠른 시작, AWS 통합에서 강점을 갖는다는 핵심 요약을 나란히 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-19.png)
 
 ### 언제 무엇을 선택할까?
 
@@ -2681,30 +1946,7 @@ flowchart TB
 
 **최종 권장사항**:
 
-```mermaid
-flowchart TD
-    Start[서비스 네트워킹 필요]
-    Start --> Q1{예산 및 인력}
-
-    Q1 -->|충분함| Q2{멀티 클라우드?}
-    Q1 -->|제한적| Simple[간단한 솔루션]
-
-    Q2 -->|Yes| Istio[Istio<br/>+ Ambient Mode]
-    Q2 -->|No| Q3{AWS Only?}
-
-    Q3 -->|Yes| Lattice[VPC Lattice]
-    Q3 -->|No| IstioSingle[Istio]
-
-    Simple --> Q4{AWS?}
-    Q4 -->|Yes| LatticeSimple[VPC Lattice]
-    Q4 -->|No| Linkerd[Linkerd]
-
-    classDef recommended fill:#00C7B7,stroke:#333,stroke-width:3px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Istio,Lattice,IstioSingle,LatticeSimple,Linkerd recommended;
-    class Start,Q1,Q2,Q3,Q4 decision;
-```
+![예산과 인력이 충분하면 멀티 클라우드 여부에 따라 Istio 또는 VPC Lattice를, 제한적이면 AWS 여부에 따라 VPC Lattice 또는 Linkerd를 선택하라는 최종 권장 결정 트리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.png)
 
 **관련 문서**:
 

@@ -288,22 +288,7 @@ spec:
 
 **JWT Validation Process:**
 
-```mermaid
-flowchart LR
-    Request[Client Request] --> Header{Authorization<br/>header exists?}
-    Header -->|No| NoToken[No token<br/>Skip validation]
-    Header -->|Yes| Extract[Extract JWT]
-    Extract --> Decode[Decode token]
-    Decode --> ValidateIss{Validate issuer}
-    ValidateIss -->|Fail| Reject[Reject<br/>401 Unauthorized]
-    ValidateIss -->|Pass| ValidateAud{Validate audiences}
-    ValidateAud -->|Fail| Reject
-    ValidateAud -->|Pass| ValidateSig{Validate signature<br/>JWKS}
-    ValidateSig -->|Fail| Reject
-    ValidateSig -->|Pass| ValidateExp{Validate expiration}
-    ValidateExp -->|Expired| Reject
-    ValidateExp -->|Valid| Allow[Allow]
-```
+![Flowchart showing how a sidecar validates an inbound JWT: it checks the token issuer, audiences, JWKS signature, and expiration in sequence, rejecting the request with 401 Unauthorized if any check fails and allowing it through only once all four checks pass.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-0.png)
 
 **Integration with OIDC Providers:**
 
@@ -446,41 +431,7 @@ spec:
 
 **Certificate Lifecycle:**
 
-```mermaid
-sequenceDiagram
-    autonumber
-    box rgba(0, 199, 183, 0.1) Pod
-    participant Envoy as Envoy Sidecar
-    end
-    box rgba(255, 153, 0, 0.1) Control Plane
-    participant Istiod as Istiod (CA)
-    end
-
-    Note over Envoy,Istiod: T=0 hours: Initial certificate issuance
-    Istiod->>+Envoy: Issue new certificate
-    Note right of Envoy: Validity: 24 hours<br/>Format: X.509<br/>Contains SPIFFE ID
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: T=0~16 hours: Certificate in use
-    end
-
-    Note over Envoy,Istiod: T=16 hours: Auto-renewal starts (8 hours before expiry)
-    Envoy->>Istiod: Request new certificate (CSR)
-    activate Istiod
-    Note right of Istiod: Validate SPIFFE ID<br/>Generate new certificate
-    Istiod->>Envoy: Issue new certificate
-    deactivate Istiod
-
-    Envoy->>Envoy: Certificate rotation (Hot Reload)
-    Note right of Envoy: Apply new certificate<br/>without downtime
-
-    rect rgba(144, 238, 144, 0.1)
-        Note over Envoy: T=16~24 hours: Using new certificate
-    end
-
-    Note over Envoy,Istiod: T=24 hours: Previous certificate expires (no impact)
-    deactivate Envoy
-```
+![Sequence diagram showing Istiod issuing a 24-hour mTLS certificate to an Envoy sidecar, then Envoy requesting and receiving a renewed certificate eight hours before expiry and hot-reloading it without downtime, so the old certificate's expiry at hour 24 has no operational impact.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-1.png)
 
 **Checking Certificates:**
 

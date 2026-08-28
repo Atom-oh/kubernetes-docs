@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="eks-auto-upgrade-title eks-auto-upgrade-desc">
+<title id="eks-auto-upgrade-title">EKS Auto-Upgrade Behavior</title>
+<desc id="eks-auto-upgrade-desc">Flowchart showing what happens when an EKS Kubernetes version approaches end of life: clusters may continue on paid extended support, but once a 60-day deprecation notice expires without a user-initiated upgrade, AWS force-upgrades the cluster to the oldest supported version.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1D8102"/></marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#DD344C"/></marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<line x1="480" y1="72" x2="480" y2="96" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="590" y1="146" x2="650" y2="146" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="596" y="128" width="34" height="14" rx="2" fill="#ffffff"/>
+<text x="613" y="139" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<line x1="480" y1="196" x2="480" y2="256" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="486" y="216" width="30" height="14" rx="2" fill="#ffffff"/>
+<text x="501" y="227" fill="#7D8998" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="760" y1="168" x2="760" y2="192" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 760 232 L 760 238 Q 760 246 752 246 L 528 246 Q 520 246 520 254 L 520 256" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="480" y1="300" x2="480" y2="324" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M 370 374 L 370 402 Q 370 410 362 410 L 268 410 Q 260 410 260 418 L 260 448" fill="none" stroke="#1D8102" stroke-width="1.2" marker-end="url(#arrow-green)"/>
+<rect x="290" y="400" width="34" height="14" rx="2" fill="#ffffff"/>
+<text x="307" y="411" fill="#1D8102" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">YES</text>
+<path d="M 590 374 L 590 402 Q 590 410 598 410 L 642 410 Q 650 410 650 418 L 650 448" fill="none" stroke="#B0031A" stroke-width="1.2" marker-end="url(#arrow-red)"/>
+<rect x="610" y="400" width="30" height="14" rx="2" fill="#ffffff"/>
+<text x="625" y="411" fill="#B0031A" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NO</text>
+<line x1="740" y1="470" x2="790" y2="470" stroke="#B0031A" stroke-width="1.2" marker-end="url(#arrow-red)"/>
+<rect x="370" y="24" width="220" height="48" rx="24" fill="#ffffff"/>
+<rect x="370" y="24" width="220" height="48" rx="24" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="52" fill="#232F3E" font-size="11" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Version Approaching EOL</text>
+<polygon points="480,96 590,146 480,196 370,146" fill="#ffffff"/>
+<polygon points="480,96 590,146 480,196 370,146" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="143" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Extended Support</text>
+<text x="480" y="157" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Enabled?</text>
+<rect x="650" y="124" width="220" height="44" rx="6" fill="#ffffff"/>
+<rect x="650" y="124" width="220" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="142" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Continue on Extended</text>
+<text x="760" y="157" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">$0.60/cluster/hr</text>
+<rect x="650" y="192" width="220" height="40" rx="6" fill="#ffffff"/>
+<rect x="650" y="192" width="220" height="40" rx="6" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="760" y="216" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Extended Support Ends</text>
+<rect x="380" y="256" width="200" height="44" rx="6" fill="#ffffff"/>
+<rect x="380" y="256" width="200" height="44" rx="6" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="274" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">60-Day Deprecation</text>
+<text x="480" y="289" fill="#232F3E" font-size="10.5" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Notice</text>
+<polygon points="480,324 590,374 480,424 370,374" fill="#ffffff"/>
+<polygon points="480,324 590,374 480,424 370,374" fill="rgba(35,47,62,0.03)" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="371" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cluster Upgraded</text>
+<text x="480" y="385" fill="#232F3E" font-size="10" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Before Deadline?</text>
+<rect x="160" y="448" width="200" height="44" rx="6" fill="rgba(29,129,2,0.06)"/>
+<rect x="160" y="448" width="200" height="44" rx="6" fill="rgba(29,129,2,0.06)" stroke="#1D8102" stroke-width="1.2"/>
+<text x="260" y="466" fill="#1D8102" font-size="10.5" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cluster on New Version</text>
+<text x="260" y="481" fill="#1D8102" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">user-controlled</text>
+<rect x="560" y="448" width="180" height="44" rx="6" fill="rgba(176,3,26,0.06)"/>
+<rect x="560" y="448" width="180" height="44" rx="6" fill="rgba(176,3,26,0.06)" stroke="#B0031A" stroke-width="1.2"/>
+<text x="650" y="466" fill="#B0031A" font-size="10.5" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Auto-Upgrade Triggered</text>
+<text x="650" y="481" fill="#B0031A" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">forced by AWS</text>
+<rect x="790" y="448" width="140" height="44" rx="6" fill="rgba(176,3,26,0.06)"/>
+<rect x="790" y="448" width="140" height="44" rx="6" fill="rgba(176,3,26,0.06)" stroke="#B0031A" stroke-width="1.2"/>
+<text x="860" y="466" fill="#B0031A" font-size="10" font-weight="700" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Upgraded to Oldest</text>
+<text x="860" y="481" fill="#B0031A" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">supported version</text>
+<line x1="24" y1="524" x2="936" y2="524" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<circle cx="30" cy="538" r="5" fill="#1D8102"/>
+<text x="46" y="542" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">User completes upgrade in time</text>
+<circle cx="330" cy="538" r="5" fill="#B0031A"/>
+<text x="346" y="542" fill="#545B64" font-size="9" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif">Deadline missed — AWS forces the upgrade</text>
+</svg>

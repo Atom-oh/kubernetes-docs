@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ray-readme-title ray-readme-desc">
+<title id="ray-readme-title">Ray on Kubernetes Overview</title>
+<desc id="ray-readme-desc">The KubeRay Operator sits between Ray's core architecture and two downstream capabilities it unlocks on Kubernetes: distributed training and tuning with Ray Train and Tune, and model or LLM serving with Ray Serve.</desc>
+<defs>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- eyebrow + title -->
+<text x="40" y="52" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">RAY ON KUBERNETES</text>
+<text x="40" y="80" fill="#232F3E" font-size="20" font-weight="700" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">From cluster architecture to serving</text>
+
+<!-- ===== Arrows (drawn before boxes) ===== -->
+
+<!-- A -> K : same y, straight line -->
+<line x1="200" y1="300" x2="340" y2="300" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- K -> T : fan attach 1 (y=289) elbow right+up into T's left edge (y=172) -->
+<path d="M 580,289 H 636 Q 644,289 644,281 V 180 Q 644,172 652,172 H 700"
+      fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- K -> S : fan attach 2 (y=311) elbow right+down into S's left edge (y=428) -->
+<path d="M 580,311 H 636 Q 644,311 644,319 V 420 Q 644,428 652,428 H 700"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- arrow label: A -> K -->
+<rect x="234" y="280" width="72" height="12" rx="2" fill="#ffffff"/>
+<text x="270" y="289" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">RUNS ON</text>
+
+<!-- arrow label: K -> T (on vertical segment at x=644) -->
+<rect x="654" y="212" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="686" y="221" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULES</text>
+
+<!-- arrow label: K -> S (on vertical segment at x=644) -->
+<rect x="654" y="372" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="686" y="381" fill="#7D8998" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCHEDULES</text>
+
+<!-- ===== Nodes ===== -->
+
+<!-- A: Architecture -->
+<rect x="40" y="268" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="268" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="120" y="294" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Architecture</text>
+<text x="120" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tasks · actors · object store</text>
+
+<!-- K: KubeRay Operator (focal) -->
+<rect x="340" y="268" width="240" height="64" rx="6" fill="#ffffff"/>
+<rect x="340" y="268" width="240" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="460" y="294" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">KubeRay Operator</text>
+<text x="460" y="312" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">RayCluster / RayJob / RayService</text>
+
+<!-- T: Ray Train & Tune -->
+<rect x="700" y="140" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="140" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810" y="166" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ray Train &amp; Tune</text>
+<text x="810" y="184" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">distributed training, tuning</text>
+
+<!-- S: Ray Serve -->
+<rect x="700" y="396" width="220" height="64" rx="6" fill="#ffffff"/>
+<rect x="700" y="396" width="220" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="810" y="422" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Ray Serve</text>
+<text x="810" y="440" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">model &amp; LLM serving</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="540" x2="920" y2="540" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="558" fill="#545B64" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEGEND</text>
+<circle cx="220" cy="554" r="4" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="232" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">operator (focal)</text>
+<circle cx="400" cy="554" r="4" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="412" y="558" fill="#545B64" font-size="9" font-family="'Geist Mono', monospace">component</text>
+
+</svg>

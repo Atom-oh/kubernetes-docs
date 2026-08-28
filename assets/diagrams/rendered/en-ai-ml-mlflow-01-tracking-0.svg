@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mlflow-tracking-title mlflow-tracking-desc">
+<title id="mlflow-tracking-title">MLflow Tracking Architecture</title>
+<desc id="mlflow-tracking-desc">Diagram showing a training script logging through the MLflow Tracking API into the Tracking Server, which writes run metadata to a backend store and files to an artifact store, both of which the Tracking UI reads directly.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <style>
+    text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}
+    .mono{font-family:'Geist Mono','Amazon Ember Mono',ui-monospace,monospace;}
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+  </marker>
+</defs>
+
+<rect width="100%" height="100%" fill="#ffffff"/>
+
+<!-- ===== Arrows (drawn before boxes) ===== -->
+
+<!-- A -> B : straight, link-blue (API call) -->
+<path d="M200,208 H280" fill="none" stroke="#0972D3" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+<rect x="208" y="188" width="64" height="12" rx="2" fill="#ffffff"/>
+<text x="240" y="197" fill="#0972D3" font-size="8" class="mono" text-anchor="middle" letter-spacing="0.06em">API CALL</text>
+
+<!-- B -> C : straight -->
+<path d="M440,208 H480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- C -> D : straight -->
+<path d="M640,208 H740" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- F -> E : straight -->
+<path d="M640,412 H740" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- C -> E : elbow down+right, enters E's top edge -->
+<path d="M560,240 V292 Q560,300 568,300 H812 Q820,300 820,308 V364"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- F -> D : elbow right+up, enters D's left edge; hops over the C->E crossing -->
+<path d="M640,392 H702 Q710,392 710,384 V308 a8,8 0 0,1 0,-16 V248 Q710,240 718,240 H740"
+      fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- ===== Nodes ===== -->
+
+<!-- A: Training Script (input) -->
+<rect x="40" y="176" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="40" y="176" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="120" y="212" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Training Script</text>
+
+<!-- B: MLflow Tracking API (backend) -->
+<rect x="280" y="176" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="280" y="176" width="160" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<rect x="288" y="182" width="32" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="304" y="191" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">API</text>
+<text x="360" y="216" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Tracking API</text>
+
+<!-- C: Tracking Server (FOCAL hub) -->
+<rect x="480" y="176" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="480" y="176" width="160" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="560" y="212" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Tracking Server</text>
+
+<!-- D: Backend Store (store) -->
+<rect x="740" y="160" width="160" height="96" rx="6" fill="#ffffff"/>
+<rect x="740" y="160" width="160" height="96" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="748" y="166" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="768" y="175" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">STORE</text>
+<text x="820" y="206" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Backend Store</text>
+<text x="820" y="224" fill="#545B64" font-size="9" class="mono" text-anchor="middle">params &#183; metrics &#183; tags</text>
+
+<!-- F: Tracking UI (input) -->
+<rect x="480" y="380" width="160" height="64" rx="6" fill="#ffffff"/>
+<rect x="480" y="380" width="160" height="64" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="560" y="416" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Tracking UI</text>
+
+<!-- E: Artifact Store (store) -->
+<rect x="740" y="364" width="160" height="96" rx="6" fill="#ffffff"/>
+<rect x="740" y="364" width="160" height="96" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+<rect x="748" y="370" width="40" height="12" rx="2" fill="transparent" stroke="rgba(35,47,62,0.40)" stroke-width="0.8"/>
+<text x="768" y="379" fill="rgba(35,47,62,0.8)" font-size="7" class="mono" text-anchor="middle" letter-spacing="0.08em">STORE</text>
+<text x="820" y="410" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Artifact Store</text>
+<text x="820" y="428" fill="#545B64" font-size="9" class="mono" text-anchor="middle">models &#183; plots &#183; datasets</text>
+
+<!-- ===== Legend ===== -->
+<line x1="40" y1="500" x2="920" y2="500" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<text x="40" y="516" fill="#545B64" font-size="8" class="mono" letter-spacing="0.14em">LEGEND</text>
+
+<circle cx="44" cy="536" r="4" fill="#232F3E"/>
+<text x="56" y="539" fill="#545B64" font-size="8" class="mono">API SERVICE</text>
+
+<circle cx="204" cy="536" r="4" fill="#EC7211"/>
+<text x="216" y="539" fill="#545B64" font-size="8" class="mono">TRACKING SERVER</text>
+
+<circle cx="404" cy="536" r="4" fill="#545B64"/>
+<text x="416" y="539" fill="#545B64" font-size="8" class="mono">DATA STORE</text>
+
+<circle cx="564" cy="536" r="4" fill="#7D8998"/>
+<text x="576" y="539" fill="#545B64" font-size="8" class="mono">TRAINING SCRIPT / UI</text>
+
+<line x1="760" y1="536" x2="788" y2="536" stroke="#0972D3" stroke-width="1.2"/>
+<text x="796" y="539" fill="#545B64" font-size="8" class="mono">API CALL</text>
+
+</svg>

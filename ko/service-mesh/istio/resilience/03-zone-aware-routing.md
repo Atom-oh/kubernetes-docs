@@ -17,38 +17,7 @@ Zone Aware Routing은 Kubernetes 가용 영역(Availability Zone)을 인식하�
 
 Zone Aware Routing은 다음과 같은 이점을 제공합니다:
 
-```mermaid
-flowchart TB
-    subgraph AZ1["Availability Zone A"]
-        Client1[클라이언트 Pod<br/>Zone A]
-        Service1[Service Pod 1<br/>Zone A]
-        Service2[Service Pod 2<br/>Zone A]
-    end
-
-    subgraph AZ2["Availability Zone B"]
-        Service3[Service Pod 3<br/>Zone B]
-        Service4[Service Pod 4<br/>Zone B]
-    end
-
-    subgraph AZ3["Availability Zone C"]
-        Service5[Service Pod 5<br/>Zone C]
-    end
-
-    Client1 -->|80%<br/>같은 AZ 우선<br/>무료| Service1
-    Client1 -->|80%<br/>같은 AZ 우선<br/>무료| Service2
-    Client1 -.->|10%<br/>장애조치<br/>크로스 AZ 비용| Service3
-    Client1 -.->|10%<br/>장애조치<br/>크로스 AZ 비용| Service5
-
-    %% 스타일 정의
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef sameZone fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef otherZone fill:#95A5A6,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Client1 client;
-    class Service1,Service2 sameZone;
-    class Service3,Service4,Service5 otherZone;
-```
+![클라이언트 파드가 같은 가용 영역의 서비스 파드로 트래픽의 80%를 무료로 우선 전송하고, 나머지 10%씩은 장애조치 목적으로 비용이 드는 크로스 AZ 경로를 통해 다른 두 영역으로 보내는 모습을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-0.png)
 
 ### 이점
 
@@ -62,31 +31,7 @@ flowchart TB
 
 ### Locality Load Balancing 알고리즘
 
-```mermaid
-flowchart TB
-    Request[요청 도착]
-    CheckLocal{같은 Zone에<br/>정상 파드<br/>존재?}
-    LocalRoute[같은 Zone으로<br/>라우팅<br/>80-100%]
-    CheckNearby{인접 Zone에<br/>정상 파드<br/>존재?}
-    NearbyRoute[인접 Zone으로<br/>라우팅<br/>10-20%]
-    RemoteRoute[다른 Region으로<br/>라우팅]
-
-    Request --> CheckLocal
-    CheckLocal -->|Yes| LocalRoute
-    CheckLocal -->|No| CheckNearby
-    CheckNearby -->|Yes| NearbyRoute
-    CheckNearby -->|No| RemoteRoute
-
-    %% 스타일 정의
-    classDef request fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef route fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% 클래스 적용
-    class Request request;
-    class CheckLocal,CheckNearby decision;
-    class LocalRoute,NearbyRoute,RemoteRoute route;
-```
+![요청이 도착하면 같은 Zone에 정상 파드가 있는지 먼저 확인해 있으면 그 Zone으로, 없으면 인접 Zone을 확인해 있으면 그곳으로, 둘 다 없으면 다른 Region으로 라우팅하는 단계적 판단 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-1.png)
 
 ### Locality 계층 구조
 
@@ -112,36 +57,7 @@ us-west-2/us-west-2a/*
 
 #### 동작 방식
 
-```mermaid
-flowchart TB
-    subgraph Node1["Node 1<br/>topology.kubernetes.io/zone=us-east-1a"]
-        Pod1[Pod A<br/>❌ Zone 레이블 없음]
-        Pod2[Pod B<br/>❌ Zone 레이블 없음]
-    end
-
-    subgraph Node2["Node 2<br/>topology.kubernetes.io/zone=us-east-1b"]
-        Pod3[Pod C<br/>❌ Zone 레이블 없음]
-    end
-
-    subgraph Istiod["Istiod (Control Plane)"]
-        Discovery[Service Discovery]
-        EDS[EDS 생성]
-    end
-
-    Discovery -->|"1. Node 레이블 조회<br/>Pod → Node 매핑"| Node1
-    Discovery -->|"1. Node 레이블 조회<br/>Pod → Node 매핑"| Node2
-    Discovery -->|"2. Pod Locality 파악<br/>Pod A → us-east-1a<br/>Pod C → us-east-1b"| EDS
-    EDS -->|"3. xDS 푸시<br/>(Locality 정보 포함)"| Envoy[Envoy Proxy]
-
-    %% 스타일 정의
-    classDef node fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Node1,Node2 node;
-    class Pod1,Pod2,Pod3 pod;
-    class Discovery,EDS,Envoy control;
-```
+![Pod 자체에는 Zone 레이블이 없어도, Istiod의 Service Discovery가 Pod가 실행 중인 Node의 topology 레이블을 조회해 Locality를 파악하고 이를 EDS로 만들어 Envoy Proxy에 xDS로 전달하는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
 
 #### 단계별 프로세스
 

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+<title id="dtitle">언어별 장애 처리 라이브러리의 파편화</title>
+<desc id="ddesc">Java, Go, Python 서비스가 각기 다른 장애 처리 라이브러리를 애플리케이션 코드에 긴밀하게 결합해 사용하는 초기 해결 방식</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+  </style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-accent-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="140" width="240" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="52" y="144" width="52" height="12" rx="2" fill="#ffffff"/>
+<text x="78.0" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">Java 서비스</text>
+
+<rect x="360" y="140" width="240" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="372" y="144" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="393.0" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">Go 서비스</text>
+
+<rect x="680" y="140" width="240" height="260" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.12)" stroke-width="0.8"/>
+<rect x="692" y="144" width="62" height="12" rx="2" fill="#ffffff"/>
+<text x="723.0" y="153" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">Python 서비스</text>
+
+<path d="M 160,236 L 160,280" fill="none" stroke="#545B64" stroke-width="1.2"/>
+<path d="M 480,236 L 480,280" fill="none" stroke="#545B64" stroke-width="1.2"/>
+<path d="M 800,236 L 800,280" fill="none" stroke="#545B64" stroke-width="1.2"/>
+<rect x="80" y="180" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160.0" y="210.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션 코드</text>
+<rect x="80" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="80" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="160.0" y="304.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Hystrix</text>
+<text x="160.0" y="320.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Netflix OSS</text>
+<rect x="400" y="180" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="210.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션 코드</text>
+<rect x="400" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="400" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Go 라이브러리</text>
+<rect x="720" y="180" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="720" y="180" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800.0" y="210.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">애플리케이션 코드</text>
+<rect x="720" y="280" width="160" height="56" rx="6" fill="#ffffff"/>
+<rect x="720" y="280" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="800.0" y="310.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Requests + Retry</text>
+</svg>

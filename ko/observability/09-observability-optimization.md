@@ -25,38 +25,7 @@
 
 ### 1.1 로깅, 메트릭, 트레이싱의 관계
 
-```mermaid
-graph TB
-    subgraph "관측성 3대 축"
-        L[로깅<br/>Logging]
-        M[메트릭<br/>Metrics]
-        T[트레이싱<br/>Tracing]
-    end
-
-    subgraph "데이터 특성"
-        L --> L1[이벤트 기반]
-        L --> L2[비정형 데이터]
-        L --> L3[디버깅에 최적]
-
-        M --> M1[시계열 데이터]
-        M --> M2[집계된 수치]
-        M --> M3[알림에 최적]
-
-        T --> T1[요청 흐름 추적]
-        T --> T2[인과관계 파악]
-        T --> T3[성능 분석에 최적]
-    end
-
-    subgraph "상호 연계"
-        L -.->|Exemplars| M
-        M -.->|Context| T
-        T -.->|Correlation ID| L
-    end
-
-    style L fill:#e1f5fe
-    style M fill:#fff3e0
-    style T fill:#f3e5f5
-```
+![로깅, 메트릭, 트레이싱 3대 관측성 축이 각각 어떤 데이터 특성을 가지며 Exemplars, Context, Correlation ID로 서로 연결되는지를 보여주는 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-0.png)
 
 ### 1.2 각 축의 역할과 선택 기준
 
@@ -68,71 +37,7 @@ graph TB
 
 ### 1.3 EKS 관측성 아키텍처 전체 그림
 
-```mermaid
-graph TB
-    subgraph "EKS 클러스터"
-        subgraph "워크로드"
-            APP[애플리케이션 Pod]
-            SIDE[사이드카/에이전트]
-        end
-
-        subgraph "수집 계층"
-            FB[Fluent Bit<br/>DaemonSet]
-            OTEL[OTel Collector<br/>DaemonSet]
-            PROM[Prometheus]
-        end
-
-        subgraph "eBPF 계층"
-            HUBBLE[Cilium Hubble]
-            PIXIE[Pixie]
-            COROOT[Coroot]
-        end
-    end
-
-    subgraph "저장 계층"
-        subgraph "로그 저장소"
-            CWL[CloudWatch Logs]
-            LOKI[Loki]
-            OS[OpenSearch]
-        end
-
-        subgraph "메트릭 저장소"
-            AMP[Amazon Managed<br/>Prometheus]
-            VM[VictoriaMetrics]
-        end
-
-        subgraph "트레이스 저장소"
-            XRAY[X-Ray]
-            TEMPO[Grafana Tempo]
-            JAEGER[Jaeger]
-        end
-    end
-
-    subgraph "시각화 계층"
-        GRAFANA[Grafana]
-        CWD[CloudWatch<br/>Dashboard]
-    end
-
-    APP --> FB
-    APP --> OTEL
-    FB --> CWL
-    FB --> LOKI
-    FB --> OS
-    OTEL --> AMP
-    OTEL --> XRAY
-    OTEL --> TEMPO
-    PROM --> AMP
-    PROM --> VM
-
-    CWL --> GRAFANA
-    LOKI --> GRAFANA
-    AMP --> GRAFANA
-    VM --> GRAFANA
-    TEMPO --> GRAFANA
-
-    style APP fill:#c8e6c9
-    style GRAFANA fill:#ffecb3
-```
+![애플리케이션 파드에서 수집된 로그·메트릭·트레이스가 각 저장소를 거쳐 Grafana 하나로 통합 시각화되는 EKS 관측성 아키텍처 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-1.png)
 
 ---
 
@@ -433,36 +338,7 @@ spec:
 
 ### 3.4 장기 저장 전략
 
-```mermaid
-graph LR
-    subgraph "단기 저장 (7일)"
-        PROM[Prometheus<br/>로컬 스토리지]
-    end
-
-    subgraph "장기 저장 옵션"
-        THANOS[Thanos<br/>S3 기반]
-        VM[VictoriaMetrics<br/>자체 스토리지]
-        AMP[AMP<br/>AWS 관리형]
-    end
-
-    subgraph "쿼리 계층"
-        TQ[Thanos Query]
-        VMQ[VictoriaMetrics<br/>vmselect]
-        AMPQ[AMP<br/>Query Endpoint]
-    end
-
-    PROM -->|Remote Write| THANOS
-    PROM -->|Remote Write| VM
-    PROM -->|Remote Write| AMP
-
-    THANOS --> TQ
-    VM --> VMQ
-    AMP --> AMPQ
-
-    TQ --> GRAFANA[Grafana]
-    VMQ --> GRAFANA
-    AMPQ --> GRAFANA
-```
+![Prometheus의 단기 저장 데이터를 Thanos, VictoriaMetrics, AMP로 원격 기록해 장기 보관하고 각자의 쿼리 계층을 거쳐 Grafana에서 조회하는 세 가지 대안 경로를 보여주는 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-2.png)
 
 ---
 
@@ -472,59 +348,7 @@ graph LR
 
 OpenTelemetry(OTel)는 관측성 데이터(트레이스, 메트릭, 로그)를 수집하고 내보내기 위한 벤더 중립적 표준입니다.
 
-```mermaid
-graph TB
-    subgraph "애플리케이션 계층"
-        APP1[서비스 A<br/>OTel SDK]
-        APP2[서비스 B<br/>OTel SDK]
-        APP3[서비스 C<br/>Auto-instrumentation]
-    end
-
-    subgraph "OTel Collector"
-        subgraph "Receivers"
-            OTLP[OTLP Receiver]
-            JAEGER_R[Jaeger Receiver]
-            ZIPKIN_R[Zipkin Receiver]
-        end
-
-        subgraph "Processors"
-            BATCH[Batch Processor]
-            ATTR[Attributes Processor]
-            TAIL[Tail Sampling]
-        end
-
-        subgraph "Exporters"
-            OTLP_E[OTLP Exporter]
-            XRAY_E[X-Ray Exporter]
-            PROM_E[Prometheus Exporter]
-        end
-    end
-
-    subgraph "백엔드"
-        TEMPO[Grafana Tempo]
-        XRAY[AWS X-Ray]
-        JAEGER[Jaeger]
-    end
-
-    APP1 -->|OTLP| OTLP
-    APP2 -->|OTLP| OTLP
-    APP3 -->|OTLP| OTLP
-
-    OTLP --> BATCH
-    JAEGER_R --> BATCH
-    ZIPKIN_R --> BATCH
-
-    BATCH --> ATTR
-    ATTR --> TAIL
-
-    TAIL --> OTLP_E
-    TAIL --> XRAY_E
-    TAIL --> PROM_E
-
-    OTLP_E --> TEMPO
-    XRAY_E --> XRAY
-    OTLP_E --> JAEGER
-```
+![애플리케이션이 보낸 트레이스가 Receiver로 들어와 배치·속성·Tail Sampling 처리기를 거쳐 Exporter를 통해 백엔드로 전달되는 OTel Collector 파이프라인 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-3.png)
 
 ### 4.2 트레이싱 백엔드 비교
 
@@ -756,26 +580,7 @@ spec:
 
 **eBPF(extended Berkeley Packet Filter)**는 리눅스 커널에서 안전하게 프로그램을 실행할 수 있는 기술입니다. eBPF 기반 모니터링의 가장 큰 장점은 **코드 수정 없이** 관측성을 확보할 수 있다는 점입니다.
 
-```mermaid
-graph TB
-    subgraph "전통적 계측 방식"
-        A1[애플리케이션 코드] --> A2[SDK 추가]
-        A2 --> A3[코드 수정/재배포]
-        A3 --> A4[데이터 수집]
-    end
-
-    subgraph "eBPF 계측 방식"
-        B1[애플리케이션 코드] --> B2[변경 없음]
-        B3[eBPF 프로그램] --> B4[커널 레벨 훅]
-        B4 --> B5[데이터 수집]
-        B2 -.-> B4
-    end
-
-    style A2 fill:#ffcdd2
-    style A3 fill:#ffcdd2
-    style B2 fill:#c8e6c9
-    style B3 fill:#c8e6c9
-```
+![전통적 계측은 SDK 추가와 코드 재배포를 거쳐야 하지만 eBPF 계측은 애플리케이션 코드 변경 없이 커널 레벨 훅에서 데이터를 수집한다는 것을 비교하는 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-4.png)
 
 | 특성 | 전통적 계측 | eBPF 계측 |
 |---|---|---|
@@ -1147,24 +952,7 @@ done
 
 ### 6.4 로그/메트릭 저장 비용 절감 전략
 
-```mermaid
-graph TB
-    subgraph "비용 절감 전략"
-        A[데이터 수집] --> B{중요도 분류}
-
-        B -->|높음| C[전체 저장<br/>장기 보관]
-        B -->|중간| D[샘플링<br/>중기 보관]
-        B -->|낮음| E[집계만<br/>단기 보관]
-
-        C --> F[S3 Glacier<br/>Deep Archive]
-        D --> G[S3 Standard-IA]
-        E --> H[메모리/로컬]
-    end
-
-    style C fill:#ffcdd2
-    style D fill:#fff9c4
-    style E fill:#c8e6c9
-```
+![수집된 데이터를 중요도에 따라 분류해 전체 저장, 샘플링, 집계 중 하나로 처리한 뒤 각각 다른 비용의 저장소로 보내는 비용 절감 의사결정 흐름 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-5.png)
 
 | 전략 | 적용 대상 | 예상 절감 |
 |---|---|---|
@@ -1515,28 +1303,7 @@ data:
 
 ### 8.3 도구 간 데이터 상관관계 분석
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Grafana
-    participant Prometheus
-    participant Loki
-    participant Tempo
-
-    User->>Grafana: 느린 API 응답 조사
-    Grafana->>Prometheus: P99 지연 시간 쿼리
-    Prometheus-->>Grafana: 메트릭 + Exemplar (traceID)
-
-    Grafana->>Tempo: traceID로 트레이스 조회
-    Tempo-->>Grafana: 전체 요청 흐름
-
-    Note over Grafana: 병목 서비스 식별
-
-    Grafana->>Loki: 서비스 로그 조회<br/>(traceID 필터)
-    Loki-->>Grafana: 관련 로그
-
-    Grafana-->>User: 통합된 분석 결과
-```
+![사용자가 느린 API를 조사할 때 Grafana가 Prometheus, Tempo, Loki를 traceID로 이어 병목 서비스를 식별하고 통합된 분석 결과를 돌려주는 과정을 보여주는 시퀀스 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-6.png)
 
 ### 8.4 대규모 클러스터에서 모니터링 시스템 성능 유지
 
@@ -1585,57 +1352,7 @@ spec:
 
 ### 8.5 고가용성 관측성 스택 구성
 
-```mermaid
-graph TB
-    subgraph "데이터 수집 계층 (HA)"
-        FB1[Fluent Bit<br/>Node 1]
-        FB2[Fluent Bit<br/>Node 2]
-        FB3[Fluent Bit<br/>Node N]
-    end
-
-    subgraph "수집기 계층 (HA)"
-        OTEL1[OTel Collector 1]
-        OTEL2[OTel Collector 2]
-        LB[Load Balancer]
-    end
-
-    subgraph "저장 계층 (HA)"
-        subgraph "Loki HA"
-            LOKI1[Loki Write 1]
-            LOKI2[Loki Write 2]
-            LOKI3[Loki Read 1]
-            LOKI4[Loki Read 2]
-        end
-
-        subgraph "VictoriaMetrics HA"
-            VM1[vminsert 1]
-            VM2[vminsert 2]
-            VM3[vmselect 1]
-            VM4[vmselect 2]
-            VMS[vmstorage x3]
-        end
-    end
-
-    subgraph "공유 스토리지"
-        S3[(S3 Bucket)]
-    end
-
-    FB1 --> LB
-    FB2 --> LB
-    FB3 --> LB
-    LB --> OTEL1
-    LB --> OTEL2
-
-    OTEL1 --> LOKI1
-    OTEL2 --> LOKI2
-    OTEL1 --> VM1
-    OTEL2 --> VM2
-
-    LOKI1 --> S3
-    LOKI2 --> S3
-    VM1 --> VMS
-    VM2 --> VMS
-```
+![여러 노드의 Fluent Bit가 로드밸런서를 거쳐 이중화된 OTel Collector로 모이고, 이중화된 Loki 및 VictoriaMetrics 쓰기 경로가 각각 S3와 자체 스토리지에 데이터를 기록하는 고가용성 관측성 스택 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-7.png)
 
 ---
 
@@ -1643,37 +1360,7 @@ graph TB
 
 ### 9.1 단계별 도입 전략
 
-```mermaid
-graph LR
-    subgraph "1단계: 기본"
-        A1[CloudWatch Logs]
-        A2[CloudWatch Metrics]
-        A3[Container Insights]
-    end
-
-    subgraph "2단계: 중급"
-        B1[Prometheus + Grafana]
-        B2[Fluent Bit + Loki]
-        B3[X-Ray 트레이싱]
-    end
-
-    subgraph "3단계: 고급"
-        C1[VictoriaMetrics/AMP]
-        C2[OpenTelemetry]
-        C3[eBPF 모니터링]
-        C4[비용 모니터링]
-    end
-
-    A1 --> B2
-    A2 --> B1
-    A3 --> B3
-
-    B1 --> C1
-    B2 --> C2
-    B3 --> C2
-    C1 --> C4
-    C2 --> C3
-```
+![CloudWatch 기본 구성에서 시작해 Prometheus/Grafana 스택을 거쳐 OpenTelemetry와 eBPF 기반 고급 관측성으로 단계적으로 성장하는 EKS 관측성 도입 경로 다이어그램](../.gitbook/assets/ko-observability-09-observability-optimization-8.png)
 
 | 단계 | 구성 요소 | 소요 기간 | 비용 | 운영 복잡도 |
 |---|---|---|---|---|

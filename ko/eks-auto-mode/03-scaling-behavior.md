@@ -13,39 +13,7 @@
 
 EKS Auto Mode의 스케일링 흐름을 이해하면 최적화에 도움이 됩니다.
 
-```mermaid
-flowchart TD
-    subgraph Trigger["트리거"]
-        A[Pod 생성] --> B{스케줄 가능?}
-        B -->|Yes| C[기존 노드에 배치]
-        B -->|No| D[Pod Pending]
-    end
-
-    subgraph AutoMode["Auto Mode Controller"]
-        D --> E[Pending Pod 감지]
-        E --> F[NodePool 평가]
-        F --> G[요구사항 분석]
-        G --> H[최적 인스턴스 선택]
-        H --> I[노드 프로비저닝]
-    end
-
-    subgraph Provisioning["프로비저닝"]
-        I --> J[EC2 인스턴스 시작]
-        J --> K[노드 부트스트랩]
-        K --> L[kubelet 등록]
-        L --> M[노드 Ready]
-    end
-
-    subgraph Scheduling["스케줄링"]
-        M --> N[Pod 스케줄링]
-        N --> O[Pod Running]
-    end
-
-    style Trigger fill:#e1f5fe
-    style AutoMode fill:#fff3e0
-    style Provisioning fill:#f3e5f5
-    style Scheduling fill:#e8f5e9
-```
+![Pod 생성 시 스케줄이 불가능하면 Auto Mode Controller가 Pending Pod를 감지해 NodePool을 평가하고 최적 인스턴스를 선택해 노드를 프로비저닝한 뒤 Pod를 스케줄링하여 Running 상태로 만드는 흐름을 보여주는 플로차트.](../.gitbook/assets/ko-eks-auto-mode-03-scaling-behavior-0.png)
 
 ## Consolidation 동작
 
@@ -101,25 +69,7 @@ spec:
     consolidateAfter: 1m
 ```
 
-```mermaid
-flowchart LR
-    subgraph Before["통합 전"]
-        N1["노드 1<br/>CPU: 20%<br/>메모리: 30%"]
-        N2["노드 2<br/>CPU: 15%<br/>메모리: 25%"]
-        N3["노드 3<br/>CPU: 10%<br/>메모리: 20%"]
-    end
-
-    subgraph After["통합 후"]
-        N4["노드 1<br/>CPU: 45%<br/>메모리: 75%"]
-        N5["(제거됨)"]
-        N6["(제거됨)"]
-    end
-
-    Before --> |Consolidation| After
-
-    style N5 fill:#ffcdd2
-    style N6 fill:#ffcdd2
-```
+![통합 전 낮은 사용률로 분산돼 있던 노드 1·2·3의 워크로드가 통합 후 노드 1로 모이면서 사용률이 높아지고, 노드 2와 3은 제거되는 것을 보여주는 다이어그램.](../.gitbook/assets/ko-eks-auto-mode-03-scaling-behavior-1.png)
 
 ## Drift 감지 및 교체
 

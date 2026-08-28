@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-service-mesh-istio-traffic-management-08-fault-injection-3-title ko-service-mesh-istio-traffic-management-08-fault-injection-3-desc">
+<title id="ko-service-mesh-istio-traffic-management-08-fault-injection-3-title">마이크로서비스 Cascade Failure 테스트</title>
+<desc id="ko-service-mesh-istio-traffic-management-08-fault-injection-3-desc">결제 서비스에 주입된 장애로 30% 요청이 실패하면 주문 서비스가 이를 흡수하고, Circuit Breaker로 프론트엔드에 안전하게 전파해 재고 서비스는 영향받지 않는지 확인한다.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+</marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+<marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+  <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+</marker>
+
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="60" y="262" width="188" height="76" rx="6" fill="#ffffff"/>
+<rect x="60" y="262" width="188" height="76" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="154.0" y="302.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">프론트엔드</text>
+<rect x="380" y="262" width="188" height="76" rx="6" fill="#ffffff"/>
+<rect x="380" y="262" width="188" height="76" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="474.0" y="302.0" fill="#EC7211" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">주문 서비스</text>
+<rect x="700" y="108" width="188" height="76" rx="6" fill="#ffffff"/>
+<rect x="700" y="108" width="188" height="76" rx="6" fill="rgba(221,52,76,0.05)" stroke="rgba(221,52,76,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="794.0" y="142.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">결제 서비스</text>
+<text x="794.0" y="162.0" fill="#545B64" font-size="9" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle">Fault Injection</text>
+<rect x="700" y="416" width="188" height="76" rx="6" fill="#ffffff"/>
+<rect x="700" y="416" width="188" height="76" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="794.0" y="456.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">재고 서비스</text>
+<line x1="248" y1="282" x2="380" y2="282" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 568,282 H 692 Q 700,282 700,274 V 146.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 568,318 H 692 Q 700,318 700,326 V 454.0" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 700,164 H 576 Q 568,164 568,172 V 300" fill="none" stroke="#EC7211" stroke-width="1" marker-end="url(#arrow-accent)"/>
+<rect x="611.0" y="144" width="46" height="12" rx="2" fill="#ffffff"/>
+<text x="634.0" y="153" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">30% 실패</text>
+<line x1="380" y1="318" x2="248" y2="318" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="264.0" y="298" width="100" height="12" rx="2" fill="#ffffff"/>
+<text x="314.0" y="307" fill="#7D8998" font-size="8" font-family="'Geist Mono','Amazon Ember Mono',ui-monospace,monospace" text-anchor="middle" letter-spacing="0.05em">CIRCUIT BREAKER</text>
+</svg>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">스케줄러 확장(Extender) 필터/우선순위 요청 흐름</title>
+  <desc id="ddesc">API 서버가 포드 생성을 요청하면 기본 스케줄러가 내부 필터링과 점수 매기기 사이에 스케줄러 확장으로 HTTP 필터/우선순위 요청을 보내 커스텀 로직을 반영하고, 최종적으로 바인딩 요청을 거쳐 노드에 포드를 스케줄링하는 과정을 보여준다.</desc>
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+    <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#0972D3"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="40" y="24" fill="#7D8998" font-size="8" class="mono" letter-spacing="0.18em">SEQUENCE · SCHEDULER EXTENDER</text>
+  <text x="40" y="46" fill="#232F3E" font-size="16" font-weight="700" class="sans">스케줄러 확장 필터 &amp; 우선순위 흐름</text>
+  <text x="40" y="60" fill="#545B64" font-size="10" class="sans">기본 스케줄러가 내부 로직 사이에 HTTP로 커스텀 필터·점수 로직을 호출한다</text>
+
+  <!-- Lifelines (drawn before boxes/messages: dashed guide lines) -->
+  <line x1="140" y1="108" x2="140" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="384" y1="108" x2="384" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="628" y1="108" x2="628" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="872" y1="108" x2="872" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- Activation bars (drawn before messages so message strokes read on top) -->
+  <rect x="380" y="132" width="8" height="420" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="0.8"/>
+  <rect x="624" y="212" width="8" height="96" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <rect x="624" y="372" width="8" height="96" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+
+  <!-- ============ Messages ============ -->
+
+  <!-- M1 y=140: API -> Scheduler : 포드 생성 요청 -->
+  <path d="M140,140 L384,140" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="228" y="120" width="72" height="12" fill="#ffffff"/>
+  <text x="264" y="129" fill="#545B64" font-size="8" class="mono" text-anchor="middle">포드 생성 요청</text>
+
+  <!-- M2 y=172: Scheduler self : 내부 필터링 -->
+  <path d="M384,172 L418,172 A6,6 0 0 1 424,178 L424,190 A6,6 0 0 1 418,196 L390,196"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="430" y="177" width="64" height="12" fill="#ffffff"/>
+  <text x="462" y="186" fill="#545B64" font-size="8" class="mono" text-anchor="middle">내부 필터링</text>
+
+  <!-- M3 y=220: Scheduler -> Extender : 필터 요청 · POST /filter [HTTP -> link-blue] -->
+  <path d="M384,220 L628,220" fill="none" stroke="#0972D3" stroke-width="1" marker-end="url(#arrow-link)"/>
+  <rect x="446" y="200" width="120" height="12" fill="#ffffff"/>
+  <text x="506" y="209" fill="#0972D3" font-size="8" class="mono" text-anchor="middle">필터 요청 · POST /filter</text>
+
+  <!-- M4 y=252: Extender self : 커스텀 필터링 로직 적용 -->
+  <path d="M628,252 L662,252 A6,6 0 0 1 668,258 L668,270 A6,6 0 0 1 662,276 L634,276"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="674" y="257" width="144" height="12" fill="#ffffff"/>
+  <text x="746" y="266" fill="#545B64" font-size="8" class="mono" text-anchor="middle">커스텀 필터링 로직 적용</text>
+
+  <!-- M5 y=300: Extender -> Scheduler : 필터링된 노드 목록 반환 (return, dashed) -->
+  <path d="M628,300 L384,300" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="446" y="280" width="120" height="12" fill="#ffffff"/>
+  <text x="506" y="289" fill="#545B64" font-size="8" class="mono" text-anchor="middle">필터링된 노드 목록 반환</text>
+
+  <!-- M6 y=332: Scheduler self : 내부 점수 매기기 -->
+  <path d="M384,332 L418,332 A6,6 0 0 1 424,338 L424,350 A6,6 0 0 1 418,356 L390,356"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="430" y="337" width="72" height="12" fill="#ffffff"/>
+  <text x="466" y="346" fill="#545B64" font-size="8" class="mono" text-anchor="middle">내부 점수 매기기</text>
+
+  <!-- M7 y=380: Scheduler -> Extender : 우선순위 요청 · POST /prioritize [HTTP -> link-blue] -->
+  <path d="M384,380 L628,380" fill="none" stroke="#0972D3" stroke-width="1" marker-end="url(#arrow-link)"/>
+  <rect x="428" y="360" width="156" height="12" fill="#ffffff"/>
+  <text x="506" y="369" fill="#0972D3" font-size="8" class="mono" text-anchor="middle">우선순위 요청 · POST /prioritize</text>
+
+  <!-- M8 y=412: Extender self : 커스텀 점수 매기기 로직 적용 -->
+  <path d="M628,412 L662,412 A6,6 0 0 1 668,418 L668,430 A6,6 0 0 1 662,436 L634,436"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="674" y="417" width="164" height="12" fill="#ffffff"/>
+  <text x="756" y="426" fill="#545B64" font-size="8" class="mono" text-anchor="middle">커스텀 점수 매기기 로직 적용</text>
+
+  <!-- M9 y=460: Extender -> Scheduler : 노드 점수 반환 (return, dashed) -->
+  <path d="M628,460 L384,460" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="466" y="440" width="80" height="12" fill="#ffffff"/>
+  <text x="506" y="449" fill="#545B64" font-size="8" class="mono" text-anchor="middle">노드 점수 반환</text>
+
+  <!-- M10 y=492: Scheduler self : 최종 노드 선택 -->
+  <path d="M384,492 L418,492 A6,6 0 0 1 424,498 L424,510 A6,6 0 0 1 418,516 L390,516"
+        fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="430" y="497" width="72" height="12" fill="#ffffff"/>
+  <text x="466" y="506" fill="#545B64" font-size="8" class="mono" text-anchor="middle">최종 노드 선택</text>
+
+  <!-- M11 y=540: Scheduler -> API : 바인딩 요청 -->
+  <path d="M384,540 L140,540" fill="none" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+  <rect x="228" y="520" width="72" height="12" fill="#ffffff"/>
+  <text x="264" y="529" fill="#545B64" font-size="8" class="mono" text-anchor="middle">바인딩 요청</text>
+
+  <!-- M12 y=572: API -> Node : 포드 스케줄링 (headline success, accent) -->
+  <path d="M140,572 L872,572" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="470" y="552" width="72" height="12" fill="#ffffff"/>
+  <text x="506" y="561" fill="#EC7211" font-size="8" class="mono" text-anchor="middle">포드 스케줄링</text>
+
+  <!-- ============ Actor boxes (painted last so labels/lines never bleed through) ============ -->
+
+  <!-- API 서버 -->
+  <rect x="76" y="72" width="128" height="36" rx="6" fill="#ffffff"/>
+  <rect x="76" y="72" width="128" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="140" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">API 서버</text>
+
+  <!-- 기본 스케줄러 (focal) -->
+  <rect x="320" y="72" width="128" height="36" rx="6" fill="#ffffff"/>
+  <rect x="320" y="72" width="128" height="36" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+  <text x="384" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">기본 스케줄러</text>
+
+  <!-- 스케줄러 확장 -->
+  <rect x="564" y="72" width="128" height="36" rx="6" fill="#ffffff"/>
+  <rect x="564" y="72" width="128" height="36" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="628" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">스케줄러 확장</text>
+
+  <!-- 노드 -->
+  <rect x="808" y="72" width="128" height="36" rx="6" fill="#ffffff"/>
+  <rect x="808" y="72" width="128" height="36" rx="6" fill="rgba(35,47,62,0.05)" stroke="#545B64" stroke-width="1"/>
+  <text x="872" y="94" fill="#232F3E" font-size="12" font-weight="600" class="sans" text-anchor="middle">노드</text>
+</svg>

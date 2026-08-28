@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ko-eks-07-eks-cost-optimization-6-title ko-eks-07-eks-cost-optimization-6-desc">
+  <title id="ko-eks-07-eks-cost-optimization-6-title">비용 모니터링 및 분석 도구</title>
+  <desc id="ko-eks-07-eks-cost-optimization-6-desc">비용 모니터링 및 분석이 AWS Cost Explorer, Kubecost, CloudWatch Container Insights, 사용자 정의 비용 대시보드 네 도구로 나뉘는 트리 다이어그램</desc>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+
+  </defs>
+  <rect width="960" height="400" fill="var(--paper)"/>
+<path d="M 392,96 V 108 Q 392,116 384,116 H 152.0 Q 144.0,116 144.0,124 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 451,96 V 108 Q 451,116 443,116 H 376.0 Q 368.0,116 368.0,124 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 509,96 V 108 Q 509,116 517,116 H 584.0 Q 592.0,116 592.0,124 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<path d="M 568,96 V 108 Q 568,116 576,116 H 808.0 Q 816.0,116 816.0,124 V 196" fill="none" stroke="var(--muted)" stroke-width="1" marker-end="url(#arrow)"/>
+<rect x="380.0" y="48" width="200" height="48" rx="6" fill="#ffffff"/>
+<rect x="380.0" y="48" width="200" height="48" rx="6" fill="var(--accent-tint)" stroke="var(--accent)" stroke-width="1.2"/>
+<text x="480.0" y="66" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">비용 모니터링 및 분석</text>
+<rect x="44.0" y="196" width="200" height="76" rx="6" fill="#ffffff"/>
+<rect x="44.0" y="196" width="200" height="76" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="144.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">AWS Cost Explorer</text>
+<text x="144.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">비용 분석 · 이상 탐지</text>
+<text x="144.0" y="245" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">예산 설정</text>
+<rect x="268.0" y="196" width="200" height="76" rx="6" fill="#ffffff"/>
+<rect x="268.0" y="196" width="200" height="76" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="368.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Kubecost</text>
+<text x="368.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">대시보드 · 알림</text>
+<rect x="492.0" y="196" width="200" height="76" rx="6" fill="#ffffff"/>
+<rect x="492.0" y="196" width="200" height="76" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="592.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Container Insights</text>
+<text x="592.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">사용량 모니터링</text>
+<text x="592.0" y="245" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">비용 인사이트</text>
+<rect x="716.0" y="196" width="200" height="76" rx="6" fill="#ffffff"/>
+<rect x="716.0" y="196" width="200" height="76" rx="6" fill="#ffffff" stroke="var(--ink)" stroke-width="1"/>
+<text x="816.0" y="216" fill="var(--ink)" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">사용자 정의 대시보드</text>
+<text x="816.0" y="232" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Grafana</text>
+<text x="816.0" y="245" fill="var(--muted)" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">최적화 점수</text>
+
+</svg>

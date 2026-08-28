@@ -37,33 +37,7 @@ VictoriaMetrics is a high-performance, cost-effective time series database and m
 
 ### VictoriaMetrics vs Prometheus
 
-```mermaid
-flowchart LR
-    subgraph PROM["Prometheus"]
-        P1[Single Node]
-        P2[Medium Compression]
-        P3[PromQL]
-        P4[15-30 day retention]
-    end
-
-    subgraph VM["VictoriaMetrics"]
-        V1[Single/Cluster]
-        V2[7x Compression]
-        V3[MetricsQL<br/>PromQL compatible]
-        V4[Unlimited retention]
-    end
-
-    P1 -.->|Need scaling| V1
-    P2 -.->|Save storage| V2
-    P3 -.->|Full compatibility| V3
-    P4 -.->|Long-term storage| V4
-
-    classDef prometheus fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef vm fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class P1,P2,P3,P4 prometheus
-    class V1,V2,V3,V4 vm
-```
+![Diagram comparing Prometheus and VictoriaMetrics traits: single-node architecture needing horizontal scaling, medium compression improved 7x, PromQL evolving into the fully-compatible MetricsQL, and limited retention becoming unlimited long-term storage.](../../.gitbook/assets/en-observability-metrics-02-victoriametrics-0.png)
 
 | Item | Prometheus | VictoriaMetrics |
 |------|------------|-----------------|
@@ -81,25 +55,7 @@ VictoriaMetrics offers two deployment modes:
 
 ### Selection Guide
 
-```mermaid
-flowchart TD
-    A[VictoriaMetrics<br/>Deployment Mode Selection] --> B{Daily ingestion?}
-
-    B -->|< 100M samples/day| C{Need high availability?}
-    B -->|> 100M samples/day| D[Cluster Mode]
-
-    C -->|No| E[vmsingle<br/>Single Node]
-    C -->|Yes| F{Accept complexity?}
-
-    F -->|Yes| D
-    F -->|No| G[vmsingle +<br/>Replicated Storage]
-
-    classDef decision fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-    classDef solution fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-
-    class A,B,C,F decision
-    class D,E,G solution
-```
+![Decision flowchart for choosing a VictoriaMetrics deployment mode: high daily ingestion routes straight to Cluster Mode, while lower ingestion branches on high-availability and complexity tolerance to land on vmsingle, vmsingle with replicated storage, or Cluster Mode.](../../.gitbook/assets/en-observability-metrics-02-victoriametrics-1.png)
 
 ## Single-Node Mode
 
@@ -218,62 +174,7 @@ Scalable cluster configuration for large-scale environments.
 
 ### Architecture
 
-```mermaid
-flowchart TB
-    subgraph WRITE["Write Path"]
-        VA[vmagent<br/>Metric Collection]
-        P[Prometheus<br/>remote_write]
-    end
-
-    subgraph VMINSERT["vminsert (Routing)"]
-        I1[vminsert-1]
-        I2[vminsert-2]
-        I3[vminsert-3]
-    end
-
-    subgraph VMSTORAGE["vmstorage (Storage)"]
-        S1[vmstorage-1]
-        S2[vmstorage-2]
-        S3[vmstorage-3]
-    end
-
-    subgraph VMSELECT["vmselect (Query)"]
-        Q1[vmselect-1]
-        Q2[vmselect-2]
-        Q3[vmselect-3]
-    end
-
-    subgraph READ["Read Path"]
-        G[Grafana]
-        AL[vmalert]
-    end
-
-    VA --> I1 & I2 & I3
-    P --> I1 & I2 & I3
-
-    I1 --> S1 & S2 & S3
-    I2 --> S1 & S2 & S3
-    I3 --> S1 & S2 & S3
-
-    Q1 --> S1 & S2 & S3
-    Q2 --> S1 & S2 & S3
-    Q3 --> S1 & S2 & S3
-
-    G --> Q1 & Q2 & Q3
-    AL --> Q1 & Q2 & Q3
-
-    classDef agent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef insert fill:#E6522C,stroke:#333,stroke-width:1px,color:white
-    classDef storage fill:#4285F4,stroke:#333,stroke-width:1px,color:white
-    classDef select fill:#9B59B6,stroke:#333,stroke-width:1px,color:white
-    classDef client fill:#F8B52A,stroke:#333,stroke-width:1px,color:black
-
-    class VA,P agent
-    class I1,I2,I3 insert
-    class S1,S2,S3 storage
-    class Q1,Q2,Q3 select
-    class G,AL client
-```
+![Cluster architecture diagram showing vmagent and Prometheus writing through vminsert into the vmstorage cluster, while Grafana and vmalert query vmstorage through vmselect, with vmstorage as the shared hub for both paths.](../../.gitbook/assets/en-observability-metrics-02-victoriametrics-2.png)
 
 ### Components
 

@@ -32,51 +32,7 @@ Monitoring and logging in Amazon EKS clusters are important for the following re
 
 A comprehensive monitoring and logging architecture for an EKS cluster consists of the following components:
 
-```mermaid
-flowchart TD
-    subgraph EKS["Amazon EKS Cluster"]
-        CP[Control Plane Logs] --> CWL
-        subgraph Nodes["Worker Nodes"]
-            Pods[Pods/Containers] --> Fluent
-            NodeExporter[Node Exporter] --> Prometheus
-            kubelet --> Prometheus
-        end
-    end
-
-    subgraph AWS["AWS Services"]
-        CWL[CloudWatch Logs]
-        CWM[CloudWatch Metrics]
-        XRay[X-Ray]
-        ES[Amazon OpenSearch]
-    end
-
-    subgraph Monitoring["Monitoring Stack"]
-        Prometheus[Prometheus] --> Alertmanager
-        Alertmanager[Alertmanager] --> Notification[Notification Channels]
-        Prometheus --> Grafana
-    end
-
-    subgraph Logging["Logging Stack"]
-        Fluent[Fluent Bit/Fluentd] --> CWL
-        Fluent --> ES
-        ES --> Kibana[OpenSearch Dashboards]
-    end
-
-    CWL --> ES
-    Prometheus --> CWM
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CWL,CWM,XRay,ES awsService;
-    class CP,Pods,NodeExporter,kubelet,Prometheus,Alertmanager k8sComponent;
-    class Fluent,Grafana,Kibana,Notification userApp;
-```
+![Architecture diagram showing EKS control-plane logs, pod logs, and node metrics flowing through Fluent Bit and Prometheus into CloudWatch Logs/Metrics, Amazon OpenSearch, and Grafana/Alertmanager.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-0.png)
 
 ### Monitoring and Logging Strategy
 
@@ -187,30 +143,7 @@ Container logs provide important information for diagnosing and resolving applic
 
 A typical container logging architecture in EKS looks like this:
 
-```mermaid
-flowchart LR
-    subgraph Node["Worker Node"]
-        Containers[Containers] --> |stdout/stderr| kubelet
-        kubelet --> |/var/log/containers/| LogAgent[Log Agent]
-    end
-
-    LogAgent --> CWL[CloudWatch Logs]
-    LogAgent --> ES[Amazon OpenSearch]
-    LogAgent --> S3[Amazon S3]
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CWL,ES,S3 awsService;
-    class kubelet k8sComponent;
-    class Containers userApp;
-    class LogAgent default;
-```
+![Architecture diagram showing container stdout/stderr picked up by kubelet, read by a log agent, and fanned out to CloudWatch Logs, Amazon OpenSearch, and Amazon S3.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-1.png)
 
 ### Log Collection with Fluent Bit
 
@@ -389,89 +322,7 @@ Configuration for log parsing in Fluent Bit:
 
 Effective cluster monitoring is essential for tracking the status, performance, and resource usage of your EKS cluster. This section explores various tools and techniques for monitoring EKS clusters.
 
-```mermaid
-flowchart TD
-    subgraph Monitoring_Solutions ["Monitoring Solutions"]
-        subgraph AWS_Solutions ["AWS Solutions"]
-            CW_CI["CloudWatch
-                Container Insights"]
-            CW_LA["CloudWatch
-                Logs Insights"]
-            CW_Alarms["CloudWatch
-                Alarms"]
-            AMP["Amazon Managed
-                Prometheus"]
-            AMG["Amazon Managed
-                Grafana"]
-        end
-
-        subgraph K8s_Solutions ["Kubernetes Solutions"]
-            Prometheus[Prometheus]
-            Grafana[Grafana]
-            Kube_State[kube-state-metrics]
-            Node_Exporter[Node Exporter]
-            K8s_Dashboard["Kubernetes
-                Dashboard"]
-        end
-
-        subgraph Tracing_Solutions ["Tracing Solutions"]
-            XRay[AWS X-Ray]
-            Jaeger[Jaeger]
-            OpenTelemetry[OpenTelemetry]
-        end
-    end
-
-    subgraph Monitoring_Targets ["Monitoring Targets"]
-        subgraph Cluster_Level ["Cluster Level"]
-            Control_Plane[Control Plane]
-            API_Server[API Server]
-            Scheduler[Scheduler]
-            Controller[Controller Manager]
-        end
-
-        subgraph Node_Level ["Node Level"]
-            CPU[CPU Usage]
-            Memory[Memory Usage]
-            Disk[Disk I/O]
-            Network[Network I/O]
-        end
-
-        subgraph Pod_Level ["Pod Level"]
-            Pod_CPU[Pod CPU]
-            Pod_Memory[Pod Memory]
-            Pod_Network[Pod Network]
-            Restarts[Restart Count]
-        end
-    end
-
-    CW_CI --> Cluster_Level
-    CW_CI --> Node_Level
-    CW_CI --> Pod_Level
-
-    Prometheus --> Kube_State
-    Prometheus --> Node_Exporter
-    Kube_State --> Cluster_Level
-    Node_Exporter --> Node_Level
-
-    Prometheus --> Grafana
-    AMP --> AMG
-
-    XRay --> API_Server
-    OpenTelemetry --> Pod_Level
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CW_CI,CW_LA,CW_Alarms,AMP,AMG,XRay awsService;
-    class Prometheus,Grafana,Kube_State,Node_Exporter,K8s_Dashboard,Control_Plane,API_Server,Scheduler,Controller k8sComponent;
-    class Jaeger,OpenTelemetry userApp;
-    class CPU,Memory,Disk,Network,Pod_CPU,Pod_Memory,Pod_Network,Restarts default;
-```
+![Diagram mapping monitoring solutions (CloudWatch Container Insights, the Prometheus stack, and distributed tracing) to the control-plane, node, and pod telemetry they cover in an EKS cluster.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-2.png)
 
 ### CloudWatch Container Insights
 
@@ -885,80 +736,7 @@ Create custom dashboards in Grafana to visualize application metrics:
 
 Effective alerting and event management are essential for rapidly detecting and responding to issues in your EKS cluster. This section explores various tools and techniques for managing alerts and events in EKS clusters.
 
-```mermaid
-flowchart TD
-    subgraph Alert_Sources ["Alert Sources"]
-        subgraph Metrics ["Metric-based"]
-            CW_Metrics[CloudWatch Metrics]
-            Prom_Metrics[Prometheus Metrics]
-            Custom_Metrics[Custom Metrics]
-        end
-
-        subgraph Logs ["Log-based"]
-            CW_Logs[CloudWatch Logs]
-            ES_Logs[OpenSearch Logs]
-            Loki_Logs[Loki Logs]
-        end
-
-        subgraph Events ["Event-based"]
-            K8s_Events[Kubernetes Events]
-            AWS_Events[AWS Events]
-            App_Events[Application Events]
-        end
-    end
-
-    subgraph Alert_Processing ["Alert Processing"]
-        CW_Alarms[CloudWatch Alarms]
-        Prom_AM["Prometheus
-                Alertmanager"]
-        EventBridge[Amazon EventBridge]
-        Event_Router[Event Router]
-    end
-
-    subgraph Notification_Channels ["Notification Channels"]
-        SNS[Amazon SNS]
-        SQS[Amazon SQS]
-        Lambda[AWS Lambda]
-        Email[Email]
-        Slack[Slack]
-        PagerDuty[PagerDuty]
-        OpsGenie[OpsGenie]
-    end
-
-    CW_Metrics --> CW_Alarms
-    Prom_Metrics --> Prom_AM
-    Custom_Metrics --> Prom_AM
-
-    CW_Logs --> CW_Alarms
-    ES_Logs --> Event_Router
-    Loki_Logs --> Prom_AM
-
-    K8s_Events --> Event_Router
-    AWS_Events --> EventBridge
-    App_Events --> Event_Router
-
-    CW_Alarms --> SNS
-    Prom_AM --> Slack
-    Prom_AM --> PagerDuty
-    EventBridge --> Lambda
-    EventBridge --> SNS
-    Event_Router --> OpsGenie
-
-    SNS --> Email
-    SNS --> SQS
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CW_Metrics,CW_Logs,CW_Alarms,EventBridge,SNS,SQS,Lambda,AWS_Events awsService;
-    class K8s_Events,Prom_AM k8sComponent;
-    class Prom_Metrics,Custom_Metrics,ES_Logs,Loki_Logs,App_Events,Event_Router,Email,Slack,PagerDuty,OpsGenie userApp;
-```
+![Data-flow diagram showing AWS-native and Kubernetes/OSS alert signals routed through CloudWatch Alarms, EventBridge, Prometheus Alertmanager, and an event router to SNS, Lambda, and chat/paging channels.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-3.png)
 
 ### CloudWatch Alarms
 
@@ -1349,78 +1127,7 @@ Implement strategies to reduce alert fatigue:
 
 Log analysis and visualization play an important role in diagnosing and resolving issues occurring in your EKS cluster. This section explores various tools and techniques for analyzing and visualizing logs in EKS clusters.
 
-```mermaid
-flowchart TD
-    subgraph Log_Sources ["Log Sources"]
-        CP_Logs[Control Plane Logs]
-        Container_Logs[Container Logs]
-        App_Logs[Application Logs]
-        AWS_Service_Logs[AWS Service Logs]
-    end
-
-    subgraph Log_Collection ["Log Collection"]
-        Fluent_Bit[Fluent Bit]
-        Fluentd[Fluentd]
-        CloudWatch_Agent[CloudWatch Agent]
-        Vector[Vector]
-    end
-
-    subgraph Log_Storage ["Log Storage"]
-        CW_Logs[CloudWatch Logs]
-        OpenSearch[Amazon OpenSearch]
-        S3[Amazon S3]
-        Loki[Grafana Loki]
-    end
-
-    subgraph Log_Analysis ["Log Analysis"]
-        CW_Insights[CloudWatch Logs Insights]
-        OS_Dashboards[OpenSearch Dashboards]
-        Athena[Amazon Athena]
-        Grafana_Explore[Grafana Explore]
-    end
-
-    subgraph Visualization ["Visualization"]
-        OS_Visualizations[OpenSearch Visualizations]
-        Grafana_Dashboards[Grafana Dashboards]
-        QuickSight[Amazon QuickSight]
-        Custom_Dashboards[Custom Dashboards]
-    end
-
-    CP_Logs --> CW_Logs
-    Container_Logs --> Fluent_Bit
-    App_Logs --> Fluent_Bit
-    AWS_Service_Logs --> CW_Logs
-
-    Fluent_Bit --> CW_Logs
-    Fluent_Bit --> OpenSearch
-    Fluent_Bit --> S3
-    Fluentd --> Loki
-    CloudWatch_Agent --> CW_Logs
-    Vector --> OpenSearch
-
-    CW_Logs --> CW_Insights
-    OpenSearch --> OS_Dashboards
-    S3 --> Athena
-    Loki --> Grafana_Explore
-
-    CW_Insights --> Custom_Dashboards
-    OS_Dashboards --> OS_Visualizations
-    Athena --> QuickSight
-    Grafana_Explore --> Grafana_Dashboards
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class CW_Logs,CW_Insights,OpenSearch,S3,Athena,QuickSight,CloudWatch_Agent,AWS_Service_Logs awsService;
-    class CP_Logs k8sComponent;
-    class Fluent_Bit,Fluentd,Vector,Container_Logs,App_Logs userApp;
-    class OS_Dashboards,OS_Visualizations,Grafana_Dashboards,Grafana_Explore,Custom_Dashboards,Loki dataStore;
-```
+![Data-flow diagram showing EKS log sources passing through shared log collectors into four storage backends, each paired with its own analysis and visualization tool: CloudWatch, OpenSearch, S3/Athena, and Grafana Loki.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-4.png)
 
 ### CloudWatch Logs Insights
 
@@ -1898,96 +1605,7 @@ Implement cost-effective storage tiering:
 
 Let's explore various techniques for troubleshooting and debugging issues in EKS clusters.
 
-```mermaid
-flowchart TD
-    subgraph Troubleshooting_Areas ["Troubleshooting Areas"]
-        subgraph Cluster_Issues ["Cluster Issues"]
-            Control_Plane[Control Plane Issues]
-            Node_Issues[Node Issues]
-            Networking[Networking Issues]
-            Auth_Issues[Authentication/Authorization Issues]
-        end
-
-        subgraph Workload_Issues ["Workload Issues"]
-            Pod_Issues[Pod Issues]
-            Service_Issues[Service Issues]
-            Deployment_Issues[Deployment Issues]
-            Resource_Issues[Resource Issues]
-        end
-
-        subgraph Common_Problems ["Common Problems"]
-            ImagePull[ImagePullBackOff]
-            CrashLoop[CrashLoopBackOff]
-            NodeNotReady[Node NotReady]
-            Connection[Service Connection Issues]
-        end
-    end
-
-    subgraph Debugging_Tools ["Debugging Tools"]
-        subgraph K8s_Tools ["Kubernetes Tools"]
-            Kubectl[kubectl]
-            K8s_Debug[kubectl debug]
-            K8s_Events[kubectl events]
-            K8s_Logs[kubectl logs]
-        end
-
-        subgraph AWS_Tools ["AWS Tools"]
-            AWS_CLI[AWS CLI]
-            CloudWatch[CloudWatch]
-            CloudTrail[CloudTrail]
-            X_Ray[X-Ray]
-        end
-
-        subgraph Network_Tools ["Network Tools"]
-            Netshoot[Netshoot]
-            TCPDump[tcpdump]
-            Dig[dig/nslookup]
-            Curl[curl/wget]
-        end
-    end
-
-    Control_Plane --> Kubectl
-    Control_Plane --> AWS_CLI
-    Control_Plane --> CloudWatch
-
-    Node_Issues --> K8s_Debug
-    Node_Issues --> AWS_CLI
-
-    Networking --> Netshoot
-    Networking --> TCPDump
-
-    Pod_Issues --> K8s_Logs
-    Pod_Issues --> K8s_Debug
-
-    Service_Issues --> K8s_Events
-    Service_Issues --> Dig
-    Service_Issues --> Curl
-
-    ImagePull --> K8s_Events
-    ImagePull --> K8s_Logs
-
-    CrashLoop --> K8s_Logs
-    CrashLoop --> K8s_Debug
-
-    NodeNotReady --> AWS_CLI
-    NodeNotReady --> K8s_Events
-
-    Connection --> Netshoot
-    Connection --> TCPDump
-
-    %% Class definitions
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class AWS_CLI,CloudWatch,CloudTrail,X_Ray awsService;
-    class Kubectl,K8s_Debug,K8s_Events,K8s_Logs,Control_Plane,Node_Issues,Pod_Issues,Service_Issues,Deployment_Issues k8sComponent;
-    class Netshoot,TCPDump,Dig,Curl userApp;
-    class ImagePull,CrashLoop,NodeNotReady,Connection,Networking,Auth_Issues,Resource_Issues default;
-```
+![Diagram mapping three EKS troubleshooting areas (cluster issues, workload issues, common failure patterns) to three debugging tool families: Kubernetes CLI tools, AWS tools, and network diagnostic tools.](../.gitbook/assets/en-eks-06-eks-monitoring-logging-5.png)
 
 ### Cluster Troubleshooting
 

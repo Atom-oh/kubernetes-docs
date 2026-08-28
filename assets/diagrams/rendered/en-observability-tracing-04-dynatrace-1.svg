@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="davis-ai-title davis-ai-desc">
+<title id="davis-ai-title">How Davis AI works</title>
+<desc id="davis-ai-desc">Five telemetry signal types feed a baseline-learning stage in the Davis AI engine, which detects anomalies, correlates them, and identifies a root cause; the root cause then produces a problem card, an impact analysis, and remediation suggestions.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+  <style>text{font-family:'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif;}</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+  </marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+  </marker>
+</defs>
+
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ===== Zones ===== -->
+<rect x="32" y="60" width="896" height="112" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="64" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="112" y="73" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">DATA COLLECTION</text>
+
+<rect x="32" y="228" width="896" height="140" rx="8" fill="rgba(255,153,0,0.04)" stroke="rgba(236,114,17,0.20)" stroke-width="0.8"/>
+<rect x="48" y="232" width="128" height="12" rx="2" fill="#ffffff"/>
+<text x="112" y="241" fill="rgba(236,114,17,0.70)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">DAVIS AI ENGINE</text>
+
+<rect x="32" y="448" width="896" height="96" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="48" y="452" width="136" height="12" rx="2" fill="#ffffff"/>
+<text x="116" y="461" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">ANALYSIS RESULTS</text>
+
+<!-- ===== Arrows (drawn before boxes) ===== -->
+
+<!-- Fan-in bus: 5 signal drops -> collector rail -> Baseline Learning -->
+<line x1="128" y1="148" x2="128" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="304" y1="148" x2="304" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="480" y1="148" x2="480" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="656" y1="148" x2="656" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="832" y1="148" x2="832" y2="204" stroke="#545B64" stroke-width="1" marker-end="url(#arrow)"/>
+<line x1="128" y1="204" x2="832" y2="204" stroke="#545B64" stroke-width="1"/>
+<line x1="180" y1="204" x2="180" y2="260" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<circle cx="180" cy="204" r="3" fill="#232F3E"/>
+
+<!-- Baseline -> Anomaly -> Correlate -> Root Cause (focal) -->
+<line x1="268" y1="288" x2="292" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="468" y1="288" x2="492" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="668" y1="288" x2="692" y2="288" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- Fan-out bus: Root Cause -> trunk -> rail -> 3 outputs -->
+<line x1="780" y1="316" x2="780" y2="430" stroke="#EC7211" stroke-width="1.2"/>
+<circle cx="780" cy="430" r="3" fill="#EC7211"/>
+<line x1="272" y1="430" x2="780" y2="430" stroke="#EC7211" stroke-width="1.2"/>
+<line x1="272" y1="430" x2="272" y2="480" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<line x1="480" y1="430" x2="480" y2="480" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<line x1="688" y1="430" x2="688" y2="480" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+<!-- ===== Data Collection nodes ===== -->
+<rect x="48" y="92" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="128" y="124" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Metrics</text>
+
+<rect x="224" y="92" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="304" y="124" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Traces</text>
+
+<rect x="400" y="92" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="480" y="124" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Logs</text>
+
+<rect x="576" y="92" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="656" y="124" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Events</text>
+
+<rect x="752" y="92" width="160" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="832" y="124" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Topology</text>
+
+<!-- ===== Davis AI Engine nodes ===== -->
+<rect x="92" y="260" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="180" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Baseline</text>
+<text x="180" y="300" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Learning</text>
+
+<rect x="292" y="260" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="380" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Anomaly</text>
+<text x="380" y="300" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Detection</text>
+
+<rect x="492" y="260" width="176" height="56" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="580" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Correlation</text>
+<text x="580" y="300" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Analysis</text>
+
+<rect x="692" y="260" width="176" height="56" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+<text x="780" y="284" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Root Cause</text>
+<text x="780" y="300" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Identification</text>
+
+<!-- ===== Analysis Results nodes ===== -->
+<rect x="184" y="480" width="176" height="48" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+<text x="272" y="509" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Problem Card</text>
+
+<rect x="392" y="480" width="176" height="48" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+<text x="480" y="509" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Impact Analysis</text>
+
+<rect x="600" y="480" width="176" height="48" rx="6" fill="#ffffff" stroke="#545B64" stroke-width="1"/>
+<text x="688" y="509" fill="#232F3E" font-size="12" font-weight="600" text-anchor="middle">Remediation</text>
+
+<!-- ===== Legend ===== -->
+<line x1="32" y1="562" x2="928" y2="562" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="32" y="578" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<line x1="112" y1="574" x2="140" y2="574" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="148" y="578" fill="#545B64" font-size="9">Signal ingestion / stage handoff</text>
+<line x1="420" y1="574" x2="448" y2="574" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<text x="456" y="578" fill="#545B64" font-size="9">Root-cause determination and output</text>
+
+</svg>

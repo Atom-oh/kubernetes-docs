@@ -9,56 +9,7 @@
 
 EKS 기반 AI/ML 인프라는 관심사를 분리하고 각 레이어의 독립적인 확장을 가능하게 하는 계층형 아키텍처를 따릅니다.
 
-```mermaid
-flowchart TB
-    subgraph Workloads ["ML 워크로드 레이어"]
-        direction LR
-        Training["모델 훈련<br/>PyTorch, TensorFlow"]
-        Inference["모델 추론<br/>vLLM, TensorRT"]
-        Notebooks["대화형 개발<br/>JupyterHub"]
-        Pipelines["ML 파이프라인<br/>Argo Workflows"]
-        Agents["AI 에이전트<br/>LangChain, CrewAI"]
-    end
-
-    subgraph Platform ["플랫폼 서비스 레이어"]
-        direction LR
-        Ray["Ray 클러스터<br/>분산 컴퓨팅"]
-        KServe["KServe<br/>모델 서빙"]
-        Kubeflow["Kubeflow<br/>ML 플랫폼"]
-        MLflow["MLflow<br/>실험 추적"]
-        VectorDB["벡터 DB<br/>Milvus, Pinecone"]
-    end
-
-    subgraph Compute ["컴퓨팅 레이어"]
-        direction LR
-        GPU["GPU NodePools<br/>p4d, p5, g5"]
-        Neuron["Neuron NodePools<br/>inf2, trn1"]
-        CPU["CPU NodePools<br/>m6i, c6i, r6i"]
-        Spot["스팟 인스턴스<br/>비용 최적화"]
-    end
-
-    subgraph Base ["EKS 기반 레이어"]
-        direction LR
-        EKS["EKS 클러스터<br/>컨트롤 플레인"]
-        Karpenter["Karpenter<br/>노드 프로비저닝"]
-        Storage["스토리지<br/>EFS, FSx, S3"]
-        Network["네트워킹<br/>VPC, EFA"]
-    end
-
-    Workloads --> Platform
-    Platform --> Compute
-    Compute --> Base
-
-    classDef workload fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef platform fill:#4ECDC4,stroke:#333,stroke-width:2px,color:white;
-    classDef compute fill:#45B7D1,stroke:#333,stroke-width:2px,color:white;
-    classDef base fill:#96CEB4,stroke:#333,stroke-width:2px,color:white;
-
-    class Training,Inference,Notebooks,Pipelines,Agents workload;
-    class Ray,KServe,Kubeflow,MLflow,VectorDB platform;
-    class GPU,Neuron,CPU,Spot compute;
-    class EKS,Karpenter,Storage,Network base;
-```
+![ML 워크로드, 플랫폼 서비스, 컴퓨팅, EKS 기반의 4개 레이어가 위에서 아래로 서로 의존하며 쌓여 있고, 컴퓨팅 레이어의 GPU/Neuron/CPU NodePool과 스팟 인스턴스가 강조되어 있는 AI/ML 인프라 레이어 구조도.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-0.png)
 
 **레이어별 역할:**
 
@@ -77,88 +28,7 @@ JARK 스택(JupyterHub + Argo Workflows + Ray + Karpenter)은 EKS에서 완전�
 
 ### JARK 스택 아키텍처
 
-```mermaid
-flowchart TB
-    subgraph Users ["데이터 과학자 & ML 엔지니어"]
-        DS1["데이터 과학자 1"]
-        DS2["데이터 과학자 2"]
-        MLE["ML 엔지니어"]
-    end
-
-    subgraph JupyterHub ["JupyterHub"]
-        Hub["허브 서버"]
-        Spawner["KubeSpawner"]
-        Auth["OAuth/Cognito"]
-        subgraph Notebooks ["사용자 노트북"]
-            NB1["CPU 노트북"]
-            NB2["GPU 노트북<br/>T4/A10G"]
-            NB3["멀티 GPU 노트북<br/>A100/H100"]
-        end
-    end
-
-    subgraph Argo ["Argo Workflows"]
-        Controller["워크플로우 컨트롤러"]
-        Server["Argo 서버 UI"]
-        subgraph Workflows ["ML 워크플로우"]
-            WF1["데이터 전처리"]
-            WF2["모델 훈련"]
-            WF3["하이퍼파라미터 튜닝"]
-            WF4["모델 평가"]
-        end
-    end
-
-    subgraph RayCluster ["Ray 클러스터"]
-        Head["Ray 헤드 노드"]
-        subgraph Workers ["Ray 워커"]
-            W1["CPU 워커 풀"]
-            W2["GPU 워커 풀"]
-            W3["Neuron 워커 풀"]
-        end
-        subgraph RayApps ["Ray 애플리케이션"]
-            RayTrain["Ray Train"]
-            RayTune["Ray Tune"]
-            RayServe["Ray Serve"]
-            RayData["Ray Data"]
-        end
-    end
-
-    subgraph Karpenter ["Karpenter 자동 스케일링"]
-        Provisioner["노드 프로비저너"]
-        subgraph NodePools ["NodePools"]
-            CPUPool["CPU NodePool<br/>m6i, c6i"]
-            GPUPool["GPU NodePool<br/>g5, p4d, p5"]
-            NeuronPool["Neuron NodePool<br/>inf2, trn1"]
-        end
-    end
-
-    subgraph Storage ["공유 스토리지"]
-        EFS["Amazon EFS<br/>노트북 & 모델"]
-        FSx["FSx for Lustre<br/>훈련 데이터"]
-        S3["Amazon S3<br/>데이터셋 & 아티팩트"]
-    end
-
-    Users --> JupyterHub
-    JupyterHub --> Argo
-    JupyterHub --> RayCluster
-    Argo --> RayCluster
-    RayCluster --> Karpenter
-    JupyterHub --> Storage
-    RayCluster --> Storage
-
-    classDef user fill:#E8E8E8,stroke:#333,stroke-width:1px;
-    classDef jupyter fill:#F37626,stroke:#333,stroke-width:2px,color:white;
-    classDef argo fill:#EF7B4D,stroke:#333,stroke-width:2px,color:white;
-    classDef ray fill:#00A2E8,stroke:#333,stroke-width:2px,color:white;
-    classDef karpenter fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef storage fill:#3F8624,stroke:#333,stroke-width:2px,color:white;
-
-    class DS1,DS2,MLE user;
-    class Hub,Spawner,Auth,NB1,NB2,NB3 jupyter;
-    class Controller,Server,WF1,WF2,WF3,WF4 argo;
-    class Head,W1,W2,W3,RayTrain,RayTune,RayServe,RayData ray;
-    class Provisioner,CPUPool,GPUPool,NeuronPool karpenter;
-    class EFS,FSx,S3 storage;
-```
+![사용자가 JupyterHub를 통해 Argo Workflows와 Ray 클러스터를 실행하고, Ray 클러스터가 Karpenter로 GPU/Neuron/CPU 노드를 자동 프로비저닝하며, JupyterHub와 Ray가 공유 스토리지(EFS·FSx·S3)에 접근하는 ML 플랫폼 오케스트레이션 구조도.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-1.png)
 
 ### JARK 스택 구성 요소
 
@@ -804,48 +674,7 @@ spec:
 
 ### DRA vs 기존 GPU 스케줄링
 
-```mermaid
-flowchart TB
-    subgraph Traditional ["기존 디바이스 플러그인 방식"]
-        direction TB
-        T1["파드 요청<br/>nvidia.com/gpu: 1"]
-        T2["디바이스 플러그인<br/>전체 GPU 할당"]
-        T3["컨테이너가<br/>독점적 GPU 접근 획득"]
-        T4["공유 불가<br/>세밀한 제어 불가"]
-
-        T1 --> T2 --> T3 --> T4
-    end
-
-    subgraph DRA ["DRA 방식 (Kubernetes 1.31+)"]
-        direction TB
-        D1["파드가<br/>ResourceClaim 생성"]
-        D2["DRA 드라이버가<br/>클레임 평가"]
-        D3["ResourceSlice가<br/>GPU 토폴로지 추적"]
-        D4["세밀한 할당<br/>MIG/MPS/타임슬라이스"]
-        D5["토폴로지 인식<br/>NVLink/IMEX 스케줄링"]
-
-        D1 --> D2 --> D3 --> D4 --> D5
-    end
-
-    subgraph Benefits ["DRA 이점"]
-        direction TB
-        B1["GPU 메모리<br/>파티셔닝"]
-        B2["멀티테넌트<br/>GPU 공유"]
-        B3["NVLink 토폴로지<br/>인식"]
-        B4["P6e-GB200<br/>UltraServer 지원"]
-    end
-
-    Traditional -.->|"제한적"| Benefits
-    DRA -->|"활성화"| Benefits
-
-    classDef traditional fill:#FF6B6B,stroke:#333,stroke-width:2px,color:white;
-    classDef dra fill:#4ECDC4,stroke:#333,stroke-width:2px,color:white;
-    classDef benefit fill:#45B7D1,stroke:#333,stroke-width:2px,color:white;
-
-    class T1,T2,T3,T4 traditional;
-    class D1,D2,D3,D4,D5 dra;
-    class B1,B2,B3,B4 benefit;
-```
+![기존 디바이스 플러그인 방식은 GPU를 통째로 할당해 공유·세밀한 제어가 불가능한 반면, DRA(K8s 1.31+) 방식은 ResourceClaim과 ResourceSlice로 GPU 토폴로지를 추적해 세밀한 할당과 NVLink 인식 스케줄링을 가능하게 하고 DRA 이점(GPU 메모리 파티셔닝, 멀티테넌트 공유, NVLink 토폴로지 인식, P6e-GB200 지원)으로 이어짐을 비교하는 플로우차트.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-2.png)
 
 ### DRA를 사용한 GPU 공유 전략
 

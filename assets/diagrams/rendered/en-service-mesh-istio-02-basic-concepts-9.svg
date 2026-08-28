@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="en-service-mesh-istio-02-basic-concepts-9-title en-service-mesh-istio-02-basic-concepts-9-desc">
+<title id="en-service-mesh-istio-02-basic-concepts-9-title">Automatic Mutual TLS Between Sidecars</title>
+<desc id="en-service-mesh-istio-02-basic-concepts-9-desc">Diagram showing plaintext traffic from an application flowing to its Envoy sidecar, which exchanges mutually-encrypted mTLS traffic with the peer pod's Envoy sidecar, while istiod's Citadel component issues certificates to both sidecars.</desc>
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap");</style>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+  <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+  <marker id="arrow-link-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0972D3"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="56" y="200" width="280" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="68" y="204" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="89.0" y="213" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">POD A</text>
+<rect x="624" y="200" width="280" height="160" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<rect x="636" y="204" width="42" height="12" rx="2" fill="#ffffff"/>
+<text x="657.0" y="213" fill="rgba(35,47,62,0.45)" font-size="7" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">POD B</text>
+<line x1="168.0" y1="272" x2="168.0" y2="296" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="792.0" y1="296" x2="792.0" y2="272" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="256" y1="320.0" x2="704" y2="320.0" stroke="#EC7211" stroke-width="1.4" marker-end="url(#arrow-accent)" marker-start="url(#arrow-accent-start)"/>
+<path d="M 480.0,112 H 472.0 Q 480.0,112 480.0,120 V 288 Q 480.0,296 488.0,296 H 220" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<path d="M 480.0,112 H 602.0 Q 610.0,112 610.0,120 V 288 Q 610.0,296 618.0,296 H 740" fill="none" stroke="#545B64" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+<rect x="134.0" y="280" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="168.0" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PLAINTEXT</text>
+<rect x="758.0" y="280" width="68" height="12" rx="2" fill="#ffffff"/>
+<text x="792.0" y="289" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PLAINTEXT</text>
+<rect x="306.0" y="308.0" width="92" height="12" rx="2" fill="#ffffff"/>
+<text x="352" y="317.0" fill="#EC7211" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">mTLS ENCRYPTED</text>
+<rect x="206.0" y="140" width="88" height="12" rx="2" fill="#ffffff"/>
+<text x="250" y="149" fill="#545B64" font-size="8" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CERT ISSUANCE</text>
+<rect x="80" y="224" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="224" width="176" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="168.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">App</text>
+<rect x="80" y="296" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="80" y="296" width="176" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="168.0" y="322.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy</text>
+<rect x="704" y="296" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="704" y="296" width="176" height="48" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="792.0" y="322.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Envoy</text>
+<rect x="704" y="224" width="176" height="48" rx="6" fill="#ffffff"/>
+<rect x="704" y="224" width="176" height="48" rx="6" fill="rgba(84,91,100,0.10)" stroke="#7D8998" stroke-width="1"/>
+<text x="792.0" y="250.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">App</text>
+<rect x="392" y="48" width="176" height="64" rx="6" fill="#ffffff"/>
+<rect x="392" y="48" width="176" height="64" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="480.0" y="74.0" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">istiod</text>
+<text x="480.0" y="90.0" fill="#545B64" font-size="9" font-family="'Geist Mono', 'Amazon Ember Mono', ui-monospace, monospace" text-anchor="middle">Citadel</text>
+</svg>

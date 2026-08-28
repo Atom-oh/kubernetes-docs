@@ -147,28 +147,7 @@ Istio Envoy는 trace ID를 자동으로 생성하지만, **애플리케이션이
 
 **분산 추적 동작 원리:**
 
-```mermaid
-flowchart LR
-    User[사용자] --> Gateway[Ingress Gateway]
-    Gateway -->|x-request-id: abc123<br/>x-b3-traceid: xyz| ServiceA[Service A]
-    ServiceA -->|헤더 전파 필수| ServiceB[Service B]
-    ServiceB -->|헤더 전파 필수| ServiceC[Service C]
-
-    Gateway -.->|Span 전송| Jaeger[Jaeger]
-    ServiceA -.->|Span 전송| Jaeger
-    ServiceB -.->|Span 전송| Jaeger
-    ServiceC -.->|Span 전송| Jaeger
-
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef gateway fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef jaeger fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Gateway gateway;
-    class ServiceA,ServiceB,ServiceC service;
-    class Jaeger jaeger;
-```
+![사용자 요청이 Ingress Gateway를 거쳐 Service A, B, C로 전달되는 동안 트레이스 헤더가 반드시 전파되어야 하며, 각 홉이 동시에 Jaeger로 스팬을 전송해 하나의 분산 트레이스로 연결됨을 보여주는 다이어그램](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-observability-0.png)
 
 **전파해야 하는 HTTP 헤더:**
 
@@ -1855,41 +1834,7 @@ frontend → backend-v2: 20% (2 rps)
 
 **5. 문제 해결 워크플로우**
 
-```mermaid
-flowchart TD
-    Start[문제 발생] --> Kiali[Kiali 대시보드]
-    Kiali --> Graph[Graph 뷰로 이동]
-    Graph --> Issue{문제 유형?}
-
-    Issue -->|트래픽 없음| Config[Istio Config 확인]
-    Issue -->|에러 발생| Logs[Logs 확인]
-    Issue -->|느린 응답| Traces[Traces 확인]
-    Issue -->|보안 거부| Security[Security 확인]
-
-    Config --> Validate[구성 검증]
-    Logs --> Debug[로그 분석]
-    Traces --> Jaeger[Jaeger 연동]
-    Security --> Policy[정책 확인]
-
-    Validate --> Fix[구성 수정]
-    Debug --> Fix
-    Jaeger --> Fix
-    Policy --> Fix
-
-    Fix --> Test[테스트]
-    Test --> Verify{해결됨?}
-    Verify -->|예| Done[완료]
-    Verify -->|아니오| Start
-
-    classDef problem fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef kiali fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Start,Issue problem;
-    class Kiali,Graph,Config,Logs,Traces,Security kiali;
-    class Validate,Debug,Jaeger,Policy,Fix,Test action;
-```
+![문제 발생 시 Kiali 대시보드의 Graph 뷰에서 트래픽 없음·에러 발생·느린 응답·보안 거부 유형을 분류해 각각 Config·Logs·Traces·Security를 확인하고 구성을 수정한 뒤 테스트하여 해결되지 않으면 처음부터 다시 진단하는 순환 절차를 보여주는 흐름도](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-observability-1.png)
 
 **참고 자료:**
 

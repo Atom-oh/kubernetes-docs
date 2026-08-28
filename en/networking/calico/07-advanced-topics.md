@@ -7,30 +7,7 @@
 
 This chapter covers advanced Calico topics for production environments, including IPAM deep dive, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows container support, and large-scale cluster design patterns.
 
-```mermaid
-graph TB
-    subgraph "Advanced Calico Topics"
-        IPAM[IPAM Deep Dive<br/>Block-based Allocation]
-        WG[WireGuard Encryption<br/>In-transit Security]
-        EG[Egress Gateway<br/>Controlled Egress]
-        MC[Multi-Cluster<br/>Federation]
-        WIN[Windows Support<br/>HNS Integration]
-        SCALE[Large-Scale Design<br/>1000+ Nodes]
-    end
-
-    IPAM --> WG
-    WG --> EG
-    EG --> MC
-    MC --> WIN
-    WIN --> SCALE
-
-    style IPAM fill:#4fc3f7
-    style WG fill:#81c784
-    style EG fill:#ffb74d
-    style MC fill:#ce93d8
-    style WIN fill:#ef9a9a
-    style SCALE fill:#90a4ae
-```
+![A sequential overview flow of six advanced Calico topics covered in this chapter: IPAM internals, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows support, and large-scale cluster design.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-0.png)
 
 ## IPAM Deep Dive
 
@@ -40,50 +17,7 @@ Calico's IP Address Management (IPAM) system is designed for high performance an
 
 Calico uses a block-based IPAM system where IP addresses are allocated in blocks (default /26 = 64 IPs) to nodes. This approach minimizes datastore interactions and improves allocation speed.
 
-```mermaid
-graph TB
-    subgraph "IPAM Architecture"
-        DS[Datastore<br/>etcd/Kubernetes]
-
-        subgraph "Node 1"
-            B1A[Block A<br/>10.244.0.0/26]
-            B1B[Block B<br/>10.244.0.64/26]
-            P1[Pod 10.244.0.5]
-            P2[Pod 10.244.0.10]
-        end
-
-        subgraph "Node 2"
-            B2A[Block C<br/>10.244.1.0/26]
-            P3[Pod 10.244.1.5]
-            P4[Pod 10.244.1.15]
-        end
-
-        subgraph "Node 3"
-            B3A[Block D<br/>10.244.2.0/26]
-            B3B[Block E<br/>10.244.2.64/26]
-            P5[Pod 10.244.2.20]
-        end
-    end
-
-    DS --> B1A
-    DS --> B1B
-    DS --> B2A
-    DS --> B3A
-    DS --> B3B
-
-    B1A --> P1
-    B1A --> P2
-    B2A --> P3
-    B2A --> P4
-    B3A --> P5
-
-    style DS fill:#ff9800
-    style B1A fill:#4fc3f7
-    style B1B fill:#4fc3f7
-    style B2A fill:#81c784
-    style B3A fill:#ce93d8
-    style B3B fill:#ce93d8
-```
+![A central datastore hands out fixed-size IP blocks to each node, and each node allocates individual pod IPs out of its own affine blocks.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-1.png)
 
 ### IP Block Affinity
 
@@ -117,25 +51,7 @@ spec:
 
 The IPAM allocation follows this process:
 
-```mermaid
-flowchart TD
-    START[Pod Creation Request] --> CHECK{Node has<br/>affine block<br/>with free IPs?}
-    CHECK -->|Yes| ALLOC1[Allocate from<br/>affine block]
-    CHECK -->|No| CHECK2{Free blocks<br/>in pool?}
-    CHECK2 -->|Yes| CLAIM[Claim new block<br/>for node]
-    CLAIM --> ALLOC2[Allocate from<br/>new block]
-    CHECK2 -->|No| CHECK3{Blocks with<br/>free IPs on<br/>other nodes?}
-    CHECK3 -->|Yes| BORROW[Borrow IP from<br/>non-affine block]
-    CHECK3 -->|No| FAIL[Allocation Failed<br/>IP Exhaustion]
-
-    ALLOC1 --> SUCCESS[IP Assigned]
-    ALLOC2 --> SUCCESS
-    BORROW --> SUCCESS
-
-    style START fill:#4fc3f7
-    style SUCCESS fill:#81c784
-    style FAIL fill:#ef5350
-```
+![On pod creation, Calico tries the node's own affine block first, then an unclaimed block, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-2.png)
 
 ### Block Size Configuration
 
@@ -420,29 +336,7 @@ WireGuard provides efficient encryption for pod-to-pod traffic across nodes.
 
 ### WireGuard Architecture
 
-```mermaid
-graph TB
-    subgraph "Node 1"
-        P1[Pod A<br/>10.244.0.5]
-        WG1[WireGuard Interface<br/>wireguard.cali]
-        ETH1[eth0<br/>192.168.1.10]
-    end
-
-    subgraph "Node 2"
-        P2[Pod B<br/>10.244.1.10]
-        WG2[WireGuard Interface<br/>wireguard.cali]
-        ETH2[eth0<br/>192.168.1.11]
-    end
-
-    P1 -->|Plain| WG1
-    WG1 -->|Encrypted| ETH1
-    ETH1 <-->|WireGuard Tunnel<br/>UDP 51820| ETH2
-    ETH2 -->|Encrypted| WG2
-    WG2 -->|Plain| P2
-
-    style WG1 fill:#81c784
-    style WG2 fill:#81c784
-```
+![Traffic leaves a pod in plaintext, is encrypted by the node's WireGuard interface, crosses the underlay as an encrypted UDP tunnel between the two nodes, and is decrypted back to plaintext before reaching the destination pod.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-3.png)
 
 ### Configuration
 
@@ -523,31 +417,7 @@ kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.metadata.ann
 
 ### WireGuard vs IPsec Comparison
 
-```mermaid
-graph LR
-    subgraph "WireGuard"
-        WG1[Modern Crypto<br/>ChaCha20-Poly1305]
-        WG2[Simple Code<br/>~4000 lines]
-        WG3[Fast Key Exchange<br/>Noise Protocol]
-        WG4[Low Overhead<br/>~60 bytes]
-    end
-
-    subgraph "IPsec"
-        IP1[Traditional Crypto<br/>AES-GCM, 3DES]
-        IP2[Complex Code<br/>~100K+ lines]
-        IP3[IKE Key Exchange<br/>IKEv1/v2]
-        IP4[Higher Overhead<br/>~80-100 bytes]
-    end
-
-    style WG1 fill:#81c784
-    style WG2 fill:#81c784
-    style WG3 fill:#81c784
-    style WG4 fill:#81c784
-    style IP1 fill:#ffb74d
-    style IP2 fill:#ffb74d
-    style IP3 fill:#ffb74d
-    style IP4 fill:#ffb74d
-```
+![Side-by-side comparison of WireGuard and IPsec encryption on four traits: cryptography, code complexity, key exchange, and per-packet overhead.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-4.png)
 
 | Feature | WireGuard | IPsec |
 |---------|-----------|-------|
@@ -566,33 +436,7 @@ Egress Gateway provides controlled, predictable egress for pods requiring specif
 
 ### Architecture
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Cluster"
-        subgraph "Namespace: production"
-            POD1[Pod A]
-            POD2[Pod B]
-        end
-
-        subgraph "Egress Gateway Nodes"
-            EG1[Egress Gateway 1<br/>External IP: 203.0.113.10]
-            EG2[Egress Gateway 2<br/>External IP: 203.0.113.11]
-        end
-    end
-
-    subgraph "External Services"
-        EXT1[Partner API<br/>Firewall: Allow 203.0.113.10-11]
-        EXT2[Database<br/>ACL: 203.0.113.0/24]
-    end
-
-    POD1 --> EG1
-    POD2 --> EG2
-    EG1 -->|SNAT| EXT1
-    EG2 -->|SNAT| EXT2
-
-    style EG1 fill:#ff9800
-    style EG2 fill:#ff9800
-```
+![Pods in the production namespace route outbound traffic through a dedicated Egress Gateway pod, which source-NATs it to a fixed external IP before it reaches partner services.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-5.png)
 
 ### Configuration
 
@@ -731,46 +575,7 @@ Calico supports multi-cluster deployments for cross-cluster communication and po
 
 ### Federation Architecture
 
-```mermaid
-graph TB
-    subgraph "Cluster A (us-east-1)"
-        CA_API[API Server]
-        CA_TYPHA[Typha]
-        CA_FELIX[Felix Agents]
-        CA_PODS[Workloads<br/>10.244.0.0/16]
-    end
-
-    subgraph "Cluster B (us-west-2)"
-        CB_API[API Server]
-        CB_TYPHA[Typha]
-        CB_FELIX[Felix Agents]
-        CB_PODS[Workloads<br/>10.245.0.0/16]
-    end
-
-    subgraph "Cluster C (eu-west-1)"
-        CC_API[API Server]
-        CC_TYPHA[Typha]
-        CC_FELIX[Felix Agents]
-        CC_PODS[Workloads<br/>10.246.0.0/16]
-    end
-
-    subgraph "Federation Layer"
-        FED[Federation Controller]
-        SYNC[Policy Sync]
-    end
-
-    CA_API <--> FED
-    CB_API <--> FED
-    CC_API <--> FED
-    FED --> SYNC
-
-    CA_PODS <-->|BGP/Overlay| CB_PODS
-    CB_PODS <-->|BGP/Overlay| CC_PODS
-    CA_PODS <-->|BGP/Overlay| CC_PODS
-
-    style FED fill:#ff9800
-    style SYNC fill:#ffb74d
-```
+![Three clusters each peer their API server with a shared Federation Controller for policy sync, while their pod workloads mesh directly with each other over BGP or overlay.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-6.png)
 
 ### Cross-Cluster Connectivity Setup
 
@@ -921,39 +726,7 @@ spec:
 
 ### HNS (Host Networking Service) Integration
 
-```mermaid
-graph TB
-    subgraph "Windows Node"
-        subgraph "Windows Container"
-            APP[Application]
-            VNIC[Virtual NIC]
-        end
-
-        HNS[Host Networking Service<br/>HNS]
-        VSWITCH[Hyper-V Virtual Switch]
-        CALICO[Calico Windows Agent]
-
-        subgraph "Policy Engine"
-            VFP[Virtual Filtering Platform]
-            ACL[ACL Rules]
-        end
-
-        NIC[Physical NIC]
-    end
-
-    APP --> VNIC
-    VNIC --> VSWITCH
-    VSWITCH --> HNS
-    HNS --> VFP
-    VFP --> ACL
-    CALICO --> HNS
-    CALICO --> VFP
-    VSWITCH --> NIC
-
-    style HNS fill:#4fc3f7
-    style CALICO fill:#81c784
-    style VFP fill:#ffb74d
-```
+![A packet from a Windows container crosses its virtual NIC into the Hyper-V virtual switch, through the Host Networking Service and Virtual Filtering Platform for policy enforcement, while the Calico Windows agent programs both HNS and the VFP directly.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-7.png)
 
 ### Windows Network Policy
 
@@ -1059,43 +832,7 @@ Tigera offers Calico Enterprise with additional features for enterprise deployme
 
 Calico Cloud is a SaaS offering that provides:
 
-```mermaid
-graph TB
-    subgraph "Calico Cloud (SaaS)"
-        UI[Management UI]
-        ANALYTICS[Analytics Engine]
-        THREAT[Threat Intelligence]
-        COMPLY[Compliance Engine]
-    end
-
-    subgraph "Customer Cluster 1"
-        AGENT1[Calico Agent]
-        PODS1[Workloads]
-    end
-
-    subgraph "Customer Cluster 2"
-        AGENT2[Calico Agent]
-        PODS2[Workloads]
-    end
-
-    subgraph "Customer Cluster 3"
-        AGENT3[Calico Agent]
-        PODS3[Workloads]
-    end
-
-    AGENT1 <--> UI
-    AGENT2 <--> UI
-    AGENT3 <--> UI
-
-    UI --> ANALYTICS
-    ANALYTICS --> THREAT
-    ANALYTICS --> COMPLY
-
-    style UI fill:#4fc3f7
-    style ANALYTICS fill:#81c784
-    style THREAT fill:#ef5350
-    style COMPLY fill:#ffb74d
-```
+![Each customer cluster's Calico agent reports to a shared Management UI, which feeds an Analytics Engine that in turn drives threat intelligence and compliance reporting.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-8.png)
 
 ## Large-Scale Cluster Design (1000+ Nodes)
 
@@ -1157,52 +894,7 @@ spec:
 
 For large BGP deployments, use Route Reflectors instead of full mesh:
 
-```mermaid
-graph TB
-    subgraph "Route Reflector Tier"
-        RR1[RR 1<br/>Zone A]
-        RR2[RR 2<br/>Zone B]
-        RR3[RR 3<br/>Zone C]
-    end
-
-    subgraph "Zone A (300 nodes)"
-        NA1[Node A1]
-        NA2[Node A2]
-        NAN[Node A...]
-    end
-
-    subgraph "Zone B (350 nodes)"
-        NB1[Node B1]
-        NB2[Node B2]
-        NBN[Node B...]
-    end
-
-    subgraph "Zone C (350 nodes)"
-        NC1[Node C1]
-        NC2[Node C2]
-        NCN[Node C...]
-    end
-
-    RR1 <--> RR2
-    RR2 <--> RR3
-    RR1 <--> RR3
-
-    NA1 --> RR1
-    NA2 --> RR1
-    NAN --> RR1
-
-    NB1 --> RR2
-    NB2 --> RR2
-    NBN --> RR2
-
-    NC1 --> RR3
-    NC2 --> RR3
-    NCN --> RR3
-
-    style RR1 fill:#ff9800
-    style RR2 fill:#ff9800
-    style RR3 fill:#ff9800
-```
+![Instead of a full BGP mesh, one route reflector per zone peers with the other reflectors, and every regular node in its zone peers only with its own zone's reflector.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-9.png)
 
 ```yaml
 # Route Reflector node configuration

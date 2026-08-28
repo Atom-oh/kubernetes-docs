@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mimir-query-caching-title mimir-query-caching-desc">
+<title id="mimir-query-caching-title">Mimir query caching strategy</title>
+<desc id="mimir-query-caching-desc">A query descends through the Query-frontend, Querier, and Store-gateway, checking a result, metadata, and chunk cache at each stage, and only reaches S3 when all three caches miss.</desc>
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+  <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#EC7211"/></marker>
+</defs>
+<rect width="960" height="600" fill="#ffffff"/>
+
+<!-- ============ ARROWS ============ -->
+
+<!-- main chain, straight verticals -->
+<line x1="260" y1="64"  x2="260" y2="80"  stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="260" y1="128" x2="260" y2="144" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="260" y1="272" x2="260" y2="288" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="260" y1="416" x2="260" y2="432" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+<!-- Miss branches (short verticals) -->
+<line x1="260" y1="208" x2="260" y2="224" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="272" y="210" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="292" y="219" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MISS</text>
+
+<line x1="260" y1="352" x2="260" y2="368" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="272" y="354" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="292" y="363" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MISS</text>
+
+<line x1="260" y1="496" x2="260" y2="512" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="272" y="498" width="40" height="12" rx="2" fill="#ffffff"/>
+<text x="292" y="507" fill="#7D8998" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">MISS</text>
+
+<!-- Hit branches -> Serve from cache (accent, happy path) -->
+<path d="M340,176 H472 Q480,176 480,184 V292 Q480,300 488,300 H620" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="382" y="156" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="165" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">HIT</text>
+
+<line x1="340" y1="320" x2="620" y2="320" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="462" y="300" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="480" y="309" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">HIT</text>
+
+<path d="M340,464 H472 Q480,464 480,456 V348 Q480,340 488,340 H620" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="382" y="444" width="36" height="12" rx="2" fill="#ffffff"/>
+<text x="400" y="453" fill="#EC7211" font-size="8" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.06em">HIT</text>
+
+<!-- ============ NODES (main chain) ============ -->
+
+<!-- Query (start, oval) -->
+<rect x="180" y="24" width="160" height="40" rx="20" fill="#ffffff"/>
+<rect x="180" y="24" width="160" height="40" rx="20" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="48" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Query</text>
+
+<!-- Query-frontend -->
+<rect x="180" y="80" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="80" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="108" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Query-frontend</text>
+
+<!-- Result Cache? diamond -->
+<polygon points="260,144 340,176 260,208 180,176" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="172" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Result</text>
+<text x="260" y="186" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cache?</text>
+
+<!-- Querier -->
+<rect x="180" y="224" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="224" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="252" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Querier</text>
+
+<!-- Metadata Cache? diamond -->
+<polygon points="260,288 340,320 260,352 180,320" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="316" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Metadata</text>
+<text x="260" y="330" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cache?</text>
+
+<!-- Store-gateway -->
+<rect x="180" y="368" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="368" width="160" height="48" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="396" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Store-gateway</text>
+
+<!-- Chunk Cache? diamond -->
+<polygon points="260,432 340,464 260,496 180,464" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="260" y="460" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Chunk</text>
+<text x="260" y="474" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Cache?</text>
+
+<!-- S3 (end, external store) -->
+<rect x="180" y="512" width="160" height="48" rx="6" fill="#ffffff"/>
+<rect x="180" y="512" width="160" height="48" rx="6" fill="rgba(35,47,62,0.03)" stroke="rgba(35,47,62,0.30)" stroke-width="1"/>
+<text x="260" y="540" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">S3</text>
+
+<!-- Serve from cache (focal, happy path) -->
+<rect x="620" y="280" width="200" height="80" rx="6" fill="#ffffff"/>
+<rect x="620" y="280" width="200" height="80" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="720" y="312" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Serve from</text>
+<text x="720" y="328" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">cache</text>
+<text x="720" y="344" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">no S3 fetch</text>
+
+<!-- legend -->
+<line x1="40" y1="572" x2="900" y2="572" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+<text x="40" y="588" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+<rect x="160" y="578" width="16" height="12" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="184" y="588" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">step</text>
+<polygon points="252,578 268,584 252,590 236,584" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+<text x="280" y="588" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">cache check</text>
+<rect x="420" y="578" width="16" height="12" rx="2" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+<text x="444" y="588" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace">cache hit (happy path)</text>
+
+</svg>

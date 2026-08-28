@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" width="960" height="600" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-labelledby="timeline-title timeline-desc"><defs><style>@import url(&quot;https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap&quot;);</style></defs>
+  <title id="timeline-title">Pause-pod plus metric-based scaling timeline</title>
+  <desc id="timeline-desc">Sequence diagram tracing two scaling waves before and at an event: a cron-triggered KEDA scale-up 30 minutes early that makes the scheduler ask Karpenter to provision nodes on AWS EC2 ahead of demand, followed by a smaller metric-triggered wave once the event starts that provisions a few more nodes.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#EC7211"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <text x="32" y="28" class="mono" font-size="8" fill="#7D8998" letter-spacing="0.18em">SCALE-UP TIMELINE</text>
+  <text x="32" y="50" class="sans" font-size="17" font-weight="700" fill="#232F3E">Pause-pod + metric-based scaling</text>
+
+  <!-- lifelines: KEDA=100, HPA=290, Scheduler=480, Karpenter=670, AWS=860 -->
+  <line x1="100" y1="96" x2="100" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="290" y1="96" x2="290" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="480" y1="96" x2="480" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="670" y1="96" x2="670" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="860" y1="96" x2="860" y2="584" stroke="rgba(35,47,62,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- actor boxes -->
+  <rect x="60" y="64" width="80" height="28" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="100" y="82" class="sans" font-size="11" font-weight="600" fill="#232F3E" text-anchor="middle">KEDA</text>
+
+  <rect x="250" y="64" width="80" height="28" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="290" y="82" class="sans" font-size="11" font-weight="600" fill="#232F3E" text-anchor="middle">HPA</text>
+
+  <rect x="420" y="64" width="120" height="28" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1"/>
+  <text x="480" y="82" class="sans" font-size="11" font-weight="600" fill="#232F3E" text-anchor="middle">K8s Scheduler</text>
+
+  <rect x="620" y="64" width="100" height="28" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="670" y="82" class="sans" font-size="11" font-weight="600" fill="#232F3E" text-anchor="middle">Karpenter</text>
+
+  <rect x="820" y="64" width="80" height="28" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+  <text x="860" y="82" class="sans" font-size="11" font-weight="600" fill="#232F3E" text-anchor="middle">AWS EC2</text>
+
+  <!-- Note 1: 30 min before event -->
+  <rect x="72" y="128" width="816" height="24" rx="4" fill="rgba(35,47,62,0.04)" stroke="rgba(35,47,62,0.20)" stroke-width="0.8"/>
+  <text x="480" y="144" class="sans" font-size="11" font-style="italic" fill="#545B64" text-anchor="middle">30 min before event — cron trigger fires</text>
+
+  <!-- msg1 y=176: KEDA -> HPA desiredReplicas:200 -->
+  <path d="M 100,176 H 290" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="146" y="160" width="98" height="12" rx="2" fill="#ffffff"/>
+  <text x="195" y="169" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.02em">DESIRED: 200</text>
+
+  <!-- msg2 y=208: HPA -> Scheduler Request 195 new Pods -->
+  <path d="M 290,208 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="326" y="192" width="118" height="12" rx="2" fill="#ffffff"/>
+  <text x="385" y="201" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.02em">REQUEST +195 PODS</text>
+
+  <!-- msg3 self y=240..264: Scheduler self "Cannot fit / Pending" -->
+  <rect x="476" y="240" width="8" height="264" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <path d="M 484,240 H 536 Q 544,240 544,248 V 252 Q 544,260 536,260 H 484"
+        fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="552" y="234" width="136" height="12" rx="2" fill="#ffffff"/>
+  <text x="620" y="243" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">PENDING (NO CAPACITY)</text>
+
+  <!-- msg4 y=280: Scheduler -> Karpenter Detect Pending Pods -->
+  <path d="M 484,280 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="524" y="264" width="106" height="12" rx="2" fill="#ffffff"/>
+  <text x="577" y="273" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.02em">DETECT PENDING</text>
+
+  <!-- msg5 y=312: Karpenter -> AWS Request 20 Nodes (accent headline) -->
+  <rect x="666" y="312" width="8" height="64" fill="rgba(35,47,62,0.06)" stroke="#545B64" stroke-width="0.8"/>
+  <path d="M 674,312 H 860" fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="726" y="296" width="108" height="12" rx="2" fill="#ffffff"/>
+  <text x="780" y="305" class="mono" font-size="8" fill="#EC7211" text-anchor="middle" letter-spacing="0.02em">REQUEST 20 NODES</text>
+
+  <!-- msg6 y=344: AWS -> Karpenter Nodes Ready (return, dashed) -->
+  <path d="M 860,344 H 674" fill="none" stroke="#545B64" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <rect x="706" y="328" width="128" height="12" rx="2" fill="#ffffff"/>
+  <text x="770" y="337" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">READY (~60-90S)</text>
+
+  <!-- msg7 y=376: Karpenter -> Scheduler Register new Nodes -->
+  <path d="M 666,376 H 492" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="524" y="360" width="112" height="12" rx="2" fill="#ffffff"/>
+  <text x="580" y="369" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">REGISTER NODES</text>
+
+  <!-- msg8 self y=408..432: Scheduler self "Schedule Pending Pods" -->
+  <path d="M 484,408 H 536 Q 544,408 544,416 V 420 Q 544,428 536,428 H 484"
+        fill="none" stroke="#EC7211" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+  <rect x="552" y="402" width="132" height="12" rx="2" fill="#ffffff"/>
+  <text x="618" y="411" class="mono" font-size="8" fill="#EC7211" text-anchor="middle" letter-spacing="0.01em">SCHEDULE PENDING</text>
+
+  <!-- Note 2: Event starts -->
+  <rect x="72" y="452" width="816" height="24" rx="4" fill="rgba(255,153,0,0.06)" stroke="rgba(236,114,17,0.40)" stroke-width="0.8"/>
+  <text x="480" y="468" class="sans" font-size="11" font-style="italic" fill="#232F3E" text-anchor="middle">Event starts — metric trigger fires</text>
+
+  <!-- msg9 y=500: KEDA -> HPA desiredReplicas:250 -->
+  <path d="M 100,500 H 290" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="140" y="484" width="110" height="12" rx="2" fill="#ffffff"/>
+  <text x="195" y="493" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">DESIRED: 250</text>
+
+  <!-- msg10 y=524: HPA -> Scheduler Request 50 additional Pods -->
+  <path d="M 290,524 H 480" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="318" y="508" width="134" height="12" rx="2" fill="#ffffff"/>
+  <text x="385" y="517" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">REQUEST +50 PODS</text>
+
+  <!-- msg11 y=548: Scheduler -> Karpenter Detect additional Pending -->
+  <path d="M 480,548 H 670" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="508" y="532" width="136" height="12" rx="2" fill="#ffffff"/>
+  <text x="576" y="541" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">DETECT MORE PENDING</text>
+
+  <!-- msg12 y=572: Karpenter -> AWS Provision 5 more Nodes -->
+  <path d="M 670,572 H 860" fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <rect x="708" y="556" width="122" height="12" rx="2" fill="#ffffff"/>
+  <text x="769" y="565" class="mono" font-size="8" fill="#7D8998" text-anchor="middle" letter-spacing="0.01em">PROVISION 5 MORE</text>
+</svg>

@@ -42,16 +42,7 @@ PodSecurityPolicy (PSP) was first introduced in Kubernetes 1.3 as a Pod security
 
 Pod Security Standards (PSS) and Pod Security Admission (PSA) were introduced as alpha in Kubernetes 1.22, became beta in 1.23, and reached GA (Generally Available) in 1.25.
 
-```mermaid
-timeline
-    title PSP to PSS Transition Timeline
-    section Kubernetes Versions
-        1.21 : PSP Deprecation Announced
-        1.22 : PSA Alpha
-        1.23 : PSA Beta
-        1.25 : PSP Removed, PSA GA
-        1.28+ : PSS/PSA Stabilized
-```
+![Timeline across Kubernetes releases showing PodSecurityPolicy deprecated in 1.21, Pod Security Admission moving from alpha in 1.22 to beta in 1.23, PSP removed and PSA reaching general availability in 1.25, and Pod Security Standards stabilizing by 1.28 and later.](../.gitbook/assets/en-security-03-pod-security-standards-0.png)
 
 ### PSP vs PSS Comparison
 
@@ -95,28 +86,7 @@ Pod Security Admission (PSA) is a built-in Admission Controller in the Kubernete
 
 ### How PSA Works
 
-```mermaid
-sequenceDiagram
-    participant User as User/Controller
-    participant API as API Server
-    participant PSA as PSA Controller
-    participant NS as Namespace Labels
-    participant etcd as etcd
-
-    User->>API: Pod Creation Request
-    API->>PSA: Admission Validation Request
-    PSA->>NS: Check Namespace Labels
-    NS-->>PSA: enforce=restricted, audit=restricted
-
-    alt Pod Complies with Policy
-        PSA-->>API: Approved
-        API->>etcd: Store Pod
-        API-->>User: 201 Created
-    else Pod Violates Policy
-        PSA-->>API: Denied (enforce mode)
-        API-->>User: 403 Forbidden
-    end
-```
+![Sequence diagram showing a pod creation request flow from a user or controller through the API server and Pod Security Admission controller, which reads the namespace's enforce and audit labels, then either approves the pod for storage in etcd or denies it with a 403 when it violates the enforced policy.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
 
 ### Verifying PSA Status
 
@@ -535,15 +505,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 Migration from PSP to PSS should be carefully planned and performed in stages.
 
-```mermaid
-flowchart TD
-    A[Step 1: Analyze Current State] --> B[Step 2: Map to PSS Profiles]
-    B --> C[Step 3: Validate in Test Environment]
-    C --> D[Step 4: Apply with warn/audit Mode]
-    D --> E[Step 5: Modify Workloads]
-    E --> F[Step 6: Switch to enforce Mode]
-    F --> G[Step 7: Remove PSP]
-```
+![Flowchart of the seven-step migration path from PodSecurityPolicy to Pod Security Standards: analyze the current state, map workloads to PSS profiles, validate in a test environment, apply the profile in warn and audit mode, modify non-compliant workloads, switch to enforce mode, and finally remove PSP.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
 
 ### Step 1: Analyze Current PSP
 

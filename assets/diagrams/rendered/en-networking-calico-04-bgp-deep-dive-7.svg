@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="multi-rack-rr-title multi-rack-rr-desc">
+    <title id="multi-rack-rr-title">Multi-Rack Route Reflector Design</title>
+    <desc id="multi-rack-rr-desc">Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.</desc>
+    <defs><style>@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#545B64"/></marker>
+      <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse"><polygon points="8 0, 0 3, 8 6" fill="#545B64"/></marker>
+    </defs>
+
+    <rect width="100%" height="100%" fill="#ffffff"/>
+
+    <!-- zones -->
+    <rect x="110" y="82" width="740" height="116" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="122" y="86" width="180" height="12" rx="2" fill="#ffffff"/>
+    <text x="212" y="95" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">MANAGEMENT RACK</text>
+
+    <rect x="110" y="310" width="740" height="118" rx="8" fill="rgba(35,47,62,0.02)" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <rect x="230" y="314" width="150" height="12" rx="2" fill="#ffffff"/>
+    <text x="305" y="323" fill="rgba(35,47,62,0.40)" font-size="7" font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.14em">COMPUTE RACKS</text>
+
+    <!-- connectors -->
+    <line x1="270" y1="150" x2="690" y2="150" stroke="#545B64" stroke-width="1.2" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+    <line x1="200" y1="182" x2="200" y2="348" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="760" y1="182" x2="760" y2="348" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M230,182 V257 Q230,265 238,265 H442 Q450,265 450,273 V348"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M730,182 V237 Q730,245 722,245 H518 Q510,245 510,253 V348"
+          fill="none" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <!-- RR1 -->
+    <rect x="130" y="118" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="118" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 1</text>
+    <text x="200" y="162" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cluster-id 1.0.0.1</text>
+
+    <!-- RR2 -->
+    <rect x="690" y="118" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="690" y="118" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="760" y="146" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Route Reflector 2</text>
+    <text x="760" y="162" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">cluster-id 1.0.0.1</text>
+
+    <!-- Rack 1 -->
+    <rect x="130" y="348" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="130" y="348" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="200" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compute Rack 1</text>
+    <text x="200" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Nodes 1–3</text>
+
+    <!-- Rack 2 (focal — shows the dual-RR uplink pattern) -->
+    <rect x="410" y="348" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="410" y="348" width="140" height="64" rx="6" fill="rgba(255,153,0,0.10)" stroke="#EC7211" stroke-width="1.2"/>
+    <text x="480" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compute Rack 2</text>
+    <text x="480" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Nodes 4–6</text>
+
+    <!-- Rack 3 -->
+    <rect x="690" y="348" width="140" height="64" rx="6" fill="#ffffff"/>
+    <rect x="690" y="348" width="140" height="64" rx="6" fill="#ffffff" stroke="#232F3E" stroke-width="1"/>
+    <text x="760" y="376" fill="#232F3E" font-size="12" font-weight="600" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Compute Rack 3</text>
+    <text x="760" y="392" fill="#545B64" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">Nodes 7–9</text>
+
+    <!-- editorial aside -->
+    <text x="480" y="486" fill="#545B64" font-size="14" font-style="italic" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif" text-anchor="middle">Every rack peers with both route reflectors (Rack 2's dual uplink shown; Rack 1 and Rack 3 mirror it).</text>
+
+    <!-- legend -->
+    <line x1="30" y1="512" x2="930" y2="512" stroke="rgba(35,47,62,0.10)" stroke-width="0.8"/>
+    <text x="30" y="532" fill="#545B64" font-size="8" font-family="'Geist Mono',monospace" letter-spacing="0.14em">LEGEND</text>
+    <line x1="220" y1="530" x2="248" y2="530" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="258" y="533" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">Rack-to-RR peering</text>
+    <line x1="450" y1="530" x2="478" y2="530" stroke="#545B64" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="488" y="533" fill="#545B64" font-size="9" font-family="'Amazon Ember','Helvetica Neue',Helvetica,Arial,sans-serif">RR-to-RR peering</text>
+
+  </svg>
