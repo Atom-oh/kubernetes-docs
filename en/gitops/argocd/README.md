@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: August 17, 2026
+> **Last Updated**: August 24, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -279,6 +279,10 @@ spec:
 ```
 
 ## Version Compatibility
+
+### August 2026 Update: Custom Configuration for the EKS Managed Argo CD Capability
+
+On August 21, 2026, AWS announced that the Amazon EKS Capability for Argo CD now supports custom configuration through the standard `argocd-cm` ConfigMap in your cluster. You can define custom health checks for your Custom Resources, customize the Argo CD UI banner content, and adjust how the capability watches and compares the resources it manages — configured the same way as in upstream Argo CD, with AWS applying the settings to the managed capability. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-argo-cd-configuration) and the [configuration guide](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html) for details.
 
 ### August 2026 Update: ArgoCD 3.5 GA and Patch Releases
 

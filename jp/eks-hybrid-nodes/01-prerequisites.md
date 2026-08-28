@@ -1,37 +1,37 @@
 # 前提条件
 
-< [目次](./) | [次へ: ネットワーク設定](02-network-configuration.md) >
+< [目次](./README.md) | [次へ: ネットワーク設定](02-network-configuration.md) >
 
-> **対応バージョン**: EKS 1.31+, nodeadm 0.1+ **最終更新**: February 23, 2026
+> **サポート対象バージョン**: EKS 1.31+, nodeadm 0.1+ **最終更新**: February 23, 2026
 
-このドキュメントでは、EKS Hybrid Nodes をデプロイするために必要なオンプレミス Node、GPU server、およびネットワークインフラストラクチャのシステム要件について説明します。
+このドキュメントでは、EKS Hybrid Nodes をデプロイするために必要なオンプレミスノード、GPU サーバー、およびネットワークインフラストラクチャのシステム要件について説明します。
 
 ## ネットワーク前提条件の概要
 
-次の図は、オンプレミス Node を EKS cluster に接続するためのネットワーク前提条件を示しています。これには、VPC 設定、Transit Gateway/Virtual Private Gateway、および CIDR 要件が含まれます。
+次の図は、VPC 設定、Transit Gateway/Virtual Private Gateway、および CIDR 要件を含む、オンプレミスノードを EKS クラスターに接続するためのネットワーク前提条件を示しています。
 
-![EKS Hybrid Nodes ネットワーク前提条件](../.gitbook/assets/hybrid-prereq-diagram.png)
+![EKS Hybrid Nodes のネットワーク前提条件](../.gitbook/assets/hybrid-prereq-diagram.png)
 
-## オンプレミス Node 要件
+## オンプレミスノードの要件
 
-### 対応 Operating Systems
+### サポート対象のオペレーティングシステム
 
-| Operating System | Version                                  | Architecture   |
+| オペレーティングシステム | バージョン                                  | アーキテクチャ   |
 | ---------------- | ---------------------------------------- | -------------- |
 | Ubuntu LTS       | 20.04, 22.04, 24.04                      | x86\_64, arm64 |
 | RHEL             | 8, 9                                     | x86\_64, arm64 |
 | Amazon Linux     | 2023                                     | x86\_64, arm64 |
-| Bottlerocket     | v1.37.0 以上 (VMware variants のみ)      | x86\_64 のみ   |
+| Bottlerocket     | v1.37.0 以降 (VMware バリアントのみ) | x86\_64 のみ   |
 
-> **Bottlerocket の注記**: EKS Hybrid Nodes でサポートされる Bottlerocket は VMware variants のみであり、Kubernetes v1.28 以降が必要です。Bottlerocket には必要な依存関係がすべて自動的に含まれるため、`nodeadm` CLI は不要です。Bottlerocket では ARM architecture はサポートされていません。
+> **Bottlerocket に関する注意**: EKS Hybrid Nodes でサポートされるのは Bottlerocket の VMware バリアントのみで、Kubernetes v1.28 以降が必要です。Bottlerocket には必要なすべての依存関係が自動的に含まれるため、`nodeadm` CLI は不要です。Bottlerocket では ARM アーキテクチャはサポートされません。
 
-> **ARM Architecture の注記**:
+> **ARM アーキテクチャに関する注意**:
 >
-> * ARM nodes には **Crypto extension を備えた ARMv8.2 以降** が必要です (kube-proxy v1.31+ の場合)
-> * **Raspberry Pi (pre-Pi 5) は互換性がありません** — Crypto extension を備えていない ARMv8.0 のみをサポートしています
+> * ARM ノードには **Crypto 拡張を備えた ARMv8.2 以降** が必要です (kube-proxy v1.31+ 向け)
+> * **Raspberry Pi (Pi 5 より前) は互換性がありません** — Crypto 拡張を持たない ARMv8.0 のみをサポートしています
 > * Pi 5 (ARMv8.2) 以降は互換性があります
 
-### Container Runtime
+### コンテナランタイム
 
 ```bash
 # Check containerd version
@@ -43,24 +43,24 @@ docker --version
 # Required version: 20.10.10 or higher
 ```
 
-> **OS 固有の containerd 注記**:
+> **OS 固有の containerd に関する注意**:
 >
-> * **Ubuntu 24.04**: containerd v1.7.19 以降、または AppArmor profile 設定の変更が必要です
-> * **RHEL**: `--containerd-source distro` は **有効ではありません**。`--containerd-source docker` を使用する必要があります
-> * **Ubuntu 20.04 / RHEL 8**: デフォルト kernel は 5.10 未満であり、Cilium v1.18.x に必要です
+> * **Ubuntu 24.04**: containerd v1.7.19 以降、または AppArmor プロファイル設定の変更が必要です
+> * **RHEL**: `--containerd-source distro` は**有効ではありません**。`--containerd-source docker` を使用する必要があります
+> * **Ubuntu 20.04 / RHEL 8**: デフォルトカーネルは Cilium v1.18.x に必要な 5.10 未満です
 
-### 最小 Hardware 仕様
+### 最小ハードウェア仕様
 
-| Resource | Minimum (AWS Official) | Recommended       |
-| -------- | ---------------------- | ----------------- |
-| CPU      | 1 vCPU                 | 4 cores 以上      |
-| RAM      | 1 GiB                  | 8 GB 以上         |
-| Disk     | 50 GB SSD              | 100 GB NVMe SSD   |
-| Network  | 100 Mbps               | 10 Gbps 以上      |
+| リソース | 最小 (AWS 公式) | 推奨     |
+| -------- | ---------------------- | --------------- |
+| CPU      | 1 vCPU                 | 4 コア以上 |
+| RAM      | 1 GiB                  | 8 GB 以上    |
+| ディスク | 50 GB SSD              | 100 GB NVMe SSD |
+| ネットワーク  | 100 Mbps               | 10 Gbps 以上 |
 
-> **注記**: AWS 公式の最小要件は 1 vCPU / 1 GiB ですが、実際の workload を実行するには 2 cores / 4 GB 以上を推奨します。
+> **注意**: AWS 公式の最小値は 1 vCPU / 1 GiB ですが、実際のワークロードを実行するには 2 コア / 4 GB 以上を推奨します。
 
-### System Configuration Check
+### システム設定の確認
 
 ```bash
 # Verify swap is disabled
@@ -90,49 +90,49 @@ EOF
 sudo sysctl --system
 ```
 
-## AWS Packer Templates を使用した Node Images の構築
+## AWS Packer テンプレートによるノードイメージの構築
 
-AWS は、EKS Hybrid Nodes 用の node images を構築するための Packer templates の例を提供しています。これらの templates は、OVA (vSphere)、Qcow2、および Raw の出力形式をサポートしています。
+AWS は、EKS Hybrid Nodes 用のノードイメージを構築するための Packer テンプレートの例を提供しています。これらのテンプレートは、OVA (vSphere)、Qcow2、Raw の出力形式をサポートしています。
 
-### Packer 前提条件
+### Packer の前提条件
 
-| Tool                  | Minimum Version |
+| ツール                  | 最小バージョン |
 | --------------------- | --------------- |
 | Packer                | v1.11.0+        |
 | VMware vSphere Plugin | v1.4.0+         |
-| QEMU Plugin           | 最新            |
+| QEMU Plugin           | 最新          |
 
-### Environment Variables
+### 環境変数
 
-| Variable              | Description                              | Default |
-| --------------------- | ---------------------------------------- | ------- |
-| `PKR_SSH_PASSWORD`    | SSH password                             | -       |
-| `ISO_URL`             | OS ISO image URL                         | -       |
-| `ISO_CHECKSUM`        | ISO checksum                             | -       |
-| `CREDENTIAL_PROVIDER` | Credential provider (`ssm` または `iam`) | `ssm`   |
-| `K8S_VERSION`         | Kubernetes version                       | -       |
-| `NODEADM_ARCH`        | Architecture (`amd64` または `arm64`)    | `amd64` |
+| 変数              | 説明                          | デフォルト |
+| --------------------- | ------------------------------------ | ------- |
+| `PKR_SSH_PASSWORD`    | SSH パスワード                         | -       |
+| `ISO_URL`             | OS ISO イメージ URL                     | -       |
+| `ISO_CHECKSUM`        | ISO チェックサム                         | -       |
+| `CREDENTIAL_PROVIDER` | 認証情報プロバイダー (`ssm` または `iam`) | `ssm`   |
+| `K8S_VERSION`         | Kubernetes バージョン                   | -       |
+| `NODEADM_ARCH`        | アーキテクチャ (`amd64` または `arm64`)    | `amd64` |
 
-**RHEL 固有の Variables:**
+**RHEL 固有の変数:**
 
-| Variable      | Description                    |
-| ------------- | ------------------------------ |
-| `RH_USERNAME` | Red Hat subscription username  |
-| `RH_PASSWORD` | Red Hat subscription password  |
+| 変数      | 説明                   |
+| ------------- | ----------------------------- |
+| `RH_USERNAME` | Red Hat サブスクリプションのユーザー名 |
+| `RH_PASSWORD` | Red Hat サブスクリプションのパスワード |
 
-**vSphere 固有の Variables:**
+**vSphere 固有の変数:**
 
-| Variable             | Description             |
-| -------------------- | ----------------------- |
-| `VSPHERE_SERVER`     | vCenter server address  |
-| `VSPHERE_USER`       | vCenter username        |
-| `VSPHERE_PASSWORD`   | vCenter password        |
-| `VSPHERE_DATACENTER` | Datacenter name         |
-| `VSPHERE_CLUSTER`    | Cluster name            |
-| `VSPHERE_DATASTORE`  | Datastore name          |
-| `VSPHERE_NETWORK`    | Network name            |
+| 変数             | 説明            |
+| -------------------- | ---------------------- |
+| `VSPHERE_SERVER`     | vCenter サーバーアドレス |
+| `VSPHERE_USER`       | vCenter ユーザー名       |
+| `VSPHERE_PASSWORD`   | vCenter パスワード       |
+| `VSPHERE_DATACENTER` | データセンター名        |
+| `VSPHERE_CLUSTER`    | クラスター名           |
+| `VSPHERE_DATASTORE`  | データストア名         |
+| `VSPHERE_NETWORK`    | ネットワーク名           |
 
-### Build Commands
+### 構築コマンド
 
 ```bash
 # Build vSphere OVA (Ubuntu 22.04)
@@ -145,11 +145,11 @@ packer build -only=general-build.qemu.rhel9 template.pkr.hcl
 packer build -only=general-build.qemu.al2023 template.pkr.hcl
 ```
 
-> **注記**: `CREDENTIAL_PROVIDER` environment variable を `iam` に設定すると、IAM Roles Anywhere 用の image が構築されます。デフォルトは `ssm` です。
+> **注意**: `CREDENTIAL_PROVIDER` 環境変数を `iam` に設定すると、IAM Roles Anywhere 用のイメージが構築されます。デフォルトは `ssm` です。
 
-## GPU Server 要件 (任意)
+## GPU サーバーの要件 (任意)
 
-### NVIDIA Driver
+### NVIDIA ドライバー
 
 ```bash
 # Check NVIDIA driver version
@@ -161,16 +161,16 @@ nvcc --version
 # Recommended version: CUDA 12.x
 ```
 
-### 対応 GPU Models
+### サポート対象の GPU モデル
 
-| GPU Model   | VRAM     | Primary Use                     |
-| ----------- | -------- | ------------------------------- |
-| NVIDIA H100 | 80 GB    | 大規模 LLM training/inference   |
-| NVIDIA H200 | 141 GB   | 非常に大規模な models           |
-| NVIDIA A100 | 40/80 GB | AI/ML 汎用                      |
-| NVIDIA L40S | 48 GB    | Inference に最適化              |
+| GPU モデル   | VRAM     | 主な用途                        |
+| ----------- | -------- | ---------------------------------- |
+| NVIDIA H100 | 80 GB    | 大規模 LLM のトレーニング/推論 |
+| NVIDIA H200 | 141 GB   | 非常に大規模なモデル                  |
+| NVIDIA A100 | 40/80 GB | AI/ML 汎用              |
+| NVIDIA L40S | 48 GB    | 推論に最適化                |
 
-### GPU Driver Installation
+### GPU ドライバーのインストール
 
 **Ubuntu 22.04 LTS (推奨):**
 
@@ -222,18 +222,18 @@ sudo nvidia-ctk runtime configure --runtime=containerd
 sudo systemctl restart containerd
 ```
 
-## Network 要件
+## ネットワーク要件
 
-### Bandwidth と Latency
+### 帯域幅とレイテンシー
 
-| Item        | Minimum            | Recommended          |
-| ----------- | ------------------ | -------------------- |
-| Bandwidth   | 100 Mbps           | 10 Gbps 以上         |
-| Latency     | 200 ms RTT 以下    | 5 ms 以下            |
-| Packet Loss | 0.1% 以下          | 0.01% 以下           |
-| MTU         | 1500               | 9000 (Jumbo Frame)   |
+| 項目        | 最小            | 推奨        |
+| ----------- | ------------------ | ------------------ |
+| 帯域幅   | 100 Mbps           | 10 Gbps 以上    |
+| レイテンシー     | 200 ms RTT 以下 | 5 ms 以下       |
+| パケット損失 | 0.1% 以下       | 0.01% 以下      |
+| MTU         | 1500               | 9000 (Jumbo Frame) |
 
-### Jumbo Frame Configuration
+### Jumbo Frame の設定
 
 ```bash
 # Check MTU setting
@@ -250,13 +250,13 @@ sudo nmcli connection up "System eth0"
 nmcli connection show "System eth0" | grep mtu
 ```
 
-## IAM Credential Provider Setup
+## IAM 認証情報プロバイダーの設定
 
-EKS Hybrid Nodes では、オンプレミス Node を AWS に対して認証するために、2 つの credential providers のいずれかが必要です。
+EKS Hybrid Nodes では、オンプレミスノードを AWS で認証するために、2 つの認証情報プロバイダーのいずれかが必要です。
 
-### Option A: SSM Hybrid Activations
+### オプション A: SSM Hybrid Activations
 
-SSM Hybrid Activations は、PKI infrastructure を必要としない、より簡単な option です。
+SSM Hybrid Activations は、PKI インフラストラクチャを必要としない、より簡単な選択肢です。
 
 ```bash
 # Create IAM role for hybrid nodes
@@ -288,9 +288,9 @@ aws ssm create-activation \
   --region ap-northeast-2
 ```
 
-### Option B: IAM Roles Anywhere
+### オプション B: IAM Roles Anywhere
 
-IAM Roles Anywhere は、既存の PKI からの X.509 certificates を使用し、air-gap environments に適しています。
+IAM Roles Anywhere は既存の PKI の X.509 証明書を使用するため、エアギャップ環境に最適です。
 
 ```bash
 # 1. Create Trust Anchor with your CA certificate
@@ -315,11 +315,11 @@ sudo cp node.crt /etc/iam/pki/server.pem
 sudo cp node.key /etc/iam/pki/server.key
 ```
 
-### CloudFormation-Based IAM Setup
+### CloudFormation ベースの IAM 設定
 
-CLI の代わりに CloudFormation を使用して、IAM roles と関連 resources をセットアップできます。
+CLI の代わりに、CloudFormation を使用して IAM ロールと関連リソースを設定できます。
 
-**SSM 用 CloudFormation Template:**
+**SSM 用 CloudFormation テンプレート:**
 
 ```bash
 # Download template
@@ -342,7 +342,7 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-**IAM Roles Anywhere 用 CloudFormation Template:**
+**IAM Roles Anywhere 用 CloudFormation テンプレート:**
 
 ```bash
 # Download template
@@ -365,26 +365,26 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### IAM Policy Details
+### IAM ポリシーの詳細
 
-Hybrid node role に必要な IAM policies の詳細です。
+ハイブリッドノードロールに必要な IAM ポリシーの詳細です。
 
-**Required Managed Policies:**
+**必須の管理ポリシー:**
 
-| Policy                               | Purpose                                |
-| ------------------------------------ | -------------------------------------- |
-| `AmazonEC2ContainerRegistryPullOnly` | ECR から container images を pull      |
-| `AmazonSSMManagedInstanceCore`       | SSM agent の core 機能 (SSM 使用時)    |
+| ポリシー                               | 目的                                       |
+| ------------------------------------ | --------------------------------------------- |
+| `AmazonEC2ContainerRegistryPullOnly` | ECR からコンテナイメージをプル                |
+| `AmazonSSMManagedInstanceCore`       | SSM エージェントのコア機能 (SSM 使用時) |
 
-**Optional Policies:**
+**任意のポリシー:**
 
-| Policy                              | Purpose                  |
+| ポリシー                              | 目的                  |
 | ----------------------------------- | ------------------------ |
-| `eks-auth:AssumeRoleForPodIdentity` | EKS Pod Identity support |
+| `eks-auth:AssumeRoleForPodIdentity` | EKS Pod Identity のサポート |
 
-**SSM Deregister Conditional Policy:**
+**SSM 登録解除の条件付きポリシー:**
 
-複数 cluster 環境では、`EKSClusterARN` condition tag を使用して、nodes が特定の clusters からのみ登録解除できるようにします。
+マルチクラスター環境では、`EKSClusterARN` 条件タグを使用して、ノードを特定のクラスターからのみ登録解除できるようにします:
 
 ```json
 {
@@ -404,13 +404,13 @@ Hybrid node role に必要な IAM policies の詳細です。
 }
 ```
 
-### IAM Roles Anywhere Trust Policy Details
+### IAM Roles Anywhere 信頼ポリシーの詳細
 
-IAM Roles Anywhere を使用する場合、trust policy configuration は非常に重要です。
+IAM Roles Anywhere を使用する場合、信頼ポリシーの設定は重要です。
 
-**x509Subject/CN Mapping:**
+**x509Subject/CN マッピング:**
 
-Certificate の CN (Common Name) は node name と一致している必要があります。これは audit tracking と node identification に使用されます。
+証明書の CN (Common Name) はノード名と一致する必要があります。これは監査追跡およびノード識別に使用されます。
 
 ```json
 {
@@ -439,33 +439,33 @@ Certificate の CN (Common Name) は node name と一致している必要があ
 }
 ```
 
-**Key Components:**
+**主要コンポーネント:**
 
-| Component               | Description                                  |
-| ----------------------- | -------------------------------------------- |
-| `sts:SetSourceIdentity` | audit tracking 用の source identity を設定   |
-| `sts:RoleSessionName`   | certificate CN に紐づく session name         |
-| `x509Subject/CN`        | Certificate CN は nodeName と一致が必要      |
+| コンポーネント               | 説明                             |
+| ----------------------- | --------------------------------------- |
+| `sts:SetSourceIdentity` | 監査追跡用のソース ID を設定 |
+| `sts:RoleSessionName`   | 証明書の CN に紐付くセッション名    |
+| `x509Subject/CN`        | 証明書の CN は nodeName と一致する必要があります      |
 
-### Credential Duration Comparison
+### 認証情報の有効期間比較
 
-| Aspect               | SSM                | IAM Roles Anywhere                                             |
-| -------------------- | ------------------ | -------------------------------------------------------------- |
-| Default Duration     | 1 hour (固定)      | 1 hour (設定可能)                                              |
-| Maximum Duration     | 1 hour             | 12 hours                                                       |
-| Rotation             | AWS により自動     | 自動、`durationSeconds` に従う                                 |
-| `MaxSessionDuration` | N/A                | IAM role value は profile の `durationSeconds` を超える必要あり |
-| Configuration        | 設定不可           | profile の `durationSeconds` parameter で設定                  |
+| 項目               | SSM              | IAM Roles Anywhere                                     |
+| -------------------- | ---------------- | ------------------------------------------------------ |
+| デフォルトの有効期間     | 1 時間 (固定)   | 1 時間 (設定可能)                                  |
+| 最大有効期間     | 1 時間           | 12 時間                                               |
+| ローテーション             | AWS により自動 | 自動、`durationSeconds` を遵守                  |
+| `MaxSessionDuration` | N/A              | IAM ロール値はプロファイルの `durationSeconds` を超える必要があります |
+| 設定        | 設定不可 | プロファイルの `durationSeconds` パラメータで設定          |
 
-> **注記**: IAM Roles Anywhere を使用する場合、IAM role の `MaxSessionDuration` は profile の `durationSeconds` 値より大きくする必要があります。そうでない場合、credential acquisition は失敗します。
+> **注意**: IAM Roles Anywhere を使用する場合、IAM ロールの `MaxSessionDuration` はプロファイルの `durationSeconds` 値より大きくなければなりません。そうでない場合、認証情報の取得に失敗します。
 
-## Cluster Access Preparation
+## クラスターアクセスの準備
 
-Hybrid nodes が EKS cluster に参加するには、適切な access entries が必要です。
+ハイブリッドノードが EKS クラスターに参加するには、適切なアクセスエントリが必要です。
 
-### HYBRID\_LINUX Access Entry (推奨)
+### HYBRID\_LINUX アクセスエントリ (推奨)
 
-`HYBRID_LINUX` access entry type は hybrid nodes 専用に設計されています。
+`HYBRID_LINUX` アクセスエントリタイプは、ハイブリッドノード向けに特別に設計されています:
 
 ```bash
 aws eks create-access-entry \
@@ -474,14 +474,14 @@ aws eks create-access-entry \
   --type HYBRID_LINUX
 ```
 
-この command は次を自動的に設定します。
+このコマンドは次を自動的に設定します:
 
-* Username: <code v-pre>system:node:{{SessionName}}</code>
-* Kubernetes groups: `system:bootstrappers`, `system:nodes`
+* ユーザー名: <code v-pre>system:node:{{SessionName}}</code>
+* Kubernetes グループ: `system:bootstrappers`, `system:nodes`
 
-### aws-auth ConfigMap Alternative
+### aws-auth ConfigMap の代替方法
 
-`API_AND_CONFIG_MAP` authentication mode を使用する場合、代替として `aws-auth` ConfigMap を使用できます。
+`API_AND_CONFIG_MAP` 認証モードを使用する場合、代替手段として `aws-auth` ConfigMap を使用できます:
 
 ```yaml
 apiVersion: v1
@@ -502,55 +502,55 @@ data:
 kubectl apply -f aws-auth-cm.yaml
 ```
 
-> **注記**: `aws-auth` ConfigMap method は legacy approach です。新しい clusters では、`HYBRID_LINUX` access entry の使用を推奨します。
+> **注意**: `aws-auth` ConfigMap の方法はレガシーなアプローチです。新しいクラスターでは、`HYBRID_LINUX` アクセスエントリの使用を推奨します。
 
-## VPC Configuration Requirements
+## VPC 設定の要件
 
-EKS cluster VPC は、Hybrid Nodes connectivity をサポートするように適切に設定されている必要があります。
+EKS クラスター VPC は、Hybrid Nodes 接続をサポートするように適切に設定する必要があります。
 
-### Route Table Configuration
+### ルートテーブルの設定
 
-VPC route tables には、オンプレミス CIDRs の routes を含める必要があります。
+VPC ルートテーブルには、オンプレミス CIDR 向けのルートを含める必要があります:
 
-| Destination                     | Target  | Purpose                       |
-| ------------------------------- | ------- | ----------------------------- |
-| 10.0.0.0/16 (VPC CIDR)          | local   | VPC internal traffic          |
-| 10.80.0.0/16 (Remote Node CIDR) | TGW/VGW | オンプレミス nodes への route |
-| 10.85.0.0/16 (Remote Pod CIDR)  | TGW/VGW | オンプレミス pods への route  |
+| 宛先                     | ターゲット  | 目的                    |
+| ------------------------------- | ------- | -------------------------- |
+| 10.0.0.0/16 (VPC CIDR)          | local   | VPC 内部トラフィック       |
+| 10.80.0.0/16 (リモートノード CIDR) | TGW/VGW | オンプレミスノードへのルート |
+| 10.85.0.0/16 (リモート Pod CIDR)  | TGW/VGW | オンプレミス Pod へのルート  |
 
-### Security Group Requirements
+### セキュリティグループの要件
 
-`RemoteNodeNetwork` / `RemotePodNetwork` が指定されると、EKS は inbound rules を自動作成します。追加の outbound rules は手動で設定する必要があります。
+`RemoteNodeNetwork` / `RemotePodNetwork` を指定すると、EKS はインバウンドルールを自動作成します。追加のアウトバウンドルールは手動で設定する必要があります:
 
-| Direction         | Protocol | Port          | Source/Destination | Purpose               |
+| 方向         | プロトコル | ポート          | 送信元/送信先 | 目的               |
 | ----------------- | -------- | ------------- | ------------------ | --------------------- |
-| Inbound (auto)    | TCP      | 443           | Remote Node CIDR   | Kubelet → API Server  |
-| Inbound (auto)    | TCP      | 443           | Remote Pod CIDR    | Pod → API Server      |
-| Inbound (auto)    | TCP      | 10250         | Remote Node CIDR   | API Server → Kubelet  |
-| Outbound (manual) | TCP      | 10250         | Remote Node CIDR   | API Server → Kubelet  |
-| Outbound (manual) | TCP      | Webhook ports | Remote Pod CIDR    | API Server → Webhooks |
+| インバウンド (自動)    | TCP      | 443           | リモートノード CIDR   | Kubelet → API Server  |
+| インバウンド (自動)    | TCP      | 443           | リモート Pod CIDR    | Pod → API Server      |
+| インバウンド (自動)    | TCP      | 10250         | リモートノード CIDR   | API Server → Kubelet  |
+| アウトバウンド (手動) | TCP      | 10250         | リモートノード CIDR   | API Server → Kubelet  |
+| アウトバウンド (手動) | TCP      | Webhook ポート | リモート Pod CIDR    | API Server → Webhooks |
 
-> **注記**: Security group ごとに inbound rules は 60 個までという制限があります。複数の CIDRs を使用する場合は、rule counts を確認してください。
+> **注意**: セキュリティグループあたりのインバウンドルールには 60 件の上限があります。複数の CIDR を使用する場合はルール数を確認してください。
 
-### API Server Endpoint Access Modes
+### API Server エンドポイントアクセスモード
 
-| Mode        | Kubelet Path                  | Use Case                                                |
-| ----------- | ----------------------------- | ------------------------------------------------------- |
-| **Public**  | Internet → EKS API endpoint   | Simple setup、オンプレミスからの Internet が必要        |
-| **Private** | VPN/DX → VPC ENI → API Server | Air-gap、最大限の security **(推奨)**                   |
+| モード        | Kubelet パス                  | ユースケース                                     |
+| ----------- | ----------------------------- | -------------------------------------------- |
+| **Public**  | Internet → EKS API エンドポイント   | 簡単なセットアップ、オンプレミスからインターネットが必要 |
+| **Private** | VPN/DX → VPC ENI → API Server | エアギャップ、最大限のセキュリティ **(推奨)**  |
 
-> **警告**: **Hybrid nodes では "Public and Private" mode を使用しないでください。** この mode では、hybrid nodes が EKS API endpoint を public IPs のみに解決するため、private VPN/Direct Connect connections が失敗します。その結果、**nodes が cluster に参加できなくなります**。Public または Private のいずれかを選択する必要があり、両方は選択できません。
+> **警告**: **ハイブリッドノードで「Public and Private」モードを使用しないでください。** このモードでは、ハイブリッドノードは EKS API エンドポイントをパブリック IP のみに解決するため、プライベート VPN/Direct Connect 接続が失敗します。その結果、**ノードはクラスターへの参加に失敗します**。Public または Private のいずれかを選択する必要があり、両方は選択できません。
 
-> **推奨**: Production hybrid environments では **Private** endpoint access を使用してください。
+> **推奨**: 本番のハイブリッド環境では **Private** エンドポイントアクセスを使用してください。
 
-## Hybrid Nodes 向け EKS Cluster Creation
+## Hybrid Nodes 用 EKS クラスターの作成
 
-Hybrid nodes support 付きで EKS cluster を作成する場合、次の要件が適用されます。
+Hybrid Nodes をサポートする EKS クラスターを作成する場合、以下の要件が適用されます:
 
-* **Authentication mode**: `API` または `API_AND_CONFIG_MAP` を使用する必要があります
-* **IP address family**: IPv4 を使用する必要があります
-* **Endpoint connectivity**: Public または Private のどちらかのみを使用する必要があります ("Public and Private" は **サポートされません** — hybrid node の join failures を引き起こします)
-* **Remote networks**: `RemoteNodeNetwork` および `RemotePodNetwork` CIDRs を指定します
+* **認証モード**: `API` または `API_AND_CONFIG_MAP` を使用する必要があります
+* **IP アドレスファミリー**: IPv4 を使用する必要があります
+* **エンドポイント接続**: Public または Private のみを使用する必要があります (「Public and Private」は**サポートされません** — ハイブリッドノードの参加失敗の原因になります)
+* **リモートネットワーク**: `RemoteNodeNetwork` および `RemotePodNetwork` CIDR を指定します
 
 ### eksctl の使用
 
@@ -600,13 +600,13 @@ aws eks update-kubeconfig --name my-hybrid-cluster --region ap-northeast-2
 kubectl get svc
 ```
 
-## Hybrid Nodes 対応 Add-ons
+## Hybrid Nodes でサポートされるアドオン
 
-すべての EKS add-ons が hybrid nodes と互換性があるわけではありません。Amazon VPC CNI は互換性が **ありません**。
+すべての EKS アドオンがハイブリッドノードと互換性があるわけではありません。Amazon VPC CNI は互換性が**ありません**。
 
-### AWS Add-ons
+### AWS アドオン
 
-| Add-on                   | Minimum Compatible Version |
+| アドオン                   | 最小互換バージョン |
 | ------------------------ | -------------------------- |
 | kube-proxy               | v1.25.14-eksbuild.2+       |
 | CoreDNS                  | v1.9.3-eksbuild.7+         |
@@ -616,9 +616,9 @@ kubectl get svc
 | Node monitoring agent    | v1.2.0-eksbuild.1+         |
 | CSI snapshot controller  | v8.1.0-eksbuild.1+         |
 
-### Community Add-ons
+### コミュニティアドオン
 
-| Add-on                    | Minimum Compatible Version |
+| アドオン                    | 最小互換バージョン |
 | ------------------------- | -------------------------- |
 | Kubernetes Metrics Server | v0.7.2-eksbuild.1+         |
 | cert-manager              | v1.17.2-eksbuild.1+        |
@@ -628,4 +628,4 @@ kubectl get svc
 
 ***
 
-< [目次](./) | [次へ: ネットワーク設定](02-network-configuration.md) >
+< [目次](./README.md) | [次へ: ネットワーク設定](02-network-configuration.md) >

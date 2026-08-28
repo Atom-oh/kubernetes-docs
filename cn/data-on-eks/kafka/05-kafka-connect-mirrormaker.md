@@ -3,29 +3,29 @@
 > **支持的版本**：Strimzi 0.45+、Kafka 3.9、MirrorMaker 2\
 > **最后更新**：July 9, 2026
 
-## Kafka Connect 概览
+## Kafka Connect 概述
 
-Kafka Connect 是一个在 Kafka 与外部系统之间移动数据的框架，例如数据库、对象存储、搜索引擎等，而无需编写自定义集成代码。你通过 connector 配置以声明式方式描述数据管道，Connect 会处理其余工作。
+Kafka Connect 是一个无需编写自定义集成代码，即可在 Kafka 与外部系统（数据库、对象存储、搜索引擎等）之间移动数据的框架。你可以通过 connector 配置以声明式方式描述数据管道，其余工作由 Connect 处理。
 
-Connector 根据数据流向分为两类：
+根据数据流动方向，connector 分为两类：
 
-* **Source connectors** 从外部系统将数据拉取到 Kafka 中。Debezium 是典型示例：它读取数据库的 write-ahead log（或 binlog），并将行级变更事件作为 CDC（Change Data Capture）管道流式写入 Kafka。JDBC Source Connector 采用更简单的基于查询的方法，定期轮询表并将结果写入 Kafka。
-* **Sink connectors** 将数据从 Kafka 推送到外部系统。S3 Sink Connector 会把 topic 数据以 JSON 或 Parquet 等格式写入 S3，而 Elasticsearch Sink Connector 会为 topic 记录建立索引，用于搜索和分析。
+* **Source connector** 从外部系统将数据拉取到 Kafka 中。Debezium 是典型示例：它读取数据库的预写日志（或 binlog），并将行级变更事件以 CDC（Change Data Capture）管道的形式流式传输到 Kafka。JDBC Source Connector 采用更简单的基于查询的方法，定期轮询表并将结果写入 Kafka。
+* **Sink connector** 将数据从 Kafka 推送到外部系统。S3 Sink Connector 会将 topic 数据以 JSON 或 Parquet 等格式写入 S3，而 Elasticsearch Sink Connector 会为 topic 记录建立索引，用于搜索和分析。
 
 Kafka Connect 支持两种运行模式：
 
-* **Distributed mode**：多个 worker 进程（Pod）组成一个组，并作为单个 Connect cluster 运行。一个 worker 充当 group coordinator，在组内分发 connector 及其 task；如果某个 worker 失效，它的 task 会自动重新平衡到仍存活的 worker 上。Connector 的生命周期（创建、删除、重新配置）通过 REST API 驱动（默认端口为 8083）。这是 Kubernetes 中唯一使用的模式。
-* **Standalone mode**：单个进程，使用基于文件的 offset store，面向本地开发。它没有高可用性或水平扩展能力，因此绝不会在 Kubernetes 上使用。
+* **Distributed mode**：多个 worker 进程（Pod）组成一个组，并作为单个 Connect cluster 运行。一个 worker 担任组协调器，在组内分配 connector 及其 task；如果某个 worker 失效，其 task 会自动重新平衡到仍存活的 worker。connector 生命周期——创建、删除、重新配置——通过 REST API 驱动（默认端口为 8083）。这是 Kubernetes 中唯一使用的模式。
+* **Standalone mode**：单个进程配合基于文件的 offset 存储，适用于本地开发。它不具备高可用性或水平扩展能力，因此绝不会用于 Kubernetes。
 
-Distributed worker 会将 offset、connector/task 配置以及 task 状态持久化到三个内部 topic（`offset.storage.topic`、`config.storage.topic`、`status.storage.topic`）中。如果这些 topic 丢失，集群上的每个 connector 都会丢失其状态，因此生产部署应始终将它们的 replication factor 设置为至少 3。
+Distributed worker 会将 offset、connector/task 配置和 task 状态持久化到三个内部 topic（`offset.storage.topic`、`config.storage.topic`、`status.storage.topic`）中。如果这些 topic 丢失，cluster 中的每个 connector 都会失去状态，因此生产部署应始终将其 replication factor 设置为至少 3。
 
 ## 在 Strimzi 上部署 Kafka Connect
 
-Strimzi 通过 `KafkaConnect` CRD 管理 distributed Connect cluster 本身，并通过 `KafkaConnector` CRD 管理运行在其上的各个 connector 实例。使用 `KafkaConnector` 资源意味着 connector 可以通过 GitOps 部署和进行版本控制，而不是手动调用 REST API。要让 Strimzi reconcile `KafkaConnector` 资源，`KafkaConnect` 资源需要添加 `strimzi.io/use-connector-resources: "true"` annotation。
+Strimzi 通过 `KafkaConnect` CRD 管理 Distributed Connect cluster 本身，并通过 `KafkaConnector` CRD 管理运行在其上的各个 connector 实例。使用 `KafkaConnector` resource 意味着 connector 可以通过 GitOps 部署和进行版本控制，而无需手动调用 REST API。要让 Strimzi 调谐 `KafkaConnector` resource，`KafkaConnect` resource 需要 `strimzi.io/use-connector-resources: "true"` annotation。
 
-Connector plugin 不会随基础 Strimzi Kafka Connect 镜像一起捆绑，因此你需要自定义镜像。Strimzi 推荐的模式避免手写 Dockerfile：你在 `KafkaConnect.spec.build` 下声明 plugin artifact（tgz/zip/jar，或 Maven coordinates），然后 Strimzi Operator 构建镜像并将其推送到你指定的 registry，例如 Amazon ECR。
+connector plugin 不包含在基础 Strimzi Kafka Connect image 中，因此你需要自定义 image。Strimzi 推荐的模式无需手写 Dockerfile：你可以在 `KafkaConnect.spec.build` 下声明 plugin artifact（tgz/zip/jar 或 Maven 坐标），Strimzi Operator 会构建 image 并将其推送到你指定的 registry——例如 Amazon ECR。
 
-### KafkaConnect build spec
+### KafkaConnect 构建规范
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -76,9 +76,9 @@ spec:
       memory: 2Gi
 ```
 
-每当 `spec.build` 发生变化（添加 plugin、升级版本等）时，Operator 都会自动重新构建镜像并滚动更新 Deployment。`pushSecret` 引用的 Secret 需要包含 registry 凭证（`docker-registry` 类型 Secret），ECR push 才能成功；如果需要，你也可以通过 IRSA 授予该访问权限。
+每当 `spec.build` 发生变化——例如添加 plugin、升级版本等——Operator 都会自动重新构建 image 并滚动发布 Deployment。`pushSecret` 引用的 Secret 需要包含 registry 凭证（`docker-registry` 类型的 Secret），ECR 推送才能成功；如果需要，你可以通过 IRSA 授予该访问权限。
 
-### KafkaConnector — Debezium PostgreSQL source 示例
+### KafkaConnector —— Debezium PostgreSQL source 示例
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -103,7 +103,7 @@ spec:
     table.include.list: public.orders,public.order_items
 ```
 
-### KafkaConnector — S3 sink 示例
+### KafkaConnector —— S3 sink 示例
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -126,27 +126,27 @@ spec:
     rotate.schedule.interval.ms: 300000
 ```
 
-`kubectl get kafkaconnector -n kafka` 会显示每个 connector 的状态；`Ready: True` condition 表示其 task 已分配给 worker 并正在运行。
+`kubectl get kafkaconnector -n kafka` 会显示各个 connector 的状态；`Ready: True` condition 表示其 task 已分配给 worker 且正在运行。
 
 ## MirrorMaker 2 架构
 
-MirrorMaker 2（MM2）是一个基于 Kafka Connect 框架构建的 topic 级、cluster-to-cluster 复制工具。它不只是复制消息：它会保留源 cluster 的 partitioning，并转换 consumer group offset，这正是灾难恢复期间实现干净的 consumer failover 的关键。在内部，MM2 由三个 connector 组成：
+MirrorMaker 2（MM2）是一个构建在 Kafka Connect 框架之上的 topic 级 cluster 到 cluster 的复制工具。它不仅复制消息：还会保留 source cluster 的 partition，并转换 consumer group offset，这使得在灾难恢复期间实现干净的 consumer failover 成为可能。在内部，MM2 由三个 connector 组成：
 
-* **MirrorSourceConnector**：执行实际的消息复制，并同步 topic 配置和 ACL。
-* **MirrorCheckpointConnector**：定期将源 cluster 的 consumer group offset 转换为目标 cluster 上等价的 offset，并记录到 checkpoint topic 中。这种 offset 转换让故障转移到 DR cluster 的 consumer 能够知道“它已经处理到哪里”。
-* **MirrorHeartbeatConnector**：发送定期 heartbeat 消息，证明源 cluster 仍然存活且复制管道正在正常运行，用于检测 replication lag 或完全断连。
+* **MirrorSourceConnector**：执行实际的消息复制，同时同步 topic 配置和 ACL。
+* **MirrorCheckpointConnector**：定期将 source cluster 的 consumer group offset 转换为 target cluster 上对应的 offset，并将其记录在 checkpoint topic 中。这种 offset 转换使 failover 到 DR cluster 的 consumer 能够知道“它已处理到什么位置”。
+* **MirrorHeartbeatConnector**：定期发送 heartbeat 消息，以证明 source cluster 存活且复制管道正常运行；这些消息可用于检测复制 lag 或完全断开连接。
 
-MM2 不会在目标 cluster 上逐字复用源 topic 的名称。默认的 `DefaultReplicationPolicy` 会将远程 topic 命名为 `<source-cluster-alias>.<topic>`。例如，从别名为 `us-east-1` 的 cluster 复制 `orders` topic，会在目标上生成名为 `us-east-1.orders` 的远程 topic。这个命名约定让 consumer 仅凭 topic 名称就能区分本地产生的消息和镜像过来的消息，同时它也是在双向设置中防止无限复制循环的机制。
+MM2 不会在 target cluster 中逐字复用 source topic 的名称。默认的 `DefaultReplicationPolicy` 将远程 topic 命名为 `<source-cluster-alias>.<topic>`。例如，从别名为 `us-east-1` 的 cluster 复制 `orders` topic，会在 target 上生成名为 `us-east-1.orders` 的远程 topic。该命名约定让 consumer 仅通过 topic 名称就能区分本地生成的消息与镜像消息，同时它也是防止双向设置中发生无限复制循环的机制。
 
 ## 灾难恢复模式
 
 ### Active-Passive
 
-这是最常见的模式：复制单向运行，从主区域 cluster 到 DR 区域 cluster。在正常运行时，应用只与主 cluster 通信，而 DR cluster 处于空闲状态，持续累积复制过来的数据。当区域故障发生时，你可以使用 MirrorCheckpointConnector 记录的 offset translation 将 consumer group 移动到 DR cluster，并从最近可用的 checkpoint 恢复消费。这并不是完美的 exactly-once 切换——取决于 checkpoint 相对于故障发生的具体时间，少量消息可能会被重新处理；并且由于 MM2 复制是异步的，任何在故障时尚未复制到 DR cluster 的消息都会丢失（RPO 受 replication lag 限制，而不是零）——但关键收益是能够快速恢复，并将数据丢失最小化到该 lag 窗口。
+这是最常见的模式：复制单向运行，从主 Region cluster 到 DR Region cluster。正常运行时，应用程序只与主 cluster 通信，而 DR cluster 保持空闲状态并持续累积复制的数据。当发生区域故障时，你可以使用 MirrorCheckpointConnector 记录的 offset 转换，将 consumer group 迁移到 DR cluster，并从最近可用的 checkpoint 恢复消费。这并非完美的 exactly-once 切换——具体取决于 checkpoint 相对于故障的创建时机，少量消息可能会被重新处理；并且由于 MM2 复制是异步的，故障发生时尚未复制到 DR cluster 的任何消息都会丢失（RPO 受复制 lag 限制，并非为零）——但其核心优势是能够快速恢复，并将数据丢失降至该 lag 窗口内。
 
 ### Active-Active
 
-两个区域都承载流量，并且每个 cluster 都双向复制到另一个 cluster。这会引入一个真实风险：从 A → B 镜像的 topic（如 `A.orders`）可能又被从 B → A 镜像回来，从而无限循环，除非显式阻止。Strimzi/MM2 通过 `replication.policy.class` 中设置的命名策略（默认的 `DefaultReplicationPolicy`，或者如果你希望远程 topic 保持原始名称则使用 `IdentityReplicationPolicy`）来防护这种情况——已经带有远程 cluster 前缀（如 `A.orders`）的 topic 会被排除，不再继续镜像。将 `topicsPattern` 缩小到实际需要跨区域复制的 topic，可作为防止意外复制循环的第二层保护。
+两个 Region 都承载流量，且每个 cluster 都向另一个 cluster 进行双向复制。这带来了实际风险：除非明确阻止，否则从 A → B 镜像的 topic（作为 `A.orders`）可能会从 B → A 立刻再次镜像，从而无限循环。Strimzi/MM2 会通过在 `replication.policy.class` 中设置的命名策略来防止这种情况（默认的 `DefaultReplicationPolicy`，或者当你希望远程 topic 保持原始名称时使用 `IdentityReplicationPolicy`）——已带有远程 cluster 前缀（如 `A.orders`）的 topic 会被排除在进一步镜像之外。将 `topicsPattern` 缩小为仅包含实际需要跨 Region 复制的 topic，可提供第二层保护以防止意外的复制循环。
 
 ### KafkaMirrorMaker2 CR 示例
 
@@ -199,20 +199,20 @@ spec:
       groupsPattern: "orders-consumer-.*"
 ```
 
-`connectCluster: dr-region` 告诉 MM2 worker Pod 应该使用哪个 cluster（这里是 DR 区域）来存储 Connect 自身的内部 topic。启用 `sync.group.offsets.enabled: "true"` 会让 MirrorCheckpointConnector 定期将其转换后的 offset 写入 DR cluster 的 `__consumer_offsets`，这样故障转移后的 consumer 就可以先不手动提交 offset，而直接恢复消费。
+`connectCluster: dr-region` 告诉 MM2 worker Pod 应使用哪个 cluster（此处为 DR Region）来存储 Connect 自身的内部 topic。启用 `sync.group.offsets.enabled: "true"` 后，MirrorCheckpointConnector 会定期将其转换后的 offset 写入 DR cluster 的 `__consumer_offsets`，这样发生 failover 的 consumer 无需先手动提交 offset 即可恢复消费。
 
-## 跨区域复制注意事项
+## 跨 Region 复制注意事项
 
-* **网络成本和延迟**：跨区域（甚至跨 AZ）复制会产生数据传输成本和往返延迟。常见做法是在目标区域运行 MM2 worker，从源 cluster 拉取数据。调优 batch size（`producer.override.batch.size`）和压缩（`producer.override.compression.type: zstd`）可以减少实际传输的数据量，从而直接降低跨区域数据传输成本。
-* **`sync.topic.acls.enabled`**：控制是否也将源 cluster 的 topic ACL 同步到目标 cluster。启用它意味着你不必维护两套访问控制策略，但如果两个 cluster 的安全态势不同——例如 DR cluster 要求比主 cluster 更严格的访问控制——那么禁用它并在两侧独立管理 ACL 可能更安全。
-* **监控 replication lag**：MM2 暴露自身的复制健康指标。`replication-latency-ms` 报告消息从在源端产生到完全复制到目标端所经过的时间，而 checkpoint connector 的 lag 相关指标显示 offset translation 的新鲜程度。将这些指标采集到 Prometheus 中，并基于 SLA（例如“replication lag 小于 5 分钟”）设置告警，可以让你持续验证 DR cluster 是否实际处于可故障转移的状态。
+* **网络成本和延迟**：跨 Region（甚至跨 AZ）复制会产生数据传输成本和往返延迟。通常会在 target Region 中运行 MM2 worker，从 source cluster 拉取数据。调整 batch size（`producer.override.batch.size`）和 compression（`producer.override.compression.type: zstd`）可减少实际传输的数据量，从而直接降低跨 Region 数据传输成本。
+* **`sync.topic.acls.enabled`**：控制是否同时将 source cluster 的 topic ACL 同步到 target。启用后无需维护两套访问控制策略；但如果两个 cluster 的安全态势不同——例如 DR cluster 要求比主 cluster 更严格的访问权限——禁用它并在每一端独立管理 ACL 可能更安全。
+* **监控复制 lag**：MM2 会公开自身的复制健康度 metric。`replication-latency-ms` 报告消息从在 source 上生成到完全复制到 target 的时间，而 checkpoint connector 的 lag 相关 metric 则显示 offset 转换的实时程度。将这些 metric 抓取到 Prometheus 中，并基于 SLA（例如“复制 lag 低于 5 分钟”）设置告警，可让你持续验证 DR cluster 确实处于可供 failover 的状态。
 
-## 下一步
+## 后续步骤
 
-在使用 Kafka Connect 和 MirrorMaker 2 完成数据移动与灾难恢复之后，下一步是了解这个工作负载如何与完全托管的 Amazon MSK 服务集成，或两者如何比较。这将在[第 6 部分：MSK 集成](./06-msk-integration.md)中介绍。
+Kafka Connect 和 MirrorMaker 2 为数据移动和灾难恢复就绪后，下一步是了解此工作负载如何与全托管的 Amazon MSK 服务集成，或如何与其进行比较。相关内容请参阅[第 6 部分：MSK 集成](./06-msk-integration.md)。
 
-[返回主页](./)
+[返回主页](./README.md)
 
 ## 测验
 
-要测试你在本章学到的内容，请尝试[Topic 测验](../../quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)。
+要测试你在本章所学的内容，请尝试[Topic 测验](../../quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)。

@@ -1,29 +1,29 @@
-# パート 5: Kafka Connect と MirrorMaker
+# Part 5: Kafka Connect and MirrorMaker
 
-> **サポートバージョン**: Strimzi 0.45+, Kafka 3.9, MirrorMaker 2\
+> **対応バージョン**: Strimzi 0.45+, Kafka 3.9, MirrorMaker 2\
 > **最終更新**: July 9, 2026
 
 ## Kafka Connect の概要
 
-Kafka Connect は、カスタムの統合コードを書くことなく、Kafka と外部システム（database、object storage、search engine など）の間でデータを移動するための framework です。connector 設定を通じて data pipeline を宣言的に記述すると、残りは Connect が処理します。
+Kafka Connect は、カスタム統合コードを書くことなく、Kafka と外部システム（データベース、オブジェクトストレージ、検索エンジンなど）の間でデータを移動するためのフレームワークです。コネクタ設定を通じてデータパイプラインを宣言的に記述すれば、Connect が残りを処理します。
 
-Connectors には、データが流れる方向に応じて 2 つの種類があります。
+コネクタには、データフローの方向に応じて 2 種類があります。
 
-* **Source connectors** は、外部システムから Kafka へデータを取り込みます。Debezium は代表的な例です。database の write-ahead log（または binlog）を読み取り、row-level の変更イベントを CDC (Change Data Capture) pipeline として Kafka に stream します。JDBC Source Connector は、より単純な query-based のアプローチを取り、定期的に table を polling して結果を Kafka に書き込みます。
-* **Sink connectors** は、Kafka から外部システムへデータを送り出します。S3 Sink Connector は topic data を JSON や Parquet などの形式で S3 に書き込み、Elasticsearch Sink Connector は検索と分析のために topic records を index 化します。
+* **Source connectors** は、外部システムから Kafka へデータを取り込みます。代表例は Debezium で、データベースの write-ahead log（または binlog）を読み取り、行レベルの変更イベントを CDC（Change Data Capture）パイプラインとして Kafka にストリーミングします。JDBC Source Connector はより単純なクエリベースの方式を採用し、テーブルを定期的にポーリングして結果を Kafka に書き込みます。
+* **Sink connectors** は、Kafka から外部システムへデータを送出します。S3 Sink Connector はトピックデータを JSON や Parquet などの形式で S3 に書き込み、Elasticsearch Sink Connector は検索および分析のためにトピックレコードをインデックス化します。
 
-Kafka Connect は 2 つの runtime mode をサポートします。
+Kafka Connect は 2 つの実行モードをサポートしています。
 
-* **Distributed mode**: 複数の worker process（Pods）が group を形成し、単一の Connect cluster として動作します。1 つの worker が group coordinator として機能し、connectors とその tasks を group 全体に分散します。worker が停止した場合、その tasks は生存している workers に自動的に re-balance されます。connector lifecycle（create、delete、reconfigure）は REST API（default では port 8083）を通じて操作されます。これは Kubernetes で使用される唯一の mode です。
-* **Standalone mode**: file-based の offset store を持つ単一 process で、local development を想定しています。高可用性や水平 scaling がないため、Kubernetes では使用されません。
+* **Distributed mode**: 複数の worker プロセス（Pod）がグループを形成し、単一の Connect クラスターとして動作します。1 つの worker が group coordinator として機能し、コネクタとそのタスクをグループ内に分散します。worker が停止すると、そのタスクは存続している worker に自動的に再分散されます。コネクタのライフサイクル（作成、削除、再構成）は REST API（デフォルトではポート 8083）を通じて操作します。これは Kubernetes で使用される唯一のモードです。
+* **Standalone mode**: ローカル開発向けの、ファイルベースの offset store を備えた単一プロセスです。高可用性や水平スケーリングがないため、Kubernetes では使用されません。
 
-Distributed workers は、offset、connector/task configuration、task status を 3 つの internal topics（`offset.storage.topic`, `config.storage.topic`, `status.storage.topic`）に永続化します。これらの topics が失われると、cluster 上のすべての connector が state を失うため、production deployment では必ず replication factor を少なくとも 3 に設定する必要があります。
+Distributed worker は、offset、コネクタ／タスク設定、およびタスクステータスを 3 つの内部トピック（`offset.storage.topic`、`config.storage.topic`、`status.storage.topic`）に永続化します。これらのトピックが失われると、クラスター上のすべてのコネクタが状態を失うため、本番デプロイでは常に replication factor を少なくとも 3 に設定する必要があります。
 
-## Strimzi で Kafka Connect をデプロイする
+## Strimzi での Kafka Connect のデプロイ
 
-Strimzi は、`KafkaConnect` CRD を通じて distributed Connect cluster 自体を管理し、その上で動作する個々の connector instances を `KafkaConnector` CRD を通じて管理します。`KafkaConnector` resources を使用すると、REST API を手動で呼び出す代わりに、connectors を GitOps でデプロイおよび version control できます。Strimzi に `KafkaConnector` resources を reconcile させるには、`KafkaConnect` resource に `strimzi.io/use-connector-resources: "true"` annotation が必要です。
+Strimzi は、distributed Connect クラスター自体を `KafkaConnect` CRD で管理し、その上で実行される個々のコネクタインスタンスを `KafkaConnector` CRD で管理します。`KafkaConnector` リソースを使用すると、REST API を手作業で呼び出す代わりに、GitOps を通じてコネクタをデプロイおよびバージョン管理できます。Strimzi が `KafkaConnector` リソースをリコンサイルできるようにするには、`KafkaConnect` リソースに `strimzi.io/use-connector-resources: "true"` アノテーションが必要です。
 
-Connector plugins は base Strimzi Kafka Connect image には bundle されていないため、custom image が必要です。Strimzi が推奨する pattern では、Dockerfile を手書きする必要がありません。plugin artifacts（tgz/zip/jar、または Maven coordinates）を `KafkaConnect.spec.build` の下で宣言すると、Strimzi Operator が image を build し、指定した registry（Amazon ECR など）へ push します。
+コネクタプラグインはベースの Strimzi Kafka Connect イメージにはバンドルされていないため、カスタムイメージが必要です。Strimzi の推奨パターンでは Dockerfile を手作業で記述する必要がありません。`KafkaConnect.spec.build` でプラグインアーティファクト（tgz/zip/jar、または Maven 座標）を宣言すると、Strimzi Operator がイメージをビルドし、Amazon ECR など指定したレジストリにプッシュします。
 
 ### KafkaConnect build spec
 
@@ -76,9 +76,9 @@ spec:
       memory: 2Gi
 ```
 
-`spec.build` が変更されるたびに（plugin の追加、version の引き上げなど）、Operator は image を rebuild し、Deployment を自動的に roll out します。`pushSecret` で参照される Secret には、ECR への push を成功させるための registry credentials（`docker-registry` type の Secret）が必要です。必要であれば、IRSA を通じてその access を付与できます。
+`spec.build` が変更されるたびに（プラグインの追加、バージョンの更新など）、Operator はイメージを再ビルドし、Deployment を自動的にロールアウトします。`pushSecret` が参照する Secret には、ECR へのプッシュを成功させるためのレジストリ認証情報（`docker-registry` タイプの Secret）が必要です。必要に応じて IRSA を通じてそのアクセスを付与できます。
 
-### KafkaConnector — Debezium PostgreSQL source の例
+### KafkaConnector — Debezium PostgreSQL source example
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -103,7 +103,7 @@ spec:
     table.include.list: public.orders,public.order_items
 ```
 
-### KafkaConnector — S3 sink の例
+### KafkaConnector — S3 sink example
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -126,29 +126,29 @@ spec:
     rotate.schedule.interval.ms: 300000
 ```
 
-`kubectl get kafkaconnector -n kafka` は各 connector の status を表示します。`Ready: True` condition は、その tasks が workers に割り当てられ、実行中であることを意味します。
+`kubectl get kafkaconnector -n kafka` は各コネクタのステータスを表示します。`Ready: True` 条件は、そのタスクが worker に割り当てられ、実行中であることを意味します。
 
-## MirrorMaker 2 Architecture
+## MirrorMaker 2 アーキテクチャ
 
-MirrorMaker 2 (MM2) は、Kafka Connect framework の上に構築された、topic-level の cluster-to-cluster replication tool です。単に messages を copy するだけではありません。source cluster の partitioning を保持し、consumer group offsets を変換します。これにより、disaster recovery 時に clean な consumer failover が可能になります。内部的に、MM2 は 3 つの connectors で構成されています。
+MirrorMaker 2（MM2）は、Kafka Connect フレームワーク上に構築された、トピックレベルのクラスター間レプリケーションツールです。メッセージをコピーするだけでなく、ソースクラスターのパーティショニングを保持し、consumer group offset を変換します。これにより、ディザスターリカバリー時にクリーンな consumer failover が可能になります。MM2 は内部的に 3 つのコネクタで構成されています。
 
-* **MirrorSourceConnector**: 実際の message replication を行い、topic configuration と ACLs も同期します。
-* **MirrorCheckpointConnector**: source cluster の consumer group offsets を target cluster 上の対応する offsets に定期的に変換し、それらを checkpoint topic に記録します。この offset translation によって、DR cluster に fail over する consumer は「どこまで処理済みだったか」を把握できます。
-* **MirrorHeartbeatConnector**: source cluster が稼働しており、replication pipeline が機能していることを示す heartbeat messages を定期的に送信します。これは replication lag や完全な disconnection の検出に使用されます。
+* **MirrorSourceConnector**: 実際のメッセージレプリケーションを実行し、トピック設定と ACL も同期します。
+* **MirrorCheckpointConnector**: ソースクラスターの consumer group offset をターゲットクラスター上の同等の offset に定期的に変換し、checkpoint トピックに記録します。この offset 変換により、DR クラスターに failover した consumer は「すでにどこまで処理したか」を把握できます。
+* **MirrorHeartbeatConnector**: ソースクラスターが稼働中であり、レプリケーションパイプラインが機能していることを示す定期的な heartbeat メッセージを送信します。これはレプリケーションラグや完全な切断の検出に使用されます。
 
-MM2 は source topic の名前を target cluster でそのまま再利用しません。default の `DefaultReplicationPolicy` は remote topics に `<source-cluster-alias>.<topic>` という名前を付けます。たとえば、`us-east-1` という alias の cluster から `orders` topic を replicate すると、target 上には `us-east-1.orders` という remote topic が作成されます。この naming convention により、consumers は topic name だけで locally-produced messages と mirrored messages を区別できます。また、bidirectional setup で infinite replication loops を防ぐ仕組みとしても機能します。
+MM2 はターゲットクラスターでソーストピックの名前をそのまま再利用しません。デフォルトの `DefaultReplicationPolicy` は、リモートトピックを `<source-cluster-alias>.<topic>` と命名します。たとえば、`us-east-1` という alias のクラスターから `orders` トピックをレプリケートすると、ターゲット上に `us-east-1.orders` という名前のリモートトピックが作成されます。この命名規則により、consumer はトピック名だけでローカル生成メッセージとミラーリングされたメッセージを区別できます。また、双方向セットアップでの無限レプリケーションループを防止するメカニズムも兼ねています。
 
-## Disaster Recovery Patterns
+## ディザスターリカバリーパターン
 
 ### Active-Passive
 
-これは最も一般的な pattern です。replication は primary-region cluster から DR-region cluster への一方向で実行されます。通常運用では、applications は primary cluster にのみ接続し、DR cluster は idle のまま replicated data を蓄積します。regional failure が発生したら、MirrorCheckpointConnector によって記録された offset translations を使って consumer groups を DR cluster に移動し、利用可能な最新の checkpoint から consumption を再開します。これは完全な exactly-once cutover ではありません。failure に対して checkpoint がいつ取得されたかによって、少数の messages が再処理される可能性があります。また MM2 replication は asynchronous であるため、failure の瞬間にまだ DR cluster へ replicate されていない message は失われます（RPO は replication lag によって制限され、zero ではありません）。しかし重要な利点は、その lag window に data loss を最小化しながら高速に recovery できることです。
+これは最も一般的なパターンです。レプリケーションは、primary region のクラスターから DR region のクラスターへ一方向に実行されます。通常運用では、アプリケーションは primary クラスターとのみ通信し、DR クラスターはアイドル状態のままレプリケートされたデータを蓄積します。リージョン障害が発生した場合、MirrorCheckpointConnector によって記録された offset 変換を使用して consumer group を DR クラスターに移動し、利用可能な最新の checkpoint から消費を再開します。これは完全な exactly-once cutover ではありません。checkpoint が障害に対してどのタイミングで取得されたかによっては、少数のメッセージが再処理される可能性があります。また、MM2 レプリケーションは非同期であるため、障害発生時点でまだ DR クラスターにレプリケートされていないメッセージは失われます（RPO はゼロではなく、レプリケーションラグによって制限されます）。ただし主な利点は、そのラグ期間にデータ損失を最小限に抑えながら迅速にリカバリーできることです。
 
 ### Active-Active
 
-両方の regions が traffic を処理し、各 cluster が相手側へ bidirectional に replicate します。これには実際の risk があります。topic が A → B に mirror され（`A.orders` として）、明示的に防止しない限り、B → A にそのまま mirror され返され、永久に loop する可能性があります。Strimzi/MM2 は、`replication.policy.class` で設定される naming policy（default の `DefaultReplicationPolicy`、または remote topics に元の名前を維持させたい場合の `IdentityReplicationPolicy`）を通じてこれを防ぎます。すでに remote-cluster prefix（`A.orders` など）を持つ topics は、さらなる mirroring から除外されます。`topicsPattern` を cross-region replication が実際に必要な topics のみに絞ることで、偶発的な replication loops に対する第 2 の保護層を追加できます。
+両方のリージョンがトラフィックを処理し、各クラスターが他方に対して双方向にレプリケートします。これには実際のリスクがあります。A → B にミラーリングされたトピック（`A.orders`）は、明示的に防止しなければ B → A にそのままミラーリングし返され、永遠にループする可能性があります。Strimzi/MM2 は、`replication.policy.class` で設定される命名ポリシー（デフォルトの `DefaultReplicationPolicy`、またはリモートトピックに元の名前を維持させる場合の `IdentityReplicationPolicy`）によりこれを防止します。すでにリモートクラスターの prefix（`A.orders` など）を持つトピックは、さらなるミラーリングから除外されます。`topicsPattern` を実際にクロスリージョンレプリケーションが必要なトピックのみに絞ることで、意図しないレプリケーションループに対する第 2 の保護層が加わります。
 
-### KafkaMirrorMaker2 CR の例
+### KafkaMirrorMaker2 CR example
 
 ```yaml
 apiVersion: kafka.strimzi.io/v1beta2
@@ -199,19 +199,19 @@ spec:
       groupsPattern: "orders-consumer-.*"
 ```
 
-`connectCluster: dr-region` は、MM2 worker Pods に対して、Connect 自身の internal topics を格納するためにどの cluster（ここでは DR region）を使用するべきかを指示します。`sync.group.offsets.enabled: "true"` を有効にすると、MirrorCheckpointConnector は変換済み offsets を DR cluster の `__consumer_offsets` に定期的に書き込みます。これにより、fail over した consumer は最初に offsets を手動で commit しなくても consumption を再開できます。
+`connectCluster: dr-region` は、MM2 worker Pod に、Connect 独自の内部トピックの保存先として使用するクラスター（ここでは DR region）を指示します。`sync.group.offsets.enabled: "true"` を有効にすると、MirrorCheckpointConnector は変換した offset を定期的に DR クラスターの `__consumer_offsets` に書き込むため、failover した consumer は最初に手動で offset をコミットしなくても消費を再開できます。
 
-## Cross-Region Replication Considerations
+## クロスリージョンレプリケーションに関する考慮事項
 
-* **Network cost and latency**: regions 間（または AZs 間でさえ）の replication には data transfer cost と round-trip latency が伴います。MM2 workers を target region で実行し、source cluster から data を pull するのが一般的です。batch size（`producer.override.batch.size`）と compression（`producer.override.compression.type: zstd`）を tuning すると、実際に転送される volume が減り、cross-region data transfer cost の削減に直接つながります。
-* **`sync.topic.acls.enabled`**: source cluster の topic ACLs も target に同期するかどうかを制御します。有効にすると access control policy を二重に保守する必要がありません。しかし 2 つの clusters の security posture が異なる場合（たとえば DR cluster が primary より厳格な access を要求する場合）、無効にして各側で ACLs を独立して管理する方が安全なことがあります。
-* **Monitoring replication lag**: MM2 は replication health のための独自 metrics を公開します。`replication-latency-ms` は message が source で produce されてから target に完全に replicate されるまでの時間を報告し、checkpoint connector の lag-related metrics は offset translation がどれだけ最新かを示します。これらを Prometheus に scrape し、SLA（例:「replication lag を 5 分未満に保つ」）に基づいて alert することで、DR cluster が実際に fail over 可能な状態にあることを継続的に検証できます。
+* **ネットワークコストとレイテンシー**: リージョン間（あるいは AZ 間）のレプリケーションには、データ転送コストと往復レイテンシーが伴います。MM2 worker はターゲットリージョンで実行し、ソースクラスターからデータを取得するのが一般的です。batch size（`producer.override.batch.size`）と compression（`producer.override.compression.type: zstd`）を調整すると、実際に転送するデータ量が削減され、クロスリージョンデータ転送コストの削減に直結します。
+* **`sync.topic.acls.enabled`**: ソースクラスターのトピック ACL もターゲットに同期するかどうかを制御します。有効にするとアクセス制御ポリシーを二重に管理する必要はありませんが、2 つのクラスターのセキュリティ方針が異なる場合（たとえば DR クラスターでは primary より厳格なアクセスが必要な場合）は、無効にして各側で ACL を独立して管理する方が安全な可能性があります。
+* **レプリケーションラグのモニタリング**: MM2 はレプリケーションの健全性に関する独自のメトリクスを公開します。`replication-latency-ms` は、メッセージがソースで生成されてからターゲットに完全にレプリケートされるまでの時間を報告します。また、checkpoint connector のラグ関連メトリクスは、offset 変換がどの程度最新かを示します。これらを Prometheus にスクレイピングし、SLA（例: 「レプリケーションラグは 5 分未満」）でアラートを設定することで、DR クラスターが実際に failover 可能な状態にあることを継続的に確認できます。
 
 ## 次のステップ
 
-Kafka Connect と MirrorMaker 2 による data movement と disaster recovery が整ったら、次のステップは、この workload が fully managed の Amazon MSK service とどのように統合されるか、またはどのように比較されるかを確認することです。これは [パート 6: MSK Integration](./06-msk-integration.md) で扱います。
+データ移動およびディザスターリカバリーのために Kafka Connect と MirrorMaker 2 を導入したら、次のステップは、このワークロードがフルマネージドの Amazon MSK サービスとどのように統合されるか、または比較されるかを確認することです。これについては、[Part 6: MSK Integration](./06-msk-integration.md) で説明します。
 
-[メインページに戻る](./)
+[メインページに戻る](./README.md)
 
 ## クイズ
 

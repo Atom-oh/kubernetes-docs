@@ -6,7 +6,7 @@ This section provides a comprehensive understanding of Cilium's core concepts an
 
 > **Supported Versions**: Cilium 1.17, 1.18
 > **Kubernetes Compatibility**: 1.32 and above
-> **Last Updated**: August 10, 2026
+> **Last Updated**: August 24, 2026
 
 ### July 2026 Update: Patch Releases and a NetworkPolicy Security Issue
 
@@ -28,6 +28,10 @@ On July 29, 2026, [Cilium 1.20.0](https://github.com/cilium/cilium/releases/tag/
 - **Performance**: the `cilium-cni` binary shrank from ~77 MB to 16 MB, plus aggregated load-balancer state and optimized BPF policy-map encoding for large clusters
 
 Take action during upgrade if you use legacy Mutual Authentication, Envoy Go extensions, Kafka-aware policies, the `cilium.io/v2alpha1` `CiliumNodeConfig` API, the libnetwork integration, or a custom CNI configuration — see the [upgrade guide](https://docs.cilium.io/en/v1.20/operations/upgrade/#upgrade-notes). The first pre-release of the next cycle, 1.21.0-pre.0, followed on August 3.
+
+### August 2026 Update: 1.20.1 / 1.19.7 / 1.18.13 Patch Releases
+
+On August 18, 2026, coordinated patch releases went out for the three maintained lines. [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1), the first patch on the 1.20 line, carries a Cluster Mesh documentation overhaul and backported bug fixes since 1.20.0; [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) backports VRRP and IGMP protocol support in the host firewall; and [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) adds incremental synchronization of Envoy resources (listeners, network policies, etc.), reducing CPU load and policy update latency. Updating to the latest patch on your line is recommended.
 
 ## Key Improvements in Cilium 1.18
 

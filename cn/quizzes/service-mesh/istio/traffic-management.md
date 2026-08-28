@@ -1,10 +1,10 @@
 # 流量管理测验
 
-> **支持的版本**: Istio 1.28.0 **EKS 版本**: 1.34 (Kubernetes 1.28+) **最后更新**: February 23, 2026
+> **支持版本**: Istio 1.28.0 **EKS 版本**: 1.34 (Kubernetes 1.28+) **最后更新**: February 23, 2026
 
-本测验用于测试您对 Istio 流量管理功能的理解。
+本测验用于测试你对 Istio 流量管理功能的理解。
 
-## 多项选择题（1-5）
+## 选择题（1-5）
 
 ### 问题 1：VirtualService 的作用
 
@@ -22,15 +22,15 @@ VirtualService 是一个核心 Istio CRD，通过定义**路由规则**来控制
 
 **说明：**
 
-* A (X)：VirtualService 不会替代 Kubernetes Service；它在 Service 之上添加路由规则
-* B (X)：负载均衡由 DestinationRule 处理；VirtualService 定义路由规则
-* C (O)：VirtualService 定义以下内容：
+* A（X）：VirtualService 不会替代 Kubernetes Service；它在 Service 之上添加路由规则
+* B（X）：负载均衡由 DestinationRule 处理；VirtualService 定义路由规则
+* C（O）：VirtualService 定义以下内容：
   * HTTP/TCP 路由规则
   * 基于 URL 路径的路由
   * 基于 Header 的路由
   * 基于权重的流量拆分
   * Timeout 和 Retry 设置
-* D (X)：VirtualService 在数据平面的 Envoy 中运行
+* D（X）：VirtualService 在数据平面的 Envoy 中运行
 
 **示例：**
 
@@ -57,7 +57,7 @@ spec:
         subset: v1
 ```
 
-**参考：**
+**参考资料：**
 
 * [路由](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [VirtualService 概念](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
@@ -70,7 +70,7 @@ spec:
 
 以下哪项**不是** DestinationRule 执行的功能？
 
-A. 定义子集 B. 配置负载均衡算法 C. 基于 HTTP 路径的路由 D. 配置 Connection Pool
+A. 定义 subset B. 配置负载均衡算法 C. 基于 HTTP 路径的路由 D. 配置 Connection Pool
 
 <details>
 
@@ -84,7 +84,7 @@ A. 定义子集 B. 配置负载均衡算法 C. 基于 HTTP 路径的路由 D. �
 
 **DestinationRule 的主要功能：**
 
-1. **定义子集（A - O）**
+1. **定义 Subset（A - O）**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -147,11 +147,11 @@ spec:
 | ----------------- | -------------- | --------------- |
 | 路由规则          | 是             | 否              |
 | 路径匹配          | 是             | 否              |
-| 子集定义          | 否             | 是              |
+| Subset 定义       | 否             | 是              |
 | 负载均衡          | 否             | 是              |
 | Connection Pool   | 否             | 是              |
 
-**参考：**
+**参考资料：**
 
 * [负载均衡](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
 * [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md)
@@ -184,7 +184,7 @@ spec:
       weight: 20
 ```
 
-A. v1：50%，v2：50% B. v1：80%，v2：20% C. v1：20%，v2：80% D. v1：100%，v2：0%
+A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
 
 <details>
 
@@ -192,7 +192,7 @@ A. v1：50%，v2：50% B. v1：80%，v2：20% C. v1：20%，v2：80% D. v1：100
 
 **答案：B**
 
-由于权重值为 **v1：80，v2：20**，流量会按 **80% 分配给 v1**、**20% 分配给 v2**。
+由于权重值为 **v1: 80，v2: 20**，流量按 **80% 到 v1** 和 **20% 到 v2** 进行分配。
 
 **说明：**
 
@@ -244,7 +244,7 @@ spec:
       - pause: {duration: 2m}
 ```
 
-**参考：**
+**参考资料：**
 
 * [流量拆分](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Argo Rollouts 集成](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
@@ -257,7 +257,7 @@ spec:
 
 以下哪项**不是** Istio Gateway 的主要作用？
 
-A. 集群外部流量进入集群内部的入口点 B. TLS 终止和证书管理 C. Service 之间的 mTLS 加密 D. 外部流量的负载均衡
+A. 集群外部到内部流量的入口 B. TLS 终止和证书管理 C. Service 之间的 mTLS 加密 D. 外部流量的负载均衡
 
 <details>
 
@@ -271,7 +271,7 @@ Service 之间的 mTLS 加密是 **Sidecar Envoy** 和 **PeerAuthentication** �
 
 **Gateway 的主要作用：**
 
-1. **Ingress/Egress 流量入口点（A - O）**
+1. **Ingress/Egress 流量入口（A - O）**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -326,7 +326,7 @@ spec:
     mode: STRICT
 ```
 
-**Gateway 与 Sidecar 的角色：**
+**Gateway 与 Sidecar 的职责：**
 
 | 功能                         | Gateway | Sidecar Envoy |
 | ---------------------------- | ------- | ------------- |
@@ -335,7 +335,7 @@ spec:
 | Service 到 Service 的 mTLS   | 否      | 是            |
 | 内部路由                     | 否      | 是            |
 
-**参考：**
+**参考资料：**
 
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
@@ -346,7 +346,7 @@ spec:
 
 ### 问题 5：Timeout 和 Retry 策略
 
-以下 VirtualService 配置表示什么含义？
+以下 VirtualService 配置表示什么？
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -366,7 +366,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. 原始请求之后最多 Retry 3 次，每次传递限制为 2 秒，整个请求限制为 10 秒 B. 总共在 2 秒内最多 Retry 3 次，每次尝试限制为 10 秒 C. 总共在 10 秒内无限 Retry，每次尝试限制为 2 秒 D. 10 秒后失败且不 Retry
+A. 在总计 10 秒内最多重试 3 次，每次尝试限制为 2 秒 B. 在总计 2 秒内最多重试 3 次，每次尝试限制为 10 秒 C. 在总计 10 秒内无限重试，每次尝试限制为 2 秒 D. 10 秒后失败且不重试
 
 <details>
 
@@ -374,7 +374,7 @@ A. 原始请求之后最多 Retry 3 次，每次传递限制为 2 秒，整个�
 
 **答案：A**
 
-此配置允许在原始请求之后**额外最多 Retry 3 次**，将每次传递限制为 **2 秒**，并将整个请求限制为 **10 秒**。因此，它最多可以向上游传递该请求四次。
+此配置会在**总计 10 秒内**最多重试 **3 次**，且**每次尝试限制为 2 秒**。
 
 **说明：**
 
@@ -383,8 +383,8 @@ A. 原始请求之后最多 Retry 3 次，每次传递限制为 2 秒，整个�
 ```yaml
 timeout: 10s           # Maximum time for entire request
 retries:
-  attempts: 3          # Up to 3 retries after the original request
-  perTryTimeout: 2s    # Time limit for each delivery
+  attempts: 3          # Maximum retry count
+  perTryTimeout: 2s    # Time limit for each attempt
 ```
 
 **执行场景：**
@@ -399,12 +399,18 @@ Scenario 2: Success after 2 attempts
 +- 2nd attempt: 1.8s elapsed -> Success
 +- Total time: 3.8s
 
-Scenario 3: Original request plus all 3 retries fail
+Scenario 3: All 3 attempts fail
 +- 1st attempt: 2s timeout -> Failure
 +- 2nd attempt: 2s timeout -> Failure
 +- 3rd attempt: 2s timeout -> Failure
-+- 4th attempt: 2s timeout -> Failure
-+- Total time: about 8s
++- Total time: 6s (fails before 10s)
+
+Scenario 4: Overall timeout
++- 1st attempt: 2s timeout -> Failure
++- 2nd attempt: 2s timeout -> Failure
++- 3rd attempt: 2s timeout -> Failure
++- 4th attempt: hasn't passed 2s but reached overall 10s
++- Total time: 10s (overall timeout)
 ```
 
 **Retry 条件设置：**
@@ -419,34 +425,23 @@ retries:
 **最佳实践：**
 
 ```yaml
-# Read requests: limited retry
-- match:
-  - method:
-      regex: "^(GET|HEAD)$"
-  retries:
-    attempts: 2
-    perTryTimeout: 2s
-    retryOn: connect-failure,refused-stream
-
-# Write requests: disable mesh retry
-- match:
-  - method:
-      regex: "^(POST|PATCH)$"
-  retries:
-    attempts: 0
+# Typical settings
+timeout: 30s
+retries:
+  attempts: 3
+  perTryTimeout: 10s
+  retryOn: 5xx,gateway-error,reset,connect-failure
 ```
 
 **注意事项：**
 
-* 为每次 Retry 预留时间时，`timeout` 应大致大于 `(1 + attempts) x perTryTimeout`，并包含 backoff
-* Retry 过多可能导致级联故障
-* `attempts: 0` 会禁用 Retry；`attempts: 1` 允许在原始请求后重放一次
-* 默认对 POST/PATCH 禁用 mesh Retry，因为服务器可能已提交操作而仅丢失响应
-* Workload mTLS 或网络加密不会使请求重放变得安全
+* `timeout` >= `attempts x perTryTimeout`，以允许完成所有重试
+* 过多重试可能导致级联故障
+* 仅建议对幂等操作进行 Retry
 
-**参考：**
+**参考资料：**
 
-* [Timeout 和 Retry](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
+* [Timeout 和 Retry](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/06-timeout-retry.md)
 
 </details>
 
@@ -456,7 +451,7 @@ retries:
 
 ### 问题 6：Argo Rollouts + Istio Canary Deployment
 
-说明如何结合使用 Argo Rollouts 和 Istio 实现自动化 Canary Deployment 的过程。包括**所需资源**（Rollout、VirtualService、DestinationRule、AnalysisTemplate）和**自动回滚条件**。
+说明如何使用 Argo Rollouts 和 Istio 一起实现自动化 Canary Deployment。请包含**所需资源**（Rollout、VirtualService、DestinationRule、AnalysisTemplate）和**自动回滚条件**。
 
 <details>
 
@@ -485,7 +480,7 @@ spec:
 
 ***
 
-**2. 定义 DestinationRule（子集定义）**
+**2. 定义 DestinationRule（Subset 定义）**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -501,7 +496,7 @@ spec:
     labels: {}  # Managed automatically by Rollout
 ```
 
-**重要**：Rollout 会自动向 Pod 添加 `rollouts-pod-template-hash` label，并使用此 label 区分子集。
+**重要：**Rollout 会自动向 Pod 添加 `rollouts-pod-template-hash` label，并使用此 label 区分 subset。
 
 ***
 
@@ -531,7 +526,7 @@ spec:
 **要点：**
 
 * `http[].name` 字段是必需的
-* Rollout 仅自动更新此 VirtualService 中的 `weight` 值
+* Rollout 只会自动更新此 VirtualService 中的 `weight` 值
 
 ***
 
@@ -734,12 +729,12 @@ kubectl argo rollouts dashboard
 
 **主要优势：**
 
-1. **完全自动化**：无需人工干预即可推进 Deployment
-2. **即时回滚**：检测到指标失败后数秒内回滚
-3. **安全 Deployment**：在每个阶段自动验证
-4. **一致的流程**：标准化的 Deployment 策略
+1. **完全自动化：**无需人工干预即可推进 Deployment
+2. **即时回滚：**检测到指标失败后可在数秒内回滚
+3. **安全 Deployment：**在每个阶段自动验证
+4. **一致的流程：**标准化的 Deployment 策略
 
-**参考：**
+**参考资料：**
 
 * [流量拆分](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
@@ -750,7 +745,7 @@ kubectl argo rollouts dashboard
 
 ### 问题 7：Blue/Green Deployment 与 Canary Deployment
 
-比较 Blue/Green Deployment 与 Canary Deployment 的**差异**，并说明各自的**优缺点**和**适用场景**。
+对比 Blue/Green Deployment 与 Canary Deployment 之间的**差异**，并说明各自的**优缺点**和**适用场景**。
 
 <details>
 
@@ -793,12 +788,12 @@ Gradually increase traffic
 | 项目               | Blue/Green                           | Canary                                 |
 | ------------------ | ------------------------------------ | -------------------------------------- |
 | **流量切换**       | 即时 100% 切换                       | 逐步增加（10% -> 100%）                |
-| **回滚速度**       | 即时（单次切换）                     | 快速（仅从当前阶段回滚）               |
+| **回滚速度**       | 即时（一次切换）                     | 快速（仅从当前阶段回滚）               |
 | **资源使用量**     | 2 倍（Blue + Green）                 | 1 倍 + 少量资源（Stable + Canary）     |
-| **风险级别**       | 中等（所有用户同时受到影响）         | 低（从少量用户开始）                   |
-| **测试周期**       | Deployment 前进行充分测试            | 在生产环境中逐步验证                   |
+| **风险级别**       | 中等（所有用户同时受影响）           | 低（从少量用户开始）                   |
+| **测试周期**       | Deployment 前进行充分测试             | 在生产环境中逐步验证                   |
 | **复杂度**         | 低                                   | 中等（需要指标分析）                   |
-| **用户影响**       | 所有用户同时受到影响                 | 从少量用户开始逐步产生影响             |
+| **用户影响**       | 所有用户同时受影响                   | 从少量用户开始逐步产生影响             |
 
 ***
 
@@ -866,28 +861,28 @@ spec:
 
 **4. 优缺点对比**
 
-**Blue/Green 优点：**
+**Blue/Green 的优点：**
 
 * 结构简单（仅 Blue <-> Green 切换）
-* 可即时回滚（切换开关）
-* 可在 Deployment 前进行充分测试
+* 可以即时回滚（切换回来）
+* 可以在 Deployment 前进行充分测试
 * 行为可预测
 
-**Blue/Green 缺点：**
+**Blue/Green 的缺点：**
 
 * 需要 2 倍资源
-* 所有用户同时受到影响
+* 所有用户同时受影响
 * 数据库迁移复杂
 * 无法逐步验证
 
-**Canary 优点：**
+**Canary 的优点：**
 
 * 从少量用户开始逐步验证
 * 资源效率高（1 倍 + 少量资源）
 * 在生产环境中进行真实验证
 * 可以自动回滚（基于指标）
 
-**Canary 缺点：**
+**Canary 的缺点：**
 
 * 配置复杂（指标、分析）
 * 需要监控
@@ -900,11 +895,11 @@ spec:
 
 **推荐使用 Blue/Green 的场景：**
 
-1. **重要发布**：充分测试后快速切换
-2. **无数据库变更**：没有 schema 变更时
-3. **需要即时回滚**：出现问题时需要快速恢复
-4. **资源充足**：能够负担 2 倍资源时
-5. **可预测的变更**：预先测试足以完成验证时
+1. **重要发布：**充分测试后快速切换
+2. **无数据库变更：**没有 schema 变更时
+3. **需要即时回滚：**发生问题时需要快速恢复
+4. **资源充足：**可以负担 2 倍资源时
+5. **可预测的变更：**预先测试足以验证时
 
 **示例：**
 
@@ -917,11 +912,11 @@ spec:
 
 **推荐使用 Canary 的场景：**
 
-1. **实验性功能**：先使用少量用户进行测试
-2. **资源受限**：没有 2 倍资源时
-3. **逐步验证**：在生产环境中使用真实数据验证
-4. **自动化 Deployment**：在 CI/CD 中自动 Deployment
-5. **Microservices**：Service 依赖关系复杂时
+1. **实验性功能：**先用少量用户测试
+2. **资源受限：**无法使用 2 倍资源时
+3. **逐步验证：**使用生产环境中的真实数据验证
+4. **自动化 Deployment：**在 CI/CD 中进行自动 Deployment
+5. **Microservices：**Service 依赖关系复杂时
 
 **示例：**
 
@@ -937,7 +932,7 @@ spec:
 
 **6. 混合方法**
 
-实践中，可以结合这两种策略：
+在实践中，可以结合两种策略：
 
 ```yaml
 # Stage 1: Gradual validation with Canary
@@ -947,7 +942,7 @@ spec:
 50% -> 100% (instant switch)
 ```
 
-**参考：**
+**参考资料：**
 
 * [流量拆分](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Blue/Green Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
@@ -958,7 +953,7 @@ spec:
 
 ### 问题 8：流量镜像（Shadow Testing）
 
-说明如何使用流量镜像安全地测试新版本。包括**用例**、**配置方法**和**注意事项**。
+说明如何使用流量镜像安全地测试新版本。请包含**用例**、**配置方法**和**注意事项**。
 
 <details>
 
@@ -968,7 +963,7 @@ spec:
 
 **流量镜像概念：**
 
-流量镜像是一种将生产流量复制并发送到新版本、同时**忽略响应**的技术。它也称为“shadow testing”。
+流量镜像是一种复制生产流量并将其发送到新版本，同时**忽略响应**的技术。它也称为“Shadow Testing”。
 
 ***
 
@@ -992,7 +987,7 @@ flowchart LR
     class V1,V2 version;
 ```
 
-**主要特性：**
+**主要特征：**
 
 * 用户只会收到 v1 的响应
 * v2 的响应会被 Envoy 丢弃
@@ -1002,7 +997,7 @@ flowchart LR
 
 **2. 配置方法**
 
-**基础镜像（100%）：**
+**基本镜像（100%）：**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1092,7 +1087,7 @@ Purpose: Verify new database schema
 4. If no issues -> Switch to v2
 ```
 
-**案例 3：Bug 修复验证**
+**案例 3：Bug Fix 验证**
 
 ```
 Purpose: Verify that bug fix actually works
@@ -1116,7 +1111,7 @@ Purpose: Pre-populate new version's cache
 
 **4. 监控配置**
 
-**使用 Prometheus Query 监控镜像流量：**
+**使用 Prometheus 查询监控镜像流量：**
 
 ```promql
 # v2 (mirror) error rate
@@ -1225,7 +1220,7 @@ Cannot validate:
 4. Manual validation (slow)
 ```
 
-**参考：**
+**参考资料：**
 
 * [流量镜像](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
 
@@ -1233,9 +1228,9 @@ Cannot validate:
 
 ***
 
-### 问题 9：本地性负载均衡（Zone Aware Routing）
+### 问题 9：Locality Load Balancing（Zone Aware Routing）
 
-说明如何使用 Istio 的本地性负载均衡在 AWS EKS 中**降低跨 AZ 成本**。包括配置示例和**预估成本节省**。
+说明如何使用 Istio 的 Locality Load Balancing 在 AWS EKS 中**降低跨 AZ 成本**。请包含配置示例和**预估成本节省**。
 
 <details>
 
@@ -1243,9 +1238,9 @@ Cannot validate:
 
 **答案：**
 
-**本地性负载均衡概念：**
+**Locality Load Balancing 概念：**
 
-本地性负载均衡是一项**优先路由到同一 Availability Zone (AZ) 内的 Service** 的功能，可降低网络延迟和跨 AZ 成本。
+Locality Load Balancing 是一项通过**优先路由到同一 Availability Zone（AZ）内的 Service**来降低网络延迟和跨 AZ 成本的功能。
 
 ***
 
@@ -1276,7 +1271,7 @@ If 80% traffic is routed to same AZ:
 
 **2. EKS Pod 拓扑 label**
 
-EKS Node 会自动设置拓扑 label：
+EKS 节点会自动设置拓扑 label：
 
 ```yaml
 # EKS node labels (automatic)
@@ -1288,9 +1283,9 @@ topology.kubernetes.io/zone: us-east-1a
 
 ***
 
-**3. 本地性负载均衡配置**
+**3. Locality Load Balancing 配置**
 
-**基础配置（同一 AZ 优先）：**
+**基本配置（同一 AZ 优先）：**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1334,7 +1329,7 @@ spec:
             "us-east-1/us-east-1a/*": 20  # Other AZ 20% (for failover)
 ```
 
-**故障转移策略：**
+**Failover 策略：**
 
 ```yaml
 spec:
@@ -1354,7 +1349,7 @@ spec:
 
 ***
 
-**4. 与 Outlier Detection 结合使用**
+**4. 与 Outlier Detection 结合**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1449,7 +1444,7 @@ $ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
 
 **7. 监控**
 
-**Prometheus Query：**
+**Prometheus 查询：**
 
 ```promql
 # Traffic distribution by Locality
@@ -1550,7 +1545,7 @@ spec:
         http1MaxPendingRequests: 50
 ```
 
-**参考：**
+**参考资料：**
 
 * [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
 * [AWS EKS 成本优化](../../../service-mesh/istio/best-practices.md#cost-optimization)
@@ -1561,7 +1556,7 @@ spec:
 
 ### 问题 10：Gateway TLS 配置
 
-说明如何在 Istio Gateway 中配置 **TLS 终止**并设置 **HTTPS 重定向**。包括两种情况：使用 ACM (AWS Certificate Manager) 证书和使用自签名证书。
+说明如何在 Istio Gateway 中配置 **TLS 终止**并设置 **HTTPS 重定向**。请包含两种情况：使用 ACM（AWS Certificate Manager）证书，以及使用自签名证书。
 
 <details>
 
@@ -1679,7 +1674,7 @@ curl -v http://bookinfo.example.com/productpage
 
 **2. 使用 AWS ACM 证书（NLB Annotation）**
 
-在 AWS EKS 中，推荐的方法是在 NLB 使用 ACM 证书进行 TLS 终止。
+在 AWS EKS 中，推荐的方法是使用 ACM 证书在 NLB 处终止 TLS。
 
 **步骤 1：签发 ACM 证书**
 
@@ -1758,7 +1753,7 @@ spec:
 
 ***
 
-**3. Mutual TLS (mTLS) - 客户端认证**
+**3. Mutual TLS（mTLS）- 客户端认证**
 
 当客户端也必须提供证书时：
 
@@ -1794,7 +1789,7 @@ curl --cert client.crt --key client.key \
 
 **4. 通配符证书**
 
-使用单个证书支持多个子域名：
+为多个子域名使用单个证书：
 
 ```bash
 # Generate wildcard certificate
@@ -1900,7 +1895,7 @@ spec:
 
 ***
 
-**6. 自动续订证书（cert-manager）**
+**6. 自动证书续期（cert-manager）**
 
 ```bash
 # Install cert-manager
@@ -1981,13 +1976,13 @@ spec:
 **说明：**
 
 * 使用 TLS 1.2 或更高版本
-* 配置强 Cipher Suites
-* 自动续订证书（cert-manager）
+* 配置强 Cipher Suite
+* 自动续期证书（cert-manager）
 * 启用 HTTP -> HTTPS 重定向
 * 不要在生产环境中使用自签名证书
 * 不要使用 TLS 1.0/1.1
 
-**参考：**
+**参考资料：**
 
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
 * [TLS 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
@@ -1998,16 +1993,16 @@ spec:
 
 ## 分数计算
 
-* 多项选择题 1-5：每题 10 分（共 50 分）
+* 选择题 1-5：每题 10 分（共 50 分）
 * 简答题 6-10：每题 10 分（共 50 分）
 * **总分：100 分**
 
 **评估标准：**
 
 * 90-100 分：优秀（Istio 流量管理专家）
-* 80-89 分：良好（具备生产运维能力）
-* 70-79 分：一般（建议进一步学习）
-* 60-69 分：低于平均水平（需要复习基础概念）
+* 80-89 分：良好（可进行生产运维）
+* 70-79 分：一般（建议额外学习）
+* 60-69 分：低于平均水平（需要复习基本概念）
 * 0-59 分：需要重新学习
 
 ## 学习资源

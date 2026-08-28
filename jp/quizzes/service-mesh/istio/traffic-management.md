@@ -1,16 +1,16 @@
 # トラフィック管理クイズ
 
-> **対応バージョン**: Istio 1.28.0 **EKS バージョン**: 1.34 (Kubernetes 1.28+) **最終更新**: February 23, 2026
+> **サポート対象バージョン**: Istio 1.28.0 **EKS バージョン**: 1.34 (Kubernetes 1.28+) **最終更新**: February 23, 2026
 
-このクイズでは、Istio のトラフィック管理機能についての理解を確認します。
+このクイズでは、Istio のトラフィック管理機能に関する理解を確認します。
 
-## 選択問題 (1-5)
+## 選択問題（1～5）
 
 ### 問題 1: VirtualService の役割
 
 VirtualService についての記述として**正しい**ものはどれですか？
 
-A. Kubernetes Service を置き換えるリソースである B. ロードバランシングアルゴリズムのみを定義できる C. ルーティングルールを定義してトラフィックを制御する D. Control Plane でのみ動作する
+A. Kubernetes Service を置き換えるリソースである B. ロードバランシングアルゴリズムのみを定義できる C. ルーティングルールを定義し、トラフィックを制御する D. Control Plane でのみ動作する
 
 <details>
 
@@ -18,19 +18,19 @@ A. Kubernetes Service を置き換えるリソースである B. ロードバラ
 
 **回答: C**
 
-VirtualService は、**ルーティングルール**を定義してトラフィックを制御する中核的な Istio CRD です。
+VirtualService は、**ルーティングルール**を定義してトラフィックを制御する、Istio の主要な CRD です。
 
 **解説:**
 
-* A (X): VirtualService は Kubernetes Service を置き換えるのではなく、Service の上にルーティングルールを追加します
-* B (X): ロードバランシングは DestinationRule が処理します。VirtualService はルーティングルールを定義します
-* C (O): VirtualService は以下を定義します:
+* A (X): VirtualService は Kubernetes Service を置き換えるものではなく、Service の上にルーティングルールを追加します
+* B (X): ロードバランシングは DestinationRule が処理し、VirtualService はルーティングルールを定義します
+* C (O): VirtualService は次の内容を定義します:
   * HTTP/TCP ルーティングルール
   * URL パスベースのルーティング
   * ヘッダーベースのルーティング
   * 重みベースのトラフィック分割
-  * Timeout および Retry の設定
-* D (X): VirtualService は Data Plane の Envoy で実行されます
+  * Timeout と Retry の設定
+* D (X): VirtualService は Data Plane の Envoy 上で動作します
 
 **例:**
 
@@ -57,10 +57,10 @@ spec:
         subset: v1
 ```
 
-**参考:**
+**参照:**
 
-* [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [VirtualService Concepts](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+* [ルーティング](../../../service-mesh/istio/traffic-management/02-routing.md)
+* [VirtualService の概念](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
 
 </details>
 
@@ -70,7 +70,7 @@ spec:
 
 DestinationRule が実行する機能では**ない**ものはどれですか？
 
-A. Subset の定義 B. ロードバランシングアルゴリズムの設定 C. HTTP パスベースのルーティング D. Connection Pool の設定
+A. subset の定義 B. ロードバランシングアルゴリズムの設定 C. HTTP パスベースのルーティング D. Connection Pool の設定
 
 <details>
 
@@ -78,13 +78,13 @@ A. Subset の定義 B. ロードバランシングアルゴリズムの設定 C.
 
 **回答: C**
 
-HTTP パスベースのルーティングは **VirtualService** の役割です。
+HTTP パスベースのルーティングは、**VirtualService** の役割です。
 
 **解説:**
 
 **DestinationRule の主な機能:**
 
-1. **Subset の定義 (A - O)**
+1. **subset の定義（A - O）**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -102,7 +102,7 @@ spec:
       version: v2
 ```
 
-2. **ロードバランシングの設定 (B - O)**
+2. **ロードバランシングの設定（B - O）**
 
 ```yaml
 spec:
@@ -111,7 +111,7 @@ spec:
       simple: ROUND_ROBIN  # RANDOM, LEAST_REQUEST, etc.
 ```
 
-3. **Connection Pool の設定 (D - O)**
+3. **Connection Pool の設定（D - O）**
 
 ```yaml
 spec:
@@ -123,7 +123,7 @@ spec:
         http1MaxPendingRequests: 50
 ```
 
-4. **HTTP パスベースのルーティング (C - X)**
+4. **HTTP パスベースのルーティング（C - X）**
 
 * これは VirtualService の役割です:
 
@@ -146,14 +146,14 @@ spec:
 | 機能              | VirtualService | DestinationRule |
 | ----------------- | -------------- | --------------- |
 | ルーティングルール | はい           | いいえ          |
-| パスマッチング     | はい           | いいえ          |
-| Subset の定義     | いいえ         | はい            |
+| パスのマッチング   | はい           | いいえ          |
+| subset の定義     | いいえ         | はい            |
 | ロードバランシング | いいえ         | はい            |
 | Connection Pool   | いいえ         | はい            |
 
-**参考:**
+**参照:**
 
-* [Load Balancing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
+* [ロードバランシング](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
 * [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md)
 
 </details>
@@ -162,7 +162,7 @@ spec:
 
 ### 問題 3: Canary Deployment のトラフィック分割
 
-次の VirtualService 設定において、v1 と v2 のトラフィック比率はどれですか？
+次の VirtualService 設定における v1 と v2 のトラフィック比率はどうなりますか？
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -184,7 +184,7 @@ spec:
       weight: 20
 ```
 
-A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
+A. v1: 50%、v2: 50% B. v1: 80%、v2: 20% C. v1: 20%、v2: 80% D. v1: 100%、v2: 0%
 
 <details>
 
@@ -192,7 +192,7 @@ A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
 
 **回答: B**
 
-weight の値が **v1: 80、v2: 20** であるため、トラフィックは **v1 に 80%**、**v2 に 20%** 分配されます。
+weight の値が **v1: 80、v2: 20** であるため、トラフィックは **v1 に 80%**、**v2 に 20%** 分散されます。
 
 **解説:**
 
@@ -203,7 +203,7 @@ weight の値が **v1: 80、v2: 20** であるため、トラフィックは **v
 * v1 の比率: 80/100 = 80%
 * v2 の比率: 20/100 = 20%
 
-**Canary Deployment の段階:**
+**Canary Deployment のステージ:**
 
 ```yaml
 # Stage 1: 10% Canary
@@ -223,7 +223,7 @@ weight の値が **v1: 80、v2: 20** であるため、トラフィックは **v
 - weight: 100 # v2
 ```
 
-**Argo Rollouts を使用した自動 Canary:**
+**Argo Rollouts による自動 Canary:**
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -244,10 +244,10 @@ spec:
       - pause: {duration: 2m}
 ```
 
-**参考:**
+**参照:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Argo Rollouts Integration](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+* [トラフィック分割](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Argo Rollouts 統合](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
 
@@ -257,7 +257,7 @@ spec:
 
 Istio Gateway の主な役割では**ない**ものはどれですか？
 
-A. クラスター外部から内部へのトラフィックのエントリーポイント B. TLS 終端と証明書管理 C. Service 間の mTLS 暗号化 D. 外部トラフィックのロードバランシング
+A. クラスター外部から内部へのトラフィックのエントリポイント B. TLS 終端と証明書管理 C. Service 間の mTLS 暗号化 D. 外部トラフィックのロードバランシング
 
 <details>
 
@@ -271,7 +271,7 @@ Service 間の mTLS 暗号化は、**Sidecar Envoy** と **PeerAuthentication** 
 
 **Gateway の主な役割:**
 
-1. **Ingress/Egress トラフィックのエントリーポイント (A - O)**
+1. **Ingress/Egress トラフィックのエントリポイント（A - O）**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -290,7 +290,7 @@ spec:
     - "*"
 ```
 
-2. **TLS 終端 (B - O)**
+2. **TLS 終端（B - O）**
 
 ```yaml
 spec:
@@ -306,12 +306,12 @@ spec:
     - bookinfo.example.com
 ```
 
-3. **外部トラフィックのロードバランシング (D - O)**
+3. **外部トラフィックのロードバランシング（D - O）**
 
 * Gateway は Kubernetes LoadBalancer Service と統合されます
-* 外部トラフィックをクラスター内に分配します
+* 外部トラフィックをクラスター内に分散します
 
-4. **Service 間の mTLS (C - X)**
+4. **Service 間 mTLS（C - X）**
 
 * これは Sidecar Envoy の役割です:
 
@@ -332,10 +332,10 @@ spec:
 | ---------------------------- | ------- | ------------- |
 | 外部 -> 内部トラフィック     | はい    | いいえ        |
 | TLS 終端                     | はい    | いいえ        |
-| Service 間の mTLS            | いいえ  | はい          |
+| Service 間 mTLS              | いいえ  | はい          |
 | 内部ルーティング             | いいえ  | はい          |
 
-**参考:**
+**参照:**
 
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
@@ -366,7 +366,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. 元のリクエストの後に最大 3 回再試行し、各配信は 2 秒に制限され、リクエスト全体は 10 秒に制限される B. 合計 2 秒以内に最大 3 回再試行し、各試行は 10 秒に制限される C. 合計 10 秒以内に無制限に再試行し、各試行は 2 秒に制限される D. 再試行せずに 10 秒後に失敗する
+A. 合計 10 秒以内に最大 3 回 Retry し、各試行は 2 秒に制限される B. 合計 2 秒以内に最大 3 回 Retry し、各試行は 10 秒に制限される C. 合計 10 秒以内に無制限に Retry し、各試行は 2 秒に制限される D. Retry なしで 10 秒後に失敗する
 
 <details>
 
@@ -374,7 +374,7 @@ A. 元のリクエストの後に最大 3 回再試行し、各配信は 2 秒�
 
 **回答: A**
 
-この設定では、**元のリクエストの後に最大 3 回の追加 Retry** が可能で、各配信を **2 秒**に制限し、リクエスト全体を **10 秒**に制限します。したがって、リクエストは Upstream に最大 4 回配信される可能性があります。
+この設定では、**合計 10 秒以内**に**最大 3 回** Retry し、**各試行は 2 秒に制限**されます。
 
 **解説:**
 
@@ -383,8 +383,8 @@ A. 元のリクエストの後に最大 3 回再試行し、各配信は 2 秒�
 ```yaml
 timeout: 10s           # Maximum time for entire request
 retries:
-  attempts: 3          # Up to 3 retries after the original request
-  perTryTimeout: 2s    # Time limit for each delivery
+  attempts: 3          # Maximum retry count
+  perTryTimeout: 2s    # Time limit for each attempt
 ```
 
 **実行シナリオ:**
@@ -399,12 +399,18 @@ Scenario 2: Success after 2 attempts
 +- 2nd attempt: 1.8s elapsed -> Success
 +- Total time: 3.8s
 
-Scenario 3: Original request plus all 3 retries fail
+Scenario 3: All 3 attempts fail
 +- 1st attempt: 2s timeout -> Failure
 +- 2nd attempt: 2s timeout -> Failure
 +- 3rd attempt: 2s timeout -> Failure
-+- 4th attempt: 2s timeout -> Failure
-+- Total time: about 8s
++- Total time: 6s (fails before 10s)
+
+Scenario 4: Overall timeout
++- 1st attempt: 2s timeout -> Failure
++- 2nd attempt: 2s timeout -> Failure
++- 3rd attempt: 2s timeout -> Failure
++- 4th attempt: hasn't passed 2s but reached overall 10s
++- Total time: 10s (overall timeout)
 ```
 
 **Retry 条件の設定:**
@@ -419,40 +425,29 @@ retries:
 **ベストプラクティス:**
 
 ```yaml
-# Read requests: limited retry
-- match:
-  - method:
-      regex: "^(GET|HEAD)$"
-  retries:
-    attempts: 2
-    perTryTimeout: 2s
-    retryOn: connect-failure,refused-stream
-
-# Write requests: disable mesh retry
-- match:
-  - method:
-      regex: "^(POST|PATCH)$"
-  retries:
-    attempts: 0
+# Typical settings
+timeout: 30s
+retries:
+  attempts: 3
+  perTryTimeout: 10s
+  retryOn: 5xx,gateway-error,reset,connect-failure
 ```
 
 **注意事項:**
 
-* すべての Retry を見込むため、`timeout` はバックオフを含めておおよそ `(1 + attempts) x perTryTimeout` より大きくする必要があります
-* Retry が多すぎると連鎖的な障害を引き起こす可能性があります
-* `attempts: 0` は Retry を無効化します。`attempts: 1` は元のリクエストの後に 1 回の再送を許可します
-* サーバー側でコミット済みで応答だけが失われている可能性があるため、POST/PATCH ではデフォルトで Mesh Retry を無効化します
-* Workload mTLS やネットワーク暗号化によって、リクエストの再送が安全になるわけではありません
+* すべての Retry を許容するため、`timeout` >= `attempts x perTryTimeout` とします
+* Retry が多すぎると、カスケード障害を引き起こす可能性があります
+* Retry は冪等な操作にのみ推奨されます
 
-**参考:**
+**参照:**
 
-* [Timeout and Retry](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
+* [Timeout と Retry](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/06-timeout-retry.md)
 
 </details>
 
 ***
 
-## 記述問題 (6-10)
+## 記述問題（6～10）
 
 ### 問題 6: Argo Rollouts + Istio Canary Deployment
 
@@ -485,7 +480,7 @@ spec:
 
 ***
 
-**2. DestinationRule の定義（Subset の定義）**
+**2. DestinationRule の定義（subset の定義）**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -501,7 +496,7 @@ spec:
     labels: {}  # Managed automatically by Rollout
 ```
 
-**重要**: Rollout は Pod に `rollouts-pod-template-hash` ラベルを自動的に追加し、このラベルを使用して Subset を区別します。
+**重要**: Rollout は Pods に `rollouts-pod-template-hash` ラベルを自動的に追加し、このラベルを使用して subset を区別します。
 
 ***
 
@@ -531,13 +526,13 @@ spec:
 **重要なポイント**:
 
 * `http[].name` フィールドは必須です
-* Rollout はこの VirtualService 内の `weight` 値のみを自動更新します
+* Rollout はこの VirtualService の `weight` 値のみを自動更新します
 
 ***
 
-**4. AnalysisTemplate の定義（自動ロールバックの条件）**
+**4. AnalysisTemplate の定義（自動ロールバック条件）**
 
-**成功率の分析:**
+**成功率分析:**
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -572,7 +567,7 @@ spec:
           ))
 ```
 
-**レイテンシーの分析:**
+**レイテンシー分析:**
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -674,7 +669,7 @@ spec:
 
 ***
 
-**6. Deployment の実行と監視**
+**6. Deployment の実行とモニタリング**
 
 ```bash
 # Install Argo Rollouts
@@ -732,16 +727,16 @@ kubectl argo rollouts dashboard
 
 ***
 
-**主な利点:**
+**主なメリット:**
 
-1. **完全自動化**: 人による介入なしに Deployment が進行します
-2. **即時ロールバック**: メトリクスの失敗を検出してから数秒以内にロールバックします
-3. **安全な Deployment**: 各段階で自動検証します
-4. **一貫したプロセス**: 標準化された Deployment 戦略
+1. **完全自動化**: 人手を介さずに Deployment が進行します
+2. **即時ロールバック**: メトリクスの失敗検出後、数秒以内にロールバックします
+3. **安全な Deployment**: 各ステージで自動検証します
+4. **一貫したプロセス**: 標準化された Deployment 戦略です
 
-**参考:**
+**参照:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [トラフィック分割](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -750,7 +745,7 @@ kubectl argo rollouts dashboard
 
 ### 問題 7: Blue/Green Deployment と Canary Deployment
 
-Blue/Green Deployment と Canary Deployment の**違い**を比較し、それぞれの**長所と短所**および**利用シナリオ**を説明してください。
+Blue/Green Deployment と Canary Deployment の**違い**を比較し、それぞれの**メリットとデメリット**、および**利用シナリオ**を説明してください。
 
 <details>
 
@@ -762,7 +757,7 @@ Blue/Green Deployment と Canary Deployment の**違い**を比較し、それ�
 
 ***
 
-**1. Deployment 方法の違い**
+**1. Deployment 手法の違い**
 
 **Blue/Green Deployment:**
 
@@ -788,23 +783,23 @@ Gradually increase traffic
 
 ***
 
-**2. 詳細比較表**
+**2. 詳細な比較表**
 
 | 項目               | Blue/Green                            | Canary                                 |
 | ------------------ | ------------------------------------- | -------------------------------------- |
-| **トラフィック切替** | 即時 100% 切替                        | 段階的な増加 (10% -> 100%)             |
-| **ロールバック速度** | 即時（単一の切替）                    | 高速（現在の段階からのみ）             |
-| **リソース使用量** | 2 倍 (Blue + Green)                   | 1 倍 + 少量 (Stable + Canary)          |
-| **リスクレベル**   | 中（すべてのユーザーに一度に影響）    | 低（少数のユーザーから開始）           |
-| **テスト期間**     | Deployment 前に十分なテスト           | 本番環境で段階的に検証                 |
-| **複雑さ**         | 低                                    | 中（メトリクス分析が必要）             |
+| **トラフィック切替** | 即時に 100% 切替                      | 段階的に増加（10% -> 100%）            |
+| **ロールバック速度** | 即時（1 回の切替）                    | 高速（現在のステージからのみ）          |
+| **リソース使用量** | 2 倍（Blue + Green）                  | 1 倍 + 少量（Stable + Canary）         |
+| **リスクレベル**   | 中（すべてのユーザーに一度に影響）     | 低（少数のユーザーから開始）           |
+| **テスト期間**     | Deployment 前に十分なテスト            | 本番環境で段階的に検証                 |
+| **複雑性**         | 低                                    | 中（メトリクス分析が必要）             |
 | **ユーザーへの影響** | すべてのユーザーに同時に影響          | 少数のユーザーから段階的に影響         |
 
 ***
 
 **3. Istio の実装例**
 
-**Blue/Green Deployment (Argo Rollouts):**
+**Blue/Green Deployment（Argo Rollouts）:**
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -831,7 +826,7 @@ spec:
         - templateName: performance-tests
 ```
 
-**Canary Deployment (Argo Rollouts):**
+**Canary Deployment（Argo Rollouts）:**
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -864,43 +859,43 @@ spec:
 
 ***
 
-**4. 長所と短所の比較**
+**4. メリットとデメリットの比較**
 
-**Blue/Green の長所:**
+**Blue/Green のメリット:**
 
 * シンプルな構造（Blue <-> Green の切替のみ）
-* 即時ロールバックが可能（切替を戻すだけ）
+* 即時のロールバックが可能（切り戻し）
 * Deployment 前に十分なテストが可能
-* 予測可能な動作
+* 挙動が予測可能
 
-**Blue/Green の短所:**
+**Blue/Green のデメリット:**
 
 * 2 倍のリソースが必要
 * すべてのユーザーに同時に影響する
 * データベース移行が複雑
-* 段階的な検証がない
+* 段階的な検証ができない
 
-**Canary の長所:**
+**Canary のメリット:**
 
 * 少数のユーザーから段階的に検証できる
-* リソース効率が良い（1 倍 + 少量）
+* リソース効率がよい（1 倍 + 少量）
 * 本番環境で実際の検証ができる
 * 自動ロールバックが可能（メトリクスベース）
 
-**Canary の短所:**
+**Canary のデメリット:**
 
 * 設定が複雑（メトリクス、分析）
-* 監視が必要
+* モニタリングが必要
 * Deployment 時間が長い
-* バージョンの共存期間がある
+* バージョンが共存する期間がある
 
 ***
 
 **5. 利用シナリオ**
 
-**Blue/Green の推奨シナリオ:**
+**Blue/Green が推奨されるシナリオ:**
 
-1. **重要なリリース**: 十分なテスト後に迅速に切り替える場合
+1. **重要なリリース**: 十分なテスト後に高速に切り替える場合
 2. **データベース変更なし**: スキーマ変更がない場合
 3. **即時ロールバックが必要**: 問題発生時に迅速な復旧が必要な場合
 4. **十分なリソース**: 2 倍のリソースを確保できる場合
@@ -915,12 +910,12 @@ spec:
 - Marketing campaign integration (switch at specific time)
 ```
 
-**Canary の推奨シナリオ:**
+**Canary が推奨されるシナリオ:**
 
 1. **実験的な機能**: まず少数のユーザーでテストする場合
 2. **リソース制約**: 2 倍のリソースを利用できない場合
 3. **段階的な検証**: 本番環境で実データを使用して検証する場合
-4. **自動 Deployment**: CI/CD で自動 Deployment する場合
+4. **自動 Deployment**: CI/CD における自動 Deployment
 5. **Microservices**: Service の依存関係が複雑な場合
 
 **例:**
@@ -947,18 +942,18 @@ spec:
 50% -> 100% (instant switch)
 ```
 
-**参考:**
+**参照:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [トラフィック分割](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Blue/Green Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
 
 </details>
 
 ***
 
-### 問題 8: Traffic Mirroring（Shadow Testing）
+### 問題 8: トラフィックミラーリング（Shadow Testing）
 
-Traffic Mirroring を使用して新しいバージョンを安全にテストする方法を説明してください。**ユースケース**、**設定方法**、**注意事項**を含めてください。
+Traffic Mirroring を使用して新しいバージョンを安全にテストする方法を説明してください。**ユースケース**、**設定方法**、および**注意事項**を含めてください。
 
 <details>
 
@@ -968,7 +963,7 @@ Traffic Mirroring を使用して新しいバージョンを安全にテスト�
 
 **Traffic Mirroring の概念:**
 
-Traffic Mirroring は、本番トラフィックを複製して新しいバージョンに送信し、**応答を無視する**手法です。「Shadow Testing」とも呼ばれます。
+Traffic Mirroring は、本番トラフィックを複製して新しいバージョンに送信し、**レスポンスを無視する**技術です。「Shadow Testing」とも呼ばれます。
 
 ***
 
@@ -992,17 +987,17 @@ flowchart LR
     class V1,V2 version;
 ```
 
-**主な特性:**
+**主な特徴:**
 
-* ユーザーは v1 の応答のみを受け取ります
-* v2 の応答は Envoy によって破棄されます
+* ユーザーが受け取るのは v1 のレスポンスのみです
+* v2 のレスポンスは Envoy によって破棄されます
 * v2 のエラーはユーザーに影響しません
 
 ***
 
 **2. 設定方法**
 
-**基本的な Mirroring（100%）:**
+**基本的なミラーリング（100%）:**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1025,7 +1020,7 @@ spec:
       value: 100  # 100% mirroring
 ```
 
-**部分 Mirroring（50%）:**
+**部分的なミラーリング（50%）:**
 
 ```yaml
 spec:
@@ -1042,7 +1037,7 @@ spec:
       value: 50  # Only 50% mirroring (reduce traffic load)
 ```
 
-**Mirroring + Canary の組み合わせ:**
+**ミラーリング + Canary の組み合わせ:**
 
 ```yaml
 spec:
@@ -1114,9 +1109,9 @@ Purpose: Pre-populate new version's cache
 
 ***
 
-**4. 監視設定**
+**4. モニタリングの設定**
 
-**Prometheus Query で Mirror トラフィックを監視:**
+**Prometheus クエリによるミラートラフィックの監視:**
 
 ```promql
 # v2 (mirror) error rate
@@ -1191,7 +1186,7 @@ Mirroring increases resources and costs.
 Solution: Mirror only for short periods (1-2 days)
 ```
 
-**警告 - 応答を検証できない:**
+**警告 - レスポンスを検証できない:**
 
 ```
 Mirror traffic responses are discarded, so
@@ -1225,7 +1220,7 @@ Cannot validate:
 4. Manual validation (slow)
 ```
 
-**参考:**
+**参照:**
 
 * [Traffic Mirroring](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/04-traffic-mirroring.md)
 
@@ -1235,7 +1230,7 @@ Cannot validate:
 
 ### 問題 9: Locality Load Balancing（Zone Aware Routing）
 
-Istio の Locality Load Balancing を使用して、AWS EKS の**クロス AZ コストを削減する**方法を説明してください。設定例と**推定コスト削減額**を含めてください。
+Istio の Locality Load Balancing を使用して、AWS EKS で**クロス AZ コストを削減**する方法を説明してください。設定例と**推定コスト削減額**を含めてください。
 
 <details>
 
@@ -1245,11 +1240,11 @@ Istio の Locality Load Balancing を使用して、AWS EKS の**クロス AZ �
 
 **Locality Load Balancing の概念:**
 
-Locality Load Balancing は、ネットワークレイテンシーとクロス AZ コストを削減するために、**同じ Availability Zone (AZ) 内の Service に優先的にルーティングする**機能です。
+Locality Load Balancing は、ネットワークレイテンシーとクロス AZ コストを削減するため、**同じ Availability Zone（AZ）内の Service を優先的にルーティングする**機能です。
 
 ***
 
-**1. AWS EKS におけるクロス AZ コスト**
+**1. AWS EKS のクロス AZ コスト**
 
 **コスト構造:**
 
@@ -1274,9 +1269,9 @@ If 80% traffic is routed to same AZ:
 
 ***
 
-**2. EKS Pod Topology ラベル**
+**2. EKS Pod のトポロジーラベル**
 
-EKS Node には Topology ラベルが自動的に設定されます:
+EKS ノードには、トポロジーラベルが自動的に設定されます:
 
 ```yaml
 # EKS node labels (automatic)
@@ -1290,7 +1285,7 @@ topology.kubernetes.io/zone: us-east-1a
 
 **3. Locality Load Balancing の設定**
 
-**基本設定（同じ AZ を優先）:**
+**基本設定（同一 AZ を優先）:**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1334,7 +1329,7 @@ spec:
             "us-east-1/us-east-1a/*": 20  # Other AZ 20% (for failover)
 ```
 
-**Failover ポリシー:**
+**フェイルオーバーポリシー:**
 
 ```yaml
 spec:
@@ -1388,7 +1383,7 @@ spec:
 
 ***
 
-**5. コスト削減額の計算**
+**5. コスト削減の計算**
 
 **シナリオ: 大規模 Microservices アーキテクチャ**
 
@@ -1420,7 +1415,7 @@ Annual savings: $1,000 x 12 = $12,000/year
 
 ***
 
-**6. パフォーマンスの向上**
+**6. パフォーマンスの改善**
 
 **レイテンシーの改善:**
 
@@ -1447,9 +1442,9 @@ $ kubectl exec -it pod-a -- curl -w "%{time_total}\n" http://service-b
 
 ***
 
-**7. 監視**
+**7. モニタリング**
 
-**Prometheus Query:**
+**Prometheus クエリ:**
 
 ```promql
 # Traffic distribution by Locality
@@ -1484,7 +1479,7 @@ Panel 4: Estimated cost (cross-AZ traffic x $0.01/GB)
 
 **8. 注意事項**
 
-**警告 - 不均衡な負荷:**
+**警告 - 負荷の不均衡:**
 
 ```
 If all traffic concentrates on one AZ, overload can occur
@@ -1505,7 +1500,7 @@ Failover policy configuration required:
   to: us-east-1/us-east-1b
 ```
 
-**警告 - Cold Start:**
+**警告 - コールドスタート:**
 
 ```
 On failover, Pods in other AZ may be in cold start state
@@ -1550,18 +1545,18 @@ spec:
         http1MaxPendingRequests: 50
 ```
 
-**参考:**
+**参照:**
 
 * [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [AWS EKS Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
+* [AWS EKS のコスト最適化](../../../service-mesh/istio/best-practices.md#cost-optimization)
 
 </details>
 
 ***
 
-### 問題 10: Gateway TLS 設定
+### 問題 10: Gateway の TLS 設定
 
-Istio Gateway で **TLS 終端**を設定し、**HTTPS リダイレクト**を構成する方法を説明してください。ACM (AWS Certificate Manager) 証明書を使用するケースと自己署名証明書を使用するケースの両方を含めてください。
+Istio Gateway で **TLS 終端**を設定し、**HTTPS リダイレクト**を構成する方法を説明してください。ACM（AWS Certificate Manager）証明書を使用する場合と、自己署名証明書を使用する場合の両方を含めてください。
 
 <details>
 
@@ -1569,11 +1564,11 @@ Istio Gateway で **TLS 終端**を設定し、**HTTPS リダイレクト**を�
 
 **回答:**
 
-**Istio Gateway TLS 設定:**
+**Istio Gateway の TLS 設定:**
 
 ***
 
-**1. 自己署名証明書の使用（Kubernetes Secret）**
+**1. 自己署名証明書を使用する場合（Kubernetes Secret）**
 
 **ステップ 1: TLS 証明書の生成**
 
@@ -1677,9 +1672,9 @@ curl -v http://bookinfo.example.com/productpage
 
 ***
 
-**2. AWS ACM 証明書の使用（NLB Annotation）**
+**2. AWS ACM 証明書を使用する場合（NLB Annotation）**
 
-AWS EKS では、ACM 証明書を使用して NLB で TLS 終端を行う方法が推奨されます。
+AWS EKS では、ACM 証明書を使用した NLB での TLS 終端が推奨されるアプローチです。
 
 **ステップ 1: ACM 証明書の発行**
 
@@ -1758,9 +1753,9 @@ spec:
 
 ***
 
-**3. Mutual TLS (mTLS) - クライアント認証**
+**3. Mutual TLS（mTLS）- クライアント認証**
 
-クライアントにも証明書の提示を求める場合:
+クライアントも証明書を提示する必要がある場合:
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1794,7 +1789,7 @@ curl --cert client.crt --key client.key \
 
 **4. ワイルドカード証明書**
 
-複数のサブドメインに 1 つの証明書を使用します:
+複数のサブドメインには単一の証明書を使用します:
 
 ```bash
 # Generate wildcard certificate
@@ -1829,7 +1824,7 @@ spec:
     - "*.example.com"  # Allow all subdomains
 ```
 
-**VirtualService でサブドメインごとにルーティング:**
+**VirtualService によるサブドメイン別ルーティング:**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1980,17 +1975,17 @@ spec:
 
 **注記:**
 
-* TLS 1.2 以降を使用します
-* 強力な Cipher Suite を設定します
-* 証明書を自動更新します（cert-manager）
-* HTTP -> HTTPS リダイレクトを有効にします
-* 本番環境で自己署名証明書を使用しません
-* TLS 1.0/1.1 を使用しません
+* TLS 1.2 以上を使用する
+* 強力な Cipher Suites を設定する
+* 証明書を自動更新する（cert-manager）
+* HTTP -> HTTPS リダイレクトを有効にする
+* 本番環境で自己署名証明書を使用しない
+* TLS 1.0/1.1 を使用しない
 
-**参考:**
+**参照:**
 
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [TLS Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
+* [TLS 設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
 
 </details>
 
@@ -1998,22 +1993,22 @@ spec:
 
 ## スコア計算
 
-* 選択問題 1-5: 各 10 点（合計 50 点）
-* 記述問題 6-10: 各 10 点（合計 50 点）
+* 選択問題 1～5: 各 10 点（合計 50 点）
+* 記述問題 6～10: 各 10 点（合計 50 点）
 * **合計: 100 点**
 
 **評価基準:**
 
-* 90-100 点: 優秀（Istio トラフィック管理エキスパート）
-* 80-89 点: 良好（本番運用の準備完了）
-* 70-79 点: 平均（追加学習を推奨）
-* 60-69 点: 平均以下（基本概念の復習が必要）
-* 0-59 点: 再学習が必要
+* 90～100 点: 優秀（Istio トラフィック管理エキスパート）
+* 80～89 点: 良好（本番運用の準備完了）
+* 70～79 点: 平均（追加学習を推奨）
+* 60～69 点: 平均以下（基本概念の復習が必要）
+* 0～59 点: 再学習が必要
 
 ## 学習リソース
 
-* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
+* [トラフィック管理ドキュメント](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [トラフィック分割](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

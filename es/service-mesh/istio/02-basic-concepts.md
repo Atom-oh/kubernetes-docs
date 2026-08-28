@@ -1,27 +1,27 @@
 # Conceptos básicos
 
-Este documento explica los conceptos principales y la arquitectura de Istio. Comprender estos conceptos básicos es importante para usar Istio de forma eficaz.
+Este documento explica los conceptos fundamentales y la arquitectura de Istio. Comprender estos conceptos básicos es importante para usar Istio eficazmente.
 
-## Tabla de contenido
+## Índice
 
-1. [Antecedentes e historia](02-basic-concepts.md#background-and-history)
+1. [Contexto e historia](02-basic-concepts.md#background-and-history)
 2. [¿Por qué Istio?](02-basic-concepts.md#why-istio)
 3. [Arquitectura de Istio](02-basic-concepts.md#istio-architecture)
-4. [Modos de implementación: Sidecar vs Ambient](02-basic-concepts.md#deployment-modes-sidecar-vs-ambient)
+4. [Modos de despliegue: Sidecar vs Ambient](02-basic-concepts.md#deployment-modes-sidecar-vs-ambient)
 5. [Recursos principales](02-basic-concepts.md#core-resources)
 6. [Conceptos de gestión de tráfico](02-basic-concepts.md#traffic-management-concepts)
 7. [Conceptos de seguridad](02-basic-concepts.md#security-concepts)
 8. [Conceptos de observabilidad](02-basic-concepts.md#observability-concepts)
 9. [Namespaces y Service Mesh](02-basic-concepts.md#namespaces-and-service-mesh)
-10. [Próximos pasos](02-basic-concepts.md#next-steps)
+10. [Siguientes pasos](02-basic-concepts.md#next-steps)
 
-## Antecedentes e historia
+## Contexto e historia
 
 ### El nacimiento de Service Mesh
 
 #### Desafíos de los microservicios
 
-A principios de la década de 2010, las empresas comenzaron a dividir las aplicaciones monolíticas en microservicios.
+A principios de la década de 2010, las empresas comenzaron a descomponer las aplicaciones monolíticas en microservicios.
 
 ```mermaid
 flowchart TB
@@ -60,18 +60,18 @@ flowchart TB
 | Problema                         | Descripción                                  | Impacto                         |
 | ------------------------------- | -------------------------------------------- | ------------------------------ |
 | **Comunicación entre servicios** | Aumento de las llamadas de red               | Latencia, propagación de fallos |
-| **Observabilidad**               | Necesidad de trazado distribuido              | Depuración difícil              |
-| **Seguridad**                    | Autenticación/cifrado entre servicios         | Complejidad de implementación de mTLS |
-| **Control de tráfico**           | Implementaciones Canary, pruebas A/B          | Modificaciones del código de la aplicación |
-| **Gestión de fallos**            | Circuit Breaker, Retry                        | Implementación por servicio     |
+| **Observabilidad**               | Necesidad de trazabilidad distribuida        | Depuración difícil             |
+| **Seguridad**                    | Autenticación/cifrado entre servicios        | Complejidad de implementación de mTLS |
+| **Control de tráfico**           | Despliegues Canary, pruebas A/B              | Modificaciones al código de la aplicación |
+| **Manejo de fallos**             | Circuit Breaker, Retry                       | Implementación por servicio     |
 
 #### Solución inicial: bibliotecas
 
 **Problemas**:
 
 * Necesidad de desarrollar bibliotecas para cada lenguaje (Hystrix para Java, biblioteca independiente para Go...)
-* Fuerte acoplamiento con el código de la aplicación
-* Requiere volver a implementar todos los servicios para las actualizaciones
+* Acoplamiento estrecho con el código de la aplicación
+* Requiere volver a desplegar todos los servicios para las actualizaciones
 * Gestión de versiones compleja
 
 ```mermaid
@@ -115,15 +115,15 @@ flowchart LR
 * Operaba más de 200 microservicios
 * Diversos lenguajes y frameworks (Python, Go, Java, etc.)
 * Los proxies existentes (HAProxy, NGINX) eran insuficientes
-  * Cambios dinámicos de configuración difíciles
+  * Cambios de configuración dinámica difíciles
   * Falta de observabilidad
-  * Funciones avanzadas de enrutamiento limitadas
+  * Funcionalidades avanzadas de enrutamiento limitadas
 
 #### Matt Klein y Envoy
 
-**Matt Klein** (ingeniero de Lyft) lanzó Envoy como código abierto en 2016.
+**Matt Klein** (ingeniero de Lyft) publicó Envoy como código abierto en 2016.
 
-**Problemas que resolvió Envoy**:
+**Problemas que Envoy resolvió**:
 
 ```mermaid
 flowchart TB
@@ -157,18 +157,18 @@ flowchart TB
 
 **Características principales de Envoy**:
 
-1. **Arquitectura fuera de proceso**: proceso separado de la aplicación
-2. **APIs xDS**: actualizaciones dinámicas de configuración
-3. **Proxy L7**: compatibilidad con HTTP/2, gRPC y WebSocket
-4. **Observabilidad**: métricas detalladas, trazado y registro
+1. **Arquitectura fuera de proceso**: proceso independiente de la aplicación
+2. **APIs xDS**: actualizaciones de configuración dinámica
+3. **Proxy L7**: soporte para HTTP/2, gRPC y WebSocket
+4. **Observabilidad**: métricas detalladas, trazabilidad y registros
 5. **Rendimiento**: escrito en C++, alto rendimiento
 
 #### Adopción por CNCF
 
 **Cronología**:
 
-* **Septiembre de 2016**: Envoy se lanzó como código abierto
-* **Septiembre de 2017**: aceptado como proyecto de CNCF (Incubating)
+* **Septiembre de 2016**: Envoy se publica como código abierto
+* **Septiembre de 2017**: aceptado como proyecto CNCF (Incubating)
 * **Noviembre de 2018**: promovido a proyecto CNCF Graduated
 
 ### El nacimiento y la historia de Istio
@@ -205,11 +205,11 @@ flowchart LR
 
 **Contribuciones de cada empresa**:
 
-| Empresa    | Contribución principal | Motivo                           |
-| ---------- | ---------------------- | -------------------------------- |
-| **Google** | Diseño del Control Plane | Experiencia con Borg y Kubernetes |
-| **IBM**    | Funciones empresariales | Requisitos de clientes empresariales |
-| **Lyft**   | Envoy Proxy            | Proxy probado en producción      |
+| Empresa    | Contribución principal    | Motivo                           |
+| ---------- | -------------------- | -------------------------------- |
+| **Google** | Diseño de Control Plane | Experiencia con Borg y Kubernetes      |
+| **IBM**    | Funcionalidades empresariales  | Requisitos de clientes empresariales |
+| **Lyft**   | Envoy Proxy          | Proxy probado en producción          |
 
 #### Historial de versiones de Istio
 
@@ -231,7 +231,7 @@ timeline
 
 **Versión 1.5 (marzo de 2020): punto de inflexión importante**:
 
-Arquitectura anterior (Istio 1.4 y versiones previas):
+Arquitectura anterior (Istio 1.4 y versiones anteriores):
 
 ```
 Separated into individual components:
@@ -241,7 +241,7 @@ Separated into individual components:
 - Galley (configuration validation)
 ```
 
-Arquitectura nueva (Istio 1.5+, versión actual 1.28):
+Nueva arquitectura (Istio 1.5+, actual 1.28):
 
 ```
 Istiod (consolidated into single binary)
@@ -254,14 +254,14 @@ Mixer completely removed (functionality moved to Envoy)
 
 **Motivos del cambio**:
 
-* Reducción de la complejidad (4 componentes → 1)
-* Mejora del rendimiento (reducción de latencia del 50 % al eliminar Mixer)
+* Complejidad reducida (4 componentes → 1)
+* Rendimiento mejorado (reducción del 50 % de la latencia al eliminar Mixer)
 * Operaciones simplificadas (gestión de un único proceso)
 * Eficiencia de recursos (menor uso de memoria y CPU)
 
 ## ¿Por qué Istio?
 
-Kubernetes proporciona orquestación de contenedores, pero tiene limitaciones para gestionar la comunicación compleja entre microservicios. Istio es una solución de service mesh para abordar estos problemas.
+Kubernetes proporciona orquestación de contenedores, pero tiene limitaciones para gestionar la comunicación compleja entre microservicios. Istio es una solución de Service Mesh para abordar estos problemas.
 
 ### Desafíos de los microservicios
 
@@ -309,7 +309,7 @@ flowchart TB
 
 #### 1. Gestión de tráfico
 
-**Problema**: se desea realizar una transición segura del tráfico al implementar nuevas versiones.
+**Problema**: se desea realizar una transición segura del tráfico al desplegar nuevas versiones.
 
 **Solución de Istio**:
 
@@ -337,9 +337,9 @@ spec:
 **Beneficios**:
 
 * No se requiere modificar el código de la aplicación
-* Ajuste de la división de tráfico en tiempo real
-* Reversión automática posible
-* Compatibilidad con pruebas A/B e implementaciones Blue/Green
+* Ajuste de división de tráfico en tiempo real
+* Posibilidad de rollback automático
+* Soporte para pruebas A/B y despliegue Blue/Green
 
 #### 2. Seguridad
 
@@ -362,29 +362,29 @@ spec:
 **Beneficios**:
 
 * Emisión y renovación automática de certificados
-* Verificación automática de identidad de Service
+* Verificación automática de identidad del servicio
 * Control de permisos granular
 * Implementación de red Zero Trust
 
 #### 3. Observabilidad
 
-**Problema**: es difícil rastrear el flujo de solicitudes a través de decenas de microservicios.
+**Problema**: es difícil rastrear el flujo de solicitudes entre decenas de microservicios.
 
 **Solución de Istio**:
 
 * Generación automática de métricas (Latency, Traffic, Errors, Saturation)
-* Trazado distribuido
+* Trazabilidad distribuida
 * Visualización de la topología de servicios
 
 **Beneficios**:
 
 * Identificación automática de cuellos de botella
-* Identificación rápida de la causa raíz de errores
+* Identificación rápida de la causa raíz de los errores
 * Supervisión del estado de los servicios en tiempo real
 
 #### 4. Resiliencia
 
-**Problema**: el fallo de un Service se propaga a todo el sistema.
+**Problema**: el fallo de un servicio se propaga a todo el sistema.
 
 **Solución de Istio**:
 
@@ -406,7 +406,7 @@ spec:
 **Beneficios**:
 
 * Aislamiento de fallos (Circuit Breaker)
-* Retry y Timeout automáticos
+* Retry y timeout automáticos
 * Eliminación automática de instancias no saludables
 * Limitación de tráfico (Rate Limiting)
 
@@ -417,13 +417,13 @@ spec:
 1. **Arquitectura de microservicios**
    * 10 o más servicios
    * Dependencias complejas entre servicios
-   * Implementaciones frecuentes
+   * Despliegues frecuentes
 2. **Se necesita gestión avanzada de tráfico**
-   * Implementaciones Canary, pruebas A/B
+   * Despliegues Canary, pruebas A/B
    * Control de enrutamiento granular
    * Traffic Mirroring
-3. **Requisitos de seguridad estrictos**
-   * Cifrado obligatorio entre servicios
+3. **Requisitos sólidos de seguridad**
+   * Cifrado entre servicios obligatorio
    * Control de acceso granular
    * Cumplimiento normativo
 4. **Observabilidad y depuración**
@@ -440,10 +440,10 @@ spec:
 2. **Restricciones de recursos**
    * Cluster pequeño
    * No se puede asumir la sobrecarga de recursos
-   * Carga del coste de memoria de Sidecar
+   * Carga de coste de memoria de Sidecar
 3. **Falta de capacidad operativa**
    * Tiempo de aprendizaje insuficiente
-   * No hay un equipo de plataforma dedicado
+   * Sin equipo de plataforma dedicado
    * Se prefieren soluciones más simples
 
 ### Comparación de alternativas
@@ -455,41 +455,41 @@ spec:
 | **Alcance**         | Externo → Cluster | Externo + entre servicios internos |
 | **Enrutamiento**       | Básico (Path, Host) | Avanzado (Header, Cookie, etc.)   |
 | **mTLS**          | Configuración manual       | Automático                         |
-| **Observabilidad** | Limitada            | Rica                              |
+| **Observabilidad** | Limitada            | Completa                              |
 | **Complejidad**    | Baja                | Alta                              |
 | **Caso de uso**      | Aplicaciones simples        | Microservicios                     |
 
 #### AWS VPC Lattice vs Istio
 
-Para una comparación detallada, consulte el documento de [integración con AWS](04-aws-integration.md#istio-vs-other-solutions-comparison).
+Para una comparación detallada, consulta el documento de [integración con AWS](04-aws-integration.md#istio-vs-other-solutions-comparison).
 
 **Resumen rápido:**
 
 * **VPC Lattice**: administrado por AWS, simple, comunicación entre VPC/cuentas
-* **Istio**: código abierto, funciones potentes, solo Kubernetes, control granular
+* **Istio**: código abierto, funcionalidades potentes, solo para Kubernetes, control granular
 
 #### Linkerd vs Istio
 
 | Propiedad           | Istio     | Linkerd            |
 | ------------------ | --------- | ------------------ |
 | **Complejidad**     | Alta      | Baja                |
-| **Funciones**       | Muy completas | Solo funciones principales |
+| **Funcionalidades**       | Muy completas | Solo funcionalidades principales |
 | **Recursos**      | Altos      | Bajos                |
 | **Curva de aprendizaje** | Pronunciada     | Suave             |
 | **Comunidad**      | Grande     | Pequeña              |
 
 **Guía de selección:**
 
-* Se necesitan funciones avanzadas y flexibilidad → **Istio**
+* Se necesitan funcionalidades avanzadas y flexibilidad → **Istio**
 * Se necesita una malla simple y ligera → **Linkerd**
 
-## Modos de implementación: Sidecar vs Ambient
+## Modos de despliegue: Sidecar vs Ambient
 
-Istio admite dos modos de implementación: **Modo Sidecar** y **Modo Ambient**.
+Istio admite dos modos de despliegue: **Sidecar Mode** y **Ambient Mode**.
 
-### Modo Sidecar (predeterminado)
+### Sidecar Mode (predeterminado)
 
-Inyecta un proxy Envoy como contenedor sidecar en cada Pod de aplicación.
+Inyecta un proxy Envoy como contenedor sidecar en cada Pod de la aplicación.
 
 ```mermaid
 flowchart LR
@@ -517,7 +517,7 @@ flowchart LR
 **Ventajas:**
 
 * Maduro y estable
-* Compatibilidad con todas las funciones de Istio
+* Compatibilidad con todas las funcionalidades de Istio
 * Control granular por Pod
 
 **Desventajas:**
@@ -526,9 +526,9 @@ flowchart LR
 * Mayor tiempo de inicio (Init Container)
 * Configuración de permisos compleja (iptables)
 
-### Modo Ambient (nuevo enfoque)
+### Ambient Mode (nuevo enfoque)
 
-Gestiona el tráfico a nivel de nodo sin sidecars.
+Gestiona el tráfico en el nivel de nodo sin sidecars.
 
 ```mermaid
 flowchart TB
@@ -563,42 +563,42 @@ flowchart TB
 * Bajo uso de recursos (1 por nodo)
 * Inicio rápido de Pod
 * Operaciones simples
-* Posible aplicación gradual de funciones L7
+* Posibilidad de aplicación gradual de funcionalidades L7
 
 **Desventajas:**
 
 * Tecnología relativamente nueva (menos madura)
-* Algunas funciones avanzadas son limitadas
+* Algunas funcionalidades avanzadas son limitadas
 * Control granular por Pod difícil
 
 ### Tabla comparativa
 
-| Propiedad                   | Modo Sidecar                | Modo Ambient                   |
+| Propiedad                   | Sidecar Mode                | Ambient Mode                   |
 | -------------------------- | --------------------------- | ------------------------------ |
 | **Uso de recursos**         | Alto (por Pod)              | Bajo (por nodo)                 |
 | **Tiempo de inicio**           | Lento (Init Container)       | Rápido                           |
 | **Complejidad operativa** | Alta                        | Baja                            |
-| **Funciones L4**            | Compatibles                   | Compatibles                      |
-| **Funciones L7**            | Compatibilidad total                | Opcionales (Waypoint)            |
+| **Funcionalidades L4**            | Compatibles                   | Compatibles                      |
+| **Funcionalidades L7**            | Compatibilidad completa                | Opcional (Waypoint)            |
 | **Madurez**               | Alta                        | Media                         |
 | **Migración**              | -                           | Posible desde Sidecar existente |
-| **Uso recomendado**        | Se necesitan funciones L7 avanzadas | Prioridad de eficiencia de recursos   |
+| **Uso recomendado**        | Se necesitan funcionalidades L7 avanzadas | Prioridad: eficiencia de recursos   |
 
 ### Guía de selección
 
-**Elija el modo Sidecar:**
+**Elige Sidecar Mode:**
 
-* Necesita utilizar todas las funciones de Istio
-* Necesita control de políticas granular por Pod
-* Necesita estabilidad probada en producción
+* Se necesita utilizar todas las funcionalidades de Istio
+* Se necesita control de políticas granular por Pod
+* Se necesita estabilidad probada en producción
 
-**Elija el modo Ambient:**
+**Elige Ambient Mode:**
 
 * La eficiencia de recursos es importante
-* Solo se necesitan funciones L4 simples
-* Planea agregar gradualmente funciones L7
+* Solo se necesitan funcionalidades L4 simples
+* Se planea añadir gradualmente funcionalidades L7
 
-**Para más detalles**, consulte el documento [Avanzado: modo Ambient](advanced/01-ambient-mode.md).
+**Para más detalles**, consulta el documento [Avanzado: Ambient Mode](advanced/01-ambient-mode.md).
 
 ## Arquitectura de Istio
 
@@ -607,9 +607,9 @@ Istio consta de dos componentes principales: **Control Plane** y **Data Plane**.
 | Componente                    | Descripción                                                                                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Control Plane (istiod)**   | Sistema de control central responsable del descubrimiento de servicios, la distribución de configuración y la gestión de certificados |
-| **Data Plane (Envoy Proxy)** | Implementado como sidecar en cada Pod, gestiona el tráfico real (enrutamiento, mTLS, métricas)                             |
+| **Data Plane (Envoy Proxy)** | Desplegado como sidecar en cada Pod; gestiona el tráfico real (enrutamiento, mTLS y métricas)                             |
 
-**Para conocer la estructura detallada de la arquitectura, los principios de funcionamiento interno y los mecanismos de interceptación de tráfico**, consulte el [documento de arquitectura](03-architecture.md).
+**Para conocer en detalle la estructura de la arquitectura, los principios de funcionamiento interno y los mecanismos de interceptación de tráfico**, consulta el [documento de arquitectura](03-architecture.md).
 
 ## Recursos principales
 
@@ -651,7 +651,7 @@ spec:
 
 ### 2. DestinationRule
 
-DestinationRule define subconjuntos (versiones) de Service y aplica políticas de tráfico.
+DestinationRule define subconjuntos (versiones) de servicios y aplica políticas de tráfico.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -687,7 +687,7 @@ spec:
 
 **Características principales**:
 
-* Definición de versión (subset) de Service
+* Definición de versión (subset) de servicio
 * Algoritmo de balanceo de carga
 * Configuración de Connection Pool
 * Circuit Breaker (Outlier Detection)
@@ -726,8 +726,8 @@ spec:
 **Características principales**:
 
 * Definir el punto de entrada de tráfico externo
-* Configuración de Host, puerto y protocolo
-* Terminación de TLS
+* Configuración de host, puerto y protocolo
+* Terminación TLS
 * Enrutamiento SNI
 
 ### 4. ServiceEntry
@@ -754,7 +754,7 @@ spec:
 
 * Registro de servicios externos
 * Control de tráfico para servicios externos
-* Gestión de tráfico de Egress
+* Gestión de tráfico de salida
 
 ### 5. PeerAuthentication
 
@@ -773,7 +773,7 @@ spec:
 
 ### 6. AuthorizationPolicy
 
-AuthorizationPolicy define los permisos de acceso a Service.
+AuthorizationPolicy define los permisos de acceso a los servicios.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -821,7 +821,7 @@ flowchart LR
     class Client default;
 ```
 
-### División de tráfico (implementación Canary)
+### División de tráfico (despliegue Canary)
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -976,13 +976,13 @@ flowchart TB
 
 | Métrica                                | Descripción          |
 | ------------------------------------- | -------------------- |
-| `istio_requests_total`                | Recuento total de solicitudes  |
-| `istio_request_duration_milliseconds` | Latencia de solicitudes      |
+| `istio_requests_total`                | Número total de solicitudes  |
+| `istio_request_duration_milliseconds` | Latencia de solicitud      |
 | `istio_request_bytes`                 | Tamaño de solicitud         |
 | `istio_response_bytes`                | Tamaño de respuesta        |
-| `istio_tcp_connections_opened_total`  | Recuento de conexiones TCP |
+| `istio_tcp_connections_opened_total`  | Número de conexiones TCP |
 
-### Trazado distribuido
+### Trazabilidad distribuida
 
 ```yaml
 # Enable tracing in Envoy
@@ -1054,9 +1054,9 @@ spec:
 
 ## Registro de cargas de trabajo de VM
 
-Istio puede registrar no solo Pods de Kubernetes, sino también **cargas de trabajo de Virtual Machine (VM)** en la service mesh. Esto permite que las aplicaciones heredadas o los servicios fuera del cluster utilicen las funciones de gestión de tráfico, seguridad y observabilidad de Istio.
+Istio puede registrar no solo Pods de Kubernetes, sino también **cargas de trabajo de Virtual Machine (VM)** en la Service Mesh. Esto permite que las aplicaciones heredadas o los servicios fuera del cluster aprovechen las funcionalidades de gestión de tráfico, seguridad y observabilidad de Istio.
 
-### Por qué se necesitan cargas de trabajo de VM
+### Por qué se necesitan las cargas de trabajo de VM
 
 ```mermaid
 flowchart TB
@@ -1172,8 +1172,8 @@ spec:
 **Campos principales de WorkloadEntry**:
 
 * `address`: dirección IP de VM
-* `labels`: coincide con el selector de Service
-* `serviceAccount`: cuenta de Service para autenticación mTLS
+* `labels`: coincide con el selector de servicio
+* `serviceAccount`: cuenta de servicio para autenticación mTLS
 * `ports`: definición de puertos expuestos
 
 ### Integración con ServiceEntry
@@ -1222,7 +1222,7 @@ spec:
 | **Método de registro**    | WorkloadEntry            | ServiceEntry + EndpointSlice   | Service + Pod       |
 | **mTLS**                   | Compatible                | Compatible                      | Compatible           |
 | **Descubrimiento de servicios**      | Manual (IP especificada)    | Automático                      | Automático           |
-| **Escenario de uso**         | Aplicaciones heredadas, DB          | Multinube, recuperación ante desastres | Aplicaciones cloud-native   |
+| **Escenario de uso**         | Aplicaciones heredadas, DB          | Multi-cloud, recuperación ante desastres | Aplicaciones cloud-native   |
 | **Complejidad operativa** | Alta                     | Media                         | Baja                 |
 
 ### Beneficios del registro de VM
@@ -1265,9 +1265,9 @@ flowchart LR
 
 **Beneficios**:
 
-* Integrar aplicaciones de VM existentes en la malla sin modificarlas
+* Integrar aplicaciones de VM existentes en la malla sin modificaciones
 * Migrar a Kubernetes por etapas
-* Mantener una seguridad y observabilidad coherentes durante la migración
+* Mantener seguridad y observabilidad consistentes durante la migración
 
 #### 2. Política de seguridad unificada
 
@@ -1302,9 +1302,9 @@ spec:
         methods: ["*"]
 ```
 
-#### 3. Observabilidad coherente
+#### 3. Observabilidad consistente
 
-Las cargas de trabajo de VM proporcionan las mismas métricas, registros y trazado distribuido que los Pods de Kubernetes.
+Las cargas de trabajo de VM proporcionan las mismas métricas, registros y trazabilidad distribuida que los Pods de Kubernetes.
 
 ```promql
 # Unified metric query for VMs and pods
@@ -1318,15 +1318,15 @@ sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
 
 ### Limitaciones del registro de VM
 
-1. **Instalación manual de Envoy**: debe instalar y configurar manualmente el proxy Envoy en la VM
+1. **Instalación manual de Envoy**: se debe instalar y configurar manualmente el proxy Envoy en la VM
 2. **Conectividad de red**: se requiere conexión de red entre la VM y el cluster de Kubernetes
-3. **Gestión de certificados**: los certificados de cuenta de Service deben implementarse en la VM
-4. **Carga operativa**: se requieren gestión y actualizaciones de la versión de Envoy en la VM
-5. **Limitación de autoescalado**: no hay autoescalado como Kubernetes HPA
+3. **Gestión de certificados**: los certificados de cuenta de servicio deben desplegarse en la VM
+4. **Carga operativa**: se requiere gestión y actualización de la versión de Envoy en la VM
+5. **Limitación de auto-scaling**: no hay auto-scaling como Kubernetes HPA
 
 ### Ejemplo de uso práctico
 
-#### Escenario: integración de una base de datos heredada
+#### Escenario: integración de base de datos heredada
 
 ```yaml
 # 1. Define database service with ServiceEntry
@@ -1393,7 +1393,7 @@ spec:
 * Los Pods de Kubernetes acceden a la base de datos mediante `postgres.production.svc.cluster.local`
 * Cifrado mTLS automático entre la VM y los Pods
 * Política de control de acceso aplicada
-* Métricas y trazado distribuido recopilados automáticamente
+* Métricas y trazabilidad distribuida recopiladas automáticamente
 
 ### Resumen de la comparación de registro de cargas de trabajo
 
@@ -1426,39 +1426,39 @@ flowchart TB
     class mTLS,Traffic,Policy,Metrics feature;
 ```
 
-Gracias a las capacidades flexibles de registro de cargas de trabajo de Istio:
+Mediante las capacidades flexibles de registro de cargas de trabajo de Istio:
 
 * **Kubernetes Pod**: aplicaciones cloud-native
-* **Multi-Cluster**: multinube, distribución regional, recuperación ante desastres
+* **Multi-Cluster**: multi-cloud, distribución regional, recuperación ante desastres
 * **Virtual Machine**: aplicaciones heredadas, bases de datos, entornos híbridos
 
-Todas las cargas de trabajo reciben funciones coherentes de seguridad, gestión de tráfico y observabilidad.
+Todas las cargas de trabajo reciben funcionalidades coherentes de seguridad, gestión de tráfico y observabilidad.
 
-## Próximos pasos
+## Siguientes pasos
 
-Ahora comprende los conceptos básicos de Istio. Aprenda a usarlos en la práctica mediante los siguientes documentos:
+Ahora comprendes los conceptos básicos de Istio. Aprende a usarlos en la práctica mediante los siguientes documentos:
 
-### Funciones principales
+### Funcionalidades principales
 
-1. [**Gestión de tráfico**](traffic-management/)
+1. [**Gestión de tráfico**](traffic-management/README.md)
    * Uso de Gateway y VirtualService
    * Definición de DestinationRule y subset
    * ServiceEntry y WorkloadEntry (registro de VM)
    * Patrones de enrutamiento avanzados (Canary, pruebas A/B)
    * Traffic Mirroring y Shadowing
-2. [**Seguridad**](security/)
+2. [**Seguridad**](security/README.md)
    * Configuración de mTLS y PeerAuthentication
    * Autenticación (RequestAuthentication, JWT)
    * Autorización (AuthorizationPolicy)
    * Gestión de políticas de seguridad
    * Integración de autenticación externa
-3. [**Observabilidad**](/broken/pages/HT0uW6gT7EfVN0LF8wU5)
+3. [**Observabilidad**](observability/README.md)
    * Recopilación de métricas (Prometheus)
-   * Trazado distribuido (Jaeger, Zipkin)
+   * Trazabilidad distribuida (Jaeger, Zipkin)
    * Configuración de registros
-   * Visualización de service mesh de Kiali
+   * Visualización de Service Mesh con Kiali
    * Dashboards de Grafana
-4. [**Resiliencia**](resilience/)
+4. [**Resiliencia**](resilience/README.md)
    * Patrón Circuit Breaker
    * Configuración de Retry y Timeout
    * Rate Limiting
@@ -1467,8 +1467,8 @@ Ahora comprende los conceptos básicos de Istio. Aprenda a usarlos en la prácti
 
 ### Temas avanzados
 
-5. [**Temas avanzados**](advanced/)
-   * Modo Ambient (malla sin sidecar)
+5. [**Temas avanzados**](advanced/README.md)
+   * Ambient Mode (malla sin sidecar)
    * Configuración Multi-Cluster
    * Personalización de EnvoyFilter
    * DNS Proxy y Caching

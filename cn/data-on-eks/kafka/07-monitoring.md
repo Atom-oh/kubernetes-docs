@@ -1,15 +1,15 @@
 # 第 7 部分：监控
 
-> **支持的版本**: Strimzi 0.45+, Prometheus Operator, KEDA 2.x\
-> **最后更新**: July 9, 2026
+> **支持的版本**：Strimzi 0.45+、Prometheus Operator、KEDA 2.x\
+> **最后更新**：July 9, 2026
 
-Kafka cluster 需要的不仅仅是 broker heap、disk 和 network 图表 —— 你还需要了解 partition replication health 和 consumer processing speed，才能及早发现问题。本文档介绍如何使用 Prometheus 抓取 Strimzi 暴露的 broker metrics、单独衡量 consumer lag，以及使用 KEDA 自动扩展 consumers。
+Kafka 集群所需的不只是 broker 堆、磁盘和网络图表——还需要了解分区复制健康状况和消费者处理速度，以便及早发现问题。本文介绍如何使用 Prometheus 抓取 Strimzi 暴露的 broker 指标、如何单独测量消费者延迟，以及如何使用 KEDA 自动扩缩消费者。
 
-## 1. Strimzi 如何暴露 Metrics
+## 1. Strimzi 如何暴露指标
 
-Strimzi 会在每个 broker/controller/Connect component container 内运行 Prometheus JMX Exporter —— 不是作为单独的 sidecar container，而是作为加载到同一个 JVM process 中的 **JVM Java agent**。JMX Exporter 会读取 JVM 内部的 JMX MBeans（例如 `kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions`），并将它们转换为 Prometheus text-format 的 `/metrics` HTTP endpoint。哪些 MBeans 映射到哪些 metric names 和 labels，由存储在 `ConfigMap` 中的 relabeling configuration 定义，而 `Kafka` CR 的 `metricsConfig` 字段会指向该 `ConfigMap`。
+Strimzi 会在每个 broker/controller/Connect 组件容器内运行 Prometheus JMX Exporter——它不是独立的 sidecar 容器，而是加载到同一个 JVM 进程中的 **JVM Java agent**。JMX Exporter 读取 JVM 内部的 JMX MBean（例如 `kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions`），并将其转换为 Prometheus 文本格式的 `/metrics` HTTP 端点。哪些 MBean 映射到哪些指标名称和标签，由存储在 `ConfigMap` 中的重标签配置定义；`Kafka` CR 的 `metricsConfig` 字段则指向该 `ConfigMap`。
 
-Strimzi upstream repository 在 [`examples/metrics`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics) 下提供了 broker、Connect 和 Cruise Control 的示例 JMX Exporter configurations。实践中，团队通常会从这些示例开始，只调整所需规则，而不是从头编写 relabeling rules。
+Strimzi 上游仓库在 [`examples/metrics`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics) 下提供了适用于 broker、Connect 和 Cruise Control 的 JMX Exporter 配置示例。实践中，团队通常从这些示例开始，只调整所需规则，而不是从头编写重标签规则。
 
 ```yaml
 # kafka-metrics-config.yaml (excerpt, based on Strimzi's example)
@@ -56,21 +56,21 @@ spec:
           key: kafka-metrics-config.yml
 ```
 
-应用 `metricsConfig` 后，Strimzi 会自动在每个 broker container 内启用 JMX Exporter Java agent，并将引用的 `ConfigMap` rules file 挂载到同一个 container 中。随后，每个 broker pod 的 `9404` 端口（默认值）上的 `/metrics` path 就可以被抓取为 Prometheus-format metrics。同一个 `metricsConfig` 字段也可用于 `KafkaConnect`、`KafkaMirrorMaker2` 和 `CruiseControl` custom resources。
+应用 `metricsConfig` 后，Strimzi 会自动在每个 broker 容器内启用 JMX Exporter Java agent，并将所引用 `ConfigMap` 的规则文件挂载到同一容器中。随后，可以在每个 broker Pod 的端口 `9404`（默认值）的 `/metrics` 路径抓取 Prometheus 格式的指标。`KafkaConnect`、`KafkaMirrorMaker2` 和 `CruiseControl` 自定义资源同样提供 `metricsConfig` 字段。
 
-## 2. 核心 Broker Metrics
+## 2. 核心 Broker 指标
 
-Kafka 暴露了大量 JMX metrics，因此有必要缩小范围，明确哪些 metrics 在日常运维中真正重要。
+Kafka 暴露大量 JMX 指标，因此应聚焦于日常实际重要的指标。
 
-| Metric | 含义 | 健康值 / 需要关注的内容 |
+| 指标 | 含义 | 健康值 / 需要关注的情况 |
 | --- | --- | --- |
-| `kafka_server_replicamanager_underreplicatedpartitions` | 此 broker 作为 leader 的 partitions 中，其 in-sync replica (ISR) 集合小于配置的 replication factor 的数量 | **应为 0。** 任何大于 0 的值都表示一个或多个 followers 正落后于 leader —— 需要调查 network latency、broker overload 或 disk I/O bottlenecks。 |
-| `kafka_controller_kafkacontroller_activecontrollercount` | 此 broker/controller 当前是否为 active controller（0 或 1） | Cluster 范围内的 **sum 必须正好为 1**。sum 为 0 表示没有 active controller（正在进行 leader election 或出现故障）；sum 为 2 或更多则暗示 split-brain 状态，需要立即调查。 |
-| Request Handler Idle Ratio (`...requesthandleravgidlepercent...`) | Broker 的 request-handler thread pool 处于 idle 状态的时间比例 | 下降的值（例如低于 20%）表示 broker 正接近 CPU/thread 饱和。持续偏低的值是需要横向扩展 brokers 或重新均衡 partitions 的信号。 |
-| `kafka_server_brokertopicmetrics_bytesinpersec_oneminuterate` / `bytesoutpersec` | 按 topic 统计的 produce/consume throughput（bytes per second） | 用于 broker/network capacity planning，并检测单个 topics 上的 traffic spikes（hot partitions）。 |
-| ISR Shrink/Expand Rate (`kafka_server_replicamanager_isrshrinkspersec`, `isrexpandspersec`) | Replicas 离开（shrink）或重新加入（expand）ISR set 的速率（per second） | 频繁 shrink 表示 followers 反复失去同步，通常会先于 under-replicated partitions 增加出现。 |
+| `kafka_server_replicamanager_underreplicatedpartitions` | 此 broker 作为 leader 的分区中，其同步副本（ISR）集合小于配置副本因子的分区数量 | **应为 0。**任何大于 0 的值都意味着一个或多个 follower 落后于 leader——请调查网络延迟、broker 过载或磁盘 I/O 瓶颈。 |
+| `kafka_controller_kafkacontroller_activecontrollercount` | 此 broker/controller 当前是否为活跃 controller（0 或 1） | 集群范围内的**总和必须恰好为 1**。总和为 0 表示没有活跃 controller（正在进行 leader 选举或发生故障）；总和为 2 或更大则表明可能出现脑裂状况，需要立即调查。 |
+| 请求处理程序空闲比率 (`...requesthandleravgidlepercent...`) | broker 请求处理程序线程池处于空闲状态的时间比例 | 持续下降的值（例如低于 20%）表明 broker 正接近 CPU/线程饱和。持续偏低的值表明应横向扩展 broker 或重新平衡分区。 |
+| `kafka_server_brokertopicmetrics_bytesinpersec_oneminuterate` / `bytesoutpersec` | 每个 topic 每秒的生产/消费吞吐量（字节数） | 用于 broker/网络容量规划，以及检测单个 topic 上的流量峰值（热分区）。 |
+| ISR 收缩/扩展速率 (`kafka_server_replicamanager_isrshrinkspersec`, `isrexpandspersec`) | 副本每秒离开（收缩）或重新加入（扩展）ISR 集合的速率 | 频繁收缩意味着 follower 反复失去同步，通常会先于未充分复制分区数量的增加出现。 |
 
-在这些 metrics 中，**under-replicated partition count** 和 **active controller count** 最直接反映 cluster 的 data safety 和 availability，因此它们应该放在每个 dashboard 和 alert rule set 的最顶部。
+在这些指标中，**未充分复制分区数量**和**活跃 controller 数量**最直接反映集群的数据安全性和可用性，因此应置于每个仪表板和告警规则集的首位。
 
 ```promql
 # Cluster-wide active controller sum (should be 1)
@@ -80,13 +80,13 @@ sum(kafka_controller_kafkacontroller_activecontrollercount)
 kafka_server_replicamanager_underreplicatedpartitions > 0
 ```
 
-## 3. Consumer Lag 监控
+## 3. 消费者延迟监控
 
-**Consumer lag** 是指每个 partition 中，最新产生的 offset（log end offset）与 consumer group 最后提交的 offset 之间的差值。持续增长的 lag 表示 consumer group 无法跟上 produce rate —— 可能是处理速度慢、consumer 停滞，或反复 rebalancing 的信号。
+**消费者延迟**是指，对于每个分区，最新生产 offset（日志末尾 offset）与消费者组最后提交的 offset 之间的差值。持续增长的延迟意味着消费者组无法跟上生产速率——这表明处理缓慢、消费者停滞或反复重新平衡。
 
-Strimzi 通过这个 in-process Java agent 暴露的 JMX Exporter metrics 描述的是 **broker 自身的状态**（见上面的第 2 节），默认不包含 consumer group offsets 或 lag。计算 lag 需要将 consumer group 的 committed offsets（记录在内部 `__consumer_offsets` topic 中）与每个 topic 的最新 offset 进行关联，这超出了 broker-side exporter 的范围。因此，团队通常会运行一个专门用于 consumer lag 的独立 exporter。
+Strimzi 通过此进程内 Java agent 暴露的 JMX Exporter 指标描述的是 **broker 自身状态**（如上文第 2 节），默认不包括消费者组 offset 或延迟。计算延迟需要将消费者组已提交的 offset（在内部 `__consumer_offsets` topic 中跟踪）与每个 topic 的最新 offset 关联起来，这超出了 broker 端 exporter 的范围。因此，团队通常会运行专用于消费者延迟的独立 exporter。
 
-最常用的选项是 community project [`kafka-lag-exporter`](https://github.com/seglo/kafka-lag-exporter)（或类似 Burrow-style exporter），它作为 cluster 中自己的 `Deployment` 运行。它会按固定 interval 轮询 Kafka Admin API，读取每个 consumer group 的 committed offsets 和每个 topic 的 latest offsets，然后以 Prometheus format 暴露诸如 `kafka_consumergroup_group_lag`（按 group、topic 和 partition 拆分的 lag）这样的 metrics。
+最广泛使用的选择是社区项目 [`kafka-lag-exporter`](https://github.com/seglo/kafka-lag-exporter)（或类似的 Burrow 风格 exporter），它作为集群中的独立 `Deployment` 运行。它按一定间隔轮询 Kafka Admin API，以读取每个消费者组的已提交 offset 和每个 topic 的最新 offset，随后以 Prometheus 格式暴露诸如 `kafka_consumergroup_group_lag`（按组、topic 和分区细分的延迟）等指标。
 
 ```yaml
 # Minimal ConfigMap for kafka-lag-exporter
@@ -109,7 +109,7 @@ data:
     }
 ```
 
-部署该 exporter 且 Prometheus 正在抓取其 `/metrics` endpoint 后，就可以像这样查询 lag：
+部署此 exporter 并由 Prometheus 抓取其 `/metrics` 端点后，可按如下方式查询延迟：
 
 ```promql
 # Total lag per consumer group and topic (summed across partitions)
@@ -119,9 +119,9 @@ sum by (group, topic) (kafka_consumergroup_group_lag)
 sum by (group, topic) (kafka_consumergroup_group_lag) > 1000
 ```
 
-## 4. 使用 ServiceMonitor / PodMonitor 连接 Scraping
+## 4. 使用 ServiceMonitor / PodMonitor 配置抓取
 
-在运行 Prometheus Operator 的环境中（例如 kube-prometheus-stack），常见做法不是手动编辑 `scrape_configs`，而是声明一个通过 label 发现 targets 的 `PodMonitor` CRD。由于 brokers 是由 Strimzi 管理的 pods，而不是位于固定 `Service` 后面，因此使用 `PodMonitor` 直接选择 pods，比依赖基于 `Service` 的 `ServiceMonitor` 更可靠。
+在运行 Prometheus Operator 的环境（如 kube-prometheus-stack）中，通常的做法不是手动编辑 `scrape_configs`，而是声明一个按标签发现目标的 `PodMonitor` CRD。由于 broker 作为由 Strimzi 管理的 Pod 运行，而不是位于固定的 `Service` 后方，因此直接使用 `PodMonitor` 选择 Pod 比依赖基于 `Service` 的 `ServiceMonitor` 更可靠。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -145,7 +145,7 @@ spec:
       interval: 30s
 ```
 
-metrics 开始流动后，针对 under-replicated partitions 的 alerting 是最基础、也最应该先放置的安全网。下面的 `PrometheusRule` 会在 under-replicated partitions 持续高于 0 至少 5 分钟时触发。
+指标开始流入后，对未充分复制分区设置告警是最基本的安全保障。下方的 `PrometheusRule` 会在未充分复制分区持续高于 0 至少 5 分钟时触发。
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -177,9 +177,9 @@ spec:
             description: "The cluster-wide sum of active controllers is not 1. Check controller leader election status."
 ```
 
-## 5. 使用 KEDA 自动扩展 Consumers
+## 5. 使用 KEDA 自动扩缩消费者
 
-基于 CPU/memory 的 HPA 往往无法反映 consumer workload 的真实负载 —— 等待处理的 messages 数量。KEDA 的 Kafka scaler (`triggers.type: kafka`) 允许你改为基于 **consumer group lag** 扩展 consumer `Deployment`。KEDA 会通过 Kafka Admin API 直接查询所配置 topic/consumer group 的 lag，因此 scaling decisions 并不严格依赖第 3 节中的独立 lag exporter（不过该 exporter 对 dashboard 和 alerting 仍然有用）。
+基于 CPU/内存的 HPA 通常无法反映消费者工作负载的实际负载——等待处理的消息数量。KEDA 的 Kafka scaler（`triggers.type: kafka`）使你能够改为基于**消费者组延迟**扩缩消费者 `Deployment`。KEDA 通过 Kafka Admin API 直接查询已配置 topic/消费者组的延迟，因此扩缩决策并不严格依赖第 3 节中的独立延迟 exporter（尽管该 exporter 对仪表板和告警仍然有用）。
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -204,33 +204,33 @@ spec:
         allowIdleConsumers: "false"
 ```
 
-关键 trigger parameters：
+关键触发器参数：
 
-* **`bootstrapServers`**: KEDA 用于查询 lag 的 Kafka cluster bootstrap address
-* **`consumerGroup`**, **`topic`**: 被衡量 lag 的 consumer group 和 topic
-* **`lagThreshold`**: 每个 partition 的 lag value，超过该值时 KEDA 会添加另一个 replica（例如，每 50 个单位的 per-partition lag 增加一个 replica）
-* **`activationLagThreshold`**: 触发从 0 到 1 个 replica 初始 scale-up 所需的最小 lag。如果未设置，即使很小的 lag 也会立即扩展到 1。
-* **`allowIdleConsumers`**: 当为 `false`（默认值）时，KEDA 会限制 replicas，确保创建的 consumers 永远不会超过可消费的 partitions 数量。
+* **`bootstrapServers`**：KEDA 用来查询延迟的 Kafka 集群 bootstrap 地址
+* **`consumerGroup`**、**`topic`**：用于测量延迟的消费者组和 topic
+* **`lagThreshold`**：KEDA 添加另一个副本的每分区延迟阈值（例如，每 50 个单位的每分区延迟增加一个副本）
+* **`activationLagThreshold`**：从 0 初始扩展到 1 个副本所需的最小延迟。若未设置，即使很小的延迟也会立即扩展到 1。
+* **`allowIdleConsumers`**：当为 `false`（默认值）时，KEDA 会限制副本数，确保创建的消费者数量不会超过可消费的分区数量。
 
-应用此 `ScaledObject` 后，KEDA Operator 会在幕后创建并管理一个标准 Kubernetes HPA，并在 lag 缓解后于 `cooldownPeriod` 之后缩容。关于更广泛的 KEDA 概念 —— scaler types、architecture、zero scaling —— 请参阅专门的 [自动扩展：KEDA](../../autoscaling/01-keda.md) 文档。
+应用此 `ScaledObject` 后，KEDA Operator 会在幕后创建并管理标准 Kubernetes HPA，并在延迟消退后经过 `cooldownPeriod` 再缩容。有关更广泛的 KEDA 概念——scaler 类型、架构、缩放至零——请参阅专门的[自动扩缩：KEDA](../../autoscaling/01-keda.md)文档。
 
-## 6. Grafana Dashboards
+## 6. Grafana 仪表板
 
-Strimzi 在其 GitHub repository 的 [`examples/metrics/grafana-dashboards`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics/grafana-dashboards) 下提供了 broker、ZooKeeper（legacy mode）、Kafka Connect 和 Cruise Control 的示例 Grafana dashboard JSON。导入这些 dashboard 并调整 cluster name/namespace variables，通常比从头构建 panels 更快。
+Strimzi 在其 GitHub 仓库的 [`examples/metrics/grafana-dashboards`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics/grafana-dashboards) 下提供 broker、ZooKeeper（旧版模式）、Kafka Connect 和 Cruise Control 的 Grafana 仪表板 JSON 示例。导入这些示例并调整集群名称/namespace 变量，通常比从头构建面板更快。
 
-一个扎实的 Kafka dashboard 至少应覆盖以下 panel groups：
+一个完善的 Kafka 仪表板至少应涵盖以下面板组：
 
-* **Broker health**: 每个 broker 的 uptime、JVM heap usage、GC pause time、request-handler/network idle ratio
-* **ISR/replication status**: under-replicated partition count、ISR shrink/expand rate、active controller count（cluster-wide sum）
-* **Throughput**: 按 topic 和按 broker 统计的 bytes in/out per second、messages per second、per-partition throughput imbalance（hot-partition detection）
-* **Consumer lag**: 每个 consumer group 的 lag trend，并与 rebalance events 关联，以找出 sudden spikes 的原因
+* **Broker 健康状况**：每个 broker 的运行时间、JVM 堆使用量、GC 暂停时间、请求处理程序/网络空闲比率
+* **ISR/复制状态**：未充分复制分区数量、ISR 收缩/扩展速率、活跃 controller 数量（集群范围总和）
+* **吞吐量**：每个 topic 和每个 broker 每秒的输入/输出字节数、每秒消息数、每分区吞吐量不平衡（热分区检测）
+* **消费者延迟**：每个消费者组的延迟趋势，并与重新平衡事件关联以识别突然峰值的原因
 
 ## 后续步骤
 
-metrics collection、alerting 和 autoscaling 就绪后，下一步是将这一切应用到真实的运维标准中 —— SLOs、capacity planning 和 incident response procedures。这些内容将在 [第 8 部分：最佳实践](./08-best-practices.md) 中介绍。
+完成指标收集、告警和自动扩缩后，下一步是将这些内容应用到实际的运维标准中——SLO、容量规划和事件响应流程。[第 8 部分：最佳实践](./08-best-practices.md)对此进行了介绍。
 
-[返回主页](./)
+[返回主页](./README.md)
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试完成 [主题测验](../../quizzes/data-on-eks/kafka/07-monitoring-quiz.md)。
+要测试你在本章中学到的内容，请尝试[主题测验](../../quizzes/data-on-eks/kafka/07-monitoring-quiz.md)。
