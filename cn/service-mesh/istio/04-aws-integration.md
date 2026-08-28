@@ -6,7 +6,7 @@
 
 1. [AWS 负载均衡器集成](04-aws-integration.md#aws-load-balancer-integration)
 2. [Istio 与其他解决方案对比](04-aws-integration.md#istio-vs-other-solutions-comparison)
-3. [EKS 专用优化](04-aws-integration.md#eks-specific-optimization)
+3. [EKS 专属优化](04-aws-integration.md#eks-specific-optimization)
 4. [最佳实践](04-aws-integration.md#best-practices)
 
 ## AWS 负载均衡器集成
@@ -174,10 +174,10 @@ spec:
 #### NLB 优势
 
 * **高性能**：每秒可处理数百万个请求
-* **低延迟**：在第 4 层运行，响应迅速
+* **低延迟**：在第 4 层运行，可快速响应
 * **静态 IP**：可分配 Elastic IP
 * **协议支持**：TCP、UDP、TLS
-* **高性价比**：比 ALB 更便宜
+* **成本效益高**：比 ALB 更便宜
 
 #### NLB 使用场景
 
@@ -321,8 +321,8 @@ spec:
 #### ALB 优势
 
 * **高级路由**：基于路径、Header、查询字符串的路由
-* **WAF 集成**：通过 AWS WAF 提升安全性
-* **身份验证集成**：Cognito、OIDC 集成
+* **WAF 集成**：通过 AWS WAF 增强安全性
+* **身份验证集成**：集成 Cognito、OIDC
 * **ACM 集成**：自动证书管理
 * **容器优化**：针对 ECS、EKS 优化
 
@@ -341,7 +341,7 @@ spec:
 | **性能**     | 每秒数百万个请求        | 每秒数万个请求 |
 | **延迟**         | 极低                               | 低                                      |
 | **静态 IP**       | 支持（Elastic IP）                 | 不支持                            |
-| **TLS 终止** | 以 TCP 直通（由 Istio 处理） | 可由 ALB 处理                    |
+| **TLS 终止** | 作为 TCP 透传（由 Istio 处理） | 可在 ALB 处理                    |
 | **路由**         | 基于 IP/端口                          | 基于路径、Host、Header                 |
 | **WAF 集成** | 不可用                          | 可用                                |
 | **成本**            | 较低                                  | 相对较高                        |
@@ -409,12 +409,12 @@ flowchart TB
 | **资源开销**  | 高（每个 Pod 一个 Envoy）                 | 低（无 Sidecar）            |
 | **复杂性**         | 高                                 | 低                         |
 | **学习曲线**     | 陡峭                                | 平缓                      |
-| **流量管理** | 非常高级（细粒度控制） | 基础（功能足够） |
-| **mTLS**               | 自动，细粒度控制      | 支持                   |
+| **流量管理** | 非常高级（细粒度控制） | 基础（功能充足） |
+| **mTLS**               | 自动、细粒度控制      | 支持                   |
 | **可观测性**      | 丰富的指标、追踪                 | 基础指标               |
 | **故障注入**    | 支持                            | 不支持               |
-| **熔断器**    | 细粒度控制                 | 基础功能         |
-| **限流**      | 本地 + 全局                       | 基础功能         |
+| **Circuit Breaker**    | 细粒度控制                 | 基础功能         |
+| **Rate Limiting**      | 本地 + 全局                       | 基础功能         |
 | **多集群**      | 强大支持                       | 跨 VPC 连接      |
 | **跨账户**      | 复杂                              | 简单（原生支持）     |
 | **成本**               | 计算成本（EC2）                   | 服务使用成本          |
@@ -423,26 +423,26 @@ flowchart TB
 
 #### 何时选择 Istio
 
-**以下情况适合使用 Istio：**
+**Istio 适用于以下情况：**
 
 1. **需要细粒度流量控制**
-   * 金丝雀部署、A/B 测试、Traffic Mirroring
+   * 金丝雀发布、A/B 测试、流量镜像
    * 复杂路由规则（基于 Header、Cookie 等）
    * 用于混沌工程的故障注入
-2. **安全要求严格**
-   * 服务之间自动 mTLS 加密
+2. **具有严格安全要求**
+   * 服务间自动 mTLS 加密
    * 细粒度授权策略
    * JWT 验证、RBAC
 3. **需要高级可观测性**
-   * 详细指标（Latency P50/P95/P99）
+   * 详细指标（延迟 P50/P95/P99）
    * 分布式追踪（Jaeger、Zipkin）
-   * Service 拓扑可视化（Kiali）
+   * 服务拓扑可视化（Kiali）
 4. **多集群 Mesh**
    * 多个 EKS 集群之间的通信
    * 跨集群故障转移
    * 全局负载均衡
 5. **供应商独立性**
-   * 可迁移至其他云或本地环境
+   * 可迁移到其他云或本地环境
    * 使用 Kubernetes 标准
 
 **示例：Istio 的高级流量管理**
@@ -493,27 +493,27 @@ spec:
 
 #### 何时选择 VPC Lattice
 
-**以下情况适合使用 VPC Lattice：**
+**VPC Lattice 适用于以下情况：**
 
-1. **简单 Service 连接**
+1. **简单的服务连接**
    * 仅需要基础负载均衡和路由
    * 快速实施很重要
 2. **低运维开销**
    * 偏好 AWS 托管服务
-   * 没有 Sidecar 管理负担
+   * 无需承担 Sidecar 管理负担
 3. **跨 VPC/账户通信**
-   * 跨多个 AWS 账户连接 Service
-   * 无需 VPC Peering 的通信
+   * 连接多个 AWS 账户中的服务
+   * 无需 VPC 对等连接即可通信
 4. **混合环境**
    * EKS + EC2 + Lambda 混合环境
-   * 使用 Kubernetes 以外的多种计算类型
+   * 使用 Kubernetes 之外的多种计算类型
 5. **成本优化**
    * 降低 Sidecar 资源成本
-   * 小规模 Service
+   * 小规模服务
 
 #### 同时使用 Istio + VPC Lattice
 
-这两种解决方案并不相互排斥，可以一起使用：
+这两种解决方案并不互斥，可以同时使用：
 
 ```mermaid
 flowchart TB
@@ -556,9 +556,9 @@ flowchart TB
 
 **使用场景：**
 
-* **集群内部**：使用 Istio 进行细粒度流量管理和安全防护
+* **集群内部**：使用 Istio 进行细粒度流量管理和安全控制
 * **跨集群/跨账户**：使用 VPC Lattice 实现简单连接
-* **混合环境**：使用 VPC Lattice 连接 Istio 集群与 Lambda/EC2
+* **混合环境**：使用 VPC Lattice 将 Istio 集群与 Lambda/EC2 连接
 
 ### Istio 与 Cilium（基于 eBPF）
 
@@ -570,9 +570,9 @@ Cilium 是使用 eBPF 的 Kubernetes 网络和安全解决方案。
 | -------------------- | --------------------------------- | ------------------------------ |
 | **技术栈** | Envoy Proxy（Sidecar）             | eBPF（内核级）            |
 | **主要用途**  | Service Mesh                      | CNI + Service Mesh             |
-| **网络**       | 在 Kubernetes CNI 之上运行 | 自行提供 CNI            |
-| **性能**      | 良好                              | 出色（内核级）       |
-| **资源使用量**   | 高（Sidecar）                    | 低（内核级）             |
+| **网络**       | 运行在 Kubernetes CNI 之上 | 自行提供 CNI            |
+| **性能**      | 良好                              | 卓越（内核级）       |
+| **资源使用**   | 高（Sidecar）                    | 低（内核级）             |
 | **L7 功能**      | 非常强大                     | 基础                          |
 | **可观测性**    | 丰富                              | Hubble（基础）                 |
 | **学习曲线**   | 陡峭                             | 陡峭                          |
@@ -584,13 +584,13 @@ Cilium 是使用 eBPF 的 Kubernetes 网络和安全解决方案。
 | ---------------------- | ------------------------------- | ----------------------------------- |
 | **Network Policy**     | Kubernetes + Istio              | Kubernetes + Cilium（更强大） |
 | **L7 负载均衡**  | 非常细粒度               | 基础                               |
-| **mTLS**               | 自动，细粒度控制 | 支持                           |
+| **mTLS**               | 自动、细粒度控制 | 支持                           |
 | **流量管理** | 非常高级                   | 基础                               |
 | **可观测性**      | Prometheus、Jaeger、Kiali       | Hubble                              |
-| **性能**        | 良好                            | 出色                           |
+| **性能**        | 良好                            | 卓越                           |
 | **多集群**      | 强大                          | Cluster Mesh                        |
 
-#### 如何选择
+#### 何时选择哪一种
 
 **选择 Istio：**
 
@@ -607,14 +607,14 @@ Cilium 是使用 eBPF 的 Kubernetes 网络和安全解决方案。
 
 **同时使用：**
 
-* 可将 Cilium 用作 CNI，并将 Istio 用作 Service Mesh
-* 但应考虑功能重叠及复杂性增加
+* 可以使用 Cilium 作为 CNI，Istio 作为 Service Mesh
+* 但应考虑功能重叠和增加的复杂性
 
-## EKS 专用优化
+## EKS 专属优化
 
 ### IAM Roles for Service Accounts (IRSA) 集成
 
-设置 IRSA，使 Istio 工作负载能够安全访问 AWS 服务。
+配置 IRSA，使 Istio 工作负载能够安全访问 AWS 服务。
 
 #### IRSA 配置
 
@@ -657,7 +657,7 @@ eksctl create iamserviceaccount \
     --approve
 ```
 
-#### 将 Istio 与 IRSA 配合使用
+#### 将 Istio 与 IRSA 一起使用
 
 ```yaml
 apiVersion: v1
@@ -693,7 +693,7 @@ spec:
 
 ### AWS Certificate Manager (ACM) 集成
 
-如何将 ACM 证书与 Istio Gateway 配合使用。
+介绍如何将 ACM 证书与 Istio Gateway 一起使用。
 
 #### 在 NLB 处终止 TLS
 
@@ -761,7 +761,7 @@ spec:
 
 ### CloudWatch Container Insights 集成
 
-通过将 Istio 指标发送到 CloudWatch 来实现统一监控。
+通过将 Istio 指标发送到 CloudWatch，实现统一监控。
 
 #### CloudWatch Agent 配置
 
@@ -939,27 +939,27 @@ spec:
 
 * ACM 证书自动续订
 * 易于管理
-* 降低 Istio 负载
+* 减少 Istio 负载
 
 **在 Istio 处终止：**
 
 * 需要端到端加密
-* 需要细粒度 TLS 策略控制
+* 细粒度 TLS 策略控制
 * 使用 mTLS
 
 ### 3. 成本优化
 
 * **Spot Instances**：用于 Istio Gateway 工作负载
 * **Graviton Instances**：使用基于 ARM 的实例节省成本
-* **资源限制**：设置合适的 Sidecar 资源限制
-* **Ambient Mode**：考虑使用以消除 Sidecar 开销
+* **资源限制**：设置适当的 Sidecar 资源限制
+* **Ambient Mode**：考虑用于消除 Sidecar 开销
 
 ### 4. 安全
 
-* **IRSA**：使用 IAM roles 访问 AWS 服务
+* **IRSA**：使用 IAM 角色访问 AWS 服务
 * **Security Groups**：最小权限原则
-* **mTLS**：启用服务之间的加密
-* **Network Policy**：与 Cilium 或 Calico 配合使用
+* **mTLS**：启用服务间加密
+* **Network Policy**：与 Cilium 或 Calico 一起使用
 
 ### 5. 监控
 
@@ -970,16 +970,16 @@ spec:
 
 ## 后续步骤
 
-完成 AWS 集成后，请参阅以下文档：
+完成 AWS 集成后，请参考以下文档：
 
-1. [**流量管理**](traffic-management/)：高级流量管理功能
-2. [**安全**](security/)：mTLS 和身份验证/授权
-3. [**可观测性**](/broken/pages/HT0uW6gT7EfVN0LF8wU5)：指标、日志、追踪收集
+1. [**流量管理**](traffic-management/README.md)：高级流量管理功能
+2. [**安全**](security/README.md)：mTLS 和身份验证/授权
+3. [**可观测性**](observability/README.md)：指标、日志和追踪收集
 
 ## 参考资料
 
 * [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
-* [EKS 最佳实践 - 网络](https://aws.github.io/aws-eks-best-practices/networking/)
-* [VPC Lattice 文档](https://docs.aws.amazon.com/vpc-lattice/)
-* [Cilium 文档](https://docs.cilium.io/)
+* [EKS Best Practices - Networking](https://aws.github.io/aws-eks-best-practices/networking/)
+* [VPC Lattice Documentation](https://docs.aws.amazon.com/vpc-lattice/)
+* [Cilium Documentation](https://docs.cilium.io/)
 * [AWS Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)

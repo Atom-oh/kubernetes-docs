@@ -1,56 +1,55 @@
-# 第4部: Schema Registry（スキーマレジストリ）
+# パート 4: Schema Registry
 
-> **サポート対象バージョン**: Karapace 4.x, Apicurio Registry 3.x, Confluent Schema Registry (compatible API)\
+> **サポート対象バージョン**: Karapace 4.x, Apicurio Registry 3.x, Confluent Schema Registry (互換 API)\
 > **最終更新**: July 9, 2026
 
 ## Schema Registry が必要な理由
 
-Kafka 自体は、すべてのメッセージを不透明なバイト配列として扱います。producer がその配列にどのような形式で書き込むかは気にしません。問題は、producer と consumer が通常は別々のアプリケーションであり、異なるチームが所有し、異なるスケジュールでデプロイされることです。producer がフィールドを追加したり型を変更したりした瞬間、その変更を知らない consumer はメッセージのデシリアライズに失敗するか、壊れた値を読み取ってしまいます。
+Kafka 自体はすべてのメッセージを不透明なバイト配列として扱います。producer がその配列にどの形式で書き込むかは関知しません。問題は、producer と consumer は通常別々のアプリケーションであり、異なるチームが所有し、異なるスケジュールでデプロイされることです。producer がフィールドを追加したり型を変更した瞬間に、その変更を認識していない consumer はメッセージのデシリアライズに失敗するか、壊れた値を読み取ることになります。
 
-### Schema-less JSON の問題
+### Schema のない JSON の問題
 
 ```json
 {"orderId": "ORD-1001", "amount": 42.5, "currency": "USD"}
 ```
 
-このような生の JSON payload は人間が読みやすい一方で、実際のコストを伴います。
+このような生の JSON payload は人間にとって読みやすい一方で、実際のコストを伴います。
 
-* **強制される契約がない**: producer が `amount` を密かに文字列に変更しても、それを止めるものがありません。
-* **検証は runtime のみ**: 欠落フィールドや型の不一致は、consumer が payload を解析しようとしたときに初めて表面化します。
-* **Payload サイズ**: フィールド名がすべてのメッセージで繰り返されるため、バイナリ形式より大きくなり、高スループットでは実際のネットワーク/ストレージコストになります。
-* **バージョン履歴がない**: 「この topic の schema のバージョン 3 はどのようなものだったか？」に答える方法がありません。
+* **強制される契約がない**: producer が `amount` を文字列に黙って変更することを防ぐものはありません。
+* **検証は runtime のみ**: 欠落したフィールドや型の不一致は、consumer が payload をパースしようとしたときに初めて表面化します。
+* **Payload サイズ**: フィールド名はすべてのメッセージで繰り返され、バイナリ形式より大きくなります。高スループットでは、実際のネットワーク・ストレージコストになります。
+* **バージョン履歴がない**: 「この topic の schema のバージョン 3 はどのようなものだったか」に答える方法がありません。
 
 ### Schema Registry が解決すること
 
-Schema Registry は、Avro、Protobuf、JSON Schema のような構造化形式の schema を一元的に保存し、バージョン管理し、バージョン間の互換性ルールを強制する独立した service です。流れはおおよそ次のようになります。
+Schema Registry は、Avro、Protobuf、JSON Schema などの構造化形式の schema を一元的に保存・バージョン管理し、バージョン間の互換性ルールを強制する独立したサービスです。フローはおおよそ次のようになります。
 
-1. メッセージを送信する前に、producer は自分の schema を registry に登録します（または検索します）。
-2. registry は schema ID を返し、producer は完全な schema の代わりに、その ID だけを先頭に付けて（通常は 5-byte の magic-byte + ID header）payload をシリアライズします。
-3. consumer はメッセージに埋め込まれた schema ID を読み取り、対応する schema を registry から取得して、それに従ってデシリアライズします。
-4. 新しい schema version が登録されると、registry は互換性ルールに照らして確認し、違反している場合は登録を即座に拒否します。
+1. メッセージを送信する前に、producer は自身の schema を registry に登録（または検索）します。
+2. registry は schema ID を返し、producer は完全な schema の代わりに、その ID だけを先頭に付加して payload をシリアライズします（通常は 5 バイトの magic-byte + ID header）。
+3. consumer はメッセージに埋め込まれた schema ID を読み取り、registry から一致する schema を取得して、それに従ってデシリアライズします。
+4. 新しい schema バージョンが登録されると、registry は互換性ルールに照らしてチェックし、違反していれば登録を完全に拒否します。
 
-これにより、producer と consumer は **互いの deployment schedule を知らなくても** 独立して進化できます。また、wire payload には schema ID だけが含まれるため、Avro/Protobuf のバイナリエンコーディングは JSON よりも大幅に小さくなります。
+これにより、producer と consumer は**互いのデプロイスケジュールを知ることなく**独立して進化できます。また、wire payload には schema ID だけが含まれるため、Avro/Protobuf のバイナリエンコーディングは JSON より大幅に小さくなります。
 
 ## 主要な実装の比較
 
 | | Karapace | Apicurio Registry | Confluent Schema Registry |
 | --- | --- | --- | --- |
 | **ベンダー** | Aiven | Red Hat | Confluent |
-| **ライセンス** | Apache License 2.0 | Apache License 2.0 | Confluent Community License (2018 年以降、完全な open source ではない) |
-| **サポート形式** | Avro, JSON Schema | Avro, Protobuf, JSON Schema, OpenAPI, AsyncAPI, GraphQL, Kafka Connect schemas, etc. | Avro, Protobuf, JSON Schema |
-| **API 互換性** | Confluent REST API と互換 | Confluent-compatible mode (`ccompat`) | 元の API (de facto standard) |
-| **Storage backend** | Kafka topic | Kafka topic or SQL (e.g. PostgreSQL) | Kafka topic |
-| **同梱 REST Proxy** | Yes (Karapace REST Proxy) | No (registry only) | Separate commercial REST Proxy |
-| **Commercial support terms** | Aiven の managed service、または community 経由 | Red Hat subscription 経由 | scale 時に Confluent Platform licensing が必要 |
-| **EKS/Strimzi との適合性** | 強い — 純粋な open source、軽量 | 強い — multi-format、multi-backend | ライセンス確認が必要 |
+| **ライセンス** | Apache License 2.0 | Apache License 2.0 | Confluent Community License (2018 年以降は完全なオープンソースではない) |
+| **サポート形式** | Avro, JSON Schema | Avro, Protobuf, JSON Schema, OpenAPI, AsyncAPI, GraphQL, Kafka Connect schemas, など | Avro, Protobuf, JSON Schema |
+| **API 互換性** | Confluent REST API と互換 | Confluent 互換モード (`ccompat`) | オリジナル API (事実上の標準) |
+| **バンドルされた REST Proxy** | あり (Karapace REST Proxy) | なし (registry のみ) | 商用の REST Proxy が別途必要 |
+| **商用サポート条件** | Aiven のマネージドサービスまたはコミュニティ経由 | Red Hat サブスクリプション経由 | 大規模利用では Confluent Platform のライセンスが必要 |
+| **EKS/Strimzi への適合性** | 強い — 純粋なオープンソースで軽量 | 強い — 複数形式・複数 backend | ライセンスレビューが必要 |
 
-**自己管理の EKS + Strimzi stack では、Karapace または Apicurio Registry を推奨します。** どちらも Apache-2.0 license で提供され、再配布や変更に制限はありません。対照的に、Confluent Schema Registry の Confluent Community License は、競合する managed service として提供することを明示的に禁止しており、2018 年以降は完全な open source ではありません。`kafka-avro-serializer` のような client-side library は現在も Confluent から公開されていますが、REST API には互換性があるため、`schema.registry.url` を Karapace または Apicurio に向けるだけで、通常はコード変更なしで動作します。
+**セルフマネージドの EKS + Strimzi スタックには、Karapace または Apicurio Registry を推奨します。**どちらも Apache-2.0 ライセンスで提供され、再配布や変更に制限はありません。一方、Confluent Schema Registry の Confluent Community License は、競合するマネージドサービスとして提供することを明示的に禁止しています。これは 2018 年以降、完全なオープンソースではありません。`kafka-avro-serializer` などの client-side library は引き続き Confluent から公開されていますが、REST API には互換性があるため、通常は `schema.registry.url` を Karapace または Apicurio に向ければコード変更なしで動作します。
 
-## Serialization Formats
+## シリアライゼーション形式
 
 ### Avro
 
-Avro は schema を JSON として定義し、data をコンパクトなバイナリ形式にシリアライズします。Kafka ecosystem で最も広く使われている形式であり、特に優れている機能は **schema resolution** です。**writer schema**（data が書き込まれたときに使用された schema）と **reader schema**（読み戻すときに使用される schema）は完全に一致している必要がなく、Avro が明確に定義されたルールに従って差分を解決します。
+Avro は schema を JSON として定義し、データをコンパクトなバイナリ形式にシリアライズします。Kafka ecosystem で最も広く使われている形式であり、際立った特徴は **schema resolution** です。**writer schema**（データの書き込み時に使用）と **reader schema**（データを読み戻す際に使用）は、完全に一致している必要はありません。Avro は明確に定義されたルールに従って差分を解決します。
 
 ```json
 {
@@ -69,7 +68,7 @@ Avro は schema を JSON として定義し、data をコンパクトなバイ�
 
 ### Protobuf
 
-Protobuf schema は `.proto` file で定義され、`protoc` でコンパイルして各 target language のコードを生成します。Avro と同様にコンパクトなバイナリエンコーディングを生成しますが、明示的なフィールド番号を割り当て、より厳密な型システムを持つため、言語をまたいでより高品質な生成コードを作りやすくなります。Kafka ecosystem での Protobuf 採用は着実に増えています。
+Protobuf schema は `.proto` ファイルで定義され、`protoc` でコンパイルして各ターゲット言語のコードを生成します。Avro と同様にコンパクトなバイナリエンコーディングを生成しますが、明示的なフィールド番号を割り当て、より厳格な型システムを備えているため、言語をまたいでより高品質な生成コードになる傾向があります。Kafka ecosystem では Protobuf の採用が着実に増えています。
 
 ```protobuf
 syntax = "proto3";
@@ -87,58 +86,58 @@ message Order {
 
 ### JSON Schema
 
-JSON Schema は JSON payload 自体の検証ルールを定義します。人間が読みやすく debug しやすい一方で、フィールド名がすべてのメッセージで繰り返されるため、payload は Avro や Protobuf よりかなり大きくなります。schema validation が必要だが、throughput や storage cost への感度が比較的低い workload に適しています。
+JSON Schema は JSON payload 自体の検証ルールを定義します。人間にとって読みやすくデバッグも容易ですが、フィールド名が各メッセージで繰り返されるため、payload は Avro や Protobuf よりかなり大きくなります。schema 検証が必要である一方、スループットやストレージコストへの感度が低い workload に適しています。
 
 ### 3 つの形式の比較
 
 | | Avro | Protobuf | JSON Schema |
 | --- | --- | --- | --- |
-| Schema definition | JSON | `.proto` IDL | JSON Schema |
-| Payload size | 小さい | 小さい | 大きい |
-| Human-readable | schema のみ | schema のみ | payload も可 |
-| Cross-language codegen | 良い | 非常に良い | 良い |
-| Kafka ecosystem adoption | 非常に高い | 高い (成長中) | 中程度 |
-| Schema evolution rules | Writer/reader resolution | Field-number based | JSON Schema validation rules |
+| Schema 定義 | JSON | `.proto` IDL | JSON Schema |
+| Payload サイズ | 小 | 小 | 大 |
+| 人間が読めるか | Schema のみ | Schema のみ | Payload も |
+| クロス言語 codegen | 良好 | 優秀 | 良好 |
+| Kafka ecosystem での採用状況 | 非常に高い | 高い（増加中） | 中程度 |
+| Schema evolution ルール | Writer/reader resolution | フィールド番号ベース | JSON Schema 検証ルール |
 
 ## 互換性戦略
 
-新しい schema version が登録されると、registry は設定された compatibility mode に従って、前の version と照らし合わせて確認します。この 4 つの mode を正しく理解することは重要です。これは schema 管理で最もよく混同される概念です。
+新しい schema バージョンが登録されると、registry は設定された互換性モードに従って前のバージョンと比較します。この 4 つのモードを正しく理解することは重要です。これは schema 管理において最も誤解されやすい概念です。
 
-| Mode | Meaning | Deployment order |
+| モード | 意味 | デプロイ順序 |
 | --- | --- | --- |
-| **BACKWARD** | **new** schema を使う reader が、**old** schema で書かれた data を読める必要がある | **consumers** を先に upgrade |
-| **FORWARD** | **old** schema を使う reader が、**new** schema で書かれた data を読める必要がある | **producers** を先に upgrade |
-| **FULL** | BACKWARD と FORWARD の両方が成立 | どちらの順序でも安全 |
-| **NONE** | 互換性チェックなし | 手動調整が必要 |
+| **BACKWARD** | **新しい** schema を使用する reader が、**古い** schema で書き込まれたデータを読み取れる必要がある | 先に **consumer** をアップグレード |
+| **FORWARD** | **古い** schema を使用する reader が、**新しい** schema で書き込まれたデータを読み取れる必要がある | 先に **producer** をアップグレード |
+| **FULL** | BACKWARD と FORWARD の両方を満たす | どちらの順序でも安全 |
+| **NONE** | 互換性チェックなし | 手動での調整が必要 |
 
-多くの人が最もよく逆に理解してしまう点は次のとおりです。
+人々が最もよく逆に理解する部分:
 
-* **BACKWARD** は「new schema（reader として）が old data を読める」ことを意味します。実際には、**new-schema consumer を先にデプロイしても安全** ということです。producer がまだ old schema で書き込んでいる間でも、upgrade 済みの consumer はそれを問題なく読み取れます。
-* **FORWARD** は「old schema（reader として）が new data を読める」ことを意味します。つまり、**producer を new schema に先に upgrade しても安全** ということです。old schema のまま動作している consumer も引き続き動作します。
+* **BACKWARD** は「新しい schema（reader として）が古いデータを読み取れる」ことを意味します。実際には、**新しい schema の consumer を先にデプロイ**しても安全です。producer がまだ古い schema で書き込んでいる間でも、アップグレード済みの consumer は問題なく読み取れます。
+* **FORWARD** は「古い schema（reader として）が新しいデータを読み取れる」ことを意味します。つまり、**producer を先に新しい schema へアップグレード**しても安全です。古い schema で稼働している consumer は引き続き動作します。
 
-### Backward-Compatible Change の例
+### Backward-Compatible な変更の例
 
-`Order` schema に default value 付きの optional field を追加することは、BACKWARD compatible です。
+`Order` schema に default 値を持つ optional field を追加することは、BACKWARD 互換です。
 
 ```json
 { "name": "discountCode", "type": ["null", "string"], "default": null }
 ```
 
-new schema を使う consumer が old data（このフィールドを持たない data）を読む場合、単に `default` value（`null`）を取得するだけで、失敗しません。
+新しい schema を使用する consumer が、この field を持たない古いデータを読み取る場合、単に `default` 値（`null`）を取得するため、失敗しません。
 
 ### 破壊的変更の例
 
-これらは典型的な BACKWARD-compatibility 違反です。
+以下は典型的な BACKWARD 互換性違反です。
 
-* **default のない required field の追加**: default のない新しい `discount_code` field を追加すると、new-schema reader は old data に存在しなかった field を期待するため、失敗します。（逆に、field を *削除* することは BACKWARD compatible ですが、代わりに FORWARD を壊します。old-schema reader は、削除済みの field が new data 上でも required であることを依然として期待するためです。）
-* **field type の変更**: `amount` を `double` から `string` に切り替えると、既存のバイナリエンコード済み data を new type として decode できなくなります。
-* **field の rename**（alias なし）: reader は新しい名前で field を探しますが、old data には古い名前でしか存在しません。
+* **default なしで必須 field を追加する**: default のない新しい `discount_code` field を追加すると、新しい schema の reader は、その field が存在したことのない古いデータに field を期待するため失敗します。（逆に、field を*削除する*ことは BACKWARD 互換ですが、代わりに FORWARD を破壊します。古い schema の reader は、新しいデータで削除された field が依然として必須であると期待するためです。）
+* **field の型を変更する**: `amount` を `double` から `string` に変更すると、既存のバイナリエンコード済みデータを新しい型としてデコードできなくなります。
+* **field を名前変更する**（alias なし）: reader は新しい名前で field を探しますが、古いデータには古い名前でしか存在しません。
 
 ## Strimzi/EKS へのデプロイ
 
-### Apicurio Registry のデプロイ (Kafka-Topic Storage)
+### Apicurio Registry のデプロイ（Kafka-Topic Storage）
 
-Strimzi-managed Kafka cluster がすでに動作している前提で、Kafka-topic storage engine を backend として、同じ namespace に Deployment として Apicurio Registry をデプロイできます。
+Strimzi 管理の Kafka cluster がすでに稼働していると仮定すると、Kafka-topic storage engine を backing として、同じ namespace に Apicurio Registry を Deployment としてデプロイできます。
 
 ```yaml
 apiVersion: apps/v1
@@ -180,11 +179,11 @@ spec:
       targetPort: 8080
 ```
 
-Apicurio は `kafkasql` の代わりに SQL backend（`APICURIO_STORAGE_KIND=sql`）もサポートしているため、すでに PostgreSQL/RDS instance を運用している場合は、registry をそちらに向けることもできます。対照的に Karapace は常に schema を Kafka topic（`_schemas`）に保存し、別個の backend configuration は必要ありません。
+Apicurio は `kafkasql` の代わりに SQL backend（`APICURIO_STORAGE_KIND=sql`）もサポートしているため、すでに PostgreSQL/RDS instance を実行している場合は、registry をそちらに向けることもできます。一方 Karapace は、常に Kafka topic（`_schemas`）に schema を保存し、別途 backend 設定を必要としません。
 
 ### Schema の登録
 
-registry が起動したら、schema は REST API（Confluent-compatible endpoint を使用）を通じて登録します。
+registry の実行後、schema は REST API を通じて登録されます（Confluent 互換 endpoint を使用）。
 
 ```bash
 curl -X POST http://apicurio-registry.kafka.svc:8080/apis/ccompat/v6/subjects/orders-value/versions \
@@ -192,23 +191,23 @@ curl -X POST http://apicurio-registry.kafka.svc:8080/apis/ccompat/v6/subjects/or
   -d '{"schema": "{\"type\":\"record\",\"name\":\"Order\",\"fields\":[{\"name\":\"orderId\",\"type\":\"string\"}]}"}'
 ```
 
-### Client Configuration
+### Client 設定
 
-Kafka producer/consumer application は、serializer を registry URL に向けます。
+Kafka producer/consumer アプリケーションは、serializer を registry URL に向けます。
 
 ```properties
 value.serializer=io.confluent.kafka.serializers.KafkaAvroSerializer
 schema.registry.url=http://apicurio-registry.kafka.svc:8080/apis/ccompat/v6
 ```
 
-同じ `KafkaAvroSerializer` class は Karapace に対しても動作します。`schema.registry.url` を Karapace の REST endpoint（default では port 8081）に向けるだけです。registry implementation を入れ替えても application code を変更する必要がないことこそ、Confluent-compatible API が提供する価値です。
+同じ `KafkaAvroSerializer` class は Karapace に対しても動作します。`schema.registry.url` を Karapace の REST endpoint（デフォルトでは port 8081）に向けるだけです。registry 実装を入れ替えてもアプリケーションコードを変更する必要はありません。これこそが Confluent 互換 API が提供する価値です。
 
-## 次のステップ
+## 次へ
 
-この部では、Schema Registry が、producer と consumer の両方が独立して進化する中で、data contract を安全に保つ方法を扱いました。第5部では Kafka Connect と MirrorMaker に進み、external system との統合と cluster 間の data replication を扱います。
+このパートでは、producer と consumer がそれぞれ独立して進化する中で、Schema Registry が両者間のデータ契約を安全に保つ仕組みを説明しました。パート 5 では Kafka Connect と MirrorMaker に進みます。外部システムとの統合、および cluster 間でのデータレプリケーションを扱います。
 
-[メインページに戻る](./)
+[メインページに戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するために、[Topic Quiz](../../quizzes/data-on-eks/kafka/04-schema-registry-quiz.md) を試してみてください。
+この章で学んだ内容を確認するには、[Topic Quiz](../../quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)に挑戦してください。

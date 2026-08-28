@@ -1,10 +1,10 @@
 # 第 3 部分：网络模式
 
-> **支持的版本**: Calico v3.29+ / Kubernetes 1.28+ **最后更新**: February 23, 2026
+> **支持的版本**：Calico v3.29+ / Kubernetes 1.28+ **最后更新**：February 23, 2026
 
 ## 概述
 
-Calico 支持多种网络模式，以适应不同的基础设施要求、性能需求和运维约束。本节将深入介绍每种网络模式，帮助你为环境选择并配置最佳模式。
+Calico 支持多种网络模式，以满足不同的基础设施要求、性能需求和运维约束。本节将深入介绍每种网络模式，帮助您为环境选择和配置最佳模式。
 
 ## 网络模式概览
 
@@ -41,7 +41,7 @@ flowchart TD
 
 ## IPIP 模式
 
-IP-in-IP（IPIP）是 Calico 的默认封装模式。它将原始 IP 数据包封装在另一个 IP 数据包中，以实现跨子网通信。
+IP-in-IP (IPIP) 是 Calico 的默认封装模式。它将原始 IP 数据包封装在另一个 IP 数据包内，以实现跨子网通信。
 
 ### IPIP 数据包结构
 
@@ -68,15 +68,15 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 ### IPIP 模式选项
 
-| Mode            | Description                               | Use Case                                   |
+| 模式            | 描述                               | 使用场景                                   |
 | --------------- | ----------------------------------------- | ------------------------------------------ |
-| **Always**      | All pod-to-pod traffic is encapsulated    | Cloud environments, simple setup           |
-| **CrossSubnet** | Only cross-subnet traffic is encapsulated | Hybrid environments, optimized performance |
-| **Never**       | IPIP disabled (use with Direct routing)   | On-premises with BGP                       |
+| **Always**      | 所有 Pod 到 Pod 的流量都会被封装    | 云环境，简单设置           |
+| **CrossSubnet** | 仅跨子网流量会被封装 | 混合环境，优化的性能 |
+| **Never**       | 禁用 IPIP（与 Direct 路由一起使用）   | 使用 BGP 的本地部署环境                       |
 
 ### IPIP CrossSubnet 模式
 
-CrossSubnet 是一种优化方式，仅封装跨越 L3 边界的流量：
+CrossSubnet 是一种优化方式，仅对跨越 L3 边界的流量进行封装：
 
 ```mermaid
 flowchart TD
@@ -173,7 +173,7 @@ sequenceDiagram
 
 ## VXLAN 模式
 
-VXLAN（Virtual Extensible LAN）是一种业界标准的覆盖网络协议，可将第 2 层帧封装在 UDP 数据包中。
+VXLAN（Virtual Extensible LAN）是一种行业标准的覆盖网络协议，可将第 2 层帧封装在 UDP 数据包中。
 
 ### VXLAN 数据包结构
 
@@ -192,12 +192,12 @@ VXLAN Encapsulated Packet:
 
 ### VXLAN 组件
 
-| Component             | Description                                      |
+| 组件             | 描述                                      |
 | --------------------- | ------------------------------------------------ |
-| **VTEP**              | VXLAN Tunnel Endpoint - encap/decap point        |
-| **VNI**               | VXLAN Network Identifier (Calico uses fixed VNI) |
-| **UDP Port**          | 4789 (IANA assigned)                             |
-| **Multicast/Unicast** | Calico uses unicast with known peer VTEPs        |
+| **VTEP**              | VXLAN 隧道端点 - 封装/解封装位置        |
+| **VNI**               | VXLAN 网络标识符（Calico 使用固定 VNI） |
+| **UDP 端口**          | 4789（由 IANA 分配）                             |
+| **组播/单播** | Calico 对已知对等 VTEP 使用单播        |
 
 ### VXLAN IPPool 配置
 
@@ -289,15 +289,15 @@ flowchart TD
 
 ## Direct/未封装模式
 
-Direct 路由模式使用原生 IP 路由而不进行任何封装，可提供尽可能高的性能。
+Direct 路由模式使用原生 IP 路由，无需任何封装，可提供尽可能最佳的性能。
 
 ### Direct 模式的要求
 
-| Requirement           | Description                                    |
+| 要求           | 描述                                    |
 | --------------------- | ---------------------------------------------- |
-| **L2 Adjacency**      | Nodes must be on the same L2 network, OR       |
-| **BGP Routing**       | External routers must learn pod routes via BGP |
-| **Route Propagation** | Physical network must route pod CIDRs          |
+| **L2 邻接**      | Node 必须位于同一 L2 网络，或者       |
+| **BGP 路由**       | 外部路由器必须通过 BGP 学习 Pod 路由 |
+| **路由传播** | 物理网络必须能够路由 Pod CIDR          |
 
 ### Direct 模式拓扑
 
@@ -398,21 +398,21 @@ ip route
 # 192.168.2.64/26 via 10.0.1.1 dev eth0 proto bird   # Rack 2 via ToR
 ```
 
-## 模式比较
+## 模式对比
 
 ### IPIP 与 VXLAN 与 Direct
 
-| Feature               | IPIP                | VXLAN                | Direct       |
+| 特性               | IPIP                | VXLAN                | Direct       |
 | --------------------- | ------------------- | -------------------- | ------------ |
-| **Protocol**          | IP Protocol 4       | UDP Port 4789        | Native IP    |
-| **Overhead**          | 20 bytes            | 50 bytes             | 0 bytes      |
+| **协议**          | IP 协议 4       | UDP 端口 4789        | 原生 IP    |
+| **开销**          | 20 字节            | 50 字节             | 0 字节      |
 | **MTU**               | 1480                | 1450                 | 1500         |
-| **Firewall Friendly** | May need IP proto 4 | UDP pass-through     | Native       |
-| **Hardware Offload**  | Limited             | Better support       | Full support |
-| **L2 Requirement**    | No                  | No                   | Yes (or BGP) |
-| **Multicast**         | Not needed          | Not needed (unicast) | Not needed   |
-| **Performance**       | Good                | Good                 | Best         |
-| **Complexity**        | Low                 | Low                  | Medium       |
+| **防火墙兼容性** | 可能需要 IP 协议 4 | UDP 直通     | 原生       |
+| **硬件卸载**  | 有限             | 支持更好       | 完全支持 |
+| **L2 要求**    | 否                  | 否                   | 是（或 BGP） |
+| **组播**         | 不需要          | 不需要（单播） | 不需要   |
+| **性能**       | 良好                | 良好                 | 最佳         |
+| **复杂度**        | 低                 | 低                  | 中等       |
 
 ### 性能基准对比
 
@@ -453,7 +453,7 @@ CPU Usage (% per Gbps):
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 数据包流比较
+### 数据包流对比
 
 ```mermaid
 flowchart TD
@@ -495,15 +495,15 @@ flowchart TD
 
 ## 云服务提供商兼容性
 
-| Provider        | IPIP | VXLAN | Direct           | Recommended               |
+| 提供商        | IPIP | VXLAN | Direct           | 推荐               |
 | --------------- | ---- | ----- | ---------------- | ------------------------- |
-| **AWS EC2**     | Yes  | Yes   | With VPC routing | VXLAN or IPIP CrossSubnet |
-| **AWS EKS**     | Yes  | Yes   | Limited          | VXLAN (default)           |
-| **Azure**       | Yes  | Yes   | With UDR         | VXLAN                     |
-| **GCP**         | Yes  | Yes   | With VPC routes  | IPIP CrossSubnet          |
-| **On-Premises** | Yes  | Yes   | Yes (BGP)        | Direct (with BGP)         |
-| **Bare Metal**  | Yes  | Yes   | Yes              | Direct (with BGP)         |
-| **OpenStack**   | Yes  | Yes   | Yes              | Depends on neutron config |
+| **AWS EC2**     | 是  | 是   | 使用 VPC 路由 | VXLAN 或 IPIP CrossSubnet |
+| **AWS EKS**     | 是  | 是   | 有限          | VXLAN（默认）           |
+| **Azure**       | 是  | 是   | 使用 UDR         | VXLAN                     |
+| **GCP**         | 是  | 是   | 使用 VPC 路由  | IPIP CrossSubnet          |
+| **本地部署环境** | 是  | 是   | 是（BGP）        | Direct（使用 BGP）         |
+| **裸金属**  | 是  | 是   | 是              | Direct（使用 BGP）         |
+| **OpenStack**   | 是  | 是   | 是              | 取决于 neutron 配置 |
 
 ### AWS 专用配置
 
@@ -526,7 +526,7 @@ spec:
       nodeSelector: all()
 ```
 
-### 使用 BGP 的本地部署
+### 使用 BGP 的本地部署环境
 
 ```yaml
 # For on-premises with BGP peering
@@ -614,13 +614,13 @@ spec:
 
 ### 按模式计算 MTU
 
-| Mode             | Base MTU | Overhead | Effective MTU | Configuration        |
+| 模式             | 基础 MTU | 开销 | 有效 MTU | 配置        |
 | ---------------- | -------- | -------- | ------------- | -------------------- |
-| Direct           | 1500     | 0        | 1500          | No change needed     |
+| Direct           | 1500     | 0        | 1500          | 无需更改     |
 | IPIP             | 1500     | 20       | 1480          | `ipipMTU: 1480`      |
 | VXLAN            | 1500     | 50       | 1450          | `vxlanMTU: 1450`     |
 | WireGuard        | 1500     | 60       | 1440          | `wireguardMTU: 1440` |
-| IPIP + WireGuard | 1500     | 80       | 1420          | Combined overhead    |
+| IPIP + WireGuard | 1500     | 80       | 1420          | 合并开销    |
 
 ### MTU 配置
 
@@ -706,23 +706,23 @@ flowchart TD
 
 ## 总结
 
-选择合适的网络模式对于实现最佳 Calico 性能至关重要：
+选择合适的网络模式对实现最佳 Calico 性能至关重要：
 
-1. **IPIP 模式**：适用于云环境的默认选择，配置简单
-2. **VXLAN 模式**：具有更好的防火墙兼容性，是标准的覆盖网络协议
-3. **Direct 模式**：适用于具备 BGP 基础设施的本地部署，可实现最高性能
+1. **IPIP 模式**：云环境的默认选择，配置简单
+2. **VXLAN 模式**：具有更好的防火墙兼容性，是标准覆盖网络协议
+3. **Direct 模式**：适用于具有 BGP 基础设施的本地部署环境，可实现最高性能
 
-关键考虑因素：
+关键注意事项：
 
 * **云部署**：使用 VXLAN 或 IPIP CrossSubnet
-* **使用 BGP 的本地部署**：使用 Direct 模式以获得最佳性能
+* **使用 BGP 的本地部署环境**：使用 Direct 模式以获得最佳性能
 * **混合环境**：IPIP 或 VXLAN CrossSubnet 可提供良好的平衡
-* **性能关键场景**：使用具有正确 BGP 配置的 Direct 模式
+* **性能关键型场景**：使用具有适当 BGP 配置的 Direct 模式
 
-[上一节：第 2 部分 - Calico 架构深入解析](02-architecture.md)
+[上一节：第 2 部分 - Calico 架构深入剖析](02-architecture.md)
 
-[返回 Calico 概述](./)
+[返回 Calico 概览](./README.md)
 
 ## 测验
 
-要测试你在本章学到的内容，请尝试[网络模式测验](../../quizzes/networking/calico/03-networking-modes-quiz.md)。
+为测试您在本章所学的内容，请尝试[网络模式测验](../../quizzes/networking/calico/03-networking-modes-quiz.md)。

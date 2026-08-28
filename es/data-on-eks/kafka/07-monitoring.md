@@ -3,13 +3,13 @@
 > **Versiones compatibles**: Strimzi 0.45+, Prometheus Operator, KEDA 2.x\
 > **Última actualización**: July 9, 2026
 
-Un cluster de Kafka necesita más que gráficos de heap de brokers, disco y red: también necesitas visibilidad sobre la salud de la replicación de partitions y la velocidad de procesamiento de consumers para detectar problemas temprano. Este documento cubre cómo recopilar las métricas de brokers que Strimzi expone con Prometheus, medir el consumer lag por separado y escalar consumers automáticamente con KEDA.
+Un clúster de Kafka necesita más que gráficos del heap del broker, disco y red: también se necesita visibilidad sobre el estado de replicación de las particiones y la velocidad de procesamiento de los consumidores para detectar problemas pronto. Este documento cubre la recopilación con Prometheus de las métricas del broker que Strimzi expone, la medición independiente del consumer lag y el autoescalado de consumidores con KEDA.
 
 ## 1. Cómo Strimzi expone métricas
 
-Strimzi ejecuta un Prometheus JMX Exporter dentro de cada contenedor de broker/controller/Connect: no como un contenedor sidecar separado, sino como un **JVM Java agent** cargado en el mismo proceso JVM. El JMX Exporter lee JMX MBeans internos de la JVM (por ejemplo `kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions`) y los convierte en un endpoint HTTP `/metrics` en formato de texto de Prometheus. Qué MBeans se asignan a qué nombres y labels de métricas se define mediante una configuración de relabeling almacenada en un `ConfigMap`, y el campo `metricsConfig` del CR `Kafka` apunta a ese `ConfigMap`.
+Strimzi ejecuta un Prometheus JMX Exporter dentro de cada contenedor de componente broker/controller/Connect, no como un contenedor sidecar independiente, sino como un **agente Java de JVM** cargado en el mismo proceso de JVM. El JMX Exporter lee MBeans JMX internos de la JVM (por ejemplo, `kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions`) y los convierte en un endpoint HTTP `/metrics` con formato de texto de Prometheus. Los MBeans que se asignan a cada nombre y etiqueta de métrica se definen mediante una configuración de relabeling almacenada en un `ConfigMap`, y el campo `metricsConfig` del CR `Kafka` apunta a ese `ConfigMap`.
 
-El repositorio upstream de Strimzi incluye configuraciones de ejemplo de JMX Exporter para brokers, Connect y Cruise Control bajo [`examples/metrics`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics). En la práctica, los equipos parten de estos ejemplos y ajustan solo las reglas que necesitan, en lugar de escribir reglas de relabeling desde cero.
+El repositorio upstream de Strimzi incluye configuraciones de ejemplo de JMX Exporter para brokers, Connect y Cruise Control en [`examples/metrics`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics). En la práctica, los equipos comienzan con estos ejemplos y ajustan solo las reglas que necesitan, en lugar de escribir reglas de relabeling desde cero.
 
 ```yaml
 # kafka-metrics-config.yaml (excerpt, based on Strimzi's example)
@@ -56,21 +56,21 @@ spec:
           key: kafka-metrics-config.yml
 ```
 
-Una vez que se aplica `metricsConfig`, Strimzi habilita automáticamente el JMX Exporter Java agent dentro de cada contenedor de broker y monta el archivo de reglas del `ConfigMap` referenciado en ese mismo contenedor. Las métricas en formato Prometheus quedan entonces disponibles para scraping en la ruta `/metrics` del puerto `9404` (el predeterminado) de cada broker pod. El mismo campo `metricsConfig` está disponible en los recursos personalizados `KafkaConnect`, `KafkaMirrorMaker2` y `CruiseControl`.
+Una vez aplicado `metricsConfig`, Strimzi habilita automáticamente el agente Java JMX Exporter dentro de cada contenedor de broker y monta en ese mismo contenedor el archivo de reglas del `ConfigMap` referenciado. Las métricas en formato Prometheus pasan a poder recopilarse en la ruta `/metrics`, en el puerto `9404` (el predeterminado), de cada Pod de broker. El mismo campo `metricsConfig` está disponible en los recursos personalizados `KafkaConnect`, `KafkaMirrorMaker2` y `CruiseControl`.
 
-## 2. Métricas principales de brokers
+## 2. Métricas principales del broker
 
-Kafka expone una gran cantidad de métricas JMX, así que ayuda acotar cuáles importan realmente en el día a día.
+Kafka expone una gran cantidad de métricas JMX, por lo que conviene centrarse en las que realmente importan a diario.
 
 | Métrica | Significado | Valor saludable / qué vigilar |
 | --- | --- | --- |
-| `kafka_server_replicamanager_underreplicatedpartitions` | Número de partitions lideradas por este broker cuyo conjunto de replicas in-sync (ISR) es menor que el replication factor configurado | **Debería ser 0.** Cualquier valor por encima de 0 significa que uno o más followers se están quedando detrás del leader: investiga latencia de red, sobrecarga del broker o cuellos de botella de I/O de disco. |
-| `kafka_controller_kafkacontroller_activecontrollercount` | Si este broker/controller es actualmente el controller activo (0 o 1) | La **suma a nivel de cluster debe ser exactamente 1**. Una suma de 0 significa que no hay controller activo (elección de leader en progreso o una falla); una suma de 2 o más sugiere una condición de split-brain y requiere investigación inmediata. |
-| Request Handler Idle Ratio (`...requesthandleravgidlepercent...`) | Fracción de tiempo en que el thread pool de request handlers del broker permanece idle | Un valor en descenso (por ejemplo, por debajo del 20%) indica que el broker se acerca a saturación de CPU/threads. Valores persistentemente bajos son una señal para escalar brokers horizontalmente o rebalancear partitions. |
-| `kafka_server_brokertopicmetrics_bytesinpersec_oneminuterate` / `bytesoutpersec` | Throughput de produce/consume por topic en bytes por segundo | Se usa para planificación de capacidad de broker/red y para detectar picos de tráfico en topics individuales (hot partitions). |
-| ISR Shrink/Expand Rate (`kafka_server_replicamanager_isrshrinkspersec`, `isrexpandspersec`) | Tasa a la que las replicas salen (shrink) o vuelven a unirse (expand) al conjunto ISR por segundo | Shrinks frecuentes significan que los followers están saliendo repetidamente de sincronía y normalmente preceden a un aumento de partitions under-replicated. |
+| `kafka_server_replicamanager_underreplicatedpartitions` | Número de particiones lideradas por este broker cuyo conjunto de réplicas en sincronización (ISR) es menor que el factor de replicación configurado | **Debe ser 0.** Cualquier valor por encima de 0 significa que uno o más followers se están quedando atrás del líder; investigue la latencia de red, la sobrecarga del broker o los cuellos de botella de I/O de disco. |
+| `kafka_controller_kafkacontroller_activecontrollercount` | Indica si este broker/controller es actualmente el controller activo (0 o 1) | La **suma de todo el clúster debe ser exactamente 1**. Una suma de 0 significa que no hay controller activo (elección de líder en curso o un fallo); una suma de 2 o más sugiere una condición de split-brain y requiere investigación inmediata. |
+| Proporción de inactividad del Request Handler (`...requesthandleravgidlepercent...`) | Fracción de tiempo en que el pool de threads de request-handler del broker permanece inactivo | Un valor decreciente (por ejemplo, inferior al 20 %) indica que el broker se acerca a la saturación de CPU/threads. Los valores persistentemente bajos indican que se deben escalar horizontalmente los brokers o reequilibrar las particiones. |
+| `kafka_server_brokertopicmetrics_bytesinpersec_oneminuterate` / `bytesoutpersec` | Throughput de producción/consumo por topic, en bytes por segundo | Se usa para la planificación de capacidad de broker/red y para detectar picos de tráfico en topics individuales (particiones calientes). |
+| Tasa de reducción/expansión de ISR (`kafka_server_replicamanager_isrshrinkspersec`, `isrexpandspersec`) | Tasa por segundo a la que las réplicas salen (reducción) o se reincorporan (expansión) al conjunto ISR | Las reducciones frecuentes significan que los followers pierden repetidamente la sincronización y suelen preceder un aumento de particiones con replicación insuficiente. |
 
-De estas, el **conteo de partitions under-replicated** y el **conteo de controllers activos** reflejan de forma más directa la seguridad de los datos y la disponibilidad del cluster, por lo que deben estar al inicio de cada dashboard y conjunto de reglas de alerta.
+De estas, el **recuento de particiones con replicación insuficiente** y el **recuento de controllers activos** reflejan más directamente la seguridad y disponibilidad de los datos del clúster, por lo que deben estar en la parte superior de cada dashboard y conjunto de reglas de alerta.
 
 ```promql
 # Cluster-wide active controller sum (should be 1)
@@ -80,13 +80,13 @@ sum(kafka_controller_kafkacontroller_activecontrollercount)
 kafka_server_replicamanager_underreplicatedpartitions > 0
 ```
 
-## 3. Monitoreo de Consumer Lag
+## 3. Monitoreo del consumer lag
 
-El **consumer lag** es, por partition, la diferencia entre el último offset producido (el log end offset) y el último offset que un consumer group ha confirmado. Un lag que crece de forma sostenida significa que un consumer group no puede seguir el ritmo de la tasa de producción: una señal de procesamiento lento, un consumer detenido o rebalancing repetido.
+El **consumer lag** es, por partición, la diferencia entre el offset producido más reciente (el offset del final del log) y el último offset que un grupo de consumidores ha confirmado. Un lag que crece de forma constante significa que un grupo de consumidores no puede seguir el ritmo de producción, lo que indica procesamiento lento, un consumidor detenido o reequilibrios repetidos.
 
-Las métricas del JMX Exporter que Strimzi expone mediante este Java agent en proceso describen el **estado propio del broker** (sección 2 anterior) y, de forma predeterminada, no incluyen offsets ni lag de consumer groups. Calcular el lag requiere correlacionar los offsets confirmados de un consumer group (rastreados en el topic interno `__consumer_offsets`) con el offset más reciente de cada topic, lo cual está fuera del alcance del exporter del lado del broker. Por esto, los equipos suelen ejecutar un exporter separado dedicado al consumer lag.
+Las métricas de JMX Exporter que Strimzi expone mediante este agente Java en proceso describen el **estado propio del broker** (sección 2 anterior) y no incluyen de forma predeterminada los offsets ni el lag de los grupos de consumidores. Calcular el lag requiere correlacionar los offsets confirmados de un grupo de consumidores (seguidos en el topic interno `__consumer_offsets`) con el offset más reciente de cada topic, lo cual queda fuera del alcance del exporter del lado del broker. Por ello, los equipos normalmente ejecutan un exporter independiente dedicado al consumer lag.
 
-La opción más utilizada es el proyecto comunitario [`kafka-lag-exporter`](https://github.com/seglo/kafka-lag-exporter) (o un exporter similar al estilo Burrow), ejecutado como su propio `Deployment` en el cluster. Consulta la Kafka Admin API en intervalos para leer los offsets confirmados de cada consumer group y los offsets más recientes de cada topic, y luego expone métricas como `kafka_consumergroup_group_lag` (lag desglosado por group, topic y partition) en formato Prometheus.
+La opción más utilizada es el proyecto comunitario [`kafka-lag-exporter`](https://github.com/seglo/kafka-lag-exporter) (o un exporter similar de estilo Burrow), que se ejecuta como su propio `Deployment` en el clúster. Consulta la API de administración de Kafka a intervalos para leer los offsets confirmados de cada grupo de consumidores y los offsets más recientes de cada topic, y después expone en formato Prometheus métricas como `kafka_consumergroup_group_lag` (lag desglosado por grupo, topic y partición).
 
 ```yaml
 # Minimal ConfigMap for kafka-lag-exporter
@@ -109,7 +109,7 @@ data:
     }
 ```
 
-Una vez que este exporter está desplegado y Prometheus está haciendo scraping de su endpoint `/metrics`, el lag se puede consultar así:
+Una vez que este exporter se implementa y Prometheus recopila su endpoint `/metrics`, el lag se puede consultar así:
 
 ```promql
 # Total lag per consumer group and topic (summed across partitions)
@@ -119,9 +119,9 @@ sum by (group, topic) (kafka_consumergroup_group_lag)
 sum by (group, topic) (kafka_consumergroup_group_lag) > 1000
 ```
 
-## 4. Conectar el scraping con ServiceMonitor / PodMonitor
+## 4. Configuración de la recopilación con ServiceMonitor / PodMonitor
 
-En entornos que ejecutan Prometheus Operator (como kube-prometheus-stack), el enfoque habitual no es editar manualmente `scrape_configs`, sino declarar un CRD `PodMonitor` que descubre targets por label. Debido a que los brokers se ejecutan como pods gestionados por Strimzi en lugar de detrás de un `Service` fijo, seleccionar pods directamente con un `PodMonitor` es más confiable que depender de un `ServiceMonitor` basado en `Service`.
+En entornos que ejecutan Prometheus Operator (como kube-prometheus-stack), el enfoque habitual no es editar manualmente `scrape_configs`, sino declarar un CRD `PodMonitor` que descubre destinos por etiqueta. Dado que los brokers se ejecutan como Pods administrados por Strimzi y no detrás de un `Service` fijo, seleccionar los Pods directamente con un `PodMonitor` es más fiable que depender de un `ServiceMonitor` basado en `Service`.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -145,7 +145,7 @@ spec:
       interval: 30s
 ```
 
-Una vez que las métricas fluyen, alertar por partitions under-replicated es la red de seguridad más básica que conviene implementar. La `PrometheusRule` siguiente se dispara cuando las partitions under-replicated permanecen por encima de 0 durante al menos 5 minutos.
+Una vez que las métricas fluyen, alertar sobre particiones con replicación insuficiente es la red de seguridad más básica que se debe implementar. El `PrometheusRule` siguiente se activa cuando las particiones con replicación insuficiente se mantienen por encima de 0 durante al menos 5 minutos.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -177,9 +177,9 @@ spec:
             description: "The cluster-wide sum of active controllers is not 1. Check controller leader election status."
 ```
 
-## 5. Autoscaling de consumers con KEDA
+## 5. Autoescalado de consumidores con KEDA
 
-El HPA basado en CPU/memoria a menudo no refleja la carga real de un workload de consumers: el número de mensajes que esperan ser procesados. El Kafka scaler de KEDA (`triggers.type: kafka`) te permite escalar un `Deployment` de consumers con base en el **consumer group lag**. KEDA consulta el lag del topic/consumer group configurado directamente a través de la Kafka Admin API, por lo que las decisiones de escalado no requieren estrictamente el exporter de lag separado de la sección 3 (aunque ese exporter sigue siendo útil para dashboards y alertas).
+El HPA basado en CPU/memoria a menudo no refleja la carga real de un workload de consumidores: la cantidad de mensajes que esperan ser procesados. El escalador de Kafka de KEDA (`triggers.type: kafka`) permite escalar un `Deployment` de consumidores según el **consumer group lag**. KEDA consulta el lag del topic/grupo de consumidores configurado directamente a través de la API de administración de Kafka, por lo que las decisiones de escalado no requieren estrictamente el exporter de lag independiente de la sección 3 (aunque ese exporter sigue siendo útil para dashboards y alertas).
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -204,33 +204,33 @@ spec:
         allowIdleConsumers: "false"
 ```
 
-Parámetros clave del trigger:
+Parámetros principales del trigger:
 
-* **`bootstrapServers`**: La dirección bootstrap del cluster Kafka que KEDA usa para consultar lag
-* **`consumerGroup`**, **`topic`**: El consumer group y el topic cuyo lag se mide
-* **`lagThreshold`**: El valor de lag por partition por encima del cual KEDA añade otra replica (por ejemplo, una replica adicional por cada 50 unidades de lag por partition)
-* **`activationLagThreshold`**: El lag mínimo necesario para activar el escalado inicial de 0 a 1 replica. Si no se establece, incluso una pequeña cantidad de lag escala inmediatamente a 1.
-* **`allowIdleConsumers`**: Cuando es `false` (el predeterminado), KEDA limita las replicas para nunca crear más consumers de los que hay partitions para consumir.
+* **`bootstrapServers`**: La dirección bootstrap del clúster de Kafka que KEDA usa para consultar el lag
+* **`consumerGroup`**, **`topic`**: El grupo de consumidores y el topic cuyo lag se mide
+* **`lagThreshold`**: El valor de lag por partición por encima del cual KEDA añade otra réplica (por ejemplo, una réplica adicional por cada 50 unidades de lag por partición)
+* **`activationLagThreshold`**: El lag mínimo necesario para activar el escalado inicial de 0 a 1 réplica. Si no se establece, incluso una pequeña cantidad de lag escala inmediatamente a 1.
+* **`allowIdleConsumers`**: Cuando es `false` (el valor predeterminado), KEDA limita las réplicas para que nunca cree más consumidores que particiones disponibles para consumir.
 
-Una vez aplicado este `ScaledObject`, el KEDA Operator crea y gestiona un HPA estándar de Kubernetes detrás de escena, y reduce el escalado después de `cooldownPeriod` cuando el lag disminuye. Para los conceptos más amplios de KEDA — tipos de scalers, arquitectura, escalado a cero — consulta el documento dedicado [Autoscaling: KEDA](../../autoscaling/01-keda.md).
+Una vez aplicado este `ScaledObject`, KEDA Operator crea y administra un HPA estándar de Kubernetes en segundo plano, y vuelve a reducir el escalado después de `cooldownPeriod` cuando el lag disminuye. Para los conceptos más amplios de KEDA —tipos de escaladores, arquitectura y escalado a cero— consulte el documento específico [Autoescalado: KEDA](../../autoscaling/01-keda.md).
 
 ## 6. Dashboards de Grafana
 
-Strimzi incluye JSON de dashboards de Grafana de ejemplo para brokers, ZooKeeper (modo legacy), Kafka Connect y Cruise Control bajo [`examples/metrics/grafana-dashboards`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics/grafana-dashboards) en su repositorio de GitHub. Importarlos y ajustar las variables de nombre de cluster/namespace suele ser más rápido que construir paneles desde cero.
+Strimzi incluye JSON de dashboards de Grafana de ejemplo para brokers, ZooKeeper (modo heredado), Kafka Connect y Cruise Control en [`examples/metrics/grafana-dashboards`](https://github.com/strimzi/strimzi-kafka-operator/tree/main/examples/metrics/grafana-dashboards) de su repositorio de GitHub. Importarlos y ajustar las variables de nombre de clúster/namespace suele ser más rápido que crear paneles desde cero.
 
-Un dashboard sólido de Kafka debería cubrir al menos estos grupos de paneles:
+Un dashboard sólido de Kafka debe cubrir al menos estos grupos de paneles:
 
-* **Salud de brokers**: uptime por broker, uso de heap de JVM, tiempo de pausa de GC, ratio idle de request-handler/red
-* **Estado de ISR/replicación**: conteo de partitions under-replicated, tasa de ISR shrink/expand, conteo de controllers activos (suma a nivel de cluster)
-* **Throughput**: bytes de entrada/salida por topic y por broker por segundo, mensajes por segundo, desequilibrio de throughput por partition (detección de hot partitions)
-* **Consumer lag**: tendencia de lag por consumer group, correlacionada con eventos de rebalance para identificar la causa de picos repentinos
+* **Estado del broker**: tiempo de actividad por broker, uso del heap de JVM, tiempo de pausa de GC, proporción de inactividad de request-handler/red
+* **Estado de ISR/replicación**: recuento de particiones con replicación insuficiente, tasa de reducción/expansión de ISR, recuento de controllers activos (suma de todo el clúster)
+* **Throughput**: bytes de entrada/salida por segundo por topic y por broker, mensajes por segundo, desequilibrio de throughput por partición (detección de particiones calientes)
+* **Consumer lag**: tendencia del lag por grupo de consumidores, correlacionada con eventos de reequilibrio para identificar la causa de picos repentinos
 
 ## Próximos pasos
 
-Con la recolección de métricas, alertas y autoscaling en funcionamiento, el siguiente paso es aplicar todo esto a estándares operativos reales: SLOs, planificación de capacidad y procedimientos de respuesta a incidentes. Eso se cubre en [Parte 8: Mejores prácticas](./08-best-practices.md).
+Con la recopilación de métricas, las alertas y el autoescalado configurados, el siguiente paso es aplicar todo esto a estándares operativos reales: SLO, planificación de capacidad y procedimientos de respuesta a incidentes. Esto se cubre en la [Parte 8: Buenas prácticas](./08-best-practices.md).
 
-[Volver a la página principal](./)
+[Volver a la página principal](./README.md)
 
 ## Cuestionario
 
-Para poner a prueba lo que aprendiste en este capítulo, intenta el [cuestionario del topic](../../quizzes/data-on-eks/kafka/07-monitoring-quiz.md).
+Para comprobar lo aprendido en este capítulo, pruebe el [Cuestionario del topic](../../quizzes/data-on-eks/kafka/07-monitoring-quiz.md).

@@ -6,9 +6,9 @@
 
 Esta sección ofrece una exploración detallada de la arquitectura de Calico. Comprender cómo funciona e interactúa cada componente es esencial para el despliegue, la resolución de problemas y la optimización eficaces de Calico en entornos de producción.
 
-## Diagrama completo de la arquitectura
+## Diagrama de arquitectura completo
 
-![Calico Architecture](../../.gitbook/assets/calico_architecture.png)
+![Arquitectura de Calico](../../.gitbook/assets/calico_architecture.png)
 
 ```mermaid
 flowchart TD
@@ -97,7 +97,7 @@ flowchart TD
 
 ## Felix: el agente de Calico
 
-Felix es el agente principal de Calico que se ejecuta en cada nodo del clúster. Es responsable de programar rutas y ACL (listas de control de acceso) en el host para proporcionar la conectividad deseada y aplicar las políticas de red.
+Felix es el agente principal de Calico que se ejecuta en cada nodo del clúster. Es responsable de programar rutas y ACL (listas de control de acceso) en el host para proporcionar la conectividad deseada y aplicar políticas de red.
 
 ### Responsabilidades de Felix
 
@@ -133,21 +133,21 @@ flowchart LR
 
 ### Funciones principales
 
-1. **Programación de rutas**: administra las rutas para los bloques CIDR de Pod
-2. **Aplicación de ACL**: programa reglas de iptables/nftables/eBPF para las políticas de red
-3. **Administración de interfaces**: configura las interfaces de endpoint de workload
-4. **Informes de estado**: informa el estado de los nodos y endpoints al datastore
-5. **Coordinación de IPAM**: administra la asignación de direcciones IP para los workloads locales
+1. **Programación de rutas**: Gestiona las rutas para bloques CIDR de Pod
+2. **Aplicación de ACL**: Programa reglas de iptables/nftables/eBPF para las políticas de red
+3. **Gestión de interfaces**: Configura interfaces de endpoint de carga de trabajo
+4. **Informe de estado**: Informa el estado del nodo y del endpoint al datastore
+5. **Coordinación de IPAM**: Gestiona la asignación de direcciones IP para cargas de trabajo locales
 
-### Opciones de plano de datos de Felix
+### Opciones del plano de datos de Felix
 
 Felix admite varios backends de plano de datos:
 
-| Plano de datos | Descripción                | Ideal para                                  |
-| ------------ | -------------------------- | ------------------------------------------- |
-| **iptables** | Firewall tradicional de Linux | Compatibilidad, despliegues maduros         |
-| **nftables** | Firewall moderno de Linux      | Kernels más recientes, mejor rendimiento    |
-| **eBPF**     | Programable en el kernel       | Máximo rendimiento, reemplazo de kube-proxy |
+| Plano de datos | Descripción                    | Ideal para                                     |
+| -------------- | ------------------------------ | ---------------------------------------------- |
+| **iptables**   | Firewall tradicional de Linux  | Compatibilidad, despliegues maduros            |
+| **nftables**   | Firewall moderno de Linux      | Kernels más recientes, mejor rendimiento       |
+| **eBPF**       | Programable dentro del kernel  | Máximo rendimiento, reemplazo de kube-proxy    |
 
 ### Recurso FelixConfiguration
 
@@ -211,7 +211,7 @@ spec:
   reportingTTLSecs: 90
 ```
 
-### Estructura de reglas de iptables de Felix
+### Estructura de reglas iptables de Felix
 
 Felix organiza las reglas de iptables en cadenas para un procesamiento eficiente:
 
@@ -262,9 +262,9 @@ sequenceDiagram
     F->>IF: Configure tunnel interface
 ```
 
-## BIRD: demonio de enrutamiento BGP
+## BIRD: daemon de enrutamiento BGP
 
-BIRD (BIRD Internet Routing Daemon) es el demonio BGP que Calico utiliza para distribuir rutas entre nodos.
+BIRD (BIRD Internet Routing Daemon) es el daemon BGP utilizado por Calico para distribuir rutas entre nodos.
 
 ### BIRD en la arquitectura de Calico
 
@@ -311,11 +311,11 @@ flowchart TD
 
 ### Tipos de sesión BGP
 
-| Tipo de sesión          | Caso de uso                    | Configuración              |
-| --------------------- | --------------------------- | ---------------------- |
-| **Malla de nodo a nodo** | Predeterminado para clústeres pequeños | Automática, malla completa   |
-| **Route Reflector**   | Clústeres grandes (100+ nodos) | Nodos RR dedicados     |
-| **Peering externo**  | Integración on-premises     | Configuración manual de peer BGP |
+| Tipo de sesión          | Caso de uso                  | Configuración                 |
+| ----------------------- | ---------------------------- | ----------------------------- |
+| **Malla de nodo a nodo** | Predeterminado para clústeres pequeños | Automática, malla completa |
+| **Route Reflector**     | Clústeres grandes (100+ nodos) | Nodos RR dedicados          |
+| **Peering externo**     | Integración on-premises      | Configuración manual de peer BGP |
 
 ### Ejemplos de configuración BGP
 
@@ -430,9 +430,9 @@ birdcl> show route protocol Mesh_10_0_1_10
 birdcl> show route 192.168.1.0/26 all
 ```
 
-## confd: administración de configuración
+## confd: gestión de configuración
 
-confd es una herramienta ligera de administración de configuración que supervisa el datastore de Calico y genera archivos de configuración de BIRD.
+confd es una herramienta ligera de gestión de configuración que observa el datastore de Calico y genera archivos de configuración de BIRD.
 
 ### Flujo de trabajo de confd
 
@@ -507,9 +507,9 @@ protocol bgp {{.Name}} {
 {{end}}
 ```
 
-## Typha: componente de escalabilidad
+## Typha: componente de escalado
 
-Typha es un proxy de fan-out que se sitúa entre el servidor API de Kubernetes y los agentes Felix. Reduce la carga en el servidor API al almacenar en caché y distribuir actualizaciones del datastore.
+Typha es un proxy fan-out situado entre el servidor de la API de Kubernetes y los agentes Felix. Reduce la carga del servidor de la API al almacenar en caché y distribuir actualizaciones del datastore.
 
 ### ¿Por qué Typha?
 
@@ -543,9 +543,9 @@ flowchart TD
     style With fill:#ccffcc,stroke:#333
 ```
 
-### Cálculo de escalabilidad de Typha
+### Cálculo de escalado de Typha
 
-El número recomendado de réplicas de Typha depende del tamaño del clúster:
+La cantidad recomendada de réplicas de Typha depende del tamaño del clúster:
 
 ```
 Typha Replicas = max(3, ceil(Nodes / 200))
@@ -647,7 +647,7 @@ spec:
     k8s-app: calico-typha
 ```
 
-### Arquitectura de fan-out de Typha
+### Arquitectura fan-out de Typha
 
 ```mermaid
 flowchart TD
@@ -708,13 +708,13 @@ El Pod calico-kube-controllers ejecuta un conjunto de controladores que sincroni
 
 ### Descripción general de los controladores
 
-| Controlador                      | Propósito                                           |
-| ------------------------------- | ------------------------------------------------- |
-| **Controlador de nodos**             | Sincroniza los nodos de Kubernetes con los recursos de nodo de Calico |
-| **Controlador de políticas**           | Sincroniza NetworkPolicy de Kubernetes con la política de Calico |
-| **Controlador de namespaces**        | Sincroniza las etiquetas de namespace para la administración de perfiles     |
-| **Controlador de ServiceAccount**   | Sincroniza las etiquetas de cuentas de servicio para RBAC             |
-| **Controlador de WorkloadEndpoint** | Limpia los endpoints de workload obsoletos                |
+| Controlador                    | Propósito                                           |
+| ------------------------------ | --------------------------------------------------- |
+| **Controlador de Node**        | Sincroniza los nodos de Kubernetes con los recursos de nodo de Calico |
+| **Controlador de Policy**      | Sincroniza Kubernetes NetworkPolicy con la política de Calico |
+| **Controlador de Namespace**   | Sincroniza etiquetas de namespace para la gestión de perfiles |
+| **Controlador de ServiceAccount** | Sincroniza etiquetas de service account para RBAC |
+| **Controlador de WorkloadEndpoint** | Limpia endpoints de carga de trabajo obsoletos |
 
 ### Bucle de reconciliación del controlador
 
@@ -780,7 +780,7 @@ data:
 
 Calico admite dos backends de datastore para almacenar su configuración y estado.
 
-### Datastore de Kubernetes API (recomendado)
+### Datastore de la API de Kubernetes (recomendado)
 
 ```mermaid
 flowchart LR
@@ -809,9 +809,9 @@ flowchart LR
 
 **Ventajas:**
 
-* No hay un clúster etcd separado que administrar
+* No hay un clúster de etcd independiente que gestionar
 * Utiliza Kubernetes RBAC para el control de acceso
-* Modelo operativo más simple
+* Modelo operativo más sencillo
 * Funciona con cualquier distribución de Kubernetes
 
 ### Datastore etcd (heredado)
@@ -843,20 +843,20 @@ flowchart LR
 
 **Ventajas:**
 
-* Desacoplado del servidor API de Kubernetes
-* Puede utilizarse para workloads no Kubernetes (VM, bare metal)
+* Desacoplado del servidor de la API de Kubernetes
+* Puede utilizarse para cargas de trabajo no Kubernetes (VM, bare metal)
 * Opción histórica para clústeres muy grandes
 
 ### Comparación de datastores
 
-| Característica                    | Kubernetes API    | etcd               |
-| -------------------------- | ----------------- | ------------------ |
-| **Complejidad operativa** | Menor             | Mayor             |
-| **Escalabilidad**            | Buena (con Typha) | Excelente          |
-| **Workloads no K8s**      | Limitados           | Soporte completo       |
-| **Copia de seguridad/restauración**         | Mediante K8s           | Herramientas independientes   |
-| **Control de acceso**         | K8s RBAC          | Autenticación de etcd          |
-| **Recomendación**         | Opción predeterminada    | Solo casos especiales |
+| Característica              | API de Kubernetes   | etcd                 |
+| --------------------------- | ------------------- | -------------------- |
+| **Complejidad operativa**   | Menor               | Mayor                |
+| **Escalabilidad**           | Buena (con Typha)   | Excelente            |
+| **Cargas no K8s**           | Limitadas           | Soporte completo     |
+| **Backup/Restore**          | Mediante K8s        | Herramientas independientes |
+| **Control de acceso**       | K8s RBAC            | Autenticación de etcd |
+| **Recomendación**           | Opción predeterminada | Solo casos especiales |
 
 ## Secuencia de interacción de componentes
 
@@ -916,7 +916,7 @@ flowchart TD
     class VethA,VethB,IPT infra
 ```
 
-### Flujo de paquetes de salida (Pod a Pod, nodos diferentes con IPIP)
+### Flujo de paquetes de salida (Pod a Pod, nodos distintos con IPIP)
 
 ```mermaid
 flowchart TD
@@ -960,7 +960,7 @@ flowchart TD
     class Switch network
 ```
 
-### Comparación de la estructura de paquetes
+### Comparación de estructuras de paquetes
 
 ```
 Original Pod-to-Pod Packet:
@@ -981,14 +981,14 @@ IPIP Encapsulated Packet:
 
 ## Resumen
 
-La arquitectura de Calico está diseñada para la escalabilidad, el rendimiento y la simplicidad operativa:
+La arquitectura de Calico está diseñada para ofrecer escalabilidad, rendimiento y simplicidad operativa:
 
-1. **Felix**: el agente principal de cada nodo, que programa rutas y ACL
-2. **BIRD**: distribuye rutas mediante BGP, lo que permite la integración con enrutamiento nativo
-3. **confd**: conecta el datastore con la configuración de BIRD
-4. **Typha**: escala el sistema reduciendo la carga del servidor API
-5. **kube-controllers**: mantiene Kubernetes y Calico sincronizados
-6. **Datastore**: Kubernetes API (recomendado) o etcd para almacenar la configuración
+1. **Felix**: El agente principal en cada nodo, que programa rutas y ACL
+2. **BIRD**: Distribuye rutas mediante BGP, lo que permite la integración con el enrutamiento nativo
+3. **confd**: Conecta el datastore con la configuración de BIRD
+4. **Typha**: Escala el sistema al reducir la carga del servidor de la API
+5. **kube-controllers**: Mantiene Kubernetes y Calico sincronizados
+6. **Datastore**: API de Kubernetes (recomendada) o etcd para almacenar la configuración
 
 Comprender estos componentes y sus interacciones es esencial para:
 
@@ -1001,8 +1001,8 @@ Comprender estos componentes y sus interacciones es esencial para:
 
 [Siguiente: Parte 3 - Modos de red](03-networking-modes.md)
 
-[Volver a la descripción general de Calico](./)
+[Volver a la descripción general de Calico](./README.md)
 
 ## Cuestionario
 
-Para comprobar lo que has aprendido en este capítulo, prueba el [Cuestionario de arquitectura](../../quizzes/networking/calico/02-architecture-quiz.md).
+Para evaluar lo que has aprendido en este capítulo, prueba el [Cuestionario de arquitectura](../../quizzes/networking/calico/02-architecture-quiz.md).

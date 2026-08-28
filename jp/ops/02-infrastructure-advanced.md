@@ -1,79 +1,79 @@
-# Infrastructure Advanced
+# インフラストラクチャの高度な構成
 
-> **サポートバージョン**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **最終更新**: February 19, 2026
+> **対応バージョン**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **最終更新**: February 19, 2026
 
-< [前へ: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [目次](./) | [次へ: CI Pipelines](03-ci-pipelines.md) >
+< [前へ: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [目次](./README.md) | [次へ: CI Pipelines](03-ci-pipelines.md) >
 
 ***
 
-## Overview
+## 概要
 
-このガイドでは、高可用性とゼロダウンタイム deployments を備えた production EKS workloads を実行するための高度な infrastructure patterns を扱います。Blue/Green cluster architecture により、シームレスな cluster upgrades、disaster recovery、複数の availability zones にまたがる traffic management が可能になります。
+このガイドでは、高可用性とゼロダウンタイムのデプロイメントで本番 EKS ワークロードを実行するための高度なインフラストラクチャパターンを説明します。Blue/Green クラスターアーキテクチャにより、複数のアベイラビリティーゾーンにまたがるシームレスなクラスターアップグレード、災害復旧、トラフィック管理が可能になります。
 
 **主なトピック:**
 
-* Blue/Green dual-cluster architecture
-* traffic distribution のための NLB weighted target groups
-* Route53 を使用した DNS-based traffic switching
-* stateful workloads のための zone-aware data placement
-* CloudWatch と Lambda による automated failover
+* Blue/Green デュアルクラスターアーキテクチャ
+* トラフィック分散のための NLB 加重ターゲットグループ
+* Route53 を使用した DNS ベースのトラフィック切り替え
+* ステートフルワークロード向けのゾーン対応データ配置
+* CloudWatch と Lambda による自動フェイルオーバー
 
 ***
 
-## 1. Blue/Green Architecture Overview
+## 1. Blue/Green アーキテクチャの概要
 
-### Why Blue/Green Clusters?
+### Blue/Green クラスターを採用する理由
 
-従来の in-place cluster upgrades には大きなリスクがあります。
+従来のインプレースクラスターアップグレードには大きなリスクがあります。
 
-* control plane updates 中の workload disruption
-* Node draining により capacity issues が発生する可能性
-* 問題発生時の rollback complexity
-* 長い maintenance windows
+* コントロールプレーンの更新中にワークロードが中断する
+* Node のドレインによりキャパシティー不足が発生する可能性がある
+* 問題発生時のロールバックが複雑になる
+* メンテナンス時間帯が長期化する
 
-Blue/Green architecture は、2 つの独立した clusters を維持することで、これらのリスクを排除します。
+Blue/Green アーキテクチャは、2 つの独立したクラスターを維持することで、これらのリスクを排除します。
 
-| Aspect        | In-Place Upgrade | Blue/Green                     |
+| 項目        | インプレースアップグレード | Blue/Green                     |
 | ------------- | ---------------- | ------------------------------ |
-| Downtime Risk | Medium-High      | Near Zero                      |
-| Rollback Time | 30-60 minutes    | Seconds (DNS/NLB)              |
-| Testing       | Limited          | Full production traffic        |
-| Cost          | Single cluster   | 2x cluster (during transition) |
+| ダウンタイムリスク | 中程度～高      | ほぼゼロ                      |
+| ロールバック時間 | 30～60 分    | 数秒（DNS/NLB）              |
+| テスト       | 限定的          | 本番トラフィック全体        |
+| コスト          | 単一クラスター   | 2 倍のクラスター（移行中） |
 
-### Architecture Diagram
+### アーキテクチャ図
 
-![NLB Blue/Green Architecture](../.gitbook/assets/nlb_bluegreen_architecture.png)
+![NLB Blue/Green アーキテクチャ](../.gitbook/assets/nlb_bluegreen_architecture.png)
 
-### Single-Zone Design Rationale
+### 単一ゾーン設計の根拠
 
-各 cluster は単一の availability zone で動作します。
+各クラスターは単一のアベイラビリティーゾーンで稼働します。
 
 **利点:**
 
-1. **Data Locality**: Pods は常に storage volumes の近くに schedule されます
-2. **Cost Optimization**: cross-AZ data transfer costs をゼロにできます
-3. **Failure Isolation**: AZ failure は 1 つの cluster のみに影響します
-4. **Simplified Networking**: 複雑な multi-AZ load balancing が不要です
+1. **データローカリティー**: Pod は常にストレージボリュームの近くにスケジュールされる
+2. **コスト最適化**: AZ 間データ転送コストがゼロになる
+3. **障害分離**: AZ 障害の影響は 1 つのクラスターに限定される
+4. **ネットワークの簡素化**: 複雑なマルチ AZ ロードバランシングが不要になる
 
 **トレードオフ:**
 
-* single-AZ risk が高くなります（Blue/Green failover により軽減）
-* zone ごとに慎重な capacity planning が必要です
+* 単一 AZ のリスクが高まる（Blue/Green フェイルオーバーで軽減）
+* ゾーンごとに慎重なキャパシティー計画が必要になる
 
-### Zone Assignment
+### ゾーンの割り当て
 
-| Cluster | Availability Zone | Purpose                  |
+| クラスター | アベイラビリティーゾーン | 用途                  |
 | ------- | ----------------- | ------------------------ |
-| Blue    | ap-northeast-2a   | Primary production       |
-| Green   | ap-northeast-2c   | Secondary/upgrade target |
+| Blue    | ap-northeast-2a   | プライマリ本番環境       |
+| Green   | ap-northeast-2c   | セカンダリ/アップグレード対象 |
 
 ***
 
-## 2. NLB Weighted Target Groups
+## 2. NLB 加重ターゲットグループ
 
-### Network Load Balancer Configuration
+### Network Load Balancer の設定
 
-shared NLB は、target group weights に基づいて Blue clusters と Green clusters の間で traffic を分散します。
+共有 NLB は、ターゲットグループの重みに基づいて Blue と Green クラスター間にトラフィックを分散します。
 
 ```hcl
 # nlb/main.tf
@@ -316,7 +316,7 @@ resource "aws_lb_listener" "https" {
 }
 ```
 
-### Variables
+### 変数
 
 ```hcl
 # nlb/variables.tf
@@ -362,7 +362,7 @@ variable "green_weight" {
 }
 ```
 
-### Outputs
+### 出力
 
 ```hcl
 # nlb/outputs.tf
@@ -411,9 +411,9 @@ output "current_weights" {
 }
 ```
 
-### Weight Adjustment for Deployments
+### デプロイメントにおける重みの調整
 
-canary-style deployments のために weights を段階的に調整します。
+カナリア方式のデプロイメントでは、重みを段階的に調整します。
 
 ```hcl
 # terraform.tfvars examples for different deployment stages
@@ -435,7 +435,7 @@ blue_weight  = 0
 green_weight = 100
 ```
 
-weight changes を適用します。
+重みの変更を適用します。
 
 ```bash
 # Update weights
@@ -449,11 +449,11 @@ aws elbv2 describe-listeners \
 
 ***
 
-## 3. DNS-Based Traffic Switching
+## 3. DNS ベースのトラフィック切り替え
 
-### Route53 Weighted Routing
+### Route53 加重ルーティング
 
-よりきめ細かな制御と global routing のために、NLB weights と併用、または代替として Route53 weighted records を使用します。
+よりきめ細かな制御とグローバルルーティングのために、NLB の重みと併用する、または置き換える形で Route53 の加重レコードを使用します。
 
 ```hcl
 # dns/main.tf
@@ -649,7 +649,7 @@ resource "aws_route53_record" "app_secondary" {
 }
 ```
 
-### Variables
+### 変数
 
 ```hcl
 # dns/variables.tf
@@ -700,29 +700,29 @@ variable "green_dns_weight" {
 }
 ```
 
-### TTL Strategy
+### TTL 戦略
 
-DNS TTL は、weights の変更時に traffic がどれだけ早く切り替わるかに影響します。
+DNS TTL は、重みの変更時にトラフィックが切り替わる速さに影響します。
 
-| TTL Value    | Switch Time     | Use Case          |
+| TTL 値    | 切り替え時間     | ユースケース          |
 | ------------ | --------------- | ----------------- |
-| 60 seconds   | \~2-3 minutes   | Rapid failover    |
-| 300 seconds  | \~10-15 minutes | Normal operations |
-| 3600 seconds | \~1-2 hours     | Stable routing    |
+| 60 秒   | \~2～3 分   | 迅速なフェイルオーバー    |
+| 300 秒  | \~10～15 分 | 通常運用 |
+| 3600 秒 | \~1～2 時間     | 安定したルーティング    |
 
-Route53 Alias records では、TTL は target（NLB）から継承されます。明示的な TTL control が必要な場合は、IP addresses を使用した non-alias records を使用します。
+Route53 Alias レコードの場合、TTL はターゲット（NLB）から継承されます。TTL を明示的に制御するには、IP アドレスを使用する非 Alias レコードを使用します。
 
 ***
 
-## 4. Data Node Placement
+## 4. データ Node の配置
 
-### Zone Affinity Concepts
+### ゾーンアフィニティの概念
 
-stateful workloads では、pods は persistent volumes と同じ zone に schedule される必要があります。EKS Auto Mode はこの多くを自動的に処理しますが、概念を理解しておくと troubleshooting に役立ちます。
+ステートフルワークロードでは、Pod を永続ボリュームと同じゾーンにスケジュールする必要があります。EKS Auto Mode がその大部分を自動処理しますが、概念を理解しておくとトラブルシューティングに役立ちます。
 
-### NodePool Zone Configuration
+### NodePool のゾーン設定
 
-実際の NodePool YAML は ArgoCD GitOps によって管理されます（[GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md) を参照）が、重要な概念は次のとおりです。
+実際の NodePool YAML は ArgoCD GitOps によって管理されます（[GitOps パイプライン設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)を参照）。ここでは主要な概念を示します。
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -763,7 +763,7 @@ spec:
 
 ### TopologySpreadConstraints
 
-workloads が single-zone cluster 内で正しく分散されるようにします。
+ワークロードが単一ゾーンクラスター内で適切に分散されるようにします。
 
 ```yaml
 # Example Deployment with topology constraints
@@ -798,9 +798,9 @@ spec:
               memory: 512Mi
 ```
 
-### Pod Affinity for Co-location
+### コロケーションのための Pod Affinity
 
-latency を削減するために、関連する pods を同じ場所に配置します。
+レイテンシーを低減するため、関連する Pod をコロケーションします。
 
 ```yaml
 # Cache pods should be near API pods
@@ -838,9 +838,9 @@ spec:
           image: redis:7-alpine
 ```
 
-### StatefulSet with Zone-Specific Storage
+### ゾーン固有ストレージを使用する StatefulSet
 
-databases やその他の stateful workloads の場合:
+データベースやその他のステートフルワークロードの場合:
 
 ```yaml
 # PostgreSQL StatefulSet with zone-locked storage
@@ -887,7 +887,7 @@ spec:
             storage: 100Gi
 ```
 
-### Storage Class for Zone-Specific Provisioning
+### ゾーン固有プロビジョニングのための StorageClass
 
 ```yaml
 # StorageClass that provisions in specific zone
@@ -912,11 +912,11 @@ reclaimPolicy: Retain
 
 ***
 
-## 5. Failover Automation
+## 5. フェイルオーバーの自動化
 
-### CloudWatch Alarms
+### CloudWatch アラーム
 
-cluster health を monitor し、automated failover を trigger します。
+クラスターの正常性を監視し、自動フェイルオーバーをトリガーします。
 
 ```hcl
 # failover/cloudwatch.tf
@@ -985,9 +985,9 @@ resource "aws_sns_topic_subscription" "email" {
 }
 ```
 
-### Lambda Failover Function
+### Lambda フェイルオーバー関数
 
-cluster が unhealthy になったときに weight switching を自動化します。
+クラスターが異常になった場合に重みを自動で切り替えます。
 
 ```hcl
 # failover/lambda.tf
@@ -1089,7 +1089,7 @@ resource "aws_lambda_permission" "cloudwatch" {
 }
 ```
 
-### Lambda Function Code
+### Lambda 関数コード
 
 ```python
 # failover/lambda/failover.py
@@ -1225,9 +1225,9 @@ def notify(message, severity):
         )
 ```
 
-### EventBridge Rule
+### EventBridge ルール
 
-failover checks を schedule で trigger します。
+スケジュールに従ってフェイルオーバーチェックをトリガーします。
 
 ```hcl
 # failover/eventbridge.tf
@@ -1255,9 +1255,9 @@ resource "aws_lambda_permission" "eventbridge" {
 }
 ```
 
-### Manual Switchover Procedure
+### 手動切り替え手順
 
-planned maintenance または manual failover の場合:
+計画メンテナンスまたは手動フェイルオーバーの場合:
 
 ```bash
 #!/bin/bash
@@ -1313,7 +1313,7 @@ echo "Verify with:"
 echo "  aws elbv2 describe-listeners --load-balancer-arn \$(terraform output -raw nlb_arn)"
 ```
 
-### Gradual Rollback Script
+### 段階的ロールバックスクリプト
 
 ```bash
 #!/bin/bash
@@ -1374,23 +1374,23 @@ echo "All traffic now routed to: $TO_CLUSTER"
 
 ***
 
-## Summary
+## まとめ
 
-NLB weighted routing を備えた Blue/Green cluster architecture は、次を提供します。
+NLB 加重ルーティングを使用する Blue/Green クラスターアーキテクチャには、次の利点があります。
 
-1. **Zero-Downtime Deployments**: traffic を段階的または即時に切り替えます
-2. **Rapid Rollback**: 数秒で previous cluster に切り戻します
-3. **Isolated Failure Domains**: AZ failures は 1 つの cluster のみに影響します
-4. **Testing in Production**: small percentage を new cluster に route します
-5. **Automated Recovery**: automatic failover のための CloudWatch + Lambda
+1. **ゼロダウンタイムデプロイメント**: トラフィックを段階的または即座に切り替えられる
+2. **迅速なロールバック**: 数秒で以前のクラスターに戻せる
+3. **分離された障害ドメイン**: AZ 障害の影響は 1 つのクラスターに限定される
+4. **本番環境でのテスト**: 少量のトラフィックを新しいクラスターにルーティングできる
+5. **自動復旧**: CloudWatch + Lambda による自動フェイルオーバー
 
-### Related Documentation
+### 関連ドキュメント
 
 * [Terraform 3-Layer Infrastructure](01-infrastructure-setup.md)
 * [CI Pipelines](03-ci-pipelines.md)
-* [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
-* [Getting Started with EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
+* [GitOps パイプライン設定](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [EKS Auto Mode の開始方法](../eks-auto-mode/01-getting-started.md)
 
 ***
 
-< [前へ: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [目次](./) | [次へ: CI Pipelines](03-ci-pipelines.md) >
+< [前へ: Terraform 3-Layer Infrastructure](01-infrastructure-setup.md) | [目次](./README.md) | [次へ: CI Pipelines](03-ci-pipelines.md) >

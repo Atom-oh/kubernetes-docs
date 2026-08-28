@@ -4,11 +4,11 @@
 
 ## Descripción general
 
-Calico admite varios modos de red para adaptarse a diferentes requisitos de infraestructura, necesidades de rendimiento y restricciones operativas. Esta sección profundiza en cada modo de red y te ayuda a elegir y configurar el modo óptimo para tu entorno.
+Calico admite varios modos de red para adaptarse a diferentes requisitos de infraestructura, necesidades de rendimiento y restricciones operativas. Esta sección analiza en profundidad cada modo de red y le ayuda a elegir y configurar el modo óptimo para su entorno.
 
 ## Resumen de los modos de red
 
-![Comparación de modos de red de Calico](../../.gitbook/assets/calico_networking_modes.png)
+![Comparación de los modos de red de Calico](../../.gitbook/assets/calico_networking_modes.png)
 
 ```mermaid
 flowchart TD
@@ -43,7 +43,7 @@ flowchart TD
 
 IP-in-IP (IPIP) es el modo de encapsulación predeterminado de Calico. Envuelve el paquete IP original dentro de otro paquete IP para la comunicación entre subredes.
 
-### Estructura de paquete IPIP
+### Estructura de paquetes IPIP
 
 ```
 Standard IP Packet (1500 bytes MTU):
@@ -69,14 +69,14 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 ### Opciones del modo IPIP
 
 | Modo            | Descripción                               | Caso de uso                                   |
-| --------------- | ----------------------------------------- | ------------------------------------------ |
-| **Siempre**      | Todo el tráfico de Pod a Pod se encapsula    | Entornos de nube, configuración sencilla           |
-| **CrossSubnet** | Solo se encapsula el tráfico entre subredes | Entornos híbridos, rendimiento optimizado |
-| **Nunca**       | IPIP deshabilitado (usar con enrutamiento Direct)   | On-premises con BGP                       |
+| --------------- | ----------------------------------------- | --------------------------------------------- |
+| **Siempre**     | Todo el tráfico de Pod a Pod se encapsula | Entornos de nube, configuración sencilla      |
+| **CrossSubnet** | Solo se encapsula el tráfico entre subredes | Entornos híbridos, rendimiento optimizado    |
+| **Nunca**       | IPIP deshabilitado (usar con enrutamiento Direct) | Entornos on-premises con BGP             |
 
 ### Modo IPIP CrossSubnet
 
-CrossSubnet es una optimización que encapsula únicamente el tráfico que cruza límites L3:
+CrossSubnet es una optimización que solo encapsula el tráfico que cruza límites L3:
 
 ```mermaid
 flowchart TD
@@ -173,9 +173,9 @@ sequenceDiagram
 
 ## Modo VXLAN
 
-VXLAN (Virtual Extensible LAN) es un protocolo de overlay estándar de la industria que encapsula tramas de capa 2 en paquetes UDP.
+VXLAN (Virtual Extensible LAN) es un protocolo de superposición estándar del sector que encapsula tramas de capa 2 en paquetes UDP.
 
-### Estructura de paquete VXLAN
+### Estructura de paquetes VXLAN
 
 ```
 VXLAN Encapsulated Packet:
@@ -194,10 +194,10 @@ VXLAN Encapsulated Packet:
 
 | Componente             | Descripción                                      |
 | --------------------- | ------------------------------------------------ |
-| **VTEP**              | Endpoint de túnel VXLAN: punto de encapsulación/desencapsulación        |
+| **VTEP**              | Endpoint de túnel VXLAN: punto de encapsulación/descapsulación |
 | **VNI**               | Identificador de red VXLAN (Calico usa un VNI fijo) |
-| **Puerto UDP**          | 4789 (asignado por IANA)                             |
-| **Multicast/Unicast** | Calico usa unicast con VTEP de pares conocidos        |
+| **Puerto UDP**        | 4789 (asignado por IANA)                         |
+| **Multicast/Unicast** | Calico usa unicast con VTEP de pares conocidos   |
 
 ### Configuración de IPPool de VXLAN
 
@@ -228,7 +228,7 @@ spec:
   nodeSelector: all()
 ```
 
-### Configuración de interfaz VXLAN
+### Configuración de la interfaz VXLAN
 
 ```bash
 # View VXLAN interface
@@ -289,15 +289,15 @@ flowchart TD
 
 ## Modo Direct/sin encapsulación
 
-El modo de enrutamiento Direct usa enrutamiento IP nativo sin encapsulación, lo que proporciona el mejor rendimiento posible.
+El modo de enrutamiento Direct utiliza enrutamiento IP nativo sin encapsulación, lo que proporciona el mejor rendimiento posible.
 
 ### Requisitos para el modo Direct
 
 | Requisito           | Descripción                                    |
-| --------------------- | ---------------------------------------------- |
-| **Adyacencia L2**      | Los Nodes deben estar en la misma red L2, O       |
-| **Enrutamiento BGP**       | Los routers externos deben aprender las rutas de Pod mediante BGP |
-| **Propagación de rutas** | La red física debe enrutar los CIDR de Pod          |
+| ------------------- | ---------------------------------------------- |
+| **Adyacencia L2**   | Los Nodes deben estar en la misma red L2, O    |
+| **Enrutamiento BGP** | Los routers externos deben aprender las rutas de Pod mediante BGP |
+| **Propagación de rutas** | La red física debe enrutar los CIDR de Pod |
 
 ### Topología del modo Direct
 
@@ -403,16 +403,16 @@ ip route
 ### IPIP vs VXLAN vs Direct
 
 | Característica               | IPIP                | VXLAN                | Direct       |
-| --------------------- | ------------------- | -------------------- | ------------ |
-| **Protocolo**          | Protocolo IP 4       | Puerto UDP 4789        | IP nativo    |
-| **Sobrecarga**          | 20 bytes            | 50 bytes             | 0 bytes      |
-| **MTU**               | 1480                | 1450                 | 1500         |
-| **Compatible con firewall** | Puede necesitar protocolo IP 4 | Paso de UDP     | Nativo       |
-| **Descarga de hardware**  | Limitada             | Mejor compatibilidad       | Compatibilidad completa |
-| **Requisito L2**    | No                  | No                   | Sí (o BGP) |
-| **Multicast**         | No es necesario          | No es necesario (unicast) | No es necesario   |
-| **Rendimiento**       | Bueno                | Bueno                 | Mejor         |
-| **Complejidad**        | Baja                 | Baja                  | Media       |
+| ---------------------------- | ------------------- | -------------------- | ------------ |
+| **Protocolo**                | Protocolo IP 4      | Puerto UDP 4789      | IP nativo    |
+| **Sobrecarga**               | 20 bytes            | 50 bytes             | 0 bytes      |
+| **MTU**                      | 1480                | 1450                 | 1500         |
+| **Compatible con firewall**  | Puede requerir proto IP 4 | Paso de UDP     | Nativo       |
+| **Descarga de hardware**     | Limitada            | Mejor compatibilidad | Compatibilidad total |
+| **Requisito L2**             | No                  | No                   | Sí (o BGP)   |
+| **Multicast**                | No necesario        | No necesario (unicast) | No necesario |
+| **Rendimiento**              | Bueno               | Bueno                | Mejor        |
+| **Complejidad**              | Baja                | Baja                 | Media        |
 
 ### Comparación de benchmarks de rendimiento
 
@@ -496,16 +496,16 @@ flowchart TD
 ## Compatibilidad con proveedores de nube
 
 | Proveedor        | IPIP | VXLAN | Direct           | Recomendado               |
-| --------------- | ---- | ----- | ---------------- | ------------------------- |
-| **AWS EC2**     | Sí  | Sí   | Con enrutamiento VPC | VXLAN o IPIP CrossSubnet |
-| **AWS EKS**     | Sí  | Sí   | Limitado          | VXLAN (predeterminado)           |
-| **Azure**       | Sí  | Sí   | Con UDR         | VXLAN                     |
-| **GCP**         | Sí  | Sí   | Con rutas VPC  | IPIP CrossSubnet          |
-| **On-Premises** | Sí  | Sí   | Sí (BGP)        | Direct (con BGP)         |
-| **Bare Metal**  | Sí  | Sí   | Sí              | Direct (con BGP)         |
-| **OpenStack**   | Sí  | Sí   | Sí              | Depende de la configuración de neutron |
+| ---------------- | ---- | ----- | ---------------- | ------------------------- |
+| **AWS EC2**     | Sí   | Sí    | Con enrutamiento VPC | VXLAN o IPIP CrossSubnet |
+| **AWS EKS**     | Sí   | Sí    | Limitado         | VXLAN (predeterminado)    |
+| **Azure**       | Sí   | Sí    | Con UDR          | VXLAN                     |
+| **GCP**         | Sí   | Sí    | Con rutas VPC    | IPIP CrossSubnet          |
+| **On-Premises** | Sí   | Sí    | Sí (BGP)         | Direct (con BGP)          |
+| **Bare Metal**  | Sí   | Sí    | Sí               | Direct (con BGP)          |
+| **OpenStack**   | Sí   | Sí    | Sí               | Depende de la configuración de neutron |
 
-### Configuración específica para AWS
+### Configuración específica de AWS
 
 ```yaml
 # For AWS EC2/EKS with VXLAN
@@ -526,7 +526,7 @@ spec:
       nodeSelector: all()
 ```
 
-### On-Premises con BGP
+### On-premises con BGP
 
 ```yaml
 # For on-premises with BGP peering
@@ -614,13 +614,13 @@ spec:
 
 ### Cálculo de MTU por modo
 
-| Modo             | MTU base | Sobrecarga | MTU efectiva | Configuración        |
-| ---------------- | -------- | -------- | ------------- | -------------------- |
-| Direct           | 1500     | 0        | 1500          | No se necesita ningún cambio     |
-| IPIP             | 1500     | 20       | 1480          | `ipipMTU: 1480`      |
-| VXLAN            | 1500     | 50       | 1450          | `vxlanMTU: 1450`     |
-| WireGuard        | 1500     | 60       | 1440          | `wireguardMTU: 1440` |
-| IPIP + WireGuard | 1500     | 80       | 1420          | Sobrecarga combinada    |
+| Modo             | MTU base | Sobrecarga | MTU efectivo | Configuración        |
+| ---------------- | -------- | --------- | ------------ | -------------------- |
+| Direct           | 1500     | 0         | 1500         | No se requiere ningún cambio |
+| IPIP             | 1500     | 20        | 1480         | `ipipMTU: 1480`      |
+| VXLAN            | 1500     | 50        | 1450         | `vxlanMTU: 1450`     |
+| WireGuard        | 1500     | 60        | 1440         | `wireguardMTU: 1440` |
+| IPIP + WireGuard | 1500     | 80        | 1420         | Sobrecarga combinada |
 
 ### Configuración de MTU
 
@@ -667,7 +667,7 @@ ping -M do -s 1422 <destination-pod-ip>   # For VXLAN (1450 MTU)
 tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 ```
 
-## Diagrama de flujo de decisión
+## Diagrama de flujo de decisiones
 
 ```mermaid
 flowchart TD
@@ -709,20 +709,20 @@ flowchart TD
 Elegir el modo de red adecuado es fundamental para un rendimiento óptimo de Calico:
 
 1. **Modo IPIP**: Opción predeterminada para entornos de nube, fácil de configurar
-2. **Modo VXLAN**: Mejor compatibilidad con firewall, protocolo de overlay estándar
+2. **Modo VXLAN**: Mejor compatibilidad con firewall, protocolo de superposición estándar
 3. **Modo Direct**: Máximo rendimiento para entornos on-premises con infraestructura BGP
 
 Consideraciones clave:
 
-* **Despliegues en la nube**: Usa VXLAN o IPIP CrossSubnet
-* **On-premises con BGP**: Usa el modo Direct para obtener el mejor rendimiento
+* **Implementaciones en la nube**: Use VXLAN o IPIP CrossSubnet
+* **On-premises con BGP**: Use el modo Direct para obtener el mejor rendimiento
 * **Entornos mixtos**: IPIP o VXLAN CrossSubnet proporcionan un buen equilibrio
 * **Rendimiento crítico**: Modo Direct con la configuración BGP adecuada
 
 [Anterior: Parte 2 - Análisis profundo de la arquitectura de Calico](02-architecture.md)
 
-[Volver a la descripción general de Calico](./)
+[Volver a la descripción general de Calico](./README.md)
 
 ## Cuestionario
 
-Para comprobar lo que has aprendido en este capítulo, prueba el [Cuestionario de modos de red](../../quizzes/networking/calico/03-networking-modes-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario sobre modos de red](../../quizzes/networking/calico/03-networking-modes-quiz.md).

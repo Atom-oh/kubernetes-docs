@@ -1,17 +1,17 @@
 # 基本概念
 
-このドキュメントでは、Istio の中核となる概念とアーキテクチャを説明します。Istio を効果的に使用するには、これらの基本概念を理解することが重要です。
+このドキュメントでは、Istio のコア概念とアーキテクチャを説明します。Istio を効果的に利用するためには、これらの基本概念を理解することが重要です。
 
 ## 目次
 
 1. [背景と歴史](02-basic-concepts.md#background-and-history)
-2. [Istio を選ぶ理由](02-basic-concepts.md#why-istio)
+2. [Istio を使用する理由](02-basic-concepts.md#why-istio)
 3. [Istio アーキテクチャ](02-basic-concepts.md#istio-architecture)
 4. [デプロイメントモード: Sidecar と Ambient](02-basic-concepts.md#deployment-modes-sidecar-vs-ambient)
 5. [コアリソース](02-basic-concepts.md#core-resources)
 6. [トラフィック管理の概念](02-basic-concepts.md#traffic-management-concepts)
 7. [セキュリティの概念](02-basic-concepts.md#security-concepts)
-8. [可観測性の概念](02-basic-concepts.md#observability-concepts)
+8. [オブザーバビリティの概念](02-basic-concepts.md#observability-concepts)
 9. [Namespace と Service Mesh](02-basic-concepts.md#namespaces-and-service-mesh)
 10. [次のステップ](02-basic-concepts.md#next-steps)
 
@@ -59,20 +59,20 @@ flowchart TB
 
 | 問題                            | 説明                                         | 影響                           |
 | ------------------------------- | -------------------------------------------- | ------------------------------ |
-| **サービス間通信**              | ネットワーク呼び出しの増加                   | レイテンシー、障害伝播         |
-| **可観測性**                    | 分散トレーシングが必要                       | デバッグの困難さ               |
+| **サービス間通信**              | ネットワーク呼び出しの増加                   | レイテンシ、障害の伝播         |
+| **オブザーバビリティ**          | 分散トレーシングの必要性                     | デバッグの困難さ               |
 | **セキュリティ**                | サービス間の認証・暗号化                     | mTLS 実装の複雑さ              |
 | **トラフィック制御**            | Canary デプロイ、A/B テスト                  | アプリケーションコードの変更   |
 | **障害処理**                    | Circuit Breaker、Retry                       | サービスごとの実装             |
 
 #### 初期の解決策: ライブラリ
 
-**問題点**:
+**問題**:
 
-* 言語ごとにライブラリを開発する必要がある（Java 用の Hystrix、Go 用の別ライブラリなど）
-* アプリケーションコードとの密結合
-* 更新時にはすべてのサービスを再デプロイする必要がある
-* 複雑なバージョン管理
+* 言語ごとにライブラリを開発する必要がある（Java 向け Hystrix、Go 向けの別ライブラリなど）
+* アプリケーションコードと密結合している
+* 更新時にすべてのサービスを再デプロイする必要がある
+* バージョン管理が複雑
 
 ```mermaid
 flowchart LR
@@ -104,19 +104,19 @@ flowchart LR
     class H,L,R lib;
 ```
 
-**Service Mesh の考え方**: ネットワークロジックをアプリケーションからインフラストラクチャ層へ移動する
+**Service Mesh のアイデア**: ネットワークロジックをアプリケーションからインフラストラクチャ層へ移す
 
 ### Envoy Proxy の誕生
 
 #### Lyft の課題
 
-**2015 年の Lyft** は、次の問題を抱えていました。
+**2015 年、Lyft** は次の問題に直面していました:
 
 * 200 以上の Microservices を運用
 * 多様な言語とフレームワーク（Python、Go、Java など）
 * 既存の Proxy（HAProxy、NGINX）では不十分
   * 動的な設定変更が困難
-  * 可観測性が不足
+  * オブザーバビリティが不足
   * 高度なルーティング機能が限定的
 
 #### Matt Klein と Envoy
@@ -157,19 +157,19 @@ flowchart TB
 
 **Envoy の主な機能**:
 
-1. **プロセス外アーキテクチャ**: アプリケーションとは別プロセス
-2. **xDS API**: 動的な設定更新
+1. **Out-of-process アーキテクチャ**: アプリケーションとは別のプロセス
+2. **xDS APIs**: 動的な設定更新
 3. **L7 Proxy**: HTTP/2、gRPC、WebSocket をサポート
-4. **可観測性**: 詳細なメトリクス、トレーシング、ログ
+4. **オブザーバビリティ**: 詳細なメトリクス、トレーシング、ロギング
 5. **パフォーマンス**: C++ で記述され、高性能
 
-#### CNCF への採用
+#### CNCF による採用
 
 **タイムライン**:
 
 * **2016 年 9 月**: Envoy をオープンソース化
 * **2017 年 9 月**: CNCF プロジェクト（Incubating）として採用
-* **2018 年 11 月**: CNCF Graduated プロジェクトに昇格
+* **2018 年 11 月**: CNCF Graduated プロジェクトへ昇格
 
 ### Istio の誕生と歴史
 
@@ -206,10 +206,10 @@ flowchart LR
 **各社の貢献**:
 
 | 企業       | 主な貢献             | 理由                           |
-| ---------- | -------------------- | ------------------------------ |
-| **Google** | Control Plane の設計 | Borg、Kubernetes の経験        |
-| **IBM**    | Enterprise 機能      | Enterprise 顧客の要件          |
-| **Lyft**   | Envoy Proxy          | 本番環境で実証済みの Proxy     |
+| ---------- | -------------------- | -------------------------------- |
+| **Google** | Control Plane の設計 | Borg、Kubernetes の経験         |
+| **IBM**    | エンタープライズ機能 | エンタープライズ顧客の要件     |
+| **Lyft**   | Envoy Proxy          | 本番環境で実証済みの Proxy      |
 
 #### Istio のバージョン履歴
 
@@ -229,7 +229,7 @@ timeline
     2025-01 : Istio 1.28 : Current version
 ```
 
-**バージョン 1.5（2020 年 3 月）- 重要な転換点**:
+**バージョン 1.5（2020 年 3 月） - 重要な転換点**:
 
 以前のアーキテクチャ（Istio 1.4 以前）:
 
@@ -241,7 +241,7 @@ Separated into individual components:
 - Galley (configuration validation)
 ```
 
-新しいアーキテクチャ（Istio 1.5 以降、現在の 1.28）:
+新しいアーキテクチャ（Istio 1.5 以降、現行 1.28）:
 
 ```
 Istiod (consolidated into single binary)
@@ -254,14 +254,14 @@ Mixer completely removed (functionality moved to Envoy)
 
 **変更の理由**:
 
-* 複雑性の削減（4 コンポーネント → 1）
-* パフォーマンスの向上（Mixer の削除によりレイテンシーを 50% 削減）
+* 複雑さの軽減（4 コンポーネント → 1）
+* パフォーマンスの向上（Mixer の削除によりレイテンシを 50% 削減）
 * 運用の簡素化（単一プロセスの管理）
 * リソース効率（メモリ、CPU 使用量の削減）
 
-## Istio を選ぶ理由
+## Istio を使用する理由
 
-Kubernetes はコンテナオーケストレーションを提供しますが、Microservices 間の複雑な通信管理には制限があります。Istio は、これらの問題を解決するための Service Mesh ソリューションです。
+Kubernetes はコンテナオーケストレーションを提供しますが、Microservices 間の複雑な通信管理には制限があります。Istio は、これらの問題に対処するための Service Mesh ソリューションです。
 
 ### Microservices の課題
 
@@ -309,9 +309,9 @@ flowchart TB
 
 #### 1. トラフィック管理
 
-**問題**: 新しいバージョンをデプロイする際に、トラフィックを安全に移行したい。
+**問題**: 新しいバージョンをデプロイする際、トラフィックを安全に移行したい。
 
-**Istio のソリューション**:
+**Istio の解決策**:
 
 ```yaml
 # Canary deployment without code changes
@@ -337,15 +337,15 @@ spec:
 **利点**:
 
 * アプリケーションコードの変更が不要
-* トラフィック分割をリアルタイムで調整可能
+* リアルタイムでのトラフィック分割調整
 * 自動ロールバックが可能
-* A/B テスト、Blue/Green デプロイをサポート
+* A/B テスト、Blue/Green デプロイメントをサポート
 
 #### 2. セキュリティ
 
-**問題**: サービス間通信を暗号化および認証したい。
+**問題**: サービス間通信を暗号化・認証したい。
 
-**Istio のソリューション**:
+**Istio の解決策**:
 
 ```yaml
 # Automatic mTLS enablement
@@ -362,31 +362,31 @@ spec:
 **利点**:
 
 * 証明書の自動発行と更新
-* Service Identity の自動検証
+* サービスアイデンティティの自動検証
 * きめ細かな権限制御
-* Zero Trust ネットワークの実装
+* Zero Trust ネットワークの実現
 
-#### 3. 可観測性
+#### 3. オブザーバビリティ
 
-**問題**: 数十の Microservices にまたがるリクエストフローの追跡が困難。
+**問題**: 数十の Microservices をまたぐリクエストフローの追跡が困難。
 
-**Istio のソリューション**:
+**Istio の解決策**:
 
 * メトリクスの自動生成（Latency、Traffic、Errors、Saturation）
 * 分散トレーシング
-* Service トポロジーの可視化
+* サービストポロジーの可視化
 
 **利点**:
 
 * ボトルネックの自動特定
 * エラーの根本原因を迅速に特定
-* Service ステータスのリアルタイム監視
+* リアルタイムのサービス状態監視
 
 #### 4. レジリエンス
 
-**問題**: 1 つの Service の障害がシステム全体に伝播する。
+**問題**: 1 つのサービスの障害がシステム全体に伝播する。
 
-**Istio のソリューション**:
+**Istio の解決策**:
 
 ```yaml
 # Automatic Circuit Breaker configuration
@@ -407,26 +407,26 @@ spec:
 
 * 障害の分離（Circuit Breaker）
 * 自動 Retry と Timeout
-* 異常なインスタンスの自動除外
+* 健全でないインスタンスの自動除外
 * トラフィック制限（Rate Limiting）
 
-### Istio を使用するタイミング
+### Istio を使用すべき場合
 
 **✅ Istio が適している場合:**
 
 1. **Microservices アーキテクチャ**
-   * 10 個以上の Service
-   * Service 間の複雑な依存関係
+   * 10 以上のサービス
+   * サービス間の複雑な依存関係
    * 頻繁なデプロイ
 2. **高度なトラフィック管理が必要**
    * Canary デプロイ、A/B テスト
    * きめ細かなルーティング制御
    * Traffic Mirroring
 3. **強力なセキュリティ要件**
-   * サービス間暗号化が必須
+   * サービス間の暗号化が必須
    * きめ細かなアクセス制御
-   * 規制遵守
-4. **可観測性とデバッグ**
+   * 規制コンプライアンス
+4. **オブザーバビリティとデバッグ**
    * 複雑なサービス間問題の追跡
    * パフォーマンスボトルネックの特定
    * SLO/SLA の監視
@@ -434,51 +434,51 @@ spec:
 **❌ Istio が過剰となる可能性がある場合:**
 
 1. **シンプルなアプリケーション**
-   * 少数の Service（5 未満）
+   * 少数のサービス（5 未満）
    * シンプルな要件
    * Kubernetes Ingress で十分
-2. **リソース制約**
-   * 小規模な Cluster
+2. **リソースの制約**
+   * 小規模なクラスター
    * リソースオーバーヘッドを許容できない
    * Sidecar のメモリコストが負担
 3. **運用能力の不足**
-   * 学習時間が不足
-   * 専任の Platform Team がいない
-   * よりシンプルなソリューションを優先
+   * 学習時間が不足している
+   * 専任のプラットフォームチームがない
+   * よりシンプルなソリューションを優先する
 
-### 代替手段との比較
+### 代替ソリューションの比較
 
 #### Kubernetes Ingress と Istio
 
 | 機能              | Kubernetes Ingress | Istio                             |
 | ----------------- | ------------------ | --------------------------------- |
-| **対象範囲**      | 外部 → Cluster     | 外部 + 内部のサービス間通信       |
+| **対象範囲**      | 外部 → クラスター  | 外部 + 内部サービス間             |
 | **ルーティング**  | 基本（Path、Host） | 高度（Header、Cookie など）       |
 | **mTLS**          | 手動設定           | 自動                              |
-| **可観測性**      | 限定的             | 豊富                              |
-| **複雑性**        | 低                 | 高                                |
+| **オブザーバビリティ** | 限定的         | 豊富                              |
+| **複雑さ**        | 低                 | 高                                |
 | **ユースケース**  | シンプルなアプリ   | Microservices                     |
 
 #### AWS VPC Lattice と Istio
 
 詳細な比較については、[AWS 統合](04-aws-integration.md#istio-vs-other-solutions-comparison)ドキュメントを参照してください。
 
-**概要**:
+**概要:**
 
-* **VPC Lattice**: AWS マネージド、シンプル、VPC/Account をまたぐ通信
+* **VPC Lattice**: AWS マネージド、シンプル、VPC/アカウント間通信
 * **Istio**: オープンソース、強力な機能、Kubernetes 専用、きめ細かな制御
 
 #### Linkerd と Istio
 
 | 特性               | Istio     | Linkerd            |
 | ------------------ | --------- | ------------------ |
-| **複雑性**         | 高        | 低                 |
+| **複雑さ**         | 高        | 低                 |
 | **機能**           | 非常に豊富 | コア機能のみ       |
 | **リソース**       | 高        | 低                 |
 | **学習曲線**       | 急        | 緩やか             |
 | **コミュニティ**   | 大        | 小                 |
 
-**選択ガイド**:
+**選択ガイド:**
 
 * 高度な機能と柔軟性が必要 → **Istio**
 * シンプルで軽量な Mesh が必要 → **Linkerd**
@@ -528,7 +528,7 @@ flowchart LR
 
 ### Ambient Mode（新しいアプローチ）
 
-Sidecar を使用せず、Node レベルでトラフィックを処理します。
+Sidecar なしでノードレベルのトラフィックを処理します。
 
 ```mermaid
 flowchart TB
@@ -560,28 +560,28 @@ flowchart TB
 
 **利点:**
 
-* 低いリソース使用量（Node ごとに 1 つ）
-* Pod の高速な起動
+* 低いリソース使用量（ノードごとに 1 つ）
+* 高速な Pod 起動
 * シンプルな運用
-* L7 機能を段階的に適用可能
+* 段階的な L7 機能の適用が可能
 
 **欠点:**
 
 * 比較的新しい技術（成熟度が低い）
 * 一部の高度な機能に制限がある
-* Pod ごとのきめ細かな制御が難しい
+* Pod ごとのきめ細かな制御が困難
 
 ### 比較表
 
 | 特性                       | Sidecar Mode                | Ambient Mode                   |
 | -------------------------- | --------------------------- | ------------------------------ |
-| **リソース使用量**         | 高（Pod ごと）              | 低（Node ごと）                |
-| **起動時間**               | 遅い（Init Container）      | 速い                           |
-| **運用の複雑性**           | 高                          | 低                             |
-| **L4 機能**                | サポート済み                | サポート済み                   |
-| **L7 機能**                | 完全サポート                | 任意（Waypoint）               |
+| **リソース使用量**         | 高（Pod ごと）              | 低（ノードごと）               |
+| **起動時間**               | 遅い（Init Container）      | 高速                           |
+| **運用の複雑さ**           | 高                          | 低                             |
+| **L4 機能**                | サポート                    | サポート                       |
+| **L7 機能**                | 完全サポート                | オプション（Waypoint）         |
 | **成熟度**                 | 高                          | 中                             |
-| **移行**                   | -                           | 既存の Sidecar から移行可能    |
+| **移行**                   | -                           | 既存 Sidecar から可能          |
 | **推奨用途**               | 高度な L7 機能が必要        | リソース効率を優先             |
 
 ### 選択ガイド
@@ -596,7 +596,7 @@ flowchart TB
 
 * リソース効率が重要
 * シンプルな L4 機能のみが必要
-* L7 機能を段階的に追加する予定
+* 段階的に L7 機能を追加する予定がある
 
 **詳細**については、[Advanced: Ambient Mode](advanced/01-ambient-mode.md)ドキュメントを参照してください。
 
@@ -604,20 +604,20 @@ flowchart TB
 
 Istio は、**Control Plane** と **Data Plane** の 2 つの主要コンポーネントで構成されます。
 
-| コンポーネント                | 説明                                                                                               |
-| ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Control Plane (istiod)**   | Service Discovery、設定配布、証明書管理を担う中央制御システム                                      |
-| **Data Plane (Envoy Proxy)** | 各 Pod に Sidecar としてデプロイされ、実際のトラフィック（ルーティング、mTLS、メトリクス）を処理   |
+| コンポーネント                | 説明                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Control Plane (istiod)**   | Service Discovery、設定配布、証明書管理を担う中央制御システム                                               |
+| **Data Plane (Envoy Proxy)** | 各 Pod に Sidecar としてデプロイされ、実際のトラフィック（ルーティング、mTLS、メトリクス）を処理            |
 
 **詳細なアーキテクチャ構造、内部動作原理、トラフィックインターセプトの仕組み**については、[アーキテクチャドキュメント](03-architecture.md)を参照してください。
 
 ## コアリソース
 
-Istio は、設定を管理するために Kubernetes Custom Resource Definitions（CRD）を使用します。
+Istio は Kubernetes Custom Resource Definitions（CRDs）を使用して設定を管理します。
 
 ### 1. VirtualService
 
-VirtualService は、リクエストを Service にルーティングする方法を定義します。
+VirtualService は、リクエストをサービスへルーティングする方法を定義します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -651,7 +651,7 @@ spec:
 
 ### 2. DestinationRule
 
-DestinationRule は、Service の Subset（バージョン）を定義し、トラフィックポリシーを適用します。
+DestinationRule は、サービスのサブセット（バージョン）を定義し、トラフィックポリシーを適用します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -687,15 +687,15 @@ spec:
 
 **主な機能**:
 
-* Service バージョン（Subset）の定義
+* サービスバージョン（subset）の定義
 * Load Balancing アルゴリズム
 * Connection Pool の設定
 * Circuit Breaker（Outlier Detection）
-* TLS 設定
+* TLS の設定
 
 ### 3. Gateway
 
-Gateway は、Mesh に流入する外部トラフィックを管理します。
+Gateway は Mesh に入る外部トラフィックを管理します。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -726,13 +726,13 @@ spec:
 **主な機能**:
 
 * 外部トラフィックのエントリポイントを定義
-* Host、Port、Protocol の設定
+* Host、ポート、プロトコルの設定
 * TLS 終端
 * SNI ルーティング
 
 ### 4. ServiceEntry
 
-ServiceEntry により、Mesh 外部の Service を内部 Service と同様に使用できます。
+ServiceEntry により、Mesh 外部のサービスを内部サービスのように利用できます。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -752,13 +752,13 @@ spec:
 
 **主な機能**:
 
-* 外部 Service の登録
-* 外部 Service のトラフィック制御
+* 外部サービスの登録
+* 外部サービスのトラフィック制御
 * Egress トラフィック管理
 
 ### 5. PeerAuthentication
 
-PeerAuthentication は、Service 間の認証ポリシーを定義します。
+PeerAuthentication は、サービス間の認証ポリシーを定義します。
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -773,7 +773,7 @@ spec:
 
 ### 6. AuthorizationPolicy
 
-AuthorizationPolicy は、Service へのアクセス権限を定義します。
+AuthorizationPolicy は、サービスへのアクセス権限を定義します。
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -821,7 +821,7 @@ flowchart LR
     class Client default;
 ```
 
-### トラフィック分割（Canary デプロイ）
+### トラフィック分割（Canary デプロイメント）
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -868,9 +868,9 @@ spec:
 
 ## セキュリティの概念
 
-### mTLS（相互 TLS）
+### mTLS（Mutual TLS）
 
-Istio は、Service 間通信を自動的に暗号化します。
+Istio は、サービス間通信を自動的に暗号化します。
 
 ```mermaid
 flowchart LR
@@ -934,7 +934,7 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
-## 可観測性の概念
+## オブザーバビリティの概念
 
 Istio は、メトリクス、ログ、トレースを自動的に生成します。
 
@@ -976,8 +976,8 @@ flowchart TB
 
 | メトリクス                            | 説明                 |
 | ------------------------------------- | -------------------- |
-| `istio_requests_total`                | 総リクエスト数       |
-| `istio_request_duration_milliseconds` | リクエストレイテンシー |
+| `istio_requests_total`                | リクエスト総数       |
+| `istio_request_duration_milliseconds` | リクエストレイテンシ |
 | `istio_request_bytes`                 | リクエストサイズ     |
 | `istio_response_bytes`                | レスポンスサイズ     |
 | `istio_tcp_connections_opened_total`  | TCP 接続数           |
@@ -1054,7 +1054,7 @@ spec:
 
 ## VM Workload の登録
 
-Istio では、Kubernetes Pod だけでなく **Virtual Machine（VM）Workload** も Service Mesh に登録できます。これにより、レガシーアプリケーションや Cluster 外部の Service でも、Istio のトラフィック管理、セキュリティ、可観測性機能を利用できます。
+Istio では、Kubernetes Pod だけでなく、**Virtual Machine（VM）Workload** も Service Mesh に登録できます。これにより、レガシーアプリケーションやクラスター外のサービスでも、Istio のトラフィック管理、セキュリティ、オブザーバビリティ機能を利用できます。
 
 ### VM Workload が必要な理由
 
@@ -1105,8 +1105,8 @@ flowchart TB
 **ユースケース**:
 
 * レガシーアプリケーションの段階的な移行
-* Database Server を Mesh に含める
-* Cluster 外部の Service の統合
+* データベースサーバーを Mesh に含める
+* クラスター外サービスの統合
 * ハイブリッドクラウド環境の構成
 
 ### VM 登録アーキテクチャ
@@ -1169,16 +1169,16 @@ spec:
     mysql: 3306
 ```
 
-**WorkloadEntry の主要フィールド**:
+**WorkloadEntry の主なフィールド**:
 
 * `address`: VM IP アドレス
-* `labels`: Service Selector と一致
-* `serviceAccount`: mTLS 認証用の Service Account
-* `ports`: 公開する Port の定義
+* `labels`: Service selector と一致
+* `serviceAccount`: mTLS 認証用の Service account
+* `ports`: 公開ポートの定義
 
 ### ServiceEntry との統合
 
-WorkloadEntry は ServiceEntry とともに使用し、VM Service を Mesh に登録します。
+WorkloadEntry は ServiceEntry とともに使用し、VM サービスを Mesh に登録します。
 
 ```yaml
 # Define service with ServiceEntry
@@ -1217,13 +1217,13 @@ spec:
 
 | 機能                       | VM Workload 登録          | Multi-Cluster                  | Kubernetes Pod      |
 | -------------------------- | ------------------------- | ------------------------------ | ------------------- |
-| **Workload の場所**        | Cluster 外部の VM         | 別の Kubernetes Cluster        | Cluster 内部        |
+| **Workload の場所**        | クラスター外の VM         | 異なる Kubernetes クラスター   | クラスター内        |
 | **Envoy のインストール**   | 手動インストール          | 自動（Sidecar）                | 自動（Sidecar）     |
 | **登録方法**               | WorkloadEntry             | ServiceEntry + EndpointSlice   | Service + Pod       |
-| **mTLS**                   | サポート済み              | サポート済み                   | サポート済み        |
+| **mTLS**                   | サポート                  | サポート                       | サポート            |
 | **Service Discovery**      | 手動（IP 指定）           | 自動                           | 自動                |
-| **ユースケース**           | レガシーアプリ、DB        | Multi-cloud、災害復旧          | Cloud-native アプリ |
-| **運用の複雑性**           | 高                        | 中                             | 低                  |
+| **ユースケース**           | レガシーアプリ、DB        | マルチクラウド、災害復旧       | クラウドネイティブアプリ |
+| **運用の複雑さ**           | 高                        | 中                             | 低                  |
 
 ### VM 登録の利点
 
@@ -1266,8 +1266,8 @@ flowchart LR
 **利点**:
 
 * 既存の VM アプリケーションを変更せずに Mesh へ統合
-* Kubernetes へ段階的に移行
-* 移行中も一貫したセキュリティと可観測性を維持
+* 段階的に Kubernetes へ移行
+* 移行中も一貫したセキュリティとオブザーバビリティを維持
 
 #### 2. 統一されたセキュリティポリシー
 
@@ -1302,7 +1302,7 @@ spec:
         methods: ["*"]
 ```
 
-#### 3. 一貫した可観測性
+#### 3. 一貫したオブザーバビリティ
 
 VM Workload は、Kubernetes Pod と同じメトリクス、ログ、分散トレーシングを提供します。
 
@@ -1318,15 +1318,15 @@ sum(rate(istio_requests_total{destination_workload="mysql-vm-1"}[5m]))
 
 ### VM 登録の制限事項
 
-1. **Envoy の手動インストール**: VM に Envoy Proxy を手動でインストールして設定する必要がある
-2. **ネットワーク接続性**: VM と Kubernetes Cluster 間のネットワーク接続が必要
-3. **証明書管理**: Service Account 証明書を VM にデプロイする必要がある
-4. **運用負荷**: VM 上の Envoy のバージョン管理と更新が必要
+1. **手動での Envoy インストール**: VM に Envoy Proxy を手動でインストール・設定する必要がある
+2. **ネットワーク接続性**: VM と Kubernetes クラスター間のネットワーク接続が必要
+3. **証明書管理**: Service account 証明書を VM にデプロイする必要がある
+4. **運用負荷**: VM 上の Envoy バージョン管理と更新が必要
 5. **Auto-scaling の制限**: Kubernetes HPA のような Auto-scaling はない
 
 ### 実践的な使用例
 
-#### シナリオ: レガシー Database の統合
+#### シナリオ: レガシーデータベースの統合
 
 ```yaml
 # 1. Define database service with ServiceEntry
@@ -1390,8 +1390,8 @@ spec:
 
 **結果**:
 
-* Kubernetes Pod は `postgres.production.svc.cluster.local` 経由で Database にアクセス
-* VM と Pod 間の mTLS 暗号化を自動化
+* Kubernetes Pod は `postgres.production.svc.cluster.local` 経由でデータベースにアクセス
+* VM と Pod 間で mTLS を自動暗号化
 * アクセス制御ポリシーを適用
 * メトリクスと分散トレーシングを自動収集
 
@@ -1426,59 +1426,59 @@ flowchart TB
     class mTLS,Traffic,Policy,Metrics feature;
 ```
 
-Istio の柔軟な Workload 登録機能により、次を実現できます。
+Istio の柔軟な Workload 登録機能により:
 
-* **Kubernetes Pod**: Cloud-native アプリケーション
-* **Multi-Cluster**: Multi-cloud、リージョン分散、災害復旧
-* **Virtual Machine**: レガシーアプリ、Database、ハイブリッド環境
+* **Kubernetes Pod**: クラウドネイティブアプリケーション
+* **Multi-Cluster**: マルチクラウド、リージョン分散、災害復旧
+* **Virtual Machine**: レガシーアプリ、データベース、ハイブリッド環境
 
-すべての Workload は、一貫したセキュリティ、トラフィック管理、可観測性機能を利用できます。
+すべての Workload は、一貫したセキュリティ、トラフィック管理、オブザーバビリティ機能を利用できます。
 
 ## 次のステップ
 
-これで Istio の基本概念を理解できました。次のドキュメントを通じて、実際の使用方法を学びましょう。
+これで Istio の基本概念を理解できました。以下のドキュメントで、実際の使用方法を学びましょう:
 
 ### コア機能
 
-1. [**トラフィック管理**](traffic-management/)
+1. [**トラフィック管理**](traffic-management/README.md)
    * Gateway と VirtualService の使用方法
-   * DestinationRule と Subset の定義
+   * DestinationRule と subset の定義
    * ServiceEntry と WorkloadEntry（VM 登録）
    * 高度なルーティングパターン（Canary、A/B テスト）
    * Traffic Mirroring と Shadowing
-2. [**セキュリティ**](security/)
+2. [**セキュリティ**](security/README.md)
    * mTLS 設定と PeerAuthentication
    * 認証（RequestAuthentication、JWT）
    * 認可（AuthorizationPolicy）
-   * セキュリティポリシー管理
+   * セキュリティポリシーの管理
    * 外部認証の統合
-3. [**可観測性**](/broken/pages/HT0uW6gT7EfVN0LF8wU5)
+3. [**オブザーバビリティ**](observability/README.md)
    * メトリクス収集（Prometheus）
    * 分散トレーシング（Jaeger、Zipkin）
-   * ログ設定
+   * ロギング設定
    * Kiali Service Mesh の可視化
-   * Grafana Dashboard
-4. [**レジリエンス**](resilience/)
+   * Grafana ダッシュボード
+4. [**レジリエンス**](resilience/README.md)
    * Circuit Breaker パターン
    * Retry と Timeout の設定
    * Rate Limiting
    * Outlier Detection
    * Fault Injection テスト
 
-### 高度なトピック
+### Advanced トピック
 
-5. [**高度なトピック**](advanced/)
+5. [**Advanced トピック**](advanced/README.md)
    * Ambient Mode（Sidecar なしの Mesh）
-   * Multi-Cluster の設定
+   * Multi-Cluster 構成
    * EnvoyFilter のカスタマイズ
    * DNS Proxy と Caching
    * VM Workload の詳細設定
-   * WASM Plugin の開発
+   * WASM プラグイン開発
 
 ## 参考資料
 
 * [Istio 公式ドキュメント - 概念](https://istio.io/latest/docs/concepts/)
 * [Istio 公式ドキュメント - トラフィック管理](https://istio.io/latest/docs/concepts/traffic-management/)
 * [Istio 公式ドキュメント - セキュリティ](https://istio.io/latest/docs/concepts/security/)
-* [Istio 公式ドキュメント - 可観測性](https://istio.io/latest/docs/concepts/observability/)
+* [Istio 公式ドキュメント - オブザーバビリティ](https://istio.io/latest/docs/concepts/observability/)
 * [Envoy Proxy 公式ドキュメント](https://www.envoyproxy.io/docs/envoy/latest/)

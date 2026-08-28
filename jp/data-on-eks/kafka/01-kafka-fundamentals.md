@@ -1,27 +1,27 @@
-# パート 1: Kafka Fundamentals
+# Part 1: Kafka の基礎
 
 > **サポート対象バージョン**: Apache Kafka 3.9 (KRaft mode)\
 > **最終更新**: July 9, 2026
 
 ## Apache Kafka とは？
 
-Apache Kafka は、大量のリアルタイムデータストリームを処理するために構築された、分散 event streaming platform です。もともとは LinkedIn で開発され、その後 Apache project としてオープンソース化されました。現在では、log aggregation、metrics pipeline、event-driven microservices、change data capture (CDC) pipeline に広く使用されています。
+Apache Kafka は、大量のリアルタイムデータストリームを処理するために構築された分散イベントストリーミングプラットフォームです。もともとは LinkedIn で開発され、後に Apache プロジェクトとしてオープンソース化されました。ログ集約、メトリクスパイプライン、イベント駆動型マイクロサービス、変更データキャプチャ (CDC) パイプラインで広く使用されています。
 
-このドキュメントでは、EKS 上で Kafka を実行する前に必要な中核概念である brokers、topics、partitions、consumer groups、replication、KRaft について説明します。パート 2 では、Strimzi Operator を使用して、これらの概念を実際の EKS cluster にデプロイする手順を扱います。
+このドキュメントでは、EKS で Kafka を実行する前に必要となる中核概念、すなわち broker、topic、partition、consumer group、replication、KRaft について説明します。Part 2 では、Strimzi Operator を使用して、これらの概念を実際の EKS cluster にデプロイする手順を説明します。
 
-## 1. Kafka Architecture Basics
+## 1. Kafka アーキテクチャの基本
 
-### Core Terminology
+### 基本用語
 
-* **Broker**: message を保存し、client request を処理する Kafka server process です。Kafka cluster は通常、複数の brokers で構成されます。
-* **Topic**: `orders` や `payments` など、message を分類するために使用される論理 channel です。
-* **Partition**: topic が分割される物理単位です。各 partition は、順序付けされた append-only の immutable log です。
-* **Offset**: partition 内の各 message に割り当てられる、連続した一意の番号です。Consumers は offset を使用して「どこまで読んだか」を追跡します。
-* **Replication Factor**: partition の data がコピーされる brokers の数であり、broker 障害時の data loss を防ぎます。
-* **Leader/Follower Replica**: 各 partition では、1 つの replica が leader として指定され、すべての read/write を処理します。残りの follower replicas は leader から data をコピーします。
-* **ISR (In-Sync Replicas)**: leader に十分追従している replicas の集合です。`acks=all` で write が送信された場合、ISR 内のすべての replica が message を受信して初めて成功と見なされます。
+* **Broker**: メッセージを保存し、client request を処理する Kafka server process です。Kafka cluster は通常、複数の broker で構成されます。
+* **Topic**: `orders` や `payments` など、メッセージを分類するために使用する論理チャネルです。
+* **Partition**: topic を分割する物理的な単位です。各 partition は順序付けされた、追記専用かつ不変のログです。
+* **Offset**: partition 内の各メッセージに割り当てられる連番の一意な番号です。consumer は offset を使用して「どこまで読み取ったか」を追跡します。
+* **Replication Factor**: partition のデータをコピーする broker の数です。broker 障害時のデータ損失から保護します。
+* **Leader/Follower Replica**: 各 partition では、1 つの replica が leader に指定され、すべての読み取りと書き込みを処理します。残りの follower replica は leader からデータをコピーします。
+* **ISR (In-Sync Replicas)**: leader に十分追いついている replica の集合です。`acks=all` を指定して書き込みを送信する場合、ISR 内のすべての replica がメッセージを受信した時点でのみ成功と見なされます。
 
-### Producer -> Partitions -> Consumer Group Flow
+### Producer -> Partitions -> Consumer Group のフロー
 
 ```mermaid
 flowchart LR
@@ -48,23 +48,23 @@ flowchart LR
     T2 --> C3
 ```
 
-Producers は topic に message を書き込み、Kafka はそれらの message を partition level で複数の brokers に分散します。同じ consumer group に属する Consumers は、partitions を分担し（おおよそ 1 対 1）、message を並列に consume します。
+Producer は topic にメッセージを書き込み、Kafka はそれらのメッセージを partition 単位で複数の broker に分散します。同じ consumer group に属する consumer は partition を（おおむね 1 対 1 で）分担し、並列にメッセージを消費します。
 
-## 2. Partitions and Ordering Guarantees
+## 2. Partition と順序保証
 
-Partition 数は、cluster の並列 throughput を左右する最も重要な要素です。Partitions が多いほど、より多くの consumers が同時に動作できますが、partitions が多すぎると brokers 上の metadata overhead と open file handles が増加します。
+partition 数は、cluster の並列スループットを左右する最も重要な要素です。partition を増やすと、より多くの consumer が同時に処理できますが、多すぎる partition は metadata のオーバーヘッドと broker 上の open file handle を増加させます。
 
-> **Key Concept**: Kafka は topic 全体にわたる ordering を **保証しません**。Ordering が保証されるのは **単一 partition 内** のみです。
+> **重要な概念**: Kafka は topic 全体にわたる順序を**保証しません**。順序が保証されるのは、**単一の partition 内**のみです。
 
-### Partition Key Selection Strategies
+### Partition Key の選択戦略
 
-Producer が key 付きで message を送信すると、Kafka はその key の hash に基づいて message を partition に routing します。同じ key は常に同じ partition に routing されます。これにより、同じ key を共有する events 間の ordering を維持できます。
+Producer が key 付きのメッセージを送信すると、Kafka はその key の hash に基づいて partition にルーティングします。同じ key は常に同じ partition にルーティングされるため、key を共有するイベント間の順序を保持できます。
 
-| Strategy | Description | Example Use Case |
+| 戦略 | 説明 | 使用例 |
 | --- | --- | --- |
-| No key (null) | Round-robin または sticky partitioner が message を partitions に分散します | ordering が重要ではない log ingestion |
-| Entity ID as key | 同じ entity の events を同じ partition に固定します | 特定の order ID に対する status events の順序を維持する |
-| Custom partitioner | business rules に基づいて partitions に routing します | 特定 customer の traffic を専用 partition に分離する |
+| key なし (null) | Round-robin または sticky partitioner がメッセージを partition 間に分散 | 順序が重要でないログ取り込み |
+| Entity ID を key として使用 | 同じ entity のイベントを同じ partition に固定 | 特定の order ID に対する status event の順序保持 |
+| Custom partitioner | business rule に基づいて partition をルーティング | 特定 customer のトラフィックを専用 partition に分離 |
 
 ```bash
 # Create a topic with 6 partitions and a replication factor of 3
@@ -76,62 +76,62 @@ kafka-topics.sh --create \
   --config min.insync.replicas=2
 ```
 
-不適切に選択された key は、traffic が単一 partition に集中する「hot partition」を作り出す可能性があります。そのため、load を均等に分散するのに十分な cardinality（十分に多い distinct values の数）を key が持つことを確認してください。
+適切に選択されていない key は、トラフィックが単一の partition に集中する「hot partition」を生み出す可能性があります。そのため、負荷を均等に分散できるよう、key に十分な cardinality（十分に多くの異なる値）があることを確認してください。
 
-## 3. Consumer Groups and Rebalancing
+## 3. Consumer Group と Rebalancing
 
-### How Consumer Groups Work
+### Consumer Group の仕組み
 
-同じ `group.id` を共有する Consumers は **consumer group** を形成します。Kafka は topic の partitions を group 内の consumer instances に自動的に割り当て、各 partition はその group 内のちょうど 1 つの consumer によって読み取られます（consumers が partitions より多い場合、一部の consumers は idle 状態になります）。
+同じ `group.id` を共有する consumer は、**consumer group** を形成します。Kafka は topic の partition を group 内の consumer instance に自動的に割り当て、各 partition はその group 内でちょうど 1 つの consumer によって読み取られます（consumer 数が partition 数より多い場合、一部の consumer は idle 状態になります）。
 
-### What Triggers a Rebalance
+### Rebalance のトリガー
 
 * 新しい consumer が group に参加する
 * 既存の consumer が group を離脱する（graceful shutdown）、または heartbeat timeout によって離脱したと検出される
-* topic の partitions 数が変更される
-* consumer が `session.timeout.ms` 内に heartbeat を送信できない、または処理に時間がかかりすぎて `max.poll.interval.ms` を超える
+* topic の partition 数が変更される
+* consumer が `session.timeout.ms` 内に heartbeat を送信できない、または処理時間が長すぎて `max.poll.interval.ms` を超過する
 
-rebalance の進行中は、影響を受ける group の consumption が短時間停止します。そのため、過度に頻繁な rebalances は throughput を低下させます。`CooperativeStickyAssignor` を使用すると、rebalance 中の partition movement を最小化し、そのコストを削減できます。
+rebalance の実行中、影響を受ける group の消費は短時間停止します。そのため、過度に頻繁な rebalance はスループットを低下させます。`CooperativeStickyAssignor` を使用すると、rebalance 中の partition 移動を最小化し、そのコストを削減できます。
 
-### Offset Commit Strategies
+### Offset Commit 戦略
 
-| Strategy | Configuration | Characteristics |
+| 戦略 | 設定 | 特性 |
 | --- | --- | --- |
-| Auto-commit | `enable.auto.commit=true` (default) | 便利な periodic commits ですが、processing が完了する前に offsets が commit される可能性があり、message loss のリスクがあります |
-| Manual commit (sync) | `enable.auto.commit=false` + `commitSync()` | processing 完了後にのみ commit します — より安全ですが、throughput は低くなります |
-| Manual commit (async) | `enable.auto.commit=false` + `commitAsync()` | throughput は高くなりますが、application は commit failures を自分で処理する必要があります |
+| Auto-commit | `enable.auto.commit=true` (default) | 定期的な commit を簡単に実行できますが、処理完了前に offset が commit される可能性があり、メッセージ損失のリスクがあります |
+| Manual commit (sync) | `enable.auto.commit=false` + `commitSync()` | 処理の完了後にのみ commit されます。より安全ですが、スループットは低下します |
+| Manual commit (async) | `enable.auto.commit=false` + `commitAsync()` | より高いスループットを実現できますが、application 側で commit failure を処理する必要があります |
 
-### Delivery Semantics
+### 配信セマンティクス
 
-* **At-most-once**: message が処理される前に offset が commit されます。障害時に messages が失われる可能性があります。
-* **At-least-once**: processing 後に offset が commit されます（一般的に推奨される default）。障害時に messages が再処理される可能性があるため、consumer logic は idempotent になるよう設計する必要があります。
-* **Exactly-once**: producer の idempotent option と transactional API (`transactional.id`) を組み合わせることで、Kafka 内（topic-to-topic）で exactly-once processing を実現します。外部 system にまたがる exactly-once processing には、追加の設計作業が必要です（たとえば、Kafka Connect の exactly-once sink connector）。
+* **At-most-once**: メッセージが処理される前に offset が commit されます。障害時にメッセージが失われる可能性があります。
+* **At-least-once**: 処理後に offset が commit されます（一般的に推奨される default）。障害時にはメッセージが再処理される可能性があるため、consumer logic は idempotent になるよう設計する必要があります。
+* **Exactly-once**: producer の idempotent option と transactional API (`transactional.id`) を組み合わせることで、Kafka 内（topic-to-topic）の exactly-once processing を実現します。外部 system にまたがる exactly-once processing には追加の設計作業が必要です（たとえば、Kafka Connect の exactly-once sink connector）。
 
-## 4. KRaft: Kafka Without ZooKeeper
+## 4. KRaft: ZooKeeper なしの Kafka
 
-歴史的に、Kafka は cluster metadata（topic/partition information、ACLs、controller election）を管理するために、別個の ZooKeeper ensemble に依存していました。Kafka 3.3 以降、**KRaft (Kafka Raft metadata mode)** は production-ready (GA) となり、**Kafka 4.0（2025 年 3 月リリース）** では ZooKeeper mode が完全に削除され、KRaft が唯一サポートされる metadata management mechanism になりました。
+従来、Kafka は cluster metadata（topic/partition 情報、ACL、controller election）を管理するために、別個の ZooKeeper ensemble に依存していました。Kafka 3.3 から、**KRaft (Kafka Raft metadata mode)** が本番利用可能 (GA) となり、**Kafka 4.0 (released in March 2025)** では ZooKeeper mode が完全に削除され、KRaft が唯一サポートされる metadata management mechanism になりました。
 
-### KRaft Architecture
+### KRaft アーキテクチャ
 
-別個の ZooKeeper cluster の代わりに、KRaft は Kafka broker processes の一部を **controller quorum** として指定します。
+KRaft は別個の ZooKeeper cluster の代わりに、Kafka broker process の一部を **controller quorum** として動作するよう指定します。
 
-* **Controller Voter**: Raft consensus protocol に参加し、metadata log を replicate する node です（quorum のため通常は 3 や 5 などの奇数）。
-* **Active Controller**: leader として選出され、partition leader election、topic creation などの cluster metadata changes を実際に処理する単一の voter です。
-* Controller と broker の roles は、小規模 clusters では同じ process 内で組み合わせることができます（`process.roles=broker,controller`）。大規模 deployments では、dedicated controller-only nodes（`process.roles=controller`）に分離できます。
+* **Controller Voter**: Raft consensus protocol に参加し、metadata log を replication する node です（quorum のために通常は 3 や 5 などの奇数です）。
+* **Active Controller**: leader として選出され、partition leader election、topic creation など、実際に cluster metadata の変更を処理する単一の voter です。
+* 小規模な cluster では、controller と broker の role を同じ process 内で組み合わせることができます（`process.roles=broker,controller`）。大規模な deployment では、専用の controller-only node に分割できます（`process.roles=controller`）。
 
-### Before / After Comparison
+### Before / After の比較
 
-| Aspect | ZooKeeper-based (default through Kafka 3.x) | KRaft-based (GA in 3.3+, only mode in 4.0+) |
+| 項目 | ZooKeeper ベース (Kafka 3.x までは default) | KRaft ベース (3.3+ で GA、4.0+ では唯一の mode) |
 | --- | --- | --- |
-| Metadata storage | 別個の ZooKeeper ensemble | Kafka 自身の internal metadata topic (`__cluster_metadata`) |
-| Clusters required | 2 つ — Kafka cluster と ZooKeeper cluster | 1 つ — Kafka cluster のみ |
-| Controller election | ZooKeeper ephemeral znodes 経由の leader election | Raft consensus 経由で選出される active controller |
-| Metadata scalability | partition 数に伴って ZooKeeper load が増加します | log-based replication は大規模な partition 数に対してよりよく scale します |
-| Kubernetes operational overhead | ZooKeeper StatefulSet、別個の PVCs、別個の monitoring が必要です | 管理する別 component はありません — Kafka broker/controller pods のみです |
+| Metadata storage | 別個の ZooKeeper ensemble | Kafka 独自の内部 metadata topic (`__cluster_metadata`) |
+| 必要な cluster | 2 つ — Kafka cluster と ZooKeeper cluster | 1 つ — Kafka cluster のみ |
+| Controller election | ZooKeeper ephemeral znode による leader election | Raft consensus によって選出される active controller |
+| Metadata scalability | partition 数に応じて ZooKeeper の負荷が増加 | log ベースの replication は大規模な partition 数に対してより優れた拡張性を提供 |
+| Kubernetes の運用オーバーヘッド | ZooKeeper StatefulSet、別個の PVC、別個の monitoring が必要 | 管理する別個の component は不要 — Kafka broker/controller pod のみ |
 
-この違いは Kubernetes/EKS environments では非常に重要です。ZooKeeper-based deployments では、Kafka StatefulSet と ZooKeeper StatefulSet の両方を実行し、network policies、PodDisruptionBudgets、monitoring を両 components にわたって重複して用意する必要がありました。KRaft はその operational burden を取り除き、Strimzi のような operator が管理する必要のある resource types の数を減らします。パート 2 で扱う Strimzi-based deployment は、default で KRaft mode を使用します。
+この違いは Kubernetes/EKS 環境で非常に重要です。ZooKeeper ベースの deployment では、Kafka StatefulSet と ZooKeeper StatefulSet の両方を実行し、両 component にわたって network policy、PodDisruptionBudget、monitoring を重複して設定する必要がありました。KRaft はこの運用負荷を排除し、Strimzi のような operator が管理する必要のある resource type の数を削減します。Part 2 で扱う Strimzi ベースの deployment では、default で KRaft mode を使用します。
 
-### Sample KRaft Node Configuration (server.properties)
+### KRaft Node 設定の例 (server.properties)
 
 ```properties
 # This node acts as both broker and controller (suitable for small clusters)
@@ -148,19 +148,19 @@ inter.broker.listener.name=BROKER
 log.dirs=/var/lib/kafka/data
 ```
 
-## 5. Replication and Durability Settings
+## 5. Replication と Durability の設定
 
-producer が message が「安全に保存された」とどの程度確信できるかは、3 つの settings の組み合わせに依存します。
+Producer がメッセージを「安全に保存された」と確信できる度合いは、3 つの設定の組み合わせに依存します。
 
-* **`replication.factor`** (topic-level setting): partition の data を何台の brokers にコピーするかを決定します。最小値は 3 が推奨され、data を失うことなく最大 2 台の同時 broker failures に耐えられます。
-* **`min.insync.replicas`** (topic-level setting): `acks=all` で write が送信された場合、write が成功と見なされるために message を持っている必要がある ISR members の最小数を指定します。一般的な組み合わせは `replication.factor=3` と `min.insync.replicas=2` で、1 台の broker が failure しても writes を利用可能に保ちます。
-* **`acks`** (producer-level setting): write が完了したと見なす前に producer が待機する confirmation の量を決定します。
+* **`replication.factor`** (topic-level setting): partition のデータをコピーする broker 数を決定します。最低 3 を推奨します。これにより、データを失うことなく最大 2 つの同時 broker failure に耐えられます。
+* **`min.insync.replicas`** (topic-level setting): `acks=all` を指定して書き込みを送信する場合、書き込みを成功と見なすためにメッセージを保持している必要がある ISR member の最小数を指定します。一般的な組み合わせは、`replication.factor=3` と `min.insync.replicas=2` です。これにより、1 つの broker に障害が発生しても書き込みを利用可能な状態に保てます。
+* **`acks`** (producer-level setting): 書き込み完了と見なす前に、producer が待機する confirmation の量を決定します。
 
-| `acks` value | Behavior | Durability | Latency/Throughput |
+| `acks` value | 動作 | Durability | Latency/Throughput |
 | --- | --- | --- | --- |
-| `0` | Producer は response を一切待ちません | 最低（送信直後に messages が失われる可能性があります） | 最速 |
-| `1` | leader が書き込むと成功と見なされます | 中程度（leader が failure すると replicated されていない data が失われる可能性があります） | 高速 |
-| `all` (`-1`) | すべての ISR replica が書き込んだ場合にのみ成功と見なされます | 最高 | 比較的低速 |
+| `0` | Producer はいかなる response も待機しない | 最低（送信直後にメッセージが失われる可能性がある） | 最速 |
+| `1` | leader が書き込んだ時点で成功と見なされる | 中程度（leader 障害時に replication されていないデータが失われる可能性がある） | 高速 |
+| `all` (`-1`) | すべての ISR replica が書き込んだ時点でのみ成功と見なされる | 最高 | 比較的低速 |
 
 ```bash
 # Dynamically change min.insync.replicas on an existing topic
@@ -169,14 +169,14 @@ kafka-configs.sh --bootstrap-server localhost:9092 \
   --add-config min.insync.replicas=2
 ```
 
-一般的な production-grade の組み合わせは、`replication.factor=3`、`min.insync.replicas=2`、producer `acks=all`、`enable.idempotence=true` です。この組み合わせは、data loss なしで単一の broker failure に耐え、idempotent producer setting により network retries によって発生する duplicate writes を防ぎます。`acks=all` は `acks=1` と比較して latency を追加する点に注意してください。そのため、多少の data loss を許容できる latency-sensitive workloads（metrics ingestion など）では、`acks=1` を選択して durability と引き換えに speed を優先する場合があります。
+一般的な本番品質の組み合わせは、`replication.factor=3`、`min.insync.replicas=2`、producer の `acks=all`、および `enable.idempotence=true` です。この組み合わせはデータ損失なしで単一の broker failure に耐え、idempotent producer 設定により network retry による重複書き込みを防止します。`acks=all` は `acks=1` と比較して latency を追加することに注意してください。そのため、metrics ingestion など、ある程度のデータ損失を許容できる latency-sensitive workload では、`acks=1` を選択して durability よりも速度を優先することがあります。
 
-## Next Steps
+## 次のステップ
 
-このドキュメントでは、Kafka の中核概念である broker/topic/partition model、ordering guarantees の範囲、consumer group rebalancing、KRaft への移行、replication/durability settings を説明しました。パート 2 では、**Strimzi Operator** を使用して、これらすべての概念を KRaft-based Kafka cluster として Amazon EKS 上にデプロイする方法を扱います。
+このドキュメントでは、Kafka の中核概念、すなわち broker/topic/partition model、順序保証の範囲、consumer group の rebalancing、KRaft への移行、replication/durability の設定について説明しました。Part 2 では、**Strimzi Operator** を使用して、これらすべての概念を Amazon EKS 上の KRaft ベース Kafka cluster としてデプロイする方法を説明します。
 
-[メインページに戻る](./)
+[メインページに戻る](./README.md)
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するために、[Topic Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md) に挑戦してみてください。
+この章で学んだ内容を確認するには、[Topic クイズ](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)に挑戦してください。

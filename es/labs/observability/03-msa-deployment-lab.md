@@ -1,28 +1,28 @@
-# Parte 3: MSA Deployment y Canary
+# Parte 3: Despliegue de MSA y Canary
 
 > **Dificultad**: Avanzado **Tiempo estimado**: 60 minutos **Última actualización**: February 23, 2026
 
 ## Objetivos de aprendizaje
 
 * Desplegar aplicaciones MSA mediante la gestión multiclúster de ArgoCD
-* Configurar Argo Rollouts para despliegues Canary con AnalysisTemplate
-* Implementar la instrumentación automática de OpenTelemetry para todos los Services
-* Ejecutar lanzamientos Canary con promoción/reversión basada en observabilidad
+* Configurar Argo Rollouts para despliegues canary con AnalysisTemplate
+* Implementar auto-instrumentación de OpenTelemetry para todos los servicios
+* Ejecutar lanzamientos canary con promoción/reversión basada en observabilidad
 
 ## Requisitos previos
 
-* [ ] Completada la [Parte 1: Configuración de infraestructura](01-infrastructure-setup-lab.md)
-* [ ] Completada la [Parte 2: Stack de observabilidad](02-observability-stack-lab.md)
-* [ ] ArgoCD y Argo Rollouts en ejecución
-* [ ] Stack de observabilidad recopilando datos
+* [ ] Completó la [Parte 1: Configuración de infraestructura](01-infrastructure-setup-lab.md)
+* [ ] Completó la [Parte 2: Stack de observabilidad](02-observability-stack-lab.md)
+* ArgoCD y Argo Rollouts en ejecución
+* Stack de observabilidad recopilando datos
 
 ***
 
 ## Descripción general de la arquitectura
 
-![Mapa de Service MSA](../../.gitbook/assets/msa-service-map.png)
+![Mapa de servicios MSA](../../.gitbook/assets/msa-service-map.png)
 
-### Flujo de llamadas de Service
+### Flujo de llamadas de servicios
 
 ```mermaid
 sequenceDiagram
@@ -64,7 +64,7 @@ sequenceDiagram
 
 ### Estructura de la aplicación
 
-| Service              | Lenguaje | Framework   | Puerto | Descripción                      |
+| Servicio              | Lenguaje | Framework   | Puerto | Descripción                      |
 | -------------------- | -------- | ----------- | ---- | -------------------------------- |
 | API Gateway          | Go       | Gin         | 8080 | Enrutamiento de solicitudes, autenticación  |
 | Order Service        | Python   | FastAPI     | 8000 | Gestión de pedidos                 |
@@ -166,17 +166,17 @@ async def create_order(order: OrderRequest):
 
 ***
 
-## Ejercicio 2: Configuración de Karpenter NodePool
+## Ejercicio 2: Configuración de NodePool de Karpenter
 
 ### Pasos
 
-**Paso 2.1: Cambiar al Service Cluster**
+**Paso 2.1: Cambiar al clúster de servicios**
 
 ```bash
 kubectl config use-context $(kubectl config get-contexts -o name | grep obs-service)
 ```
 
-**Paso 2.2: Crear un NodePool dedicado para las cargas de trabajo MSA**
+**Paso 2.2: Crear NodePool dedicado para cargas de trabajo de MSA**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -265,7 +265,7 @@ kubectl get ec2nodeclasses
 
 ***
 
-## Ejercicio 3: Configuración de KEDA ScaledObject
+## Ejercicio 3: Configuración de ScaledObject de KEDA
 
 ### Pasos
 
@@ -283,7 +283,7 @@ helm install keda kedacore/keda \
   --wait
 ```
 
-**Paso 3.2: Crear un ScaledObject para Notification Service (basado en SQS)**
+**Paso 3.2: Crear ScaledObject para Notification Service (basado en SQS)**
 
 ```bash
 kubectl create namespace msa
@@ -322,7 +322,7 @@ spec:
 EOF
 ```
 
-**Paso 3.3: Crear un ScaledObject para Order Service (basado en Prometheus)**
+**Paso 3.3: Crear ScaledObject para Order Service (basado en Prometheus)**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -378,17 +378,17 @@ kubectl get hpa -n msa
 
 ***
 
-## Ejercicio 4: Despliegue de ArgoCD Application
+## Ejercicio 4: Despliegue de Application de ArgoCD
 
 ### Pasos
 
-**Paso 4.1: Cambiar al Managed Cluster (host de ArgoCD)**
+**Paso 4.1: Cambiar al clúster administrado (host de ArgoCD)**
 
 ```bash
 kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
 ```
 
-**Paso 4.2: Crear la App-of-Apps de ArgoCD**
+**Paso 4.2: Crear App-of-Apps de ArgoCD**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -418,7 +418,7 @@ spec:
 EOF
 ```
 
-**Paso 4.3: Crear un ApplicationSet para los Services MSA**
+**Paso 4.3: Crear ApplicationSet para los servicios MSA**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -476,7 +476,7 @@ spec:
 EOF
 ```
 
-**Paso 4.4: Desplegar directamente manifiestos MSA de ejemplo (para el laboratorio)**
+**Paso 4.4: Desplegar manifiestos de ejemplo de MSA directamente (para el laboratorio)**
 
 ```bash
 # Switch to Service Cluster
@@ -761,7 +761,7 @@ kubectl get svc -n msa
 
 ***
 
-## Ejercicio 5: Instrumentación automática de OpenTelemetry
+## Ejercicio 5: Auto-instrumentación de OpenTelemetry
 
 ### Pasos
 
@@ -829,7 +829,7 @@ spec:
 EOF
 ```
 
-**Paso 5.3: Tabla de cobertura de instrumentación automática**
+**Paso 5.3: Tabla de cobertura de auto-instrumentación**
 
 | Lenguaje | Bibliotecas instrumentadas               | Anotación                                               |
 | -------- | ------------------------------------ | -------------------------------------------------------- |
@@ -861,7 +861,7 @@ kubectl logs -n opentelemetry -l app=otel-collector --tail=50 | grep "trace"
 
 ### Pasos
 
-**Paso 6.1: Convertir Order Service en un Rollout**
+**Paso 6.1: Convertir Order Service a Rollout**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -966,7 +966,7 @@ spec:
 EOF
 ```
 
-**Paso 6.2: Crear un AnalysisTemplate**
+**Paso 6.2: Crear AnalysisTemplate**
 
 ```bash
 cat <<'EOF' | kubectl apply -f -
@@ -1016,7 +1016,7 @@ spec:
 EOF
 ```
 
-### Diagrama de estado Canary
+### Diagrama de estado de Canary
 
 ```mermaid
 stateDiagram-v2
@@ -1037,7 +1037,7 @@ stateDiagram-v2
     Rollback --> [*]: Rolled back to v1
 ```
 
-**Paso 6.3: Activar el despliegue Canary (actualizar imagen)**
+**Paso 6.3: Activar el despliegue canary (actualizar imagen)**
 
 ```bash
 # Update to v2
@@ -1076,7 +1076,7 @@ kubectl argo rollouts set image order-service \
   -n msa
 ```
 
-**Paso 7.2: Supervisar el análisis Canary**
+**Paso 7.2: Supervisar el análisis canary**
 
 ```bash
 # Watch analysis results
@@ -1096,7 +1096,7 @@ kubectl argo rollouts status order-service -n msa
 # Expected output: "Degraded - RolloutAborted: Rollout aborted due to analysis failure"
 ```
 
-**Paso 7.4: Comprobar la división de tráfico en Grafana**
+**Paso 7.4: Revisar Grafana para la división de tráfico**
 
 ```bash
 # Open Grafana and check:
@@ -1121,16 +1121,16 @@ kubectl get pods -n msa -l app=order-service -o jsonpath='{range .items[*]}{.met
 
 ## Resumen
 
-En este laboratorio, has:
+En este laboratorio, usted ha:
 
 | Tarea                                  | Estado     |
 | ------------------------------------- | ---------- |
-| Karpenter NodePool para MSA            | Configurado |
-| KEDA ScaledObjects (SQS + Prometheus) | Creados    |
-| ArgoCD ApplicationSet                 | Desplegado   |
-| MSA Services (4 Services)             | En ejecución    |
-| Instrumentación automática de OTel             | Habilitada    |
-| Argo Rollouts Canary                  | Configurado |
+| NodePool de Karpenter para MSA            | Configurado |
+| ScaledObjects de KEDA (SQS + Prometheus) | Creados    |
+| ApplicationSet de ArgoCD                 | Desplegado   |
+| Servicios MSA (4 servicios)             | En ejecución    |
+| Auto-instrumentación de OTel             | Habilitada    |
+| Canary de Argo Rollouts                  | Configurado |
 | AnalysisTemplate                      | Creado    |
 | Prueba de fallo/reversión                 | Completada  |
 
@@ -1142,43 +1142,43 @@ La limpieza se realizará en la [Parte 6](06-distributed-tracing-lab.md#cleanup)
 
 <details>
 
-<summary>La instrumentación de OTel no se está inyectando</summary>
+<summary>La instrumentación de OTel no se inyecta</summary>
 
-* Verifica que OTel Operator esté en ejecución: `kubectl get pods -n opentelemetry-operator-system`
-* Comprueba el recurso Instrumentation: `kubectl get instrumentation -n msa`
-* Asegúrate de que las anotaciones de los Pod sean correctas
-* Reinicia los Pod después de crear Instrumentation
-
-</details>
-
-<details>
-
-<summary>El análisis Canary falla siempre</summary>
-
-* Comprueba la sintaxis de la consulta de Prometheus en AnalysisTemplate
-* Verifica que se estén recopilando métricas: prueba la consulta en Grafana Explore
-* Comprueba los logs de AnalysisRun: `kubectl describe analysisrun -n msa <name>`
-* Ajusta las condiciones de éxito/fallo si es necesario
+* Verifique que OTel Operator esté en ejecución: `kubectl get pods -n opentelemetry-operator-system`
+* Revise el recurso Instrumentation: `kubectl get instrumentation -n msa`
+* Asegúrese de que las anotaciones del Pod sean correctas
+* Reinicie los Pods después de crear Instrumentation
 
 </details>
 
 <details>
 
-<summary>KEDA no está escalando</summary>
+<summary>El análisis canary siempre falla</summary>
 
-* Verifica los permisos de IRSA para el acceso a SQS
-* Comprueba los logs del operador KEDA: `kubectl logs -n keda -l app=keda-operator`
-* Prueba las métricas de SQS: `aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
+* Revise la sintaxis de la consulta de Prometheus en AnalysisTemplate
+* Verifique que se recopilen métricas: pruebe la consulta en Grafana Explore
+* Revise los logs de AnalysisRun: `kubectl describe analysisrun -n msa <name>`
+* Ajuste las condiciones de éxito/fallo si es necesario
 
 </details>
 
-## Siguientes pasos
+<details>
 
-Continúa con la [Parte 4: Pruebas de carga y autoescalado](04-load-testing-scaling-lab.md) para realizar pruebas de estrés de la aplicación MSA.
+<summary>KEDA no escala</summary>
+
+* Verifique los permisos de IRSA para el acceso a SQS
+* Revise los logs del operador de KEDA: `kubectl logs -n keda -l app=keda-operator`
+* Pruebe las métricas de SQS: `aws sqs get-queue-attributes --queue-url $SQS_QUEUE_URL --attribute-names ApproximateNumberOfMessages`
+
+</details>
+
+## Próximos pasos
+
+Continúe con la [Parte 4: Pruebas de carga y autoescalado](04-load-testing-scaling-lab.md) para realizar pruebas de carga de la aplicación MSA.
 
 ## Referencias
 
-* [Documentación de ArgoCD](../../gitops/argocd/)
+* [Documentación de ArgoCD](../../gitops/argocd/README.md)
 * [Documentación de Argo Rollouts](../../gitops/argocd/05-traffic-management.md)
 * [Documentación de KEDA](../../autoscaling/01-keda.md)
 * [Documentación de Karpenter](../../autoscaling/02-karpenter.md)

@@ -4,34 +4,34 @@
 > **Versión de EKS**: 1.34 (Kubernetes 1.28+)
 > **Última actualización**: February 19, 2026
 
-Este cuestionario evalúa tu comprensión de la service mesh de Istio.
+Este cuestionario evalúa tu comprensión del service mesh de Istio.
 
 ## Pregunta 1: Conceptos básicos de Service Mesh
 
 <details>
-<summary>¿Qué es una service mesh y cuáles son sus principales características?</summary>
+<summary>¿Qué es un service mesh y cuáles son sus características principales?</summary>
 
 **Respuesta:**
-Una service mesh es una capa de infraestructura que gestiona la comunicación entre servicios, lo que te permite controlar y observar la comunicación entre servicios sin modificar el código de la aplicación.
+Un service mesh es una capa de infraestructura que gestiona la comunicación de servicio a servicio, lo que te permite controlar y observar la comunicación entre servicios sin modificar el código de la aplicación.
 
 **Características principales:**
 1. **Gestión de tráfico**: Controla el flujo de tráfico entre servicios
-   - Enrutamiento, balanceo de carga, despliegues Canary
+   - Enrutamiento, balanceo de carga, despliegues canary
    - Timeout, Retry, Circuit Breaker
    - Duplicación de tráfico y pruebas shadow
 
-2. **Seguridad**: Cifrado y autenticación para la comunicación entre servicios
+2. **Seguridad**: Cifrado y autenticación para la comunicación de servicio a servicio
    - mTLS automático (TLS mutuo)
    - Authorization Policy (control de acceso)
    - Request Authentication (JWT)
 
-3. **Observabilidad**: Visibilidad de la comunicación entre servicios
+3. **Observabilidad**: Visibilidad de la comunicación de servicio a servicio
    - Recopilación de métricas (Prometheus)
    - Trazado distribuido (Jaeger/Zipkin)
    - Registro y visualización (Kiali, Grafana)
 
 **Características de Istio:**
-- Se superpone de forma transparente a las aplicaciones distribuidas existentes
+- Se integra de forma transparente en aplicaciones distribuidas existentes
 - Usa el patrón de proxy sidecar (Envoy)
 - Admite Ambient Mode (arquitectura sin sidecar)
 - Gestión de políticas mediante configuración declarativa
@@ -45,9 +45,9 @@ Una service mesh es una capa de infraestructura que gestiona la comunicación en
 **Respuesta:**
 **Control Plane:**
 - **Istiod**: Control Plane unificado en un único binario
-  - **Service Discovery**: Mantiene el registro de servicios de la mesh
-  - **Gestión de configuración**: Almacena y distribuye la configuración de Istio
-  - **Gestión de certificados**: Genera y rota certificados para mTLS
+  - **Service Discovery**: Mantiene el registro de servicios del mesh
+  - **Configuration Management**: Almacena y distribuye la configuración de Istio
+  - **Certificate Management**: Genera y rota certificados para mTLS
 
 **Data Plane:**
 - **Envoy Proxy**: Desplegado como sidecar, intermedia toda la comunicación de red
@@ -63,16 +63,16 @@ Una service mesh es una capa de infraestructura que gestiona la comunicación en
 - Control Plane unificado en un único binario (Istiod)
 - Arquitectura escalable y de alta disponibilidad
 - Configuración basada en CRD nativa de Kubernetes
-- Es posible una reducción de recursos de más del 85% con Ambient Mode
+- Posibilidad de reducir recursos en más de un 85% con Ambient Mode
 </details>
 
 ## Pregunta 3: Gestión de tráfico e integración con Argo Rollouts
 
 <details>
-<summary>¿Cómo implementas despliegues Canary automatizados mediante Istio y Argo Rollouts?</summary>
+<summary>¿Cómo implementas despliegues canary automatizados mediante Istio y Argo Rollouts?</summary>
 
 **Respuesta:**
-Argo Rollouts se integra con Istio para proporcionar despliegues Canary automáticos basados en métricas.
+Argo Rollouts se integra con Istio para proporcionar despliegues canary automáticos basados en métricas.
 
 **1. Definición del recurso Rollout:**
 ```yaml
@@ -133,8 +133,8 @@ spec:
 ```
 
 **Características clave:**
-- Progresión/rollback automático basado en métricas
-- Aumento gradual del tráfico (10% → 25% → 50% → 100%)
+- Progresión/rollback automáticos basados en métricas
+- Incremento gradual del tráfico (10% → 25% → 50% → 100%)
 - Análisis de métricas de Prometheus en tiempo real
 - Rollback automático inmediato ante errores
 </details>
@@ -146,12 +146,12 @@ spec:
 
 **Respuesta:**
 **Beneficios de mTLS:**
-- Cifrado automático de la comunicación entre servicios
+- Cifrado automático de la comunicación de servicio a servicio
 - Seguridad mejorada mediante autenticación mutua
 - Se aplica sin cambios en el código de la aplicación
 - Emisión y renovación automáticas de certificados
 
-**1. PeerAuthentication - Política de mTLS:**
+**1. PeerAuthentication - Política mTLS:**
 ```yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -205,9 +205,9 @@ spec:
     jwksUri: "https://auth.example.com/.well-known/jwks.json"
 ```
 
-**Buenas prácticas:**
-- Usa políticas de denegación predeterminada
-- Aplica el principio de privilegio mínimo
+**Prácticas recomendadas:**
+- Usa políticas deny-by-default
+- Aplica el principio de mínimo privilegio
 - Autenticación basada en Service Account
 - Aislamiento de Namespace
 </details>
@@ -221,7 +221,7 @@ spec:
 **Rol de Gateway:**
 - Punto de entrada para el tráfico externo hacia los servicios internos del cluster
 - Control de tráfico Ingress/Egress
-- Terminación TLS y gestión de certificados
+- Terminación de TLS y gestión de certificados
 - Integración con balanceadores de carga
 
 **Ejemplo de configuración:**
@@ -282,7 +282,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-**Creación del certificado TLS:**
+**Creación de certificado TLS:**
 ```bash
 # Create TLS certificate as Kubernetes Secret
 kubectl create -n istio-system secret tls bookinfo-secret \
@@ -360,13 +360,13 @@ istioctl dashboard jaeger
 - ztunnel (proxy L4 a nivel de nodo) + waypoint (proxy L7 opcional)
 - Reducción de recursos de más del 85%
 
-**Comparación de arquitectura:**
+**Comparación de arquitecturas:**
 
 | Característica | Sidecar Mode | Ambient Mode |
 |---------|-------------|--------------|
 | Despliegue | Inyección de Envoy por Pod | 1 ztunnel por nodo |
 | Uso de recursos | Alto (50-100MB por Pod) | Bajo (50MB por nodo) |
-| Complejidad de despliegue | Alta (se necesita redespliegue) | Baja (aplicación transparente) |
+| Complejidad del despliegue | Alta (se requiere redespliegue) | Baja (aplicación transparente) |
 | Características L4 | Compatible | Compatible mediante ztunnel |
 | Características L7 | Compatibilidad completa | Requiere waypoint |
 | Rendimiento | Ligeramente más lento | Rápido (solo L4) |
@@ -426,7 +426,7 @@ spec:
         maxRequestsPerConnection: 2
 ```
 
-**3. Rate Limiting - Control de tasa de solicitudes:**
+**3. Rate Limiting - Control de la tasa de solicitudes:**
 ```yaml
 # Local Rate Limiting
 apiVersion: networking.istio.io/v1alpha3
@@ -451,7 +451,7 @@ spec:
 **Diferencias:**
 - **Outlier Detection**: Reactivo (excluye tras un error)
 - **Circuit Breaker**: Preventivo (limita conexiones)
-- **Rate Limiting**: Control de tasa de solicitudes (token bucket)
+- **Rate Limiting**: Control de la tasa de solicitudes (token bucket)
 
 **Uso combinado:**
 ```yaml
@@ -464,7 +464,7 @@ trafficPolicy:
 ```
 </details>
 
-## Pregunta 9: Locality Load Balancing (enrutamiento consciente de zona)
+## Pregunta 9: Balanceo de carga por localidad (enrutamiento consciente de zona)
 
 <details>
 <summary>¿Qué es la característica Locality Load Balancing de Istio y cómo se utiliza con AWS EKS?</summary>
@@ -472,7 +472,7 @@ trafficPolicy:
 **Respuesta:**
 **Concepto de Locality Load Balancing:**
 - Enrutamiento prioritario a servicios en la misma Availability Zone (AZ)
-- Latencia de red reducida
+- Reducción de la latencia de red
 - Ahorro en costes de transferencia de datos entre AZ (~85%)
 
 **Configuración:**
@@ -500,14 +500,14 @@ spec:
           to: us-west-2
 ```
 
-**Uso con AWS EKS:**
+**Uso de AWS EKS:**
 1. **Ahorro de costes:**
    - Tráfico entre AZ: $0.01/GB
    - Tráfico en la misma AZ: Gratis
-   - Ahorro significativo de costes con un enrutamiento del 80% dentro de la misma AZ
+   - Ahorro de costes significativo con un 80% de enrutamiento en la misma AZ
 
-2. **Mejora de rendimiento:**
-   - Latencia dentro de una AZ: ~1ms
+2. **Mejora del rendimiento:**
+   - Latencia dentro de la AZ: ~1ms
    - Latencia entre AZ: ~2-3ms
 
 3. **Failover automático:**
@@ -522,10 +522,10 @@ topology.kubernetes.io/zone: us-east-1a
 ```
 </details>
 
-## Pregunta 10: Integración con Amazon EKS y buenas prácticas
+## Pregunta 10: Integración con Amazon EKS y prácticas recomendadas
 
 <details>
-<summary>¿Cuáles son las consideraciones y buenas prácticas al integrar Istio 1.28.0 con Amazon EKS 1.34?</summary>
+<summary>¿Cuáles son las consideraciones y prácticas recomendadas al integrar Istio 1.28.0 con Amazon EKS 1.34?</summary>
 
 **Respuesta:**
 **1. Instalación y configuración:**
@@ -619,14 +619,14 @@ data:
         log_group_name /aws/eks/cluster/istio
 ```
 
-**6. Buenas prácticas:**
+**6. Prácticas recomendadas:**
 - Usa el perfil de producción
-- HA de Control Plane (replicas >= 3)
+- Alta disponibilidad de Control Plane (réplicas >= 3)
 - Modo mTLS STRICT
 - Configuración de PodDisruptionBudget
 - Habilita Locality Load Balancing
 - Monitorización con Prometheus + Grafana
-- Actualizaciones de versión regulares (enfoque Canary)
+- Actualizaciones regulares de versión (enfoque Canary)
 
 **7. Optimización de costes:**
 - Considera Ambient Mode (reducción de recursos del 85%)
@@ -640,7 +640,7 @@ data:
 <summary>¿Cómo implementas Progressive Delivery totalmente automatizado con Istio + Argo Rollouts?</summary>
 
 **Respuesta:**
-Progressive Delivery es un enfoque que avanza o revierte automáticamente los despliegues según las métricas.
+Progressive Delivery es un enfoque que avanza o revierte automáticamente los despliegues basándose en métricas.
 
 **Ejemplo de automatización completa:**
 ```yaml
@@ -710,7 +710,7 @@ spec:
 ```
 
 **Beneficios clave:**
-- Automatización completa (sin intervención humana)
+- Automatización completa (no se necesita intervención humana)
 - Rollback inmediato (en segundos tras detectar un error)
 - Despliegues seguros (verificación basada en métricas)
 - Proceso consistente (estandarizado)
@@ -720,13 +720,13 @@ spec:
 
 **Puntuación:**
 - 10-11 correctas: Excelente (nivel experto en Istio)
-- 8-9 correctas: Bueno (capaz de operar en producción)
-- 6-7 correctas: Regular (se recomienda aprendizaje adicional)
-- 4-5 correctas: Insuficiente (se requiere repasar los conceptos básicos)
+- 8-9 correctas: Bien (capaz de operar en producción)
+- 6-7 correctas: Promedio (se recomienda aprendizaje adicional)
+- 4-5 correctas: Insuficiente (se debe revisar los conceptos básicos)
 - 0-3 correctas: Se necesita volver a estudiar
 
 **Recursos de aprendizaje:**
 - [Documentación oficial de Istio](https://istio.io/latest/docs/)
 - [Documentación de Argo Rollouts](https://argo-rollouts.readthedocs.io/)
 - [EKS Workshop - Istio](https://www.eksworkshop.com/docs/security/servicemesh/)
-- [Documentación detallada en esta guía](../../service-mesh/istio/)
+- [Documentación detallada de esta guía](../../service-mesh/istio/README.md)
