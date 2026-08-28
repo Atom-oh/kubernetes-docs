@@ -1,6 +1,6 @@
 # 重试与超时
 
-重试与超时是提升微服务韧性的核心机制。使用 Istio，您无需修改应用程序代码即可配置这些策略。
+重试与超时是提升微服务韧性的核心机制。借助 Istio，您无需更改应用程序代码即可配置这些策略。
 
 ## 目录
 
@@ -8,7 +8,7 @@
 2. [超时配置](#timeout-configuration)
 3. [重试配置](#retry-configuration)
 4. [组合使用重试与超时](#combining-retry-and-timeout)
-5. [实践示例](#practical-examples)
+5. [实用示例](#practical-examples)
 6. [重要警告](#important-warnings)
 7. [最佳实践](#best-practices)
 8. [故障排除](#troubleshooting)
@@ -112,6 +112,8 @@ spec:
 
 ## 重试配置
 
+> **重要：**省略 `retries` 并不一定意味着已关闭重试。Istio 的集群范围默认值为 `attempts: 2`，并设置了 `retryOn: connect-failure,refused-stream,unavailable,cancelled`。`attempts` 计数的是**原始请求之后的额外重试**，因此总共可能会投递三次。请在路由上设置 `attempts: 0`，以明确禁用 Proxy 重试。
+
 ### 基本重试
 
 ```yaml
@@ -146,6 +148,8 @@ spec:
 
 ### 高级重试配置
 
+`payment-service` 接受非幂等写入（提交扣款），因此若将单一重试策略应用于每种方法，mesh 便可能会在 `reset` 或 `5xx` 时重放 POST——这正是本页面警告的模糊重放风险。应改为按方法拆分路由：可大幅重试只读状态检查，并为写入路径完全禁用 mesh 重试。
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -155,14 +159,27 @@ spec:
   hosts:
   - payment-service
   http:
-  - route:
+  - name: reads-retryable
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment-service
     retries:
-      attempts: 5
-      perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: connect-failure,refused-stream
       retryRemoteLocalities: true  # Retry to other regions
+  - name: writes-no-mesh-retry
+    match:
+    - method:
+        regex: "^(POST|PUT|PATCH|DELETE)$"
+    route:
+    - destination:
+        host: payment-service
+    retries:
+      attempts: 0
 ```
 
 ## 组合使用重试与超时
@@ -184,50 +201,52 @@ spec:
     timeout: 10s  # Total timeout
     retries:
       attempts: 3
-      perTryTimeout: 3s  # Per-retry timeout
+      perTryTimeout: 3s  # Timeout for each delivery, including the original
 ```
 
-**计算**：最大等待时间 = min（总超时，尝试次数 × perTryTimeout）= min（10s，3 × 3s）= 9s
+**计算：**理论上的投递时间上限为 `(1 + attempts) × perTryTimeout = 4 × 3s = 12s`，但会先应用路由级 `timeout: 10s`。退避以及剩余的路由超时时间可能会减少实际尝试的重试次数。
 
-### 感知幂等性的配置
+### 按 HTTP 方法拆分重试策略
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: idempotent-retry
+  name: order-service
 spec:
   hosts:
   - order-service
   http:
-  # GET requests - safe to retry
-  - match:
+  # POST/PATCH: do not replay an ambiguous write in the mesh
+  - name: writes-no-mesh-retry
+    match:
     - method:
-        exact: GET
-    route:
-    - destination:
-        host: order-service
-    timeout: 5s
-    retries:
-      attempts: 3
-      perTryTimeout: 1s
-      retryOn: 5xx,reset
-
-  # POST requests - limited retry
-  - match:
-    - method:
-        exact: POST
+        regex: "^(POST|PATCH)$"
     route:
     - destination:
         host: order-service
     timeout: 10s
     retries:
-      attempts: 1  # Minimal retry if idempotency not guaranteed
-      perTryTimeout: 5s
-      retryOn: connect-failure,reset  # Network issues only
+      attempts: 0
+
+  # GET/HEAD: retry only connection establishment and REFUSED_STREAM failures
+  - name: reads-limited-retry
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
+    - destination:
+        host: order-service
+    timeout: 5s
+    retries:
+      attempts: 2
+      perTryTimeout: 2s
+      retryOn: connect-failure,refused-stream
 ```
 
-## 实践示例
+默认情况下，请为 POST/PATCH 以及领域定义为写入的任何操作禁用 mesh 重试。不要仅根据 HTTP 方法就推断 PUT 或 DELETE 是安全的：只有在应用程序的实际契约允许重复执行时，才对其进行重试。
+
+## 实用示例
 
 ### 示例 1：微服务链路
 
@@ -319,7 +338,9 @@ spec:
   resolution: DNS
 ```
 
-### 示例 3：与断路器组合使用
+### 示例 3：与 Circuit Breaker 结合使用
+
+`payment` 处理非幂等写入，因此本示例与前面的 `payment-service` 示例一样按方法拆分路由：读取操作可以大幅重试，写入操作禁用 mesh 重试，而下方的 Circuit Breaker 同时应用于两者。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -330,14 +351,28 @@ spec:
   hosts:
   - payment
   http:
-  - route:
+  - name: reads-retryable
+    match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment
     timeout: 10s
     retries:
       attempts: 3
       perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
+      retryOn: connect-failure,refused-stream
+  - name: writes-no-mesh-retry
+    match:
+    - method:
+        regex: "^(POST|PUT|PATCH|DELETE)$"
+    route:
+    - destination:
+        host: payment
+    timeout: 10s
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -363,7 +398,7 @@ spec:
 
 ### 非幂等请求的重试风险
 
-**核心原则**：对于 POST、PUT、DELETE 等会改变状态的请求，在 Istio Proxy 层自动重试可能导致**数据一致性问题**。
+**核心原则：**对 POST/PATCH 以及领域定义的非幂等写入执行自动 Istio Proxy 重试，可能会导致**数据一致性问题**。仅当应用程序的真实契约保证幂等性时，才将 PUT/DELETE 视为例外。
 
 #### 问题场景
 
@@ -391,16 +426,16 @@ sequenceDiagram
 
 #### 为什么这很危险？
 
-1. **重复创建**：POST 请求实际已成功，但响应因网络问题丢失，Proxy 重试后会创建**重复记录**。
-2. **错误的状态变更**：**支付、库存扣减**等业务关键操作可能会执行多次。
-3. **无法验证**：Istio Proxy 无法确认请求是否成功。
+1. **重复创建：**POST 请求实际已成功，但因网络问题丢失响应，Proxy 重试并创建了**重复记录**。
+2. **错误的状态变更：**如**支付、库存扣减**等业务关键操作可能会执行多次。
+3. **无法验证：**Istio Proxy 无法确认请求是否成功。
 
 #### 安全的重试策略
 
-**推荐：应用程序级重试**
+**建议：禁用 mesh 重试并在应用程序级别实施去重**
 
 ```yaml
-# Istio: Only retry network issues
+# Istio: explicitly do not retry a non-idempotent write
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -417,10 +452,10 @@ spec:
         host: order-service
     timeout: 10s
     retries:
-      attempts: 1  # Disable retry
-      perTryTimeout: 5s
-      retryOn: connect-failure,refused-stream  # Connection failures only
+      attempts: 0  # No delivery after the original request
 ```
+
+`reset`、`503` 和超时并不能证明服务器拒绝了请求。服务器可能会提交数据库事务，然后仅丢失响应，因此 Proxy 无法确定重放是否安全。出现模糊结果后，应用程序应查询操作状态，而不是盲目重新发送请求。
 
 ```python
 # Application: Use Idempotency Key
@@ -475,19 +510,26 @@ def create_order():
     return jsonify(order), 201
 ```
 
-#### HTTP 方法的重试安全性
+针对生产写入 API，请组合使用以下防护措施：
 
-| 方法 | 幂等 | Istio 重试安全性 | 推荐设置 |
+- 由同一事务中的数据库唯一约束支持的 `Idempotency-Key`
+- 用于更新的 `ETag`/`If-Match` 或版本字段 compare-and-swap
+- 在超时/reset 后查询 transaction-ID 或 command-ID 状态
+- 用于支付或事件发布等不可逆下游影响的事务性 outbox
+
+#### HTTP 方法重试安全性
+
+| 方法 | 幂等 | Istio 重试安全性 | 建议设置 |
 |--------|------------|-------------------|---------------------|
 | **GET** | 是 | 安全 | `attempts: 3, retryOn: 5xx,reset` |
 | **HEAD** | 是 | 安全 | `attempts: 3, retryOn: 5xx,reset` |
 | **OPTIONS** | 是 | 安全 | `attempts: 3, retryOn: 5xx,reset` |
-| **PUT** | 有条件 | 谨慎 | 需要 Idempotency Key |
-| **DELETE** | 有条件 | 谨慎 | 需要 Idempotency Key |
-| **POST** | 否 | 危险 | `attempts: 1, application retry` |
-| **PATCH** | 否 | 危险 | `attempts: 1, application retry` |
+| **PUT** | 取决于契约 | 谨慎 | 真实的幂等性契约 + 条件更新 |
+| **DELETE** | 取决于契约 | 谨慎 | 真实的幂等性契约 + 结果查询 |
+| **POST** | 通常否 | 危险 | `attempts: 0`、Idempotency Key |
+| **PATCH** | 通常否 | 危险 | `attempts: 0`、版本/ETag |
 
-#### 安全的重试场景
+#### 安全的重试情形
 
 ```yaml
 # Read-only requests - safe
@@ -536,9 +578,9 @@ spec:
       retryOn: 5xx,reset
 ```
 
-#### 与断路器配合使用时的注意事项
+#### 与 Circuit Breaker 配合使用时的注意事项
 
-断路器对于**故障隔离**很有效，但它**无法阻止**非幂等请求的重复执行。
+Circuit Breaker 对于**故障隔离**很有效，但它**无法防止**非幂等请求的重复执行。
 
 ```yaml
 # Bad example: POST + Circuit Breaker + Retry
@@ -601,12 +643,12 @@ spec:
       baseEjectionTime: 30s
 ```
 
-#### 实用指南
+#### 实践指南
 
-1. **GET/HEAD/OPTIONS**：可以使用 Istio Proxy Retry
-2. **POST/PATCH**：禁用 Istio Retry，使用应用程序级 Retry + Idempotency Key
-3. **PUT/DELETE**：仅在保证幂等性时使用 Istio Retry
-4. **关键操作（支付/库存/积分）**：必须具有应用程序级验证 + Idempotency Key
+1. **GET/HEAD/OPTIONS：**可以使用 Istio Proxy Retry
+2. **POST/PATCH：**禁用 Istio Retry，使用应用程序级 Retry + Idempotency Key
+3. **PUT/DELETE：**仅在保证幂等性时使用 Istio Retry
+4. **关键操作（支付/库存/积分）：**必须具有应用程序级验证 + Idempotency Key
 
 ## 最佳实践
 
@@ -676,22 +718,20 @@ spec:
       perTryTimeout: 2s
       retryOn: 5xx,reset,connect-failure
 
-  # POST - retry carefully
+  # POST/PATCH - explicitly disable mesh retry
   - match:
     - method:
-        exact: POST
+        regex: "^(POST|PATCH)$"
     route:
     - destination:
         host: api-service
     retries:
-      attempts: 1
-      perTryTimeout: 5s
-      retryOn: connect-failure  # Network issues only
+      attempts: 0
 ```
 
 ### 3. 指数退避
 
-Istio 默认以 25ms 的间隔进行重试，但如果需要自定义退避：
+Istio 默认以 25ms 的间隔进行重试，以下展示如何配置自定义退避。这仅适用于读取路径——如本页前文所示，`payment` 仍为写入操作禁用 mesh 重试：
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -702,13 +742,16 @@ spec:
   hosts:
   - payment
   http:
-  - route:
+  - match:
+    - method:
+        regex: "^(GET|HEAD)$"
+    route:
     - destination:
         host: payment
     retries:
       attempts: 5
       perTryTimeout: 2s
-      retryOn: 5xx,reset
+      retryOn: connect-failure,refused-stream
       # Istio automatically increases retry interval
       # 25ms, 50ms, 100ms, 200ms, 400ms
 ```
@@ -782,3 +825,4 @@ spec:
 - [Istio Timeout](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute)
 - [Istio Retry](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry)
 - [Envoy Retry Policy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on)
+- [RFC 9110: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods)
