@@ -1,10 +1,18 @@
 # News
-> **Last Updated**: August 17, 2026
+> **Last Updated**: August 24, 2026
 
 Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate digest documents here. Each week, GitHub Actions applies relevant news directly to the existing doc it relates to, and this update log records only which doc changed and why. News with no matching doc is recorded here as a link only.
 
 ## Update Log
 
+- 2026-W35: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied custom configuration support (via the `argocd-cm` ConfigMap) for the Amazon EKS managed Argo CD capability
+- 2026-W35: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.36.4/v1.35.8/v1.34.11 patch releases and v1.37.0-rc.1
+- 2026-W35: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.1/1.19.7/1.18.13 patch releases
+- 2026-W35: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied the Karpenter v1.14.1 patch release
+- 2026-W35: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.31.0-rc.0 release (1.31 entering RC)
+- 2026-W35: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied the CNCF blog guide on distilling slow SQL queries into OTel span-derived metrics
+- 2026-W35: no matching doc — Amazon EKS now supports certificate authority (CA) rotation with automated lifecycle management ([source](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management))
+- 2026-W35: no matching doc — Kubeflow graduates within the CNCF ([source](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/))
 - 2026-W34: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.0 GA release and the v3.5.1/v3.4.7/v3.3.14 patch releases
 - 2026-W34: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.31.0-beta.1 release (1.31 entering beta)
 - 2026-W34: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — applied Linkerd edge-26.8.2 (Gateway API 1.5.1 support, tested max k8s 1.36)

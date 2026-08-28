@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **지원 버전**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **마지막 업데이트**: 2026년 8월 17일
+> **마지막 업데이트**: 2026년 8월 24일
 
 ## 목차
 
@@ -265,6 +265,10 @@ spec:
 | **Missing** | 리소스 없음 |
 
 ## 버전 지원 정보
+
+### 2026년 8월 업데이트: EKS 관리형 Argo CD 기능의 사용자 지정 구성 지원
+
+2026년 8월 21일, Amazon EKS의 Argo CD 관리형 기능(EKS Capability for Argo CD)이 클러스터 내 표준 `argocd-cm` ConfigMap을 통한 사용자 지정 구성을 지원한다고 발표했습니다. 커스텀 리소스(CR)에 대한 커스텀 헬스 체크 정의, Argo CD UI 배너 내용 변경, 관리 대상 리소스의 감시(watch)·비교(diff) 방식 조정 등을 업스트림 Argo CD와 동일한 방식으로 설정하면 AWS가 이를 관리형 기능에 적용합니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-argo-cd-configuration)와 [설정 가이드](https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html)를 참고하세요.
 
 ### 2026년 8월 업데이트: ArgoCD 3.5 정식 릴리스 및 패치
 

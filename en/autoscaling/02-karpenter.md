@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.6 - 1.14, Kubernetes 1.29+ (as of v1.14)
-> **Last Updated**: July 27, 2026
+> **Last Updated**: August 24, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -413,6 +413,10 @@ See the [v1.14.0 release notes](https://github.com/aws/karpenter-provider-aws/re
 Then, on July 17, 2026, a coordinated batch of patch releases (v1.3.8 through v1.11.3) went out across all maintained minor lines, each bumping the upstream `sigs.k8s.io/karpenter` version. If you are on an older line, updating to that line's latest patch is recommended ([release list](https://github.com/aws/karpenter-provider-aws/releases)).
 
 On July 22, 2026, AWS additionally announced Elastic Fabric Adapter (EFA) network device configuration and EC2 placement group support for Karpenter (and EKS Auto Mode) node pools. Network interfaces on EFA-capable instances can be set to EFA-only (which consumes no VPC IP addresses) or standard ENI, and cluster/spread/partition placement strategies can be specified directly in the node pool configuration — useful for distributed training and inference workloads. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/).
+
+### August 2026 Update: v1.14.1 Patch Release
+
+[v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1), the first patch on the v1.14 line, was published on August 21, 2026. It is a maintenance release bumping the upstream `sigs.k8s.io/karpenter` version and cherry-picking fixes made since v1.14.0.
 
 ## Node Classes
 

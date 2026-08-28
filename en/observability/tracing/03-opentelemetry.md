@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **Supported Versions**: OTEL 1.x
-> **Last Updated**: July 27, 2026
+> **Last Updated**: August 24, 2026
 
 ## Introduction
 
@@ -763,6 +763,10 @@ service:
 ### July 2026 Update: Observing a Network Boundary for AI Agent Traffic
 
 A CNCF blog post describes a pattern for [building a network boundary for AI agents using NGINX and OpenTelemetry](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/). Outbound traffic from AI agents is forced through a forward proxy (NGINX), and the NGINX native OpenTelemetry module emits an OTel span for every request. Those spans flow through an OTel Collector just like the pipelines covered above — persisted to an audit log or forwarded to Jaeger, Grafana, or a SIEM — letting you correlate user interactions with the external calls an agent made on their behalf. If you run agent workloads in your cluster, this is a useful observability pattern that reuses your existing OTel pipeline as-is.
+
+### August 2026 Update: Distilling Slow SQL Queries into Reliability Metrics
+
+A CNCF blog post walks through [how to turn slow queries into actionable reliability metrics with OpenTelemetry](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/). It builds a repeatable workflow that distills the OpenTelemetry database spans your application already emits into span-derived metrics you can dashboard and alert on — starting with simple slow-query detection, then adding traffic-weighted impact (which queries are most worth optimizing) and anomaly detection (which queries are behaving abnormally right now). A hands-on [lab repository](https://github.com/causely-oss/slow-query-lab) accompanies the post.
 
 ## Best Practices
 
