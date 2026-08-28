@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 실행 모델 맵",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      650
+    ],
+    "views": [
+      {
+        "id": "serverless-path",
+        "label": "서버리스 경로 (Fargate)",
+        "focus": [
+          "dev",
+          "controlplane",
+          "fargate",
+          "awsvm"
+        ],
+        "note": "노드 운영이 완전히 사라지는 경로 — 파드 하나가 곧 격리된 microVM 하나입니다."
+      },
+      {
+        "id": "automode-path",
+        "label": "Auto Mode 경로",
+        "focus": [
+          "dev",
+          "controlplane",
+          "automode",
+          "ec2"
+        ],
+        "note": "Karpenter가 내장된 관리형 데이터 플레인 — 노드 기동·패치·교체를 AWS가 수행합니다."
+      },
+      {
+        "id": "hybrid-path",
+        "label": "하이브리드 경로",
+        "focus": [
+          "dev",
+          "controlplane",
+          "hybrid",
+          "onprem"
+        ],
+        "note": "온프레미스 서버를 EKS 컨트롤 플레인에 노드로 등록해 하나의 클러스터로 운영합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자 / GitOps",
+      "sublabel": "kubectl · ArgoCD",
+      "pos": [
+        40,
+        295
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "controlplane",
+      "type": "cloud",
+      "label": "EKS Control Plane",
+      "sublabel": "API Server · Scheduler",
+      "tag": "항상 AWS 관리",
+      "pos": [
+        260,
+        285
+      ],
+      "size": [
+        180,
+        84
+      ]
+    },
+    {
+      "id": "fargate",
+      "type": "cloud",
+      "label": "Fargate",
+      "sublabel": "서버리스 · 파드 단위",
+      "pos": [
+        580,
+        70
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "automode",
+      "type": "cloud",
+      "label": "EKS Auto Mode",
+      "sublabel": "관리형 데이터 플레인",
+      "tag": "Karpenter 내장",
+      "pos": [
+        580,
+        180
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "mng",
+      "type": "backend",
+      "label": "Managed Node Group",
+      "sublabel": "EC2 + ASG",
+      "pos": [
+        580,
+        290
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "selfmanaged",
+      "type": "backend",
+      "label": "Self-managed Nodes",
+      "sublabel": "커스텀 AMI · 직접 운영",
+      "pos": [
+        580,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "hybrid",
+      "type": "external",
+      "label": "EKS Hybrid Nodes",
+      "sublabel": "온프레미스 · 엣지",
+      "pos": [
+        580,
+        510
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "awsvm",
+      "type": "security",
+      "label": "AWS 소유 인프라",
+      "sublabel": "Firecracker microVM",
+      "pos": [
+        940,
+        70
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "ec2",
+      "type": "backend",
+      "label": "EC2 인스턴스",
+      "sublabel": "고객 계정 용량",
+      "pos": [
+        940,
+        290
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "onprem",
+      "type": "external",
+      "label": "온프레미스 서버",
+      "sublabel": "SSM / IAM Roles Anywhere",
+      "pos": [
+        940,
+        510
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "고객 AWS 계정 — 데이터 플레인",
+      "wraps": [
+        "automode",
+        "mng",
+        "selfmanaged",
+        "ec2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "deploy",
+      "from": "dev",
+      "to": "controlplane",
+      "label": "매니페스트 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sched-fargate",
+      "from": "controlplane",
+      "to": "fargate",
+      "label": "Fargate Profile 매칭",
+      "labelSegment": 1,
+      "labelDx": -75
+    },
+    {
+      "id": "sched-automode",
+      "from": "controlplane",
+      "to": "automode",
+      "label": "노드 수명주기 위임",
+      "labelSegment": 1,
+      "labelDx": -75
+    },
+    {
+      "id": "sched-mng",
+      "from": "controlplane",
+      "to": "mng"
+    },
+    {
+      "id": "sched-self",
+      "from": "controlplane",
+      "to": "selfmanaged",
+      "variant": "dashed"
+    },
+    {
+      "id": "sched-hybrid",
+      "from": "controlplane",
+      "to": "hybrid",
+      "variant": "dashed"
+    },
+    {
+      "id": "fargate-cap",
+      "from": "fargate",
+      "to": "awsvm",
+      "label": "파드당 microVM 1개"
+    },
+    {
+      "id": "automode-cap",
+      "from": "automode",
+      "to": "ec2",
+      "label": "Karpenter가 JIT 기동"
+    },
+    {
+      "id": "mng-cap",
+      "from": "mng",
+      "to": "ec2",
+      "label": "ASG 스케일링",
+      "labelDx": -56
+    },
+    {
+      "id": "self-cap",
+      "from": "selfmanaged",
+      "to": "ec2",
+      "label": "직접 프로비저닝",
+      "variant": "dashed"
+    },
+    {
+      "id": "hybrid-cap",
+      "from": "hybrid",
+      "to": "onprem",
+      "label": "노드로 등록"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "모델 선택 기준",
+      "items": [
+        "Fargate — 노드 운영 제로, 파드 단위 과금",
+        "Auto Mode — Karpenter 내장, AWS가 노드 패치·교체",
+        "MNG — 범용 기본값, ASG 기반",
+        "Self-managed — GPU·커스텀 AMI 등 특수 요구",
+        "Hybrid — 기존 온프레미스 자산 활용"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "책임 경계",
+      "items": [
+        "컨트롤 플레인은 모든 모델에서 AWS 관리",
+        "Fargate·Auto Mode는 노드 OS까지 AWS 책임",
+        "MNG는 AMI 업데이트 트리거가 고객 몫"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "용량 공급 방식",
+      "items": [
+        "Karpenter JIT — pending 파드에 맞춰 즉시 기동",
+        "ASG — 고정 그룹 단위 스케일링",
+        "microVM — 파드 하나당 격리 VM 하나"
+      ]
+    }
+  ]
+}
