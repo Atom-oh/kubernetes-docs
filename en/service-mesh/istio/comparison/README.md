@@ -1,6 +1,7 @@
 # Comparison Guide
 
-> **Last Updated**: July 7, 2026 **Target Audience**: Architects, DevOps Engineers, Platform Engineers
+> **Last Updated**: July 7, 2026
+> **Target Audience**: Architects, DevOps Engineers, Platform Engineers
 
 This section compares various Service Mesh and networking solutions, presenting the pros and cons of each solution and appropriate use cases.
 
