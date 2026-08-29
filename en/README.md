@@ -23,6 +23,7 @@ This training content provides quizzes for each topic along with the learning ma
 3. [Container Technology](./basics/03-container-technology.md) | [Quiz](./quizzes/basics/03-container-technology-quiz.md) | [Lab](./labs/basics/03-container-technology-lab.md)
 4. [Introduction to Kubernetes](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
 5. [eBPF Fundamentals and Practical Applications](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
+6. [Network Fundamentals — 25 Protocols](./basics/06-network-fundamentals.md) | [Quiz](./quizzes/basics/06-network-fundamentals-quiz.md)
 
 ### Kubernetes Core Concepts
 1. [Cluster Architecture](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)

@@ -15,6 +15,7 @@
 * [Container Technology](basics/03-container-technology.md)
 * [Introduction to Kubernetes](basics/04-kubernetes-introduction.md)
 * [eBPF Fundamentals and Practical Applications](basics/05-ebpf-fundamentals.md)
+* [Network Fundamentals — 25 Protocols](basics/06-network-fundamentals.md)
 
 ## Kubernetes Core Concepts
 
@@ -375,6 +376,7 @@
   * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
   * [Introduction to Kubernetes Quiz](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF Fundamentals and Practical Applications Quiz](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+  * [Network Fundamentals Quiz](quizzes/basics/06-network-fundamentals-quiz.md)
 * Kubernetes Core Concepts
   * [Cluster Architecture Quiz](quizzes/core/01-cluster-architecture-quiz.md)
   * [Pods and Workloads Quiz](quizzes/core/02-pods-and-workloads-quiz.md)
