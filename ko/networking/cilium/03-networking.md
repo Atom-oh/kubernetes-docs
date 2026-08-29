@@ -3,7 +3,7 @@
 > **지원 버전**: Cilium 1.18  
 > **마지막 업데이트**: 2026년 2월 22일
 
-> 📎 Ethernet, ARP 등 링크 계층 기초가 필요하다면 [네트워크 기초](../../basics/06-network-fundamentals.md)를 먼저 참고하세요.
+> 📎 Ethernet, ARP 등 링크 계층 기초가 필요하다면 [네트워크 기초 Part 1](../../basics/06-network-fundamentals-part1.md)을 먼저 참고하세요.
 
 ## 실습 환경 설정
 

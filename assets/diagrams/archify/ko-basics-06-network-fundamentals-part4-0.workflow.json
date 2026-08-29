@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "https://example.com — 한 요청의 여정",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "주소 준비"
+    },
+    {
+      "id": "local",
+      "label": "로컬 네트워크"
+    },
+    {
+      "id": "transit",
+      "label": "인터넷 경유"
+    },
+    {
+      "id": "talk",
+      "label": "종단 간 대화"
+    }
+  ],
+  "mainPath": [
+    "dns",
+    "arp",
+    "frame",
+    "route",
+    "nat"
+  ],
+  "nodes": [
+    {
+      "id": "dhcp",
+      "lane": "prep",
+      "col": 0,
+      "type": "external",
+      "label": "DHCP",
+      "sublabel": "IP·GW·DNS 수신"
+    },
+    {
+      "id": "dns",
+      "lane": "prep",
+      "col": 1,
+      "type": "backend",
+      "label": "DNS/DoH",
+      "sublabel": "A/AAAA 조회"
+    },
+    {
+      "id": "arp",
+      "lane": "local",
+      "col": 2,
+      "type": "backend",
+      "label": "ARP",
+      "sublabel": "GW MAC 조회"
+    },
+    {
+      "id": "frame",
+      "lane": "local",
+      "col": 3,
+      "type": "backend",
+      "label": "Ethernet/Wi-Fi",
+      "sublabel": "프레임 전송"
+    },
+    {
+      "id": "route",
+      "lane": "transit",
+      "col": 4,
+      "type": "cloud",
+      "label": "IP 라우팅",
+      "sublabel": "OSPF·BGP"
+    },
+    {
+      "id": "nat",
+      "lane": "transit",
+      "col": 5,
+      "type": "security",
+      "label": "NAT",
+      "sublabel": "사설→공인"
+    },
+    {
+      "id": "hs",
+      "lane": "talk",
+      "col": 2,
+      "type": "security",
+      "label": "TCP/QUIC+TLS",
+      "sublabel": "연결·암호화"
+    },
+    {
+      "id": "http",
+      "lane": "talk",
+      "col": 3,
+      "type": "frontend",
+      "label": "HTTP/3",
+      "sublabel": "요청·응답"
+    },
+    {
+      "id": "rt",
+      "lane": "talk",
+      "col": 5,
+      "type": "backend",
+      "label": "실시간 채널",
+      "sublabel": "WS·gRPC·WebRTC"
+    }
+  ],
+  "edges": [
+    {
+      "id": "dhcp-dns",
+      "from": "dhcp",
+      "to": "dns",
+      "variant": "dashed"
+    },
+    {
+      "id": "dns-arp",
+      "from": "dns",
+      "to": "arp",
+      "label": "외부 목적지"
+    },
+    {
+      "id": "arp-frame",
+      "from": "arp",
+      "to": "frame"
+    },
+    {
+      "id": "frame-route",
+      "from": "frame",
+      "to": "route",
+      "label": "홉 단위 전달"
+    },
+    {
+      "id": "route-nat",
+      "from": "route",
+      "to": "nat"
+    },
+    {
+      "id": "nat-hs",
+      "from": "nat",
+      "to": "hs",
+      "label": "경계 통과",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          625,
+          409
+        ],
+        [
+          300,
+          409
+        ]
+      ],
+      "labelAt": [
+        463,
+        407
+      ]
+    },
+    {
+      "id": "hs-http",
+      "from": "hs",
+      "to": "http",
+      "variant": "emphasis"
+    },
+    {
+      "id": "http-rt",
+      "from": "http",
+      "to": "rt",
+      "label": "필요 시",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ]
+}
