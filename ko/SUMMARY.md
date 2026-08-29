@@ -125,6 +125,7 @@
 ## Data on EKS
 
 * [Data on EKS 개요](data-on-eks/README.md)
+* [모던 데이터 파이프라인 해부](data-on-eks/01-data-pipeline-anatomy.md)
 * [Kafka on EKS 딥다이브](data-on-eks/kafka/README.md)
   * [Part 1: Kafka 핵심 개념](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -468,6 +469,7 @@
   * [Part 2: MLflow Model Registry 퀴즈](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
   * [Part 3: MLflow EKS 배포 퀴즈](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * Data on EKS
+  * [모던 데이터 파이프라인 해부 퀴즈](quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
   * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka 운영 퀴즈](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
