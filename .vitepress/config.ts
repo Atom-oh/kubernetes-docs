@@ -48,6 +48,47 @@ const config = defineConfig({
           }
         }
       })
+      // Archify diagrams: the shared markdown embeds a static PNG followed by
+      // an "interactive diagram" link to public/archmaps/ (GitBook shows both
+      // as-is). On the VitePress site, replace that pair with an inline iframe
+      // so the animated interactive viewer renders directly in the page.
+      md.core.ruler.push('archify_embed', (state) => {
+        const tokens = state.tokens
+        const ARCHMAP = /https?:\/\/[^/]+\/kubernetes-docs\/archmaps\/([a-z0-9-]+)\.html/
+        for (let i = 0; i < tokens.length; i++) {
+          if (tokens[i].type !== 'paragraph_open') continue
+          const inline = tokens[i + 1]
+          if (!inline || inline.type !== 'inline' || !inline.children) continue
+          const open = inline.children.find((t) => t.type === 'link_open')
+          const href = open && open.attrGet('href')
+          const match = href && href.match(ARCHMAP)
+          if (!match) continue
+          const base = match[1]
+          const caption = base.startsWith('ko-') ? '전체 화면으로 열기 ↗' : 'Open full screen ↗'
+          const html = new state.Token('html_block', '', 0)
+          html.content =
+            `<div class="archmap-embed">` +
+            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${base}" loading="lazy" allowfullscreen></iframe>` +
+            `<p class="archmap-embed__caption"><a href="${href}" target="_blank" rel="noopener">${caption}</a></p>` +
+            `</div>\n`
+          let start = i
+          // Drop the static PNG paragraph directly above (same diagram) — the
+          // iframe replaces it on the VitePress site.
+          const prevInline = tokens[i - 2]
+          if (
+            i >= 3 &&
+            tokens[i - 3].type === 'paragraph_open' &&
+            prevInline && prevInline.type === 'inline' && prevInline.children &&
+            prevInline.children.some(
+              (t) => t.type === 'image' && (t.attrGet('src') || '').includes(`${base}.png`)
+            )
+          ) {
+            start = i - 3
+          }
+          tokens.splice(start, i + 3 - start, html)
+          i = start
+        }
+      })
     }
   },
   transformPageData(pageData, { siteConfig }) {

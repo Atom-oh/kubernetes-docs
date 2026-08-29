@@ -9,7 +9,8 @@
       820,
       760
     ],
-    "column_fit": "spread"
+    "column_fit": "spread",
+    "animation": "trace"
   },
   "participants": [
     {

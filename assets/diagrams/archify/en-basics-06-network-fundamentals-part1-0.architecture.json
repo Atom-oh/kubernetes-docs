@@ -3,7 +3,8 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "From Home to Server — Link and Routing Layer Map",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "components": [
     {

@@ -3,7 +3,8 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Traffic Mirroring 동작 원리",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "lanes": [
     {
