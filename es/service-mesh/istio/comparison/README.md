@@ -1,8 +1,9 @@
 # Guía de comparación
 
-> **Última actualización**: July 7, 2026 **Público objetivo**: Arquitectos, Ingenieros de DevOps, Ingenieros de Plataforma
+> **Última actualización**: July 7, 2026
+> **Público objetivo**: Arquitectos, ingenieros DevOps, ingenieros de plataforma
 
-Esta sección compara varias soluciones de Service Mesh y redes, presentando las ventajas y desventajas de cada solución, así como los casos de uso adecuados.
+Esta sección compara diversas soluciones de Service Mesh y redes, y presenta las ventajas y desventajas de cada solución, junto con los casos de uso adecuados.
 
 ## Tabla de contenidos
 
@@ -10,7 +11,7 @@ Esta sección compara varias soluciones de Service Mesh y redes, presentando las
 
 Comparación de las principales soluciones de Service Mesh disponibles en entornos Kubernetes:
 
-* **Istio** - Service Mesh empresarial rico en funcionalidades
+* **Istio** - Service Mesh de nivel empresarial y con abundantes funcionalidades
 * **Linkerd** - Service Mesh ligero y fácil de usar
 * **Kong Mesh** - Service Mesh universal basado en Kuma
 * **Consul Connect** - Solución de Service Mesh de HashiCorp
@@ -19,9 +20,9 @@ Comparación de las principales soluciones de Service Mesh disponibles en entorn
 
 * Arquitectura y componentes
 * Rendimiento y uso de recursos
-* Conjunto de funcionalidades (gestión del tráfico, seguridad, observabilidad)
+* Conjunto de funcionalidades (gestión de tráfico, seguridad, observabilidad)
 * Curva de aprendizaje y complejidad operativa
-* Soporte multi-cluster
+* Soporte para múltiples clústeres
 * Escalabilidad y soporte de plataformas
 
 ### 2. [Istio vs VPC Lattice](02-istio-vs-lattice.md)
@@ -30,74 +31,45 @@ Comparación entre Kubernetes Service Mesh (Istio) y las redes de servicios nati
 
 **Istio Service Mesh**:
 
-* Service mesh centrado en Kubernetes
-* Funcionalidades enriquecidas de gestión del tráfico y observabilidad
-* Independiente de la nube
+* Service Mesh centrado en Kubernetes
+* Funcionalidades completas de gestión de tráfico y observabilidad
+* Neutral respecto a la nube
 
 **AWS VPC Lattice**:
 
 * Redes de servicios nativas de AWS
 * Arquitectura serverless
-* Conectividad multi-cuenta/VPC simplificada
+* Conectividad simplificada entre múltiples cuentas/VPC
 
 **Criterios de comparación**:
 
-* Arquitectura y modelo de despliegue
-* Funcionalidades de gestión del tráfico
+* Arquitectura y modelo de implementación
+* Funcionalidades de gestión de tráfico
 * Modelo de seguridad
 * Sobrecarga operativa
-* Estructura de costos
-* Soporte híbrido y multi-cloud
+* Estructura de costes
+* Soporte híbrido y multinube
 
-### 3. [Guía de selección entre Sidecar y Ambient Mode](03-sidecar-vs-ambient.md)
+### 3. [Guía de selección entre el modo Sidecar y Ambient](03-sidecar-vs-ambient.md)
 
 Una guía de decisión basada en resultados de pruebas para elegir entre el modo sidecar y el modo ambient de Istio en EKS 1.36:
 
-* Resultados de pruebas para 4 requisitos: mTLS, NetworkPolicy, latencia y rollout sin tiempo de inactividad (waypoint 503)
-* Datos medidos que muestran una tasa de 503 más alta a través del waypoint ambient que con sidecar
-* Una recomendación de despliegue mixto por niveles según el nivel de workload (núcleo / seminúcleo / periferia)
+* Resultados de pruebas frente a 4 requisitos: mTLS, NetworkPolicy, latencia y rollout sin tiempo de inactividad (waypoint 503)
+* Datos medidos que muestran una mayor tasa de 503 a través del waypoint ambient que del sidecar
+* Una recomendación de implementación mixta por niveles según el nivel de workload (núcleo / seminúcleo / periferia)
 
 **Criterios de comparación**:
 
 * Aplicación y verificación de mTLS
 * Interacción de NetworkPolicy con el puerto HBONE
 * Tasa de 503 durante los rollouts (medida)
-* Riesgo de la política de reintentos en APIs no idempotentes
+* Riesgo de la política de reintentos en API no idempotentes
 
 ## Guía de selección
 
 ### Criterios de selección de Service Mesh
 
-```mermaid
-flowchart TD
-    Start[Need Service Mesh?]
-    Start -->|Yes| Q1{Platform?}
-    Start -->|No| NoMesh[Use basic K8s Service]
-
-    Q1 -->|Kubernetes Only| Q2{Can accept complexity?}
-    Q1 -->|Multi-Platform| ConsulKong[Consider Consul/Kong Mesh]
-
-    Q2 -->|Yes, need rich features| Istio[Select Istio]
-    Q2 -->|No, simplicity first| Linkerd[Select Linkerd]
-
-    Q3{AWS-centric?}
-    Q3 -->|Yes| Q4{Serverless/Simplicity?}
-    Q3 -->|No| Q5{Multi-cloud?}
-
-    Q4 -->|Yes| Lattice[VPC Lattice]
-    Q4 -->|No| IstioEKS[Istio on EKS]
-
-    Q5 -->|Yes| IstioMulti[Istio Multi-cluster]
-    Q5 -->|No| Regional[Regional Solution]
-
-    classDef meshSolution fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef awsSolution fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Istio,Linkerd,ConsulKong,IstioEKS,IstioMulti meshSolution;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-    class Lattice awsSolution;
-```
+![Diagrama de flujo de dos rutas de decisión para elegir un service mesh: una ruta que prioriza la plataforma Kubernetes y termina en Istio, Linkerd o Consul/Kong Mesh, y una ruta centrada en AWS que termina en VPC Lattice, Istio en EKS, Istio Multi-cluster o una solución regional.](../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png)
 
 ### Recomendaciones de casos de uso
 
@@ -105,15 +77,15 @@ flowchart TD
 
 **Recomendado**: Istio
 
-* Conjunto de funcionalidades enriquecido
-* Control de tráfico detallado
+* Conjunto de funcionalidades completo
+* Control de tráfico granular
 * Seguridad sólida (Authorization Policies, mTLS)
-* Federación multi-cluster
-* Amplio ecosistema y comunidad
+* Federación de múltiples clústeres
+* Ecosistema y comunidad extensos
 
 **Alternativa**: Kong Mesh (cuando se necesita un control plane universal)
 
-#### Startup / Inicio rápido
+#### Startup / inicio rápido
 
 **Recomendado**: Linkerd
 
@@ -122,27 +94,27 @@ flowchart TD
 * Curva de aprendizaje rápida
 * mTLS y métricas automáticas
 
-**Alternativa**: VPC Lattice (para arquitectura centrada en AWS)
+**Alternativa**: VPC Lattice (para arquitecturas centradas en AWS)
 
 #### Arquitectura nativa de AWS
 
 **Recomendado**: VPC Lattice
 
-* Servicio completamente administrado
-* Sin sobrecarga operativa
+* Servicio totalmente gestionado
+* Sobrecarga operativa cero
 * Integración con servicios de AWS (Lambda, ECS, EKS)
 * Conectividad sencilla entre VPC/cuentas
 
-**Alternativa**: Istio en EKS (cuando se necesitan funcionalidades más enriquecidas)
+**Alternativa**: Istio en EKS (cuando se necesitan funcionalidades más completas)
 
-#### Multi-Cloud / Híbrido
+#### Multinube / híbrido
 
 **Recomendado**: Istio o Consul Connect
 
-* Independiente de la nube
+* Neutral respecto a la nube
 * Soporte para workloads de VM
-* Federación multi-cluster
-* Políticas y observabilidad consistentes
+* Federación de múltiples clústeres
+* Políticas y observabilidad coherentes
 
 #### Integración de sistemas heredados
 
@@ -150,18 +122,18 @@ flowchart TD
 
 * Soporte prioritario para workloads de VM
 * Migración gradual posible
-* Integración de Service Discovery
+* Integración con Service Discovery
 * Soporte para diversas plataformas
 
-#### Requisitos sólidos de observabilidad
+#### Requisitos estrictos de observabilidad
 
 **Recomendado**: Istio
 
-* Métricas enriquecidas (Prometheus, OpenTelemetry)
-* Trazabilidad distribuida (Jaeger, Zipkin, Tempo)
-* Logs de acceso detallados
+* Métricas completas (Prometheus, OpenTelemetry)
+* Trazado distribuido (Jaeger, Zipkin, Tempo)
+* Registros de acceso detallados
 * Integración con Kiali
-* Paneles de Grafana
+* Dashboards de Grafana
 
 **Alternativa**: Linkerd (para requisitos sencillos de observabilidad)
 
@@ -173,32 +145,32 @@ flowchart TD
 | ---------------------- | ------------ | -------------- | ----------- | -------------- |
 | **Arquitectura**       | Envoy proxy  | Linkerd2-proxy | Envoy proxy | Consul proxy   |
 | **Uso de recursos**     | Alto         | Bajo           | Medio       | Medio          |
-| **Curva de aprendizaje**     | Pronunciada        | Suave         | Media      | Media         |
+| **Curva de aprendizaje**     | Pronunciada        | Suave         | Media       | Media          |
 | **Riqueza de funcionalidades**   | 5/5          | 3/5            | 4/5         | 4/5            |
-| **Multi-cluster**      | Excelente    | Compatible      | Excelente   | Excelente      |
+| **Múltiples clústeres**      | Excelente    | Compatible      | Excelente   | Excelente      |
 | **Soporte de VM**         | Limitado      | Ninguno           | Excelente   | Excelente      |
-| **Comunidad**          | Muy grande   | Media         | Media      | Grande          |
+| **Comunidad**          | Muy grande   | Mediana         | Mediana      | Grande          |
 | **Soporte empresarial** | Google Cloud | Buoyant        | Kong        | HashiCorp      |
 
 ### Comparación de Istio vs VPC Lattice
 
 | Criterios                   | Istio             | VPC Lattice                 |
 | -------------------------- | ----------------- | --------------------------- |
-| **Modelo de despliegue**       | Autoadministrado      | Completamente administrado               |
+| **Modelo de implementación**       | Autogestionado      | Totalmente gestionado               |
 | **Plataforma**               | Kubernetes        | AWS (EKS, ECS, EC2, Lambda) |
 | **Complejidad operativa** | Alta              | Baja                         |
 | **Riqueza de funcionalidades**       | 5/5               | 3/5                         |
-| **Control de tráfico**        | Muy detallado | Básico                       |
-| **Modelo de costos**             | Basado en recursos    | Basado en uso                 |
-| **Dependencia de proveedor**         | Baja               | Alta (AWS)                  |
-| **Multi-cloud**            | Compatible       | Solo AWS                    |
+| **Control de tráfico**        | Muy granular | Básico                       |
+| **Modelo de costes**             | Basado en recursos    | Basado en el uso                 |
+| **Dependencia del proveedor**         | Baja               | Alta (AWS)                  |
+| **Multinube**            | Compatible         | Solo AWS                    |
 
 ## Recursos relacionados
 
 ### Documentación de Istio
 
 * [Arquitectura de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/architecture/README.md)
-* [Gestión del tráfico de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md)
+* [Gestión de tráfico de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/traffic-management/README.md)
 * [Seguridad de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/security/README.md)
 * [Observabilidad de Istio](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/observability/README.md)
 
@@ -220,33 +192,33 @@ flowchart TD
 
 * Cuando se necesitan más funcionalidades
 * Migración gradual: transición por namespace
-* Transición de la configuración basada en anotaciones a Istio CRD
+* Transición de configuración basada en anotaciones a Istio CRD
 
 ### De Kubernetes básico a Service Mesh
 
-* Necesidades crecientes de gestión del tráfico, seguridad y observabilidad
-* Despliegue Canary: comenzar con algunos servicios
+* Aumento de las necesidades de gestión de tráfico, seguridad y observabilidad
+* Implementación Canary: comenzar con algunos servicios
 * Evaluar el impacto de la inyección de sidecar
 
 ### De VPC Lattice a Istio (o viceversa)
 
-* Requisitos multi-cloud frente a preferencia por AWS nativo
+* Requisitos multinube frente a preferencia por AWS nativo
 * Riqueza de funcionalidades frente a simplicidad operativa
-* Enfoque híbrido: posible uso simultáneo
+* Enfoque híbrido: uso simultáneo posible
 
 ## Preguntas frecuentes
 
 <details>
 
-<summary>P1: ¿Es Service Mesh absolutamente necesario?</summary>
+<summary>P1: ¿Es absolutamente necesario Service Mesh?</summary>
 
 **Respuesta**: Service Mesh se recomienda en los siguientes casos:
 
 * Decenas o más microservicios
-* Necesidad de control de tráfico detallado (Canary, pruebas A/B)
-* Requisitos de seguridad sólidos (mTLS, Authorization)
-* Trazabilidad distribuida y observabilidad
-* Comunicación multi-cluster
+* Necesidad de control de tráfico granular (Canary, pruebas A/B)
+* Requisitos estrictos de seguridad (mTLS, Authorization)
+* Trazado distribuido y observabilidad
+* Comunicación entre múltiples clústeres
 
 Para **servicios pequeños** o **arquitecturas simples**, Kubernetes Service e Ingress básicos pueden ser suficientes.
 
@@ -256,19 +228,19 @@ Para **servicios pequeños** o **arquitecturas simples**, Kubernetes Service e I
 
 <summary>P2: ¿Debo elegir Istio o Linkerd?</summary>
 
-**Elija Istio**:
+**Elegir Istio**:
 
-* Cuando se necesitan funcionalidades enriquecidas
+* Cuando se necesitan funcionalidades completas
 * Entornos de grandes empresas
-* Control de tráfico y políticas detallados
-* Federación multi-cluster
+* Control de tráfico y políticas granulares
+* Federación de múltiples clústeres
 
-**Elija Linkerd**:
+**Elegir Linkerd**:
 
 * Cuando se necesita un inicio sencillo y rápido
 * Cuando la eficiencia de recursos es importante
 * Cuando solo se necesitan funcionalidades básicas de Service Mesh
-* Cuando se desea minimizar la complejidad operativa
+* Cuando se busca minimizar la complejidad operativa
 
 </details>
 
@@ -280,15 +252,15 @@ Para **servicios pequeños** o **arquitecturas simples**, Kubernetes Service e I
 
 * Arquitectura centrada en AWS
 * Entorno mixto de EKS + ECS + Lambda
-* Estrategia centrada en serverless
+* Estrategia que prioriza serverless
 * Minimizar la sobrecarga operativa
-* Conectividad multi-VPC/cuenta simplificada
+* Conectividad simplificada entre múltiples VPC/cuentas
 
 **Istio recomendado** (en lugar de VPC Lattice):
 
-* Estrategia multi-cloud
-* Necesidad de control de tráfico detallado
-* Requisitos enriquecidos de observabilidad
+* Estrategia multinube
+* Necesidad de control de tráfico granular
+* Requisitos completos de observabilidad
 * Arquitectura centrada en Kubernetes
 
 </details>
@@ -311,9 +283,9 @@ Para **servicios pequeños** o **arquitecturas simples**, Kubernetes Service e I
 
 **VPC Lattice**:
 
-* Sin sobrecarga de infraestructura al ser un servicio administrado
-* Ligero aumento de latencia debido a un salto de red adicional
-* Se incurre en un costo basado en uso
+* Sin sobrecarga de infraestructura al ser un servicio gestionado
+* Ligero aumento de la latencia debido a un salto de red adicional
+* Se incurre en un coste basado en el uso
 
 </details>
 
@@ -327,16 +299,16 @@ Para **servicios pequeños** o **arquitecturas simples**, Kubernetes Service e I
 
 * Posibles conflictos de sidecar
 * Resolución de problemas compleja
-* Doble sobrecarga
+* Sobrecarga doble
 * Separación de responsabilidades poco clara
 
 **Casos de uso excepcionales**:
 
-* **Istio + VPC Lattice**: Istio para el interior del cluster, VPC Lattice para conectividad entre clusters/externa
-* **Migración gradual**: De Linkerd a Istio (transición por namespace)
+* **Istio + VPC Lattice**: Istio para el interior del clúster, VPC Lattice para la conectividad entre clústeres/externa
+* **Migración gradual**: de Linkerd a Istio (transición por namespace)
 
 </details>
 
 ***
 
-**Próximos pasos**: Lea los documentos detallados de comparación y seleccione la solución más adecuada para su entorno.
+**Próximos pasos**: Lea los documentos de comparación detallados y seleccione la solución más adecuada para su entorno.
