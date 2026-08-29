@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "집에서 서버까지 — 링크와 라우팅 계층 지도",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "laptop",
+      "type": "external",
+      "label": "노트북",
+      "sublabel": "Wi-Fi 클라이언트",
+      "pos": [
+        70,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sw",
+      "type": "backend",
+      "label": "L2 스위치",
+      "sublabel": "Ethernet · VLAN",
+      "pos": [
+        320,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rtr",
+      "type": "security",
+      "label": "공유기/라우터",
+      "sublabel": "NAT · DHCP",
+      "pos": [
+        570,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "isp",
+      "type": "cloud",
+      "label": "ISP 엣지",
+      "sublabel": "PPPoE 종단",
+      "pos": [
+        570,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "cloud",
+      "label": "인터넷 코어",
+      "sublabel": "AS 간 BGP",
+      "pos": [
+        320,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dc",
+      "type": "cloud",
+      "label": "DC 라우터",
+      "sublabel": "내부 OSPF",
+      "pos": [
+        70,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "srv",
+      "type": "backend",
+      "label": "서버",
+      "sublabel": "공인 IP",
+      "pos": [
+        70,
+        520
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "로컬 네트워크 — 링크 계층",
+      "wraps": [
+        "laptop",
+        "sw",
+        "rtr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "인터넷 — 라우팅 계층",
+      "wraps": [
+        "isp",
+        "core"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터센터",
+      "wraps": [
+        "dc",
+        "srv"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "laptop",
+      "to": "sw",
+      "label": "Wi-Fi (CSMA/CA)"
+    },
+    {
+      "id": "c2",
+      "from": "sw",
+      "to": "rtr",
+      "label": "Ethernet · MTU 1500",
+      "labelDy": -24
+    },
+    {
+      "id": "c3",
+      "from": "rtr",
+      "to": "isp",
+      "label": "PPPoE · MTU 1492",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        645,
+        214
+      ]
+    },
+    {
+      "id": "c4",
+      "from": "isp",
+      "to": "core",
+      "label": "BGP 경로 광고"
+    },
+    {
+      "id": "c5",
+      "from": "core",
+      "to": "dc",
+      "label": "BGP → OSPF"
+    },
+    {
+      "id": "c6",
+      "from": "dc",
+      "to": "srv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

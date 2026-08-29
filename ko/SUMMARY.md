@@ -15,7 +15,11 @@
 * [컨테이너 기술](basics/03-container-technology.md)
 * [Kubernetes 소개](basics/04-kubernetes-introduction.md)
 * [eBPF 기초와 실무 활용](basics/05-ebpf-fundamentals.md)
-* [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals.md)
+* [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals-part1.md)
+  * [Part 1: 계층 모델과 링크·라우팅](basics/06-network-fundamentals-part1.md)
+  * [Part 2: 전송 계층과 TLS](basics/06-network-fundamentals-part2.md)
+  * [Part 3: 애플리케이션 프로토콜](basics/06-network-fundamentals-part3.md)
+  * [Part 4: 요청의 여정과 클라우드](basics/06-network-fundamentals-part4.md)
 
 ## Kubernetes 핵심 개념
 
@@ -376,7 +380,10 @@
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
-  * [네트워크 기초 퀴즈](quizzes/basics/06-network-fundamentals-quiz.md)
+  * [네트워크 기초 Part 1 퀴즈](quizzes/basics/06-network-fundamentals-part1-quiz.md)
+  * [네트워크 기초 Part 2 퀴즈](quizzes/basics/06-network-fundamentals-part2-quiz.md)
+  * [네트워크 기초 Part 3 퀴즈](quizzes/basics/06-network-fundamentals-part3-quiz.md)
+  * [네트워크 기초 Part 4 퀴즈](quizzes/basics/06-network-fundamentals-part4-quiz.md)
 * Kubernetes 핵심 개념
   * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
   * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)

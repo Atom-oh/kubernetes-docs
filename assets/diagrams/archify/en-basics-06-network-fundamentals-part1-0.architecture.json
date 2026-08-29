@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "From Home to Server — Link and Routing Layer Map",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "laptop",
+      "type": "external",
+      "label": "Laptop",
+      "sublabel": "Wi-Fi client",
+      "pos": [
+        70,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sw",
+      "type": "backend",
+      "label": "L2 Switch",
+      "sublabel": "Ethernet · VLAN",
+      "pos": [
+        320,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rtr",
+      "type": "security",
+      "label": "Home Router",
+      "sublabel": "NAT · DHCP",
+      "pos": [
+        570,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "isp",
+      "type": "cloud",
+      "label": "ISP Edge",
+      "sublabel": "PPPoE termination",
+      "pos": [
+        570,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "cloud",
+      "label": "Internet Core",
+      "sublabel": "BGP between ASes",
+      "pos": [
+        320,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "dc",
+      "type": "cloud",
+      "label": "DC Router",
+      "sublabel": "OSPF inside",
+      "pos": [
+        70,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "srv",
+      "type": "backend",
+      "label": "Server",
+      "sublabel": "public IP",
+      "pos": [
+        70,
+        520
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Local network — link layer",
+      "wraps": [
+        "laptop",
+        "sw",
+        "rtr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Internet — routing layer",
+      "wraps": [
+        "isp",
+        "core"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data center",
+      "wraps": [
+        "dc",
+        "srv"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "laptop",
+      "to": "sw",
+      "label": "Wi-Fi (CSMA/CA)"
+    },
+    {
+      "id": "c2",
+      "from": "sw",
+      "to": "rtr",
+      "label": "Ethernet · MTU 1500",
+      "labelDy": -24
+    },
+    {
+      "id": "c3",
+      "from": "rtr",
+      "to": "isp",
+      "label": "PPPoE · MTU 1492",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        645,
+        214
+      ]
+    },
+    {
+      "id": "c4",
+      "from": "isp",
+      "to": "core",
+      "label": "BGP route ads"
+    },
+    {
+      "id": "c5",
+      "from": "core",
+      "to": "dc",
+      "label": "BGP → OSPF"
+    },
+    {
+      "id": "c6",
+      "from": "dc",
+      "to": "srv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

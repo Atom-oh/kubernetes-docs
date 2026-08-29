@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "https://example.com — One Request, End to End",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "Getting Addresses"
+    },
+    {
+      "id": "local",
+      "label": "Local Network"
+    },
+    {
+      "id": "transit",
+      "label": "Across the Internet"
+    },
+    {
+      "id": "talk",
+      "label": "End-to-End Conversation"
+    }
+  ],
+  "mainPath": [
+    "dns",
+    "arp",
+    "frame",
+    "route",
+    "nat"
+  ],
+  "nodes": [
+    {
+      "id": "dhcp",
+      "lane": "prep",
+      "col": 0,
+      "type": "external",
+      "label": "DHCP",
+      "sublabel": "IP·GW·DNS lease"
+    },
+    {
+      "id": "dns",
+      "lane": "prep",
+      "col": 1,
+      "type": "backend",
+      "label": "DNS/DoH",
+      "sublabel": "A/AAAA lookup"
+    },
+    {
+      "id": "arp",
+      "lane": "local",
+      "col": 2,
+      "type": "backend",
+      "label": "ARP",
+      "sublabel": "resolve GW MAC"
+    },
+    {
+      "id": "frame",
+      "lane": "local",
+      "col": 3,
+      "type": "backend",
+      "label": "Ethernet/Wi-Fi",
+      "sublabel": "send frames"
+    },
+    {
+      "id": "route",
+      "lane": "transit",
+      "col": 4,
+      "type": "cloud",
+      "label": "IP Routing",
+      "sublabel": "OSPF · BGP"
+    },
+    {
+      "id": "nat",
+      "lane": "transit",
+      "col": 5,
+      "type": "security",
+      "label": "NAT",
+      "sublabel": "private→public"
+    },
+    {
+      "id": "hs",
+      "lane": "talk",
+      "col": 2,
+      "type": "security",
+      "label": "TCP/QUIC+TLS",
+      "sublabel": "connect · encrypt"
+    },
+    {
+      "id": "http",
+      "lane": "talk",
+      "col": 3,
+      "type": "frontend",
+      "label": "HTTP/3",
+      "sublabel": "request·response"
+    },
+    {
+      "id": "rt",
+      "lane": "talk",
+      "col": 5,
+      "type": "backend",
+      "label": "Realtime",
+      "sublabel": "WS·gRPC·WebRTC"
+    }
+  ],
+  "edges": [
+    {
+      "id": "dhcp-dns",
+      "from": "dhcp",
+      "to": "dns",
+      "variant": "dashed"
+    },
+    {
+      "id": "dns-arp",
+      "from": "dns",
+      "to": "arp",
+      "label": "external target"
+    },
+    {
+      "id": "arp-frame",
+      "from": "arp",
+      "to": "frame"
+    },
+    {
+      "id": "frame-route",
+      "from": "frame",
+      "to": "route",
+      "label": "hop by hop"
+    },
+    {
+      "id": "route-nat",
+      "from": "route",
+      "to": "nat"
+    },
+    {
+      "id": "nat-hs",
+      "from": "nat",
+      "to": "hs",
+      "label": "at the edge",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          625,
+          409
+        ],
+        [
+          300,
+          409
+        ]
+      ],
+      "labelAt": [
+        463,
+        407
+      ]
+    },
+    {
+      "id": "hs-http",
+      "from": "hs",
+      "to": "http",
+      "variant": "emphasis"
+    },
+    {
+      "id": "http-rt",
+      "from": "http",
+      "to": "rt",
+      "label": "if needed",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ]
+}

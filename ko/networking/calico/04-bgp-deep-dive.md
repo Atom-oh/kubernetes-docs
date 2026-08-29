@@ -2,7 +2,7 @@
 
 > **지원 버전**: Calico v3.29+ / Kubernetes 1.28+ **마지막 업데이트**: 2026년 2월 23일
 
-> 📎 BGP 자체가 생소하다면 [네트워크 기초](../../basics/06-network-fundamentals.md)의 BGP 절을 먼저 읽어보세요.
+> 📎 BGP 자체가 생소하다면 [네트워크 기초 Part 1](../../basics/06-network-fundamentals-part1.md)의 BGP 절을 먼저 읽어보세요.
 
 ## 개요
 
