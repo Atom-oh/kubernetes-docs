@@ -3,7 +3,8 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "WireGuard 암호화 아키텍처",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "components": [
     {

@@ -3,7 +3,8 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Timeout과 Retry가 필요한 이유",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "lanes": [
     {

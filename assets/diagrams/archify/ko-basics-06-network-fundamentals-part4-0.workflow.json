@@ -3,7 +3,8 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "https://example.com — 한 요청의 여정",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "lanes": [
     {

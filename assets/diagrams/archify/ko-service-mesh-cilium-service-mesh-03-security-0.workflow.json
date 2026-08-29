@@ -3,7 +3,8 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Cilium 보안 아키텍처",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "lanes": [
     {
