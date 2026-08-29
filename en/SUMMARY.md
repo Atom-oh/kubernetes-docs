@@ -125,6 +125,7 @@
 ## Data on EKS
 
 * [Data on EKS Overview](data-on-eks/README.md)
+* [Anatomy of a Modern Data Pipeline](data-on-eks/01-data-pipeline-anatomy.md)
 * [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
   * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -468,6 +469,7 @@
   * [Part 2: MLflow Model Registry Quiz](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
   * [Part 3: Deploying MLflow on EKS Quiz](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * Data on EKS
+  * [Anatomy of a Modern Data Pipeline Quiz](quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka Operations Quiz](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)

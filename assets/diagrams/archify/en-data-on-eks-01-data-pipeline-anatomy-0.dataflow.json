@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Anatomy of a Modern Data Pipeline — Five Layers",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      760
+    ]
+  },
+  "stages": [
+    {
+      "label": "Sources"
+    },
+    {
+      "label": "Ingestion"
+    },
+    {
+      "label": "Storage"
+    },
+    {
+      "label": "Processing"
+    },
+    {
+      "label": "Consumption"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Apps · DBs",
+      "sublabel": "OLTP · logs",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "iot",
+      "type": "external",
+      "label": "IoT · External APIs",
+      "sublabel": "event producers",
+      "stage": 0,
+      "row": 4
+    },
+    {
+      "id": "batch",
+      "type": "backend",
+      "label": "Batch Connectors",
+      "sublabel": "periodic loads",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "stream",
+      "type": "messagebus",
+      "label": "Streaming Queue",
+      "sublabel": "Kafka · Kinesis",
+      "stage": 1,
+      "row": 4
+    },
+    {
+      "id": "lake",
+      "type": "database",
+      "label": "Data Lake",
+      "sublabel": "raw · low cost",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "dwh",
+      "type": "database",
+      "label": "Warehouse",
+      "sublabel": "query-optimized",
+      "stage": 2,
+      "row": 2
+    },
+    {
+      "id": "spark",
+      "type": "backend",
+      "label": "Batch Processing",
+      "sublabel": "Spark",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "Stream Processing",
+      "sublabel": "Flink · KStreams",
+      "stage": 3,
+      "row": 4
+    },
+    {
+      "id": "bi",
+      "type": "frontend",
+      "label": "Dashboards·Reports",
+      "sublabel": "BI · SQL",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "ml",
+      "type": "backend",
+      "label": "ML · APIs",
+      "sublabel": "feature store",
+      "stage": 4,
+      "row": 4
+    }
+  ],
+  "flows": [
+    {
+      "id": "app-batch",
+      "from": "app",
+      "to": "batch",
+      "label": "snapshots · CDC"
+    },
+    {
+      "id": "iot-stream",
+      "from": "iot",
+      "to": "stream",
+      "label": "events",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batch-lake",
+      "from": "batch",
+      "to": "lake",
+      "label": "raw landing",
+      "route": "straight"
+    },
+    {
+      "id": "stream-lake",
+      "from": "stream",
+      "to": "lake",
+      "label": "raw retention",
+      "variant": "dashed"
+    },
+    {
+      "id": "lake-dwh",
+      "from": "lake",
+      "to": "dwh",
+      "label": "curated loads (ELT)",
+      "variant": "default"
+    },
+    {
+      "id": "lake-spark",
+      "from": "lake",
+      "to": "spark",
+      "label": "batch transform",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stream-flink",
+      "from": "stream",
+      "to": "flink",
+      "label": "realtime transform",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "dwh-bi",
+      "from": "dwh",
+      "to": "bi",
+      "label": "SQL analytics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flink-ml",
+      "from": "flink",
+      "to": "ml",
+      "label": "realtime features"
+    }
+  ]
+}

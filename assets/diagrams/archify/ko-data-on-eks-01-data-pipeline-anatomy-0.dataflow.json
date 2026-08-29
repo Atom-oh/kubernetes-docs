@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "모던 데이터 파이프라인 해부 — 5개 계층",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      760
+    ]
+  },
+  "stages": [
+    {
+      "label": "소스"
+    },
+    {
+      "label": "수집"
+    },
+    {
+      "label": "저장"
+    },
+    {
+      "label": "처리"
+    },
+    {
+      "label": "소비"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "앱·DB",
+      "sublabel": "OLTP · 로그",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "iot",
+      "type": "external",
+      "label": "IoT · 외부 API",
+      "sublabel": "이벤트 발생원",
+      "stage": 0,
+      "row": 4
+    },
+    {
+      "id": "batch",
+      "type": "backend",
+      "label": "배치 커넥터",
+      "sublabel": "주기 적재",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "stream",
+      "type": "messagebus",
+      "label": "스트리밍 큐",
+      "sublabel": "Kafka · Kinesis",
+      "stage": 1,
+      "row": 4
+    },
+    {
+      "id": "lake",
+      "type": "database",
+      "label": "데이터 레이크",
+      "sublabel": "원본 · 저비용",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "dwh",
+      "type": "database",
+      "label": "웨어하우스",
+      "sublabel": "분석 쿼리 최적화",
+      "stage": 2,
+      "row": 2
+    },
+    {
+      "id": "spark",
+      "type": "backend",
+      "label": "배치 처리",
+      "sublabel": "Spark",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "flink",
+      "type": "backend",
+      "label": "스트림 처리",
+      "sublabel": "Flink · KStreams",
+      "stage": 3,
+      "row": 4
+    },
+    {
+      "id": "bi",
+      "type": "frontend",
+      "label": "대시보드·리포트",
+      "sublabel": "BI · SQL",
+      "stage": 4,
+      "row": 1
+    },
+    {
+      "id": "ml",
+      "type": "backend",
+      "label": "ML·API",
+      "sublabel": "feature store",
+      "stage": 4,
+      "row": 4
+    }
+  ],
+  "flows": [
+    {
+      "id": "app-batch",
+      "from": "app",
+      "to": "batch",
+      "label": "스냅샷 · CDC"
+    },
+    {
+      "id": "iot-stream",
+      "from": "iot",
+      "to": "stream",
+      "label": "이벤트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batch-lake",
+      "from": "batch",
+      "to": "lake",
+      "label": "원본 적재",
+      "route": "straight"
+    },
+    {
+      "id": "stream-lake",
+      "from": "stream",
+      "to": "lake",
+      "label": "원본 보존",
+      "variant": "dashed"
+    },
+    {
+      "id": "lake-dwh",
+      "from": "lake",
+      "to": "dwh",
+      "label": "정제 적재 (ELT)",
+      "variant": "default"
+    },
+    {
+      "id": "lake-spark",
+      "from": "lake",
+      "to": "spark",
+      "label": "배치 변환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stream-flink",
+      "from": "stream",
+      "to": "flink",
+      "label": "실시간 변환",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "dwh-bi",
+      "from": "dwh",
+      "to": "bi",
+      "label": "SQL 분석",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flink-ml",
+      "from": "flink",
+      "to": "ml",
+      "label": "실시간 피처"
+    }
+  ]
+}

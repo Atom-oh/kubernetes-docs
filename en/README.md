@@ -133,6 +133,7 @@ This training content provides quizzes for each topic along with the learning ma
 
 ### Data on EKS
 1. [Data on EKS Overview](./data-on-eks/README.md)
+   - [Anatomy of a Modern Data Pipeline](./data-on-eks/01-data-pipeline-anatomy.md) | [Quiz](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
 2. **Kafka on EKS Deep Dive**
    - [Kafka on EKS Introduction](./data-on-eks/kafka/README.md)
    - [Part 1: Kafka Fundamentals](./data-on-eks/kafka/01-kafka-fundamentals.md) | [Quiz](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)

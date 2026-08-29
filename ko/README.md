@@ -133,6 +133,7 @@
 
 ### Data on EKS
 1. [Data on EKS 개요](./data-on-eks/README.md)
+   - [모던 데이터 파이프라인 해부](./data-on-eks/01-data-pipeline-anatomy.md) | [퀴즈](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
 2. **Kafka on EKS 딥다이브**
    - [Kafka on EKS 소개](./data-on-eks/kafka/README.md)
    - [Part 1: Kafka 핵심 개념](./data-on-eks/kafka/01-kafka-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
