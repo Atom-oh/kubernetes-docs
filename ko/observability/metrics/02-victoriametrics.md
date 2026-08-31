@@ -37,7 +37,7 @@ VictoriaMetrics는 고성능, 비용 효율적인 시계열 데이터베이스 �
 
 ### VictoriaMetrics vs Prometheus
 
-![Prometheus와 VictoriaMetrics를 아키텍처, 압축률, 쿼리 언어, 보존 기간 네 가지 기준으로 나란히 비교하고 각 항목이 어떻게 대응되는지 화살표로 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-0.png)
+![Prometheus와 VictoriaMetrics를 아키텍처, 압축률, 쿼리 언어, 보존 기간 네 가지 기준으로 나란히 비교하고 각 항목이 어떻게 대응되는지 화살표로 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-02-victoriametrics-0.svg)
 
 | 항목 | Prometheus | VictoriaMetrics |
 |------|------------|-----------------|
@@ -55,7 +55,7 @@ VictoriaMetrics는 두 가지 배포 모드를 제공합니다:
 
 ### 선택 가이드
 
-![일일 수집량과 고가용성 요구, 복잡성 감수 여부에 따라 VictoriaMetrics를 vmsingle 단일 노드, 복제 스토리지를 더한 vmsingle, 또는 클러스터 모드 중 하나로 배포하도록 안내하는 의사결정 흐름도.](../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-1.png)
+![일일 수집량과 고가용성 요구, 복잡성 감수 여부에 따라 VictoriaMetrics를 vmsingle 단일 노드, 복제 스토리지를 더한 vmsingle, 또는 클러스터 모드 중 하나로 배포하도록 안내하는 의사결정 흐름도.](../../../assets/diagrams/rendered/ko-observability-metrics-02-victoriametrics-1.svg)
 
 ## 단일 노드 모드
 
@@ -174,7 +174,7 @@ spec:
 
 ### 아키텍처
 
-![vmagent와 Prometheus가 vminsert를 거쳐 쓰고 Grafana와 vmalert가 vmselect를 거쳐 질의하며, 두 경로 모두 수평 확장되는 vmstorage에서 만나는 VictoriaMetrics 클러스터 아키텍처.](../../.gitbook/assets/ko-observability-metrics-02-victoriametrics-2.png)
+![vmagent와 Prometheus가 vminsert를 거쳐 쓰고 Grafana와 vmalert가 vmselect를 거쳐 질의하며, 두 경로 모두 수평 확장되는 vmstorage에서 만나는 VictoriaMetrics 클러스터 아키텍처.](../../../assets/diagrams/rendered/ko-observability-metrics-02-victoriametrics-2.svg)
 
 ### 구성 요소
 

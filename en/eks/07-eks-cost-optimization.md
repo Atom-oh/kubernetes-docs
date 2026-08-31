@@ -20,7 +20,7 @@ Amazon EKS (Elastic Kubernetes Service) makes it easy to deploy, manage, and sca
 
 The costs incurred when using Amazon EKS consist of the following components:
 
-![Tree diagram showing EKS total cost broken into control plane, compute, storage, networking, and other cost components, each with their underlying AWS services.](../.gitbook/assets/en-eks-07-eks-cost-optimization-0.png)
+![Tree diagram showing EKS total cost broken into control plane, compute, storage, networking, and other cost components, each with their underlying AWS services.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-0.svg)
 
 ## FinOps Principles and EKS
 
@@ -28,7 +28,7 @@ FinOps (Financial Operations) is an operational model for cloud cost management 
 
 ### Core Principles of the FinOps Framework
 
-![Diagram mapping six FinOps core principles on the left to five EKS implementation methods on the right, showing which implementation method operationalizes each principle.](../.gitbook/assets/en-eks-07-eks-cost-optimization-1.png)
+![Diagram mapping six FinOps core principles on the left to five EKS implementation methods on the right, showing which implementation method operationalizes each principle.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-1.svg)
 
 ### Applying FinOps to EKS
 
@@ -100,7 +100,7 @@ Cost related to networking for the EKS cluster:
 
 Compute cost is typically the largest cost component of an EKS cluster. You can optimize compute costs using the following strategies.
 
-![Tree diagram showing five compute cost optimization strategies for EKS: instance type optimization, spot instance utilization, savings plans and reserved instances, auto scaling optimization, and Fargate vs EC2 cost comparison.](../.gitbook/assets/en-eks-07-eks-cost-optimization-2.png)
+![Tree diagram showing five compute cost optimization strategies for EKS: instance type optimization, spot instance utilization, savings plans and reserved instances, auto scaling optimization, and Fargate vs EC2 cost comparison.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-2.svg)
 
 ### Selecting the Right Instance Type
 
@@ -424,7 +424,7 @@ VPA Modes:
 
 Storage is an important cost component of EKS clusters. You can optimize storage costs using the following strategies.
 
-![Tree diagram showing three storage cost optimization areas for EKS: EBS volume optimization, EFS cost optimization, and S3 cost optimization, each with their key tactics.](../.gitbook/assets/en-eks-07-eks-cost-optimization-3.png)
+![Tree diagram showing three storage cost optimization areas for EKS: EBS volume optimization, EFS cost optimization, and S3 cost optimization, each with their key tactics.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-3.svg)
 
 ### EBS Volume Optimization
 
@@ -572,7 +572,7 @@ Optimize S3 request costs:
 
 Networking costs can be significant, especially with large data transfers. You can optimize networking costs using the following strategies.
 
-![Tree diagram showing three networking cost optimization areas for EKS: data transfer optimization, load balancer optimization, and NAT gateway optimization, each with their key tactics.](../.gitbook/assets/en-eks-07-eks-cost-optimization-4.png)
+![Tree diagram showing three networking cost optimization areas for EKS: data transfer optimization, load balancer optimization, and NAT gateway optimization, each with their key tactics.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-4.svg)
 
 ### Data Transfer Optimization
 
@@ -728,7 +728,7 @@ Optimize outbound traffic passing through NAT gateway:
 
 Effective resource management and governance is important for controlling EKS cluster costs. You can effectively manage resources using the following strategies.
 
-![Tree diagram showing three resource management and governance areas for EKS: resource requests and limits optimization, namespaces and resource quotas, and cost allocation and tagging.](../.gitbook/assets/en-eks-07-eks-cost-optimization-5.png)
+![Tree diagram showing three resource management and governance areas for EKS: resource requests and limits optimization, namespaces and resource quotas, and cost allocation and tagging.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-5.svg)
 
 ### Resource Requests and Limits Optimization
 
@@ -901,7 +901,7 @@ Kubecost provides the following features:
 
 To effectively optimize costs, you need to continuously monitor and analyze costs. You can monitor and analyze EKS cluster costs using the following tools and strategies.
 
-![Tree diagram showing four cost monitoring and analysis tools for EKS: AWS Cost Explorer, Kubecost, CloudWatch Container Insights, and custom cost dashboards, each with their key capabilities.](../.gitbook/assets/en-eks-07-eks-cost-optimization-6.png)
+![Tree diagram showing four cost monitoring and analysis tools for EKS: AWS Cost Explorer, Kubecost, CloudWatch Container Insights, and custom cost dashboards, each with their key capabilities.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-6.svg)
 
 ### AWS Cost Explorer
 
@@ -1100,7 +1100,7 @@ Calculate cost optimization scores to track cluster cost efficiency:
 
 Let's look at best practices for optimizing EKS cluster costs.
 
-![Tree diagram showing three categories of EKS cost optimization best practices: general best practices, workload-specific optimization, and financial services cost optimization.](../.gitbook/assets/en-eks-07-eks-cost-optimization-7.png)
+![Tree diagram showing three categories of EKS cost optimization best practices: general best practices, workload-specific optimization, and financial services cost optimization.](../../assets/diagrams/rendered/en-eks-07-eks-cost-optimization-7.svg)
 
 ### General Best Practices
 

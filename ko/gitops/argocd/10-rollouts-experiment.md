@@ -35,7 +35,7 @@ Experiment는 단독 리소스로도 만들 수 있지만, 실무에서는 대�
 
 Rollout이 experiment step에 도달하면 아래 체인으로 리소스가 생성됩니다.
 
-![Rollout이 생성하는 Experiment가 baseline·canary ReplicaSet과 AnalysisRun을 만들고, AnalysisTemplate이 templateName으로 AnalysisRun에 참조되는 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-10-rollouts-experiment-0.png)
+![Rollout이 생성하는 Experiment가 baseline·canary ReplicaSet과 AnalysisRun을 만들고, AnalysisTemplate이 templateName으로 AnalysisRun에 참조되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-10-rollouts-experiment-0.svg)
 
 동작 순서는 다음과 같습니다.
 
@@ -115,7 +115,7 @@ Metric "success-rate" assessed Failed due to failed (2) > failureLimit (1)
 
 AnalysisRun의 최종 상태가 Experiment를 거쳐 Rollout까지 전파됩니다.
 
-![AnalysisRun 상태가 Successful이면 Experiment가 성공해 Rollout이 다음 step으로 진행하고, Failed·Inconclusive·Error면 Experiment가 실패해 Rollout이 Degraded로 중단됨을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-10-rollouts-experiment-1.png)
+![AnalysisRun 상태가 Successful이면 Experiment가 성공해 Rollout이 다음 step으로 진행하고, Failed·Inconclusive·Error면 Experiment가 실패해 Rollout이 Degraded로 중단됨을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-10-rollouts-experiment-1.svg)
 
 - **Successful**: `duration` 경과와 분석 성공이 모두 충족되면 Experiment가 Successful이 되고, Rollout은 다음 step으로 진행합니다.
 - **Failed / Inconclusive**: Experiment가 실패로 끝나고 Rollout이 abort됩니다. Rollout 상태는 `Degraded`가 되며 stable 버전이 그대로 유지됩니다.

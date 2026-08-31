@@ -9,7 +9,7 @@ Kubernetes는 AI/ML 워크로드를 실행하기 위한 강력한 플랫폼입�
 
 AI/ML 워크로드는 일반적인 애플리케이션 워크로드와 다른 특성을 가지고 있습니다:
 
-![AI/ML 워크로드의 리소스 집약성이 GPU·메모리·CPU·네트워크 요구사항으로, 워크로드 다양성이 훈련·추론·전처리·HPO 유형으로 이어지는 특성 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-0.png)
+![AI/ML 워크로드의 리소스 집약성이 GPU·메모리·CPU·네트워크 요구사항으로, 워크로드 다양성이 훈련·추론·전처리·HPO 유형으로 이어지는 특성 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-0.svg)
 
 1. **리소스 집약적**: GPU, 고성능 CPU, 대용량 메모리 등 많은 컴퓨팅 리소스가 필요합니다.
 2. **데이터 집약적**: 대용량 데이터셋에 대한 빠른 액세스가 필요합니다.
@@ -68,7 +68,7 @@ AI/ML 라이프사이클 관리를 위한 DevOps 원칙 적용:
 
 ## EKS에서의 AI/ML 인프라 구성
 
-![Amazon EKS 안의 훈련·추론·CPU 노드 그룹이 공유 스토리지·네트워킹 계층을 사용하고, EKS가 SageMaker·ECR·CloudWatch 등 AWS 서비스와 연동되는 인프라 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-1.png)
+![Amazon EKS 안의 훈련·추론·CPU 노드 그룹이 공유 스토리지·네트워킹 계층을 사용하고, EKS가 SageMaker·ECR·CloudWatch 등 AWS 서비스와 연동되는 인프라 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-1.svg)
 
 ### 노드 유형 선택
 
@@ -136,7 +136,7 @@ AI/ML 워크로드에는 고성능 스토리지가 필요합니다:
 
 ## AI/ML 워크로드 배포
 
-![Amazon EKS 위에서 NVIDIA GPU 운영자가 노드 수준 GPU 스택을, Kubeflow가 노트북·훈련 작업을, KServe가 모델 서빙 옵션을 관리하는 소프트웨어 구성요소 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-2.png)
+![Amazon EKS 위에서 NVIDIA GPU 운영자가 노드 수준 GPU 스택을, Kubeflow가 노트북·훈련 작업을, KServe가 모델 서빙 옵션을 관리하는 소프트웨어 구성요소 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-2.svg)
 
 ### NVIDIA GPU 운영자
 
@@ -180,7 +180,7 @@ Kubeflow는 다음과 같은 구성 요소를 제공합니다:
 
 분산 훈련을 위한 Kubernetes 리소스:
 
-![MPI Job의 Launcher 파드가 Worker 파드를 기동하고, Worker들이 NCCL·MPI·EFA로 통신하며, 체크포인트를 FSx for Lustre를 거쳐 S3와 체크포인트 저장소에 저장하는 분산 훈련 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-3.png)
+![MPI Job의 Launcher 파드가 Worker 파드를 기동하고, Worker들이 NCCL·MPI·EFA로 통신하며, 체크포인트를 FSx for Lustre를 거쳐 S3와 체크포인트 저장소에 저장하는 분산 훈련 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-3.svg)
 
 1. **MPI Operator**:
 
@@ -266,7 +266,7 @@ spec:
 
 모델 서빙을 위한 옵션:
 
-![클라이언트 요청이 네트워킹 계층을 거쳐 추론 서비스로 전달되고, 추론 서비스가 모델 저장소를 읽으며 스케일링이 추론 서비스를 자동 확장하는 모델 서빙 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-4.png)
+![클라이언트 요청이 네트워킹 계층을 거쳐 추론 서비스로 전달되고, 추론 서비스가 모델 저장소를 읽으며 스케일링이 추론 서비스를 자동 확장하는 모델 서빙 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-4.svg)
 
 1. **KServe**:
 
@@ -397,7 +397,7 @@ spec:
 
 ## AI/ML 워크로드 최적화
 
-![GPU·훈련·스토리지 최적화가 성능 향상으로 이어지고 비용 최적화가 비용 절감으로 이어지는 AI/ML 워크로드 최적화 네 영역과 그 결과를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-5.png)
+![GPU·훈련·스토리지 최적화가 성능 향상으로 이어지고 비용 최적화가 비용 절감으로 이어지는 AI/ML 워크로드 최적화 네 영역과 그 결과를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-5.svg)
 
 ### GPU 메모리 최적화
 
@@ -572,7 +572,7 @@ spec:
 
 ## 모니터링 및 로깅
 
-![DCGM·Node·Kube State 익스포터가 수집한 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 나뉘고, Fluentd가 수집한 로그가 CloudWatch·ElasticSearch로 전달되는 관측 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-6.png)
+![DCGM·Node·Kube State 익스포터가 수집한 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 나뉘고, Fluentd가 수집한 로그가 CloudWatch·ElasticSearch로 전달되는 관측 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-01-ai-ml-workloads-6.svg)
 
 ### Prometheus 및 Grafana
 

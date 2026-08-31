@@ -78,7 +78,7 @@ Service resilience patterns:
 
 Istio consists of a **Control Plane** and a **Data Plane**.
 
-![Istiod in the control plane pushes configuration down to the Envoy sidecar proxies running alongside application containers in three data-plane pods, and those proxies establish mutual TLS connections directly with one another.](../.gitbook/assets/en-service-mesh-02-istio-0.png)
+![Istiod in the control plane pushes configuration down to the Envoy sidecar proxies running alongside application containers in three data-plane pods, and those proxies establish mutual TLS connections directly with one another.](../../assets/diagrams/rendered/en-service-mesh-02-istio-0.svg)
 
 ### Control Plane (istiod)
 

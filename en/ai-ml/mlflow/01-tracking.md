@@ -76,7 +76,7 @@ The tracking server splits what it stores into two categories, backed by two dif
 
 This split matters because the two stores have different durability, scaling, and access-pattern requirements: a database is well-suited to many small structured writes and queries, while object storage is well-suited to storing and retrieving large files. [Part 3: EKS Deployment](./03-eks-deployment.md) goes into the infrastructure choices this implies when you run your own tracking server on EKS — for now, it's enough to know the two stores exist and serve different purposes.
 
-![Diagram showing a training script logging through the MLflow Tracking API into the Tracking Server, which writes run metadata to a backend store and files to an artifact store, both of which the Tracking UI reads directly.](../../.gitbook/assets/en-ai-ml-mlflow-01-tracking-0.png)
+![Diagram showing a training script logging through the MLflow Tracking API into the Tracking Server, which writes run metadata to a backend store and files to an artifact store, both of which the Tracking UI reads directly.](../../../assets/diagrams/rendered/en-ai-ml-mlflow-01-tracking-0.svg)
 
 The training script never talks to either store directly — it always goes through the Tracking API, which the tracking server uses to route metadata writes to the backend store and file writes to the artifact store. The UI reads from both stores to render experiments, runs, logged models, and traces.
 

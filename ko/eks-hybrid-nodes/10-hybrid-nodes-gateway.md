@@ -53,7 +53,7 @@ EKS Hybrid Nodes Gateway는 **2026년 4월 21일 정식 출시(GA)** 된 오픈�
 
 ### 전체 아키텍처 개요
 
-![VPC 안의 리더/스탠바이 게이트웨이가 VXLAN 터널로 온프레미스 하이브리드 노드와 연결되고, VPC 라우트 테이블과 VPC Pod로도 라우팅되는 EKS 하이브리드 노드 게이트웨이 토폴로지를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
+![VPC 안의 리더/스탠바이 게이트웨이가 VXLAN 터널로 온프레미스 하이브리드 노드와 연결되고, VPC 라우트 테이블과 VPC Pod로도 라우팅되는 EKS 하이브리드 노드 게이트웨이 토폴로지를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.svg)
 
 ### 핵심 구성 요소 상세
 
@@ -193,7 +193,7 @@ kubectl get lease -n eks-hybrid-nodes-gateway
 - 리더 장애 시 즉시 인계 준비
 - Lease 갱신 모니터링
 
-![리더 Pod가 15초마다 Lease를 갱신하다 장애가 발생하면, 40초 뒤 Lease 만료를 감지한 팔로워 Pod가 Lease를 획득하고 VPC 라우트 테이블을 갱신해 새로운 리더로 승격하는 시퀀스를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
+![리더 Pod가 15초마다 Lease를 갱신하다 장애가 발생하면, 40초 뒤 Lease 만료를 감지한 팔로워 Pod가 Lease를 획득하고 VPC 라우트 테이블을 갱신해 새로운 리더로 승격하는 시퀀스를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.svg)
 
 Lease 관련 주요 파라미터:
 
@@ -933,7 +933,7 @@ kubectl exec -n eks-hybrid-nodes-gateway $GW_POD -- ip route show dev hybrid_vxl
 
 ### 패턴 1: VPC Pod에서 Hybrid Pod로
 
-![VPC Pod가 보낸 패킷이 VPC 노드, VPC 라우트 테이블을 거쳐 게이트웨이 EC2에서 VXLAN으로 캡슐화되고 Direct Connect/VPN을 지나 하이브리드 노드의 Cilium Agent에서 디캡슐화되어 Hybrid Pod에 전달되는 패킷 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
+![VPC Pod가 보낸 패킷이 VPC 노드, VPC 라우트 테이블을 거쳐 게이트웨이 EC2에서 VXLAN으로 캡슐화되고 Direct Connect/VPN을 지나 하이브리드 노드의 Cilium Agent에서 디캡슐화되어 Hybrid Pod에 전달되는 패킷 경로를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.svg)
 
 **상세 흐름:**
 
@@ -948,7 +948,7 @@ kubectl exec -n eks-hybrid-nodes-gateway $GW_POD -- ip route show dev hybrid_vxl
 
 ### 패턴 2: Hybrid Pod에서 VPC Pod로
 
-![Hybrid Pod가 보낸 패킷이 Cilium Agent에서 VXLAN으로 캡슐화되어 Direct Connect/VPN을 지나 게이트웨이 EC2에서 디캡슐화되고, VPC 라우팅을 거쳐 VPC Pod에 전달되는 패킷 경로를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
+![Hybrid Pod가 보낸 패킷이 Cilium Agent에서 VXLAN으로 캡슐화되어 Direct Connect/VPN을 지나 게이트웨이 EC2에서 디캡슐화되고, VPC 라우팅을 거쳐 VPC Pod에 전달되는 패킷 경로를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.svg)
 
 **상세 흐름:**
 
@@ -962,7 +962,7 @@ kubectl exec -n eks-hybrid-nodes-gateway $GW_POD -- ip route show dev hybrid_vxl
 
 이 패턴은 Hybrid Node에서 실행되는 Admission Webhook이나 Conversion Webhook으로의 통신에 중요합니다.
 
-![EKS API 서버가 하이브리드 노드에서 실행되는 웹훅 Pod를 호출할 때 ENI, VPC 라우트 테이블, 게이트웨이 EC2, VXLAN 터널을 거쳐 요청이 전달되고 동일한 경로로 응답이 그대로 되돌아오는 왕복 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
+![EKS API 서버가 하이브리드 노드에서 실행되는 웹훅 Pod를 호출할 때 ENI, VPC 라우트 테이블, 게이트웨이 EC2, VXLAN 터널을 거쳐 요청이 전달되고 동일한 경로로 응답이 그대로 되돌아오는 왕복 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.svg)
 
 > **중요**: 게이트웨이가 없는 환경에서는 라우팅 불가능한 Pod 네트워크를 사용할 경우 웹훅을 Hybrid Node에서 실행할 수 없습니다. 게이트웨이를 사용하면 이 제약이 해소됩니다.
 
@@ -970,7 +970,7 @@ kubectl exec -n eks-hybrid-nodes-gateway $GW_POD -- ip route show dev hybrid_vxl
 
 ALB, NLB, Amazon Managed Prometheus 등 AWS 서비스가 Hybrid Pod에 직접 접근하는 패턴입니다.
 
-![ALB, NLB, Amazon Managed Prometheus가 VPC 라우트 테이블과 게이트웨이 EC2를 거쳐 온프레미스의 세 Hybrid Pod에 IP 타겟으로 직접 연결되는 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
+![ALB, NLB, Amazon Managed Prometheus가 VPC 라우트 테이블과 게이트웨이 EC2를 거쳐 온프레미스의 세 Hybrid Pod에 IP 타겟으로 직접 연결되는 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.svg)
 
 **지원되는 AWS 서비스 통합:**
 
@@ -988,7 +988,7 @@ ALB, NLB, Amazon Managed Prometheus 등 AWS 서비스가 Hybrid Pod에 직접 �
 
 ### HA 아키텍처
 
-![가용 영역 A의 리더 게이트웨이가 Lease를 갱신하며 VPC 라우트 테이블과 온프레미스 하이브리드 노드로 향하는 활성 VXLAN 터널을 유지하고, 가용 영역 B의 스탠바이 게이트웨이는 Lease를 감시하며 대기 상태의 터널만 유지하는 멀티 AZ 고가용성 구조를 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
+![가용 영역 A의 리더 게이트웨이가 Lease를 갱신하며 VPC 라우트 테이블과 온프레미스 하이브리드 노드로 향하는 활성 VXLAN 터널을 유지하고, 가용 영역 B의 스탠바이 게이트웨이는 Lease를 감시하며 대기 상태의 터널만 유지하는 멀티 AZ 고가용성 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.svg)
 
 ### Lease 기반 리더 선출 상세
 

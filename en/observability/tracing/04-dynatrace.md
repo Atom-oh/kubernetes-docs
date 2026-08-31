@@ -19,7 +19,7 @@ Dynatrace is an AI-powered full-stack observability platform. Through OneAgent t
 
 ## Architecture
 
-![OneAgent runs as a DaemonSet on EKS worker nodes and auto-instruments applications; telemetry flows through the in-cluster ActiveGate to Dynatrace SaaS, which feeds the Davis AI engine and Grail data lakehouse, while a Dynatrace Operator manages the in-cluster components via a mutating webhook.](../../.gitbook/assets/en-observability-tracing-04-dynatrace-0.png)
+![OneAgent runs as a DaemonSet on EKS worker nodes and auto-instruments applications; telemetry flows through the in-cluster ActiveGate to Dynatrace SaaS, which feeds the Davis AI engine and Grail data lakehouse, while a Dynatrace Operator manages the in-cluster components via a mutating webhook.](../../../assets/diagrams/rendered/en-observability-tracing-04-dynatrace-0.svg)
 
 ## EKS Deployment with Helm
 
@@ -265,7 +265,7 @@ spec:
 
 ### How Davis AI Works
 
-![Five telemetry signal types feed a baseline-learning stage in the Davis AI engine, which detects anomalies, correlates them, and identifies a root cause; the root cause then produces a problem card, an impact analysis, and remediation suggestions.](../../.gitbook/assets/en-observability-tracing-04-dynatrace-1.png)
+![Five telemetry signal types feed a baseline-learning stage in the Davis AI engine, which detects anomalies, correlates them, and identifies a root cause; the root cause then produces a problem card, an impact analysis, and remediation suggestions.](../../../assets/diagrams/rendered/en-observability-tracing-04-dynatrace-1.svg)
 
 ### Problem Alert Configuration
 

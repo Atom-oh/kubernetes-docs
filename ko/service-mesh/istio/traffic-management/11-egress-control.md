@@ -12,7 +12,7 @@ Egress 제어는 메시 외부로 나가는 트래픽을 관리하고 보안을 
 
 ## Egress 개요
 
-![파드에서 나가는 트래픽이 사이드카 프록시와 이그레스 게이트웨이를 거쳐 외부 서비스로 전달되는 경로를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-11-egress-control-0.png)
+![파드에서 나가는 트래픽이 사이드카 프록시와 이그레스 게이트웨이를 거쳐 외부 서비스로 전달되는 경로를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-11-egress-control-0.svg)
 
 ## ServiceEntry 설정
 

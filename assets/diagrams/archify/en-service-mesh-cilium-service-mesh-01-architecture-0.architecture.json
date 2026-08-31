@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Service Mesh Architecture",
+    "output": "en-service-mesh-cilium-service-mesh-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "controlplane",
+      "type": "backend",
+      "label": "Control Plane API",
+      "sublabel": "Cilium Operator",
+      "pos": [
+        370,
+        20
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "per node",
+      "pos": [
+        370,
+        160
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF Programs",
+      "sublabel": "kernel, L3/L4",
+      "pos": [
+        120,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Node Envoy",
+      "sublabel": "shared L7 proxy",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "external",
+      "label": "Pod Traffic",
+      "sublabel": "workload connections",
+      "pos": [
+        370,
+        420
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-agent",
+      "from": "controlplane",
+      "to": "agent",
+      "label": "sync config",
+      "labelAt": [
+        465,
+        94
+      ]
+    },
+    {
+      "id": "agent-ebpf",
+      "from": "agent",
+      "to": "ebpf",
+      "label": "program kernel"
+    },
+    {
+      "id": "agent-envoy",
+      "from": "agent",
+      "to": "envoy",
+      "label": "configure L7"
+    },
+    {
+      "id": "pod-ebpf",
+      "from": "pod",
+      "to": "ebpf",
+      "label": "L3/L4 traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebpf-envoy",
+      "from": "ebpf",
+      "to": "envoy",
+      "label": "redirect L7",
+      "variant": "dashed",
+      "labelAt": [
+        465,
+        390
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control",
+      "items": [
+        "the Cilium Agent runs per node and syncs with the control plane API"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data path",
+      "items": [
+        "eBPF programs handle L3/L4 traffic directly in the kernel",
+        "a single shared node Envoy provides L7 features when needed"
+      ]
+    }
+  ]
+}

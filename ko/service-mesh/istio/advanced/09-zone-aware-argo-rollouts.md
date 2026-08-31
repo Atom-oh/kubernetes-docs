@@ -22,7 +22,7 @@
 
 **문제 시나리오**:
 
-![Spot Instance로 인해 Zone C의 모든 Pod가 중단되기 전과 후를 비교하여, Zone별로 분리된 PodDisruptionBudget이 다른 Zone에는 영향을 주지 않지만 Zone C 자체의 가용성 비율은 무너짐을 보여주는 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.png)
+![Spot Instance로 인해 Zone C의 모든 Pod가 중단되기 전과 후를 비교하여, Zone별로 분리된 PodDisruptionBudget이 다른 Zone에는 영향을 주지 않지만 Zone C 자체의 가용성 비율은 무너짐을 보여주는 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.svg)
 
 **왜 Zone별 Rollout이 필요한가?**
 
@@ -123,7 +123,7 @@ spec:
 
 ### 전체 구조
 
-![클라이언트가 단일 VirtualService를 호출하고, DestinationRule의 locality 설정에 따라 각 Zone의 독립적인 Rollout이 관리하는 stable/canary Pod로 트래픽이 분배되는 전체 아키텍처를 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
+![클라이언트가 단일 VirtualService를 호출하고, DestinationRule의 locality 설정에 따라 각 Zone의 독립적인 Rollout이 관리하는 stable/canary Pod로 트래픽이 분배되는 전체 아키텍처를 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.svg)
 
 ### 핵심 컴포넌트
 
@@ -651,15 +651,15 @@ spec:
 
 ### 정상 상태 (Zone-local 트래픽)
 
-![정상 상태에서 Client A의 요청이 같은 Zone A의 Envoy Sidecar와 Pod만 거쳐 처리되고, 다른 Zone의 Pod는 사용되지 않음을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.png)
+![정상 상태에서 Client A의 요청이 같은 Zone A의 Envoy Sidecar와 Pod만 거쳐 처리되고, 다른 Zone의 Pod는 사용되지 않음을 보여주는 시퀀스 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.svg)
 
 ### Failover 시나리오
 
-![Zone A의 Pod가 3회 연속 오류를 반환하면 Outlier Detection이 해당 엔드포인트를 제외하고, DestinationRule의 failover 규칙에 따라 요청이 Zone B의 Pod로 자동 전환되는 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
+![Zone A의 Pod가 3회 연속 오류를 반환하면 Outlier Detection이 해당 엔드포인트를 제외하고, DestinationRule의 failover 규칙에 따라 요청이 Zone B의 Pod로 자동 전환되는 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.svg)
 
 ### Canary 배포 중 트래픽 흐름
 
-![Argo Rollouts가 점진적으로 조정하는 weight에 따라 VirtualService가 요청의 90%는 stable subset으로, 10%는 canary subset으로 분배하는 Canary 배포 중 트래픽 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.png)
+![Argo Rollouts가 점진적으로 조정하는 weight에 따라 VirtualService가 요청의 90%는 stable subset으로, 10%는 canary subset으로 분배하는 Canary 배포 중 트래픽 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.svg)
 
 ## 문제 해결
 

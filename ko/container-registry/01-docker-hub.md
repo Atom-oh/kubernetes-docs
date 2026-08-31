@@ -6,7 +6,7 @@
 
 Docker Hub는 세계에서 가장 큰 컨테이너 이미지 저장소로, 수백만 개의 공개 이미지를 호스팅합니다. Docker Official Images, Verified Publishers, 커뮤니티 이미지를 제공하며, 개인 및 팀을 위한 프라이빗 저장소 기능도 지원합니다.
 
-![Docker Hub의 세 가지 이미지 신뢰 등급인 공식 이미지, 인증된 게시자, 커뮤니티 이미지를 나란히 비교하여 각 등급의 검증 수준과 예시 이미지를 보여주는 다이어그램.](../.gitbook/assets/ko-container-registry-01-docker-hub-0.png)
+![Docker Hub의 세 가지 이미지 신뢰 등급인 공식 이미지, 인증된 게시자, 커뮤니티 이미지를 나란히 비교하여 각 등급의 검증 수준과 예시 이미지를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-container-registry-01-docker-hub-0.svg)
 
 ---
 
@@ -135,7 +135,7 @@ kubectl create secret docker-registry dockerhub-secret \
 
 ## Docker Hub Rate Limit 대응 전략
 
-![Docker Hub Rate Limit 발생 여부를 확인한 뒤 환경에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 중 하나를 적용하거나 인증된 Pull로 사전에 예방하여 최종적으로 Rate Limit을 해소하는 의사결정 흐름도.](../.gitbook/assets/ko-container-registry-01-docker-hub-1.png)
+![Docker Hub Rate Limit 발생 여부를 확인한 뒤 환경에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 중 하나를 적용하거나 인증된 Pull로 사전에 예방하여 최종적으로 Rate Limit을 해소하는 의사결정 흐름도.](../../assets/diagrams/rendered/ko-container-registry-01-docker-hub-1.svg)
 
 ### 전략 1: Pull-through Cache (containerd)
 

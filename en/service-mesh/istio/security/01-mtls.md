@@ -45,7 +45,7 @@ spiffe://cluster.local/ns/default/sa/productpage
 5. Agent delivers certificate to Envoy (SDS protocol)
 6. Automatic certificate renewal (default TTL: 24 hours)
 
-![Each pod's Envoy sidecar receives an X.509 certificate from istiod, then encrypts pod-to-pod traffic with mTLS while application traffic to and from each sidecar stays local plaintext.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-0.png)
+![Each pod's Envoy sidecar receives an X.509 certificate from istiod, then encrypts pod-to-pod traffic with mTLS while application traffic to and from each sidecar stays local plaintext.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-01-mtls-0.svg)
 
 ## mTLS Modes
 
@@ -102,7 +102,7 @@ Istio automatically generates a self-signed root CA during installation. The dia
 - **Intermediate CA**: Intermediate CA for issuing workload certificates
 - **Workload Certificates**: mTLS certificates for each service (auto-renewed)
 
-![A self-signed root CA inside istiod signs an intermediate CA, which issues and auto-renews the mTLS workload certificate for every service in the mesh.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-1.png)
+![A self-signed root CA inside istiod signs an intermediate CA, which issues and auto-renews the mTLS workload certificate for every service in the mesh.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-01-mtls-1.svg)
 
 **Default Certificate Properties**:
 - Validity period: **90 days** (auto-renewal: 24 hours before expiration)
@@ -405,7 +405,7 @@ spec:
 
 ALB supports client certificate-based mTLS.
 
-![A client presents a certificate that AWS ALB terminates and verifies, then ALB forwards over TLS to the Istio Gateway, which re-encrypts with Envoy mTLS into the backend service.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-2.png)
+![A client presents a certificate that AWS ALB terminates and verifies, then ALB forwards over TLS to the Istio Gateway, which re-encrypts with Envoy mTLS into the backend service.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-01-mtls-2.svg)
 
 #### Step 1: Configure mTLS on ALB
 
@@ -530,7 +530,7 @@ spec:
 
 CloudFront supports client certificate verification.
 
-![A client's certificate is verified at the CloudFront edge, then the request travels over plain TLS through ALB and the Istio Gateway before Envoy mTLS re-encrypts it into the backend service.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-3.png)
+![A client's certificate is verified at the CloudFront edge, then the request travels over plain TLS through ALB and the Istio Gateway before Envoy mTLS re-encrypts it into the backend service.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-01-mtls-3.svg)
 
 #### Step 1: Create CloudFront Distribution
 
@@ -669,7 +669,7 @@ spec:
 
 mTLS across the entire path from client to backend:
 
-![A client's mTLS connection to CloudFront hands off to plain TLS across ALB and the Istio Gateway, then the Istio mesh re-establishes Envoy mTLS hop by hop across three backend services.](../../../.gitbook/assets/en-service-mesh-istio-security-01-mtls-4.png)
+![A client's mTLS connection to CloudFront hands off to plain TLS across ALB and the Istio Gateway, then the Istio mesh re-establishes Envoy mTLS hop by hop across three backend services.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-01-mtls-4.svg)
 
 **Security per segment**:
 1. **Client -> CloudFront**: mTLS (client certificate verification)

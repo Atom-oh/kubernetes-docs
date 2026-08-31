@@ -411,7 +411,7 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 ### HA 아키텍처
 
-![로드밸런서가 API 서버로 요청을 분산하고, API 서버는 Redis에 캐시를 저장하며, 애플리케이션 컨트롤러는 리포지토리 서버에서 매니페스트를 가져오고, Redis는 마스터·리플리카·센티널로 구성된 HA 클러스터를 이루는 ArgoCD 고가용성 구성을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-01-installation-0.png)
+![로드밸런서가 API 서버로 요청을 분산하고, API 서버는 Redis에 캐시를 저장하며, 애플리케이션 컨트롤러는 리포지토리 서버에서 매니페스트를 가져오고, Redis는 마스터·리플리카·센티널로 구성된 HA 클러스터를 이루는 ArgoCD 고가용성 구성을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-01-installation-0.svg)
 
 ### 컨트롤러 레플리카 설정
 

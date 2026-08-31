@@ -9,13 +9,13 @@ Model training is one of the most resource-intensive workloads in the AI/ML life
 
 A typical model training pipeline on Kubernetes involves multiple stages from data preparation to model evaluation:
 
-![Distributed training pipeline flowing from an S3 data lake through preprocessing into worker pods that synchronize gradients via a parameter server and AllReduce, then checkpoint to FSx for Lustre before an evaluation job logs metrics and registers the model.](../.gitbook/assets/en-ai-ml-05-model-training-0.png)
+![Distributed training pipeline flowing from an S3 data lake through preprocessing into worker pods that synchronize gradients via a parameter server and AllReduce, then checkpoint to FSx for Lustre before an evaluation job logs metrics and registers the model.](../../assets/diagrams/rendered/en-ai-ml-05-model-training-0.svg)
 
 ## Distributed Training Strategies
 
 Training large models requires distributing computation across multiple GPUs and nodes. Understanding the different parallelism strategies is crucial for efficient training.
 
-![Four quadrants compare data, tensor, pipeline, and expert parallelism: splitting data across model replicas, splitting a layer's weights across GPUs, splitting layers into pipeline stages, and routing tokens to a subset of experts, each converging on a combine or sync step.](../.gitbook/assets/en-ai-ml-05-model-training-1.png)
+![Four quadrants compare data, tensor, pipeline, and expert parallelism: splitting data across model replicas, splitting a layer's weights across GPUs, splitting layers into pipeline stages, and routing tokens to a subset of experts, each converging on a combine or sync step.](../../assets/diagrams/rendered/en-ai-ml-05-model-training-1.svg)
 
 ### Parallelism Strategy Comparison
 
@@ -50,7 +50,7 @@ Slinky brings the familiar Slurm workload manager to Kubernetes, enabling HPC-st
 
 ### Slinky Architecture
 
-![ArgoCD, ECR, and a network load balancer feed an EKS cluster where the Slurm control plane dispatches GPU pods, user access pods reach the controller and REST API, Karpenter scales a GPU node pool, and all compute pods share FSx for Lustre storage.](../.gitbook/assets/en-ai-ml-05-model-training-2.png)
+![ArgoCD, ECR, and a network load balancer feed an EKS cluster where the Slurm control plane dispatches GPU pods, user access pods reach the controller and REST API, Karpenter scales a GPU node pool, and all compute pods share FSx for Lustre storage.](../../assets/diagrams/rendered/en-ai-ml-05-model-training-2.svg)
 
 ### Slinky Components
 

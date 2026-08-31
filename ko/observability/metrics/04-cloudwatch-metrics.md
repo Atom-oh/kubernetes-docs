@@ -33,7 +33,7 @@ Amazon CloudWatch는 AWS의 네이티브 모니터링 및 관측성 서비스입
 
 ### CloudWatch vs 오픈소스 솔루션
 
-![CloudWatch는 완전 관리형·AWS 네이티브·사용량 기반 비용·15개월 보존을 제공하고, 오픈소스 Prometheus/VictoriaMetrics 스택은 자체 운영·클라우드 중립·인프라 비용만·무제한 보존이라는 상반된 특성을 가진다는 것을 보여주는 비교 다이어그램.](../../.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-0.png)
+![CloudWatch는 완전 관리형·AWS 네이티브·사용량 기반 비용·15개월 보존을 제공하고, 오픈소스 Prometheus/VictoriaMetrics 스택은 자체 운영·클라우드 중립·인프라 비용만·무제한 보존이라는 상반된 특성을 가진다는 것을 보여주는 비교 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-04-cloudwatch-metrics-0.svg)
 
 | 항목 | CloudWatch | Prometheus/VM |
 |------|------------|---------------|
@@ -50,7 +50,7 @@ Container Insights는 EKS 클러스터의 컨테이너화된 워크로드를 모
 
 ### 아키텍처
 
-![워커 노드의 애플리케이션이 CloudWatch Agent와 Fluent Bit DaemonSet에 각각 메트릭·로그를 노출하고, 두 에이전트가 Container Insights 메트릭과 CloudWatch Logs로 전송된 뒤 Performance Monitoring에서 합쳐지는 수집 경로를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-1.png)
+![워커 노드의 애플리케이션이 CloudWatch Agent와 Fluent Bit DaemonSet에 각각 메트릭·로그를 노출하고, 두 에이전트가 Container Insights 메트릭과 CloudWatch Logs로 전송된 뒤 Performance Monitoring에서 합쳐지는 수집 경로를 보여주는 아키텍처 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-04-cloudwatch-metrics-1.svg)
 
 ### 수집되는 메트릭
 
@@ -995,7 +995,7 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 
 ### 비용 최적화 전략
 
-![CloudWatch 비용 최적화가 메트릭·로그·대시보드 세 갈래로 나뉘고, 각 갈래마다 고해상도 메트릭 최소화, 로그 보존 기간 설정 같은 구체적인 실행 항목으로 이어지는 트리 다이어그램.](../../.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-2.png)
+![CloudWatch 비용 최적화가 메트릭·로그·대시보드 세 갈래로 나뉘고, 각 갈래마다 고해상도 메트릭 최소화, 로그 보존 기간 설정 같은 구체적인 실행 항목으로 이어지는 트리 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-04-cloudwatch-metrics-2.svg)
 
 ### 1. 메트릭 수집 최적화
 

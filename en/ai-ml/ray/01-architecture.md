@@ -55,6 +55,8 @@ Worker nodes exist to run tasks and actors and to add their CPU, GPU, and memory
 
 ![A Ray head node running the Global Control Store, driver, and autoscaler oversees a set of worker nodes running tasks and actors, and every node in the cluster reads and writes the same distributed object store.](../../.gitbook/assets/en-ai-ml-ray-01-architecture-0.png)
 
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-01-architecture-0.html)
+
 Every node participates in the distributed object store, so an object produced by a task on one worker node can be read by a task or actor running on a different worker node, with Ray handling the data movement between them.
 
 ## Higher-Level Libraries Built on the Same Foundation

@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Service Mesh 아키텍처",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "controlplane",
+      "type": "backend",
+      "label": "Control Plane API",
+      "sublabel": "Cilium Operator",
+      "pos": [
+        370,
+        20
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "노드별",
+      "pos": [
+        370,
+        160
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF 프로그램",
+      "sublabel": "커널, L3/L4",
+      "pos": [
+        120,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Node Envoy",
+      "sublabel": "공유 L7 프록시",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "external",
+      "label": "Pod 트래픽",
+      "sublabel": "워크로드 연결",
+      "pos": [
+        370,
+        420
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-agent",
+      "from": "controlplane",
+      "to": "agent",
+      "label": "설정 동기화",
+      "labelAt": [
+        465,
+        94
+      ]
+    },
+    {
+      "id": "agent-ebpf",
+      "from": "agent",
+      "to": "ebpf",
+      "label": "커널 프로그래밍"
+    },
+    {
+      "id": "agent-envoy",
+      "from": "agent",
+      "to": "envoy",
+      "label": "L7 설정"
+    },
+    {
+      "id": "pod-ebpf",
+      "from": "pod",
+      "to": "ebpf",
+      "label": "L3/L4 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebpf-envoy",
+      "from": "ebpf",
+      "to": "envoy",
+      "label": "L7 리다이렉트",
+      "variant": "dashed",
+      "labelAt": [
+        465,
+        390
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "제어",
+      "items": [
+        "Cilium Agent가 노드마다 실행되며 컨트롤 플레인 API와 동기화한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "데이터패스",
+      "items": [
+        "eBPF 프로그램이 커널에서 L3/L4 트래픽을 직접 처리한다",
+        "필요할 때 노드당 하나의 공유 Envoy가 L7 기능을 제공한다"
+      ]
+    }
+  ]
+}

@@ -38,7 +38,7 @@ Cilium leverages eBPF to provide powerful security features for containerized en
 
 ### Cilium Security Architecture
 
-![Traffic flows down through Cilium's four defense-in-depth security layers — Network Security, Application Security, Threat Detection, and Runtime Security — with Hubble's eBPF-native observability in the Threat Detection layer highlighted as the visibility foundation underlying the others.](../../.gitbook/assets/en-networking-cilium-06-security-visibility-0.png)
+![Traffic flows down through Cilium's four defense-in-depth security layers — Network Security, Application Security, Threat Detection, and Runtime Security — with Hubble's eBPF-native observability in the Threat Detection layer highlighted as the visibility foundation underlying the others.](../../../assets/diagrams/rendered/en-networking-cilium-06-security-visibility-0.svg)
 
 ### Network Security Features:
 

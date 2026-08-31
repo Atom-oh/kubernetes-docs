@@ -15,7 +15,7 @@ OpenTelemetry has officially achieved CNCF **graduated** status, the foundation'
 
 OpenTelemetry was born from the merger of OpenTracing and OpenCensus projects:
 
-![OpenTracing and OpenCensus merged in 2019 to form OpenTelemetry, which now defines the specification, SDKs, Collector, and wire protocol used across the observability ecosystem.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
+![OpenTracing and OpenCensus merged in 2019 to form OpenTelemetry, which now defines the specification, SDKs, Collector, and wire protocol used across the observability ecosystem.](../../../assets/diagrams/rendered/en-observability-tracing-03-opentelemetry-0.svg)
 
 ## Core Concepts
 
@@ -29,7 +29,7 @@ OpenTelemetry was born from the merger of OpenTracing and OpenCensus projects:
 
 ### Core Components
 
-![Application code emits telemetry through the OTel API and SDK into a receive-process-export pipeline that fans out to five observability backends: Tempo, Prometheus, Loki, X-Ray, and Datadog.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-1.png)
+![Application code emits telemetry through the OTel API and SDK into a receive-process-export pipeline that fans out to five observability backends: Tempo, Prometheus, Loki, X-Ray, and Datadog.](../../../assets/diagrams/rendered/en-observability-tracing-03-opentelemetry-1.svg)
 
 ## OpenTelemetry SDK
 
@@ -239,7 +239,7 @@ public class OrderService {
 
 ### Architecture
 
-![Five receiver protocols feed a six-stage Collector processor chain — batch, memory limiter, attributes, filter, tail sampling, and resource — before the data fans out to six exporter backends.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
+![Five receiver protocols feed a six-stage Collector processor chain — batch, memory limiter, attributes, filter, tail sampling, and resource — before the data fans out to six exporter backends.](../../../assets/diagrams/rendered/en-observability-tracing-03-opentelemetry-2.svg)
 
 ### Collector Configuration
 

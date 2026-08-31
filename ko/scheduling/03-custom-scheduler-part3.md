@@ -196,7 +196,7 @@ Pod Deletion Cost는 `controller.kubernetes.io/pod-deletion-cost` 어노테이�
 
 다음 다이어그램은 Pod Deletion Cost가 스케일 다운 시 어떻게 작동하는지 보여줍니다:
 
-![ReplicaSet 컨트롤러가 스케일 다운 시 Pod 목록을 조회하고 각 Pod의 Pod Deletion Cost 어노테이션 값을 확인한 뒤 비용이 낮은 순으로 정렬하여 가장 낮은 비용의 Pod(Pod-3: -10, Pod-4: 0)부터 삭제하는 과정을 보여주는 흐름도.](../.gitbook/assets/ko-scheduling-03-custom-scheduler-part3-0.png)
+![ReplicaSet 컨트롤러가 스케일 다운 시 Pod 목록을 조회하고 각 Pod의 Pod Deletion Cost 어노테이션 값을 확인한 뒤 비용이 낮은 순으로 정렬하여 가장 낮은 비용의 Pod(Pod-3: -10, Pod-4: 0)부터 삭제하는 과정을 보여주는 흐름도.](../../assets/diagrams/rendered/ko-scheduling-03-custom-scheduler-part3-0.svg)
 
 ### 사용 사례
 

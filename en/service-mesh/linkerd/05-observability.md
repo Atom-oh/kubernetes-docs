@@ -9,7 +9,7 @@ Linkerd provides powerful observability features out of the box. Without any ins
 
 ## Observability Architecture
 
-![Data-plane proxies export metrics to the Viz extension's Prometheus, which feeds Grafana and the web dashboard while forwarding to an optional external Prometheus/Grafana pair, and proxies also stream spans directly to Jaeger for distributed tracing.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-0.png)
+![Data-plane proxies export metrics to the Viz extension's Prometheus, which feeds Grafana and the web dashboard while forwarding to an optional external Prometheus/Grafana pair, and proxies also stream spans directly to Jaeger for distributed tracing.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-05-observability-0.svg)
 
 ## Golden Metrics
 
@@ -67,7 +67,7 @@ linkerd viz dashboard --address 0.0.0.0
 
 ### Dashboard Features
 
-![From the Namespace Overview, operators drill into the Deployments view, which branches to per-Pod status, per-route metrics, and the live Tap request stream, while the namespace level also links directly to the service Topology view.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-1.png)
+![From the Namespace Overview, operators drill into the Deployments view, which branches to per-Pod status, per-route metrics, and the live Tap request stream, while the namespace level also links directly to the service Topology view.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-05-observability-1.svg)
 
 **Dashboard Views:**
 
@@ -739,7 +739,7 @@ spec:
 
 ### Troubleshooting Workflow
 
-![Starting from a detected issue, checking success rate routes to viz top then a shared tap-and-logs step for low success, or on to a latency check, edge check, and mTLS/certificate check when success is normal, all converging on Issue Resolved.](../../.gitbook/assets/en-service-mesh-linkerd-05-observability-2.png)
+![Starting from a detected issue, checking success rate routes to viz top then a shared tap-and-logs step for low success, or on to a latency check, edge check, and mTLS/certificate check when success is normal, all converging on Issue Resolved.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-05-observability-2.svg)
 
 ## Next Steps
 

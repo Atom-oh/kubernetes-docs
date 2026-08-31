@@ -8,7 +8,7 @@ Amazon Elastic Container Registry(ECR)는 AWS에서 제공하는 완전관리형
 
 ### 아키텍처
 
-![AWS 계정 안에서 Amazon ECR Private가 IAM 인증, 수명주기 정책, 암호화, 스캔 기능으로 비공개 리포지토리를 관리하고, ECR Public이 별도로 공개 리포지토리를 제공하는 구조를 보여준다.](../.gitbook/assets/ko-container-registry-02-amazon-ecr-0.png)
+![AWS 계정 안에서 Amazon ECR Private가 IAM 인증, 수명주기 정책, 암호화, 스캔 기능으로 비공개 리포지토리를 관리하고, ECR Public이 별도로 공개 리포지토리를 제공하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-container-registry-02-amazon-ecr-0.svg)
 
 ### Private vs Public ECR
 
@@ -369,7 +369,7 @@ ECR Lifecycle Policy는 이미지 보존 규칙을 자동화하여 스토리지 
 
 ### Lifecycle Policy 동작 원리
 
-![이미지가 Push되면 Lifecycle Policy가 등록된 규칙을 순서대로 평가해 매칭되는 규칙을 적용하고, 보존 기준을 초과한 이미지만 삭제하고 나머지는 보존하는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-02-amazon-ecr-1.png)
+![이미지가 Push되면 Lifecycle Policy가 등록된 규칙을 순서대로 평가해 매칭되는 규칙을 적용하고, 보존 기준을 초과한 이미지만 삭제하고 나머지는 보존하는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-container-registry-02-amazon-ecr-1.svg)
 
 **규칙 평가 순서:**
 1. 규칙은 `rulePriority` 숫자가 낮은 것부터 평가
@@ -1029,7 +1029,7 @@ aws ec2 create-vpc-endpoint \
 
 외부 레지스트리를 ECR을 통해 캐싱하여 외부 의존성을 줄이고 pull 성능을 향상시킵니다.
 
-![kubelet의 이미지 요청이 ECR 엔드포인트를 거쳐 캐시가 있으면 즉시 제공하고, 캐시가 없으면 업스트림 레지스트리에서 가져와 ECR에 캐시로 저장한 뒤 제공하는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-02-amazon-ecr-2.png)
+![kubelet의 이미지 요청이 ECR 엔드포인트를 거쳐 캐시가 있으면 즉시 제공하고, 캐시가 없으면 업스트림 레지스트리에서 가져와 ECR에 캐시로 저장한 뒤 제공하는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-container-registry-02-amazon-ecr-2.svg)
 
 #### 지원 Upstream 레지스트리
 

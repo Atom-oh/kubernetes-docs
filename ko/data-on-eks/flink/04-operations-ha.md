@@ -144,7 +144,7 @@ Flink Kubernetes Operator에 내장된 오토스케일러(Part 2)와 Karpenter�
 * **Flink 오토스케일러**는 버텍스별 메트릭(백프레셔, Busy Time, 랙)을 관찰해 잡 그래프 안의 각 연산자에 필요한 **병렬도(parallelism)**를 결정합니다 — 이는 하위 노드에 대한 정보가 전혀 없는, 잡 내부의 판단입니다.
 * **Karpenter**는 스케줄링되지 못한 TaskManager Pod(또는 비어버린 노드)를 관찰해 EC2 용량을 프로비저닝하거나 회수할지 결정합니다 — 이는 그 Pod들이 왜 존재하는지는 전혀 모르고, 단지 존재한다는 사실에만 반응하는 노드 단위의 판단입니다.
 
-![Flink 오토스케일러가 버텍스별 메트릭(백프레셔, Busy Time, 랙)을 평가해 병렬도를 늘리거나 줄이고, 그 결과에 따라 Karpenter가 새 EC2 노드를 프로비저닝하거나 남는 노드를 통합/종료하는 연동 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-04-operations-ha-0.png)
+![Flink 오토스케일러가 버텍스별 메트릭(백프레셔, Busy Time, 랙)을 평가해 병렬도를 늘리거나 줄이고, 그 결과에 따라 Karpenter가 새 EC2 노드를 프로비저닝하거나 남는 노드를 통합/종료하는 연동 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-data-on-eks-flink-04-operations-ha-0.svg)
 
 잡 단위 판단(병렬도)이 항상 먼저 일어나고, 노드 단위 판단(EC2 용량)은 그 결과 — Pending 상태이거나 비어버린 Pod — 에만 반응합니다. 한쪽 루프만 튜닝하면 Spark 성능 튜닝 문서에서 경고하는 것과 같은 종류의 불일치가 생깁니다. Flink 오토스케일러가 병렬도를 Karpenter의 [`NodePool`](../../autoscaling/02-karpenter.md#nodepool)이 맞는 노드를 프로비저닝할 수 있는 속도보다 빠르게 늘리면, 새 TaskManager Pod가 예상보다 오래 `Pending` 상태로 머물면서 오히려 오토스케일러가 유발한 스케일 업 자체를 지연시킵니다. 반대로 Karpenter의 노드 통합(consolidation) 지연 시간을 오토스케일러 자체의 안정화 구간보다 충분히 길게 유지해야, Karpenter가 오토스케일러가 곧 다시 필요로 할 노드를 미리 회수해버리는 문제를 막을 수 있습니다.
 

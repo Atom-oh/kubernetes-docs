@@ -22,7 +22,7 @@
 
 ### 에어갭 환경의 유형
 
-![완전 에어갭, 프록시를 통한 부분 에어갭, VPN/Direct Connect와 VPC 엔드포인트를 사용하는 프라이빗 연결이라는 세 가지 네트워크 연결 방식을 비교하고, AWS는 하이브리드 노드에 프라이빗 연결 방식을 권장함을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-03-airgap-setup-0.png)
+![완전 에어갭, 프록시를 통한 부분 에어갭, VPN/Direct Connect와 VPC 엔드포인트를 사용하는 프라이빗 연결이라는 세 가지 네트워크 연결 방식을 비교하고, AWS는 하이브리드 노드에 프라이빗 연결 방식을 권장함을 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-03-airgap-setup-0.svg)
 
 ---
 
@@ -30,7 +30,7 @@
 
 이 문서에서 구성하는 에어갭 아키텍처는 다음과 같습니다:
 
-![인터넷 접근이 가능한 사전 준비 호스트가 hybrid-assets 매니페스트를 내려받아 바이너리와 컨테이너 이미지를 프라이빗 S3 버킷과 ECR에 미리 준비해 두면, 에어갭 환경의 온프레미스 노드는 도메인을 로컬로 해석하고 VPC 엔드포인트를 거쳐 같은 S3 버킷과 ECR에 오프라인으로 접근한다는 것을 보여준다.](../.gitbook/assets/ko-eks-hybrid-nodes-03-airgap-setup-1.png)
+![인터넷 접근이 가능한 사전 준비 호스트가 hybrid-assets 매니페스트를 내려받아 바이너리와 컨테이너 이미지를 프라이빗 S3 버킷과 ECR에 미리 준비해 두면, 에어갭 환경의 온프레미스 노드는 도메인을 로컬로 해석하고 VPC 엔드포인트를 거쳐 같은 S3 버킷과 ECR에 오프라인으로 접근한다는 것을 보여준다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-03-airgap-setup-1.svg)
 
 ### 아티팩트 저장소 역할 분담
 

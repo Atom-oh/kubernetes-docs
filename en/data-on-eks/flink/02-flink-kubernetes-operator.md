@@ -178,7 +178,7 @@ flinkConfiguration:
 
 Under the hood, when the autoscaler decides to rescale a vertex, it triggers the rescale through the exact same mechanism described above — a `last-state` upgrade. That's why `last-state` needs to be fast and resilient: it's not just the upgrade mode for manual deploys, it's also the mechanism the autoscaler leans on continuously as load shifts.
 
-![The Flink Kubernetes Operator watches FlinkDeployment and FlinkSessionJob custom resources and manages a JobManager pod and TaskManager pods, whose emitted metrics an Autoscaler reads to trigger a last-state rescale back through the Operator.](../../.gitbook/assets/en-data-on-eks-flink-02-flink-kubernetes-operator-0.png)
+![The Flink Kubernetes Operator watches FlinkDeployment and FlinkSessionJob custom resources and manages a JobManager pod and TaskManager pods, whose emitted metrics an Autoscaler reads to trigger a last-state rescale back through the Operator.](../../../assets/diagrams/rendered/en-data-on-eks-flink-02-flink-kubernetes-operator-0.svg)
 
 ## Next Steps
 

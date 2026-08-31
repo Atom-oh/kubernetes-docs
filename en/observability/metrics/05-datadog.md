@@ -33,7 +33,7 @@ Datadog is a unified observability platform for monitoring cloud-scale infrastru
 
 ### Datadog vs Open Source vs CloudWatch
 
-![Three side-by-side profiles comparing Datadog, Amazon CloudWatch, and a self-hosted open-source stack across platform model, intelligence, integration breadth, and pricing shape.](../../.gitbook/assets/en-observability-metrics-05-datadog-0.png)
+![Three side-by-side profiles comparing Datadog, Amazon CloudWatch, and a self-hosted open-source stack across platform model, intelligence, integration breadth, and pricing shape.](../../../assets/diagrams/rendered/en-observability-metrics-05-datadog-0.svg)
 
 | Item | Datadog | CloudWatch | Prometheus+Grafana |
 |------|---------|------------|-------------------|
@@ -49,7 +49,7 @@ Datadog is a unified observability platform for monitoring cloud-scale infrastru
 
 ### Overall Architecture
 
-![The Datadog Agent DaemonSet and Cluster Agent collect metrics, logs, traces, and profiles from an EKS cluster's applications and forward them into the Datadog platform, where they feed dashboards, and where Watchdog AI generates monitor alerts.](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
+![The Datadog Agent DaemonSet and Cluster Agent collect metrics, logs, traces, and profiles from an EKS cluster's applications and forward them into the Datadog platform, where they feed dashboards, and where Watchdog AI generates monitor alerts.](../../../assets/diagrams/rendered/en-observability-metrics-05-datadog-1.svg)
 
 ### Components
 
@@ -800,7 +800,7 @@ Estimated total cost: ~$3,350/month
 
 ### Cost Optimization Strategies
 
-![A tree showing Datadog cost optimization branching into metric, log, and APM optimization, each listing its own set of concrete tuning strategies.](../../.gitbook/assets/en-observability-metrics-05-datadog-2.png)
+![A tree showing Datadog cost optimization branching into metric, log, and APM optimization, each listing its own set of concrete tuning strategies.](../../../assets/diagrams/rendered/en-observability-metrics-05-datadog-2.svg)
 
 #### 1. Metric Optimization
 

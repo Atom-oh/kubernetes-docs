@@ -32,7 +32,7 @@ To follow along with the examples in this document, you will need the following 
 
 ### JobManager <-> TaskManager Flow on Kubernetes
 
-![Diagram of the Flink JobManager pod (Job Graph and Scheduler, Checkpoint Coordinator, Kubernetes ResourceManager, REST API and Web UI) coordinating two TaskManager pods, showing the ResourceManager requesting and releasing pods, the Job Graph and Scheduler deploying subtasks into each pod's task slots, and the Checkpoint Coordinator triggering snapshots on one slot per pod.](../../.gitbook/assets/en-data-on-eks-flink-01-architecture-0.png)
+![Diagram of the Flink JobManager pod (Job Graph and Scheduler, Checkpoint Coordinator, Kubernetes ResourceManager, REST API and Web UI) coordinating two TaskManager pods, showing the ResourceManager requesting and releasing pods, the Job Graph and Scheduler deploying subtasks into each pod's task slots, and the Checkpoint Coordinator triggering snapshots on one slot per pod.](../../../assets/diagrams/rendered/en-data-on-eks-flink-01-architecture-0.svg)
 
 The JobManager decomposes a submitted application into a job graph, splits each operator into parallel subtasks, and assigns those subtasks to task slots across the available TaskManager pods. When native Kubernetes deployment is used, the JobManager's own Kubernetes ResourceManager dynamically requests new TaskManager pods when more slots are needed and releases them when a job's parallelism shrinks or the job finishes.
 

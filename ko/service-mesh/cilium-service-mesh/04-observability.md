@@ -9,7 +9,7 @@ Cilium Service Mesh는 Hubble을 통해 강력한 네트워크 관찰성을 제�
 
 ## Hubble 아키텍처
 
-![각 노드의 eBPF 프로그램과 Cilium Agent가 수집한 흐름 데이터를 Hubble Observer가 모아 Hubble Relay로 전달하고, Relay는 Hubble UI·CLI로 시각화를 제공하며 Observer의 메트릭은 Prometheus를 거쳐 Grafana 대시보드로 흐른다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-0.png)
+![각 노드의 eBPF 프로그램과 Cilium Agent가 수집한 흐름 데이터를 Hubble Observer가 모아 Hubble Relay로 전달하고, Relay는 Hubble UI·CLI로 시각화를 제공하며 Observer의 메트릭은 Prometheus를 거쳐 Grafana 대시보드로 흐른다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-04-observability-0.svg)
 
 ### 구성 요소
 
@@ -215,7 +215,7 @@ hubble observe --http-method "POST|PUT"
 
 Hubble UI는 서비스 간 의존성을 시각적으로 보여줍니다:
 
-![Hubble UI의 서비스 맵 화면에서 Frontend가 Backend와 정적 자산 CDN으로 요청을 보내고, Backend는 Database와 Redis 캐시를 호출하는 실시간 서비스 의존성 그래프를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-1.png)
+![Hubble UI의 서비스 맵 화면에서 Frontend가 Backend와 정적 자산 CDN으로 요청을 보내고, Backend는 Database와 Redis 캐시를 호출하는 실시간 서비스 의존성 그래프를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-04-observability-1.svg)
 
 ### UI 기능
 
@@ -463,13 +463,13 @@ hubble observe --namespace production -o json | \
 
 ### 서비스 맵 예시
 
-![Production 네임스페이스에서 Ingress부터 Frontend, API Gateway를 거쳐 User·Order·Payment 서비스로 이어지는 요청 흐름과 각 서비스가 PostgreSQL·Redis·Kafka에 접근하는 의존 관계를 RPS·P99 지연 시간과 함께 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-2.png)
+![Production 네임스페이스에서 Ingress부터 Frontend, API Gateway를 거쳐 User·Order·Payment 서비스로 이어지는 요청 흐름과 각 서비스가 PostgreSQL·Redis·Kafka에 접근하는 의존 관계를 RPS·P99 지연 시간과 함께 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-04-observability-2.svg)
 
 ## Golden Signals 모니터링
 
 ### 4가지 골든 시그널
 
-![Cilium Service Mesh 관찰성이 추적하는 4가지 골든 시그널인 지연 시간, 처리량, 오류율, 포화도를 동등한 4개의 지표 카드로 나란히 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-04-observability-3.png)
+![Cilium Service Mesh 관찰성이 추적하는 4가지 골든 시그널인 지연 시간, 처리량, 오류율, 포화도를 동등한 4개의 지표 카드로 나란히 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-04-observability-3.svg)
 
 ### PromQL 쿼리
 

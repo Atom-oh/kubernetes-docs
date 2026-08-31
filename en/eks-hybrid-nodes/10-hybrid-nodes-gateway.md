@@ -70,7 +70,7 @@ The gateway transforms what was a complex, error-prone, multi-team networking ch
 
 The EKS Hybrid Nodes Gateway sits at the boundary between your VPC and your on-premises network, acting as a VXLAN-based bridge for Pod traffic. The following diagram illustrates the overall architecture:
 
-![Architecture diagram showing a leader gateway pod in the AWS VPC bridging cloud nodes and the EKS control plane to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering pod traffic to the leader's ENI.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png)
+![Architecture diagram showing a leader gateway pod in the AWS VPC bridging cloud nodes and the EKS control plane to on-premises hybrid nodes over a VXLAN tunnel, with a standby gateway ready to take over and a VPC route table steering pod traffic to the leader's ENI.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.svg)
 
 ### VXLAN Tunnel Mechanics
 
@@ -204,7 +204,7 @@ The standby pod:
 
 One of the gateway's most valuable features is automatic VPC route table management. The leader pod watches for Hybrid Node events and programs routes accordingly.
 
-![Sequence diagram showing the leader gateway watching Kubernetes node events, then programming or removing FDB, ARP, and local route entries and reflecting the change into the VPC route table, symmetrically for a hybrid node joining and leaving the cluster.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png)
+![Sequence diagram showing the leader gateway watching Kubernetes node events, then programming or removing FDB, ARP, and local route entries and reflecting the change into the VPC route table, symmetrically for a hybrid node joining and leaving the cluster.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.svg)
 
 The gateway uses the EC2 API to manage routes:
 
@@ -220,7 +220,7 @@ The gateway uses the EC2 API to manage routes:
 
 The following diagram shows how all components interact:
 
-![Architecture diagram showing the gateway pod as the hub that holds a leader-election lease, watches node resources, and updates CiliumVTEPConfig and the VPC route table, which drive a data plane where the hybrid_vxlan0 interface tunnels to a Cilium agent and an EC2 ENI forwards VPC-routed traffic into that tunnel.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png)
+![Architecture diagram showing the gateway pod as the hub that holds a leader-election lease, watches node resources, and updates CiliumVTEPConfig and the VPC route table, which drive a data plane where the hybrid_vxlan0 interface tunnels to a Cilium agent and an EC2 ENI forwards VPC-routed traffic into that tunnel.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.svg)
 
 ---
 
@@ -1008,7 +1008,7 @@ Understanding how traffic flows through the gateway is essential for troubleshoo
 
 This is the most common pattern --- a Pod running on a cloud node in the VPC needs to communicate with a Pod running on a hybrid node on-premises.
 
-![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png)
+![Sequence diagram showing a packet from a cloud pod matching the VPC route table to the gateway leader, getting VXLAN-encapsulated onto hybrid_vxlan0, crossing Direct Connect or VPN, and being decapsulated and delivered to the destination pod on the hybrid node.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.svg)
 
 **Step-by-step packet flow:**
 
@@ -1025,7 +1025,7 @@ This is the most common pattern --- a Pod running on a cloud node in the VPC nee
 
 When a Pod on a hybrid node needs to reach a Pod (or any IP) in the VPC.
 
-![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png)
+![Sequence diagram showing a packet from a hybrid pod resolved by the Cilium agent's BPF VTEP lookup, VXLAN-encapsulated across Direct Connect or VPN to the gateway, decapsulated, and delivered natively through the VPC to the destination cloud pod.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.svg)
 
 **Step-by-step packet flow:**
 
@@ -1131,13 +1131,13 @@ VPC Pod → Hybrid Pod:
 
 The recommended production deployment uses 2 gateway replicas spread across Availability Zones:
 
-![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png)
+![Architecture diagram showing a leader gateway pod in Availability Zone A holding the Kubernetes lease, managing the CiliumVTEPConfig, and programming the VPC route table, while a standby gateway pod in Availability Zone B monitors the lease for takeover.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.svg)
 
 ### Failover Sequence
 
 When the leader gateway pod becomes unavailable (node failure, pod crash, network partition), the following failover sequence occurs:
 
-![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png)
+![Sequence diagram showing the leader gateway pod failing to renew its Kubernetes lease, the standby pod acquiring the expired lease and becoming leader, then updating CiliumVTEPConfig and replacing the VPC route in parallel to complete failover in about fifteen to twenty-five seconds.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.svg)
 
 ### Failover Timeline
 

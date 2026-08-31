@@ -45,7 +45,7 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 **중요**: Istio 1.5 이후 Pilot, Citadel, Galley는 **별도 컴포넌트가 아닌 Istiod 내부 기능**입니다.
 
-![Kubernetes API에서 검증된 구성이 Istiod의 Galley·Citadel·Pilot 기능을 거쳐 xDS API와 X.509 인증서로 Envoy 사이드카들에 전달되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-0.png)
+![Kubernetes API에서 검증된 구성이 Istiod의 Galley·Citadel·Pilot 기능을 거쳐 xDS API와 X.509 인증서로 Envoy 사이드카들에 전달되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-0.svg)
 
 ### Istiod의 주요 기능
 
@@ -115,7 +115,7 @@ spec:
 
 #### 3. Certificate Management (Citadel 기능)
 
-![Envoy가 Istiod에 CSR을 보내면 Istiod가 SPIFFE Identity를 검증하고 서명한 뒤 X.509 인증서를 발급하며, 만료 전 동일한 절차로 인증서를 갱신하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-1.png)
+![Envoy가 Istiod에 CSR을 보내면 Istiod가 SPIFFE Identity를 검증하고 서명한 뒤 X.509 인증서를 발급하며, 만료 전 동일한 절차로 인증서를 갱신하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-1.svg)
 
 **SPIFFE ID 형식**:
 
@@ -218,6 +218,8 @@ spec:
 
 ![들어오는 요청이 Envoy의 Listener, Filter, Router, Cluster를 순서대로 거쳐 업스트림 서비스로 나가는 아웃바운드 트래픽 처리 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-2.png)
 
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-2.html)
+
 ### Envoy의 주요 구성 요소
 
 #### 1. Listeners
@@ -248,7 +250,7 @@ spec:
 
 **요청/응답을 처리하는 플러그인**:
 
-![HTTP 요청이 JWT 인증, Rate Limiting, RBAC 검증, Stats 수집을 거쳐 Router에 도달한 뒤 HTTP 응답으로 반환되는 Envoy 필터 체인 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-3.png)
+![HTTP 요청이 JWT 인증, Rate Limiting, RBAC 검증, Stats 수집을 거쳐 Router에 도달한 뒤 HTTP 응답으로 반환되는 Envoy 필터 체인 순서를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-3.svg)
 
 #### 3. Clusters
 
@@ -297,7 +299,7 @@ spec:
 
 ### Injection 방식
 
-![사용자의 Deployment 생성 요청이 API Server와 Mutating Webhook을 거쳐 Sidecar Injector에서 Pod Spec을 수정한 뒤, 수정된 스펙으로 istio-init·애플리케이션·istio-proxy 컨테이너를 가진 파드가 생성되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-4.png)
+![사용자의 Deployment 생성 요청이 API Server와 Mutating Webhook을 거쳐 Sidecar Injector에서 Pod Spec을 수정한 뒤, 수정된 스펙으로 istio-init·애플리케이션·istio-proxy 컨테이너를 가진 파드가 생성되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-4.svg)
 
 ### 원본 vs Injection 후
 
@@ -397,7 +399,7 @@ kubectl apply -f deployment-injected.yaml
 
 **역할**: 파드의 네트워크 트래픽을 Envoy Proxy로 리다이렉트하는 iptables 규칙 설정
 
-![파드 시작 시 istio-init이 iptables 규칙을 설정해 모든 트래픽을 Envoy로 리다이렉트하고, 이후 애플리케이션의 아웃바운드 요청이 iptables를 거쳐 Envoy로 전달되며 Envoy 자신의 요청만 iptables를 우회하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-5.png)
+![파드 시작 시 istio-init이 iptables 규칙을 설정해 모든 트래픽을 Envoy로 리다이렉트하고, 이후 애플리케이션의 아웃바운드 요청이 iptables를 거쳐 Envoy로 전달되며 Envoy 자신의 요청만 iptables를 우회하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-5.svg)
 
 ### iptables 규칙 상세
 
@@ -429,7 +431,7 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### 트래픽 흐름 (iptables 적용 후)
 
-![애플리케이션의 아웃바운드 요청이 OUTPUT 체인을 거쳐 Envoy의 15001 리스너로 리다이렉트되어 외부 서비스로 나가고, 외부 서비스의 응답은 PREROUTING 체인을 거쳐 15006 리스너에서 mTLS 검증 후 애플리케이션으로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-6.png)
+![애플리케이션의 아웃바운드 요청이 OUTPUT 체인을 거쳐 Envoy의 15001 리스너로 리다이렉트되어 외부 서비스로 나가고, 외부 서비스의 응답은 PREROUTING 체인을 거쳐 15006 리스너에서 mTLS 검증 후 애플리케이션으로 전달되는 경로를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-6.svg)
 
 ### iptables 규칙 확인
 
@@ -475,7 +477,7 @@ Istio는 두 가지 트래픽 가로채기 방식을 지원합니다:
 
 ### Kubernetes DNS 기본 동작
 
-![애플리케이션의 이름 해석 요청이 파드 내부의 resolv.conf를 거쳐 CoreDNS로 전달되고, ClusterIP가 반환되어 애플리케이션에 전달되는 기본 DNS 조회 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-7.png)
+![애플리케이션의 이름 해석 요청이 파드 내부의 resolv.conf를 거쳐 CoreDNS로 전달되고, ClusterIP가 반환되어 애플리케이션에 전달되는 기본 DNS 조회 경로를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-7.svg)
 
 **/etc/resolv.conf** (파드 내부):
 
@@ -489,7 +491,7 @@ options ndots:5
 
 **Istio에서는 Envoy가 DNS를 처리**합니다:
 
-![애플리케이션의 TCP 연결이 Envoy의 Listener, DNS Filter, Route Match, Cluster를 거쳐 Endpoint Discovery에서 Istiod의 xDS Server와 EDS API로 통신하며 CoreDNS 호출 없이 엔드포인트를 해석하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-8.png)
+![애플리케이션의 TCP 연결이 Envoy의 Listener, DNS Filter, Route Match, Cluster를 거쳐 Endpoint Discovery에서 Istiod의 xDS Server와 EDS API로 통신하며 CoreDNS 호출 없이 엔드포인트를 해석하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-8.svg)
 
 **장점**:
 
@@ -513,7 +515,7 @@ spec:
 
 **동작 방식**:
 
-![애플리케이션의 DNS 쿼리가 iptables를 거쳐 Envoy DNS Proxy로 리다이렉트된 뒤, 메시 내부 서비스면 Istiod에 xDS로 조회하고 외부 도메인이면 CoreDNS에 위임해 IP를 반환받아 애플리케이션에 전달하는 분기 처리를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-9.png)
+![애플리케이션의 DNS 쿼리가 iptables를 거쳐 Envoy DNS Proxy로 리다이렉트된 뒤, 메시 내부 서비스면 Istiod에 xDS로 조회하고 외부 도메인이면 CoreDNS에 위임해 IP를 반환받아 애플리케이션에 전달하는 분기 처리를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-9.svg)
 
 **DNS Proxy iptables 규칙**:
 
@@ -530,7 +532,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 **xDS**: Discovery Service의 약자로, Envoy의 동적 구성 프로토콜입니다.
 
-![Istiod의 xDS Server(Pilot)가 gRPC 스트림으로 Envoy의 Listener·Route·Cluster·Endpoint·Secret Discovery Service 다섯 채널에 동적 구성을 동시에 공급하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-10.png)
+![Istiod의 xDS Server(Pilot)가 gRPC 스트림으로 Envoy의 Listener·Route·Cluster·Endpoint·Secret Discovery Service 다섯 채널에 동적 구성을 동시에 공급하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-10.svg)
 
 ### xDS API 종류
 
@@ -544,7 +546,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 ### xDS 통신 흐름
 
-![파드가 시작되면 Envoy가 Istiod에 연결해 mTLS 인증 후 LDS·CDS·EDS·RDS·SDS 리소스를 순회 요청해 구성을 완료하고, 이후 Kubernetes API의 서비스 변경을 감지한 Istiod가 새 Endpoint를 Envoy에 푸시하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-11.png)
+![파드가 시작되면 Envoy가 Istiod에 연결해 mTLS 인증 후 LDS·CDS·EDS·RDS·SDS 리소스를 순회 요청해 구성을 완료하고, 이후 Kubernetes API의 서비스 변경을 감지한 Istiod가 새 Endpoint를 Envoy에 푸시하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-11.svg)
 
 ### xDS 통신 확인
 
@@ -593,7 +595,7 @@ istioctl proxy-config routes <pod-name> -n default
 
 기본적으로 각 Envoy는 **메시 전체의 모든 서비스 정보**를 받습니다:
 
-![1000개 서비스로 이루어진 메시 전체의 구성 정보가 단일 파드의 Envoy Proxy에 모두 푸시되어, 애플리케이션이 실제 사용하는 서비스가 2개뿐인데도 Envoy가 1000개 전부를 수신하는 자원 낭비 문제를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-12.png)
+![1000개 서비스로 이루어진 메시 전체의 구성 정보가 단일 파드의 Envoy Proxy에 모두 푸시되어, 애플리케이션이 실제 사용하는 서비스가 2개뿐인데도 Envoy가 1000개 전부를 수신하는 자원 낭비 문제를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-12.svg)
 
 **문제점**:
 

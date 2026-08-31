@@ -24,13 +24,13 @@ Multi-cluster Service Mesh is powerful but increases complexity and cost. Carefu
 
 ### Decision Flow
 
-![A five-question decision cascade that routes a team from wanting multi-cluster toward single-cluster Istio, AWS VPC Lattice, or a hybrid Istio-plus-Lattice approach based on existing clusters, regional separation, DR needs, L7 requirements, and operational capacity.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-0.png)
+![A five-question decision cascade that routes a team from wanting multi-cluster toward single-cluster Istio, AWS VPC Lattice, or a hybrid Istio-plus-Lattice approach based on existing clusters, regional separation, DR needs, L7 requirements, and operational capacity.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-0.svg)
 
 ### When Multi-cluster is Needed
 
 #### 1. Geographic Distribution and Latency Optimization
 
-![A unified Istio mesh pushes config sync to three regional EKS clusters in the US, Europe, and Asia, which also mesh directly with each other over cross-region mTLS.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-1.png)
+![A unified Istio mesh pushes config sync to three regional EKS clusters in the US, Europe, and Asia, which also mesh directly with each other over cross-region mTLS.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-1.svg)
 
 **When needed**:
 
@@ -40,7 +40,7 @@ Multi-cluster Service Mesh is powerful but increases complexity and cost. Carefu
 
 #### 2. Disaster Recovery (DR)
 
-![Route 53 normally sends all user traffic to the active cluster's production workloads while the standby cluster receives real-time config replication, and flips to send all traffic to standby once a disaster triggers failover.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-2.png)
+![Route 53 normally sends all user traffic to the active cluster's production workloads while the standby cluster receives real-time config replication, and flips to send all traffic to standby once a disaster triggers failover.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-2.svg)
 
 **When needed**:
 
@@ -68,7 +68,7 @@ Multi-cluster Service Mesh is powerful but increases complexity and cost. Carefu
 
 #### 1. Single Region, Small Scale Services
 
-![A single EKS cluster's Istio control plane manages three namespaces (prod, staging, dev), an approach sufficient for single-region, small-scale services that don't need multi-cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-3.png)
+![A single EKS cluster's Istio control plane manages three namespaces (prod, staging, dev), an approach sufficient for single-region, small-scale services that don't need multi-cluster.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-3.svg)
 
 **Use instead**:
 
@@ -243,7 +243,7 @@ Answer these questions before adoption:
 
 #### Pattern 1: Istio Multi-cluster Only
 
-![Two clusters each run their own Istiod control plane and east-west gateway; the gateways carry cross-region mTLS traffic between the clusters' app services while the two Istiod instances sync service discovery.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-4.png)
+![Two clusters each run their own Istiod control plane and east-west gateway; the gateways carry cross-region mTLS traffic between the clusters' app services while the two Istiod instances sync service discovery.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-4.svg)
 
 **Pros**:
 
@@ -259,7 +259,7 @@ Answer these questions before adoption:
 
 #### Pattern 2: VPC Lattice Only
 
-![App services in two separate VPCs each register as a VPC Lattice service, and both services route through a shared Lattice service network instead of an Istio mesh.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-5.png)
+![App services in two separate VPCs each register as a VPC Lattice service, and both services route through a shared Lattice service network instead of an Istio mesh.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-5.svg)
 
 **Pros**:
 
@@ -275,7 +275,7 @@ Answer these questions before adoption:
 
 #### Pattern 3: Hybrid (Recommended)
 
-![Inside each cluster, an Istio mesh gives Service A and Service B full mTLS and retry between themselves, while Service B in each cluster reaches the other cluster only through a shared VPC Lattice service network.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-6.png)
+![Inside each cluster, an Istio mesh gives Service A and Service B full mTLS and retry between themselves, while Service B in each cluster reaches the other cluster only through a shared VPC Lattice service network.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-6.svg)
 
 **Pros**:
 
@@ -308,7 +308,7 @@ With Multi-cluster Service Mesh you can:
 
 ### Primary-Remote
 
-![One primary cluster's Istiod pushes config to two services in a remote cluster, while Service A on the primary and the two remote services communicate over mTLS, giving the topology a single control plane but a single point of failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-7.png)
+![One primary cluster's Istiod pushes config to two services in a remote cluster, while Service A on the primary and the two remote services communicate over mTLS, giving the topology a single control plane but a single point of failure.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-7.svg)
 
 **Characteristics**:
 
@@ -319,7 +319,7 @@ With Multi-cluster Service Mesh you can:
 
 ### Multi-Primary
 
-![Two clusters each run their own full Istiod control plane, which stay in sync with each other while Service A in both clusters load-balances traffic between them, trading single-control-plane simplicity for regional autonomy and no single point of failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-8.png)
+![Two clusters each run their own full Istiod control plane, which stay in sync with each other while Service A in both clusters load-balances traffic between them, trading single-control-plane simplicity for regional autonomy and no single point of failure.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-8.svg)
 
 **Characteristics**:
 
@@ -596,7 +596,7 @@ spec:
 
 ### Traffic Flow
 
-![Cluster 1's Service A calls its local Envoy, which routes through VPC Lattice DNS to Cluster 2's Service B; the response returns the same way, with Istio collecting metrics independently inside each cluster.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-9.png)
+![Cluster 1's Service A calls its local Envoy, which routes through VPC Lattice DNS to Cluster 2's Service B; the response returns the same way, with Istio collecting metrics independently inside each cluster.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-9.svg)
 
 ### Pros and Considerations
 
@@ -619,7 +619,7 @@ spec:
 
 #### Architecture
 
-![US and Europe clusters each use Istio internally to connect Frontend, Cart, and Order services, while both clusters' Order service reaches a Payment service in a third region only through a shared VPC Lattice service network.](../../../.gitbook/assets/en-service-mesh-istio-advanced-02-multi-cluster-10.png)
+![US and Europe clusters each use Istio internally to connect Frontend, Cart, and Order services, while both clusters' Order service reaches a Payment service in a third region only through a shared VPC Lattice service network.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-02-multi-cluster-10.svg)
 
 **Decision**:
 

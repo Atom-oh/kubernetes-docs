@@ -27,7 +27,7 @@ WorkloadEntry is an Istio Custom Resource Definition (CRD) that registers worklo
 
 ### Use Scenarios
 
-![Architecture diagram showing legacy VMs and a bare-metal server registering with the istiod control plane while their applications keep talking over mTLS to matching workloads inside a Kubernetes cluster.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-0.png)
+![Architecture diagram showing legacy VMs and a bare-metal server registering with the istiod control plane while their applications keep talking over mTLS to matching workloads inside a Kubernetes cluster.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-0.svg)
 
 **Primary Use Cases**:
 1. **Gradual Migration**: Incrementally migrate legacy applications to Kubernetes
@@ -53,13 +53,13 @@ WorkloadEntry is an Istio Custom Resource Definition (CRD) that registers worklo
 
 ### Traffic Flow Comparison
 
-![Flowchart comparing how a client request reaches a Kubernetes Pod through automatic Service discovery against how it reaches a VM through a manually registered ServiceEntry and WorkloadEntry.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-1.png)
+![Flowchart comparing how a client request reaches a Kubernetes Pod through automatic Service discovery against how it reaches a VM through a manually registered ServiceEntry and WorkloadEntry.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-1.svg)
 
 ## Architecture
 
 ### VM Workload Architecture
 
-![Architecture diagram showing a manually installed Envoy sidecar on a VM exchanging mTLS traffic with a Pod's auto-injected Envoy, while istiod pushes xDS config and certificates to both proxies.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-2.png)
+![Architecture diagram showing a manually installed Envoy sidecar on a VM exchanging mTLS traffic with a Pod's auto-injected Envoy, while istiod pushes xDS config and certificates to both proxies.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-2.svg)
 
 ### Key Components
 
@@ -212,7 +212,7 @@ spec:
 
 ### Operation Flow
 
-![Sequence diagram showing a Kubernetes Pod resolving a virtual IP through Istio DNS, then the Envoy proxy matching a ServiceEntry and WorkloadEntry before opening an mTLS connection to the registered VM and returning its response.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-3.png)
+![Sequence diagram showing a Kubernetes Pod resolving a virtual IP through Istio DNS, then the Envoy proxy matching a ServiceEntry and WorkloadEntry before opening an mTLS connection to the registered VM and returning its response.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-3.svg)
 
 ### Load Balancing
 
@@ -1058,7 +1058,7 @@ kubectl apply -f serviceentries-backup.yaml
 
 ### 7. Gradual Migration Strategy
 
-![Flowchart of the five-phase path for moving a workload off a VM: register it in the mesh, split traffic, deploy to Kubernetes, transition traffic, then remove the VM.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-13-workload-entry-4.png)
+![Flowchart of the five-phase path for moving a workload off a VM: register it in the mesh, split traffic, deploy to Kubernetes, transition traffic, then remove the VM.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-13-workload-entry-4.svg)
 
 **Phase 1: VM Mesh Registration**
 ```yaml

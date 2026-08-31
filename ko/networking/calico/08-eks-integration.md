@@ -14,11 +14,11 @@
 
 EKS에서는 AWS VPC CNI가 Pod 네트워킹을 담당하고, Calico는 Network Policy 적용을 담당하는 하이브리드 구성이 일반적입니다.
 
-![EKS 클러스터의 Worker Node에서 Pod, VPC CNI, Calico가 각각 EC2 ENI로 트래픽을 전달하고, ENI가 다시 AWS VPC로 라우팅하는 하이브리드 네트워킹 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-0.png)
+![EKS 클러스터의 Worker Node에서 Pod, VPC CNI, Calico가 각각 EC2 ENI로 트래픽을 전달하고, ENI가 다시 AWS VPC로 라우팅하는 하이브리드 네트워킹 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-0.svg)
 
 ### 트래픽 흐름
 
-![Source Pod가 보낸 패킷을 Calico Felix가 iptables로 Policy를 평가해 허용 시 VPC ENI를 거쳐 목적지에 도달시키고, 거부 시 iptables가 패킷을 드롭해 Pod로 되돌리는 시퀀스를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-1.png)
+![Source Pod가 보낸 패킷을 Calico Felix가 iptables로 Policy를 평가해 허용 시 VPC ENI를 거쳐 목적지에 도달시키고, 거부 시 iptables가 패킷을 드롭해 Pod로 되돌리는 시퀀스를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-1.svg)
 
 ## 설치 방법 비교
 
@@ -202,7 +202,7 @@ helm upgrade calico projectcalico/tigera-operator \
 
 EKS v1.25+에서는 AWS가 자체 Network Policy Controller를 제공합니다. 이것은 Calico와 별개의 구현입니다.
 
-![Kubernetes NetworkPolicy는 AWS Native Network Policy Controller와 Calico Felix 양쪽에서 처리될 수 있지만, Calico 전용 NetworkPolicy는 Felix에서만 처리됨을 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-2.png)
+![Kubernetes NetworkPolicy는 AWS Native Network Policy Controller와 Calico Felix 양쪽에서 처리될 수 있지만, Calico 전용 NetworkPolicy는 Felix에서만 처리됨을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-2.svg)
 
 ### 기능 비교
 
@@ -356,7 +356,7 @@ eksctl create iamserviceaccount \
 
 ### 계층형 보안 모델
 
-![인터넷에서 들어온 트래픽이 AWS 레벨의 Network ACL과 Security Group, Kubernetes 레벨의 Calico NetworkPolicy와 GlobalNetworkPolicy, Application 레벨의 mTLS와 Authorization을 차례로 거쳐 애플리케이션에 도달하는 계층형 보안 체계를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-3.png)
+![인터넷에서 들어온 트래픽이 AWS 레벨의 Network ACL과 Security Group, Kubernetes 레벨의 Calico NetworkPolicy와 GlobalNetworkPolicy, Application 레벨의 mTLS와 Authorization을 차례로 거쳐 애플리케이션에 도달하는 계층형 보안 체계를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-3.svg)
 
 ### 사용 가이드
 

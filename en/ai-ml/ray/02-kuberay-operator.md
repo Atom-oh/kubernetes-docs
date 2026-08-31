@@ -31,7 +31,7 @@ KubeRay exposes most of its functionality through three Custom Resource Definiti
 
 **RayService** targets production model serving. It manages a RayCluster together with a Ray Serve application deployed on top of it, and can perform rolling upgrades of the underlying cluster and application aimed at zero downtime — check the current release notes for that upgrade path's maturity and any prerequisites before relying on it in production.
 
-![The KubeRay Operator reconciles a RayCluster custom resource into a Head Pod and CPU/GPU worker group pods, while the Ray Autoscaler monitors those worker groups, requests more replicas back on the RayCluster spec, and signals pending Pods to Karpenter, which provisions matching EC2 nodes for the worker groups.](../../.gitbook/assets/en-ai-ml-ray-02-kuberay-operator-0.png)
+![The KubeRay Operator reconciles a RayCluster custom resource into a Head Pod and CPU/GPU worker group pods, while the Ray Autoscaler monitors those worker groups, requests more replicas back on the RayCluster spec, and signals pending Pods to Karpenter, which provisions matching EC2 nodes for the worker groups.](../../../assets/diagrams/rendered/en-ai-ml-ray-02-kuberay-operator-0.svg)
 
 ## Two-Tier Autoscaling: Ray Autoscaler and Karpenter
 

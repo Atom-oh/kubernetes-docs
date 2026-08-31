@@ -31,7 +31,7 @@ Istio는 Google의 SRE 원칙에 따른 Golden Signals를 자동으로 수집합
 
 ### 메트릭 수집 아키텍처
 
-![애플리케이션 파드의 Envoy 사이드카가 istiod의 설정을 받아 메트릭을 생성하고, Prometheus에 스크레이프되거나 OpenTelemetry Collector로 푸시된 뒤, Prometheus를 거쳐 Grafana와 Kiali로 시각화되는 Istio 메트릭 수집 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-01-metrics-0.png)
+![애플리케이션 파드의 Envoy 사이드카가 istiod의 설정을 받아 메트릭을 생성하고, Prometheus에 스크레이프되거나 OpenTelemetry Collector로 푸시된 뒤, Prometheus를 거쳐 Grafana와 Kiali로 시각화되는 Istio 메트릭 수집 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-observability-01-metrics-0.svg)
 
 ## Istio 표준 메트릭
 

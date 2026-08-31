@@ -12,7 +12,7 @@
 
 ## 아키텍처 개요
 
-![MSA 애플리케이션, 노드 메트릭, K8s 이벤트 등 데이터 소스가 OTel Collector에 모여 수신·가공·내보내기 단계를 거친 뒤, 메트릭·로깅·트레이싱 백엔드로 각각 분기되어 전달되는 관측성 파이프라인 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-02-observability-stack-lab-0.png)
+![MSA 애플리케이션, 노드 메트릭, K8s 이벤트 등 데이터 소스가 OTel Collector에 모여 수신·가공·내보내기 단계를 거친 뒤, 메트릭·로깅·트레이싱 백엔드로 각각 분기되어 전달되는 관측성 파이프라인 구조를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-02-observability-stack-lab-0.svg)
 
 ---
 

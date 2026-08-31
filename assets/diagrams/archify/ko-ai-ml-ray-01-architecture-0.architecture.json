@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray 클러스터 아키텍처",
+    "output": "ko-ai-ml-ray-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "head",
+      "type": "backend",
+      "label": "Head Node",
+      "sublabel": "GCS · Driver · Autoscaler",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "worker1",
+      "type": "backend",
+      "label": "Worker Node",
+      "sublabel": "Task / Actor 실행",
+      "pos": [
+        380,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "worker2",
+      "type": "backend",
+      "label": "Worker Node",
+      "sublabel": "Task / Actor 실행",
+      "pos": [
+        380,
+        360
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "object-store",
+      "type": "database",
+      "label": "Object Store",
+      "sublabel": "분산 공유 저장소",
+      "pos": [
+        690,
+        200
+      ],
+      "size": [
+        190,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "head-worker1",
+      "from": "head",
+      "to": "worker1",
+      "label": "태스크 스케줄링"
+    },
+    {
+      "id": "head-worker2",
+      "from": "head",
+      "to": "worker2",
+      "label": "태스크 스케줄링"
+    },
+    {
+      "id": "head-store",
+      "from": "head",
+      "to": "object-store",
+      "label": "GCS 메타데이터",
+      "variant": "dashed"
+    },
+    {
+      "id": "worker1-store",
+      "from": "worker1",
+      "to": "object-store",
+      "label": "put / get"
+    },
+    {
+      "id": "worker2-store",
+      "from": "worker2",
+      "to": "object-store",
+      "label": "put / get"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Head Node",
+      "items": [
+        "Global Control Store(GCS)가 클러스터 메타데이터를 관리한다",
+        "드라이버가 사용자 프로그램을 실행한다",
+        "오토스케일러가 워커 노드를 추가/제거한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Worker Node",
+      "items": [
+        "스케줄된 태스크와 액터를 실행한다",
+        "분산 Object Store를 통해 공유 객체를 읽고 쓴다"
+      ]
+    }
+  ]
+}

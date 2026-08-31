@@ -51,11 +51,11 @@ Grafana OnCall은 오픈소스 온콜 관리 도구로, 알림 라우팅, 온콜
 
 ### Grafana OnCall 구성 요소
 
-![여러 알림 소스가 API Server로 들어와 Alert Engine, Routes, Escalation Chains, Schedules, Alert Groups를 거쳐 다양한 알림 채널로 전달되는 Grafana OnCall의 내부 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png)
+![여러 알림 소스가 API Server로 들어와 Alert Engine, Routes, Escalation Chains, Schedules, Alert Groups를 거쳐 다양한 알림 채널로 전달되는 Grafana OnCall의 내부 구성을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-0.svg)
 
 ### 알림 처리 흐름
 
-![알림 소스가 보낸 알림이 라우팅과 에스컬레이션 체인을 거쳐 온콜 담당자에게 전달되고, 응답이 없으면 다음 담당자로 에스컬레이션된 뒤 확인 처리되는 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-1.png)
+![알림 소스가 보낸 알림이 라우팅과 에스컬레이션 체인을 거쳐 온콜 담당자에게 전달되고, 응답이 없으면 다음 담당자로 에스컬레이션된 뒤 확인 처리되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-1.svg)
 
 ---
 
@@ -373,7 +373,7 @@ response = requests.post(
 
 ### 스케줄 개념
 
-![주간/야간 로테이션, 1차·2차·백업 담당자 레이어, 휴가 대체와 임시 변경 오버라이드가 합쳐져 하나의 최종 온콜 스케줄을 구성하는 과정을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-2.png)
+![주간/야간 로테이션, 1차·2차·백업 담당자 레이어, 휴가 대체와 임시 변경 오버라이드가 합쳐져 하나의 최종 온콜 스케줄을 구성하는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-2.svg)
 
 ### 스케줄 생성 (API)
 
@@ -476,7 +476,7 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 
 ### 에스컬레이션 체인 구조
 
-![알림이 발생하면 현재 온콜, 2차 온콜, 팀 리드, 전체 팀 순으로 15분마다 응답 여부를 확인하며 단계적으로 에스컬레이션되고, 응답이 확인되면 알림이 해결되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-3.png)
+![알림이 발생하면 현재 온콜, 2차 온콜, 팀 리드, 전체 팀 순으로 15분마다 응답 여부를 확인하며 단계적으로 에스컬레이션되고, 응답이 확인되면 알림이 해결되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-3.svg)
 
 ### 에스컬레이션 체인 생성
 
@@ -618,7 +618,7 @@ warning-chain:
 
 ### 라우트 설정
 
-![수신된 알림이 Integration 유형과 레이블·폴더·네임스페이스 조건에 따라 Critical, Infra, Default, Low Priority, DBA 다섯 개의 에스컬레이션 체인 중 하나로 라우팅되는 규칙을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-4.png)
+![수신된 알림이 Integration 유형과 레이블·폴더·네임스페이스 조건에 따라 Critical, Infra, Default, Low Priority, DBA 다섯 개의 에스컬레이션 체인 중 하나로 라우팅되는 규칙을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-4.svg)
 
 ### 라우트 생성
 
@@ -716,7 +716,7 @@ curl -X POST https://oncall.example.com/api/v1/slack_channels/ \
 
 ### Slack 워크플로우
 
-![알림이 Slack 채널에 버튼과 함께 게시되고, 사용자가 Acknowledge 또는 Resolve 버튼을 클릭하면 OnCall이 상태를 갱신하고 메시지를 갱신하는 두 가지 처리 경로를 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-5.png)
+![알림이 Slack 채널에 버튼과 함께 게시되고, 사용자가 Acknowledge 또는 Resolve 버튼을 클릭하면 OnCall이 상태를 갱신하고 메시지를 갱신하는 두 가지 처리 경로를 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-5.svg)
 
 ### MS Teams 통합
 
@@ -776,7 +776,7 @@ telegram:
 
 Grafana IRM(구 Grafana Incident)은 인시던트 관리 도구로, OnCall과 통합하여 알림에서 인시던트까지 전체 워크플로우를 관리합니다.
 
-![Grafana OnCall에서 발생한 알림이 알림 그룹과 에스컬레이션을 거쳐 심각도가 높으면 Grafana IRM의 인시던트로 생성되고, 조사와 해결, 포스트모템 단계로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-6.png)
+![Grafana OnCall에서 발생한 알림이 알림 그룹과 에스컬레이션을 거쳐 심각도가 높으면 Grafana IRM의 인시던트로 생성되고, 조사와 해결, 포스트모템 단계로 이어지는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-6.svg)
 
 ### 자동 인시던트 생성
 
@@ -836,7 +836,7 @@ user-preferences:
 
 ### 알림 채널 우선순위
 
-![알림의 중요도에 따라 Important 알림은 Push·전화·SMS·Slack·Email 모든 채널로, Default 알림은 Slack과 Email 기본 채널로만 전달되는 우선순위 규칙을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png)
+![알림의 중요도에 따라 Important 알림은 Push·전화·SMS·Slack·Email 모든 채널로, Default 알림은 Slack과 Email 기본 채널로만 전달되는 우선순위 규칙을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-7.svg)
 
 ---
 
@@ -860,7 +860,7 @@ user-preferences:
 
 ### 마이그레이션 고려사항
 
-![PagerDuty나 OpsGenie 사용자가 비용 절감, Grafana 스택 사용, 자체 호스팅 선호, 기본 기능 충분성을 차례로 검토해 Grafana OnCall로 마이그레이션할지 현재 도구를 유지할지 결정하는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png)
+![PagerDuty나 OpsGenie 사용자가 비용 절감, Grafana 스택 사용, 자체 호스팅 선호, 기본 기능 충분성을 차례로 검토해 Grafana OnCall로 마이그레이션할지 현재 도구를 유지할지 결정하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-alerting-03-grafana-oncall-8.svg)
 
 ### 마이그레이션 체크리스트
 

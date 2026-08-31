@@ -36,7 +36,7 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 
 다음 다이어그램은 Kubernetes의 주요 확장 지점을 보여줍니다:
 
-![사용자 요청을 받는 API 서버가 API 확장, 컨트롤러 확장, 스케줄링 확장 지점으로 이어지고, 별도로 노드가 CSI·CNI·디바이스 플러그인으로 확장되는 Kubernetes의 주요 확장 지점 구조를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-0.png)
+![사용자 요청을 받는 API 서버가 API 확장, 컨트롤러 확장, 스케줄링 확장 지점으로 이어지고, 별도로 노드가 CSI·CNI·디바이스 플러그인으로 확장되는 Kubernetes의 주요 확장 지점 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-0.svg)
 
 ### 확장 방법 선택
 
@@ -54,7 +54,7 @@ Kubernetes는 다양한 확장 지점을 제공하여 기본 기능을 확장하
 
 다음 다이어그램은 커스텀 리소스의 작동 방식을 보여줍니다:
 
-![사용자가 커스텀 리소스 정의와 커스텀 리소스 인스턴스를 생성하면 API 서버 내부에서 등록·검증을 거쳐 etcd에 저장되는 커스텀 리소스의 처리 흐름을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-1.png)
+![사용자가 커스텀 리소스 정의와 커스텀 리소스 인스턴스를 생성하면 API 서버 내부에서 등록·검증을 거쳐 etcd에 저장되는 커스텀 리소스의 처리 흐름을 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-1.svg)
 
 ### 커스텀 리소스 정의(CRD)
 
@@ -204,7 +204,7 @@ spec:
 
 다음 다이어그램은 오퍼레이터 패턴의 작동 방식을 보여줍니다:
 
-![사용자가 만든 커스텀 리소스를 오퍼레이터의 컨트롤러가 감시·상태 확인하며 필요한 조치를 실행해 실제 Kubernetes 리소스에 반영하고 다시 커스텀 리소스 상태를 갱신하는 조정 루프를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-2.png)
+![사용자가 만든 커스텀 리소스를 오퍼레이터의 컨트롤러가 감시·상태 확인하며 필요한 조치를 실행해 실제 Kubernetes 리소스에 반영하고 다시 커스텀 리소스 상태를 갱신하는 조정 루프를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-2.svg)
 
 ### 오퍼레이터 개념
 
@@ -334,7 +334,7 @@ make deploy
 
 다음 다이어그램은 어드미션 컨트롤러의 작동 방식을 보여줍니다:
 
-![사용자의 API 요청이 인증·권한 부여를 거쳐 변형 어드미션 컨트롤러와 검증 어드미션 컨트롤러에서 각각 웹훅을 호출한 뒤, 검증된 요청이 API 처리 단계에서 etcd에 저장되기까지의 순서를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-3.png)
+![사용자의 API 요청이 인증·권한 부여를 거쳐 변형 어드미션 컨트롤러와 검증 어드미션 컨트롤러에서 각각 웹훅을 호출한 뒤, 검증된 요청이 API 처리 단계에서 etcd에 저장되기까지의 순서를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-3.svg)
 
 ### 어드미션 컨트롤러 유형
 
@@ -858,7 +858,7 @@ CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제
 
 다음 다이어그램은 CSI의 아키텍처와 작동 방식을 보여줍니다:
 
-![사용자가 만든 PersistentVolumeClaim이 StorageClass와 프로비저너를 거쳐 CSI 드라이버에 전달되고, CSI 드라이버가 컨트롤러 서비스와 노드 서비스를 통해 볼륨을 생성·마운트하며 스토리지 시스템과 연동되는 과정을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-4.png)
+![사용자가 만든 PersistentVolumeClaim이 StorageClass와 프로비저너를 거쳐 CSI 드라이버에 전달되고, CSI 드라이버가 컨트롤러 서비스와 노드 서비스를 통해 볼륨을 생성·마운트하며 스토리지 시스템과 연동되는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-4.svg)
 
 ### CSI 아키텍처
 
@@ -1072,7 +1072,7 @@ CNI는 Kubernetes와 네트워킹 솔루션 간의 표준 인터페이스를 제
 
 다음 다이어그램은 CNI의 아키텍처와 작동 방식을 보여줍니다:
 
-![kubelet이 컨테이너 런타임을 통해 CNI 플러그인을 호출하면 IPAM 플러그인이 IP 풀에서 주소를 할당하고 네트워크 구성이 적용되어 포드 네트워크가 완성되는 과정을 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-5.png)
+![kubelet이 컨테이너 런타임을 통해 CNI 플러그인을 호출하면 IPAM 플러그인이 IP 풀에서 주소를 할당하고 네트워크 구성이 적용되어 포드 네트워크가 완성되는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-5.svg)
 
 ### CNI 아키텍처
 
@@ -1255,7 +1255,7 @@ Amazon EKS는 다양한 확장 기능을 지원하여 Kubernetes 클러스터의
 
 다음 다이어그램은 Amazon EKS의 확장 기능 아키텍처를 보여줍니다:
 
-![EKS 클러스터가 컨트롤 플레인과 노드 그룹을 관리하고, 컨트롤 플레인에 연결된 VPC CNI·CoreDNS·kube-proxy·EBS CSI·로드 밸런서 컨트롤러 같은 추가 기능이 각각 대응하는 AWS 서비스와 연동되며, IAM이 IRSA로 노드 그룹에 권한을 부여하는 구조를 보여준다.](../.gitbook/assets/ko-core-11-extending-kubernetes-6.png)
+![EKS 클러스터가 컨트롤 플레인과 노드 그룹을 관리하고, 컨트롤 플레인에 연결된 VPC CNI·CoreDNS·kube-proxy·EBS CSI·로드 밸런서 컨트롤러 같은 추가 기능이 각각 대응하는 AWS 서비스와 연동되며, IAM이 IRSA로 노드 그룹에 권한을 부여하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-11-extending-kubernetes-6.svg)
 
 ### EKS 추가 기능
 

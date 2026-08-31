@@ -24,7 +24,7 @@ Outlier Detection **does not delete instances** but temporarily removes them fro
 
 **How Outlier Detection Works:**
 
-![Flowchart of the outlier-detection cycle: a request that fails an error check increments an error counter, and once the failure threshold is exceeded the instance is ejected, waits, and is later retried and reintroduced, while successful or under-threshold requests flow to normal processing.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-0.png)
+![Flowchart of the outlier-detection cycle: a request that fails an error check increments an error counter, and once the failure threshold is exceeded the instance is ejected, waits, and is later retried and reintroduced, while successful or under-threshold requests flow to normal processing.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-resilience-0.svg)
 
 **Key Features:**
 
@@ -110,7 +110,7 @@ spec:
 
 **Token Bucket Algorithm:**
 
-![Flowchart of a token-bucket rate limiter: a bucket capped at 100 tokens is refilled at 10 tokens per second, and each arriving request checks token availability, consuming one to be allowed or getting rejected with HTTP 429 when none remain.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-1.png)
+![Flowchart of a token-bucket rate limiter: a bucket capped at 100 tokens is refilled at 10 tokens per second, and each arriving request checks token availability, consuming one to be allowed or getting rejected with HTTP 429 when none remain.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-resilience-1.svg)
 
 **Reference:**
 
@@ -138,7 +138,7 @@ Zone Aware Routing **does not concentrate traffic to a single AZ**, but rather p
 
 **Correct Behavior of Zone Aware Routing:**
 
-![Diagram showing a client pod sending 80% of its traffic to two same-zone service pods at no cost, and failing over 10% each to service pods in two other availability zones at a cross-AZ cost, with a fourth service pod present in zone B but not targeted.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-2.png)
+![Diagram showing a client pod sending 80% of its traffic to two same-zone service pods at no cost, and failing over 10% each to service pods in two other availability zones at a cross-AZ cost, with a fourth service pod present in zone B but not targeted.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-resilience-2.svg)
 
 **Actual Benefits of Zone Aware Routing:**
 
@@ -922,7 +922,7 @@ us-east-1/us-east-1c/*
 
 **3. Traffic Flow Diagram**
 
-![Diagram showing an Order Service client pod in us-east-1a sending 70% of traffic to two same-zone Order Service pods for free, and failing over 15% each to Order Service pods in us-east-1b and us-east-1c at $0.01 per GB, with a fourth pod present in us-east-1b but not targeted.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-resilience-3.png)
+![Diagram showing an Order Service client pod in us-east-1a sending 70% of traffic to two same-zone Order Service pods for free, and failing over 15% each to Order Service pods in us-east-1b and us-east-1c at $0.01 per GB, with a fourth pod present in us-east-1b but not targeted.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-resilience-3.svg)
 
 **4. Cost Savings Calculation**
 

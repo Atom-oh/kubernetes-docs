@@ -12,7 +12,7 @@ Traffic Mirroring(또는 Shadow Traffic)은 프로덕션 트래픽을 실시간�
 
 ## Traffic Mirroring 개요
 
-![클라이언트의 요청이 프로덕션의 Version 1으로 전달되어 실제 응답을 받는 동시에, 동일한 요청이 Shadow 영역의 Version 2로 복제되지만 그 응답은 무시됨을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-09-traffic-mirror-0.png)
+![클라이언트의 요청이 프로덕션의 Version 1으로 전달되어 실제 응답을 받는 동시에, 동일한 요청이 Shadow 영역의 Version 2로 복제되지만 그 응답은 무시됨을 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-09-traffic-mirror-0.svg)
 
 ## 기본 설정
 

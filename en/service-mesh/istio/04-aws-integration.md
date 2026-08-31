@@ -19,7 +19,7 @@ NLB is a Layer 4 (TCP/UDP) load balancer, suitable when high performance and low
 
 #### NLB Architecture
 
-![Diagram showing how client HTTPS traffic reaches an AWS Network Load Balancer, which passes TCP connections through unterminated to two Istio Ingress Gateway Envoy pods inside an EKS cluster, which in turn route HTTP/HTTPS internally to two backend application pods.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-0.png)
+![Diagram showing how client HTTPS traffic reaches an AWS Network Load Balancer, which passes TCP connections through unterminated to two Istio Ingress Gateway Envoy pods inside an EKS cluster, which in turn route HTTP/HTTPS internally to two backend application pods.](../../../assets/diagrams/rendered/en-service-mesh-istio-04-aws-integration-0.svg)
 
 #### NLB Configuration
 
@@ -153,7 +153,7 @@ ALB is a Layer 7 (HTTP/HTTPS) load balancer, suitable when advanced routing feat
 
 #### ALB Architecture
 
-![Diagram showing how client HTTPS traffic reaches an AWS Application Load Balancer, which terminates and forwards HTTP/2 to two Istio Ingress Gateway pods inside an EKS cluster, which route requests internally to two backend application pods.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-1.png)
+![Diagram showing how client HTTPS traffic reaches an AWS Application Load Balancer, which terminates and forwards HTTP/2 to two Istio Ingress Gateway pods inside an EKS cluster, which route requests internally to two backend application pods.](../../../assets/diagrams/rendered/en-service-mesh-istio-04-aws-integration-1.svg)
 
 #### ALB Configuration
 
@@ -279,7 +279,7 @@ VPC Lattice is AWS's managed application networking service.
 
 #### Architecture Comparison
 
-![Side-by-side comparison showing Istio's control plane pushing config to Envoy sidecars that mesh directly over mTLS, versus AWS VPC Lattice's managed service network routing plain HTTP between sidecar-free application pods.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-2.png)
+![Side-by-side comparison showing Istio's control plane pushing config to Envoy sidecars that mesh directly over mTLS, versus AWS VPC Lattice's managed service network routing plain HTTP between sidecar-free application pods.](../../../assets/diagrams/rendered/en-service-mesh-istio-04-aws-integration-2.svg)
 
 #### Feature Comparison
 
@@ -396,7 +396,7 @@ spec:
 
 The two solutions are not mutually exclusive and can be used together:
 
-![Diagram showing Istio managing mTLS and config inside one EKS cluster in AWS Account 1, while a shared VPC Lattice service network routes traffic from that cluster across account boundaries to a sidecar-free service and a Lambda function in AWS Account 2.](../../.gitbook/assets/en-service-mesh-istio-04-aws-integration-3.png)
+![Diagram showing Istio managing mTLS and config inside one EKS cluster in AWS Account 1, while a shared VPC Lattice service network routes traffic from that cluster across account boundaries to a sidecar-free service and a Lambda function in AWS Account 2.](../../../assets/diagrams/rendered/en-service-mesh-istio-04-aws-integration-3.svg)
 
 **Use Cases:**
 

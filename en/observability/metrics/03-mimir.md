@@ -37,7 +37,7 @@ Grafana Mimir is an open-source, horizontally scalable long-term metrics storage
 
 Mimir is the successor to Cortex, offering better performance and operability:
 
-![Mimir evolved from Cortex and shares its centralized remote-write approach, while Thanos took a separate sidecar-based federated-query path.](../../.gitbook/assets/en-observability-metrics-03-mimir-0.png)
+![Mimir evolved from Cortex and shares its centralized remote-write approach, while Thanos took a separate sidecar-based federated-query path.](../../../assets/diagrams/rendered/en-observability-metrics-03-mimir-0.svg)
 
 | Item | Mimir | Cortex | Thanos |
 |------|-------|--------|--------|
@@ -52,7 +52,7 @@ Mimir is the successor to Cortex, offering better performance and operability:
 
 ### Overall Architecture
 
-![Prometheus writes through the Distributor into Ingesters, which upload blocks to object storage; the Compactor merges those blocks, while Grafana's queries flow through the Query-frontend and Querier to read recent data from the Ingester and historical data from the Store-gateway, both backed by the same object storage.](../../.gitbook/assets/en-observability-metrics-03-mimir-1.png)
+![Prometheus writes through the Distributor into Ingesters, which upload blocks to object storage; the Compactor merges those blocks, while Grafana's queries flow through the Query-frontend and Querier to read recent data from the Ingester and historical data from the Store-gateway, both backed by the same object storage.](../../../assets/diagrams/rendered/en-observability-metrics-03-mimir-1.svg)
 
 ### Data Flow
 
@@ -262,7 +262,7 @@ overrides:
 
 ### Tenant Isolation
 
-![Each tenant's samples carry an X-Scope-OrgID header through a shared Distributor and Ingester, which write to a separate object-storage prefix per tenant so data never mixes across tenants.](../../.gitbook/assets/en-observability-metrics-03-mimir-2.png)
+![Each tenant's samples carry an X-Scope-OrgID header through a shared Distributor and Ingester, which write to a separate object-storage prefix per tenant so data never mixes across tenants.](../../../assets/diagrams/rendered/en-observability-metrics-03-mimir-2.svg)
 
 ## Helm Installation
 
@@ -591,7 +591,7 @@ mimir:
 
 ### Query Caching Strategy
 
-![A query descends through the Query-frontend, Querier, and Store-gateway, checking a result, metadata, and chunk cache at each stage, and only reaches S3 when all three caches miss.](../../.gitbook/assets/en-observability-metrics-03-mimir-3.png)
+![A query descends through the Query-frontend, Querier, and Store-gateway, checking a result, metadata, and chunk cache at each stage, and only reaches S3 when all three caches miss.](../../../assets/diagrams/rendered/en-observability-metrics-03-mimir-3.svg)
 
 ## Comparison with VictoriaMetrics
 
@@ -612,7 +612,7 @@ mimir:
 
 ### Selection Criteria
 
-![A decision tree that routes the choice of a metrics backend through Grafana-ecosystem fit, multi-tenancy needs, operational simplicity, object-storage preference, and cost versus scalability priority, converging on either Mimir or VictoriaMetrics.](../../.gitbook/assets/en-observability-metrics-03-mimir-4.png)
+![A decision tree that routes the choice of a metrics backend through Grafana-ecosystem fit, multi-tenancy needs, operational simplicity, object-storage preference, and cost versus scalability priority, converging on either Mimir or VictoriaMetrics.](../../../assets/diagrams/rendered/en-observability-metrics-03-mimir-4.svg)
 
 **Choose Mimir when**:
 - Using Grafana Cloud or Grafana ecosystem

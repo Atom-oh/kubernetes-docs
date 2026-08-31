@@ -21,7 +21,7 @@ Circuit Breaker automatically isolates failing services to prevent cascading fai
 
 In microservice architecture, it prevents failures from one service from propagating to other services.
 
-![Flowchart contrasting a microservice chain without a circuit breaker, where Service A's slow response and timeouts cascade into failures at Service B, C, and D, against the same chain with a circuit breaker, where Service B fast-fails and enters an open circuit while Service C and D continue operating normally.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.png)
+![Flowchart contrasting a microservice chain without a circuit breaker, where Service A's slow response and timeouts cascade into failures at Service B, C, and D, against the same chain with a circuit breaker, where Service B fast-fails and enters an open circuit while Service C and D continue operating normally.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-07-circuit-breaker-0.svg)
 
 ### Key Benefits
 
@@ -34,7 +34,7 @@ In microservice architecture, it prevents failures from one service from propaga
 
 ## Circuit Breaker Overview
 
-![State machine showing the circuit breaker cycling from Closed (all requests pass) to Open (requests fail fast) once the consecutive-error threshold is exceeded, then to HalfOpen (limited test requests) after the wait time elapses, returning to Closed on success or back to Open on failure.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.png)
+![State machine showing the circuit breaker cycling from Closed (all requests pass) to Open (requests fail fast) once the consecutive-error threshold is exceeded, then to HalfOpen (limited test requests) after the wait time elapses, returning to Closed on success or back to Open on failure.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-07-circuit-breaker-1.svg)
 
 ## Connection Pool Settings
 
@@ -570,11 +570,11 @@ istioctl proxy-config cluster <pod-name> -o json | \
 
 #### Circuit Breaker's Role and Limitations
 
-![Grouped list contrasting what a circuit breaker does — isolate failing services, prevent cascading failures, protect system resources, and attempt auto recovery — against what it does not do: prevent duplicate requests, guarantee data consistency, manage transactions, or guarantee idempotency.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.png)
+![Grouped list contrasting what a circuit breaker does — isolate failing services, prevent cascading failures, protect system resources, and attempt auto recovery — against what it does not do: prevent duplicate requests, guarantee data consistency, manage transactions, or guarantee idempotency.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-07-circuit-breaker-2.svg)
 
 #### Problem Scenario: Retry + Circuit Breaker
 
-![Sequence diagram showing a client's payment request retried after a timeout, each retry re-inserting the payment into the database, until the third attempt finally returns 200 OK — leaving three duplicate payment inserts even though the circuit breaker's five-consecutive-error threshold was never reached.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.png)
+![Sequence diagram showing a client's payment request retried after a timeout, each retry re-inserting the payment into the database, until the third attempt finally returns 200 OK — leaving three duplicate payment inserts even though the circuit breaker's five-consecutive-error threshold was never reached.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-07-circuit-breaker-3.svg)
 
 **Problem**: Before Circuit Breaker activates (after 5 consecutive errors), **3 duplicate payments** have already occurred.
 

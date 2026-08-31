@@ -61,7 +61,7 @@ IDP는 다음과 같은 문제를 해결합니다:
 
 Backstage는 프론트엔드(React SPA)와 백엔드(Node.js)로 구성된 웹 애플리케이션이며, 플러그인 기반 아키텍처를 통해 기능을 확장합니다.
 
-![개발자와 플랫폼 엔지니어가 Backstage UI를 통해 백엔드 API와 플러그인 백엔드를 거쳐 PostgreSQL, S3, GitHub, EKS, ArgoCD, Cognito/Okta 등 저장소 및 외부 시스템과 연동되는 Backstage 애플리케이션 아키텍처를 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-0.png)
+![개발자와 플랫폼 엔지니어가 Backstage UI를 통해 백엔드 API와 플러그인 백엔드를 거쳐 PostgreSQL, S3, GitHub, EKS, ArgoCD, Cognito/Okta 등 저장소 및 외부 시스템과 연동되는 Backstage 애플리케이션 아키텍처를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-06-backstage-idp-0.svg)
 
 ### 핵심 구성 요소
 
@@ -513,7 +513,7 @@ backend.start();
 
 Backstage Software Catalog는 다양한 Entity 타입을 사용하여 조직의 소프트웨어 생태계를 모델링합니다.
 
-![payments-domain 아래 order-system과 payment-system이 있고 각 시스템의 컴포넌트가 API를 제공/소비하고 리소스에 의존하며, platform-team과 backend-team이 각 시스템을 소유하는 Backstage 카탈로그 엔티티 관계를 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-1.png)
+![payments-domain 아래 order-system과 payment-system이 있고 각 시스템의 컴포넌트가 API를 제공/소비하고 리소스에 의존하며, platform-team과 backend-team이 각 시스템을 소유하는 Backstage 카탈로그 엔티티 관계를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-06-backstage-idp-1.svg)
 
 ### Entity 타입 개요
 
@@ -1603,7 +1603,7 @@ TechDocs는 Backstage의 "docs-as-code" 솔루션으로, MkDocs를 기반으로 
 
 ### TechDocs 워크플로우
 
-![개발자가 작성한 Markdown이 Git Repository, CI 빌드, S3 업로드를 거쳐 Backstage TechDocs UI에서 렌더링되고 개발자가 그 UI에서 문서를 열람하는 TechDocs 빌드 파이프라인을 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png)
+![개발자가 작성한 Markdown이 Git Repository, CI 빌드, S3 업로드를 거쳐 Backstage TechDocs UI에서 렌더링되고 개발자가 그 UI에서 문서를 열람하는 TechDocs 빌드 파이프라인을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-06-backstage-idp-2.svg)
 
 ### S3 스토리지 백엔드 구성
 
@@ -1920,7 +1920,7 @@ kubernetes:
 
 Backstage의 Permission Framework는 플러그인 수준의 세밀한 접근 제어를 제공합니다. 이를 통해 "누가 무엇을 할 수 있는가"를 정책으로 정의할 수 있습니다.
 
-![사용자 요청이 Permission Framework와 Permission Policy를 거쳐 허용, 거부, 조건부 허용 중 하나로 판정되며 platform-team/backend-team/viewer 정책 예시가 참조되는 Backstage 권한 프레임워크 흐름을 보여준다.](../.gitbook/assets/ko-platform-engineering-06-backstage-idp-3.png)
+![사용자 요청이 Permission Framework와 Permission Policy를 거쳐 허용, 거부, 조건부 허용 중 하나로 판정되며 platform-team/backend-team/viewer 정책 예시가 참조되는 Backstage 권한 프레임워크 흐름을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-06-backstage-idp-3.svg)
 
 ### Permission 플러그인 설치
 

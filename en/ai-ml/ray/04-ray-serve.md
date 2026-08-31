@@ -20,7 +20,7 @@ To follow along with the examples in this document, you will need the following 
 
 A single deployment scales horizontally simply by adding more actor replicas behind Ray Serve's request router, the same way any actor-backed service scales in Ray. More interestingly, Ray Serve lets multiple deployments compose into one serving pipeline, called an application. A common example is a two-step pipeline: one deployment handles preprocessing (tokenization, image resizing, feature extraction) and hands its output to a second deployment that runs the actual model inference. Each deployment in that pipeline can be scaled, versioned, and resourced independently, because each is still just a group of actor replicas underneath.
 
-![A client request flows through Ray Serve Ingress into Preprocess and Model Inference actor deployments and back as a response, while a bottom-up autoscaling chain of the Ray Serve Autoscaler, the Ray/KubeRay Autoscaler, and Karpenter watches queue depth and pending Pods to scale replicas, worker Pods, and nodes in turn.](../../.gitbook/assets/en-ai-ml-ray-04-ray-serve-0.png)
+![A client request flows through Ray Serve Ingress into Preprocess and Model Inference actor deployments and back as a response, while a bottom-up autoscaling chain of the Ray Serve Autoscaler, the Ray/KubeRay Autoscaler, and Karpenter watches queue depth and pending Pods to scale replicas, worker Pods, and nodes in turn.](../../../assets/diagrams/rendered/en-ai-ml-ray-04-ray-serve-0.svg)
 
 ## Ray Serve LLM
 

@@ -130,7 +130,7 @@ Airflow 2는 모든 컴포넌트가 같은 로컬 디스크 경로에서 DAG 파
 
 Part 2에서 다룬 공식 Helm 차트에서 `git-sync` 사이드카는 여전히 동작합니다 — Airflow 3가 이 방식을 없앤 것은 아닙니다. 다만 재현성이 중요한 실행(몇 달 전의 백필을 다시 돌려서 당시 실제로 실행됐던 그 코드를 그대로 얻어야 하는 상황)에서는 `GitDagBundle`이야말로 그 보장을 실제로 제공하는 방식입니다. 그래서 이 문서에서는 `git-sync`의 단순한 대안이 아니라 그것을 대체하는 현대적인 방식으로 자리매김하는 것입니다.
 
-![Airflow DAG의 extract_orders 태스크가 KubernetesPodOperator를 통해 Pod를 생성하고, 그 Pod가 IRSA ServiceAccount로 실행되며 taint가 걸린 전용 노드 풀에 스케줄링된 뒤, 완료 상태가 오퍼레이터로 전달되어 Airflow 스케줄러에 성공/실패로 보고되는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-airflow-03-dag-patterns-0.png)
+![Airflow DAG의 extract_orders 태스크가 KubernetesPodOperator를 통해 Pod를 생성하고, 그 Pod가 IRSA ServiceAccount로 실행되며 taint가 걸린 전용 노드 풀에 스케줄링된 뒤, 완료 상태가 오퍼레이터로 전달되어 Airflow 스케줄러에 성공/실패로 보고되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-data-on-eks-airflow-03-dag-patterns-0.svg)
 
 ## 작성 패턴
 

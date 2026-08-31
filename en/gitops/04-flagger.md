@@ -70,7 +70,7 @@ Both Flagger and Argo Rollouts solve the progressive delivery problem for Kubern
 
 Flagger is designed as the progressive delivery component of the Flux GitOps toolkit:
 
-![Flux's source, kustomize, helm, notification and image-automation controllers reconcile Kubernetes deployments from a Git repository, while Flagger watches those deployments, queries Prometheus, and manages the Services and routes used for progressive delivery.](../.gitbook/assets/en-gitops-04-flagger-0.png)
+![Flux's source, kustomize, helm, notification and image-automation controllers reconcile Kubernetes deployments from a Git repository, while Flagger watches those deployments, queries Prometheus, and manages the Services and routes used for progressive delivery.](../../assets/diagrams/rendered/en-gitops-04-flagger-0.svg)
 
 ---
 
@@ -80,7 +80,7 @@ Flagger is designed as the progressive delivery component of the Flux GitOps too
 
 Flagger implements a control loop that progressively advances a new version of an application by analyzing metrics, running conformance tests, and managing traffic routing. The core reconciliation loop is:
 
-![A canary progresses from initialized through step-wise traffic increases to waiting for promotion, promoting, and finalising into a successful rollout, or diverts to a failed state and rolls back to initialized if metrics or a timeout fail along the way.](../.gitbook/assets/en-gitops-04-flagger-1.png)
+![A canary progresses from initialized through step-wise traffic increases to waiting for promotion, promoting, and finalising into a successful rollout, or diverts to a failed state and rolls back to initialized if metrics or a timeout fail along the way.](../../assets/diagrams/rendered/en-gitops-04-flagger-1.svg)
 
 ### Detailed Control Loop Steps
 
@@ -122,7 +122,7 @@ Flagger's metrics analysis engine queries Prometheus to evaluate whether a canar
 
 Both metrics are derived from the service mesh or ingress controller's Prometheus metrics (e.g., `istio_requests_total`, `istio_request_duration_milliseconds_bucket`).
 
-![Flagger shifts a slice of traffic to the canary pod through the mesh, then queries Prometheus for success rate and latency against thresholds before advancing the traffic weight.](../.gitbook/assets/en-gitops-04-flagger-2.png)
+![Flagger shifts a slice of traffic to the canary pod through the mesh, then queries Prometheus for success rate and latency against thresholds before advancing the traffic weight.](../../assets/diagrams/rendered/en-gitops-04-flagger-2.svg)
 
 ---
 
@@ -403,7 +403,7 @@ Step 5: Canary 50%, Primary 50%  ->  Analyze metrics
 Step 6: Promote -> Canary spec copied to Primary, all traffic to Primary
 ```
 
-![Canary traffic weight climbs in five steps from 10% to 50% before promotion to 100%, and at each step Flagger analyzes the request success rate and P99 duration and runs any configured webhooks.](../.gitbook/assets/en-gitops-04-flagger-3.png)
+![Canary traffic weight climbs in five steps from 10% to 50% before promotion to 100%, and at each step Flagger analyzes the request success rate and P99 duration and runs any configured webhooks.](../../assets/diagrams/rendered/en-gitops-04-flagger-3.svg)
 
 You can also define non-linear traffic stepping with `stepWeights` (an array):
 
@@ -618,7 +618,7 @@ In Blue-Green mode:
 - After all iterations pass, traffic is switched 100% from primary to canary in a single step
 - If any iteration fails, the canary is scaled down with no impact on production traffic
 
-![Flagger deploys a green canary, drives synthetic load through it in repeated analysis iterations, then switches all user traffic to green, updates the primary spec, and scales the old canary down.](../.gitbook/assets/en-gitops-04-flagger-4.png)
+![Flagger deploys a green canary, drives synthetic load through it in repeated analysis iterations, then switches all user traffic to green, updates the primary spec, and scales the old canary down.](../../assets/diagrams/rendered/en-gitops-04-flagger-4.svg)
 
 ### Mirror Traffic
 
@@ -1190,7 +1190,7 @@ webhooks:
 
 The most powerful pattern is combining Flux HelmRelease for application deployment with Flagger Canary for progressive delivery. Flux manages the desired state from Git, and Flagger manages how changes are rolled out.
 
-![A developer's image push flows through Flux's controllers into a HelmRelease change that Flagger picks up, runs a canary analysis against, and then either promotes to primary or rolls back, notifying the developer either way.](../.gitbook/assets/en-gitops-04-flagger-5.png)
+![A developer's image push flows through Flux's controllers into a HelmRelease change that Flagger picks up, runs a canary analysis against, and then either promotes to primary or rolls back, notifying the developer either way.](../../assets/diagrams/rendered/en-gitops-04-flagger-5.svg)
 
 **Repository structure for Flux + Flagger:**
 
@@ -1352,7 +1352,7 @@ images:
 
 The fully automated pipeline uses Flux Image Automation to detect new container images, commit the updated tag to Git, and let Flagger handle the progressive rollout:
 
-![A new image built and pushed to ECR is picked up by Flux's image automation controllers, which commit an updated manifest that Kustomize applies, and Flagger's metrics analysis then promotes the resulting canary to primary or leaves it in place.](../.gitbook/assets/en-gitops-04-flagger-6.png)
+![A new image built and pushed to ECR is picked up by Flux's image automation controllers, which commit an updated manifest that Kustomize applies, and Flagger's metrics analysis then promotes the resulting canary to primary or leaves it in place.](../../assets/diagrams/rendered/en-gitops-04-flagger-6.svg)
 
 **Flux Image Automation resources:**
 
@@ -1810,7 +1810,7 @@ webhooks:
 
 For organizations running multiple EKS clusters, Flagger can be deployed in a hub-and-spoke pattern:
 
-![A single management cluster's Flux controllers read one Git repository and apply the same Kustomization to three production clusters in different regions, each running its own Flagger, Istio, and web-app canary.](../.gitbook/assets/en-gitops-04-flagger-7.png)
+![A single management cluster's Flux controllers read one Git repository and apply the same Kustomization to three production clusters in different regions, each running its own Flagger, Istio, and web-app canary.](../../assets/diagrams/rendered/en-gitops-04-flagger-7.svg)
 
 **Key considerations for multi-cluster Flagger:**
 

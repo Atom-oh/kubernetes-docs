@@ -32,7 +32,7 @@ Amazon EKS 클러스터에서 모니터링과 로깅은 다음과 같은 이유�
 
 EKS 클러스터의 포괄적인 모니터링 및 로깅 아키텍처는 다음과 같은 구성 요소로 이루어집니다:
 
-![EKS 클러스터의 컨트롤 플레인 로그와 워커 노드가 Prometheus 기반 모니터링 스택과 Fluent Bit 기반 로깅 스택을 거쳐 CloudWatch·OpenSearch로 전달되고, 다시 Grafana·OpenSearch Dashboards·알림 채널로 시각화·통보되는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-0.png)
+![EKS 클러스터의 컨트롤 플레인 로그와 워커 노드가 Prometheus 기반 모니터링 스택과 Fluent Bit 기반 로깅 스택을 거쳐 CloudWatch·OpenSearch로 전달되고, 다시 Grafana·OpenSearch Dashboards·알림 채널로 시각화·통보되는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-06-eks-monitoring-logging-0.svg)
 
 ### 모니터링 및 로깅 전략
 
@@ -143,7 +143,7 @@ EKS Capabilities는 Argo CD, AWS Controllers for Kubernetes(ACK), kro를 EKS 컨
 
 EKS에서 일반적인 컨테이너 로깅 아키텍처는 다음과 같습니다:
 
-![워커 노드의 컨테이너 표준출력이 kubelet을 거쳐 로그 에이전트로 모이고, 그 에이전트가 CloudWatch Logs, Amazon OpenSearch, Amazon S3 세 곳으로 로그를 분산 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-1.png)
+![워커 노드의 컨테이너 표준출력이 kubelet을 거쳐 로그 에이전트로 모이고, 그 에이전트가 CloudWatch Logs, Amazon OpenSearch, Amazon S3 세 곳으로 로그를 분산 전달하는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-06-eks-monitoring-logging-1.svg)
 
 ### Fluent Bit를 사용한 로그 수집
 
@@ -322,7 +322,7 @@ Fluent Bit에서 로그 파싱을 위한 구성:
 
 효과적인 클러스터 모니터링은 EKS 클러스터의 상태, 성능 및 리소스 사용량을 추적하는 데 필수적입니다. 이 섹션에서는 EKS 클러스터를 모니터링하기 위한 다양한 도구와 기술을 살펴봅니다.
 
-![AWS 솔루션, Kubernetes 솔루션, 추적 솔루션이라는 세 축의 모니터링 도구가 클러스터·노드·파드 수준의 관찰 대상을 각각 어떻게 나누어 커버하는지 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-2.png)
+![AWS 솔루션, Kubernetes 솔루션, 추적 솔루션이라는 세 축의 모니터링 도구가 클러스터·노드·파드 수준의 관찰 대상을 각각 어떻게 나누어 커버하는지 보여준다.](../../assets/diagrams/rendered/ko-eks-06-eks-monitoring-logging-2.svg)
 
 ### CloudWatch Container Insights
 
@@ -736,7 +736,7 @@ Grafana에서 사용자 정의 대시보드를 생성하여 애플리케이션 �
 
 효과적인 알림 및 이벤트 관리는 EKS 클러스터에서 문제를 신속하게 감지하고 대응하는 데 필수적입니다. 이 섹션에서는 EKS 클러스터에서 알림 및 이벤트를 관리하기 위한 다양한 도구와 기술을 살펴봅니다.
 
-![지표·로그·이벤트 기반의 알림 소스가 CloudWatch 경보, Prometheus Alertmanager, EventBridge, 이벤트 라우터라는 네 처리 경로를 거쳐 SNS, Lambda, Slack 등 알림 채널로 전달되는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-3.png)
+![지표·로그·이벤트 기반의 알림 소스가 CloudWatch 경보, Prometheus Alertmanager, EventBridge, 이벤트 라우터라는 네 처리 경로를 거쳐 SNS, Lambda, Slack 등 알림 채널로 전달되는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-06-eks-monitoring-logging-3.svg)
 
 ### CloudWatch 경보
 
@@ -1127,7 +1127,7 @@ PagerDuty와 같은 도구를 사용하여 알림 에스컬레이션 정책을 �
 
 로그 분석 및 시각화는 EKS 클러스터에서 발생하는 문제를 진단하고 해결하는 데 중요한 역할을 합니다. 이 섹션에서는 EKS 클러스터의 로그를 분석하고 시각화하기 위한 다양한 도구와 기술을 살펴봅니다.
 
-![여러 로그 소스가 수집 에이전트를 거쳐 CloudWatch Logs, OpenSearch, S3, Loki 네 가지 저장소로 나뉘어 들어가고, 각 저장소가 자신과 짝을 이루는 분석·시각화 도구로 이어지는 흐름을 보여준다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-4.png)
+![여러 로그 소스가 수집 에이전트를 거쳐 CloudWatch Logs, OpenSearch, S3, Loki 네 가지 저장소로 나뉘어 들어가고, 각 저장소가 자신과 짝을 이루는 분석·시각화 도구로 이어지는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-06-eks-monitoring-logging-4.svg)
 
 ### CloudWatch Logs Insights
 
@@ -1605,7 +1605,7 @@ route:
 
 EKS 클러스터에서 발생하는 문제를 해결하고 디버깅하기 위한 다양한 기술을 살펴보겠습니다.
 
-![클러스터 문제, 워크로드 문제, 일반적인 문제라는 세 가지 문제 유형이 kubectl 도구, AWS 도구, 네트워크 도구라는 디버깅 도구군과 각각 어떻게 연결되는지 보여주며, kubectl 도구가 세 유형 모두에서 쓰이는 중심 도구임을 강조한다.](../.gitbook/assets/ko-eks-06-eks-monitoring-logging-5.png)
+![클러스터 문제, 워크로드 문제, 일반적인 문제라는 세 가지 문제 유형이 kubectl 도구, AWS 도구, 네트워크 도구라는 디버깅 도구군과 각각 어떻게 연결되는지 보여주며, kubectl 도구가 세 유형 모두에서 쓰이는 중심 도구임을 강조한다.](../../assets/diagrams/rendered/ko-eks-06-eks-monitoring-logging-5.svg)
 
 ### 클러스터 문제 해결
 

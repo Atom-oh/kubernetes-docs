@@ -129,7 +129,7 @@ Trust Bundle은 특정 Trust Domain의 루트 CA 인증서들을 포함하는 �
 
 ### 컴포넌트 개요
 
-![SPIRE Server가 데이터스토어와 CA를 관리하며 각 노드의 SPIRE Agent로부터 노드 어테스테이션과 SVID 요청을 받고, Agent는 자신이 실행 중인 노드의 워크로드들에 Workload API로 SVID를 전달하며, Controller Manager가 등록 엔트리를 관리하는 구조를 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-0.png)
+![SPIRE Server가 데이터스토어와 CA를 관리하며 각 노드의 SPIRE Agent로부터 노드 어테스테이션과 SVID 요청을 받고, Agent는 자신이 실행 중인 노드의 워크로드들에 Workload API로 SVID를 전달하며, Controller Manager가 등록 엔트리를 관리하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-security-12-spiffe-spire-0.svg)
 
 ### SPIRE Server
 
@@ -151,7 +151,7 @@ SPIRE Agent는 각 노드에서 실행되며 다음 기능을 수행합니다:
 
 ### SVID 발급 플로우
 
-![애플리케이션이 Workload API로 SVID를 요청하면 Agent가 프로세스 정보로 어테스테이션 셀렉터를 매칭하고 Server의 Node API가 등록 엔트리를 확인해 CA로 서명한 X.509-SVID를 발급, Agent가 캐시에 저장한 뒤 애플리케이션에 전달하는 과정을 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-1.png)
+![애플리케이션이 Workload API로 SVID를 요청하면 Agent가 프로세스 정보로 어테스테이션 셀렉터를 매칭하고 Server의 Node API가 등록 엔트리를 확인해 CA로 서명한 X.509-SVID를 발급, Agent가 캐시에 저장한 뒤 애플리케이션에 전달하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-security-12-spiffe-spire-1.svg)
 
 ---
 
@@ -269,7 +269,7 @@ kubectl exec -n spire-system spire-server-0 -- \
 
 ### 노드 및 워크로드 어테스테이션 플로우
 
-![SPIRE Agent가 k8s_psat 토큰 또는 aws_iid 문서로 노드 어테스테이션을 거쳐 Node SVID를 발급받은 뒤, 이를 이용해 워크로드의 Pod 메타데이터와 UID/GID를 확인하고 등록 엔트리와 매칭해 Workload SVID를 발급하는 두 단계 절차를 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-2.png)
+![SPIRE Agent가 k8s_psat 토큰 또는 aws_iid 문서로 노드 어테스테이션을 거쳐 Node SVID를 발급받은 뒤, 이를 이용해 워크로드의 Pod 메타데이터와 UID/GID를 확인하고 등록 엔트리와 매칭해 Workload SVID를 발급하는 두 단계 절차를 보여준다.](../../assets/diagrams/rendered/ko-security-12-spiffe-spire-2.svg)
 
 ### Kubernetes PSAT 어테스테이션 구성
 
@@ -737,7 +737,7 @@ linkerd install --identity-external-issuer \
 
 ### 페더레이션 아키텍처
 
-![서로 다른 트러스트 도메인의 SPIRE Server가 각각 Bundle Endpoint를 통해 상대방의 Trust Bundle을 주기적으로 교환·저장하고, 이를 신뢰 기반으로 두 도메인의 워크로드가 직접 mTLS로 통신하는 구조를 보여준다.](../.gitbook/assets/ko-security-12-spiffe-spire-3.png)
+![서로 다른 트러스트 도메인의 SPIRE Server가 각각 Bundle Endpoint를 통해 상대방의 Trust Bundle을 주기적으로 교환·저장하고, 이를 신뢰 기반으로 두 도메인의 워크로드가 직접 mTLS로 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-security-12-spiffe-spire-3.svg)
 
 ### 페더레이션 구성
 

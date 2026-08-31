@@ -75,7 +75,7 @@ EOF
 
 ## Kubernetes 보안 아키텍처
 
-![인프라 계층에서 시작해 API 서버 보안을 거쳐 인증, 권한 부여, 어드미션 컨트롤, 감사 로깅으로 이어지는 클러스터 보안 파이프라인과, 여기서 파생되는 데이터 암호화 및 워크로드 보안 통제를 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-0.png)
+![인프라 계층에서 시작해 API 서버 보안을 거쳐 인증, 권한 부여, 어드미션 컨트롤, 감사 로깅으로 이어지는 클러스터 보안 파이프라인과, 여기서 파생되는 데이터 암호화 및 워크로드 보안 통제를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-core-06-security-0.svg)
 
 ## 목차
 1. [보안 개요](#보안-개요)
@@ -164,7 +164,7 @@ Kubernetes는 다음과 같은 보안 원칙을 따릅니다:
 
 Kubernetes API 서버에 접근하기 위해서는 인증 과정을 거쳐야 합니다. Kubernetes는 다양한 인증 방법을 지원합니다:
 
-![사용자나 서비스가 API 서버에 인증을 요청하면 X.509 인증서, 서비스 계정 토큰, OIDC 등 다섯 가지 방법으로 검증되고, 성공하면 권한 부여 단계로 넘어가고 실패하면 요청이 거부되는 흐름을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-1.png)
+![사용자나 서비스가 API 서버에 인증을 요청하면 X.509 인증서, 서비스 계정 토큰, OIDC 등 다섯 가지 방법으로 검증되고, 성공하면 권한 부여 단계로 넘어가고 실패하면 요청이 거부되는 흐름을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-core-06-security-1.svg)
 
 ### X.509 인증서
 
@@ -224,7 +224,7 @@ API 서버 앞에 인증 프록시를 배치하여 사용자 인증을 처리하
 
 인증이 "당신이 누구인가?"를 확인하는 과정이라면, 권한 부여는 "당신이 무엇을 할 수 있는가?"를 결정하는 과정입니다. Kubernetes는 다양한 권한 부여 모드를 지원합니다:
 
-![인증된 사용자나 서비스가 API 서버에 권한 부여를 요청하면 RBAC, ABAC, Node, 웹훅 중 하나의 방식으로 평가되어 요청이 허용되거나 거부되는 흐름을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-2.png)
+![인증된 사용자나 서비스가 API 서버에 권한 부여를 요청하면 RBAC, ABAC, Node, 웹훅 중 하나의 방식으로 평가되어 요청이 허용되거나 거부되는 흐름을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-core-06-security-2.svg)
 
 ### RBAC(Role-Based Access Control)
 
@@ -312,7 +312,7 @@ Node 권한 부여는 kubelet이 API 서버에 접근할 때 사용되는 특수
 
 보안 컨텍스트는 포드나 컨테이너 수준에서 보안 설정을 정의합니다. 이를 통해 권한, 액세스 제어, 기능 등을 세밀하게 제어할 수 있습니다.
 
-![포드 안에 포드 보안 컨텍스트와 컨테이너가 함께 있고, 컨테이너 내부에 컨테이너 보안 컨텍스트가 포함되며, 포드 전체는 Privileged·Baseline·Restricted 세 수준의 포드 보안 표준을 준수해야 함을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-3.png)
+![포드 안에 포드 보안 컨텍스트와 컨테이너가 함께 있고, 컨테이너 내부에 컨테이너 보안 컨텍스트가 포함되며, 포드 전체는 Privileged·Baseline·Restricted 세 수준의 포드 보안 표준을 준수해야 함을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-core-06-security-3.svg)
 
 ### 포드 보안 컨텍스트
 
@@ -369,7 +369,7 @@ metadata:
 
 네트워크 정책은 포드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 Kubernetes 클러스터의 모든 포드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
 
-![NetworkPolicy가 인바운드(ingress)와 아웃바운드(egress) 규칙으로 podSelector·namespaceSelector·ipBlock을 선택해 특정 포트만 허용하고, 이 정책이 API 포드에 적용되어 프론트엔드→API→데이터베이스로 이어지는 트래픽을 제어하는 모습을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-4.png)
+![NetworkPolicy가 인바운드(ingress)와 아웃바운드(egress) 규칙으로 podSelector·namespaceSelector·ipBlock을 선택해 특정 포트만 허용하고, 이 정책이 API 포드에 적용되어 프론트엔드→API→데이터베이스로 이어지는 트래픽을 제어하는 모습을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-core-06-security-4.svg)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -527,7 +527,7 @@ rules:
 
 Amazon EKS는 Kubernetes의 기본 보안 기능 외에도 AWS의 보안 서비스와 통합하여 보안을 강화할 수 있습니다.
 
-![AWS IAM, Security Groups, Secrets Manager, KMS, WAF, GuardDuty 같은 AWS 보안 서비스가 각각 IRSA, 포드 보안 그룹, External Secrets Operator 등의 EKS 통합 기능을 통해 포드, API 서버, 워커 노드를 보호하는 매핑을 보여주는 다이어그램.](../.gitbook/assets/ko-core-06-security-5.png)
+![AWS IAM, Security Groups, Secrets Manager, KMS, WAF, GuardDuty 같은 AWS 보안 서비스가 각각 IRSA, 포드 보안 그룹, External Secrets Operator 등의 EKS 통합 기능을 통해 포드, API 서버, 워커 노드를 보호하는 매핑을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-core-06-security-5.svg)
 
 ### IAM 역할 및 서비스 계정(IRSA)
 

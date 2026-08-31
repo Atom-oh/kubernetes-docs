@@ -35,7 +35,7 @@ Prometheus Alertmanager is a component that processes alerts sent from Prometheu
 
 ### Prometheus Alert Flow
 
-![Sequence diagram showing Prometheus evaluating and firing an alert, Alertmanager running it through deduplication, grouping, routing, inhibition and silence checks, then notifying a receiver, which confirms delivery.](../../.gitbook/assets/alertmanager-alert-flow.png)
+![Sequence diagram showing Prometheus evaluating and firing an alert, Alertmanager running it through deduplication, grouping, routing, inhibition and silence checks, then notifying a receiver, which confirms delivery.](../../../assets/diagrams/rendered/alertmanager-alert-flow.svg)
 
 ---
 
@@ -43,7 +43,7 @@ Prometheus Alertmanager is a component that processes alerts sent from Prometheu
 
 ### Alertmanager Internal Structure
 
-![Architecture diagram showing alerts entering Alertmanager's API, flowing through a pipeline of dispatcher, inhibitor, silencer, aggregation and notification stages to receivers, while a clustered gossip protocol keeps the notification log and silence store synced across replicas.](../../.gitbook/assets/alertmanager-internal-structure.png)
+![Architecture diagram showing alerts entering Alertmanager's API, flowing through a pipeline of dispatcher, inhibitor, silencer, aggregation and notification stages to receivers, while a clustered gossip protocol keeps the notification log and silence store synced across replicas.](../../../assets/diagrams/rendered/alertmanager-internal-structure.svg)
 
 ### Component Description
 
@@ -230,7 +230,7 @@ rules:
 
 ### Alert States
 
-![State machine showing an alert moving from Inactive to Pending once its PromQL condition is met, then to Firing once the 'for' duration elapses, with paths back to Inactive if the condition clears.](../../.gitbook/assets/alertmanager-alert-states.png)
+![State machine showing an alert moving from Inactive to Pending once its PromQL condition is met, then to Firing once the 'for' duration elapses, with paths back to Inactive if the condition clears.](../../../assets/diagrams/rendered/alertmanager-alert-states.svg)
 
 ---
 
@@ -275,7 +275,7 @@ route:
 
 ### Routing Flow
 
-![Flowchart showing how Alertmanager routes a received alert down its matcher tree — critical severity to the critical receiver, then service and owner matchers deciding between team-a, the service team, or the default receiver.](../../.gitbook/assets/alertmanager-routing-flow.png)
+![Flowchart showing how Alertmanager routes a received alert down its matcher tree — critical severity to the critical receiver, then service and owner matchers deciding between team-a, the service team, or the default receiver.](../../../assets/diagrams/rendered/alertmanager-routing-flow.svg)
 
 ### Matchers
 
@@ -501,7 +501,7 @@ receivers:
 
 Inhibition is a feature that suppresses related alerts when a specific alert fires.
 
-![Architecture diagram contrasting alert delivery without inhibition, where three related alerts all reach the receiver, against delivery with inhibition, where a node-down alert still reaches the receiver while the pod and service alerts it implies are suppressed.](../../.gitbook/assets/alertmanager-inhibition-concept.png)
+![Architecture diagram contrasting alert delivery without inhibition, where three related alerts all reach the receiver, against delivery with inhibition, where a node-down alert still reaches the receiver while the pod and service alerts it implies are suppressed.](../../../assets/diagrams/rendered/alertmanager-inhibition-concept.svg)
 
 ### Inhibition Rule Configuration
 
@@ -611,7 +611,7 @@ curl -X POST http://alertmanager:9093/api/v2/silences \
 
 ### Silence Management Best Practices
 
-![Flowchart showing a silence's duration set by its type — maintenance, deployment, investigation, or known issue — followed by a mandatory comment, regular review, and either automatic removal on expiry or a manual review.](../../.gitbook/assets/alertmanager-silence-best-practices.png)
+![Flowchart showing a silence's duration set by its type — maintenance, deployment, investigation, or known issue — followed by a mandatory comment, regular review, and either automatic removal on expiry or a manual review.](../../../assets/diagrams/rendered/alertmanager-silence-best-practices.svg)
 
 **Recommendations:**
 
@@ -718,7 +718,7 @@ data:
 
 ### Clustering Architecture
 
-![Architecture diagram showing Prometheus sending the same alerts to a three-replica Alertmanager cluster, the replicas gossiping state amongst themselves in a ring, replicas 2 and 3 forwarding their view to replica 1 for deduplication, and replica 1 forwarding to the receivers.](../../.gitbook/assets/alertmanager-clustering-architecture.png)
+![Architecture diagram showing Prometheus sending the same alerts to a three-replica Alertmanager cluster, the replicas gossiping state amongst themselves in a ring, replicas 2 and 3 forwarding their view to replica 1 for deduplication, and replica 1 forwarding to the receivers.](../../../assets/diagrams/rendered/alertmanager-clustering-architecture.svg)
 
 ### StatefulSet Configuration
 

@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Cluster Architecture",
+    "output": "en-core-01-cluster-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "kubectl / Client",
+      "sublabel": "API request",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "API frontend",
+      "pos": [
+        220,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "key-value store",
+      "pos": [
+        220,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "node selection",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "controllers",
+      "pos": [
+        470,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "backend",
+      "label": "cloud-controller-manager",
+      "sublabel": "cloud provider API",
+      "pos": [
+        470,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "node agent",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Container Runtime",
+      "sublabel": "containerd / CRI-O",
+      "pos": [
+        740,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Pods",
+      "sublabel": "running workloads",
+      "pos": [
+        740,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "network rules",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Worker Node",
+      "wraps": [
+        "kubelet",
+        "runtime",
+        "pods",
+        "kube-proxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "kubectl / API",
+      "variant": "emphasis",
+      "labelAt": [
+        200,
+        296
+      ]
+    },
+    {
+      "id": "api-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "read / write state"
+    },
+    {
+      "id": "api-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "watch pods"
+    },
+    {
+      "id": "api-controller-manager",
+      "from": "apiserver",
+      "to": "controller-manager",
+      "label": "watch / reconcile",
+      "labelDy": 20,
+      "labelDx": 60
+    },
+    {
+      "id": "api-cloud-controller-manager",
+      "from": "apiserver",
+      "to": "cloud-controller-manager",
+      "label": "watch / reconcile"
+    },
+    {
+      "id": "api-kubelet",
+      "from": "apiserver",
+      "to": "kubelet",
+      "label": "assign pod"
+    },
+    {
+      "id": "kubelet-runtime",
+      "from": "kubelet",
+      "to": "runtime",
+      "label": "CRI",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -30
+    },
+    {
+      "id": "runtime-pods",
+      "from": "runtime",
+      "to": "pods",
+      "label": "run",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kube-proxy-pods",
+      "from": "kube-proxy",
+      "to": "pods",
+      "label": "forward traffic",
+      "variant": "dashed",
+      "labelDy": 14
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control Plane",
+      "items": [
+        "kube-apiserver exposes the Kubernetes API",
+        "etcd stores all cluster data",
+        "kube-scheduler picks a node for new pods",
+        "kube-controller-manager runs core controllers",
+        "cloud-controller-manager talks to the cloud provider API"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Worker Node",
+      "items": [
+        "kubelet manages containers on the node",
+        "kube-proxy maintains network rules and forwarding",
+        "the container runtime (containerd, CRI-O, ...) runs pods"
+      ]
+    }
+  ]
+}

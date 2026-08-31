@@ -427,7 +427,7 @@ spec:
 
 스케일 다운 시의 전체 흐름:
 
-![트래픽이 줄어 HPA가 스케일 다운될 때 deletion-cost 값에 따라 클라우드 Pod가 먼저 삭제되고 온프레미스 Pod는 유지되며, 비게 된 클라우드 노드는 Karpenter가 제거하는 흐름을 보여주는 순서도입니다.](../.gitbook/assets/ko-eks-hybrid-nodes-06-workload-placement-0.png)
+![트래픽이 줄어 HPA가 스케일 다운될 때 deletion-cost 값에 따라 클라우드 Pod가 먼저 삭제되고 온프레미스 Pod는 유지되며, 비게 된 클라우드 노드는 Karpenter가 제거하는 흐름을 보여주는 순서도입니다.](../../assets/diagrams/rendered/ko-eks-hybrid-nodes-06-workload-placement-0.svg)
 
 ---
 

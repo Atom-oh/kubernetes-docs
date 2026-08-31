@@ -55,7 +55,7 @@ kubectl -n policy-demo get resourcequota,networkpolicy
 
 ## Kubernetes Policy Architecture
 
-![Diagram showing how the four Kubernetes policy types are implemented by concrete mechanisms (ResourceQuota/LimitRange, Pod Security Standards, NetworkPolicy, OPA Gatekeeper/Kyverno, Admission Controllers), which are applied at the cluster, namespace, or pod level.](../.gitbook/assets/en-core-07-policies-0.png)
+![Diagram showing how the four Kubernetes policy types are implemented by concrete mechanisms (ResourceQuota/LimitRange, Pod Security Standards, NetworkPolicy, OPA Gatekeeper/Kyverno, Admission Controllers), which are applied at the cluster, namespace, or pod level.](../../assets/diagrams/rendered/en-core-07-policies-0.svg)
 
 ## Policy Type Comparison
 
@@ -147,7 +147,7 @@ Kubernetes can implement various types of policies through built-in resources (e
 
 Resource allocation policies control the amount of resources such as CPU and memory that pods and containers can use.
 
-![Diagram showing how resource requests and limits set on a pod determine its QoS class (Guaranteed, Burstable, BestEffort), and how QoS class governs eviction order when a node runs short on resources.](../.gitbook/assets/en-core-07-policies-1.png)
+![Diagram showing how resource requests and limits set on a pod determine its QoS class (Guaranteed, Burstable, BestEffort), and how QoS class governs eviction order when a node runs short on resources.](../../assets/diagrams/rendered/en-core-07-policies-1.svg)
 
 ### Resource Requests and Limits
 
@@ -197,7 +197,7 @@ QoS classes determine the pod eviction order during resource shortage:
 
 Pod Security Policy (PSP) was deprecated starting from Kubernetes 1.21 and completely removed in version 1.25. Instead, Pod Security Standards and Pod Security Admission have been introduced.
 
-![Diagram showing how a namespace label configures Pod Security Admission, which enforces, audits, or warns against one of the three Pod Security Standards levels when a pod creation request is validated, allowing or denying it.](../.gitbook/assets/en-core-07-policies-2.png)
+![Diagram showing how a namespace label configures Pod Security Admission, which enforces, audits, or warns against one of the three Pod Security Standards levels when a pod creation request is validated, allowing or denying it.](../../assets/diagrams/rendered/en-core-07-policies-2.svg)
 
 ### Pod Security Standards
 
@@ -231,7 +231,7 @@ Meaning of each label:
 
 Network Policy provides a way to control communication between pods. By default, all pods in a Kubernetes cluster can communicate with each other, but network policies can restrict this.
 
-![Diagram showing how a NetworkPolicy's selector, policy types, and ingress/egress rules govern which pod-to-pod traffic is allowed or blocked, and the three selector kinds a policy can use.](../.gitbook/assets/en-core-07-policies-3.png)
+![Diagram showing how a NetworkPolicy's selector, policy types, and ingress/egress rules govern which pod-to-pod traffic is allowed or blocked, and the three selector kinds a policy can use.](../../assets/diagrams/rendered/en-core-07-policies-3.svg)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -305,7 +305,7 @@ ingress:
 
 ResourceQuota limits the total amount of resources that can be used within a namespace. This prevents one team from monopolizing all resources when multiple teams or projects share cluster resources.
 
-![Diagram showing the four kinds of ResourceQuota applied to a namespace, how pod resource usage accumulates against that quota, and how a new pod request is admitted or denied based on whether it fits within the remaining quota.](../.gitbook/assets/en-core-07-policies-4.png)
+![Diagram showing the four kinds of ResourceQuota applied to a namespace, how pod resource usage accumulates against that quota, and how a new pod request is admitted or denied based on whether it fits within the remaining quota.](../../assets/diagrams/rendered/en-core-07-policies-4.svg)
 
 ```yaml
 apiVersion: v1
@@ -414,7 +414,7 @@ LimitRange can be applied to the following resource types:
 
 The Kubernetes ecosystem has several policy engines that can implement more complex and flexible policies.
 
-![Diagram showing how the API server routes admission requests through the Admission Webhook to the OPA Gatekeeper, Kyverno, or Kubewarden policy engines, each of which supports a subset of validate, mutate, and generate policy types.](../.gitbook/assets/en-core-07-policies-5.png)
+![Diagram showing how the API server routes admission requests through the Admission Webhook to the OPA Gatekeeper, Kyverno, or Kubewarden policy engines, each of which supports a subset of validate, mutate, and generate policy types.](../../assets/diagrams/rendered/en-core-07-policies-5.svg)
 
 ### OPA Gatekeeper
 
@@ -534,7 +534,7 @@ spec:
 
 In Amazon EKS, you can manage policies using Kubernetes' default policy mechanisms along with various AWS services.
 
-![Diagram showing how AWS-side controls (IAM, Security Groups, Organizations, Config, Firewall Manager) integrate with EKS-specific mechanisms and built-in Kubernetes policies to govern the EKS cluster, its namespaces, and pods.](../.gitbook/assets/en-core-07-policies-6.png)
+![Diagram showing how AWS-side controls (IAM, Security Groups, Organizations, Config, Firewall Manager) integrate with EKS-specific mechanisms and built-in Kubernetes policies to govern the EKS cluster, its namespaces, and pods.](../../assets/diagrams/rendered/en-core-07-policies-6.svg)
 
 ### Integration with AWS IAM
 

@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Architecture",
+    "output": "en-service-mesh-linkerd-02-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "admission webhook",
+      "pos": [
+        30,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "service discovery",
+      "pos": [
+        280,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "mTLS CA",
+      "pos": [
+        530,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxyA",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "App A sidecar",
+      "pos": [
+        120,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "proxyB",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "App B sidecar",
+      "pos": [
+        500,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "injector",
+        "destination",
+        "identity"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "proxyA",
+        "proxyB"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "injector-proxyA",
+      "from": "injector",
+      "to": "proxyA",
+      "label": "inject sidecar",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "destination-proxyA",
+      "from": "destination",
+      "to": "proxyA",
+      "label": "endpoint updates",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "destination-proxyB",
+      "from": "destination",
+      "to": "proxyB",
+      "label": "endpoint updates",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "identity-proxyB",
+      "from": "identity",
+      "to": "proxyB",
+      "label": "issue certificate",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        607,
+        114
+      ]
+    },
+    {
+      "id": "proxyA-proxyB",
+      "from": "proxyA",
+      "to": "proxyB",
+      "label": "mTLS traffic",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control Plane",
+      "items": [
+        "Proxy Injector adds the sidecar at pod admission time",
+        "Destination pushes service discovery updates to proxies",
+        "Identity issues short-lived mTLS certificates"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data Plane",
+      "items": [
+        "each linkerd-proxy sidecar relays its app's traffic",
+        "two proxies establish mTLS between applications"
+      ]
+    }
+  ]
+}

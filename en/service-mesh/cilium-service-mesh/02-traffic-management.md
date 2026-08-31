@@ -9,7 +9,7 @@ Traffic management in Cilium Service Mesh combines eBPF-based L4 load balancing 
 
 ## Traffic Management Architecture
 
-![A request from a client passes down through three Cilium traffic-management layers — L7 Envoy HTTP routing, L4 eBPF load balancing, and L3 eBPF IP routing — before reaching the server, with each layer's additional capabilities shown as supporting tags.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-0.png)
+![A request from a client passes down through three Cilium traffic-management layers — L7 Envoy HTTP routing, L4 eBPF load balancing, and L3 eBPF IP routing — before reaching the server, with each layer's additional capabilities shown as supporting tags.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-02-traffic-management-0.svg)
 
 ## CiliumEnvoyConfig
 
@@ -429,7 +429,7 @@ loadBalancer:
 
 #### Maglev Hashing
 
-![A client request is hashed on its five-tuple, looked up in a 65,537-entry Maglev table, and the resulting backend selection is fanned out consistently to one of three backend pods.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-02-traffic-management-1.png)
+![A client request is hashed on its five-tuple, looked up in a 65,537-entry Maglev table, and the resulting backend selection is fanned out consistently to one of three backend pods.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-02-traffic-management-1.svg)
 
 ### L7 Load Balancing (Envoy)
 

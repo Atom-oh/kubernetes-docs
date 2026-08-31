@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Envoy Architecture",
+    "output": "en-service-mesh-istio-03-architecture-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "listener",
+      "type": "backend",
+      "label": "Listener",
+      "sublabel": "accepts connections",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "Filter Chain",
+      "sublabel": "processes bytes",
+      "pos": [
+        260,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "picks a cluster",
+      "pos": [
+        490,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "backend",
+      "label": "Cluster",
+      "sublabel": "connection pool",
+      "pos": [
+        720,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "upstream",
+      "type": "external",
+      "label": "Upstream Service",
+      "sublabel": "outbound target",
+      "pos": [
+        950,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "listener-filter",
+      "from": "listener",
+      "to": "filter",
+      "label": "raw bytes"
+    },
+    {
+      "id": "filter-router",
+      "from": "filter",
+      "to": "router",
+      "label": "parsed request",
+      "labelAt": [
+        460,
+        294
+      ]
+    },
+    {
+      "id": "router-cluster",
+      "from": "router",
+      "to": "cluster",
+      "label": "route match"
+    },
+    {
+      "id": "cluster-upstream",
+      "from": "cluster",
+      "to": "upstream",
+      "label": "load-balanced connection",
+      "variant": "emphasis",
+      "labelAt": [
+        920,
+        294
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Inbound path",
+      "items": [
+        "a Listener accepts a connection on a port",
+        "a Filter Chain processes the raw bytes"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Outbound path",
+      "items": [
+        "the Router matches the request to a Cluster",
+        "the Cluster load-balances the connection to the upstream service"
+      ]
+    }
+  ]
+}

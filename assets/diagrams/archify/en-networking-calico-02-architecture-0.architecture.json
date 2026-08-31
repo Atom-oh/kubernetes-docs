@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Architecture",
+    "output": "en-networking-calico-02-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "policy / routing source",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "typha",
+      "type": "backend",
+      "label": "Typha",
+      "sublabel": "datastore cache",
+      "pos": [
+        300,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "per-node agent",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bird",
+      "type": "backend",
+      "label": "BIRD",
+      "sublabel": "per-node BGP",
+      "pos": [
+        560,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "tor",
+      "type": "cloud",
+      "label": "ToR Switch / Spine",
+      "sublabel": "external network",
+      "pos": [
+        830,
+        360
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-typha",
+      "from": "apiserver",
+      "to": "typha",
+      "label": "watch policy / routing",
+      "labelAt": [
+        265,
+        216
+      ]
+    },
+    {
+      "id": "typha-felix",
+      "from": "typha",
+      "to": "felix",
+      "label": "policy + routing"
+    },
+    {
+      "id": "typha-bird",
+      "from": "typha",
+      "to": "bird",
+      "label": "policy + routing"
+    },
+    {
+      "id": "bird-tor",
+      "from": "bird",
+      "to": "tor",
+      "label": "BGP peering"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control",
+      "items": [
+        "Typha fans datastore updates out to every node, reducing API server load",
+        "Felix programs interfaces, routes, and firewall rules on each node"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Routing",
+      "items": [
+        "BIRD distributes routes over BGP",
+        "peers with the ToR switch / Spine to reach the external network"
+      ]
+    }
+  ]
+}

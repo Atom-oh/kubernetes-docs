@@ -63,7 +63,7 @@ This document provides a comprehensive comparison between Kubernetes Service Mes
 
 ### Istio Architecture
 
-![Architecture diagram showing Istiod pushing xDS configuration to Envoy sidecars attached to each application pod, with sidecars exchanging mTLS traffic and exporting metrics and traces to Prometheus, Jaeger, and Kiali.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
+![Architecture diagram showing Istiod pushing xDS configuration to Envoy sidecars attached to each application pod, with sidecars exchanging mTLS traffic and exporting metrics and traces to Prometheus, Jaeger, and Kiali.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.svg)
 
 **Features**:
 
@@ -74,7 +74,7 @@ This document provides a comprehensive comparison between Kubernetes Service Mes
 
 ### VPC Lattice Architecture
 
-![Architecture diagram showing compute across an EKS pod, an ECS task, a Lambda function, and an EC2 instance all associating with a single AWS-managed VPC Lattice service network, which routes through services and target groups without any sidecar proxy.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
+![Architecture diagram showing compute across an EKS pod, an ECS task, a Lambda function, and an EC2 instance all associating with a single AWS-managed VPC Lattice service network, which routes through services and target groups without any sidecar proxy.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-02-istio-vs-lattice-1.svg)
 
 **Features**:
 
@@ -728,7 +728,7 @@ Istio provides powerful features, but operating it in production environments pr
 
 #### Key Operational Challenges
 
-![Diagram mapping six recurring Istio operational challenges to three downstream impacts, showing increased failure risk as the most common consequence.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-2.png)
+![Diagram mapping six recurring Istio operational challenges to three downstream impacts, showing increased failure risk as the most common consequence.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-02-istio-vs-lattice-2.svg)
 
 ### Installation and Initial Setup
 
@@ -967,7 +967,7 @@ Istio upgrades are among the most risky and complex operations in production env
 
 ### Istio Multi-Cloud
 
-![Diagram showing per-cloud Istiod control planes in AWS, Google Cloud, and Azure federating service discovery with each other, while their EKS, GKE, and AKS clusters exchange mTLS traffic directly across cloud boundaries.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
+![Diagram showing per-cloud Istiod control planes in AWS, Google Cloud, and Azure federating service discovery with each other, while their EKS, GKE, and AKS clusters exchange mTLS traffic directly across cloud boundaries.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-02-istio-vs-lattice-3.svg)
 
 **Advantages**:
 
@@ -990,7 +990,7 @@ Istio upgrades are among the most risky and complex operations in production env
 
 ### Using Istio + VPC Lattice Together
 
-![Architecture diagram showing an Istio mesh handling frontend-to-backend traffic inside an EKS cluster, then exiting through an egress gateway into a VPC Lattice service network that reaches an ECS payment service and a Lambda notification service in separate VPCs.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-4.png)
+![Architecture diagram showing an Istio mesh handling frontend-to-backend traffic inside an EKS cluster, then exiting through an egress gateway into a VPC Lattice service network that reaches an ECS payment service and a Lambda notification service in separate VPCs.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-02-istio-vs-lattice-4.svg)
 
 **Use Cases**:
 
@@ -1001,7 +1001,7 @@ Istio upgrades are among the most risky and complex operations in production env
 
 ### Decision Tree
 
-![Flowchart walking from platform choice through workload type, feature requirements, and operational resources to a recommendation of either Istio or VPC Lattice, with VPC Lattice reached by three different simpler paths.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-5.png)
+![Flowchart walking from platform choice through workload type, feature requirements, and operational resources to a recommendation of either Istio or VPC Lattice, with VPC Lattice reached by three different simpler paths.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-02-istio-vs-lattice-5.svg)
 
 ### Quick Recommendation Table
 

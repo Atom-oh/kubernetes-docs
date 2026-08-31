@@ -9,7 +9,7 @@ Linkerd enables fine-grained control of service-to-service traffic through Servi
 
 ## Traffic Management Architecture
 
-![Architecture diagram showing ServiceProfile, TrafficSplit, and HTTPRoute configuration feeding a destination controller that discovers endpoints and distributes policy to proxy features for load balancing, retries, timeouts, and circuit breaking.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-0.png)
+![Architecture diagram showing ServiceProfile, TrafficSplit, and HTTPRoute configuration feeding a destination controller that discovers endpoints and distributes policy to proxy features for load balancing, retries, timeouts, and circuit breaking.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-0.svg)
 
 ## ServiceProfile
 
@@ -163,7 +163,7 @@ Linkerd automatically retries failed requests to overcome transient failures.
 
 ### Retry Behavior
 
-![Sequence diagram showing linkerd-proxy transparently retrying a request that failed with a 503 after checking the ServiceProfile retry budget, so the client only ever sees the successful response.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-1.png)
+![Sequence diagram showing linkerd-proxy transparently retrying a request that failed with a 503 after checking the ServiceProfile retry budget, so the client only ever sees the successful response.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-1.svg)
 
 ### Retry Conditions
 
@@ -265,7 +265,7 @@ spec:
 
 ### Timeout Behavior
 
-![Sequence diagram showing linkerd-proxy starting a per-route timeout when it forwards a request, and branching on whether the backend service responds within the deadline or the proxy returns a 504 while the backend keeps processing.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-2.png)
+![Sequence diagram showing linkerd-proxy starting a per-route timeout when it forwards a request, and branching on whether the backend service responds within the deadline or the proxy returns a 504 while the backend keeps processing.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-2.svg)
 
 ## Load Balancing
 
@@ -273,7 +273,7 @@ Linkerd uses the EWMA (Exponentially Weighted Moving Average) algorithm for inte
 
 ### EWMA Algorithm
 
-![Architecture diagram showing a new request routed by the load balancer to the endpoint with the lowest exponentially-weighted moving average latency score, while slower endpoints wait for traffic.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-3.png)
+![Architecture diagram showing a new request routed by the load balancer to the endpoint with the lowest exponentially-weighted moving average latency score, while slower endpoints wait for traffic.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-3.svg)
 
 **EWMA Characteristics:**
 
@@ -323,7 +323,7 @@ spec:
 
 ### Canary Deployment
 
-![Architecture diagram showing a TrafficSplit apex service dividing incoming traffic between a stable backend at 90 percent and a canary backend at 10 percent.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-4.png)
+![Architecture diagram showing a TrafficSplit apex service dividing incoming traffic between a stable backend at 90 percent and a canary backend at 10 percent.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-4.svg)
 
 **Progressive Canary Deployment:**
 
@@ -619,7 +619,7 @@ Linkerd implements the circuit breaker pattern through failure accrual.
 
 ### Failure Accrual Behavior
 
-![State machine showing an endpoint moving from Closed to Open after consecutive failures exceed a threshold, to Half-Open once the backoff elapses, then back to Closed on a successful probe or back to Open if the probe fails.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-5.png)
+![State machine showing an endpoint moving from Closed to Open after consecutive failures exceed a threshold, to Half-Open once the backoff elapses, then back to Closed on a successful probe or back to Open if the probe fails.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-5.svg)
 
 **Behavior:**
 
@@ -729,7 +729,7 @@ spec:
 
 ### Flagger Deployment Flow
 
-![Flowchart showing Flagger detecting a deployment change, initializing a canary at zero traffic, then looping through metric analysis and 10 percent traffic increments until it either promotes the canary to 100 percent or rolls it back on failed success criteria.](../../.gitbook/assets/en-service-mesh-linkerd-03-traffic-management-6.png)
+![Flowchart showing Flagger detecting a deployment change, initializing a canary at zero traffic, then looping through metric analysis and 10 percent traffic increments until it either promotes the canary to 100 percent or rolls it back on failed success criteria.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-03-traffic-management-6.svg)
 
 ### Flagger Metric Templates
 

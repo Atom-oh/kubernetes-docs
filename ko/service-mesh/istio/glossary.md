@@ -495,7 +495,7 @@ Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
 
 #### 1. Sidecar Mode - 아웃바운드 요청
 
-![애플리케이션(Downstream)이 Envoy Sidecar로 요청을 보내고 Envoy가 이를 Backend 서비스(Upstream)로 전달하는 흐름을 보여주는 3단계 흐름도입니다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-0.png)
+![애플리케이션(Downstream)이 Envoy Sidecar로 요청을 보내고 Envoy가 이를 Backend 서비스(Upstream)로 전달하는 흐름을 보여주는 3단계 흐름도입니다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-glossary-0.svg)
 
 **관점**:
 - **Envoy 입장**: 애플리케이션이 Downstream (요청 보내는 쪽)
@@ -503,7 +503,7 @@ Downstream (클라이언트)  →  Envoy Proxy  →  Upstream (백엔드)
 
 #### 2. Ingress Gateway - 외부 요청
 
-![외부 클라이언트(Downstream)가 Ingress Gateway로 HTTP 요청을 보내고 Gateway가 이를 내부 서비스(Upstream)로 라우팅하는 흐름을 보여주는 3단계 흐름도입니다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-1.png)
+![외부 클라이언트(Downstream)가 Ingress Gateway로 HTTP 요청을 보내고 Gateway가 이를 내부 서비스(Upstream)로 라우팅하는 흐름을 보여주는 3단계 흐름도입니다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-glossary-1.svg)
 
 **Downstream 관련 Envoy 설정**:
 
@@ -873,7 +873,7 @@ AWS API 요청을 인증하기 위한 서명 프로토콜입니다.
 
 **작동 방식**:
 
-![클라이언트의 HTTP 요청을 받은 Envoy Proxy가 AWS Credentials를 로드해 SigV4 서명(HMAC-SHA256)을 생성하고 Authorization 헤더를 추가해 AWS 서비스로 전달하면, AWS가 서명을 검증한 뒤 응답이 Envoy를 거쳐 클라이언트로 돌아오는 시퀀스를 보여줍니다.](../../.gitbook/assets/ko-service-mesh-istio-glossary-2.png)
+![클라이언트의 HTTP 요청을 받은 Envoy Proxy가 AWS Credentials를 로드해 SigV4 서명(HMAC-SHA256)을 생성하고 Authorization 헤더를 추가해 AWS 서비스로 전달하면, AWS가 서명을 검증한 뒤 응답이 Envoy를 거쳐 클라이언트로 돌아오는 시퀀스를 보여줍니다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-glossary-2.svg)
 
 **서명 구성 요소**:
 

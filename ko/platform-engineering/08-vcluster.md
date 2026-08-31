@@ -80,13 +80,13 @@ Kubernetes에서 멀티 테넌시를 구현하는 전통적인 방법들에는 �
 
 vCluster의 핵심은 호스트 클러스터 내부에서 실행되는 **가상 컨트롤 플레인**입니다. 각 가상 클러스터는 자체 API Server, Controller Manager, 데이터 저장소를 보유합니다.
 
-![호스트 EKS 클러스터 위에서 두 팀의 vCluster가 각자의 네임스페이스에서 가상 API 서버를 운영하고, Syncer가 이를 호스트 API 서버와 동기화하며 실제 워크로드 Pod를 호스트 노드에 생성하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-0.png)
+![호스트 EKS 클러스터 위에서 두 팀의 vCluster가 각자의 네임스페이스에서 가상 API 서버를 운영하고, Syncer가 이를 호스트 API 서버와 동기화하며 실제 워크로드 Pod를 호스트 노드에 생성하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-0.svg)
 
 ### Syncer 컴포넌트
 
 Syncer는 vCluster의 핵심 컴포넌트로, 가상 클러스터와 호스트 클러스터 간의 **리소스 동기화**를 담당합니다.
 
-![가상 클러스터의 Pod, Service, ConfigMap, Ingress 4가지 리소스가 Syncer를 거쳐 이름과 네임스페이스가 변환된 형태로 호스트 클러스터에 생성되는 과정을 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-1.png)
+![가상 클러스터의 Pod, Service, ConfigMap, Ingress 4가지 리소스가 Syncer를 거쳐 이름과 네임스페이스가 변환된 형태로 호스트 클러스터에 생성되는 과정을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-1.svg)
 
 **Syncer의 핵심 동작:**
 
@@ -161,7 +161,7 @@ controlPlane:
 
 ### 호스트 클러스터와의 관계
 
-![개발자의 kubectl apply 요청이 가상 API 서버를 거쳐 Syncer에서 이름·네임스페이스가 변환되고, 호스트 API 서버와 Kubelet을 통해 실제로 실행된 뒤 상태가 다시 가상 클러스터로 반영되는 흐름을 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-2.png)
+![개발자의 kubectl apply 요청이 가상 API 서버를 거쳐 Syncer에서 이름·네임스페이스가 변환되고, 호스트 API 서버와 Kubelet을 통해 실제로 실행된 뒤 상태가 다시 가상 클러스터로 반영되는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-2.svg)
 
 이 시퀀스에서 핵심은 **Deployment와 ReplicaSet은 가상 클러스터 내부에서만 존재**하고, **Pod만 호스트 클러스터로 동기화**된다는 점입니다. 이를 통해 가상 클러스터는 자체 컨트롤러 로직을 독립적으로 실행하면서도 호스트 클러스터의 컴퓨팅 리소스를 효율적으로 공유합니다.
 
@@ -783,7 +783,7 @@ controlPlane:
 
 각 개발 팀에 독립된 가상 클러스터를 제공하여, 팀 간 간섭 없이 자유롭게 개발할 수 있는 환경을 구성합니다.
 
-![호스트 EKS 클러스터 안에서 프론트엔드·백엔드·데이터 세 팀이 각각 다른 쿠버네티스 버전의 vCluster를 소유하고, ALB Controller·EBS CSI·Prometheus 같은 공유 인프라를 함께 사용하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-3.png)
+![호스트 EKS 클러스터 안에서 프론트엔드·백엔드·데이터 세 팀이 각각 다른 쿠버네티스 버전의 vCluster를 소유하고, ALB Controller·EBS CSI·Prometheus 같은 공유 인프라를 함께 사용하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-3.svg)
 
 ```yaml
 # team-frontend-vcluster.yaml
@@ -932,7 +932,7 @@ sync:
 
 Pull Request가 생성될 때마다 독립된 프리뷰 환경을 자동으로 생성하여, 리뷰어가 변경사항을 실제 환경에서 확인할 수 있게 합니다.
 
-![GitHub Actions가 PR이 열리면 vCluster를 생성해 앱을 배포하고 프리뷰 URL을 PR에 댓글로 남기며, PR이 머지되거나 닫히면 같은 워크플로가 vCluster를 삭제하는 두 갈래 라이프사이클을 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-4.png)
+![GitHub Actions가 PR이 열리면 vCluster를 생성해 앱을 배포하고 프리뷰 URL을 PR에 댓글로 남기며, PR이 머지되거나 닫히면 같은 워크플로가 vCluster를 삭제하는 두 갈래 라이프사이클을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-4.svg)
 
 ```yaml
 # preview-vcluster.yaml
@@ -1033,7 +1033,7 @@ sync:
 
 SaaS 고객별로 격리된 Kubernetes 환경을 제공하는 플랫폼입니다:
 
-![SaaS 플랫폼의 테넌트 관리 API와 vCluster Controller가 등급별로 CPU·메모리 자원이 다른 세 테넌트의 vCluster를 생성·삭제하고, 각 고객은 자신의 vCluster에만 kubectl로 접근하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-5.png)
+![SaaS 플랫폼의 테넌트 관리 API와 vCluster Controller가 등급별로 CPU·메모리 자원이 다른 세 테넌트의 vCluster를 생성·삭제하고, 각 고객은 자신의 vCluster에만 kubectl로 접근하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-5.svg)
 
 ```yaml
 # enterprise-tenant-vcluster.yaml
@@ -1520,7 +1520,7 @@ spec:
 
 [ArgoCD](../gitops/argocd/02-applications.md)를 사용하여 가상 클러스터의 라이프사이클을 GitOps로 관리합니다:
 
-![Backstage 셀프서비스 템플릿이 Git 저장소에 PR을 생성하면 ArgoCD ApplicationSet이 이를 감지해 두 개의 팀별 vCluster를 EKS 호스트 클러스터에 배포하는 GitOps 흐름을 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-6.png)
+![Backstage 셀프서비스 템플릿이 Git 저장소에 PR을 생성하면 ArgoCD ApplicationSet이 이를 감지해 두 개의 팀별 vCluster를 EKS 호스트 클러스터에 배포하는 GitOps 흐름을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-6.svg)
 
 ```yaml
 # argocd/vcluster-appset.yaml
@@ -1565,7 +1565,7 @@ spec:
 
 Backstage + ArgoCD + vCluster를 결합한 완전한 셀프서비스 워크플로우:
 
-![개발자가 Backstage 템플릿으로 개발 환경을 요청하면 GitHub PR 승인과 ArgoCD 동기화를 거쳐 vCluster가 프로비저닝되고, 완료 알림과 kubeconfig를 받아 바로 접속하는 전체 과정을 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-7.png)
+![개발자가 Backstage 템플릿으로 개발 환경을 요청하면 GitHub PR 승인과 ArgoCD 동기화를 거쳐 vCluster가 프로비저닝되고, 완료 알림과 kubeconfig를 받아 바로 접속하는 전체 과정을 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-7.svg)
 
 ---
 
@@ -1891,7 +1891,7 @@ done
 
 ### 라이프사이클 관리
 
-![개발자 요청으로 시작된 vCluster가 승인·프로비저닝을 거쳐 Running 상태에 이르고, 이후 자동 Sleep/Wake, 수동 Pause/Resume, TTL 만료에 의한 삭제까지 이어지는 상태 전이를 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-8.png)
+![개발자 요청으로 시작된 vCluster가 승인·프로비저닝을 거쳐 Running 상태에 이르고, 이후 자동 Sleep/Wake, 수동 Pause/Resume, TTL 만료에 의한 삭제까지 이어지는 상태 전이를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-8.svg)
 
 **주요 라이프사이클 정책:**
 

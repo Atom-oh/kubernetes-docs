@@ -78,7 +78,7 @@ Istio는 강력한 트래픽 관리 기능을 제공합니다:
 
 Istio는 **Control Plane**과 **Data Plane**으로 구성됩니다.
 
-![istiod가 Control Plane에서 각 파드의 Envoy 사이드카 프록시로 구성을 배포하고, Data Plane의 세 사이드카(Pod A, B, C)는 서로 mTLS로 암호화된 트래픽을 주고받는 Istio 아키텍처를 보여준다.](../.gitbook/assets/ko-service-mesh-02-istio-0.png)
+![istiod가 Control Plane에서 각 파드의 Envoy 사이드카 프록시로 구성을 배포하고, Data Plane의 세 사이드카(Pod A, B, C)는 서로 mTLS로 암호화된 트래픽을 주고받는 Istio 아키텍처를 보여준다.](../../assets/diagrams/rendered/ko-service-mesh-02-istio-0.svg)
 
 ### Control Plane (istiod)
 

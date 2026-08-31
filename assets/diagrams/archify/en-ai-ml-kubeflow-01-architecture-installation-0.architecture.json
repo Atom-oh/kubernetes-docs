@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow Component Architecture",
+    "output": "en-ai-ml-kubeflow-01-architecture-installation-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Ingress Gateway",
+      "sublabel": "AuthN / AuthZ",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dashboard",
+      "type": "backend",
+      "label": "Central Dashboard",
+      "sublabel": "single UI entry point",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "profile",
+      "type": "backend",
+      "label": "Profile Controller",
+      "sublabel": "team-a / team-b namespaces",
+      "pos": [
+        550,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "controllers",
+      "type": "backend",
+      "label": "Component Controllers",
+      "sublabel": "Pipelines \u00b7 Notebook \u00b7 Katib \u00b7 Trainer \u00b7 KServe",
+      "pos": [
+        550,
+        360
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "shared control plane",
+      "pos": [
+        840,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gateway-dashboard",
+      "from": "gateway",
+      "to": "dashboard",
+      "label": "authenticated request",
+      "labelAt": [
+        255,
+        216
+      ]
+    },
+    {
+      "id": "dashboard-profile",
+      "from": "dashboard",
+      "to": "profile",
+      "label": "namespace routing"
+    },
+    {
+      "id": "dashboard-controllers",
+      "from": "dashboard",
+      "to": "controllers",
+      "label": "component calls"
+    },
+    {
+      "id": "profile-api",
+      "from": "profile",
+      "to": "apiserver",
+      "label": "reconcile"
+    },
+    {
+      "id": "controllers-api",
+      "from": "controllers",
+      "to": "apiserver",
+      "label": "reconcile"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Multi-tenancy",
+      "items": [
+        "a Profile Controller reconciles namespace, RBAC, quota, and AuthorizationPolicy per team",
+        "the Central Dashboard is the single UI entry point"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Components",
+      "items": [
+        "Pipelines, Notebooks, Katib, Trainer, and KServe each run their own controller",
+        "every controller reconciles state through the shared Kubernetes API server"
+      ]
+    }
+  ]
+}

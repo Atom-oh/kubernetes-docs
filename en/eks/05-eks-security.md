@@ -34,7 +34,7 @@ Amazon EKS combines the security features of AWS and Kubernetes to provide a mul
 
 ### EKS Security Architecture
 
-![Architecture diagram showing AWS manages the encrypted control plane, etcd, KMS, and IAM authentication, while the customer secures worker nodes, pods, service accounts, security groups, network policies, and secrets.](../.gitbook/assets/en-eks-05-eks-security-0.png)
+![Architecture diagram showing AWS manages the encrypted control plane, etcd, KMS, and IAM authentication, while the customer secures worker nodes, pods, service accounts, security groups, network policies, and secrets.](../../assets/diagrams/rendered/en-eks-05-eks-security-0.svg)
 
 ## Latest Security Trends (2023)
 
@@ -44,7 +44,7 @@ The latest trends and recommendations in the Kubernetes and EKS security domain 
 
 Moving away from traditional perimeter-based security models, this approach does not trust any access by default and continuously verifies it.
 
-![Architecture diagram mapping five Zero Trust principles to the EKS implementation methods that satisfy each one, from encrypted communication via service mesh to traffic inspection via network policies.](../.gitbook/assets/en-eks-05-eks-security-1.png)
+![Architecture diagram mapping five Zero Trust principles to the EKS implementation methods that satisfy each one, from encrypted communication via service mesh to traffic inspection via network policies.](../../assets/diagrams/rendered/en-eks-05-eks-security-1.svg)
 
 Implementing Zero Trust in EKS:
 - **Service Mesh**: mTLS communication between services using Istio or AWS App Mesh
@@ -94,7 +94,7 @@ Amazon EKS provides the following authentication mechanisms:
 2. **OIDC Provider Integration**: Integrates with external OIDC providers (e.g., Active Directory, Okta, Auth0) to manage user authentication.
 3. **IAM Roles for Service Accounts**: Links AWS IAM roles to Kubernetes service accounts so pods can securely access AWS services.
 
-![Architecture diagram showing how DevOps, developers, CI/CD, and pods authenticate through IAM Authenticator, OIDC, or IRSA into the Kubernetes API server, RBAC, and service accounts, with IRSA also granting pods direct access to AWS resources.](../.gitbook/assets/en-eks-05-eks-security-2.png)
+![Architecture diagram showing how DevOps, developers, CI/CD, and pods authenticate through IAM Authenticator, OIDC, or IRSA into the Kubernetes API server, RBAC, and service accounts, with IRSA also granting pods direct access to AWS resources.](../../assets/diagrams/rendered/en-eks-05-eks-security-2.svg)
 
 ### IAM Roles and Policy Configuration
 
@@ -220,7 +220,7 @@ The trust relationship works as follows:
 
 ### STS AssumeRoleWithWebIdentity Flow
 
-![Sequence diagram showing a pod exchanging its projected Kubernetes JWT with AWS STS, which validates the token against the EKS OIDC provider's public keys before returning temporary credentials the pod uses to call an AWS service.](../.gitbook/assets/en-eks-05-eks-security-3.png)
+![Sequence diagram showing a pod exchanging its projected Kubernetes JWT with AWS STS, which validates the token against the EKS OIDC provider's public keys before returning temporary credentials the pod uses to call an AWS service.](../../assets/diagrams/rendered/en-eks-05-eks-security-3.svg)
 
 ### Token Exchange Mechanism
 
@@ -322,7 +322,7 @@ EKS Pod Identity is a newer authentication mechanism that simplifies how pods ac
 
 The EKS Pod Identity Agent runs as a DaemonSet on your nodes and handles credential distribution:
 
-![Architecture diagram showing the seven-step credential exchange where a pod requests credentials from the node's Pod Identity Agent, which validates identity through the EKS Pod Identity Service and STS before an IAM role's temporary credentials are relayed back and injected into the pod.](../.gitbook/assets/en-eks-05-eks-security-4.png)
+![Architecture diagram showing the seven-step credential exchange where a pod requests credentials from the node's Pod Identity Agent, which validates identity through the EKS Pod Identity Service and STS before an IAM role's temporary credentials are relayed back and injected into the pod.](../../assets/diagrams/rendered/en-eks-05-eks-security-4.svg)
 
 ### Pod Identity Association Setup
 
@@ -449,7 +449,7 @@ kubectl annotate serviceaccount my-app-sa \
 
 ### Pod Identity Architecture Diagram
 
-![Architecture diagram showing two namespaces each associating a service account with its own IAM role, while pods in both namespaces request credentials from a shared Pod Identity Agent and Pod Identity Service before accessing AWS services.](../.gitbook/assets/en-eks-05-eks-security-5.png)
+![Architecture diagram showing two namespaces each associating a service account with its own IAM role, while pods in both namespaces request credentials from a shared Pod Identity Agent and Pod Identity Service before accessing AWS services.](../../assets/diagrams/rendered/en-eks-05-eks-security-5.svg)
 
 ## Cluster Endpoint Access Control
 
@@ -520,7 +520,7 @@ Operating a private-only EKS cluster requires network connectivity solutions:
 
 **Pattern 1: VPN Access**
 
-![Architecture diagram showing an admin workstation reaching the EKS API server through an AWS Client VPN tunnel into the cluster's VPC, without exposing the API server directly to the internet.](../.gitbook/assets/en-eks-05-eks-security-6.png)
+![Architecture diagram showing an admin workstation reaching the EKS API server through an AWS Client VPN tunnel into the cluster's VPC, without exposing the API server directly to the internet.](../../assets/diagrams/rendered/en-eks-05-eks-security-6.svg)
 
 ```bash
 # Create Client VPN endpoint
@@ -534,7 +534,7 @@ aws ec2 create-client-vpn-endpoint \
 
 **Pattern 2: Transit Gateway**
 
-![Architecture diagram showing an on-premises admin workstation reaching the EKS API server through Direct Connect or VPN into a Transit Gateway that routes into the EKS VPC.](../.gitbook/assets/en-eks-05-eks-security-7.png)
+![Architecture diagram showing an on-premises admin workstation reaching the EKS API server through Direct Connect or VPN into a Transit Gateway that routes into the EKS VPC.](../../assets/diagrams/rendered/en-eks-05-eks-security-7.svg)
 
 **Pattern 3: Bastion Host with SSM**
 
@@ -669,7 +669,7 @@ aws eks update-cluster-config \
 
 You can use AWS security groups to control network traffic to nodes and pods in your EKS cluster.
 
-![Architecture diagram showing internet traffic reaching worker nodes through a public-subnet load balancer and bastion host, while the private-subnet EKS control plane manages worker nodes governed by network policies, and security groups plus VPC endpoints restrict and privatize traffic at the network layer.](../.gitbook/assets/en-eks-05-eks-security-8.png)
+![Architecture diagram showing internet traffic reaching worker nodes through a public-subnet load balancer and bastion host, while the private-subnet EKS control plane manages worker nodes governed by network policies, and security groups plus VPC endpoints restrict and privatize traffic at the network layer.](../../assets/diagrams/rendered/en-eks-05-eks-security-8.svg)
 
 #### Cluster Security Group
 
@@ -751,7 +751,7 @@ Pod Security Standards, introduced in Kubernetes 1.23, provide a built-in mechan
 - **Baseline**: Prevent known privilege escalation
 - **Restricted**: Apply strong security restrictions
 
-![Layer stack diagram showing the three Pod Security Standards levels from Privileged down to Restricted, above the security-context settings and policy-engine admission controls that enforce them.](../.gitbook/assets/en-eks-05-eks-security-9.png)
+![Layer stack diagram showing the three Pod Security Standards levels from Privileged down to Restricted, above the security-context settings and policy-engine admission controls that enforce them.](../../assets/diagrams/rendered/en-eks-05-eks-security-9.svg)
 
 Example of applying PSS to a namespace:
 
@@ -875,7 +875,7 @@ SELinux provides mandatory access control that prevents:
 
 dm-verity provides cryptographic verification of the root filesystem:
 
-![Flowchart showing the Bottlerocket boot chain from bootloader to kernel to dm-verity, which builds a hash tree over the root filesystem and compares it against the trusted root hash, continuing boot only on a match and failing boot otherwise.](../.gitbook/assets/en-eks-05-eks-security-10.png)
+![Flowchart showing the Bottlerocket boot chain from bootloader to kernel to dm-verity, which builds a hash tree over the root filesystem and compares it against the trusted root hash, continuing boot only on a match and failing boot otherwise.](../../assets/diagrams/rendered/en-eks-05-eks-security-10.svg)
 
 Key benefits:
 - **Tamper Detection**: Any modification to system files is detected
@@ -991,7 +991,7 @@ The effective permissions are the intersection of identity-based policies and pe
 Effective Permissions = Identity Policy ∩ Permission Boundary
 ```
 
-![Flowchart showing a requested action evaluated against both the identity-based policy and the permission boundary, where the effective permission is the intersection of the two: allowed only if both allow, denied if either denies.](../.gitbook/assets/en-eks-05-eks-security-11.png)
+![Flowchart showing a requested action evaluated against both the identity-based policy and the permission boundary, where the effective permission is the intersection of the two: allowed only if both allow, denied if either denies.](../../assets/diagrams/rendered/en-eks-05-eks-security-11.svg)
 
 Example scenario:
 - Identity policy allows: `s3:*`, `ec2:*`, `rds:*`
@@ -1270,7 +1270,7 @@ Amazon EKS added seven new IAM condition keys that let you enforce policy-based,
 
 EKS encrypts Kubernetes secrets stored in etcd by default. You can use AWS KMS for an additional layer of encryption:
 
-![Architecture diagram showing external secret stores feeding Kubernetes Secrets through integration tools such as the External Secrets Operator, then flowing into encrypted storage and pod retrieval, alongside independent etcd envelope encryption.](../.gitbook/assets/en-eks-05-eks-security-12.png)
+![Architecture diagram showing external secret stores feeding Kubernetes Secrets through integration tools such as the External Secrets Operator, then flowing into encrypted storage and pod retrieval, alongside independent etcd envelope encryption.](../../assets/diagrams/rendered/en-eks-05-eks-security-12.svg)
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2 --encryption-provider-config-key arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
@@ -1349,7 +1349,7 @@ sops --decrypt secrets.enc.yaml
 
 You can enable EKS control plane audit logs to record all API calls made in the cluster:
 
-![Architecture diagram showing two parallel pipelines: control-plane and audit logs flowing through CloudWatch into a log pipeline, Security Hub, and alerting, alongside AWS Config and Inspector findings mapped through a CIS benchmark to compliance standards such as PCI DSS and HIPAA.](../.gitbook/assets/en-eks-05-eks-security-13.png)
+![Architecture diagram showing two parallel pipelines: control-plane and audit logs flowing through CloudWatch into a log pipeline, Security Hub, and alerting, alongside AWS Config and Inspector findings mapped through a CIS benchmark to compliance standards such as PCI DSS and HIPAA.](../../assets/diagrams/rendered/en-eks-05-eks-security-13.svg)
 
 ```bash
 aws eks update-cluster-config \
@@ -1377,7 +1377,7 @@ You can use AWS Security Hub to centrally manage and monitor the security postur
 
 You can enable Amazon GuardDuty EKS Protection to detect potential security threats in your EKS cluster:
 
-![Architecture diagram showing AWS security services and Kubernetes security tools feeding signal collection, which is analyzed and correlated to drive response and remediation, while findings also report into AWS Security Hub, which in turn configures what signal categories are collected.](../.gitbook/assets/en-eks-05-eks-security-14.png)
+![Architecture diagram showing AWS security services and Kubernetes security tools feeding signal collection, which is analyzed and correlated to drive response and remediation, while findings also report into AWS Security Hub, which in turn configures what signal categories are collected.](../../assets/diagrams/rendered/en-eks-05-eks-security-14.svg)
 
 ```bash
 aws guardduty update-detector \
@@ -1464,7 +1464,7 @@ Additional security requirements to consider when using EKS in the financial ser
 
 ### EKS Security Architecture Example for Financial Services
 
-![Architecture diagram showing internet traffic filtered by AWS WAF and a load balancer into application pods running on a private-subnet EKS cluster alongside security sidecars, with security tooling monitoring the cluster and KMS-encrypted data services holding RDS, S3, and DynamoDB.](../.gitbook/assets/en-eks-05-eks-security-15.png)
+![Architecture diagram showing internet traffic filtered by AWS WAF and a load balancer into application pods running on a private-subnet EKS cluster alongside security sidecars, with security tooling monitoring the cluster and KMS-encrypted data services holding RDS, S3, and DynamoDB.](../../assets/diagrams/rendered/en-eks-05-eks-security-15.svg)
 
 ## Conclusion
 

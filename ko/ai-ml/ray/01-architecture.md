@@ -55,6 +55,8 @@ Worker node는 task와 actor를 실행하고, 클러스터 전체가 사용하�
 
 ![Ray 클러스터에서 Head Node(Global Control Store, Driver, Autoscaler)가 여러 Worker Node의 Task/Actor 실행을 관리하고, 모든 노드가 클러스터 전역에 걸쳐 공유되는 분산 Object Store에 접근하는 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-ai-ml-ray-01-architecture-0.png)
 
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-ray-01-architecture-0.html)
+
 모든 노드는 분산 object store에 함께 참여하므로, 한 worker node의 task가 만들어낸 객체를 다른 worker node에서 실행 중인 task나 actor가 읽을 수 있으며, 그 사이의 데이터 이동은 Ray가 처리합니다.
 
 ## 동일한 기반 위에 구축된 상위 레벨 라이브러리

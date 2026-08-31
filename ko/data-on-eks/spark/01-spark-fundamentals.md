@@ -41,7 +41,7 @@ spark-submit \
 
 `k8s://<endpoint>` 형태의 마스터 URL은 `spark-submit`이 Kubernetes API 서버를 바라보게 만듭니다. 제출 이후의 흐름은 다음과 같습니다.
 
-![spark-submit 사용자의 요청으로 Kubernetes API 서버가 Driver Pod를 생성하고, Driver Pod가 다시 API 서버를 통해 Executor Pod들을 생성한 뒤 Executor가 Driver에 등록·보고하고 작업을 할당받는 순서를 보여주는 시퀀스 다이어그램.](../../.gitbook/assets/ko-data-on-eks-spark-01-spark-fundamentals-0.png)
+![spark-submit 사용자의 요청으로 Kubernetes API 서버가 Driver Pod를 생성하고, Driver Pod가 다시 API 서버를 통해 Executor Pod들을 생성한 뒤 Executor가 Driver에 등록·보고하고 작업을 할당받는 순서를 보여주는 시퀀스 다이어그램.](../../../assets/diagrams/rendered/ko-data-on-eks-spark-01-spark-fundamentals-0.svg)
 
 1. `spark-submit`은 Kubernetes API 서버와 직접 통신하여 **드라이버 Pod**를 곧바로 생성합니다. 중간에 별도의 스케줄링 프로세스가 개입하지 않습니다.
 2. 드라이버 Pod가 실행되면, 드라이버 스스로가 Kubernetes API를 다시 호출해 필요한 **executor Pod**를 생성합니다. 이때 기준이 되는 값은 `spark.executor.instances`이거나, 뒤에서 다룰 Dynamic Resource Allocation입니다.

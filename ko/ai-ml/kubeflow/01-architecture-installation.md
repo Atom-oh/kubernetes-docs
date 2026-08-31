@@ -55,6 +55,8 @@ Kubeflow의 아키텍처는 모든 컴포넌트가 컨트롤러와 CRD 집합으
 
 ![Istio Ingress Gateway와 AuthN/AuthZ를 통과한 요청이 Kubeflow Central Dashboard에 도달하고, 대시보드가 프로필 컨트롤러 기반 멀티테넌시 계층(team-a/team-b 네임스페이스)과 여러 컴포넌트 컨트롤러(Pipelines, Notebook, Katib, Trainer, KServe)를 각각 호출하며 두 경로 모두 Kubernetes API Server로 수렴하는 Kubeflow 아키텍처를 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-01-architecture-installation-0.png)
 
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-01-architecture-installation-0.html)
+
 몇 가지 짚어둘 점이 있습니다.
 
 - **테넌시 경계로서의 Profile.** "Kubeflow Profile"은 Kubernetes 네임스페이스와, 이를 하나의 `Profile` 커스텀 리소스로부터 Profile Controller가 조정(reconcile)하는 RBAC 바인딩·리소스 쿼터·Istio `AuthorizationPolicy` 묶음입니다. 사용자나 팀마다 보통 하나의 프로필을 부여받으며, 다른 모든 컴포넌트(Notebooks, Pipelines 실행, Katib 실험)는 요청한 사용자의 프로필 네임스페이스 안에 리소스를 생성합니다.

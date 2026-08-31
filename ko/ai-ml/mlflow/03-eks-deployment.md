@@ -29,7 +29,7 @@ EKS에서의 프로덕션 MLflow 배포는 세 가지 구성 요소로 이루어
 
 **아티팩트 저장소.** 백엔드 저장소의 행(row)은 작지만, 그 옆에 함께 기록되는 것들은 종종 그렇지 않습니다. 직렬화된 모델, 플롯, 데이터셋 같은 대용량 바이너리 객체는 데이터베이스가 아니라 별도의 아티팩트 저장소로 갑니다. AWS에서는 Amazon S3가 그 역할을 맡습니다: 트래킹 서버는 기본 아티팩트 루트로 설정된 S3 URI 하위에 아티팩트를 읽고 쓰며, 클라이언트는 서버 설정에 따라 트래킹 서버를 경유해서, 또는 S3에 직접 접근해서 아티팩트를 가져옵니다.
 
-![MLflow 트래킹 서버가 ALB 뒤 Kubernetes Service로 노출되고, 두 개의 트래킹 서버 Pod가 ServiceAccount(IRSA/Pod Identity)를 통해 부여된 권한으로 RDS/Aurora PostgreSQL 백엔드 저장소와 S3 아티팩트 저장소에 접근하는 EKS 배포 구조.](../../.gitbook/assets/ko-ai-ml-mlflow-03-eks-deployment-0.png)
+![MLflow 트래킹 서버가 ALB 뒤 Kubernetes Service로 노출되고, 두 개의 트래킹 서버 Pod가 ServiceAccount(IRSA/Pod Identity)를 통해 부여된 권한으로 RDS/Aurora PostgreSQL 백엔드 저장소와 S3 아티팩트 저장소에 접근하는 EKS 배포 구조.](../../../assets/diagrams/rendered/ko-ai-ml-mlflow-03-eks-deployment-0.svg)
 
 ## 설치 방식
 

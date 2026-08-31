@@ -85,7 +85,7 @@ After completing this document, you will be able to:
 
 Crossplane introduces five fundamental concepts that work together to provide infrastructure abstraction:
 
-![Architecture diagram showing a developer's namespaced Claim creating a cluster-scoped Composite Resource, which a Composition maps to Managed Resources that Crossplane reconciles into real S3, RDS, and Security Group objects in the AWS account.](../.gitbook/assets/en-platform-engineering-07-crossplane-0.png)
+![Architecture diagram showing a developer's namespaced Claim creating a cluster-scoped Composite Resource, which a Composition maps to Managed Resources that Crossplane reconciles into real S3, RDS, and Security Group objects in the AWS account.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-0.svg)
 
 **1. Provider**: A Crossplane package that installs CRDs and controllers for a specific cloud provider. For example, `provider-aws` installs CRDs for every AWS service (S3, RDS, VPC, IAM, etc.) and runs controllers that know how to create, update, and delete those AWS resources.
 
@@ -101,7 +101,7 @@ Crossplane introduces five fundamental concepts that work together to provide in
 
 Crossplane runs as a set of controllers inside your Kubernetes cluster:
 
-![Architecture diagram of the Crossplane runtime, showing the core controller managing RBAC and the package manager, which installs a provider-aws pod that watches CRDs in etcd and reconciles them against the AWS APIs.](../.gitbook/assets/en-platform-engineering-07-crossplane-1.png)
+![Architecture diagram of the Crossplane runtime, showing the core controller managing RBAC and the package manager, which installs a provider-aws pod that watches CRDs in etcd and reconciles them against the AWS APIs.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-1.svg)
 
 - **Crossplane Core Controller**: Manages the lifecycle of Compositions, XRDs, and the mapping between XRs and Managed Resources
 - **RBAC Manager**: Automatically generates Kubernetes RBAC ClusterRoles for XRDs so that Claims can be used in namespaces
@@ -611,7 +611,7 @@ Compositions are the heart of Crossplane's value proposition. They allow platfor
 
 ### Workflow Overview
 
-![Linear flow showing the platform team defining an XRD and writing a Composition, then a developer creating a Claim that Crossplane turns into a Composite Resource, mapped by the Composition into managed resources a provider provisions in AWS.](../.gitbook/assets/en-platform-engineering-07-crossplane-2.png)
+![Linear flow showing the platform team defining an XRD and writing a Composition, then a developer creating a Claim that Crossplane turns into a Composite Resource, mapped by the Composition into managed resources a provider provisions in AWS.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-2.svg)
 
 ### Step 1: Define a CompositeResourceDefinition (XRD)
 
@@ -1145,7 +1145,7 @@ spec:
 
 ### Claim Lifecycle
 
-![Sequence diagram showing a developer's kubectl apply flowing through Kubernetes, a Composite Resource, and managed resources into AWS to provision infrastructure and return a connection secret, followed by a continuous loop that detects and corrects configuration drift.](../.gitbook/assets/en-platform-engineering-07-crossplane-3.png)
+![Sequence diagram showing a developer's kubectl apply flowing through Kubernetes, a Composite Resource, and managed resources into AWS to provision infrastructure and return a connection secret, followed by a continuous loop that detects and corrects configuration drift.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-3.svg)
 
 ---
 
@@ -1209,7 +1209,7 @@ Combining [Backstage](./06-backstage-idp.md) as the developer portal with Crossp
 
 ### Architecture Overview
 
-![Architecture diagram showing a Backstage software template generating a Claim into GitHub, ArgoCD syncing and applying it to the cluster, and Crossplane turning it into a Composite Resource and managed resources that provision RDS and S3 in AWS.](../.gitbook/assets/en-platform-engineering-07-crossplane-4.png)
+![Architecture diagram showing a Backstage software template generating a Claim into GitHub, ArgoCD syncing and applying it to the cluster, and Crossplane turning it into a Composite Resource and managed resources that provision RDS and S3 in AWS.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-4.svg)
 
 ### Backstage Software Template for Crossplane Claims
 

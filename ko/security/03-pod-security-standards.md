@@ -42,7 +42,7 @@ PodSecurityPolicy(PSP)는 Kubernetes 1.3에서 처음 도입된 Pod 보안 메�
 
 Pod Security Standards(PSS)와 Pod Security Admission(PSA)은 Kubernetes 1.22에서 알파로 도입되어, 1.23에서 베타, 1.25에서 GA(Generally Available)가 되었습니다.
 
-![Kubernetes 1.21에서 PSP 사용 중단이 발표된 뒤 1.22 PSA 알파, 1.23 PSA 베타를 거쳐 1.25에서 PSP가 완전히 제거되고 PSA가 GA되며 1.28 이후 PSS/PSA가 안정화되는 전환 과정을 보여주는 타임라인.](../.gitbook/assets/ko-security-03-pod-security-standards-0.png)
+![Kubernetes 1.21에서 PSP 사용 중단이 발표된 뒤 1.22 PSA 알파, 1.23 PSA 베타를 거쳐 1.25에서 PSP가 완전히 제거되고 PSA가 GA되며 1.28 이후 PSS/PSA가 안정화되는 전환 과정을 보여주는 타임라인.](../../assets/diagrams/rendered/ko-security-03-pod-security-standards-0.svg)
 
 ### PSP vs PSS 비교
 
@@ -86,7 +86,7 @@ Pod Security Admission(PSA)은 Kubernetes API 서버에 내장된 Admission Cont
 
 ### PSA 작동 방식
 
-![Pod 생성 요청이 API Server를 거쳐 PSA Controller의 네임스페이스 레이블 검증을 통과하면 etcd에 저장되고 201로 응답하며, 정책을 위반하면 403으로 거부되는 두 갈래의 Admission 검증 흐름을 보여주는 시퀀스 다이어그램.](../.gitbook/assets/ko-security-03-pod-security-standards-1.png)
+![Pod 생성 요청이 API Server를 거쳐 PSA Controller의 네임스페이스 레이블 검증을 통과하면 etcd에 저장되고 201로 응답하며, 정책을 위반하면 403으로 거부되는 두 갈래의 Admission 검증 흐름을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/ko-security-03-pod-security-standards-1.svg)
 
 ### PSA 활성화 상태 확인
 
@@ -502,7 +502,7 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 PSP에서 PSS로의 마이그레이션은 신중하게 계획하고 단계적으로 수행해야 합니다.
 
-![현재 상태 분석부터 PSS 프로파일 매핑, 테스트 검증, warn/audit 모드 적용, 워크로드 수정을 거쳐 enforce 모드로 전환하고 마지막으로 PSP를 제거하는 7단계 마이그레이션 절차를 보여주는 흐름도.](../.gitbook/assets/ko-security-03-pod-security-standards-2.png)
+![현재 상태 분석부터 PSS 프로파일 매핑, 테스트 검증, warn/audit 모드 적용, 워크로드 수정을 거쳐 enforce 모드로 전환하고 마지막으로 PSP를 제거하는 7단계 마이그레이션 절차를 보여주는 흐름도.](../../assets/diagrams/rendered/ko-security-03-pod-security-standards-2.svg)
 
 ### 1단계: 현재 PSP 분석
 

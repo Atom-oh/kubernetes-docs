@@ -24,7 +24,7 @@ Distributed tracing tracks and visualizes request flows between microservices, e
 
 Istio supports the W3C Trace Context standard to ensure standardized trace propagation.
 
-![Sequence diagram showing a client request propagating W3C trace context through Envoy sidecars and app containers in Service A and Service B, with each Envoy sidecar and application exporting spans asynchronously to the Jaeger Collector.](../../../.gitbook/assets/en-service-mesh-istio-observability-02-tracing-0.png)
+![Sequence diagram showing a client request propagating W3C trace context through Envoy sidecars and app containers in Service A and Service B, with each Envoy sidecar and application exporting spans asynchronously to the Jaeger Collector.](../../../../assets/diagrams/rendered/en-service-mesh-istio-observability-02-tracing-0.svg)
 
 ### Core Concepts
 

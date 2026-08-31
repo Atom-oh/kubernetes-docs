@@ -16,7 +16,7 @@
 
 ApplicationSet은 템플릿을 사용하여 여러 ArgoCD Application을 자동으로 생성하는 컨트롤러입니다. 대규모 배포, 멀티 클러스터 환경, 동적 환경 관리에 유용합니다.
 
-![Generator와 Template 두 입력이 ApplicationSet Controller의 템플릿 처리 단계를 거쳐 여러 개의 Application 리소스로 동시에 생성되는 팬아웃 구조를 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-0.png)
+![Generator와 Template 두 입력이 ApplicationSet Controller의 템플릿 처리 단계를 거쳐 여러 개의 Application 리소스로 동시에 생성되는 팬아웃 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-0.svg)
 
 ### 기본 구조
 
@@ -778,7 +778,7 @@ spec:
 
 ### Progressive Sync 흐름
 
-![myapp-dev에서 myapp-staging을 거쳐 myapp-prod-ap, myapp-prod-us 순으로 진행되는 3단계 프로그레시브 롤아웃과 Prod 단계의 maxUpdate 1 제약을 보여주는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-1.png)
+![myapp-dev에서 myapp-staging을 거쳐 myapp-prod-ap, myapp-prod-us 순으로 진행되는 3단계 프로그레시브 롤아웃과 Prod 단계의 maxUpdate 1 제약을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-1.svg)
 
 ## 멀티 클러스터 배포 패턴
 
@@ -987,7 +987,7 @@ spec:
 
 ### 템플릿 병합 동작
 
-![기본 템플릿과 생성기별 오버라이드가 Deep Merge 단계에서 합쳐져 최종 템플릿이 만들어지고, 오버라이드가 기본값보다 우선한다는 규칙을 편집적 캐아웃으로 강조한 다이어그램](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-2.png)
+![기본 템플릿과 생성기별 오버라이드가 Deep Merge 단계에서 합쳐져 최종 템플릿이 만들어지고, 오버라이드가 기본값보다 우선한다는 규칙을 편집적 캐아웃으로 강조한 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-2.svg)
 
 ## 다음 단계
 

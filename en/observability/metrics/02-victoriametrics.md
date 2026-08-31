@@ -37,7 +37,7 @@ VictoriaMetrics is a high-performance, cost-effective time series database and m
 
 ### VictoriaMetrics vs Prometheus
 
-![Diagram comparing Prometheus and VictoriaMetrics traits: single-node architecture needing horizontal scaling, medium compression improved 7x, PromQL evolving into the fully-compatible MetricsQL, and limited retention becoming unlimited long-term storage.](../../.gitbook/assets/en-observability-metrics-02-victoriametrics-0.png)
+![Diagram comparing Prometheus and VictoriaMetrics traits: single-node architecture needing horizontal scaling, medium compression improved 7x, PromQL evolving into the fully-compatible MetricsQL, and limited retention becoming unlimited long-term storage.](../../../assets/diagrams/rendered/en-observability-metrics-02-victoriametrics-0.svg)
 
 | Item | Prometheus | VictoriaMetrics |
 |------|------------|-----------------|
@@ -55,7 +55,7 @@ VictoriaMetrics offers two deployment modes:
 
 ### Selection Guide
 
-![Decision flowchart for choosing a VictoriaMetrics deployment mode: high daily ingestion routes straight to Cluster Mode, while lower ingestion branches on high-availability and complexity tolerance to land on vmsingle, vmsingle with replicated storage, or Cluster Mode.](../../.gitbook/assets/en-observability-metrics-02-victoriametrics-1.png)
+![Decision flowchart for choosing a VictoriaMetrics deployment mode: high daily ingestion routes straight to Cluster Mode, while lower ingestion branches on high-availability and complexity tolerance to land on vmsingle, vmsingle with replicated storage, or Cluster Mode.](../../../assets/diagrams/rendered/en-observability-metrics-02-victoriametrics-1.svg)
 
 ## Single-Node Mode
 
@@ -174,7 +174,7 @@ Scalable cluster configuration for large-scale environments.
 
 ### Architecture
 
-![Cluster architecture diagram showing vmagent and Prometheus writing through vminsert into the vmstorage cluster, while Grafana and vmalert query vmstorage through vmselect, with vmstorage as the shared hub for both paths.](../../.gitbook/assets/en-observability-metrics-02-victoriametrics-2.png)
+![Cluster architecture diagram showing vmagent and Prometheus writing through vminsert into the vmstorage cluster, while Grafana and vmalert query vmstorage through vmselect, with vmstorage as the shared hub for both paths.](../../../assets/diagrams/rendered/en-observability-metrics-02-victoriametrics-2.svg)
 
 ### Components
 

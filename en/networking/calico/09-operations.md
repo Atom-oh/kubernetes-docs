@@ -7,7 +7,7 @@
 
 This chapter provides comprehensive operational guidance for Calico deployments, covering installation, monitoring, troubleshooting, upgrades, and best practices for production environments.
 
-![Flowchart of the Calico operations lifecycle showing installation leading into configuration, which drives monitoring, troubleshooting, upgrades, and backup, with troubleshooting and upgrades both feeding fixes back into configuration as the shared hub.](../../.gitbook/assets/en-networking-calico-09-operations-0.png)
+![Flowchart of the Calico operations lifecycle showing installation leading into configuration, which drives monitoring, troubleshooting, upgrades, and backup, with troubleshooting and upgrades both feeding fixes back into configuration as the shared hub.](../../../assets/diagrams/rendered/en-networking-calico-09-operations-0.svg)
 
 ## Installation Guide
 

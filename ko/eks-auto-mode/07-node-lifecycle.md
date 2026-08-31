@@ -53,7 +53,7 @@ EKS Auto Mode는 Karpenter 기반 `expireAfter` 기본값을 사용하며, 노�
 
 ### expireAfter 동작 원리
 
-![expireAfter 타이머가 만료되면 워크로드 존재 여부에 따라 Pod 퇴거·PDB 확인·Graceful 종료를 거치는 경로와 즉시 종료 경로로 나뉘어 노드를 삭제하고 필요시 새 노드를 프로비저닝하는 노드 만료 처리 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-0.png)
+![expireAfter 타이머가 만료되면 워크로드 존재 여부에 따라 Pod 퇴거·PDB 확인·Graceful 종료를 거치는 경로와 즉시 종료 경로로 나뉘어 노드를 삭제하고 필요시 새 노드를 프로비저닝하는 노드 만료 처리 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-auto-mode-07-node-lifecycle-0.svg)
 
 ## AMI 관리 전략
 
@@ -153,7 +153,7 @@ kubectl describe nodeclaim <name> | grep -A5 "Status:"
 
 ### Drift 발생 시나리오
 
-![NodePool, NodeClass, AMI, 보안 그룹 변경이라는 네 가지 트리거가 Auto Mode Controller로 모여 감지된 뒤 Drift 표시, 순차적 교체, 새 노드 프로비저닝 순으로 조치가 이어지는 Drift 감지 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-1.png)
+![NodePool, NodeClass, AMI, 보안 그룹 변경이라는 네 가지 트리거가 Auto Mode Controller로 모여 감지된 뒤 Drift 표시, 순차적 교체, 새 노드 프로비저닝 순으로 조치가 이어지는 Drift 감지 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-auto-mode-07-node-lifecycle-1.svg)
 
 ### AMI 업데이트 주기
 
@@ -270,7 +270,7 @@ KERNEL:.status.nodeInfo.kernelVersion
 
 ### 상호작용 이해
 
-![운영 중인 노드가 사용률 저하 시 Consolidation으로 Pod를 이동시켜 제거되거나 expireAfter 도달 시 Expiration으로 교체가 시작되며, 두 조건 모두 만족하지 않으면 다시 운영 중 상태로 돌아오는 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-07-node-lifecycle-2.png)
+![운영 중인 노드가 사용률 저하 시 Consolidation으로 Pod를 이동시켜 제거되거나 expireAfter 도달 시 Expiration으로 교체가 시작되며, 두 조건 모두 만족하지 않으면 다시 운영 중 상태로 돌아오는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-auto-mode-07-node-lifecycle-2.svg)
 
 ### 권장 조합 설정
 

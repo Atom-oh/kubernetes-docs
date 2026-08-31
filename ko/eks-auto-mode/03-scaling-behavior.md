@@ -13,7 +13,7 @@
 
 EKS Auto Mode의 스케일링 흐름을 이해하면 최적화에 도움이 됩니다.
 
-![Pod 생성 시 스케줄이 불가능하면 Auto Mode Controller가 Pending Pod를 감지해 NodePool을 평가하고 최적 인스턴스를 선택해 노드를 프로비저닝한 뒤 Pod를 스케줄링하여 Running 상태로 만드는 흐름을 보여주는 플로차트.](../.gitbook/assets/ko-eks-auto-mode-03-scaling-behavior-0.png)
+![Pod 생성 시 스케줄이 불가능하면 Auto Mode Controller가 Pending Pod를 감지해 NodePool을 평가하고 최적 인스턴스를 선택해 노드를 프로비저닝한 뒤 Pod를 스케줄링하여 Running 상태로 만드는 흐름을 보여주는 플로차트.](../../assets/diagrams/rendered/ko-eks-auto-mode-03-scaling-behavior-0.svg)
 
 ## Consolidation 동작
 
@@ -69,7 +69,7 @@ spec:
     consolidateAfter: 1m
 ```
 
-![통합 전 낮은 사용률로 분산돼 있던 노드 1·2·3의 워크로드가 통합 후 노드 1로 모이면서 사용률이 높아지고, 노드 2와 3은 제거되는 것을 보여주는 다이어그램.](../.gitbook/assets/ko-eks-auto-mode-03-scaling-behavior-1.png)
+![통합 전 낮은 사용률로 분산돼 있던 노드 1·2·3의 워크로드가 통합 후 노드 1로 모이면서 사용률이 높아지고, 노드 2와 3은 제거되는 것을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-eks-auto-mode-03-scaling-behavior-1.svg)
 
 ## Drift 감지 및 교체
 

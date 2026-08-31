@@ -20,7 +20,7 @@ ServiceEntry registers external services in the Istio service mesh, allowing the
 
 By default, Istio mesh does not control traffic to external services. Using ServiceEntry:
 
-![Side-by-side comparison showing that without a ServiceEntry, mesh traffic to an external API is unmanaged with no monitoring, policy enforcement, or circuit breaker, while with a ServiceEntry the same traffic is managed and gains all three capabilities.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-0.png)
+![Side-by-side comparison showing that without a ServiceEntry, mesh traffic to an external API is unmanaged with no monitoring, policy enforcement, or circuit breaker, while with a ServiceEntry the same traffic is managed and gains all three capabilities.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-12-service-entry-0.svg)
 
 ### Key Benefits
 
@@ -36,7 +36,7 @@ By default, Istio mesh does not control traffic to external services. Using Serv
 
 ServiceEntry adds external services to the Istio service registry.
 
-![An application inside the service mesh sends a request through a ServiceEntry registration, which applies traffic control, monitoring, and security before fanning out to an external API and an external database.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-12-service-entry-1.png)
+![An application inside the service mesh sends a request through a ServiceEntry registration, which applies traffic control, monitoring, and security before fanning out to an external API and an external database.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-12-service-entry-1.svg)
 
 ### Basic Structure
 

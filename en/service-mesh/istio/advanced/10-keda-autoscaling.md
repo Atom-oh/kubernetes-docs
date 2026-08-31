@@ -72,7 +72,7 @@ Practical scaling patterns covered in this document:
 
 ### Metrics-based Scaling Flow
 
-![A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus, compares the result to a threshold, and when it decides to scale out it updates the HPA target so Kubernetes creates new Pods, then waits out a cooldown period before evaluating again.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-0.png)
+![A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus, compares the result to a threshold, and when it decides to scale out it updates the HPA target so Kubernetes creates new Pods, then waits out a cooldown period before evaluating again.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-0.svg)
 
 ### ScaledObject Basic Structure
 
@@ -147,7 +147,7 @@ spec:
 
 #### How It Works
 
-![A polling loop collects RPS metrics, checks the RPS against a scale-out threshold and a scale-in threshold, adjusts replica count when a threshold is crossed, then waits and repeats.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-1.png)
+![A polling loop collects RPS metrics, checks the RPS against a scale-out threshold and a scale-in threshold, adjusts replica count when a threshold is crossed, then waits and repeats.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-1.svg)
 
 ### 2. Latency Based Scaling
 
@@ -716,7 +716,7 @@ spec:
 
 ### 1. Metric Selection Guide
 
-![A decision tree that routes a workload to RPS-based, latency-based, predictive, or composite scaling based on whether it is stateless, has a predictable traffic pattern, and is latency sensitive, with the two single-metric strategies able to combine into a composite one.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-2.png)
+![A decision tree that routes a workload to RPS-based, latency-based, predictive, or composite scaling based on whether it is stateless, has a predictable traffic pattern, and is latency sensitive, with the two single-metric strategies able to combine into a composite one.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-2.svg)
 
 **Recommended Metrics**:
 

@@ -55,7 +55,7 @@ The DAG-delivery difference in the table above is more than a checkbox. Part 3's
 
 Even though MWAA's own control plane isn't on your EKS cluster, an MWAA DAG can still target and manage workloads on an EKS cluster you do control — the same `KubernetesPodOperator` from Part 3, pointed outward instead of in-cluster.
 
-![A DAG running on the AWS-managed MWAA scheduler uses the KubernetesPodOperator with in_cluster=False and a synced kube_config.yaml to reach across into a separate EKS cluster and create a pod there, authorized by an eksctl iamidentitymapping that grants the MWAA execution role access to the EKS cluster's RBAC.](../../.gitbook/assets/en-data-on-eks-airflow-04-mwaa-integration-0.png)
+![A DAG running on the AWS-managed MWAA scheduler uses the KubernetesPodOperator with in_cluster=False and a synced kube_config.yaml to reach across into a separate EKS cluster and create a pod there, authorized by an eksctl iamidentitymapping that grants the MWAA execution role access to the EKS cluster's RBAC.](../../../assets/diagrams/rendered/en-data-on-eks-airflow-04-mwaa-integration-0.svg)
 
 Because MWAA's execution environment has no in-cluster Kubernetes API access, `KubernetesPodOperator` has to authenticate the same way any external client would: with a kubeconfig file and an IAM identity that the target cluster's RBAC trusts.
 

@@ -30,7 +30,7 @@ kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable
 
 vLLM is an LLM inference engine with the following characteristics:
 
-![Diagram grouping vLLM's core features, its internal component pipeline, and the resulting benefits such as memory efficiency and high throughput.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
+![Diagram grouping vLLM's core features, its internal component pipeline, and the resulting benefits such as memory efficiency and high throughput.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg)
 
 ### Key Features of vLLM
 
@@ -207,7 +207,7 @@ response = client.chat.completions.create(
 
 System requirements for deploying vLLM on EKS:
 
-![Diagram showing hardware and software prerequisites for vLLM, and how GPU memory determines the supported model size tier.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
+![Diagram showing hardware and software prerequisites for vLLM, and how GPU memory determines the supported model size tier.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg)
 
 1. **Hardware**:
    - NVIDIA GPU (Volta, Turing, Ampere, Hopper architecture)
@@ -231,7 +231,7 @@ System requirements for deploying vLLM on EKS:
 
 ## EKS Infrastructure Configuration
 
-![Architecture diagram of an Amazon EKS cluster running vLLM: a control plane, GPU and CPU node groups, storage and networking resources, and supporting AWS services.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
+![Architecture diagram of an Amazon EKS cluster running vLLM: a control plane, GPU and CPU node groups, storage and networking resources, and supporting AWS services.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg)
 
 ## Storage Configuration
 
@@ -326,7 +326,7 @@ spec:
 
 The following diagram shows two main architectures for deploying vLLM on EKS:
 
-![Diagram comparing a single-node vLLM pod deployment with a multi-node NCCL-synchronized deployment, both fed by a load balancer and sharing FSx/S3-backed storage.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
+![Diagram comparing a single-node vLLM pod deployment with a multi-node NCCL-synchronized deployment, both fed by a load balancer and sharing FSx/S3-backed storage.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg)
 
 ### Single Node Deployment
 
@@ -518,7 +518,7 @@ spec:
 
 ## Performance Optimization
 
-![Diagram showing GPU memory, throughput, and network optimization techniques, each with its configuration flag, converging on overall performance improvement.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
+![Diagram showing GPU memory, throughput, and network optimization techniques, each with its configuration flag, converging on overall performance improvement.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg)
 
 ### GPU Memory Optimization
 
@@ -607,7 +607,7 @@ affinity:
 
 ## Monitoring and Logging
 
-![Diagram showing vLLM, GPU, and Kubernetes metrics flowing into a Prometheus/Grafana monitoring stack that produces dashboards and alerts, alongside a separate logging stack.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
+![Diagram showing vLLM, GPU, and Kubernetes metrics flowing into a Prometheus/Grafana monitoring stack that produces dashboards and alerts, alongside a separate logging stack.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg)
 
 ### Prometheus Metrics
 
@@ -683,7 +683,7 @@ data:
 
 ## Autoscaling
 
-![Diagram showing CPU, GPU, request-rate, and queue-length signals driving pod-level autoscaling, which in turn drives GPU node autoscaling and spot capacity.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
+![Diagram showing CPU, GPU, request-rate, and queue-length signals driving pod-level autoscaling, which in turn drives GPU node autoscaling and spot capacity.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg)
 
 ### HPA (Horizontal Pod Autoscaler)
 
@@ -828,7 +828,7 @@ securityContext:
 
 ## Client Integration
 
-![Diagram showing client SDKs reaching vLLM through an API gateway, a security layer for authentication and rate limiting, and finally the load-balanced backend service.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
+![Diagram showing client SDKs reaching vLLM through an API gateway, a security layer for authentication and rate limiting, and finally the load-balanced backend service.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg)
 
 ### API Gateway
 

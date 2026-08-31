@@ -65,7 +65,7 @@ Model Registry의 조직적 가치는 무엇보다 두 가지 서로 다른 관�
 
 이렇게 분리해두면, 후보 모델을 만드는 사람이나 시스템이 실제로 무엇이 프로덕션에서 서빙되는지 직접 통제할 필요가 없고, 모델을 소비하는 시스템도 버전 번호를 수동으로 추적할 필요가 없습니다. `challenger` alias는 `champion`과 함께 자주 사용되며, 현재 서빙 중인 것을 건드리지 않으면서 승격 검토 중인 버전을 표시하는 용도로 쓰입니다.
 
-![서빙 시스템이 fraud-detector 모델의 champion, challenger 별칭을 통해 각각 정식 트래픽과 그림자 평가 트래픽을 서로 다른 모델 버전으로 라우팅하는 구조를 보여준다.](../../.gitbook/assets/ko-ai-ml-mlflow-02-model-registry-0.png)
+![서빙 시스템이 fraud-detector 모델의 champion, challenger 별칭을 통해 각각 정식 트래픽과 그림자 평가 트래픽을 서로 다른 모델 버전으로 라우팅하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-mlflow-02-model-registry-0.svg)
 
 ## 모델 계보와 재현성
 

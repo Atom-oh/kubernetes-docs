@@ -34,7 +34,7 @@ This guide builds a complete FinOps cost visibility platform on Kubernetes using
 
 ### 1.1 Inform, Optimize, Operate Cycle
 
-![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
+![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-0.svg)
 
 **Inform Phase**: Establish visibility by deploying cost monitoring tools, implementing a label strategy, and building showback dashboards. This is the foundation all optimization efforts build on.
 
@@ -577,7 +577,7 @@ spec:
 
 ### 3.3 Shared Cost Distribution
 
-![Flowchart showing total cluster cost split into direct team costs, shared platform costs, and idle costs, where the shared costs (kube-system, monitoring, ingress-nginx) and idle costs are each distributed back to teams using a different weighting method (CPU, total cost, even split, or weighted distribution).](../.gitbook/assets/en-ops-13-finops-cost-platform-1.png)
+![Flowchart showing total cluster cost split into direct team costs, shared platform costs, and idle costs, where the shared costs (kube-system, monitoring, ingress-nginx) and idle costs are each distributed back to teams using a different weighting method (CPU, total cost, even split, or weighted distribution).](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-1.svg)
 
 | Distribution Method | When to Use | Pros | Cons |
 |-------------------|-------------|------|------|
@@ -1201,7 +1201,7 @@ kubectl get namespaces -l goldilocks.fairwinds.com/enabled=true
 
 For mature organizations, VPA recommendations can flow into an automated pipeline that creates pull requests for review.
 
-![Flowchart showing VPA recommendations collected on a schedule, compared to current requests, and — when the change exceeds 20% — turned into a pull request that a team reviews before ArgoCD syncs it; smaller changes are skipped.](../.gitbook/assets/en-ops-13-finops-cost-platform-2.png)
+![Flowchart showing VPA recommendations collected on a schedule, compared to current requests, and — when the change exceeds 20% — turned into a pull request that a team reviews before ArgoCD syncs it; smaller changes are skipped.](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-2.svg)
 
 ```yaml
 # rightsizing-pipeline-cronjob.yaml

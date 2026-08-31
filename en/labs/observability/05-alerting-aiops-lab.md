@@ -20,9 +20,9 @@
 
 ## Architecture Overview
 
-![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
+![AIOps Architecture](../../../assets/diagrams/rendered/aiops-architecture.svg)
 
-![Alertmanager and CloudWatch Alarms trigger Grafana OnCall and an AIOps Lambda agent; CloudWatch Investigations feeds the agent a hypothesis, the agent queries Bedrock Claude, and results route through SNS to email, Slack, and PagerDuty.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-0.png)
+![Alertmanager and CloudWatch Alarms trigger Grafana OnCall and an AIOps Lambda agent; CloudWatch Investigations feeds the agent a hypothesis, the agent queries Bedrock Claude, and results route through SNS to email, Slack, and PagerDuty.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-0.svg)
 
 ***
 
@@ -429,7 +429,7 @@ aws sns subscribe \
 
 CloudWatch Investigations uses AI to automatically analyze anomalies and provide hypotheses.
 
-![A linear state machine showing how CloudWatch anomaly detection leads through automatic investigation creation, data collection, correlation, AI hypothesis generation, root-cause proposal, and recommended actions to a completed investigation.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-1.png)
+![A linear state machine showing how CloudWatch anomaly detection leads through automatic investigation creation, data collection, correlation, AI hypothesis generation, root-cause proposal, and recommended actions to a completed investigation.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-1.svg)
 
 **Step 5.2: Create Investigation trigger**
 
@@ -481,7 +481,7 @@ aws cloudwatch put-insight-rule \
 
 **Step 6.1: AIOps Agent architecture**
 
-![Alertmanager triggers an API Gateway webhook that invokes a Lambda function, which queries CloudWatch, Loki, and Tempo concurrently, asks Bedrock Claude to analyze the combined context, and publishes the resulting report to SNS.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-2.png)
+![Alertmanager triggers an API Gateway webhook that invokes a Lambda function, which queries CloudWatch, Loki, and Tempo concurrently, asks Bedrock Claude to analyze the combined context, and publishes the resulting report to SNS.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-2.svg)
 
 **Step 6.2: Create Lambda function**
 
@@ -848,7 +848,7 @@ Check your email for the AIOps analysis report.
 
 **Step 9.1: Multi-agent architecture for complex incidents**
 
-![A coordinator agent triages an incoming alert, assigns four specialist agents (metrics, logs, traces, infrastructure) to analyze it in parallel, then synthesizes their findings into a final report.](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-3.png)
+![A coordinator agent triages an incoming alert, assigns four specialist agents (metrics, logs, traces, infrastructure) to analyze it in parallel, then synthesizes their findings into a final report.](../../../assets/diagrams/rendered/en-labs-observability-05-alerting-aiops-lab-3.svg)
 
 This advanced pattern uses multiple specialized AI agents that collaborate on complex incidents. Implementation requires:
 

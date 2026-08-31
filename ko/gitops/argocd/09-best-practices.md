@@ -19,7 +19,7 @@
 
 ### 모노레포 vs 폴리레포
 
-![모노레포는 하나의 저장소 안에 app-a, app-b, infra 디렉터리가 함께 들어있고, 폴리레포는 같은 구성 요소가 서로 독립된 세 개의 저장소로 분리되어 있음을 비교하는 다이어그램](../../.gitbook/assets/ko-gitops-argocd-09-best-practices-0.png)
+![모노레포는 하나의 저장소 안에 app-a, app-b, infra 디렉터리가 함께 들어있고, 폴리레포는 같은 구성 요소가 서로 독립된 세 개의 저장소로 분리되어 있음을 비교하는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-09-best-practices-0.svg)
 
 | 방식 | 장점 | 단점 |
 |------|------|------|
@@ -140,7 +140,7 @@ patches:
 
 ### Git 브랜치 기반 승격
 
-![develop, staging, main 브랜치가 PR 승인으로 순차 승격되며 Dev와 Staging 환경은 자동 배포되지만 Prod 환경만 수동 동기화 게이트가 걸려 있음을 보여주는 흐름도](../../.gitbook/assets/ko-gitops-argocd-09-best-practices-1.png)
+![develop, staging, main 브랜치가 PR 승인으로 순차 승격되며 Dev와 Staging 환경은 자동 배포되지만 Prod 환경만 수동 동기화 게이트가 걸려 있음을 보여주는 흐름도](../../../assets/diagrams/rendered/ko-gitops-argocd-09-best-practices-1.svg)
 
 **Application 설정:**
 

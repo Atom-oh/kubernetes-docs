@@ -19,7 +19,7 @@ Istio의 고급 라우팅 기능을 사용하면 요청의 다양한 속성을 �
 
 VirtualService의 라우팅 규칙은 **Match 조건**과 **Route 대상**으로 구성됩니다.
 
-![들어오는 요청이 VirtualService의 세 가지 규칙(API v1 트래픽, 모바일 클라이언트, 기본 폴백)에 순서대로 매칭되어 각각 api-v1, mobile-app, web-app 서비스로 라우팅되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-02-routing-0.png)
+![들어오는 요청이 VirtualService의 세 가지 규칙(API v1 트래픽, 모바일 클라이언트, 기본 폴백)에 순서대로 매칭되어 각각 api-v1, mobile-app, web-app 서비스로 라우팅되는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-02-routing-0.svg)
 
 ### 기본 구조
 

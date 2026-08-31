@@ -6,7 +6,7 @@
 
 This chapter covers Calico integration with Amazon EKS, including architecture patterns, installation methods, and EKS-specific optimizations. Learn how to leverage Calico's network policy capabilities alongside AWS VPC CNI for optimal EKS networking.
 
-![The EKS API server reaches into two worker nodes, where the VPC CNI handles pod networking and Calico enforces network policy on the same pods.](../../.gitbook/assets/en-networking-calico-08-eks-integration-0.png)
+![The EKS API server reaches into two worker nodes, where the VPC CNI handles pod networking and Calico enforces network policy on the same pods.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
 
 ## VPC CNI + Calico Architecture
 
@@ -16,11 +16,11 @@ Amazon EKS uses AWS VPC CNI by default for pod networking. Calico can be added f
 
 ### Architecture Deep Dive
 
-![A pod's traffic crosses a veth pair onto a VPC CNI-managed secondary ENI while Calico's Felix agent programs iptables/eBPF rules on that same path, before the primary ENI carries traffic to the VPC subnet and internet gateway.](../../.gitbook/assets/en-networking-calico-08-eks-integration-1.png)
+![A pod's traffic crosses a veth pair onto a VPC CNI-managed secondary ENI while Calico's Felix agent programs iptables/eBPF rules on that same path, before the primary ENI carries traffic to the VPC subnet and internet gateway.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
 
 ### Traffic Flow with VPC CNI + Calico
 
-![Pod A's egress traffic is evaluated by Calico on its node before the VPC CNI routes it across the AWS VPC to the destination node, where Calico evaluates ingress policy before delivering the packet to Pod B.](../../.gitbook/assets/en-networking-calico-08-eks-integration-2.png)
+![Pod A's egress traffic is evaluated by Calico on its node before the VPC CNI routes it across the AWS VPC to the destination node, where Calico evaluates ingress policy before delivering the packet to Pod B.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
 
 ## Installation Methods Comparison
 
@@ -457,7 +457,7 @@ spec:
 
 ### Comparison
 
-![AWS security groups enforce coarse instance and ENI-level L3-L4 rules, while Calico's GlobalNetworkPolicy, namespace NetworkPolicy, and HostEndpointPolicy all converge on the same pod, which also exchanges traffic directly with its peer pod.](../../.gitbook/assets/en-networking-calico-08-eks-integration-3.png)
+![AWS security groups enforce coarse instance and ENI-level L3-L4 rules, while Calico's GlobalNetworkPolicy, namespace NetworkPolicy, and HostEndpointPolicy all converge on the same pod, which also exchanges traffic directly with its peer pod.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
 
 | Aspect          | Security Groups | Calico Policy         |
 | --------------- | --------------- | --------------------- |

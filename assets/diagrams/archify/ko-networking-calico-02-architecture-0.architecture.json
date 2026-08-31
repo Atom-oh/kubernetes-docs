@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 아키텍처",
+    "output": "ko-networking-calico-02-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "정책 / 라우팅 소스",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "typha",
+      "type": "backend",
+      "label": "Typha",
+      "sublabel": "데이터스토어 캐시",
+      "pos": [
+        300,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "노드별 에이전트",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bird",
+      "type": "backend",
+      "label": "BIRD",
+      "sublabel": "노드별 BGP",
+      "pos": [
+        560,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "tor",
+      "type": "cloud",
+      "label": "ToR 스위치 / Spine",
+      "sublabel": "외부 네트워크",
+      "pos": [
+        830,
+        360
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-typha",
+      "from": "apiserver",
+      "to": "typha",
+      "label": "정책 / 라우팅 감시",
+      "labelAt": [
+        265,
+        216
+      ]
+    },
+    {
+      "id": "typha-felix",
+      "from": "typha",
+      "to": "felix",
+      "label": "정책 + 라우팅"
+    },
+    {
+      "id": "typha-bird",
+      "from": "typha",
+      "to": "bird",
+      "label": "정책 + 라우팅"
+    },
+    {
+      "id": "bird-tor",
+      "from": "bird",
+      "to": "tor",
+      "label": "BGP 피어링"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "제어",
+      "items": [
+        "Typha가 데이터스토어 변경 사항을 모든 노드에 분산해 API 서버 부하를 줄인다",
+        "Felix가 각 노드에서 인터페이스, 라우팅, 방화벽 규칙을 프로그래밍한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라우팅",
+      "items": [
+        "BIRD가 BGP로 라우팅 정보를 배포한다",
+        "ToR 스위치 / Spine과 피어링해 외부 네트워크에 연결한다"
+      ]
+    }
+  ]
+}

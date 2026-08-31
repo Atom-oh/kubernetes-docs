@@ -86,7 +86,7 @@ Calico is an open-source networking and network security solution designed for c
 
 ### Project History: From Project Calico to Tigera
 
-![Timeline showing Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI adoption and Tigera's founding, to a Kubernetes-native datastore in 2018 and full eBPF data-plane feature parity in 2025.](../../.gitbook/assets/en-networking-calico-01-introduction-0.png)
+![Timeline showing Calico's evolution from an OpenStack networking project in 2014, through Kubernetes CNI adoption and Tigera's founding, to a Kubernetes-native datastore in 2018 and full eBPF data-plane feature parity in 2025.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-0.svg)
 
 | Year | Milestone | Significance |
 |------|-----------|--------------|
@@ -109,7 +109,7 @@ Calico provides five core capabilities that make it a leading choice for Kuberne
 
 Calico offers multiple networking modes optimized for different environments:
 
-![Architecture diagram mapping Calico's four networking modes to their performance characteristics, from encapsulated IPIP and VXLAN overlays through native-speed direct routing to the eBPF data plane, which reaches kernel-bypass performance.](../../.gitbook/assets/en-networking-calico-01-introduction-1.png)
+![Architecture diagram mapping Calico's four networking modes to their performance characteristics, from encapsulated IPIP and VXLAN overlays through native-speed direct routing to the eBPF data plane, which reaches kernel-bypass performance.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-1.svg)
 
 **Key Performance Features:**
 - Native Linux networking stack integration
@@ -237,7 +237,7 @@ Calico runs consistently across diverse environments:
 
 ### Traditional Kubernetes Networking Challenges
 
-![Architecture diagram contrasting kube-proxy's linear iptables rule chains, which degrade in performance as a cluster grows, with Calico's Felix agent using optimized iptables or eBPF and IP sets to hold consistent performance at scale.](../../.gitbook/assets/en-networking-calico-01-introduction-2.png)
+![Architecture diagram contrasting kube-proxy's linear iptables rule chains, which degrade in performance as a cluster grows, with Calico's Felix agent using optimized iptables or eBPF and IP sets to hold consistent performance at scale.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-2.svg)
 
 ### Comparison Table
 
@@ -325,7 +325,7 @@ spec:
 
 Calico Federation enables policy and routing across multiple clusters:
 
-![Architecture diagram showing three Kubernetes clusters, on-premises, AWS, and GCP, each running Calico alongside its workloads, linked pairwise by Calico Federation for policy and routing, with a direct BGP/VPN path connecting the on-premises and GCP clusters.](../../.gitbook/assets/en-networking-calico-01-introduction-3.png)
+![Architecture diagram showing three Kubernetes clusters, on-premises, AWS, and GCP, each running Calico alongside its workloads, linked pairwise by Calico Federation for policy and routing, with a direct BGP/VPN path connecting the on-premises and GCP clusters.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-3.svg)
 
 **Benefits:**
 - Unified policy management across clusters

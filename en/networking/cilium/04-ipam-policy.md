@@ -36,7 +36,7 @@ IPAM is a system responsible for allocating, tracking, and managing IP addresses
 
 ### Cilium IPAM Architecture
 
-![Diagram showing five Cilium IPAM modes (Cluster Pool/Multi-Pool, Kubernetes Host Scope, AWS ENI, Azure/GKE IPAM, and CRD-based IPAM) each mapping to one of four allocation models (Centralized, Distributed, Cloud Native, and Custom Allocation), with the AWS ENI path to Cloud Native Allocation highlighted as the mode most relevant to AWS EKS environments.](../../.gitbook/assets/en-networking-cilium-04-ipam-policy-0.png)
+![Diagram showing five Cilium IPAM modes (Cluster Pool/Multi-Pool, Kubernetes Host Scope, AWS ENI, Azure/GKE IPAM, and CRD-based IPAM) each mapping to one of four allocation models (Centralized, Distributed, Cloud Native, and Custom Allocation), with the AWS ENI path to Cloud Native Allocation highlighted as the mode most relevant to AWS EKS environments.](../../../assets/diagrams/rendered/en-networking-cilium-04-ipam-policy-0.svg)
 
 ### Cilium IPAM Modes:
 

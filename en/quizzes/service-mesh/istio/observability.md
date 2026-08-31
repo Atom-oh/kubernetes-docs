@@ -141,7 +141,7 @@ Istio Envoy automatically generates trace IDs, but **the application must propag
 
 **How Distributed Tracing Works:**
 
-![Diagram showing the ingress gateway minting distributed-tracing headers on an incoming request, each downstream service (A, B, C) required to forward those headers unchanged to the next hop, and every hop also sending its span to Jaeger.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
+![Diagram showing the ingress gateway minting distributed-tracing headers on an incoming request, each downstream service (A, B, C) required to forward those headers unchanged to the next hop, and every hop also sending its span to Jaeger.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-observability-0.svg)
 
 **HTTP Headers to Propagate:**
 
@@ -1819,7 +1819,7 @@ Tabs:
 
 **5. Troubleshooting Workflow**
 
-![Decision-ladder diagram showing a Kiali-driven troubleshooting loop: open the Kiali graph view, classify the problem into one of four categories (no traffic, errors, slow response, security denied), diagnose and fix it, then verify — looping back to the start if unresolved or finishing if resolved.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
+![Decision-ladder diagram showing a Kiali-driven troubleshooting loop: open the Kiali graph view, classify the problem into one of four categories (no traffic, errors, slow response, security denied), diagnose and fix it, then verify — looping back to the start if unresolved or finishing if resolved.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-observability-1.svg)
 
 **Reference:**
 

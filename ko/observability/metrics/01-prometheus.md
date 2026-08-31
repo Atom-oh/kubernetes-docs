@@ -46,7 +46,7 @@ Prometheus는 SoundCloud에서 개발되어 CNCF(Cloud Native Computing Foundati
 
 ## 아키텍처
 
-![서비스 디스커버리와 대상으로부터 Retrieval이 메트릭을 스크랩해 TSDB에 저장하고, HTTP Server가 시각화 도구에 쿼리 API를 제공하며 Alert Rules가 Alertmanager를 거쳐 알림 채널로 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-metrics-01-prometheus-0.png)
+![서비스 디스커버리와 대상으로부터 Retrieval이 메트릭을 스크랩해 TSDB에 저장하고, HTTP Server가 시각화 도구에 쿼리 API를 제공하며 Alert Rules가 Alertmanager를 거쳐 알림 채널로 전달되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-metrics-01-prometheus-0.svg)
 
 ### 데이터 흐름
 
@@ -507,7 +507,7 @@ Prometheus Operator는 Kubernetes에서 Prometheus를 선언적으로 관리하�
 
 ### 커스텀 리소스 정의 (CRDs)
 
-![Prometheus Operator가 Prometheus, Alertmanager, ThanosRuler를 생성하고, Prometheus는 ServiceMonitor·PodMonitor·PrometheusRule·ScrapeConfig·Probe를, Alertmanager는 AlertmanagerConfig를 하위 커스텀 리소스로 갖는 계층 구조를 보여준다.](../../.gitbook/assets/ko-observability-metrics-01-prometheus-1.png)
+![Prometheus Operator가 Prometheus, Alertmanager, ThanosRuler를 생성하고, Prometheus는 ServiceMonitor·PodMonitor·PrometheusRule·ScrapeConfig·Probe를, Alertmanager는 AlertmanagerConfig를 하위 커스텀 리소스로 갖는 계층 구조를 보여준다.](../../../assets/diagrams/rendered/ko-observability-metrics-01-prometheus-1.svg)
 
 ### Prometheus 리소스
 

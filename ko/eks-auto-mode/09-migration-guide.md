@@ -11,7 +11,7 @@
 
 ## 마이그레이션 단계
 
-![기존 노드 그룹 기반 EKS 클러스터를 현재 상태 분석부터 Auto Mode 활성화, NodePool 구성, 워크로드 마이그레이션, 기존 노드 그룹 축소·삭제, 검증 및 최적화까지 7단계로 전환하는 순차 흐름도.](../.gitbook/assets/ko-eks-auto-mode-09-migration-guide-0.png)
+![기존 노드 그룹 기반 EKS 클러스터를 현재 상태 분석부터 Auto Mode 활성화, NodePool 구성, 워크로드 마이그레이션, 기존 노드 그룹 축소·삭제, 검증 및 최적화까지 7단계로 전환하는 순차 흐름도.](../../assets/diagrams/rendered/ko-eks-auto-mode-09-migration-guide-0.svg)
 
 ## 1단계: 현재 상태 분석
 

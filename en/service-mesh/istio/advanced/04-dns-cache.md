@@ -29,7 +29,7 @@ Istio DNS Proxy is a feature where Envoy acts as a DNS server to intercept and p
 
 ### Architecture
 
-![Diagram showing how Envoy's DNS proxy intercepts application DNS and HTTP traffic inside a pod, resolves ServiceEntry-registered hosts to a virtual IP via its DNS table, forwards other lookups to CoreDNS, and receives ServiceEntry configuration pushed by Istiod.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-0.png)
+![Diagram showing how Envoy's DNS proxy intercepts application DNS and HTTP traffic inside a pod, resolves ServiceEntry-registered hosts to a virtual IP via its DNS table, forwards other lookups to CoreDNS, and receives ServiceEntry configuration pushed by Istiod.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-04-dns-cache-0.svg)
 
 ## DNS Proxy vs DNS Caching
 
@@ -49,7 +49,7 @@ These two features have different purposes and behaviors:
 
 Using both features together provides optimal performance:
 
-![Diagram showing Envoy routing ServiceEntry-registered lookups through its DNS proxy for an instant virtual IP, while other external lookups fall through to a cached CoreDNS resolution path.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-1.png)
+![Diagram showing Envoy routing ServiceEntry-registered lookups through its DNS proxy for an instant virtual IP, while other external lookups fall through to a cached CoreDNS resolution path.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-04-dns-cache-1.svg)
 
 ## DNS Proxy Configuration
 
@@ -315,7 +315,7 @@ DNS Proxy automatically allocates virtual IPs to services registered in ServiceE
 
 ### Automatic Allocation Behavior
 
-![Sequence diagram showing an application resolving a ServiceEntry host to an Envoy-assigned virtual IP, then Envoy mapping that virtual IP back to the real external host and completing the HTTP request on the application's behalf.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-2.png)
+![Sequence diagram showing an application resolving a ServiceEntry host to an Envoy-assigned virtual IP, then Envoy mapping that virtual IP back to the real external host and completing the HTTP request on the application's behalf.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-04-dns-cache-2.svg)
 
 ### Address Range Configuration
 
@@ -489,7 +489,7 @@ wireshark dns.pcap
 
 **Recommended approach**: Gradual rollout
 
-![Flowchart showing a gradual rollout of DNS Proxy through test, staging, and production, with validation and monitoring gates that route back to troubleshooting or rollback on failure.](../../../.gitbook/assets/en-service-mesh-istio-advanced-04-dns-cache-3.png)
+![Flowchart showing a gradual rollout of DNS Proxy through test, staging, and production, with validation and monitoring gates that route back to troubleshooting or rollback on failure.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-04-dns-cache-3.svg)
 
 ### 2. ServiceEntry Management
 

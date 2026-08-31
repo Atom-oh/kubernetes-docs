@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 클러스터 아키텍처",
+    "output": "ko-core-01-cluster-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "kubectl / 클라이언트",
+      "sublabel": "API 요청",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "API 프론트엔드",
+      "pos": [
+        220,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "키-값 저장소",
+      "pos": [
+        220,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "노드 선택",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "컨트롤러",
+      "pos": [
+        470,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "backend",
+      "label": "cloud-controller-manager",
+      "sublabel": "클라우드 제공업체 API",
+      "pos": [
+        470,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "컨테이너 런타임",
+      "sublabel": "containerd / CRI-O",
+      "pos": [
+        740,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Pods",
+      "sublabel": "실행 중인 워크로드",
+      "pos": [
+        740,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "네트워크 규칙",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "kubelet",
+        "runtime",
+        "pods",
+        "kube-proxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "kubectl / API",
+      "variant": "emphasis",
+      "labelAt": [
+        200,
+        296
+      ]
+    },
+    {
+      "id": "api-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "읽기 / 쓰기"
+    },
+    {
+      "id": "api-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "파드 감시"
+    },
+    {
+      "id": "api-controller-manager",
+      "from": "apiserver",
+      "to": "controller-manager",
+      "label": "감시 / 조정",
+      "labelDy": 20,
+      "labelDx": 60
+    },
+    {
+      "id": "api-cloud-controller-manager",
+      "from": "apiserver",
+      "to": "cloud-controller-manager",
+      "label": "감시 / 조정"
+    },
+    {
+      "id": "api-kubelet",
+      "from": "apiserver",
+      "to": "kubelet",
+      "label": "파드 할당"
+    },
+    {
+      "id": "kubelet-runtime",
+      "from": "kubelet",
+      "to": "runtime",
+      "label": "CRI",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -30
+    },
+    {
+      "id": "runtime-pods",
+      "from": "runtime",
+      "to": "pods",
+      "label": "실행",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kube-proxy-pods",
+      "from": "kube-proxy",
+      "to": "pods",
+      "label": "트래픽 전달",
+      "variant": "dashed",
+      "labelDy": 14
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "kube-apiserver는 Kubernetes API를 노출한다",
+        "etcd는 모든 클러스터 데이터를 저장한다",
+        "kube-scheduler는 새 파드가 실행될 노드를 선택한다",
+        "kube-controller-manager는 핵심 컨트롤러들을 실행한다",
+        "cloud-controller-manager는 클라우드 제공업체 API와 통신한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워커 노드",
+      "items": [
+        "kubelet은 노드에서 컨테이너를 관리한다",
+        "kube-proxy는 네트워크 규칙과 트래픽 전달을 담당한다",
+        "컨테이너 런타임(containerd, CRI-O 등)이 파드를 실행한다"
+      ]
+    }
+  ]
+}

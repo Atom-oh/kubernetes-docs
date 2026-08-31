@@ -28,7 +28,7 @@ Istio는 두 가지 유형의 인증을 제공합니다:
    - OAuth/OIDC 제공자 통합
    - RequestAuthentication CRD로 구성
 
-![사용자가 OAuth/OIDC 제공자에게 로그인해 JWT 토큰을 받고, 그 토큰을 실은 요청이 Istio Gateway의 Request Authentication에서 검증되어 성공하면 애플리케이션으로 전달되고 실패하면 사용자에게 되돌아가는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-02-authentication-0.png)
+![사용자가 OAuth/OIDC 제공자에게 로그인해 JWT 토큰을 받고, 그 토큰을 실은 요청이 Istio Gateway의 Request Authentication에서 검증되어 성공하면 애플리케이션으로 전달되고 실패하면 사용자에게 되돌아가는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-02-authentication-0.svg)
 
 ## Request Authentication (JWT)
 

@@ -135,7 +135,7 @@ data:
 
 ## Rate Limit Mitigation Strategies
 
-![A decision flowchart for resolving a Docker Hub rate limit: if hit, route by environment to ECR Pull-through Cache on AWS/EKS, Harbor Proxy Cache when self-hosted, or a containerd mirror/registry distribution otherwise, all resolving the limit; if not yet hit, use authenticated pulls to prevent one.](../.gitbook/assets/en-container-registry-01-docker-hub-0.png)
+![A decision flowchart for resolving a Docker Hub rate limit: if hit, route by environment to ECR Pull-through Cache on AWS/EKS, Harbor Proxy Cache when self-hosted, or a containerd mirror/registry distribution otherwise, all resolving the limit; if not yet hit, use authenticated pulls to prevent one.](../../assets/diagrams/rendered/en-container-registry-01-docker-hub-0.svg)
 
 ### Strategy 1: Pull-Through Cache with Harbor
 

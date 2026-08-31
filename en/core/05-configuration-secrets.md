@@ -62,7 +62,7 @@ kubectl -n config-demo logs config-test-pod
 
 ## Configuration Management at a Glance
 
-![Cluster administrators, GitOps pipelines, and external systems all provision ConfigMaps and Secrets, which Pods consume as environment variables, volume mounts, and image-pull credentials, with Secret additionally feeding sidecar auto-reload, KSOPS encryption, and Vault dynamic injection.](../.gitbook/assets/en-core-05-configuration-secrets-0.png)
+![Cluster administrators, GitOps pipelines, and external systems all provision ConfigMaps and Secrets, which Pods consume as environment variables, volume mounts, and image-pull credentials, with Secret additionally feeding sidecar auto-reload, KSOPS encryption, and Vault dynamic injection.](../../assets/diagrams/rendered/en-core-05-configuration-secrets-0.svg)
 
 ## Table of Contents
 
@@ -158,7 +158,7 @@ spec:
         name: my-config
 ```
 
-![A ConfigMap's key-value data is consumed by Pods three ways -- as environment variables, as a mounted volume, or as command-line arguments -- with the environment-variable and volume paths shown resolving into concrete values inside the container.](../.gitbook/assets/en-core-05-configuration-secrets-1.png)
+![A ConfigMap's key-value data is consumed by Pods three ways -- as environment variables, as a mounted volume, or as command-line arguments -- with the environment-variable and volume paths shown resolving into concrete values inside the container.](../../assets/diagrams/rendered/en-core-05-configuration-secrets-1.svg)
 
 ### ConfigMap Creation
 
@@ -305,7 +305,7 @@ kubectl apply -f updated-configmap.yaml
 
 Secrets are API objects that store sensitive information such as passwords, OAuth tokens, and SSH keys. Secrets are similar to ConfigMaps but provide additional security features for storing sensitive data.
 
-![A Kubernetes Secret's supported types (Opaque, TLS, docker-registry, basic-auth) and its base64/etcd-encryption storage method, alongside the three ways a Pod can consume it: as environment variables, a mounted volume, or an image-pull secret.](../.gitbook/assets/en-core-05-configuration-secrets-2.png)
+![A Kubernetes Secret's supported types (Opaque, TLS, docker-registry, basic-auth) and its base64/etcd-encryption storage method, alongside the three ways a Pod can consume it: as environment variables, a mounted volume, or an image-pull secret.](../../assets/diagrams/rendered/en-core-05-configuration-secrets-2.svg)
 
 ### Secret Types
 
@@ -468,7 +468,7 @@ resources:
 
 Environment variables are a simple way to pass configuration information to containers. Kubernetes provides several ways to set environment variables.
 
-![The four sources Kubernetes can populate a Container's environment variables from -- a direct static value, a ConfigMap key or full envFrom reference, a Secret key or full envFrom reference, and the Downward API's field or resource references.](../.gitbook/assets/en-core-05-configuration-secrets-3.png)
+![The four sources Kubernetes can populate a Container's environment variables from -- a direct static value, a ConfigMap key or full envFrom reference, a Secret key or full envFrom reference, and the Downward API's field or resource references.](../../assets/diagrams/rendered/en-core-05-configuration-secrets-3.svg)
 
 ### Direct Setting
 
@@ -577,7 +577,7 @@ spec:
 
 Mounting configuration files to containers through volumes provides a more flexible configuration management method than environment variables.
 
-![A Pod defines Volumes backed by a ConfigMap or Secret; its Container mounts them via Volume Mounts that reference those Volumes; and four mount options are available -- full mount, specific-keys-only, read-only, and subPath mounting.](../.gitbook/assets/en-core-05-configuration-secrets-4.png)
+![A Pod defines Volumes backed by a ConfigMap or Secret; its Container mounts them via Volume Mounts that reference those Volumes; and four mount options are available -- full mount, specific-keys-only, read-only, and subPath mounting.](../../assets/diagrams/rendered/en-core-05-configuration-secrets-4.svg)
 
 ### ConfigMap Volume
 
@@ -770,7 +770,7 @@ Document configuration options and their effects. This helps team members unders
 
 In Amazon EKS, you can use AWS's various services in addition to Kubernetes' basic configuration management features to manage configuration and secrets. This section covers various ways to manage configuration in EKS and integration with AWS services.
 
-![Amazon EKS uses native ConfigMaps and Secrets while also integrating AWS Secrets Manager, Parameter Store, AppConfig, KMS, and IAM, bridged into the cluster by tools like External Secrets Operator, ASCP, IRSA, and ACK that create or mount Secrets and grant Pods scoped AWS access.](../.gitbook/assets/en-core-05-configuration-secrets-5.png)
+![Amazon EKS uses native ConfigMaps and Secrets while also integrating AWS Secrets Manager, Parameter Store, AppConfig, KMS, and IAM, bridged into the cluster by tools like External Secrets Operator, ASCP, IRSA, and ACK that create or mount Secrets and grant Pods scoped AWS access.](../../assets/diagrams/rendered/en-core-05-configuration-secrets-5.svg)
 
 ### AWS Secrets Manager Integration
 

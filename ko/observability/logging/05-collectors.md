@@ -19,7 +19,7 @@ Kubernetes 환경에서 로그를 수집하는 다양한 도구들이 있습니�
 
 ### 로그 수집기 역할
 
-![로그 소스(Container stdout, Log Files, Systemd Journal)가 로그 수집기의 입력·처리·출력 단계를 거쳐 Loki, OpenSearch, CloudWatch, S3 등 여러 목적지로 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-0.png)
+![로그 소스(Container stdout, Log Files, Systemd Journal)가 로그 수집기의 입력·처리·출력 단계를 거쳐 Loki, OpenSearch, CloudWatch, S3 등 여러 목적지로 전달되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-05-collectors-0.svg)
 
 ### 핵심 기능
 
@@ -51,7 +51,7 @@ FluentBit은 CNCF 프로젝트로, C로 작성된 경량 로그 프로세서입�
 
 ### 아키텍처
 
-![FluentBit이 Input, Parser, Filter, Buffer, Output 플러그인 단계를 순서대로 거쳐 로그를 처리하는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-1.png)
+![FluentBit이 Input, Parser, Filter, Buffer, Output 플러그인 단계를 순서대로 거쳐 로그를 처리하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-05-collectors-1.svg)
 
 ### 전체 설정 예시
 
@@ -466,7 +466,7 @@ Promtail은 Grafana Labs에서 개발한 Loki 전용 로그 수집 에이전트�
 
 ### 아키텍처
 
-![Promtail이 서비스 디스커버리로 대상을 찾고 스크랩한 뒤 여러 파이프라인 스테이지를 거쳐 Loki로 전송하는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-2.png)
+![Promtail이 서비스 디스커버리로 대상을 찾고 스크랩한 뒤 여러 파이프라인 스테이지를 거쳐 Loki로 전송하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-05-collectors-2.svg)
 
 ### 전체 설정 예시
 
@@ -1126,7 +1126,7 @@ OpenTelemetry Collector는 OTLP(OpenTelemetry Protocol) Proto 인코딩을 사�
 
 ### 아키텍처
 
-![OpenTelemetry Collector가 여러 리시버로 수집한 로그를 프로세서 단계에서 가공한 뒤 익스포터로 내보내는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-3.png)
+![OpenTelemetry Collector가 여러 리시버로 수집한 로그를 프로세서 단계에서 가공한 뒤 익스포터로 내보내는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-05-collectors-3.svg)
 
 ### 전체 설정 예시
 
@@ -1527,7 +1527,7 @@ OTEL Collector 권장:
 
 ### 의사결정 플로우
 
-![목적지가 Loki 전용인지, AWS 환경인지, OTEL 표준이 필요한지를 순서대로 물어 FluentBit, Promtail, Grafana Alloy, OTEL Collector 중 하나를 선택하도록 안내하는 의사결정 흐름을 보여준다.](../../.gitbook/assets/ko-observability-logging-05-collectors-4.png)
+![목적지가 Loki 전용인지, AWS 환경인지, OTEL 표준이 필요한지를 순서대로 물어 FluentBit, Promtail, Grafana Alloy, OTEL Collector 중 하나를 선택하도록 안내하는 의사결정 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-05-collectors-4.svg)
 
 ---
 

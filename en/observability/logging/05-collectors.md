@@ -19,7 +19,7 @@ Various tools exist for collecting logs in Kubernetes environments. This documen
 
 ### Log Collector Role
 
-![Diagram showing container stdout, log files, and the systemd journal all feeding a single log-collector pipeline of input, processing, and output stages, which fans out to Loki, OpenSearch, CloudWatch, and S3.](../../.gitbook/assets/en-observability-logging-05-collectors-0.png)
+![Diagram showing container stdout, log files, and the systemd journal all feeding a single log-collector pipeline of input, processing, and output stages, which fans out to Loki, OpenSearch, CloudWatch, and S3.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-0.svg)
 
 ### Core Functions
 
@@ -52,7 +52,7 @@ FluentBit is a CNCF project, a lightweight log processor written in C. It starte
 
 ### Architecture
 
-![Diagram of FluentBit's five sequential plugin stages: input plugins, parser, filter plugins, buffer, and output plugins, each shown with its representative plugin names.](../../.gitbook/assets/en-observability-logging-05-collectors-1.png)
+![Diagram of FluentBit's five sequential plugin stages: input plugins, parser, filter plugins, buffer, and output plugins, each shown with its representative plugin names.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-1.svg)
 
 ### Complete Configuration Example
 
@@ -468,7 +468,7 @@ Promtail is a log collection agent developed by Grafana Labs specifically for Lo
 
 ### Architecture
 
-![Diagram of Promtail's four-stage pipeline: service discovery, scrape targets, pipeline stages, and push to Loki, ending in Loki as the only destination.](../../.gitbook/assets/en-observability-logging-05-collectors-2.png)
+![Diagram of Promtail's four-stage pipeline: service discovery, scrape targets, pipeline stages, and push to Loki, ending in Loki as the only destination.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-2.svg)
 
 ### Complete Configuration Example
 
@@ -951,7 +951,7 @@ OpenTelemetry Collector uses OTLP (OpenTelemetry Protocol) Proto encoding. Compa
 
 ### Architecture
 
-![Diagram of the OpenTelemetry Collector's three-stage pipeline: receivers, processors, and exporters, each listing representative component names.](../../.gitbook/assets/en-observability-logging-05-collectors-3.png)
+![Diagram of the OpenTelemetry Collector's three-stage pipeline: receivers, processors, and exporters, each listing representative component names.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-3.svg)
 
 ### Complete Configuration Example
 
@@ -1344,7 +1344,7 @@ OTEL Collector recommended:
 
 ### Decision Flow
 
-![Decision flowchart for choosing a log collector, routing through Loki-only-destination, existing-tooling, and AWS-environment questions to recommend Promtail, Grafana Alloy, FluentBit, or the OpenTelemetry Collector.](../../.gitbook/assets/en-observability-logging-05-collectors-4.png)
+![Decision flowchart for choosing a log collector, routing through Loki-only-destination, existing-tooling, and AWS-environment questions to recommend Promtail, Grafana Alloy, FluentBit, or the OpenTelemetry Collector.](../../../assets/diagrams/rendered/en-observability-logging-05-collectors-4.svg)
 
 ---
 

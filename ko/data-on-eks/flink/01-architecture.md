@@ -32,7 +32,7 @@ Apache Flink는 무한(unbounded) 및 유한(bounded) 데이터 스트림에 대
 
 ### Kubernetes에서의 JobManager ↔ TaskManager 흐름
 
-![쿠버네티스 클러스터 안에서 Flink JobManager 파드(Job Graph, Checkpoint Coordinator, Kubernetes ResourceManager, REST API)가 두 개의 TaskManager 파드를 요청·해제하고, 각 파드의 Task Slot에 서브태스크를 배포하며 첫 슬롯에 체크포인트 스냅샷을 트리거하는 구조를 보여주는 아키텍처 다이어그램입니다.](../../.gitbook/assets/ko-data-on-eks-flink-01-architecture-0.png)
+![쿠버네티스 클러스터 안에서 Flink JobManager 파드(Job Graph, Checkpoint Coordinator, Kubernetes ResourceManager, REST API)가 두 개의 TaskManager 파드를 요청·해제하고, 각 파드의 Task Slot에 서브태스크를 배포하며 첫 슬롯에 체크포인트 스냅샷을 트리거하는 구조를 보여주는 아키텍처 다이어그램입니다.](../../../assets/diagrams/rendered/ko-data-on-eks-flink-01-architecture-0.svg)
 
 JobManager는 제출된 애플리케이션을 잡 그래프로 분해하고, 각 오퍼레이터를 병렬 서브태스크로 나눠, 가용한 TaskManager Pod들의 태스크 슬롯에 배치합니다. 네이티브 Kubernetes 배포를 사용하면 JobManager 내부의 Kubernetes ResourceManager가 더 많은 슬롯이 필요할 때 새로운 TaskManager Pod를 동적으로 요청하고, 잡의 병렬도가 줄거나 잡이 종료되면 해당 Pod를 반환합니다.
 

@@ -230,7 +230,7 @@ docker build \
 
 ## 레지스트리 미러링 및 캐싱
 
-![레이트 리밋 문제인지 가용성/성능 문제인지, 그리고 AWS/EKS 환경인지 자체 인프라인지에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 설정, Harbor 전체 미러링, ECR 멀티 리전 복제, Harbor Pull Replication 중 적합한 캐싱/미러링 전략을 선택하는 의사결정 트리.](../.gitbook/assets/ko-container-registry-04-best-practices-0.png)
+![레이트 리밋 문제인지 가용성/성능 문제인지, 그리고 AWS/EKS 환경인지 자체 인프라인지에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 설정, Harbor 전체 미러링, ECR 멀티 리전 복제, Harbor Pull Replication 중 적합한 캐싱/미러링 전략을 선택하는 의사결정 트리.](../../assets/diagrams/rendered/ko-container-registry-04-best-practices-0.svg)
 
 ### containerd 레지스트리 미러 설정
 
@@ -800,7 +800,7 @@ deploy:
 
 ### Build-Push-Scan-Deploy 파이프라인
 
-![코드 커밋 후 이미지를 빌드해 ECR에 푸시하고 Trivy로 스캔한 뒤, 통과하면 쿠버네티스에 배포하고 HIGH/CRITICAL 취약점이 있으면 배포를 차단하고 알림을 보내는 CI/CD 파이프라인.](../.gitbook/assets/ko-container-registry-04-best-practices-1.png)
+![코드 커밋 후 이미지를 빌드해 ECR에 푸시하고 Trivy로 스캔한 뒤, 통과하면 쿠버네티스에 배포하고 HIGH/CRITICAL 취약점이 있으면 배포를 차단하고 알림을 보내는 CI/CD 파이프라인.](../../assets/diagrams/rendered/ko-container-registry-04-best-practices-1.svg)
 
 ### ArgoCD 이미지 업데이트 자동화
 

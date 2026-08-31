@@ -545,7 +545,7 @@ xfs_growfs /data
 
 볼륨 클로닝은 스냅샷과 달리 소스 볼륨에서 직접 새 볼륨을 생성합니다. 클로닝 과정에서 데이터는 백그라운드에서 복사되며, 새 볼륨은 즉시 사용할 수 있습니다.
 
-![소스 PVC를 dataSource로 참조하면 EBS 볼륨 데이터가 백그라운드에서 클론 PVC의 새 EBS 볼륨으로 직접 복사되는 볼륨 클로닝 과정을 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-0.png)
+![소스 PVC를 dataSource로 참조하면 EBS 볼륨 데이터가 백그라운드에서 클론 PVC의 새 EBS 볼륨으로 직접 복사되는 볼륨 클로닝 과정을 보여준다.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part2-0.svg)
 
 ### dataSource 필드 사용
 
@@ -651,7 +651,7 @@ EBS 다중 연결은 Kubernetes의 `ReadWriteMany` 액세스 모드와 다릅니
 * Filesystem 모드의 동시 쓰기는 파일 시스템 손상을 초래할 수 있습니다
 * 애플리케이션 수준에서 동시 액세스 조정이 필요합니다 (클러스터 파일 시스템 또는 분산 잠금)
 
-![동일 가용 영역 내 세 개의 노드가 하나의 io2 Block Express EBS 볼륨에 Block 디바이스로 동시 연결되지만 파일시스템 동시 쓰기는 지원되지 않아 클러스터 파일시스템이 필요함을 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-1.png)
+![동일 가용 영역 내 세 개의 노드가 하나의 io2 Block Express EBS 볼륨에 Block 디바이스로 동시 연결되지만 파일시스템 동시 쓰기는 지원되지 않아 클러스터 파일시스템이 필요함을 보여준다.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part2-1.svg)
 
 ### 제한사항
 
@@ -746,7 +746,7 @@ Mountpoint for Amazon S3 CSI 드라이버는 S3 버킷을 Kubernetes 파드에 �
 
 Mountpoint for S3는 특정 워크로드 패턴에 최적화되어 있습니다:
 
-![Mountpoint for S3가 순차 읽기·대용량 파일·스트리밍 읽기에서는 높은 성능을 내지만 랜덤 쓰기·다수의 소용량 파일·파일 추가 쓰기에서는 제한적임을 대비해 보여준다.](../.gitbook/assets/ko-eks-04-eks-storage-part2-2.png)
+![Mountpoint for S3가 순차 읽기·대용량 파일·스트리밍 읽기에서는 높은 성능을 내지만 랜덤 쓰기·다수의 소용량 파일·파일 추가 쓰기에서는 제한적임을 대비해 보여준다.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part2-2.svg)
 
 | 작업       | 성능  | 설명                     |
 | -------- | --- | ---------------------- |

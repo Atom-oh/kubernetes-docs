@@ -24,17 +24,17 @@ A Service Mesh is an infrastructure layer that manages communication between mic
 
 #### Basic Concepts of Service Mesh
 
-![Diagram contrasting direct service-to-service calls, where each service reimplements retries and encryption, with a service-mesh pattern where sidecar proxies handle mTLS and a control plane distributes policy.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
+![Diagram contrasting direct service-to-service calls, where each service reimplements retries and encryption, with a service-mesh pattern where sidecar proxies handle mTLS and a control plane distributes policy.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-0.svg)
 
 #### Architecture Pattern Comparison
 
-![Side-by-side comparison of how Istio, Linkerd, Consul and Kong Mesh structure their control plane and data plane, from a single unified control plane to a multi-zone global/local split.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-1.png)
+![Side-by-side comparison of how Istio, Linkerd, Consul and Kong Mesh structure their control plane and data plane, from a single unified control plane to a multi-zone global/local split.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-1.svg)
 
 ### Detailed Architecture
 
 #### Istio
 
-![Diagram of Istio's architecture: Istiod acts as the unified control plane, reading CRD configuration and pushing it via the xDS API to Envoy sidecars, which encrypt traffic between pods with mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-2.png)
+![Diagram of Istio's architecture: Istiod acts as the unified control plane, reading CRD configuration and pushing it via the xDS API to Envoy sidecars, which encrypt traffic between pods with mTLS.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-2.svg)
 
 **Features**:
 
@@ -52,7 +52,7 @@ A Service Mesh is an infrastructure layer that manages communication between mic
 
 ### Linkerd
 
-![Diagram of Linkerd's architecture: a lightweight control plane issues certificates, service endpoints and proxy injection, and Rust micro-proxies handle mTLS between pods.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-3.png)
+![Diagram of Linkerd's architecture: a lightweight control plane issues certificates, service endpoints and proxy injection, and Rust micro-proxies handle mTLS between pods.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-3.svg)
 
 **Features**:
 
@@ -70,7 +70,7 @@ A Service Mesh is an infrastructure layer that manages communication between mic
 
 ### Kong Mesh
 
-![Diagram of Kong Mesh's architecture: an optional global control plane syncs policy to a zone control plane, which configures Kuma DP proxies across Kubernetes pods and VMs that mesh together over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-4.png)
+![Diagram of Kong Mesh's architecture: an optional global control plane syncs policy to a zone control plane, which configures Kuma DP proxies across Kubernetes pods and VMs that mesh together over mTLS.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-4.svg)
 
 **Features**:
 
@@ -92,7 +92,7 @@ Kong Mesh is a Universal Service Mesh based on Kuma that integrates multiple clu
 
 **Multi-Zone Deployment Architecture**
 
-![Diagram of a Kong Mesh multi-zone deployment where a global control plane synchronizes policy to zone control planes across AWS, GCP and on-premises, and workloads communicate cross-zone over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-5.png)
+![Diagram of a Kong Mesh multi-zone deployment where a global control plane synchronizes policy to zone control planes across AWS, GCP and on-premises, and workloads communicate cross-zone over mTLS.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-5.svg)
 
 **Key Features**:
 
@@ -103,11 +103,11 @@ Kong Mesh is a Universal Service Mesh based on Kuma that integrates multiple clu
 
 **Service Connection and Traffic Flow**
 
-![Sequence diagram of a Kong Mesh cross-zone request: the control plane pushes policy to both zones' Kuma DP proxies, then an application's request is routed through mTLS-encrypted cross-zone proxy hops to the target service and back, with metrics reported afterward.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
+![Sequence diagram of a Kong Mesh cross-zone request: the control plane pushes policy to both zones' Kuma DP proxies, then an application's request is routed through mTLS-encrypted cross-zone proxy hops to the target service and back, with metrics reported afterward.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-6.svg)
 
 **Policy Propagation Mechanism**
 
-![Flowchart showing how a kubectl-applied policy either goes to the Global Control Plane and syncs to every zone, or is stored locally in a single Zone Control Plane, before either path updates the zone's data-plane proxies.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-7.png)
+![Flowchart showing how a kubectl-applied policy either goes to the Global Control Plane and syncs to every zone, or is stored locally in a single Zone Control Plane, before either path updates the zone's data-plane proxies.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-7.svg)
 
 **Policy Propagation Scope by Type**:
 
@@ -121,11 +121,11 @@ Kong Mesh is a Universal Service Mesh based on Kuma that integrates multiple clu
 
 **Data Plane Lifecycle**
 
-![Flowchart of a Kuma data plane proxy's lifecycle: it initializes and registers with the Zone Control Plane, receives xDS configuration, runs traffic proxying with hot-reloadable updates, and drains connections on shutdown.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-8.png)
+![Flowchart of a Kuma data plane proxy's lifecycle: it initializes and registers with the Zone Control Plane, receives xDS configuration, runs traffic proxying with hot-reloadable updates, and drains connections on shutdown.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-8.svg)
 
 **Cross-Zone Service Discovery**
 
-![Diagram of Kong Mesh cross-zone service discovery: services in each zone register with their Zone Control Plane, which report up to a global registry that clients query for local-first, cross-zone-capable routing.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-9.png)
+![Diagram of Kong Mesh cross-zone service discovery: services in each zone register with their Zone Control Plane, which report up to a global registry that clients query for local-first, cross-zone-capable routing.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-9.svg)
 
 **Service Discovery Features**:
 
@@ -248,7 +248,7 @@ spec:
 
 ### Consul Connect
 
-![Diagram of Consul Connect's architecture: a Consul server cluster acts as the service catalog for both Kubernetes pods and legacy VMs, whose Envoy sidecars discover each other through it and mesh together over mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-10.png)
+![Diagram of Consul Connect's architecture: a Consul server cluster acts as the service catalog for both Kubernetes pods and legacy VMs, whose Envoy sidecars discover each other through it and mesh together over mTLS.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-10.svg)
 
 **Features**:
 
@@ -268,7 +268,7 @@ spec:
 
 ### Latency Overhead
 
-![Comparison diagram showing added P99 latency for each service mesh's data-plane proxy relative to a direct, mesh-free Kubernetes service call, with Linkerd lowest and Istio/Consul highest.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-11.png)
+![Comparison diagram showing added P99 latency for each service mesh's data-plane proxy relative to a direct, mesh-free Kubernetes service call, with Linkerd lowest and Istio/Consul highest.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-11.svg)
 
 **Benchmark Results** (P99 Latency increase, 1000 RPS):
 
@@ -303,7 +303,7 @@ spec:
 
 **Maximum RPS (Requests Per Second)**:
 
-![Comparison of maximum sustained requests-per-second for each service mesh's data plane as a percentage of an unmeshed baseline, with Linkerd retaining the most throughput and Istio/Consul the least.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-12.png)
+![Comparison of maximum sustained requests-per-second for each service mesh's data plane as a percentage of an unmeshed baseline, with Linkerd retaining the most throughput and Istio/Consul the least.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-12.svg)
 
 **Conclusion**:
 
@@ -753,19 +753,19 @@ ui_config {
 
 **Istio Multi-Primary**:
 
-![Diagram of Istio's multi-primary multi-cluster model: each cluster runs its own Istiod, the two discover each other's services, and workloads across clusters communicate directly over cross-cluster mTLS.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-13.png)
+![Diagram of Istio's multi-primary multi-cluster model: each cluster runs its own Istiod, the two discover each other's services, and workloads across clusters communicate directly over cross-cluster mTLS.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-13.svg)
 
 **Linkerd Multi-cluster**:
 
-![Diagram of Linkerd's multi-cluster model: a service routes through a gateway in its source cluster, which mesh-connects over mTLS to a gateway in the target cluster that forwards to a mirrored service.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-14.png)
+![Diagram of Linkerd's multi-cluster model: a service routes through a gateway in its source cluster, which mesh-connects over mTLS to a gateway in the target cluster that forwards to a mirrored service.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-14.svg)
 
 **Kong Mesh Multi-zone**:
 
-![Diagram of Kong Mesh's multi-zone topology: a global control plane synchronizes policy to zone control planes across AWS, Azure and on-premises, while services in different zones talk to each other cross-zone.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-15.png)
+![Diagram of Kong Mesh's multi-zone topology: a global control plane synchronizes policy to zone control planes across AWS, Azure and on-premises, while services in different zones talk to each other cross-zone.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-15.svg)
 
 **Consul Multi-datacenter**:
 
-![Diagram of Consul Connect's multi-datacenter model: Consul server clusters in each datacenter gossip over WAN, mesh gateways carry cross-datacenter service traffic, and local services discover through their own Consul servers.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
+![Diagram of Consul Connect's multi-datacenter model: Consul server clusters in each datacenter gossip over WAN, mesh gateways carry cross-datacenter service traffic, and local services discover through their own Consul servers.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-16.svg)
 
 ### Multi-Cluster Feature Comparison
 
@@ -900,7 +900,7 @@ kubectl logs <pod> -c consul-connect-envoy-sidecar
 
 ### Learning Curve
 
-![Diagram matching each service mesh's learning difficulty to the scale of use case it suits: Linkerd for a quick start, Kong Mesh or Consul for medium scale, and Istio for large enterprise deployments.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-17.png)
+![Diagram matching each service mesh's learning difficulty to the scale of use case it suits: Linkerd for a quick start, Kong Mesh or Consul for medium scale, and Istio for large enterprise deployments.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-17.svg)
 
 ## Cost Analysis
 
@@ -1125,7 +1125,7 @@ istioctl install --set profile=demo \
 
 ### Decision Tree
 
-![Decision tree for choosing a service mesh: it branches on team experience, resource constraints, platform (Kubernetes-only vs. hybrid with VMs) and feature needs to arrive at Linkerd, Istio, Kong Mesh or Consul.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-18.png)
+![Decision tree for choosing a service mesh: it branches on team experience, resource constraints, platform (Kubernetes-only vs. hybrid with VMs) and feature needs to arrive at Linkerd, Istio, Kong Mesh or Consul.](../../../../assets/diagrams/rendered/en-service-mesh-istio-comparison-01-service-mesh-comparison-18.svg)
 
 ### Quick Recommendation Guide
 

@@ -40,7 +40,7 @@ Ambient Mode의 해결책:
 
 ### 핵심 개념
 
-![애플리케이션 컨테이너에 사이드카 프록시가 붙는 Sidecar 방식과, 노드 단위 ztunnel과 선택적 Waypoint 프록시로 트래픽을 처리하는 Ambient 방식을 나란히 비교하는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-0.png)
+![애플리케이션 컨테이너에 사이드카 프록시가 붙는 Sidecar 방식과, 노드 단위 ztunnel과 선택적 Waypoint 프록시로 트래픽을 처리하는 Ambient 방식을 나란히 비교하는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-0.svg)
 
 ### Ambient Mode의 장점
 
@@ -55,7 +55,7 @@ Ambient Mode의 해결책:
 
 #### Sidecar Mode
 
-![세 개의 파드 각각에 App 컨테이너와 Envoy Sidecar가 함께 배치되고, Envoy들이 서로 mTLS로 직접 통신하는 Sidecar Mode의 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-1.png)
+![세 개의 파드 각각에 App 컨테이너와 Envoy Sidecar가 함께 배치되고, Envoy들이 서로 mTLS로 직접 통신하는 Sidecar Mode의 구조를 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-1.svg)
 
 **특징**:
 - 각 파드에 Envoy 프록시 주입
@@ -65,7 +65,7 @@ Ambient Mode의 해결책:
 
 #### Ambient Mode
 
-![노드에 배치된 ztunnel이 애플리케이션 파드의 트래픽을 투명하게 처리해 L4 서비스로 직접 전달하고, L7 기능이 필요할 때만 선택적으로 Waypoint 프록시를 경유하는 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-2.png)
+![노드에 배치된 ztunnel이 애플리케이션 파드의 트래픽을 투명하게 처리해 L4 서비스로 직접 전달하고, L7 기능이 필요할 때만 선택적으로 Waypoint 프록시를 경유하는 구조를 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-2.svg)
 
 **특징**:
 - 노드당 하나의 ztunnel
@@ -137,7 +137,7 @@ ztunnel은 Ambient Mode의 핵심 구성 요소로, **노드 레벨에서 실행
 
 #### ztunnel 역할
 
-![애플리케이션 파드에서 들어온 TCP 연결이 ztunnel 내부에서 mTLS 암호화, 텔레메트리 수집, Identity 확인, L4 로드 밸런싱을 순서대로 거쳐 대상 서비스로 전달되는 과정을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-3.png)
+![애플리케이션 파드에서 들어온 TCP 연결이 ztunnel 내부에서 mTLS 암호화, 텔레메트리 수집, Identity 확인, L4 로드 밸런싱을 순서대로 거쳐 대상 서비스로 전달되는 과정을 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-3.svg)
 
 **ztunnel 특징**:
 - Rust로 작성 (성능 최적화)
@@ -198,7 +198,7 @@ Waypoint는 **L7 기능이 필요한 경우 사용하는 선택적 프록시**�
 
 #### Waypoint 배포 단위
 
-![하나의 Namespace 안에서 frontend와 backend ServiceAccount가 각자 별도의 Waypoint 프록시를 공유하고, ztunnel이 L7 라우팅이 필요한 트래픽을 해당 Waypoint로 전달하는 구조를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-4.png)
+![하나의 Namespace 안에서 frontend와 backend ServiceAccount가 각자 별도의 Waypoint 프록시를 공유하고, ztunnel이 L7 라우팅이 필요한 트래픽을 해당 Waypoint로 전달하는 구조를 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-4.svg)
 
 **배포 옵션**:
 - **ServiceAccount 기반**: 특정 SA를 가진 파드만 해당 Waypoint 사용
@@ -207,7 +207,7 @@ Waypoint는 **L7 기능이 필요한 경우 사용하는 선택적 프록시**�
 
 #### Waypoint 역할
 
-![ztunnel에서 L7 처리가 필요한 트래픽을 넘겨받은 Waypoint가 경로 라우팅, 재시도, 서킷 브레이커, 폴트 인젝션, 헤더 조작을 순서대로 적용한 뒤 대상 서비스로 전달하는 과정을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-5.png)
+![ztunnel에서 L7 처리가 필요한 트래픽을 넘겨받은 Waypoint가 경로 라우팅, 재시도, 서킷 브레이커, 폴트 인젝션, 헤더 조작을 순서대로 적용한 뒤 대상 서비스로 전달하는 과정을 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-5.svg)
 
 **Waypoint 특징**:
 - Service Account별 또는 Namespace별 배포
@@ -235,7 +235,7 @@ spec:
 
 다음은 Ambient Mode에서 **Sidecar 없이** 트래픽이 어떻게 흐르는지 보여주는 종합 다이어그램입니다:
 
-![Sidecar 없이 동작하는 클라이언트와 서버 애플리케이션 사이에서, ztunnel만 거치는 L4 전용 경로와 Waypoint 프록시를 추가로 거치는 L7 경로 두 시나리오의 요청·응답 흐름을 비교하는 시퀀스 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-6.png)
+![Sidecar 없이 동작하는 클라이언트와 서버 애플리케이션 사이에서, ztunnel만 거치는 L4 전용 경로와 Waypoint 프록시를 추가로 거치는 L7 경로 두 시나리오의 요청·응답 흐름을 비교하는 시퀀스 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-6.svg)
 
 **트래픽 흐름 분석**:
 
@@ -264,7 +264,7 @@ spec:
 - **효율적**: 최소한의 오버헤드
 - **방화벽 친화적**: 표준 HTTP/2 포트 사용
 
-![애플리케이션이 보낸 평문 TCP 트래픽이 출발지 ztunnel에서 HBONE(HTTP/2 기반 mTLS) 터널로 감싸져 네트워크를 통과한 뒤, 도착지 ztunnel에서 다시 평문으로 풀려 대상 앱에 전달되는 과정을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-7.png)
+![애플리케이션이 보낸 평문 TCP 트래픽이 출발지 ztunnel에서 HBONE(HTTP/2 기반 mTLS) 터널로 감싸져 네트워크를 통과한 뒤, 도착지 ztunnel에서 다시 평문으로 풀려 대상 앱에 전달되는 과정을 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-7.svg)
 
 ## 설치 및 구성
 
@@ -385,7 +385,7 @@ spec:
 
 #### 단계별 마이그레이션
 
-![운영 중인 Sidecar Mode에서 Ambient 컴포넌트 설치, Namespace 레이블 추가, Sidecar 제거, Waypoint 배포를 거쳐 Ambient Mode로 완전히 전환되는 5단계 마이그레이션 절차를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-8.png)
+![운영 중인 Sidecar Mode에서 Ambient 컴포넌트 설치, Namespace 레이블 추가, Sidecar 제거, Waypoint 배포를 거쳐 Ambient Mode로 완전히 전환되는 5단계 마이그레이션 절차를 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-8.svg)
 
 #### 1단계: Ambient 컴포넌트 설치
 
@@ -480,7 +480,7 @@ kubectl delete gateway -n default --all
 
 ### 리소스 사용량 시각화
 
-![100개 파드 클러스터를 기준으로 Sidecar Mode와 Ambient Mode의 메모리·CPU 사용량을 비교하고, 그 결과로 얻어지는 리소스 절감 효과를 정리한 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-9.png)
+![100개 파드 클러스터를 기준으로 Sidecar Mode와 Ambient Mode의 메모리·CPU 사용량을 비교하고, 그 결과로 얻어지는 리소스 절감 효과를 정리한 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-9.svg)
 
 ### 리소스 절감 계산
 
@@ -504,7 +504,7 @@ cpu_saved = sidecar_cpu - ambient_cpu          # 8.5 vCPU (~85%)
 
 ### 언제 Ambient Mode를 선택해야 하는가?
 
-![리소스 제약과 필요한 L7 기능의 범위에 따라 ztunnel만 사용하는 Ambient Mode, Waypoint를 추가한 Ambient Mode, 또는 Sidecar Mode 중 무엇을 선택해야 하는지 안내하는 의사결정 트리.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-10.png)
+![리소스 제약과 필요한 L7 기능의 범위에 따라 ztunnel만 사용하는 Ambient Mode, Waypoint를 추가한 Ambient Mode, 또는 Sidecar Mode 중 무엇을 선택해야 하는지 안내하는 의사결정 트리.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-10.svg)
 
 **Ambient Mode 권장 시나리오**:
 - ✅ 수백 개 이상의 마이크로서비스
@@ -634,7 +634,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### 비교 자료
 
-![Istio 1.0의 Sidecar Mode에서 시작해 1.15의 Ambient Beta를 거쳐 1.28의 Ambient Stable로 이어지는 데이터 플레인 아키텍처의 진화 과정을 보여주는 타임라인.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-11.png)
+![Istio 1.0의 Sidecar Mode에서 시작해 1.15의 Ambient Beta를 거쳐 1.28의 Ambient Stable로 이어지는 데이터 플레인 아키텍처의 진화 과정을 보여주는 타임라인.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-01-ambient-mode-11.svg)
 
 **프로덕션 사용 현황** (2025년 기준):
 - 🏢 **Solo.io**: 사내 클러스터 전체를 Ambient Mode로 마이그레이션

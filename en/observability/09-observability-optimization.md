@@ -25,7 +25,7 @@ In modern cloud-native environments, **observability** is the ability to underst
 
 ### 1.1 Relationship Between Logging, Metrics, and Tracing
 
-![Logging, Metrics, and Tracing shown as three peer pillars, each with its own data shape and best-fit question, linked by a dashed cycle of correlation signals — exemplars, trace context, and correlation IDs — that let an engineer jump between them.](../.gitbook/assets/en-observability-09-observability-optimization-0.png)
+![Logging, Metrics, and Tracing shown as three peer pillars, each with its own data shape and best-fit question, linked by a dashed cycle of correlation signals — exemplars, trace context, and correlation IDs — that let an engineer jump between them.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-0.svg)
 
 ### 1.2 Role of Each Pillar and Selection Criteria
 
@@ -37,7 +37,7 @@ In modern cloud-native environments, **observability** is the ability to underst
 
 ### 1.3 Overall EKS Observability Architecture
 
-![Application pods emit data to Fluent Bit and the OTel Collector, which fan out to log, metrics, and trace storage backends alongside Prometheus, all converging into Grafana as the single-pane-of-glass dashboard.](../.gitbook/assets/en-observability-09-observability-optimization-1.png)
+![Application pods emit data to Fluent Bit and the OTel Collector, which fan out to log, metrics, and trace storage backends alongside Prometheus, all converging into Grafana as the single-pane-of-glass dashboard.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-1.svg)
 
 ---
 
@@ -338,7 +338,7 @@ spec:
 
 ### 3.4 Long-term Storage Strategy
 
-![Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.](../.gitbook/assets/en-observability-09-observability-optimization-2.png)
+![Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-2.svg)
 
 ---
 
@@ -348,7 +348,7 @@ spec:
 
 OpenTelemetry (OTel) is a vendor-neutral standard for collecting and exporting observability data (traces, metrics, logs).
 
-![Application services send OTLP data through the OTel Collector's receive, batch, and attribute stages into tail sampling, which decides what survives and routes surviving spans to Tempo/Jaeger, AWS X-Ray, or a Prometheus exporter.](../.gitbook/assets/en-observability-09-observability-optimization-3.png)
+![Application services send OTLP data through the OTel Collector's receive, batch, and attribute stages into tail sampling, which decides what survives and routes surviving spans to Tempo/Jaeger, AWS X-Ray, or a Prometheus exporter.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-3.svg)
 
 ### 4.2 Tracing Backend Comparison
 
@@ -580,7 +580,7 @@ spec:
 
 **eBPF (extended Berkeley Packet Filter)** is a technology that allows safe program execution within the Linux kernel. The biggest advantage of eBPF-based monitoring is achieving observability **without code modifications**.
 
-![Traditional code-based instrumentation requires adding an SDK and redeploying code before data collection begins, while eBPF instrumentation reaches the same data collection through kernel-level hooks without any change to the running application.](../.gitbook/assets/en-observability-09-observability-optimization-4.png)
+![Traditional code-based instrumentation requires adding an SDK and redeploying code before data collection begins, while eBPF instrumentation reaches the same data collection through kernel-level hooks without any change to the running application.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-4.svg)
 
 | Characteristic | Traditional Instrumentation | eBPF Instrumentation |
 |---|---|---|
@@ -952,7 +952,7 @@ done
 
 ### 6.4 Log/Metrics Storage Cost Reduction Strategies
 
-![Collected data is classified by priority — high-priority data gets full storage and long-term retention in Glacier, medium-priority data is sampled into Standard-IA, and low-priority data is aggregated only and kept in fast local memory.](../.gitbook/assets/en-observability-09-observability-optimization-5.png)
+![Collected data is classified by priority — high-priority data gets full storage and long-term retention in Glacier, medium-priority data is sampled into Standard-IA, and low-priority data is aggregated only and kept in fast local memory.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-5.svg)
 
 | Strategy | Target | Expected Savings |
 |---|---|---|
@@ -1303,7 +1303,7 @@ data:
 
 ### 8.3 Cross-Tool Data Correlation Analysis
 
-![A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.](../.gitbook/assets/en-observability-09-observability-optimization-6.png)
+![A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-6.svg)
 
 ### 8.4 Maintaining Monitoring System Performance at Large Scale
 
@@ -1352,7 +1352,7 @@ spec:
 
 ### 8.5 High Availability Observability Stack Configuration
 
-![Multiple Fluent Bit agents fan into a load balancer that spreads work across a redundant pair of OTel Collectors, which write logs to an HA Loki-write pair backed by shared S3 and metrics to an HA vminsert pair backed by replicated vmstorage.](../.gitbook/assets/en-observability-09-observability-optimization-7.png)
+![Multiple Fluent Bit agents fan into a load balancer that spreads work across a redundant pair of OTel Collectors, which write logs to an HA Loki-write pair backed by shared S3 and metrics to an HA vminsert pair backed by replicated vmstorage.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-7.svg)
 
 ---
 
@@ -1360,7 +1360,7 @@ spec:
 
 ### 9.1 Phased Adoption Strategy
 
-![A three-phase adoption path: Phase 1 uses CloudWatch-only basics, Phase 2 layers on the Prometheus/Grafana and Loki/X-Ray stack, and Phase 3 arrives at OpenTelemetry, eBPF monitoring, and cost monitoring as the advanced end state.](../.gitbook/assets/en-observability-09-observability-optimization-8.png)
+![A three-phase adoption path: Phase 1 uses CloudWatch-only basics, Phase 2 layers on the Prometheus/Grafana and Loki/X-Ray stack, and Phase 3 arrives at OpenTelemetry, eBPF monitoring, and cost monitoring as the advanced end state.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-8.svg)
 
 | Phase | Components | Duration | Cost | Operational Complexity |
 |---|---|---|---|---|

@@ -20,7 +20,7 @@
 
 동기화(Sync)는 Git 저장소의 원하는 상태(Desired State)를 Kubernetes 클러스터의 실제 상태(Live State)와 일치시키는 과정입니다.
 
-![ArgoCD가 Git 저장소의 원하는 상태와 Kubernetes 클러스터의 실제 상태를 지속적으로 비교하고, 차이(OutOfSync)가 발견되면 변경을 적용해 실제 상태를 원하는 상태로 되돌리는 순환 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-0.png)
+![ArgoCD가 Git 저장소의 원하는 상태와 Kubernetes 클러스터의 실제 상태를 지속적으로 비교하고, 차이(OutOfSync)가 발견되면 변경을 적용해 실제 상태를 원하는 상태로 되돌리는 순환 구조를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-0.svg)
 
 ### 동기화 상태
 
@@ -130,7 +130,7 @@ syncPolicy:
 
 **동작 예시:**
 
-![Git에서 deployment-A가 삭제되면 ArgoCD가 변경을 감지하고 prune 옵션이 켜져 있음을 확인한 뒤 Kubernetes 클러스터에서 해당 리소스를 실제로 삭제하는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-1.png)
+![Git에서 deployment-A가 삭제되면 ArgoCD가 변경을 감지하고 prune 옵션이 켜져 있음을 확인한 뒤 Kubernetes 클러스터에서 해당 리소스를 실제로 삭제하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-1.svg)
 
 ### selfHeal
 
@@ -144,7 +144,7 @@ syncPolicy:
 
 **동작 예시:**
 
-![사용자가 kubectl로 레플리카 수를 직접 바꾸면 ArgoCD가 Git과의 차이를 드리프트로 감지하고 selfHeal 옵션에 따라 클러스터 상태를 Git에 선언된 값으로 되돌리는 과정을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-2.png)
+![사용자가 kubectl로 레플리카 수를 직접 바꾸면 ArgoCD가 Git과의 차이를 드리프트로 감지하고 selfHeal 옵션에 따라 클러스터 상태를 Git에 선언된 값으로 되돌리는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-2.svg)
 
 ### allowEmpty
 
@@ -313,7 +313,7 @@ spec:
 
 동기화 웨이브(Sync Wave)는 리소스의 적용 순서를 제어합니다:
 
-![sync-wave 어노테이션 값이 작은 그룹부터 순서대로 리소스가 적용되어, Namespace와 ServiceAccount가 가장 먼저, Ingress와 HPA가 가장 나중에 생성되는 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-3.png)
+![sync-wave 어노테이션 값이 작은 그룹부터 순서대로 리소스가 적용되어, Namespace와 ServiceAccount가 가장 먼저, Ingress와 HPA가 가장 나중에 생성되는 순서를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-3.svg)
 
 ### 웨이브 어노테이션
 
@@ -632,7 +632,7 @@ spec:
 
 ### 동기화 윈도우 동작
 
-![동기화 요청이 들어오면 Allow 윈도우가 활성인지 먼저 확인해 동기화를 실행하고, 아니면 Deny 윈도우가 활성인지 확인해 활성이면 동기화를 차단하고 그렇지 않으면 기본 허용으로 동기화를 실행하는 판정 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-4.png)
+![동기화 요청이 들어오면 Allow 윈도우가 활성인지 먼저 확인해 동기화를 실행하고, 아니면 Deny 윈도우가 활성인지 확인해 활성이면 동기화를 차단하고 그렇지 않으면 기본 허용으로 동기화를 실행하는 판정 순서를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-4.svg)
 
 ### 윈도우 우선순위
 
@@ -744,7 +744,7 @@ syncPolicy:
 
 ### 재시도 동작
 
-![ArgoCD가 동기화에 4번 실패할 때마다 5초, 10초, 20초, 40초로 대기 시간을 두 배씩 늘려가며 재시도하다가 다섯 번째 시도에서 성공하고, limit=5에 도달하면 재시도를 중단하는 지수 백오프 동작을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-5.png)
+![ArgoCD가 동기화에 4번 실패할 때마다 5초, 10초, 20초, 40초로 대기 시간을 두 배씩 늘려가며 재시도하다가 다섯 번째 시도에서 성공하고, limit=5에 도달하면 재시도를 중단하는 지수 백오프 동작을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-5.svg)
 
 ## 선택적 동기화
 

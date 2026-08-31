@@ -6,7 +6,7 @@
 
 Network Policy는 Calico의 두 번째 핵심 차별화 요소입니다. Calico는 Kubernetes 표준 NetworkPolicy를 완벽히 지원하면서, 더 강력한 확장 기능을 제공합니다. 이 문서에서는 Kubernetes 표준 정책의 한계를 이해하고, Calico가 제공하는 고급 정책 기능을 심층적으로 다룹니다.
 
-![Kubernetes 표준 NetworkPolicy를 기반으로 Calico NetworkPolicy, GlobalNetworkPolicy, Tier 기반 정책이 차례로 쌓이며 정책의 적용 범위와 기능이 점점 넓어지는 4단계 계층 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-05-network-policy-0.png)
+![Kubernetes 표준 NetworkPolicy를 기반으로 Calico NetworkPolicy, GlobalNetworkPolicy, Tier 기반 정책이 차례로 쌓이며 정책의 적용 범위와 기능이 점점 넓어지는 4단계 계층 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-05-network-policy-0.svg)
 
 ## Kubernetes NetworkPolicy 기본
 
@@ -579,7 +579,7 @@ spec:
 
 ### Tier 평가 흐름
 
-![들어오는 트래픽이 Security, Platform, Application, Default 네 개의 Tier를 order 순서로 통과하며, 각 Tier에서 규칙에 매치되면 즉시 Drop 또는 Accept로 보내고 매치되지 않으면 Pass로 다음 Tier에 넘어가는 정책 평가 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-05-network-policy-1.png)
+![들어오는 트래픽이 Security, Platform, Application, Default 네 개의 Tier를 order 순서로 통과하며, 각 Tier에서 규칙에 매치되면 즉시 Drop 또는 Accept로 보내고 매치되지 않으면 Pass로 다음 Tier에 넘어가는 정책 평가 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-05-network-policy-1.svg)
 
 ### Tier 정책 예시
 

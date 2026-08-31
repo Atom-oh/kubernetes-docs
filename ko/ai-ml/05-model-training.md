@@ -9,13 +9,13 @@
 
 Kubernetes에서의 일반적인 모델 훈련 파이프라인은 데이터 준비부터 모델 평가까지 여러 단계를 포함합니다:
 
-![S3 데이터 레이크에서 시작해 분산 훈련 워커가 파라미터 서버와 AllReduce로 동기화하고, FSx for Lustre에 체크포인트를 저장한 뒤 평가를 거쳐 모델 레지스트리에 등록되는 4단계 파이프라인을 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-0.png)
+![S3 데이터 레이크에서 시작해 분산 훈련 워커가 파라미터 서버와 AllReduce로 동기화하고, FSx for Lustre에 체크포인트를 저장한 뒤 평가를 거쳐 모델 레지스트리에 등록되는 4단계 파이프라인을 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-05-model-training-0.svg)
 
 ## 분산 훈련 전략
 
 대규모 모델을 훈련하려면 여러 GPU와 노드에 걸쳐 연산을 분산해야 합니다. 다양한 병렬화 전략을 이해하는 것이 효율적인 훈련에 필수적입니다.
 
-![데이터 병렬화, 텐서 병렬화, 파이프라인 병렬화, 전문가 병렬화(MoE)라는 4가지 독립적인 분산 훈련 전략 각각의 내부 흐름을 2x2로 나란히 비교해서 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-1.png)
+![데이터 병렬화, 텐서 병렬화, 파이프라인 병렬화, 전문가 병렬화(MoE)라는 4가지 독립적인 분산 훈련 전략 각각의 내부 흐름을 2x2로 나란히 비교해서 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-05-model-training-1.svg)
 
 ### 병렬화 전략 비교
 
@@ -50,7 +50,7 @@ Slinky는 친숙한 Slurm 워크로드 관리자를 Kubernetes에 도입하여 A
 
 ### Slinky 아키텍처
 
-![ArgoCD, Amazon ECR, NLB 같은 외부 서비스가 EKS 클러스터 안의 Slurm 컨트롤 플레인, 사용자 접근(로그인 Pod/JupyterHub), GPU 컴퓨트 노드, 공유 스토리지(FSx for Lustre), Karpenter 오토스케일링과 어떻게 연결되는지 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-2.png)
+![ArgoCD, Amazon ECR, NLB 같은 외부 서비스가 EKS 클러스터 안의 Slurm 컨트롤 플레인, 사용자 접근(로그인 Pod/JupyterHub), GPU 컴퓨트 노드, 공유 스토리지(FSx for Lustre), Karpenter 오토스케일링과 어떻게 연결되는지 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-05-model-training-2.svg)
 
 ### Slinky 컴포넌트
 

@@ -10,7 +10,7 @@ Calico supports multiple networking modes to accommodate different infrastructur
 
 ![Calico Networking Modes Comparison](../../.gitbook/assets/calico_networking_modes.png)
 
-![Three parallel rows compare Calico's IPIP, VXLAN, and Direct/Native networking modes, tracing each mode's encapsulation approach and MTU to the use case it fits best, with Direct/Native highlighted as the top-performance option.](../../.gitbook/assets/en-networking-calico-03-networking-modes-0.png)
+![Three parallel rows compare Calico's IPIP, VXLAN, and Direct/Native networking modes, tracing each mode's encapsulation approach and MTU to the use case it fits best, with Direct/Native highlighted as the top-performance option.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-0.svg)
 
 ## IPIP Mode
 
@@ -51,7 +51,7 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 CrossSubnet is an optimization that only encapsulates traffic crossing L3 boundaries:
 
-![Two nodes on the same subnet route directly to each other with no encapsulation, while traffic crossing into the other subnet is IPIP-encapsulated only for that cross-subnet hop.](../../.gitbook/assets/en-networking-calico-03-networking-modes-1.png)
+![Two nodes on the same subnet route directly to each other with no encapsulation, while traffic crossing into the other subnet is IPIP-encapsulated only for that cross-subnet hop.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-1.svg)
 
 ### IPIP IPPool Configuration
 
@@ -102,7 +102,7 @@ ip route | grep tunl0
 
 ### IPIP Packet Flow Diagram
 
-![A packet from Pod A is routed into the tunl0 interface on Node 1, IPIP-encapsulated, carried across the physical network to Node 2, decapsulated, and delivered to Pod B.](../../.gitbook/assets/en-networking-calico-03-networking-modes-2.png)
+![A packet from Pod A is routed into the tunl0 interface on Node 1, IPIP-encapsulated, carried across the physical network to Node 2, decapsulated, and delivered to Pod B.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-2.svg)
 
 ## VXLAN Mode
 
@@ -188,7 +188,7 @@ ip route | grep vxlan
 
 ### VXLAN Packet Flow
 
-![Pod A's packet is encapsulated by its node's VTEP into a UDP/VXLAN frame, crosses the physical network, and is decapsulated by the destination VTEP before reaching Pod B.](../../.gitbook/assets/en-networking-calico-03-networking-modes-3.png)
+![Pod A's packet is encapsulated by its node's VTEP into a UDP/VXLAN frame, crosses the physical network, and is decapsulated by the destination VTEP before reaching Pod B.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-3.svg)
 
 ## Direct/Unencapsulated Mode
 
@@ -204,7 +204,7 @@ Direct routing mode uses native IP routing without any encapsulation, providing 
 
 ### Direct Mode Topology
 
-![Nodes in each rack peer over BGP with their rack's top-of-rack switch, and both top-of-rack switches peer with a shared spine switch, so pod routes propagate natively without any overlay.](../../.gitbook/assets/en-networking-calico-03-networking-modes-4.png)
+![Nodes in each rack peer over BGP with their rack's top-of-rack switch, and both top-of-rack switches peer with a shared spine switch, so pod routes propagate natively without any overlay.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-4.svg)
 
 ### Direct Mode IPPool Configuration
 
@@ -327,7 +327,7 @@ CPU Usage (% per Gbps):
 
 ### Packet Flow Comparison
 
-![Three lanes trace the same Pod A to Pod B hop under Direct, IPIP, and VXLAN mode, showing that only the encapsulation step at the physical network boundary differs between them.](../../.gitbook/assets/en-networking-calico-03-networking-modes-5.png)
+![Three lanes trace the same Pod A to Pod B hop under Direct, IPIP, and VXLAN mode, showing that only the encapsulation step at the physical network boundary differs between them.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-5.svg)
 
 ## Cloud Provider Compatibility
 
@@ -505,7 +505,7 @@ tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 
 ## Decision Flowchart
 
-![A decision tree starting from cloud-vs-on-premises branches through provider, VPC routing, and BGP/L2 adjacency questions to arrive at VXLAN, IPIP CrossSubnet, or Direct mode, with the on-premises BGP path highlighted as the top-performance route.](../../.gitbook/assets/en-networking-calico-03-networking-modes-6.png)
+![A decision tree starting from cloud-vs-on-premises branches through provider, VPC routing, and BGP/L2 adjacency questions to arrive at VXLAN, IPIP CrossSubnet, or Direct mode, with the on-premises BGP path highlighted as the top-performance route.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-6.svg)
 
 ## Summary
 

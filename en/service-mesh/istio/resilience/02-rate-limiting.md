@@ -16,7 +16,7 @@ Rate Limiting is a feature that limits request rates to protect services from ov
 
 Rate Limiting is needed in the following situations:
 
-![Diagram showing three clients sending traffic through a token-bucket rate limiter that forwards allowed requests to two service pods and rejects excess traffic with a 429 response.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-0.png)
+![Diagram showing three clients sending traffic through a token-bucket rate limiter that forwards allowed requests to two service pods and rejects excess traffic with a 429 response.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-02-rate-limiting-0.svg)
 
 ### Purpose of Rate Limiting
 
@@ -64,7 +64,7 @@ Rate Limiting is needed in the following situations:
 
 ### Token Bucket Algorithm
 
-![Flowchart showing a token bucket refilled at a steady rate, checked on each incoming request, and either allowing the request while consuming a token or rejecting it with a 429 when empty.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-1.png)
+![Flowchart showing a token bucket refilled at a steady rate, checked on each incoming request, and either allowing the request while consuming a token or rejecting it with a 429 when empty.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-02-rate-limiting-1.svg)
 
 ### Basic Configuration
 
@@ -230,7 +230,7 @@ Global Rate Limiting uses a centralized Rate Limit service to apply accurate rat
 
 ### Architecture
 
-![Architecture diagram showing clients sending requests through an Istio ingress gateway that checks a centralized rate limit server backed by an in-memory cache before forwarding allowed traffic to backend services.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
+![Architecture diagram showing clients sending requests through an Istio ingress gateway that checks a centralized rate limit server backed by an in-memory cache before forwarding allowed traffic to backend services.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-02-rate-limiting-2.svg)
 
 ### Configuration Method
 

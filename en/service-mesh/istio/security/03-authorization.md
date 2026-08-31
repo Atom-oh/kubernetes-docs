@@ -28,7 +28,7 @@ Istio AuthorizationPolicy provides fine-grained access control for services. The
 - **Operation**: HTTP method, path, port
 - **Conditions**: Custom conditions (headers, JWT claims, etc.)
 
-![A flowchart showing Istio AuthorizationPolicy evaluating a request through three sequential checks — service account, namespace, and HTTP method — where any failed check immediately denies and audit-logs the request, while passing all three allows it.](../../../.gitbook/assets/en-service-mesh-istio-security-03-authorization-0.png)
+![A flowchart showing Istio AuthorizationPolicy evaluating a request through three sequential checks — service account, namespace, and HTTP method — where any failed check immediately denies and audit-logs the request, while passing all three allows it.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-03-authorization-0.svg)
 
 ## Basic Policies
 

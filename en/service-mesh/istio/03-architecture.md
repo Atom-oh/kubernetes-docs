@@ -43,7 +43,7 @@ This document provides an in-depth look at Istio's internal architecture and net
 
 **Important**: Since Istio 1.5, Pilot, Citadel, and Galley are **internal functions of Istiod, not separate components**.
 
-![Architecture diagram showing Istiod's single process consolidating Pilot, Citadel, and Galley functions, validating configuration from the Kubernetes API and pushing xDS configuration and X.509 certificates to Envoy sidecar proxies.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
+![Architecture diagram showing Istiod's single process consolidating Pilot, Citadel, and Galley functions, validating configuration from the Kubernetes API and pushing xDS configuration and X.509 certificates to Envoy sidecar proxies.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-0.svg)
 
 ### Istiod Main Functions
 
@@ -113,7 +113,7 @@ spec:
 
 #### 3. Certificate Management (Citadel Functionality)
 
-![Sequence diagram showing Envoy requesting a certificate from Istiod, Istiod verifying the workload identity with SPIFFE, signing and issuing an X.509 certificate for mTLS, and later renewing it before expiry.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-1.png)
+![Sequence diagram showing Envoy requesting a certificate from Istiod, Istiod verifying the workload identity with SPIFFE, signing and issuing an X.509 certificate for mTLS, and later renewing it before expiry.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-1.svg)
 
 **SPIFFE ID Format**:
 
@@ -216,6 +216,8 @@ spec:
 
 ![Architecture diagram showing an inbound request passing through Envoy's listener, filter chain, and router into a cluster of upstream services before leaving as an outbound request.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
 
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
+
 ### Envoy Main Components
 
 #### 1. Listeners
@@ -246,7 +248,7 @@ spec:
 
 **Plugins that process requests/responses**:
 
-![Flowchart showing an HTTP request passing sequentially through Envoy's JWT authentication, rate limiting, RBAC validation, stats collection, and router filters before becoming the HTTP response.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-3.png)
+![Flowchart showing an HTTP request passing sequentially through Envoy's JWT authentication, rate limiting, RBAC validation, stats collection, and router filters before becoming the HTTP response.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-3.svg)
 
 #### 3. Clusters
 
@@ -295,7 +297,7 @@ spec:
 
 ### Injection Process
 
-![Flowchart showing a Deployment's pod creation call to the Kubernetes API triggering a mutating webhook that asks Istio's sidecar injector to modify the pod spec, resulting in a pod with an istio-init container and an istio-proxy sidecar alongside the application container.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-4.png)
+![Flowchart showing a Deployment's pod creation call to the Kubernetes API triggering a mutating webhook that asks Istio's sidecar injector to modify the pod spec, resulting in a pod with an istio-init container and an istio-proxy sidecar alongside the application container.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-4.svg)
 
 ### Original vs After Injection
 
@@ -395,7 +397,7 @@ kubectl apply -f deployment-injected.yaml
 
 **Role**: Sets up iptables rules to redirect pod network traffic to Envoy Proxy
 
-![Sequence diagram showing the istio-init container configuring iptables to redirect a pod's traffic to Envoy before the application and Envoy proxy start, so that a later outbound request is transparently intercepted and redirected to Envoy's listener.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-5.png)
+![Sequence diagram showing the istio-init container configuring iptables to redirect a pod's traffic to Envoy before the application and Envoy proxy start, so that a later outbound request is transparently intercepted and redirected to Envoy's listener.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-5.svg)
 
 ### iptables Rules Detail
 
@@ -427,7 +429,7 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### Traffic Flow (After iptables Applied)
 
-![Architecture diagram showing an application's outbound request redirected by iptables OUTPUT chain rules into Envoy's outbound listener and forwarded to an external service using the proxy's own UID to bypass further interception, and a mirrored inbound path through the PREROUTING chain into Envoy's inbound listener after mTLS verification back to the application.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-6.png)
+![Architecture diagram showing an application's outbound request redirected by iptables OUTPUT chain rules into Envoy's outbound listener and forwarded to an external service using the proxy's own UID to bypass further interception, and a mirrored inbound path through the PREROUTING chain into Envoy's inbound listener after mTLS verification back to the application.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-6.svg)
 
 ### Checking iptables Rules
 
@@ -473,7 +475,7 @@ Istio supports two traffic interception methods:
 
 ### Kubernetes DNS Basic Operation
 
-![Flowchart showing an application's default DNS lookup path: a name resolution request goes through the pod's resolv.conf to CoreDNS, which returns the service's ClusterIP back to the application.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-7.png)
+![Flowchart showing an application's default DNS lookup path: a name resolution request goes through the pod's resolv.conf to CoreDNS, which returns the service's ClusterIP back to the application.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-7.svg)
 
 **/etc/resolv.conf** (inside pod):
 
@@ -487,7 +489,7 @@ options ndots:5
 
 **In Istio, Envoy handles DNS**:
 
-![Flowchart showing Envoy intercepting an application's TCP connection, inspecting the Host header, resolving the route, selecting a cluster, and querying endpoints through Istiod's xDS server rather than calling CoreDNS.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-8.png)
+![Flowchart showing Envoy intercepting an application's TCP connection, inspecting the Host header, resolving the route, selecting a cluster, and querying endpoints through Istiod's xDS server rather than calling CoreDNS.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-8.svg)
 
 **Advantages**:
 
@@ -511,7 +513,7 @@ spec:
 
 **Operation**:
 
-![Sequence diagram showing Envoy's DNS proxy intercepting a redirected DNS query and branching: for an in-mesh Istio service it asks Istiod's xDS server for the ClusterIP, otherwise it falls back to querying CoreDNS, before returning an IP to the application either way.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-9.png)
+![Sequence diagram showing Envoy's DNS proxy intercepting a redirected DNS query and branching: for an in-mesh Istio service it asks Istiod's xDS server for the ClusterIP, otherwise it falls back to querying CoreDNS, before returning an IP to the application either way.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-9.svg)
 
 **DNS Proxy iptables rules**:
 
@@ -528,7 +530,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 **xDS**: Stands for Discovery Service, Envoy's dynamic configuration protocol.
 
-![Architecture diagram showing Istiod's Pilot component maintaining five bidirectional gRPC streams with Envoy: Listener, Route, Cluster, Endpoint, and Secret Discovery Services.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-10.png)
+![Architecture diagram showing Istiod's Pilot component maintaining five bidirectional gRPC streams with Envoy: Listener, Route, Cluster, Endpoint, and Secret Discovery Services.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-10.svg)
 
 ### xDS API Types
 
@@ -542,7 +544,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 ### xDS Communication Flow
 
-![Sequence diagram showing a newly started Envoy proxy connecting to Istiod over mTLS, looping through xDS request/response round-trips for each discovery resource type until fully configured, and later receiving a pushed endpoint update after Istiod detects a Kubernetes service change.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-11.png)
+![Sequence diagram showing a newly started Envoy proxy connecting to Istiod over mTLS, looping through xDS request/response round-trips for each discovery resource type until fully configured, and later receiving a pushed endpoint update after Istiod detects a Kubernetes service change.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-11.svg)
 
 ### Verifying xDS Communication
 
@@ -591,7 +593,7 @@ istioctl proxy-config routes <pod-name> -n default
 
 By default, each Envoy receives **information about all services in the entire mesh**:
 
-![Architecture diagram showing that by default every Envoy sidecar in a 1000-service mesh receives configuration for all services, even though the application in its pod only talks to two of them.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-12.png)
+![Architecture diagram showing that by default every Envoy sidecar in a 1000-service mesh receives configuration for all services, even though the application in its pod only talks to two of them.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-12.svg)
 
 **Problems**:
 

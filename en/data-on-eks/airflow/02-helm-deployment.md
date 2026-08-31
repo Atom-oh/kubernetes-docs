@@ -130,7 +130,7 @@ In practice, teams running high task volumes tend to find `KubernetesExecutor` s
 
 You are not actually forced to choose only one for an entire deployment. Airflow 3's "multiple executors concurrently" feature (introduced in Part 1) lets a single deployment assign an executor per task or per DAG rather than committing to one globally — for example, running most DAGs on a warm `CeleryExecutor` pool for low-latency dispatch, while routing a handful of resource-heavy or GPU tasks to `KubernetesExecutor` for isolation. This is the realistic answer for most non-trivial deployments: pick a sensible default, and override it explicitly for the tasks that need the other executor's behavior.
 
-![Side-by-side comparison of two Apache Airflow task-execution models: KubernetesExecutor, where the scheduler spawns one dedicated pod per task, versus CeleryExecutor, where the scheduler enqueues tasks onto a Redis broker that a pool of warm, reusable celery workers pulls from.](../../.gitbook/assets/en-data-on-eks-airflow-02-helm-deployment-0.png)
+![Side-by-side comparison of two Apache Airflow task-execution models: KubernetesExecutor, where the scheduler spawns one dedicated pod per task, versus CeleryExecutor, where the scheduler enqueues tasks onto a Redis broker that a pool of warm, reusable celery workers pulls from.](../../../assets/diagrams/rendered/en-data-on-eks-airflow-02-helm-deployment-0.svg)
 
 With `KubernetesExecutor`, every task is a fresh pod that exists only for the task's lifetime. With `CeleryExecutor`, the worker pods are long-lived and pull work from the broker — the pods in the diagram above are already running before any task is queued.
 

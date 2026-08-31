@@ -55,6 +55,8 @@ Kubeflow's architecture centers on a shared Kubernetes API server that every com
 
 ![The Istio ingress gateway routes requests through Dex/Cognito OIDC authentication to the Kubeflow Central Dashboard, which acts as the hub connecting the Profile Controller (managing per-team namespace profiles) and the component controllers for Pipelines, Notebooks, Katib, Kubeflow Trainer, and KServe, all of which reconcile custom resources against the Kubernetes API server under namespace-scoped access.](../../.gitbook/assets/en-ai-ml-kubeflow-01-architecture-installation-0.png)
 
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-01-architecture-installation-0.html)
+
 A few points worth calling out:
 
 - **Profiles as tenancy boundary.** A "Kubeflow Profile" is a Kubernetes namespace plus a bundle of RBAC bindings, resource quotas, and Istio `AuthorizationPolicy` objects, all reconciled by the Profile Controller from a single `Profile` custom resource. Every user or team typically gets one profile, and every other component (Notebooks, Pipelines runs, Katib experiments) creates its resources inside the requesting user's profile namespace.

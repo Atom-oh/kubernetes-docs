@@ -30,7 +30,7 @@ FinOps는 클라우드 비용을 엔지니어링 조직이 주도적으로 관�
 
 FinOps Foundation에서 정의한 FinOps 프레임워크는 세 가지 반복적 단계로 구성됩니다. 이 사이클은 한 번으로 끝나는 것이 아니라, 조직의 성숙도가 높아짐에 따라 점점 정교해지는 **지속적 개선 루프**입니다.
 
-![Inform, Optimize, Operate 세 단계가 순환하며 각 단계의 핵심 활동을 보여주는 FinOps 라이프사이클 흐름도로, 비용 최적화 단계를 중심으로 강조한다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-0.png)
+![Inform, Optimize, Operate 세 단계가 순환하며 각 단계의 핵심 활동을 보여주는 FinOps 라이프사이클 흐름도로, 비용 최적화 단계를 중심으로 강조한다.](../../assets/diagrams/rendered/ko-ops-13-finops-cost-platform-0.svg)
 
 ### 1.1 각 단계의 핵심 활동
 
@@ -986,7 +986,7 @@ Kubernetes 클러스터에는 모든 팀이 공유하는 인프라 비용이 존
 | 보안 | cert-manager, OPA, Falco | 균등 분배 | 모든 팀이 동일하게 혜택 |
 | 유휴 비용 | 미사용 노드 리소스 | 노드별 가중치 | 노드 사용량에 비례 |
 
-![총 1만 달러의 클러스터 비용을 직접·공유·유휴 비용으로 나눠 팀 A, B, C에 배분한 누적 막대 그래프로, 유휴 비용을 최적화 대상으로 강조한다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-1.png)
+![총 1만 달러의 클러스터 비용을 직접·공유·유휴 비용으로 나눠 팀 A, B, C에 배분한 누적 막대 그래프로, 유휴 비용을 최적화 대상으로 강조한다.](../../assets/diagrams/rendered/ko-ops-13-finops-cost-platform-1.svg)
 
 ### 3.4 Grafana Showback 대시보드
 
@@ -2482,7 +2482,7 @@ kubectl get vpa -n data-production
 
 VPA 추천을 수동으로 적용하는 대신, CI/CD 파이프라인을 통해 추천값을 PR로 생성하고 리뷰 후 적용하는 자동화 워크플로우를 구축합니다.
 
-![CronJob이 매주 VPA 추천값을 조회해 스크립트가 PR을 생성하고, Git/CI가 검증 후 팀 리더의 승인·머지를 거쳐 ArgoCD로 안전하게 배포하는 시퀀스 다이어그램이다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-2.png)
+![CronJob이 매주 VPA 추천값을 조회해 스크립트가 PR을 생성하고, Git/CI가 검증 후 팀 리더의 승인·머지를 거쳐 ArgoCD로 안전하게 배포하는 시퀀스 다이어그램이다.](../../assets/diagrams/rendered/ko-ops-13-finops-cost-platform-2.svg)
 
 **라이트사이징 자동화 CronJob:**
 
