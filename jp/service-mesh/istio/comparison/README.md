@@ -1,18 +1,19 @@
 # 比較ガイド
 
-> **最終更新**: July 7, 2026 **対象読者**: アーキテクト、DevOps エンジニア、Platform エンジニア
+> **最終更新**: July 7, 2026
+> **対象読者**: アーキテクト、DevOps エンジニア、Platform エンジニア
 
-このセクションでは、さまざまな Service Mesh とネットワーキングソリューションを比較し、各ソリューションの長所、短所、および適切なユースケースを紹介します。
+このセクションでは、さまざまな Service Mesh およびネットワーキングソリューションを比較し、各ソリューションの長所・短所と適切なユースケースを紹介します。
 
 ## 目次
 
-### 1. [Service Mesh ソリューション比較](01-service-mesh-comparison.md)
+### 1. [Service Mesh ソリューションの比較](01-service-mesh-comparison.md)
 
 Kubernetes 環境で利用できる主要な Service Mesh ソリューションの比較:
 
 * **Istio** - 機能が豊富なエンタープライズグレードの Service Mesh
 * **Linkerd** - 軽量で使いやすい Service Mesh
-* **Kong Mesh** - Kuma をベースとしたユニバーサル Service Mesh
+* **Kong Mesh** - Kuma ベースのユニバーサル Service Mesh
 * **Consul Connect** - HashiCorp の Service Mesh ソリューション
 
 **比較基準**:
@@ -21,22 +22,22 @@ Kubernetes 環境で利用できる主要な Service Mesh ソリューション�
 * パフォーマンスとリソース使用量
 * 機能セット（トラフィック管理、セキュリティ、可観測性）
 * 学習曲線と運用の複雑さ
-* マルチクラスターサポート
-* スケーラビリティとプラットフォームサポート
+* マルチクラスター対応
+* スケーラビリティとプラットフォーム対応
 
 ### 2. [Istio vs VPC Lattice](02-istio-vs-lattice.md)
 
-Kubernetes Service Mesh（Istio）と AWS ネイティブなサービスネットワーキング（VPC Lattice）の比較:
+Kubernetes Service Mesh（Istio）と AWS ネイティブのサービスネットワーキング（VPC Lattice）の比較:
 
 **Istio Service Mesh**:
 
 * Kubernetes 中心の Service Mesh
 * 豊富なトラフィック管理および可観測性機能
-* クラウド中立
+* クラウドニュートラル
 
 **AWS VPC Lattice**:
 
-* AWS ネイティブなサービスネットワーキング
+* AWS ネイティブのサービスネットワーキング
 * サーバーレスアーキテクチャ
 * シンプルなマルチアカウント/VPC 接続
 
@@ -47,59 +48,30 @@ Kubernetes Service Mesh（Istio）と AWS ネイティブなサービスネッ�
 * セキュリティモデル
 * 運用オーバーヘッド
 * コスト構造
-* ハイブリッドおよびマルチクラウドサポート
+* ハイブリッドおよびマルチクラウド対応
 
-### 3. [Sidecar vs Ambient Mode 選定ガイド](03-sidecar-vs-ambient.md)
+### 3. [Sidecar vs Ambient モード選択ガイド](03-sidecar-vs-ambient.md)
 
-EKS 1.36 上で Istio の sidecar モードと ambient モードを選択するための、テスト結果に基づく意思決定ガイド:
+EKS 1.36 において Istio の sidecar モードと ambient モードを選択するための、テスト結果に基づく意思決定ガイド:
 
 * mTLS、NetworkPolicy、レイテンシー、ゼロダウンタイムロールアウト（waypoint 503）の 4 要件に対するテスト結果
-* sidecar よりも ambient waypoint 経由で高い 503 発生率を示す計測データ
-* ワークロード層（core / semi-core / periphery）ごとの段階的な混在デプロイメント推奨事項
+* sidecar よりも ambient waypoint 経由で高い 503 率を示す測定データ
+* ワークロード階層（コア / セミコア / 周辺）ごとの段階的な混在デプロイメントの推奨
 
 **比較基準**:
 
 * mTLS の強制と検証
-* HBONE ポートにおける NetworkPolicy の相互作用
-* ロールアウト中の 503 発生率（計測値）
+* HBONE ポートに対する NetworkPolicy の相互作用
+* ロールアウト中の 503 率（測定値）
 * 非冪等 API におけるリトライポリシーのリスク
 
-## 選定ガイド
+## 選択ガイド
 
-### Service Mesh の選定基準
+### Service Mesh の選択基準
 
-```mermaid
-flowchart TD
-    Start[Need Service Mesh?]
-    Start -->|Yes| Q1{Platform?}
-    Start -->|No| NoMesh[Use basic K8s Service]
+![Service Mesh を選択するための 2 つの判断経路を示すフローチャート。Kubernetes プラットフォーム優先の経路は Istio、Linkerd、または Consul/Kong Mesh に至り、AWS 中心の経路は VPC Lattice、EKS 上の Istio、Istio マルチクラスター、またはリージョナルソリューションに至ります。](../../../.gitbook/assets/en-service-mesh-istio-comparison-README-0.png)
 
-    Q1 -->|Kubernetes Only| Q2{Can accept complexity?}
-    Q1 -->|Multi-Platform| ConsulKong[Consider Consul/Kong Mesh]
-
-    Q2 -->|Yes, need rich features| Istio[Select Istio]
-    Q2 -->|No, simplicity first| Linkerd[Select Linkerd]
-
-    Q3{AWS-centric?}
-    Q3 -->|Yes| Q4{Serverless/Simplicity?}
-    Q3 -->|No| Q5{Multi-cloud?}
-
-    Q4 -->|Yes| Lattice[VPC Lattice]
-    Q4 -->|No| IstioEKS[Istio on EKS]
-
-    Q5 -->|Yes| IstioMulti[Istio Multi-cluster]
-    Q5 -->|No| Regional[Regional Solution]
-
-    classDef meshSolution fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef awsSolution fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class Istio,Linkerd,ConsulKong,IstioEKS,IstioMulti meshSolution;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-    class Lattice awsSolution;
-```
-
-### ユースケース別の推奨事項
+### ユースケース別の推奨
 
 #### 大企業
 
@@ -108,7 +80,7 @@ flowchart TD
 * 豊富な機能セット
 * きめ細かなトラフィック制御
 * 強力なセキュリティ（Authorization Policies、mTLS）
-* マルチクラスター Federation
+* マルチクラスター連携
 * 広範なエコシステムとコミュニティ
 
 **代替**: Kong Mesh（ユニバーサル control plane が必要な場合）
@@ -139,9 +111,9 @@ flowchart TD
 
 **推奨**: Istio または Consul Connect
 
-* クラウド中立
-* VM ワークロードサポート
-* マルチクラスター Federation
+* クラウドニュートラル
+* VM ワークロード対応
+* マルチクラスター連携
 * 一貫したポリシーと可観測性
 
 #### レガシーシステム統合
@@ -151,9 +123,9 @@ flowchart TD
 * VM ワークロードを優先したサポート
 * 段階的な移行が可能
 * Service Discovery 統合
-* 多様なプラットフォームサポート
+* 多様なプラットフォーム対応
 
-#### 強力な可観測性の要件
+#### 強力な可観測性要件
 
 **推奨**: Istio
 
@@ -167,31 +139,31 @@ flowchart TD
 
 ## クイック比較表
 
-### Service Mesh 比較
+### Service Mesh の比較
 
 | 基準               | Istio        | Linkerd        | Kong Mesh   | Consul Connect |
 | ---------------------- | ------------ | -------------- | ----------- | -------------- |
 | **アーキテクチャ**       | Envoy proxy  | Linkerd2-proxy | Envoy proxy | Consul proxy   |
-| **リソース使用量**     | 高い         | 低い           | 中程度      | 中程度         |
-| **学習曲線**     | 急           | 緩やか         | 中程度      | 中程度         |
-| **機能の豊富さ**   | 5/5          | 3/5            | 4/5         | 4/5            |
-| **マルチクラスター**      | 優れている   | サポート済み   | 優れている  | 優れている     |
-| **VM サポート**         | 制限あり     | なし           | 優れている  | 優れている     |
-| **コミュニティ**          | 非常に大規模 | 中規模         | 中規模      | 大規模         |
+| **リソース使用量**     | 高         | 低            | 中      | 中         |
+| **学習曲線**     | 急        | 緩やか        | 中      | 中         |
+| **機能の豊富さ**   | 5/5          | 3/5            | 4/5         | 4/5         |
+| **マルチクラスター**      | 優秀    | 対応済み      | 優秀   | 優秀      |
+| **VM 対応**         | 限定的      | なし           | 優秀   | 優秀      |
+| **コミュニティ**          | 非常に大規模   | 中規模         | 中規模      | 大規模          |
 | **エンタープライズサポート** | Google Cloud | Buoyant        | Kong        | HashiCorp      |
 
-### Istio vs VPC Lattice 比較
+### Istio vs VPC Lattice の比較
 
 | 基準                   | Istio             | VPC Lattice                 |
 | -------------------------- | ----------------- | --------------------------- |
-| **デプロイメントモデル**       | 自己管理          | フルマネージド              |
+| **デプロイメントモデル**       | 自己管理      | フルマネージド               |
 | **プラットフォーム**               | Kubernetes        | AWS (EKS, ECS, EC2, Lambda) |
-| **運用の複雑さ** | 高い              | 低い                        |
+| **運用の複雑さ** | 高              | 低                         |
 | **機能の豊富さ**       | 5/5               | 3/5                         |
-| **トラフィック制御**        | 非常にきめ細かい  | 基本的                      |
-| **コストモデル**             | リソースベース    | 使用量ベース                |
-| **ベンダーロックイン**         | 低い              | 高い（AWS）                 |
-| **マルチクラウド**            | サポート済み      | AWS のみ                    |
+| **トラフィック制御**        | 非常にきめ細かい | 基本                       |
+| **コストモデル**             | リソースベース    | 使用量ベース                 |
+| **ベンダーロックイン**         | 低               | 高（AWS）                  |
+| **マルチクラウド**            | 対応済み         | AWS のみ                    |
 
 ## 関連リソース
 
@@ -204,7 +176,7 @@ flowchart TD
 
 ### VPC Lattice ドキュメント
 
-* [VPC Lattice 概要](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md)
+* [VPC Lattice の概要](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/vpc-lattice.md)
 
 ### 外部リファレンス
 
@@ -219,18 +191,18 @@ flowchart TD
 ### Linkerd から Istio
 
 * より多くの機能が必要な場合
-* 段階的移行: namespace 単位で移行
+* 段階的な移行: namespace ごとに移行
 * Annotation ベースの設定から Istio CRD への移行
 
 ### 基本的な Kubernetes から Service Mesh
 
-* トラフィック管理、セキュリティ、可観測性のニーズ増加
-* Canary デプロイメント: 一部のサービスから開始
+* トラフィック管理、セキュリティ、可観測性のニーズの増加
+* Canary デプロイメント: 一部の Service から開始
 * sidecar injection の影響を評価
 
 ### VPC Lattice から Istio（またはその逆）
 
-* マルチクラウド要件と AWS ネイティブ志向の比較
+* マルチクラウド要件と AWS ネイティブを優先する要件の比較
 * 機能の豊富さと運用のシンプルさの比較
 * ハイブリッドアプローチ: 同時利用が可能
 
@@ -238,9 +210,9 @@ flowchart TD
 
 <details>
 
-<summary>Q1: Service Mesh は絶対に必要ですか？</summary>
+<summary>Q1: Service Mesh は本当に必要ですか？</summary>
 
-**回答**: Service Mesh は、次の場合に推奨されます:
+**回答**: Service Mesh は、以下のケースで推奨されます:
 
 * 数十以上のマイクロサービス
 * きめ細かなトラフィック制御（Canary、A/B Testing）が必要
@@ -261,13 +233,13 @@ flowchart TD
 * 豊富な機能が必要な場合
 * 大企業環境
 * きめ細かなトラフィック制御とポリシー
-* マルチクラスター Federation
+* マルチクラスター連携
 
 **Linkerd を選択**:
 
-* シンプルかつ迅速な開始が必要な場合
+* シンプルで迅速な開始が必要な場合
 * リソース効率が重要な場合
-* 基本的な Service Mesh 機能だけが必要な場合
+* 基本的な Service Mesh 機能のみが必要な場合
 * 運用の複雑さを最小化する場合
 
 </details>
@@ -284,7 +256,7 @@ flowchart TD
 * 運用オーバーヘッドの最小化
 * シンプルなマルチ VPC/アカウント接続
 
-**Istio を推奨**（VPC Lattice の代わり）:
+**Istio を推奨**（VPC Lattice の代わりに）:
 
 * マルチクラウド戦略
 * きめ細かなトラフィック制御が必要
@@ -311,7 +283,7 @@ flowchart TD
 
 **VPC Lattice**:
 
-* マネージドサービスのためインフラストラクチャオーバーヘッドなし
+* マネージドサービスのためインフラオーバーヘッドなし
 * 追加のネットワークホップによるわずかなレイテンシー増加
 * 使用量ベースのコストが発生
 
@@ -323,20 +295,20 @@ flowchart TD
 
 **回答**: 技術的には可能ですが、推奨されません。
 
-**問題**:
+**課題**:
 
 * sidecar の競合の可能性
 * 複雑なトラブルシューティング
 * 二重のオーバーヘッド
-* 責任分界が不明確
+* 責任分離が不明確
 
 **例外的なユースケース**:
 
 * **Istio + VPC Lattice**: クラスター内部には Istio、クラスター間/外部接続には VPC Lattice
-* **段階的移行**: Linkerd から Istio（namespace 単位で移行）
+* **段階的な移行**: Linkerd から Istio（namespace ごとに移行）
 
 </details>
 
 ***
 
-**次のステップ**: 詳細な比較ドキュメントを読み、環境に最適なソリューションを選択してください。
+**次のステップ**: 詳細な比較ドキュメントを読み、環境に最も適したソリューションを選択してください。
