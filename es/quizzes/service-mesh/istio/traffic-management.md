@@ -6,9 +6,9 @@ Este cuestionario evalúa tu comprensión de las características de gestión de
 
 ## Preguntas de opción múltiple (1-5)
 
-### Pregunta 1: Rol de VirtualService
+### Pregunta 1: Función de VirtualService
 
-¿Qué afirmación sobre VirtualService es **correcta**?
+¿Cuál afirmación sobre VirtualService es **correcta**?
 
 A. Es un recurso que reemplaza Kubernetes Service B. Solo puede definir algoritmos de balanceo de carga C. Define reglas de enrutamiento y controla el tráfico D. Solo opera en el Control Plane
 
@@ -18,17 +18,17 @@ A. Es un recurso que reemplaza Kubernetes Service B. Solo puede definir algoritm
 
 **Respuesta: C**
 
-VirtualService es un CRD central de Istio que controla el tráfico al definir **reglas de enrutamiento**.
+VirtualService es un CRD principal de Istio que controla el tráfico al definir **reglas de enrutamiento**.
 
 **Explicación:**
 
-* A (X): VirtualService no reemplaza Kubernetes Service; añade reglas de enrutamiento sobre Service
-* B (X): El balanceo de carga lo gestiona DestinationRule; VirtualService define las reglas de enrutamiento
+* A (X): VirtualService no reemplaza Kubernetes Service; agrega reglas de enrutamiento sobre Service
+* B (X): El balanceo de carga es gestionado por DestinationRule; VirtualService define reglas de enrutamiento
 * C (O): VirtualService define lo siguiente:
   * Reglas de enrutamiento HTTP/TCP
-  * Enrutamiento basado en la ruta de URL
+  * Enrutamiento basado en la ruta URL
   * Enrutamiento basado en encabezados
-  * División de tráfico basada en peso
+  * División del tráfico basada en pesos
   * Configuración de Timeout y Retry
 * D (X): VirtualService se ejecuta en Envoy en el Data Plane
 
@@ -60,7 +60,7 @@ spec:
 **Referencia:**
 
 * [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [VirtualService Concepts](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+* [Conceptos de VirtualService](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
 
 </details>
 
@@ -68,9 +68,9 @@ spec:
 
 ### Pregunta 2: Funciones de DestinationRule
 
-¿Cuál **NO** es una función realizada por DestinationRule?
+¿Cuál NO es una función realizada por DestinationRule?
 
-A. Definir subconjuntos B. Configurar algoritmos de balanceo de carga C. Enrutamiento basado en la ruta HTTP D. Configurar Connection Pool
+A. Definir subconjuntos B. Configurar algoritmos de balanceo de carga C. Enrutamiento basado en ruta HTTP D. Configurar Connection Pool
 
 <details>
 
@@ -78,13 +78,13 @@ A. Definir subconjuntos B. Configurar algoritmos de balanceo de carga C. Enrutam
 
 **Respuesta: C**
 
-El enrutamiento basado en la ruta HTTP es la función de **VirtualService**.
+El enrutamiento basado en ruta HTTP es la función de **VirtualService**.
 
 **Explicación:**
 
 **Funciones principales de DestinationRule:**
 
-1. **Definición de subconjuntos (A - O)**
+1. **Definir subconjuntos (A - O)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -102,7 +102,7 @@ spec:
       version: v2
 ```
 
-2. **Configuración de balanceo de carga (B - O)**
+2. **Configuración del balanceo de carga (B - O)**
 
 ```yaml
 spec:
@@ -123,7 +123,7 @@ spec:
         http1MaxPendingRequests: 50
 ```
 
-4. **Enrutamiento basado en la ruta HTTP (C - X)**
+4. **Enrutamiento basado en ruta HTTP (C - X)**
 
 * Esta es la función de VirtualService:
 
@@ -144,8 +144,8 @@ spec:
 **Tabla comparativa:**
 
 | Función          | VirtualService | DestinationRule |
-| ---------------- | -------------- | --------------- |
-| Reglas de enrutamiento | Sí            | No              |
+| ----------------- | -------------- | --------------- |
+| Reglas de enrutamiento     | Sí            | No              |
 | Coincidencia de rutas     | Sí            | No              |
 | Definición de subconjuntos | No             | Sí             |
 | Balanceo de carga    | No             | Sí             |
@@ -153,7 +153,7 @@ spec:
 
 **Referencia:**
 
-* [Load Balancing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
+* [Balanceo de carga](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/05-load-balancing.md)
 * [Connection Pool](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/08-connection-pool.md)
 
 </details>
@@ -192,11 +192,11 @@ A. v1: 50%, v2: 50% B. v1: 80%, v2: 20% C. v1: 20%, v2: 80% D. v1: 100%, v2: 0%
 
 **Respuesta: B**
 
-Dado que los valores de peso son **v1: 80, v2: 20**, el tráfico se distribuye en **80% a v1** y **20% a v2**.
+Dado que los valores de peso son **v1: 80, v2: 20**, el tráfico se distribuye como **80% a v1** y **20% a v2**.
 
 **Explicación:**
 
-**División de tráfico basada en peso:**
+**División de tráfico basada en pesos:**
 
 * El campo `weight` representa proporciones relativas
 * Peso total: 80 + 20 = 100
@@ -246,8 +246,8 @@ spec:
 
 **Referencia:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
-* [Argo Rollouts Integration](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
+* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [Integración de Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
 
@@ -255,9 +255,9 @@ spec:
 
 ### Pregunta 4: Propósito de Gateway
 
-¿Cuál **NO** es un rol principal de Istio Gateway?
+¿Cuál NO es una función principal de Istio Gateway?
 
-A. Punto de entrada para el tráfico desde fuera del clúster hacia el interior B. Terminación de TLS y gestión de certificados C. Cifrado mTLS entre servicios D. Balanceo de carga del tráfico externo
+A. Punto de entrada para el tráfico desde fuera del clúster hacia dentro B. Terminación TLS y gestión de certificados C. Cifrado mTLS entre servicios D. Balanceo de carga del tráfico externo
 
 <details>
 
@@ -290,7 +290,7 @@ spec:
     - "*"
 ```
 
-2. **Terminación de TLS (B - O)**
+2. **Terminación TLS (B - O)**
 
 ```yaml
 spec:
@@ -306,7 +306,7 @@ spec:
     - bookinfo.example.com
 ```
 
-3. **Balanceo de carga de tráfico externo (D - O)**
+3. **Balanceo de carga del tráfico externo (D - O)**
 
 * Gateway se integra con Kubernetes LoadBalancer Service
 * Distribuye el tráfico externo hacia el clúster
@@ -331,7 +331,7 @@ spec:
 | Función                     | Gateway | Sidecar Envoy |
 | ---------------------------- | ------- | ------------- |
 | Tráfico externo -> interno | Sí     | No            |
-| Terminación de TLS              | Sí     | No            |
+| Terminación TLS              | Sí     | No            |
 | mTLS de servicio a servicio      | No      | Sí           |
 | Enrutamiento interno             | No      | Sí           |
 
@@ -366,7 +366,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-A. Reintentar hasta 3 veces dentro de un total de 10 segundos, con cada intento limitado a 2 segundos B. Reintentar hasta 3 veces dentro de un total de 2 segundos, con cada intento limitado a 10 segundos C. Reintentos ilimitados dentro de un total de 10 segundos, con cada intento limitado a 2 segundos D. Fallar después de 10 segundos sin reintentos
+A. Reintenta hasta 3 veces después de la solicitud original, con cada envío limitado a 2 segundos y toda la solicitud limitada a 10 segundos B. Reintenta hasta 3 veces dentro de un total de 2 segundos, con cada intento limitado a 10 segundos C. Reintentos ilimitados dentro de un total de 10 segundos, con cada intento limitado a 2 segundos D. Falla después de 10 segundos sin reintentos
 
 <details>
 
@@ -374,7 +374,7 @@ A. Reintentar hasta 3 veces dentro de un total de 10 segundos, con cada intento 
 
 **Respuesta: A**
 
-Esta configuración reintenta **hasta 3 veces** dentro de **10 segundos en total**, con **cada intento limitado a 2 segundos**.
+Esta configuración permite **hasta 3 reintentos adicionales después de la solicitud original**, limita cada envío a **2 segundos** y limita toda la solicitud a **10 segundos**. Por lo tanto, puede enviar la solicitud upstream hasta cuatro veces.
 
 **Explicación:**
 
@@ -383,8 +383,8 @@ Esta configuración reintenta **hasta 3 veces** dentro de **10 segundos en total
 ```yaml
 timeout: 10s           # Maximum time for entire request
 retries:
-  attempts: 3          # Maximum retry count
-  perTryTimeout: 2s    # Time limit for each attempt
+  attempts: 3          # Up to 3 retries after the original request
+  perTryTimeout: 2s    # Time limit for each delivery
 ```
 
 **Escenarios de ejecución:**
@@ -399,18 +399,12 @@ Scenario 2: Success after 2 attempts
 +- 2nd attempt: 1.8s elapsed -> Success
 +- Total time: 3.8s
 
-Scenario 3: All 3 attempts fail
+Scenario 3: Original request plus all 3 retries fail
 +- 1st attempt: 2s timeout -> Failure
 +- 2nd attempt: 2s timeout -> Failure
 +- 3rd attempt: 2s timeout -> Failure
-+- Total time: 6s (fails before 10s)
-
-Scenario 4: Overall timeout
-+- 1st attempt: 2s timeout -> Failure
-+- 2nd attempt: 2s timeout -> Failure
-+- 3rd attempt: 2s timeout -> Failure
-+- 4th attempt: hasn't passed 2s but reached overall 10s
-+- Total time: 10s (overall timeout)
++- 4th attempt: 2s timeout -> Failure
++- Total time: about 8s
 ```
 
 **Configuración de condiciones de Retry:**
@@ -425,23 +419,34 @@ retries:
 **Prácticas recomendadas:**
 
 ```yaml
-# Typical settings
-timeout: 30s
-retries:
-  attempts: 3
-  perTryTimeout: 10s
-  retryOn: 5xx,gateway-error,reset,connect-failure
+# Read requests: limited retry
+- match:
+  - method:
+      regex: "^(GET|HEAD)$"
+  retries:
+    attempts: 2
+    perTryTimeout: 2s
+    retryOn: connect-failure,refused-stream
+
+# Write requests: disable mesh retry
+- match:
+  - method:
+      regex: "^(POST|PATCH)$"
+  retries:
+    attempts: 0
 ```
 
 **Precauciones:**
 
-* `timeout` >= `attempts x perTryTimeout` para permitir todos los reintentos
-* Demasiados reintentos pueden provocar un fallo en cascada
-* Se recomienda Retry solo para operaciones idempotentes
+* Para presupuestar cada reintento, `timeout` debería ser aproximadamente mayor que `(1 + attempts) x perTryTimeout`, incluyendo el backoff
+* Demasiados reintentos pueden provocar fallos en cascada
+* `attempts: 0` desactiva el Retry; `attempts: 1` permite una repetición después de la solicitud original
+* Desactiva Retry de mesh de forma predeterminada para POST/PATCH porque el servidor puede confirmar y perder solo la respuesta
+* El mTLS de Workload o el cifrado de red no hacen segura la repetición de solicitudes
 
 **Referencia:**
 
-* [Timeout and Retry](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/06-timeout-retry.md)
+* [Timeout y Retry](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
 </details>
 
@@ -451,7 +456,7 @@ retries:
 
 ### Pregunta 6: Argo Rollouts + Istio Canary Deployment
 
-Explica el proceso de implementar Canary Deployment automatizado mediante Argo Rollouts e Istio. Incluye los **recursos requeridos** (Rollout, VirtualService, DestinationRule, AnalysisTemplate) y las **condiciones de rollback automático**.
+Explica el proceso de implementación de Canary Deployment automatizado mediante Argo Rollouts e Istio conjuntamente. Incluye los **recursos requeridos** (Rollout, VirtualService, DestinationRule, AnalysisTemplate) y las **condiciones de rollback automático**.
 
 <details>
 
@@ -496,7 +501,7 @@ spec:
     labels: {}  # Managed automatically by Rollout
 ```
 
-**Importante**: Rollout añade automáticamente la etiqueta `rollouts-pod-template-hash` a los Pods y utiliza esta etiqueta para distinguir los subconjuntos.
+**Importante**: Rollout agrega automáticamente la etiqueta `rollouts-pod-template-hash` a los Pods y utiliza esta etiqueta para distinguir subconjuntos.
 
 ***
 
@@ -669,7 +674,7 @@ spec:
 
 ***
 
-**6. Ejecución y supervisión del Deployment**
+**6. Ejecución y monitoreo del Deployment**
 
 ```bash
 # Install Argo Rollouts
@@ -707,7 +712,7 @@ kubectl argo rollouts dashboard
 +- Auto rollback executed -> Stable 100%
 ```
 
-**Escenario 2: Latencia > 500 ms**
+**Escenario 2: Latencia > 500ms**
 
 ```
 25% Canary -> Analysis starts
@@ -727,16 +732,16 @@ kubectl argo rollouts dashboard
 
 ***
 
-**Beneficios principales:**
+**Beneficios clave:**
 
-1. **Totalmente automatizado**: El Deployment avanza sin intervención humana
-2. **Rollback instantáneo**: Rollback en segundos tras detectar un fallo de métrica
+1. **Totalmente automatizado**: El Deployment progresa sin intervención humana
+2. **Rollback instantáneo**: Rollback en segundos después de detectar el fallo de una métrica
 3. **Deployment seguro**: Verificación automática en cada etapa
-4. **Proceso consistente**: Estrategia de Deployment estandarizada
+4. **Proceso coherente**: Estrategia de Deployment estandarizada
 
 **Referencia:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)
 
 </details>
@@ -787,9 +792,9 @@ Gradually increase traffic
 
 | Elemento               | Blue/Green                           | Canary                                 |
 | ------------------ | ------------------------------------ | -------------------------------------- |
-| **Cambio de tráfico** | Cambio instantáneo del 100%                  | Incremento gradual (10% -> 100%)         |
+| **Cambio de tráfico** | Cambio instantáneo al 100%                  | Aumento gradual (10% -> 100%)         |
 | **Velocidad de rollback** | Instantánea (un solo cambio)              | Rápida (solo desde la etapa actual)         |
-| **Uso de recursos** | 2x (Blue + Green)                    | 1x + una cantidad pequeña (Stable + Canary)    |
+| **Uso de recursos** | 2x (Blue + Green)                    | 1x + pequeña cantidad (Stable + Canary)    |
 | **Nivel de riesgo**     | Medio (todos los usuarios a la vez)           | Bajo (comienza con pocos usuarios)            |
 | **Período de pruebas** | Pruebas suficientes antes del Deployment | Validación gradual en producción       |
 | **Complejidad**     | Baja                                  | Media (requiere análisis de métricas)      |
@@ -863,24 +868,24 @@ spec:
 
 **Pros de Blue/Green:**
 
-* Estructura sencilla (solo cambio entre Blue <-> Green)
-* Rollback instantáneo posible (cambio de conmutador)
-* Es posible realizar pruebas suficientes antes del Deployment
+* Estructura simple (solo cambio Blue <-> Green)
+* Posibilidad de rollback instantáneo (cambio inverso)
+* Posibilidad de pruebas suficientes antes del Deployment
 * Comportamiento predecible
 
 **Contras de Blue/Green:**
 
 * Requiere 2x recursos
-* Todos los usuarios se ven afectados simultáneamente
-* Migraciones de bases de datos complejas
-* Sin validación gradual
+* Todos los usuarios son afectados simultáneamente
+* Migraciones de base de datos complejas
+* No hay validación gradual
 
 **Pros de Canary:**
 
 * Validación gradual comenzando con pocos usuarios
-* Uso eficiente de recursos (1x + una cantidad pequeña)
+* Uso eficiente de recursos (1x + pequeña cantidad)
 * Validación real en el entorno de producción
-* Rollback automático posible (basado en métricas)
+* Posibilidad de rollback automático (basado en métricas)
 
 **Contras de Canary:**
 
@@ -896,7 +901,7 @@ spec:
 **Escenarios recomendados para Blue/Green:**
 
 1. **Lanzamientos importantes**: Cambio rápido después de pruebas suficientes
-2. **Sin cambios en la base de datos**: Cuando no hay cambios de esquema
+2. **Sin cambios de base de datos**: Cuando no hay cambios de esquema
 3. **Necesidad de rollback instantáneo**: Cuando se necesita una recuperación rápida ante problemas
 4. **Recursos suficientes**: Cuando se pueden costear 2x recursos
 5. **Cambios predecibles**: Cuando las pruebas previas son suficientes para la verificación
@@ -913,10 +918,10 @@ spec:
 **Escenarios recomendados para Canary:**
 
 1. **Características experimentales**: Probar primero con pocos usuarios
-2. **Restricciones de recursos**: Cuando no hay disponibles 2x recursos
+2. **Restricciones de recursos**: Cuando no hay 2x recursos disponibles
 3. **Validación gradual**: Validación con datos reales en producción
 4. **Deployment automatizado**: Deployment automático en CI/CD
-5. **Microservices**: Cuando las dependencias de servicios son complejas
+5. **Microservices**: Cuando las dependencias de servicio son complejas
 
 **Ejemplos:**
 
@@ -944,7 +949,7 @@ En la práctica, puedes combinar ambas estrategias:
 
 **Referencia:**
 
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Blue/Green Deployment](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md#bluegreen-deployment)
 
 </details>
@@ -963,34 +968,20 @@ Explica cómo probar de forma segura nuevas versiones mediante Traffic Mirroring
 
 **Concepto de Traffic Mirroring:**
 
-Traffic Mirroring es una técnica que duplica el tráfico de producción y lo envía a una nueva versión, mientras **ignora las respuestas**. También se denomina "shadow testing".
+Traffic Mirroring es una técnica que duplica el tráfico de producción y lo envía a una versión nueva, mientras **ignora las respuestas**. También se denomina "shadow testing".
 
 ***
 
 **1. Cómo funciona**
 
-```mermaid
-flowchart LR
-    User[User] --> Envoy[Envoy Proxy]
-    Envoy -->|Primary Request| V1[Version 1<br/>Production]
-    Envoy -.->|Mirror Request<br/>Response Ignored| V2[Version 2<br/>Test]
+![Una solicitud de usuario es duplicada por el proxy Envoy: la solicitud principal va a la versión 1 de producción, mientras la solicitud espejo va a la versión 2 de prueba, cuya respuesta se descarta.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-traffic-management-0.png)
 
-    V1 -->|Response| User
-    V2 -.->|Response Discarded| Envoy
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-traffic-management-0.html)
 
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef version fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class User user;
-    class Envoy envoy;
-    class V1,V2 version;
-```
-
-**Características principales:**
+**Características clave:**
 
 * Los usuarios solo reciben la respuesta de v1
-* La respuesta de v2 se descarta mediante Envoy
+* La respuesta de v2 es descartada por Envoy
 * Los errores de v2 no afectan a los usuarios
 
 ***
@@ -1065,7 +1056,7 @@ spec:
 
 **3. Casos de uso**
 
-**Caso 1: Pruebas de rendimiento de la nueva versión**
+**Caso 1: Pruebas de rendimiento de una nueva versión**
 
 ```
 Purpose: Verify if v2's performance is better than v1
@@ -1136,7 +1127,7 @@ histogram_quantile(0.95,
 )
 ```
 
-**Panel de Grafana:**
+**Dashboard de Grafana:**
 
 ```yaml
 # Panel 1: Error rate comparison (v1 vs v2)
@@ -1174,7 +1165,7 @@ POST /api/orders  # Both v1 and v2 create orders -> Duplicates!
 GET /api/orders   # Mirror only read-only operations
 ```
 
-**Advertencia: coste:**
+**Advertencia: costo:**
 
 ```
 Mirroring increases resources and costs.
@@ -1228,9 +1219,9 @@ Cannot validate:
 
 ***
 
-### Pregunta 9: Locality Load Balancing (Zone Aware Routing)
+### Pregunta 9: Locality Load Balancing (enrutamiento consciente de zona)
 
-Explica cómo usar Locality Load Balancing de Istio para **reducir los costes entre AZ** en AWS EKS. Incluye ejemplos de configuración y **ahorros de costes estimados**.
+Explica cómo usar Locality Load Balancing de Istio para **reducir los costos entre AZ** en AWS EKS. Incluye ejemplos de configuración y **ahorro estimado de costos**.
 
 <details>
 
@@ -1240,13 +1231,13 @@ Explica cómo usar Locality Load Balancing de Istio para **reducir los costes en
 
 **Concepto de Locality Load Balancing:**
 
-Locality Load Balancing es una característica que **enruta preferentemente a servicios dentro de la misma Availability Zone (AZ)** para reducir la latencia de red y los costes entre AZ.
+Locality Load Balancing es una característica que **enruta preferentemente hacia servicios dentro de la misma Availability Zone (AZ)** para reducir la latencia de red y los costos entre AZ.
 
 ***
 
-**1. Costes entre AZ en AWS EKS**
+**1. Costos entre AZ en AWS EKS**
 
-**Estructura de costes:**
+**Estructura de costos:**
 
 ```
 Same AZ traffic: Free
@@ -1254,7 +1245,7 @@ Cross-AZ traffic: $0.01-0.02 per GB
 Cross-Region traffic: $0.02-0.09 per GB
 ```
 
-**Cálculo de ejemplo:**
+**Ejemplo de cálculo:**
 
 ```
 Service A (us-east-1a) -> Service B (us-east-1b)
@@ -1269,9 +1260,9 @@ If 80% traffic is routed to same AZ:
 
 ***
 
-**2. Etiquetas de topología de Pods de EKS**
+**2. Etiquetas de topología de Pod de EKS**
 
-Los nodos de EKS tienen automáticamente establecidas etiquetas de topología:
+Los nodos de EKS tienen configuradas automáticamente etiquetas de topología:
 
 ```yaml
 # EKS node labels (automatic)
@@ -1383,7 +1374,7 @@ spec:
 
 ***
 
-**5. Cálculo de ahorro de costes**
+**5. Cálculo de ahorro de costos**
 
 **Escenario: arquitectura de Microservices a gran escala**
 
@@ -1466,7 +1457,7 @@ sum(rate(istio_requests_total{
 sum(rate(istio_requests_total[5m]))
 ```
 
-**Panel de Grafana:**
+**Dashboard de Grafana:**
 
 ```yaml
 Panel 1: Request count by Locality (us-east-1a, us-east-1b, us-east-1c)
@@ -1547,16 +1538,16 @@ spec:
 
 **Referencia:**
 
-* [Zone Aware Routing](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
-* [AWS EKS Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
+* [Enrutamiento consciente de zona](../../../service-mesh/istio/resilience/03-zone-aware-routing.md)
+* [Optimización de costos de AWS EKS](../../../service-mesh/istio/best-practices.md#cost-optimization)
 
 </details>
 
 ***
 
-### Pregunta 10: Configuración de TLS de Gateway
+### Pregunta 10: Configuración TLS de Gateway
 
-Explica cómo configurar la **terminación de TLS** y establecer la **redirección HTTPS** en Istio Gateway. Incluye ambos casos: uso de certificados ACM (AWS Certificate Manager) y uso de certificados autofirmados.
+Explica cómo configurar la **terminación TLS** y cómo establecer la **redirección HTTPS** en Istio Gateway. Incluye ambos casos: uso de certificados de ACM (AWS Certificate Manager) y uso de certificados autofirmados.
 
 <details>
 
@@ -1564,7 +1555,7 @@ Explica cómo configurar la **terminación de TLS** y establecer la **redirecci�
 
 **Respuesta:**
 
-**Configuración de TLS de Istio Gateway:**
+**Configuración TLS de Istio Gateway:**
 
 ***
 
@@ -1595,7 +1586,7 @@ kubectl create -n istio-system secret tls bookinfo-secret \
 kubectl get secret bookinfo-secret -n istio-system
 ```
 
-**Paso 3: Configurar Gateway (HTTPS + redirección HTTP -> HTTPS)**
+**Paso 3: Configurar Gateway (redirección HTTPS + HTTP -> HTTPS)**
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -1657,7 +1648,7 @@ spec:
       perTryTimeout: 2s
 ```
 
-**Paso 5: Probar**
+**Paso 5: Prueba**
 
 ```bash
 # HTTPS access
@@ -1672,9 +1663,9 @@ curl -v http://bookinfo.example.com/productpage
 
 ***
 
-**2. Uso de certificados AWS ACM (anotación de NLB)**
+**2. Uso de certificados AWS ACM (anotación NLB)**
 
-En AWS EKS, el enfoque recomendado es la terminación de TLS en NLB con certificados ACM.
+En AWS EKS, el enfoque recomendado es la terminación TLS en NLB con certificados ACM.
 
 **Paso 1: Emitir certificado ACM**
 
@@ -1789,7 +1780,7 @@ curl --cert client.crt --key client.key \
 
 **4. Certificados wildcard**
 
-Utiliza un único certificado para varios subdominios:
+Usa un único certificado para varios subdominios:
 
 ```bash
 # Generate wildcard certificate
@@ -1975,23 +1966,23 @@ spec:
 
 **Notas:**
 
-* Utiliza TLS 1.2 o superior
-* Configura Cipher Suites robustas
-* Renueva automáticamente los certificados (cert-manager)
+* Usa TLS 1.2 o superior
+* Configura Cipher Suites seguros
+* Renueva certificados automáticamente (cert-manager)
 * Habilita la redirección HTTP -> HTTPS
-* No utilices certificados autofirmados en producción
-* No utilices TLS 1.0/1.1
+* No uses certificados autofirmados en producción
+* No uses TLS 1.0/1.1
 
 **Referencia:**
 
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [TLS Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
+* [Configuración TLS](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md#tls-configuration)
 
 </details>
 
 ***
 
-## Cálculo de la puntuación
+## Cálculo de puntuación
 
 * Opción múltiple 1-5: 10 puntos cada una (50 puntos en total)
 * Respuesta corta 6-10: 10 puntos cada una (50 puntos en total)
@@ -1999,16 +1990,16 @@ spec:
 
 **Criterios de evaluación:**
 
-* 90-100 puntos: Excelente (experto en Istio Traffic Management)
+* 90-100 puntos: Excelente (experto en gestión de tráfico de Istio)
 * 80-89 puntos: Bueno (preparado para operaciones de producción)
 * 70-79 puntos: Promedio (se recomienda estudio adicional)
-* 60-69 puntos: Por debajo del promedio (se necesita revisar los conceptos básicos)
+* 60-69 puntos: Por debajo del promedio (se necesita repasar los conceptos básicos)
 * 0-59 puntos: Necesita volver a estudiar
 
 ## Recursos de aprendizaje
 
-* [Traffic Management Documentation](../../../service-mesh/istio/traffic-management/README.md)
+* [Documentación de gestión de tráfico](../../../service-mesh/istio/traffic-management/README.md)
 * [VirtualService](../../../service-mesh/istio/traffic-management/02-routing.md)
 * [Gateway](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/01-gateway.md)
-* [Traffic Splitting](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
+* [División de tráfico](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/traffic-management/03-traffic-splitting.md)
 * [Argo Rollouts](../../../service-mesh/istio/advanced/08-argo-rollouts.md)

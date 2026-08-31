@@ -1,78 +1,51 @@
 # Cilium Service Mesh 安全
 
-> **支持的版本**: Cilium 1.16+, Kubernetes 1.28+
-> **最后更新**: August 21, 2026
+> **支持的版本**：Cilium 1.16+，Kubernetes 1.28+
+> **最后更新**：August 21, 2026
 
 ## 概述
 
 Cilium 安全具有三个不同的层：
 
-1. **基于身份的授权：** Cilium Identity 和 eBPF 策略决定哪些工作负载可以通信。
-2. **双向认证：** Cilium 通过 SPIFFE/SPIRE 提供的双向认证，通过独立于应用程序数据连接的**带外**握手验证对等身份。
-3. **数据加密：** 在既有实现中，必须单独启用 WireGuard/IPsec 以加密负载。在支持的场景中，原生 ztunnel mTLS 预览版使用 TLS 加密工作负载流量。
+1. **基于身份的授权：** Cilium Identity 和 eBPF policy 决定哪些 workload 可以通信。
+2. **双向认证：** Cilium 通过 SPIFFE/SPIRE 实现的双向认证，借助独立于应用数据连接的**带外**握手来验证对端身份。
+3. **数据加密：** 在成熟实现中，必须单独启用 WireGuard/IPsec 来加密负载。在受支持的情况下，原生 ztunnel mTLS 预览版会使用 TLS 加密 workload 流量。
 
-这些功能可以组合使用，但它们并不自动等同于 Istio `PeerAuthentication` `STRICT` 工作负载 mTLS。应将身份授权、对等认证和传输中加密作为独立需求进行评估。
+这些功能可以组合使用，但它们并不自动等同于 Istio `PeerAuthentication` `STRICT` workload mTLS。请将身份授权、对端认证和传输中的加密作为独立需求进行评估。
 
 ## 安全架构
 
-```mermaid
-flowchart LR
-    Workload[Workload traffic]
-    Identity[Cilium Identity]
-    Policy[eBPF L3/L4 and L7 policy]
-    SPIRE[SPIFFE/SPIRE]
-    Auth[Out-of-band mutual authentication]
-    Encrypt{Payload encryption choice}
-    WG[WireGuard or IPsec]
-    Native[Native ztunnel mTLS preview]
+![Workload 流量由 Cilium Identity 和 eBPF policy 授权，而基于 SPIFFE/SPIRE 的带外双向认证以及 WireGuard/IPsec 或原生 ztunnel mTLS 负载加密则作为独立层运行。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-0.png)
 
-    Workload --> Identity --> Policy
-    Identity --> SPIRE --> Auth --> Policy
-    Policy --> Encrypt
-    Encrypt --> WG
-    Encrypt --> Native
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-0.html)
 
 ## 双向认证和数据加密
 
-### 已有的 Cilium 双向认证
+### 成熟的 Cilium 双向认证
 
-Cilium 双向认证会在允许连接之前验证两个端点身份，但既有认证握手独立于应用程序数据路径。不要以为仅 `authentication.mode: required` 就会通过 TLS 加密现有数据连接的负载。在需要数据保密性时，请配置 [WireGuard 或 IPsec](https://docs.cilium.io/en/stable/security/network/encryption/)。
+Cilium 双向认证会在允许连接之前验证两个 endpoint 的身份，但成熟的认证握手与应用数据路径是分离的。不要认为仅使用 `authentication.mode: required` 就会通过 TLS 加密现有数据连接的负载。当需要数据保密性时，请配置 [WireGuard 或 IPsec](https://docs.cilium.io/en/stable/security/network/encryption/)。
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CiliumA as Cilium Agent A
-    participant SPIRE as SPIRE Agent
-    participant CiliumB as Cilium Agent B
-    participant PodB as Pod B
+![Pod A 的连接请求会先经过 Cilium agent、SPIRE SVID 认证和带外认证握手，然后才建立 policy 允许的数据连接。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-1.png)
 
-    PodA->>CiliumA: Connection request
-    CiliumA->>SPIRE: Request SVID-based authentication
-    SPIRE-->>CiliumA: Identity proof
-    CiliumA->>CiliumB: Out-of-band authentication handshake
-    CiliumB-->>CiliumA: Authentication result
-    CiliumA->>PodB: Data connection after policy allows it
-    Note over PodA,PodB: Select WireGuard/IPsec or native mTLS separately for payload encryption
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-1.html)
 
-### 通过 ztunnel 实现的原生 mTLS（2026 年更新）
+### 通过 ztunnel 实现原生 mTLS（2026 更新）
 
-2026 年 3 月公布的 Cilium 原生 mTLS 设计使用 ztunnel 模型，在工作负载 mTLS 路径上将双向认证与实际负载加密相结合。它与既有的带外双向认证加 WireGuard/IPsec 是不同的数据平面。该栈包含三个协同工作的组件：
+Cilium 于 2026 年 3 月公布的原生 mTLS 设计采用 ztunnel 模型，在 workload-mTLS 路径上将双向认证与实际负载加密结合起来。它与成熟的带外双向认证加 WireGuard/IPsec 是不同的数据平面。该技术栈由三个协作组件构成：
 
-- **SPIRE** — 签发工作负载身份和 X.509 证书（与下方基于 SPIRE 的配置中角色相同）
+- **SPIRE** — 签发 workload 身份和 X.509 证书（与下面基于 SPIRE 的配置中作用相同）
 - **Cilium** — 安装 iptables 规则，将出站 Pod 流量透明地重定向到端口 15001 上的 ztunnel
-- **ztunnel** — 每个节点一个代理（而非每个 Pod 一个 sidecar），执行实际的 mTLS 握手并加密 Pod 到 Pod 的流量
+- **ztunnel** — 每个 Node 一个 proxy（而非每个 Pod 一个 sidecar），执行实际的 mTLS 握手并加密 Pod-to-Pod 流量
 
-这保留了“无需每个 Pod 配置 sidecar、无需修改应用程序”的特性，同时 TLS 握手在专用的每节点进程中运行。采用前请检查当前预览状态和平台支持情况；不要将其视为对运维上已经成熟的 Istio `STRICT` mTLS 路径的自动替代。
+这保留了“无需每个 Pod 配置 sidecar、无需更改应用”的特性，同时 TLS 握手在专用的每 Node 进程中运行。采用前请检查当前的预览状态和平台支持情况；不要将其视为对运维上已成熟的 Istio `STRICT` mTLS 路径的自动替代方案。
 
-有关完整架构说明，请参阅 [Cilium 关于原生 mTLS 的博客文章](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)。
+有关完整的架构说明，请参阅 [Cilium 关于原生 mTLS 的博客文章](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)。
 
 ### 何时为 mTLS 选择 Cilium 或 Istio
 
-- 当需求是在已运行 Cilium 的数据平面上实现高效的 L3/L4 身份策略和网络加密时，**选择 Cilium** — 无需额外运维 sidecar 或每 Service 代理，并且 CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy 已能表达所需的访问规则。
-- 当需求是具有 `PeerAuthentication` `STRICT` 语义的成熟工作负载证书 mTLS，或 Istio 原生 L7 策略/路由（即 [sidecar 与 ambient 对比](../istio/comparison/03-sidecar-vs-ambient.md)中介绍的 kind `AuthorizationPolicy`、重试和流量转移规则）时，**选择 Istio** — Cilium 的既有双向认证是带外的，且不具备该策略能力。
-- 不要仅依据加密层做决定：Cilium 的 WireGuard/IPsec 和原生 ztunnel mTLS 预览版都能加密负载，但任何一个单独使用都无法复现 Istio `PeerAuthentication` `STRICT` 在一个开关中结合工作负载身份签发、策略强制执行和负载加密的能力。
+- 当需求是在已运行 Cilium 的数据平面上实现高效的 L3/L4 identity policy 和网络加密时，**选择 Cilium** — 无需额外运行 sidecar 或每 Service proxy，并且 CiliumNetworkPolicy/CiliumClusterwideNetworkPolicy 已能表达所需的访问规则。
+- 当需求是具有 `PeerAuthentication` `STRICT` 语义的成熟 workload-certificate mTLS，或 Istio 原生的 L7 policy/routing（包括 [sidecar 与 ambient 对比](../istio/comparison/03-sidecar-vs-ambient.md) 中涵盖的 `AuthorizationPolicy`、重试和流量迁移规则）时，**选择 Istio** — Cilium 成熟的双向认证是带外的，且不具备该 policy surface。
+- 不要只依据加密层做决定：Cilium 的 WireGuard/IPsec 及其原生 ztunnel mTLS 预览版都会加密负载，但单独使用其中任何一种都无法复现 Istio `PeerAuthentication` `STRICT` 将 workload identity 签发、policy enforcement 和负载加密集于一个开关的组合。
 
 ### 基于 SPIRE 的双向认证配置
 
@@ -119,7 +92,7 @@ authentication:
               disableContainerSelectors: false
 ```
 
-### 双向认证策略强制执行
+### 双向认证 Policy 强制执行
 
 ```yaml
 # Require mutual authentication cluster-wide
@@ -184,7 +157,7 @@ spec:
 
 ## CiliumNetworkPolicy L7 规则
 
-### HTTP L7 安全策略
+### HTTP L7 安全 Policy
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -242,7 +215,7 @@ spec:
           path: "/metrics"
 ```
 
-### Kafka L7 安全策略
+### Kafka L7 安全 Policy
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -302,7 +275,7 @@ spec:
           topic: "orders"
 ```
 
-### DNS L7 安全策略
+### DNS L7 安全 Policy
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -347,7 +320,7 @@ spec:
 
 ## 双向认证
 
-> 本节配置 `authentication.mode` 策略示例。有关双向认证涵盖和不涵盖的内容（带外握手，独立于负载加密），请参阅上方的[双向认证和数据加密](#mutual-authentication-and-data-encryption)。
+> 本节配置 `authentication.mode` policy 示例。有关双向认证涵盖和不涵盖的内容（带外握手，与负载加密分离），请参阅上文的[双向认证和数据加密](#mutual-authentication-and-data-encryption)。
 
 ### 认证模式
 
@@ -371,7 +344,7 @@ authentication:
 - mode: test-always-fail
 ```
 
-### 双向认证策略示例
+### 双向认证 Policy 示例
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -434,11 +407,11 @@ spec:
 
 ## 加密
 
-> 本节配置上方[双向认证和数据加密](#mutual-authentication-and-data-encryption)中概念性介绍的负载加密机制（WireGuard/IPsec）— 加密是与双向认证不同的选择，而非其副产品。
+> 本节配置上文[双向认证和数据加密](#mutual-authentication-and-data-encryption)中概念性介绍的负载加密机制（WireGuard/IPsec）——加密是与双向认证分开的选择，并非其副产品。
 
 ### WireGuard 透明加密
 
-WireGuard 在 Linux 内核级别加密所有 Pod 到 Pod 流量：
+WireGuard 在 Linux kernel 层加密所有 Pod-to-Pod 流量：
 
 ```yaml
 # values.yaml - Enable WireGuard
@@ -473,26 +446,9 @@ Errors: 0
 
 #### WireGuard 架构
 
-```mermaid
-graph TB
-    subgraph "Node A"
-        PodA[Pod A]
-        CiliumA[Cilium Agent]
-        WGA[WireGuard Interface<br/>cilium_wg0]
-    end
+![Node A 和 Node B 上的 cilium_wg0 WireGuard interface 通过 ChaCha20-Poly1305 加密隧道承载 pod-to-pod 流量。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-2.png)
 
-    subgraph "Node B"
-        PodB[Pod B]
-        CiliumB[Cilium Agent]
-        WGB[WireGuard Interface<br/>cilium_wg0]
-    end
-
-    PodA --> CiliumA
-    CiliumA --> WGA
-    WGA <-->|"Encrypted Tunnel<br/>(ChaCha20Poly1305)"| WGB
-    WGB --> CiliumB
-    CiliumB --> PodB
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-2.html)
 
 ### IPsec 加密
 
@@ -519,11 +475,11 @@ encryption:
 
 ### 加密对比
 
-| 功能 | WireGuard | IPsec |
+| 特性 | WireGuard | IPsec |
 |---------|-----------|-------|
 | 性能 | 非常高 | 高 |
 | 配置复杂度 | 低 | 中 |
-| 内核支持 | 5.6+（内置） | 所有版本 |
+| Kernel 支持 | 5.6+（内置） | 所有版本 |
 | 加密算法 | ChaCha20Poly1305 | AES-GCM 等 |
 | 密钥管理 | 自动 | 手动/自动 |
 | 标准 | 非标准 | IETF 标准 |
@@ -532,21 +488,11 @@ encryption:
 
 ### Cilium Identity
 
-Cilium 根据身份而非 IP 应用安全策略：
+Cilium 基于身份而不是 IP 应用安全 policy：
 
-```mermaid
-graph LR
-    subgraph "Identity Assignment"
-        Pod[Pod] --> Labels[Labels]
-        Labels --> Hash[Hash Function]
-        Hash --> Identity[Numeric Identity<br/>e.g., 12345]
-    end
+![Pod 的 label set 会被哈希为数字身份，该身份用于查找 eBPF policy map 并生成允许/拒绝决策。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-3.png)
 
-    subgraph "Policy Evaluation"
-        Identity --> PolicyMap[Policy Map]
-        PolicyMap --> Decision[Allow/Deny]
-    end
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-3.html)
 
 ### 身份组件
 
@@ -573,7 +519,7 @@ IDENTITY   LABELS
 12346      k8s:app=backend,k8s:io.kubernetes.pod.namespace=default
 ```
 
-### 基于身份的策略
+### 基于身份的 Policy
 
 ```yaml
 # Identity-based network policy
@@ -609,20 +555,9 @@ spec:
 
 ### IP 与 Identity 对比
 
-```mermaid
-graph TB
-    subgraph "IP-based Security (Traditional)"
-        IPPolicy[IP-based Policy]
-        IP1[10.0.1.5 -> 10.0.2.10: Allow]
-        IP2[Problem: Policy update needed<br/>when Pod IP changes]
-    end
+![基于 IP 的安全要求每当 Pod IP 变更时更新 policy，而基于身份的安全不受 IP 变动影响。](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-03-security-4.png)
 
-    subgraph "Identity-based Security (Cilium)"
-        IDPolicy[Identity-based Policy]
-        ID1[frontend -> backend: Allow]
-        ID2[Benefit: Unaffected by<br/>IP changes]
-    end
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-03-security-4.html)
 
 ## 外部 PKI 集成
 
@@ -692,9 +627,9 @@ data:
     }
 ```
 
-## 零信任网络
+## Zero Trust 网络
 
-### 默认拒绝策略
+### 默认拒绝 Policy
 
 ```yaml
 # Cluster-wide default deny
@@ -868,7 +803,7 @@ spec:
 
 ## 安全审计和监控
 
-### 策略审计模式
+### Policy 审计模式
 
 ```yaml
 # Test policy in audit mode
@@ -894,7 +829,7 @@ spec:
       - port: "8080"
 ```
 
-### 策略违规监控
+### Policy 违规监控
 
 ```bash
 # Observe policy violations with Hubble
@@ -930,9 +865,9 @@ hubble:
 
 ## 后续步骤
 
-- [可观测性](./04-observability.md): 使用 Hubble 进行安全监控
-- [Ingress 和 Gateway](./05-ingress-gateway.md): 外部流量安全
-- [最佳实践](./06-best-practices.md): 生产环境安全配置
+- [可观测性](./04-observability.md)：使用 Hubble 进行安全监控
+- [Ingress 和 Gateway](./05-ingress-gateway.md)：外部流量安全
+- [最佳实践](./06-best-practices.md)：生产环境安全配置
 
 ## 参考资料
 
@@ -942,4 +877,4 @@ hubble:
 - [Cilium 原生 mTLS](https://cilium.io/blog/2026/03/23/native-mtls-cilium/)
 - [Istio PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
 - [SPIFFE/SPIRE 文档](https://spiffe.io/docs/latest/)
-- [零信任架构 - NIST](https://www.nist.gov/publications/zero-trust-architecture)
+- [Zero Trust Architecture - NIST](https://www.nist.gov/publications/zero-trust-architecture)
