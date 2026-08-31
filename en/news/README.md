@@ -1,10 +1,17 @@
 # News
-> **Last Updated**: August 24, 2026
+> **Last Updated**: August 31, 2026
 
 Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate digest documents here. Each week, GitHub Actions applies relevant news directly to the existing doc it relates to, and this update log records only which doc changed and why. News with no matching doc is recorded here as a link only.
 
 ## Update Log
 
+- 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 "Garhwal" release (Pod certificates/ClusterTrustBundles Stable, Metrics API GA, kube-dns and IPVS-mode deprecations, and more)
+- 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.30.4/1.29.7 security patch releases (ISTIO-SECURITY-2026-006, 13 Envoy CVEs)
+- 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.2/v3.4.8 patch releases
+- 2026-W36: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — applied Linkerd edge-26.8.4 (TLSRoute API version negotiation, and more)
+- 2026-W36: no matching doc — Amazon EKS now supports up to 10 external OIDC identity providers per cluster ([source](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers))
+- 2026-W36: no matching doc — Scale before the spike: predictive autoscaling for GPU workloads on Kubernetes, CNCF blog ([source](https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/))
+- 2026-W36: no matching doc — Building an AI factory on Kubernetes, CNCF blog ([source](https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/))
 - 2026-W35: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied custom configuration support (via the `argocd-cm` ConfigMap) for the Amazon EKS managed Argo CD capability
 - 2026-W35: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.36.4/v1.35.8/v1.34.11 patch releases and v1.37.0-rc.1
 - 2026-W35: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.1/1.19.7/1.18.13 patch releases

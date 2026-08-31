@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.32, 1.33, 1.34  
-> **마지막 업데이트**: 2026년 8월 24일
+> **마지막 업데이트**: 2026년 8월 31일
 
 ## 실습 환경 설정
 
@@ -1504,6 +1504,17 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 2026년 8월 20일 유지 관리 중인 모든 라인의 패치 릴리스가 공개되었습니다: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4), [v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8), [v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11). 사용 중인 마이너 버전의 최신 패치를 적용하는 것을 권장합니다.
 
 같은 날 v1.37의 두 번째 릴리스 후보인 [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1)도 태그되어(rc.0은 8월 6일), 2026년 8월 26일로 예정된 v1.37.0 정식 릴리스가 일정대로 진행 중입니다.
+
+### 2026년 8월 업데이트: Kubernetes v1.37 "Garhwal" 정식 릴리스
+
+2026년 8월 26일 [Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)이 예정대로 정식 릴리스되었습니다. 이번 릴리스에는 총 67개의 개선 사항이 포함되었으며, 그중 16개가 Stable, 23개가 Beta로 승격되었고 나머지는 Alpha로 도입되었습니다. 주요 내용:
+
+- **파드 인증서와 ClusterTrustBundle의 Stable 승격**: 서비스 어카운트 토큰 대신 워크로드에 X.509 인증서를 자동 발급·로테이션하는 PodCertificate 기능과 신뢰 앵커(trust anchor) 배포용 ClusterTrustBundle이 표준 기능이 되었습니다 ([상세 글](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
+- **Metrics API(metrics.k8s.io) GA**: `kubectl top`과 HPA가 사용하는 리소스 메트릭 API가 정식(stable) 버전으로 졸업했습니다 ([상세 글](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
+- 그 외 **Stable**: DRA(Dynamic Resource Allocation) 기능 다수, watchcache 초기화 복원력 개선 등 / **Beta**: HPA scale-to-zero, 매니페스트 기반 어드미션 컨트롤 구성 등 / **Alpha**: 파드 수준 체크포인트·복원 등
+- **사용 중단(deprecation)**: kube-dns, kube-proxy의 `ipvs` 모드, `kubectl run --filename/-f`가 사용 중단되었고, 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
+
+업그레이드 전에는 [공식 릴리스 노트](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)에서 사용 중단·제거 항목을 반드시 확인하세요.
 
 ### 업그레이드 전략
 

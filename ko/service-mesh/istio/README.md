@@ -1,8 +1,18 @@
 # Istio
 
-> **마지막 업데이트**: 2026년 8월 24일
+> **마지막 업데이트**: 2026년 8월 31일
 
 Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다.
+
+### 2026년 8월 업데이트: Istio 1.30.4 / 1.29.7 보안 패치 릴리스
+
+2026년 8월 27일 Istio 1.30.4와 1.29.7 패치 릴리스가 공개되었습니다. 이번 릴리스는 **보안 수정([ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/))을 포함하므로 우선 적용을 권장**합니다:
+
+- **Envoy CVE 13건 수정**: HTTP/2 트레일러 처리의 heap use-after-free(CVE-2026-73513), `ignore_path_parameters_in_path_matching`을 통한 RBAC 우회(CVE-2026-73553), HTTP/2 중복 Host 헤더로 인한 메모리 고갈(CVE-2026-73550) 등
+- **Istio CVE 1건 수정**: 사이드카 프록시에서 `BackendTLSPolicy`의 CA 참조가 해석되지 않으면 평문(plaintext)으로 fail-open 되던 문제(GHSA-qm8v-g4f9-qhjx)
+- 그 외 원격 클러스터 자격 증명 로테이션 후 네트워크 게이트웨이/엔드포인트가 사라지던 멀티클러스터 버그 등 다수의 안정성 수정
+
+한편 차기 버전 1.31의 릴리스 후보도 8월 25-27일 사이 rc.2부터 rc.4까지 이어져 정식 릴리스가 임박했습니다. 자세한 내용은 [1.30.4 공식 발표](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.4/)를 참고하세요.
 
 ### 2026년 8월 업데이트: Istio 1.31 RC 단계 진입
 

@@ -1,6 +1,10 @@
 # Linkerd
 
-> **지원 버전**: Linkerd 2.16+ **마지막 업데이트**: 2026년 8월 17일
+> **지원 버전**: Linkerd 2.16+ **마지막 업데이트**: 2026년 8월 31일
+
+### 2026년 8월 업데이트: edge-26.8.4
+
+2026년 8월 25일 공개된 edge-26.8.4 릴리스에는 opaque 프로토콜 처리에서 nil ExternalWorkload를 방어하지 못하던 문제 수정, policy 컨트롤러가 TLSRoute API 버전을 클러스터와 협상(negotiate)하도록 하는 수정, Go 1.26.7 업데이트가 포함되었습니다. 자세한 내용은 [릴리스 노트](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4)를 참고하세요.
 
 ### 2026년 8월 업데이트: edge-26.8.2 — Gateway API 1.5.1 지원
 

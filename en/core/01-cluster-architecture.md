@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
-> **Last Updated**: August 24, 2026
+> **Last Updated**: August 31, 2026
 
 ## Lab Environment Setup
 
@@ -1508,6 +1508,17 @@ On July 31, 2026, the release team published the [Kubernetes v1.37 sneak peek](h
 On August 20, 2026, patch releases went out for all maintained lines: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4), [v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8), and [v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11). As usual, applying the latest patch for your minor version is recommended.
 
 The same day, the second release candidate for v1.37, [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1), was also tagged (rc.0 was cut on August 6), keeping the final v1.37.0 release on track for August 26, 2026.
+
+### August 2026 Update: Kubernetes v1.37 "Garhwal" Released
+
+[Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) was released on schedule on August 26, 2026. The release consists of 67 enhancements: 16 graduated to Stable, 23 graduated to Beta, and the rest entered as Alpha. Highlights:
+
+- **Pod certificates and ClusterTrustBundles graduate to Stable**: the PodCertificate feature, which automatically issues and rotates X.509 certificates for workloads as an alternative to service account tokens, and the ClusterTrustBundle resource for distributing trust anchors are now standard features ([detailed post](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
+- **Metrics API (metrics.k8s.io) goes GA**: the resource metrics API used by `kubectl top` and the HPA has graduated to stable ([detailed post](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
+- Also **Stable**: several DRA (Dynamic Resource Allocation) features, resilient watchcache initialization, and more / **Beta**: HPA scale-to-zero, manifest-based admission control configuration, and more / **Alpha**: pod-level checkpoint and restore, and more
+- **Deprecations**: kube-dns, kube-proxy's `ipvs` mode, and `kubectl run --filename/-f` are deprecated, and static Pods can no longer reference Secrets or ConfigMaps. The removal of cgroup v1 support also continues to progress.
+
+Before upgrading, be sure to review the deprecations and removals in the [official release notes](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md).
 
 ### Upgrade Strategies
 

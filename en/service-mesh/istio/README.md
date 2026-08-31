@@ -1,8 +1,18 @@
 # Istio
 
-> **Last Updated**: August 24, 2026
+> **Last Updated**: August 31, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
+
+### August 2026 Update: Istio 1.30.4 / 1.29.7 Security Patch Releases
+
+On August 27, 2026, the Istio 1.30.4 and 1.29.7 patch releases were published. These releases **contain security fixes ([ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/)), so upgrading promptly is recommended**:
+
+- **13 Envoy CVEs fixed**: including a heap use-after-free in HTTP/2 trailer handling (CVE-2026-73513), an RBAC bypass via `ignore_path_parameters_in_path_matching` (CVE-2026-73553), and HTTP/2 memory exhaustion via discarded duplicate Host headers (CVE-2026-73550)
+- **1 Istio CVE fixed**: `BackendTLSPolicy` failing open to plaintext on sidecar proxies when its CA reference is unresolved (GHSA-qm8v-g4f9-qhjx)
+- Plus numerous stability fixes, such as a multicluster bug where a remote cluster's network gateway/endpoints could disappear after credential rotation
+
+Meanwhile, release candidates for the next version, 1.31, continued from rc.2 through rc.4 between August 25-27, so the official release is close. See the [1.30.4 official announcement](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.4/) for details.
 
 ### August 2026 Update: Istio 1.31 Enters RC
 
