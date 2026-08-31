@@ -59,7 +59,7 @@ Tekton extends the Kubernetes API with a set of Custom Resource Definitions (CRD
 
 ### 1.1 Core CRDs
 
-![Diagram showing how Tekton's Pipeline, PipelineRun, Task, and TaskRun custom resources relate to Step, Workspace, and Result, and how those map onto native Kubernetes Pod, Container, and PersistentVolumeClaim objects.](../.gitbook/assets/en-ops-14-tekton-pipelines-0.png)
+![Diagram showing how Tekton's Pipeline, PipelineRun, Task, and TaskRun custom resources relate to Step, Workspace, and Result, and how those map onto native Kubernetes Pod, Container, and PersistentVolumeClaim objects.](../../assets/diagrams/rendered/en-ops-14-tekton-pipelines-0.svg)
 
 **Task**: A reusable, parameterized unit of work. Each Task defines one or more Steps that execute sequentially in containers within a single Pod. Tasks also declare Workspaces (for shared data) and Results (for output values).
 
@@ -75,7 +75,7 @@ Tekton extends the Kubernetes API with a set of Custom Resource Definitions (CRD
 
 ### 1.2 Controller Architecture
 
-![Diagram showing the Tekton Pipelines, Chains, Triggers, and Dashboard controllers reconciling against the Kubernetes API server, which persists state to etcd, while Chains signs and attests images to an OCI registry, with users entering via kubectl or a webhook.](../.gitbook/assets/en-ops-14-tekton-pipelines-1.png)
+![Diagram showing the Tekton Pipelines, Chains, Triggers, and Dashboard controllers reconciling against the Kubernetes API server, which persists state to etcd, while Chains signs and attests images to an OCI registry, with users entering via kubectl or a webhook.](../../assets/diagrams/rendered/en-ops-14-tekton-pipelines-1.svg)
 
 **tekton-pipelines-controller**: The core reconciliation controller. It watches for new PipelineRun and TaskRun resources, creates Pods for execution, monitors container completion, propagates results, and updates status.
 
@@ -750,7 +750,7 @@ Pipelines orchestrate multiple Tasks into a directed acyclic graph (DAG). Tasks 
 
 ### 4.1 Task Ordering and Parallel Execution
 
-![Task dependency graph showing git-clone feeding parallel lint and unit-test tasks that both converge on build-image, followed by security-scan and deploy.](../.gitbook/assets/en-ops-14-tekton-pipelines-2.png)
+![Task dependency graph showing git-clone feeding parallel lint and unit-test tasks that both converge on build-image, followed by security-scan and deploy.](../../assets/diagrams/rendered/en-ops-14-tekton-pipelines-2.svg)
 
 In the diagram above, `lint` and `unit-test` run in parallel after `git-clone` completes. `build-image` waits for both to succeed. This is achieved by using `runAfter` in the Pipeline spec.
 
@@ -1035,7 +1035,7 @@ Tekton Triggers enable automatic Pipeline execution in response to external even
 
 ### 5.1 Trigger Architecture
 
-![Diagram showing a GitHub webhook POST arriving at an EventListener, passing through an Interceptor and CEL filter, then a TriggerBinding and TriggerTemplate that create the PipelineRun.](../.gitbook/assets/en-ops-14-tekton-pipelines-3.png)
+![Diagram showing a GitHub webhook POST arriving at an EventListener, passing through an Interceptor and CEL filter, then a TriggerBinding and TriggerTemplate that create the PipelineRun.](../../assets/diagrams/rendered/en-ops-14-tekton-pipelines-3.svg)
 
 **EventListener**: A Kubernetes Service that receives incoming webhook HTTP requests and routes them through Triggers.
 
@@ -1347,7 +1347,7 @@ Tekton Chains provides automated supply chain security for your CI/CD pipelines.
 
 ### 6.1 How Chains Works
 
-![Sequence diagram of a developer's push triggering a Tekton build and push to ECR, followed by Tekton Chains generating SLSA provenance, signing with Cosign, and publishing the signature and attestation to ECR and Rekor's transparency log.](../.gitbook/assets/en-ops-14-tekton-pipelines-4.png)
+![Sequence diagram of a developer's push triggering a Tekton build and push to ECR, followed by Tekton Chains generating SLSA provenance, signing with Cosign, and publishing the signature and attestation to ECR and Rekor's transparency log.](../../assets/diagrams/rendered/en-ops-14-tekton-pipelines-4.svg)
 
 ### 6.2 Chains Configuration
 
@@ -1543,7 +1543,7 @@ The most effective production architecture separates CI (build, test, push) from
 
 ### 7.1 CI/CD Separation Architecture
 
-![Diagram of the full CI/CD pipeline: a developer push driving a Tekton pipeline through build, test, scan, and sign stages to a signed image in ECR, handed off via a GitOps repo update to ArgoCD, which verifies the Cosign signature with Kyverno before deploying to the cluster.](../.gitbook/assets/en-ops-14-tekton-pipelines-5.png)
+![Diagram of the full CI/CD pipeline: a developer push driving a Tekton pipeline through build, test, scan, and sign stages to a signed image in ECR, handed off via a GitOps repo update to ArgoCD, which verifies the Cosign signature with Kyverno before deploying to the cluster.](../../assets/diagrams/rendered/en-ops-14-tekton-pipelines-5.svg)
 
 ### 7.2 GitOps Repository Update Task
 

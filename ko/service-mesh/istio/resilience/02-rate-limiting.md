@@ -16,7 +16,7 @@ Rate Limiting은 서비스를 과부하로부터 보호하고, 공정한 리소�
 
 Rate Limiting은 다음과 같은 상황에서 필요합니다:
 
-![세 클라이언트의 요청이 Token Bucket 방식의 Rate Limiter를 거쳐, 처리 가능한 두 Pod로는 허용되고 초과된 요청은 429 오류로 차단되는 흐름을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-02-rate-limiting-0.png)
+![세 클라이언트의 요청이 Token Bucket 방식의 Rate Limiter를 거쳐, 처리 가능한 두 Pod로는 허용되고 초과된 요청은 429 오류로 차단되는 흐름을 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-02-rate-limiting-0.svg)
 
 ### Rate Limiting의 목적
 
@@ -64,7 +64,7 @@ Rate Limiting은 다음과 같은 상황에서 필요합니다:
 
 ### Token Bucket 알고리즘
 
-![Refill이 주기적으로 토큰을 채우는 Token Bucket에서 요청이 도착하면 토큰 보유 여부를 판정해 허용 시 토큰을 소비하고 부족하면 429로 거부하는 순환 흐름을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-02-rate-limiting-1.png)
+![Refill이 주기적으로 토큰을 채우는 Token Bucket에서 요청이 도착하면 토큰 보유 여부를 판정해 허용 시 토큰을 소비하고 부족하면 429로 거부하는 순환 흐름을 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-02-rate-limiting-1.svg)
 
 ### 기본 설정
 
@@ -230,7 +230,7 @@ spec:
 
 ### 아키텍처
 
-![Ingress Gateway가 클라이언트 요청마다 중앙 Rate Limit Server에 gRPC로 허용 여부를 확인하고, 서버는 캐시를 조회한 뒤 응답을 돌려주며 허용된 요청만 백엔드 서비스로 전달되는 글로벌 Rate Limiting 아키텍처를 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-02-rate-limiting-2.png)
+![Ingress Gateway가 클라이언트 요청마다 중앙 Rate Limit Server에 gRPC로 허용 여부를 확인하고, 서버는 캐시를 조회한 뒤 응답을 돌려주며 허용된 요청만 백엔드 서비스로 전달되는 글로벌 Rate Limiting 아키텍처를 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-02-rate-limiting-2.svg)
 
 ### 구성 방법
 

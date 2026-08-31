@@ -288,7 +288,7 @@ spec:
 
 **JWT Validation Process:**
 
-![Flowchart showing how a sidecar validates an inbound JWT: it checks the token issuer, audiences, JWKS signature, and expiration in sequence, rejecting the request with 401 Unauthorized if any check fails and allowing it through only once all four checks pass.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-0.png)
+![Flowchart showing how a sidecar validates an inbound JWT: it checks the token issuer, audiences, JWKS signature, and expiration in sequence, rejecting the request with 401 Unauthorized if any check fails and allowing it through only once all four checks pass.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-security-0.svg)
 
 **Integration with OIDC Providers:**
 
@@ -431,7 +431,7 @@ spec:
 
 **Certificate Lifecycle:**
 
-![Sequence diagram showing Istiod issuing a 24-hour mTLS certificate to an Envoy sidecar, then Envoy requesting and receiving a renewed certificate eight hours before expiry and hot-reloading it without downtime, so the old certificate's expiry at hour 24 has no operational impact.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-1.png)
+![Sequence diagram showing Istiod issuing a 24-hour mTLS certificate to an Envoy sidecar, then Envoy requesting and receiving a renewed certificate eight hours before expiry and hot-reloading it without downtime, so the old certificate's expiry at hour 24 has no operational impact.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-security-1.svg)
 
 **Checking Certificates:**
 

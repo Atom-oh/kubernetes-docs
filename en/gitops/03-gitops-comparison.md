@@ -50,11 +50,11 @@ Both are CNCF graduated projects, indicating maturity and wide adoption.
 
 #### ArgoCD Architecture
 
-![Architecture diagram showing ArgoCD's API Server acting as the central hub between the web UI, Dex SSO, the Redis cache, and the Application Controller, which reconciles manifests pulled by the Repo Server from a Git repository into the target Kubernetes cluster.](../.gitbook/assets/en-gitops-03-gitops-comparison-0.png)
+![Architecture diagram showing ArgoCD's API Server acting as the central hub between the web UI, Dex SSO, the Redis cache, and the Application Controller, which reconciles manifests pulled by the Repo Server from a Git repository into the target Kubernetes cluster.](../../assets/diagrams/rendered/en-gitops-03-gitops-comparison-0.svg)
 
 #### FluxCD Architecture
 
-![Architecture diagram showing FluxCD's Source Controller fetching from Git, Helm, and OCI sources and driving the Kustomize and Helm controllers to apply resources into the Kubernetes cluster, while the Notification Controller watches all three and the Image Automation Controller writes updated image tags back to Git.](../.gitbook/assets/en-gitops-03-gitops-comparison-1.png)
+![Architecture diagram showing FluxCD's Source Controller fetching from Git, Helm, and OCI sources and driving the Kustomize and Helm controllers to apply resources into the Kubernetes cluster, while the Notification Controller watches all three and the Image Automation Controller writes updated image tags back to Git.](../../assets/diagrams/rendered/en-gitops-03-gitops-comparison-1.svg)
 
 ### Community and Ecosystem
 

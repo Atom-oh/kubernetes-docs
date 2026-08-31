@@ -65,7 +65,7 @@ Kubernetes 클러스터는 컨트롤 플레인 구성요소와 노드 구성요�
 
 ### 컨트롤 플레인 구성요소 관리
 
-![컨트롤 플레인이 API 서버, etcd, 스케줄러, 컨트롤러 관리자, 클라우드 컨트롤러 관리자로 구성되며 각 구성요소가 담당하는 운영 작업을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-0.png)
+![컨트롤 플레인이 API 서버, etcd, 스케줄러, 컨트롤러 관리자, 클라우드 컨트롤러 관리자로 구성되며 각 구성요소가 담당하는 운영 작업을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-0.svg)
 
 #### API 서버 관리
 
@@ -136,7 +136,7 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-![클러스터 관리자가 설정, 운영, 보안, 업그레이드, 백업 다섯 영역을 관리하며 각 영역마다 사용하는 도구를 매핑한 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-1.png)
+![클러스터 관리자가 설정, 운영, 보안, 업그레이드, 백업 다섯 영역을 관리하며 각 영역마다 사용하는 도구를 매핑한 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-1.svg)
 
 ### 클러스터 관리 도구
 
@@ -167,7 +167,7 @@ Kubernetes 클러스터는 여러 구성요소로 이루어져 있으며, 이러
 
 다음 다이어그램은 Kubernetes 컨트롤 플레인 구성요소와 그 상호작용을 보여줍니다:
 
-![kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저, 클라우드 컨트롤러 매니저가 양방향으로 통신하고, 각 워커 노드의 kubelet이 API 서버와 통신하며 kube-proxy와 컨테이너 런타임을 관리하는 구조를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-2.png)
+![kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저, 클라우드 컨트롤러 매니저가 양방향으로 통신하고, 각 워커 노드의 kubelet이 API 서버와 통신하며 kube-proxy와 컨테이너 런타임을 관리하는 구조를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-2.svg)
 
 #### 컨트롤 플레인 구성요소 모니터링
 
@@ -386,7 +386,7 @@ Kubernetes 네트워크 모델의 기본 요구 사항:
 
 다음 다이어그램은 Kubernetes 네트워킹 구성요소와 통신 흐름을 보여줍니다:
 
-![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 포드로 전달되고, 포드 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여주는 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-3.png)
+![클라이언트 요청이 인그레스와 서비스를 거쳐 두 노드에 분산된 포드로 전달되고, 포드 간 통신과 외부 서비스로의 아웃바운드 트래픽까지 이어지는 클러스터 네트워킹 흐름을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-3.svg)
 
 ### CNI(Container Network Interface) 플러그인
 
@@ -513,7 +513,7 @@ Kubernetes의 인증 및 권한 관리는 클러스터 보안의 핵심 요소�
 
 다음 다이어그램은 Kubernetes의 인증 및 권한 부여 흐름을 보여줍니다:
 
-![사용자 또는 서비스 계정의 요청이 인증, 권한 부여, 어드미션 컨트롤을 차례로 통과해 API 서버에 도달하며, 인증에는 X.509·토큰·OIDC·웹훅 방식이, 권한 부여에는 RBAC·ABAC·Node·Webhook 모드가 쓰인다는 것을 보여주는 흐름도](../.gitbook/assets/ko-core-09-cluster-administration-4.png)
+![사용자 또는 서비스 계정의 요청이 인증, 권한 부여, 어드미션 컨트롤을 차례로 통과해 API 서버에 도달하며, 인증에는 X.509·토큰·OIDC·웹훅 방식이, 권한 부여에는 RBAC·ABAC·Node·Webhook 모드가 쓰인다는 것을 보여주는 흐름도](../../assets/diagrams/rendered/ko-core-09-cluster-administration-4.svg)
 
 ### 인증(Authentication)
 
@@ -712,7 +712,7 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 성능 개선, 보�
 
 다음 다이어그램은 Kubernetes 클러스터 업그레이드 프로세스를 보여줍니다:
 
-![클러스터 업그레이드가 계획, 백업, 컨트롤 플레인 업그레이드와 테스트, 워커 노드 업그레이드, 검증을 거쳐 완료되며, 검증에서 문제가 발생하면 백업에서 복원하는 롤백 경로로 이어지는 순서도](../.gitbook/assets/ko-core-09-cluster-administration-5.png)
+![클러스터 업그레이드가 계획, 백업, 컨트롤 플레인 업그레이드와 테스트, 워커 노드 업그레이드, 검증을 거쳐 완료되며, 검증에서 문제가 발생하면 백업에서 복원하는 롤백 경로로 이어지는 순서도](../../assets/diagrams/rendered/ko-core-09-cluster-administration-5.svg)
 
 ### 업그레이드 계획
 
@@ -800,7 +800,7 @@ Kubernetes 클러스터의 백업 및 복구는 재해 복구 계획의 중요�
 
 다음 다이어그램은 Kubernetes 클러스터의 백업 및 복구 프로세스를 보여줍니다:
 
-![예약된 백업이 etcd 스냅샷과 리소스 YAML을 백업 저장소에 모으고, 재해가 발생하면 그 저장소로부터 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구하는 흐름을 보여주는 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-6.png)
+![예약된 백업이 etcd 스냅샷과 리소스 YAML을 백업 저장소에 모으고, 재해가 발생하면 그 저장소로부터 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구하는 흐름을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-6.svg)
 
 ### etcd 백업
 
@@ -919,7 +919,7 @@ spec:
 
 다음 다이어그램은 Kubernetes 클러스터의 모니터링 및 로깅 아키텍처를 보여줍니다:
 
-![클러스터의 메트릭이 Prometheus를 거쳐 Alertmanager와 Grafana로, 로그가 Fluentd를 거쳐 Elasticsearch·Kibana와 Loki를 통해 다시 Grafana로 모이는 통합 모니터링·로깅 스택 구조를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-7.png)
+![클러스터의 메트릭이 Prometheus를 거쳐 Alertmanager와 Grafana로, 로그가 Fluentd를 거쳐 Elasticsearch·Kibana와 Loki를 통해 다시 Grafana로 모이는 통합 모니터링·로깅 스택 구조를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-7.svg)
 
 ### 모니터링 도구
 
@@ -1128,7 +1128,7 @@ Amazon EKS는 관리형 Kubernetes 서비스로, 클러스터 관리의 많은 �
 
 다음 다이어그램은 Amazon EKS 클러스터 아키텍처와 관리 구성요소를 보여줍니다:
 
-![사용자가 AWS 콘솔·CLI·API를 통해 관리하는 Amazon EKS가 컨트롤 플레인, 노드 그룹, Fargate로 구성되고 컨트롤 플레인은 IAM·VPC·CloudWatch 같은 AWS 관리형 구성요소를 사용하며 VPC CNI·CoreDNS·kube-proxy 같은 부가 기능이 함께 동작하는 구조를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-8.png)
+![사용자가 AWS 콘솔·CLI·API를 통해 관리하는 Amazon EKS가 컨트롤 플레인, 노드 그룹, Fargate로 구성되고 컨트롤 플레인은 IAM·VPC·CloudWatch 같은 AWS 관리형 구성요소를 사용하며 VPC CNI·CoreDNS·kube-proxy 같은 부가 기능이 함께 동작하는 구조를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-8.svg)
 
 ### EKS 클러스터 구성
 
@@ -1390,7 +1390,7 @@ Kubernetes 클러스터 네트워킹은 파드 간 통신, 서비스 디스커�
 
 ### 네트워크 아키텍처
 
-![클러스터 네트워킹이 파드 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입, 인그레스 컨트롤러, 네트워크 보안이라는 구체적 구현 요소로 이어지는 것을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-9.png)
+![클러스터 네트워킹이 파드 네트워크, 서비스 네트워크, 인그레스, 네트워크 정책 네 영역으로 나뉘고 각 영역이 CNI 플러그인, 서비스 타입, 인그레스 컨트롤러, 네트워크 보안이라는 구체적 구현 요소로 이어지는 것을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-9.svg)
 
 ### CNI 플러그인 관리
 
@@ -1565,7 +1565,7 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 
 ### 업그레이드 계획
 
-![업그레이드 계획이 버전 호환성 확인, 백업 생성, 업그레이드 전략 선택, 다운타임 계획 네 항목으로 나뉘고 각 항목이 API 변경 검토, etcd 백업, 인플레이스 대 블루/그린 선택, 사용자 커뮤니케이션 같은 구체적 조치로 이어지는 것을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-10.png)
+![업그레이드 계획이 버전 호환성 확인, 백업 생성, 업그레이드 전략 선택, 다운타임 계획 네 항목으로 나뉘고 각 항목이 API 변경 검토, etcd 백업, 인플레이스 대 블루/그린 선택, 사용자 커뮤니케이션 같은 구체적 조치로 이어지는 것을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-10.svg)
 
 ### 업그레이드 전략 비교
 
@@ -1721,7 +1721,7 @@ velero restore create --from-backup full-cluster-backup
 
 ### 모니터링 아키텍처
 
-![Kubernetes 모니터링이 메트릭 수집, 로그 수집, 알림, 시각화 네 기능으로 나뉘고 각각 Prometheus, Fluentd, Alertmanager, Grafana 도구가 맡으며 로그가 Elasticsearch에 쌓여 Kibana로 시각화되는 계층 구조를 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-11.png)
+![Kubernetes 모니터링이 메트릭 수집, 로그 수집, 알림, 시각화 네 기능으로 나뉘고 각각 Prometheus, Fluentd, Alertmanager, Grafana 도구가 맡으며 로그가 Elasticsearch에 쌓여 Kibana로 시각화되는 계층 구조를 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-11.svg)
 
 ### Prometheus 및 Grafana 설치
 
@@ -1831,7 +1831,7 @@ Kubernetes 클러스터 문제 해결은 시스템 관리자와 운영자에게 
 
 ### 문제 해결 방법론
 
-![클러스터 문제 해결이 문제 식별, 정보 수집, 원인 분석, 해결책 적용, 검증, 문서화 순서로 진행되며 정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉜다는 것을 보여주는 순서도](../.gitbook/assets/ko-core-09-cluster-administration-12.png)
+![클러스터 문제 해결이 문제 식별, 정보 수집, 원인 분석, 해결책 적용, 검증, 문서화 순서로 진행되며 정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉜다는 것을 보여주는 순서도](../../assets/diagrams/rendered/ko-core-09-cluster-administration-12.svg)
 
 ### 일반적인 문제 및 해결 방법
 
@@ -1906,7 +1906,7 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 관리하는 Kubernetes 서�
 
 ### EKS 클러스터 아키텍처
 
-![Amazon EKS 클러스터가 컨트롤 플레인, 데이터 플레인, 네트워킹, 보안 네 영역으로 구성되며 각 영역이 AWS 관리형 API 서버·etcd, 관리형/자체관리형 노드와 Fargate, VPC CNI 기반 네트워킹, IAM 기반 보안으로 이어지는 것을 보여주는 트리 다이어그램](../.gitbook/assets/ko-core-09-cluster-administration-13.png)
+![Amazon EKS 클러스터가 컨트롤 플레인, 데이터 플레인, 네트워킹, 보안 네 영역으로 구성되며 각 영역이 AWS 관리형 API 서버·etcd, 관리형/자체관리형 노드와 Fargate, VPC CNI 기반 네트워킹, IAM 기반 보안으로 이어지는 것을 보여주는 트리 다이어그램](../../assets/diagrams/rendered/ko-core-09-cluster-administration-13.svg)
 
 ### EKS 클러스터 생성
 

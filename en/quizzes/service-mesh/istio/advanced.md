@@ -51,7 +51,7 @@ Savings rate: 98.6% (memory), 98.5% (CPU)
 
 **Ambient Mode Architecture:**
 
-![Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-0.png)
+![Diagram showing pods on two nodes routing through a per-node ztunnel L4 proxy that carries mTLS to its peer node, with both ztunnels optionally forwarding to a shared waypoint proxy when L7 policy is needed.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-0.svg)
 
 **Enabling Ambient Mode:**
 
@@ -98,7 +98,7 @@ D. Service Entry
 
 **Multi-cluster Mesh Architecture:**
 
-![Diagram showing a shared primary Istiod distributing configuration to each cluster's local Istiod, which discovers its own services, while pods in the two clusters communicate directly across the cluster boundary.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-1.png)
+![Diagram showing a shared primary Istiod distributing configuration to each cluster's local Istiod, which discovers its own services, while pods in the two clusters communicate directly across the cluster boundary.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-1.svg)
 
 **Istiod's Roles:**
 
@@ -462,7 +462,7 @@ D. Istio Gateway
 
 **Argo Rollouts + Istio Integration Architecture:**
 
-![Diagram showing user traffic entering through an Istio Gateway and VirtualService that splits weight between a stable and canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on success or failure verdicts from an AnalysisTemplate fed by Prometheus metrics.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-2.png)
+![Diagram showing user traffic entering through an Istio Gateway and VirtualService that splits weight between a stable and canary pod, while an Argo Rollouts controller updates that weight and manages the pods based on success or failure verdicts from an AnalysisTemplate fed by Prometheus metrics.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-2.svg)
 
 **VirtualService Role:**
 
@@ -788,7 +788,7 @@ Explain how to integrate 2 EKS clusters (us-east-1, us-west-2) into **a single I
 
 **1. Architecture Overview**
 
-![Diagram showing a primary Istiod in one region distributing configuration and service discovery to a remote cluster's Istiod, while workload pods in each cluster reach each other only through mutually authenticated east-west gateways.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-3.png)
+![Diagram showing a primary Istiod in one region distributing configuration and service discovery to a remote cluster's Istiod, while workload pods in each cluster reach each other only through mutually authenticated east-west gateways.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-3.svg)
 
 ---
 
@@ -1148,7 +1148,7 @@ Implement **per-user Rate Limiting** (100 requests per minute) using EnvoyFilter
 
 **1. Architecture Overview**
 
-![Diagram showing a client request passing through the Envoy proxy, which checks a Redis-backed rate-limit store before forwarding an allowed request to the backend service or rejecting it with a 429 response.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-4.png)
+![Diagram showing a client request passing through the Envoy proxy, which checks a Redis-backed rate-limit store before forwarding an allowed request to the backend service or rejecting it with a 429 response.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-4.svg)
 
 ---
 
@@ -1460,7 +1460,7 @@ Implement **Blue/Green deployment** using Argo Rollouts and Istio. Include **aut
 
 **1. Blue/Green Deployment Concept**
 
-![Diagram showing an Istio Gateway sending production traffic to an active service backed by the current blue version, and preview traffic to a preview service backed by the new green version, while an AnalysisTemplate gates whether the rollout promotes to a traffic switch that swaps active and preview, or rolls back.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-advanced-5.png)
+![Diagram showing an Istio Gateway sending production traffic to an active service backed by the current blue version, and preview traffic to a preview service backed by the new green version, while an AnalysisTemplate gates whether the rollout promotes to a traffic switch that swaps active and preview, or rolls back.](../../../../assets/diagrams/rendered/en-quizzes-service-mesh-istio-advanced-5.svg)
 
 ---
 

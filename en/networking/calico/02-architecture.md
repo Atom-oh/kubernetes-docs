@@ -10,7 +10,7 @@ This section provides an in-depth exploration of Calico's architecture. Understa
 
 ![Calico Architecture](../../.gitbook/assets/calico_architecture.png)
 
-![Architecture diagram showing Kubernetes control plane, Calico control plane (API server, kube-controllers, Typha), and a representative worker node where Felix programs the local data plane and confd/BIRD distribute routes over a BGP mesh between nodes.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
+![Architecture diagram showing Kubernetes control plane, Calico control plane (API server, kube-controllers, Typha), and a representative worker node where Felix programs the local data plane and confd/BIRD distribute routes over a BGP mesh between nodes.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-0.svg)
 
 ## Felix: The Calico Agent
 
@@ -18,7 +18,7 @@ Felix is the primary Calico agent that runs on every node in the cluster. It is 
 
 ### Felix Responsibilities
 
-![Diagram showing Felix's Datastore Watcher fanning out to its route, ACL, interface, and IPAM managers, which in turn program the node's routing table, iptables rules, IP sets, and network interfaces.](../../.gitbook/assets/en-networking-calico-02-architecture-1.png)
+![Diagram showing Felix's Datastore Watcher fanning out to its route, ACL, interface, and IPAM managers, which in turn program the node's routing table, iptables rules, IP sets, and network interfaces.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
 
 ### Core Functions
 
@@ -128,7 +128,7 @@ Felix organizes iptables rules into chains for efficient processing:
 
 ### Felix Data Flow
 
-![Sequence diagram showing Felix receiving policy, endpoint, and IP pool updates from the datastore and translating each into iptables rules, route table entries, or network interface configuration.](../../.gitbook/assets/en-networking-calico-02-architecture-2.png)
+![Sequence diagram showing Felix receiving policy, endpoint, and IP pool updates from the datastore and translating each into iptables rules, route table entries, or network interface configuration.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
 
 ## BIRD: BGP Routing Daemon
 
@@ -136,7 +136,7 @@ BIRD (BIRD Internet Routing Daemon) is the BGP daemon used by Calico for distrib
 
 ### BIRD in Calico Architecture
 
-![Diagram showing BIRD instances on each node forming a full iBGP mesh to exchange pod routes, then peering over eBGP with the top-of-rack switch and core router to advertise those routes externally.](../../.gitbook/assets/en-networking-calico-02-architecture-3.png)
+![Diagram showing BIRD instances on each node forming a full iBGP mesh to exchange pod routes, then peering over eBGP with the top-of-rack switch and core router to advertise those routes externally.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
 
 ### BGP Session Types
 
@@ -215,7 +215,7 @@ spec:
 
 ### Route Propagation Process
 
-![Sequence diagram showing a new pod's route being allocated by Felix, added to BIRD's local routing table, and propagated to peer nodes over a BGP UPDATE so they install it and route Felix accordingly.](../../.gitbook/assets/en-networking-calico-02-architecture-4.png)
+![Sequence diagram showing a new pod's route being allocated by Felix, added to BIRD's local routing table, and propagated to peer nodes over a BGP UPDATE so they install it and route Felix accordingly.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
 
 ### BIRD Status Commands
 
@@ -247,7 +247,7 @@ confd is a lightweight configuration management tool that watches the Calico dat
 
 ### confd Workflow
 
-![Diagram showing confd's watcher reacting to BGP configuration, peer, and node resources in the Calico datastore, rendering a bird.cfg file from templates, and handing it to the running BIRD process.](../../.gitbook/assets/en-networking-calico-02-architecture-5.png)
+![Diagram showing confd's watcher reacting to BGP configuration, peer, and node resources in the Calico datastore, rendering a bird.cfg file from templates, and handing it to the running BIRD process.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
 
 ### confd Template Processing
 
@@ -289,7 +289,7 @@ Typha is a fan-out proxy that sits between the Kubernetes API server and Felix a
 
 ### Why Typha?
 
-![Comparison diagram showing every Felix watching the Kubernetes API directly in a small cluster versus Typha pods fanning out cached updates to hundreds of Felix agents in a large cluster.](../../.gitbook/assets/en-networking-calico-02-architecture-6.png)
+![Comparison diagram showing every Felix watching the Kubernetes API directly in a small cluster versus Typha pods fanning out cached updates to hundreds of Felix agents in a large cluster.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg)
 
 ### Typha Scaling Calculation
 
@@ -397,7 +397,7 @@ spec:
 
 ### Typha Fan-out Architecture
 
-![Architecture diagram showing two API server watch streams feeding two Typha pods, each caching updates locally and fanning them out to roughly one hundred Felix agents in its node group.](../../.gitbook/assets/en-networking-calico-02-architecture-7.png)
+![Architecture diagram showing two API server watch streams feeding two Typha pods, each caching updates locally and fanning them out to roughly one hundred Felix agents in its node group.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
 
 ## kube-controllers: Kubernetes Integration
 
@@ -415,7 +415,7 @@ The calico-kube-controllers pod runs a set of controllers that sync Kubernetes r
 
 ### Controller Reconciliation Loop
 
-![Sequence diagram showing kube-controllers repeatedly listing Kubernetes and Calico resources, diffing them, and either writing changes to the Calico datastore or taking no action when the two are already in sync.](../../.gitbook/assets/en-networking-calico-02-architecture-8.png)
+![Sequence diagram showing kube-controllers repeatedly listing Kubernetes and Calico resources, diffing them, and either writing changes to the Calico datastore or taking no action when the two are already in sync.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
 
 ### kube-controllers Configuration
 
@@ -461,7 +461,7 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ### Kubernetes API Datastore (Recommended)
 
-![Diagram showing Felix, Typha, and kube-controllers all reading and writing Calico state through the Kubernetes API server, which itself persists to etcd - no separate Calico etcd cluster required.](../../.gitbook/assets/en-networking-calico-02-architecture-9.png)
+![Diagram showing Felix, Typha, and kube-controllers all reading and writing Calico state through the Kubernetes API server, which itself persists to etcd - no separate Calico etcd cluster required.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
 
 **Advantages:**
 
@@ -472,7 +472,7 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ### etcd Datastore (Legacy)
 
-![Diagram showing Felix and Typha reading and writing directly to a dedicated Calico etcd cluster while kube-controllers bridges that cluster with the Kubernetes API server - the legacy, decoupled datastore option.](../../.gitbook/assets/en-networking-calico-02-architecture-10.png)
+![Diagram showing Felix and Typha reading and writing directly to a dedicated Calico etcd cluster while kube-controllers bridges that cluster with the Kubernetes API server - the legacy, decoupled datastore option.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
 
 **Advantages:**
 
@@ -493,17 +493,17 @@ Calico supports two datastore backends for storing its configuration and state.
 
 ## Component Interaction Sequence
 
-![Sequence diagram tracing a NetworkPolicy and a Pod creation from the Kubernetes API through kube-controllers and Typha to Felix, which programs the local data plane and updates BGP routes.](../../.gitbook/assets/en-networking-calico-02-architecture-11.png)
+![Sequence diagram tracing a NetworkPolicy and a Pod creation from the Kubernetes API through kube-controllers and Typha to Felix, which programs the local data plane and updates BGP routes.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg)
 
 ## Packet Flow Analysis
 
 ### Ingress Packet Flow (Pod-to-Pod, Same Node)
 
-![Diagram showing a packet crossing from one pod to another on the same node through their veth interfaces and the host's iptables/eBPF policy check.](../../.gitbook/assets/en-networking-calico-02-architecture-12.png)
+![Diagram showing a packet crossing from one pod to another on the same node through their veth interfaces and the host's iptables/eBPF policy check.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
 
 ### Egress Packet Flow (Pod-to-Pod, Different Nodes with IPIP)
 
-![Diagram showing a packet leaving one node's pod through its veth and iptables check, IPIP-encapsulated across the physical network switch, and decapsulated and delivered into a pod on a second node.](../../.gitbook/assets/en-networking-calico-02-architecture-13.png)
+![Diagram showing a packet leaving one node's pod through its veth and iptables check, IPIP-encapsulated across the physical network switch, and decapsulated and delivered into a pod on a second node.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
 
 ### Packet Structure Comparison
 

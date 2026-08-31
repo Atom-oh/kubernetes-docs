@@ -16,7 +16,7 @@ This deep dive covers both Kubernetes standard policies and Calico's extended ca
 
 Kubernetes NetworkPolicy is a namespace-scoped resource that controls traffic to and from pods based on labels, namespaces, and IP blocks.
 
-![Comparison showing that without a NetworkPolicy every pod can reach every other pod freely, while a NetworkPolicy narrows that mesh down to one explicitly allowed path and blocks the rest.](../../.gitbook/assets/en-networking-calico-05-network-policy-0.png)
+![Comparison showing that without a NetworkPolicy every pod can reach every other pod freely, while a NetworkPolicy narrows that mesh down to one explicitly allowed path and blocks the rest.](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg)
 
 ### Basic NetworkPolicy Structure
 
@@ -427,7 +427,7 @@ Tiers provide hierarchical policy evaluation, enabling separation of concerns be
 
 ### Policy Evaluation Order
 
-![Flowchart showing traffic passing in order through the Security, Platform, and Application tiers, where each tier can deny the packet, allow it, or pass it to the next tier, ending in an implicit deny if no tier matches.](../../.gitbook/assets/en-networking-calico-05-network-policy-1.png)
+![Flowchart showing traffic passing in order through the Security, Platform, and Application tiers, where each tier can deny the packet, allow it, or pass it to the next tier, ending in an implicit deny if no tier matches.](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg)
 
 ### Creating Tiers
 

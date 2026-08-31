@@ -17,7 +17,7 @@
 
 AppProject는 ArgoCD에서 Application을 논리적으로 그룹화하고 접근 제어를 설정하는 리소스입니다.
 
-![ArgoCD 안에서 Frontend, Backend, Platform 세 프로젝트가 각각 애플리케이션을 묶고, 그 아래 각 팀이 자신의 프로젝트만 소유하도록 1대1로 연결되는 RBAC 경계를 보여주는 다이어그램.](../../.gitbook/assets/ko-gitops-argocd-06-projects-rbac-0.png)
+![ArgoCD 안에서 Frontend, Backend, Platform 세 프로젝트가 각각 애플리케이션을 묶고, 그 아래 각 팀이 자신의 프로젝트만 소유하도록 1대1로 연결되는 RBAC 경계를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-gitops-argocd-06-projects-rbac-0.svg)
 
 ### 기본 프로젝트 vs 커스텀 프로젝트
 
@@ -683,7 +683,7 @@ curl -H "Authorization: Bearer $ARGOCD_TOKEN" \
 
 ### 패턴 1: 팀별 프로젝트
 
-![ArgoCD 안의 Frontend, Backend, Data 세 프로젝트가 모두 동일하게 Dev, Staging, Prod 클러스터 전체로 배포되는 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-gitops-argocd-06-projects-rbac-1.png)
+![ArgoCD 안의 Frontend, Backend, Data 세 프로젝트가 모두 동일하게 Dev, Staging, Prod 클러스터 전체로 배포되는 구조를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-gitops-argocd-06-projects-rbac-1.svg)
 
 ```yaml
 # Frontend 프로젝트

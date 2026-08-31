@@ -10,7 +10,7 @@ Amazon Elastic Container Registry (ECR) is a fully managed container registry se
 
 ECR operates as a regional service with two distinct offerings:
 
-![Architecture diagram contrasting Amazon ECR Private, a regionally scoped registry with IAM-based access control and cross-region replication, against Amazon ECR Public, a globally hosted registry offering anonymous read access and gallery discovery.](../.gitbook/assets/en-container-registry-02-amazon-ecr-0.png)
+![Architecture diagram contrasting Amazon ECR Private, a regionally scoped registry with IAM-based access control and cross-region replication, against Amazon ECR Public, a globally hosted registry offering anonymous read access and gallery discovery.](../../assets/diagrams/rendered/en-container-registry-02-amazon-ecr-0.svg)
 
 **ECR Private**: For internal container images with IAM-based access control. Images are stored regionally and can be replicated across regions.
 
@@ -388,7 +388,7 @@ Lifecycle policies evaluate rules in **priority order** (lowest number first). K
 3. Once an image matches a rule, subsequent rules do not evaluate that image
 4. Rules with the same priority are evaluated in an undefined order (avoid this)
 
-![Flowchart showing how an ECR lifecycle policy evaluates an image against ranked rules (SemVer tags, dev/staging tags, untagged), applies the first matching rule, then expires the image only if it exceeds that rule's retention threshold, otherwise retaining it.](../.gitbook/assets/en-container-registry-02-amazon-ecr-1.png)
+![Flowchart showing how an ECR lifecycle policy evaluates an image against ranked rules (SemVer tags, dev/staging tags, untagged), applies the first matching rule, then expires the image only if it exceeds that rule's retention threshold, otherwise retaining it.](../../assets/diagrams/rendered/en-container-registry-02-amazon-ecr-1.svg)
 
 ### Selection Criteria
 
@@ -939,7 +939,7 @@ aws ec2 create-vpc-endpoint \
 
 ECR Pull-Through Cache reduces latency, avoids external rate limits, and removes dependencies on external registry availability.
 
-![Flowchart showing a kubelet image pull request checking the ECR endpoint: a cache hit serves the image instantly, while a cache miss pulls the image from the upstream registry, caches it in the ECR repository, and then serves it.](../.gitbook/assets/en-container-registry-02-amazon-ecr-2.png)
+![Flowchart showing a kubelet image pull request checking the ECR endpoint: a cache hit serves the image instantly, while a cache miss pulls the image from the upstream registry, caches it in the ECR repository, and then serves it.](../../assets/diagrams/rendered/en-container-registry-02-amazon-ecr-2.svg)
 
 #### Supported Upstream Registries
 

@@ -48,13 +48,13 @@ Karpenter is an open-source cluster autoscaler that automates node provisioning 
 
 Karpenter operates as a Kubernetes controller, detecting unschedulable pods and provisioning appropriate nodes.
 
-![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods and provisioner and node template resources, then calling the Kubernetes and cloud provider instance APIs to create compute instances.](../.gitbook/assets/en-autoscaling-02-karpenter-0.png)
+![Architecture diagram showing the Karpenter controller in a Kubernetes cluster watching unschedulable pods and provisioner and node template resources, then calling the Kubernetes and cloud provider instance APIs to create compute instances.](../../assets/diagrams/rendered/en-autoscaling-02-karpenter-0.svg)
 
 ### Karpenter Workflow
 
 The following diagram shows how Karpenter works in an EKS cluster:
 
-![Sequence diagram showing an unschedulable pod triggering the Karpenter controller, which queries the cloud EC2 API for instance options, provisions a new node, and the Kubernetes API then schedules the pod onto that node.](../.gitbook/assets/en-autoscaling-02-karpenter-1.png)
+![Sequence diagram showing an unschedulable pod triggering the Karpenter controller, which queries the cloud EC2 API for instance options, provisions a new node, and the Kubernetes API then schedules the pod onto that node.](../../assets/diagrams/rendered/en-autoscaling-02-karpenter-1.svg)
 
 ### Key Components
 
@@ -481,7 +481,7 @@ userData: |
 
 The following diagram shows Karpenter's node consolidation process. This feature is important for optimizing cluster efficiency and reducing costs:
 
-![Flowchart showing Karpenter analyzing underutilized nodes, provisioning one consolidated node, migrating pods onto it, then draining and terminating the old nodes it replaced.](../.gitbook/assets/en-autoscaling-02-karpenter-2.png)
+![Flowchart showing Karpenter analyzing underutilized nodes, provisioning one consolidated node, migrating pods onto it, then draining and terminating the old nodes it replaced.](../../assets/diagrams/rendered/en-autoscaling-02-karpenter-2.svg)
 
 ## Interruption Handling
 
@@ -704,7 +704,7 @@ spec:
 
 Karpenter integrates seamlessly with Amazon EKS to provide cluster autoscaling.
 
-![Architecture diagram showing the Karpenter controller in an Amazon EKS cluster assuming an IAM role to call the EC2 API directly, bypassing Auto Scaling Groups and Managed Node Groups to create EC2 instances.](../.gitbook/assets/en-autoscaling-02-karpenter-3.png)
+![Architecture diagram showing the Karpenter controller in an Amazon EKS cluster assuming an IAM role to call the EC2 API directly, bypassing Auto Scaling Groups and Managed Node Groups to create EC2 instances.](../../assets/diagrams/rendered/en-autoscaling-02-karpenter-3.svg)
 
 ### EKS Cluster Preparation
 
@@ -929,7 +929,7 @@ When a failure is detected, Karpenter also automatically suspends voluntary disr
 
 You can use Karpenter to optimize costs for EKS clusters:
 
-![Comparison tree showing Cluster Autoscaler's node-group-based approach yielding medium cost savings, against Karpenter's workload-based approach with faster scaling, consolidation, and Spot use yielding high cost savings.](../.gitbook/assets/en-autoscaling-02-karpenter-4.png)
+![Comparison tree showing Cluster Autoscaler's node-group-based approach yielding medium cost savings, against Karpenter's workload-based approach with faster scaling, consolidation, and Spot use yielding high cost savings.](../../assets/diagrams/rendered/en-autoscaling-02-karpenter-4.svg)
 
 #### 1. Using Spot Instances
 
@@ -1006,7 +1006,7 @@ spec:
 
 ## Best Practices
 
-![Four parallel lists of Karpenter best practices grouped by category: performance optimization, cost optimization, availability improvement, and security hardening.](../.gitbook/assets/en-autoscaling-02-karpenter-5.png)
+![Four parallel lists of Karpenter best practices grouped by category: performance optimization, cost optimization, availability improvement, and security hardening.](../../assets/diagrams/rendered/en-autoscaling-02-karpenter-5.svg)
 
 ### Performance Optimization
 

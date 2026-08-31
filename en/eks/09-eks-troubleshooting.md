@@ -19,7 +19,7 @@ When operating Amazon EKS clusters, various issues can arise. This document prov
 
 ## Troubleshooting Basics
 
-![Tree diagram showing the EKS troubleshooting basics branching into the six-step diagnostic approach, essential CLI tools, log sources, and diagnostic-info collection.](../.gitbook/assets/en-eks-09-eks-troubleshooting-0.png)
+![Tree diagram showing the EKS troubleshooting basics branching into the six-step diagnostic approach, essential CLI tools, log sources, and diagnostic-info collection.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-0.svg)
 
 ### Troubleshooting Approach
 
@@ -218,7 +218,7 @@ kubectl exec -it netshoot -- traceroute <target-ip>
 
 ## Cluster Creation and Management Issues
 
-![Tree diagram showing cluster creation, endpoint access, and deletion issues each branching into their most common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-1.png)
+![Tree diagram showing cluster creation, endpoint access, and deletion issues each branching into their most common root causes.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-1.svg)
 
 ### Cluster Creation Failure
 
@@ -525,7 +525,7 @@ aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<clus
 
 Networking issues are among the most common problems in EKS clusters. This section covers common networking issues and their solutions.
 
-![Tree diagram showing pod-to-pod communication, service access, and load balancer issues each branching into their most common root causes, alongside DNS and VPC CNI issue categories.](../.gitbook/assets/en-eks-09-eks-troubleshooting-2.png)
+![Tree diagram showing pod-to-pod communication, service access, and load balancer issues each branching into their most common root causes, alongside DNS and VPC CNI issue categories.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-2.svg)
 
 ### Pod-to-Pod Communication Issues
 
@@ -1112,7 +1112,7 @@ aws iam attach-role-policy \
 
 ## Node and Pod Issues
 
-![Tree diagram showing Node NotReady and Pod Not Running issues each branching into their most common root causes, alongside resource-constraint and node-group issue categories.](../.gitbook/assets/en-eks-09-eks-troubleshooting-3.png)
+![Tree diagram showing Node NotReady and Pod Not Running issues each branching into their most common root causes, alongside resource-constraint and node-group issue categories.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-3.svg)
 
 ### Node NotReady Issues
 
@@ -1416,7 +1416,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/
 
 ## IAM and Authentication Issues
 
-![Tree diagram showing cluster access denial, IRSA, and node join failure issues each branching into their most common root causes.](../.gitbook/assets/en-eks-09-eks-troubleshooting-4.png)
+![Tree diagram showing cluster access denial, IRSA, and node join failure issues each branching into their most common root causes.](../../assets/diagrams/rendered/en-eks-09-eks-troubleshooting-4.svg)
 
 ### Cluster Access Denied
 

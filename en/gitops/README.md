@@ -17,7 +17,7 @@ GitOps is an operational framework that applies DevOps best practices for infras
 
 At its core, GitOps uses Git repositories as the single source of truth for declarative infrastructure and application configurations. Changes to the desired state are made through Git commits, and automated processes ensure the actual system state matches the declared state.
 
-![Architecture diagram showing a developer pushing changes to Git, which a GitOps agent watches and reconciles into a Kubernetes cluster, while the cluster reports status back to the agent.](../.gitbook/assets/gitops-reconciliation-loop.png)
+![Architecture diagram showing a developer pushing changes to Git, which a GitOps agent watches and reconciles into a Kubernetes cluster, while the cluster reports status back to the agent.](../../assets/diagrams/rendered/gitops-reconciliation-loop.svg)
 
 ### History and Evolution
 
@@ -102,7 +102,7 @@ When the actual state drifts from the desired state (manual changes, failures, e
 
 GitOps supports two deployment models:
 
-![Flowchart contrasting traditional push-based CI/CD, where a pipeline applies changes directly to the cluster, with the GitOps pull model, where an agent watches Git and applies changes itself.](../.gitbook/assets/gitops-push-vs-pull.png)
+![Flowchart contrasting traditional push-based CI/CD, where a pipeline applies changes directly to the cluster, with the GitOps pull model, where an agent watches Git and applies changes itself.](../../assets/diagrams/rendered/gitops-push-vs-pull.svg)
 
 ### Push Model
 
@@ -205,7 +205,7 @@ Jenkins X provides CI/CD for cloud-native applications on Kubernetes.
 
 ### Decision Framework
 
-![Decision tree guiding the choice between ArgoCD, FluxCD, or either tool based on web UI needs, multi-cluster scope, RBAC requirements, image automation priority, and lightweight footprint priority.](../.gitbook/assets/gitops-tool-selection.png)
+![Decision tree guiding the choice between ArgoCD, FluxCD, or either tool based on web UI needs, multi-cluster scope, RBAC requirements, image automation priority, and lightweight footprint priority.](../../assets/diagrams/rendered/gitops-tool-selection.svg)
 
 ## GitOps on Amazon EKS
 
@@ -228,7 +228,7 @@ metadata:
 
 #### Multi-Account Architecture
 
-![Architecture diagram showing ArgoCD in a management account reading from Git and reconciling EKS clusters in separate development, staging, and production accounts over cross-account connections.](../.gitbook/assets/gitops-multi-account-argocd.png)
+![Architecture diagram showing ArgoCD in a management account reading from Git and reconciling EKS clusters in separate development, staging, and production accounts over cross-account connections.](../../assets/diagrams/rendered/gitops-multi-account-argocd.svg)
 
 #### AWS Service Integration
 

@@ -8,7 +8,7 @@ In this document, we will learn about services, load balancing, and network poli
 
 Kubernetes provides the following service types:
 
-![Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../.gitbook/assets/en-eks-03-eks-networking-part2-0.png)
+![Four Kubernetes Service types — ClusterIP, NodePort, LoadBalancer, and ExternalName — each mapped one-to-one to the access method it enables, from internal-only cluster access to an external load balancer or DNS CNAME.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-0.svg)
 
 1. **ClusterIP**: Service accessible only within the cluster
 2. **NodePort**: Service accessible through a specific port on all nodes
@@ -88,7 +88,7 @@ spec:
 
 EKS integrates Kubernetes services with AWS load balancers to make applications accessible from outside.
 
-![Users reach a Classic, Network, or Application Load Balancer; the CLB and NLB attach directly to a LoadBalancer Service while the ALB routes through an Ingress resource to a NodePort Service, and both services forward traffic into the cluster's pods.](../.gitbook/assets/en-eks-03-eks-networking-part2-1.png)
+![Users reach a Classic, Network, or Application Load Balancer; the CLB and NLB attach directly to a LoadBalancer Service while the ALB routes through an Ingress resource to a NodePort Service, and both services forward traffic into the cluster's pods.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-1.svg)
 
 ### Classic Load Balancer (CLB)
 
@@ -150,7 +150,7 @@ metadata:
 
 To use ALB, you need to install the AWS Load Balancer Controller and use Ingress resources:
 
-![Internet traffic reaches an ALB in the VPC's public subnet, which is driven by the AWS Load Balancer Controller and an Ingress resource in the private-subnet EKS cluster to route to Service 1 and Service 2 and their backing pods.](../.gitbook/assets/en-eks-03-eks-networking-part2-2.png)
+![Internet traffic reaches an ALB in the VPC's public subnet, which is driven by the AWS Load Balancer Controller and an Ingress resource in the private-subnet EKS cluster to route to Service 1 and Service 2 and their backing pods.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-2.svg)
 
 1. Install AWS Load Balancer Controller:
 
@@ -230,7 +230,7 @@ metadata:
 
 ### Service and Load Balancer Best Practices
 
-![Five best practices for choosing and configuring Kubernetes Services and load balancers on EKS, branching from a single root recommendation: default to internal traffic, go external deliberately, choose ALB for L7 needs, choose NLB for L4 needs, and tune load balancer attributes.](../.gitbook/assets/en-eks-03-eks-networking-part2-3.png)
+![Five best practices for choosing and configuring Kubernetes Services and load balancers on EKS, branching from a single root recommendation: default to internal traffic, go external deliberately, choose ALB for L7 needs, choose NLB for L4 needs, and tune load balancer attributes.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-3.svg)
 
 1. **Use ClusterIP for internal services**: Use ClusterIP type for services accessed only within the cluster.
 2. **Use LoadBalancer or Ingress for external services**: Use LoadBalancer type or Ingress resources for services that need external access.
@@ -244,7 +244,7 @@ metadata:
 
 Network policies are used to control pod-to-pod communication. To use network policies in EKS, you need to install a CNI plugin that supports network policies (e.g., Calico, Cilium).
 
-![Four network policies govern traffic in an EKS cluster: namespace isolation reaches both namespaces, a pod-communication policy allows the frontend pod to reach the backend pod, an external-traffic policy scopes what reaches the frontend pod, and an egress policy scopes what the backend pod may reach, while the backend pod also talks to a database pod in a second namespace.](../.gitbook/assets/en-eks-03-eks-networking-part2-4.png)
+![Four network policies govern traffic in an EKS cluster: namespace isolation reaches both namespaces, a pod-communication policy allows the frontend pod to reach the backend pod, an external-traffic policy scopes what reaches the frontend pod, and an egress policy scopes what the backend pod may reach, while the backend pod also talks to a database pod in a second namespace.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-4.svg)
 
 ### Installing Calico
 
@@ -372,7 +372,7 @@ spec:
 
 ### Network Policy Best Practices
 
-![Five best practices for Kubernetes network policies branching from a single root: default-deny, namespace isolation, least privilege, restrict egress, and test policies before rollout.](../.gitbook/assets/en-eks-03-eks-networking-part2-5.png)
+![Five best practices for Kubernetes network policies branching from a single root: default-deny, namespace isolation, least privilege, restrict egress, and test policies before rollout.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-5.svg)
 
 1. **Apply default deny policy**: Deny all traffic by default and explicitly allow only necessary traffic.
 2. **Namespace isolation**: Enhance security by restricting communication between namespaces.
@@ -391,7 +391,7 @@ spec:
 
 Gateway API is Kubernetes' next-generation service networking API that overcomes the limitations of traditional Ingress resources and provides richer routing capabilities. AWS Load Balancer Controller supports Gateway API, enabling L4 (NLB) and L7 (ALB) routing configuration through Gateway resources.
 
-![A GatewayClass configures a Gateway, which fans out to an HTTPRoute for L7 traffic through an ALB and a TCPRoute for L4 traffic through an NLB; the HTTPRoute distributes to Service A and Service B, and the TCPRoute forwards to Service C.](../.gitbook/assets/en-eks-03-eks-networking-part2-6.png)
+![A GatewayClass configures a Gateway, which fans out to an HTTPRoute for L7 traffic through an ALB and a TCPRoute for L4 traffic through an NLB; the HTTPRoute distributes to Service A and Service B, and the TCPRoute forwards to Service C.](../../assets/diagrams/rendered/en-eks-03-eks-networking-part2-6.svg)
 
 ### Prerequisites
 

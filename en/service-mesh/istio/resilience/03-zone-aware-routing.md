@@ -17,7 +17,7 @@ Zone Aware Routing is a feature that optimizes traffic by recognizing Kubernetes
 
 Zone Aware Routing provides the following benefits:
 
-![A client pod in Availability Zone A sends 80% of its traffic to two service pods in its own zone and fails over 10% each to service pods in Availability Zone B and Availability Zone C.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-0.png)
+![A client pod in Availability Zone A sends 80% of its traffic to two service pods in its own zone and fails over 10% each to service pods in Availability Zone B and Availability Zone C.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-03-zone-aware-routing-0.svg)
 
 ### Benefits
 
@@ -31,7 +31,7 @@ Zone Aware Routing provides the following benefits:
 
 ### Locality Load Balancing Algorithm
 
-![A request is routed by first checking for healthy pods in the same zone; if none, it checks the adjacent zone; and if none there either, it falls back to another region.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-1.png)
+![A request is routed by first checking for healthy pods in the same zone; if none, it checks the adjacent zone; and if none there either, it falls back to another region.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-03-zone-aware-routing-1.svg)
 
 ### Locality Hierarchy
 
@@ -57,7 +57,7 @@ us-west-2/us-west-2a/*
 
 #### How It Works
 
-![Istiod's service discovery reads the topology.kubernetes.io/zone label on each Node to determine Pod locality without needing zone labels on the pods themselves, then generates EDS and pushes that locality information to the Envoy proxy.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
+![Istiod's service discovery reads the topology.kubernetes.io/zone label on each Node to determine Pod locality without needing zone labels on the pods themselves, then generates EDS and pushes that locality information to the Envoy proxy.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-03-zone-aware-routing-2.svg)
 
 #### Step-by-Step Process
 

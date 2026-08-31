@@ -22,7 +22,7 @@ Istio의 로깅 기능을 통해 서비스 메시의 모든 활동을 기록하�
 
 ### Istio 로그 계층
 
-![애플리케이션 파드의 Envoy 프록시가 생성한 액세스 로그를 Promtail, Fluent Bit, OpenTelemetry Collector가 각각 Loki와 Elasticsearch로 전달하고, Grafana가 이를 조회하는 로그 파이프라인과 istiod가 Envoy를 설정하는 제어 경로를 함께 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-03-logging-0.png)
+![애플리케이션 파드의 Envoy 프록시가 생성한 액세스 로그를 Promtail, Fluent Bit, OpenTelemetry Collector가 각각 Loki와 Elasticsearch로 전달하고, Grafana가 이를 조회하는 로그 파이프라인과 istiod가 Envoy를 설정하는 제어 경로를 함께 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-observability-03-logging-0.svg)
 
 ### 로그 유형
 

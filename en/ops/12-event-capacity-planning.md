@@ -333,7 +333,7 @@ spec:
 
 **How It Works:**
 
-![Sequence diagram showing how the infra team reserves node capacity ahead of a traffic event by deploying low-priority pause pods that trigger Karpenter to provision nodes early, then get evicted instantly by real workloads when the event starts.](../.gitbook/assets/en-ops-12-event-capacity-planning-0.png)
+![Sequence diagram showing how the infra team reserves node capacity ahead of a traffic event by deploying low-priority pause pods that trigger Karpenter to provision nodes early, then get evicted instantly by real workloads when the event starts.](../../assets/diagrams/rendered/en-ops-12-event-capacity-planning-0.svg)
 
 ---
 
@@ -517,7 +517,7 @@ spec:
 
 KEDA selects the **maximum replica count** across all triggers. If cron requests 100 and Prometheus requests 150, the result is 150.
 
-![Architecture diagram showing three KEDA triggers — a cron floor, a Prometheus order-rate trigger, and an SQS queue-depth trigger — feeding a MAX selection that sets the single desired replica count applied to the HPA and used for pod scaling.](../.gitbook/assets/en-ops-12-event-capacity-planning-1.png)
+![Architecture diagram showing three KEDA triggers — a cron floor, a Prometheus order-rate trigger, and an SQS queue-depth trigger — feeding a MAX selection that sets the single desired replica count applied to the HPA and used for pod scaling.](../../assets/diagrams/rendered/en-ops-12-event-capacity-planning-1.svg)
 
 ---
 
@@ -525,7 +525,7 @@ KEDA selects the **maximum replica count** across all triggers. If cron requests
 
 ### 4.1 Pod-Level and Node-Level Scaling
 
-![Sequence diagram tracing two scaling waves before and at an event: a cron-triggered KEDA scale-up 30 minutes early that makes the scheduler ask Karpenter to provision nodes on AWS EC2 ahead of demand, followed by a smaller metric-triggered wave once the event starts that provisions a few more nodes.](../.gitbook/assets/en-ops-12-event-capacity-planning-2.png)
+![Sequence diagram tracing two scaling waves before and at an event: a cron-triggered KEDA scale-up 30 minutes early that makes the scheduler ask Karpenter to provision nodes on AWS EC2 ahead of demand, followed by a smaller metric-triggered wave once the event starts that provisions a few more nodes.](../../assets/diagrams/rendered/en-ops-12-event-capacity-planning-2.svg)
 
 ### 4.2 Scaling Timing Optimization
 

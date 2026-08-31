@@ -307,13 +307,13 @@ spec:
 
 ### 벤치마크 결과
 
-![Native, Cilium 서비스 메시, Istio의 P99 지연 시간을 비교하는 막대 그래프로, Cilium 서비스 메시가 Native에 근접한 낮은 지연을 보이는 반면 Istio는 훨씬 높은 지연을 보인다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-0.png)
+![Native, Cilium 서비스 메시, Istio의 P99 지연 시간을 비교하는 막대 그래프로, Cilium 서비스 메시가 Native에 근접한 낮은 지연을 보이는 반면 Istio는 훨씬 높은 지연을 보인다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-06-best-practices-0.svg)
 
 ## 사이드카 메시에서 마이그레이션
 
 ### 마이그레이션 전략
 
-![사이드카 서비스 메시에서 Cilium으로 전환하는 3단계(준비, 점진적 전환, 완전 전환) 마이그레이션 전략을 보여주는 순서도.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-1.png)
+![사이드카 서비스 메시에서 Cilium으로 전환하는 3단계(준비, 점진적 전환, 완전 전환) 마이그레이션 전략을 보여주는 순서도.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-06-best-practices-1.svg)
 
 ### Istio에서 마이그레이션
 
@@ -491,7 +491,7 @@ envoy:
 
 ### 점진적 L7 전환
 
-![L3/L4는 Cilium이 담당하고 L7 소유권을 Istio에서 Cilium으로 점진적으로 이관하는 3단계 전환 과정을 보여주는 순서도.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-2.png)
+![L3/L4는 Cilium이 담당하고 L7 소유권을 Istio에서 Cilium으로 점진적으로 이관하는 3단계 전환 과정을 보여주는 순서도.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-06-best-practices-2.svg)
 
 ## 모니터링 및 알림 설정
 

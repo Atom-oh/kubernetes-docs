@@ -130,7 +130,7 @@ Part 1에서 컴포넌트 아키텍처의 일부로 두 executor를 개괄적으
 
 그렇다고 배포 전체에서 반드시 하나만 골라야 하는 것은 아닙니다. Part 1에서 소개한 Airflow 3의 "여러 executor 동시 사용" 기능을 이용하면, 배포 전역에 하나의 executor를 못 박는 대신 태스크 또는 DAG 단위로 executor를 지정할 수 있습니다 — 예를 들어 대부분의 DAG는 지연이 낮은 warm `CeleryExecutor` 풀에서 돌리면서, 리소스 소모가 크거나 GPU가 필요한 일부 태스크만 격리를 위해 `KubernetesExecutor`로 라우팅하는 식입니다. 대부분의 본격적인 배포에서는 이 방식이 현실적인 답입니다: 합리적인 기본 executor를 정하고, 다른 executor의 특성이 필요한 태스크만 명시적으로 오버라이드하는 것입니다.
 
-![KubernetesExecutor는 스케줄러가 태스크마다 Pod를 하나씩 새로 생성하고 태스크 종료 후 즉시 삭제하는 반면, CeleryExecutor는 스케줄러가 Redis 브로커에 태스크를 큐잉하면 상시 실행 중인 warm 워커 Pod가 이를 가져가 처리하는 구조를 비교하는 다이어그램입니다.](../../.gitbook/assets/ko-data-on-eks-airflow-02-helm-deployment-0.png)
+![KubernetesExecutor는 스케줄러가 태스크마다 Pod를 하나씩 새로 생성하고 태스크 종료 후 즉시 삭제하는 반면, CeleryExecutor는 스케줄러가 Redis 브로커에 태스크를 큐잉하면 상시 실행 중인 warm 워커 Pod가 이를 가져가 처리하는 구조를 비교하는 다이어그램입니다.](../../../assets/diagrams/rendered/ko-data-on-eks-airflow-02-helm-deployment-0.svg)
 
 `KubernetesExecutor`는 태스크마다 새 Pod가 생성되고 그 태스크의 생명주기 동안만 존재합니다. `CeleryExecutor`는 worker Pod가 장기간 살아있으면서 브로커에서 작업을 가져오는 구조로, 위 다이어그램의 worker Pod들은 태스크가 큐에 들어오기 전부터 이미 실행 중인 상태입니다.
 

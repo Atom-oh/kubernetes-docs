@@ -19,7 +19,7 @@ Amazon EKS 클러스터를 운영하다 보면 다양한 문제가 발생할 수
 
 ## 문제 해결 기본 사항
 
-![EKS 문제 해결의 접근 방식, 필수 도구, 로그 수집, 진단 정보 수집이라는 네 가지 기본 축을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-0.png)
+![EKS 문제 해결의 접근 방식, 필수 도구, 로그 수집, 진단 정보 수집이라는 네 가지 기본 축을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-0.svg)
 
 ### 문제 해결 접근 방식
 
@@ -218,7 +218,7 @@ kubectl exec -it netshoot -- traceroute <target-ip>
 
 ## 클러스터 생성 및 관리 문제
 
-![클러스터 생성 실패, 엔드포인트 접근 문제, 삭제 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-1.png)
+![클러스터 생성 실패, 엔드포인트 접근 문제, 삭제 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-1.svg)
 
 ### 클러스터 생성 실패
 
@@ -524,7 +524,7 @@ aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<clus
 
 EKS 클러스터에서 네트워킹 문제는 가장 흔하게 발생하는 문제 중 하나입니다. 이 섹션에서는 일반적인 네트워킹 문제와 그 해결 방법을 다룹니다.
 
-![파드 간 통신, 서비스 접근, 로드 밸런서, DNS, VPC CNI 다섯 갈래의 네트워킹 문제와 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-2.png)
+![파드 간 통신, 서비스 접근, 로드 밸런서, DNS, VPC CNI 다섯 갈래의 네트워킹 문제와 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-2.svg)
 
 ### 파드 간 통신 문제
 
@@ -1109,7 +1109,7 @@ aws iam attach-role-policy \
 
 ## 노드 및 파드 문제
 
-![노드 상태 문제, 파드 문제, 자동 스케일링 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-3.png)
+![노드 상태 문제, 파드 문제, 자동 스케일링 문제 세 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-3.svg)
 
 ### 노드 상태 문제
 
@@ -1450,7 +1450,7 @@ EOF
 ```
 ## IAM 및 인증 문제
 
-![IAM 인증 문제와 RBAC 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-4.png)
+![IAM 인증 문제와 RBAC 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-4.svg)
 
 ### IAM 인증 문제
 
@@ -1669,7 +1669,7 @@ kubectl create serviceaccount <serviceaccount-name> -n <namespace>
 ```
 ## 스토리지 문제
 
-![EBS 볼륨 문제와 EFS 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-5.png)
+![EBS 볼륨 문제와 EFS 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-5.svg)
 
 ### EBS 볼륨 문제
 
@@ -1968,7 +1968,7 @@ EOF
 ```
 ## 로깅 및 모니터링 문제
 
-![CloudWatch 로그 문제와 모니터링 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-6.png)
+![CloudWatch 로그 문제와 모니터링 문제 두 갈래와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-6.svg)
 
 ### CloudWatch 로그 문제
 
@@ -2194,7 +2194,7 @@ kubectl patch deployment -n grafana grafana -p '{"spec":{"template":{"spec":{"co
 ```
 ## 성능 문제
 
-![노드 성능, 파드 성능, 네트워크 성능 세 갈래의 성능 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-7.png)
+![노드 성능, 파드 성능, 네트워크 성능 세 갈래의 성능 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-7.svg)
 
 ### 노드 성능 문제
 
@@ -2562,7 +2562,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/
 ```
 ## 업그레이드 문제
 
-![클러스터, 노드 그룹, 애드온 업그레이드 세 갈래의 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-8.png)
+![클러스터, 노드 그룹, 애드온 업그레이드 세 갈래의 문제와 각각의 주요 원인을 보여주는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-8.svg)
 
 ### 클러스터 업그레이드 문제
 
@@ -2917,7 +2917,7 @@ kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master
 
 ## 일반적인 오류 메시지 및 해결 방법
 
-![클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-9.png)
+![클러스터, 노드/파드, 네트워킹, IAM/인증, 스토리지 다섯 영역별 대표 오류 메시지를 정리한 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-09-eks-troubleshooting-9.svg)
 
 ### 클러스터 생성 및 관리 오류
 

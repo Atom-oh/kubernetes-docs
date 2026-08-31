@@ -11,7 +11,7 @@ Agentic AI goes beyond simple question-answering to autonomously create plans, u
 
 Agentic AI is an autonomous AI system with the following characteristics:
 
-![An agentic AI system applies four characteristics -- autonomous planning, tool-based execution, iterative improvement, and state/memory management -- onto a goal-plan-execute-evaluate loop that either returns to planning or completes.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-0.png)
+![An agentic AI system applies four characteristics -- autonomous planning, tool-based execution, iterative improvement, and state/memory management -- onto a goal-plan-execute-evaluate loop that either returns to planning or completes.](../../assets/diagrams/rendered/en-ai-ml-03-agentic-ai-platform-0.svg)
 
 1. **Autonomous Planning**: Decomposes complex tasks into subtasks and determines execution order.
 2. **Tool-based Execution**: Utilizes various tools including external APIs, databases, and code executors.
@@ -35,7 +35,7 @@ Kubernetes provides the following core capabilities for Agentic AI platforms:
 
 Key challenges to solve when building an Agentic AI platform:
 
-![Four technical challenges in running agentic AI at scale -- GPU resource management, multi-LLM integration, workflow orchestration, and real-time cost optimization -- each paired with the tools and techniques that address it.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-1.png)
+![Four technical challenges in running agentic AI at scale -- GPU resource management, multi-LLM integration, workflow orchestration, and real-time cost optimization -- each paired with the tools and techniques that address it.](../../assets/diagrams/rendered/en-ai-ml-03-agentic-ai-platform-1.svg)
 
 ---
 
@@ -291,7 +291,7 @@ spec:
 
 vLLM provides high-performance LLM inference through the following core technologies:
 
-![Four vLLM core technologies -- PagedAttention, continuous batching, prefix caching, and chunked prefill -- each mapped to the performance benefit it delivers: memory efficiency, throughput, latency, or long-context support.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-2.png)
+![Four vLLM core technologies -- PagedAttention, continuous batching, prefix caching, and chunked prefill -- each mapped to the performance benefit it delivers: memory efficiency, throughput, latency, or long-context support.](../../assets/diagrams/rendered/en-ai-ml-03-agentic-ai-platform-2.svg)
 
 ### vLLM Deployment Configuration
 
@@ -540,7 +540,7 @@ Extending the Kubernetes Gateway API to efficiently route AI inference workloads
 
 ### Kgateway + InferencePool Architecture
 
-![A client request travels through a Gateway, an HTTPRoute, and an InferencePool node to an Endpoint Picker, which routes traffic to individual vLLM pods using least-loaded or prefix-aware selection.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-3.png)
+![A client request travels through a Gateway, an HTTPRoute, and an InferencePool node to an Endpoint Picker, which routes traffic to individual vLLM pods using least-loaded or prefix-aware selection.](../../assets/diagrams/rendered/en-ai-ml-03-agentic-ai-platform-3.svg)
 
 #### InferencePool CRD
 
@@ -1100,7 +1100,7 @@ print(result["result"])
 
 Kagent is a Kubernetes-native AI agent lifecycle management tool.
 
-![A Kagent Controller reconciles an Agent CRD into an Agent Runtime, which the agent's LLM backend, tool set, memory store, and state management components all feed via inference, execution, store/query, and management calls.](../.gitbook/assets/en-ai-ml-03-agentic-ai-platform-4.png)
+![A Kagent Controller reconciles an Agent CRD into an Agent Runtime, which the agent's LLM backend, tool set, memory store, and state management components all feed via inference, execution, store/query, and management calls.](../../assets/diagrams/rendered/en-ai-ml-03-agentic-ai-platform-4.svg)
 
 ### Agent CRD Definition
 

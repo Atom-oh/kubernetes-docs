@@ -95,7 +95,7 @@ A Pod consists of the following components:
 3. **Network**: IP address and ports assigned to the Pod
 4. **Container Spec**: Container image, environment variables, resource requirements, etc.
 
-![A Kubernetes Pod boundary showing an application container, sidecar container, and init container sharing one Pod IP address and network namespace, alongside four types of mountable storage volumes (emptyDir, configMap, secret, persistentVolumeClaim).](../.gitbook/assets/en-core-02-pods-and-workloads-0.png)
+![A Kubernetes Pod boundary showing an application container, sidecar container, and init container sharing one Pod IP address and network namespace, alongside four types of mountable storage volumes (emptyDir, configMap, secret, persistentVolumeClaim).](../../assets/diagrams/rendered/en-core-02-pods-and-workloads-0.svg)
 
 ### Pod Example
 

@@ -188,7 +188,7 @@ A trust domain is an administrative boundary of trust. All workloads within a tr
 
 SPIRE implements the SPIFFE specification with a server-agent architecture:
 
-![Architecture diagram showing the SPIRE Server and its data store issuing identities to SPIRE Agents on two Kubernetes nodes, fed by a Kubernetes registrar and a SPIFFE CSI driver that mounts SVIDs onto each node.](../.gitbook/assets/en-security-12-spiffe-spire-0.png)
+![Architecture diagram showing the SPIRE Server and its data store issuing identities to SPIRE Agents on two Kubernetes nodes, fed by a Kubernetes registrar and a SPIFFE CSI driver that mounts SVIDs onto each node.](../../assets/diagrams/rendered/en-security-12-spiffe-spire-0.svg)
 
 ### SPIRE Server
 
@@ -305,7 +305,7 @@ plugins {
 
 The following diagram shows how a workload obtains its SVID:
 
-![Sequence diagram of a workload requesting an identity from the SPIRE Agent, which attests the caller against the Kubernetes API, forwards the matched request to the SPIRE Server, and returns a signed X.509-SVID to the workload.](../.gitbook/assets/en-security-12-spiffe-spire-1.png)
+![Sequence diagram of a workload requesting an identity from the SPIRE Agent, which attests the caller against the Kubernetes API, forwards the matched request to the SPIRE Server, and returns a signed X.509-SVID to the workload.](../../assets/diagrams/rendered/en-security-12-spiffe-spire-1.svg)
 
 ---
 
@@ -442,7 +442,7 @@ Node attestation establishes trust between SPIRE Agents and the SPIRE Server. Th
 
 ### Attestation Flow
 
-![Flowchart showing a SPIRE Agent collecting attestation evidence through one of three methods, sending it to the SPIRE Server for validation, and either receiving a Node SVID or having the connection rejected.](../.gitbook/assets/en-security-12-spiffe-spire-2.png)
+![Flowchart showing a SPIRE Agent collecting attestation evidence through one of three methods, sending it to the SPIRE Server for validation, and either receiving a Node SVID or having the connection rejected.](../../assets/diagrams/rendered/en-security-12-spiffe-spire-2.svg)
 
 ### Kubernetes PSAT (Projected Service Account Token)
 
@@ -997,7 +997,7 @@ Federation enables workloads in different trust domains to establish mutual trus
 
 ### Federation Trust Establishment
 
-![Architecture diagram showing two independent SPIRE trust domains exchanging trust bundles through published endpoints, so a workload in one domain can establish mutual TLS directly with a workload in the other.](../.gitbook/assets/en-security-12-spiffe-spire-3.png)
+![Architecture diagram showing two independent SPIRE trust domains exchanging trust bundles through published endpoints, so a workload in one domain can establish mutual TLS directly with a workload in the other.](../../assets/diagrams/rendered/en-security-12-spiffe-spire-3.svg)
 
 ### Configuring Federation
 

@@ -14,7 +14,7 @@ This document is the third and final part of the Amazon EKS storage series, cove
 
 Effectively monitoring storage resources in an EKS cluster is important for detecting performance issues early and establishing capacity planning.
 
-![Diagram showing three parallel storage-monitoring pipelines: AWS CloudWatch turning per-volume metrics into alarms and a dashboard, Prometheus feeding ServiceMonitor/PodMonitor discovery into Grafana and alert rules, and a custom volume-usage exporter driving custom metrics and alerts.](../.gitbook/assets/en-eks-04-eks-storage-part3-0.png)
+![Diagram showing three parallel storage-monitoring pipelines: AWS CloudWatch turning per-volume metrics into alarms and a dashboard, Prometheus feeding ServiceMonitor/PodMonitor discovery into Grafana and alert rules, and a custom volume-usage exporter driving custom metrics and alerts.](../../assets/diagrams/rendered/en-eks-04-eks-storage-part3-0.svg)
 
 ### Monitoring with CloudWatch
 
@@ -176,7 +176,7 @@ spec:
 
 Let's explore common storage issues that can occur in EKS clusters and their solutions.
 
-![Diagram showing four common EKS storage issues — PVC pending, provisioning failure, mount issues, performance issues — routing into four diagnostic-check categories, two of which are shared across multiple issues, each resolving to a matching fix action.](../.gitbook/assets/en-eks-04-eks-storage-part3-1.png)
+![Diagram showing four common EKS storage issues — PVC pending, provisioning failure, mount issues, performance issues — routing into four diagnostic-check categories, two of which are shared across multiple issues, each resolving to a matching fix action.](../../assets/diagrams/rendered/en-eks-04-eks-storage-part3-1.svg)
 
 ### Volume Provisioning Issues
 
@@ -346,7 +346,7 @@ mountOptions:
 
 Let's explore strategies for optimizing storage costs in EKS clusters.
 
-![Diagram showing four AWS storage types — EBS, EFS, FSx for Lustre, S3 — each driving matching optimization actions (volume tuning, EFS settings, FSx settings, lifecycle management), all four rolling up into a single cost-monitoring view built on Cost Explorer, Kubernetes cost allocation, and anomaly detection.](../.gitbook/assets/en-eks-04-eks-storage-part3-2.png)
+![Diagram showing four AWS storage types — EBS, EFS, FSx for Lustre, S3 — each driving matching optimization actions (volume tuning, EFS settings, FSx settings, lifecycle management), all four rolling up into a single cost-monitoring view built on Cost Explorer, Kubernetes cost allocation, and anomaly detection.](../../assets/diagrams/rendered/en-eks-04-eks-storage-part3-2.svg)
 
 ### Volume Type and Size Optimization
 
@@ -448,7 +448,7 @@ aws efs put-lifecycle-configuration \
 
 Let's explore security best practices for protecting storage resources in EKS clusters.
 
-![Diagram showing EBS, EFS, FSx, and S3 security pairing into data encryption (backed by AWS KMS) and access control (IAM and Kubernetes RBAC), with access control and an independent pod security context both converging on policy enforcement via OPA Gatekeeper, Kyverno, and Pod Security Standards.](../.gitbook/assets/en-eks-04-eks-storage-part3-3.png)
+![Diagram showing EBS, EFS, FSx, and S3 security pairing into data encryption (backed by AWS KMS) and access control (IAM and Kubernetes RBAC), with access control and an independent pod security context both converging on policy enforcement via OPA Gatekeeper, Kyverno, and Pod Security Standards.](../../assets/diagrams/rendered/en-eks-04-eks-storage-part3-3.svg)
 
 ### Data Encryption
 
@@ -640,7 +640,7 @@ metadata:
 
 Let's explore best practices for effectively managing storage in EKS clusters.
 
-![Diagram showing five storage lifecycle phases — planning, implementation, operation, optimization, decommission — where the first four each drive a matching three-step practice (requirements through capacity planning, Terraform through GitOps, backups through Velero, performance through autoscaling review), and decommissioning stands alone with no defined workflow.](../.gitbook/assets/en-eks-04-eks-storage-part3-4.png)
+![Diagram showing five storage lifecycle phases — planning, implementation, operation, optimization, decommission — where the first four each drive a matching three-step practice (requirements through capacity planning, Terraform through GitOps, backups through Velero, performance through autoscaling review), and decommissioning stands alone with no defined workflow.](../../assets/diagrams/rendered/en-eks-04-eks-storage-part3-4.svg)
 
 ### Storage Planning and Design
 

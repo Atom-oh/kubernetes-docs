@@ -9,7 +9,7 @@ Linkerd treats security as a core value, automatically applying mTLS without any
 
 ## Security Architecture
 
-![Architecture diagram showing the certificate chain issuing workload certificates, the control plane's identity and policy controllers pushing identity and authorization into both data-plane proxies, and the two proxies terminating mutual TLS between each other.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-0.png)
+![Architecture diagram showing the certificate chain issuing workload certificates, the control plane's identity and policy controllers pushing identity and authorization into both data-plane proxies, and the two proxies terminating mutual TLS between each other.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-0.svg)
 
 ## Automatic mTLS
 
@@ -17,7 +17,7 @@ Linkerd's most powerful security feature is automatically encrypting all mesh tr
 
 ### How mTLS Works
 
-![Sequence diagram showing plain HTTP from application A being upgraded by its sidecar proxy into a mutually authenticated, encrypted TLS connection to proxy B, which terminates TLS and forwards plain HTTP to application B before the encrypted response returns the same way.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-1.png)
+![Sequence diagram showing plain HTTP from application A being upgraded by its sidecar proxy into a mutually authenticated, encrypted TLS connection to proxy B, which terminates TLS and forwards plain HTTP to application B before the encrypted response returns the same way.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-1.svg)
 
 ### mTLS Characteristics
 
@@ -50,7 +50,7 @@ linkerd viz tap deploy/web -n my-app
 
 ### Non-Mesh Traffic Handling
 
-![Architecture diagram showing an external client outside the mesh sending plain HTTP to a mesh proxy, which forwards it unencrypted to the application because no peer identity exists to negotiate mTLS with.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-2.png)
+![Architecture diagram showing an external client outside the mesh sending plain HTTP to a mesh proxy, which forwards it unencrypted to the application because no peer identity exists to negotiate mTLS with.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-2.svg)
 
 Traffic from outside the mesh is automatically detected and processed as plaintext:
 
@@ -79,7 +79,7 @@ spiffe://root.linkerd.cluster.local/ns/database/sa/postgres
 
 ### Identity Issuance Process
 
-![Sequence diagram showing a pod obtaining its ServiceAccount token, generating a CSR with a SPIFFE ID, and sending it to the Identity Controller, which validates the request, asks the Trust Anchor to sign the certificate, and returns the signed workload certificate to the pod.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-3.png)
+![Sequence diagram showing a pod obtaining its ServiceAccount token, generating a CSR with a SPIFFE ID, and sending it to the Identity Controller, which validates the request, asks the Trust Anchor to sign the certificate, and returns the signed workload certificate to the pod.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-3.svg)
 
 ### Verifying Identity
 
@@ -102,7 +102,7 @@ Linkerd provides fine-grained access control through Server, ServerAuthorization
 
 ### Policy Model
 
-![Architecture diagram showing a Server resource defining an inbound port, a ServerAuthorization granting access to it, and an AuthorizationPolicy applying that grant under either a default-deny or a default-allow policy mode.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-4.png)
+![Architecture diagram showing a Server resource defining an inbound port, a ServerAuthorization granting access to it, and an AuthorizationPolicy applying that grant under either a default-deny or a default-allow policy mode.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-4.svg)
 
 ### Server Resource
 
@@ -439,7 +439,7 @@ spec:
 
 ### Certificate Hierarchy
 
-![Architecture diagram showing a long-lived Trust Anchor root CA signing a one-year Identity Issuer intermediate CA, which in turn signs each proxy's short-lived 24-hour workload certificate.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-5.png)
+![Architecture diagram showing a long-lived Trust Anchor root CA signing a one-year Identity Issuer intermediate CA, which in turn signs each proxy's short-lived 24-hour workload certificate.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-5.svg)
 
 ### Trust Anchor Management
 
@@ -678,7 +678,7 @@ helm install linkerd-control-plane linkerd/linkerd-control-plane \
 
 ### Security Layers
 
-![Architecture diagram showing Linkerd's network-level mTLS encryption, service authorization, and workload identity each feeding a corresponding application-level control: JWT/OAuth, application RBAC, and input validation.](../../.gitbook/assets/en-service-mesh-linkerd-04-security-6.png)
+![Architecture diagram showing Linkerd's network-level mTLS encryption, service authorization, and workload identity each feeding a corresponding application-level control: JWT/OAuth, application RBAC, and input validation.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-04-security-6.svg)
 
 | Layer | Linkerd Role | Application Role |
 |-------|--------------|------------------|

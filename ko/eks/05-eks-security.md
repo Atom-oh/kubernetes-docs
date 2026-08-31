@@ -34,7 +34,7 @@ Amazon EKS는 AWS와 Kubernetes의 보안 기능을 결합하여 다층적인 �
 
 ### EKS 보안 아키텍처
 
-![AWS가 책임지는 컨트롤 플레인·etcd·KMS 영역과 고객이 책임지는 워커 노드·파드·보안 그룹·네트워크 정책 영역이 IAM 인증과 암호화된 통신으로 연결되는 EKS 공동 책임 모델을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-0.png)
+![AWS가 책임지는 컨트롤 플레인·etcd·KMS 영역과 고객이 책임지는 워커 노드·파드·보안 그룹·네트워크 정책 영역이 IAM 인증과 암호화된 통신으로 연결되는 EKS 공동 책임 모델을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-0.svg)
 
 ## 최신 보안 트렌드 (2023)
 
@@ -44,7 +44,7 @@ Kubernetes 및 EKS 보안 영역에서의 최신 트렌드와 권장사항은 �
 
 전통적인 경계 기반 보안 모델에서 벗어나, 모든 접근을 기본적으로 신뢰하지 않고 지속적으로 검증하는 접근 방식입니다.
 
-![암호화, 최소 권한, 지속적 검증, 접근 제어, 트래픽 검사라는 다섯 가지 제로 트러스트 원칙이 서비스 메시·IRSA·Security Hub·OPA·네트워크 정책 등 EKS 구현 방법으로 각각 연결된다.](../.gitbook/assets/ko-eks-05-eks-security-1.png)
+![암호화, 최소 권한, 지속적 검증, 접근 제어, 트래픽 검사라는 다섯 가지 제로 트러스트 원칙이 서비스 메시·IRSA·Security Hub·OPA·네트워크 정책 등 EKS 구현 방법으로 각각 연결된다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-1.svg)
 
 EKS에서 제로 트러스트 구현:
 - **서비스 메시**: Istio 또는 AWS App Mesh를 사용한 서비스 간 mTLS 통신
@@ -94,7 +94,7 @@ Amazon EKS는 다음과 같은 인증 메커니즘을 제공합니다:
 2. **OIDC 제공자 통합**: 외부 OIDC 제공자(예: Active Directory, Okta, Auth0)와 통합하여 사용자 인증을 관리합니다.
 3. **서비스 계정 IAM 역할**: Kubernetes 서비스 계정에 AWS IAM 역할을 연결하여 파드가 AWS 서비스에 안전하게 액세스할 수 있게 합니다.
 
-![DevOps·개발자·CI/CD·파드가 IAM 인증자, OIDC 제공자, IRSA를 거쳐 Kubernetes API 서버와 AWS 리소스에 접근하는 EKS의 세 가지 인증 경로를 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-2.png)
+![DevOps·개발자·CI/CD·파드가 IAM 인증자, OIDC 제공자, IRSA를 거쳐 Kubernetes API 서버와 AWS 리소스에 접근하는 EKS의 세 가지 인증 경로를 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-2.svg)
 
 ### IAM 역할 및 정책 구성
 
@@ -212,7 +212,7 @@ EKS에서 OIDC(OpenID Connect) Provider는 Kubernetes 서비스 계정과 AWS IA
 
 EKS 클러스터를 생성하면 AWS는 클러스터별로 고유한 OIDC 발급자(Issuer) URL을 생성합니다. 이 URL은 IAM Identity Provider로 등록되어 Kubernetes 서비스 계정 토큰을 AWS IAM 자격 증명으로 교환할 수 있게 합니다.
 
-![파드가 서비스 계정 JWT 토큰을 AWS STS에 제시하면 STS가 EKS OIDC Provider의 JWKS로 서명을 검증하고 IAM 역할의 신뢰 정책을 확인한 뒤 임시 자격 증명을 발급하는 AssumeRoleWithWebIdentity 흐름을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-3.png)
+![파드가 서비스 계정 JWT 토큰을 AWS STS에 제시하면 STS가 EKS OIDC Provider의 JWKS로 서명을 검증하고 IAM 역할의 신뢰 정책을 확인한 뒤 임시 자격 증명을 발급하는 AssumeRoleWithWebIdentity 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-3.svg)
 
 ### STS AssumeRoleWithWebIdentity 흐름
 
@@ -345,7 +345,7 @@ EKS Pod Identity는 2023년에 도입된 새로운 방식으로, IRSA의 복잡�
 
 ### Pod Identity Agent 동작 원리
 
-![각 노드에서 DaemonSet으로 실행되는 Pod Identity Agent가 파드의 자격 증명 요청을 가로채 Pod Identity Association의 역할 매핑을 확인하고 AWS STS에서 임시 자격 증명을 받아 파드에 전달하는 과정을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-4.png)
+![각 노드에서 DaemonSet으로 실행되는 Pod Identity Agent가 파드의 자격 증명 요청을 가로채 Pod Identity Association의 역할 매핑을 확인하고 AWS STS에서 임시 자격 증명을 받아 파드에 전달하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-4.svg)
 
 Pod Identity Agent는 각 노드에서 DaemonSet으로 실행되며:
 1. 파드의 자격 증명 요청을 가로챕니다
@@ -480,7 +480,7 @@ EKS 클러스터의 Kubernetes API 서버 엔드포인트에 대한 접근을 �
 
 EKS는 세 가지 엔드포인트 구성을 지원합니다:
 
-![EKS API 서버를 Public Only, Private Only, Public+Private 세 가지 방식으로 구성했을 때 인터넷과 VPC 내부 노드가 각각 어떤 경로로 컨트롤 플레인에 도달하는지 비교한다.](../.gitbook/assets/ko-eks-05-eks-security-5.png)
+![EKS API 서버를 Public Only, Private Only, Public+Private 세 가지 방식으로 구성했을 때 인터넷과 VPC 내부 노드가 각각 어떤 경로로 컨트롤 플레인에 도달하는지 비교한다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-5.svg)
 
 | 구성 | Public | Private | 사용 사례 |
 |------|--------|---------|-----------|
@@ -531,7 +531,7 @@ Private 엔드포인트만 활성화된 클러스터에 접근하는 방법:
 
 #### VPN 연결
 
-![관리자가 AWS VPN을 거쳐 EKS VPC에 진입한 뒤 Private Endpoint를 통해서만 컨트롤 플레인에 접근하는 경로를 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-6.png)
+![관리자가 AWS VPN을 거쳐 EKS VPC에 진입한 뒤 Private Endpoint를 통해서만 컨트롤 플레인에 접근하는 경로를 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-6.svg)
 
 ```bash
 # Site-to-Site VPN 설정 후 kubectl 사용
@@ -540,7 +540,7 @@ kubectl --kubeconfig ~/.kube/config get nodes
 
 #### Transit Gateway
 
-![온프레미스 관리자가 Direct Connect와 Transit Gateway를 거쳐 EKS VPC 안의 클러스터까지 도달하는 하이브리드 접근 경로를 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-7.png)
+![온프레미스 관리자가 Direct Connect와 Transit Gateway를 거쳐 EKS VPC 안의 클러스터까지 도달하는 하이브리드 접근 경로를 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-7.svg)
 
 #### Bastion Host / Session Manager
 
@@ -643,7 +643,7 @@ aws eks update-cluster-config \
 
 EKS 클러스터의 노드와 파드에 대한 네트워크 트래픽을 제어하기 위해 AWS 보안 그룹을 사용할 수 있습니다.
 
-![퍼블릭 서브넷의 ALB와 Bastion, 프라이빗 서브넷의 EKS 워커 노드가 보안 그룹과 네트워크 정책으로 보호되며 VPC 엔드포인트를 통해 AWS 서비스에 프라이빗하게 접근하는 구조를 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-8.png)
+![퍼블릭 서브넷의 ALB와 Bastion, 프라이빗 서브넷의 EKS 워커 노드가 보안 그룹과 네트워크 정책으로 보호되며 VPC 엔드포인트를 통해 AWS 서비스에 프라이빗하게 접근하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-8.svg)
 
 #### 클러스터 보안 그룹
 
@@ -725,7 +725,7 @@ Kubernetes 1.23부터 도입된 포드 보안 표준은 파드의 보안 컨텍�
 - **Baseline**: 알려진 권한 에스컬레이션 방지
 - **Restricted**: 강력한 보안 제한 적용
 
-![Privileged·Baseline·Restricted 세 단계의 포드 보안 표준이 보안 컨텍스트와 OPA/Kyverno 같은 정책 엔진의 적용을 거쳐 애플리케이션 파드와 권한 있는 파드에 각각 어떻게 반영되는지 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-9.png)
+![Privileged·Baseline·Restricted 세 단계의 포드 보안 표준이 보안 컨텍스트와 OPA/Kyverno 같은 정책 엔진의 적용을 거쳐 애플리케이션 파드와 권한 있는 파드에 각각 어떻게 반영되는지 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-9.svg)
 
 네임스페이스에 PSS 적용 예시:
 
@@ -800,7 +800,7 @@ Bottlerocket은 AWS에서 개발한 컨테이너 워크로드 전용 Linux 운�
 
 ### Bottlerocket 특성
 
-![Bottlerocket 운영체제가 API 기반 구성·SELinux·dm-verity·읽기 전용 루트로 구성된 보안 특성, 자동 업데이트/롤백/A-B 파티션 방식의 업데이트 전략, SSH·패키지 관리자·불필요 서비스를 제거한 최소화 전략으로 불변 인프라를 구현함을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-10.png)
+![Bottlerocket 운영체제가 API 기반 구성·SELinux·dm-verity·읽기 전용 루트로 구성된 보안 특성, 자동 업데이트/롤백/A-B 파티션 방식의 업데이트 전략, SSH·패키지 관리자·불필요 서비스를 제거한 최소화 전략으로 불변 인프라를 구현함을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-10.svg)
 
 #### API 기반 구성
 
@@ -859,7 +859,7 @@ spec:
 
 dm-verity는 블록 레벨에서 루트 파일시스템의 무결성을 검증합니다:
 
-![블록을 읽고 해시를 계산해 Merkle Tree에 저장된 값과 대조하는 dm-verity 검증 과정에서 해시가 일치하면 접근을 허용하고 불일치하면 접근을 차단하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-11.png)
+![블록을 읽고 해시를 계산해 Merkle Tree에 저장된 값과 대조하는 dm-verity 검증 과정에서 해시가 일치하면 접근을 허용하고 불일치하면 접근을 차단하는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-11.svg)
 
 - 부팅 시 루트 파일시스템의 무결성 검증
 - 런타임에 수정 시도 감지 및 차단
@@ -957,7 +957,7 @@ IAM 권한 경계(Permission Boundary)는 IAM 역할이나 사용자에게 부�
 
 권한 경계는 "유효 권한 = 정책 ∩ 경계"의 원칙을 따릅니다:
 
-![IAM 정책과 권한 경계의 교집합이 유효 권한이 되는 원리를, S3·DynamoDB·EC2 권한을 부여한 정책이 S3·DynamoDB만 허용하는 경계와 만나 최종적으로 S3·DynamoDB만 사용 가능해지는 예시로 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-12.png)
+![IAM 정책과 권한 경계의 교집합이 유효 권한이 되는 원리를, S3·DynamoDB·EC2 권한을 부여한 정책이 S3·DynamoDB만 허용하는 경계와 만나 최종적으로 S3·DynamoDB만 사용 가능해지는 예시로 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-12.svg)
 
 ### SCP (Service Control Policy) 활용
 
@@ -1197,7 +1197,7 @@ Amazon EKS는 클러스터를 생성하거나 업데이트하는 시점에 정�
 
 EKS는 기본적으로 etcd에 저장된 Kubernetes 비밀을 암호화합니다. 추가적인 암호화 계층을 위해 AWS KMS를 사용할 수 있습니다:
 
-![etcd에 저장되는 Kubernetes Secrets가 AWS KMS로 암호화되고, AWS Secrets Manager·Vault·SOPS 같은 비밀 관리 솔루션이 External Secrets Operator 등 통합 도구를 거쳐 파드에 주입되는 흐름을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-13.png)
+![etcd에 저장되는 Kubernetes Secrets가 AWS KMS로 암호화되고, AWS Secrets Manager·Vault·SOPS 같은 비밀 관리 솔루션이 External Secrets Operator 등 통합 도구를 거쳐 파드에 주입되는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-13.svg)
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2 --encryption-provider-config-key arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
@@ -1276,7 +1276,7 @@ sops --decrypt secrets.enc.yaml
 
 EKS 컨트롤 플레인 감사 로그를 활성화하여 클러스터에서 수행된 모든 API 호출을 기록할 수 있습니다:
 
-![컨트롤 플레인 로그와 감사 로그가 CloudTrail·CloudWatch를 거쳐 분석되고 Security Hub와 CIS Kubernetes Benchmark 평가를 통해 PCI DSS·HIPAA·GDPR 등 규제 표준 준수 여부로 이어지는 흐름을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-14.png)
+![컨트롤 플레인 로그와 감사 로그가 CloudTrail·CloudWatch를 거쳐 분석되고 Security Hub와 CIS Kubernetes Benchmark 평가를 통해 PCI DSS·HIPAA·GDPR 등 규제 표준 준수 여부로 이어지는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-14.svg)
 
 ```bash
 aws eks update-cluster-config \
@@ -1304,7 +1304,7 @@ AWS Security Hub를 사용하여 EKS 클러스터의 보안 상태를 중앙에�
 
 Amazon GuardDuty EKS Protection을 활성화하여 EKS 클러스터에서 잠재적인 보안 위협을 탐지할 수 있습니다:
 
-![GuardDuty와 Security Hub가 런타임·네트워크·ID 보안 신호를 수집하고 Falco와 kube-audit 같은 Kubernetes 도구의 탐지 결과를 더해 수집→분석→탐지→대응→해결의 위협 대응 워크플로우로 이어지는 과정을 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-15.png)
+![GuardDuty와 Security Hub가 런타임·네트워크·ID 보안 신호를 수집하고 Falco와 kube-audit 같은 Kubernetes 도구의 탐지 결과를 더해 수집→분석→탐지→대응→해결의 위협 대응 워크플로우로 이어지는 과정을 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-15.svg)
 
 ```bash
 aws guardduty update-detector \
@@ -1391,7 +1391,7 @@ Falco 규칙 예시:
 
 ### 금융 서비스를 위한 EKS 보안 아키텍처 예시
 
-![인터넷 트래픽이 WAF와 ALB를 거쳐 보안 사이드카가 포함된 애플리케이션 파드에 도달하고, KMS로 암호화된 데이터 서비스에 접근하는 동안 GuardDuty·Security Hub 등이 EKS 클러스터 전체를 모니터링하는 금융권 보안 구조를 보여준다.](../.gitbook/assets/ko-eks-05-eks-security-16.png)
+![인터넷 트래픽이 WAF와 ALB를 거쳐 보안 사이드카가 포함된 애플리케이션 파드에 도달하고, KMS로 암호화된 데이터 서비스에 접근하는 동안 GuardDuty·Security Hub 등이 EKS 클러스터 전체를 모니터링하는 금융권 보안 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-05-eks-security-16.svg)
 
 ## 결론
 

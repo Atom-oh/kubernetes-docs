@@ -427,7 +427,7 @@ spec:
 
 End-to-end scale-down flow:
 
-![Flowchart showing that when traffic drops and HPA scales down, the pod-deletion-cost annotation decides which pods die first: cloud pods with a low deletion cost are removed, while on-prem pods with a high deletion cost are retained, and the emptied cloud nodes are then reclaimed by Karpenter.](../.gitbook/assets/en-eks-hybrid-nodes-06-workload-placement-0.png)
+![Flowchart showing that when traffic drops and HPA scales down, the pod-deletion-cost annotation decides which pods die first: cloud pods with a low deletion cost are removed, while on-prem pods with a high deletion cost are retained, and the emptied cloud nodes are then reclaimed by Karpenter.](../../assets/diagrams/rendered/en-eks-hybrid-nodes-06-workload-placement-0.svg)
 
 ---
 

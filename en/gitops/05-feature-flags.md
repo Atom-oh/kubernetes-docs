@@ -60,7 +60,7 @@ Feature flags serve several distinct purposes in software delivery:
 
 Progressive delivery extends continuous delivery by adding fine-grained control over which users see new functionality and when. Feature flags are a critical building block in this model:
 
-![Flowchart showing a container image deployed once through Kubernetes, then a feature flag evaluation gradually widening its release from internal users to beta, canary, and full general availability.](../.gitbook/assets/en-gitops-05-feature-flags-0.png)
+![Flowchart showing a container image deployed once through Kubernetes, then a feature flag evaluation gradually widening its release from internal users to beta, canary, and full general availability.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-0.svg)
 
 With feature flags, you deploy the code to all pods simultaneously but control who sees the new behavior at the application level. This is fundamentally different from traffic-splitting approaches (like canary deployments), which control which pod version a request hits. The two techniques complement each other, as described in the [Canary Release and Feature Flag Combination](#canary-release-and-feature-flag-combination) section.
 
@@ -100,7 +100,7 @@ Key benefits of OpenFeature:
 
 The OpenFeature SDK follows a layered architecture that separates the evaluation API from the flag management backend:
 
-![Architecture diagram showing application code calling the OpenFeature SDK, which routes flag evaluation through a swappable provider to one of four flag backends: flagd, LaunchDarkly, Flagsmith, or environment variables.](../.gitbook/assets/en-gitops-05-feature-flags-1.png)
+![Architecture diagram showing application code calling the OpenFeature SDK, which routes flag evaluation through a swappable provider to one of four flag backends: flagd, LaunchDarkly, Flagsmith, or environment variables.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-1.svg)
 
 ### Core Components
 
@@ -146,7 +146,7 @@ openfeature.SetProvider(launchdarkly.NewProvider())  // Option B: LaunchDarkly
 
 A complete flag evaluation follows this sequence:
 
-![Sequence diagram showing an application's boolean flag check flowing through the OpenFeature client and hook pipeline to a provider and flag backend, which returns a targeting match that becomes the resolved boolean.](../.gitbook/assets/en-gitops-05-feature-flags-2.png)
+![Sequence diagram showing an application's boolean flag check flowing through the OpenFeature client and hook pipeline to a provider and flag backend, which returns a targeting match that becomes the resolved boolean.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-2.svg)
 
 ---
 
@@ -167,7 +167,7 @@ Key characteristics:
 
 ### flagd Architecture
 
-![Architecture diagram showing flagd loading flag configuration from CRDs, ConfigMaps, files, or HTTP into a sync engine and flag state store, then evaluating rules and serving results to application pods over gRPC and HTTP.](../.gitbook/assets/en-gitops-05-feature-flags-3.png)
+![Architecture diagram showing flagd loading flag configuration from CRDs, ConfigMaps, files, or HTTP into a sync engine and flag state store, then evaluating rules and serving results to application pods over gRPC and HTTP.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-3.svg)
 
 ### Helm Installation
 
@@ -311,11 +311,11 @@ flagd can run in two modes on Kubernetes. The choice depends on your latency req
 
 **Sidecar Mode** (injected by the OpenFeature Operator):
 
-![Architecture diagram showing an application container calling a flagd sidecar over localhost inside the same pod, while the sidecar watches a FeatureFlag custom resource for updates.](../.gitbook/assets/en-gitops-05-feature-flags-4.png)
+![Architecture diagram showing an application container calling a flagd sidecar over localhost inside the same pod, while the sidecar watches a FeatureFlag custom resource for updates.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-4.svg)
 
 **Standalone Mode** (centralized deployment):
 
-![Architecture diagram showing three application pods calling a shared flagd Service over gRPC, backed by a multi-replica flagd Deployment in its own namespace that watches a FeatureFlag custom resource.](../.gitbook/assets/en-gitops-05-feature-flags-5.png)
+![Architecture diagram showing three application pods calling a shared flagd Service over gRPC, backed by a multi-replica flagd Deployment in its own namespace that watches a FeatureFlag custom resource.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-5.svg)
 
 | Aspect | Sidecar | Standalone |
 |--------|---------|------------|
@@ -435,7 +435,7 @@ After the operator processes this Deployment, the resulting pod will contain two
 
 The operator watches `FeatureFlag` CRs for changes and generates or updates the corresponding ConfigMaps that flagd reads. This synchronization flow works as follows:
 
-![Sequence diagram showing a FeatureFlag change committed to Git flow through ArgoCD or Flux into the Kubernetes API, where the OpenFeature Operator regenerates a ConfigMap that flagd detects and reloads within seconds.](../.gitbook/assets/en-gitops-05-feature-flags-6.png)
+![Sequence diagram showing a FeatureFlag change committed to Git flow through ArgoCD or Flux into the Kubernetes API, where the OpenFeature Operator regenerates a ConfigMap that flagd detects and reloads within seconds.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-6.svg)
 
 When you update a `FeatureFlag` CR, the operator detects the change through the Kubernetes watch API, regenerates the ConfigMap containing the flag specification, and flagd picks up the change through its file watcher -- all without pod restarts.
 
@@ -807,7 +807,7 @@ Feature flags and canary releases are complementary strategies. Canary releases 
 
 ### Architecture: Flagger + Feature Flags
 
-![Architecture diagram showing an Istio VirtualService splitting 90% of traffic to a primary v1 deployment where a flag stays off, and 10% to a canary v2 deployment where pods evaluate the same flag against flagd.](../.gitbook/assets/en-gitops-05-feature-flags-7.png)
+![Architecture diagram showing an Istio VirtualService splitting 90% of traffic to a primary v1 deployment where a flag stays off, and 10% to a canary v2 deployment where pods evaluate the same flag against flagd.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-7.svg)
 
 ### Flagger + Feature Flag Workflow
 
@@ -1090,7 +1090,7 @@ spec:
 
 The pull request workflow for feature flag changes provides safety and traceability:
 
-![Sequence diagram showing a developer editing a flag file on a branch, CI validating and a peer approving the pull request, then GitOps applying the merged FeatureFlag resource so Kubernetes syncs it without a pod restart.](../.gitbook/assets/en-gitops-05-feature-flags-8.png)
+![Sequence diagram showing a developer editing a flag file on a branch, CI validating and a peer approving the pull request, then GitOps applying the merged FeatureFlag resource so Kubernetes syncs it without a pod restart.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-8.svg)
 
 **CI validation example** (GitHub Actions):
 
@@ -1321,7 +1321,7 @@ spec:
 
 Every feature flag should have a defined lifecycle. Flags that persist beyond their intended purpose become technical debt that increases code complexity, test surface, and cognitive load.
 
-![Flowchart showing a feature flag's life from creation through a flag-off development period, a gradual percentage rollout, a stable fully-on state, to eventual cleanup that removes the flag and its dead code paths.](../.gitbook/assets/en-gitops-05-feature-flags-9.png)
+![Flowchart showing a feature flag's life from creation through a flag-off development period, a gradual percentage rollout, a stable fully-on state, to eventual cleanup that removes the flag and its dead code paths.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-9.svg)
 
 Recommended lifecycle rules:
 

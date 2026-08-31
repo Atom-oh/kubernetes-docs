@@ -30,7 +30,7 @@ kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable
 
 vLLM은 다음과 같은 특징을 가진 LLM 추론 엔진입니다:
 
-![PagedAttention과 연속 배치 처리 등 vLLM의 핵심 특징이 요청 스케줄러·추론 엔진·KV 캐시 관리자로 이어지는 파이프라인을 거쳐 메모리 효율성, 높은 처리량, 확장성이라는 이점으로 이어지는 관계를 보여주는 아키텍처 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-0.png)
+![PagedAttention과 연속 배치 처리 등 vLLM의 핵심 특징이 요청 스케줄러·추론 엔진·KV 캐시 관리자로 이어지는 파이프라인을 거쳐 메모리 효율성, 높은 처리량, 확장성이라는 이점으로 이어지는 관계를 보여주는 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-0.svg)
 
 ### vLLM의 주요 기능
 
@@ -207,7 +207,7 @@ response = client.chat.completions.create(
 
 vLLM을 EKS에 배포하기 위한 시스템 요구 사항은 다음과 같습니다:
 
-![GPU 메모리를 중심으로 하드웨어, 소프트웨어 스택, 모델 크기별 GPU 메모리 요구량의 관계를 보여주는 시스템 요구 사항 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-1.png)
+![GPU 메모리를 중심으로 하드웨어, 소프트웨어 스택, 모델 크기별 GPU 메모리 요구량의 관계를 보여주는 시스템 요구 사항 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-1.svg)
 
 1. **하드웨어**:
    - NVIDIA GPU(Volta, Turing, Ampere, Hopper 아키텍처)
@@ -231,7 +231,7 @@ vLLM을 EKS에 배포하기 위한 시스템 요구 사항은 다음과 같습�
 
 ## EKS 인프라 구성
 
-![EKS 컨트롤 플레인이 GPU/CPU 노드 그룹에 워크로드를 스케줄링하고, GPU와 CPU 노드가 FSx for Lustre에서 모델을 불러오며 ECR과 CloudWatch 같은 AWS 관리형 서비스가 이를 지원하는 인프라 구조를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-2.png)
+![EKS 컨트롤 플레인이 GPU/CPU 노드 그룹에 워크로드를 스케줄링하고, GPU와 CPU 노드가 FSx for Lustre에서 모델을 불러오며 ECR과 CloudWatch 같은 AWS 관리형 서비스가 이를 지원하는 인프라 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-2.svg)
 
 ## 스토리지 구성
 
@@ -326,7 +326,7 @@ spec:
 
 다음 다이어그램은 EKS에서 vLLM을 배포하는 두 가지 주요 아키텍처를 보여줍니다:
 
-![클라이언트 요청이 로드 밸런서를 거쳐 GPU 8개짜리 단일 노드 파드나 NCCL로 통신하는 다중 노드 파드로 전달되고, 두 방식 모두 FSx for Lustre 공유 스토리지에서 모델을 불러오는 vLLM 배포 구조를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-3.png)
+![클라이언트 요청이 로드 밸런서를 거쳐 GPU 8개짜리 단일 노드 파드나 NCCL로 통신하는 다중 노드 파드로 전달되고, 두 방식 모두 FSx for Lustre 공유 스토리지에서 모델을 불러오는 vLLM 배포 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-3.svg)
 
 ### 단일 노드 배포
 
@@ -518,7 +518,7 @@ spec:
 
 ## 성능 최적화
 
-![GPU 메모리, 처리량, 네트워크 세 영역의 vLLM 튜닝 옵션들이 모두 하나의 성능 향상 결과로 수렴하는 관계를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-4.png)
+![GPU 메모리, 처리량, 네트워크 세 영역의 vLLM 튜닝 옵션들이 모두 하나의 성능 향상 결과로 수렴하는 관계를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-4.svg)
 
 ### GPU 메모리 최적화
 
@@ -607,7 +607,7 @@ affinity:
 
 ## 모니터링 및 로깅
 
-![vLLM·GPU·Kubernetes 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 이어지고, 로그는 별도로 Fluentd를 거쳐 CloudWatch에 전달되는 관찰 가능성 파이프라인을 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-5.png)
+![vLLM·GPU·Kubernetes 메트릭이 Prometheus에 모여 Grafana 대시보드와 Alert Manager 알림으로 이어지고, 로그는 별도로 Fluentd를 거쳐 CloudWatch에 전달되는 관찰 가능성 파이프라인을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-5.svg)
 
 ### Prometheus 메트릭
 
@@ -683,7 +683,7 @@ data:
 
 ## 오토스케일링
 
-![CPU·GPU 사용률과 요청량 같은 트리거가 HPA·KEDA·커스텀 메트릭을 통해 Karpenter와 Cluster Autoscaler의 노드 스케일링으로 이어지고 Spot 인스턴스로 비용을 절감하는 vLLM 오토스케일링 구조를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-6.png)
+![CPU·GPU 사용률과 요청량 같은 트리거가 HPA·KEDA·커스텀 메트릭을 통해 Karpenter와 Cluster Autoscaler의 노드 스케일링으로 이어지고 Spot 인스턴스로 비용을 절감하는 vLLM 오토스케일링 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-6.svg)
 
 ### HPA(Horizontal Pod Autoscaler)
 
@@ -828,7 +828,7 @@ securityContext:
 
 ## 클라이언트 통합
 
-![Python·JavaScript·Curl 클라이언트가 Nginx·API Gateway·Envoy 게이트웨이를 거쳐 인증·속도 제한·CORS 보안 계층을 통과한 뒤 로드 밸런서를 거쳐 vLLM 서비스에 도달하는 요청 경로를 보여주는 다이어그램](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-7.png)
+![Python·JavaScript·Curl 클라이언트가 Nginx·API Gateway·Envoy 게이트웨이를 거쳐 인증·속도 제한·CORS 보안 계층을 통과한 뒤 로드 밸런서를 거쳐 vLLM 서비스에 도달하는 요청 경로를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-ai-ml-02-vllm-deployment-7.svg)
 
 ### API 게이트웨이
 

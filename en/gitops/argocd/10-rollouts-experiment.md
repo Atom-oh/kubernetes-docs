@@ -35,7 +35,7 @@ An Experiment can be created as a standalone resource, but in practice it is alm
 
 When a Rollout reaches an experiment step, resources are created along this chain:
 
-![A Rollout creates an Experiment, the central resource that spins up baseline and canary ReplicaSets from its spec.templates and starts an AnalysisRun from its spec.analyses, with an AnalysisTemplate supplying the AnalysisRun's definition by reference.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-0.png)
+![A Rollout creates an Experiment, the central resource that spins up baseline and canary ReplicaSets from its spec.templates and starts an AnalysisRun from its spec.analyses, with an AnalysisTemplate supplying the AnalysisRun's definition by reference.](../../../assets/diagrams/rendered/en-gitops-argocd-10-rollouts-experiment-0.svg)
 
 The sequence is:
 
@@ -115,7 +115,7 @@ Metric "success-rate" assessed Failed due to failed (2) > failureLimit (1)
 
 The AnalysisRun's final status propagates through the Experiment up to the Rollout.
 
-![The AnalysisRun status decides the Experiment's outcome: a Successful result lets the Rollout proceed to its next canary step, while a Failed, Inconclusive, or Error result fails the Experiment and aborts the Rollout into a Degraded state.](../../.gitbook/assets/en-gitops-argocd-10-rollouts-experiment-1.png)
+![The AnalysisRun status decides the Experiment's outcome: a Successful result lets the Rollout proceed to its next canary step, while a Failed, Inconclusive, or Error result fails the Experiment and aborts the Rollout into a Degraded state.](../../../assets/diagrams/rendered/en-gitops-argocd-10-rollouts-experiment-1.svg)
 
 - **Successful**: once both the `duration` has elapsed and the analysis succeeded, the Experiment becomes Successful and the Rollout proceeds to the next step.
 - **Failed / Inconclusive**: the Experiment ends as failed and the Rollout is aborted. The Rollout status becomes `Degraded` and the stable version stays in place.

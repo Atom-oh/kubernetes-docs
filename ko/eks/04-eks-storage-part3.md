@@ -14,7 +14,7 @@
 
 EKS 클러스터에서 스토리지 리소스를 효과적으로 모니터링하는 것은 성능 문제를 조기에 발견하고 용량 계획을 수립하는 데 중요합니다.
 
-![AWS CloudWatch, Kubernetes 모니터링, 사용자 정의 솔루션이 각각 지표를 수집하고 CloudWatch 경보를 거쳐 대시보드로 이어지는 EKS 스토리지 모니터링 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part3-0.png)
+![AWS CloudWatch, Kubernetes 모니터링, 사용자 정의 솔루션이 각각 지표를 수집하고 CloudWatch 경보를 거쳐 대시보드로 이어지는 EKS 스토리지 모니터링 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part3-0.svg)
 
 ### CloudWatch를 사용한 모니터링
 
@@ -176,7 +176,7 @@ spec:
 
 EKS 클러스터에서 발생할 수 있는 일반적인 스토리지 문제와 해결 방법을 살펴보겠습니다.
 
-![PVC 프로비저닝 문제와 볼륨 마운트·성능 문제가 각각 어떤 진단 단계를 거쳐 어떤 해결 조치로 이어지는지 두 그룹으로 나누어 보여주는 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part3-1.png)
+![PVC 프로비저닝 문제와 볼륨 마운트·성능 문제가 각각 어떤 진단 단계를 거쳐 어떤 해결 조치로 이어지는지 두 그룹으로 나누어 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part3-1.svg)
 
 ### 볼륨 프로비저닝 문제
 
@@ -346,7 +346,7 @@ mountOptions:
 
 EKS 클러스터의 스토리지 비용을 최적화하기 위한 전략을 살펴보겠습니다.
 
-![EBS, EFS, FSx, S3 네 가지 스토리지 유형이 각자의 최적화 전략을 거쳐 비용 모니터링으로 수렴하는 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part3-2.png)
+![EBS, EFS, FSx, S3 네 가지 스토리지 유형이 각자의 최적화 전략을 거쳐 비용 모니터링으로 수렴하는 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part3-2.svg)
 
 ### 볼륨 유형 및 크기 최적화
 
@@ -448,7 +448,7 @@ aws efs put-lifecycle-configuration \
 
 EKS 클러스터에서 스토리지 리소스를 보호하기 위한 보안 모범 사례를 살펴보겠습니다.
 
-![EBS·EFS·S3 등 스토리지 서비스의 보안 설정이 저장·전송 암호화를 거쳐 AWS KMS로 모이고, 액세스 제어와 파드 보안이 각각 Kubernetes RBAC 및 Pod Security Standards로 이어지는 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part3-3.png)
+![EBS·EFS·S3 등 스토리지 서비스의 보안 설정이 저장·전송 암호화를 거쳐 AWS KMS로 모이고, 액세스 제어와 파드 보안이 각각 Kubernetes RBAC 및 Pod Security Standards로 이어지는 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part3-3.svg)
 
 ### 데이터 암호화
 
@@ -640,7 +640,7 @@ metadata:
 
 EKS 클러스터에서 스토리지를 효과적으로 관리하기 위한 모범 사례를 살펴보겠습니다.
 
-![스토리지 수명 주기의 계획·구현·운영·최적화 네 단계가 각각 계획 설계, 자동화, 백업·재해복구, 성능·비용 최적화라는 실행 영역과 짝을 이루는 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part3-4.png)
+![스토리지 수명 주기의 계획·구현·운영·최적화 네 단계가 각각 계획 설계, 자동화, 백업·재해복구, 성능·비용 최적화라는 실행 영역과 짝을 이루는 구조를 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-eks-04-eks-storage-part3-4.svg)
 
 ### 스토리지 계획 및 설계
 

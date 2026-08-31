@@ -12,7 +12,7 @@ The following diagram shows the architecture of the scheduler extender approach:
 
 The scheduler extender workflow is as follows:
 
-![Sequence diagram showing the API server handing a pod to the default Kubernetes scheduler, which runs its own internal filtering and scoring, delegates a filter and a prioritize HTTP call to a scheduler extender, then combines the results to select a node, bind the pod, and hand it off for scheduling on that node.](../.gitbook/assets/en-scheduling-02-custom-scheduler-part2-0.png)
+![Sequence diagram showing the API server handing a pod to the default Kubernetes scheduler, which runs its own internal filtering and scoring, delegates a filter and a prioritize HTTP call to a scheduler extender, then combines the results to select a node, bind the pod, and hand it off for scheduling on that node.](../../assets/diagrams/rendered/en-scheduling-02-custom-scheduler-part2-0.svg)
 
 ### Scheduler Extender Implementation
 

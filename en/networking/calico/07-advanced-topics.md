@@ -7,7 +7,7 @@
 
 This chapter covers advanced Calico topics for production environments, including IPAM deep dive, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows container support, and large-scale cluster design patterns.
 
-![A sequential overview flow of six advanced Calico topics covered in this chapter: IPAM internals, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows support, and large-scale cluster design.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-0.png)
+![A sequential overview flow of six advanced Calico topics covered in this chapter: IPAM internals, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows support, and large-scale cluster design.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-0.svg)
 
 ## IPAM Deep Dive
 
@@ -17,7 +17,7 @@ Calico's IP Address Management (IPAM) system is designed for high performance an
 
 Calico uses a block-based IPAM system where IP addresses are allocated in blocks (default /26 = 64 IPs) to nodes. This approach minimizes datastore interactions and improves allocation speed.
 
-![A central datastore hands out fixed-size IP blocks to each node, and each node allocates individual pod IPs out of its own affine blocks.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-1.png)
+![A central datastore hands out fixed-size IP blocks to each node, and each node allocates individual pod IPs out of its own affine blocks.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-1.svg)
 
 ### IP Block Affinity
 
@@ -51,7 +51,7 @@ spec:
 
 The IPAM allocation follows this process:
 
-![On pod creation, Calico tries the node's own affine block first, then an unclaimed block, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-2.png)
+![On pod creation, Calico tries the node's own affine block first, then an unclaimed block, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-2.svg)
 
 ### Block Size Configuration
 
@@ -336,7 +336,7 @@ WireGuard provides efficient encryption for pod-to-pod traffic across nodes.
 
 ### WireGuard Architecture
 
-![Traffic leaves a pod in plaintext, is encrypted by the node's WireGuard interface, crosses the underlay as an encrypted UDP tunnel between the two nodes, and is decrypted back to plaintext before reaching the destination pod.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-3.png)
+![Traffic leaves a pod in plaintext, is encrypted by the node's WireGuard interface, crosses the underlay as an encrypted UDP tunnel between the two nodes, and is decrypted back to plaintext before reaching the destination pod.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-3.svg)
 
 ### Configuration
 
@@ -417,7 +417,7 @@ kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.metadata.ann
 
 ### WireGuard vs IPsec Comparison
 
-![Side-by-side comparison of WireGuard and IPsec encryption on four traits: cryptography, code complexity, key exchange, and per-packet overhead.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-4.png)
+![Side-by-side comparison of WireGuard and IPsec encryption on four traits: cryptography, code complexity, key exchange, and per-packet overhead.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-4.svg)
 
 | Feature | WireGuard | IPsec |
 |---------|-----------|-------|
@@ -436,7 +436,7 @@ Egress Gateway provides controlled, predictable egress for pods requiring specif
 
 ### Architecture
 
-![Pods in the production namespace route outbound traffic through a dedicated Egress Gateway pod, which source-NATs it to a fixed external IP before it reaches partner services.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-5.png)
+![Pods in the production namespace route outbound traffic through a dedicated Egress Gateway pod, which source-NATs it to a fixed external IP before it reaches partner services.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-5.svg)
 
 ### Configuration
 
@@ -575,7 +575,7 @@ Calico supports multi-cluster deployments for cross-cluster communication and po
 
 ### Federation Architecture
 
-![Three clusters each peer their API server with a shared Federation Controller for policy sync, while their pod workloads mesh directly with each other over BGP or overlay.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-6.png)
+![Three clusters each peer their API server with a shared Federation Controller for policy sync, while their pod workloads mesh directly with each other over BGP or overlay.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-6.svg)
 
 ### Cross-Cluster Connectivity Setup
 
@@ -726,7 +726,7 @@ spec:
 
 ### HNS (Host Networking Service) Integration
 
-![A packet from a Windows container crosses its virtual NIC into the Hyper-V virtual switch, through the Host Networking Service and Virtual Filtering Platform for policy enforcement, while the Calico Windows agent programs both HNS and the VFP directly.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-7.png)
+![A packet from a Windows container crosses its virtual NIC into the Hyper-V virtual switch, through the Host Networking Service and Virtual Filtering Platform for policy enforcement, while the Calico Windows agent programs both HNS and the VFP directly.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-7.svg)
 
 ### Windows Network Policy
 
@@ -832,7 +832,7 @@ Tigera offers Calico Enterprise with additional features for enterprise deployme
 
 Calico Cloud is a SaaS offering that provides:
 
-![Each customer cluster's Calico agent reports to a shared Management UI, which feeds an Analytics Engine that in turn drives threat intelligence and compliance reporting.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-8.png)
+![Each customer cluster's Calico agent reports to a shared Management UI, which feeds an Analytics Engine that in turn drives threat intelligence and compliance reporting.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-8.svg)
 
 ## Large-Scale Cluster Design (1000+ Nodes)
 
@@ -894,7 +894,7 @@ spec:
 
 For large BGP deployments, use Route Reflectors instead of full mesh:
 
-![Instead of a full BGP mesh, one route reflector per zone peers with the other reflectors, and every regular node in its zone peers only with its own zone's reflector.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-9.png)
+![Instead of a full BGP mesh, one route reflector per zone peers with the other reflectors, and every regular node in its zone peers only with its own zone's reflector.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-9.svg)
 
 ```yaml
 # Route Reflector node configuration

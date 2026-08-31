@@ -37,7 +37,7 @@ Grafana Mimir는 Grafana Labs에서 개발한 오픈소스, 수평 확장 가능
 
 Mimir는 Cortex의 후속 프로젝트로, 더 나은 성능과 운영성을 제공합니다:
 
-![Cortex에서 파생된 Mimir와 독립적으로 발전한 Thanos가 각각 중앙 집중식 원격 쓰기 방식과 사이드카 기반 연합 쿼리 방식을 사용함을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-03-mimir-0.png)
+![Cortex에서 파생된 Mimir와 독립적으로 발전한 Thanos가 각각 중앙 집중식 원격 쓰기 방식과 사이드카 기반 연합 쿼리 방식을 사용함을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-03-mimir-0.svg)
 
 | 항목 | Mimir | Cortex | Thanos |
 |------|-------|--------|--------|
@@ -52,7 +52,7 @@ Mimir는 Cortex의 후속 프로젝트로, 더 나은 성능과 운영성을 제
 
 ### 전체 아키텍처
 
-![Prometheus가 Distributor를 거쳐 Ingester에 메트릭을 쓰고, Ingester·Compactor·Store-gateway가 객체 스토리지에 블록을 저장하며, Grafana가 Query-frontend와 Querier를 통해 데이터를 읽어오는 Mimir의 쓰기·읽기 경로를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-03-mimir-1.png)
+![Prometheus가 Distributor를 거쳐 Ingester에 메트릭을 쓰고, Ingester·Compactor·Store-gateway가 객체 스토리지에 블록을 저장하며, Grafana가 Query-frontend와 Querier를 통해 데이터를 읽어오는 Mimir의 쓰기·읽기 경로를 보여주는 아키텍처 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-03-mimir-1.svg)
 
 ### 데이터 흐름
 
@@ -262,7 +262,7 @@ overrides:
 
 ### 테넌트 격리
 
-![세 테넌트가 각자의 X-Scope-OrgID 헤더로 Distributor에 메트릭을 보내고, Ingester를 거쳐 객체 스토리지의 서로 다른 테넌트별 블록 경로에 격리 저장됨을 보여주는 다이어그램.](../../.gitbook/assets/ko-observability-metrics-03-mimir-2.png)
+![세 테넌트가 각자의 X-Scope-OrgID 헤더로 Distributor에 메트릭을 보내고, Ingester를 거쳐 객체 스토리지의 서로 다른 테넌트별 블록 경로에 격리 저장됨을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-metrics-03-mimir-2.svg)
 
 ## Helm 설치
 
@@ -591,7 +591,7 @@ mimir:
 
 ### 쿼리 캐싱 전략
 
-![쿼리가 Query-frontend의 결과 캐시, Querier의 메타데이터 캐시, Store-gateway의 청크 캐시를 순서대로 거치며, 캐시가 있으면 즉시 응답하고 없을 때만 다음 단계로 내려가 최종적으로 S3까지 도달하는 3단계 캐시 확인 흐름을 보여주는 플로차트.](../../.gitbook/assets/ko-observability-metrics-03-mimir-3.png)
+![쿼리가 Query-frontend의 결과 캐시, Querier의 메타데이터 캐시, Store-gateway의 청크 캐시를 순서대로 거치며, 캐시가 있으면 즉시 응답하고 없을 때만 다음 단계로 내려가 최종적으로 S3까지 도달하는 3단계 캐시 확인 흐름을 보여주는 플로차트.](../../../assets/diagrams/rendered/ko-observability-metrics-03-mimir-3.svg)
 
 ## VictoriaMetrics와 비교
 
@@ -612,7 +612,7 @@ mimir:
 
 ### 선택 기준
 
-![Grafana 에코시스템 활용 여부, 엔터프라이즈 멀티테넌시 필요성, 운영 단순성 우선도, 객체 스토리지 활용 의향, 클라우드 스토리지 비용 민감도를 차례로 물어 Mimir 또는 VictoriaMetrics 중 하나를 선택하도록 안내하는 의사결정 플로차트.](../../.gitbook/assets/ko-observability-metrics-03-mimir-4.png)
+![Grafana 에코시스템 활용 여부, 엔터프라이즈 멀티테넌시 필요성, 운영 단순성 우선도, 객체 스토리지 활용 의향, 클라우드 스토리지 비용 민감도를 차례로 물어 Mimir 또는 VictoriaMetrics 중 하나를 선택하도록 안내하는 의사결정 플로차트.](../../../assets/diagrams/rendered/ko-observability-metrics-03-mimir-4.svg)
 
 **Mimir 선택 시**:
 - Grafana Cloud 또는 Grafana 에코시스템 사용

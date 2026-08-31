@@ -83,7 +83,7 @@ After completing this document, you will be able to:
 
 ### High-Level Architecture
 
-![Architecture diagram showing browser traffic reaching the Backstage backend, which fans out to core and integration plugins, a PostgreSQL store, TechDocs storage in S3, and external systems including GitHub, EKS, ArgoCD, and an OIDC identity provider.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-0.png)
+![Architecture diagram showing browser traffic reaching the Backstage backend, which fans out to core and integration plugins, a PostgreSQL store, TechDocs storage in S3, and external systems including GitHub, EKS, ArgoCD, and an OIDC identity provider.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-0.svg)
 
 ### Core Concepts
 
@@ -567,7 +567,7 @@ export const authModuleOidc = createBackendModule({
 
 The Backstage Software Catalog uses a well-defined entity model to represent your organization's software ecosystem. Understanding this model is essential for effective catalog management.
 
-![Entity-relationship diagram showing a Domain owning a System, which is built from Components that expose APIs and depend on Resources, with a Group owning the System and Component and a User belonging to that Group.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png)
+![Entity-relationship diagram showing a Domain owning a System, which is built from Components that expose APIs and depend on Resources, with a Group owning the System and Component and a User belonging to that Group.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-1.svg)
 
 ### Entity Types
 
@@ -1828,7 +1828,7 @@ export const KedaScalingCard = () => {
 
 Backstage includes a built-in permission framework that controls access to catalog entities, templates, and plugin features. The permission system is policy-based and integrates with the catalog's ownership model.
 
-![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-2.png)
+![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-2.svg)
 
 ### Enabling the Permission Framework
 

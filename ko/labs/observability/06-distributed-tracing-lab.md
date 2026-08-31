@@ -13,7 +13,7 @@
 
 ## 분석 워크플로우
 
-![운영자가 Grafana 대시보드에서 지연 급증을 발견한 뒤 Exemplar를 눌러 Tempo의 트레이스로, 다시 Loki의 로그로 이동하며 근본 원인을 찾아가는 순서를 보여준다.](../../.gitbook/assets/ko-labs-observability-06-distributed-tracing-lab-0.png)
+![운영자가 Grafana 대시보드에서 지연 급증을 발견한 뒤 Exemplar를 눌러 Tempo의 트레이스로, 다시 Loki의 로그로 이동하며 근본 원인을 찾아가는 순서를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-06-distributed-tracing-lab-0.svg)
 
 ---
 
@@ -232,7 +232,7 @@ Exemplar는 메트릭 데이터 포인트에 연결된 트레이스 ID로, 집�
 
 ### Exemplar 워크플로우
 
-![메트릭 그래프의 p99 지연 급증 지점을 Exemplar로 클릭하면 트레이스로, 트레이스에서 다시 로그로 드릴다운하는 4단계 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-06-distributed-tracing-lab-1.png)
+![메트릭 그래프의 p99 지연 급증 지점을 Exemplar로 클릭하면 트레이스로, 트레이스에서 다시 로그로 드릴다운하는 4단계 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-06-distributed-tracing-lab-1.svg)
 
 **Step 6.5.1: Exemplar가 있는 메트릭 쿼리**
 

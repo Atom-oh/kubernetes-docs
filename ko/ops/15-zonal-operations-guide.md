@@ -119,7 +119,7 @@ TargetGroupBinding의 기본/고급/멀티포트 설정은 [`networking/03-aws-l
 
 [KIP-392](https://cwiki.apache.org/confluence/display/KAFKA/KIP-392:+Allow+consumers+to+fetch+from+closest+replica)(Kafka 2.4+)는 컨슈머가 파티션 리더가 아니라 **같은 rack(AZ)에 있는 팔로워 replica**에서 직접 fetch하도록 허용합니다.
 
-![컨슈머가 client.rack 정보를 담아 리더 브로커에 Fetch를 요청하면 리더가 같은 가용 영역(AZ-a)의 팔로워 브로커로 리다이렉트하고, 컨슈머는 그 팔로워에서 직접 데이터를 받아 크로스 AZ 전송 비용을 없애는 흐름을 보여준다.](../.gitbook/assets/ko-ops-15-zonal-operations-guide-0.png)
+![컨슈머가 client.rack 정보를 담아 리더 브로커에 Fetch를 요청하면 리더가 같은 가용 영역(AZ-a)의 팔로워 브로커로 리다이렉트하고, 컨슈머는 그 팔로워에서 직접 데이터를 받아 크로스 AZ 전송 비용을 없애는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-ops-15-zonal-operations-guide-0.svg)
 
 - **브로커**: `replica.selector.class=org.apache.kafka.common.replica.RackAwareReplicaSelector` 설정, 모든 브로커에 `broker.rack`(AZ ID) 지정
 - **컨슈머**: `client.rack` 컨슈머 속성에 자기 AZ ID를 설정 — 앞서 설명한 zone 인지 방법으로 얻은 값을 주입

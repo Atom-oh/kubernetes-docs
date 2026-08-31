@@ -56,7 +56,7 @@ Kubescape joined the CNCF Sandbox in 2022, demonstrating its commitment to open-
 
 ### Kubescape Architecture
 
-![Diagram showing Kubescape input sources and security frameworks feeding control evaluation and vulnerability scanning, which converge on a risk calculator before producing reports and metrics.](../.gitbook/assets/en-security-11-kubescape-0.png)
+![Diagram showing Kubescape input sources and security frameworks feeding control evaluation and vulnerability scanning, which converge on a risk calculator before producing reports and metrics.](../../assets/diagrams/rendered/en-security-11-kubescape-0.svg)
 
 ---
 
@@ -304,7 +304,7 @@ kubescape list controls
 
 ### Scanning Pipeline Flow
 
-![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../.gitbook/assets/en-security-11-kubescape-1.png)
+![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../../assets/diagrams/rendered/en-security-11-kubescape-1.svg)
 
 ### Cluster Scanning
 
@@ -477,7 +477,7 @@ RBAC analysis capabilities:
 
 ### Continuous Scanning Architecture
 
-![Architecture diagram showing a scheduled scanner pod inside a Kubernetes cluster collecting workload resources and runtime events into results storage, which feeds Prometheus, a dashboard, and the Kubescape API outside the cluster.](../.gitbook/assets/en-security-11-kubescape-2.png)
+![Architecture diagram showing a scheduled scanner pod inside a Kubernetes cluster collecting workload resources and runtime events into results storage, which feeds Prometheus, a dashboard, and the Kubescape API outside the cluster.](../../assets/diagrams/rendered/en-security-11-kubescape-2.svg)
 
 ### Operator Components
 
@@ -724,7 +724,7 @@ kubescape scan framework nsa --format json | \
 
 ### CI/CD Integration Workflow
 
-![Flowchart showing a CI pipeline checking out code, running a Kubescape scan, and evaluating the risk score against a threshold to either deploy to the cluster or block the deployment.](../.gitbook/assets/en-security-11-kubescape-3.png)
+![Flowchart showing a CI pipeline checking out code, running a Kubescape scan, and evaluating the risk score against a threshold to either deploy to the cluster or block the deployment.](../../assets/diagrams/rendered/en-security-11-kubescape-3.svg)
 
 ### GitHub Actions Workflow
 

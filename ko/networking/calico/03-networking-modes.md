@@ -10,7 +10,7 @@ Calico는 다양한 네트워킹 환경에 맞는 여러 모드를 제공합니�
 
 ![Calico 네트워킹 모드 비교](../../.gitbook/assets/calico_networking_modes.png)
 
-![네트워크 환경, 성능 요구사항, 호환성이라는 세 가지 선택 기준이 모드 선택 지점을 거쳐 IPIP, VXLAN, Direct, CrossSubnet 네 가지 네트워킹 모드로 이어지는 관계를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-0.png)
+![네트워크 환경, 성능 요구사항, 호환성이라는 세 가지 선택 기준이 모드 선택 지점을 거쳐 IPIP, VXLAN, Direct, CrossSubnet 네 가지 네트워킹 모드로 이어지는 관계를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-0.svg)
 
 ### 모드별 특성 비교표
 
@@ -32,7 +32,7 @@ Calico는 다양한 네트워킹 환경에 맞는 여러 모드를 제공합니�
 
 IPIP 모드는 원본 IP 패킷을 새로운 IP 헤더로 캡슐화합니다. Linux 커널의 `tunl0` 인터페이스를 사용합니다.
 
-![Pod A에서 나온 패킷이 Node 1의 tunl0에서 캡슐화되어 네트워크를 건너 Node 2의 tunl0에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-1.png)
+![Pod A에서 나온 패킷이 Node 1의 tunl0에서 캡슐화되어 네트워크를 건너 Node 2의 tunl0에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-1.svg)
 
 ### IPIP 패킷 구조
 
@@ -97,7 +97,7 @@ spec:
 
 ### IPIP 패킷 흐름 상세
 
-![Pod A가 보낸 패킷을 Node 1이 캡슐화해 네트워크로 전달하고, Node 2가 이를 디캡슐화해 Pod B로 전달하기까지 시간 순서를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-2.png)
+![Pod A가 보낸 패킷을 Node 1이 캡슐화해 네트워크로 전달하고, Node 2가 이를 디캡슐화해 Pod B로 전달하기까지 시간 순서를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-2.svg)
 
 ## VXLAN 모드
 
@@ -105,7 +105,7 @@ spec:
 
 VXLAN (Virtual Extensible LAN)은 Layer 2 프레임을 UDP 패킷으로 캡슐화합니다. 기본 포트는 UDP 4789입니다.
 
-![Pod A에서 나온 패킷이 Node 1의 vxlan.calico VTEP에서 UDP로 캡슐화되어 네트워크를 건너 Node 2의 VTEP에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-3.png)
+![Pod A에서 나온 패킷이 Node 1의 vxlan.calico VTEP에서 UDP로 캡슐화되어 네트워크를 건너 Node 2의 VTEP에서 디캡슐화된 뒤 Pod B로 전달되는 경로를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-3.svg)
 
 ### VXLAN 패킷 구조
 
@@ -214,7 +214,7 @@ spec:
 
 Direct 모드는 캡슐화 없이 순수 IP 라우팅을 사용합니다. BGP로 Pod CIDR을 광고하여 외부 라우터가 패킷을 올바른 노드로 전달합니다.
 
-![Pod A의 패킷이 캡슐화 없이 라우팅 테이블과 BGP로 광고된 경로를 통해 라우터를 거쳐 Pod B로 직접 전달되는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-4.png)
+![Pod A의 패킷이 캡슐화 없이 라우팅 테이블과 BGP로 광고된 경로를 통해 라우터를 거쳐 Pod B로 직접 전달되는 경로를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-4.svg)
 
 ### Direct 모드 패킷 구조
 
@@ -298,7 +298,7 @@ default via 10.0.1.1 dev eth0
 
 CrossSubnet은 IPIP 또는 VXLAN의 "스마트" 모드입니다. 같은 서브넷의 노드 간에는 Direct 라우팅을, 다른 서브넷 간에는 캡슐화를 사용합니다.
 
-![같은 서브넷의 노드 간에는 캡슐화 없이 직접 통신하고, 다른 서브넷의 노드 간에는 IPIP 또는 VXLAN으로 캡슐화하여 통신하는 CrossSubnet 모드의 동작을 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-5.png)
+![같은 서브넷의 노드 간에는 캡슐화 없이 직접 통신하고, 다른 서브넷의 노드 간에는 IPIP 또는 VXLAN으로 캡슐화하여 통신하는 CrossSubnet 모드의 동작을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-5.svg)
 
 ### CrossSubnet 설정
 
@@ -330,7 +330,7 @@ spec:
 
 ### CrossSubnet 서브넷 판단 로직
 
-![패킷 전송 시 출발지와 목적지가 같은 서브넷이면 캡슐화 없이 직접 전송하고, 다른 서브넷이면 IPIP 또는 VXLAN으로 캡슐화한 뒤 두 경로 모두 패킷 전달로 합쳐지는 판단 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-6.png)
+![패킷 전송 시 출발지와 목적지가 같은 서브넷이면 캡슐화 없이 직접 전송하고, 다른 서브넷이면 IPIP 또는 VXLAN으로 캡슐화한 뒤 두 경로 모두 패킷 전달로 합쳐지는 판단 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-03-networking-modes-6.svg)
 
 ## 성능 벤치마크
 

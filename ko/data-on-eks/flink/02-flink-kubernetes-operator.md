@@ -178,7 +178,7 @@ flinkConfiguration:
 
 내부적으로 오토스케일러가 vertex의 리스케일을 결정하면, 위에서 설명한 것과 동일한 메커니즘 — 즉 `last-state` 업그레이드 — 를 통해 이를 트리거합니다. 그래서 `last-state`는 빠르고 안정적으로 동작해야 합니다: 수동 배포를 위한 업그레이드 모드일 뿐만 아니라, 부하가 변할 때마다 오토스케일러가 지속적으로 의존하는 메커니즘이기도 하기 때문입니다.
 
-![FlinkDeployment CR과 FlinkSessionJob CR을 감시하는 Flink Kubernetes Operator가 JobManager Pod와 TaskManager Pod를 관리하고, 오토스케일러가 vertex별 지표(busy time, backlog, 처리 속도)를 읽어 임계값을 초과하면 Operator를 통해 JobManager에 last-state 리스케일을 트리거하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-02-flink-kubernetes-operator-0.png)
+![FlinkDeployment CR과 FlinkSessionJob CR을 감시하는 Flink Kubernetes Operator가 JobManager Pod와 TaskManager Pod를 관리하고, 오토스케일러가 vertex별 지표(busy time, backlog, 처리 속도)를 읽어 임계값을 초과하면 Operator를 통해 JobManager에 last-state 리스케일을 트리거하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-data-on-eks-flink-02-flink-kubernetes-operator-0.svg)
 
 ## 다음 단계
 

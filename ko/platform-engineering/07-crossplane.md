@@ -89,7 +89,7 @@ Graduated 프로젝트는 프로덕션 환경에서의 광범위한 채택, 건�
 
 Crossplane의 아키텍처를 이해하려면 다섯 가지 핵심 개념을 먼저 파악해야 합니다.
 
-![개발자 Namespace의 Claim이 Crossplane 컨트롤 플레인에서 Composite Resource, XRD, Composition을 거쳐 Managed Resource로 변환되고, Provider가 이를 AWS·GCP·Azure API로 각각 프로비저닝하는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-0.png)
+![개발자 Namespace의 Claim이 Crossplane 컨트롤 플레인에서 Composite Resource, XRD, Composition을 거쳐 Managed Resource로 변환되고, Provider가 이를 AWS·GCP·Azure API로 각각 프로비저닝하는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-0.svg)
 
 ### 개념별 상세 설명
 
@@ -125,7 +125,7 @@ Claim은 Composite Resource의 **네임스페이스 스코프** 버전입니다.
 
 ### 컨트롤 플레인 아키텍처
 
-![쿠버네티스 클러스터 안에서 API 서버·etcd 컨트롤 플레인이 Claim부터 Managed Resource까지의 리소스 체인을 관리하고, Provider Runtime의 Provider-AWS 컨트롤러가 실제 AWS API를 호출하는 구조를 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-1.png)
+![쿠버네티스 클러스터 안에서 API 서버·etcd 컨트롤 플레인이 Claim부터 Managed Resource까지의 리소스 체인을 관리하고, Provider Runtime의 Provider-AWS 컨트롤러가 실제 AWS API를 호출하는 구조를 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-1.svg)
 
 ### 리소스 생명주기
 
@@ -684,7 +684,7 @@ spec:
 
 Composition은 Crossplane의 가장 강력한 기능입니다. 플랫폼 엔지니어가 복잡한 인프라를 **단순한 API**로 추상화하여, 개발자가 클라우드 리소스의 세부 사항을 몰라도 인프라를 프로비저닝할 수 있게 합니다.
 
-![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 원하는 Composition을 참조해 서로 다른 사양의 리소스 묶음이 자동 생성되는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-2.png)
+![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 원하는 Composition을 참조해 서로 다른 사양의 리소스 묶음이 자동 생성되는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-2.svg)
 
 ### CompositeResourceDefinition (XRD) 정의
 
@@ -1108,7 +1108,7 @@ spec:
 
 Claim은 Crossplane의 **셀프서비스 인터페이스**입니다. 개발자는 자신의 네임스페이스에서 Claim을 생성하여 인프라를 요청하며, 플랫폼 팀이 정의한 Composition에 따라 실제 클라우드 리소스가 프로비저닝됩니다.
 
-![개발자가 database-claim.yaml을 적용하면 Crossplane이 Composite Resource를 만들고 Composition을 조회해 AWS에 SecurityGroup·SubnetGroup·RDS Instance를 순서대로 생성한 뒤 Connection Secret과 Ready 상태를 돌려주는 순서도.](../.gitbook/assets/ko-platform-engineering-07-crossplane-3.png)
+![개발자가 database-claim.yaml을 적용하면 Crossplane이 Composite Resource를 만들고 Composition을 조회해 AWS에 SecurityGroup·SubnetGroup·RDS Instance를 순서대로 생성한 뒤 Connection Secret과 Ready 상태를 돌려주는 순서도.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-3.svg)
 
 ### 데이터베이스 Claim 예제
 
@@ -1321,7 +1321,7 @@ ACK과 Crossplane은 동일 클러스터에서 공존할 수 있습니다. 단, 
 
 [Backstage IDP](./06-backstage-idp.md)와 Crossplane을 통합하면, 개발자가 Backstage UI에서 버튼 클릭만으로 데이터베이스, 캐시, 메시지 큐 등의 인프라를 셀프서비스로 프로비저닝할 수 있습니다.
 
-![개발자가 Backstage 폼에 입력하면 Scaffolder가 Claim YAML을 Git에 커밋하고 ArgoCD가 이를 클러스터에 적용해 Crossplane이 Composite Resource와 Managed Resource를 거쳐 RDS·S3·SecurityGroup을 프로비저닝하는 셀프서비스 흐름을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-4.png)
+![개발자가 Backstage 폼에 입력하면 Scaffolder가 Claim YAML을 Git에 커밋하고 ArgoCD가 이를 클러스터에 적용해 Crossplane이 Composite Resource와 Managed Resource를 거쳐 RDS·S3·SecurityGroup을 프로비저닝하는 셀프서비스 흐름을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-4.svg)
 
 ### Backstage Template에서 Crossplane Claim 생성
 

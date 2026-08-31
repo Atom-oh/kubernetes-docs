@@ -40,7 +40,7 @@ The OSI model is a conceptual model that classifies network communication into 7
 
 ### OSI Model Layer Diagram
 
-![A layer-stack diagram of the OSI model from Application down to Physical, showing each layer's data unit and addressing scheme, with L7 (HTTP/gRPC/Kafka), L4 (port/protocol), and L3 (IP/CIDR) tagged as the layers Cilium enforces policy at, and L7 highlighted as this guide's focus.](../../.gitbook/assets/en-networking-cilium-05-l2-l7-networking-0.png)
+![A layer-stack diagram of the OSI model from Application down to Physical, showing each layer's data unit and addressing scheme, with L7 (HTTP/gRPC/Kafka), L4 (port/protocol), and L3 (IP/CIDR) tagged as the layers Cilium enforces policy at, and L7 highlighted as this guide's focus.](../../../assets/diagrams/rendered/en-networking-cilium-05-l2-l7-networking-0.svg)
 
 ### OSI Model Layers:
 

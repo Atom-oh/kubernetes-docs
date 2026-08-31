@@ -22,7 +22,7 @@ Istio's logging capabilities allow you to record and analyze all activities in t
 
 ### Istio Log Layers
 
-![Architecture diagram showing how the Envoy sidecar proxy emits access logs that flow through log collectors and an OpenTelemetry collector into Loki and Elasticsearch, from which Grafana renders dashboards, while istiod configures Envoy under control from the Telemetry API.](../../../.gitbook/assets/en-service-mesh-istio-observability-03-logging-0.png)
+![Architecture diagram showing how the Envoy sidecar proxy emits access logs that flow through log collectors and an OpenTelemetry collector into Loki and Elasticsearch, from which Grafana renders dashboards, while istiod configures Envoy under control from the Telemetry API.](../../../../assets/diagrams/rendered/en-service-mesh-istio-observability-03-logging-0.svg)
 
 ### Log Types
 

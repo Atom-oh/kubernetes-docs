@@ -9,7 +9,7 @@
 
 EKS 기반 AI/ML 인프라는 관심사를 분리하고 각 레이어의 독립적인 확장을 가능하게 하는 계층형 아키텍처를 따릅니다.
 
-![ML 워크로드, 플랫폼 서비스, 컴퓨팅, EKS 기반의 4개 레이어가 위에서 아래로 서로 의존하며 쌓여 있고, 컴퓨팅 레이어의 GPU/Neuron/CPU NodePool과 스팟 인스턴스가 강조되어 있는 AI/ML 인프라 레이어 구조도.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-0.png)
+![ML 워크로드, 플랫폼 서비스, 컴퓨팅, EKS 기반의 4개 레이어가 위에서 아래로 서로 의존하며 쌓여 있고, 컴퓨팅 레이어의 GPU/Neuron/CPU NodePool과 스팟 인스턴스가 강조되어 있는 AI/ML 인프라 레이어 구조도.](../../assets/diagrams/rendered/ko-ai-ml-06-ai-infrastructure-0.svg)
 
 **레이어별 역할:**
 
@@ -28,7 +28,7 @@ JARK 스택(JupyterHub + Argo Workflows + Ray + Karpenter)은 EKS에서 완전�
 
 ### JARK 스택 아키텍처
 
-![사용자가 JupyterHub를 통해 Argo Workflows와 Ray 클러스터를 실행하고, Ray 클러스터가 Karpenter로 GPU/Neuron/CPU 노드를 자동 프로비저닝하며, JupyterHub와 Ray가 공유 스토리지(EFS·FSx·S3)에 접근하는 ML 플랫폼 오케스트레이션 구조도.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-1.png)
+![사용자가 JupyterHub를 통해 Argo Workflows와 Ray 클러스터를 실행하고, Ray 클러스터가 Karpenter로 GPU/Neuron/CPU 노드를 자동 프로비저닝하며, JupyterHub와 Ray가 공유 스토리지(EFS·FSx·S3)에 접근하는 ML 플랫폼 오케스트레이션 구조도.](../../assets/diagrams/rendered/ko-ai-ml-06-ai-infrastructure-1.svg)
 
 ### JARK 스택 구성 요소
 
@@ -674,7 +674,7 @@ spec:
 
 ### DRA vs 기존 GPU 스케줄링
 
-![기존 디바이스 플러그인 방식은 GPU를 통째로 할당해 공유·세밀한 제어가 불가능한 반면, DRA(K8s 1.31+) 방식은 ResourceClaim과 ResourceSlice로 GPU 토폴로지를 추적해 세밀한 할당과 NVLink 인식 스케줄링을 가능하게 하고 DRA 이점(GPU 메모리 파티셔닝, 멀티테넌트 공유, NVLink 토폴로지 인식, P6e-GB200 지원)으로 이어짐을 비교하는 플로우차트.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-2.png)
+![기존 디바이스 플러그인 방식은 GPU를 통째로 할당해 공유·세밀한 제어가 불가능한 반면, DRA(K8s 1.31+) 방식은 ResourceClaim과 ResourceSlice로 GPU 토폴로지를 추적해 세밀한 할당과 NVLink 인식 스케줄링을 가능하게 하고 DRA 이점(GPU 메모리 파티셔닝, 멀티테넌트 공유, NVLink 토폴로지 인식, P6e-GB200 지원)으로 이어짐을 비교하는 플로우차트.](../../assets/diagrams/rendered/ko-ai-ml-06-ai-infrastructure-2.svg)
 
 ### DRA를 사용한 GPU 공유 전략
 

@@ -21,7 +21,7 @@ FluxCD는 Git 리포지토리를 Kubernetes 클러스터의 원하는 상태를 
 
 FluxCD는 GitOps 워크플로우를 구현하기 위해 함께 작동하는 전문화된 컨트롤러 세트로 구성됩니다:
 
-![Git 리포지토리의 네 가지 소스가 Source Controller로 모이고, Source Controller가 Kustomize Controller와 Helm Controller에 매니페스트를 넘겨 Kubernetes 클러스터 리소스에 반영하며, Notification Controller가 세 컨트롤러의 상태를 감시하고 Image Automation Controller가 새 이미지 태그를 GitRepository에 커밋해 순환을 완성하는 FluxCD GitOps 파이프라인을 보여준다.](../.gitbook/assets/ko-gitops-02-fluxcd-0.png)
+![Git 리포지토리의 네 가지 소스가 Source Controller로 모이고, Source Controller가 Kustomize Controller와 Helm Controller에 매니페스트를 넘겨 Kubernetes 클러스터 리소스에 반영하며, Notification Controller가 세 컨트롤러의 상태를 감시하고 Image Automation Controller가 새 이미지 태그를 GitRepository에 커밋해 순환을 완성하는 FluxCD GitOps 파이프라인을 보여준다.](../../assets/diagrams/rendered/ko-gitops-02-fluxcd-0.svg)
 
 ## 핵심 컴포넌트
 

@@ -28,7 +28,7 @@ Istio provides two types of authentication:
    - Integration with OAuth/OIDC providers
    - Configured with RequestAuthentication CRD
 
-![Sequence diagram of the Istio request-authentication flow: a user logs in with an OAuth/OIDC provider to get a JWT, presents it to Istio's Request Authentication filter at the gateway, which verifies the token and either forwards the request to the application or rejects it back to the user.](../../../.gitbook/assets/en-service-mesh-istio-security-02-authentication-0.png)
+![Sequence diagram of the Istio request-authentication flow: a user logs in with an OAuth/OIDC provider to get a JWT, presents it to Istio's Request Authentication filter at the gateway, which verifies the token and either forwards the request to the application or rejects it back to the user.](../../../../assets/diagrams/rendered/en-service-mesh-istio-security-02-authentication-0.svg)
 
 ## Request Authentication (JWT)
 

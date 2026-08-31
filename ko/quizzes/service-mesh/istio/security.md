@@ -297,7 +297,7 @@ spec:
 
 **JWT 검증 프로세스:**
 
-![클라이언트 요청의 Authorization 헤더에서 JWT를 추출해 issuer/audience, 서명(JWKS), 만료 시간을 순서대로 검증하고, 어느 단계든 실패하면 401로 거부하며 모두 통과해야만 요청을 허용하는 검증 흐름도](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-security-0.png)
+![클라이언트 요청의 Authorization 헤더에서 JWT를 추출해 issuer/audience, 서명(JWKS), 만료 시간을 순서대로 검증하고, 어느 단계든 실패하면 401로 거부하며 모두 통과해야만 요청을 허용하는 검증 흐름도](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-security-0.svg)
 
 **OIDC 제공자와 통합:**
 
@@ -443,7 +443,7 @@ spec:
 
 **인증서 라이프사이클:**
 
-![Istiod가 Envoy 사이드카에 24시간 수명의 X.509 인증서를 발급하고, 만료 8시간 전 Envoy가 CSR로 갱신을 요청해 Istiod가 새 인증서를 발급하면 Envoy가 무중단으로(Hot Reload) 교체하는 mTLS 인증서 자동 순환 시퀀스](../../../.gitbook/assets/ko-quizzes-service-mesh-istio-security-1.png)
+![Istiod가 Envoy 사이드카에 24시간 수명의 X.509 인증서를 발급하고, 만료 8시간 전 Envoy가 CSR로 갱신을 요청해 Istiod가 새 인증서를 발급하면 Envoy가 무중단으로(Hot Reload) 교체하는 mTLS 인증서 자동 순환 시퀀스](../../../../assets/diagrams/rendered/ko-quizzes-service-mesh-istio-security-1.svg)
 
 **인증서 확인:**
 

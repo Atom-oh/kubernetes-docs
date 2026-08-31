@@ -15,13 +15,13 @@ AWS Load Balancer Controller is a controller that manages AWS Elastic Load Balan
 - **AWS WAF Integration**: Web Application Firewall enforcement
 - **AWS Shield**: DDoS protection
 
-![Diagram showing Ingress, Service, and TargetGroupBinding resources triggering the AWS Load Balancer Controller, which creates an Application Load Balancer and a Network Load Balancer, each with its own AWS Target Group, all registering the same backend Pods.](../.gitbook/assets/en-networking-03-aws-lb-controller-0.png)
+![Diagram showing Ingress, Service, and TargetGroupBinding resources triggering the AWS Load Balancer Controller, which creates an Application Load Balancer and a Network Load Balancer, each with its own AWS Target Group, all registering the same backend Pods.](../../assets/diagrams/rendered/en-networking-03-aws-lb-controller-0.svg)
 
 ## Architecture
 
 ### How the Controller Works
 
-![Sequence diagram showing a user creating an Ingress or Service, the Kubernetes API notifying the LB Controller, the controller calling the AWS API to provision an ALB or NLB plus its target group and listener rules, then writing status back to Kubernetes so the user receives the load balancer's DNS name, with a note that the controller keeps registering and deregistering targets as Pods change.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
+![Sequence diagram showing a user creating an Ingress or Service, the Kubernetes API notifying the LB Controller, the controller calling the AWS API to provision an ALB or NLB plus its target group and listener rules, then writing status back to Kubernetes so the user receives the load balancer's DNS name, with a note that the controller keeps registering and deregistering targets as Pods change.](../../assets/diagrams/rendered/en-networking-03-aws-lb-controller-1.svg)
 
 ### Component Structure
 

@@ -24,7 +24,7 @@ In microservice architecture, numerous services depend on each other, and **a si
 
 Chaos Engineering, which originated from Netflix's Chaos Monkey, aims to **experience failures proactively in production environments** and discover system weaknesses.
 
-![Comparison flowchart showing how traditional testing only surfaces failures in production, while chaos engineering continuously injects faults to discover weaknesses and build a resilient system.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-0.png)
+![Comparison flowchart showing how traditional testing only surfaces failures in production, while chaos engineering continuously injects faults to discover weaknesses and build a resilient system.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-0.svg)
 
 #### 2. **Reproducing Real Production Scenarios**
 
@@ -42,7 +42,7 @@ In production environments, the following problems can occur:
 
 Without Fault Injection, it's **difficult to confirm whether Circuit Breaker and Timeout settings actually work**.
 
-![Flowchart showing a service sending a request into a fault-injected dependency, receiving delay or failure back, and reporting to monitoring to confirm the circuit breaker activated.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-1.png)
+![Flowchart showing a service sending a request into a fault-injected dependency, receiving delay or failure back, and reporting to monitoring to confirm the circuit breaker activated.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-1.svg)
 
 #### 4. **Validating Safe Deployments**
 
@@ -271,7 +271,7 @@ spec:
 
 ## Fault Injection Overview
 
-![Flowchart showing a client's request split into a delay path that reaches the service slowly and an abort path that returns an immediate error, both defined inside a fault injection zone.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-2.png)
+![Flowchart showing a client's request split into a delay path that reaches the service slowly and an abort path that returns an immediate error, both defined inside a fault injection zone.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-2.svg)
 
 ## Delay Injection
 
@@ -541,7 +541,7 @@ spec:
 
 **Situation**: Verify if one service failure propagates to other services
 
-![Flowchart showing a request path from frontend through order service to a fault-injected payment service, where a 30% failure rate trips a circuit breaker that protects the frontend and lets inventory service keep operating normally.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-3.png)
+![Flowchart showing a request path from frontend through order service to a fault-injected payment service, where a 30% failure rate trips a circuit breaker that protects the frontend and lets inventory service keep operating normally.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-3.svg)
 
 ```yaml
 # Inject faults into payment service
@@ -687,7 +687,7 @@ spec:
 
 Gradually increase fault rate to find system limits:
 
-![Flowchart showing four escalating fault-injection stages, each proceeding to the next once monitoring is clean, and each rolling back to a shared fix-and-improve step whenever an issue is found.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-4.png)
+![Flowchart showing four escalating fault-injection stages, each proceeding to the next once monitoring is clean, and each rolling back to a shared fix-and-improve step whenever an issue is found.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-08-fault-injection-4.svg)
 
 **Step-by-step execution**:
 

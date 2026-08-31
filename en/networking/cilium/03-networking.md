@@ -64,7 +64,7 @@ Container networking models define how containers communicate with each other. E
 
 ### Cilium Networking Modes
 
-![Diagram grouping Cilium's networking modes into overlay, native routing, and cloud integration, showing that skipping encapsulation with native routing yields the best performance while overlay modes trade some performance for portability.](../../.gitbook/assets/en-networking-cilium-03-networking-0.png)
+![Diagram grouping Cilium's networking modes into overlay, native routing, and cloud integration, showing that skipping encapsulation with native routing yields the best performance while overlay modes trade some performance for portability.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-0.svg)
 
 ## VXLAN Technology Deep Dive
 
@@ -115,7 +115,7 @@ data:
 
 This configuration instructs Cilium to set up inter-pod communication within the cluster using VXLAN tunneling. Each node acts as a VTEP and encapsulates pod traffic into VXLAN packets for transmission to other nodes.
 
-![Layer stack showing a VXLAN-encapsulated packet from the outer Ethernet header down through the outer IP header and the VXLAN header carrying the VNI, to the original inner Ethernet frame it wraps.](../../.gitbook/assets/en-networking-cilium-03-networking-1.png)
+![Layer stack showing a VXLAN-encapsulated packet from the outer Ethernet header down through the outer IP header and the VXLAN header carrying the VNI, to the original inner Ethernet frame it wraps.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-1.svg)
 
 ### How VXLAN Works:
 
@@ -139,7 +139,7 @@ Cilium uses VXLAN by default to implement overlay networking, but also supports 
 
 ### Cilium Overlay Network Architecture:
 
-![Architecture diagram showing a container on Host A reaching a container on Host B through each host's eBPF datapath and VTEP, which exchange VXLAN-encapsulated traffic over the shared physical network.](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
+![Architecture diagram showing a container on Host A reaching a container on Host B through each host's eBPF datapath and VTEP, which exchange VXLAN-encapsulated traffic over the shared physical network.](../../../assets/diagrams/rendered/en-networking-cilium-03-networking-2.svg)
 
 ### How Cilium Overlay Networking Works:
 

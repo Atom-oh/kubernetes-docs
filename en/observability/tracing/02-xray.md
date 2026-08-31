@@ -19,7 +19,7 @@ AWS X-Ray is an AWS native service for tracing and analyzing requests in distrib
 
 ## Architecture
 
-![Application pods in an Amazon EKS cluster, instrumented with the X-Ray SDK, send trace segments to an X-Ray daemon and OTLP data to an ADOT collector, both of which forward traces to AWS X-Ray; X-Ray also receives auto-instrumented traces from Lambda, API Gateway, SQS, and SNS, and in turn feeds CloudWatch, ServiceLens, and X-Ray Insights for analysis.](../../.gitbook/assets/en-observability-tracing-02-xray-0.png)
+![Application pods in an Amazon EKS cluster, instrumented with the X-Ray SDK, send trace segments to an X-Ray daemon and OTLP data to an ADOT collector, both of which forward traces to AWS X-Ray; X-Ray also receives auto-instrumented traces from Lambda, API Gateway, SQS, and SNS, and in turn feeds CloudWatch, ServiceLens, and X-Ray Insights for analysis.](../../../assets/diagrams/rendered/en-observability-tracing-02-xray-0.svg)
 
 ## X-Ray Daemon Deployment
 

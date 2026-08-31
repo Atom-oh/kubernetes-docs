@@ -20,7 +20,7 @@ Grafana는 메트릭, 로그, 추적 데이터를 시각화하고 분석하기 �
 
 ## 아키텍처
 
-![사용자의 요청이 Grafana 서버 내부의 Frontend와 Backend를 거쳐 PostgreSQL/Redis 저장소에 기록되고, Plugin System을 통해 여러 데이터 소스를 조회하며, Alerting Engine이 별도로 알림 채널로 알림을 전송하는 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-grafana-readme-0.png)
+![사용자의 요청이 Grafana 서버 내부의 Frontend와 Backend를 거쳐 PostgreSQL/Redis 저장소에 기록되고, Plugin System을 통해 여러 데이터 소스를 조회하며, Alerting Engine이 별도로 알림 채널로 알림을 전송하는 아키텍처를 보여준다.](../../../assets/diagrams/rendered/ko-observability-grafana-readme-0.svg)
 
 ## Helm 배포
 

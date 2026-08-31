@@ -149,7 +149,7 @@ Controlling the X-Forwarded-For (XFF) header and hop count is crucial for tracki
 
 ### X-Forwarded-For Overview
 
-![Sequence diagram showing a client request passing through a load balancer, an Istio Gateway, and an Envoy sidecar, with each hop appending its own address to the X-Forwarded-For header before the application receives the final request.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-0.png)
+![Sequence diagram showing a client request passing through a load balancer, an Istio Gateway, and an Envoy sidecar, with each hop appending its own address to the X-Forwarded-For header before the application receives the final request.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-0.svg)
 
 ### XFF Configuration Options
 
@@ -246,7 +246,7 @@ xff_num_trusted_hops: 3 -> Trust last 3
 
 #### Scenario 1: AWS ALB + Istio Gateway
 
-![Flowchart showing a client request passing through a single AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at the ALB.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-1.png)
+![Flowchart showing a client request passing through a single AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at the ALB.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-1.svg)
 
 **Configuration**:
 
@@ -285,7 +285,7 @@ spec:
 
 #### Scenario 2: Client -> CloudFront -> ALB -> Gateway
 
-![Flowchart showing a client request passing through CloudFront and an AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at each proxy.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-2.png)
+![Flowchart showing a client request passing through CloudFront and an AWS ALB before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining one hop at each proxy.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-2.svg)
 
 **Configuration**:
 
@@ -328,7 +328,7 @@ xff_num_trusted_hops: 2 -> Trust last 2 (CloudFront, ALB)
 
 #### Scenario 3: Client -> CloudFront -> NLB -> ALB -> Gateway
 
-![Flowchart showing a client request passing through CloudFront, an AWS NLB, and an AWS ALB before reaching the Istio Gateway and application, highlighting that the L4 NLB passes the header through unchanged while CloudFront and the ALB each add a hop.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-3.png)
+![Flowchart showing a client request passing through CloudFront, an AWS NLB, and an AWS ALB before reaching the Istio Gateway and application, highlighting that the L4 NLB passes the header through unchanged while CloudFront and the ALB each add a hop.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-3.svg)
 
 **Configuration**:
 
@@ -374,7 +374,7 @@ xff_num_trusted_hops: 2 -> Trust last 2 (CloudFront, ALB)
 
 #### Scenario 4: Client -> ALB -> Gateway (Direct Connection)
 
-![Flowchart showing a client request passing through a single AWS ALB with no CDN in front of it before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining exactly one hop at the ALB.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-4.png)
+![Flowchart showing a client request passing through a single AWS ALB with no CDN in front of it before reaching the Istio Gateway and application, with the X-Forwarded-For header gaining exactly one hop at the ALB.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-4.svg)
 
 **Configuration**:
 
@@ -677,7 +677,7 @@ spec:
 
 #### Architecture Overview
 
-![Architecture diagram showing two clients reaching an AWS ALB and Istio Gateway, where the Gateway's EnvoyFilter extracts the real client IP from X-Forwarded-For once for all apps, after which unrestricted apps accept any IP while IP-restricted apps allow only the company NAT range.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-5.png)
+![Architecture diagram showing two clients reaching an AWS ALB and Istio Gateway, where the Gateway's EnvoyFilter extracts the real client IP from X-Forwarded-For once for all apps, after which unrestricted apps accept any IP while IP-restricted apps allow only the company NAT range.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-5.svg)
 
 #### Core Principle
 
@@ -775,7 +775,7 @@ spec:
 
 #### Operation Flow
 
-![Sequence diagram of a single client request traveling through an ALB and Istio Gateway, where the Gateway extracts the real client IP once and forwards it to two apps — one with no AuthorizationPolicy that returns 200 OK, and one with an IP-restriction policy that returns 403 Forbidden for the same client.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-6.png)
+![Sequence diagram of a single client request traveling through an ALB and Istio Gateway, where the Gateway extracts the real client IP once and forwards it to two apps — one with no AuthorizationPolicy that returns 200 OK, and one with an IP-restriction policy that returns 403 Forbidden for the same client.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-6.svg)
 
 #### Why Gateway Configuration is Needed?
 
@@ -1093,7 +1093,7 @@ You can return static responses directly without going through backend services 
 
 ### Static Response Overview
 
-![Flowchart showing a client request reaching the Envoy proxy, which returns a static response directly to the client when a match condition is met, and only proxies through to the backend service otherwise.](../../../.gitbook/assets/en-service-mesh-istio-advanced-03-envoy-filter-7.png)
+![Flowchart showing a client request reaching the Envoy proxy, which returns a static response directly to the client when a match condition is met, and only proxies through to the backend service otherwise.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-03-envoy-filter-7.svg)
 
 ### Use Cases
 

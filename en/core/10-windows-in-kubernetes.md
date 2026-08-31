@@ -33,7 +33,7 @@ There are two types of Windows containers:
 
 The following diagram shows the architectural differences between the two Windows container types:
 
-![Comparison of Windows Server Containers, which share one host kernel, against Hyper-V Isolation Containers, where each container gets its own lightweight VM and kernel before reaching the shared hypervisor and hardware.](../.gitbook/assets/en-core-10-windows-in-kubernetes-0.png)
+![Comparison of Windows Server Containers, which share one host kernel, against Hyper-V Isolation Containers, where each container gets its own lightweight VM and kernel before reaching the shared hypervisor and hardware.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-0.svg)
 
 ### Windows Container Images
 
@@ -66,7 +66,7 @@ The Windows support architecture in Kubernetes is as follows:
 2. **Linux Worker Nodes**: Run system components (CoreDNS, metrics-server, etc.).
 3. **Windows Worker Nodes**: Run Windows application workloads.
 
-![A single Linux-only control plane manages a mixed cluster, reaching both a Linux worker node and two Windows worker nodes that each run kubelet, kube-proxy, and Windows containers.](../.gitbook/assets/en-core-10-windows-in-kubernetes-1.png)
+![A single Linux-only control plane manages a mixed cluster, reaching both a Linux worker node and two Windows worker nodes that each run kubelet, kube-proxy, and Windows containers.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-1.svg)
 
 ### Windows Node Components
 
@@ -300,7 +300,7 @@ Networking on Windows nodes has different characteristics than Linux nodes.
 
 The following diagram shows the networking architecture of a Kubernetes cluster with mixed Windows and Linux nodes:
 
-![A client request reaches a Kubernetes Service, which load-balances to Linux and Windows pods alike, while the pods themselves form one flat mesh network regardless of node OS.](../.gitbook/assets/en-core-10-windows-in-kubernetes-2.png)
+![A client request reaches a Kubernetes Service, which load-balances to Linux and Windows pods alike, while the pods themselves form one flat mesh network regardless of node OS.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-2.svg)
 
 ### Supported Network Plugins
 
@@ -430,7 +430,7 @@ Let's explore storage options available on Windows nodes.
 
 The following diagram shows various storage options available on Windows nodes:
 
-![A Windows container can mount emptyDir, hostPath, ConfigMap, Secret, or PersistentVolume storage, with hostPath backed by the node disk and PersistentVolumes reaching Azure Disk/File, AWS EBS, or SMB shares through a CSI driver.](../.gitbook/assets/en-core-10-windows-in-kubernetes-3.png)
+![A Windows container can mount emptyDir, hostPath, ConfigMap, Secret, or PersistentVolume storage, with hostPath backed by the node disk and PersistentVolumes reaching Azure Disk/File, AWS EBS, or SMB shares through a CSI driver.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-3.svg)
 
 ### Supported Volume Types
 
@@ -815,7 +815,7 @@ Let's explore how to run Windows workloads in Amazon EKS.
 
 The following diagram shows the Windows support architecture in Amazon EKS:
 
-![The managed EKS control plane reaches both a Linux node group and a Windows node group, plus AWS IAM, VPC, and CloudWatch, while Windows application pods reach end users through an Elastic Load Balancer.](../.gitbook/assets/en-core-10-windows-in-kubernetes-4.png)
+![The managed EKS control plane reaches both a Linux node group and a Windows node group, plus AWS IAM, VPC, and CloudWatch, while Windows application pods reach end users through an Elastic Load Balancer.](../../assets/diagrams/rendered/en-core-10-windows-in-kubernetes-4.svg)
 
 ### Enabling Windows Support in EKS
 

@@ -14,7 +14,7 @@ BGP(Border Gateway Protocol)는 Calico의 핵심 차별화 요소입니다. Cili
 
 BGP(Border Gateway Protocol)는 인터넷의 핵심 라우팅 프로토콜로, 자율 시스템(Autonomous System, AS) 간에 라우팅 정보를 교환합니다. 현재 BGP-4가 표준이며, RFC 4271에 정의되어 있습니다.
 
-![세 개의 자율 시스템(AS 64512, AS 64513, AS 64514)에서 같은 AS 내부 라우터는 iBGP로, AS 경계를 넘는 라우터끼리는 eBGP로 연결되어 라우팅 정보를 교환하는 모습을 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-0.png)
+![세 개의 자율 시스템(AS 64512, AS 64513, AS 64514)에서 같은 AS 내부 라우터는 iBGP로, AS 경계를 넘는 라우터끼리는 eBGP로 연결되어 라우팅 정보를 교환하는 모습을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-0.svg)
 
 ### AS 번호 (Autonomous System Number)
 
@@ -54,13 +54,13 @@ BGP는 두 가지 모드로 운영됩니다:
 | Administrative Distance | 200                 | 20                  |
 | 사용 사례                   | 클러스터 내부             | 외부 라우터 연결           |
 
-![AS 64512에 속한 3개의 Kubernetes 노드가 서로 iBGP로 완전 연결되어 있고, 각 노드가 별도의 AS 64513에 속한 ToR 스위치와 개별적으로 eBGP를 맺는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-1.png)
+![AS 64512에 속한 3개의 Kubernetes 노드가 서로 iBGP로 완전 연결되어 있고, 각 노드가 별도의 AS 64513에 속한 ToR 스위치와 개별적으로 eBGP를 맺는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-1.svg)
 
 ### BGP 경로 선택 알고리즘
 
 BGP는 여러 경로 중 최적의 경로를 선택하기 위해 다음 순서로 속성을 비교합니다:
 
-![BGP 라우터가 경로 수신 후 Weight부터 Neighbor IP까지 11개의 속성을 순서대로 비교하다가 값이 다른 첫 속성에서 최적 경로를 확정하고, 모두 동일하면 다음 속성으로 계속 넘어가는 흐름을 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-2.png)
+![BGP 라우터가 경로 수신 후 Weight부터 Neighbor IP까지 11개의 속성을 순서대로 비교하다가 값이 다른 첫 속성에서 최적 경로를 확정하고, 모두 동일하면 다음 속성으로 계속 넘어가는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-2.svg)
 
 **주요 경로 속성 상세:**
 
@@ -83,7 +83,7 @@ BGP는 여러 경로 중 최적의 경로를 선택하기 위해 다음 순서�
 
 기본적으로 Calico는 모든 노드 간에 iBGP full-mesh를 구성합니다.
 
-![5개의 Kubernetes 노드가 서로 모든 쌍에 대해 직접 iBGP 세션을 맺어 10개의 세션으로 완전 연결된 full-mesh 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-3.png)
+![5개의 Kubernetes 노드가 서로 모든 쌍에 대해 직접 iBGP 세션을 맺어 10개의 세션으로 완전 연결된 full-mesh 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-3.svg)
 
 **Full-Mesh BGP 세션 계산:**
 
@@ -104,7 +104,7 @@ BGP는 여러 경로 중 최적의 경로를 선택하기 위해 다음 순서�
 
 Route Reflector(RR)는 iBGP의 full-mesh 요구사항을 해결합니다.
 
-![6개의 클라이언트 노드가 각각 자신이 속한 Route Reflector 한 대에만 연결되고, 두 Route Reflector끼리는 서로 mesh로 연결되어, 노드 간 완전 연결 없이도 모든 경로가 전파되는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-4.png)
+![6개의 클라이언트 노드가 각각 자신이 속한 Route Reflector 한 대에만 연결되고, 두 Route Reflector끼리는 서로 mesh로 연결되어, 노드 간 완전 연결 없이도 모든 경로가 전파되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-4.svg)
 
 **Route Reflector 동작 원리:**
 
@@ -516,7 +516,7 @@ ip prefix-list KUBERNETES-PODS
 
 ### Spine-Leaf 아키텍처 통합
 
-![2대의 Spine 스위치가 3개 랙의 Leaf 스위치 각각과 eBGP로 연결되고, 각 Leaf는 자기 랙에 속한 Kubernetes 노드들과 다시 eBGP로 연결되어 물리 네트워크와 클러스터가 계층적으로 통합되는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-5.png)
+![2대의 Spine 스위치가 3개 랙의 Leaf 스위치 각각과 eBGP로 연결되고, 각 Leaf는 자기 랙에 속한 Kubernetes 노드들과 다시 eBGP로 연결되어 물리 네트워크와 클러스터가 계층적으로 통합되는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-5.svg)
 
 #### Calico 설정 (Spine-Leaf 통합)
 
@@ -822,7 +822,7 @@ calicoctl get node -o wide
 
 각 랙에 별도의 AS 번호를 할당하여 확장성을 높입니다.
 
-![두 데이터센터가 각각 랙마다 별도의 AS를 두고 Spine이 각 랙과 eBGP로 연결되며, 두 데이터센터의 Spine이 공통 WAN 라우터(AS 64000)를 통해 서로 연결되는 멀티 데이터센터 BGP 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-6.png)
+![두 데이터센터가 각각 랙마다 별도의 AS를 두고 Spine이 각 랙과 eBGP로 연결되며, 두 데이터센터의 Spine이 공통 WAN 라우터(AS 64000)를 통해 서로 연결되는 멀티 데이터센터 BGP 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-6.svg)
 
 #### AS-per-Rack Calico 설정
 

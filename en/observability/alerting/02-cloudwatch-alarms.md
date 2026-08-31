@@ -48,13 +48,13 @@ Amazon CloudWatch Alarms is the alerting feature of AWS's native monitoring serv
 
 ### CloudWatch Alarms Operation Flow
 
-![Metrics from EC2, EKS, RDS, Lambda, and custom sources feed CloudWatch Metrics, which alarms evaluate directly or via metric math and anomaly detection bands; triggered alarms fan out to SNS and other actions, and SNS forwards to notification channels.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png)
+![Metrics from EC2, EKS, RDS, Lambda, and custom sources feed CloudWatch Metrics, which alarms evaluate directly or via metric math and anomaly detection bands; triggered alarms fan out to SNS and other actions, and SNS forwards to notification channels.](../../../assets/diagrams/rendered/en-observability-alerting-02-cloudwatch-alarms-0.svg)
 
 ### Alarm States
 
 CloudWatch Alarms have three states:
 
-![A CloudWatch alarm starts OK, moves to ALARM when its threshold is exceeded and back to OK once the metric returns to normal, and falls into INSUFFICIENT_DATA from either state when metric data stops arriving until data resumes.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png)
+![A CloudWatch alarm starts OK, moves to ALARM when its threshold is exceeded and back to OK once the metric returns to normal, and falls into INSUFFICIENT_DATA from either state when metric data stops arriving until data resumes.](../../../assets/diagrams/rendered/en-observability-alerting-02-cloudwatch-alarms-1.svg)
 
 ---
 
@@ -198,7 +198,7 @@ math-functions:
 
 Composite Alarms can combine multiple Metric Alarms to define complex conditions.
 
-![Three metric alarms and a combining rule feed a composite alarm that evaluates the boolean condition across them, and only the composite alarm triggers the downstream SNS/Lambda action.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png)
+![Three metric alarms and a combining rule feed a composite alarm that evaluates the boolean condition across them, and only the composite alarm triggers the downstream SNS/Lambda action.](../../../assets/diagrams/rendered/en-observability-alerting-02-cloudwatch-alarms-2.svg)
 
 ### Creating Composite Alarms
 
@@ -303,7 +303,7 @@ aws cloudwatch set-alarm-state \
 
 CloudWatch Anomaly Detection uses machine learning to learn normal patterns of metrics and detect outliers.
 
-![A learning phase trains an ML model on historical data to produce an expected band, and a detection phase checks current metrics against that band, raising an anomaly alert when they fall outside it or marking the metric normal when they fall within it.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png)
+![A learning phase trains an ML model on historical data to produce an expected band, and a detection phase checks current metrics against that band, raising an anomaly alert when they fall outside it or marking the metric normal when they fall within it.](../../../assets/diagrams/rendered/en-observability-alerting-02-cloudwatch-alarms-3.svg)
 
 ### Creating Anomaly Detection Alarms
 
@@ -533,7 +533,7 @@ aws events put-targets \
 
 ### Automatic Response Configuration
 
-![A CloudWatch alarm state change flows through EventBridge to an event rule that dispatches it to one of five automated responses: auto scaling, instance restart, Slack notification, an SSM runbook, or a Step Functions recovery workflow.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png)
+![A CloudWatch alarm state change flows through EventBridge to an event rule that dispatches it to one of five automated responses: auto scaling, instance restart, Slack notification, an SSM runbook, or a Step Functions recovery workflow.](../../../assets/diagrams/rendered/en-observability-alerting-02-cloudwatch-alarms-4.svg)
 
 ### EventBridge Event Pattern
 
@@ -777,7 +777,7 @@ aws cloudwatch put-metric-alarm \
 
 ### Cost Optimization Strategies
 
-![Four cost-optimization strategies branch from a central goal — minimizing alarm count, optimizing evaluation resolution, using composite alarms, and removing unnecessary alarms — each broken down into concrete tactics.](../../.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png)
+![Four cost-optimization strategies branch from a central goal — minimizing alarm count, optimizing evaluation resolution, using composite alarms, and removing unnecessary alarms — each broken down into concrete tactics.](../../../assets/diagrams/rendered/en-observability-alerting-02-cloudwatch-alarms-5.svg)
 
 ### Recommended Settings
 

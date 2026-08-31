@@ -75,7 +75,7 @@ spec:
     automated: {}  # Enable auto-sync with defaults
 ```
 
-![Flow diagram showing Argo CD detecting changes in Git via webhook or polling, comparing desired vs live state, applying changes when drift is detected, and receiving status feedback from the target cluster.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-0.png)
+![Flow diagram showing Argo CD detecting changes in Git via webhook or polling, comparing desired vs live state, applying changes when drift is detected, and receiving status feedback from the target cluster.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-0.svg)
 
 ## Auto-Sync Policies
 
@@ -105,7 +105,7 @@ syncPolicy:
 
 **Use case**: Prevent configuration drift from manual kubectl changes or other tools.
 
-![Sequence diagram showing a user manually scaling a deployment with kubectl, Argo CD detecting the state change, reading the desired replica count from Git, and reapplying it so Kubernetes self-heals back to the Git-declared state.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-1.png)
+![Sequence diagram showing a user manually scaling a deployment with kubectl, Argo CD detecting the state change, reading the desired replica count from Git, and reapplying it so Kubernetes self-heals back to the Git-declared state.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-1.svg)
 
 ### Allow Empty
 
@@ -243,7 +243,7 @@ Resources are grouped by wave number and synced in order:
 2. Within a wave, hooks run first, then resources
 3. Next wave starts only after previous completes
 
-![Layer-stack diagram showing Argo CD sync waves applying resources in order from wave -2 through wave 1: CRDs first, then namespaces and service accounts, then the default wave of config maps, secrets, and deployments, then services and ingress last.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-2.png)
+![Layer-stack diagram showing Argo CD sync waves applying resources in order from wave -2 through wave 1: CRDs first, then namespaces and service accounts, then the default wave of config maps, secrets, and deployments, then services and ingress last.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-2.svg)
 
 ### Setting Sync Wave
 
@@ -660,7 +660,7 @@ spec:
 
 ### Retry Flow
 
-![Sequence diagram showing a controller retrying a failed sync against Kubernetes with exponential backoff waits of 5, 10, and 20 seconds, succeeding on the fourth attempt and reporting the synced status back to the application.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-3.png)
+![Sequence diagram showing a controller retrying a failed sync against Kubernetes with exponential backoff waits of 5, 10, and 20 seconds, succeeding on the fourth attempt and reporting the synced status back to the application.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-3.svg)
 
 ### Retry Only on Specific Errors
 

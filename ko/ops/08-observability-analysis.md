@@ -305,13 +305,13 @@ func recordMetricWithExemplar(ctx context.Context, duration float64, labels prom
 
 ### 아키텍처 다이어그램
 
-![애플리케이션의 트레이스·로그·메트릭이 OpenTelemetry Collector(Receivers→Processors→Exporters)를 거쳐 Prometheus/AMP, Loki, Tempo에 각각 저장되고, Grafana가 세 저장소를 조회하며 Tempo가 exemplar와 trace_id로 메트릭·로그를 연결하는 상관관계 허브 역할을 하는 관찰 가능성 파이프라인 구조를 보여준다.](../.gitbook/assets/ko-ops-08-observability-analysis-0.png)
+![애플리케이션의 트레이스·로그·메트릭이 OpenTelemetry Collector(Receivers→Processors→Exporters)를 거쳐 Prometheus/AMP, Loki, Tempo에 각각 저장되고, Grafana가 세 저장소를 조회하며 Tempo가 exemplar와 trace_id로 메트릭·로그를 연결하는 상관관계 허브 역할을 하는 관찰 가능성 파이프라인 구조를 보여준다.](../../assets/diagrams/rendered/ko-ops-08-observability-analysis-0.svg)
 
 ### 상관 분석 워크플로우
 
 문제 발생 시 상관 분석을 통한 근본 원인 분석 워크플로우입니다.
 
-![메트릭 알림이 발생했을 때 exemplar 존재 여부에 따라 트레이스를 바로 조회하거나 시간 범위로 검색한 뒤, 스팬을 분석하고 관련 로그를 확인해 근본 원인을 파악하고 해결 조치로 이어지는 장애 조사 절차를 보여준다.](../.gitbook/assets/ko-ops-08-observability-analysis-1.png)
+![메트릭 알림이 발생했을 때 exemplar 존재 여부에 따라 트레이스를 바로 조회하거나 시간 범위로 검색한 뒤, 스팬을 분석하고 관련 로그를 확인해 근본 원인을 파악하고 해결 조치로 이어지는 장애 조사 절차를 보여준다.](../../assets/diagrams/rendered/ko-ops-08-observability-analysis-1.svg)
 
 1. **Alert 발생**: Prometheus에서 알림 트리거
 2. **Metric 확인**: 관련 메트릭 대시보드에서 이상 패턴 확인

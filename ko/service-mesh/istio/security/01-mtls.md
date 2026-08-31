@@ -45,7 +45,7 @@ spiffe://cluster.local/ns/default/sa/productpage
 5. Agent가 Envoy에 인증서 전달 (SDS 프로토콜)
 6. 인증서 자동 갱신 (기본 TTL: 24시간)
 
-![Envoy 사이드카 간 mTLS 암호화 통신과 istiod가 각 Envoy에 인증서를 발급하는 과정을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-0.png)
+![Envoy 사이드카 간 mTLS 암호화 통신과 istiod가 각 Envoy에 인증서를 발급하는 과정을 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-01-mtls-0.svg)
 
 ## mTLS 모드
 
@@ -102,7 +102,7 @@ Istio는 설치 시 자동으로 자체 서명된 루트 CA를 생성합니다. 
 - **Intermediate CA**: 워크로드 인증서 발급용 중간 CA
 - **Workload Certificates**: 각 서비스의 mTLS 인증서 (자동 갱신)
 
-![Istio CA의 Root CA가 Intermediate CA에 서명하고, Intermediate CA가 각 워크로드 서비스에 인증서를 발급하는 계층 구조를 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-1.png)
+![Istio CA의 Root CA가 Intermediate CA에 서명하고, Intermediate CA가 각 워크로드 서비스에 인증서를 발급하는 계층 구조를 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-01-mtls-1.svg)
 
 **기본 인증서 속성**:
 - 유효 기간: **90일** (자동 갱신: 만료 24시간 전)
@@ -405,7 +405,7 @@ spec:
 
 ALB는 클라이언트 인증서 기반 mTLS를 지원합니다.
 
-![클라이언트의 mTLS가 ALB에서 종료되고, ALB부터 Istio Gateway와 백엔드 서비스까지는 TLS/mTLS로 이어지는 구간별 보안 체인을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-2.png)
+![클라이언트의 mTLS가 ALB에서 종료되고, ALB부터 Istio Gateway와 백엔드 서비스까지는 TLS/mTLS로 이어지는 구간별 보안 체인을 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-01-mtls-2.svg)
 
 #### 1단계: ALB에 mTLS 설정
 
@@ -530,7 +530,7 @@ spec:
 
 CloudFront는 클라이언트 인증서 검증을 지원합니다.
 
-![클라이언트의 mTLS가 CloudFront 엣지에서 검증되고, ALB와 Istio Gateway를 거쳐 백엔드 서비스까지 TLS/mTLS로 이어지는 구간별 보안 체인을 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-3.png)
+![클라이언트의 mTLS가 CloudFront 엣지에서 검증되고, ALB와 Istio Gateway를 거쳐 백엔드 서비스까지 TLS/mTLS로 이어지는 구간별 보안 체인을 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-01-mtls-3.svg)
 
 #### 1단계: CloudFront 배포 생성
 
@@ -669,7 +669,7 @@ spec:
 
 클라이언트부터 백엔드까지 전체 구간 mTLS:
 
-![클라이언트부터 CloudFront, ALB, Istio Gateway를 거쳐 메시 내부 서비스 A·B·C까지 6개 구간이 모두 mTLS 또는 TLS로 보호되는 전체 경로를 보여주는 다이어그램](../../../.gitbook/assets/ko-service-mesh-istio-security-01-mtls-4.png)
+![클라이언트부터 CloudFront, ALB, Istio Gateway를 거쳐 메시 내부 서비스 A·B·C까지 6개 구간이 모두 mTLS 또는 TLS로 보호되는 전체 경로를 보여주는 다이어그램](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-01-mtls-4.svg)
 
 **구간별 보안**:
 1. **클라이언트 → CloudFront**: mTLS (클라이언트 인증서 검증)

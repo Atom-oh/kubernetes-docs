@@ -55,7 +55,7 @@ MWAA(Managed Workflows for Apache Airflow)는 scheduler, api-server(Part 1에서
 
 MWAA 자체 컨트롤 플레인이 EKS 클러스터 위에 있지 않더라도, MWAA의 DAG는 여전히 사용자가 직접 소유한 EKS 클러스터의 워크로드를 대상으로 삼아 제어할 수 있습니다 — Part 3에서 다룬 것과 동일한 `KubernetesPodOperator`를 in-cluster 대신 바깥쪽 클러스터를 향하도록 구성하는 것입니다.
 
-![AWS가 관리하는 MWAA 환경의 DAG가 S3에서 받은 kube_config.yaml로 별도 인프라인 사용자 EKS 클러스터에 접속해 Pod를 생성하고, eksctl로 사전에 부여한 IAM RBAC 매핑이 이 접근을 허용하는 과정을 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-data-on-eks-airflow-04-mwaa-integration-0.png)
+![AWS가 관리하는 MWAA 환경의 DAG가 S3에서 받은 kube_config.yaml로 별도 인프라인 사용자 EKS 클러스터에 접속해 Pod를 생성하고, eksctl로 사전에 부여한 IAM RBAC 매핑이 이 접근을 허용하는 과정을 보여주는 아키텍처 다이어그램.](../../../assets/diagrams/rendered/ko-data-on-eks-airflow-04-mwaa-integration-0.svg)
 
 MWAA 실행 환경에는 in-cluster Kubernetes API 접근 권한이 없으므로, `KubernetesPodOperator`도 다른 외부 클라이언트와 똑같은 방식으로 인증해야 합니다. 즉 kubeconfig 파일과, 대상 클러스터의 RBAC가 신뢰하는 IAM 아이덴티티가 필요합니다.
 

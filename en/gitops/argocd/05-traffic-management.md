@@ -35,7 +35,7 @@ Standard Kubernetes Deployments only support rolling updates. Argo Rollouts exte
 
 ### Architecture
 
-![Architecture diagram showing the Argo Rollouts controller driving an ingress controller, service mesh, and active/preview replica sets, while the Analysis controller queries metrics backends and reports pass/fail back to the controller.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-0.png)
+![Architecture diagram showing the Argo Rollouts controller driving an ingress controller, service mesh, and active/preview replica sets, while the Analysis controller queries metrics backends and reports pass/fail back to the controller.](../../../assets/diagrams/rendered/en-gitops-argocd-05-traffic-management-0.svg)
 
 ## Installation
 
@@ -183,7 +183,7 @@ spec:
 
 ### Blue-Green Flow
 
-![Sequence diagram showing a Rollout shifting traffic from an active v1 service to a preview v2 service, running pre- and post-promotion analysis, and switching production traffic to v2 after either automatic or manually approved promotion.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-1.png)
+![Sequence diagram showing a Rollout shifting traffic from an active v1 service to a preview v2 service, running pre- and post-promotion analysis, and switching production traffic to v2 after either automatic or manually approved promotion.](../../../assets/diagrams/rendered/en-gitops-argocd-05-traffic-management-1.svg)
 
 ### Blue-Green with Auto-Promotion
 
@@ -325,7 +325,7 @@ kubectl argo rollouts promote myapp-canary --full
 
 ### Canary Traffic Flow
 
-![Architecture diagram showing an ingress controller splitting all incoming requests, sending 90 percent of traffic to three stable v1 pods and 10 percent to one canary v2 pod.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
+![Architecture diagram showing an ingress controller splitting all incoming requests, sending 90 percent of traffic to three stable v1 pods and 10 percent to one canary v2 pod.](../../../assets/diagrams/rendered/en-gitops-argocd-05-traffic-management-2.svg)
 
 ## Analysis and Verification
 

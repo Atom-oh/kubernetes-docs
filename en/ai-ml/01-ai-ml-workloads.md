@@ -9,7 +9,7 @@ Kubernetes is a powerful platform for running AI/ML workloads. In this chapter, 
 
 AI/ML workloads have different characteristics compared to typical application workloads:
 
-![Diagram showing that AI/ML workloads are resource intensive and diverse; resource-intensive workloads require GPU acceleration, large memory, high-performance CPU, and high-speed networking, while diverse workloads span model training, inference, data preprocessing, and hyperparameter optimization.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-0.png)
+![Diagram showing that AI/ML workloads are resource intensive and diverse; resource-intensive workloads require GPU acceleration, large memory, high-performance CPU, and high-speed networking, while diverse workloads span model training, inference, data preprocessing, and hyperparameter optimization.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-0.svg)
 
 1. **Resource Intensive**: Requires significant computing resources including GPUs, high-performance CPUs, and large memory.
 2. **Data Intensive**: Requires fast access to large datasets.
@@ -68,7 +68,7 @@ Vector database integration for embeddings and semantic search:
 
 ## AI/ML Infrastructure Configuration in EKS
 
-![Diagram showing an Amazon EKS cluster with training, inference, and CPU node groups that all depend on shared storage (EBS, EFS, FSx for Lustre, S3) and shared networking (VPC CNI, ENA/EFA, placement groups), with the cluster integrating with AWS services SageMaker, ECR, and CloudWatch.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-1.png)
+![Diagram showing an Amazon EKS cluster with training, inference, and CPU node groups that all depend on shared storage (EBS, EFS, FSx for Lustre, S3) and shared networking (VPC CNI, ENA/EFA, placement groups), with the cluster integrating with AWS services SageMaker, ECR, and CloudWatch.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-1.svg)
 
 ### Node Type Selection
 
@@ -136,7 +136,7 @@ Networking configuration for distributed training:
 
 ## AI/ML Workload Deployment
 
-![Diagram showing the NVIDIA GPU Operator expanding into driver, container toolkit, device plugin, and DCGM exporter; Kubeflow expanding into notebooks, training jobs, pipelines, and Katib; the MPI Operator as a standalone component; and KServe expanding into a model serving stack of KServe, TorchServe, and Triton Inference Server.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-2.png)
+![Diagram showing the NVIDIA GPU Operator expanding into driver, container toolkit, device plugin, and DCGM exporter; Kubeflow expanding into notebooks, training jobs, pipelines, and Katib; the MPI Operator as a standalone component; and KServe expanding into a model serving stack of KServe, TorchServe, and Triton Inference Server.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-2.svg)
 
 ### NVIDIA GPU Operator
 
@@ -180,7 +180,7 @@ Kubeflow provides the following components:
 
 Kubernetes resources for distributed training:
 
-![Diagram showing a launcher pod starting four worker pods that exchange gradients bidirectionally over NVIDIA NCCL, which runs over MPI and the Elastic Fabric Adapter; the worker pods also write to FSx for Lustre, which syncs to Amazon S3 and a checkpoint store.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-3.png)
+![Diagram showing a launcher pod starting four worker pods that exchange gradients bidirectionally over NVIDIA NCCL, which runs over MPI and the Elastic Fabric Adapter; the worker pods also write to FSx for Lustre, which syncs to Amazon S3 and a checkpoint store.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-3.svg)
 
 1. **MPI Operator**:
 
@@ -266,7 +266,7 @@ spec:
 
 Options for model serving:
 
-![Diagram showing a client sending requests through networking (Ingress, ALB, API Gateway) to inference services (KServe, TorchServe, Triton), which read from model storage (S3, ECR, EFS) and are scaled by HPA, KEDA, and VPA.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-4.png)
+![Diagram showing a client sending requests through networking (Ingress, ALB, API Gateway) to inference services (KServe, TorchServe, Triton), which read from model storage (S3, ECR, EFS) and are scaled by HPA, KEDA, and VPA.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-4.svg)
 
 1. **KServe**:
 
@@ -397,7 +397,7 @@ spec:
 
 ## AI/ML Workload Optimization
 
-![Diagram showing GPU optimization, training optimization, and storage optimization all feeding into a performance improvement outcome, while cost optimization (spot instances, auto scaling, hybrid nodes) feeds into a cost reduction outcome.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-5.png)
+![Diagram showing GPU optimization, training optimization, and storage optimization all feeding into a performance improvement outcome, while cost optimization (spot instances, auto scaling, hybrid nodes) feeds into a cost reduction outcome.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-5.svg)
 
 ### GPU Memory Optimization
 
@@ -572,7 +572,7 @@ spec:
 
 ## Monitoring and Logging
 
-![Diagram showing GPU, node, and kube-state exporters feeding Prometheus, which drives Alert Manager into alerts and Grafana into dashboards; separately, Fluentd ships logs to CloudWatch Logs and to Elasticsearch, which feeds Kibana.](../.gitbook/assets/en-ai-ml-01-ai-ml-workloads-6.png)
+![Diagram showing GPU, node, and kube-state exporters feeding Prometheus, which drives Alert Manager into alerts and Grafana into dashboards; separately, Fluentd ships logs to CloudWatch Logs and to Elasticsearch, which feeds Kibana.](../../assets/diagrams/rendered/en-ai-ml-01-ai-ml-workloads-6.svg)
 
 ### Prometheus and Grafana
 

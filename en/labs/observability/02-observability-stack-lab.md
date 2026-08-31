@@ -23,7 +23,7 @@
 
 ## Architecture Overview
 
-![Diagram showing applications, Kubernetes, and infrastructure data sources flowing through an OpenTelemetry Collector pipeline of receivers, processors, and exporters, which fans out to separate metrics, logs, and traces backends, all unified for visualization in Grafana.](../../.gitbook/assets/en-labs-observability-02-observability-stack-lab-0.png)
+![Diagram showing applications, Kubernetes, and infrastructure data sources flowing through an OpenTelemetry Collector pipeline of receivers, processors, and exporters, which fans out to separate metrics, logs, and traces backends, all unified for visualization in Grafana.](../../../assets/diagrams/rendered/en-labs-observability-02-observability-stack-lab-0.svg)
 
 ---
 

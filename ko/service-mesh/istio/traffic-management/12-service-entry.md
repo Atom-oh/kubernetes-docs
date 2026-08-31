@@ -20,7 +20,7 @@ ServiceEntry는 Istio 서비스 메시에 외부 서비스를 등록하여 메�
 
 Istio 메시는 기본적으로 외부 서비스에 대한 트래픽을 제어하지 않습니다. ServiceEntry를 사용하면:
 
-![ServiceEntry 없이는 외부 API로 나가는 트래픽이 모니터링도 정책도 Circuit Breaker도 없는 블랙홀이지만, ServiceEntry로 등록하면 동일한 트래픽에 모니터링·정책·Circuit Breaker가 모두 적용됨을 두 패널로 비교한 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-12-service-entry-0.png)
+![ServiceEntry 없이는 외부 API로 나가는 트래픽이 모니터링도 정책도 Circuit Breaker도 없는 블랙홀이지만, ServiceEntry로 등록하면 동일한 트래픽에 모니터링·정책·Circuit Breaker가 모두 적용됨을 두 패널로 비교한 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-12-service-entry-0.svg)
 
 ### 주요 이점
 
@@ -36,7 +36,7 @@ Istio 메시는 기본적으로 외부 서비스에 대한 트래픽을 제어�
 
 ServiceEntry는 외부 서비스를 Istio 서비스 레지스트리에 추가합니다.
 
-![메시 내부 애플리케이션의 요청이 ServiceEntry(포커스 노드)를 거쳐 외부 API와 외부 DB로 나가며, 그 경로에 트래픽 제어·모니터링·보안이 적용되는 흐름을 보여주는 다이어그램.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-12-service-entry-1.png)
+![메시 내부 애플리케이션의 요청이 ServiceEntry(포커스 노드)를 거쳐 외부 API와 외부 DB로 나가며, 그 경로에 트래픽 제어·모니터링·보안이 적용되는 흐름을 보여주는 다이어그램.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-12-service-entry-1.svg)
 
 ### 기본 구조
 

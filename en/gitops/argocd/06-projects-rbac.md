@@ -460,7 +460,7 @@ policy.csv: |
 
 ### Namespace-per-Team
 
-![Diagram showing three ArgoCD AppProjects (team-a, team-b, platform) each restricted to deploy only into its designated Kubernetes namespace, with the platform project scoped to the shared kube-system and monitoring namespaces.](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
+![Diagram showing three ArgoCD AppProjects (team-a, team-b, platform) each restricted to deploy only into its designated Kubernetes namespace, with the platform project scoped to the shared kube-system and monitoring namespaces.](../../../assets/diagrams/rendered/en-gitops-argocd-06-projects-rbac-0.svg)
 
 Implementation:
 

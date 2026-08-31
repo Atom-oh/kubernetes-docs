@@ -49,7 +49,7 @@ Kubescape는 개발부터 운영까지 전체 Kubernetes 보안 라이프사이�
 
 ### 아키텍처 개요
 
-![CLI·Operator·CI/CD에서 들어온 스캔 요청이 보안 프레임워크 기준으로 컨트롤 평가·취약점 스캔·RBAC 분석을 거쳐 Risk Calculator에서 통합 위험도를 산정하고, 그 결과가 리포트·JSON/SARIF·Kubescape Cloud·알림으로 출력되는 전체 아키텍처.](../.gitbook/assets/ko-security-11-kubescape-0.png)
+![CLI·Operator·CI/CD에서 들어온 스캔 요청이 보안 프레임워크 기준으로 컨트롤 평가·취약점 스캔·RBAC 분석을 거쳐 Risk Calculator에서 통합 위험도를 산정하고, 그 결과가 리포트·JSON/SARIF·Kubescape Cloud·알림으로 출력되는 전체 아키텍처.](../../assets/diagrams/rendered/ko-security-11-kubescape-0.svg)
 
 ---
 
@@ -314,7 +314,7 @@ kubescape scan framework --use-from custom-framework.yaml
 
 ### 스캔 파이프라인 흐름
 
-![CLI 입력이 선택된 프레임워크를 기준으로 리소스 파싱·컨트롤 실행·규칙 검사, 리스크 계산·심각도 분류·우선순위 지정을 거쳐 Pretty Print·JSON·SARIF·HTML/PDF 등 다양한 형식으로 출력되는 단일 스캔 실행 파이프라인.](../.gitbook/assets/ko-security-11-kubescape-1.png)
+![CLI 입력이 선택된 프레임워크를 기준으로 리소스 파싱·컨트롤 실행·규칙 검사, 리스크 계산·심각도 분류·우선순위 지정을 거쳐 Pretty Print·JSON·SARIF·HTML/PDF 등 다양한 형식으로 출력되는 단일 스캔 실행 파이프라인.](../../assets/diagrams/rendered/ko-security-11-kubescape-1.svg)
 
 ### 클러스터 스캔
 
@@ -522,7 +522,7 @@ Dangerous Role Bindings:
 
 ### 지속적 스캔 아키텍처
 
-![클러스터 안에서 CronJob이 Operator Controller를 트리거해 스캐너들이 배포·파드·서비스·Secret·ServiceAccount를 검사하고 Node Agent의 eBPF 이벤트도 Controller로 모여, 그 결과가 CRD로 저장되어 Baseline과 비교되며 변경 감지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조.](../.gitbook/assets/ko-security-11-kubescape-2.png)
+![클러스터 안에서 CronJob이 Operator Controller를 트리거해 스캐너들이 배포·파드·서비스·Secret·ServiceAccount를 검사하고 Node Agent의 eBPF 이벤트도 Controller로 모여, 그 결과가 CRD로 저장되어 Baseline과 비교되며 변경 감지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조.](../../assets/diagrams/rendered/ko-security-11-kubescape-2.svg)
 
 ### Operator 컴포넌트
 
@@ -725,7 +725,7 @@ Priority 3 - Medium (Within 1 Week):
 
 ### CI/CD 워크플로우
 
-![코드 커밋과 이미지 빌드 후 Kubescape 스캔을 거쳐 점수가 임계값을 넘는지 판정하고, 통과하면 배포를 진행하고 실패하면 배포를 차단한 뒤 알림을 보내는 CI/CD 보안 게이트 흐름.](../.gitbook/assets/ko-security-11-kubescape-3.png)
+![코드 커밋과 이미지 빌드 후 Kubescape 스캔을 거쳐 점수가 임계값을 넘는지 판정하고, 통과하면 배포를 진행하고 실패하면 배포를 차단한 뒤 알림을 보내는 CI/CD 보안 게이트 흐름.](../../assets/diagrams/rendered/ko-security-11-kubescape-3.svg)
 
 ### GitHub Actions 워크플로우
 
@@ -1330,7 +1330,7 @@ fi
 
 ### 수정 워크플로우
 
-![정기 스캔이나 알림으로 발견된 문제를 분류·분석한 뒤 수정이 필요하면 코드를 고쳐 배포하고 재스캔으로 검증하며 실패 시 다시 수정하고, 위험이 허용 가능하면 예외로 등록해 이슈를 종료하는 반복적 수정(Remediation) 워크플로.](../.gitbook/assets/ko-security-11-kubescape-4.png)
+![정기 스캔이나 알림으로 발견된 문제를 분류·분석한 뒤 수정이 필요하면 코드를 고쳐 배포하고 재스캔으로 검증하며 실패 시 다시 수정하고, 위험이 허용 가능하면 예외로 등록해 이슈를 종료하는 반복적 수정(Remediation) 워크플로.](../../assets/diagrams/rendered/ko-security-11-kubescape-4.svg)
 
 ### 보안 강화 체크리스트
 

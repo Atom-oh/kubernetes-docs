@@ -22,7 +22,7 @@ Grafana Tempo is an open-source backend for large-scale distributed tracing. Tem
 
 Tempo consists of the following main components:
 
-![Architecture diagram showing applications sending traces through an OTEL Collector into Tempo's distributor and ingester, which writes trace blocks to S3 and generates RED metrics for Grafana, which in turn queries back through the query frontend and querier that search S3 and read from a Memcached/Redis cache, while a separate compactor writes retention-managed blocks to the same S3 store.](../../.gitbook/assets/en-observability-tracing-01-tempo-0.png)
+![Architecture diagram showing applications sending traces through an OTEL Collector into Tempo's distributor and ingester, which writes trace blocks to S3 and generates RED metrics for Grafana, which in turn queries back through the query frontend and querier that search S3 and read from a Memcached/Redis cache, while a separate compactor writes retention-managed blocks to the same S3 store.](../../../assets/diagrams/rendered/en-observability-tracing-01-tempo-0.svg)
 
 ### Component Details
 

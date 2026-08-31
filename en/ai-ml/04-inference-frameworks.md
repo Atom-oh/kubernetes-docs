@@ -9,7 +9,7 @@ This chapter covers the diverse inference framework ecosystem for deploying Larg
 
 The LLM inference ecosystem has evolved rapidly, with multiple frameworks addressing different aspects of production deployment. The following diagram shows the relationship between these frameworks:
 
-![Map of the LLM inference framework ecosystem showing NVIDIA's stack, dev/gateway tools, and the orchestration layer all feeding workloads into the open-source inference frameworks, with AWS Native services provisioned alongside them.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-0.png)
+![Map of the LLM inference framework ecosystem showing NVIDIA's stack, dev/gateway tools, and the orchestration layer all feeding workloads into the open-source inference frameworks, with AWS Native services provisioned alongside them.](../../assets/diagrams/rendered/en-ai-ml-04-inference-frameworks-0.svg)
 
 ### Framework Selection Guide
 
@@ -32,7 +32,7 @@ NVIDIA NIM (NVIDIA Inference Microservices) provides production-ready, container
 
 ### NIM Architecture
 
-![Architecture of an NVIDIA NIM deployment on EKS: a request enters through an ALB and Nginx Ingress into a replicated NIM container running a TensorRT-LLM engine on a GPU node pool, with a model-cache path to FSx, NGC, and S3 storage, and a metrics path through Prometheus to Grafana.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-1.png)
+![Architecture of an NVIDIA NIM deployment on EKS: a request enters through an ALB and Nginx Ingress into a replicated NIM container running a TensorRT-LLM engine on a GPU node pool, with a model-cache path to FSx, NGC, and S3 storage, and a metrics path through Prometheus to Grafana.](../../assets/diagrams/rendered/en-ai-ml-04-inference-frameworks-1.svg)
 
 ### Prerequisites
 
@@ -640,7 +640,7 @@ NVIDIA Dynamo is an inference graph orchestration framework that enables disaggr
 
 ### Dynamo Architecture
 
-![Pipeline showing NVIDIA Dynamo's disaggregated serving: a client request routed through a KV-aware router to a prefill worker pool, which writes to a shared KV cache store that a decode worker pool reads from, with both pools executing on pluggable vLLM, SGLang, and TensorRT-LLM backends.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-2.png)
+![Pipeline showing NVIDIA Dynamo's disaggregated serving: a client request routed through a KV-aware router to a prefill worker pool, which writes to a shared KV cache store that a decode worker pool reads from, with both pools executing on pluggable vLLM, SGLang, and TensorRT-LLM backends.](../../assets/diagrams/rendered/en-ai-ml-04-inference-frameworks-2.svg)
 
 ### Key Concepts
 
@@ -1716,7 +1716,7 @@ SGLang (Structured Generation Language) is a high-performance LLM serving framew
 
 ### SGLang Core Technology
 
-![Three-tier view of SGLang showing its frontend APIs feeding a RadixAttention runtime engine, which drives KV-cache reuse and schedule-overlap optimizations.](../.gitbook/assets/en-ai-ml-04-inference-frameworks-3.png)
+![Three-tier view of SGLang showing its frontend APIs feeding a RadixAttention runtime engine, which drives KV-cache reuse and schedule-overlap optimizations.](../../assets/diagrams/rendered/en-ai-ml-04-inference-frameworks-3.svg)
 
 1. **RadixAttention**: Radix tree-based KV cache reuse that goes beyond prefix caching, efficiently sharing cache across partially overlapping prompts.
 2. **Compressed FSM Structured Output**: Compresses finite state machines for structured output (JSON Schema, regex, etc.), delivering up to 10x faster structured decoding vs vLLM.

@@ -17,7 +17,7 @@ Amazon EKS 클러스터를 최신 상태로 유지하는 것은 보안, 안정�
 
 ## EKS 업그레이드 개요
 
-![EKS 업그레이드 개요가 버전 관리, 업그레이드 구성 요소, 업그레이드 경로, 업그레이드 순서 네 범주로 분기하는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-0.png)
+![EKS 업그레이드 개요가 버전 관리, 업그레이드 구성 요소, 업그레이드 경로, 업그레이드 순서 네 범주로 분기하는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-0.svg)
 
 ### EKS 버전 관리
 
@@ -60,7 +60,7 @@ EKS 클러스터는 한 번에 한 마이너 버전씩 업그레이드해야 합
 
 ## 업그레이드 계획 및 준비
 
-![업그레이드 계획 및 준비가 업그레이드 평가와 업그레이드 전 준비로 나뉘고, 평가는 호환성·리소스·일정 확인 세 세부 영역으로 더 세분화되는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-1.png)
+![업그레이드 계획 및 준비가 업그레이드 평가와 업그레이드 전 준비로 나뉘고, 평가는 호환성·리소스·일정 확인 세 세부 영역으로 더 세분화되는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-1.svg)
 
 ### 업그레이드 평가
 
@@ -151,7 +151,7 @@ velero backup create pre-upgrade-backup --include-namespaces=default,app-namespa
 
 ## EKS 컨트롤 플레인 업그레이드
 
-![EKS 컨트롤 플레인 업그레이드가 준비, 수행, 모니터링, 문제 해결 네 단계로 나뉘는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-2.png)
+![EKS 컨트롤 플레인 업그레이드가 준비, 수행, 모니터링, 문제 해결 네 단계로 나뉘는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-2.svg)
 
 ### 컨트롤 플레인 업그레이드 준비
 
@@ -268,7 +268,7 @@ CloudWatch에서 클러스터 지표를 모니터링합니다:
 
 컨트롤 플레인을 업그레이드한 후에는 노드 그룹을 업그레이드해야 합니다. 노드 그룹 업그레이드에는 여러 전략이 있으며, 각 전략에는 장단점이 있습니다.
 
-![노드 그룹 업그레이드가 전략, 관리형, 자체 관리형, Fargate, 모니터링 검증 다섯 갈래로 나뉘고 전략이 관리형·자체 관리형·Fargate 세 방식으로 더 세분화되는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-3.png)
+![노드 그룹 업그레이드가 전략, 관리형, 자체 관리형, Fargate, 모니터링 검증 다섯 갈래로 나뉘고 전략이 관리형·자체 관리형·Fargate 세 방식으로 더 세분화되는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-3.svg)
 
 ### 노드 그룹 업그레이드 전략
 
@@ -491,7 +491,7 @@ kubectl get pods --all-namespaces -o wide | grep -v Running
 
 EKS 클러스터에는 여러 애드온이 포함되어 있으며, 이러한 애드온도 업그레이드해야 합니다.
 
-![애드온 업그레이드가 AWS 관리형 애드온, 자체 관리형 애드온, 주요 애드온 가이드, 문제 해결 네 범주로 나뉘는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-4.png)
+![애드온 업그레이드가 AWS 관리형 애드온, 자체 관리형 애드온, 주요 애드온 가이드, 문제 해결 네 범주로 나뉘는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-4.svg)
 
 ### AWS 관리형 애드온
 
@@ -648,7 +648,7 @@ kubectl get events -n kube-system --sort-by='.lastTimestamp'
 
 업그레이드가 완료된 후에는 클러스터가 정상적으로 작동하는지 검증하고 발생할 수 있는 문제를 해결해야 합니다.
 
-![업그레이드 검증 및 문제 해결이 검증과 문제 해결 두 갈래로 나뉘고, 각각 클러스터 상태·워크로드·기능 테스트, 일반 문제·해결 단계로 세분화되는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-5.png)
+![업그레이드 검증 및 문제 해결이 검증과 문제 해결 두 갈래로 나뉘고, 각각 클러스터 상태·워크로드·기능 테스트, 일반 문제·해결 단계로 세분화되는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-5.svg)
 
 ### 업그레이드 검증
 
@@ -837,7 +837,7 @@ aws eks update-addon \
 
 대규모 환경에서는 업그레이드 프로세스를 자동화하는 것이 중요합니다. 다음과 같은 도구와 방법을 사용하여 EKS 업그레이드를 자동화할 수 있습니다.
 
-![업그레이드 자동화가 eksctl, AWS CLI 및 스크립트, GitOps, 자동화 모범 사례 네 갈래로 나뉘는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-6.png)
+![업그레이드 자동화가 eksctl, AWS CLI 및 스크립트, GitOps, 자동화 모범 사례 네 갈래로 나뉘는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-6.svg)
 
 ### eksctl을 사용한 자동화
 
@@ -1002,7 +1002,7 @@ EKS 업그레이드 자동화를 위한 모범 사례:
 
 EKS 클러스터 업그레이드를 위한 모범 사례를 살펴보겠습니다.
 
-![업그레이드 모범 사례가 일반, 대규모 클러스터, 금융 서비스 세 범주로 나뉘고 일반 모범 사례는 계획·준비·수행·후속 네 단계로 세분화되는 트리 다이어그램.](../.gitbook/assets/ko-eks-08-eks-upgrades-7.png)
+![업그레이드 모범 사례가 일반, 대규모 클러스터, 금융 서비스 세 범주로 나뉘고 일반 모범 사례는 계획·준비·수행·후속 네 단계로 세분화되는 트리 다이어그램.](../../assets/diagrams/rendered/ko-eks-08-eks-upgrades-7.svg)
 
 ### 일반적인 모범 사례
 

@@ -11,9 +11,9 @@
 
 ## 아키텍처 개요
 
-![AIOps Architecture](../../.gitbook/assets/aiops-architecture.png)
+![AIOps Architecture](../../../assets/diagrams/rendered/aiops-architecture.svg)
 
-![Prometheus AlertManager와 CloudWatch Alarms가 이상을 탐지하면 Grafana OnCall과 SNS Topic으로 라우팅되고, SNS가 AIOps Agent(Lambda+Bedrock)를 호출해 CloudWatch Investigations로 근본 원인을 분석한 뒤 Slack·Email·PagerDuty 채널로 결과가 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-0.png)
+![Prometheus AlertManager와 CloudWatch Alarms가 이상을 탐지하면 Grafana OnCall과 SNS Topic으로 라우팅되고, SNS가 AIOps Agent(Lambda+Bedrock)를 호출해 CloudWatch Investigations로 근본 원인을 분석한 뒤 Slack·Email·PagerDuty 채널로 결과가 전달되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-05-alerting-aiops-lab-0.svg)
 
 ***
 
@@ -390,7 +390,7 @@ aws sns list-subscriptions-by-topic --topic-arn ${SNS_ALERTS_TOPIC_ARN}
 
 ### 조사 프로세스
 
-![CloudWatch 경보 발생부터 리소스 스캔, AI 기반 근본 원인 가설 생성, 제안 조치, 인시던트 보고서 생성까지 CloudWatch Investigations가 거치는 7단계 순차 상태 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-1.png)
+![CloudWatch 경보 발생부터 리소스 스캔, AI 기반 근본 원인 가설 생성, 제안 조치, 인시던트 보고서 생성까지 CloudWatch Investigations가 거치는 7단계 순차 상태 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-05-alerting-aiops-lab-1.svg)
 
 **Step 5.5.1: CloudWatch Investigations 활성화**
 
@@ -429,7 +429,7 @@ CloudWatch Console에서:
 
 ### AIOps Agent 아키텍처
 
-![AlertManager의 웹훅으로 트리거된 AIOps Lambda가 로그·지표·트레이스 원격 측정 데이터를 순서대로 수집한 뒤 Bedrock Claude에 분석을 요청하고, 그 결과를 SNS를 통해 이메일로 통지하는 시간순 상호작용을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-2.png)
+![AlertManager의 웹훅으로 트리거된 AIOps Lambda가 로그·지표·트레이스 원격 측정 데이터를 순서대로 수집한 뒤 Bedrock Claude에 분석을 요청하고, 그 결과를 SNS를 통해 이메일로 통지하는 시간순 상호작용을 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-05-alerting-aiops-lab-2.svg)
 
 **Step 5.6.1: Lambda 함수 코드**
 
@@ -890,7 +890,7 @@ aws logs filter-log-events \
 
 ### 멀티 에이전트 아키텍처
 
-![운영자 또는 경보가 Collaborator Agent를 트리거하면 Collaborator가 지표·로그·트레이스 세 전문 에이전트와 양방향으로 협의한 뒤 그 결과를 종합해 근본 원인 보고서를 만드는 허브-스포크 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-3.png)
+![운영자 또는 경보가 Collaborator Agent를 트리거하면 Collaborator가 지표·로그·트레이스 세 전문 에이전트와 양방향으로 협의한 뒤 그 결과를 종합해 근본 원인 보고서를 만드는 허브-스포크 구조를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-05-alerting-aiops-lab-3.svg)
 
 | Agent        | 역할      | 데이터 소스                      |
 | ------------ | ------- | --------------------------- |

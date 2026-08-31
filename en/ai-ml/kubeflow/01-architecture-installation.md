@@ -53,7 +53,7 @@ A nuance worth flagging now: **Kubeflow Trainer v2** — built around new `Train
 
 Kubeflow's architecture centers on a shared Kubernetes API server that every component talks to as a set of controllers and CRDs, with an Istio-based multi-tenancy layer providing namespace isolation and a Central Dashboard providing a single UI entry point.
 
-![The Istio ingress gateway routes requests through Dex/Cognito OIDC authentication to the Kubeflow Central Dashboard, which acts as the hub connecting the Profile Controller (managing per-team namespace profiles) and the component controllers for Pipelines, Notebooks, Katib, Kubeflow Trainer, and KServe, all of which reconcile custom resources against the Kubernetes API server under namespace-scoped access.](../../.gitbook/assets/en-ai-ml-kubeflow-01-architecture-installation-0.png)
+![The Istio ingress gateway routes requests through Dex/Cognito OIDC authentication to the Kubeflow Central Dashboard, which acts as the hub connecting the Profile Controller (managing per-team namespace profiles) and the component controllers for Pipelines, Notebooks, Katib, Kubeflow Trainer, and KServe, all of which reconcile custom resources against the Kubernetes API server under namespace-scoped access.](../../../assets/diagrams/rendered/en-ai-ml-kubeflow-01-architecture-installation-0.svg)
 
 A few points worth calling out:
 

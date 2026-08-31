@@ -9,13 +9,13 @@ Linkerd의 다중 클러스터 기능은 서비스 미러링(Service Mirroring) 
 
 ## 다중 클러스터 아키텍처
 
-![West와 East 두 클러스터에서 각 클러스터의 Service Mirror Controller와 Gateway가 mTLS와 감시(Watch)를 통해 연결되고, East의 미러 서비스가 West Gateway로 라우팅되는 다중 클러스터 아키텍처를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-06-multi-cluster-0.png)
+![West와 East 두 클러스터에서 각 클러스터의 Service Mirror Controller와 Gateway가 mTLS와 감시(Watch)를 통해 연결되고, East의 미러 서비스가 West Gateway로 라우팅되는 다중 클러스터 아키텍처를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-06-multi-cluster-0.svg)
 
 ## 서비스 미러링 개념
 
 ### 동작 방식
 
-![East 클러스터의 애플리케이션이 미러 서비스를 호출하면 미러 서비스가 West Gateway의 IP로 주소를 해석해 mTLS로 연결하고, Gateway가 신원을 검증한 뒤 실제 대상 서비스로 요청을 전달하며, 응답이 역순으로 돌아오는 서비스 미러링 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-06-multi-cluster-1.png)
+![East 클러스터의 애플리케이션이 미러 서비스를 호출하면 미러 서비스가 West Gateway의 IP로 주소를 해석해 mTLS로 연결하고, Gateway가 신원을 검증한 뒤 실제 대상 서비스로 요청을 전달하며, 응답이 역순으로 돌아오는 서비스 미러링 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-06-multi-cluster-1.svg)
 
 ### 서비스 미러링 특성
 
@@ -287,7 +287,7 @@ spec:
 
 ## 크로스 클러스터 트래픽 흐름
 
-![East 클러스터의 클라이언트 파드가 자신의 프록시를 거쳐 인터넷/VPN을 통해 West 클러스터의 Gateway로 mTLS 연결을 맺고, Gateway가 West의 서버 프록시로 전달해 서버 파드에 도달하며, 응답이 같은 경로를 역순으로 돌아오는 크로스 클러스터 트래픽 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-06-multi-cluster-2.png)
+![East 클러스터의 클라이언트 파드가 자신의 프록시를 거쳐 인터넷/VPN을 통해 West 클러스터의 Gateway로 mTLS 연결을 맺고, Gateway가 West의 서버 프록시로 전달해 서버 파드에 도달하며, 응답이 같은 경로를 역순으로 돌아오는 크로스 클러스터 트래픽 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-06-multi-cluster-2.svg)
 
 ## EKS 다중 클러스터 패턴
 
@@ -372,7 +372,7 @@ eksctl create cluster \
 
 ### 공유 Trust Anchor
 
-![하나의 공유 Root CA(Trust Anchor)가 West와 East 각 클러스터의 중간 CA(Issuer)에 서명하고 각 Issuer가 자신의 클러스터 안 워크로드 인증서에 서명함으로써 두 클러스터가 상호 신뢰하는 mTLS PKI 체계를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-06-multi-cluster-3.png)
+![하나의 공유 Root CA(Trust Anchor)가 West와 East 각 클러스터의 중간 CA(Issuer)에 서명하고 각 Issuer가 자신의 클러스터 안 워크로드 인증서에 서명함으로써 두 클러스터가 상호 신뢰하는 mTLS PKI 체계를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-06-multi-cluster-3.svg)
 
 ### 클러스터별 인가 정책
 

@@ -24,13 +24,13 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 ### 의사결정 흐름
 
-![다섯 가지 질문(클러스터 존재 여부, 지역 분리, DR/HA, 강력한 L7 기능, 운영 복잡도 감당 가능성)을 거쳐 Single-cluster, AWS VPC Lattice, Hybrid, Multi-cluster Istio 중 하나로 이어지는 Multi-cluster 도입 의사결정 흐름도.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-0.png)
+![다섯 가지 질문(클러스터 존재 여부, 지역 분리, DR/HA, 강력한 L7 기능, 운영 복잡도 감당 가능성)을 거쳐 Single-cluster, AWS VPC Lattice, Hybrid, Multi-cluster Istio 중 하나로 이어지는 Multi-cluster 도입 의사결정 흐름도.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-0.svg)
 
 ### Multi-cluster가 필요한 경우 ✅
 
 #### 1. 지리적 분산 및 지연 시간 최적화
 
-![Istio Mesh가 미국, 유럽, 아시아 세 리전의 EKS 클러스터에 구성을 동기화하고, 세 클러스터가 서로 Cross-region mTLS로 통신하는 지리적 분산 아키텍처.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-1.png)
+![Istio Mesh가 미국, 유럽, 아시아 세 리전의 EKS 클러스터에 구성을 동기화하고, 세 클러스터가 서로 Cross-region mTLS로 통신하는 지리적 분산 아키텍처.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-1.svg)
 
 **필요한 경우**:
 
@@ -40,7 +40,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 #### 2. 재해 복구 (Disaster Recovery)
 
-![Global DNS(Route53)가 평상시 100% 트래픽을 활성 클러스터로, 재해 발생 시 대기 클러스터로 전환하며 두 클러스터가 실시간 구성 복제로 연결된 Active-Standby 재해 복구 구조.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-2.png)
+![Global DNS(Route53)가 평상시 100% 트래픽을 활성 클러스터로, 재해 발생 시 대기 클러스터로 전환하며 두 클러스터가 실시간 구성 복제로 연결된 Active-Standby 재해 복구 구조.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-2.svg)
 
 **필요한 경우**:
 
@@ -68,7 +68,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 #### 1. 단일 리전, 소규모 서비스
 
-![Istio Control Plane이 하나의 EKS 클러스터 안에서 prod, staging, dev 세 Namespace를 관리하며 Multi-cluster 없이도 환경을 분리할 수 있음을 보여주는 단일 클러스터 구성.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-3.png)
+![Istio Control Plane이 하나의 EKS 클러스터 안에서 prod, staging, dev 세 Namespace를 관리하며 Multi-cluster 없이도 환경을 분리할 수 있음을 보여주는 단일 클러스터 구성.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-3.svg)
 
 **대신 사용**:
 
@@ -243,7 +243,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 #### 패턴 1: Istio Multi-cluster만 사용
 
-![두 클러스터의 Istiod가 서비스 디스커버리로 동기화되고 East-West Gateway가 Cross-region mTLS로 연결되어 각 클러스터의 App Services를 서로 라우팅하는 Istio-only Multi-cluster 패턴.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-4.png)
+![두 클러스터의 Istiod가 서비스 디스커버리로 동기화되고 East-West Gateway가 Cross-region mTLS로 연결되어 각 클러스터의 App Services를 서로 라우팅하는 Istio-only Multi-cluster 패턴.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-4.svg)
 
 **장점**:
 
@@ -259,7 +259,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 #### 패턴 2: VPC Lattice만 사용
 
-![두 VPC의 App Services가 각각 VPC Lattice Service에 등록되고 Service Network를 통해 서로 라우팅되는 AWS VPC Lattice 단독 사용 패턴.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-5.png)
+![두 VPC의 App Services가 각각 VPC Lattice Service에 등록되고 Service Network를 통해 서로 라우팅되는 AWS VPC Lattice 단독 사용 패턴.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-5.svg)
 
 **장점**:
 
@@ -275,7 +275,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 #### 패턴 3: Hybrid (권장)
 
-![두 클러스터 내부에서는 Istio Mesh가 Service A와 Service B 사이의 mTLS·Retry를 담당하고, 클러스터 간 통신은 AWS VPC Lattice Service Network가 담당하는 Hybrid 아키텍처.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-6.png)
+![두 클러스터 내부에서는 Istio Mesh가 Service A와 Service B 사이의 mTLS·Retry를 담당하고, 클러스터 간 통신은 AWS VPC Lattice Service Network가 담당하는 Hybrid 아키텍처.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-6.svg)
 
 **장점**:
 
@@ -308,7 +308,7 @@ Multi-cluster Service Mesh를 사용하면:
 
 ### Primary-Remote
 
-![Primary 클러스터의 단일 Istiod Control Plane이 Remote 클러스터의 Service B, C에 구성을 푸시하고, 세 서비스가 mTLS로 서로 통신하는 Primary-Remote 토폴로지.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-7.png)
+![Primary 클러스터의 단일 Istiod Control Plane이 Remote 클러스터의 Service B, C에 구성을 푸시하고, 세 서비스가 mTLS로 서로 통신하는 Primary-Remote 토폴로지.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-7.svg)
 
 **특징**:
 
@@ -319,7 +319,7 @@ Multi-cluster Service Mesh를 사용하면:
 
 ### Multi-Primary
 
-![두 클러스터가 각각 독립적인 Istiod Control Plane을 두고 서로 동기화하며, Service A 인스턴스 사이에서 로드 밸런싱으로 트래픽을 분산하는 Multi-Primary 토폴로지.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-8.png)
+![두 클러스터가 각각 독립적인 Istiod Control Plane을 두고 서로 동기화하며, Service A 인스턴스 사이에서 로드 밸런싱으로 트래픽을 분산하는 Multi-Primary 토폴로지.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-8.svg)
 
 **특징**:
 
@@ -596,7 +596,7 @@ spec:
 
 ### 트래픽 흐름
 
-![Cluster 1의 Service A가 Envoy를 거쳐 VPC Lattice를 경유해 Cluster 2의 Service B에 도달하고, 각 클러스터에서 Istio가 독립적으로 메트릭을 수집하며 응답이 같은 경로로 되돌아오는 요청-응답 시퀀스.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-9.png)
+![Cluster 1의 Service A가 Envoy를 거쳐 VPC Lattice를 경유해 Cluster 2의 Service B에 도달하고, 각 클러스터에서 Istio가 독립적으로 메트릭을 수집하며 응답이 같은 경로로 되돌아오는 요청-응답 시퀀스.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-9.svg)
 
 ### 장점과 고려사항
 
@@ -619,7 +619,7 @@ spec:
 
 #### 아키텍처
 
-![미국과 유럽 리전의 각 EKS 클러스터 내부에서 Frontend, Cart, Order 서비스가 Istio로 통신하고, 두 리전의 Order 서비스가 VPC Lattice Service Network를 통해 아시아 리전의 결제 서비스로 라우팅되는 글로벌 전자상거래 하이브리드 구성.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-10.png)
+![미국과 유럽 리전의 각 EKS 클러스터 내부에서 Frontend, Cart, Order 서비스가 Istio로 통신하고, 두 리전의 Order 서비스가 VPC Lattice Service Network를 통해 아시아 리전의 결제 서비스로 라우팅되는 글로벌 전자상거래 하이브리드 구성.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-02-multi-cluster-10.svg)
 
 **의사결정**:
 

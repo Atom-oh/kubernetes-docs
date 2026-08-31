@@ -101,7 +101,7 @@ echo "Archive: $OUTPUT_DIR.tar.gz"
 
 ### Decision Tree for Rapid Problem Identification
 
-![Decision-tree flowchart for the first five minutes of EKS incident triage, branching from an incident on service accessibility, kubectl connectivity, and node readiness to route the responder to a control-plane, node, scheduling, app/config, workload, cluster-wide, or network/DNS root cause.](../.gitbook/assets/en-eks-11-eks-advanced-debugging-0.png)
+![Decision-tree flowchart for the first five minutes of EKS incident triage, branching from an incident on service accessibility, kubectl connectivity, and node readiness to route the responder to a control-plane, node, scheduling, app/config, workload, cluster-wide, or network/DNS root cause.](../../assets/diagrams/rendered/en-eks-11-eks-advanced-debugging-0.svg)
 
 ---
 
@@ -379,7 +379,7 @@ aws eks update-addon \
 
 ### NotReady Node Decision Tree
 
-![Decision-tree flowchart for diagnosing a NotReady EKS node, walking down through EC2 instance status, kubelet health, network connectivity, and disk/memory pressure to containerd runtime health, with the matching remediation command at each branch.](../.gitbook/assets/en-eks-11-eks-advanced-debugging-1.png)
+![Decision-tree flowchart for diagnosing a NotReady EKS node, walking down through EC2 instance status, kubelet health, network connectivity, and disk/memory pressure to containerd runtime health, with the matching remediation command at each branch.](../../assets/diagrams/rendered/en-eks-11-eks-advanced-debugging-1.svg)
 
 ### kubelet/containerd Debugging via SSM
 
@@ -579,7 +579,7 @@ data:
 
 ### Pod State Flow Diagram
 
-![State machine showing a Kubernetes Pod's lifecycle -- Pending to ContainerCreating to Running to Succeeded on the happy path, with ContainerCreating and Running able to fail into Failed, and Failed pods returning to Pending under the restart policy -- annotated with the major failure causes at each state.](../.gitbook/assets/en-eks-11-eks-advanced-debugging-2.png)
+![State machine showing a Kubernetes Pod's lifecycle -- Pending to ContainerCreating to Running to Succeeded on the happy path, with ContainerCreating and Running able to fail into Failed, and Failed pods returning to Pending under the restart policy -- annotated with the major failure causes at each state.](../../assets/diagrams/rendered/en-eks-11-eks-advanced-debugging-2.svg)
 
 ### Basic Diagnostic Commands
 
@@ -1455,7 +1455,7 @@ spec:
 
 ### 4-Layer Detection Pipeline
 
-![Four-stage EKS observability pipeline showing metrics, logs, traces, and events flowing from data sources through collection tools (CloudWatch Agent, Fluent Bit, ADOT Collector, Prometheus) into an analysis layer (Logs Insights, metric alarms, anomaly detection, composite alarms) and out to alerting channels (SNS, Slack, PagerDuty, EventBridge).](../.gitbook/assets/en-eks-11-eks-advanced-debugging-3.png)
+![Four-stage EKS observability pipeline showing metrics, logs, traces, and events flowing from data sources through collection tools (CloudWatch Agent, Fluent Bit, ADOT Collector, Prometheus) into an analysis layer (Logs Insights, metric alarms, anomaly detection, composite alarms) and out to alerting channels (SNS, Slack, PagerDuty, EventBridge).](../../assets/diagrams/rendered/en-eks-11-eks-advanced-debugging-3.svg)
 
 ### Reference Architecture 1: AWS Native
 

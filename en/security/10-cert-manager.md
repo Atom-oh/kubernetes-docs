@@ -77,7 +77,7 @@ cert-manager is a **CNCF Graduated project**, indicating production-ready maturi
 
 cert-manager consists of three main components that work together to manage certificate lifecycles:
 
-![Architecture diagram showing the cert-manager control plane watching Certificate and Issuer custom resources, requesting signed certificates from an external CA, and writing the result into a TLS Secret that Ingress and Gateway resources reference.](../.gitbook/assets/en-security-10-cert-manager-0.png)
+![Architecture diagram showing the cert-manager control plane watching Certificate and Issuer custom resources, requesting signed certificates from an external CA, and writing the result into a TLS Secret that Ingress and Gateway resources reference.](../../assets/diagrams/rendered/en-security-10-cert-manager-0.svg)
 
 ### Component Responsibilities
 
@@ -89,7 +89,7 @@ cert-manager consists of three main components that work together to manage cert
 
 ### Certificate Issuance Flow
 
-![Flowchart showing cert-manager creating a CertificateRequest from a Certificate resource, branching into an ACME order-and-challenge sequence for ACME issuers or going straight to storage for non-ACME issuers, and finally writing the TLS Secret.](../.gitbook/assets/en-security-10-cert-manager-1.png)
+![Flowchart showing cert-manager creating a CertificateRequest from a Certificate resource, branching into an ACME order-and-challenge sequence for ACME issuers or going straight to storage for non-ACME issuers, and finally writing the TLS Secret.](../../assets/diagrams/rendered/en-security-10-cert-manager-1.svg)
 
 ---
 
@@ -450,7 +450,7 @@ ACME (Automatic Certificate Management Environment) is used with Let's Encrypt a
 
 #### ACME Challenge Types
 
-![Flowchart showing cert-manager choosing between an HTTP-01 challenge when port 80 is reachable and a DNS-01 challenge for wildcard certificates or blocked ports, with the DNS-01 path also creating a Route 53 TXT record through an IRSA-authenticated pod before both paths verify and complete.](../.gitbook/assets/en-security-10-cert-manager-2.png)
+![Flowchart showing cert-manager choosing between an HTTP-01 challenge when port 80 is reachable and a DNS-01 challenge for wildcard certificates or blocked ports, with the DNS-01 path also creating a Route 53 TXT record through an IRSA-authenticated pod before both paths verify and complete.](../../assets/diagrams/rendered/en-security-10-cert-manager-2.svg)
 
 #### HTTP-01 Solver
 
@@ -906,7 +906,7 @@ The two approaches aren't mutually exclusive — for example, public-domain cert
 
 istio-csr is a cert-manager agent that integrates with Istio to provide workload certificates. It replaces the default istiod CA with certificates signed by cert-manager.
 
-![Sequence diagram showing an Envoy sidecar requesting a certificate from istio-csr, which forwards a CertificateRequest through cert-manager to a ClusterIssuer for signing, then returns the signed SPIFFE SVID so Envoy can enable mutual TLS.](../.gitbook/assets/en-security-10-cert-manager-3.png)
+![Sequence diagram showing an Envoy sidecar requesting a certificate from istio-csr, which forwards a CertificateRequest through cert-manager to a ClusterIssuer for signing, then returns the signed SPIFFE SVID so Envoy can enable mutual TLS.](../../assets/diagrams/rendered/en-security-10-cert-manager-3.svg)
 
 #### Installing istio-csr
 

@@ -36,7 +36,7 @@ Kubernetes 클러스터는 컨테이너화된 애플리케이션을 실행하기
 
 ### 클러스터 아키텍처 다이어그램
 
-![컨트롤 플레인의 kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저가 연결되고 각 워커 노드의 kubelet, kube-proxy, 컨테이너 런타임이 파드를 실행하는 구조를 보여준다.](../.gitbook/assets/cluster-overview.png)
+![컨트롤 플레인의 kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저가 연결되고 각 워커 노드의 kubelet, kube-proxy, 컨테이너 런타임이 파드를 실행하는 구조를 보여준다.](../../assets/diagrams/rendered/cluster-overview.svg)
 
 **컨트롤 플레인 구성 요소**:
 - **kube-apiserver**: Kubernetes API를 노출하는 프론트엔드
@@ -442,7 +442,7 @@ mode: "iptables"
 
 **컨테이너 런타임 계층 구조**:
 
-![Kubernetes가 CRI(Container Runtime Interface)를 통해 containerd와 CRI-O 같은 컨테이너 런타임을 호출하고, 이들이 각각 runc와 crun을 사용해 컨테이너를 실행하는 계층 구조를 보여준다.](../.gitbook/assets/cri-hierarchy.png)
+![Kubernetes가 CRI(Container Runtime Interface)를 통해 containerd와 CRI-O 같은 컨테이너 런타임을 호출하고, 이들이 각각 runc와 crun을 사용해 컨테이너를 실행하는 계층 구조를 보여준다.](../../assets/diagrams/rendered/cri-hierarchy.svg)
 
 **containerd 구성 예시**:
 ```toml
@@ -577,7 +577,7 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 컨트롤 플레인 내부 통신
 
-![kube-scheduler, kube-controller-manager, cloud-controller-manager가 모두 kube-apiserver를 통해 클러스터 상태를 읽고 쓰며, kube-apiserver만이 etcd와 직접 통신하는 구조를 보여준다.](../.gitbook/assets/control-plane-internal-comm.png)
+![kube-scheduler, kube-controller-manager, cloud-controller-manager가 모두 kube-apiserver를 통해 클러스터 상태를 읽고 쓰며, kube-apiserver만이 etcd와 직접 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/control-plane-internal-comm.svg)
 
 컨트롤 플레인 구성 요소 간의 통신은 다음과 같습니다:
 
@@ -603,7 +603,7 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 컨트롤 플레인과 노드 간 통신
 
-![kube-apiserver가 각 노드의 kubelet 및 kube-proxy와 양방향 HTTPS 통신을 유지하며 노드 상태와 서비스 정보를 주고받는 구조를 보여준다.](../.gitbook/assets/control-plane-node-comm.png)
+![kube-apiserver가 각 노드의 kubelet 및 kube-proxy와 양방향 HTTPS 통신을 유지하며 노드 상태와 서비스 정보를 주고받는 구조를 보여준다.](../../assets/diagrams/rendered/control-plane-node-comm.svg)
 
 컨트롤 플레인과 노드 간의 통신은 다음과 같습니다:
 
@@ -624,7 +624,7 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 노드 간 통신
 
-![서로 다른 노드에 배치된 파드들이 CNI 네트워크 플러그인을 통해 NAT 없이 서로 통신하는 구조를 보여준다.](../.gitbook/assets/inter-node-pod-comm.png)
+![서로 다른 노드에 배치된 파드들이 CNI 네트워크 플러그인을 통해 NAT 없이 서로 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/inter-node-pod-comm.svg)
 
 노드 간의 통신은 다음과 같습니다:
 
@@ -640,7 +640,7 @@ Kubernetes 클러스터 내에서는 여러 구성 요소 간의 통신이 이�
 
 ### 외부 통신
 
-![클러스터 외부의 클라이언트가 kube-apiserver를 통해 클러스터를 제어하거나, Service/Ingress를 거쳐 파드에 도달하는 두 가지 외부 접근 경로를 보여준다.](../.gitbook/assets/external-comm.png)
+![클러스터 외부의 클라이언트가 kube-apiserver를 통해 클러스터를 제어하거나, Service/Ingress를 거쳐 파드에 도달하는 두 가지 외부 접근 경로를 보여준다.](../../assets/diagrams/rendered/external-comm.svg)
 
 클러스터 외부와의 통신은 다음과 같습니다:
 
@@ -692,11 +692,11 @@ resources:
 
 **고가용성 컨트롤 플레인 아키텍처**:
 
-![로드 밸런서가 3개의 컨트롤 플레인 노드로 트래픽을 분산하고, 각 노드가 kube-apiserver, etcd, kube-scheduler, kube-controller-manager를 동일하게 갖춰 단일 장애점을 없애는 구조를 보여준다.](../.gitbook/assets/ha-control-plane.png)
+![로드 밸런서가 3개의 컨트롤 플레인 노드로 트래픽을 분산하고, 각 노드가 kube-apiserver, etcd, kube-scheduler, kube-controller-manager를 동일하게 갖춰 단일 장애점을 없애는 구조를 보여준다.](../../assets/diagrams/rendered/ha-control-plane.svg)
 
 **etcd 클러스터 구성**:
 
-![3개의 etcd 노드가 서로 완전 연결(mesh)되어 Raft 합의로 데이터 일관성을 유지하는 etcd 클러스터 구성을 보여준다.](../.gitbook/assets/etcd-cluster-mesh.png)
+![3개의 etcd 노드가 서로 완전 연결(mesh)되어 Raft 합의로 데이터 일관성을 유지하는 etcd 클러스터 구성을 보여준다.](../../assets/diagrams/rendered/etcd-cluster-mesh.svg)
 
 ### 워커 노드 고가용성
 
@@ -709,7 +709,7 @@ resources:
 
 **워커 노드 분산 배포**:
 
-![여러 워커 노드를 3개의 가용 영역에 나누어 배치함으로써 하나의 가용 영역 장애가 전체 클러스터에 영향을 주지 않도록 하는 구조를 보여준다.](../.gitbook/assets/worker-node-az-distribution.png)
+![여러 워커 노드를 3개의 가용 영역에 나누어 배치함으로써 하나의 가용 영역 장애가 전체 클러스터에 영향을 주지 않도록 하는 구조를 보여준다.](../../assets/diagrams/rendered/worker-node-az-distribution.svg)
 
 ### 애플리케이션 고가용성
 
@@ -1019,7 +1019,7 @@ Kubernetes 스토리지 아키텍처는 다음과 같은 구성 요소로 이루
 
 **스토리지 아키텍처 흐름**:
 
-![파드가 볼륨 마운트, PVC, PV를 거쳐 실제 CSI 스토리지 드라이버에 도달하는 쿠버네티스 스토리지 추상화 흐름을 보여준다.](../.gitbook/assets/storage-architecture-flow.png)
+![파드가 볼륨 마운트, PVC, PV를 거쳐 실제 CSI 스토리지 드라이버에 도달하는 쿠버네티스 스토리지 추상화 흐름을 보여준다.](../../assets/diagrams/rendered/storage-architecture-flow.svg)
 
 ### 볼륨 유형
 
@@ -1118,7 +1118,7 @@ CSI는 Kubernetes와 스토리지 시스템 간의 표준 인터페이스를 제
 
 **CSI 아키텍처**:
 
-![Kubernetes가 표준 인터페이스인 CSI를 통해 CSI 드라이버를 호출하고, 드라이버가 실제 스토리지 시스템과 통신하는 구조를 보여준다.](../.gitbook/assets/csi-architecture.png)
+![Kubernetes가 표준 인터페이스인 CSI를 통해 CSI 드라이버를 호출하고, 드라이버가 실제 스토리지 시스템과 통신하는 구조를 보여준다.](../../assets/diagrams/rendered/csi-architecture.svg)
 
 **CSI 드라이버 배포 예시**:
 ```yaml
@@ -1571,7 +1571,7 @@ EKS 클러스터는 다음과 같은 구성 요소로 이루어져 있습니다:
 
 **EKS 아키텍처 다이어그램**:
 
-![AWS가 관리하는 EKS 컨트롤 플레인(kube-apiserver, etcd, 스케줄러)과 사용자가 운영하는 워커 노드, 그리고 IAM/ECR/CloudWatch 등 AWS 서비스 및 VPC 네트워킹이 연동되는 구조를 보여준다.](../.gitbook/assets/eks-aws-architecture.png)
+![AWS가 관리하는 EKS 컨트롤 플레인(kube-apiserver, etcd, 스케줄러)과 사용자가 운영하는 워커 노드, 그리고 IAM/ECR/CloudWatch 등 AWS 서비스 및 VPC 네트워킹이 연동되는 구조를 보여준다.](../../assets/diagrams/rendered/eks-aws-architecture.svg)
 
 ### EKS 컨트롤 플레인
 

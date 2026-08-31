@@ -63,7 +63,7 @@ Loki was designed with the philosophy of "handling logs like Prometheus":
 
 ### Component Overview
 
-![Diagram of Loki's write path (log agents through the distributor and ingester into S3 object storage) and read path (Grafana through the query frontend into the querier, which merges live data from the ingester, historical data from S3, and cached results from Redis/Memcached, while a compactor optimizes S3's indexes).](../../.gitbook/assets/en-observability-logging-01-loki-0.png)
+![Diagram of Loki's write path (log agents through the distributor and ingester into S3 object storage) and read path (Grafana through the query frontend into the querier, which merges live data from the ingester, historical data from S3, and cached results from Redis/Memcached, while a compactor optimizes S3's indexes).](../../../assets/diagrams/rendered/en-observability-logging-01-loki-0.svg)
 
 ### Component Details
 
@@ -834,7 +834,7 @@ labels:
 
 ### Cardinality Management
 
-![Flowchart showing how the number of labels and the cardinality of each label's values multiply into total stream count, which is the single factor driving index size, query performance, and memory usage.](../../.gitbook/assets/en-observability-logging-01-loki-1.png)
+![Flowchart showing how the number of labels and the cardinality of each label's values multiply into total stream count, which is the single factor driving index size, query performance, and memory usage.](../../../assets/diagrams/rendered/en-observability-logging-01-loki-1.svg)
 
 **Stream Count Calculation:**
 ```

@@ -9,7 +9,7 @@ This guide covers comprehensive best practices for running AI/ML workloads on Am
 
 Running AI/ML workloads efficiently on Kubernetes requires careful consideration across multiple dimensions:
 
-![A flowchart mapping eight AI/ML best-practice areas on EKS — benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security — to four outcomes, showing that most practices converge on high performance while a smaller set drives resource efficiency, reliability, and cost savings.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png)
+![A flowchart mapping eight AI/ML best-practice areas on EKS — benchmarking, container optimization, GPU selection, networking, storage, observability, cost optimization, and security — to four outcomes, showing that most practices converge on high performance while a smaller set drives resource efficiency, reliability, and cost savings.](../../assets/diagrams/rendered/en-ai-ml-07-ai-ml-best-practices-0.svg)
 
 ## Benchmarking LLM Inference
 
@@ -19,7 +19,7 @@ Benchmarking is essential for understanding the performance characteristics of y
 
 Understanding the key metrics is crucial for evaluating LLM inference performance:
 
-![A flowchart mapping five LLM inference metrics — time to first token, inter-token latency, tokens per second, end-to-end latency, and throughput — to the three user-experience outcomes they drive, with perceived responsiveness highlighted as the metric pair to optimize first.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png)
+![A flowchart mapping five LLM inference metrics — time to first token, inter-token latency, tokens per second, end-to-end latency, and throughput — to the three user-experience outcomes they drive, with perceived responsiveness highlighted as the metric pair to optimize first.](../../assets/diagrams/rendered/en-ai-ml-07-ai-ml-best-practices-1.svg)
 
 | Metric | Description | Formula | Target Range |
 |--------|-------------|---------|--------------|
@@ -219,7 +219,7 @@ AI/ML containers face unique cold start challenges due to large image sizes and 
 
 ### Cold Start Timeline Analysis
 
-![Sequence diagram showing why a large AI/ML pod takes 5 to 15 minutes to become ready: the scheduler places the pod, the kubelet pulls a 10 to 50 GB image over 2 to 10 minutes, the container is created, and the application spends 1 to 5 minutes loading model weights into GPU memory before passing its health check.](../.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-2.png)
+![Sequence diagram showing why a large AI/ML pod takes 5 to 15 minutes to become ready: the scheduler places the pod, the kubelet pulls a 10 to 50 GB image over 2 to 10 minutes, the container is created, and the application spends 1 to 5 minutes loading model weights into GPU memory before passing its health check.](../../assets/diagrams/rendered/en-ai-ml-07-ai-ml-best-practices-2.svg)
 
 ### Image Size Breakdown
 

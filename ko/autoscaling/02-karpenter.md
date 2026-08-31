@@ -48,13 +48,13 @@ Karpenter는 Kubernetes 클러스터의 노드 프로비저닝을 자동화하�
 
 Karpenter는 Kubernetes 컨트롤러로 작동하며, 스케줄링할 수 없는 파드를 감지하고 적절한 노드를 프로비저닝합니다.
 
-![Karpenter 컨트롤러가 쿠버네티스 클러스터 내부의 프로비저너·노드 템플릿·미스케줄 파드를 감시하고, Kubernetes API와 클라우드 제공자의 인스턴스 API를 호출해 컴퓨트 인스턴스를 직접 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-0.png)
+![Karpenter 컨트롤러가 쿠버네티스 클러스터 내부의 프로비저너·노드 템플릿·미스케줄 파드를 감시하고, Kubernetes API와 클라우드 제공자의 인스턴스 API를 호출해 컴퓨트 인스턴스를 직접 프로비저닝하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-autoscaling-02-karpenter-0.svg)
 
 ### Karpenter 워크플로우
 
 다음 다이어그램은 Karpenter가 EKS 클러스터에서 작동하는 방식을 보여줍니다:
 
-![스케줄링되지 못한 파드가 Karpenter 컨트롤러를 거쳐 AWS EC2 API로 인스턴스를 조회·요청하고, 새 노드가 등록되어 파드가 최종 스케줄링되기까지의 시간 순서를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-1.png)
+![스케줄링되지 못한 파드가 Karpenter 컨트롤러를 거쳐 AWS EC2 API로 인스턴스를 조회·요청하고, 새 노드가 등록되어 파드가 최종 스케줄링되기까지의 시간 순서를 보여준다.](../../assets/diagrams/rendered/ko-autoscaling-02-karpenter-1.svg)
 
 ### 주요 구성 요소
 
@@ -473,7 +473,7 @@ userData: |
 
 다음 다이어그램은 Karpenter의 노드 통합(consolidation) 프로세스를 보여줍니다. 이 기능은 클러스터 효율성을 최적화하고 비용을 절감하는 데 중요합니다:
 
-![사용률이 낮은 기존 노드 세 개를 분석·평가한 뒤 하나의 새 노드로 파드를 마이그레이션하고, 비워진 기존 노드를 드레이닝·종료해 노드 수를 통합하는 과정을 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-2.png)
+![사용률이 낮은 기존 노드 세 개를 분석·평가한 뒤 하나의 새 노드로 파드를 마이그레이션하고, 비워진 기존 노드를 드레이닝·종료해 노드 수를 통합하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-autoscaling-02-karpenter-2.svg)
 
 ## 인터럽션 처리
 
@@ -696,7 +696,7 @@ spec:
 
 Karpenter는 Amazon EKS와 원활하게 통합되어 클러스터 오토스케일링을 제공합니다.
 
-![Karpenter 컨트롤러가 IRSA를 통해 EC2 API 권한을 얻어 Auto Scaling Group과 관리형 노드 그룹을 거치지 않고 EC2 인스턴스를 직접 생성하며, 보안 그룹과 VPC 설정을 그대로 활용하는 구조를 보여준다.](../.gitbook/assets/ko-autoscaling-02-karpenter-3.png)
+![Karpenter 컨트롤러가 IRSA를 통해 EC2 API 권한을 얻어 Auto Scaling Group과 관리형 노드 그룹을 거치지 않고 EC2 인스턴스를 직접 생성하며, 보안 그룹과 VPC 설정을 그대로 활용하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-autoscaling-02-karpenter-3.svg)
 
 ### EKS 클러스터 준비
 
@@ -917,7 +917,7 @@ Karpenter는 Amazon ARC(Application Recovery Controller)의 Zonal Shift를 지�
 
 Karpenter를 사용하여 EKS 클러스터의 비용을 최적화할 수 있습니다:
 
-![노드 그룹 기반으로 느리게 확장하는 Cluster Autoscaler와, 워크로드 기반으로 다양한 인스턴스 유형·노드 통합·스팟 활용까지 지원해 더 높은 비용 절감을 이끄는 Karpenter의 특징을 나란히 비교한다.](../.gitbook/assets/ko-autoscaling-02-karpenter-4.png)
+![노드 그룹 기반으로 느리게 확장하는 Cluster Autoscaler와, 워크로드 기반으로 다양한 인스턴스 유형·노드 통합·스팟 활용까지 지원해 더 높은 비용 절감을 이끄는 Karpenter의 특징을 나란히 비교한다.](../../assets/diagrams/rendered/ko-autoscaling-02-karpenter-4.svg)
 
 #### 1. 스팟 인스턴스 사용
 
@@ -994,7 +994,7 @@ spec:
 
 ## 모범 사례
 
-![Karpenter 운영 모범 사례를 성능, 비용, 가용성, 보안 네 가지 축으로 나누어 각 축마다 실천할 네 가지 구체적인 설정 항목을 나란히 정리한다.](../.gitbook/assets/ko-autoscaling-02-karpenter-5.png)
+![Karpenter 운영 모범 사례를 성능, 비용, 가용성, 보안 네 가지 축으로 나누어 각 축마다 실천할 네 가지 구체적인 설정 항목을 나란히 정리한다.](../../assets/diagrams/rendered/ko-autoscaling-02-karpenter-5.svg)
 
 ### 성능 최적화
 

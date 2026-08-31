@@ -36,7 +36,7 @@ IPAM은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니�
 
 ### Cilium IPAM 아키텍처
 
-![클러스터 범위, 노드 범위, 클라우드 제공업체, 사용자 정의라는 네 가지 Cilium IPAM 구현 방식이 각각 중앙 집중식, 분산, 클라우드 네이티브, 사용자 정의 할당 결과로 이어지는 것을 보여주는 다이어그램으로, 여러 퍼블릭 클라우드의 VPC/VNET IP를 그대로 쓰는 클라우드 네이티브 할당 경로가 강조되어 있다.](../../.gitbook/assets/ko-networking-cilium-04-ipam-policy-0.png)
+![클러스터 범위, 노드 범위, 클라우드 제공업체, 사용자 정의라는 네 가지 Cilium IPAM 구현 방식이 각각 중앙 집중식, 분산, 클라우드 네이티브, 사용자 정의 할당 결과로 이어지는 것을 보여주는 다이어그램으로, 여러 퍼블릭 클라우드의 VPC/VNET IP를 그대로 쓰는 클라우드 네이티브 할당 경로가 강조되어 있다.](../../../assets/diagrams/rendered/ko-networking-cilium-04-ipam-policy-0.svg)
 
 ### Cilium IPAM 모드:
 

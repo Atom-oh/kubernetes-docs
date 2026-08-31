@@ -19,7 +19,7 @@ Comprehensively visualize and monitor Istio service mesh using Grafana, Kiali, a
 
 ### Observability Stack Architecture
 
-![Architecture diagram showing Envoy sidecars in the Istio data plane sending metrics, logs, and traces to Prometheus, Loki, Jaeger, and Tempo, which in turn feed the Kiali, Grafana, and Jaeger UI dashboards, while istiod pushes configuration to Kiali for validation.](../../../.gitbook/assets/en-service-mesh-istio-observability-04-dashboards-0.png)
+![Architecture diagram showing Envoy sidecars in the Istio data plane sending metrics, logs, and traces to Prometheus, Loki, Jaeger, and Tempo, which in turn feed the Kiali, Grafana, and Jaeger UI dashboards, while istiod pushes configuration to Kiali for validation.](../../../../assets/diagrams/rendered/en-service-mesh-istio-observability-04-dashboards-0.svg)
 
 ### Purpose by Tool
 

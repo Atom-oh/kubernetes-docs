@@ -21,7 +21,7 @@ DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트�
 
 DestinationRule은 **라우팅 이후의 트래픽 정책**을 정의합니다. VirtualService가 "어디로" 보낼지 결정한다면, DestinationRule은 "어떻게" 처리할지 결정합니다.
 
-![클라이언트 요청이 VirtualService의 라우팅 결정을 거쳐 DestinationRule의 트래픽 정책에 따라 두 버전으로 분배되는 흐름을 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-0.png)
+![클라이언트 요청이 VirtualService의 라우팅 결정을 거쳐 DestinationRule의 트래픽 정책에 따라 두 버전으로 분배되는 흐름을 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-0.svg)
 
 ### DestinationRule의 주요 역할
 
@@ -39,7 +39,7 @@ DestinationRule은 **라우팅 이후의 트래픽 정책**을 정의합니다. 
 
 ### 역할 비교
 
-![HTTP 요청이 조건 매칭과 라우팅 결정을 거쳐 DestinationRule의 Subset 선택과 정책 적용을 통해 v1·v2 파드로 로드 밸런싱되는 과정을 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-1.png)
+![HTTP 요청이 조건 매칭과 라우팅 결정을 거쳐 DestinationRule의 Subset 선택과 정책 적용을 통해 v1·v2 파드로 로드 밸런싱되는 과정을 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-1.svg)
 
 ### 책임 분리
 
@@ -98,7 +98,7 @@ Subset은 서비스의 **논리적 그룹**을 정의합니다. 주로 버전, �
 
 ### Subset의 본질
 
-![Kubernetes Service가 정의한 Subset v1·v2가 레이블 매칭을 통해 실제 파드들과 연결되는 관계를 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-2.png)
+![Kubernetes Service가 정의한 Subset v1·v2가 레이블 매칭을 통해 실제 파드들과 연결되는 관계를 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-2.svg)
 
 ### Subset 사용 시나리오
 
@@ -321,7 +321,7 @@ DestinationRule의 `trafficPolicy`는 다양한 트래픽 제어 기능을 제�
 
 ### Traffic Policy 계층 구조
 
-![전역 Traffic Policy가 모든 subset에 기본으로 적용되고, v1은 이를 오버라이드하며 v2는 그대로 상속받는 계층 구조를 보여줍니다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-3.png)
+![전역 Traffic Policy가 모든 subset에 기본으로 적용되고, v1은 이를 오버라이드하며 v2는 그대로 상속받는 계층 구조를 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-3.svg)
 
 ### Traffic Policy 구성 요소
 

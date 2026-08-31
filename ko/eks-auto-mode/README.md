@@ -84,7 +84,7 @@ EKS Auto Mode는 AWS가 관리하는 완전 자동화된 노드 관리 솔루션
 
 EKS Auto Mode는 Karpenter를 기반으로 동작하지만, AWS가 관리하는 컨트롤 플레인 내에서 실행됩니다.
 
-![사용자의 파드 생성 요청부터 EKS API 서버의 Pending 감지, Auto Mode Controller의 NodePool·인스턴스 타입 결정, EC2 Fleet를 통한 신규 노드 프로비저닝, kubelet 등록과 파드 스케줄링을 거쳐 Pod Running까지 이어지는 EKS Auto Mode의 자동 노드 프로비저닝 흐름을 보여준다.](../.gitbook/assets/ko-eks-auto-mode-readme-0.png)
+![사용자의 파드 생성 요청부터 EKS API 서버의 Pending 감지, Auto Mode Controller의 NodePool·인스턴스 타입 결정, EC2 Fleet를 통한 신규 노드 프로비저닝, kubelet 등록과 파드 스케줄링을 거쳐 Pod Running까지 이어지는 EKS Auto Mode의 자동 노드 프로비저닝 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-auto-mode-readme-0.svg)
 
 ## 지원 리전 및 제한 사항
 

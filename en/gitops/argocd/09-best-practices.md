@@ -127,7 +127,7 @@ gitops-root/
 
 ### Git Branch Strategy
 
-![Git branches develop, staging, and main are merged in sequence, each triggering a deploy to its matching environment: develop to the Dev Cluster, staging to the Staging Cluster, and main to the Production Cluster.](../../.gitbook/assets/en-gitops-argocd-09-best-practices-0.png)
+![Git branches develop, staging, and main are merged in sequence, each triggering a deploy to its matching environment: develop to the Dev Cluster, staging to the Staging Cluster, and main to the Production Cluster.](../../../assets/diagrams/rendered/en-gitops-argocd-09-best-practices-0.svg)
 
 ### Directory-Based Promotion
 
