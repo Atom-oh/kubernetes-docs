@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **Last Updated**: August 24, 2026
+> **Last Updated**: August 31, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -195,6 +195,10 @@ spec:
 ```
 
 ## Version Compatibility
+
+### August 2026 Update: ArgoCD v3.5.2 / v3.4.8 Patch Releases
+
+On August 27, 2026, patches for the maintained release lines went out: v3.5.2 and v3.4.8. v3.5.2 carries bug fixes such as auto-sync being skipped when a newer commit arrives during a sync, `ignoreApplicationDifferences` not being restored after ApplicationSet normalization, and the notification controller mutating objects from a shared cache without deep-copying them first. See the [v3.5.2 release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2) for details.
 
 ### August 2026 Update: Custom Configuration for the EKS Managed Argo CD Capability
 

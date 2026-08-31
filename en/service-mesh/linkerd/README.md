@@ -1,6 +1,10 @@
 # Linkerd
 
-> **Supported Versions**: Linkerd 2.16+ **Last Updated**: August 17, 2026
+> **Supported Versions**: Linkerd 2.16+ **Last Updated**: August 31, 2026
+
+### August 2026 Update: edge-26.8.4
+
+The edge-26.8.4 release, published August 25, 2026, guards against a nil ExternalWorkload in opaque protocol handling, makes the policy controller negotiate the TLSRoute API version with the cluster, and bumps Go to 1.26.7. See the [release notes](https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4) for details.
 
 ### August 2026 Update: edge-26.8.2 — Gateway API 1.5.1 Support
 

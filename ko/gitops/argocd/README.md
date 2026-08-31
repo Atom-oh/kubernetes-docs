@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **지원 버전**: ArgoCD v2.9+, Argo Rollouts v1.6+
-> **마지막 업데이트**: 2026년 8월 24일
+> **마지막 업데이트**: 2026년 8월 31일
 
 ## 목차
 
@@ -180,6 +180,10 @@ spec:
 | **Missing** | 리소스 없음 |
 
 ## 버전 지원 정보
+
+### 2026년 8월 업데이트: ArgoCD v3.5.2 / v3.4.8 패치 릴리스
+
+2026년 8월 27일 유지 관리 중인 릴리스 라인의 패치인 v3.5.2와 v3.4.8이 공개되었습니다. v3.5.2에는 동기화 진행 중 새 커밋이 도착하면 auto-sync가 건너뛰어지던 문제, ApplicationSet 정규화 이후 `ignoreApplicationDifferences`가 복원되지 않던 문제, notification 컨트롤러가 공유 캐시의 객체를 복사 없이 변형(mutate)하던 문제 등에 대한 버그 수정이 담겼습니다. 자세한 내용은 [v3.5.2 릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)를 참고하세요.
 
 ### 2026년 8월 업데이트: EKS 관리형 Argo CD 기능의 사용자 지정 구성 지원
 

@@ -1,10 +1,17 @@
 # 소식
-> **마지막 업데이트**: 2026년 8월 24일
+> **마지막 업데이트**: 2026년 8월 31일
 
 Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
 
 ## 갱신 로그
 
+- 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 "Garhwal" 정식 릴리스(파드 인증서/ClusterTrustBundle Stable, Metrics API GA, kube-dns·IPVS 모드 사용 중단 등) 반영
+- 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7 보안 패치 릴리스(ISTIO-SECURITY-2026-006, Envoy CVE 13건) 반영
+- 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8 패치 릴리스 반영
+- 2026-W36: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.4(TLSRoute API 버전 협상 등) 반영
+- 2026-W36: 매칭 문서 없음 — Amazon EKS, 클러스터당 최대 10개의 외부 OIDC 자격 증명 공급자 연결 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers))
+- 2026-W36: 매칭 문서 없음 — Kubernetes GPU 워크로드를 위한 예측형(predictive) 오토스케일링, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/))
+- 2026-W36: 매칭 문서 없음 — Kubernetes 위에 AI 팩토리 구축하기, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/))
 - 2026-W35: [gitops/argocd/README.md](../gitops/argocd/README.md) — Amazon EKS 관리형 Argo CD 기능의 `argocd-cm` ConfigMap 기반 사용자 지정 구성 지원 반영
 - 2026-W35: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.4/v1.35.8/v1.34.11 패치 릴리스 및 v1.37.0-rc.1 반영
 - 2026-W35: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.1/1.19.7/1.18.13 패치 릴리스 반영
