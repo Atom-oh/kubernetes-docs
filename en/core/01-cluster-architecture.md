@@ -36,7 +36,9 @@ A Kubernetes cluster consists of a set of nodes (virtual or physical machines) f
 
 ### Cluster Architecture Diagram
 
-![Architecture diagram showing the control plane's kube-apiserver coordinating etcd, the scheduler, and controller managers, and reaching across to a worker node's kubelet and kube-proxy, which in turn drive the container runtime and running pods.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-0.svg)
+![Architecture diagram showing the control plane's kube-apiserver coordinating etcd, the scheduler, and controller managers, and reaching across to a worker node's kubelet and kube-proxy, which in turn drive the container runtime and running pods.](../../.gitbook/assets/en-core-01-cluster-architecture-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 
 **Control Plane Components**:
 - **kube-apiserver**: Frontend that exposes the Kubernetes API

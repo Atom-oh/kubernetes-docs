@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow 컴포넌트 아키텍처",
+    "output": "ko-ai-ml-kubeflow-01-architecture-installation-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Ingress Gateway",
+      "sublabel": "AuthN / AuthZ",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "dashboard",
+      "type": "backend",
+      "label": "Central Dashboard",
+      "sublabel": "단일 UI 진입점",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "profile",
+      "type": "backend",
+      "label": "Profile Controller",
+      "sublabel": "team-a / team-b 네임스페이스",
+      "pos": [
+        550,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "controllers",
+      "type": "backend",
+      "label": "컴포넌트 컨트롤러",
+      "sublabel": "Pipelines · Notebook · Katib · Trainer · KServe",
+      "pos": [
+        550,
+        360
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "공유 컨트롤 플레인",
+      "pos": [
+        840,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gateway-dashboard",
+      "from": "gateway",
+      "to": "dashboard",
+      "label": "인증된 요청",
+      "labelAt": [
+        255,
+        216
+      ]
+    },
+    {
+      "id": "dashboard-profile",
+      "from": "dashboard",
+      "to": "profile",
+      "label": "네임스페이스 라우팅"
+    },
+    {
+      "id": "dashboard-controllers",
+      "from": "dashboard",
+      "to": "controllers",
+      "label": "컴포넌트 호출"
+    },
+    {
+      "id": "profile-api",
+      "from": "profile",
+      "to": "apiserver",
+      "label": "조정(reconcile)"
+    },
+    {
+      "id": "controllers-api",
+      "from": "controllers",
+      "to": "apiserver",
+      "label": "조정(reconcile)"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "멀티테넌시",
+      "items": [
+        "Profile Controller가 팀별 네임스페이스, RBAC, 쿼터, AuthorizationPolicy를 조정한다",
+        "Central Dashboard가 단일 UI 진입점을 제공한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "컴포넌트",
+      "items": [
+        "Pipelines, Notebook, Katib, Trainer, KServe가 각각 자체 컨트롤러를 실행한다",
+        "모든 컨트롤러는 공유 Kubernetes API 서버를 통해 상태를 조정한다"
+      ]
+    }
+  ]
+}

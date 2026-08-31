@@ -9,7 +9,9 @@ The architecture of Cilium Service Mesh is fundamentally different from traditio
 
 ## Overall Architecture
 
-![Architecture diagram showing how the Kubernetes control plane drives the per-node Cilium Agent and Operator, which program eBPF kernel datapath maps that intercept pod traffic and redirect L7 flows to a shared node-local Envoy proxy.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-01-architecture-0.svg)
+![Architecture diagram showing how the Kubernetes control plane drives the per-node Cilium Agent and Operator, which program eBPF kernel datapath maps that intercept pod traffic and redirect L7 flows to a shared node-local Envoy proxy.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-01-architecture-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-01-architecture-0.html)
 
 ## eBPF Datapath
 

@@ -9,7 +9,9 @@ Linkerd follows a service mesh architecture consisting of a control plane and da
 
 ## Overall Architecture
 
-![Architecture diagram showing Linkerd's control plane (Destination, Identity, Proxy Injector, Policy controllers) configuring the linkerd-proxy sidecars in two application pods, which exchange traffic over mTLS while the Viz extension collects metrics.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-0.svg)
+![Architecture diagram showing Linkerd's control plane (Destination, Identity, Proxy Injector, Policy controllers) configuring the linkerd-proxy sidecars in two application pods, which exchange traffic over mTLS while the Viz extension collects metrics.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-0.html)
 
 ## Control Plane
 

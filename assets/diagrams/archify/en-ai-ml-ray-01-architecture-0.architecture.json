@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray Cluster Architecture",
+    "output": "en-ai-ml-ray-01-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "head", "type": "backend", "label": "Head Node", "sublabel": "GCS · Driver · Autoscaler", "pos": [40, 200], "size": [190, 70] },
+    { "id": "worker1", "type": "backend", "label": "Worker Node", "sublabel": "Task / Actor execution", "pos": [380, 60], "size": [190, 60] },
+    { "id": "worker2", "type": "backend", "label": "Worker Node", "sublabel": "Task / Actor execution", "pos": [380, 360], "size": [190, 60] },
+    { "id": "object-store", "type": "database", "label": "Object Store", "sublabel": "distributed, shared", "pos": [690, 200], "size": [190, 70] }
+  ],
+  "connections": [
+    { "id": "head-worker1", "from": "head", "to": "worker1", "label": "schedule tasks" },
+    { "id": "head-worker2", "from": "head", "to": "worker2", "label": "schedule tasks" },
+    { "id": "head-store", "from": "head", "to": "object-store", "label": "GCS metadata", "variant": "dashed" },
+    { "id": "worker1-store", "from": "worker1", "to": "object-store", "label": "put / get" },
+    { "id": "worker2-store", "from": "worker2", "to": "object-store", "label": "put / get" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Head Node", "items": ["Global Control Store (GCS) holds cluster metadata", "the driver runs the user program", "the autoscaler adds/removes worker nodes"] },
+    { "dot": "emerald", "title": "Worker Nodes", "items": ["execute scheduled tasks and actors", "read and write shared objects through the distributed object store"] }
+  ]
+}

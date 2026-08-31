@@ -216,7 +216,9 @@ spec:
 
 ### Envoy 아키텍처
 
-![들어오는 요청이 Envoy의 Listener, Filter, Router, Cluster를 순서대로 거쳐 업스트림 서비스로 나가는 아웃바운드 트래픽 처리 경로를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-03-architecture-2.svg)
+![들어오는 요청이 Envoy의 Listener, Filter, Router, Cluster를 순서대로 거쳐 업스트림 서비스로 나가는 아웃바운드 트래픽 처리 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-2.html)
 
 ### Envoy의 주요 구성 요소
 

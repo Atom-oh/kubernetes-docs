@@ -9,7 +9,9 @@ Linkerd는 컨트롤 플레인과 데이터 플레인으로 구성된 서비스 
 
 ## 전체 아키텍처
 
-![컨트롤 플레인의 네 컴포넌트가 데이터 플레인의 linkerd-proxy 사이드카를 구성하고, 두 프록시가 mTLS로 애플리케이션 간 트래픽을 중계하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-02-architecture-0.svg)
+![컨트롤 플레인의 네 컴포넌트가 데이터 플레인의 linkerd-proxy 사이드카를 구성하고, 두 프록시가 mTLS로 애플리케이션 간 트래픽을 중계하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-0.html)
 
 ## 컨트롤 플레인
 

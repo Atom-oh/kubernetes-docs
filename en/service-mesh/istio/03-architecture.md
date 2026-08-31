@@ -214,7 +214,9 @@ spec:
 
 ### Envoy Architecture
 
-![Architecture diagram showing an inbound request passing through Envoy's listener, filter chain, and router into a cluster of upstream services before leaving as an outbound request.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-2.svg)
+![Architecture diagram showing an inbound request passing through Envoy's listener, filter chain, and router into a cluster of upstream services before leaving as an outbound request.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
 
 ### Envoy Main Components
 

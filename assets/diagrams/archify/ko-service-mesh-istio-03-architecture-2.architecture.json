@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Envoy 아키텍처",
+    "output": "ko-service-mesh-istio-03-architecture-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "listener",
+      "type": "backend",
+      "label": "Listener",
+      "sublabel": "연결 수신",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "Filter Chain",
+      "sublabel": "바이트 처리",
+      "pos": [
+        260,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Router",
+      "sublabel": "클러스터 선택",
+      "pos": [
+        490,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "backend",
+      "label": "Cluster",
+      "sublabel": "커넥션 풀",
+      "pos": [
+        720,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "upstream",
+      "type": "external",
+      "label": "Upstream Service",
+      "sublabel": "아웃바운드 대상",
+      "pos": [
+        950,
+        220
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "listener-filter",
+      "from": "listener",
+      "to": "filter",
+      "label": "raw bytes"
+    },
+    {
+      "id": "filter-router",
+      "from": "filter",
+      "to": "router",
+      "label": "파싱된 요청",
+      "labelAt": [
+        460,
+        294
+      ]
+    },
+    {
+      "id": "router-cluster",
+      "from": "router",
+      "to": "cluster",
+      "label": "라우트 매칭"
+    },
+    {
+      "id": "cluster-upstream",
+      "from": "cluster",
+      "to": "upstream",
+      "label": "로드밸런싱된 연결",
+      "variant": "emphasis",
+      "labelAt": [
+        920,
+        294
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "인바운드 경로",
+      "items": [
+        "Listener가 포트에서 연결을 수신한다",
+        "Filter Chain이 원시 바이트를 처리한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "아웃바운드 경로",
+      "items": [
+        "Router가 요청을 Cluster에 매칭한다",
+        "Cluster가 업스트림 서비스로 연결을 로드밸런싱한다"
+      ]
+    }
+  ]
+}

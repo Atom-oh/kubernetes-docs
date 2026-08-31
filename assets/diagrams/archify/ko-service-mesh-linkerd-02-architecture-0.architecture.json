@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 아키텍처",
+    "output": "ko-service-mesh-linkerd-02-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "어드미션 웹훅",
+      "pos": [
+        30,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "서비스 디스커버리",
+      "pos": [
+        280,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "mTLS CA",
+      "pos": [
+        530,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxyA",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "App A 사이드카",
+      "pos": [
+        120,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "proxyB",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "App B 사이드카",
+      "pos": [
+        500,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "injector",
+        "destination",
+        "identity"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "proxyA",
+        "proxyB"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "injector-proxyA",
+      "from": "injector",
+      "to": "proxyA",
+      "label": "사이드카 주입",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "destination-proxyA",
+      "from": "destination",
+      "to": "proxyA",
+      "label": "엔드포인트 업데이트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "destination-proxyB",
+      "from": "destination",
+      "to": "proxyB",
+      "label": "엔드포인트 업데이트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "identity-proxyB",
+      "from": "identity",
+      "to": "proxyB",
+      "label": "인증서 발급",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        607,
+        114
+      ]
+    },
+    {
+      "id": "proxyA-proxyB",
+      "from": "proxyA",
+      "to": "proxyB",
+      "label": "mTLS 트래픽",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인",
+      "items": [
+        "Proxy Injector가 파드 어드미션 시점에 사이드카를 추가한다",
+        "Destination이 프록시에 서비스 디스커버리 업데이트를 전달한다",
+        "Identity가 단기 mTLS 인증서를 발급한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "데이터 플레인",
+      "items": [
+        "각 linkerd-proxy 사이드카가 자신의 앱 트래픽을 중계한다",
+        "두 프록시가 애플리케이션 간 mTLS를 구성한다"
+      ]
+    }
+  ]
+}

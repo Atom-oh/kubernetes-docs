@@ -9,7 +9,9 @@ Cilium Service Mesh의 아키텍처는 전통적인 사이드카 기반 서비�
 
 ## 전체 아키텍처
 
-![쿠버네티스 노드 안에서 Cilium Agent가 커널의 eBPF 프로그램과 사용자 공간의 노드 Envoy를 제어 플레인 API와 동기화하며 트래픽을 처리하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-01-architecture-0.svg)
+![쿠버네티스 노드 안에서 Cilium Agent가 커널의 eBPF 프로그램과 사용자 공간의 노드 Envoy를 제어 플레인 API와 동기화하며 트래픽을 처리하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-0.html)
 
 ## eBPF 데이터패스
 

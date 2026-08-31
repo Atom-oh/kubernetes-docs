@@ -53,7 +53,9 @@ The head node runs a few additional responsibilities beyond what a worker does:
 
 Worker nodes exist to run tasks and actors and to add their CPU, GPU, and memory to the pool the whole cluster draws from. A key property of Ray's scheduling model follows from this: Ray schedules tasks and actors against the cluster's combined resource pool, not against any one node's resources in isolation. A task requesting two CPUs can land on whichever node in the cluster has two CPUs free — the scheduler is not choosing a node up front the way you might manually place work on a specific machine.
 
-![A Ray head node running the Global Control Store, driver, and autoscaler oversees a set of worker nodes running tasks and actors, and every node in the cluster reads and writes the same distributed object store.](../../../assets/diagrams/rendered/en-ai-ml-ray-01-architecture-0.svg)
+![A Ray head node running the Global Control Store, driver, and autoscaler oversees a set of worker nodes running tasks and actors, and every node in the cluster reads and writes the same distributed object store.](../../.gitbook/assets/en-ai-ml-ray-01-architecture-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-01-architecture-0.html)
 
 Every node participates in the distributed object store, so an object produced by a task on one worker node can be read by a task or actor running on a different worker node, with Ray handling the data movement between them.
 
