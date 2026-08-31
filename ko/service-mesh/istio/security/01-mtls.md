@@ -2,6 +2,8 @@
 
 Mutual TLS (mTLS)는 Istio의 핵심 보안 기능으로, 서비스 간 통신을 자동으로 암호화하고 인증합니다.
 
+> 📎 TLS 핸드셰이크와 인증서 검증이 생소하다면 [네트워크 기초 Part 2](../../../basics/06-network-fundamentals-part2.md)의 TLS 절을 먼저 읽어보세요.
+
 ## 목차
 
 1. [mTLS 개요](#mtls-개요)

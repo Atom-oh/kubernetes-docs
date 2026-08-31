@@ -3,7 +3,8 @@
   "diagram_type": "workflow",
   "meta": {
     "title": "Cilium Identity 할당과 정책 평가",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "lanes": [
     {

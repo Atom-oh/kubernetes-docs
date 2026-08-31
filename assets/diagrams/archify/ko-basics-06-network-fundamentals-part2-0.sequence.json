@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "첫 요청까지의 왕복 — TCP+TLS 1.3 vs QUIC",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      660
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "브라우저"
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server",
+      "sublabel": "예: example.com"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 390,
+      "label": "TCP + TLS 1.3 — 첫 요청까지 2 RTT"
+    },
+    {
+      "from": 415,
+      "to": 580,
+      "label": "QUIC — 1 RTT (재개 시 0 RTT)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "syn",
+      "from": "client",
+      "to": "server",
+      "y": 185,
+      "label": "SYN"
+    },
+    {
+      "id": "synack",
+      "from": "server",
+      "to": "client",
+      "y": 220,
+      "label": "SYN+ACK",
+      "variant": "return"
+    },
+    {
+      "id": "ack",
+      "from": "client",
+      "to": "server",
+      "y": 255,
+      "label": "ACK"
+    },
+    {
+      "id": "ch",
+      "from": "client",
+      "to": "server",
+      "y": 295,
+      "label": "TLS ClientHello",
+      "variant": "security",
+      "note": "TCP 1 RTT 후에야 TLS 시작"
+    },
+    {
+      "id": "sh",
+      "from": "server",
+      "to": "client",
+      "y": 340,
+      "label": "ServerHello · 인증서 · Finished",
+      "variant": "return"
+    },
+    {
+      "id": "fin",
+      "from": "client",
+      "to": "server",
+      "y": 378,
+      "label": "Finished + HTTP 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "qinit",
+      "from": "client",
+      "to": "server",
+      "y": 448,
+      "label": "QUIC Initial (ClientHello 포함)",
+      "variant": "security",
+      "note": "전송·암호화 핸드셰이크가 한 번에"
+    },
+    {
+      "id": "qhs",
+      "from": "server",
+      "to": "client",
+      "y": 495,
+      "label": "Handshake (인증서 · Finished)",
+      "variant": "return"
+    },
+    {
+      "id": "qreq",
+      "from": "client",
+      "to": "server",
+      "y": 535,
+      "label": "HTTP/3 요청",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "server",
+      "from": 180,
+      "to": 385,
+      "type": "backend"
+    },
+    {
+      "participant": "server",
+      "from": 443,
+      "to": 542,
+      "type": "backend"
+    }
+  ]
+}

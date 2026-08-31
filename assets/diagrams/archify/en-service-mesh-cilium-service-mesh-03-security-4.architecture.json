@@ -4,7 +4,8 @@
   "meta": {
     "title": "IP-based vs Identity-based Security",
     "quality_profile": "showcase",
-    "locale": "en"
+    "locale": "en",
+    "animation": "trace"
   },
   "components": [
     {

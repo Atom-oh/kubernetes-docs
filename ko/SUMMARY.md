@@ -15,6 +15,11 @@
 * [컨테이너 기술](basics/03-container-technology.md)
 * [Kubernetes 소개](basics/04-kubernetes-introduction.md)
 * [eBPF 기초와 실무 활용](basics/05-ebpf-fundamentals.md)
+* [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals-part1.md)
+  * [Part 1: 계층 모델과 링크·라우팅](basics/06-network-fundamentals-part1.md)
+  * [Part 2: 전송 계층과 TLS](basics/06-network-fundamentals-part2.md)
+  * [Part 3: 애플리케이션 프로토콜](basics/06-network-fundamentals-part3.md)
+  * [Part 4: 요청의 여정과 클라우드](basics/06-network-fundamentals-part4.md)
 
 ## Kubernetes 핵심 개념
 
@@ -120,6 +125,7 @@
 ## Data on EKS
 
 * [Data on EKS 개요](data-on-eks/README.md)
+* [모던 데이터 파이프라인 해부](data-on-eks/01-data-pipeline-anatomy.md)
 * [Kafka on EKS 딥다이브](data-on-eks/kafka/README.md)
   * [Part 1: Kafka 핵심 개념](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -375,6 +381,10 @@
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
   * [Kubernetes 소개 퀴즈](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF 기초와 실무 활용 퀴즈](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+  * [네트워크 기초 Part 1 퀴즈](quizzes/basics/06-network-fundamentals-part1-quiz.md)
+  * [네트워크 기초 Part 2 퀴즈](quizzes/basics/06-network-fundamentals-part2-quiz.md)
+  * [네트워크 기초 Part 3 퀴즈](quizzes/basics/06-network-fundamentals-part3-quiz.md)
+  * [네트워크 기초 Part 4 퀴즈](quizzes/basics/06-network-fundamentals-part4-quiz.md)
 * Kubernetes 핵심 개념
   * [클러스터 아키텍처 퀴즈](quizzes/core/01-cluster-architecture-quiz.md)
   * [파드와 워크로드 퀴즈](quizzes/core/02-pods-and-workloads-quiz.md)
@@ -459,6 +469,7 @@
   * [Part 2: MLflow Model Registry 퀴즈](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
   * [Part 3: MLflow EKS 배포 퀴즈](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * Data on EKS
+  * [모던 데이터 파이프라인 해부 퀴즈](quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
   * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka 운영 퀴즈](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)

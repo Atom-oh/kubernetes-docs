@@ -4,7 +4,8 @@
   "meta": {
     "title": "Traffic Mirroring",
     "quality_profile": "showcase",
-    "locale": "en"
+    "locale": "en",
+    "animation": "trace"
   },
   "lanes": [
     {

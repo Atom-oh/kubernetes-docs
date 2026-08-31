@@ -4,7 +4,8 @@
   "meta": {
     "title": "Cilium Identity Assignment and Policy Evaluation",
     "quality_profile": "showcase",
-    "locale": "en"
+    "locale": "en",
+    "animation": "trace"
   },
   "lanes": [
     {

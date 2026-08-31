@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "DNS 재귀 해석 — 루트에서 권한 서버까지",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      620
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "스텁 리졸버"
+    },
+    {
+      "id": "resolver",
+      "type": "backend",
+      "label": "재귀 리졸버",
+      "sublabel": "ISP/조직"
+    },
+    {
+      "id": "root",
+      "type": "database",
+      "label": "루트 NS",
+      "sublabel": "."
+    },
+    {
+      "id": "tld",
+      "type": "database",
+      "label": "TLD NS",
+      "sublabel": ".com"
+    },
+    {
+      "id": "auth",
+      "type": "database",
+      "label": "권한 NS",
+      "sublabel": "example.com"
+    }
+  ],
+  "messages": [
+    {
+      "id": "q0",
+      "from": "client",
+      "to": "resolver",
+      "y": 180,
+      "label": "example.com A?",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q1",
+      "from": "resolver",
+      "to": "root",
+      "y": 225,
+      "label": "A? (캐시 미스)"
+    },
+    {
+      "id": "r1",
+      "from": "root",
+      "to": "resolver",
+      "y": 265,
+      "label": ".com TLD로 위임",
+      "variant": "return"
+    },
+    {
+      "id": "q2",
+      "from": "resolver",
+      "to": "tld",
+      "y": 310,
+      "label": "A?"
+    },
+    {
+      "id": "r2",
+      "from": "tld",
+      "to": "resolver",
+      "y": 350,
+      "label": "권한 NS로 위임",
+      "variant": "return"
+    },
+    {
+      "id": "q3",
+      "from": "resolver",
+      "to": "auth",
+      "y": 395,
+      "label": "A?"
+    },
+    {
+      "id": "r3",
+      "from": "auth",
+      "to": "resolver",
+      "y": 435,
+      "label": "93.184.216.34 · TTL 300",
+      "variant": "return"
+    },
+    {
+      "id": "ans",
+      "from": "resolver",
+      "to": "client",
+      "y": 490,
+      "label": "응답 + 캐시 저장",
+      "variant": "emphasis",
+      "note": "TTL 동안은 리졸버 캐시가 즉시 응답 — 루트까지 다시 가지 않음"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "resolver",
+      "from": 175,
+      "to": 498,
+      "type": "backend"
+    },
+    {
+      "participant": "root",
+      "from": 220,
+      "to": 272,
+      "type": "database"
+    },
+    {
+      "participant": "tld",
+      "from": 305,
+      "to": 357,
+      "type": "database"
+    },
+    {
+      "participant": "auth",
+      "from": 390,
+      "to": 442,
+      "type": "database"
+    }
+  ]
+}

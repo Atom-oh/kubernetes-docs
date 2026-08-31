@@ -4,7 +4,8 @@
   "meta": {
     "title": "WireGuard Encryption Architecture",
     "quality_profile": "showcase",
-    "locale": "en"
+    "locale": "en",
+    "animation": "trace"
   },
   "components": [
     {

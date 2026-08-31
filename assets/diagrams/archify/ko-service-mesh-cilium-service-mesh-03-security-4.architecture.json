@@ -3,7 +3,8 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "IP 기반 vs Identity 기반 보안",
-    "quality_profile": "showcase"
+    "quality_profile": "showcase",
+    "animation": "trace"
   },
   "components": [
     {

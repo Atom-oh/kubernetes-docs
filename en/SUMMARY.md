@@ -15,6 +15,11 @@
 * [Container Technology](basics/03-container-technology.md)
 * [Introduction to Kubernetes](basics/04-kubernetes-introduction.md)
 * [eBPF Fundamentals and Practical Applications](basics/05-ebpf-fundamentals.md)
+* [Network Fundamentals — 25 Protocols](basics/06-network-fundamentals-part1.md)
+  * [Part 1: The Layer Model, Link and Routing Layers](basics/06-network-fundamentals-part1.md)
+  * [Part 2: The Transport Layer and TLS](basics/06-network-fundamentals-part2.md)
+  * [Part 3: Application Protocols](basics/06-network-fundamentals-part3.md)
+  * [Part 4: A Request's Journey and the Cloud](basics/06-network-fundamentals-part4.md)
 
 ## Kubernetes Core Concepts
 
@@ -120,6 +125,7 @@
 ## Data on EKS
 
 * [Data on EKS Overview](data-on-eks/README.md)
+* [Anatomy of a Modern Data Pipeline](data-on-eks/01-data-pipeline-anatomy.md)
 * [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
   * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -375,6 +381,10 @@
   * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
   * [Introduction to Kubernetes Quiz](quizzes/basics/04-kubernetes-introduction-quiz.md)
   * [eBPF Fundamentals and Practical Applications Quiz](quizzes/basics/05-ebpf-fundamentals-quiz.md)
+  * [Network Fundamentals Part 1 Quiz](quizzes/basics/06-network-fundamentals-part1-quiz.md)
+  * [Network Fundamentals Part 2 Quiz](quizzes/basics/06-network-fundamentals-part2-quiz.md)
+  * [Network Fundamentals Part 3 Quiz](quizzes/basics/06-network-fundamentals-part3-quiz.md)
+  * [Network Fundamentals Part 4 Quiz](quizzes/basics/06-network-fundamentals-part4-quiz.md)
 * Kubernetes Core Concepts
   * [Cluster Architecture Quiz](quizzes/core/01-cluster-architecture-quiz.md)
   * [Pods and Workloads Quiz](quizzes/core/02-pods-and-workloads-quiz.md)
@@ -459,6 +469,7 @@
   * [Part 2: MLflow Model Registry Quiz](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
   * [Part 3: Deploying MLflow on EKS Quiz](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
 * Data on EKS
+  * [Anatomy of a Modern Data Pipeline Quiz](quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka Operations Quiz](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
