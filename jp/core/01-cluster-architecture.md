@@ -1,7 +1,7 @@
 # クラスターアーキテクチャ
 
-> **対応バージョン**: Kubernetes 1.32, 1.33, 1.34
-> **最終更新**: August 24, 2026
+> **サポート対象バージョン**: Kubernetes 1.32, 1.33, 1.34
+> **最終更新**: August 31, 2026
 
 ## ラボ環境のセットアップ
 
@@ -30,122 +30,60 @@ kubectl get pods -n kube-system
 
 ## クラスターアーキテクチャの概要
 
-> **主要な概念**: Kubernetes クラスターは control plane と worker node から構成され、それぞれは特定の役割を果たす複数のコンポーネントで構成されています。
+> **コアコンセプト**: Kubernetes クラスターは、control plane と worker node で構成され、それぞれは特定の役割を果たす複数のコンポーネントから成ります。
 
-Kubernetes クラスターは、コンテナ化されたアプリケーションを実行するための node（仮想マシンまたは物理マシン）の集合で構成されます。クラスターは大きく control plane と worker node に分けられます。
+Kubernetes クラスターは、コンテナ化されたアプリケーションを実行するためのノード（仮想または物理マシン）の集合で構成されます。クラスターは大きく control plane と worker node に分けられます。
 
 ### クラスターアーキテクチャ図
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Cluster"
-        subgraph "Control Plane"
-            API[kube-apiserver]
-            ETCD[etcd]
-            SCHED[kube-scheduler]
-            CM[kube-controller-manager]
-            CCM[cloud-controller-manager]
+![control plane の kube-apiserver が etcd、scheduler、controller manager を調整し、worker node の kubelet と kube-proxy に接続します。これらはさらに container runtime と実行中の Pod を駆動するアーキテクチャ図。](../../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
-            API <--> ETCD
-            API <--> SCHED
-            API <--> CM
-            API <--> CCM
-        end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 
-        subgraph "Worker Node 1"
-            KUBELET1[kubelet]
-            PROXY1[kube-proxy]
-            CRI1[Container Runtime]
-
-            POD1A[Pod A]
-            POD1B[Pod B]
-
-            KUBELET1 --> CRI1
-            CRI1 --> POD1A
-            CRI1 --> POD1B
-            PROXY1 --> POD1A
-            PROXY1 --> POD1B
-        end
-
-        subgraph "Worker Node 2"
-            KUBELET2[kubelet]
-            PROXY2[kube-proxy]
-            CRI2[Container Runtime]
-
-            POD2A[Pod C]
-            POD2B[Pod D]
-
-            KUBELET2 --> CRI2
-            CRI2 --> POD2A
-            CRI2 --> POD2B
-            PROXY2 --> POD2A
-            PROXY2 --> POD2B
-        end
-
-        API <--> KUBELET1
-        API <--> KUBELET2
-        API <--> PROXY1
-        API <--> PROXY2
-    end
-
-    %% Style definitions
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef nodeComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class API,SCHED,CM,CCM controlPlane;
-    class ETCD dataStore;
-    class KUBELET1,KUBELET2,PROXY1,PROXY2,CRI1,CRI2 nodeComponent;
-    class POD1A,POD1B,POD2A,POD2B pod;
-```
-
-**Control Plane のコンポーネント**:
+**Control Plane コンポーネント**:
 - **kube-apiserver**: Kubernetes API を公開するフロントエンド
-- **etcd**: すべてのクラスター データを保存するキー・バリュー ストア
-- **kube-scheduler**: 新しく作成された Pod を実行する node を選択
+- **etcd**: すべてのクラスターデータを保存するキー・バリューストア
+- **kube-scheduler**: 新しく作成された Pod を実行するノードを選択
 - **kube-controller-manager**: クラスター状態を管理する controller を実行
 - **cloud-controller-manager**: クラウドプロバイダー API と連携
 
-**Worker Node のコンポーネント**:
-- **kubelet**: 各 node で稼働し、コンテナの実行を管理する agent
+**Worker Node コンポーネント**:
+- **kubelet**: 各ノード上で動作し、コンテナ実行を管理するエージェント
 - **kube-proxy**: ネットワークルールを維持し、接続転送を実行
 - **Container Runtime**: コンテナを実行（containerd、CRI-O など）
 
 ## Control Plane コンポーネント
 
-control plane は Kubernetes クラスターの「頭脳」として機能し、クラスター全体の状態を管理および制御します。control plane コンポーネントは通常、専用マシン上で実行され、高可用性のために複数のインスタンスにレプリケートできます。
+control plane は Kubernetes クラスターの「頭脳」として機能し、クラスター全体の状態を管理および制御します。control plane コンポーネントは通常専用マシン上で実行され、高可用性のために複数のインスタンスに複製できます。
 
 ### Control Plane コンポーネントの詳細
 
 | コンポーネント | 主な機能 | 通信先 | 高可用性構成 |
 |-----------|---------------|----------------------|--------------------------------|
-| **kube-apiserver** | - Kubernetes API を提供<br>- 認証と認可<br>- API リクエストの処理 | - すべてのコンポーネント<br>- etcd | 複数インスタンスによる水平スケーリング |
-| **etcd** | - クラスター データの保存<br>- 分散キー・バリュー ストア<br>- 一貫性の確保 | - kube-apiserver | 複数 node のクラスター |
-| **kube-scheduler** | - Pod 配置の決定<br>- node リソースの評価<br>- affinity/anti-affinity の適用 | - kube-apiserver | active-standby 構成 |
-| **kube-controller-manager** | - Node Controller<br>- Replication Controller<br>- Endpoint Controller<br>- Service Account Controller | - kube-apiserver | active-standby 構成 |
-| **cloud-controller-manager** | - クラウドプロバイダー統合<br>- node ライフサイクル<br>- ルーティングと負荷分散 | - kube-apiserver<br>- Cloud API | active-standby 構成 |
+| **kube-apiserver** | - Kubernetes API を提供<br>- 認証と認可<br>- API リクエスト処理 | - すべてのコンポーネント<br>- etcd | 複数インスタンスによる水平スケーリング |
+| **etcd** | - クラスターデータの保存<br>- 分散キー・バリューストア<br>- 一貫性の確保 | - kube-apiserver | 複数ノードクラスター |
+| **kube-scheduler** | - Pod 配置の決定<br>- ノードリソースの評価<br>- affinity/anti-affinity の適用 | - kube-apiserver | アクティブ・スタンバイ構成 |
+| **kube-controller-manager** | - Node Controller<br>- Replication Controller<br>- Endpoint Controller<br>- Service Account Controller | - kube-apiserver | アクティブ・スタンバイ構成 |
+| **cloud-controller-manager** | - クラウドプロバイダー統合<br>- ノードライフサイクル<br>- ルーティングとロードバランシング | - kube-apiserver<br>- Cloud API | アクティブ・スタンバイ構成 |
 
 ### Control Plane の通信フロー
 
 1. ユーザーまたは controller が kube-apiserver にリクエストを送信します
 2. kube-apiserver が認証、認可、admission を実行します
-3. kube-apiserver が etcd からデータを読み取り、または etcd にデータを書き込みます
-4. controller と scheduler が kube-apiserver を通じてクラスター状態を watch します
-5. kubelet が node の状態を kube-apiserver に報告します
+3. kube-apiserver が etcd との間でデータを読み書きします
+4. controller と scheduler が kube-apiserver を通じてクラスター状態を監視します
+5. kubelet がノード状態を kube-apiserver に報告します
 
 ### kube-apiserver
 
-kube-apiserver は Kubernetes API を公開する control plane のフロントエンドです。すべての内部および外部リクエストは、この API server を通じて処理されます。
+kube-apiserver は Kubernetes API を公開する control plane のフロントエンドです。すべての内部および外部リクエストは、この API server を介して処理されます。
 
 **主な機能**:
 - REST API を提供
 - 認証と認可
 - リクエストの検証と処理
 - etcd との通信
-- 水平スケーリング可能（複数のインスタンスにスケール可能）
+- 水平スケーラブル（複数インスタンスへスケール可能）
 
 **主なフラグと設定オプション**:
 ```bash
@@ -173,16 +111,16 @@ kube-apiserver \
 
 ### etcd
 
-etcd はすべてのクラスター データを保存する、一貫性と高可用性を備えたキー・バリュー ストアです。Kubernetes の「唯一の信頼できる情報源」として機能します。
+etcd はすべてのクラスター データを保存する、一貫性と高可用性を備えたキー・バリューストアです。Kubernetes の「信頼できる唯一の情報源」として機能します。
 
 **主な特徴**:
 - 分散システム
-- 強い一貫性（Raft 合意アルゴリズムを使用）
-- 高可用性（複数 node で構成可能）
-- セキュアなデータ保存
-- 変更を監視する watch 機能
+- 強い一貫性（Raft コンセンサスアルゴリズムを使用）
+- 高可用性（複数ノードで構成可能）
+- 安全なデータ保存
+- 変更を監視する Watch 機能
 
-**etcd クラスターの設定**:
+**etcd クラスター構成**:
 ```bash
 # etcd cluster configuration example (3 nodes)
 etcd \
@@ -197,7 +135,7 @@ etcd \
   --data-dir=/var/lib/etcd
 ```
 
-**etcd のバックアップとリカバリー**:
+**etcd のバックアップと復旧**:
 ```bash
 # etcd backup
 ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
@@ -219,37 +157,37 @@ ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
 - ディスク I/O の最適化（SSD を推奨）
 - 適切なメモリ割り当て
 - 定期的な compaction と defragmentation
-- クラスター規模に応じた適切な etcd node 数（通常は 3 または 5）
+- クラスター規模に応じた適切な etcd ノード数（通常は 3 または 5）
 
-#### 2026年7月の更新: etcd v3.7.0 リリース
+#### 2026 年 7 月更新: etcd v3.7.0 リリース
 
-2026年7月8日、SIG etcd は etcd v3.7.0 をリリースしました。主な内容は次のとおりです。
+2026 年 7 月 8 日、SIG etcd は etcd v3.7.0 をリリースしました。主な内容は次のとおりです。
 
-- **RangeStream**: 大規模な range 結果をレスポンス全体をメモリにバッファリングする代わりにチャンク単位でストリーミングします（長く要望されていた機能）
-- **パフォーマンス改善**: keys-only range リクエストを最適化し、lease をより高速かつ信頼性の高いものに改善
-- 旧式の v2store の残存部分をすべて削除し、大規模な protobuf の刷新を完了
+- **RangeStream**: レスポンス全体をメモリにバッファリングする代わりに、大規模な範囲結果をチャンク単位でストリーミングします（長く要望されていた機能）
+- **パフォーマンス改善**: keys-only range リクエストの最適化、より高速かつ信頼性の高い lease
+- レガシー v2store の最後の残存部分を削除し、大規模な protobuf のオーバーホールを完了
 - 更新されたコア依存関係 bbolt v1.5.0 および raft v3.7.0 を同梱
 
-詳細は [公式発表](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/) および [etcd v3.7 の変更履歴](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md) を参照してください。
+詳細は、[公式発表](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/)および [etcd v3.7 の変更履歴](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md)を参照してください。
 
 ### kube-scheduler
 
-kube-scheduler は、新しく作成された Pod を実行する node を選択する control plane コンポーネントです。
+kube-scheduler は、新しく作成された Pod を実行するノードを選択する control plane コンポーネントです。
 
 **スケジューリングプロセス**:
-1. **Filtering**: Pod を実行できる node を特定
+1. **Filtering**: Pod を実行できるノードを特定
    - リソース要件（CPU、メモリ）
-   - node selector、node affinity
-   - taint と toleration
-   - volume の制約
+   - Node selector、node affinity
+   - Taint と toleration
+   - Volume の制約
 
-2. **Scoring**: 適切な node にスコアを付与
+2. **Scoring**: 適切なノードにスコアを割り当て
    - リソース使用率
-   - Pod の inter-affinity/anti-affinity
-   - データローカリティ
-   - node 間の負荷分散
+   - Pod inter-affinity/anti-affinity
+   - データの局所性
+   - ノード間の負荷分散
 
-3. **Binding**: Pod を最適な node に割り当て
+3. **Binding**: Pod を最適なノードに割り当て
 
 **Scheduler の設定**:
 ```bash
@@ -263,7 +201,7 @@ kube-scheduler \
 **Scheduler Profile と Plugin**:
 - デフォルトの scheduler profile
 - カスタム scheduler profile
-- scheduler の拡張ポイント（filter、score、bind など）
+- Scheduler の拡張ポイント（filter、score、bind など）
 - 複数 scheduler のサポート
 
 **スケジューリングポリシー**:
@@ -287,17 +225,17 @@ profiles:
 kube-controller-manager は複数の controller プロセスを実行する control plane コンポーネントです。各 controller はクラスターの特定の側面を管理します。
 
 **主な Controller**:
-- **Node Controller**: node の状態を監視し対応
-- **Replication Controller**: Pod の replica 数を維持
+- **Node Controller**: ノード状態を監視し対応
+- **Replication Controller**: Pod のレプリカ数を維持
 - **Endpoint Controller**: Service と Pod を接続
-- **Service Account & Token Controller**: namespace のデフォルト account と API token を作成
+- **Service Account & Token Controller**: Namespace のデフォルト account と API token を作成
 - **Job Controller**: 一回限りのタスクを管理
 - **CronJob Controller**: スケジュールされたタスクを管理
-- **DaemonSet Controller**: 特定の Pod がすべての node で実行されることを保証
-- **StatefulSet Controller**: stateful application を管理
+- **DaemonSet Controller**: 特定の Pod がすべてのノードで実行されることを保証
+- **StatefulSet Controller**: ステートフルアプリケーションを管理
 - **PV Controller**: Persistent Volume を管理
-- **Namespace Controller**: namespace のライフサイクルを管理
-- **Garbage Collector**: 孤立した object をクリーンアップ
+- **Namespace Controller**: Namespace のライフサイクルを管理
+- **Garbage Collector**: 孤立したオブジェクトをクリーンアップ
 
 **Controller Manager の設定**:
 ```bash
@@ -314,22 +252,22 @@ kube-controller-manager \
 ```
 
 **Controller の動作**:
-1. controller は API server を通じてクラスター状態を継続的に watch します
+1. Controller は API server を通じてクラスター状態を継続的に監視します
 2. 現在の状態と望ましい状態の差異を検出します
 3. 差異を調整するための操作を実行します
-4. 状態の変更を API server に報告します
+4. 状態変更を API server に報告します
 
 ### cloud-controller-manager
 
-cloud-controller-manager はクラウド固有の制御ロジックを含む control plane コンポーネントです。これにより、Kubernetes core とクラウドプロバイダー API を分離できます。
+cloud-controller-manager はクラウド固有の制御ロジックを含む control plane コンポーネントです。これにより、Kubernetes core をクラウドプロバイダー API から分離できます。
 
 **主な Controller**:
-- **Node Controller**: クラウドプロバイダー API を通じて node の状態を確認
-- **Route Controller**: クラウド環境で route を設定
+- **Node Controller**: クラウドプロバイダー API を通じてノード状態を確認
+- **Route Controller**: クラウド環境でルートを設定
 - **Service Controller**: クラウド load balancer を作成、更新、削除
-- **Volume Controller**: クラウドストレージ volume を作成、attach、mount
+- **Volume Controller**: クラウドストレージ Volume を作成、アタッチ、マウント
 
-**クラウドプロバイダー実装**:
+**Cloud Provider 実装**:
 - AWS Cloud Controller Manager
 - Azure Cloud Controller Manager
 - GCP Cloud Controller Manager
@@ -348,23 +286,23 @@ cloud-controller-manager \
 
 **Cloud Controller Manager の利点**:
 - クラウドプロバイダー固有のコードを Kubernetes core から分離
-- クラウドプロバイダーは独自の機能を独立して開発可能
+- クラウドプロバイダーが独自の機能を独立して開発可能
 - Kubernetes core を変更せずにクラウド機能を追加
 
 ## Node コンポーネント
 
-node はコンテナ化されたアプリケーションを実行する Kubernetes クラスター内の worker machine です。各 node は control plane によって管理され、複数のコンポーネントで構成されます。
+Node はコンテナ化されたアプリケーションを実行する Kubernetes クラスター内の worker machine です。各 Node は control plane によって管理され、複数のコンポーネントから構成されます。
 
 ### kubelet
 
-kubelet は各 node 上で稼働し、Pod 内のコンテナを管理する agent です。kubelet はさまざまなメカニズムを通じて PodSpec を受け取り、それらの spec に従ってコンテナが正常に実行されることを保証します。
+kubelet は各 Node 上で動作し、Pod 内のコンテナを管理するエージェントです。kubelet はさまざまなメカニズムを通じて PodSpec を受け取り、それらの仕様に従ってコンテナが正常に実行されることを保証します。
 
 **主な機能**:
 - PodSpec に従ってコンテナを実行
-- コンテナの状態を監視・報告
+- コンテナ状態を監視して報告
 - コンテナのライフサイクルを管理
-- volume mount を管理
-- node の状態を報告
+- Volume mount を管理
+- Node 状態を報告
 - コンテナのヘルスチェックを実行
 
 **kubelet の設定**:
@@ -410,7 +348,7 @@ healthzPort: 10248
 ```
 
 **Static Pod**:
-kubelet は API server を経由せずに直接管理する static Pod を実行できます。これは主に control plane コンポーネントの実行に使用されます。
+kubelet は API server を介さずに直接管理する static Pod を実行できます。これは主に control plane コンポーネントの実行に使用されます。
 
 ```yaml
 # /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -431,7 +369,7 @@ spec:
 
 ### kube-proxy
 
-kube-proxy は Kubernetes の Service 概念を実装する、各 node 上で稼働するネットワークプロキシです。node 上のネットワークルールを維持し、接続転送を実行します。
+kube-proxy は Kubernetes の Service 概念を実装する、各 Node 上で動作する network proxy です。Node 上のネットワークルールを維持し、接続転送を実行します。
 
 **主な機能**:
 - Service IP と port のネットワークルールを維持
@@ -440,7 +378,7 @@ kube-proxy は Kubernetes の Service 概念を実装する、各 node 上で稼
 - Service discovery をサポート
 
 **動作モード**:
-1. **userspace mode**: user space で proxy を実行（レガシー）
+1. **userspace mode**: ユーザー空間で proxy を実行（レガシー）
 2. **iptables mode**: Linux iptables を使用した NAT 実装（デフォルト）
 3. **IPVS mode**: Linux kernel の IP Virtual Server を使用（高性能）
 
@@ -491,7 +429,7 @@ mode: "iptables"
 
 | 特性 | iptables Mode | IPVS Mode |
 |----------------|---------------|-----------|
-| パフォーマンス | 多数の Service でパフォーマンス低下 | 大規模クラスターでより優れたパフォーマンス |
+| パフォーマンス | Service 数が多いとパフォーマンスが低下 | 大規模クラスターでより高いパフォーマンス |
 | Load Balancing アルゴリズム | round robin のみサポート | さまざまなアルゴリズムをサポート（rr、lc、dh、sh、sed、nq） |
 | 実装 | ネットワークパケット filtering chain | hash table ベース |
 | Kernel 要件 | デフォルトの kernel module | IPVS kernel module が必要 |
@@ -503,28 +441,11 @@ Container runtime はコンテナを実行するソフトウェアです。Kuber
 **主な Container Runtime**:
 1. **containerd**: 軽量な container runtime（現在最も広く使用）
 2. **CRI-O**: Kubernetes 向けに特別に設計された軽量 runtime
-3. **Docker Engine**: Docker shim を通じてサポート（Kubernetes 1.24 で非推奨）
+3. **Docker Engine**: Docker shim を通じてサポート（Kubernetes 1.24 から非推奨）
 
 **Container Runtime レイヤー構造**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef cri fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef runtime fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef lowlevel fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-
-    K8S[Kubernetes] --> CRI[Container Runtime Interface]
-    CRI --> CD[containerd]
-    CRI --> CRIO[CRI-O]
-    CD --> RUNC[runc]
-    CRIO --> CRUN[crun]
-
-    class K8S k8s;
-    class CRI cri;
-    class CD,CRIO runtime;
-    class RUNC,CRUN lowlevel;
-```
+![Kubernetes が Container Runtime Interface を呼び出し、それが containerd または CRI-O に委譲され、各々が低レベル runtime（runc または crun）によって支えられるツリー図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-1.svg)
 
 **containerd 設定例**:
 ```toml
@@ -564,12 +485,12 @@ pause_image = "k8s.gcr.io/pause:3.6"
 
 ### Add-on コンポーネント
 
-Add-on は Kubernetes クラスターの機能を拡張する追加コンポーネントです。重要な Add-on には次のものがあります。
+Add-on は Kubernetes クラスターの機能を拡張する追加コンポーネントです。重要な Add-on には以下が含まれます。
 
 1. **CNI Network Plugin**: Pod networking を実装
    - Calico、Cilium、Flannel、Weave Net など
 
-2. **DNS**: クラスター内で DNS service を提供
+2. **DNS**: クラスター内の DNS service を提供
    - CoreDNS（デフォルト）
 
 3. **Dashboard**: Web ベースの UI を提供
@@ -578,7 +499,7 @@ Add-on は Kubernetes クラスターの機能を拡張する追加コンポー�
 4. **Ingress Controller**: HTTP/HTTPS routing を管理
    - NGINX Ingress Controller、Traefik、HAProxy など
 
-5. **Metrics Server**: リソース使用量 metrics を収集
+5. **Metrics Server**: リソース使用量メトリクスを収集
    - Metrics Server
 
 6. **Logging and Monitoring**: ログ収集と監視
@@ -654,76 +575,48 @@ data:
     }
 ```
 
-## クラスター通信経路
+## クラスターの通信経路
 
-Kubernetes クラスター内ではさまざまなコンポーネント間で通信が行われます。これらの通信経路を理解することは、クラスター設計、セキュリティ、トラブルシューティングにおいて重要です。
+Kubernetes クラスター内では、さまざまなコンポーネント間で通信が行われます。これらの通信経路を理解することは、クラスター設計、セキュリティ、トラブルシューティングに重要です。
 
 ### Control Plane 内部通信
 
-```mermaid
-graph LR
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-    classDef controller fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef scheduler fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
+![scheduler、controller manager、cloud controller manager がすべて kube-apiserver を呼び出し、kube-apiserver が gRPC 経由で etcd のクラスター状態を読み書きするアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-2.svg)
 
-    API[kube-apiserver] <--> ETCD[etcd]
-    SCHED[kube-scheduler] --> API
-    CTRL[kube-controller-manager] --> API
-    CCM[cloud-controller-manager] --> API
-
-    class API apiserver;
-    class ETCD etcd;
-    class CTRL,CCM controller;
-    class SCHED scheduler;
-```
-
-control plane コンポーネント間の通信は次のとおりです。
+control plane コンポーネント間の通信は以下のとおりです。
 
 1. **kube-apiserver と etcd**: kube-apiserver はクラスター状態を保存および取得するために etcd と通信します。
    - プロトコル: gRPC
    - Port: 2379/TCP
    - セキュリティ: TLS 証明書ベースの認証
 
-2. **kube-scheduler と kube-apiserver**: kube-scheduler は Pod のスケジューリングのために kube-apiserver と通信します。
+2. **kube-scheduler と kube-apiserver**: kube-scheduler は Pod scheduling のために kube-apiserver と通信します。
    - プロトコル: HTTPS
    - Port: 6443/TCP（kube-apiserver）
    - セキュリティ: TLS 証明書ベースの認証
 
-3. **kube-controller-manager と kube-apiserver**: controller はクラスター状態を watch および変更するために kube-apiserver と通信します。
+3. **kube-controller-manager と kube-apiserver**: Controller はクラスター状態を監視および変更するために kube-apiserver と通信します。
    - プロトコル: HTTPS
    - Port: 6443/TCP（kube-apiserver）
    - セキュリティ: TLS 証明書ベースの認証
 
-4. **cloud-controller-manager と kube-apiserver**: cloud controller はクラスター状態を watch し、クラウドリソースを管理するために kube-apiserver と通信します。
+4. **cloud-controller-manager と kube-apiserver**: Cloud controller はクラスター状態を監視し、クラウドリソースを管理するために kube-apiserver と通信します。
    - プロトコル: HTTPS
    - Port: 6443/TCP（kube-apiserver）
    - セキュリティ: TLS 証明書ベースの認証
 
-### Control Plane と Node 間の通信
+### Control Plane と Node の通信
 
-```mermaid
-graph TD
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef kubelet fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef proxy fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
+![kube-apiserver と各 Node の kubelet および kube-proxy 間の双方向 HTTPS 通信を示すアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-3.svg)
 
-    API[kube-apiserver] <--> KB[kubelet]
-    API <--> KP[kube-proxy]
+control plane と Node 間の通信は以下のとおりです。
 
-    class API apiserver;
-    class KB kubelet;
-    class KP proxy;
-```
-
-control plane と node 間の通信は次のとおりです。
-
-1. **kube-apiserver と kubelet**: kube-apiserver は Pod spec を配信し、node の状態を収集するために kubelet と通信します。
+1. **kube-apiserver と kubelet**: kube-apiserver は Pod spec を配信し、Node 状態を収集するために kubelet と通信します。
    - プロトコル: HTTPS
    - Port: 10250/TCP（kubelet）
    - セキュリティ: TLS 証明書ベースの認証
 
-2. **kubelet と kube-apiserver**: kubelet は node 登録、Pod 状態の報告、event 送信のために kube-apiserver と通信します。
+2. **kubelet と kube-apiserver**: kubelet は Node 登録、Pod 状態報告、event 送信のために kube-apiserver と通信します。
    - プロトコル: HTTPS
    - Port: 6443/TCP（kube-apiserver）
    - セキュリティ: TLS 証明書ベースの認証
@@ -735,71 +628,44 @@ control plane と node 間の通信は次のとおりです。
 
 ### Node 間通信
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef cni fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
+![異なる Node 上に存在する可能性のある 4 つの Pod が、共有 CNI network を介してすべて相互に双方向通信するアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-4.svg)
 
-    P1[Pod 1] <--> CNI[CNI Network]
-    P2[Pod 2] <--> CNI
-    P3[Pod 3] <--> CNI
-    P4[Pod 4] <--> CNI
+Node 間通信は以下のとおりです。
 
-    class P1,P2,P3,P4 pod;
-    class CNI cni;
-```
+1. **Pod 間通信**: Pod は CNI plugin が提供する network を介して相互に通信します。
+   - プロトコル: アプリケーションに依存（TCP、UDP など）
+   - Port: アプリケーションに依存
+   - セキュリティ: network policy を通じて制御可能
 
-node 間通信は次のとおりです。
-
-1. **Pod 間通信**: Pod は CNI plugin が提供するネットワークを通じて互いに通信します。
-   - プロトコル: application に依存（TCP、UDP など）
-   - Port: application に依存
-   - セキュリティ: network policy によって制御可能
-
-2. **Node をまたぐ Pod 間通信**: 異なる node 上の Pod 間の通信は CNI plugin が処理します。
-   - プロトコル: application に依存（TCP、UDP など）
-   - Port: application に依存
-   - セキュリティ: network policy によって制御可能
+2. **Node をまたぐ Pod 通信**: 異なる Node 上の Pod 間通信は CNI plugin によって処理されます。
+   - プロトコル: アプリケーションに依存（TCP、UDP など）
+   - Port: アプリケーションに依存
+   - セキュリティ: network policy を通じて制御可能
 
 ### 外部通信
 
-```mermaid
-graph LR
-    classDef external fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef service fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
+![外部 client がクラスター管理のために kube-apiserver へ直接接続し、アプリケーショントラフィックには Service または Ingress を経由して Pod へ到達するアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-5.svg)
 
-    C[External Client] --> API[kube-apiserver]
-    C --> SVC[Service/Ingress]
-    SVC --> P[Pod]
+外部エンティティとの通信は以下のとおりです。
 
-    class C external;
-    class API apiserver;
-    class SVC service;
-    class P pod;
-```
-
-外部エンティティとの通信は次のとおりです。
-
-1. **Client と kube-apiserver**: ユーザーと外部システムは kube-apiserver を通じてクラスターとやり取りします。
+1. **Client と kube-apiserver**: ユーザーと外部システムは kube-apiserver を通じてクラスターと対話します。
    - プロトコル: HTTPS
    - Port: 6443/TCP（kube-apiserver）
    - セキュリティ: TLS 証明書、token、ユーザー認証など
 
-2. **外部トラフィックと Service**: 外部トラフィックは NodePort、LoadBalancer Service、または Ingress を通じてクラスター内の application にアクセスします。
+2. **外部トラフィックと Service**: 外部トラフィックは NodePort、LoadBalancer Service、または Ingress を通じてクラスター内のアプリケーションにアクセスします。
    - プロトコル: HTTP、HTTPS、TCP、UDP など
    - Port: Service 設定に依存
-   - セキュリティ: ingress controller と Service 設定に依存
+   - セキュリティ: Ingress controller と Service 設定に依存
 
 ### 通信セキュリティ
 
-Kubernetes クラスター内の通信のセキュリティは、以下の方法で実装されます。
+Kubernetes クラスター内の通信セキュリティは、以下の方法で実装されます。
 
 1. **TLS 証明書**: control plane コンポーネント間のすべての通信は TLS 証明書で暗号化されます。
-2. **認証と認可**: API server へのすべてのリクエストは、認証および認可プロセスを経ます。
-3. **Network Policy**: Pod 間通信は network policy により制限できます。
-4. **暗号化された Secret**: etcd に保存される Secret は暗号化できます。
+2. **認証と認可**: API server へのすべてのリクエストは、認証および認可プロセスを経由します。
+3. **Network Policy**: Pod 間通信は network policy によって制限できます。
+4. **暗号化された Secret**: etcd に保存された Secret は暗号化できます。
 
 **API Server 通信セキュリティ設定例**:
 ```yaml
@@ -818,97 +684,44 @@ resources:
 
 ### 高可用性クラスター構成
 
-高可用性（HA）Kubernetes クラスターは、単一障害点を排除し、サービス中断なしに運用を継続するように設計されています。
+高可用性（HA）Kubernetes クラスターは、単一障害点を排除し、サービス中断なく動作を継続するように設計されています。
 
 ### Control Plane の高可用性
 
 control plane の高可用性は、以下の方法で実装されます。
 
-1. **複数の Control Plane Node**: 通常、冗長性のために 3 または 5 の control plane node をデプロイ
-2. **etcd クラスター**: 複数の etcd instance で構成されるクラスターをデプロイ（通常は 3 または 5）
+1. **複数の Control Plane Node**: 冗長性のために通常 3 または 5 台の control plane node をデプロイ
+2. **etcd Cluster**: 複数の etcd instance で構成されるクラスターをデプロイ（通常 3 または 5）
 3. **Load Balancer**: API server の前に load balancer を配置してトラフィックを分散
 
 **高可用性 Control Plane アーキテクチャ**:
 
-```mermaid
-graph TD
-    classDef loadbalancer fill:#ffecb3,stroke:#f9a825,stroke-width:2px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef component fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
+![load balancer が 3 つの複製された control plane node にトラフィックを分散し、各 Node が自身の kube-apiserver、etcd、kube-scheduler、kube-controller-manager を実行するアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-6.svg)
 
-    LB[Load Balancer] --> CP1[Control Plane 1]
-    LB --> CP2[Control Plane 2]
-    LB --> CP3[Control Plane 3]
+**etcd Cluster 構成**:
 
-    CP1 --> API1[kube-apiserver]
-    CP1 --> ETCD1[etcd]
-    CP1 --> SCHED1[kube-scheduler]
-    CP1 --> CTRL1[kube-controller-manager]
-
-    CP2 --> API2[kube-apiserver]
-    CP2 --> ETCD2[etcd]
-    CP2 --> SCHED2[kube-scheduler]
-    CP2 --> CTRL2[kube-controller-manager]
-
-    CP3 --> API3[kube-apiserver]
-    CP3 --> ETCD3[etcd]
-    CP3 --> SCHED3[kube-scheduler]
-    CP3 --> CTRL3[kube-controller-manager]
-
-    class LB loadbalancer;
-    class CP1,CP2,CP3 controlplane;
-    class API1,API2,API3,ETCD1,ETCD2,ETCD3,SCHED1,SCHED2,SCHED3,CTRL1,CTRL2,CTRL3 component;
-```
-
-**etcd クラスター構成**:
-
-```mermaid
-graph LR
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-
-    E1[etcd Node 1] <==> E2[etcd Node 2]
-    E2 <==> E3[etcd Node 3]
-    E3 <==> E1
-
-    class E1,E2,E3 etcd;
-```
+![3 つの etcd Node がリングを形成し、各ペアが Raft コンセンサスプロトコルにより状態を複製するため双方向に接続されるアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-7.svg)
 
 ### Worker Node の高可用性
 
 worker node の高可用性は、以下の方法で実装されます。
 
 1. **複数の Worker Node**: 複数の worker node に workload を分散
-2. **自動 Node リカバリー**: クラウドプロバイダーの自動リカバリー機能を利用
-3. **Auto Scaling**: cluster autoscaler による自動 node スケーリング
-4. **複数の Availability Zone**: 複数の availability zone に node をデプロイ
+2. **自動 Node 復旧**: クラウドプロバイダーの自動復旧機能を利用
+3. **Auto Scaling**: cluster autoscaler による Node の自動スケーリング
+4. **複数の Availability Zone**: 複数の availability zone に Node をデプロイ
 
 **Worker Node の分散デプロイ**:
 
-```mermaid
-graph TD
-    classDef az fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,stroke-dasharray:5 5;
-    classDef node fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
+![障害分離のため、3 つの availability zone に各 2 台ずつ worker node が分散配置されているアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-8.svg)
 
-    AZ1[Availability Zone A] --> WN1[Worker Node]
-    AZ1 --> WN2[Worker Node]
+### アプリケーションの高可用性
 
-    AZ2[Availability Zone B] --> WN3[Worker Node]
-    AZ2 --> WN4[Worker Node]
-
-    AZ3[Availability Zone C] --> WN5[Worker Node]
-    AZ3 --> WN6[Worker Node]
-
-    class AZ1,AZ2,AZ3 az;
-    class WN1,WN2,WN3,WN4,WN5,WN6 node;
-```
-
-### Application の高可用性
-
-application の高可用性は、以下の方法で実装されます。
+アプリケーションの高可用性は、以下の方法で実装されます。
 
 1. **ReplicaSet/Deployment**: 複数の Pod replica を実行
-2. **Pod 分散ルール**: Pod anti-affinity により複数の node に Pod を分散
-3. **PodDisruptionBudget**: 計画的な中断中に最小限の可用性を保証
+2. **Pod 分散ルール**: Pod anti-affinity を通じて複数の Node に Pod を分散
+3. **PodDisruptionBudget**: 計画的な中断中の最小可用性を保証
 4. **Service と Load Balancing**: 複数の Pod にトラフィックを分散
 
 **Pod Anti-Affinity の例**:
@@ -956,12 +769,12 @@ spec:
 
 Kubernetes クラスターの災害復旧戦略は、以下の方法で実装されます。
 
-1. **etcd のバックアップとリカバリー**: 定期的な etcd データのバックアップおよびリカバリー手順を確立
-2. **マルチリージョンデプロイ**: 複数のリージョンにクラスターをデプロイ
-3. **Cluster Federation**: federation 内で複数のクラスターを管理
-4. **継続的バックアップ**: application データを継続的にバックアップ
+1. **etcd のバックアップと復旧**: 定期的な etcd データのバックアップと復旧手順を確立
+2. **Multi-Region デプロイ**: 複数の region にクラスターをデプロイ
+3. **Cluster Federation**: federation 内の複数クラスターを管理
+4. **継続的バックアップ**: アプリケーションデータを継続的にバックアップ
 
-**etcd バックアップスクリプトの例**:
+**etcd バックアップスクリプト例**:
 ```bash
 #!/bin/bash
 ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d-%H%M%S).db \
@@ -971,7 +784,7 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d-%H%M%S)
   --key=/etc/kubernetes/pki/etcd/server.key
 ```
 
-**etcd リカバリースクリプトの例**:
+**etcd 復旧スクリプト例**:
 ```bash
 #!/bin/bash
 # Stop cluster
@@ -996,37 +809,37 @@ systemctl start kubelet
 
 ## クラスターネットワーキング
 
-Kubernetes networking は Pod、Service、外部世界の間の通信を可能にします。Kubernetes networking model は、すべての Pod が一意の IP address を持ち、NAT なしで互いに通信できることを前提としています。
+Kubernetes networking は Pod、Service、外部との通信を可能にします。Kubernetes networking model では、すべての Pod が一意の IP address を持ち、NAT なしで相互に通信できることを前提としています。
 
-### ネットワーキングモデル
+### Networking Model
 
 Kubernetes networking model には以下の要件があります。
 
 1. **Pod 間通信**: すべての Pod は NAT なしですべての他の Pod と通信できなければなりません
-2. **Node と Pod 間の通信**: node は NAT なしですべての Pod と通信できなければなりません
-3. **Pod と外部間の通信**: Pod は外部世界と通信できなければなりません（通常は NAT を使用）
+2. **Node と Pod 間通信**: Node は NAT なしですべての Pod と通信できなければなりません
+3. **Pod と外部の通信**: Pod は外部と通信できなければなりません（通常は NAT を使用）
 
-### CNI（Container Network Interface）
+### CNI (Container Network Interface)
 
-CNI は Kubernetes で networking を実装するための標準 interface です。さまざまな CNI plugin があり、それぞれ異なる機能とパフォーマンス特性を備えています。
+CNI は Kubernetes で networking を実装するための標準 interface です。さまざまな CNI plugin があり、それぞれ異なる機能とパフォーマンス特性を持ちます。
 
 **主な CNI Plugin**:
 
-1. **Calico**: BGP ベースの networking、network policy をサポート
-   - 特徴: 高性能、network policy、暗号化、eBPF サポート
-   - 使用例: 大規模クラスター、セキュリティ重視の環境
+1. **Calico**: BGP ベースの networking、network policy のサポート
+   - 特徴: 高パフォーマンス、network policy、暗号化、eBPF サポート
+   - ユースケース: 大規模クラスター、セキュリティ重視の環境
 
 2. **Cilium**: eBPF ベースの networking とセキュリティ
-   - 特徴: L3-L7 security policy、高性能、可観測性
-   - 使用例: microservice、セキュリティ重視の環境
+   - 特徴: L3-L7 セキュリティポリシー、高パフォーマンス、observability
+   - ユースケース: microservice、セキュリティ重視の環境
 
 3. **Flannel**: シンプルな overlay network
    - 特徴: 簡単なセットアップ、軽量
-   - 使用例: 小規模クラスター、開発環境
+   - ユースケース: 小規模クラスター、開発環境
 
-4. **Weave Net**: マルチホスト container networking
+4. **Weave Net**: マルチホストコンテナ networking
    - 特徴: 暗号化、network policy、multi-cloud
-   - 使用例: hybrid cloud、multi-cloud
+   - ユースケース: hybrid cloud、multi-cloud
 
 **CNI 設定例（Calico）**:
 ```yaml
@@ -1067,15 +880,15 @@ data:
     }
 ```
 
-### Service ネットワーキング
+### Service Networking
 
-Kubernetes Service は一連の Pod に安定した endpoint を提供します。Service には ClusterIP、NodePort、LoadBalancer、ExternalName など、複数の type があります。
+Kubernetes Service は Pod の集合に対して安定した endpoint を提供します。Service には ClusterIP、NodePort、LoadBalancer、ExternalName を含むいくつかの種類があります。
 
 **Service Networking コンポーネント**:
 
 1. **ClusterIP**: クラスター内からのみアクセス可能な virtual IP
-2. **kube-proxy**: Service IP 宛てのトラフィックを Pod に route
-3. **CoreDNS**: Service discovery 用の DNS service
+2. **kube-proxy**: Service IP 宛てのトラフィックを Pod にルーティング
+3. **CoreDNS**: Service discovery のための DNS service
 
 **Service Networking フロー**:
 ```
@@ -1097,15 +910,15 @@ spec:
   type: ClusterIP
 ```
 
-### Ingress ネットワーキング
+### Ingress Networking
 
-Ingress はクラスター外部からクラスター内部の Service への HTTP および HTTPS routing を管理します。Ingress controller が ingress resource を実装します。
+Ingress はクラスター外部からクラスター内部の Service への HTTP および HTTPS routing を管理します。Ingress controller は Ingress resource を実装します。
 
 **主な Ingress Controller**:
-1. **NGINX Ingress Controller**: NGINX ベースの ingress controller
-2. **AWS ALB Ingress Controller**: AWS Application Load Balancer をベース
+1. **NGINX Ingress Controller**: NGINX ベースの Ingress controller
+2. **AWS ALB Ingress Controller**: AWS Application Load Balancer ベース
 3. **Traefik**: cloud-native edge router
-4. **HAProxy Ingress**: HAProxy ベースの ingress controller
+4. **HAProxy Ingress**: HAProxy ベースの Ingress controller
 
 **Ingress Networking フロー**:
 ```
@@ -1137,7 +950,7 @@ spec:
 
 ### Network Policy
 
-network policy は Pod 間の通信を制御する方法を提供します。デフォルトでは、すべての Pod が相互に通信できますが、network policy でこれを制限できます。
+Network policy は Pod 間の通信を制御する方法を提供します。デフォルトでは、すべての Pod が相互に通信できますが、network policy でこれを制限できます。
 
 **Network Policy の例**:
 ```yaml
@@ -1170,17 +983,17 @@ spec:
       port: 9090
 ```
 
-### ネットワークのトラブルシューティング
+### Network のトラブルシューティング
 
 Kubernetes networking の問題をトラブルシューティングするための一般的なツールとコマンド:
 
-1. **ping、traceroute**: 基本的なネットワーク接続テスト
-2. **tcpdump**: ネットワークパケットのキャプチャと分析
-3. **netstat、ss**: ネットワーク接続状態を確認
+1. **ping、traceroute**: 基本的な network connectivity テスト
+2. **tcpdump**: network packet のキャプチャと分析
+3. **netstat、ss**: network connection 状態を確認
 4. **nslookup、dig**: DNS lookup テスト
-5. **kubectl exec**: Pod 内でネットワークコマンドを実行
+5. **kubectl exec**: Pod 内で network command を実行
 
-**ネットワークデバッグの例**:
+**Network デバッグの例**:
 ```bash
 # Test network connectivity within a pod
 kubectl exec -it <pod-name> -- ping <target-ip>
@@ -1197,56 +1010,38 @@ kubectl get endpoints <service-name>
 
 ## クラスターストレージ
 
-Kubernetes storage はコンテナ化された application にデータ永続性を提供します。Kubernetes は application が storage を効率的に使用できるように、さまざまな storage option と abstraction を提供します。
+Kubernetes storage はコンテナ化されたアプリケーションにデータ永続性を提供します。Kubernetes は、アプリケーションがストレージを効率的に使用できるように、さまざまな storage option と abstraction を提供します。
 
 ### ストレージアーキテクチャ
 
 Kubernetes storage architecture は以下のコンポーネントで構成されます。
 
-1. **Volume**: Pod 内のコンテナに mount できる directory
-2. **Persistent Volume（PV）**: クラスター内の storage resource
-3. **Persistent Volume Claim（PVC）**: ユーザーの storage request
-4. **Storage Class**: storage の「class」または type を定義
-5. **CSI（Container Storage Interface）**: storage system との標準 interface
+1. **Volume**: Pod 内のコンテナにマウントできる directory
+2. **Persistent Volume (PV)**: クラスター内の storage resource
+3. **Persistent Volume Claim (PVC)**: ユーザーによる storage request
+4. **Storage Class**: storage の「class」または種類を定義
+5. **CSI (Container Storage Interface)**: storage system との標準 interface
 
 **ストレージアーキテクチャフロー**:
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef volume fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-    classDef pvc fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pv fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
+![Pod の volume mount が PVC と PV を介して CSI driver により実際の storage backend に解決されるアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-9.svg)
 
-    POD[Pod] --> VOL[Volume Mount]
-    VOL --> PVC[PVC]
-    PVC --> PV[PV]
-    PV --> STORAGE[Actual Storage<br>CSI Driver]
+### Volume タイプ
 
-    class POD pod;
-    class VOL volume;
-    class PVC pvc;
-    class PV pv;
-    class STORAGE storage;
-```
-
-### Volume Type
-
-Kubernetes はさまざまな type の volume をサポートします。
+Kubernetes はさまざまな種類の Volume をサポートします。
 
 1. **Ephemeral Volume**:
-   - **emptyDir**: 空の directory として開始し、Pod が削除されると削除
-   - **configMap**: ConfigMap を volume として mount
-   - **secret**: Secret を volume として mount
+   - **emptyDir**: 空の directory として開始され、Pod が削除されると削除されます
+   - **configMap**: ConfigMap を Volume としてマウント
+   - **secret**: Secret を Volume としてマウント
    - **downwardAPI**: Pod とコンテナの情報をファイルとして公開
 
 2. **Persistent Volume**:
-   - **awsElasticBlockStore**: AWS EBS volume
+   - **awsElasticBlockStore**: AWS EBS Volume
    - **azureDisk**: Azure Disk
    - **gcePersistentDisk**: GCE Persistent Disk
-   - **nfs**: NFS volume
-   - **csi**: CSI driver を通じた volume
+   - **nfs**: NFS Volume
+   - **csi**: CSI driver を介した Volume
 
 **Volume の例**:
 ```yaml
@@ -1269,7 +1064,7 @@ spec:
 
 ### Persistent Volume と Claim
 
-Persistent Volume（PV）は、管理者によってプロビジョニングされるか、storage class を通じて動的にプロビジョニングされるクラスター内の storage resource です。Persistent Volume Claim（PVC）はユーザーの storage request です。
+Persistent Volume（PV）は、管理者によってプロビジョニングされるか、storage class を通じて動的にプロビジョニングされる、クラスター内の storage resource です。Persistent Volume Claim（PVC）はユーザーの storage request です。
 
 **Persistent Volume の例**:
 ```yaml
@@ -1306,7 +1101,7 @@ spec:
 
 ### Storage Class
 
-storage class は管理者が提供する storage の「class」を記述します。storage class を使用すると、PVC がリクエストされたときに PV を動的にプロビジョニングできます。
+Storage class は管理者が提供する storage の「class」を記述します。Storage class では PVC が要求されたときに PV を動的にプロビジョニングできます。
 
 **Storage Class の例**:
 ```yaml
@@ -1322,28 +1117,13 @@ reclaimPolicy: Delete
 allowVolumeExpansion: true
 ```
 
-### CSI（Container Storage Interface）
+### CSI (Container Storage Interface)
 
-CSI は Kubernetes と storage system の間に標準 interface を提供します。CSI により、storage provider は Kubernetes コードを変更せずに独自の storage driver を開発できます。
+CSI は Kubernetes と storage system 間の標準 interface を提供します。CSI を通じて、storage provider は Kubernetes code を変更せずに独自の storage driver を開発できます。
 
 **CSI アーキテクチャ**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef csi fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef driver fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-
-    K8S[Kubernetes] --> CSI[Container Storage Interface]
-    CSI --> DRIVER[CSI Driver<br>e.g., AWS EBS CSI Driver]
-    DRIVER --> STORAGE[Storage System<br>e.g., AWS EBS]
-
-    class K8S k8s;
-    class CSI csi;
-    class DRIVER driver;
-    class STORAGE storage;
-```
+![Kubernetes が Container Storage Interface を呼び出し、それがベンダーの CSI driver に委譲され、基盤となる storage system をプロビジョニングするアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-10.svg)
 
 **CSI Driver デプロイ例**:
 ```yaml
@@ -1363,35 +1143,35 @@ volumeBindingMode: WaitForFirstConsumer
 
 Kubernetes storage を使用するためのベストプラクティス:
 
-1. **適切な Storage Type を選択**: workload の特性に一致する storage type を選択
-2. **Dynamic Provisioning を使用**: storage class を通じた dynamic provisioning を利用
-3. **適切な Access Mode を選択**: workload の要件に一致する access mode を選択
-4. **Resource Request と Limit を設定**: 適切な storage capacity をリクエスト
-5. **バックアップおよびリカバリー戦略を確立**: 重要なデータのバックアップおよびリカバリー戦略を準備
-6. **Storage を監視**: storage 使用量とパフォーマンスを監視
+1. **適切な Storage Type を選択**: workload の特性に合う storage type を選択
+2. **Dynamic Provisioning を使用**: storage class を通じた dynamic provisioning を活用
+3. **適切な Access Mode を選択**: workload 要件に合う access mode を選択
+4. **Resource Request と Limit を設定**: 適切な storage capacity を要求
+5. **バックアップと復旧戦略を確立**: 重要なデータのバックアップと復旧戦略を準備
+6. **Storage を監視**: storage 使用率とパフォーマンスを監視
 
 ## クラスターのスケーラビリティ
 
-Kubernetes クラスターのスケーラビリティとは、増加する負荷と要件を処理するクラスターの能力を指します。スケーラビリティは水平スケーリング（scale out）と垂直スケーリング（scale up）により実現できます。
+Kubernetes クラスターのスケーラビリティとは、増加する負荷と要件を処理するクラスターの能力を指します。スケーラビリティは、horizontal scaling（scale out）と vertical scaling（scale up）によって実装できます。
 
 ### クラスターのスケール上限
 
-Kubernetes クラスターには次のスケール上限があります。
+Kubernetes クラスターには以下のスケール上限があります。
 
-1. **Node 数**: 最大 5,000 node
+1. **Node 数**: クラスターあたり最大 5,000 Node
 2. **Pod 数**: クラスターあたり最大 150,000 Pod
-3. **Node あたりの Pod 数**: node あたり最大 110 Pod（デフォルト）
+3. **Node あたりの Pod 数**: Node あたり最大 110 Pod（デフォルト）
 4. **Service 数**: クラスターあたり最大 10,000 Service
-5. **Pod あたりの Container 数**: Pod あたり最大 20 container
+5. **Pod あたりの Container 数**: Pod あたり最大 20 Container
 
-これらの上限は Kubernetes バージョンおよびクラスター構成により異なる場合があります。
+これらの上限は Kubernetes version とクラスター構成によって異なる場合があります。
 
-### 水平スケーリング
+### Horizontal Scaling
 
-水平スケーリングは、node を追加することでクラスター容量を増やします。
+horizontal scaling は、より多くの Node を追加してクラスター容量を増やします。
 
 **Node Auto Scaling**:
-Kubernetes Cluster Autoscaler は workload 要件に基づいて node 数を自動的に調整します。
+Kubernetes Cluster Autoscaler は、workload 要件に基づいて Node 数を自動的に調整します。
 
 ```yaml
 # AWS Auto Scaling Group tags example
@@ -1428,7 +1208,7 @@ spec:
 ```
 
 **Karpenter**:
-Karpenter は AWS によって開発された新しい node auto-scaling ツールであり、より高速かつ効率的な node provisioning を提供します。
+Karpenter は AWS が開発した新しい Node auto-scaling tool で、より高速かつ効率的な Node provisioning を提供します。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1459,12 +1239,12 @@ spec:
     karpenter.sh/discovery: my-cluster
 ```
 
-### 垂直スケーリング
+### Vertical Scaling
 
-垂直スケーリングは既存の node のリソース（CPU、メモリ）を増やします。
+vertical scaling は、既存 Node のリソース（CPU、メモリ）を増やします。
 
 **Vertical Pod Autoscaler（VPA）**:
-VPA は Pod の CPU およびメモリ request を自動的に調整します。
+VPA は Pod の CPU とメモリ request を自動的に調整します。
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -1489,9 +1269,9 @@ spec:
         memory: 500Mi
 ```
 
-### Application のスケーリング
+### アプリケーションのスケーリング
 
-application レベルのスケーリングは、Pod replica 数を調整することで実装されます。
+アプリケーションレベルのスケーリングは、Pod replica 数を調整して実装されます。
 
 **Horizontal Pod Autoscaler（HPA）**:
 HPA は CPU 使用率または custom metric に基づいて Pod replica 数を自動的に調整します。
@@ -1544,11 +1324,11 @@ spec:
 Kubernetes クラスターのスケーラビリティに関するベストプラクティス:
 
 1. **Resource Request と Limit を設定**: すべての Pod に適切な resource request と limit を設定
-2. **Node Pool 戦略**: 異なる workload 特性に対応する複数の node pool を構成
-3. **Auto Scaling を構成**: Cluster Autoscaler、HPA、VPA を適切に構成
-4. **効率的な Pod 配置**: node affinity、Pod affinity/anti-affinity を利用
-5. **クラスター監視**: resource 使用量とパフォーマンスを継続的に監視
-6. **負荷テスト**: スケーリング戦略を検証するための定期的な負荷テスト
+2. **Node Pool 戦略**: 異なる workload 特性に応じて複数の node pool を構成
+3. **Auto Scaling を設定**: Cluster Autoscaler、HPA、VPA を適切に構成
+4. **効率的な Pod 配置**: node affinity、Pod affinity/anti-affinity を活用
+5. **クラスター監視**: リソース使用率とパフォーマンスを継続的に監視
+6. **負荷テスト**: スケーリング戦略を検証するために定期的に負荷テストを実施
 
 ## クラスターセキュリティ
 
@@ -1558,11 +1338,11 @@ Kubernetes クラスターのセキュリティは複数のレイヤーで実装
 
 Kubernetes API server へのアクセスを認証する方法:
 
-1. **X.509 証明書**: TLS client 証明書を使用した認証
-2. **Service Account Token**: Pod 内から API server にアクセスするための token
-3. **OpenID Connect（OIDC）**: 外部 identity provider を通じた認証
-4. **Webhook Token Authentication**: 外部認証 service を通じた認証
-5. **Authentication Proxy**: authentication proxy を通じた認証
+1. **X.509 証明書**: TLS client certificate を使用した認証
+2. **Service Account Token**: Pod 内で API server にアクセスするための token
+3. **OpenID Connect（OIDC）**: 外部 identity provider を介した認証
+4. **Webhook Token Authentication**: 外部認証 service を介した認証
+5. **Authentication Proxy**: authentication proxy を介した認証
 
 **kubeconfig の例**:
 ```yaml
@@ -1590,10 +1370,10 @@ current-context: my-context
 
 認証済みユーザーのアクションを制御する方法:
 
-1. **RBAC（Role-Based Access Control）**: role ベースの access control
-2. **ABAC（Attribute-Based Access Control）**: attribute ベースの access control
-3. **Node Authorization**: node 向けの特別な認可
-4. **Webhook Authorization**: 外部 service を通じた認可
+1. **RBAC（Role-Based Access Control）**: role ベースのアクセス制御
+2. **ABAC（Attribute-Based Access Control）**: attribute ベースのアクセス制御
+3. **Node Authorization**: Node 用の特別な認可
+4. **Webhook Authorization**: 外部 service を介した認可
 
 **RBAC の例**:
 ```yaml
@@ -1624,13 +1404,13 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### ネットワークセキュリティ
+### Network Security
 
-クラスター内のネットワークトラフィックを保護する方法:
+クラスター内の network traffic を保護する方法:
 
 1. **Network Policy**: Pod 間通信を制御
-2. **暗号化通信**: TLS による通信の暗号化
-3. **Service Mesh**: Istio、Linkerd などによる高度なネットワークセキュリティ
+2. **暗号化通信**: TLS による通信暗号化
+3. **Service Mesh**: Istio、Linkerd などによる高度な network security
 
 **Network Policy の例**:
 ```yaml
@@ -1645,14 +1425,14 @@ spec:
   - Egress
 ```
 
-### Pod セキュリティ
+### Pod Security
 
 Pod レベルでのセキュリティ実装:
 
 1. **Pod Security Context**: Pod およびコンテナレベルのセキュリティ設定
 2. **Pod Security Standards**: Pod のセキュリティ要件を定義
 3. **seccomp Profile**: system call の制限
-4. **AppArmor/SELinux**: mandatory access control
+4. **AppArmor/SELinux**: 強制アクセス制御
 
 **Pod Security Context の例**:
 ```yaml
@@ -1675,15 +1455,15 @@ spec:
         - ALL
 ```
 
-### Secret 管理
+### Secret Management
 
 機密情報を安全に管理する方法:
 
 1. **Kubernetes Secret**: 基本的な Secret resource を使用
-2. **暗号化された etcd**: etcd に保存される Secret を暗号化
-3. **外部 Secret 管理**: HashiCorp Vault、AWS Secrets Manager などを利用
+2. **Encrypted etcd**: etcd に保存される Secret を暗号化
+3. **External Secret Management**: HashiCorp Vault、AWS Secrets Manager などを活用
 
-**暗号化された etcd 設定例**:
+**暗号化された etcd の設定例**:
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
@@ -1704,48 +1484,59 @@ Kubernetes クラスターのセキュリティに関するベストプラクテ
 
 1. **最小権限の原則**: 必要最小限の権限のみを付与
 2. **定期的な更新**: クラスターとコンポーネントを定期的に更新
-3. **ネットワーク分離**: network policy により Pod 間通信を制限
-4. **Image セキュリティ**: 信頼できる image のみを使用し、脆弱性スキャンを実装
-5. **Audit Logging**: クラスター activity の audit log を有効化
+3. **Network Isolation**: network policy によって Pod 間通信を制限
+4. **Image Security**: 信頼できる image のみを使用し、脆弱性スキャンを実装
+5. **Audit Logging**: クラスターアクティビティの audit log を有効化
 6. **Security Benchmark**: CIS benchmark などのセキュリティ標準に準拠
 
-## クラスターアップグレード
+## クラスターのアップグレード
 
 Kubernetes クラスターのアップグレードは、新機能、security patch、bug fix を適用するために必要です。アップグレードは慎重に計画し、実行する必要があります。
 
-### 2026年7月の更新: Kubernetes v1.37 が Beta に
+### 2026 年 7 月更新: Kubernetes v1.37 が Beta に
 
-v1.37.0-beta.0 は2026年7月20日に公開され、次の minor release である v1.37 は release cycle の後期段階に入りました。Code Freeze は予定どおり2026年7月22日から23日に発効し、最終版 v1.37.0 のリリースは2026年8月26日に予定されています。完全なスケジュールについては [v1.37 リリース情報](https://www.kubernetes.dev/resources/release/) を参照してください。
+v1.37.0-beta.0 は 2026 年 7 月 20 日に公開され、次の minor release である v1.37 は release cycle の後期段階に入りました。Code Freeze は予定どおり 2026 年 7 月 22～23 日に発効し、最終 v1.37.0 リリースは 2026 年 8 月 26 日に予定されています。完全なスケジュールについては、[v1.37 リリース情報](https://www.kubernetes.dev/resources/release/)を参照してください。
 
-同じ週（2026年7月22日から23日）に、保守対象のすべての line 向けに patch release が公開されました: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3)、[v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7)、[v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10)。通常どおり、使用中の minor version に対する最新 patch の適用を推奨します。
+同じ週（2026 年 7 月 22～23 日）には、サポート中のすべてのライン向けに patch release が公開されました: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3)、[v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7)、[v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10)。通常どおり、使用中の minor version に対する最新 patch の適用を推奨します。
 
-### 2026年8月の更新: v1.37 のプレビュー
+### 2026 年 8 月更新: v1.37 の先行紹介
 
-2026年7月31日、release team は [Kubernetes v1.37 のプレビュー](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/) を公開し、2026年8月26日に予定されている最終 v1.37.0 リリースに先立つ、予定された deprecation、removal、機能変更を説明しました。Docs Freeze は2026年8月5日から6日に発効しました。その一方で、次の cycle の最初の tag である v1.38.0-alpha.0 が2026年8月6日に作成されました。
+2026 年 7 月 31 日、release team は [Kubernetes v1.37 の先行紹介](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/)を公開し、2026 年 8 月 26 日に予定どおりリリースされる最終 v1.37.0 に先立ち、予定される非推奨化、削除、機能変更の概要を示しました。Docs Freeze は 2026 年 8 月 5～6 日に発効しました。一方、次の cycle の最初の tag である v1.38.0-alpha.0 は 2026 年 8 月 6 日に作成されました。
 
-### 2026年8月の更新: Patch Release と v1.37.0-rc.1
+### 2026 年 8 月更新: Patch Release と v1.37.0-rc.1
 
-2026年8月20日、保守対象のすべての line 向けに patch release が公開されました: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4)、[v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8)、[v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11)。通常どおり、使用中の minor version に対する最新 patch の適用を推奨します。
+2026 年 8 月 20 日、サポート中のすべてのライン向けに patch release が公開されました: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4)、[v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8)、[v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11)。通常どおり、使用中の minor version に対する最新 patch の適用を推奨します。
 
-同日、v1.37 の2番目の release candidate である [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1) も tag 付けされました（rc.0 は8月6日に作成）。これにより、最終 v1.37.0 リリースは2026年8月26日の予定どおりに進行しています。
+同日、v1.37 の 2 番目の release candidate である [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1) も tag 付けされました（rc.0 は 8 月 6 日に作成）。これにより、最終 v1.37.0 リリースは 2026 年 8 月 26 日に予定どおり進行しました。
+
+### 2026 年 8 月更新: Kubernetes v1.37 "Garhwal" リリース
+
+[Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/)は、2026 年 8 月 26 日に予定どおりリリースされました。このリリースは 67 の enhancement で構成されます。16 件が Stable に昇格し、23 件が Beta に昇格し、残りは Alpha として導入されました。主な内容は次のとおりです。
+
+- **Pod certificate と ClusterTrustBundle が Stable に昇格**: service account token の代替として workload に X.509 証明書を自動発行・ローテーションする PodCertificate feature と、trust anchor を配布する ClusterTrustBundle resource が標準機能になりました（[詳細記事](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/)）
+- **Metrics API（metrics.k8s.io）が GA に移行**: `kubectl top` と HPA で使用される resource metrics API が stable に昇格しました（[詳細記事](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/)）
+- その他の **Stable**: 複数の DRA（Dynamic Resource Allocation）feature、回復力のある watchcache 初期化など / **Beta**: HPA scale-to-zero、manifest ベースの admission control configuration など / **Alpha**: Pod レベルの checkpoint と restore など
+- **非推奨化**: kube-dns、kube-proxy の `ipvs` mode、`kubectl run --filename/-f` は非推奨となり、static Pod は Secret または ConfigMap を参照できなくなりました。cgroup v1 support の削除も引き続き進められています。
+
+アップグレードする前に、[公式リリースノート](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)にある非推奨化と削除を必ず確認してください。
 
 ### アップグレード戦略
 
-Kubernetes クラスターアップグレードの戦略:
+Kubernetes クラスターのアップグレード戦略:
 
-1. **Blue/Green Upgrade**: 新 version のクラスターを別途作成し、workload を移行
+1. **Blue/Green Upgrade**: 新しい version のクラスターを別途作成し、workload を移行
 2. **In-Place Upgrade**: 既存クラスターを直接アップグレード
-3. **Canary Upgrade**: 検証のためにまず一部の node のみをアップグレード
+3. **Canary Upgrade**: 検証のため、最初に一部の Node のみをアップグレード
 
 ### アップグレード順序
 
-Kubernetes クラスターアップグレードの一般的な順序:
+Kubernetes クラスターの一般的なアップグレード順序:
 
 1. **Control Plane Upgrade**: kube-apiserver、kube-controller-manager、kube-scheduler、etcd
-2. **DNS と CNI の Upgrade**: CoreDNS、CNI plugin、その他の主要な Add-on
-3. **Worker Node Upgrade**: worker node を順次アップグレード
+2. **DNS と CNI のアップグレード**: CoreDNS、CNI plugin、その他の主要 Add-on
+3. **Worker Node Upgrade**: worker node を順番にアップグレード
 
-**kubeadm Upgrade の例**:
+**kubeadm アップグレード例**:
 ```bash
 # Control plane upgrade
 kubeadm upgrade plan
@@ -1764,26 +1555,26 @@ kubectl uncordon <node-name>
 
 Kubernetes クラスターをアップグレードする際の考慮事項:
 
-1. **API 変更**: 新 version の API 変更を確認
+1. **API 変更**: 新しい version の API 変更を確認
 2. **Feature Gate**: 新しい feature gate とデフォルト値の変更を確認
-3. **依存関係**: CNI、CSI などの依存コンポーネントの互換性を確認
-4. **Downtime**: アップグレード中に予想される downtime を計画
-5. **Rollback Plan**: 問題発生時の rollback plan を確立
+3. **依存関係**: CNI、CSI などの依存コンポーネントとの互換性を確認
+4. **ダウンタイム**: アップグレード中に想定される downtime を計画
+5. **ロールバック計画**: 問題発生時の rollback plan を確立
 
 ### アップグレードのベストプラクティス
 
-Kubernetes クラスターアップグレードのベストプラクティス:
+Kubernetes クラスターのアップグレードに関するベストプラクティス:
 
 1. **まずテスト環境でテスト**: 本番アップグレード前にテスト環境で検証
-2. **段階的アップグレード**: 一度に1つの minor version ずつアップグレード
+2. **段階的アップグレード**: 一度に 1 つの minor version ずつアップグレード
 3. **バックアップ**: アップグレード前に etcd データをバックアップ
-4. **ドキュメント化**: アップグレード手順と結果をドキュメント化
-5. **監視**: アップグレード中およびアップグレード後にクラスター状態を監視
-6. **アップグレードウィンドウ**: トラフィックの少ない時間帯にアップグレードを実行
+4. **ドキュメント化**: アップグレード手順と結果を文書化
+5. **監視**: アップグレード中および後にクラスター状態を監視
+6. **アップグレードウィンドウ**: トラフィックが少ない時間帯にアップグレードを実行
 
 ## Amazon EKS クラスターアーキテクチャ
 
-Amazon EKS（Elastic Kubernetes Service）は AWS が提供する managed Kubernetes service です。EKS はすべての基本的な Kubernetes 機能を提供するとともに、AWS service との統合および管理の利便性を追加します。
+Amazon EKS（Elastic Kubernetes Service）は AWS が提供するマネージド Kubernetes service です。EKS はすべての基本的な Kubernetes 機能を提供するとともに、AWS service との統合および管理の利便性を追加します。
 
 ### EKS アーキテクチャの概要
 
@@ -1793,71 +1584,30 @@ EKS クラスターは以下のコンポーネントで構成されます。
 2. **EKS Node**: ユーザーが管理する worker node（EC2 instance）
 3. **EKS Managed Node Group**: AWS が管理する node group
 4. **EKS Fargate Profile**: serverless container 実行環境
-5. **VPC と Subnet**: クラスター networking 用の VPC と subnet
+5. **VPC と Subnet**: cluster networking 用の VPC と subnet
 
 **EKS アーキテクチャ図**:
 
-```mermaid
-graph TD
-    classDef aws fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px;
-    classDef eks fill:#fce4ec,stroke:#c2185b,stroke-width:1px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef nodes fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef services fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef network fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px;
-
-    AWS[AWS Cloud] --> CP[EKS Control Plane<br>AWS Managed]
-    AWS --> WN[Worker Nodes]
-    AWS --> AWSS[AWS Services]
-    AWS --> VPC[VPC & Networking]
-
-    CP --> API[kube-apiserver]
-    CP --> ETCD[etcd]
-    CP --> SCHED[kube-scheduler]
-    CP --> CTRL[kube-controller-manager]
-
-    WN --> NG1[Node Group 1<br>EC2 instances]
-    WN --> NG2[Node Group 2<br>EC2 instances]
-    WN --> FG[Fargate Profile<br>Serverless]
-
-    AWSS --> IAM[IAM]
-    AWSS --> ECR[ECR]
-    AWSS --> ELB[ELB/ALB/NLB]
-    AWSS --> EBS[EBS/EFS/FSx]
-    AWSS --> CW[CloudWatch]
-
-    VPC --> VPCM[VPC]
-    VPC --> SN[Subnets]
-    VPC --> SG[Security Groups]
-    VPC --> RT[Route Tables]
-    VPC --> CNI[VPC CNI]
-
-    class AWS aws;
-    class CP controlplane;
-    class WN nodes;
-    class AWSS,IAM,ECR,ELB,EBS,CW services;
-    class VPC,VPCM,SN,SG,RT,CNI network;
-    class API,ETCD,SCHED,CTRL,NG1,NG2,FG eks;
-```
+![AWS Cloud がマネージド EKS control plane、顧客運用の worker node、そしてクラスターが依存する AWS service と VPC networking をホストするアーキテクチャ図。](../../assets/diagrams/rendered/en-core-01-cluster-architecture-11.svg)
 
 ### EKS Control Plane
 
-EKS control plane は AWS により管理され、複数の availability zone にまたがる高可用性を提供します。
+EKS control plane は AWS によって管理され、複数の availability zone にわたる高可用性を提供します。
 
 **主な特徴**:
-1. **Managed Service**: AWS が control plane のメンテナンスと upgrade を管理
+1. **Managed Service**: AWS が control plane の保守とアップグレードを管理
 2. **高可用性**: 複数の availability zone にデプロイ
-3. **Auto Scaling**: 負荷に基づき自動的にスケール
+3. **Auto Scaling**: 負荷に基づいて自動的にスケール
 4. **セキュリティ**: AWS security service と統合
 
-### EKS Node Type
+### EKS Node タイプ
 
-EKS はさまざまな type の node をサポートします。
+EKS はさまざまな種類の Node をサポートします。
 
 1. **Self-Managed Node**: ユーザーが EC2 instance を直接管理
-2. **Managed Node Group**: AWS が node のライフサイクルを管理
+2. **Managed Node Group**: AWS が Node のライフサイクルを管理
 3. **Fargate**: serverless container 実行環境
-4. **Bottlerocket Node**: コンテナ workload 向けに最適化された OS
+4. **Bottlerocket Node**: コンテナ workload に最適化された OS
 
 **Managed Node Group の例**:
 ```yaml
@@ -1884,13 +1634,13 @@ managedNodeGroups:
         albIngress: true
 ```
 
-### EKS ネットワーキング
+### EKS Networking
 
-EKS networking は Amazon VPC をベースとし、以下のコンポーネントを含みます。
+EKS networking は Amazon VPC に基づき、以下のコンポーネントを含みます。
 
 1. **VPC CNI Plugin**: AWS VPC networking との統合
-2. **Security Group**: node および Pod レベルのネットワークセキュリティ
-3. **Load Balancer 統合**: ELB、ALB、NLB との統合
+2. **Security Group**: Node および Pod レベルの network security
+3. **Load Balancer Integration**: ELB、ALB、NLB との統合
 4. **VPC Endpoint**: AWS service とのプライベート通信
 
 **VPC CNI 設定例**:
@@ -1907,11 +1657,11 @@ data:
   minimum-ip-target: "10"
 ```
 
-### EKS ストレージ
+### EKS Storage
 
-EKS はさまざまな AWS storage service と統合します。
+EKS はさまざまな AWS storage service と統合されます。
 
-1. **EBS CSI Driver**: Amazon EBS volume 管理
+1. **EBS CSI Driver**: Amazon EBS Volume 管理
 2. **EFS CSI Driver**: Amazon EFS file system 管理
 3. **FSx for Lustre CSI Driver**: FSx for Lustre file system 管理
 4. **S3**: object storage
@@ -1929,14 +1679,14 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-### EKS セキュリティ
+### EKS Security
 
 EKS は AWS security service と統合して強力なセキュリティを提供します。
 
-1. **IAM 統合**: AWS IAM と Kubernetes RBAC の統合
-2. **VPC セキュリティ**: VPC security group と network ACL
-3. **AWS KMS**: Secret 暗号化のための KMS 統合
-4. **AWS WAF**: Web application firewall 統合
+1. **IAM Integration**: AWS IAM と Kubernetes RBAC の統合
+2. **VPC Security**: VPC security group と network ACL
+3. **AWS KMS**: Secret encryption のための KMS 統合
+4. **AWS WAF**: web application firewall 統合
 5. **AWS Shield**: DDoS 保護
 
 **IAM Role Service Account の例**:
@@ -1950,14 +1700,14 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-reader-role
 ```
 
-### EKS の監視とログ記録
+### EKS Monitoring and Logging
 
-EKS は AWS monitoring および logging service と統合します。
+EKS は AWS monitoring および logging service と統合されます。
 
-1. **CloudWatch Container Insights**: コンテナ監視
+1. **CloudWatch Container Insights**: container monitoring
 2. **CloudWatch Logs**: ログ収集と分析
-3. **X-Ray**: 分散トレーシング
-4. **Prometheus と Grafana**: open source monitoring tool 統合
+3. **X-Ray**: distributed tracing
+4. **Prometheus と Grafana**: open source monitoring tool との統合
 
 **CloudWatch Container Insights の例**:
 ```yaml
@@ -1990,11 +1740,11 @@ spec:
 
 EKS クラスターのコストを最適化する方法:
 
-1. **Spot Instance**: コスト効率の高い Spot instance を利用
-2. **Fargate**: serverless container 実行によりアイドルリソースのコストを削減
-3. **Auto Scaling**: cluster autoscaler によるリソース最適化
-4. **Graviton Processor**: ARM ベースの Graviton instance を利用
-5. **Resource Request の最適化**: 適切な resource request と limit を設定
+1. **Spot Instance**: コスト効率の良い Spot instance を活用
+2. **Fargate**: serverless container 実行で idle resource のコストを削減
+3. **Auto Scaling**: cluster autoscaler による resource 最適化
+4. **Graviton Processor**: ARM ベースの Graviton instance を活用
+5. **Resource Request Optimization**: 適切な resource request と limit を設定
 
 **Spot Instance Node Group の例**:
 ```yaml
@@ -2014,31 +1764,31 @@ managedNodeGroups:
 
 ## さらに学ぶ
 
-このドキュメントで扱ったクラスターアーキテクチャへの理解を深めるには、以下のトピックを参照してください。
+このドキュメントで取り上げたクラスターアーキテクチャへの理解を深めるには、以下のトピックを参照してください。
 
-- [Kubernetes 入門](../basics/04-kubernetes-introduction.md) - Kubernetes の基本概念と歴史
-- [Pod と Workload](./02-pods-and-workloads.md) - クラスターで実行される workload の管理
+- [Kubernetes の概要](../basics/04-kubernetes-introduction.md) - Kubernetes の基本概念と歴史
+- [Pod と Workload](./02-pods-and-workloads.md) - クラスター内で実行される workload の管理
 - [Service と Networking](./03-services-networking.md) - クラスター内の networking 設定
-- [Scheduling、Preemption、Eviction](./08-scheduling-preemption-eviction.md) - Pod を node に配置する方法
+- [Scheduling、Preemption、Eviction](./08-scheduling-preemption-eviction.md) - Pod が Node に配置される仕組み
 - [クラスター管理](./09-cluster-administration.md) - クラスターの運用と管理
-- [EKS 入門](../eks/01-eks-introduction.md) - Amazon EKS service の概要
+- [EKS の概要](../eks/01-eks-introduction.md) - Amazon EKS service の概要
 - [EKS クラスターの作成](../eks/02-eks-cluster-creation-part1.md) - EKS クラスターの作成方法
 
-### ハンズオンおよび高度な学習
+### ハンズオンと高度な学習
 
-- [Kubernetes 公式チュートリアル](https://kubernetes.io/docs/tutorials/) - ハンズオン実践による学習
+- [Kubernetes 公式チュートリアル](https://kubernetes.io/docs/tutorials/) - ハンズオンによる学習
 - [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - Kubernetes クラスターを手動で構築
-- [Cilium Networking](../networking/cilium/01-introduction.md) - 高度な networking とセキュリティ機能
+- [Cilium Networking](../networking/cilium/01-introduction.md) - 高度な networking と security feature
 
 ## まとめ
 
-このドキュメントでは、Kubernetes クラスターのアーキテクチャ、主なコンポーネント、およびそれらが連携する方法を確認しました。また、クラスター networking、storage、スケーラビリティ、セキュリティ、upgrade といった重要な側面に加え、Amazon EKS クラスターのアーキテクチャも扱いました。
+このドキュメントでは、Kubernetes クラスターのアーキテクチャ、主なコンポーネント、およびそれらが連携する仕組みを確認しました。また、クラスター networking、storage、scalability、security、upgrade などの重要な側面と、Amazon EKS クラスターのアーキテクチャについても取り上げました。
 
-Kubernetes クラスターアーキテクチャを理解することは、効果的なクラスターの設計、デプロイ、運用の基盤です。この知識により、安定し、スケーラブルで、セキュリティが強化された Kubernetes 環境を構築できます。
+Kubernetes クラスターアーキテクチャの理解は、効果的なクラスター設計、デプロイ、運用の基盤です。この知識を活用することで、安定性、スケーラビリティ、セキュリティを強化した Kubernetes 環境を構築できます。
 
 ## クイズ
 
-この章で学んだ内容をテストするには、[クラスターアーキテクチャクイズ](../quizzes/core/01-cluster-architecture-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[クラスターアーキテクチャクイズ](../quizzes/core/01-cluster-architecture-quiz.md)に挑戦してください。
 
 ## 参考資料
 
@@ -2047,4 +1797,4 @@ Kubernetes クラスターアーキテクチャを理解することは、効果
 - [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
 - [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)
 - [Kubernetes Up & Running](https://www.oreilly.com/library/view/kubernetes-up-and/9781492046523/)
-- [Kubernetes Best Practices](https://www.oreilly.com/library/view/kubernetes-best-practices/9781492056461/)
+- [Kubernetes ベストプラクティス](https://www.oreilly.com/library/view/kubernetes-best-practices/9781492056461/)
