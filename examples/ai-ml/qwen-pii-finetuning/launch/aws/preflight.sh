@@ -93,5 +93,21 @@ if [[ "$ROLE_COUNT" != "0" ]]; then
   exit 1
 fi
 
+UNIFIED_DOMAIN_ID=$(aws datazone list-domains \
+  --region "$REGION" \
+  --query "items[?name=='sagemaker_hyper'].id | [0]" \
+  --output text)
+if [[ -n "$UNIFIED_DOMAIN_ID" && "$UNIFIED_DOMAIN_ID" != "None" ]]; then
+  PROJECT_COUNT=$(aws datazone list-projects \
+    --region "$REGION" \
+    --domain-identifier "$UNIFIED_DOMAIN_ID" \
+    --output json | jq \
+    '[.items[]? | select(.name | startswith("qwen-pii-"))] | length')
+  if [[ "$PROJECT_COUNT" != "0" ]]; then
+    printf 'Found %s qwen-pii Unified Studio projects; clean them before continuing.\n' "$PROJECT_COUNT" >&2
+    exit 1
+  fi
+fi
+
 printf 'Preflight passed: region=%s, SageMaker quota=%s, EC2 GPU vCPU quota=%s\n' \
   "$REGION" "$SM_QUOTA" "$EC2_QUOTA"

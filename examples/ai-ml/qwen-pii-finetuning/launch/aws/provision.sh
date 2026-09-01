@@ -23,6 +23,7 @@ MLFLOW_APP_ARN=""
 UNIFIED_DOMAIN_ID=""
 PROJECT_PROFILE_ID=""
 PROJECT_ID=""
+PROJECT_OWNER_GROUP_ID=""
 CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 mkdir -p "$RESULTS_DIR"
@@ -48,6 +49,7 @@ write_inventory() {
     --arg unified_domain_id "$UNIFIED_DOMAIN_ID" \
     --arg project_profile_id "$PROJECT_PROFILE_ID" \
     --arg project_id "$PROJECT_ID" \
+    --arg project_owner_group_id "$PROJECT_OWNER_GROUP_ID" \
     --arg source_s3_uri "s3://${BUCKET_NAME}/qwen-pii/${EXPERIMENT_ID}/source/source.tar.gz" \
     --arg created_at "$CREATED_AT" \
     '{
@@ -62,6 +64,7 @@ write_inventory() {
       unified_domain_id: $unified_domain_id,
       project_profile_id: $project_profile_id,
       project_id: $project_id,
+      project_owner_group_id: $project_owner_group_id,
       source_s3_uri: $source_s3_uri,
       created_at: $created_at
     }' > "${INVENTORY}.tmp"
@@ -275,12 +278,31 @@ if [[ -z "$PROJECT_PROFILE_ID" || "$PROJECT_PROFILE_ID" == "None" ]]; then
   printf 'Enabled All capabilities project profile not found.\n' >&2
   exit 1
 fi
+CALLER_ARN=$(aws sts get-caller-identity --query Arn --output text)
+CALLER_ROLE_NAME=$(sed -E 's#^arn:aws:sts::[0-9]+:assumed-role/([^/]+)/.*#\1#' <<<"$CALLER_ARN")
+CALLER_IAM_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${CALLER_ROLE_NAME}"
+PROJECT_OWNER_GROUP_ID=$(aws datazone search-user-profiles \
+  --region "$REGION" \
+  --domain-identifier "$UNIFIED_DOMAIN_ID" \
+  --user-type DATAZONE_IAM_USER \
+  --search-text "$CALLER_ROLE_NAME" \
+  --output json | jq -r \
+  --arg arn "$CALLER_IAM_ARN" \
+  '[.items[]? | select(.details.iam.arn == $arn) | .details.iam.groupProfileId][0] // empty')
+if [[ -z "$PROJECT_OWNER_GROUP_ID" ]]; then
+  printf 'DataZone group profile not found for %s.\n' "$CALLER_IAM_ARN" >&2
+  exit 1
+fi
+MEMBERSHIP_ASSIGNMENTS=$(jq -nc \
+  --arg group "$PROJECT_OWNER_GROUP_ID" \
+  '[{member: {groupIdentifier: $group}, designation: "PROJECT_OWNER"}]')
 PROJECT_ID=$(aws datazone create-project \
   --region "$REGION" \
   --domain-identifier "$UNIFIED_DOMAIN_ID" \
   --name "$EXPERIMENT_ID" \
   --description "Ephemeral Qwen PII fine-tuning validation project" \
   --project-profile-id "$PROJECT_PROFILE_ID" \
+  --membership-assignments "$MEMBERSHIP_ASSIGNMENTS" \
   --query id \
   --output text)
 write_inventory

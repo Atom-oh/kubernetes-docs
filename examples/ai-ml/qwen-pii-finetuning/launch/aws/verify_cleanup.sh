@@ -31,11 +31,16 @@ if [[ -n "$MLFLOW_APP_ARN" ]] && APP_STATUS=$(aws sagemaker describe-mlflow-app 
     REMAINING+=("mlflow-app:$MLFLOW_APP_ARN")
   fi
 fi
-if [[ -n "$PROJECT_ID" ]] && aws datazone get-project \
-  --region "$REGION" \
-  --domain-identifier "$UNIFIED_DOMAIN_ID" \
-  --identifier "$PROJECT_ID" >/dev/null 2>&1; then
-  REMAINING+=("unified-studio-project:$PROJECT_ID")
+if [[ -n "$PROJECT_ID" && -n "$UNIFIED_DOMAIN_ID" ]]; then
+  PROJECT_EXISTS=$(aws datazone list-projects \
+    --region "$REGION" \
+    --domain-identifier "$UNIFIED_DOMAIN_ID" \
+    --output json | jq -r \
+    --arg id "$PROJECT_ID" \
+    'any(.items[]?; .id == $id)')
+  if [[ "$PROJECT_EXISTS" == "true" ]]; then
+    REMAINING+=("unified-studio-project:$PROJECT_ID")
+  fi
 fi
 if [[ -n "$BUCKET_NAME" ]] && aws s3api head-bucket \
   --bucket "$BUCKET_NAME" >/dev/null 2>&1; then

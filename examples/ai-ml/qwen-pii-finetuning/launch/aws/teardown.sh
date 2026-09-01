@@ -60,19 +60,25 @@ if [[ -n "$MLFLOW_APP_ARN" ]]; then
 fi
 
 if [[ -n "$PROJECT_ID" && -n "$UNIFIED_DOMAIN_ID" ]]; then
-  if aws datazone get-project \
+  PROJECT_EXISTS=$(aws datazone list-projects \
     --region "$REGION" \
     --domain-identifier "$UNIFIED_DOMAIN_ID" \
-    --identifier "$PROJECT_ID" >/dev/null 2>&1; then
+    --output json | jq -r \
+    --arg id "$PROJECT_ID" \
+    'any(.items[]?; .id == $id)')
+  if [[ "$PROJECT_EXISTS" == "true" ]]; then
     aws datazone delete-project \
       --region "$REGION" \
       --domain-identifier "$UNIFIED_DOMAIN_ID" \
       --identifier "$PROJECT_ID"
     for _attempt in $(seq 1 80); do
-      if ! aws datazone get-project \
+      PROJECT_EXISTS=$(aws datazone list-projects \
         --region "$REGION" \
         --domain-identifier "$UNIFIED_DOMAIN_ID" \
-        --identifier "$PROJECT_ID" >/dev/null 2>&1; then
+        --output json | jq -r \
+        --arg id "$PROJECT_ID" \
+        'any(.items[]?; .id == $id)')
+      if [[ "$PROJECT_EXISTS" != "true" ]]; then
         break
       fi
       sleep 15
