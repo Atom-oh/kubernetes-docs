@@ -703,7 +703,7 @@ git commit -m "feat: add common QLoRA training entry point"
 - Create: `examples/ai-ml/qwen-pii-finetuning/tests/test_sagemaker_request.py`
 
 **Interfaces:**
-- Produces: a tagged S3 bucket, SageMaker execution role, MLflow role, Small tracking server, and Unified Studio project.
+- Produces: a tagged S3 bucket, SageMaker execution role, MLflow role, MLflow App, and Unified Studio project.
 - Produces: `examples/ai-ml/qwen-pii-finetuning/results/resource-inventory.json`.
 - Produces: one SageMaker Training Job request from the canonical config.
 - Deletes every inventory entry.
@@ -756,8 +756,8 @@ Expected: FAIL because the launcher does not exist.
 4. create a SageMaker execution role scoped to the bucket prefix, CloudWatch
    Logs, the regional DLC, and managed MLflow access;
 5. create a separate MLflow service role scoped to the artifact prefix;
-6. create a Small MLflow Tracking Server with automatic model registration
-   disabled;
+6. create an MLflow App with `AutoModelRegistrationDisabled` and account
+   default status `DISABLED`;
 7. discover the Unified Studio V2 domain named `sagemaker_hyper`;
 8. discover the enabled project profile named `All capabilities`;
 9. create a project whose name is exactly `${EXPERIMENT_ID}`;
@@ -788,7 +788,7 @@ to `results/sagemaker-${MODE}.json`.
 `examples/ai-ml/qwen-pii-finetuning/results/resource-inventory.json` and
 deletes in dependency order:
 
-1. stop/delete MLflow Tracking Server;
+1. delete the MLflow App;
 2. delete Unified Studio project and poll terminal deletion;
 3. empty all versioned and unversioned S3 objects, then delete bucket;
 4. detach/delete inline policies and delete experiment roles;
@@ -1033,7 +1033,7 @@ bash examples/ai-ml/qwen-pii-finetuning/launch/aws/provision.sh
 Expected:
 
 - bucket is encrypted and private;
-- MLflow server reaches `Created`;
+- MLflow App reaches `ACTIVE`;
 - Unified Studio project reaches `ACTIVE`;
 - inventory contains every resource created.
 
@@ -1086,14 +1086,14 @@ Expected:
 
 - [ ] **Step 7: Export managed MLflow results**
 
-Use the tracking server ARN through `sagemaker-mlflow`, download aggregate
+Use the MLflow App ARN through `sagemaker-mlflow`, download aggregate
 metric artifacts and run metadata, and verify the exported dataset hash equals
 the committed manifest.
 
 - [ ] **Step 8: Stop and delete managed MLflow after export**
 
-Delete the tracking server and poll until it no longer appears in
-`list-mlflow-tracking-servers`. Preserve its entry in the inventory with
+Delete the MLflow App and poll until it no longer appears in
+`list-mlflow-apps`. Preserve its entry in the inventory with
 `deleted_at`.
 
 - [ ] **Step 9: Commit sanitized SageMaker results**
@@ -1217,7 +1217,7 @@ Expected: FAIL because the summary does not exist.
 
 - load result JSON and reject mismatched dataset/config hashes;
 - query the Price List API for current Seoul
-  `ml.g6e.4xlarge-Training`, `g6e.4xlarge`, and Small MLflow rates;
+  `ml.g6e.4xlarge-Training`, `g6e.4xlarge`, and MLflow App usage/storage rates;
 - use `Decimal` for cost math;
 - calculate base-to-tuned deltas in code;
 - write sorted JSON and stable CSV;

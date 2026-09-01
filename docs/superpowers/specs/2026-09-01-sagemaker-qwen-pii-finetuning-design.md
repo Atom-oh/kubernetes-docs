@@ -31,7 +31,7 @@ cloud resources must be deleted.
 - Track the SageMaker run with SageMaker managed MLflow and the EKS run with an
   ephemeral MLflow server running on EKS.
 - Record baseline and fine-tuned results.
-- Delete the SageMaker MLflow server, EKS cluster and GPU node, Unified Studio
+- Delete the SageMaker MLflow App, EKS cluster and GPU node, Unified Studio
   test project, S3 objects and bucket, IAM experiment roles, and other
   experiment-specific cloud resources after exporting results.
 - Preserve only non-sensitive result summaries, plots, hashes, and
@@ -257,14 +257,15 @@ except for environment labels and infrastructure identifiers.
    Logs, and SageMaker managed MLflow access.
 3. Create an experiment-specific S3 bucket with default encryption, Block
    Public Access, and a deletion policy suitable for teardown.
-4. Create a Small SageMaker managed MLflow Tracking Server.
+4. Create a SageMaker managed MLflow App with automatic model registration
+   disabled and without making it the account default.
 5. Submit a SageMaker Training Job on one `ml.g6e.4xlarge`, with a 300 GB
    training volume and `MaxRuntimeInSeconds=10800`.
 6. Use the common `train.py`, dependency lock, dataset hashes, and experiment
    configuration.
 7. Log baseline evaluation, fine-tuning metrics, final evaluation, resource
    metadata, and artifacts to managed MLflow.
-8. Download the result export before deleting the tracking server.
+8. Download the result export before deleting the MLflow App.
 
 SageMaker infrastructure management, automatic job shutdown, CloudWatch Logs,
 and managed MLflow are the subject of the SageMaker AI example.
