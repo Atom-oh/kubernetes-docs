@@ -2,6 +2,8 @@
 set -euo pipefail
 
 export AWS_SDK_UA_APP_ID=AWSSkill-SageMaker
+export AWS_RETRY_MODE=adaptive
+export AWS_MAX_ATTEMPTS=10
 
 MODE=${1:-}
 if [[ "$MODE" != "smoke" && "$MODE" != "full" ]]; then

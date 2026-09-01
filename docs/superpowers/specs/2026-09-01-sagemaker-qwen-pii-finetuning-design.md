@@ -440,7 +440,9 @@ Do not commit:
   unexpected rate or if tokenization round-trip tests fail.
 - Stop and diagnose CUDA OOM, dependency mismatch, model download corruption,
   MLflow authentication failure, or missing GPU scheduling before retrying.
-- Use a unique experiment tag on every AWS resource.
+- Use a unique experiment tag on every AWS resource that supports the account's
+  tagging policy. When the Unified Studio domain rejects custom project tags,
+  use the unique project name and inventory-recorded project ID instead.
 - Maintain a machine-readable resource inventory from creation through
   deletion.
 - Cleanup must run after success or failure. Then use read-only AWS queries to

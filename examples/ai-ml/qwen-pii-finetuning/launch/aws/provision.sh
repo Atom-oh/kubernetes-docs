@@ -2,6 +2,8 @@
 set -euo pipefail
 
 export AWS_SDK_UA_APP_ID=AWSSkill-SageMaker
+export AWS_RETRY_MODE=adaptive
+export AWS_MAX_ATTEMPTS=10
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PACKAGE_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
@@ -279,7 +281,6 @@ PROJECT_ID=$(aws datazone create-project \
   --name "$EXPERIMENT_ID" \
   --description "Ephemeral Qwen PII fine-tuning validation project" \
   --project-profile-id "$PROJECT_PROFILE_ID" \
-  --resource-tags Experiment=qwen-pii-finetuning,ExperimentId="$EXPERIMENT_ID" \
   --query id \
   --output text)
 write_inventory
