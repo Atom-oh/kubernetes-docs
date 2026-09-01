@@ -32,3 +32,11 @@ python3 -m venv /tmp/qwen-pii-plan-venv
 
 Generated datasets and raw predictions are runtime artifacts. Only aggregate
 metrics, hashes, non-sensitive plots, and teardown evidence are committed.
+
+## Validation result
+
+The AWS validation performed on September 1, 2026 stopped before GPU training
+because the created SageMaker Unified Studio project did not grant the caller
+project membership. The factual result, cleanup status, and remaining owner
+action are recorded in
+[`docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md`](../../../docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md).
