@@ -1,0 +1,40 @@
+experiment_name: qwen-pii-finetuning
+model_id: Qwen/Qwen3-30B-A3B-Instruct-2507
+seed: 42
+dataset:
+  train: 1600
+  validation: 200
+  test: 400
+languages:
+  ko: 0.8
+  en: 0.2
+entity_types:
+  - PERSON
+  - RRN
+  - DOB
+  - REL
+  - ADDRESS
+  - PHONE
+  - EMAIL
+  - ACCOUNT
+  - CARD
+training:
+  quantization: nf4
+  double_quant: true
+  compute_dtype: bfloat16
+  lora_rank: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  max_sequence_length: 1024
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0002
+  scheduler: cosine
+  warmup_ratio: 0.03
+  smoke_steps: 10
+  max_steps: 80
+  evaluation_interval: 20
+  max_runtime_seconds: 10800
+compute:
+  sagemaker: ml.g6e.4xlarge
+  eks: g6e.4xlarge
