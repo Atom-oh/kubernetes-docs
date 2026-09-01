@@ -1,7 +1,7 @@
 # Arquitectura del clúster
 
 > **Versiones compatibles**: Kubernetes 1.32, 1.33, 1.34
-> **Última actualización**: August 24, 2026
+> **Última actualización**: August 31, 2026
 
 ## Configuración del entorno de laboratorio
 
@@ -9,7 +9,7 @@ Para practicar los conceptos de este documento, necesita las siguientes herramie
 
 ### Herramientas necesarias
 - kubectl v1.34 o posterior
-- Un clúster de Kubernetes en funcionamiento (EKS, minikube, kind, etc.)
+- Un clúster de Kubernetes funcional (EKS, minikube, kind, etc.)
 
 ### Configuración del entorno de desarrollo local
 
@@ -30,124 +30,62 @@ kubectl get pods -n kube-system
 
 ## Descripción general de la arquitectura del clúster
 
-> **Concepto principal**: Un clúster de Kubernetes consta del control plane y los worker nodes, cada uno compuesto por varios componentes que desempeñan roles específicos.
+> **Concepto central**: Un clúster de Kubernetes consta del plano de control y nodos de trabajo, cada uno compuesto por varios componentes que desempeñan funciones específicas.
 
-Un clúster de Kubernetes consta de un conjunto de nodes (máquinas virtuales o físicas) para ejecutar aplicaciones en contenedores. El clúster se divide ampliamente en el control plane y los worker nodes.
+Un clúster de Kubernetes consta de un conjunto de nodos (máquinas virtuales o físicas) para ejecutar aplicaciones en contenedores. El clúster se divide principalmente en el plano de control y los nodos de trabajo.
 
 ### Diagrama de arquitectura del clúster
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Cluster"
-        subgraph "Control Plane"
-            API[kube-apiserver]
-            ETCD[etcd]
-            SCHED[kube-scheduler]
-            CM[kube-controller-manager]
-            CCM[cloud-controller-manager]
+![Diagrama de arquitectura que muestra el kube-apiserver del plano de control coordinando etcd, el scheduler y los controller managers, y conectándose con el kubelet y kube-proxy de un nodo de trabajo, que a su vez controlan el runtime de contenedores y los pods en ejecución.](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
-            API <--> ETCD
-            API <--> SCHED
-            API <--> CM
-            API <--> CCM
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 
-        subgraph "Worker Node 1"
-            KUBELET1[kubelet]
-            PROXY1[kube-proxy]
-            CRI1[Container Runtime]
-
-            POD1A[Pod A]
-            POD1B[Pod B]
-
-            KUBELET1 --> CRI1
-            CRI1 --> POD1A
-            CRI1 --> POD1B
-            PROXY1 --> POD1A
-            PROXY1 --> POD1B
-        end
-
-        subgraph "Worker Node 2"
-            KUBELET2[kubelet]
-            PROXY2[kube-proxy]
-            CRI2[Container Runtime]
-
-            POD2A[Pod C]
-            POD2B[Pod D]
-
-            KUBELET2 --> CRI2
-            CRI2 --> POD2A
-            CRI2 --> POD2B
-            PROXY2 --> POD2A
-            PROXY2 --> POD2B
-        end
-
-        API <--> KUBELET1
-        API <--> KUBELET2
-        API <--> PROXY1
-        API <--> PROXY2
-    end
-
-    %% Style definitions
-    classDef controlPlane fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef nodeComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Class application
-    class API,SCHED,CM,CCM controlPlane;
-    class ETCD dataStore;
-    class KUBELET1,KUBELET2,PROXY1,PROXY2,CRI1,CRI2 nodeComponent;
-    class POD1A,POD1B,POD2A,POD2B pod;
-```
-
-**Componentes del control plane**:
+**Componentes del plano de control**:
 - **kube-apiserver**: Frontend que expone la API de Kubernetes
-- **etcd**: Almacén de clave-valor que guarda todos los datos del clúster
-- **kube-scheduler**: Selecciona nodes para ejecutar pods recién creados
+- **etcd**: Almacén clave-valor que guarda todos los datos del clúster
+- **kube-scheduler**: Selecciona nodos para ejecutar pods recién creados
 - **kube-controller-manager**: Ejecuta controllers que administran el estado del clúster
 - **cloud-controller-manager**: Interactúa con las API del proveedor de nube
 
-**Componentes de los worker nodes**:
-- **kubelet**: Agente que se ejecuta en cada node y administra la ejecución de contenedores
+**Componentes del nodo de trabajo**:
+- **kubelet**: Agente que se ejecuta en cada nodo y administra la ejecución de contenedores
 - **kube-proxy**: Mantiene reglas de red y realiza el reenvío de conexiones
 - **Container Runtime**: Ejecuta contenedores (containerd, CRI-O, etc.)
 
-## Componentes del control plane
+## Componentes del plano de control
 
-El control plane actúa como el "cerebro" del clúster de Kubernetes, administrando y controlando el estado general del clúster. Los componentes del control plane normalmente se ejecutan en máquinas dedicadas y pueden replicarse en varias instancias para obtener alta disponibilidad.
+El plano de control actúa como el "cerebro" del clúster de Kubernetes y administra y controla el estado global del clúster. Los componentes del plano de control normalmente se ejecutan en máquinas dedicadas y se pueden replicar en varias instancias para lograr alta disponibilidad.
 
-### Detalles de los componentes del control plane
+### Detalles de los componentes del plano de control
 
 | Componente | Funciones principales | Destinos de comunicación | Configuración de alta disponibilidad |
 |-----------|---------------|----------------------|--------------------------------|
 | **kube-apiserver** | - Proporciona la API de Kubernetes<br>- Autenticación y autorización<br>- Procesamiento de solicitudes de API | - Todos los componentes<br>- etcd | Escalado horizontal con varias instancias |
-| **etcd** | - Almacena datos del clúster<br>- Almacén distribuido de clave-valor<br>- Garantiza la consistencia | - kube-apiserver | Clúster de varios nodes |
-| **kube-scheduler** | - Decisiones de ubicación de Pod<br>- Evalúa recursos de node<br>- Aplica afinidad/anti-afinidad | - kube-apiserver | Configuración activo-en espera |
-| **kube-controller-manager** | - Controller de node<br>- Controller de replicación<br>- Controller de endpoint<br>- Controller de service account | - kube-apiserver | Configuración activo-en espera |
-| **cloud-controller-manager** | - Integración con el proveedor de nube<br>- Ciclo de vida de node<br>- Enrutamiento y balanceo de carga | - kube-apiserver<br>- API de nube | Configuración activo-en espera |
+| **etcd** | - Almacena datos del clúster<br>- Almacén clave-valor distribuido<br>- Garantiza consistencia | - kube-apiserver | Clúster multinodo |
+| **kube-scheduler** | - Decisiones de ubicación de Pod<br>- Evalúa recursos de nodos<br>- Aplica afinidad/anti-afinidad | - kube-apiserver | Configuración activo-en espera |
+| **kube-controller-manager** | - Node controller<br>- Replication controller<br>- Endpoint controller<br>- Service account controller | - kube-apiserver | Configuración activo-en espera |
+| **cloud-controller-manager** | - Integración con proveedor de nube<br>- Ciclo de vida del nodo<br>- Enrutamiento y balanceo de carga | - kube-apiserver<br>- API de nube | Configuración activo-en espera |
 
-### Flujo de comunicación del control plane
+### Flujo de comunicación del plano de control
 
 1. El usuario o controller envía una solicitud a kube-apiserver
 2. kube-apiserver realiza autenticación, autorización y admisión
-3. kube-apiserver lee/escribe datos de/en etcd
+3. kube-apiserver lee/escribe datos desde/hacia etcd
 4. Los controllers y el scheduler observan el estado del clúster mediante kube-apiserver
-5. kubelet informa el estado del node a kube-apiserver
+5. kubelet informa el estado del nodo a kube-apiserver
 
 ### kube-apiserver
 
-kube-apiserver es el frontend del control plane que expone la API de Kubernetes. Todas las solicitudes internas y externas se procesan a través de este servidor de API.
+kube-apiserver es el frontend del plano de control que expone la API de Kubernetes. Todas las solicitudes internas y externas se procesan mediante este servidor de API.
 
 **Funciones principales**:
-- Proporciona API REST
+- Proporciona una API REST
 - Autenticación y autorización
 - Validación y procesamiento de solicitudes
 - Comunicación con etcd
 - Escalable horizontalmente (puede escalar a varias instancias)
 
-**Indicadores y opciones de configuración principales**:
+**Principales flags y opciones de configuración**:
 ```bash
 # Basic configuration example
 kube-apiserver \
@@ -167,22 +105,22 @@ kube-apiserver \
 
 **Seguridad del servidor de API**:
 - Comunicación segura mediante certificados TLS
-- Admite varios métodos de autenticación (certificados X.509, tokens de service account, OIDC, webhooks, etc.)
+- Admite varios métodos de autenticación (certificados X.509, tokens de ServiceAccount, OIDC, webhooks, etc.)
 - Administración de permisos mediante RBAC (Role-Based Access Control)
 - Validación y modificación de solicitudes mediante admission controllers
 
 ### etcd
 
-etcd es un almacén de clave-valor consistente y de alta disponibilidad que guarda todos los datos del clúster. Actúa como la "fuente de la verdad" de Kubernetes.
+etcd es un almacén clave-valor consistente y de alta disponibilidad que guarda todos los datos del clúster. Actúa como la "fuente de verdad" de Kubernetes.
 
-**Características principales**:
+**Características clave**:
 - Sistema distribuido
 - Consistencia fuerte (usa el algoritmo de consenso Raft)
-- Alta disponibilidad (puede configurarse con varios nodes)
+- Alta disponibilidad (se puede configurar con varios nodos)
 - Almacenamiento seguro de datos
-- Funcionalidad Watch para supervisar cambios
+- Funcionalidad watch para supervisar cambios
 
-**Configuración del clúster de etcd**:
+**Configuración del clúster etcd**:
 ```bash
 # etcd cluster configuration example (3 nodes)
 etcd \
@@ -216,40 +154,40 @@ ETCDCTL_API=3 etcdctl snapshot restore snapshot.db \
 ```
 
 **Optimización del rendimiento de etcd**:
-- Optimización de I/O de disco (se recomienda SSD)
-- Asignación adecuada de memoria
+- Optimización de E/S de disco (se recomienda SSD)
+- Asignación de memoria adecuada
 - Compactación y desfragmentación periódicas
-- Número apropiado de nodes de etcd según el tamaño del clúster (normalmente 3 o 5)
+- Número adecuado de nodos etcd según el tamaño del clúster (normalmente 3 o 5)
 
-#### Actualización de julio de 2026: se publicó etcd v3.7.0
+#### Actualización de julio de 2026: lanzamiento de etcd v3.7.0
 
-El 8 de julio de 2026, SIG etcd publicó etcd v3.7.0. Aspectos destacados:
+El 8 de julio de 2026, SIG etcd lanzó etcd v3.7.0. Aspectos destacados:
 
-- **RangeStream**: transmite resultados de rangos grandes en fragmentos en lugar de almacenar toda la respuesta en memoria (una función solicitada desde hace tiempo)
-- **Mejoras de rendimiento**: solicitudes de rango solo de claves optimizadas, leases más rápidos y confiables
+- **RangeStream**: transmite resultados de rangos grandes en fragmentos en lugar de almacenar toda la respuesta en memoria (una característica solicitada desde hace tiempo)
+- **Mejoras de rendimiento**: solicitudes de rango solo de claves optimizadas, leases más rápidos y fiables
 - Elimina los últimos restos del v2store heredado y completa una importante renovación de protobuf
-- Se entrega con dependencias centrales actualizadas: bbolt v1.5.0 y raft v3.7.0
+- Incluye dependencias principales actualizadas: bbolt v1.5.0 y raft v3.7.0
 
 Consulte el [anuncio oficial](https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/) y el [registro de cambios de etcd v3.7](https://github.com/etcd-io/etcd/blob/main/CHANGELOG/CHANGELOG-3.7.md) para obtener más detalles.
 
 ### kube-scheduler
 
-kube-scheduler es el componente del control plane que selecciona nodes donde ejecutar pods recién creados.
+kube-scheduler es el componente del plano de control que selecciona nodos para ejecutar pods recién creados.
 
 **Proceso de scheduling**:
-1. **Filtrado**: identificar nodes que pueden ejecutar el pod
+1. **Filtrado**: identificación de los nodos que pueden ejecutar el pod
    - Requisitos de recursos (CPU, memoria)
-   - Selectores de node, afinidad de node
+   - Selectores de nodo, afinidad de nodo
    - Taints y tolerations
    - Restricciones de volumen
 
-2. **Puntuación**: asignar puntuaciones a nodes adecuados
+2. **Puntuación**: asignación de puntuaciones a nodos adecuados
    - Utilización de recursos
-   - Interafinidad/anti-afinidad de Pod
+   - Inter-afinidad/anti-afinidad de Pod
    - Localidad de datos
-   - Balanceo de carga entre nodes
+   - Balanceo de carga entre nodos
 
-3. **Vinculación**: asignar el pod al node óptimo
+3. **Binding**: asignación del pod al nodo óptimo
 
 **Configuración del scheduler**:
 ```bash
@@ -284,19 +222,19 @@ profiles:
 
 ### kube-controller-manager
 
-kube-controller-manager es el componente del control plane que ejecuta varios procesos de controller. Cada controller administra un aspecto específico del clúster.
+kube-controller-manager es el componente del plano de control que ejecuta varios procesos de controller. Cada controller administra un aspecto específico del clúster.
 
 **Controllers principales**:
-- **Node Controller**: Supervisa y responde al estado de node
-- **Replication Controller**: Mantiene el recuento de réplicas de pod
-- **Endpoint Controller**: Conecta services y pods
-- **Service Account & Token Controller**: Crea cuentas y tokens de API predeterminados para namespaces
-- **Job Controller**: Administra tareas de una sola vez
+- **Node Controller**: Supervisa y responde al estado de los nodos
+- **Replication Controller**: Mantiene el número de réplicas de Pod
+- **Endpoint Controller**: Conecta Services y pods
+- **Service Account & Token Controller**: Crea cuentas predeterminadas y tokens de API para namespaces
+- **Job Controller**: Administra tareas únicas
 - **CronJob Controller**: Administra tareas programadas
-- **DaemonSet Controller**: Garantiza que pods específicos se ejecuten en todos los nodes
+- **DaemonSet Controller**: Garantiza que pods específicos se ejecuten en todos los nodos
 - **StatefulSet Controller**: Administra aplicaciones con estado
 - **PV Controller**: Administra volúmenes persistentes
-- **Namespace Controller**: Administra el ciclo de vida de namespace
+- **Namespace Controller**: Administra el ciclo de vida de los namespaces
 - **Garbage Collector**: Limpia objetos huérfanos
 
 **Configuración de Controller Manager**:
@@ -316,15 +254,15 @@ kube-controller-manager \
 **Funcionamiento de los controllers**:
 1. Los controllers observan continuamente el estado del clúster mediante el servidor de API
 2. Detectan diferencias entre el estado actual y el deseado
-3. Realizan operaciones para conciliar la diferencia
+3. Realizan operaciones para reconciliar la diferencia
 4. Informan cambios de estado al servidor de API
 
 ### cloud-controller-manager
 
-cloud-controller-manager es el componente del control plane que contiene lógica de control específica de la nube. Esto permite separar el núcleo de Kubernetes de las API del proveedor de nube.
+cloud-controller-manager es el componente del plano de control que contiene lógica de control específica de la nube. Esto permite separar el núcleo de Kubernetes de las API de proveedores de nube.
 
 **Controllers principales**:
-- **Node Controller**: Comprueba el estado de node mediante la API del proveedor de nube
+- **Node Controller**: Comprueba el estado del nodo mediante la API del proveedor de nube
 - **Route Controller**: Configura rutas en entornos de nube
 - **Service Controller**: Crea, actualiza y elimina balanceadores de carga de nube
 - **Volume Controller**: Crea, adjunta y monta volúmenes de almacenamiento de nube
@@ -346,26 +284,26 @@ cloud-controller-manager \
   --leader-elect=true
 ```
 
-**Beneficios de Cloud Controller Manager**:
+**Ventajas de Cloud Controller Manager**:
 - Separación del código específico del proveedor de nube del núcleo de Kubernetes
-- Los proveedores de nube pueden desarrollar sus propias funcionalidades de forma independiente
-- Añade funcionalidades de nube sin cambiar el núcleo de Kubernetes
+- Los proveedores de nube pueden desarrollar sus propias características de forma independiente
+- Añade características de nube sin cambiar el núcleo de Kubernetes
 
-## Componentes de node
+## Componentes del nodo
 
-Los nodes son máquinas worker del clúster de Kubernetes que ejecutan aplicaciones en contenedores. Cada node es administrado por el control plane y consta de varios componentes.
+Los nodos son máquinas de trabajo del clúster de Kubernetes que ejecutan aplicaciones en contenedores. Cada nodo es administrado por el plano de control y consta de varios componentes.
 
 ### kubelet
 
-kubelet es un agente que se ejecuta en cada node y administra contenedores dentro de pods. kubelet recibe PodSpecs mediante varios mecanismos y garantiza que los contenedores se ejecuten correctamente según esas especificaciones.
+kubelet es un agente que se ejecuta en cada nodo y administra los contenedores dentro de los pods. kubelet recibe PodSpecs mediante diversos mecanismos y garantiza que los contenedores se ejecuten correctamente conforme a esas especificaciones.
 
 **Funciones principales**:
-- Ejecuta contenedores según PodSpec
+- Ejecuta contenedores según el PodSpec
 - Supervisa e informa el estado de los contenedores
 - Administra el ciclo de vida de los contenedores
-- Administra montajes de volumen
-- Informa el estado de node
-- Realiza comprobaciones de estado de los contenedores
+- Administra montajes de volúmenes
+- Informa el estado del nodo
+- Realiza comprobaciones de salud de contenedores
 
 **Configuración de kubelet**:
 ```bash
@@ -409,8 +347,8 @@ healthzBindAddress: 127.0.0.1
 healthzPort: 10248
 ```
 
-**Static Pods**:
-kubelet puede ejecutar static pods que administra directamente sin pasar por el servidor de API. Esto se usa principalmente para ejecutar componentes del control plane.
+**Pods estáticos**:
+kubelet puede ejecutar pods estáticos que administra directamente sin pasar por el servidor de API. Esto se utiliza principalmente para ejecutar componentes del plano de control.
 
 ```yaml
 # /etc/kubernetes/manifests/kube-apiserver.yaml
@@ -431,18 +369,18 @@ spec:
 
 ### kube-proxy
 
-kube-proxy es un proxy de red que se ejecuta en cada node e implementa el concepto Kubernetes Service. Mantiene reglas de red en los nodes y realiza el reenvío de conexiones.
+kube-proxy es un proxy de red que se ejecuta en cada nodo e implementa el concepto de Service de Kubernetes. Mantiene reglas de red en los nodos y realiza el reenvío de conexiones.
 
 **Funciones principales**:
-- Mantiene reglas de red para IP y puertos de service
+- Mantiene reglas de red para IP y puertos de Service
 - Reenvío de conexiones
 - Implementa balanceo de carga
-- Admite descubrimiento de service
+- Admite descubrimiento de servicios
 
 **Modos de funcionamiento**:
-1. **userspace mode**: Ejecuta el proxy en espacio de usuario (heredado)
-2. **iptables mode**: Implementación NAT que usa iptables de Linux (predeterminado)
-3. **IPVS mode**: Usa IP Virtual Server del kernel de Linux (alto rendimiento)
+1. **modo userspace**: ejecuta el proxy en espacio de usuario (heredado)
+2. **modo iptables**: implementación NAT con iptables de Linux (predeterminado)
+3. **modo IPVS**: utiliza IP Virtual Server del kernel de Linux (alto rendimiento)
 
 **Configuración de kube-proxy**:
 ```bash
@@ -491,40 +429,23 @@ mode: "iptables"
 
 | Característica | Modo iptables | Modo IPVS |
 |----------------|---------------|-----------|
-| Rendimiento | Degradación del rendimiento con muchos services | Mejor rendimiento en clústeres grandes |
-| Algoritmos de balanceo de carga | Solo se admite round robin | Se admiten varios algoritmos (rr, lc, dh, sh, sed, nq) |
+| Rendimiento | Degradación del rendimiento con muchos Services | Mejor rendimiento en clústeres grandes |
+| Algoritmos de balanceo de carga | Solo admite round robin | Admite diversos algoritmos (rr, lc, dh, sh, sed, nq) |
 | Implementación | Cadenas de filtrado de paquetes de red | Basada en tabla hash |
-| Requisitos del kernel | Módulos predeterminados del kernel | Se requiere el módulo IPVS del kernel |
+| Requisitos del kernel | Módulos de kernel predeterminados | Se requiere módulo de kernel IPVS |
 
 ### Container Runtime
 
-Container runtime es el software que ejecuta contenedores. Kubernetes admite varios container runtimes mediante la Container Runtime Interface (CRI).
+El runtime de contenedores es el software que ejecuta contenedores. Kubernetes admite diversos runtimes de contenedores mediante Container Runtime Interface (CRI).
 
-**Container runtimes principales**:
-1. **containerd**: Container runtime ligero (actualmente el más utilizado)
+**Principales runtimes de contenedores**:
+1. **containerd**: Runtime de contenedores ligero (actualmente el más utilizado)
 2. **CRI-O**: Runtime ligero diseñado específicamente para Kubernetes
 3. **Docker Engine**: Compatible mediante Docker shim (obsoleto desde Kubernetes 1.24)
 
-**Estructura de capas de Container Runtime**:
+**Estructura de capas del runtime de contenedores**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef cri fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef runtime fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef lowlevel fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-
-    K8S[Kubernetes] --> CRI[Container Runtime Interface]
-    CRI --> CD[containerd]
-    CRI --> CRIO[CRI-O]
-    CD --> RUNC[runc]
-    CRIO --> CRUN[crun]
-
-    class K8S k8s;
-    class CRI cri;
-    class CD,CRIO runtime;
-    class RUNC,CRUN lowlevel;
-```
+![Diagrama de árbol que muestra Kubernetes llamando a Container Runtime Interface, que delega en containerd o CRI-O, ambos respaldados por un runtime de bajo nivel (runc o crun).](../../assets/diagrams/rendered/en-core-01-cluster-architecture-1.svg)
 
 **Ejemplo de configuración de containerd**:
 ```toml
@@ -562,17 +483,17 @@ cgroup_manager = "systemd"
 pause_image = "k8s.gcr.io/pause:3.6"
 ```
 
-### Componentes add-on
+### Componentes complementarios
 
 Los add-ons son componentes adicionales que amplían la funcionalidad de los clústeres de Kubernetes. Algunos add-ons importantes incluyen:
 
 1. **Plugins de red CNI**: Implementan la red de pods
    - Calico, Cilium, Flannel, Weave Net, etc.
 
-2. **DNS**: Proporciona el servicio DNS dentro del clúster
+2. **DNS**: Proporciona servicio DNS dentro del clúster
    - CoreDNS (predeterminado)
 
-3. **Dashboard**: Proporciona UI basada en web
+3. **Dashboard**: Proporciona una interfaz de usuario basada en web
    - Kubernetes Dashboard
 
 4. **Ingress Controller**: Administra el enrutamiento HTTP/HTTPS
@@ -581,7 +502,7 @@ Los add-ons son componentes adicionales que amplían la funcionalidad de los cl�
 5. **Metrics Server**: Recopila métricas de uso de recursos
    - Metrics Server
 
-6. **Logging y Monitoring**: Recopilación y supervisión de logs
+6. **Registro y monitorización**: Recopilación y monitorización de logs
    - Prometheus, Grafana, Elasticsearch, Fluentd, Kibana, etc.
 
 **Ejemplo de configuración de CoreDNS**:
@@ -658,27 +579,11 @@ data:
 
 La comunicación entre varios componentes se produce dentro de un clúster de Kubernetes. Comprender estas rutas de comunicación es importante para el diseño, la seguridad y la resolución de problemas del clúster.
 
-### Comunicación interna del control plane
+### Comunicación interna del plano de control
 
-```mermaid
-graph LR
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-    classDef controller fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef scheduler fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
+![Diagrama de arquitectura que muestra al scheduler, controller manager y cloud controller manager llamando a kube-apiserver, que a su vez lee y escribe el estado del clúster en etcd mediante gRPC.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-2.svg)
 
-    API[kube-apiserver] <--> ETCD[etcd]
-    SCHED[kube-scheduler] --> API
-    CTRL[kube-controller-manager] --> API
-    CCM[cloud-controller-manager] --> API
-
-    class API apiserver;
-    class ETCD etcd;
-    class CTRL,CCM controller;
-    class SCHED scheduler;
-```
-
-La comunicación entre los componentes del control plane es la siguiente:
+La comunicación entre los componentes del plano de control es la siguiente:
 
 1. **kube-apiserver y etcd**: kube-apiserver se comunica con etcd para almacenar y recuperar el estado del clúster.
    - Protocolo: gRPC
@@ -700,106 +605,67 @@ La comunicación entre los componentes del control plane es la siguiente:
    - Puerto: 6443/TCP (kube-apiserver)
    - Seguridad: autenticación basada en certificados TLS
 
-### Comunicación entre control plane y node
+### Comunicación entre el plano de control y los nodos
 
-```mermaid
-graph TD
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef kubelet fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef proxy fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
+![Diagrama de arquitectura que muestra comunicación HTTPS bidireccional entre kube-apiserver y el kubelet y kube-proxy de cada nodo.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-3.svg)
 
-    API[kube-apiserver] <--> KB[kubelet]
-    API <--> KP[kube-proxy]
+La comunicación entre el plano de control y los nodos es la siguiente:
 
-    class API apiserver;
-    class KB kubelet;
-    class KP proxy;
-```
-
-La comunicación entre el control plane y los nodes es la siguiente:
-
-1. **kube-apiserver y kubelet**: kube-apiserver se comunica con kubelet para entregar especificaciones de pod y recopilar el estado de node.
+1. **kube-apiserver y kubelet**: kube-apiserver se comunica con kubelet para entregar especificaciones de pod y recopilar el estado del nodo.
    - Protocolo: HTTPS
    - Puerto: 10250/TCP (kubelet)
    - Seguridad: autenticación basada en certificados TLS
 
-2. **kubelet y kube-apiserver**: kubelet se comunica con kube-apiserver para el registro de node, la notificación de estado de pod y la transmisión de eventos.
+2. **kubelet y kube-apiserver**: kubelet se comunica con kube-apiserver para el registro del nodo, el informe de estado de pod y la transmisión de eventos.
    - Protocolo: HTTPS
    - Puerto: 6443/TCP (kube-apiserver)
    - Seguridad: autenticación basada en certificados TLS
 
-3. **kube-proxy y kube-apiserver**: kube-proxy se comunica con kube-apiserver para recuperar información de service.
+3. **kube-proxy y kube-apiserver**: kube-proxy se comunica con kube-apiserver para recuperar información de Service.
    - Protocolo: HTTPS
    - Puerto: 6443/TCP (kube-apiserver)
    - Seguridad: autenticación basada en certificados TLS
 
-### Comunicación entre nodes
+### Comunicación entre nodos
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef cni fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
+![Diagrama de arquitectura que muestra cuatro pods, potencialmente en nodos distintos, comunicándose bidireccionalmente entre sí mediante la red CNI compartida.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-4.svg)
 
-    P1[Pod 1] <--> CNI[CNI Network]
-    P2[Pod 2] <--> CNI
-    P3[Pod 3] <--> CNI
-    P4[Pod 4] <--> CNI
+La comunicación entre nodos es la siguiente:
 
-    class P1,P2,P3,P4 pod;
-    class CNI cni;
-```
-
-La comunicación entre nodes es la siguiente:
-
-1. **Comunicación de Pod a Pod**: Los pods se comunican entre sí mediante la red proporcionada por plugins de CNI.
+1. **Comunicación Pod a Pod**: Los pods se comunican entre sí mediante la red proporcionada por plugins CNI.
    - Protocolo: depende de la aplicación (TCP, UDP, etc.)
    - Puerto: depende de la aplicación
-   - Seguridad: se puede controlar mediante network policies
+   - Seguridad: puede controlarse mediante políticas de red
 
-2. **Comunicación de Pod entre nodes**: La comunicación entre pods en distintos nodes es administrada por el plugin CNI.
+2. **Comunicación de Pod entre nodos**: La comunicación entre pods en nodos diferentes es gestionada por el plugin CNI.
    - Protocolo: depende de la aplicación (TCP, UDP, etc.)
    - Puerto: depende de la aplicación
-   - Seguridad: se puede controlar mediante network policies
+   - Seguridad: puede controlarse mediante políticas de red
 
 ### Comunicación externa
 
-```mermaid
-graph LR
-    classDef external fill:#ffcdd2,stroke:#d32f2f,stroke-width:1px;
-    classDef apiserver fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef service fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-
-    C[External Client] --> API[kube-apiserver]
-    C --> SVC[Service/Ingress]
-    SVC --> P[Pod]
-
-    class C external;
-    class API apiserver;
-    class SVC service;
-    class P pod;
-```
+![Diagrama de arquitectura que muestra un cliente externo que llega directamente a kube-apiserver para administrar el clúster y que accede al tráfico de aplicación mediante un Service o Ingress hacia un pod.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-5.svg)
 
 La comunicación con entidades externas es la siguiente:
 
 1. **Cliente y kube-apiserver**: Los usuarios y sistemas externos interactúan con el clúster mediante kube-apiserver.
    - Protocolo: HTTPS
    - Puerto: 6443/TCP (kube-apiserver)
-   - Seguridad: certificados TLS, tokens, autenticación de usuarios, etc.
+   - Seguridad: certificados TLS, tokens, autenticación de usuario, etc.
 
-2. **Tráfico externo y Services**: El tráfico externo accede a aplicaciones dentro del clúster mediante services NodePort, LoadBalancer o Ingress.
+2. **Tráfico externo y Services**: El tráfico externo accede a aplicaciones dentro del clúster mediante Services NodePort, LoadBalancer o Ingress.
    - Protocolo: HTTP, HTTPS, TCP, UDP, etc.
-   - Puerto: depende de la configuración de service
-   - Seguridad: depende de la configuración del ingress controller y service
+   - Puerto: depende de la configuración del Service
+   - Seguridad: depende de la configuración de ingress controller y Service
 
 ### Seguridad de la comunicación
 
 La seguridad de la comunicación dentro de un clúster de Kubernetes se implementa mediante los siguientes métodos:
 
-1. **Certificados TLS**: Toda la comunicación entre componentes del control plane se cifra con certificados TLS.
+1. **Certificados TLS**: Toda la comunicación entre componentes del plano de control se cifra con certificados TLS.
 2. **Autenticación y autorización**: Todas las solicitudes al servidor de API pasan por procesos de autenticación y autorización.
-3. **Network Policies**: La comunicación de Pod a Pod puede restringirse mediante network policies.
-4. **Secrets cifrados**: Los Secrets almacenados en etcd pueden cifrarse.
+3. **Políticas de red**: La comunicación de Pod a Pod puede restringirse mediante políticas de red.
+4. **Secrets cifrados**: Los Secrets almacenados en etcd se pueden cifrar.
 
 **Ejemplo de configuración de seguridad de comunicación del servidor de API**:
 ```yaml
@@ -818,98 +684,45 @@ resources:
 
 ### Configuración de clúster de alta disponibilidad
 
-Los clústeres de Kubernetes de alta disponibilidad (HA) están diseñados para eliminar puntos únicos de fallo y continuar operando sin interrupción del servicio.
+Los clústeres de Kubernetes de alta disponibilidad (HA) se diseñan para eliminar puntos únicos de fallo y continuar operando sin interrupción del servicio.
 
-### Alta disponibilidad del control plane
+### Alta disponibilidad del plano de control
 
-La alta disponibilidad del control plane se implementa mediante los siguientes métodos:
+La alta disponibilidad del plano de control se implementa mediante los siguientes métodos:
 
-1. **Varios nodes de control plane**: normalmente se implementan 3 o 5 nodes de control plane para redundancia
-2. **Clúster de etcd**: implementar un clúster compuesto por varias instancias de etcd (normalmente 3 o 5)
-3. **Load Balancer**: colocar un load balancer delante de los servidores de API para distribuir el tráfico
+1. **Varios nodos de plano de control**: Normalmente se implementan 3 o 5 nodos de plano de control para redundancia
+2. **Clúster etcd**: Se implementa un clúster compuesto por varias instancias etcd (normalmente 3 o 5)
+3. **Balanceador de carga**: Se coloca un balanceador de carga delante de los servidores de API para distribuir el tráfico
 
-**Arquitectura de control plane de alta disponibilidad**:
+**Arquitectura del plano de control de alta disponibilidad**:
 
-```mermaid
-graph TD
-    classDef loadbalancer fill:#ffecb3,stroke:#f9a825,stroke-width:2px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef component fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
+![Diagrama de arquitectura que muestra un balanceador de carga distribuyendo tráfico entre tres nodos de plano de control replicados, cada uno con su propio kube-apiserver, etcd, kube-scheduler y kube-controller-manager.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-6.svg)
 
-    LB[Load Balancer] --> CP1[Control Plane 1]
-    LB --> CP2[Control Plane 2]
-    LB --> CP3[Control Plane 3]
+**Configuración del clúster etcd**:
 
-    CP1 --> API1[kube-apiserver]
-    CP1 --> ETCD1[etcd]
-    CP1 --> SCHED1[kube-scheduler]
-    CP1 --> CTRL1[kube-controller-manager]
+![Diagrama de arquitectura que muestra tres nodos etcd formando un anillo, con cada par conectado bidireccionalmente para replicar estado mediante el protocolo de consenso Raft.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-7.svg)
 
-    CP2 --> API2[kube-apiserver]
-    CP2 --> ETCD2[etcd]
-    CP2 --> SCHED2[kube-scheduler]
-    CP2 --> CTRL2[kube-controller-manager]
+### Alta disponibilidad de nodos de trabajo
 
-    CP3 --> API3[kube-apiserver]
-    CP3 --> ETCD3[etcd]
-    CP3 --> SCHED3[kube-scheduler]
-    CP3 --> CTRL3[kube-controller-manager]
+La alta disponibilidad de los nodos de trabajo se implementa mediante los siguientes métodos:
 
-    class LB loadbalancer;
-    class CP1,CP2,CP3 controlplane;
-    class API1,API2,API3,ETCD1,ETCD2,ETCD3,SCHED1,SCHED2,SCHED3,CTRL1,CTRL2,CTRL3 component;
-```
+1. **Varios nodos de trabajo**: Distribuya cargas de trabajo entre varios nodos de trabajo
+2. **Recuperación automática de nodos**: Utilice las características de recuperación automática del proveedor de nube
+3. **Auto Scaling**: Escalado automático de nodos mediante cluster autoscaler
+4. **Varias zonas de disponibilidad**: Implemente nodos en varias zonas de disponibilidad
 
-**Configuración del clúster de etcd**:
+**Implementación distribuida de nodos de trabajo**:
 
-```mermaid
-graph LR
-    classDef etcd fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
-
-    E1[etcd Node 1] <==> E2[etcd Node 2]
-    E2 <==> E3[etcd Node 3]
-    E3 <==> E1
-
-    class E1,E2,E3 etcd;
-```
-
-### Alta disponibilidad de worker nodes
-
-La alta disponibilidad de los worker nodes se implementa mediante los siguientes métodos:
-
-1. **Varios worker nodes**: Distribuir workloads entre varios worker nodes
-2. **Recuperación automática de node**: Utilizar las funciones de recuperación automática del proveedor de nube
-3. **Auto Scaling**: Escalado automático de nodes mediante cluster autoscaler
-4. **Varias Availability Zones**: Implementar nodes en varias zonas de disponibilidad
-
-**Implementación distribuida de worker nodes**:
-
-```mermaid
-graph TD
-    classDef az fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,stroke-dasharray:5 5;
-    classDef node fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-
-    AZ1[Availability Zone A] --> WN1[Worker Node]
-    AZ1 --> WN2[Worker Node]
-
-    AZ2[Availability Zone B] --> WN3[Worker Node]
-    AZ2 --> WN4[Worker Node]
-
-    AZ3[Availability Zone C] --> WN5[Worker Node]
-    AZ3 --> WN6[Worker Node]
-
-    class AZ1,AZ2,AZ3 az;
-    class WN1,WN2,WN3,WN4,WN5,WN6 node;
-```
+![Diagrama de arquitectura que muestra nodos de trabajo distribuidos dos por zona en tres zonas de disponibilidad para aislar fallos.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-8.svg)
 
 ### Alta disponibilidad de aplicaciones
 
 La alta disponibilidad de las aplicaciones se implementa mediante los siguientes métodos:
 
-1. **ReplicaSet/Deployment**: Ejecutar varias réplicas de pod
-2. **Reglas de distribución de Pod**: Distribuir pods entre varios nodes mediante anti-afinidad de pod
-3. **PodDisruptionBudget**: Garantizar disponibilidad mínima durante interrupciones planificadas
-4. **Service y balanceo de carga**: Distribuir tráfico entre varios pods
+1. **ReplicaSet/Deployment**: Ejecute varias réplicas de pod
+2. **Reglas de distribución de Pod**: Distribuya pods entre varios nodos mediante anti-afinidad de pod
+3. **PodDisruptionBudget**: Garantice la disponibilidad mínima durante interrupciones planificadas
+4. **Service y balanceo de carga**: Distribuya el tráfico entre varios pods
 
 **Ejemplo de anti-afinidad de Pod**:
 ```yaml
@@ -954,12 +767,12 @@ spec:
 
 ### Estrategia de recuperación ante desastres
 
-Las estrategias de recuperación ante desastres para los clústeres de Kubernetes se implementan mediante los siguientes métodos:
+Las estrategias de recuperación ante desastres para clústeres de Kubernetes se implementan mediante los siguientes métodos:
 
-1. **Copia de seguridad y recuperación de etcd**: Establecer procedimientos periódicos de copia de seguridad y recuperación de datos de etcd
-2. **Implementación multirregión**: Implementar clústeres en varias regiones
-3. **Federación de clústeres**: Administrar varios clústeres en federación
-4. **Copia de seguridad continua**: Copia de seguridad continua de los datos de las aplicaciones
+1. **Copia de seguridad y recuperación de etcd**: Establezca procedimientos periódicos de copia de seguridad y recuperación de datos etcd
+2. **Implementación multirregión**: Implemente clústeres en varias regiones
+3. **Federación de clústeres**: Administre varios clústeres en federación
+4. **Copia de seguridad continua**: Copia de seguridad continua de los datos de aplicación
 
 **Ejemplo de script de copia de seguridad de etcd**:
 ```bash
@@ -996,37 +809,37 @@ systemctl start kubelet
 
 ## Redes del clúster
 
-Las redes de Kubernetes permiten la comunicación entre pods, services y el mundo exterior. El modelo de red de Kubernetes asume que cada pod tiene una dirección IP única y puede comunicarse con los demás sin NAT.
+Las redes de Kubernetes permiten la comunicación entre pods, servicios y el mundo exterior. El modelo de redes de Kubernetes asume que cada pod tiene una dirección IP única y puede comunicarse con los demás sin NAT.
 
-### Modelo de red
+### Modelo de redes
 
-El modelo de red de Kubernetes tiene los siguientes requisitos:
+El modelo de redes de Kubernetes tiene los siguientes requisitos:
 
-1. **Comunicación de Pod a Pod**: Todos los pods deben poder comunicarse con todos los demás pods sin NAT
-2. **Comunicación de node a Pod**: Los nodes deben poder comunicarse con todos los pods sin NAT
-3. **Comunicación de Pod a exterior**: Los pods deben poder comunicarse con el mundo exterior (normalmente mediante NAT)
+1. **Comunicación Pod a Pod**: Todos los pods deben poder comunicarse con todos los demás pods sin NAT
+2. **Comunicación nodo a Pod**: Los nodos deben poder comunicarse con todos los pods sin NAT
+3. **Comunicación de Pod al exterior**: Los pods deben poder comunicarse con el mundo exterior (normalmente mediante NAT)
 
 ### CNI (Container Network Interface)
 
-CNI es una interfaz estándar para implementar redes en Kubernetes. Hay varios plugins de CNI, cada uno con distintas características y rendimiento.
+CNI es una interfaz estándar para implementar redes en Kubernetes. Hay diversos plugins CNI, cada uno con características y rendimiento distintos.
 
-**Plugins de CNI principales**:
+**Principales plugins CNI**:
 
-1. **Calico**: Redes basadas en BGP, compatibilidad con network policies
-   - Características: alto rendimiento, network policies, cifrado, compatibilidad con eBPF
-   - Casos de uso: clústeres grandes, entornos centrados en seguridad
+1. **Calico**: Redes basadas en BGP, compatibilidad con políticas de red
+   - Características: alto rendimiento, políticas de red, cifrado, compatibilidad con eBPF
+   - Casos de uso: clústeres grandes, entornos centrados en la seguridad
 
 2. **Cilium**: Redes y seguridad basadas en eBPF
    - Características: políticas de seguridad L3-L7, alto rendimiento, observabilidad
-   - Casos de uso: microservices, entornos centrados en seguridad
+   - Casos de uso: microservicios, entornos centrados en la seguridad
 
 3. **Flannel**: Red overlay sencilla
-   - Características: configuración sencilla, ligera
+   - Características: configuración sencilla, ligero
    - Casos de uso: clústeres pequeños, entornos de desarrollo
 
-4. **Weave Net**: Redes de contenedores multi-host
-   - Características: cifrado, network policies, multi-cloud
-   - Casos de uso: nube híbrida, multi-cloud
+4. **Weave Net**: Redes de contenedores en varios hosts
+   - Características: cifrado, políticas de red, multinube
+   - Casos de uso: nube híbrida, multinube
 
 **Ejemplo de configuración de CNI (Calico)**:
 ```yaml
@@ -1069,13 +882,13 @@ data:
 
 ### Redes de Service
 
-Los Kubernetes Services proporcionan endpoints estables para un conjunto de pods. Los Services tienen varios tipos, incluidos ClusterIP, NodePort, LoadBalancer y ExternalName.
+Los Services de Kubernetes proporcionan endpoints estables para un conjunto de pods. Los Services tienen varios tipos, incluidos ClusterIP, NodePort, LoadBalancer y ExternalName.
 
 **Componentes de redes de Service**:
 
 1. **ClusterIP**: IP virtual accesible solo dentro del clúster
-2. **kube-proxy**: Enruta el tráfico a IP de service hacia pods
-3. **CoreDNS**: Servicio DNS para descubrimiento de service
+2. **kube-proxy**: Enruta el tráfico destinado a IP de Service hacia pods
+3. **CoreDNS**: Servicio DNS para descubrimiento de servicios
 
 **Flujo de redes de Service**:
 ```
@@ -1099,12 +912,12 @@ spec:
 
 ### Redes de Ingress
 
-Ingress administra el enrutamiento HTTP y HTTPS desde fuera del clúster hasta los services dentro del clúster. Los ingress controllers implementan recursos de ingress.
+Ingress administra el enrutamiento HTTP y HTTPS desde fuera del clúster hacia Services dentro del clúster. Los ingress controllers implementan recursos ingress.
 
-**Ingress Controllers principales**:
+**Principales Ingress Controllers**:
 1. **NGINX Ingress Controller**: Ingress controller basado en NGINX
 2. **AWS ALB Ingress Controller**: Basado en AWS Application Load Balancer
-3. **Traefik**: Router de borde cloud-native
+3. **Traefik**: Router de borde nativo de nube
 4. **HAProxy Ingress**: Ingress controller basado en HAProxy
 
 **Flujo de redes de Ingress**:
@@ -1135,11 +948,11 @@ spec:
               number: 80
 ```
 
-### Network Policies
+### Políticas de red
 
-Las network policies proporcionan una forma de controlar la comunicación entre pods. De forma predeterminada, todos los pods pueden comunicarse entre sí, pero las network policies pueden restringirla.
+Las políticas de red proporcionan una forma de controlar la comunicación entre pods. De forma predeterminada, todos los pods pueden comunicarse entre sí, pero las políticas de red pueden restringirlo.
 
-**Ejemplo de Network Policy**:
+**Ejemplo de política de red**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1172,13 +985,13 @@ spec:
 
 ### Resolución de problemas de red
 
-Herramientas y comandos comunes para resolver problemas de red de Kubernetes:
+Herramientas y comandos habituales para resolver problemas de red de Kubernetes:
 
 1. **ping, traceroute**: Pruebas básicas de conectividad de red
 2. **tcpdump**: Captura y análisis de paquetes de red
-3. **netstat, ss**: Comprobar el estado de las conexiones de red
+3. **netstat, ss**: Comprueban el estado de conexiones de red
 4. **nslookup, dig**: Pruebas de búsqueda DNS
-5. **kubectl exec**: Ejecutar comandos de red dentro de pods
+5. **kubectl exec**: Ejecuta comandos de red dentro de pods
 
 **Ejemplo de depuración de red**:
 ```bash
@@ -1197,7 +1010,7 @@ kubectl get endpoints <service-name>
 
 ## Almacenamiento del clúster
 
-El almacenamiento de Kubernetes proporciona persistencia de datos para aplicaciones en contenedores. Kubernetes ofrece varias opciones y abstracciones de almacenamiento para ayudar a las aplicaciones a utilizarlo eficazmente.
+El almacenamiento de Kubernetes proporciona persistencia de datos para aplicaciones en contenedores. Kubernetes ofrece varias opciones y abstracciones de almacenamiento para ayudar a las aplicaciones a usar el almacenamiento eficazmente.
 
 ### Arquitectura de almacenamiento
 
@@ -1205,50 +1018,32 @@ La arquitectura de almacenamiento de Kubernetes consta de los siguientes compone
 
 1. **Volumes**: Directorios que se pueden montar en contenedores dentro de pods
 2. **Persistent Volumes (PV)**: Recursos de almacenamiento en el clúster
-3. **Persistent Volume Claims (PVC)**: Solicitudes de almacenamiento de los usuarios
-4. **Storage Classes**: Definen "clases" o tipos de almacenamiento
+3. **Persistent Volume Claims (PVC)**: Solicitudes de almacenamiento de usuarios
+4. **Storage Classes**: Define "clases" o tipos de almacenamiento
 5. **CSI (Container Storage Interface)**: Interfaz estándar con sistemas de almacenamiento
 
 **Flujo de arquitectura de almacenamiento**:
 
-```mermaid
-graph LR
-    classDef pod fill:#ffecb3,stroke:#f9a825,stroke-width:1px;
-    classDef volume fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
-    classDef pvc fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef pv fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e8eaf6,stroke:#3f51b5,stroke-width:1px;
+![Diagrama de arquitectura que muestra el montaje de volumen de un pod resolviéndose mediante un PVC y un PV hasta el backend de almacenamiento real mediante un driver CSI.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-9.svg)
 
-    POD[Pod] --> VOL[Volume Mount]
-    VOL --> PVC[PVC]
-    PVC --> PV[PV]
-    PV --> STORAGE[Actual Storage<br>CSI Driver]
+### Tipos de volumen
 
-    class POD pod;
-    class VOL volume;
-    class PVC pvc;
-    class PV pv;
-    class STORAGE storage;
-```
+Kubernetes admite varios tipos de volúmenes:
 
-### Tipos de Volume
-
-Kubernetes admite varios tipos de volumes:
-
-1. **Ephemeral Volumes**:
+1. **Volúmenes efímeros**:
    - **emptyDir**: Comienza como un directorio vacío y se elimina cuando se elimina el pod
-   - **configMap**: Monta ConfigMap como un volume
-   - **secret**: Monta Secret como un volume
+   - **configMap**: Monta ConfigMap como volumen
+   - **secret**: Monta Secret como volumen
    - **downwardAPI**: Expone información de pod y contenedor como archivos
 
-2. **Persistent Volumes**:
+2. **Volúmenes persistentes**:
    - **awsElasticBlockStore**: Volúmenes AWS EBS
    - **azureDisk**: Azure Disk
    - **gcePersistentDisk**: GCE Persistent Disk
    - **nfs**: Volúmenes NFS
    - **csi**: Volúmenes mediante drivers CSI
 
-**Ejemplo de Volume**:
+**Ejemplo de volumen**:
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -1267,9 +1062,9 @@ spec:
       claimName: test-pvc
 ```
 
-### Persistent Volumes y Claims
+### Persistent Volumes y claims
 
-Los Persistent Volumes (PV) son recursos de almacenamiento en el clúster que administradores aprovisionan o se aprovisionan dinámicamente mediante storage classes. Los Persistent Volume Claims (PVC) son solicitudes de almacenamiento de usuarios.
+Los Persistent Volumes (PV) son recursos de almacenamiento del clúster aprovisionados por administradores o aprovisionados dinámicamente mediante clases de almacenamiento. Los Persistent Volume Claims (PVC) son solicitudes de almacenamiento de usuarios.
 
 **Ejemplo de Persistent Volume**:
 ```yaml
@@ -1306,7 +1101,7 @@ spec:
 
 ### Storage Classes
 
-Las storage classes describen las "clases" de almacenamiento que proporcionan los administradores. Las storage classes permiten el aprovisionamiento dinámico de PV cuando se solicitan PVC.
+Las clases de almacenamiento describen las "clases" de almacenamiento que proporcionan los administradores. Las Storage Classes permiten el aprovisionamiento dinámico de PV cuando se solicitan PVC.
 
 **Ejemplo de Storage Class**:
 ```yaml
@@ -1328,24 +1123,9 @@ CSI proporciona una interfaz estándar entre Kubernetes y los sistemas de almace
 
 **Arquitectura de CSI**:
 
-```mermaid
-graph TD
-    classDef k8s fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-    classDef csi fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef driver fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef storage fill:#e0f7fa,stroke:#0097a7,stroke-width:1px;
+![Diagrama de arquitectura que muestra Kubernetes llamando a Container Storage Interface, que delega en un driver CSI del proveedor que aprovisiona el sistema de almacenamiento subyacente.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-10.svg)
 
-    K8S[Kubernetes] --> CSI[Container Storage Interface]
-    CSI --> DRIVER[CSI Driver<br>e.g., AWS EBS CSI Driver]
-    DRIVER --> STORAGE[Storage System<br>e.g., AWS EBS]
-
-    class K8S k8s;
-    class CSI csi;
-    class DRIVER driver;
-    class STORAGE storage;
-```
-
-**Ejemplo de implementación de CSI Driver**:
+**Ejemplo de implementación de driver CSI**:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -1361,37 +1141,37 @@ volumeBindingMode: WaitForFirstConsumer
 
 ### Prácticas recomendadas de almacenamiento
 
-Prácticas recomendadas para usar almacenamiento de Kubernetes:
+Prácticas recomendadas para usar el almacenamiento de Kubernetes:
 
-1. **Elegir el tipo de almacenamiento adecuado**: Seleccionar el tipo de almacenamiento que corresponda a las características del workload
-2. **Usar aprovisionamiento dinámico**: Utilizar aprovisionamiento dinámico mediante storage classes
-3. **Elegir modos de acceso adecuados**: Seleccionar modos de acceso que correspondan a los requisitos del workload
-4. **Establecer solicitudes y límites de recursos**: Solicitar la capacidad de almacenamiento adecuada
-5. **Establecer una estrategia de copia de seguridad y recuperación**: Preparar estrategias de copia de seguridad y recuperación para datos críticos
-6. **Supervisar el almacenamiento**: Supervisar el uso y rendimiento del almacenamiento
+1. **Elija el tipo de almacenamiento adecuado**: Seleccione un tipo de almacenamiento que coincida con las características de la carga de trabajo
+2. **Use aprovisionamiento dinámico**: Utilice aprovisionamiento dinámico mediante clases de almacenamiento
+3. **Elija los modos de acceso adecuados**: Seleccione modos de acceso que coincidan con los requisitos de la carga de trabajo
+4. **Establezca solicitudes y límites de recursos**: Solicite capacidad de almacenamiento adecuada
+5. **Establezca una estrategia de copia de seguridad y recuperación**: Prepare estrategias de copia de seguridad y recuperación para datos críticos
+6. **Supervise el almacenamiento**: Supervise el uso y rendimiento del almacenamiento
 
 ## Escalabilidad del clúster
 
-La escalabilidad de un clúster de Kubernetes se refiere a la capacidad del clúster para gestionar cargas y requisitos crecientes. La escalabilidad se puede implementar mediante escalado horizontal (scale out) y vertical (scale up).
+La escalabilidad del clúster de Kubernetes se refiere a la capacidad del clúster de manejar cargas y requisitos crecientes. La escalabilidad se puede implementar mediante escalado horizontal (scale out) y vertical (scale up).
 
 ### Límites de escala del clúster
 
 Los clústeres de Kubernetes tienen los siguientes límites de escala:
 
-1. **Número de nodes**: Máximo de 5.000 nodes
-2. **Número de Pods**: Máximo de 150.000 pods por clúster
-3. **Pods por node**: Máximo de 110 pods por node (predeterminado)
-4. **Número de Services**: Máximo de 10.000 services por clúster
+1. **Número de nodos**: Máximo de 5.000 nodos
+2. **Número de pods**: Máximo de 150.000 pods por clúster
+3. **Pods por nodo**: Máximo de 110 pods por nodo (predeterminado)
+4. **Número de Services**: Máximo de 10.000 Services por clúster
 5. **Contenedores por Pod**: Máximo de 20 contenedores por pod
 
 Estos límites pueden variar según la versión de Kubernetes y la configuración del clúster.
 
 ### Escalado horizontal
 
-El escalado horizontal aumenta la capacidad del clúster agregando más nodes.
+El escalado horizontal aumenta la capacidad del clúster añadiendo más nodos.
 
-**Auto Scaling de nodes**:
-Kubernetes Cluster Autoscaler ajusta automáticamente el número de nodes según los requisitos del workload.
+**Auto Scaling de nodos**:
+Kubernetes Cluster Autoscaler ajusta automáticamente el número de nodos según los requisitos de la carga de trabajo.
 
 ```yaml
 # AWS Auto Scaling Group tags example
@@ -1428,7 +1208,7 @@ spec:
 ```
 
 **Karpenter**:
-Karpenter es una nueva herramienta de autoescalado de nodes desarrollada por AWS que proporciona aprovisionamiento de nodes más rápido y eficiente.
+Karpenter es una nueva herramienta de autoescalado de nodos desarrollada por AWS que proporciona aprovisionamiento de nodos más rápido y eficiente.
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1461,10 +1241,10 @@ spec:
 
 ### Escalado vertical
 
-El escalado vertical aumenta los recursos (CPU, memoria) de los nodes existentes.
+El escalado vertical aumenta los recursos (CPU, memoria) de los nodos existentes.
 
 **Vertical Pod Autoscaler (VPA)**:
-VPA ajusta automáticamente las solicitudes de CPU y memoria para pods.
+VPA ajusta automáticamente las solicitudes de CPU y memoria de los pods.
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -1491,7 +1271,7 @@ spec:
 
 ### Escalado de aplicaciones
 
-El escalado a nivel de aplicación se implementa ajustando el número de réplicas de pod.
+El escalado en el nivel de aplicación se implementa ajustando el número de réplicas de pod.
 
 **Horizontal Pod Autoscaler (HPA)**:
 HPA ajusta automáticamente el número de réplicas de pod según la utilización de CPU o métricas personalizadas.
@@ -1541,27 +1321,27 @@ spec:
 
 ### Prácticas recomendadas de escalabilidad
 
-Prácticas recomendadas para la escalabilidad de clústeres de Kubernetes:
+Prácticas recomendadas para la escalabilidad del clúster de Kubernetes:
 
-1. **Establecer solicitudes y límites de recursos**: Establecer solicitudes y límites de recursos adecuados para todos los pods
-2. **Estrategia de node pool**: Configurar varios node pools para diferentes características de workload
-3. **Configurar Auto Scaling**: Configurar correctamente Cluster Autoscaler, HPA y VPA
-4. **Ubicación eficiente de Pods**: Utilizar afinidad de node y afinidad/anti-afinidad de pod
-5. **Supervisión del clúster**: Supervisar continuamente el uso y rendimiento de los recursos
-6. **Pruebas de carga**: Realizar pruebas de carga periódicas para validar estrategias de escalado
+1. **Establezca solicitudes y límites de recursos**: Establezca solicitudes y límites de recursos adecuados para todos los pods
+2. **Estrategia de node pool**: Configure varios node pools para diferentes características de carga de trabajo
+3. **Configure Auto Scaling**: Configure correctamente Cluster Autoscaler, HPA y VPA
+4. **Ubicación eficiente de pods**: Utilice afinidad de nodo y afinidad/anti-afinidad de pod
+5. **Monitorización del clúster**: Supervise continuamente el uso de recursos y el rendimiento
+6. **Pruebas de carga**: Realice pruebas de carga periódicas para validar las estrategias de escalado
 
 ## Seguridad del clúster
 
-La seguridad de clústeres de Kubernetes debe implementarse en varias capas. Esto incluye autenticación, autorización, network policies, seguridad de pods y más.
+La seguridad del clúster de Kubernetes debe implementarse en varias capas. Incluye autenticación, autorización, políticas de red, seguridad de pods y más.
 
 ### Autenticación
 
 Métodos para autenticar el acceso al servidor de API de Kubernetes:
 
 1. **Certificados X.509**: Autenticación mediante certificados de cliente TLS
-2. **Tokens de Service Account**: Tokens para acceso al servidor de API dentro de pods
-3. **OpenID Connect (OIDC)**: Autenticación mediante proveedores de identidad externos
-4. **Autenticación de token de Webhook**: Autenticación mediante servicios de autenticación externos
+2. **Tokens de ServiceAccount**: Tokens para el acceso al servidor de API dentro de pods
+3. **OpenID Connect (OIDC)**: Autenticación mediante proveedores externos de identidad
+4. **Autenticación de token Webhook**: Autenticación mediante servicios externos de autenticación
 5. **Proxy de autenticación**: Autenticación mediante proxies de autenticación
 
 **Ejemplo de kubeconfig**:
@@ -1592,7 +1372,7 @@ Métodos para controlar las acciones de usuarios autenticados:
 
 1. **RBAC (Role-Based Access Control)**: Control de acceso basado en roles
 2. **ABAC (Attribute-Based Access Control)**: Control de acceso basado en atributos
-3. **Node Authorization**: Autorización especial para nodes
+3. **Node Authorization**: Autorización especial para nodos
 4. **Webhook Authorization**: Autorización mediante servicios externos
 
 **Ejemplo de RBAC**:
@@ -1628,11 +1408,11 @@ roleRef:
 
 Métodos para proteger el tráfico de red dentro del clúster:
 
-1. **Network Policies**: Controlar la comunicación de Pod a Pod
-2. **Comunicación cifrada**: Cifrado de comunicación mediante TLS
+1. **Políticas de red**: Controlan la comunicación de Pod a Pod
+2. **Comunicación cifrada**: Cifrado de comunicaciones mediante TLS
 3. **Service Mesh**: Seguridad de red avanzada mediante Istio, Linkerd, etc.
 
-**Ejemplo de Network Policy**:
+**Ejemplo de política de red**:
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -1647,9 +1427,9 @@ spec:
 
 ### Seguridad de Pod
 
-Implementación de seguridad en el nivel de pod:
+Implementación de seguridad a nivel de pod:
 
-1. **Pod Security Context**: Configuración de seguridad en el nivel de pod y contenedor
+1. **Pod Security Context**: Configuración de seguridad a nivel de pod y contenedor
 2. **Pod Security Standards**: Define requisitos de seguridad de pod
 3. **Perfiles seccomp**: Restricciones de llamadas al sistema
 4. **AppArmor/SELinux**: Control de acceso obligatorio
@@ -1679,9 +1459,9 @@ spec:
 
 Métodos para administrar de forma segura información confidencial:
 
-1. **Kubernetes Secrets**: Usar recursos Secret básicos
-2. **etcd cifrado**: Cifrar Secrets almacenados en etcd
-3. **Administración externa de Secrets**: Utilizar HashiCorp Vault, AWS Secrets Manager, etc.
+1. **Kubernetes Secrets**: Use recursos Secret básicos
+2. **etcd cifrado**: Cifre los Secrets almacenados en etcd
+3. **Administración externa de Secrets**: Utilice HashiCorp Vault, AWS Secrets Manager, etc.
 
 **Ejemplo de configuración de etcd cifrado**:
 ```yaml
@@ -1700,52 +1480,63 @@ resources:
 
 ### Prácticas recomendadas de seguridad
 
-Prácticas recomendadas para la seguridad de clústeres de Kubernetes:
+Prácticas recomendadas para la seguridad del clúster de Kubernetes:
 
-1. **Principio de mínimo privilegio**: Conceder solo los privilegios mínimos necesarios
-2. **Actualizaciones periódicas**: Actualizar periódicamente el clúster y los componentes
-3. **Aislamiento de red**: Restringir la comunicación de Pod a Pod mediante network policies
-4. **Seguridad de imágenes**: Usar solo imágenes de confianza e implementar análisis de vulnerabilidades
-5. **Audit Logging**: Habilitar logs de auditoría para la actividad del clúster
-6. **Security Benchmarks**: Cumplir estándares de seguridad como los benchmarks CIS
+1. **Principio de mínimo privilegio**: Conceda solo los privilegios mínimos necesarios
+2. **Actualizaciones periódicas**: Actualice regularmente el clúster y sus componentes
+3. **Aislamiento de red**: Restrinja la comunicación de Pod a Pod mediante políticas de red
+4. **Seguridad de imágenes**: Use solo imágenes de confianza e implemente análisis de vulnerabilidades
+5. **Registro de auditoría**: Habilite logs de auditoría para la actividad del clúster
+6. **Benchmarks de seguridad**: Cumpla estándares de seguridad como los benchmarks CIS
 
 ## Actualizaciones del clúster
 
-Las actualizaciones de clústeres de Kubernetes son necesarias para aplicar nuevas funcionalidades, parches de seguridad y correcciones de errores. Las actualizaciones se deben planificar y ejecutar cuidadosamente.
+Las actualizaciones del clúster de Kubernetes son necesarias para aplicar nuevas características, parches de seguridad y correcciones de errores. Las actualizaciones deben planificarse y ejecutarse cuidadosamente.
 
-### Actualización de julio de 2026: Kubernetes v1.37 en beta
+### Actualización de julio de 2026: Kubernetes v1.37 en Beta
 
-v1.37.0-beta.0 se publicó el 20 de julio de 2026, llevando la siguiente versión menor, v1.37, a la fase final de su ciclo de lanzamiento. Code Freeze entró en vigor según lo previsto el 22-23 de julio de 2026, y la versión final v1.37.0 está prevista para el 26 de agosto de 2026. Consulte la [información de lanzamiento de v1.37](https://www.kubernetes.dev/resources/release/) para ver el calendario completo.
+v1.37.0-beta.0 se publicó el 20 de julio de 2026, llevando la siguiente versión minor, v1.37, a la fase final de su ciclo de lanzamiento. Code Freeze entró en vigor según lo previsto el 22 y 23 de julio de 2026, y el lanzamiento final de v1.37.0 está previsto para el 26 de agosto de 2026. Consulte la [información de lanzamiento de v1.37](https://www.kubernetes.dev/resources/release/) para conocer el calendario completo.
 
-En la misma semana (22-23 de julio de 2026), se publicaron patch releases para todas las líneas mantenidas: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3), [v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7) y [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10). Como es habitual, se recomienda aplicar el parche más reciente para su versión menor.
+Esa misma semana (22 y 23 de julio de 2026), se publicaron releases de parches para todas las líneas mantenidas: [v1.36.3](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3), [v1.35.7](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7) y [v1.34.10](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10). Como de costumbre, se recomienda aplicar el parche más reciente para su versión minor.
 
 ### Actualización de agosto de 2026: adelanto de v1.37
 
-El 31 de julio de 2026, el equipo de lanzamiento publicó el [adelanto de Kubernetes v1.37](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/), que describe las deprecaciones, eliminaciones y cambios de funcionalidades planificados antes de la versión final v1.37.0, aún prevista para el 26 de agosto de 2026. Docs Freeze entró en vigor el 5-6 de agosto de 2026. Mientras tanto, el primer tag del siguiente ciclo, v1.38.0-alpha.0, se creó el 6 de agosto de 2026.
+El 31 de julio de 2026, el equipo de lanzamiento publicó el [adelanto de Kubernetes v1.37](https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/), que describe deprecaciones, eliminaciones y cambios de características previstos antes del lanzamiento final de v1.37.0, aún programado para el 26 de agosto de 2026. Docs Freeze entró en vigor el 5 y 6 de agosto de 2026. Mientras tanto, la primera etiqueta del ciclo siguiente, v1.38.0-alpha.0, se creó el 6 de agosto de 2026.
 
-### Actualización de agosto de 2026: patch releases y v1.37.0-rc.1
+### Actualización de agosto de 2026: releases de parches y v1.37.0-rc.1
 
-El 20 de agosto de 2026, se publicaron patch releases para todas las líneas mantenidas: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4), [v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8) y [v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11). Como es habitual, se recomienda aplicar el parche más reciente para su versión menor.
+El 20 de agosto de 2026, se publicaron releases de parches para todas las líneas mantenidas: [v1.36.4](https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4), [v1.35.8](https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8) y [v1.34.11](https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11). Como de costumbre, se recomienda aplicar el parche más reciente para su versión minor.
 
-Ese mismo día, también se etiquetó el segundo release candidate de v1.37, [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1) (rc.0 se creó el 6 de agosto), manteniendo la versión final v1.37.0 prevista para el 26 de agosto de 2026.
+Ese mismo día también se etiquetó el segundo candidato de lanzamiento para v1.37, [v1.37.0-rc.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1) (rc.0 se creó el 6 de agosto), lo que mantiene el lanzamiento final de v1.37.0 encaminado para el 26 de agosto de 2026.
+
+### Actualización de agosto de 2026: lanzamiento de Kubernetes v1.37 "Garhwal"
+
+[Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) se lanzó según lo previsto el 26 de agosto de 2026. El lanzamiento consta de 67 mejoras: 16 pasaron a Stable, 23 pasaron a Beta y el resto entró como Alpha. Aspectos destacados:
+
+- **Los certificados de Pod y ClusterTrustBundles pasan a Stable**: la característica PodCertificate, que emite y rota automáticamente certificados X.509 para cargas de trabajo como alternativa a tokens de ServiceAccount, y el recurso ClusterTrustBundle para distribuir anclajes de confianza ya son características estándar ([publicación detallada](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
+- **Metrics API (metrics.k8s.io) llega a GA**: la API de métricas de recursos utilizada por `kubectl top` y HPA ha pasado a estable ([publicación detallada](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
+- También **Stable**: varias características de DRA (Dynamic Resource Allocation), inicialización resiliente de watchcache y más / **Beta**: HPA scale-to-zero, configuración de control de admisión basada en manifests y más / **Alpha**: checkpoint y restauración a nivel de pod y más
+- **Deprecaciones**: kube-dns, el modo `ipvs` de kube-proxy y `kubectl run --filename/-f` están obsoletos, y los Pods estáticos ya no pueden referenciar Secrets ni ConfigMaps. También sigue avanzando la eliminación de compatibilidad con cgroup v1.
+
+Antes de actualizar, asegúrese de revisar las deprecaciones y eliminaciones en las [notas de lanzamiento oficiales](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md).
 
 ### Estrategias de actualización
 
 Estrategias para actualizar clústeres de Kubernetes:
 
-1. **Actualización Blue/Green**: Crear un clúster con la nueva versión por separado y migrar workloads
-2. **Actualización in-place**: Actualizar directamente el clúster existente
-3. **Actualización canary**: Actualizar primero solo algunos nodes para validación
+1. **Actualización Blue/Green**: Cree un clúster de nueva versión por separado y migre las cargas de trabajo
+2. **Actualización in-place**: Actualice directamente el clúster existente
+3. **Actualización canary**: Actualice primero solo algunos nodos para validación
 
 ### Orden de actualización
 
-Orden típico para actualizaciones de clústeres de Kubernetes:
+Orden habitual para actualizar clústeres de Kubernetes:
 
-1. **Actualización del control plane**: kube-apiserver, kube-controller-manager, kube-scheduler, etcd
+1. **Actualización del plano de control**: kube-apiserver, kube-controller-manager, kube-scheduler, etcd
 2. **Actualización de DNS y CNI**: CoreDNS, plugins CNI y otros add-ons principales
-3. **Actualización de worker nodes**: Actualización secuencial de worker nodes
+3. **Actualización de nodos de trabajo**: Actualización secuencial de nodos de trabajo
 
-**Ejemplo de actualización de kubeadm**:
+**Ejemplo de actualización con kubeadm**:
 ```bash
 # Control plane upgrade
 kubeadm upgrade plan
@@ -1764,100 +1555,59 @@ kubectl uncordon <node-name>
 
 Consideraciones al actualizar clústeres de Kubernetes:
 
-1. **Cambios de API**: Comprobar los cambios de API en las versiones nuevas
-2. **Feature Gates**: Comprobar nuevos feature gates y cambios de valores predeterminados
-3. **Dependencias**: Comprobar la compatibilidad de componentes dependientes como CNI y CSI
-4. **Tiempo de inactividad**: Planificar el tiempo de inactividad esperado durante actualizaciones
-5. **Plan de rollback**: Establecer un plan de rollback en caso de problemas
+1. **Cambios de API**: Compruebe los cambios de API en las nuevas versiones
+2. **Feature Gates**: Compruebe nuevos feature gates y cambios en valores predeterminados
+3. **Dependencias**: Compruebe la compatibilidad de componentes dependientes como CNI y CSI
+4. **Tiempo de inactividad**: Planifique el tiempo de inactividad previsto durante las actualizaciones
+5. **Plan de rollback**: Establezca un plan de rollback en caso de problemas
 
 ### Prácticas recomendadas de actualización
 
-Prácticas recomendadas para actualizaciones de clústeres de Kubernetes:
+Prácticas recomendadas para actualizar clústeres de Kubernetes:
 
-1. **Probar primero en un entorno de prueba**: Validar en un entorno de prueba antes de actualizar producción
-2. **Actualización gradual**: Actualizar una versión menor a la vez
-3. **Copia de seguridad**: Realizar copia de seguridad de los datos de etcd antes de la actualización
-4. **Documentación**: Documentar procedimientos y resultados de actualización
-5. **Supervisión**: Supervisar el estado del clúster durante y después de la actualización
-6. **Ventana de actualización**: Realizar actualizaciones durante periodos de poco tráfico
+1. **Pruebe primero en el entorno de prueba**: Valide en un entorno de prueba antes de actualizar producción
+2. **Actualización gradual**: Actualice una versión minor a la vez
+3. **Copia de seguridad**: Realice una copia de seguridad de los datos etcd antes de actualizar
+4. **Documentación**: Documente los procedimientos y resultados de actualización
+5. **Monitorización**: Supervise el estado del clúster durante y después de la actualización
+6. **Ventana de actualización**: Realice actualizaciones durante períodos de poco tráfico
 
 ## Arquitectura de clúster de Amazon EKS
 
-Amazon EKS (Elastic Kubernetes Service) es un servicio administrado de Kubernetes proporcionado por AWS. EKS ofrece todas las funcionalidades básicas de Kubernetes a la vez que añade integración con los servicios de AWS y comodidad de administración.
+Amazon EKS (Elastic Kubernetes Service) es un servicio de Kubernetes administrado proporcionado por AWS. EKS ofrece todas las características básicas de Kubernetes y añade integración con servicios de AWS y facilidad de administración.
 
 ### Descripción general de la arquitectura de EKS
 
 Los clústeres de EKS constan de los siguientes componentes:
 
-1. **EKS Control Plane**: Control plane de Kubernetes administrado por AWS
-2. **EKS Nodes**: Worker nodes administrados por usuarios (instancias EC2)
-3. **EKS Managed Node Groups**: Node groups administrados por AWS
-4. **EKS Fargate Profiles**: Entorno de ejecución de contenedores serverless
-5. **VPC y Subnets**: VPC y subnets para las redes del clúster
+1. **Plano de control de EKS**: Plano de control de Kubernetes administrado por AWS
+2. **Nodos de EKS**: Nodos de trabajo administrados por usuarios (instancias EC2)
+3. **Grupos de nodos administrados de EKS**: Grupos de nodos administrados por AWS
+4. **Perfiles EKS Fargate**: Entorno de ejecución de contenedores serverless
+5. **VPC y subnets**: VPC y subnets para las redes del clúster
 
 **Diagrama de arquitectura de EKS**:
 
-```mermaid
-graph TD
-    classDef aws fill:#e8f5e9,stroke:#2e7d32,stroke-width:1px;
-    classDef eks fill:#fce4ec,stroke:#c2185b,stroke-width:1px;
-    classDef controlplane fill:#bbdefb,stroke:#1976d2,stroke-width:2px;
-    classDef nodes fill:#c8e6c9,stroke:#388e3c,stroke-width:1px;
-    classDef services fill:#d1c4e9,stroke:#673ab7,stroke-width:1px;
-    classDef network fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px;
+![Diagrama de arquitectura que muestra AWS Cloud alojando un plano de control de EKS administrado, nodos de trabajo operados por el cliente y los servicios de AWS y redes VPC de soporte de los que depende el clúster.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-11.svg)
 
-    AWS[AWS Cloud] --> CP[EKS Control Plane<br>AWS Managed]
-    AWS --> WN[Worker Nodes]
-    AWS --> AWSS[AWS Services]
-    AWS --> VPC[VPC & Networking]
+### Plano de control de EKS
 
-    CP --> API[kube-apiserver]
-    CP --> ETCD[etcd]
-    CP --> SCHED[kube-scheduler]
-    CP --> CTRL[kube-controller-manager]
+El plano de control de EKS es administrado por AWS y ofrece alta disponibilidad en varias zonas de disponibilidad.
 
-    WN --> NG1[Node Group 1<br>EC2 instances]
-    WN --> NG2[Node Group 2<br>EC2 instances]
-    WN --> FG[Fargate Profile<br>Serverless]
-
-    AWSS --> IAM[IAM]
-    AWSS --> ECR[ECR]
-    AWSS --> ELB[ELB/ALB/NLB]
-    AWSS --> EBS[EBS/EFS/FSx]
-    AWSS --> CW[CloudWatch]
-
-    VPC --> VPCM[VPC]
-    VPC --> SN[Subnets]
-    VPC --> SG[Security Groups]
-    VPC --> RT[Route Tables]
-    VPC --> CNI[VPC CNI]
-
-    class AWS aws;
-    class CP controlplane;
-    class WN nodes;
-    class AWSS,IAM,ECR,ELB,EBS,CW services;
-    class VPC,VPCM,SN,SG,RT,CNI network;
-    class API,ETCD,SCHED,CTRL,NG1,NG2,FG eks;
-```
-
-### EKS Control Plane
-
-El control plane de EKS es administrado por AWS y proporciona alta disponibilidad en varias zonas de disponibilidad.
-
-**Características principales**:
-1. **Servicio administrado**: AWS administra el mantenimiento y las actualizaciones del control plane
+**Características clave**:
+1. **Servicio administrado**: AWS administra el mantenimiento y las actualizaciones del plano de control
 2. **Alta disponibilidad**: Implementado en varias zonas de disponibilidad
 3. **Auto Scaling**: Escala automáticamente según la carga
-4. **Seguridad**: Integrado con los servicios de seguridad de AWS
+4. **Seguridad**: Integrado con servicios de seguridad de AWS
 
-### Tipos de node de EKS
+### Tipos de nodo de EKS
 
-EKS admite varios tipos de nodes:
+EKS admite varios tipos de nodos:
 
-1. **Self-Managed Nodes**: Los usuarios administran directamente las instancias EC2
-2. **Managed Node Groups**: AWS administra el ciclo de vida de node
+1. **Nodos autoadministrados**: Los usuarios administran directamente las instancias EC2
+2. **Grupos de nodos administrados**: AWS administra el ciclo de vida de los nodos
 3. **Fargate**: Entorno de ejecución de contenedores serverless
-4. **Bottlerocket Nodes**: SO optimizado para workloads de contenedores
+4. **Nodos Bottlerocket**: SO optimizado para cargas de trabajo de contenedores
 
 **Ejemplo de Managed Node Group**:
 ```yaml
@@ -1889,8 +1639,8 @@ managedNodeGroups:
 Las redes de EKS se basan en Amazon VPC e incluyen los siguientes componentes:
 
 1. **Plugin VPC CNI**: Integración con redes de AWS VPC
-2. **Security Groups**: Seguridad de red en el nivel de node y pod
-3. **Integración de Load Balancer**: Integración con ELB, ALB, NLB
+2. **Security Groups**: Seguridad de red a nivel de nodo y pod
+3. **Integración de Load Balancer**: Integración con ELB, ALB y NLB
 4. **VPC Endpoints**: Comunicación privada con servicios de AWS
 
 **Ejemplo de configuración de VPC CNI**:
@@ -1934,12 +1684,12 @@ volumeBindingMode: WaitForFirstConsumer
 EKS se integra con servicios de seguridad de AWS para proporcionar una seguridad sólida:
 
 1. **Integración de IAM**: Integración de AWS IAM y Kubernetes RBAC
-2. **Seguridad de VPC**: Security groups de VPC y ACL de red
+2. **Seguridad de VPC**: VPC security groups y ACL de red
 3. **AWS KMS**: Integración de KMS para cifrado de Secrets
 4. **AWS WAF**: Integración de firewall de aplicaciones web
-5. **AWS Shield**: Protección contra DDoS
+5. **AWS Shield**: Protección DDoS
 
-**Ejemplo de IAM Role Service Account**:
+**Ejemplo de ServiceAccount con IAM Role**:
 ```yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -1950,14 +1700,14 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-reader-role
 ```
 
-### Supervisión y logging de EKS
+### Monitorización y registro de EKS
 
-EKS se integra con servicios de supervisión y logging de AWS:
+EKS se integra con servicios de monitorización y registro de AWS:
 
-1. **CloudWatch Container Insights**: Supervisión de contenedores
+1. **CloudWatch Container Insights**: Monitorización de contenedores
 2. **CloudWatch Logs**: Recopilación y análisis de logs
 3. **X-Ray**: Trazado distribuido
-4. **Prometheus y Grafana**: Integración de herramientas de supervisión de código abierto
+4. **Prometheus y Grafana**: Integración con herramientas de monitorización de código abierto
 
 **Ejemplo de CloudWatch Container Insights**:
 ```yaml
@@ -1986,17 +1736,17 @@ spec:
         # ... additional configuration
 ```
 
-### Optimización de costos de EKS
+### Optimización de costes de EKS
 
-Métodos para optimizar los costos de clústeres de EKS:
+Métodos para optimizar los costes del clúster de EKS:
 
-1. **Spot Instances**: Utilizar instancias Spot rentables
-2. **Fargate**: Reducir costos de recursos inactivos con ejecución de contenedores serverless
+1. **Spot Instances**: Utilice instancias Spot rentables
+2. **Fargate**: Reduzca los costes de recursos inactivos con ejecución de contenedores serverless
 3. **Auto Scaling**: Optimización de recursos mediante cluster autoscaler
-4. **Graviton Processors**: Utilizar instancias Graviton basadas en ARM
-5. **Optimización de solicitudes de recursos**: Establecer solicitudes y límites de recursos adecuados
+4. **Procesadores Graviton**: Utilice instancias Graviton basadas en ARM
+5. **Optimización de solicitudes de recursos**: Establezca solicitudes y límites de recursos adecuados
 
-**Ejemplo de Node Group de Spot Instance**:
+**Ejemplo de grupo de nodos de Spot Instance**:
 ```yaml
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
@@ -2014,31 +1764,31 @@ managedNodeGroups:
 
 ## Más información
 
-Para profundizar su comprensión de la arquitectura de clúster explicada en este documento, consulte los siguientes temas:
+Para profundizar en su comprensión de la arquitectura de clúster tratada en este documento, consulte los siguientes temas:
 
 - [Introducción a Kubernetes](../basics/04-kubernetes-introduction.md) - Conceptos básicos e historia de Kubernetes
-- [Pods y workloads](./02-pods-and-workloads.md) - Administración de workloads que se ejecutan en el clúster
-- [Services y redes](./03-services-networking.md) - Configuración de red dentro del clúster
-- [Scheduling, preemption y eviction](./08-scheduling-preemption-eviction.md) - Cómo se ubican los pods en los nodes
-- [Administración de clústeres](./09-cluster-administration.md) - Operación y administración de clústeres
+- [Pods y cargas de trabajo](./02-pods-and-workloads.md) - Administración de cargas de trabajo que se ejecutan en el clúster
+- [Services y redes](./03-services-networking.md) - Configuración de redes dentro del clúster
+- [Scheduling, preemption y eviction](./08-scheduling-preemption-eviction.md) - Cómo se colocan los pods en nodos
+- [Administración de clústeres](./09-cluster-administration.md) - Operación y administración del clúster
 - [Introducción a EKS](../eks/01-eks-introduction.md) - Descripción general del servicio Amazon EKS
-- [Creación de clústeres EKS](../eks/02-eks-cluster-creation-part1.md) - Cómo crear clústeres EKS
+- [Creación de clúster EKS](../eks/02-eks-cluster-creation-part1.md) - Cómo crear clústeres EKS
 
 ### Aprendizaje práctico y avanzado
 
-- [Tutoriales oficiales de Kubernetes](https://kubernetes.io/docs/tutorials/) - Aprendizaje mediante práctica directa
-- [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - Construir manualmente un clúster de Kubernetes
-- [Redes de Cilium](../networking/cilium/01-introduction.md) - Funcionalidades avanzadas de red y seguridad
+- [Tutoriales oficiales de Kubernetes](https://kubernetes.io/docs/tutorials/) - Aprendizaje mediante práctica
+- [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way) - Creación manual de un clúster de Kubernetes
+- [Redes de Cilium](../networking/cilium/01-introduction.md) - Características avanzadas de redes y seguridad
 
 ## Conclusión
 
-En este documento, hemos examinado la arquitectura de los clústeres de Kubernetes, los componentes principales y cómo funcionan juntos. También cubrimos aspectos importantes como las redes, el almacenamiento, la escalabilidad, la seguridad y las actualizaciones del clúster, así como la arquitectura de los clústeres de Amazon EKS.
+En este documento, hemos examinado la arquitectura de los clústeres de Kubernetes, los componentes principales y cómo trabajan juntos. También cubrimos aspectos importantes como las redes, el almacenamiento, la escalabilidad, la seguridad y las actualizaciones del clúster, así como la arquitectura de clústeres Amazon EKS.
 
-Comprender la arquitectura de clúster de Kubernetes es la base para el diseño, la implementación y la operación eficaces de clústeres. Con este conocimiento, puede crear entornos de Kubernetes estables, escalables y con mayor seguridad.
+Comprender la arquitectura de clúster de Kubernetes es la base para diseñar, implementar y operar clústeres de manera eficaz. Con este conocimiento, puede crear entornos de Kubernetes estables, escalables y con mayor seguridad.
 
 ## Cuestionario
 
-Para probar lo que aprendió en este capítulo, pruebe el [Cuestionario de arquitectura de clúster](../quizzes/core/01-cluster-architecture-quiz.md).
+Para comprobar lo que aprendió en este capítulo, pruebe el [Cuestionario de arquitectura de clúster](../quizzes/core/01-cluster-architecture-quiz.md).
 
 ## Referencias
 
