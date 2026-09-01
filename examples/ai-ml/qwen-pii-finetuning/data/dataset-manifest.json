@@ -1,0 +1,63 @@
+{
+  "counts": {
+    "test": 400,
+    "train": 1600,
+    "validation": 200
+  },
+  "entity_types": {
+    "test": {
+      "ACCOUNT": 133,
+      "ADDRESS": 199,
+      "CARD": 133,
+      "DOB": 133,
+      "EMAIL": 199,
+      "PERSON": 333,
+      "PHONE": 199,
+      "REL": 133,
+      "RRN": 106
+    },
+    "train": {
+      "ACCOUNT": 534,
+      "ADDRESS": 800,
+      "CARD": 533,
+      "DOB": 534,
+      "EMAIL": 801,
+      "PERSON": 1334,
+      "PHONE": 801,
+      "REL": 534,
+      "RRN": 427
+    },
+    "validation": {
+      "ACCOUNT": 66,
+      "ADDRESS": 100,
+      "CARD": 67,
+      "DOB": 66,
+      "EMAIL": 99,
+      "PERSON": 166,
+      "PHONE": 99,
+      "REL": 66,
+      "RRN": 54
+    }
+  },
+  "generator_version": "1.0.0",
+  "languages": {
+    "test": {
+      "en": 80,
+      "ko": 320
+    },
+    "train": {
+      "en": 320,
+      "ko": 1280
+    },
+    "validation": {
+      "en": 40,
+      "ko": 160
+    }
+  },
+  "seed": 42,
+  "sha256": {
+    "test": "6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21",
+    "train": "b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a",
+    "validation": "25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820"
+  }
+}
