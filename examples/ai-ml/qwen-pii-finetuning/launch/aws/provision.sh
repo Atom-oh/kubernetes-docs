@@ -190,17 +190,17 @@ for _attempt in $(seq 1 40); do
     --arn "$MLFLOW_APP_ARN" \
     --query Status \
     --output text)
-  if [[ "$APP_STATUS" == "ACTIVE" ]]; then
+  if [[ "$APP_STATUS" == "Created" || "$APP_STATUS" == "Updated" ]]; then
     break
   fi
-  if [[ "$APP_STATUS" == "FAILED" ]]; then
+  if [[ "$APP_STATUS" == "CreateFailed" || "$APP_STATUS" == "UpdateFailed" || "$APP_STATUS" == "DeleteFailed" ]]; then
     printf 'MLflow App creation failed.\n' >&2
     exit 1
   fi
   sleep 15
 done
-if [[ "${APP_STATUS:-}" != "ACTIVE" ]]; then
-  printf 'Timed out waiting for MLflow App ACTIVE status.\n' >&2
+if [[ "${APP_STATUS:-}" != "Created" && "${APP_STATUS:-}" != "Updated" ]]; then
+  printf 'Timed out waiting for MLflow App ready status.\n' >&2
   exit 1
 fi
 

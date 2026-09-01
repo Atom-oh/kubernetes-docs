@@ -27,20 +27,33 @@ if [[ ! "$EXPERIMENT_ID" =~ ^qwen-pii-[0-9A-Za-z-]+$ ]]; then
 fi
 
 if [[ -n "$MLFLOW_APP_ARN" ]]; then
-  if aws sagemaker describe-mlflow-app \
+  if APP_STATUS=$(aws sagemaker describe-mlflow-app \
     --region "$REGION" \
-    --arn "$MLFLOW_APP_ARN" >/dev/null 2>&1; then
-    aws sagemaker delete-mlflow-app \
-      --region "$REGION" \
-      --arn "$MLFLOW_APP_ARN"
-    for _attempt in $(seq 1 80); do
-      if ! aws sagemaker describe-mlflow-app \
+    --arn "$MLFLOW_APP_ARN" \
+    --query Status \
+    --output text 2>/dev/null); then
+    if [[ "$APP_STATUS" != "Deleted" ]]; then
+      aws sagemaker delete-mlflow-app \
         --region "$REGION" \
-        --arn "$MLFLOW_APP_ARN" >/dev/null 2>&1; then
-        break
-      fi
-      sleep 15
-    done
+        --arn "$MLFLOW_APP_ARN"
+      for _attempt in $(seq 1 80); do
+        if ! APP_STATUS=$(aws sagemaker describe-mlflow-app \
+          --region "$REGION" \
+          --arn "$MLFLOW_APP_ARN" \
+          --query Status \
+          --output text 2>/dev/null); then
+          break
+        fi
+        if [[ "$APP_STATUS" == "Deleted" ]]; then
+          break
+        fi
+        if [[ "$APP_STATUS" == "DeleteFailed" ]]; then
+          printf 'MLflow App deletion failed for %s.\n' "$MLFLOW_APP_ARN" >&2
+          exit 1
+        fi
+        sleep 15
+      done
+    fi
   fi
 fi
 

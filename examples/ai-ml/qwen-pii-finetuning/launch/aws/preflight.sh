@@ -60,7 +60,7 @@ aws ecr describe-images \
 APP_COUNT=$(aws sagemaker list-mlflow-apps \
   --region "$REGION" \
   --output json | jq \
-  '[.Summaries[]? | select((.Name | startswith("qwen-pii-")) and (.Status == "ACTIVE" or .Status == "CREATING"))] | length')
+  '[.Summaries[]? | select((.Name | startswith("qwen-pii-")) and .Status != "Deleted")] | length')
 if [[ "$APP_COUNT" != "0" ]]; then
   printf 'Found %s active qwen-pii MLflow App resources; clean them before continuing.\n' "$APP_COUNT" >&2
   exit 1

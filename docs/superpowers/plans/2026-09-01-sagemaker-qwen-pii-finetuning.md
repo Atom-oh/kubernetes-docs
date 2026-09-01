@@ -1034,7 +1034,7 @@ bash examples/ai-ml/qwen-pii-finetuning/launch/aws/provision.sh
 Expected:
 
 - bucket is encrypted and private;
-- MLflow App reaches `ACTIVE`;
+- MLflow App reaches `Created`;
 - Unified Studio project reaches `ACTIVE`;
 - inventory contains every resource created.
 

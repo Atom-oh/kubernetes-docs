@@ -23,9 +23,11 @@ UNIFIED_DOMAIN_ID=$(jq -r '.unified_domain_id // empty' "$INVENTORY")
 PROJECT_ID=$(jq -r '.project_id // empty' "$INVENTORY")
 REMAINING=()
 
-if [[ -n "$MLFLOW_APP_ARN" ]] && aws sagemaker describe-mlflow-app \
-  --region "$REGION" --arn "$MLFLOW_APP_ARN" >/dev/null 2>&1; then
-  REMAINING+=("mlflow-app:$MLFLOW_APP_ARN")
+if [[ -n "$MLFLOW_APP_ARN" ]] && APP_STATUS=$(aws sagemaker describe-mlflow-app \
+  --region "$REGION" --arn "$MLFLOW_APP_ARN" --query Status --output text 2>/dev/null); then
+  if [[ "$APP_STATUS" != "Deleted" ]]; then
+    REMAINING+=("mlflow-app:$MLFLOW_APP_ARN")
+  fi
 fi
 if [[ -n "$PROJECT_ID" ]] && aws datazone get-project \
   --region "$REGION" \
@@ -67,6 +69,9 @@ done < <(aws ec2 describe-instances \
 
 while IFS= read -r resource_arn; do
   [[ -z "$resource_arn" ]] && continue
+  if [[ "$resource_arn" == "$MLFLOW_APP_ARN" && "${APP_STATUS:-}" == "Deleted" ]]; then
+    continue
+  fi
   REMAINING+=("tagged:$resource_arn")
 done < <(aws resourcegroupstaggingapi get-resources \
   --region "$REGION" \
