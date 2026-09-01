@@ -920,13 +920,14 @@ The job must:
 The script must:
 
 1. create the cluster;
-2. install NVIDIA device plugin chart version `0.17.4`;
+2. install NVIDIA device plugin chart version `0.20.0`;
 3. wait until a GPU appears in node allocatable resources;
 4. run `nvidia-smi` in a short validation pod;
 5. deploy MLflow and wait Ready;
 6. render and start the smoke or full Job;
 7. wait for completion with the runtime deadline;
-8. port-forward MLflow and export aggregate runs/artifacts;
+8. run the aggregate exporter inside the MLflow Pod and copy out its sanitized
+   JSON without exposing the ClusterIP service;
 9. delete the EKS cluster even when the Job fails.
 
 Use a shell `trap` that calls `eksctl delete cluster --wait`.

@@ -284,7 +284,8 @@ reference.
 5. Run the common training package as a Kubernetes Job requesting one GPU.
 6. Log the same resolved parameters, baseline results, training metrics, final
    results, and artifacts to the EKS MLflow server.
-7. Export the MLflow experiment through a port-forward before cluster deletion.
+7. Export aggregate MLflow experiment metadata from inside the MLflow Pod
+   before cluster deletion; do not expose the service outside ClusterIP.
 
 The EKS path demonstrates operational responsibility: cluster creation, GPU
 device enablement, MLflow deployment, job scheduling, log collection, artifact
