@@ -340,6 +340,9 @@ Integrates Kubernetes Services and Ingress with AWS ELB (ALB/NLB).
 ### [Gateway API](04-gateway-api.md)
 Next-generation Kubernetes ingress API. Standardized resource model and role-based configuration.
 
+### [Pod Network Benchmark](06-pod-network-benchmark.md)
+Pod-to-pod RTT, HTTP latency and throughput measured on EKS for the same node, same AZ and cross-AZ, plus DNS `ndots:5` query amplification.
+
 ## Network Troubleshooting
 
 ### Common Issues and Solutions
@@ -476,6 +479,7 @@ spec:
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB integration
 6. [Gateway API](04-gateway-api.md) - Next-generation ingress
 7. [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) - Connecting VPCs across AWS Organizations (field-verified)
+8. [Pod Network Benchmark](06-pod-network-benchmark.md) - Measured latency and throughput per node/AZ boundary
 
 ---
 

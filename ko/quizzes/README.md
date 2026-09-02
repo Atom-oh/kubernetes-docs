@@ -87,6 +87,7 @@
 - [VPC Lattice 퀴즈](./networking/02-vpc-lattice-quiz.md)
 - [AWS Load Balancer Controller 퀴즈](./networking/03-aws-lb-controller-quiz.md)
 - [Gateway API 퀴즈](./networking/04-gateway-api-quiz.md)
+- [Pod 네트워크 실측 벤치마크 퀴즈](./networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 - [Istio 퀴즈](./service-mesh/02-istio-quiz.md)

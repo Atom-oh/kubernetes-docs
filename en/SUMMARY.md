@@ -122,6 +122,7 @@
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
 * [Cross-Org VPC Connectivity](networking/05-cross-org-vpc-connectivity.md)
+* [Pod Network Benchmark](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -545,6 +546,7 @@
   * [AWS Load Balancer Controller Quiz](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API Quiz](quizzes/networking/04-gateway-api-quiz.md)
   * [Cross-Org VPC Connectivity Quiz](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Pod Network Benchmark Quiz](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Istio Quiz](quizzes/service-mesh/02-istio-quiz.md)
   * Istio Detailed Quiz

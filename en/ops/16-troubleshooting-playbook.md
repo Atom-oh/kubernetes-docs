@@ -40,6 +40,7 @@ Each symptom cell links to its playbook section below.
 | [`AccessDenied` in app logs (AWS API)](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + pod `env \| grep AWS` | IRSA (IAM Roles for Service Accounts) annotation/trust policy error, missing Pod Identity association, pods not restarted |
 | [Stuck in `ContainerCreating` + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | Subnet IP exhaustion, node max-pods reached, `aws-node` unhealthy |
 | [Karpenter does not launch a node](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` reached, requirements/taint mismatch, instance type restriction |
+| [Service creation rejected with `failed calling webhook`](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | Webhook Deployment unhealthy (CrashLoop) behind a `failurePolicy: Fail` webhook that matches every namespace |
 
 ***
 
@@ -484,6 +485,55 @@ The NodePool status at the same moment showed `graviton` at `CPU_LIMIT 8 / CPU_U
 | No events, Karpenter logs quiet | The pod is not a Karpenter candidate (`nodeSelector` points at MNG labels, or scheduling constraints unrelated to Karpenter) | Re-check every node-related constraint in the pod spec |
 
 NodePool/EC2NodeClass structure and detailed troubleshooting are in [Karpenter — Troubleshooting](../autoscaling/02-karpenter.md#troubleshooting) and [EKS Advanced Debugging — Karpenter Provisioning Issues](../eks/11-eks-advanced-debugging.md#karpenter-provisioning-issues).
+
+### 11. No Service can be created: failed calling webhook
+
+**Symptom**: any `kubectl apply`/`create` of a Service — in any namespace, including ones that have nothing to do with load balancers — is rejected by the API server. Deployments that ship a Service, Helm installs, and ArgoCD syncs stall right there, while **existing Services keep working**, so nothing looks wrong at the pod level.
+
+```
+Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": failed to call webhook:
+  ... no endpoints available for service "aws-load-balancer-webhook-service"
+```
+
+**Diagnosis**: the message already names the webhook and the Service behind it. Walk down from the webhook configuration → the webhook Service's endpoints → the Deployment behind them.
+
+```bash
+# (1) Which webhooks are registered, and what each does on failure (rules, namespaceSelector, objectSelector, failurePolicy)
+kubectl get mutatingwebhookconfigurations,validatingwebhookconfigurations
+kubectl get mutatingwebhookconfiguration aws-load-balancer-webhook -o jsonpath='{range .webhooks[*]}{.name}{"\t"}failurePolicy={.failurePolicy}{"\t"}ns={.namespaceSelector}{"\t"}obj={.objectSelector}{"\t"}{.rules[*].operations}{" "}{.rules[*].resources}{"\n"}{end}'
+
+# (2) Is there a Ready pod behind the webhook Service?
+kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service
+
+# (3) Why does that Deployment keep dying?
+kubectl -n kube-system get pods -l app.kubernetes.io/name=aws-load-balancer-controller
+kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
+```
+
+What this cluster actually looked like on September 2, 2026: `aws-load-balancer-controller` v3.2.1 (2 replicas) had been in **`CrashLoopBackOff` for 48 days with 9,250 restarts**. Every `--previous` log showed the same pattern (some fields other than the timestamps trimmed):
+
+```
+{"ts":"2026-09-02T07:54:42Z","logger":"setup","msg":"Disabling NLBGatewayAPI: missing required Gateway API CRDs","missing":["TLSRoute","TCPRoute","UDPRoute"]}
+{"level":"error","logger":"controller-runtime.source.Kind","msg":"if kind is a CRD, it should be installed before calling Start","kind":"ListenerSet.gateway.networking.k8s.io","error":"no matches for kind \"ListenerSet\" in version \"gateway.networking.k8s.io/v1\""}
+{"ts":"2026-09-02T07:57:00Z","level":"error","logger":"setup","msg":"problem running manager","error":"failed to wait for gateway.k8s.aws/alb caches to sync kind source: *v1.ListenerSet: timed out waiting for cache to be synced for Kind *v1.ListenerSet"}
+```
+
+How to read it: the controller's ALB Gateway API controller expects the `ListenerSet` CRD (Gateway API **experimental** channel) and the cluster does not have it. The NLB side disables itself when its CRDs are missing (first line, info), but the ALB side waits for its cache to sync and **the process exits after about 2 min 18 s** — so the pod looks `Running` for a moment, dies again, and the webhook Service's endpoints are empty most of the time. Meanwhile the `mservice.elbv2.k8s.aws` webhook has `failurePolicy: Fail`, `namespaceSelector: {}` (every namespace), `objectSelector: app.kubernetes.io/name NotIn [aws-load-balancer-controller]`, and a rule on Service **CREATE**. In other words, **the availability of this webhook Deployment is the availability of Service creation for the whole cluster**, and the moment it has zero endpoints the API server rejects every matching request. Pod creation was unaffected — pods were created normally in this state.
+
+**Causes and fixes**:
+
+| Observation | Cause | Fix |
+|---|---|---|
+| `no endpoints available for service "aws-load-balancer-webhook-service"` | Zero Ready pods in the webhook Deployment (CrashLoop, unschedulable, replicas 0) | **Make the controller healthy first** (next row). Confirm recovery by `get endpointslices` showing addresses in its ENDPOINTS column |
+| `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` in the logs | The Gateway API CRDs this controller version requires are not installed | (a) Install the Gateway API CRDs that controller version requires — `ListenerSet` is in the experimental channel, (b) until the CRDs are present, disable the controller's Gateway API feature via its Helm feature-gate values (check the exact gate names in that version's `values.yaml`), (c) pin a controller version that matches the installed CRDs |
+| Endpoints exist, but `connection refused` / `context deadline exceeded` / `x509` | Path to the webhook port blocked (NetworkPolicy/security group), certificate expired or mismatched | Check the API server → pod webhook-port path, `clientConfig.caBundle`, and certificate renewal |
+| You must create a Service right now | — | **Only as a conscious emergency measure with the blast radius understood**: patch the `failurePolicy` of `mservice.elbv2.k8s.aws` to `Ignore`. Services created meanwhile do NOT get the controller's mutation (the default `loadBalancerClass` is not injected), so after recovery **revert to `Fail`** and review the Services created in between |
+
+What not to do: label a Service with `app.kubernetes.io/name=aws-load-balancer-controller` to dodge the `objectSelector`. It passes the webhook, but that Service **silently drops out of the controller's management** (no mutation applied) and the label now lies. That selector exists only so the controller's own Service can be created.
+
+**Prevention**: (1) alert when the webhook Service has no ready address — with kube-state-metrics `(sum(kube_endpoint_address{namespace="kube-system", endpoint="aws-load-balancer-webhook-service", ready="true"}) or vector(0)) == 0` (the `or vector(0)` matters: with zero addresses the series disappears instead of reading 0) — or on the controller's `CrashLoopBackOff` — this cluster ran 2 replicas and both died for the same reason, so replica count does not protect against this failure. (2) Periodically review `failurePolicy: Fail` webhooks that match every namespace: `kubectl get mutatingwebhookconfigurations -o json | jq '.items[].webhooks[] | select(.failurePolicy=="Fail") | {name, namespaceSelector, rules}'`. (3) Run webhook Deployments with at least 2 replicas spread across AZs plus a PDB — that guards against node/AZ loss; for configuration errors, (1) is the answer.
+
+This outage is what prevented the ClusterIP (kube-proxy) measurements in the [Pod Network Benchmark](../networking/06-pod-network-benchmark.md) — the webhook was not bypassed; the benchmark used Pod IPs only.
 
 ***
 

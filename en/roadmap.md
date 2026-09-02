@@ -36,6 +36,7 @@ Documents built on numbers measured on real AWS resources, not spec sheets:
 - [EBS gp2 vs gp3 Measured Benchmark](storage/01-ebs-gp2-gp3-benchmark.md) — a 10x IOPS gap at the same 100 GiB capacity, and the gp2 burst-credit cliff
 - [ClickHouse on EKS Measured Benchmark](database/01-clickhouse-on-eks.md) — 100M-row ingest throughput, compression ratios, query latency
 - [Kafka on EKS Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md) — RF3 ingest ceiling of ≈130–135 MiB/s (= one gp3 volume's write cap) vs 338 MiB/s at RF1, p99 by acks setting, and cold consumers cutting producer throughput by ~45%
+- [Pod Network Benchmark](networking/06-pod-network-benchmark.md) — the 0.040 → 0.339 → 0.544 ms RTT ladder (same node → same AZ → cross-AZ), a 4.96 Gbps single-flow cap regardless of AZ vs 9.94 Gbps with 8 flows, and `ndots:5`'s 10-query/8-NXDOMAIN amplification
 
 ## Share a diagram — exports for LinkedIn and talks
 

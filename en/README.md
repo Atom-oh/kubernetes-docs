@@ -132,6 +132,7 @@ This training content provides quizzes for each topic along with the learning ma
 7. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Quiz](./quizzes/networking/03-aws-lb-controller-quiz.md)
 8. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
 9. [Cross-Org VPC Connectivity](./networking/05-cross-org-vpc-connectivity.md) | [Quiz](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+10. [Pod Network Benchmark](./networking/06-pod-network-benchmark.md) | [Quiz](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)

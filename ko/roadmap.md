@@ -36,6 +36,7 @@
 - [EBS gp2 vs gp3 실측 벤치마크](storage/01-ebs-gp2-gp3-benchmark.md) — 같은 100GiB에서 IOPS 10배 차이와 gp2 버스트 크레딧 절벽
 - [ClickHouse on EKS 실측 벤치마크](database/01-clickhouse-on-eks.md) — 1억 행 ingest 처리량, 압축률, 쿼리 레이턴시
 - [Kafka on EKS 실측 벤치마크](data-on-eks/kafka/09-kafka-benchmark.md) — RF3 클러스터 ingest 상한 ≈130–135 MiB/s(= gp3 볼륨 1개 쓰기 캡)과 RF1 338 MiB/s, acks별 p99, 콜드 컨슈머가 프로듀서 처리량을 약 45% 깎는 현상
+- [Pod 네트워크 실측 벤치마크](networking/06-pod-network-benchmark.md) — 같은 노드 0.040 ms → 같은 AZ 0.339 ms → 다른 AZ 0.544 ms RTT 사다리, AZ와 무관한 단일 TCP 플로우 4.96 Gbps 상한과 8플로우 9.94 Gbps, `ndots:5`의 10쿼리/8 NXDOMAIN 증폭
 
 ## 다이어그램 공유하기 — LinkedIn·발표용 내보내기
 
