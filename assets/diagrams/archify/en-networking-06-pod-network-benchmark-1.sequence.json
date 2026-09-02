@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "DNS ndots:5 — 10 queries and 8 NXDOMAINs for one resolution",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1600,
+      1000
+    ],
+    "column_fit": "spread",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "request (A + AAAA)"
+        },
+        "default": {
+          "label": "next candidate"
+        },
+        "return": {
+          "label": "answer"
+        },
+        "dashed": {
+          "label": "upstream forward"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "walk",
+        "label": "ndots:5 — 4 search suffixes first",
+        "focus": [
+          "app",
+          "coredns"
+        ],
+        "note": "3 dots < ndots 5 → 4 search suffixes tried first. A+AAAA per round, 5 rounds in series, 8 NXDOMAIN. 4.37 ms end-to-end, warm median 3.78 ms."
+      },
+      {
+        "id": "upstream",
+        "label": "4th candidate → VPC resolver",
+        "focus": [
+          "coredns",
+          "vpc"
+        ],
+        "note": "ap-northeast-2.compute.internal is outside cluster.local → forwarded upstream. ndots:1 leaks kubernetes.default too (6 queries, 2.04 ms)."
+      },
+      {
+        "id": "dot",
+        "label": "trailing dot — 2 queries, 0.80 ms",
+        "focus": [
+          "app",
+          "coredns",
+          "vpc"
+        ],
+        "note": "Trailing dot = absolute name → no search walk. 2 queries / 0 NXDOMAIN / warm median 0.80 ms vs the ndots:5 walk at 10 / 8 / 3.78 ms."
+      }
+    ],
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Pod app (glibc 2.41)"
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS 172.20.0.10"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC resolver"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 694,
+      "label": "ndots:5 — sts.ap-northeast-2.amazonaws.com (3 dots < 5) · 4 search suffixes walked first · 10 queries · 8 NXDOMAIN · 4.37 ms end-to-end (warm median 3.78 ms)"
+    },
+    {
+      "from": 714,
+      "to": 876,
+      "label": "trailing dot — sts.ap-northeast-2.amazonaws.com. (absolute name) · no search walk · 2 queries · 0 NXDOMAIN · warm median 0.80 ms"
+    }
+  ],
+  "messages": [
+    {
+      "id": "q1",
+      "from": "app",
+      "to": "coredns",
+      "y": 195,
+      "label": "0.00 ms · A + AAAA in parallel · sts.ap-northeast-2.amazonaws.com.bench-net.svc.cluster.local.",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a1",
+      "from": "coredns",
+      "to": "app",
+      "y": 231,
+      "label": "NXDomain ×2 (0.92 / 1.14 ms) — kubernetes plugin, authoritative",
+      "variant": "return"
+    },
+    {
+      "id": "q2",
+      "from": "app",
+      "to": "coredns",
+      "y": 269,
+      "label": "1.21 ms · A + AAAA · sts.ap-northeast-2.amazonaws.com.svc.cluster.local."
+    },
+    {
+      "id": "a2",
+      "from": "coredns",
+      "to": "app",
+      "y": 305,
+      "label": "NXDomain ×2 (2.01 / 2.26 ms)",
+      "variant": "return"
+    },
+    {
+      "id": "q3",
+      "from": "app",
+      "to": "coredns",
+      "y": 343,
+      "label": "2.32 ms · A + AAAA · sts.ap-northeast-2.amazonaws.com.cluster.local."
+    },
+    {
+      "id": "a3",
+      "from": "coredns",
+      "to": "app",
+      "y": 379,
+      "label": "NXDomain ×2 (3.15 / 3.41 ms)",
+      "variant": "return"
+    },
+    {
+      "id": "q4",
+      "from": "app",
+      "to": "coredns",
+      "y": 417,
+      "label": "3.47 ms · A + AAAA · sts.ap-northeast-2.amazonaws.com.ap-northeast-2.compute.internal."
+    },
+    {
+      "id": "f4",
+      "from": "coredns",
+      "to": "vpc",
+      "y": 453,
+      "label": "forward . /etc/resolv.conf — outside the cluster.local zone, so upstream",
+      "variant": "dashed"
+    },
+    {
+      "id": "fa4",
+      "from": "vpc",
+      "to": "coredns",
+      "y": 489,
+      "label": "NXDomain (non-authoritative)",
+      "variant": "return"
+    },
+    {
+      "id": "a4",
+      "from": "coredns",
+      "to": "app",
+      "y": 525,
+      "label": "NXDomain ×2 (3.68 / 3.93 ms)",
+      "variant": "return"
+    },
+    {
+      "id": "q5",
+      "from": "app",
+      "to": "coredns",
+      "y": 563,
+      "label": "3.99 ms · A + AAAA · sts.ap-northeast-2.amazonaws.com.",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f5",
+      "from": "coredns",
+      "to": "vpc",
+      "y": 599,
+      "label": "forward . (upstream lookup on a cache 30 miss) — not captured by the pod-side tcpdump",
+      "variant": "dashed"
+    },
+    {
+      "id": "fa5",
+      "from": "vpc",
+      "to": "coredns",
+      "y": 635,
+      "label": "A 10.0.3.84 · A 10.0.2.129 — STS interface endpoint, one ENI per AZ",
+      "variant": "return"
+    },
+    {
+      "id": "a5",
+      "from": "coredns",
+      "to": "app",
+      "y": 671,
+      "label": "4.37 ms · A 10.0.3.84, A 10.0.2.129 · AAAA no data — answer in the last 0.38 ms",
+      "variant": "return"
+    },
+    {
+      "id": "d1",
+      "from": "app",
+      "to": "coredns",
+      "y": 745,
+      "label": "A + AAAA in parallel · sts.ap-northeast-2.amazonaws.com.",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d2",
+      "from": "coredns",
+      "to": "vpc",
+      "y": 781,
+      "label": "forward . (upstream lookup on a cache 30 miss) — not captured by the pod-side tcpdump",
+      "variant": "dashed"
+    },
+    {
+      "id": "d3",
+      "from": "vpc",
+      "to": "coredns",
+      "y": 817,
+      "label": "A 10.0.3.84 · A 10.0.2.129",
+      "variant": "return"
+    },
+    {
+      "id": "d4",
+      "from": "coredns",
+      "to": "app",
+      "y": 853,
+      "label": "A ×2 · AAAA no data",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "coredns",
+      "from": 190,
+      "to": 238,
+      "type": "backend"
+    },
+    {
+      "participant": "coredns",
+      "from": 264,
+      "to": 312,
+      "type": "backend"
+    },
+    {
+      "participant": "coredns",
+      "from": 338,
+      "to": 386,
+      "type": "backend"
+    },
+    {
+      "participant": "coredns",
+      "from": 412,
+      "to": 532,
+      "type": "backend"
+    },
+    {
+      "participant": "vpc",
+      "from": 448,
+      "to": 496,
+      "type": "cloud"
+    },
+    {
+      "participant": "coredns",
+      "from": 558,
+      "to": 678,
+      "type": "backend"
+    },
+    {
+      "participant": "vpc",
+      "from": 594,
+      "to": 642,
+      "type": "cloud"
+    },
+    {
+      "participant": "coredns",
+      "from": 740,
+      "to": 860,
+      "type": "backend"
+    },
+    {
+      "participant": "vpc",
+      "from": 776,
+      "to": 824,
+      "type": "cloud"
+    }
+  ]
+}

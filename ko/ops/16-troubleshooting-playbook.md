@@ -40,6 +40,7 @@
 | [앱 로그에 `AccessDenied` (AWS API)](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + 파드 `env \| grep AWS` | IRSA(IAM Roles for Service Accounts) 어노테이션/신뢰 정책 오류, Pod Identity association 누락, 파드 재시작 안 함 |
 | [`ContainerCreating`에서 멈춤 + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-고갈) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | 서브넷 IP 고갈, 노드 max-pods 도달, `aws-node` 비정상 |
 | [Karpenter가 노드를 안 만듦](#10-eks-karpenter가-노드를-만들지-않음) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` 도달, requirements/taint 불일치, 인스턴스 타입 제한 |
+| [Service 생성이 `failed calling webhook`으로 거부됨](#11-어떤-service도-만들-수-없음-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | 웹훅 Deployment 비정상(CrashLoop)인데 `failurePolicy: Fail` + 전체 네임스페이스 매치 |
 
 ***
 
@@ -484,6 +485,55 @@ FailedScheduling  karpenter  Failed to schedule pod, incompatible with nodepool 
 | 이벤트 없음, Karpenter 로그도 조용 | 파드가 Karpenter 대상이 아님 (`nodeSelector`가 MNG 라벨을 가리킴, 또는 Karpenter와 무관한 스케줄 제약) | 파드 spec에서 노드 관련 제약 전체를 다시 확인 |
 
 NodePool/EC2NodeClass 구조와 상세 문제 해결은 [Karpenter — 문제 해결](../autoscaling/02-karpenter.md#문제-해결)과 [EKS 고급 디버깅 — Karpenter 프로비저닝 문제](../eks/11-eks-advanced-debugging.md#karpenter-프로비저닝-문제)에 있습니다.
+
+### 11. 어떤 Service도 만들 수 없음: failed calling webhook
+
+**증상**: 어느 네임스페이스에서든 — 로드밸런서와 아무 상관 없는 네임스페이스라도 — Service를 `kubectl apply`/`create` 하면 API 서버가 거부합니다. Service가 들어 있는 Deployment 배포, Helm 설치, ArgoCD sync가 그 자리에서 멈추는데, **기존 Service는 계속 정상 동작**하므로 파드 상태만 보면 아무 이상이 없습니다.
+
+```
+Internal error occurred: failed calling webhook "mservice.elbv2.k8s.aws": failed to call webhook:
+  ... no endpoints available for service "aws-load-balancer-webhook-service"
+```
+
+**진단**: 메시지 안에 웹훅 이름과 그 뒤의 Service 이름이 다 들어 있습니다. 웹훅 설정 → 웹훅 Service의 endpoints → 그 뒤의 Deployment 순으로 내려갑니다.
+
+```bash
+# (1) 어떤 웹훅이 걸려 있고, 각각 실패 시 어떻게 동작하는가 (rules, namespaceSelector, objectSelector, failurePolicy)
+kubectl get mutatingwebhookconfigurations,validatingwebhookconfigurations
+kubectl get mutatingwebhookconfiguration aws-load-balancer-webhook -o jsonpath='{range .webhooks[*]}{.name}{"\t"}failurePolicy={.failurePolicy}{"\t"}ns={.namespaceSelector}{"\t"}obj={.objectSelector}{"\t"}{.rules[*].operations}{" "}{.rules[*].resources}{"\n"}{end}'
+
+# (2) 웹훅 Service 뒤에 Ready 파드가 있는가
+kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service
+
+# (3) 그 Deployment는 왜 죽는가
+kubectl -n kube-system get pods -l app.kubernetes.io/name=aws-load-balancer-controller
+kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
+```
+
+2026년 9월 2일 이 클러스터에서 실제로 본 상태: `aws-load-balancer-controller` v3.2.1(replicas 2)이 **48일 동안 `CrashLoopBackOff`, 재시작 9,250회**. `--previous` 로그는 매번 같은 패턴이었습니다 (타임스탬프 외 필드 일부 생략).
+
+```
+{"ts":"2026-09-02T07:54:42Z","logger":"setup","msg":"Disabling NLBGatewayAPI: missing required Gateway API CRDs","missing":["TLSRoute","TCPRoute","UDPRoute"]}
+{"level":"error","logger":"controller-runtime.source.Kind","msg":"if kind is a CRD, it should be installed before calling Start","kind":"ListenerSet.gateway.networking.k8s.io","error":"no matches for kind \"ListenerSet\" in version \"gateway.networking.k8s.io/v1\""}
+{"ts":"2026-09-02T07:57:00Z","level":"error","logger":"setup","msg":"problem running manager","error":"failed to wait for gateway.k8s.aws/alb caches to sync kind source: *v1.ListenerSet: timed out waiting for cache to be synced for Kind *v1.ListenerSet"}
+```
+
+읽는 법: 컨트롤러의 ALB Gateway API 컨트롤러가 `ListenerSet` CRD(Gateway API **experimental** 채널)를 기대하는데 클러스터에 없습니다. NLB 쪽은 CRD가 없으면 스스로 비활성화되지만(첫 줄, info), ALB 쪽은 캐시 동기화를 기다리다 **약 2분 18초 만에 프로세스가 종료**됩니다 — 그래서 파드가 잠깐 `Running`으로 보이다 다시 죽고, 웹훅 Service의 endpoints는 대부분의 시간 비어 있습니다. 한편 `mservice.elbv2.k8s.aws` 웹훅은 `failurePolicy: Fail`, `namespaceSelector: {}`(전체 네임스페이스), `objectSelector: app.kubernetes.io/name NotIn [aws-load-balancer-controller]`, 규칙은 Service **CREATE**입니다. 즉 **이 웹훅 Deployment의 가용성이 곧 클러스터 전체의 Service 생성 가용성**이고, endpoints가 0개인 순간 API 서버는 매치되는 요청을 전부 거부합니다. 파드 생성은 영향이 없었습니다 — 이 상태에서도 파드는 정상적으로 만들어졌습니다.
+
+**원인과 조치**:
+
+| 관찰 | 원인 | 조치 |
+|---|---|---|
+| `no endpoints available for service "aws-load-balancer-webhook-service"` | 웹훅 Deployment에 Ready 파드가 0개 (CrashLoop, 스케줄 실패, replicas 0) | **컨트롤러를 먼저 살립니다** (아래 행). 복구 확인은 `get endpointslices`의 ENDPOINTS 열에 주소가 보이는지로 |
+| 로그에 `no matches for kind "ListenerSet"` → `timed out waiting for cache to be synced` | 컨트롤러 버전이 요구하는 Gateway API CRD가 미설치 | (a) 그 컨트롤러 버전이 요구하는 Gateway API CRD 설치 — `ListenerSet`은 experimental 채널, (b) CRD를 갖추기 전까지 Helm의 feature-gate 값으로 컨트롤러의 Gateway API 기능을 끈다 (정확한 gate 이름은 해당 버전의 `values.yaml`에서 확인), (c) 설치된 CRD와 맞는 컨트롤러 버전으로 고정 |
+| endpoints는 있는데 `connection refused` / `context deadline exceeded` / `x509` | 웹훅 포트로의 경로 차단(NetworkPolicy/보안 그룹), 인증서 만료·불일치 | API 서버 → 파드 웹훅 포트 경로, `clientConfig.caBundle`과 인증서 갱신 상태 확인 |
+| 지금 당장 Service를 만들어야 함 | — | **영향 범위를 이해한 의식적인 비상조치로만**: `mservice.elbv2.k8s.aws`의 `failurePolicy`를 `Ignore`로 패치. 그 사이 만든 Service는 컨트롤러의 mutation(기본 `loadBalancerClass` 주입)을 받지 못하므로, 복구 후 **반드시 `Fail`로 되돌리고** 그동안 만든 Service를 점검 |
+
+하지 말아야 할 것: Service에 `app.kubernetes.io/name=aws-load-balancer-controller` 라벨을 붙여 `objectSelector`를 피해 가는 것. 웹훅은 통과하지만 그 Service는 컨트롤러 관리 대상에서 **조용히 빠지고**(mutation 미적용), 라벨이 거짓말을 하게 됩니다. 이 selector는 컨트롤러 자신의 Service를 만들기 위한 예외일 뿐입니다.
+
+**예방**: (1) 웹훅 Service에 Ready 주소가 하나도 없을 때 알림 — kube-state-metrics로는 `(sum(kube_endpoint_address{namespace="kube-system", endpoint="aws-load-balancer-webhook-service", ready="true"}) or vector(0)) == 0` (`or vector(0)`이 중요합니다: 주소가 0개면 시리즈가 0으로 읽히는 게 아니라 사라집니다) — 또는 컨트롤러의 `CrashLoopBackOff`에 알림 — 이 클러스터는 replicas 2였지만 두 파드가 같은 이유로 죽었으므로 복제본 수는 이 장애를 막아 주지 않습니다. (2) 전체 네임스페이스를 매치하는 `failurePolicy: Fail` 웹훅을 정기 점검: `kubectl get mutatingwebhookconfigurations -o json | jq '.items[].webhooks[] | select(.failurePolicy=="Fail") | {name, namespaceSelector, rules}'`. (3) 웹훅 Deployment는 AZ를 나눈 2개 이상의 복제본 + PDB — 이것은 노드/AZ 장애에 대한 보호이고, 설정 오류에는 (1)이 답입니다.
+
+이 장애 때문에 [Pod 네트워크 실측 벤치마크](../networking/06-pod-network-benchmark.md)에서는 ClusterIP(kube-proxy) 경로를 측정하지 못했습니다 — 웹훅을 우회하지 않고 Pod IP만으로 측정했습니다.
 
 ***
 
