@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod 네트워크 실측 토폴로지 — 같은 노드 · 같은 AZ · 다른 AZ",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1280, 500],
+    "legend": {
+      "entries": {
+        "frontend": { "label": "클라이언트 Pod" },
+        "backend": { "label": "서버 Pod (iperf3 -s + fortio server)" }
+      }
+    },
+    "views": [
+      { "id": "latency", "label": "레이턴시 사다리", "focus": ["cli", "srv_same", "srv_a", "srv_b"], "note": "ping avg 0.040 → 0.339 → 0.544 ms, HTTP p50 0.259 → 0.461 → 0.704 ms. AZ 홉 하나가 p50에 +0.24 ms를 더합니다." },
+      { "id": "bandwidth", "label": "대역폭 상한", "focus": ["cli", "srv_a", "srv_b"], "note": "노드 간 단일 TCP 플로우는 같은 AZ든 다른 AZ든 4.96 Gbps, 8 플로우는 9.94 Gbps — AZ 경계는 대역폭을 줄이지 않습니다." },
+      { "id": "cost", "label": "다른 AZ 요금", "focus": ["cli", "srv_b"], "note": "180 s 동안 9.93 Gbps로 223.4 GB를 보내면 $0.01/GB × 양방향 = $4.47. 다른 AZ의 진짜 비용은 대역폭이 아니라 요금입니다." }
+    ]
+  },
+  "components": [
+    { "id": "srv_same", "type": "backend", "label": "srv-same", "sublabel": "10.0.2.72 · cli와 같은 노드", "pos": [50, 90], "size": [190, 64] },
+    { "id": "cli", "type": "frontend", "label": "cli", "sublabel": "10.0.2.109 · iperf3 · fortio · ping", "pos": [520, 90], "size": [190, 64] },
+    { "id": "srv_a", "type": "backend", "label": "srv-a", "sublabel": "10.0.2.37 · 같은 AZ · 다른 노드", "pos": [520, 300], "size": [190, 64] },
+    { "id": "srv_b", "type": "backend", "label": "srv-b", "sublabel": "10.0.3.65 · 다른 AZ", "pos": [1030, 90], "size": [190, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AZ ap-northeast-2a", "wraps": ["srv_same", "cli", "srv_a"], "pad": 32 },
+    { "kind": "security-group", "label": "노드 ip-10-0-2-128 · m5.xlarge", "wraps": ["srv_same", "cli"], "pad": 12 },
+    { "kind": "security-group", "label": "노드 ip-10-0-2-20 · m5.xlarge", "wraps": ["srv_a"], "pad": 12 },
+    { "kind": "region", "label": "AZ ap-northeast-2b", "wraps": ["srv_b"], "pad": 32 },
+    { "kind": "security-group", "label": "노드 ip-10-0-3-32 · m5.xlarge", "wraps": ["srv_b"], "pad": 12 }
+  ],
+  "connections": [
+    { "id": "c-same-node", "from": "cli", "to": "srv_same", "label": "같은 노드 · RTT 0.040 ms · p50 0.259 ms", "variant": "emphasis" },
+    { "id": "c-same-az", "from": "cli", "to": "srv_a", "label": "같은 AZ · RTT 0.339 ms · p50 0.461 ms", "variant": "emphasis", "labelAt": [615, 168] },
+    { "id": "c-cross-az", "from": "cli", "to": "srv_b", "label": "다른 AZ · RTT 0.544 ms · p50 0.704 ms", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "RTT / HTTP p50 사다리", "items": ["ping avg 0.040 → 0.339 → 0.544 ms (같은 노드 → 같은 AZ → 다른 AZ)", "HTTP p50 0.259 → 0.461 → 0.704 ms (100 qps · 4 conn · keepalive)", "AZ 홉 하나 = RTT +0.21 ms, p50 +0.24 ms"] },
+    { "dot": "emerald", "title": "대역폭 상한 (iperf3 TCP · 20 s)", "items": ["노드 간 단일 플로우 4.96 Gbps — 같은 AZ·다른 AZ 동일 (EC2 플로우당 5 Gbps 상한)", "8 플로우 9.94 Gbps = m5.xlarge 최대 10 Gbps", "같은 노드 29.97 Gbps (1 플로우, 클라이언트 CPU 99.8 %) / 48.15 Gbps (8 플로우)"] },
+    { "dot": "rose", "title": "다른 AZ 비용 앵커", "items": ["180 s × 9.93 Gbps = 223.4 GB → $2.23 out + $2.23 in = $4.47", "Regional Data Transfer $0.01/GB — AZ 경계를 넘는 양방향 각각 과금", "1.25 Gbps 베이스라인으로의 스텝다운은 180 s 안에 관측되지 않음"] }
+  ]
+}

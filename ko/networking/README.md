@@ -340,6 +340,9 @@ Kubernetes Service와 Ingress를 AWS ELB(ALB/NLB)와 통합.
 ### [Gateway API](04-gateway-api.md)
 차세대 Kubernetes 인그레스 API. 표준화된 리소스 모델과 역할 기반 구성.
 
+### [Pod 네트워크 실측 벤치마크](06-pod-network-benchmark.md)
+같은 노드·같은 AZ·다른 AZ의 Pod 간 RTT·HTTP 레이턴시·처리량과 DNS `ndots:5` 쿼리 증폭을 EKS에서 직접 측정한 숫자.
+
 ## 네트워크 트러블슈팅
 
 ### 일반적인 문제와 해결 방법
@@ -476,6 +479,7 @@ spec:
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 통합
 6. [Gateway API](04-gateway-api.md) - 차세대 인그레스
 7. [Cross-Org VPC 연결](05-cross-org-vpc-connectivity.md) - 서로 다른 AWS Organization 간 VPC 연결 (실측 기반)
+8. [Pod 네트워크 실측 벤치마크](06-pod-network-benchmark.md) - 노드·AZ 경계별 실측 레이턴시와 처리량
 
 ---
 

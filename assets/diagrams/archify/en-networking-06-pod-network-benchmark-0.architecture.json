@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Network Benchmark Topology — same node · same AZ · cross-AZ",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1280, 500],
+    "legend": {
+      "entries": {
+        "frontend": { "label": "Client pod" },
+        "backend": { "label": "Server pod (iperf3 -s + fortio server)" }
+      }
+    },
+    "views": [
+      { "id": "latency", "label": "Latency ladder", "focus": ["cli", "srv_same", "srv_a", "srv_b"], "note": "ping avg 0.040 → 0.339 → 0.544 ms, HTTP p50 0.259 → 0.461 → 0.704 ms. One AZ hop adds +0.24 ms to p50." },
+      { "id": "bandwidth", "label": "Bandwidth caps", "focus": ["cli", "srv_a", "srv_b"], "note": "One inter-node TCP flow is 4.96 Gbps same-AZ and cross-AZ alike; 8 flows reach 9.94 Gbps — the AZ boundary does not cut bandwidth." },
+      { "id": "cost", "label": "Cross-AZ bill", "focus": ["cli", "srv_b"], "note": "180 s at 9.93 Gbps moved 223.4 GB: $0.01/GB in each direction = $4.47. The real cross-AZ cost is the bill, not bandwidth." }
+    ]
+  },
+  "components": [
+    { "id": "srv_same", "type": "backend", "label": "srv-same", "sublabel": "10.0.2.72 · same node as cli", "pos": [50, 90], "size": [190, 64] },
+    { "id": "cli", "type": "frontend", "label": "cli", "sublabel": "10.0.2.109 · iperf3 · fortio · ping", "pos": [520, 90], "size": [190, 64] },
+    { "id": "srv_a", "type": "backend", "label": "srv-a", "sublabel": "10.0.2.37 · same AZ · other node", "pos": [520, 300], "size": [190, 64] },
+    { "id": "srv_b", "type": "backend", "label": "srv-b", "sublabel": "10.0.3.65 · other AZ", "pos": [1030, 90], "size": [190, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AZ ap-northeast-2a", "wraps": ["srv_same", "cli", "srv_a"], "pad": 32 },
+    { "kind": "security-group", "label": "node ip-10-0-2-128 · m5.xlarge", "wraps": ["srv_same", "cli"], "pad": 12 },
+    { "kind": "security-group", "label": "node ip-10-0-2-20 · m5.xlarge", "wraps": ["srv_a"], "pad": 12 },
+    { "kind": "region", "label": "AZ ap-northeast-2b", "wraps": ["srv_b"], "pad": 32 },
+    { "kind": "security-group", "label": "node ip-10-0-3-32 · m5.xlarge", "wraps": ["srv_b"], "pad": 12 }
+  ],
+  "connections": [
+    { "id": "c-same-node", "from": "cli", "to": "srv_same", "label": "same node · RTT 0.040 ms · p50 0.259 ms", "variant": "emphasis" },
+    { "id": "c-same-az", "from": "cli", "to": "srv_a", "label": "same AZ · RTT 0.339 ms · p50 0.461 ms", "variant": "emphasis", "labelAt": [615, 168] },
+    { "id": "c-cross-az", "from": "cli", "to": "srv_b", "label": "cross-AZ · RTT 0.544 ms · p50 0.704 ms", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "RTT / HTTP p50 ladder", "items": ["ping avg 0.040 → 0.339 → 0.544 ms (same node → same AZ → cross-AZ)", "HTTP p50 0.259 → 0.461 → 0.704 ms (100 qps · 4 conn · keepalive)", "One AZ hop = RTT +0.21 ms, p50 +0.24 ms"] },
+    { "dot": "emerald", "title": "Bandwidth caps (iperf3 TCP · 20 s)", "items": ["Single inter-node flow 4.96 Gbps — identical same-AZ and cross-AZ (EC2 5 Gbps per-flow cap)", "8 flows 9.94 Gbps = m5.xlarge 10 Gbps peak", "Same node 29.97 Gbps (1 flow, client CPU 99.8 %) / 48.15 Gbps (8 flows)"] },
+    { "dot": "rose", "title": "Cross-AZ cost anchor", "items": ["180 s × 9.93 Gbps = 223.4 GB → $2.23 out + $2.23 in = $4.47", "Regional Data Transfer $0.01/GB — billed in each direction across the AZ boundary", "No step-down toward the 1.25 Gbps baseline observed within 180 s"] }
+  ]
+}

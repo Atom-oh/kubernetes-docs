@@ -83,6 +83,7 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [VPC Lattice Quiz](./networking/02-vpc-lattice-quiz.md)
 - [AWS Load Balancer Controller Quiz](./networking/03-aws-lb-controller-quiz.md)
 - [Gateway API Quiz](./networking/04-gateway-api-quiz.md)
+- [Pod Network Benchmark Quiz](./networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 - [Istio Quiz](./service-mesh/02-istio-quiz.md)
