@@ -623,3 +623,10 @@
   * [FinOps コスト可視化プラットフォームクイズ](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines クイズ](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [ゾーンクラスター運用クイズ](quizzes/ops/15-zonal-operations-guide-quiz.md)
+* Storage
+  * [EBS gp2 と gp3 の実測ベンチマーク比較クイズ](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+## ストレージ
+
+* [ストレージの概要](storage/README.md)
+* [EBS gp2 と gp3 の実測ベンチマーク比較](storage/01-ebs-gp2-gp3-benchmark.md)

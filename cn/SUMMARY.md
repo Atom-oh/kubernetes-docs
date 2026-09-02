@@ -623,3 +623,13 @@
   * [FinOps 成本可见性平台测验](quizzes/ops/13-finops-cost-platform.md)
   * [Tekton Pipelines 测验](quizzes/ops/14-tekton-pipelines.md)
   * [可用区集群运维测验](quizzes/ops/15-zonal-operations-guide.md)
+
+## 存储
+
+* [存储概述](storage/README.md)
+* [EBS gp2 与 gp3 实测基准测试](storage/01-ebs-gp2-gp3-benchmark.md)
+
+## 测验集合
+
+* Storage
+  * [EBS gp2 与 gp3 实测基准测试测验](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)

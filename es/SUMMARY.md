@@ -623,3 +623,10 @@
   * [Cuestionario de plataforma de visibilidad de costos FinOps](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Cuestionario de Pipelines de Tekton](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Cuestionario de operaciones de clúster zonal](quizzes/ops/15-zonal-operations-guide-quiz.md)
+* Storage
+  * [Cuestionario: Comparativa de rendimiento medida de EBS gp2 frente a gp3](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+## Almacenamiento
+
+* [Descripción general del almacenamiento](storage/README.md)
+* [Comparativa de rendimiento medida de EBS gp2 frente a gp3](storage/01-ebs-gp2-gp3-benchmark.md)

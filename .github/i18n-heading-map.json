@@ -98,5 +98,15 @@
     "cn": "服务网格",
     "es": "Malla de servicios",
     "jp": "サービスメッシュ"
+  },
+  "Storage": {
+    "cn": "存储",
+    "es": "Almacenamiento",
+    "jp": "ストレージ"
+  },
+  "Table of Contents": {
+    "cn": "目录",
+    "es": "Tabla de contenido",
+    "jp": "目次"
   }
 }
