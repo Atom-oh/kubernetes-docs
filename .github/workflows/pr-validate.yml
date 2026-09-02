@@ -1,0 +1,27 @@
+name: PR validation
+
+# Runs the same validation suite deploy.yml runs on main, but at PR time, so
+# broken links, missing assets, and ko/en parity gaps fail the PR check
+# instead of breaking the Pages deploy after merge.
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+      - 'assets/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.vitepress/**'
+      - '.github/workflows/pr-validate.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run docs:validate
