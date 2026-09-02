@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 네트워킹 모드 비교",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1360, 640],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "워커 노드" },
+        "messagebus": { "label": "캡슐화 터널" },
+        "cloud": { "label": "물리 네트워크 장비" }
+      }
+    },
+    "views": [
+      { "id": "ipip", "label": "IPIP 모드", "focus": ["ipip-n1", "ipip-tunnel", "ipip-n2"], "note": "Pod 패킷을 tunl0에서 새 IP 헤더(Protocol 4)로 감쌉니다. 오버헤드 20 bytes, 권장 MTU 1480." },
+      { "id": "vxlan", "label": "VXLAN 모드", "focus": ["vxlan-n1", "vxlan-tunnel", "vxlan-n2"], "note": "vxlan.calico가 UDP 4789로 감쌉니다. 오버헤드 50 bytes, 권장 MTU 1450. 대부분의 방화벽을 통과합니다." },
+      { "id": "bgp", "label": "Direct / BGP 모드", "focus": ["bgp-n1", "tor", "bgp-n2"], "note": "캡슐화 없이 BGP로 광고된 경로를 따라 ToR / L3 라우터가 직접 전달합니다. 오버헤드 0, MTU 1500." }
+    ]
+  },
+  "components": [
+    { "id": "ipip-n1", "type": "backend", "label": "Node 1", "sublabel": "Pod A 10.0.1.10 · eth0 192.168.1.10", "pos": [80, 100], "size": [260, 64] },
+    { "id": "ipip-tunnel", "type": "messagebus", "label": "IPIP 터널", "sublabel": "tunl0 · IP Protocol 4", "pos": [550, 100], "size": [260, 64], "tag": "MTU 1480" },
+    { "id": "ipip-n2", "type": "backend", "label": "Node 2", "sublabel": "Pod C 10.0.2.10 · eth0 192.168.1.20", "pos": [1020, 100], "size": [260, 64] },
+    { "id": "vxlan-n1", "type": "backend", "label": "Node 1", "sublabel": "Pod A 10.0.1.10 · eth0 192.168.1.10", "pos": [80, 290], "size": [260, 64] },
+    { "id": "vxlan-tunnel", "type": "messagebus", "label": "VXLAN 터널", "sublabel": "vxlan.calico · UDP 4789", "pos": [550, 290], "size": [260, 64], "tag": "MTU 1450" },
+    { "id": "vxlan-n2", "type": "backend", "label": "Node 2", "sublabel": "Pod C 10.0.2.10 · eth0 192.168.1.20", "pos": [1020, 290], "size": [260, 64] },
+    { "id": "bgp-n1", "type": "backend", "label": "Node 1", "sublabel": "Pod A 10.0.1.10 · eth0 192.168.1.10", "pos": [80, 480], "size": [260, 64] },
+    { "id": "tor", "type": "cloud", "label": "ToR 스위치 / L3 라우터", "sublabel": "BGP 피어링 · 캡슐화 없음", "pos": [550, 480], "size": [260, 64], "tag": "MTU 1500 · 최고 성능" },
+    { "id": "bgp-n2", "type": "backend", "label": "Node 2", "sublabel": "Pod C 10.0.2.10 · eth0 192.168.1.20", "pos": [1020, 480], "size": [260, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "IPIP 모드 — IP-in-IP 캡슐화", "wraps": ["ipip-n1", "ipip-tunnel", "ipip-n2"], "pad": 36 },
+    { "kind": "region", "label": "VXLAN 모드 — VXLAN 캡슐화", "wraps": ["vxlan-n1", "vxlan-tunnel", "vxlan-n2"], "pad": 36 },
+    { "kind": "region", "label": "Direct / BGP 모드 — 캡슐화 없는 직접 라우팅 · 최고 성능", "wraps": ["bgp-n1", "tor", "bgp-n2"], "pad": 36 }
+  ],
+  "connections": [
+    { "id": "c-ipip-encap", "from": "ipip-n1", "to": "ipip-tunnel", "label": "캡슐화 (+20 bytes)" },
+    { "id": "c-ipip-decap", "from": "ipip-tunnel", "to": "ipip-n2", "label": "디캡슐화" },
+    { "id": "c-vxlan-encap", "from": "vxlan-n1", "to": "vxlan-tunnel", "label": "캡슐화 (+50 bytes)" },
+    { "id": "c-vxlan-decap", "from": "vxlan-tunnel", "to": "vxlan-n2", "label": "디캡슐화" },
+    { "id": "c-bgp-out", "from": "bgp-n1", "to": "tor", "label": "Native L3 라우팅 (+0 bytes)" },
+    { "id": "c-bgp-in", "from": "tor", "to": "bgp-n2", "label": "Native L3 라우팅" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "IPIP — MTU 1480", "items": ["패킷: Outer IP 헤더(192.168.1.10 → .20) + Inner IP 헤더(10.0.1.10 → 10.0.2.10) + 원본 페이로드", "오버헤드 20 bytes (IP 헤더 1개)", "용도: BGP를 쓸 수 없는 환경의 서브넷 간 라우팅"] },
+    { "dot": "orange", "title": "VXLAN — MTU 1450", "items": ["패킷: Outer IP + UDP 4789 + VXLAN 헤더(VNI) + Inner IP 헤더 + 원본 페이로드", "오버헤드 50 bytes (IP + UDP + VXLAN)", "용도: 클라우드 환경, 대부분의 방화벽 통과"] },
+    { "dot": "emerald", "title": "Direct / BGP — MTU 1500", "items": ["패킷: IP 헤더(10.0.1.10 → 10.0.2.10) + 원본 페이로드, 캡슐화 없음", "오버헤드 0 bytes", "용도: 최고 성능, BGP 지원 네트워크 필요"] }
+  ]
+}

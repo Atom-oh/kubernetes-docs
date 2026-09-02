@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linux Architecture — From User Space to Hardware",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      660
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "User-space programs"
+        },
+        "messagebus": {
+          "label": "System Call Interface"
+        },
+        "backend": {
+          "label": "Kernel components"
+        },
+        "security": {
+          "label": "Security subsystem"
+        },
+        "external": {
+          "label": "Hardware"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "user-space",
+        "label": "User Space",
+        "focus": [
+          "apps",
+          "shell",
+          "libs"
+        ],
+        "note": "Where regular applications and the shell run; their requests reach the kernel through system libraries."
+      },
+      {
+        "id": "syscall-boundary",
+        "label": "System Call Boundary",
+        "focus": [
+          "libs",
+          "syscall"
+        ],
+        "note": "User space programs access kernel services only through system calls."
+      },
+      {
+        "id": "kernel-subsystems",
+        "label": "Kernel Subsystems",
+        "focus": [
+          "syscall",
+          "proc",
+          "mem",
+          "fs",
+          "net",
+          "sec"
+        ],
+        "note": "Process and memory management, the file system, networking, and security are provided as services inside the kernel."
+      },
+      {
+        "id": "drivers-hardware",
+        "label": "Device Drivers and Hardware",
+        "focus": [
+          "drivers",
+          "hw"
+        ],
+        "note": "Through device drivers the kernel talks to the CPU, memory, storage, and network card, mediating between hardware and software."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "frontend",
+      "label": "Applications",
+      "sublabel": "Regular applications",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "shell",
+      "type": "frontend",
+      "label": "Shell",
+      "sublabel": "Bash, Zsh",
+      "pos": [
+        40,
+        346
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "libs",
+      "type": "frontend",
+      "label": "System Libraries",
+      "pos": [
+        234,
+        288
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "syscall",
+      "type": "messagebus",
+      "label": "System Call Interface",
+      "sublabel": "Kernel service entry point",
+      "pos": [
+        456,
+        288
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "proc",
+      "type": "backend",
+      "label": "Process Management",
+      "sublabel": "Create · schedule · exit",
+      "pos": [
+        706,
+        130
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mem",
+      "type": "backend",
+      "label": "Memory Management",
+      "sublabel": "Virtual · physical memory",
+      "pos": [
+        706,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "fs",
+      "type": "backend",
+      "label": "File System",
+      "sublabel": "Mounts · hierarchy",
+      "pos": [
+        706,
+        290
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "net",
+      "type": "backend",
+      "label": "Networking",
+      "sublabel": "Network stack",
+      "pos": [
+        706,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sec",
+      "type": "security",
+      "label": "Security",
+      "sublabel": "Permissions · contexts",
+      "pos": [
+        706,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "drivers",
+      "type": "backend",
+      "label": "Device Drivers",
+      "sublabel": "Talk to hardware devices",
+      "pos": [
+        946,
+        288
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "hw",
+      "type": "external",
+      "label": "Hardware",
+      "sublabel": "CPU · Memory · Storage · NIC",
+      "pos": [
+        1176,
+        288
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "User Space",
+      "wraps": [
+        "apps",
+        "shell",
+        "libs"
+      ],
+      "pad": 22
+    },
+    {
+      "kind": "region",
+      "label": "Kernel Space",
+      "wraps": [
+        "syscall",
+        "proc",
+        "mem",
+        "fs",
+        "net",
+        "sec",
+        "drivers"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "Kernel Subsystems",
+      "wraps": [
+        "proc",
+        "mem",
+        "fs",
+        "net",
+        "sec"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "apps",
+      "to": "libs"
+    },
+    {
+      "id": "c2",
+      "from": "shell",
+      "to": "libs"
+    },
+    {
+      "id": "c3",
+      "from": "libs",
+      "to": "syscall",
+      "label": "system call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4",
+      "from": "syscall",
+      "to": "proc"
+    },
+    {
+      "id": "c5",
+      "from": "syscall",
+      "to": "mem"
+    },
+    {
+      "id": "c6",
+      "from": "syscall",
+      "to": "fs"
+    },
+    {
+      "id": "c7",
+      "from": "syscall",
+      "to": "net"
+    },
+    {
+      "id": "c8",
+      "from": "syscall",
+      "to": "sec"
+    },
+    {
+      "id": "c9",
+      "from": "proc",
+      "to": "drivers"
+    },
+    {
+      "id": "c10",
+      "from": "mem",
+      "to": "drivers"
+    },
+    {
+      "id": "c11",
+      "from": "fs",
+      "to": "drivers"
+    },
+    {
+      "id": "c12",
+      "from": "net",
+      "to": "drivers"
+    },
+    {
+      "id": "c13",
+      "from": "sec",
+      "to": "drivers"
+    },
+    {
+      "id": "c14",
+      "from": "drivers",
+      "to": "hw",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "User Space",
+      "items": [
+        "Memory region where regular applications run",
+        "Accesses kernel services through system calls"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Role of the Kernel",
+      "items": [
+        "Intermediary between hardware and software",
+        "Process · memory · device management",
+        "Provides the system call interface"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Hardware",
+      "items": [
+        "CPU · Memory · Storage · Network card",
+        "Device drivers handle communication with hardware devices"
+      ]
+    }
+  ]
+}

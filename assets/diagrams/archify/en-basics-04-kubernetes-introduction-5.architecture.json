@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Storage",
+    "locale": "en",
+    "output": "en-basics-04-kubernetes-introduction-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "User resources"
+        },
+        "database": {
+          "label": "Storage resources"
+        },
+        "cloud": {
+          "label": "External storage"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-to-pv",
+        "label": "Pod → PVC → PV",
+        "focus": [
+          "pod1",
+          "pvc1",
+          "pv1"
+        ],
+        "note": "Pods access PVs through PVCs. pvc-1 (8Gi request) is bound to pv-1 (10Gi)."
+      },
+      {
+        "id": "dynamic-provisioning",
+        "label": "Dynamic provisioning",
+        "focus": [
+          "sc",
+          "pv1",
+          "pv2",
+          "pv3"
+        ],
+        "note": "The StorageClass (standard) defines how volumes are provisioned and produces the PVs."
+      },
+      {
+        "id": "external-backend",
+        "label": "External storage backend",
+        "focus": [
+          "pv1",
+          "pv2",
+          "pv3",
+          "ebs1",
+          "ebs2",
+          "ebs3"
+        ],
+        "note": "Each PV represents an AWS EBS volume (vol-1 to vol-3) outside the cluster."
+      }
+    ],
+    "viewBox": [
+      1360,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "uses pvc-1",
+      "pos": [
+        90,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "uses pvc-2",
+      "pos": [
+        90,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pvc1",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "pvc-1 · 8Gi request",
+      "pos": [
+        320,
+        110
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pvc2",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "pvc-2 · 5Gi request",
+      "pos": [
+        320,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "database",
+      "label": "StorageClass",
+      "sublabel": "standard · defines provisioning",
+      "pos": [
+        590,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pv1",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "pv-1 · 10Gi",
+      "pos": [
+        890,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pv2",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "pv-2 · 20Gi",
+      "pos": [
+        890,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pv3",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "pv-3 · 5Gi",
+      "pos": [
+        890,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebs1",
+      "type": "cloud",
+      "label": "AWS EBS Volume",
+      "sublabel": "vol-1",
+      "pos": [
+        1170,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebs2",
+      "type": "cloud",
+      "label": "AWS EBS Volume",
+      "sublabel": "vol-2",
+      "pos": [
+        1170,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebs3",
+      "type": "cloud",
+      "label": "AWS EBS Volume",
+      "sublabel": "vol-3",
+      "pos": [
+        1170,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pvc1",
+        "pvc2",
+        "sc",
+        "pv1",
+        "pv2",
+        "pv3"
+      ],
+      "pad": 64
+    },
+    {
+      "kind": "region",
+      "label": "User Namespace",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pvc1",
+        "pvc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage Resources",
+      "wraps": [
+        "sc",
+        "pv1",
+        "pv2",
+        "pv3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External Storage",
+      "wraps": [
+        "ebs1",
+        "ebs2",
+        "ebs3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod1-pvc1",
+      "from": "pod1",
+      "to": "pvc1",
+      "label": "claimName",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod2-pvc2",
+      "from": "pod2",
+      "to": "pvc2"
+    },
+    {
+      "id": "pvc1-pv1",
+      "from": "pvc1",
+      "to": "pv1",
+      "label": "binding",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc2-pv3",
+      "from": "pvc2",
+      "to": "pv3",
+      "label": "binding"
+    },
+    {
+      "id": "sc-pv1",
+      "from": "sc",
+      "to": "pv1",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sc-pv2",
+      "from": "sc",
+      "to": "pv2",
+      "label": "dynamic provisioning",
+      "variant": "dashed"
+    },
+    {
+      "id": "sc-pv3",
+      "from": "sc",
+      "to": "pv3",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pv1-ebs1",
+      "from": "pv1",
+      "to": "ebs1",
+      "label": "volumeID",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pv2-ebs2",
+      "from": "pv2",
+      "to": "ebs2"
+    },
+    {
+      "id": "pv3-ebs3",
+      "from": "pv3",
+      "to": "ebs3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Storage resources",
+      "items": [
+        "The StorageClass (standard) defines how volumes are provisioned",
+        "A PersistentVolume is a storage resource in the cluster that exists independently of pods",
+        "Dashed arrows show dynamic provisioning by the StorageClass"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "User resources",
+      "items": [
+        "A PersistentVolumeClaim is a user's storage request",
+        "Pods access PVs through PVCs (pvc-1 8Gi → pv-1 10Gi, pvc-2 5Gi → pv-3 5Gi)",
+        "pv-2 (20Gi) has no claim and remains unbound"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "External storage",
+      "items": [
+        "Each PV is backed by an AWS EBS volume (vol-1, vol-2, vol-3) outside the cluster"
+      ]
+    }
+  ]
+}

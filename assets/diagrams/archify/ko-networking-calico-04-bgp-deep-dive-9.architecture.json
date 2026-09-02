@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico BGP 토폴로지",
+    "output": "ko-networking-calico-04-bgp-deep-dive-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "Kubernetes 노드 (BIRD)" },
+        "messagebus": { "label": "Route Reflector 노드" }
+      }
+    },
+    "views": [
+      { "id": "full-mesh", "label": "Full-Mesh (기본값)", "focus": ["fm1", "fm2", "fm3", "fm4"], "note": "모든 노드 쌍이 직접 iBGP 세션을 맺는다. 4노드 6세션, 5노드 10세션, 100노드면 4,950세션으로 N²로 늘어나 50노드 미만에서만 적합하다." },
+      { "id": "route-reflector", "label": "Route Reflector", "focus": ["rr1", "rr2", "c1", "c2", "c3", "c4"], "note": "nodeToNodeMeshEnabled: false로 mesh를 끄면 클라이언트는 RR과만 피어링하고, RR이 수집한 경로를 다른 클라이언트에 반사한다." },
+      { "id": "rr-pair", "label": "RR 이중화", "focus": ["rr1", "rr2"], "note": "RR 두 대가 서로 피어링하고 각 클라이언트가 두 RR 모두와 세션을 맺는다. Cluster ID·Originator ID로 루프를 막는다." }
+    ]
+  },
+  "components": [
+    { "id": "fm1", "type": "backend", "label": "Node 1", "pos": [250, 100], "size": [120, 52] },
+    { "id": "fm4", "type": "backend", "label": "Node 4", "pos": [250, 250], "size": [120, 52] },
+    { "id": "fm2", "type": "backend", "label": "Node 2", "pos": [70, 400], "size": [120, 52] },
+    { "id": "fm3", "type": "backend", "label": "Node 3", "pos": [430, 400], "size": [120, 52] },
+    { "id": "rr1", "type": "messagebus", "label": "Route Reflector 1", "sublabel": "route-reflector=true", "pos": [670, 100], "size": [180, 352] },
+    { "id": "rr2", "type": "messagebus", "label": "Route Reflector 2", "sublabel": "route-reflector=true", "pos": [1130, 100], "size": [180, 352] },
+    { "id": "c1", "type": "backend", "label": "Node 1", "sublabel": "클라이언트", "pos": [930, 100], "size": [110, 52] },
+    { "id": "c2", "type": "backend", "label": "Node 2", "sublabel": "클라이언트", "pos": [930, 200], "size": [110, 52] },
+    { "id": "c3", "type": "backend", "label": "Node 3", "sublabel": "클라이언트", "pos": [930, 300], "size": [110, 52] },
+    { "id": "c4", "type": "backend", "label": "Node 4", "sublabel": "클라이언트", "pos": [930, 400], "size": [110, 52] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Full-Mesh (기본값) · 세션 N(N−1)/2 = O(N²) · 50노드 미만 적합", "wraps": ["fm1", "fm2", "fm3", "fm4"] },
+    { "kind": "region", "label": "Route Reflector · 세션 2N+1 = O(N) · 50노드 이상 권장", "wraps": ["rr1", "rr2", "c1", "c2", "c3", "c4"] }
+  ],
+  "connections": [
+    { "id": "fm4-fm1", "from": "fm4", "to": "fm1", "variant": "dashed" },
+    { "id": "fm2-fm3", "from": "fm2", "to": "fm3", "variant": "dashed", "label": "iBGP 세션 (모든 노드 쌍)" },
+    { "id": "fm4-fm2", "from": "fm4", "to": "fm2", "variant": "dashed" },
+    { "id": "fm4-fm3", "from": "fm4", "to": "fm3", "variant": "dashed" },
+    { "id": "fm1-fm2", "from": "fm1", "to": "fm2", "variant": "dashed" },
+    { "id": "fm1-fm3", "from": "fm1", "to": "fm3", "variant": "dashed" },
+    { "id": "rr1-rr2", "from": "rr1", "to": "rr2", "variant": "emphasis", "label": "RR 간 피어링" },
+    { "id": "c1-rr1", "from": "c1", "to": "rr1", "label": "iBGP 세션" },
+    { "id": "c2-rr1", "from": "c2", "to": "rr1" },
+    { "id": "c3-rr1", "from": "c3", "to": "rr1" },
+    { "id": "c4-rr1", "from": "c4", "to": "rr1" },
+    { "id": "c1-rr2", "from": "c1", "to": "rr2", "label": "iBGP 세션" },
+    { "id": "c2-rr2", "from": "c2", "to": "rr2" },
+    { "id": "c3-rr2", "from": "c3", "to": "rr2" },
+    { "id": "c4-rr2", "from": "c4", "to": "rr2" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Full-Mesh (기본값)", "items": ["세션 수 = N × (N−1) / 2 — 5노드 10개, 50노드 1,225개, 100노드 4,950개", "50개 미만 노드에 적합, 50개 이상이면 Route Reflector 사용을 강력히 권장"] },
+    { "dot": "violet", "title": "Route Reflector", "items": ["클라이언트 노드의 경로를 수집해 다른 클라이언트들에게 반사(Reflection)", "Cluster ID와 Originator ID로 라우팅 루프 방지", "BGPConfiguration에서 nodeToNodeMeshEnabled: false 필수"] },
+    { "dot": "amber", "title": "RR 설계 권장", "items": ["~100 노드: RR 2–3대, 다른 가용 영역에 분산", "~500 노드: RR 3–5대, 다른 랙/가용 영역에 분산", "1000+ 노드: RR 5대 이상 또는 계층형 RR 구조"] }
+  ]
+}

@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "File Permission Structure",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "ls -l"
+        },
+        "backend": {
+          "label": "File type"
+        },
+        "security": {
+          "label": "rwx bits"
+        },
+        "frontend": {
+          "label": "Example"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "fields",
+        "label": "Four-field structure",
+        "focus": [
+          "src",
+          "ft",
+          "own",
+          "grp",
+          "oth"
+        ],
+        "note": "Read the 10-character permission string left to right: 1 file-type character, then 3 characters each for owner, group, and other users."
+      },
+      {
+        "id": "filetype",
+        "label": "File type character",
+        "focus": [
+          "ft",
+          "ex_ft"
+        ],
+        "note": "The first character is one of - (regular file), d (directory), l (symbolic link), c (character device), b (block device)."
+      },
+      {
+        "id": "example",
+        "label": "Reading drwxr-xr--",
+        "focus": [
+          "ex_str",
+          "ex_ft",
+          "ex_own",
+          "ex_grp",
+          "ex_oth"
+        ],
+        "note": "A directory: the owner has all permissions, the group can read and execute, and other users can only read."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "ls -l",
+      "sublabel": "10-character string",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ft",
+      "type": "backend",
+      "label": "File type",
+      "sublabel": "char 1 · - d l c b",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "own",
+      "type": "security",
+      "label": "Owner permissions",
+      "sublabel": "chars 2–4 · r w x",
+      "pos": [
+        520,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "grp",
+      "type": "security",
+      "label": "Group permissions",
+      "sublabel": "chars 5–7 · r w x",
+      "pos": [
+        750,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "oth",
+      "type": "security",
+      "label": "Others' permissions",
+      "sublabel": "chars 8–10 · r w x",
+      "pos": [
+        980,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_str",
+      "type": "external",
+      "label": "drwxr-xr--",
+      "sublabel": "example output",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_ft",
+      "type": "frontend",
+      "label": "d",
+      "sublabel": "Directory",
+      "pos": [
+        290,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_own",
+      "type": "frontend",
+      "label": "rwx",
+      "sublabel": "Owner · all permissions",
+      "pos": [
+        520,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_grp",
+      "type": "frontend",
+      "label": "r-x",
+      "sublabel": "Group · read, execute",
+      "pos": [
+        750,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_oth",
+      "type": "frontend",
+      "label": "r--",
+      "sublabel": "Others · read only",
+      "pos": [
+        980,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Four fields of the permission string",
+      "wraps": [
+        "ft",
+        "own",
+        "grp",
+        "oth"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Example",
+      "wraps": [
+        "ex_str",
+        "ex_ft",
+        "ex_own",
+        "ex_grp",
+        "ex_oth"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "src",
+      "to": "ft",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "ft",
+      "to": "own",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3",
+      "from": "own",
+      "to": "grp",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4",
+      "from": "grp",
+      "to": "oth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e0",
+      "from": "src",
+      "to": "ex_str",
+      "label": "example",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 100
+    },
+    {
+      "id": "e1",
+      "from": "ft",
+      "to": "ex_ft",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e2",
+      "from": "own",
+      "to": "ex_own",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e3",
+      "from": "grp",
+      "to": "ex_grp",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e4",
+      "from": "oth",
+      "to": "ex_oth",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "File type (character 1)",
+      "items": [
+        "- : regular file",
+        "d : directory",
+        "l : symbolic link",
+        "c : character device",
+        "b : block device"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Permission triplet (owner · group · others)",
+      "items": [
+        "r : read",
+        "w : write",
+        "x : execute",
+        "- : permission not granted"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Example — drwxr-xr--",
+      "items": [
+        "d → directory",
+        "rwx → owner: read, write, execute (all permissions)",
+        "r-x → group: read, execute",
+        "r-- → other users: read only"
+      ]
+    }
+  ]
+}

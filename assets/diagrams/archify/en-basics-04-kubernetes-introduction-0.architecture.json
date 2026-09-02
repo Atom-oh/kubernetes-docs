@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Control Plane Components",
+    "locale": "en",
+    "output": "en-basics-04-kubernetes-introduction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "api-path",
+        "label": "API request path",
+        "focus": [
+          "client",
+          "apiserver",
+          "etcd"
+        ],
+        "note": "Every internal and external request goes through kube-apiserver; cluster data is persisted in etcd."
+      },
+      {
+        "id": "scheduling",
+        "label": "Pod scheduling",
+        "focus": [
+          "apiserver",
+          "scheduler"
+        ],
+        "note": "kube-scheduler watches the API server for new pods and picks the node each one will run on."
+      },
+      {
+        "id": "controllers",
+        "label": "Controllers",
+        "focus": [
+          "apiserver",
+          "controller-manager",
+          "cloud-controller-manager"
+        ],
+        "note": "Both controller managers watch state through the API server and reconcile it toward the desired state."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "kubectl / Client",
+      "sublabel": "internal and external requests",
+      "pos": [
+        20,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "the cluster's API endpoint",
+      "pos": [
+        415,
+        110
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "cluster data store",
+      "pos": [
+        680,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "pod scheduling",
+      "pos": [
+        200,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "runs controller processes",
+      "pos": [
+        410,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "backend",
+      "label": "cloud-controller-manager",
+      "sublabel": "cloud service integration",
+      "pos": [
+        650,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (Master)",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-api",
+      "from": "client",
+      "to": "apiserver",
+      "label": "Kubernetes API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "read / write",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-to-api",
+      "from": "scheduler",
+      "to": "apiserver",
+      "label": "watch pods / assign node"
+    },
+    {
+      "id": "cm-to-api",
+      "from": "controller-manager",
+      "to": "apiserver",
+      "label": "watch / reconcile"
+    },
+    {
+      "id": "ccm-to-api",
+      "from": "cloud-controller-manager",
+      "to": "apiserver",
+      "label": "reconcile cloud resources"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Core components",
+      "items": [
+        "kube-apiserver: frontend of the control plane that exposes the Kubernetes API",
+        "etcd: consistent, highly available key-value store for all cluster data",
+        "kube-scheduler: selects the node that runs each new pod"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "kube-controller-manager",
+      "items": [
+        "Node Controller: notices and responds when nodes go down",
+        "Replication Controller: maintains the correct number of pod replicas",
+        "Endpoints Controller: connects services and pods",
+        "Service Account & Token Controller: creates default accounts and API tokens"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "cloud-controller-manager",
+      "items": [
+        "Node Controller: checks with the cloud provider whether a node was deleted",
+        "Route Controller: sets up routes in the cloud infrastructure",
+        "Service Controller: creates, updates, deletes cloud load balancers",
+        "Volume Controller: creates, attaches, mounts volumes"
+      ]
+    }
+  ]
+}
