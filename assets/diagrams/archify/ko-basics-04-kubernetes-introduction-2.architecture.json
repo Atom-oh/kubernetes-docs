@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 전체 아키텍처",
+    "output": "ko-basics-04-kubernetes-introduction-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "control-plane", "label": "컨트롤 플레인", "focus": ["clients", "apiserver", "etcd", "scheduler", "controller-manager", "cloud-controller-manager"], "note": "모든 내부·외부 요청은 kube-apiserver를 거치고, 클러스터 데이터는 etcd에 저장됩니다." },
+      { "id": "worker-nodes", "label": "워커 노드", "focus": ["kubelet1", "kube-proxy1", "runtime1", "pods1", "kubelet2", "kube-proxy2", "runtime2", "pods2"], "note": "각 노드에서 kubelet이 컨테이너 런타임으로 파드를 실행하고, kube-proxy가 서비스 트래픽을 전달합니다." },
+      { "id": "request-path", "label": "요청 경로", "focus": ["clients", "apiserver", "kubelet1", "runtime1", "pods1"], "note": "kubectl 요청이 API 서버를 거쳐 kubelet에 파드 명세로 전달되고, 컨테이너 런타임이 파드를 실행합니다." }
+    ]
+  },
+  "components": [
+    { "id": "clients", "type": "external", "label": "외부 클라이언트", "sublabel": "kubectl · API 클라이언트", "pos": [40, 200], "size": [190, 64] },
+    { "id": "scheduler", "type": "backend", "label": "kube-scheduler", "sublabel": "노드에 파드 할당", "pos": [280, 40], "size": [200, 64] },
+    { "id": "controller-manager", "type": "backend", "label": "kube-controller-manager", "sublabel": "컨트롤러 프로세스 실행", "pos": [510, 40], "size": [220, 64] },
+    { "id": "cloud-controller-manager", "type": "backend", "label": "cloud-controller-manager", "sublabel": "클라우드별 컨트롤 로직", "pos": [760, 40], "size": [220, 64] },
+    { "id": "apiserver", "type": "backend", "label": "kube-apiserver", "sublabel": "Kubernetes API 프론트엔드", "pos": [510, 200], "size": [220, 64] },
+    { "id": "etcd", "type": "database", "label": "etcd", "sublabel": "키-값 저장소", "pos": [1000, 200], "size": [180, 64] },
+    { "id": "kubelet1", "type": "backend", "label": "kubelet", "sublabel": "노드 에이전트", "pos": [280, 400], "size": [180, 60] },
+    { "id": "kube-proxy1", "type": "backend", "label": "kube-proxy", "sublabel": "네트워크 프록시", "pos": [500, 400], "size": [160, 60] },
+    { "id": "runtime1", "type": "backend", "label": "컨테이너 런타임", "sublabel": "containerd / CRI-O 등", "pos": [280, 520], "size": [180, 60] },
+    { "id": "pods1", "type": "backend", "label": "Pods", "sublabel": "컨테이너 그룹", "pos": [280, 640], "size": [180, 60] },
+    { "id": "kubelet2", "type": "backend", "label": "kubelet", "sublabel": "노드 에이전트", "pos": [760, 400], "size": [180, 60] },
+    { "id": "kube-proxy2", "type": "backend", "label": "kube-proxy", "sublabel": "네트워크 프록시", "pos": [980, 400], "size": [160, 60] },
+    { "id": "runtime2", "type": "backend", "label": "컨테이너 런타임", "sublabel": "containerd / CRI-O 등", "pos": [760, 520], "size": [180, 60] },
+    { "id": "pods2", "type": "backend", "label": "Pods", "sublabel": "컨테이너 그룹", "pos": [760, 640], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "컨트롤 플레인 (마스터 노드)", "wraps": ["scheduler", "controller-manager", "cloud-controller-manager", "apiserver", "etcd"] },
+    { "kind": "region", "label": "워커 노드 1", "wraps": ["kubelet1", "kube-proxy1", "runtime1", "pods1"] },
+    { "kind": "region", "label": "워커 노드 2", "wraps": ["kubelet2", "kube-proxy2", "runtime2", "pods2"] }
+  ],
+  "connections": [
+    { "id": "c-clients-api", "from": "clients", "to": "apiserver", "label": "kubectl / API 요청", "variant": "emphasis" },
+    { "id": "c-api-etcd", "from": "apiserver", "to": "etcd", "label": "읽기 / 쓰기" },
+    { "id": "c-api-scheduler", "from": "apiserver", "to": "scheduler", "label": "노드 할당" },
+    { "id": "c-api-cm", "from": "apiserver", "to": "controller-manager", "label": "상태 조정" },
+    { "id": "c-api-ccm", "from": "apiserver", "to": "cloud-controller-manager", "label": "클라우드 제어" },
+    { "id": "c-api-kubelet1", "from": "apiserver", "to": "kubelet1", "label": "파드 명세 / 상태 보고", "variant": "emphasis" },
+    { "id": "c-api-kubelet2", "from": "apiserver", "to": "kubelet2", "label": "파드 명세 / 상태 보고" },
+    { "id": "c-kubelet1-runtime1", "from": "kubelet1", "to": "runtime1", "label": "컨테이너 실행 관리", "variant": "emphasis", "labelDy": 24 },
+    { "id": "c-runtime1-pods1", "from": "runtime1", "to": "pods1", "label": "컨테이너 실행", "variant": "emphasis", "labelDy": 24 },
+    { "id": "c-proxy1-pods1", "from": "kube-proxy1", "to": "pods1", "label": "트래픽 전달", "variant": "dashed", "labelDy": 54 },
+    { "id": "c-kubelet2-runtime2", "from": "kubelet2", "to": "runtime2", "label": "컨테이너 실행 관리", "labelDy": 24 },
+    { "id": "c-runtime2-pods2", "from": "runtime2", "to": "pods2", "label": "컨테이너 실행", "labelDy": 24 },
+    { "id": "c-proxy2-pods2", "from": "kube-proxy2", "to": "pods2", "label": "트래픽 전달", "variant": "dashed", "labelDy": 54 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "컨트롤 플레인", "items": [
+      "API server·etcd·scheduler·controller가 클러스터 상태를 관리"
+    ] },
+    { "dot": "emerald", "title": "워커 노드", "items": [
+      "kubelet·컨테이너 런타임·kube-proxy가 파드 실행과 트래픽을 담당"
+    ] }
+  ]
+}

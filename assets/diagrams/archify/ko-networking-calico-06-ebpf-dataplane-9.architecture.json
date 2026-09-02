@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 데이터플레인: iptables vs eBPF",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      500
+    ],
+    "views": [
+      {
+        "id": "iptables-path",
+        "label": "iptables 패킷 경로",
+        "focus": [
+          "nic-ipt",
+          "prerouting",
+          "forward",
+          "kubeproxy",
+          "postrouting",
+          "pod-ipt"
+        ],
+        "note": "패킷 하나가 PREROUTING → FORWARD → POSTROUTING 체인을 차례로 순회한다. 규칙 수에 비례하는 O(N) 평가로 지연이 커진다."
+      },
+      {
+        "id": "ebpf-path",
+        "label": "eBPF 패킷 경로",
+        "focus": [
+          "nic-ebpf",
+          "tc-hook",
+          "bpf-maps",
+          "connect-lb",
+          "pod-ebpf"
+        ],
+        "note": "TC hook의 BPF 프로그램 하나가 BPF Map을 O(1)로 조회해 정책과 라우팅을 한 번에 처리한다. 지연이 낮다."
+      },
+      {
+        "id": "kube-proxy-replacement",
+        "label": "kube-proxy 대체",
+        "focus": [
+          "kubeproxy",
+          "bpf-maps",
+          "connect-lb"
+        ],
+        "note": "iptables 모드의 Service LB는 kube-proxy 규칙이 맡지만, eBPF 모드는 소켓 레벨 connect-time LB가 처리해 kube-proxy가 필요 없다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "패킷 엔드포인트 (NIC / Pod)"
+        },
+        "backend": {
+          "label": "iptables 체인 · 규칙"
+        },
+        "cloud": {
+          "label": "eBPF 프로그램"
+        },
+        "database": {
+          "label": "BPF Map"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "nic-ipt",
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "패킷 수신",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        110,
+        64
+      ]
+    },
+    {
+      "id": "prerouting",
+      "type": "backend",
+      "label": "PREROUTING",
+      "sublabel": "raw · mangle · nat + conntrack",
+      "pos": [
+        214,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "forward",
+      "type": "backend",
+      "label": "FORWARD",
+      "sublabel": "mangle · filter",
+      "pos": [
+        438,
+        90
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy iptables 규칙",
+      "sublabel": "Service LB (DNAT)",
+      "tag": "O(N) 규칙 평가",
+      "pos": [
+        642,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "postrouting",
+      "type": "backend",
+      "label": "POSTROUTING",
+      "sublabel": "mangle · nat",
+      "pos": [
+        876,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod-ipt",
+      "type": "external",
+      "label": "목적지 Pod",
+      "sublabel": "높은 지연",
+      "pos": [
+        1090,
+        90
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "nic-ebpf",
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "패킷 수신",
+      "pos": [
+        60,
+        290
+      ],
+      "size": [
+        110,
+        64
+      ]
+    },
+    {
+      "id": "tc-hook",
+      "type": "cloud",
+      "label": "TC Hook",
+      "sublabel": "BPF 프로그램 하나로 정책 + 라우팅",
+      "pos": [
+        214,
+        290
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "bpf-maps",
+      "type": "database",
+      "label": "BPF Maps",
+      "sublabel": "Policy · Service Routing · Endpoint",
+      "tag": "O(1) Map 조회",
+      "pos": [
+        470,
+        290
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "connect-lb",
+      "type": "cloud",
+      "label": "Connect-time LB",
+      "sublabel": "소켓 레벨 · kube-proxy 불필요",
+      "tag": "DSR 지원",
+      "pos": [
+        746,
+        290
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "pod-ebpf",
+      "type": "external",
+      "label": "목적지 Pod",
+      "sublabel": "낮은 지연",
+      "pos": [
+        1090,
+        290
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "iptables 데이터플레인 (Legacy) · O(N) 규칙 평가",
+      "wraps": [
+        "nic-ipt",
+        "prerouting",
+        "forward",
+        "kubeproxy",
+        "postrouting",
+        "pod-ipt"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "eBPF 데이터플레인 (Modern) · O(1) Map 조회",
+      "wraps": [
+        "nic-ebpf",
+        "tc-hook",
+        "bpf-maps",
+        "connect-lb",
+        "pod-ebpf"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-nic-pre",
+      "from": "nic-ipt",
+      "to": "prerouting"
+    },
+    {
+      "id": "c-pre-fwd",
+      "from": "prerouting",
+      "to": "forward"
+    },
+    {
+      "id": "c-fwd-kp",
+      "from": "forward",
+      "to": "kubeproxy"
+    },
+    {
+      "id": "c-kp-post",
+      "from": "kubeproxy",
+      "to": "postrouting"
+    },
+    {
+      "id": "c-post-pod",
+      "from": "postrouting",
+      "to": "pod-ipt",
+      "label": "여러 체인 순회",
+      "labelDy": -26
+    },
+    {
+      "id": "c-nic-tc",
+      "from": "nic-ebpf",
+      "to": "tc-hook",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-tc-maps",
+      "from": "tc-hook",
+      "to": "bpf-maps",
+      "label": "Map 조회",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "c-maps-lb",
+      "from": "bpf-maps",
+      "to": "connect-lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-lb-pod",
+      "from": "connect-lb",
+      "to": "pod-ebpf",
+      "label": "단일 처리 경로",
+      "variant": "emphasis",
+      "labelDy": -26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "iptables 모드",
+      "items": [
+        "패킷마다 여러 체인을 순회해 지연이 높다",
+        "규칙을 선형으로 검색하므로 규칙이 많아질수록 성능이 떨어진다 (O(N))",
+        "kube-proxy의 NAT 규칙이 서비스·엔드포인트 수에 비례해 늘어난다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF 모드",
+      "items": [
+        "BPF Map 해시 조회로 규모와 무관한 O(1) 검색",
+        "BPF 프로그램 하나가 정책·NAT·라우팅을 한 번에 처리해 지연이 낮다",
+        "kube-proxy 없이 connect-time LB로 서비스를 처리하고 DSR을 지원한다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "성능 비교",
+      "items": [
+        "지연 시간: iptables 높음 / eBPF 낮음",
+        "CPU 사용량: iptables 높음 / eBPF 낮음",
+        "규칙 확장성: iptables 제한적 / eBPF 우수"
+      ]
+    }
+  ]
+}

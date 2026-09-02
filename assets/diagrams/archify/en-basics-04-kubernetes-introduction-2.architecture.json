@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Full Architecture",
+    "locale": "en",
+    "output": "en-basics-04-kubernetes-introduction-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {"id": "control-plane", "label": "Control plane", "focus": ["clients", "apiserver", "etcd", "scheduler", "controller-manager", "cloud-controller-manager"], "note": "All internal and external requests go through kube-apiserver, and cluster data is stored in etcd."},
+      {"id": "worker-nodes", "label": "Worker nodes", "focus": ["kubelet1", "kube-proxy1", "runtime1", "pods1", "kubelet2", "kube-proxy2", "runtime2", "pods2"], "note": "On each node, kubelet runs pods through the container runtime while kube-proxy forwards Service traffic."},
+      {"id": "request-path", "label": "Request path", "focus": ["clients", "apiserver", "kubelet1", "runtime1", "pods1"], "note": "A kubectl request passes through the API server to kubelet as a pod spec, and the container runtime runs the pod."}
+    ]
+  },
+  "components": [
+    {"id": "clients", "type": "external", "label": "External clients", "sublabel": "kubectl · API clients", "pos": [40, 200], "size": [190, 64]},
+    {"id": "scheduler", "type": "backend", "label": "kube-scheduler", "sublabel": "assigns pods to nodes", "pos": [280, 40], "size": [200, 64]},
+    {"id": "controller-manager", "type": "backend", "label": "kube-controller-manager", "sublabel": "runs controller processes", "pos": [510, 40], "size": [220, 64]},
+    {"id": "cloud-controller-manager", "type": "backend", "label": "cloud-controller-manager", "sublabel": "cloud-specific control logic", "pos": [760, 40], "size": [220, 64]},
+    {"id": "apiserver", "type": "backend", "label": "kube-apiserver", "sublabel": "Kubernetes API frontend", "pos": [510, 200], "size": [220, 64]},
+    {"id": "etcd", "type": "database", "label": "etcd", "sublabel": "key-value store", "pos": [1000, 200], "size": [180, 64]},
+    {"id": "kubelet1", "type": "backend", "label": "kubelet", "sublabel": "node agent", "pos": [280, 400], "size": [180, 60]},
+    {"id": "kube-proxy1", "type": "backend", "label": "kube-proxy", "sublabel": "network proxy", "pos": [500, 400], "size": [160, 60]},
+    {"id": "runtime1", "type": "backend", "label": "Container Runtime", "sublabel": "containerd / CRI-O, etc.", "pos": [280, 520], "size": [180, 60]},
+    {"id": "pods1", "type": "backend", "label": "Pods", "sublabel": "group of containers", "pos": [280, 640], "size": [180, 60]},
+    {"id": "kubelet2", "type": "backend", "label": "kubelet", "sublabel": "node agent", "pos": [760, 400], "size": [180, 60]},
+    {"id": "kube-proxy2", "type": "backend", "label": "kube-proxy", "sublabel": "network proxy", "pos": [980, 400], "size": [160, 60]},
+    {"id": "runtime2", "type": "backend", "label": "Container Runtime", "sublabel": "containerd / CRI-O, etc.", "pos": [760, 520], "size": [180, 60]},
+    {"id": "pods2", "type": "backend", "label": "Pods", "sublabel": "group of containers", "pos": [760, 640], "size": [180, 60]}
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "Control Plane (Master Node)", "wraps": ["scheduler", "controller-manager", "cloud-controller-manager", "apiserver", "etcd"]},
+    {"kind": "region", "label": "Worker Node 1", "wraps": ["kubelet1", "kube-proxy1", "runtime1", "pods1"]},
+    {"kind": "region", "label": "Worker Node 2", "wraps": ["kubelet2", "kube-proxy2", "runtime2", "pods2"]}
+  ],
+  "connections": [
+    {"id": "c-clients-api", "from": "clients", "to": "apiserver", "label": "kubectl / API requests", "variant": "emphasis"},
+    {"id": "c-api-etcd", "from": "apiserver", "to": "etcd", "label": "read / write"},
+    {"id": "c-api-scheduler", "from": "apiserver", "to": "scheduler", "label": "node assignment"},
+    {"id": "c-api-cm", "from": "apiserver", "to": "controller-manager", "label": "reconcile"},
+    {"id": "c-api-ccm", "from": "apiserver", "to": "cloud-controller-manager", "label": "cloud control"},
+    {"id": "c-api-kubelet1", "from": "apiserver", "to": "kubelet1", "label": "pod spec / status", "variant": "emphasis"},
+    {"id": "c-api-kubelet2", "from": "apiserver", "to": "kubelet2", "label": "pod spec / status"},
+    {"id": "c-kubelet1-runtime1", "from": "kubelet1", "to": "runtime1", "label": "manages containers", "variant": "emphasis", "labelDy": 24},
+    {"id": "c-runtime1-pods1", "from": "runtime1", "to": "pods1", "label": "run containers", "variant": "emphasis", "labelDy": 24},
+    {"id": "c-proxy1-pods1", "from": "kube-proxy1", "to": "pods1", "label": "forward traffic", "variant": "dashed", "labelDy": 54},
+    {"id": "c-kubelet2-runtime2", "from": "kubelet2", "to": "runtime2", "label": "manages containers", "labelDy": 24},
+    {"id": "c-runtime2-pods2", "from": "runtime2", "to": "pods2", "label": "run containers", "labelDy": 24},
+    {"id": "c-proxy2-pods2", "from": "kube-proxy2", "to": "pods2", "label": "forward traffic", "variant": "dashed", "labelDy": 54}
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Control plane", "items": [
+      "API server, etcd, scheduler, and controllers manage cluster state"
+    ] },
+    { "dot": "emerald", "title": "Worker nodes", "items": [
+      "kubelet, the container runtime, and kube-proxy run pods and traffic"
+    ] }
+  ]
+}

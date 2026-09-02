@@ -1,0 +1,297 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico Network Policy Tier Evaluation",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Incoming traffic"
+        },
+        "security": {
+          "label": "Tier policy"
+        },
+        "backend": {
+          "label": "Immediate exit"
+        },
+        "cloud": {
+          "label": "Profile default action"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "tier-order",
+        "label": "Evaluate tiers in order",
+        "focus": [
+          "packet",
+          "sec",
+          "plat",
+          "app",
+          "def"
+        ],
+        "note": "Tiers are evaluated from the lowest order; a Pass hands the packet to the next tier."
+      },
+      {
+        "id": "immediate-exit",
+        "label": "A match ends evaluation",
+        "focus": [
+          "sec_exit",
+          "plat_exit",
+          "app_exit",
+          "def_exit"
+        ],
+        "note": "A rule match with Allow or Deny in any tier ends evaluation immediately."
+      },
+      {
+        "id": "fallthrough",
+        "label": "Final default action",
+        "focus": [
+          "def",
+          "def_exit",
+          "profile"
+        ],
+        "note": "K8s NetworkPolicy in the Default tier has no Pass; with no matching policy the endpoint profile's default action applies."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1222,
+      408
+    ]
+  },
+  "lanes": [
+    {
+      "id": "eval",
+      "label": "Policy evaluation (ascending order)"
+    },
+    {
+      "id": "exit",
+      "label": "Rule match → immediate exit",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph_sec",
+      "label": "Security Tier · security team",
+      "fromCol": 1,
+      "toCol": 1,
+      "variant": "security"
+    },
+    {
+      "id": "ph_plat",
+      "label": "Platform Tier · platform team",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "ph_app",
+      "label": "Application Tier · app teams",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "ph_def",
+      "label": "Default Tier · built-in",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "packet",
+    "sec",
+    "plat",
+    "app",
+    "def"
+  ],
+  "nodes": [
+    {
+      "id": "packet",
+      "lane": "eval",
+      "col": 0,
+      "type": "external",
+      "label": "Packet arrives",
+      "sublabel": "Pod ingress / egress",
+      "width": 128
+    },
+    {
+      "id": "sec",
+      "lane": "eval",
+      "col": 1,
+      "type": "security",
+      "label": "GlobalNetworkPolicy",
+      "sublabel": "order 100 · block threat IPs",
+      "tag": "security.block-threats",
+      "width": 168
+    },
+    {
+      "id": "plat",
+      "lane": "eval",
+      "col": 2,
+      "type": "security",
+      "label": "GlobalNetworkPolicy",
+      "sublabel": "order 200 · DNS + API baseline",
+      "tag": "platform.baseline",
+      "width": 168
+    },
+    {
+      "id": "app",
+      "lane": "eval",
+      "col": 3,
+      "type": "security",
+      "label": "Calico NetworkPolicy",
+      "sublabel": "order 500 · frontend → backend",
+      "tag": "application.frontend-rules",
+      "width": 172
+    },
+    {
+      "id": "def",
+      "lane": "eval",
+      "col": 4,
+      "type": "security",
+      "label": "K8s NetworkPolicy",
+      "sublabel": "order 1000 · deny / allow",
+      "tag": "Kubernetes standard API",
+      "width": 160
+    },
+    {
+      "id": "profile",
+      "lane": "eval",
+      "col": 5,
+      "type": "cloud",
+      "label": "Profile default",
+      "sublabel": "no policy matched",
+      "width": 150
+    },
+    {
+      "id": "sec_exit",
+      "lane": "exit",
+      "col": 1,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "e.g. threat-intel → Deny",
+      "width": 150
+    },
+    {
+      "id": "plat_exit",
+      "lane": "exit",
+      "col": 2,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "e.g. kube-dns → Allow",
+      "width": 150
+    },
+    {
+      "id": "app_exit",
+      "lane": "exit",
+      "col": 3,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "e.g. backend:8080 → Allow",
+      "width": 150
+    },
+    {
+      "id": "def_exit",
+      "lane": "exit",
+      "col": 4,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "no Pass · decided here",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "packet-sec",
+      "from": "packet",
+      "to": "sec"
+    },
+    {
+      "id": "sec-plat",
+      "from": "sec",
+      "to": "plat",
+      "label": "Pass"
+    },
+    {
+      "id": "plat-app",
+      "from": "plat",
+      "to": "app",
+      "label": "Pass"
+    },
+    {
+      "id": "app-def",
+      "from": "app",
+      "to": "def",
+      "label": "Pass"
+    },
+    {
+      "id": "def-profile",
+      "from": "def",
+      "to": "profile",
+      "label": "no match",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "sec-exit",
+      "from": "sec",
+      "to": "sec_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "plat-exit",
+      "from": "plat",
+      "to": "plat_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "app-exit",
+      "from": "app",
+      "to": "app_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "def-exit",
+      "from": "def",
+      "to": "def_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Decision actions",
+      "items": [
+        "Allow: a rule match permits the traffic and ends evaluation",
+        "Deny: a rule match blocks the traffic and ends evaluation",
+        "Pass: defers the decision to the next tier"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Tier ownership",
+      "items": [
+        "security (100) security team · platform (200) platform team · application (500) app teams",
+        "RBAC scopes each team to the policies in its own tier",
+        "Every Kubernetes NetworkPolicy lives in the Default tier"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Final default action",
+      "items": [
+        "The Default tier (order 1000) is evaluated last",
+        "K8s NetworkPolicy has no Pass action",
+        "If no tier matches, the endpoint profile's default action applies"
+      ]
+    }
+  ]
+}

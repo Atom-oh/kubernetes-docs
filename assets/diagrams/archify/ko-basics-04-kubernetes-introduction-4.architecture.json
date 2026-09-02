@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "네임스페이스와 NetworkPolicy",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      640
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "internet",
+          "frontend",
+          "api",
+          "db"
+        ],
+        "note": "외부 요청이 프론트엔드 → API → 데이터베이스 파드로 흐르는 기본 경로. 정책이 없으면 모든 파드가 서로 통신할 수 있습니다."
+      },
+      {
+        "id": "network-policy",
+        "label": "NetworkPolicy 적용",
+        "focus": [
+          "policy",
+          "db"
+        ],
+        "note": "role=db 파드에 db-network-policy가 적용되어 인그레스·이그레스가 정책으로 제한됩니다."
+      },
+      {
+        "id": "cross-namespace",
+        "label": "네임스페이스 간 통신",
+        "focus": [
+          "prometheus",
+          "frontend",
+          "api",
+          "db"
+        ],
+        "note": "monitoring 네임스페이스의 Prometheus가 default 네임스페이스 파드의 메트릭을 수집합니다. 이 경로도 정책으로 제어할 수 있습니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "외부 트래픽",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "프론트엔드 파드",
+      "sublabel": "frontend-1 · frontend-2",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 파드",
+      "sublabel": "api-1 · api-2",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "데이터베이스 파드",
+      "sublabel": "db-1 · db-2",
+      "tag": "role=db",
+      "pos": [
+        910,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "db-network-policy",
+      "pos": [
+        910,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집",
+      "pos": [
+        620,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "default 네임스페이스",
+      "wraps": [
+        "frontend",
+        "api",
+        "db",
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "monitoring 네임스페이스",
+      "wraps": [
+        "prometheus"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-internet-frontend",
+      "from": "internet",
+      "to": "frontend",
+      "label": "외부 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "API 호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-api-db",
+      "from": "api",
+      "to": "db",
+      "label": "DB 쿼리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-policy-db",
+      "from": "policy",
+      "to": "db",
+      "label": "role=db 파드에 적용",
+      "variant": "security",
+      "labelAt": [
+        1000,
+        162
+      ]
+    },
+    {
+      "id": "c-prom-frontend",
+      "from": "prometheus",
+      "to": "frontend",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "c-prom-api",
+      "from": "prometheus",
+      "to": "api",
+      "label": "메트릭 수집 (scrape)",
+      "variant": "dashed",
+      "labelAt": [
+        778,
+        360
+      ]
+    },
+    {
+      "id": "c-prom-db",
+      "from": "prometheus",
+      "to": "db",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "기본 동작",
+      "items": [
+        "기본적으로 모든 파드는 서로 통신할 수 있다",
+        "NetworkPolicy를 적용하면 이를 선택적으로 제한할 수 있다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "제어 범위",
+      "items": [
+        "파드 간 · 네임스페이스 간 통신 제어",
+        "인그레스(수신) · 이그레스(송신) 트래픽 제어",
+        "포트 · 프로토콜 기반 필터링"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "예시 정책 db-network-policy",
+      "items": [
+        "default 네임스페이스의 podSelector role=db 파드에 적용",
+        "Ingress: role=frontend 파드에서 TCP 3306 수신만 허용 · Egress: role=monitoring 파드로 TCP 9090 송신만 허용"
+      ]
+    }
+  ]
+}

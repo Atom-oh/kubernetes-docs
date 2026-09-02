@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 스토리지",
+    "output": "ko-basics-04-kubernetes-introduction-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "사용자 리소스 (Pod, PVC)"
+        },
+        "database": {
+          "label": "스토리지 리소스 (StorageClass, PV)"
+        },
+        "cloud": {
+          "label": "외부 스토리지 (AWS EBS)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-to-pv",
+        "label": "파드 → PVC → PV",
+        "focus": [
+          "pod1",
+          "pvc1",
+          "pv1"
+        ],
+        "note": "파드는 PVC를 통해 PV에 접근한다. pvc-1(8Gi 요청)이 pv-1(10Gi)에 바인딩된다."
+      },
+      {
+        "id": "dynamic-provisioning",
+        "label": "동적 프로비저닝",
+        "focus": [
+          "sc",
+          "pv1",
+          "pv2",
+          "pv3"
+        ],
+        "note": "StorageClass(standard)가 볼륨 프로비저닝 방법을 정의하고 PV를 만들어 낸다."
+      },
+      {
+        "id": "external-backend",
+        "label": "외부 스토리지 백엔드",
+        "focus": [
+          "pv1",
+          "pv2",
+          "pv3",
+          "ebs1",
+          "ebs2",
+          "ebs3"
+        ],
+        "note": "각 PV는 클러스터 밖의 AWS EBS 볼륨(vol-1~3)을 나타낸다."
+      }
+    ],
+    "viewBox": [
+      1360,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "pvc-1 사용",
+      "pos": [
+        90,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "pvc-2 사용",
+      "pos": [
+        90,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pvc1",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "pvc-1 · 8Gi 요청",
+      "pos": [
+        320,
+        110
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pvc2",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "pvc-2 · 5Gi 요청",
+      "pos": [
+        320,
+        390
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "database",
+      "label": "StorageClass",
+      "sublabel": "standard · 프로비저닝 방법 정의",
+      "pos": [
+        590,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pv1",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "pv-1 · 10Gi",
+      "pos": [
+        890,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pv2",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "pv-2 · 20Gi",
+      "pos": [
+        890,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pv3",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "pv-3 · 5Gi",
+      "pos": [
+        890,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebs1",
+      "type": "cloud",
+      "label": "AWS EBS Volume",
+      "sublabel": "vol-1",
+      "pos": [
+        1170,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebs2",
+      "type": "cloud",
+      "label": "AWS EBS Volume",
+      "sublabel": "vol-2",
+      "pos": [
+        1170,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebs3",
+      "type": "cloud",
+      "label": "AWS EBS Volume",
+      "sublabel": "vol-3",
+      "pos": [
+        1170,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pvc1",
+        "pvc2",
+        "sc",
+        "pv1",
+        "pv2",
+        "pv3"
+      ],
+      "pad": 64
+    },
+    {
+      "kind": "region",
+      "label": "사용자 네임스페이스",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pvc1",
+        "pvc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지 리소스",
+      "wraps": [
+        "sc",
+        "pv1",
+        "pv2",
+        "pv3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부 스토리지",
+      "wraps": [
+        "ebs1",
+        "ebs2",
+        "ebs3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod1-pvc1",
+      "from": "pod1",
+      "to": "pvc1",
+      "label": "claimName",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod2-pvc2",
+      "from": "pod2",
+      "to": "pvc2"
+    },
+    {
+      "id": "pvc1-pv1",
+      "from": "pvc1",
+      "to": "pv1",
+      "label": "바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc2-pv3",
+      "from": "pvc2",
+      "to": "pv3",
+      "label": "바인딩"
+    },
+    {
+      "id": "sc-pv1",
+      "from": "sc",
+      "to": "pv1",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sc-pv2",
+      "from": "sc",
+      "to": "pv2",
+      "label": "동적 프로비저닝",
+      "variant": "dashed"
+    },
+    {
+      "id": "sc-pv3",
+      "from": "sc",
+      "to": "pv3",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pv1-ebs1",
+      "from": "pv1",
+      "to": "ebs1",
+      "label": "volumeID",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pv2-ebs2",
+      "from": "pv2",
+      "to": "ebs2"
+    },
+    {
+      "id": "pv3-ebs3",
+      "from": "pv3",
+      "to": "ebs3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "스토리지 리소스",
+      "items": [
+        "StorageClass(standard)는 볼륨 프로비저닝 방법을 정의한다",
+        "PersistentVolume은 클러스터의 스토리지 리소스로, 파드와 독립적으로 존재한다",
+        "점선은 StorageClass에 의한 동적 프로비저닝을 나타낸다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "사용자 리소스",
+      "items": [
+        "PersistentVolumeClaim은 사용자의 스토리지 요청이다",
+        "파드는 PVC를 통해 PV에 접근한다 (pvc-1 8Gi → pv-1 10Gi, pvc-2 5Gi → pv-3 5Gi)",
+        "클레임이 없는 pv-2(20Gi)는 바인딩되지 않은 채 남아 있다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "외부 스토리지",
+      "items": [
+        "각 PV는 클러스터 밖의 AWS EBS 볼륨(vol-1, vol-2, vol-3)을 실제 스토리지로 사용한다"
+      ]
+    }
+  ]
+}

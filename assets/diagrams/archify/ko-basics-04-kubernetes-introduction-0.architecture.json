@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 컨트롤 플레인 구성 요소",
+    "output": "ko-basics-04-kubernetes-introduction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "api-path",
+        "label": "API 요청 경로",
+        "focus": ["client", "apiserver", "etcd"],
+        "note": "모든 내부·외부 요청은 kube-apiserver를 거치며, 클러스터 데이터는 etcd에 저장됩니다."
+      },
+      {
+        "id": "scheduling",
+        "label": "파드 스케줄링",
+        "focus": ["apiserver", "scheduler"],
+        "note": "kube-scheduler는 API 서버에서 새 파드를 감시하고 실행할 노드를 선택해 할당합니다."
+      },
+      {
+        "id": "controllers",
+        "label": "컨트롤러",
+        "focus": ["apiserver", "controller-manager", "cloud-controller-manager"],
+        "note": "두 컨트롤러 매니저는 API 서버를 통해 상태를 감시하고 원하는 상태로 조정합니다."
+      }
+    ]
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "kubectl / 클라이언트", "sublabel": "내부·외부 요청", "pos": [20, 110], "size": [140, 60] },
+    { "id": "apiserver", "type": "backend", "label": "kube-apiserver", "sublabel": "클러스터의 API 엔드포인트", "pos": [415, 110], "size": [190, 60] },
+    { "id": "etcd", "type": "database", "label": "etcd", "sublabel": "클러스터 데이터 저장소", "pos": [680, 110], "size": [170, 60] },
+    { "id": "scheduler", "type": "backend", "label": "kube-scheduler", "sublabel": "파드 스케줄링", "pos": [200, 290], "size": [170, 60] },
+    { "id": "controller-manager", "type": "backend", "label": "kube-controller-manager", "sublabel": "컨트롤러 프로세스 관리", "pos": [410, 290], "size": [200, 60] },
+    { "id": "cloud-controller-manager", "type": "backend", "label": "cloud-controller-manager", "sublabel": "클라우드 서비스 통합", "pos": [650, 290], "size": [200, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "컨트롤 플레인 (마스터)", "wraps": ["apiserver", "etcd", "scheduler", "controller-manager", "cloud-controller-manager"] }
+  ],
+  "connections": [
+    { "id": "client-to-api", "from": "client", "to": "apiserver", "label": "Kubernetes API", "variant": "emphasis" },
+    { "id": "api-to-etcd", "from": "apiserver", "to": "etcd", "label": "읽기 / 쓰기", "variant": "emphasis" },
+    { "id": "scheduler-to-api", "from": "scheduler", "to": "apiserver", "label": "파드 감시 / 노드 할당" },
+    { "id": "cm-to-api", "from": "controller-manager", "to": "apiserver", "label": "감시 / 조정" },
+    { "id": "ccm-to-api", "from": "cloud-controller-manager", "to": "apiserver", "label": "클라우드 리소스 조정" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "핵심 구성 요소",
+      "items": [
+        "kube-apiserver: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드",
+        "etcd: 모든 클러스터 데이터를 저장하는 고가용성 키-값 저장소",
+        "kube-scheduler: 새 파드를 실행할 노드를 선택해 할당"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "kube-controller-manager",
+      "items": [
+        "노드 컨트롤러: 노드 다운 시 알림 및 대응",
+        "레플리케이션 컨트롤러: 파드 복제본 수 유지",
+        "엔드포인트 컨트롤러: 서비스와 파드 연결",
+        "서비스 어카운트 & 토큰 컨트롤러: 기본 계정·API 토큰 생성"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "cloud-controller-manager",
+      "items": [
+        "노드 컨트롤러: 클라우드 제공자에게 노드 삭제 여부 확인",
+        "라우트 컨트롤러: 클라우드 인프라에 라우트 설정",
+        "서비스 컨트롤러: 클라우드 로드 밸런서 생성·업데이트·삭제",
+        "볼륨 컨트롤러: 볼륨 생성·연결·마운트"
+      ]
+    }
+  ]
+}
