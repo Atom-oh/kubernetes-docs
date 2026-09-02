@@ -3,7 +3,7 @@
 # Cloud Native Operations 교육 컨텐츠
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-이 저장소는 Kubernetes와 Amazon EKS에 대한 포괄적인 교육 자료를 제공합니다. Linux 기초부터 컨테이너화, Kubernetes 오케스트레이션, 그리고 Amazon EKS의 고급 기능까지 다룹니다.
+이 저장소는 Linux와 컨테이너 기초부터 Kubernetes와 Amazon EKS, 네트워킹, 서비스 메시, 스토리지, 데이터베이스, 데이터 파이프라인, AI/ML, 그리고 보안·운영까지 클라우드 전반을 아우르는 종합 가이드북입니다. 학습 자료와 함께 실제 AWS 환경에서 측정한 벤치마크 데이터, 주제별 퀴즈와 실습 랩을 제공합니다.
 
 ## 학습 자료 및 퀴즈
 
@@ -11,47 +11,41 @@
 
 - [학습 자료 목차](#목차) - 주제별 학습 자료
 - [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
+- [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로
+- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법
 
 ## 목차
 
 ### 소식
 - [주간 소식](./news/README.md) - Kubernetes/EKS 생태계 최신 뉴스 다이제스트
 
-### 기초 개념
+### Linux & Container
 1. [Linux 기초](./basics/01-linux-basics.md) | [퀴즈](./quizzes/basics/01-linux-basics-quiz.md) | [실습](./labs/basics/01-linux-basics-lab.md)
 2. [Linux 운영 기술](./basics/02-linux-advanced.md) | [퀴즈](./quizzes/basics/02-linux-advanced-quiz.md) | [실습](./labs/basics/02-linux-advanced-lab.md)
 3. [컨테이너 기술](./basics/03-container-technology.md) | [퀴즈](./quizzes/basics/03-container-technology-quiz.md) | [실습](./labs/basics/03-container-technology-lab.md)
-4. [Kubernetes 소개](./basics/04-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/04-kubernetes-introduction-quiz.md)
-5. [eBPF 기초와 실무 활용](./basics/05-ebpf-fundamentals.md) | [퀴즈](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
-6. [네트워크 기초 — 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
-   - [Part 1: 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
-   - [Part 2: 전송 계층과 TLS](./basics/06-network-fundamentals-part2.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
-   - [Part 3: 애플리케이션 프로토콜](./basics/06-network-fundamentals-part3.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
-   - [Part 4: 요청의 여정과 클라우드](./basics/06-network-fundamentals-part4.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
+4. [eBPF 기초와 실무 활용](./basics/05-ebpf-fundamentals.md) | [퀴즈](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### Kubernetes 핵심 개념
-1. [클러스터 아키텍처](./core/01-cluster-architecture.md) | [퀴즈](./quizzes/core/01-cluster-architecture-quiz.md)
-2. [파드와 워크로드](./core/02-pods-and-workloads.md) | [퀴즈](./quizzes/core/02-pods-and-workloads-quiz.md)
-3. [서비스와 네트워킹](./core/03-services-networking.md) | [퀴즈](./quizzes/core/03-services-networking-quiz.md)
-4. [스토리지](./core/04-storage.md) | [퀴즈](./quizzes/core/04-storage-quiz.md)
-5. [구성](./core/05-configuration-secrets.md) | [퀴즈](./quizzes/core/05-configuration-secrets-quiz.md)
-6. [보안](./core/06-security.md) | [퀴즈](./quizzes/core/06-security-quiz.md)
-7. [정책](./core/07-policies.md) | [퀴즈](./quizzes/core/07-policies-quiz.md)
-8. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
-9. [클러스터 관리](./core/09-cluster-administration.md) | [퀴즈](./quizzes/core/09-cluster-administration-quiz.md)
-10. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [퀴즈](./quizzes/core/10-windows-in-kubernetes-quiz.md)
-11. [Kubernetes 확장](./core/11-extending-kubernetes.md) | [퀴즈](./quizzes/core/11-extending-kubernetes-quiz.md)
-
-### Scheduling
-1. Custom Scheduler
+1. [Kubernetes 소개](./basics/04-kubernetes-introduction.md) | [퀴즈](./quizzes/basics/04-kubernetes-introduction-quiz.md)
+2. [클러스터 아키텍처](./core/01-cluster-architecture.md) | [퀴즈](./quizzes/core/01-cluster-architecture-quiz.md)
+3. [파드와 워크로드](./core/02-pods-and-workloads.md) | [퀴즈](./quizzes/core/02-pods-and-workloads-quiz.md)
+4. [서비스와 네트워킹](./core/03-services-networking.md) | [퀴즈](./quizzes/core/03-services-networking-quiz.md)
+5. [스토리지](./core/04-storage.md) | [퀴즈](./quizzes/core/04-storage-quiz.md)
+6. [구성](./core/05-configuration-secrets.md) | [퀴즈](./quizzes/core/05-configuration-secrets-quiz.md)
+7. [보안](./core/06-security.md) | [퀴즈](./quizzes/core/06-security-quiz.md)
+8. [정책](./core/07-policies.md) | [퀴즈](./quizzes/core/07-policies-quiz.md)
+9. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+10. [클러스터 관리](./core/09-cluster-administration.md) | [퀴즈](./quizzes/core/09-cluster-administration-quiz.md)
+11. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [퀴즈](./quizzes/core/10-windows-in-kubernetes-quiz.md)
+12. [Kubernetes 확장](./core/11-extending-kubernetes.md) | [퀴즈](./quizzes/core/11-extending-kubernetes-quiz.md)
+13. Custom Scheduler
    - [Part 1: Custom Scheduler 기초](./scheduling/01-custom-scheduler-part1.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
    - [Part 2: 스케줄러 확장 및 프레임워크](./scheduling/02-custom-scheduler-part2.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Part 3: 커스텀 스케줄러 구현 사례 및 모니터링](./scheduling/03-custom-scheduler-part3.md) | [퀴즈](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-
-### Autoscaling
-1. [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
-2. [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
-3. [Knative](./autoscaling/03-knative.md) | [퀴즈](./quizzes/autoscaling/03-knative-quiz.md)
+14. 오토스케일링
+   - [KEDA](./autoscaling/01-keda.md) | [퀴즈](./quizzes/autoscaling/05-keda-quiz.md)
+   - [Karpenter](./autoscaling/02-karpenter.md) | [퀴즈](./quizzes/autoscaling/06-karpenter-quiz.md)
+   - [Knative](./autoscaling/03-knative.md) | [퀴즈](./quizzes/autoscaling/03-knative-quiz.md)
 
 ### Amazon EKS
 1. [EKS 소개](./eks/01-eks-introduction.md) | [퀴즈](./quizzes/eks/01-eks-introduction-quiz.md)
@@ -176,8 +170,13 @@
 
 ### Networking
 1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
-2. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
-3. **Cilium 딥다이브**
+2. [네트워크 기초 — 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
+   - [Part 1: 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
+   - [Part 2: 전송 계층과 TLS](./basics/06-network-fundamentals-part2.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
+   - [Part 3: 애플리케이션 프로토콜](./basics/06-network-fundamentals-part3.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
+   - [Part 4: 요청의 여정과 클라우드](./basics/06-network-fundamentals-part4.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
+3. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
+4. **Cilium 딥다이브**
    - [Cilium 소개](./networking/cilium/README.md)
    - [Part 1: 소개](./networking/cilium/01-introduction.md) | [퀴즈](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [퀴즈](./quizzes/networking/cilium/02-ebpf-quiz.md)
@@ -188,7 +187,7 @@
    - [Part 7: 고급 주제](./networking/cilium/07-advanced-topics.md) | [퀴즈](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
    - [네트워킹 개념](./networking/cilium/networking-concepts.md) | [퀴즈](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [용어집](./networking/cilium/glossary.md) | [퀴즈](./quizzes/networking/cilium/glossary-quiz.md)
-4. **Calico 딥다이브**
+5. **Calico 딥다이브**
    - [Calico 소개](./networking/calico/README.md)
    - [Part 1: 소개](./networking/calico/01-introduction.md) | [퀴즈](./quizzes/networking/calico/01-introduction-quiz.md)
    - [Part 2: 아키텍처](./networking/calico/02-architecture.md) | [퀴즈](./quizzes/networking/calico/02-architecture-quiz.md)
@@ -200,9 +199,9 @@
    - [Part 8: EKS 통합](./networking/calico/08-eks-integration.md) | [퀴즈](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: 운영](./networking/calico/09-operations.md) | [퀴즈](./quizzes/networking/calico/09-operations-quiz.md)
    - [용어집](./networking/calico/glossary.md) | [퀴즈](./quizzes/networking/calico/glossary-quiz.md)
-5. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
-6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
-7. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
+6. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
+7. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
+8. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
@@ -224,6 +223,76 @@
    - [Ingress Gateway](./service-mesh/cilium-service-mesh/05-ingress-gateway.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
    - [모범 사례](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
+### Storage
+1. [Storage 개요](./storage/README.md)
+2. [EBS gp2 vs gp3 실측 벤치마크](./storage/01-ebs-gp2-gp3-benchmark.md) | [퀴즈](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### Database
+1. [Database on Kubernetes 개요](./database/README.md)
+2. [ClickHouse on EKS 실측 벤치마크](./database/01-clickhouse-on-eks.md) | [퀴즈](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+
+### Data Pipeline
+1. [Data on EKS 개요](./data-on-eks/README.md)
+   - [모던 데이터 파이프라인 해부](./data-on-eks/01-data-pipeline-anatomy.md) | [퀴즈](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+2. **Kafka on EKS 딥다이브**
+   - [Kafka on EKS 소개](./data-on-eks/kafka/README.md)
+   - [Part 1: Kafka 핵심 개념](./data-on-eks/kafka/01-kafka-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+   - [Part 2: Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator.md) | [퀴즈](./quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+   - [Part 3: Kafka 운영](./data-on-eks/kafka/03-kafka-operations.md) | [퀴즈](./quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+   - [Part 4: 스키마 레지스트리](./data-on-eks/kafka/04-schema-registry.md) | [퀴즈](./quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+   - [Part 5: Kafka Connect와 MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [퀴즈](./quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+   - [Part 6: MSK 통합](./data-on-eks/kafka/06-msk-integration.md) | [퀴즈](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+   - [Part 7: 모니터링](./data-on-eks/kafka/07-monitoring.md) | [퀴즈](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+   - [Part 8: 모범 사례](./data-on-eks/kafka/08-best-practices.md) | [퀴즈](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+3. **Spark on EKS 딥다이브**
+   - [Spark on EKS 소개](./data-on-eks/spark/README.md)
+   - [Part 1: Spark on Kubernetes 기초](./data-on-eks/spark/01-spark-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
+   - [Part 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [퀴즈](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
+   - [Part 3: Amazon EMR on EKS](./data-on-eks/spark/03-emr-on-eks.md) | [퀴즈](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
+   - [Part 4: 성능 및 비용 튜닝](./data-on-eks/spark/04-performance-tuning.md) | [퀴즈](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
+   - [Part 5: 모범 사례와 보안](./data-on-eks/spark/05-best-practices.md) | [퀴즈](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
+4. **Airflow on EKS 딥다이브**
+   - [Airflow on EKS 소개](./data-on-eks/airflow/README.md)
+   - [Part 1: Kubernetes에서의 Airflow 아키텍처](./data-on-eks/airflow/01-architecture.md) | [퀴즈](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
+   - [Part 2: Helm 배포와 Executor 선택](./data-on-eks/airflow/02-helm-deployment.md) | [퀴즈](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [Part 3: DAG 패턴과 KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [퀴즈](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
+   - [Part 4: Amazon MWAA 통합](./data-on-eks/airflow/04-mwaa-integration.md) | [퀴즈](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
+   - [Part 5: 운영과 보안](./data-on-eks/airflow/05-operations.md) | [퀴즈](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
+5. **Flink on EKS 딥다이브**
+   - [Flink on EKS 소개](./data-on-eks/flink/README.md)
+   - [Part 1: Kubernetes에서의 Flink 아키텍처](./data-on-eks/flink/01-architecture.md) | [퀴즈](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
+   - [Part 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [퀴즈](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+   - [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [퀴즈](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+   - [Part 4: 운영, 고가용성, 그리고 매니지드 Flink](./data-on-eks/flink/04-operations-ha.md) | [퀴즈](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
+
+### AI/ML
+1. [AI/ML 워크로드](./ai-ml/01-ai-ml-workloads.md) | [퀴즈](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [AI 인프라스트럭처](./ai-ml/06-ai-infrastructure.md) | [퀴즈](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+3. [모델 트레이닝](./ai-ml/05-model-training.md) | [퀴즈](./quizzes/ai-ml/05-model-training-quiz.md)
+4. [추론 프레임워크](./ai-ml/04-inference-frameworks.md) | [퀴즈](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
+5. [vLLM 배포 및 최적화](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+6. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+7. [AI/ML 모범 사례](./ai-ml/07-ai-ml-best-practices.md) | [퀴즈](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **Ray on EKS 딥다이브**
+   - [Ray on EKS 소개](./ai-ml/ray/README.md)
+   - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [퀴즈](./quizzes/ai-ml/ray/01-architecture-quiz.md)
+   - [Part 2: The KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [퀴즈](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+   - [Part 3: Ray Train and Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [퀴즈](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+   - [Part 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [퀴즈](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **Kubeflow on EKS 딥다이브**
+   - [Kubeflow on EKS 소개](./ai-ml/kubeflow/README.md)
+   - [Part 1: EKS에서의 Kubeflow 아키텍처와 설치](./ai-ml/kubeflow/01-architecture-installation.md) | [퀴즈](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [Part 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [퀴즈](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [Part 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [퀴즈](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](./ai-ml/kubeflow/04-katib.md) | [퀴즈](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [Part 5: Kubeflow Trainer와 분산 학습](./ai-ml/kubeflow/05-training-operator.md) | [퀴즈](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [Part 6: KServe — Kubernetes 위에서의 모델 서빙](./ai-ml/kubeflow/06-kserve.md) | [퀴즈](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **MLflow on EKS 딥다이브**
+   - [MLflow on EKS 소개](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [퀴즈](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [퀴즈](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: MLflow를 EKS에 배포하기](./ai-ml/mlflow/03-eks-deployment.md) | [퀴즈](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
 2. [Kubernetes 인증 및 권한 부여](./security/02-kubernetes-auth-authz.md) | [퀴즈](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
@@ -237,24 +306,6 @@
 10. [cert-manager](./security/10-cert-manager.md) | [퀴즈](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [퀴즈](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [퀴즈](./quizzes/security/12-spiffe-spire-quiz.md)
-
-### Container Registry
-1. [컨테이너 레지스트리 개요](./container-registry/README.md)
-2. [Docker Hub](./container-registry/01-docker-hub.md) | [퀴즈](./quizzes/container-registry/01-docker-hub-quiz.md)
-3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [퀴즈](./quizzes/container-registry/02-amazon-ecr-quiz.md)
-4. [Harbor](./container-registry/03-harbor.md) | [퀴즈](./quizzes/container-registry/03-harbor-quiz.md)
-5. [컨테이너 레지스트리 모범 사례](./container-registry/04-best-practices.md) | [퀴즈](./quizzes/container-registry/04-best-practices-quiz.md)
-
-### Platform Engineering
-0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
-1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
-2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [퀴즈](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
-4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
-5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
-6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
-7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
-8. [vCluster](./platform-engineering/08-vcluster.md) | [퀴즈](./quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)
@@ -275,22 +326,23 @@
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [퀴즈](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags와 OpenFeature](./gitops/05-feature-flags.md) | [퀴즈](./quizzes/gitops/05-feature-flags-quiz.md)
 
-### 운영 가이드
-1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
-2. [인프라 구성 고급](./ops/02-infrastructure-advanced.md) | [퀴즈](./quizzes/ops/02-infrastructure-advanced-quiz.md)
-3. [CI 파이프라인 구성](./ops/03-ci-pipelines.md) | [퀴즈](./quizzes/ops/03-ci-pipelines-quiz.md)
-4. [GitOps 멀티 클러스터](./ops/04-gitops-multi-cluster.md) | [퀴즈](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
-5. [GitOps 자동화](./ops/05-gitops-automation.md) | [퀴즈](./quizzes/ops/05-gitops-automation-quiz.md)
-6. [스케일링 전략](./ops/06-scaling-strategies.md) | [퀴즈](./quizzes/ops/06-scaling-strategies-quiz.md)
-7. [Observability 알림 설정](./ops/07-observability-alerts.md) | [퀴즈](./quizzes/ops/07-observability-alerts-quiz.md)
-8. [Observability 분석 방법](./ops/08-observability-analysis.md) | [퀴즈](./quizzes/ops/08-observability-analysis-quiz.md)
-9. [Observability 스택 구성](./ops/09-observability-stack.md) | [퀴즈](./quizzes/ops/09-observability-stack-quiz.md)
-10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
-11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
-12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
-13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
-14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
-15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+### Platform Engineering
+0. [Platform Engineering 개요](./platform-engineering/00-platform-engineering-overview.md) | [퀴즈](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+1. [Helm](./platform-engineering/01-helm.md) | [퀴즈](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [퀴즈](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [퀴즈](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes 확장 메커니즘](./platform-engineering/04-kubernetes-extensions.md) | [퀴즈](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO 통합 예제](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [퀴즈](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [퀴즈](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [퀴즈](./quizzes/platform-engineering/08-vcluster-quiz.md)
+
+### Container Registry
+1. [컨테이너 레지스트리 개요](./container-registry/README.md)
+2. [Docker Hub](./container-registry/01-docker-hub.md) | [퀴즈](./quizzes/container-registry/01-docker-hub-quiz.md)
+3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [퀴즈](./quizzes/container-registry/02-amazon-ecr-quiz.md)
+4. [Harbor](./container-registry/03-harbor.md) | [퀴즈](./quizzes/container-registry/03-harbor-quiz.md)
+5. [컨테이너 레지스트리 모범 사례](./container-registry/04-best-practices.md) | [퀴즈](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### Observability
 1. [Observability 개요](./observability/README.md)
@@ -322,6 +374,23 @@
 6. [Grafana](./observability/grafana/README.md) | [퀴즈](./quizzes/observability/grafana/grafana-quiz.md)
 7. [관측성 최적화 가이드](./observability/09-observability-optimization.md) | [퀴즈](./quizzes/observability/09-observability-optimization-quiz.md)
 
+### 운영 가이드
+1. [인프라 구성 기초](./ops/01-infrastructure-setup.md) | [퀴즈](./quizzes/ops/01-infrastructure-setup-quiz.md)
+2. [인프라 구성 고급](./ops/02-infrastructure-advanced.md) | [퀴즈](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+3. [CI 파이프라인 구성](./ops/03-ci-pipelines.md) | [퀴즈](./quizzes/ops/03-ci-pipelines-quiz.md)
+4. [GitOps 멀티 클러스터](./ops/04-gitops-multi-cluster.md) | [퀴즈](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
+5. [GitOps 자동화](./ops/05-gitops-automation.md) | [퀴즈](./quizzes/ops/05-gitops-automation-quiz.md)
+6. [스케일링 전략](./ops/06-scaling-strategies.md) | [퀴즈](./quizzes/ops/06-scaling-strategies-quiz.md)
+7. [Observability 알림 설정](./ops/07-observability-alerts.md) | [퀴즈](./quizzes/ops/07-observability-alerts-quiz.md)
+8. [Observability 분석 방법](./ops/08-observability-analysis.md) | [퀴즈](./quizzes/ops/08-observability-analysis-quiz.md)
+9. [Observability 스택 구성](./ops/09-observability-stack.md) | [퀴즈](./quizzes/ops/09-observability-stack-quiz.md)
+10. [리소스 최적화](./ops/10-resource-optimization.md) | [퀴즈](./quizzes/ops/10-resource-optimization-quiz.md)
+11. [EKS 업그레이드 운영](./ops/11-upgrade-operations.md) | [퀴즈](./quizzes/ops/11-upgrade-operations-quiz.md)
+12. [이벤트 용량 계획 플레이북](./ops/12-event-capacity-planning.md) | [퀴즈](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
+15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+
 ## 실습 가이드
 
 이론 학습 후 실제 환경에서 실습할 수 있는 가이드를 제공합니다.
@@ -343,7 +412,7 @@
 ## 학습 가이드
 
 ### 초보자를 위한 학습 순서
-1. **기초 개념** → **Kubernetes 핵심 개념** → **Amazon EKS** 순서로 학습
+1. **Linux & Container** → **Kubernetes 핵심 개념** → **Amazon EKS** 순서로 학습
 2. 각 장을 읽은 후 해당 퀴즈를 풀어 이해도 확인
 3. 실습 환경에서 직접 명령어와 예제 코드 실행
 

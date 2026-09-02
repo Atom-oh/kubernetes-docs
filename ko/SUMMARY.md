@@ -3,26 +3,23 @@
 ## 소개
 
 * [소개](README.md)
+* [가이드북 로드맵](roadmap.md)
+* [LLM과 함께 읽기](llm-guide.md)
 
 ## 소식
 
 * [소식](news/README.md)
 
-## Basic
+## Linux & Container
 
 * [Linux 기초](basics/01-linux-basics.md)
 * [Linux 운영 기술](basics/02-linux-advanced.md)
 * [컨테이너 기술](basics/03-container-technology.md)
-* [Kubernetes 소개](basics/04-kubernetes-introduction.md)
 * [eBPF 기초와 실무 활용](basics/05-ebpf-fundamentals.md)
-* [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals-part1.md)
-  * [Part 1: 계층 모델과 링크·라우팅](basics/06-network-fundamentals-part1.md)
-  * [Part 2: 전송 계층과 TLS](basics/06-network-fundamentals-part2.md)
-  * [Part 3: 애플리케이션 프로토콜](basics/06-network-fundamentals-part3.md)
-  * [Part 4: 요청의 여정과 클라우드](basics/06-network-fundamentals-part4.md)
 
 ## Kubernetes 핵심 개념
 
+* [Kubernetes 소개](basics/04-kubernetes-introduction.md)
 * [클러스터 아키텍처](core/01-cluster-architecture.md)
 * [파드와 워크로드](core/02-pods-and-workloads.md)
 * [서비스와 네트워킹](core/03-services-networking.md)
@@ -34,19 +31,14 @@
 * [클러스터 관리](core/09-cluster-administration.md)
 * [Windows in Kubernetes](core/10-windows-in-kubernetes.md)
 * [Kubernetes 확장](core/11-extending-kubernetes.md)
-
-## Scheduling
-
 * [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
   * [Part 1: 기본 개념](scheduling/01-custom-scheduler-part1.md)
   * [Part 2: 구현](scheduling/02-custom-scheduler-part2.md)
   * [Part 3: 고급 기능](scheduling/03-custom-scheduler-part3.md)
-
-## Autoscaling
-
-* [KEDA](autoscaling/01-keda.md)
-* [Karpenter](autoscaling/02-karpenter.md)
-* [Knative](autoscaling/03-knative.md)
+* 오토스케일링
+  * [KEDA](autoscaling/01-keda.md)
+  * [Karpenter](autoscaling/02-karpenter.md)
+  * [Knative](autoscaling/03-knative.md)
 
 ## Amazon EKS
 
@@ -163,6 +155,11 @@
 ## Network Operations
 
 * [Network Operations 개요](networking/README.md)
+* [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals-part1.md)
+  * [Part 1: 계층 모델과 링크·라우팅](basics/06-network-fundamentals-part1.md)
+  * [Part 2: 전송 계층과 TLS](basics/06-network-fundamentals-part2.md)
+  * [Part 3: 애플리케이션 프로토콜](basics/06-network-fundamentals-part3.md)
+  * [Part 4: 요청의 여정과 클라우드](basics/06-network-fundamentals-part4.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 딥다이브](networking/cilium/README.md)
   * [Part 1: 소개](networking/cilium/01-introduction.md)
@@ -257,6 +254,73 @@
   * [인그레스 & 게이트웨이](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [모범 사례](service-mesh/cilium-service-mesh/06-best-practices.md)
 
+## Storage
+
+* [Storage 개요](storage/README.md)
+* [EBS gp2 vs gp3 실측 벤치마크](storage/01-ebs-gp2-gp3-benchmark.md)
+
+## Database
+
+* [Database on Kubernetes 개요](database/README.md)
+* [ClickHouse on EKS 실측 벤치마크](database/01-clickhouse-on-eks.md)
+
+## Data Pipeline
+
+* [Data on EKS 개요](data-on-eks/README.md)
+* [모던 데이터 파이프라인 해부](data-on-eks/01-data-pipeline-anatomy.md)
+* [Kafka on EKS 딥다이브](data-on-eks/kafka/README.md)
+  * [Part 1: Kafka 핵심 개념](data-on-eks/kafka/01-kafka-fundamentals.md)
+  * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
+  * [Part 3: Kafka 운영](data-on-eks/kafka/03-kafka-operations.md)
+  * [Part 4: 스키마 레지스트리](data-on-eks/kafka/04-schema-registry.md)
+  * [Part 5: Kafka Connect와 MirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
+  * [Part 6: MSK 통합](data-on-eks/kafka/06-msk-integration.md)
+  * [Part 7: 모니터링](data-on-eks/kafka/07-monitoring.md)
+  * [Part 8: 모범 사례](data-on-eks/kafka/08-best-practices.md)
+* [Spark on EKS 딥다이브](data-on-eks/spark/README.md)
+  * [Part 1: Spark on Kubernetes 기초](data-on-eks/spark/01-spark-fundamentals.md)
+  * [Part 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
+  * [Part 3: Amazon EMR on EKS](data-on-eks/spark/03-emr-on-eks.md)
+  * [Part 4: 성능 및 비용 튜닝](data-on-eks/spark/04-performance-tuning.md)
+  * [Part 5: 모범 사례와 보안](data-on-eks/spark/05-best-practices.md)
+* [Airflow on EKS 딥다이브](data-on-eks/airflow/README.md)
+  * [Part 1: Kubernetes에서의 Airflow 아키텍처](data-on-eks/airflow/01-architecture.md)
+  * [Part 2: Helm 배포와 Executor 선택](data-on-eks/airflow/02-helm-deployment.md)
+  * [Part 3: DAG 패턴과 KubernetesPodOperator](data-on-eks/airflow/03-dag-patterns.md)
+  * [Part 4: Amazon MWAA 통합](data-on-eks/airflow/04-mwaa-integration.md)
+  * [Part 5: 운영과 보안](data-on-eks/airflow/05-operations.md)
+* [Flink on EKS 딥다이브](data-on-eks/flink/README.md)
+  * [Part 1: Kubernetes에서의 Flink 아키텍처](data-on-eks/flink/01-architecture.md)
+  * [Part 2: Flink Kubernetes Operator](data-on-eks/flink/02-flink-kubernetes-operator.md)
+  * [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴](data-on-eks/flink/03-state-checkpointing-streaming.md)
+  * [Part 4: 운영, 고가용성, 그리고 매니지드 Flink](data-on-eks/flink/04-operations-ha.md)
+
+## AI/ML
+
+* [AI/ML 워크로드](ai-ml/01-ai-ml-workloads.md)
+* [AI 인프라스트럭처](ai-ml/06-ai-infrastructure.md)
+* [모델 트레이닝](ai-ml/05-model-training.md)
+* [추론 프레임워크](ai-ml/04-inference-frameworks.md)
+* [vLLM 배포 및 최적화](ai-ml/02-vllm-deployment.md)
+* [Agentic AI 플랫폼](ai-ml/03-agentic-ai-platform.md)
+* [AI/ML 모범 사례](ai-ml/07-ai-ml-best-practices.md)
+* [Ray on EKS 딥다이브](ai-ml/ray/README.md)
+  * [Part 1: Ray Architecture](ai-ml/ray/01-architecture.md)
+  * [Part 2: The KubeRay Operator](ai-ml/ray/02-kuberay-operator.md)
+  * [Part 3: Ray Train and Ray Tune](ai-ml/ray/03-ray-train-tune.md)
+  * [Part 4: Ray Serve](ai-ml/ray/04-ray-serve.md)
+* [Kubeflow on EKS 딥다이브](ai-ml/kubeflow/README.md)
+  * [Part 1: EKS에서의 Kubeflow 아키텍처와 설치](ai-ml/kubeflow/01-architecture-installation.md)
+  * [Part 2: Kubeflow Pipelines](ai-ml/kubeflow/02-pipelines.md)
+  * [Part 3: Kubeflow Notebooks](ai-ml/kubeflow/03-notebooks.md)
+  * [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](ai-ml/kubeflow/04-katib.md)
+  * [Part 5: Kubeflow Trainer와 분산 학습](ai-ml/kubeflow/05-training-operator.md)
+  * [Part 6: KServe — Kubernetes 위에서의 모델 서빙](ai-ml/kubeflow/06-kserve.md)
+* [MLflow on EKS 딥다이브](ai-ml/mlflow/README.md)
+  * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
+  * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
+  * [Part 3: MLflow를 EKS에 배포하기](ai-ml/mlflow/03-eks-deployment.md)
+
 ## Security & Policy
 
 * [Kyverno를 사용한 정책 관리](security/01-kyverno-policy-management.md)
@@ -271,29 +335,6 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
-
-## Container Registry
-
-* [컨테이너 레지스트리 개요](container-registry/README.md)
-* [Docker Hub](container-registry/01-docker-hub.md)
-* [Amazon ECR](container-registry/02-amazon-ecr.md)
-* [Harbor](container-registry/03-harbor.md)
-* [컨테이너 레지스트리 모범 사례](container-registry/04-best-practices.md)
-
-## Platform Engineering
-
-* [Platform Engineering 개요](platform-engineering/00-platform-engineering-overview.md)
-* [Helm](platform-engineering/01-helm.md)
-* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
-  * [S3 및 IAM 예제](platform-engineering/ack/01-s3-iam.md)
-  * [SQS 및 SNS 예제](platform-engineering/ack/02-sqs-sns.md)
-  * [ELBv2, Route 53, RDS 예제](platform-engineering/ack/03-elbv2-route53-rds.md)
-* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
-* [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
-* [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
-* [Backstage IDP](platform-engineering/06-backstage-idp.md)
-* [Crossplane](platform-engineering/07-crossplane.md)
-* [vCluster](platform-engineering/08-vcluster.md)
 
 ## GitOps
 
@@ -314,24 +355,28 @@
   * [Flagger Progressive Delivery](gitops/04-flagger.md)
   * [Feature Flags와 OpenFeature](gitops/05-feature-flags.md)
 
-## Operations Guide
+## Platform Engineering
 
-* [운영 가이드 소개](ops/README.md)
-  * [인프라 구성 기초](ops/01-infrastructure-setup.md)
-  * [인프라 구성 고급](ops/02-infrastructure-advanced.md)
-  * [CI 파이프라인 구성](ops/03-ci-pipelines.md)
-  * [GitOps 멀티 클러스터](ops/04-gitops-multi-cluster.md)
-  * [GitOps 자동화](ops/05-gitops-automation.md)
-  * [스케일링 전략](ops/06-scaling-strategies.md)
-  * [Observability 알림 설정](ops/07-observability-alerts.md)
-  * [Observability 분석 방법](ops/08-observability-analysis.md)
-  * [Observability 스택 구성](ops/09-observability-stack.md)
-  * [리소스 최적화](ops/10-resource-optimization.md)
-  * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
-  * [이벤트 용량 계획 플레이북](ops/12-event-capacity-planning.md)
-  * [FinOps 비용 가시성 플랫폼](ops/13-finops-cost-platform.md)
-  * [Tekton Pipelines](ops/14-tekton-pipelines.md)
-  * [Zonal 클러스터 운영 전략](ops/15-zonal-operations-guide.md)
+* [Platform Engineering 개요](platform-engineering/00-platform-engineering-overview.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [S3 및 IAM 예제](platform-engineering/ack/01-s3-iam.md)
+  * [SQS 및 SNS 예제](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2, Route 53, RDS 예제](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kubernetes 확장 메커니즘](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp: ACK + KRO 통합 예제](platform-engineering/05-example-corp-app.md)
+* [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
+
+## Container Registry
+
+* [컨테이너 레지스트리 개요](container-registry/README.md)
+* [Docker Hub](container-registry/01-docker-hub.md)
+* [Amazon ECR](container-registry/02-amazon-ecr.md)
+* [Harbor](container-registry/03-harbor.md)
+* [컨테이너 레지스트리 모범 사례](container-registry/04-best-practices.md)
 
 ## Observability
 
@@ -359,6 +404,25 @@
     * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
   * [Grafana](observability/grafana/README.md)
 * [관측성 최적화 가이드](observability/09-observability-optimization.md)
+
+## Operations Guide
+
+* [운영 가이드 소개](ops/README.md)
+  * [인프라 구성 기초](ops/01-infrastructure-setup.md)
+  * [인프라 구성 고급](ops/02-infrastructure-advanced.md)
+  * [CI 파이프라인 구성](ops/03-ci-pipelines.md)
+  * [GitOps 멀티 클러스터](ops/04-gitops-multi-cluster.md)
+  * [GitOps 자동화](ops/05-gitops-automation.md)
+  * [스케일링 전략](ops/06-scaling-strategies.md)
+  * [Observability 알림 설정](ops/07-observability-alerts.md)
+  * [Observability 분석 방법](ops/08-observability-analysis.md)
+  * [Observability 스택 구성](ops/09-observability-stack.md)
+  * [리소스 최적화](ops/10-resource-optimization.md)
+  * [EKS 업그레이드 운영](ops/11-upgrade-operations.md)
+  * [이벤트 용량 계획 플레이북](ops/12-event-capacity-planning.md)
+  * [FinOps 비용 가시성 플랫폼](ops/13-finops-cost-platform.md)
+  * [Tekton Pipelines](ops/14-tekton-pipelines.md)
+  * [Zonal 클러스터 운영 전략](ops/15-zonal-operations-guide.md)
 
 ## Lab Guides
 
@@ -554,6 +618,10 @@
     * [보안 퀴즈](quizzes/service-mesh/cilium-service-mesh/security.md)
     * [관찰성 퀴즈](quizzes/service-mesh/cilium-service-mesh/observability.md)
     * [인그레스 & 게이트웨이 퀴즈](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
+* Storage
+  * [EBS gp2 vs gp3 실측 벤치마크 퀴즈](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+* Database
+  * [ClickHouse on EKS 실측 벤치마크 퀴즈](quizzes/database/01-clickhouse-on-eks-quiz.md)
 * Security & Policy
   * [Kyverno를 사용한 정책 관리 퀴즈](quizzes/security/01-kyverno-policy-management-quiz.md)
   * [Kubernetes 인증 및 권한 부여 퀴즈](quizzes/security/02-kubernetes-auth-authz-quiz.md)

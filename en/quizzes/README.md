@@ -83,6 +83,12 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 ### Service Mesh
 - [Istio Quiz](./service-mesh/02-istio-quiz.md)
 
+### Storage
+- [EBS gp2 vs gp3 Measured Benchmark Quiz](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### Database
+- [ClickHouse on EKS Measured Benchmark Quiz](./database/01-clickhouse-on-eks-quiz.md)
+
 ### Security & Policy
 - [Policy Management with Kyverno Quiz](./security/01-kyverno-policy-management-quiz.md)
 - [Kubernetes Authentication and Authorization Quiz](./security/02-kubernetes-auth-authz-quiz.md)

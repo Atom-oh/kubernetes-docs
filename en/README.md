@@ -3,7 +3,7 @@
 # Kubernetes and Amazon EKS Training Content
 [![GitBook](https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1)](https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link)
 
-This repository provides comprehensive training materials on Kubernetes and Amazon EKS. It covers everything from Linux basics to containerization, Kubernetes orchestration, and advanced features of Amazon EKS.
+This repository is a comprehensive cloud guidebook covering Linux and container fundamentals, Kubernetes and Amazon EKS, networking, service mesh, storage, databases, data pipelines, AI/ML, and security & operations. Alongside the learning materials it provides benchmark data measured on real AWS environments, plus quizzes and hands-on labs for every topic.
 
 ## Learning Materials and Quizzes
 
@@ -11,47 +11,41 @@ This training content provides quizzes for each topic along with the learning ma
 
 - [Learning Materials Table of Contents](#table-of-contents) - Learning materials by topic
 - [Quiz Collection](./quizzes/README.md) - Quizzes by topic
+- [Guidebook Roadmap](./roadmap.md) - The full learning map and recommended learning paths
+- [Reading with LLMs](./llm-guide.md) - How to feed this entire guidebook to an AI via llms.txt
 
 ## Table of Contents
 
 ### News
 - [Weekly News](./news/README.md) - Latest Kubernetes/EKS ecosystem news digests
 
-### Basic Concepts
+### Linux & Container
 1. [Linux Basics](./basics/01-linux-basics.md) | [Quiz](./quizzes/basics/01-linux-basics-quiz.md) | [Lab](./labs/basics/01-linux-basics-lab.md)
 2. [Linux Operations Skills](./basics/02-linux-advanced.md) | [Quiz](./quizzes/basics/02-linux-advanced-quiz.md) | [Lab](./labs/basics/02-linux-advanced-lab.md)
 3. [Container Technology](./basics/03-container-technology.md) | [Quiz](./quizzes/basics/03-container-technology-quiz.md) | [Lab](./labs/basics/03-container-technology-lab.md)
-4. [Introduction to Kubernetes](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
-5. [eBPF Fundamentals and Practical Applications](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
-6. [Network Fundamentals — 25 Protocols](./basics/06-network-fundamentals-part1.md)
-   - [Part 1: The Layer Model, Link and Routing Layers](./basics/06-network-fundamentals-part1.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
-   - [Part 2: The Transport Layer and TLS](./basics/06-network-fundamentals-part2.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
-   - [Part 3: Application Protocols](./basics/06-network-fundamentals-part3.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
-   - [Part 4: A Request's Journey and the Cloud](./basics/06-network-fundamentals-part4.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
+4. [eBPF Fundamentals and Practical Applications](./basics/05-ebpf-fundamentals.md) | [Quiz](./quizzes/basics/05-ebpf-fundamentals-quiz.md)
 
 ### Kubernetes Core Concepts
-1. [Cluster Architecture](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
-2. [Pods and Workloads](./core/02-pods-and-workloads.md) | [Quiz](./quizzes/core/02-pods-and-workloads-quiz.md)
-3. [Services and Networking](./core/03-services-networking.md) | [Quiz](./quizzes/core/03-services-networking-quiz.md)
-4. [Storage](./core/04-storage.md) | [Quiz](./quizzes/core/04-storage-quiz.md)
-5. [Configuration](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
-6. [Security](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
-7. [Policies](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
-8. [Scheduling, Preemption and Eviction](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
-9. [Cluster Administration](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
-10. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
-11. [Extending Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
-
-### Scheduling
-1. Custom Scheduler
+1. [Introduction to Kubernetes](./basics/04-kubernetes-introduction.md) | [Quiz](./quizzes/basics/04-kubernetes-introduction-quiz.md)
+2. [Cluster Architecture](./core/01-cluster-architecture.md) | [Quiz](./quizzes/core/01-cluster-architecture-quiz.md)
+3. [Pods and Workloads](./core/02-pods-and-workloads.md) | [Quiz](./quizzes/core/02-pods-and-workloads-quiz.md)
+4. [Services and Networking](./core/03-services-networking.md) | [Quiz](./quizzes/core/03-services-networking-quiz.md)
+5. [Storage](./core/04-storage.md) | [Quiz](./quizzes/core/04-storage-quiz.md)
+6. [Configuration](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
+7. [Security](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
+8. [Policies](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
+9. [Scheduling, Preemption and Eviction](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+10. [Cluster Administration](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
+11. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
+12. [Extending Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
+13. Custom Scheduler
    - [Part 1: Custom Scheduler Basics](./scheduling/01-custom-scheduler-part1.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part1-quiz.md)
    - [Part 2: Scheduler Extensions and Framework](./scheduling/02-custom-scheduler-part2.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part2-quiz.md)
    - [Part 3: Custom Scheduler Implementation Examples and Monitoring](./scheduling/03-custom-scheduler-part3.md) | [Quiz](./quizzes/scheduling/02-custom-scheduler-part3-quiz.md)
-
-### Autoscaling
-1. [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
-2. [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
-3. [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
+14. Autoscaling
+   - [KEDA](./autoscaling/01-keda.md) | [Quiz](./quizzes/autoscaling/05-keda-quiz.md)
+   - [Karpenter](./autoscaling/02-karpenter.md) | [Quiz](./quizzes/autoscaling/06-karpenter-quiz.md)
+   - [Knative](./autoscaling/03-knative.md) | [Quiz](./quizzes/autoscaling/03-knative-quiz.md)
 
 ### Amazon EKS
 1. [Introduction to EKS](./eks/01-eks-introduction.md) | [Quiz](./quizzes/eks/01-eks-introduction-quiz.md)
@@ -176,8 +170,13 @@ This training content provides quizzes for each topic along with the learning ma
 
 ### Networking
 1. [Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
-2. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
-3. **Cilium Deep Dive**
+2. [Network Fundamentals — 25 Protocols](./basics/06-network-fundamentals-part1.md)
+   - [Part 1: The Layer Model, Link and Routing Layers](./basics/06-network-fundamentals-part1.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
+   - [Part 2: The Transport Layer and TLS](./basics/06-network-fundamentals-part2.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
+   - [Part 3: Application Protocols](./basics/06-network-fundamentals-part3.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
+   - [Part 4: A Request's Journey and the Cloud](./basics/06-network-fundamentals-part4.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
+3. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
+4. **Cilium Deep Dive**
    - [Cilium Introduction](./networking/cilium/README.md)
    - [Part 1: Introduction](./networking/cilium/01-introduction.md) | [Quiz](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [Quiz](./quizzes/networking/cilium/02-ebpf-quiz.md)
@@ -188,7 +187,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 7: Advanced Topics](./networking/cilium/07-advanced-topics.md) | [Quiz](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
    - [Networking Concepts](./networking/cilium/networking-concepts.md) | [Quiz](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [Glossary](./networking/cilium/glossary.md) | [Quiz](./quizzes/networking/cilium/glossary-quiz.md)
-4. **Calico Deep Dive**
+5. **Calico Deep Dive**
    - [Calico Introduction](./networking/calico/README.md)
    - [Part 1: Introduction](./networking/calico/01-introduction.md) | [Quiz](./quizzes/networking/calico/01-introduction-quiz.md)
    - [Part 2: Architecture](./networking/calico/02-architecture.md) | [Quiz](./quizzes/networking/calico/02-architecture-quiz.md)
@@ -200,9 +199,9 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 8: EKS Integration](./networking/calico/08-eks-integration.md) | [Quiz](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: Operations](./networking/calico/09-operations.md) | [Quiz](./quizzes/networking/calico/09-operations-quiz.md)
    - [Glossary](./networking/calico/glossary.md) | [Quiz](./quizzes/networking/calico/glossary-quiz.md)
-5. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
-6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Quiz](./quizzes/networking/03-aws-lb-controller-quiz.md)
-7. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
+6. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
+7. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Quiz](./quizzes/networking/03-aws-lb-controller-quiz.md)
+8. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)
@@ -224,6 +223,76 @@ This training content provides quizzes for each topic along with the learning ma
    - [Ingress Gateway](./service-mesh/cilium-service-mesh/05-ingress-gateway.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
    - [Best Practices](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
+### Storage
+1. [Storage Overview](./storage/README.md)
+2. [EBS gp2 vs gp3 Measured Benchmark](./storage/01-ebs-gp2-gp3-benchmark.md) | [Quiz](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### Database
+1. [Databases on Kubernetes Overview](./database/README.md)
+2. [ClickHouse on EKS Measured Benchmark](./database/01-clickhouse-on-eks.md) | [Quiz](./quizzes/database/01-clickhouse-on-eks-quiz.md)
+
+### Data Pipeline
+1. [Data on EKS Overview](./data-on-eks/README.md)
+   - [Anatomy of a Modern Data Pipeline](./data-on-eks/01-data-pipeline-anatomy.md) | [Quiz](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+2. **Kafka on EKS Deep Dive**
+   - [Kafka on EKS Introduction](./data-on-eks/kafka/README.md)
+   - [Part 1: Kafka Fundamentals](./data-on-eks/kafka/01-kafka-fundamentals.md) | [Quiz](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+   - [Part 2: Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator.md) | [Quiz](./quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+   - [Part 3: Kafka Operations](./data-on-eks/kafka/03-kafka-operations.md) | [Quiz](./quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+   - [Part 4: Schema Registry](./data-on-eks/kafka/04-schema-registry.md) | [Quiz](./quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+   - [Part 5: Kafka Connect and MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [Quiz](./quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+   - [Part 6: MSK Integration](./data-on-eks/kafka/06-msk-integration.md) | [Quiz](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+   - [Part 7: Monitoring](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+   - [Part 8: Best Practices](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+3. **Spark on EKS Deep Dive**
+   - [Spark on EKS Introduction](./data-on-eks/spark/README.md)
+   - [Part 1: Spark on Kubernetes Fundamentals](./data-on-eks/spark/01-spark-fundamentals.md) | [Quiz](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
+   - [Part 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [Quiz](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
+   - [Part 3: Amazon EMR on EKS](./data-on-eks/spark/03-emr-on-eks.md) | [Quiz](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
+   - [Part 4: Performance and Cost Tuning](./data-on-eks/spark/04-performance-tuning.md) | [Quiz](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
+   - [Part 5: Best Practices and Security](./data-on-eks/spark/05-best-practices.md) | [Quiz](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
+4. **Airflow on EKS Deep Dive**
+   - [Airflow on EKS Introduction](./data-on-eks/airflow/README.md)
+   - [Part 1: Airflow Architecture on Kubernetes](./data-on-eks/airflow/01-architecture.md) | [Quiz](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
+   - [Part 2: Helm Deployment and Executor Choice](./data-on-eks/airflow/02-helm-deployment.md) | [Quiz](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [Part 3: DAG Patterns and KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [Quiz](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
+   - [Part 4: Amazon MWAA Integration](./data-on-eks/airflow/04-mwaa-integration.md) | [Quiz](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
+   - [Part 5: Operations and Security](./data-on-eks/airflow/05-operations.md) | [Quiz](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
+5. **Flink on EKS Deep Dive**
+   - [Flink on EKS Introduction](./data-on-eks/flink/README.md)
+   - [Part 1: Flink Architecture on Kubernetes](./data-on-eks/flink/01-architecture.md) | [Quiz](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
+   - [Part 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [Quiz](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+   - [Part 3: State, Checkpointing, and Streaming Patterns](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [Quiz](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+   - [Part 4: Operations, High Availability, and Managed Flink](./data-on-eks/flink/04-operations-ha.md) | [Quiz](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
+
+### AI/ML
+1. [AI/ML Workloads](./ai-ml/01-ai-ml-workloads.md) | [Quiz](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [AI Infrastructure](./ai-ml/06-ai-infrastructure.md) | [Quiz](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+3. [Model Training on EKS](./ai-ml/05-model-training.md) | [Quiz](./quizzes/ai-ml/05-model-training-quiz.md)
+4. [Inference Frameworks](./ai-ml/04-inference-frameworks.md) | [Quiz](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
+5. [vLLM Deployment & Optimization](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+6. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+7. [AI/ML Best Practices](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **Ray on EKS Deep Dive**
+   - [Ray on EKS Introduction](./ai-ml/ray/README.md)
+   - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [Quiz](./quizzes/ai-ml/ray/01-architecture-quiz.md)
+   - [Part 2: The KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [Quiz](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+   - [Part 3: Ray Train and Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [Quiz](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+   - [Part 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [Quiz](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **Kubeflow on EKS Deep Dive**
+   - [Kubeflow on EKS Introduction](./ai-ml/kubeflow/README.md)
+   - [Part 1: Kubeflow Architecture and Installation on EKS](./ai-ml/kubeflow/01-architecture-installation.md) | [Quiz](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [Part 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [Quiz](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [Part 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [Quiz](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [Part 4: Katib — Hyperparameter Tuning and AutoML](./ai-ml/kubeflow/04-katib.md) | [Quiz](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [Part 5: Kubeflow Trainer and Distributed Training](./ai-ml/kubeflow/05-training-operator.md) | [Quiz](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [Part 6: KServe — Model Serving on Kubernetes](./ai-ml/kubeflow/06-kserve.md) | [Quiz](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **MLflow on EKS Deep Dive**
+   - [MLflow on EKS Introduction](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [Quiz](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [Quiz](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: Deploying MLflow on EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Quiz](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+
 ### Security & Policy
 1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
 2. [Kubernetes Authentication and Authorization](./security/02-kubernetes-auth-authz.md) | [Quiz](./quizzes/security/02-kubernetes-auth-authz-quiz.md)
@@ -237,24 +306,6 @@ This training content provides quizzes for each topic along with the learning ma
 10. [cert-manager](./security/10-cert-manager.md) | [Quiz](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
-
-### Container Registry
-1. [Container Registry Overview](./container-registry/README.md)
-2. [Docker Hub](./container-registry/01-docker-hub.md) | [Quiz](./quizzes/container-registry/01-docker-hub-quiz.md)
-3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [Quiz](./quizzes/container-registry/02-amazon-ecr-quiz.md)
-4. [Harbor](./container-registry/03-harbor.md) | [Quiz](./quizzes/container-registry/03-harbor-quiz.md)
-5. [Container Registry Best Practices](./container-registry/04-best-practices.md) | [Quiz](./quizzes/container-registry/04-best-practices-quiz.md)
-
-### Platform Engineering
-0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
-1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
-2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
-3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
-4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
-5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
-6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
-7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
-8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
 
 ### GitOps
 1. [GitOps Overview](./gitops/README.md)
@@ -275,22 +326,23 @@ This training content provides quizzes for each topic along with the learning ma
 5. [Flagger Progressive Delivery](./gitops/04-flagger.md) | [Quiz](./quizzes/gitops/04-flagger-quiz.md)
 6. [Feature Flags and OpenFeature](./gitops/05-feature-flags.md) | [Quiz](./quizzes/gitops/05-feature-flags-quiz.md)
 
-### Operations Guide
-1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
-2. [Infrastructure Advanced](./ops/02-infrastructure-advanced.md) | [Quiz](./quizzes/ops/02-infrastructure-advanced-quiz.md)
-3. [CI Pipelines](./ops/03-ci-pipelines.md) | [Quiz](./quizzes/ops/03-ci-pipelines-quiz.md)
-4. [GitOps Multi-Cluster](./ops/04-gitops-multi-cluster.md) | [Quiz](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
-5. [GitOps Automation](./ops/05-gitops-automation.md) | [Quiz](./quizzes/ops/05-gitops-automation-quiz.md)
-6. [Scaling Strategies](./ops/06-scaling-strategies.md) | [Quiz](./quizzes/ops/06-scaling-strategies-quiz.md)
-7. [Observability Alerts](./ops/07-observability-alerts.md) | [Quiz](./quizzes/ops/07-observability-alerts-quiz.md)
-8. [Observability Analysis](./ops/08-observability-analysis.md) | [Quiz](./quizzes/ops/08-observability-analysis-quiz.md)
-9. [Observability Stack](./ops/09-observability-stack.md) | [Quiz](./quizzes/ops/09-observability-stack-quiz.md)
-10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
-11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
-12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
-13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
-14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
-15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+### Platform Engineering
+0. [Platform Engineering Overview](./platform-engineering/00-platform-engineering-overview.md) | [Quiz](./quizzes/platform-engineering/00-platform-engineering-overview-quiz.md)
+1. [Helm](./platform-engineering/01-helm.md) | [Quiz](./quizzes/platform-engineering/01-helm-quiz.md)
+2. [AWS Controllers for Kubernetes (ACK)](./platform-engineering/02-ack.md) | [Quiz](./quizzes/platform-engineering/02-ack-quiz.md)
+3. [Kubernetes Resource Operator (KRO)](./platform-engineering/03-kro.md) | [Quiz](./quizzes/platform-engineering/03-kro-quiz.md)
+4. [Kubernetes Extension Mechanisms](./platform-engineering/04-kubernetes-extensions.md) | [Quiz](./quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+5. [ExampleCorp: ACK + KRO Integration Example](./platform-engineering/05-example-corp-app.md)
+6. [Backstage IDP](./platform-engineering/06-backstage-idp.md) | [Quiz](./quizzes/platform-engineering/06-backstage-idp-quiz.md)
+7. [Crossplane](./platform-engineering/07-crossplane.md) | [Quiz](./quizzes/platform-engineering/07-crossplane-quiz.md)
+8. [vCluster](./platform-engineering/08-vcluster.md) | [Quiz](./quizzes/platform-engineering/08-vcluster-quiz.md)
+
+### Container Registry
+1. [Container Registry Overview](./container-registry/README.md)
+2. [Docker Hub](./container-registry/01-docker-hub.md) | [Quiz](./quizzes/container-registry/01-docker-hub-quiz.md)
+3. [Amazon ECR](./container-registry/02-amazon-ecr.md) | [Quiz](./quizzes/container-registry/02-amazon-ecr-quiz.md)
+4. [Harbor](./container-registry/03-harbor.md) | [Quiz](./quizzes/container-registry/03-harbor-quiz.md)
+5. [Container Registry Best Practices](./container-registry/04-best-practices.md) | [Quiz](./quizzes/container-registry/04-best-practices-quiz.md)
 
 ### Observability
 1. [Observability Overview](./observability/README.md)
@@ -322,6 +374,23 @@ This training content provides quizzes for each topic along with the learning ma
 6. [Grafana](./observability/grafana/README.md) | [Quiz](./quizzes/observability/grafana/grafana-quiz.md)
 7. [Observability Optimization Guide](./observability/09-observability-optimization.md) | [Quiz](./quizzes/observability/09-observability-optimization-quiz.md)
 
+### Operations Guide
+1. [Infrastructure Setup](./ops/01-infrastructure-setup.md) | [Quiz](./quizzes/ops/01-infrastructure-setup-quiz.md)
+2. [Infrastructure Advanced](./ops/02-infrastructure-advanced.md) | [Quiz](./quizzes/ops/02-infrastructure-advanced-quiz.md)
+3. [CI Pipelines](./ops/03-ci-pipelines.md) | [Quiz](./quizzes/ops/03-ci-pipelines-quiz.md)
+4. [GitOps Multi-Cluster](./ops/04-gitops-multi-cluster.md) | [Quiz](./quizzes/ops/04-gitops-multi-cluster-quiz.md)
+5. [GitOps Automation](./ops/05-gitops-automation.md) | [Quiz](./quizzes/ops/05-gitops-automation-quiz.md)
+6. [Scaling Strategies](./ops/06-scaling-strategies.md) | [Quiz](./quizzes/ops/06-scaling-strategies-quiz.md)
+7. [Observability Alerts](./ops/07-observability-alerts.md) | [Quiz](./quizzes/ops/07-observability-alerts-quiz.md)
+8. [Observability Analysis](./ops/08-observability-analysis.md) | [Quiz](./quizzes/ops/08-observability-analysis-quiz.md)
+9. [Observability Stack](./ops/09-observability-stack.md) | [Quiz](./quizzes/ops/09-observability-stack-quiz.md)
+10. [Resource Optimization](./ops/10-resource-optimization.md) | [Quiz](./quizzes/ops/10-resource-optimization-quiz.md)
+11. [Upgrade Operations](./ops/11-upgrade-operations.md) | [Quiz](./quizzes/ops/11-upgrade-operations-quiz.md)
+12. [Event Capacity Planning Playbook](./ops/12-event-capacity-planning.md) | [Quiz](./quizzes/ops/12-event-capacity-planning-quiz.md)
+13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
+14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
+15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+
 ## Lab Guides
 
 We provide hands-on lab guides for practicing in real environments after learning the theory.
@@ -343,7 +412,7 @@ We provide hands-on lab guides for practicing in real environments after learnin
 ## Learning Guide
 
 ### Learning Path for Beginners
-1. Study in this order: **Basic Concepts** -> **Kubernetes Core Concepts** -> **Amazon EKS**
+1. Study in this order: **Linux & Container** -> **Kubernetes Core Concepts** -> **Amazon EKS**
 2. After reading each chapter, take the corresponding quiz to check your understanding
 3. Execute commands and example code hands-on in a practice environment
 

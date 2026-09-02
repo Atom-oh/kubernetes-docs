@@ -36,7 +36,7 @@ Kubernetes 클러스터는 컨테이너화된 애플리케이션을 실행하기
 
 ### 클러스터 아키텍처 다이어그램
 
-![컨트롤 플레인의 kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저가 연결되고 각 워커 노드의 kubelet, kube-proxy, 컨테이너 런타임이 파드를 실행하는 구조를 보여준다.](../../.gitbook/assets/ko-core-01-cluster-architecture-0.png)
+![컨트롤 플레인의 kube-apiserver를 중심으로 etcd, 스케줄러, 컨트롤러 매니저가 연결되고 각 워커 노드의 kubelet, kube-proxy, 컨테이너 런타임이 파드를 실행하는 구조를 보여준다.](../.gitbook/assets/ko-core-01-cluster-architecture-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-01-cluster-architecture-0.html)
 

@@ -3,26 +3,23 @@
 ## Introduction
 
 * [Introduction](README.md)
+* [Guidebook Roadmap](roadmap.md)
+* [Reading with LLMs](llm-guide.md)
 
 ## News
 
 * [News](news/README.md)
 
-## Basic
+## Linux & Container
 
 * [Linux Basics](basics/01-linux-basics.md)
 * [Linux Operations Skills](basics/02-linux-advanced.md)
 * [Container Technology](basics/03-container-technology.md)
-* [Introduction to Kubernetes](basics/04-kubernetes-introduction.md)
 * [eBPF Fundamentals and Practical Applications](basics/05-ebpf-fundamentals.md)
-* [Network Fundamentals — 25 Protocols](basics/06-network-fundamentals-part1.md)
-  * [Part 1: The Layer Model, Link and Routing Layers](basics/06-network-fundamentals-part1.md)
-  * [Part 2: The Transport Layer and TLS](basics/06-network-fundamentals-part2.md)
-  * [Part 3: Application Protocols](basics/06-network-fundamentals-part3.md)
-  * [Part 4: A Request's Journey and the Cloud](basics/06-network-fundamentals-part4.md)
 
 ## Kubernetes Core Concepts
 
+* [Introduction to Kubernetes](basics/04-kubernetes-introduction.md)
 * [Cluster Architecture](core/01-cluster-architecture.md)
 * [Pods and Workloads](core/02-pods-and-workloads.md)
 * [Services and Networking](core/03-services-networking.md)
@@ -34,19 +31,14 @@
 * [Cluster Administration](core/09-cluster-administration.md)
 * [Windows in Kubernetes](core/10-windows-in-kubernetes.md)
 * [Extending Kubernetes](core/11-extending-kubernetes.md)
-
-## Scheduling
-
 * [Custom Scheduler](scheduling/01-custom-scheduler-part1.md)
   * [Part 1: Basic Concepts](scheduling/01-custom-scheduler-part1.md)
   * [Part 2: Implementation](scheduling/02-custom-scheduler-part2.md)
   * [Part 3: Advanced Features](scheduling/03-custom-scheduler-part3.md)
-
-## Autoscaling
-
-* [KEDA](autoscaling/01-keda.md)
-* [Karpenter](autoscaling/02-karpenter.md)
-* [Knative](autoscaling/03-knative.md)
+* Autoscaling
+  * [KEDA](autoscaling/01-keda.md)
+  * [Karpenter](autoscaling/02-karpenter.md)
+  * [Knative](autoscaling/03-knative.md)
 
 ## Amazon EKS
 
@@ -163,6 +155,11 @@
 ## Networking
 
 * [Networking Overview](networking/README.md)
+* [Network Fundamentals — 25 Protocols](basics/06-network-fundamentals-part1.md)
+  * [Part 1: The Layer Model, Link and Routing Layers](basics/06-network-fundamentals-part1.md)
+  * [Part 2: The Transport Layer and TLS](basics/06-network-fundamentals-part2.md)
+  * [Part 3: Application Protocols](basics/06-network-fundamentals-part3.md)
+  * [Part 4: A Request's Journey and the Cloud](basics/06-network-fundamentals-part4.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium Deep Dive](networking/cilium/README.md)
   * [Part 1: Introduction](networking/cilium/01-introduction.md)
@@ -257,6 +254,73 @@
   * [Ingress & Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [Best Practices](service-mesh/cilium-service-mesh/06-best-practices.md)
 
+## Storage
+
+* [Storage Overview](storage/README.md)
+* [EBS gp2 vs gp3 Measured Benchmark](storage/01-ebs-gp2-gp3-benchmark.md)
+
+## Database
+
+* [Databases on Kubernetes Overview](database/README.md)
+* [ClickHouse on EKS Measured Benchmark](database/01-clickhouse-on-eks.md)
+
+## Data Pipeline
+
+* [Data on EKS Overview](data-on-eks/README.md)
+* [Anatomy of a Modern Data Pipeline](data-on-eks/01-data-pipeline-anatomy.md)
+* [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
+  * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
+  * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
+  * [Part 3: Kafka Operations](data-on-eks/kafka/03-kafka-operations.md)
+  * [Part 4: Schema Registry](data-on-eks/kafka/04-schema-registry.md)
+  * [Part 5: Kafka Connect and MirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
+  * [Part 6: MSK Integration](data-on-eks/kafka/06-msk-integration.md)
+  * [Part 7: Monitoring](data-on-eks/kafka/07-monitoring.md)
+  * [Part 8: Best Practices](data-on-eks/kafka/08-best-practices.md)
+* [Spark on EKS Deep Dive](data-on-eks/spark/README.md)
+  * [Part 1: Spark on Kubernetes Fundamentals](data-on-eks/spark/01-spark-fundamentals.md)
+  * [Part 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
+  * [Part 3: Amazon EMR on EKS](data-on-eks/spark/03-emr-on-eks.md)
+  * [Part 4: Performance and Cost Tuning](data-on-eks/spark/04-performance-tuning.md)
+  * [Part 5: Best Practices and Security](data-on-eks/spark/05-best-practices.md)
+* [Airflow on EKS Deep Dive](data-on-eks/airflow/README.md)
+  * [Part 1: Airflow Architecture on Kubernetes](data-on-eks/airflow/01-architecture.md)
+  * [Part 2: Helm Deployment and Executor Choice](data-on-eks/airflow/02-helm-deployment.md)
+  * [Part 3: DAG Patterns and KubernetesPodOperator](data-on-eks/airflow/03-dag-patterns.md)
+  * [Part 4: Amazon MWAA Integration](data-on-eks/airflow/04-mwaa-integration.md)
+  * [Part 5: Operations and Security](data-on-eks/airflow/05-operations.md)
+* [Flink on EKS Deep Dive](data-on-eks/flink/README.md)
+  * [Part 1: Flink Architecture on Kubernetes](data-on-eks/flink/01-architecture.md)
+  * [Part 2: Flink Kubernetes Operator](data-on-eks/flink/02-flink-kubernetes-operator.md)
+  * [Part 3: State, Checkpointing, and Streaming Patterns](data-on-eks/flink/03-state-checkpointing-streaming.md)
+  * [Part 4: Operations, High Availability, and Managed Flink](data-on-eks/flink/04-operations-ha.md)
+
+## AI/ML
+
+* [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md)
+* [AI Infrastructure](ai-ml/06-ai-infrastructure.md)
+* [Model Training on EKS](ai-ml/05-model-training.md)
+* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
+* [vLLM Deployment & Optimization](ai-ml/02-vllm-deployment.md)
+* [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
+* [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
+* [Ray on EKS Deep Dive](ai-ml/ray/README.md)
+  * [Part 1: Ray Architecture](ai-ml/ray/01-architecture.md)
+  * [Part 2: The KubeRay Operator](ai-ml/ray/02-kuberay-operator.md)
+  * [Part 3: Ray Train and Ray Tune](ai-ml/ray/03-ray-train-tune.md)
+  * [Part 4: Ray Serve](ai-ml/ray/04-ray-serve.md)
+* [Kubeflow on EKS Deep Dive](ai-ml/kubeflow/README.md)
+  * [Part 1: Kubeflow Architecture and Installation on EKS](ai-ml/kubeflow/01-architecture-installation.md)
+  * [Part 2: Kubeflow Pipelines](ai-ml/kubeflow/02-pipelines.md)
+  * [Part 3: Kubeflow Notebooks](ai-ml/kubeflow/03-notebooks.md)
+  * [Part 4: Katib — Hyperparameter Tuning and AutoML](ai-ml/kubeflow/04-katib.md)
+  * [Part 5: Kubeflow Trainer and Distributed Training](ai-ml/kubeflow/05-training-operator.md)
+  * [Part 6: KServe — Model Serving on Kubernetes](ai-ml/kubeflow/06-kserve.md)
+* [MLflow on EKS Deep Dive](ai-ml/mlflow/README.md)
+  * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
+  * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
+  * [Part 3: Deploying MLflow on EKS](ai-ml/mlflow/03-eks-deployment.md)
+
 ## Security & Policy
 
 * [Policy Management with Kyverno](security/01-kyverno-policy-management.md)
@@ -271,29 +335,6 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
-
-## Container Registry
-
-* [Container Registry Overview](container-registry/README.md)
-* [Docker Hub](container-registry/01-docker-hub.md)
-* [Amazon ECR](container-registry/02-amazon-ecr.md)
-* [Harbor](container-registry/03-harbor.md)
-* [Container Registry Best Practices](container-registry/04-best-practices.md)
-
-## Platform Engineering
-
-* [Platform Engineering Overview](platform-engineering/00-platform-engineering-overview.md)
-* [Helm](platform-engineering/01-helm.md)
-* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
-  * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
-  * [SQS and SNS Examples](platform-engineering/ack/02-sqs-sns.md)
-  * [ELBv2, Route 53, RDS Examples](platform-engineering/ack/03-elbv2-route53-rds.md)
-* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
-* [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
-* [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
-* [Backstage IDP](platform-engineering/06-backstage-idp.md)
-* [Crossplane](platform-engineering/07-crossplane.md)
-* [vCluster](platform-engineering/08-vcluster.md)
 
 ## GitOps
 
@@ -314,24 +355,28 @@
   * [Flagger Progressive Delivery](gitops/04-flagger.md)
   * [Feature Flags and OpenFeature](gitops/05-feature-flags.md)
 
-## Operations Guide
+## Platform Engineering
 
-* [Operations Guide](ops/README.md)
-  * [Infrastructure Setup](ops/01-infrastructure-setup.md)
-  * [Infrastructure Advanced](ops/02-infrastructure-advanced.md)
-  * [CI Pipelines](ops/03-ci-pipelines.md)
-  * [GitOps Multi-Cluster](ops/04-gitops-multi-cluster.md)
-  * [GitOps Automation](ops/05-gitops-automation.md)
-  * [Scaling Strategies](ops/06-scaling-strategies.md)
-  * [Observability Alerts](ops/07-observability-alerts.md)
-  * [Observability Analysis](ops/08-observability-analysis.md)
-  * [Observability Stack](ops/09-observability-stack.md)
-  * [Resource Optimization](ops/10-resource-optimization.md)
-  * [Upgrade Operations](ops/11-upgrade-operations.md)
-  * [Event Capacity Planning](ops/12-event-capacity-planning.md)
-  * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
-  * [Tekton Pipelines](ops/14-tekton-pipelines.md)
-  * [Zonal Cluster Operations](ops/15-zonal-operations-guide.md)
+* [Platform Engineering Overview](platform-engineering/00-platform-engineering-overview.md)
+* [Helm](platform-engineering/01-helm.md)
+* [AWS Controllers for Kubernetes (ACK)](platform-engineering/02-ack.md)
+  * [S3 and IAM Examples](platform-engineering/ack/01-s3-iam.md)
+  * [SQS and SNS Examples](platform-engineering/ack/02-sqs-sns.md)
+  * [ELBv2, Route 53, RDS Examples](platform-engineering/ack/03-elbv2-route53-rds.md)
+* [Kubernetes Resource Operator (KRO)](platform-engineering/03-kro.md)
+* [Kubernetes Extension Mechanisms](platform-engineering/04-kubernetes-extensions.md)
+* [ExampleCorp: ACK + KRO Integration Example](platform-engineering/05-example-corp-app.md)
+* [Backstage IDP](platform-engineering/06-backstage-idp.md)
+* [Crossplane](platform-engineering/07-crossplane.md)
+* [vCluster](platform-engineering/08-vcluster.md)
+
+## Container Registry
+
+* [Container Registry Overview](container-registry/README.md)
+* [Docker Hub](container-registry/01-docker-hub.md)
+* [Amazon ECR](container-registry/02-amazon-ecr.md)
+* [Harbor](container-registry/03-harbor.md)
+* [Container Registry Best Practices](container-registry/04-best-practices.md)
 
 ## Observability
 
@@ -359,6 +404,25 @@
     * [Grafana OnCall](observability/alerting/03-grafana-oncall.md)
   * [Grafana](observability/grafana/README.md)
 * [Observability Optimization Guide](observability/09-observability-optimization.md)
+
+## Operations Guide
+
+* [Operations Guide](ops/README.md)
+  * [Infrastructure Setup](ops/01-infrastructure-setup.md)
+  * [Infrastructure Advanced](ops/02-infrastructure-advanced.md)
+  * [CI Pipelines](ops/03-ci-pipelines.md)
+  * [GitOps Multi-Cluster](ops/04-gitops-multi-cluster.md)
+  * [GitOps Automation](ops/05-gitops-automation.md)
+  * [Scaling Strategies](ops/06-scaling-strategies.md)
+  * [Observability Alerts](ops/07-observability-alerts.md)
+  * [Observability Analysis](ops/08-observability-analysis.md)
+  * [Observability Stack](ops/09-observability-stack.md)
+  * [Resource Optimization](ops/10-resource-optimization.md)
+  * [Upgrade Operations](ops/11-upgrade-operations.md)
+  * [Event Capacity Planning](ops/12-event-capacity-planning.md)
+  * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
+  * [Tekton Pipelines](ops/14-tekton-pipelines.md)
+  * [Zonal Cluster Operations](ops/15-zonal-operations-guide.md)
 
 ## Lab Guides
 
@@ -554,6 +618,10 @@
     * [Security Quiz](quizzes/service-mesh/cilium-service-mesh/security.md)
     * [Observability Quiz](quizzes/service-mesh/cilium-service-mesh/observability.md)
     * [Ingress Gateway Quiz](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
+* Storage
+  * [EBS gp2 vs gp3 Measured Benchmark Quiz](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+* Database
+  * [ClickHouse on EKS Measured Benchmark Quiz](quizzes/database/01-clickhouse-on-eks-quiz.md)
 * Security & Policy
   * [Policy Management with Kyverno Quiz](quizzes/security/01-kyverno-policy-management-quiz.md)
   * [Kubernetes Authentication and Authorization Quiz](quizzes/security/02-kubernetes-auth-authz-quiz.md)
