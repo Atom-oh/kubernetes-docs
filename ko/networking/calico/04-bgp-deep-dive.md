@@ -79,7 +79,9 @@ BGP는 여러 경로 중 최적의 경로를 선택하기 위해 다음 순서�
 
 ## Calico BGP 아키텍처
 
-![Calico BGP 토폴로지](../../.gitbook/assets/calico_bgp_topology.png)
+![왼쪽은 4개 노드가 모든 쌍에 대해 직접 iBGP 세션을 맺는 기본 full-mesh(세션 N(N−1)/2, 50노드 미만 적합), 오른쪽은 클라이언트 노드 4개가 각각 Route Reflector 두 대와만 피어링하고 두 RR이 서로 피어링하는 Route Reflector 토폴로지(세션 2N+1, 50노드 이상 권장)를 나란히 비교해 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-04-bgp-deep-dive-9.html)
 
 ### Full-Mesh 토폴로지
 

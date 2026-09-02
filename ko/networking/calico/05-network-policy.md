@@ -541,7 +541,9 @@ spec:
 
 ## Tier 기반 정책
 
-![Calico Network Policy Tier 평가 흐름](../../.gitbook/assets/calico_network_policy_tiers.png)
+![Calico Network Policy Tier 평가 흐름: 패킷이 Security(100) → Platform(200) → Application(300) → Default Tier 순으로 평가되며, 어느 Tier에서든 Allow/Deny 매치 시 즉시 종료되고 Pass면 다음 Tier로, 매치가 없으면 Profile 기본 동작이 적용됩니다.](../../.gitbook/assets/ko-networking-calico-05-network-policy-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-05-network-policy-2.html)
 
 Tier는 정책을 계층화하여 관리합니다. 보안팀, 플랫폼팀, 애플리케이션팀이 각자의 영역에서 정책을 관리할 수 있습니다.
 

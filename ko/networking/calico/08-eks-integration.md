@@ -8,7 +8,9 @@
 
 ## VPC CNI + Calico 아키텍처
 
-![Calico on Amazon EKS](../../.gitbook/assets/calico_eks_integration.png)
+![EKS 컨트롤 플레인의 kube-apiserver를 Typha가 감시해 두 Worker Node의 calico-node(Felix)로 정책을 배포하고, 각 노드에서는 aws-node(VPC CNI)가 ENI를 관리해 VPC CIDR에서 Pod IP를 할당하며 Calico가 같은 Pod에 NetworkPolicy를 적용하고 노드 간 Pod 트래픽은 VPC가 라우팅하는 VPC CNI + Calico 하이브리드 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-08-eks-integration-4.html)
 
 ### 통합 아키텍처 상세
 
