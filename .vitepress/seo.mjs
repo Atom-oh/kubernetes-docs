@@ -69,6 +69,13 @@ export function extractDescription(markdown) {
     }
     if (inFence) continue
 
+    // A <details> block on a quiz page holds the answer. Skipping just the tag
+    // line leaves the answer itself as the first "paragraph", which then ships
+    // as the page's meta description and gives the answer away in search
+    // results. Stop instead: pages whose only prose is inside the toggle get no
+    // description and fall back to the locale default.
+    if (/^<details\b/i.test(trimmed)) break
+
     const isContent =
       trimmed !== '' &&
       !trimmed.startsWith('#') && // headings
