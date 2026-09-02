@@ -8,7 +8,7 @@
     "docs:build:locale": "vitepress build",
     "docs:preview": "vitepress preview",
     "docs:test": "node --test scripts/__tests__/*.test.mjs",
-    "docs:validate": "npm run docs:test && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs"
+    "docs:validate": "npm run docs:test && node scripts/validate-local-links.mjs && node scripts/validate-image-assets.mjs && node scripts/validate-language-parity.mjs"
   },
   "devDependencies": {
     "medium-zoom": "^1.1.0",
