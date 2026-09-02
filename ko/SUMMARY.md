@@ -121,6 +121,7 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [Cross-Org VPC 연결](networking/05-cross-org-vpc-connectivity.md)
 
 ## Service Mesh
 
@@ -543,6 +544,7 @@
   * [VPC Lattice 퀴즈](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller 퀴즈](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API 퀴즈](quizzes/networking/04-gateway-api-quiz.md)
+  * [Cross-Org VPC 연결 퀴즈](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
 * Service Mesh
   * [Istio 퀴즈](quizzes/service-mesh/02-istio-quiz.md)
   * Istio 상세 퀴즈
