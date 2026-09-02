@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "acks=1 vs acks=all — the path of a produce request to commit",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "animation": "trace",
+    "viewBox": [
+      1600,
+      960
+    ],
+    "column_fit": "spread",
+    "views": [
+      {
+        "id": "acks1",
+        "label": "acks=1 — leader only",
+        "focus": [
+          "producer",
+          "leader",
+          "pagecache"
+        ],
+        "note": "Responds as soon as the leader's local log (page cache) has the record. Measured p99 17 ms at 20k rec/s (B2)."
+      },
+      {
+        "id": "acksall",
+        "label": "acks=all — commit after ISR replication",
+        "focus": [
+          "producer",
+          "leader",
+          "follower1",
+          "follower2"
+        ],
+        "note": "Both followers replicate by pulling and the HW must advance before the response. Same p50 (3 ms) but p99 126 ms (B1)."
+      },
+      {
+        "id": "flush",
+        "label": "Disk flush is asynchronous",
+        "focus": [
+          "pagecache",
+          "ebs"
+        ],
+        "note": "No fsync by default — the OS flushes in the background. At saturation the RF3 ceiling ≈130–135 MiB/s = one gp3 volume's write cap (F1)."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "producer",
+      "type": "external",
+      "label": "Producer"
+    },
+    {
+      "id": "leader",
+      "type": "backend",
+      "label": "kafka-0 (leader)"
+    },
+    {
+      "id": "follower1",
+      "type": "backend",
+      "label": "kafka-1 (follower, ISR)"
+    },
+    {
+      "id": "follower2",
+      "type": "backend",
+      "label": "kafka-2 (follower, ISR)"
+    },
+    {
+      "id": "pagecache",
+      "type": "database",
+      "label": "Page cache (kafka-0 log)"
+    },
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "EBS gp3 (kafka-0 volume)"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 312,
+      "label": "acks=1 — respond as soon as the leader's local log has it · measured at 20k rec/s: p50 3 ms · p99 17 ms (B2)"
+    },
+    {
+      "from": 332,
+      "to": 735,
+      "label": "acks=all + min.insync.replicas=2 — commit only after the followers have pulled the records · measured at 20k rec/s: p50 3 ms · p99 126 ms (B1) — the cost is in the tail, not p50"
+    },
+    {
+      "from": 755,
+      "to": 825,
+      "label": "Durability comes from replication — disk flush is asynchronous · at saturation the RF3 ingest ceiling ≈130–135 MiB/s = one gp3 volume's write cap (F1)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "produce-acks1",
+      "from": "producer",
+      "to": "leader",
+      "y": 195,
+      "label": "ProduceRequest (acks=1)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "leader-append-acks1",
+      "from": "leader",
+      "to": "pagecache",
+      "y": 238,
+      "label": "Local log append — written to page cache, no disk flush"
+    },
+    {
+      "id": "ack-acks1",
+      "from": "leader",
+      "to": "producer",
+      "y": 282,
+      "label": "ProduceResponse — no follower wait",
+      "variant": "return"
+    },
+    {
+      "id": "produce-acksall",
+      "from": "producer",
+      "to": "leader",
+      "y": 362,
+      "label": "ProduceRequest (acks=all)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "leader-append-acksall",
+      "from": "leader",
+      "to": "pagecache",
+      "y": 402,
+      "label": "Local log append — response held until HW reaches this offset"
+    },
+    {
+      "id": "fetch1",
+      "from": "follower1",
+      "to": "leader",
+      "y": 447,
+      "label": "FetchRequest (replicaId=1)",
+      "note": "Followers pull from the leader — the leader never pushes"
+    },
+    {
+      "id": "fetch2",
+      "from": "follower2",
+      "to": "leader",
+      "y": 482,
+      "label": "FetchRequest (replicaId=2)"
+    },
+    {
+      "id": "fetch-resp1",
+      "from": "leader",
+      "to": "follower1",
+      "y": 525,
+      "label": "FetchResponse — new records",
+      "variant": "return",
+      "note": "kafka-1 appends to its own log"
+    },
+    {
+      "id": "fetch-resp2",
+      "from": "leader",
+      "to": "follower2",
+      "y": 565,
+      "label": "FetchResponse — new records",
+      "variant": "return",
+      "note": "kafka-2 appends to its own log"
+    },
+    {
+      "id": "fetch-next1",
+      "from": "follower1",
+      "to": "leader",
+      "y": 608,
+      "label": "Next FetchRequest — new LEO"
+    },
+    {
+      "id": "fetch-next2",
+      "from": "follower2",
+      "to": "leader",
+      "y": 645,
+      "label": "Next FetchRequest — new LEO → leader advances HW",
+      "note": "HW = min LEO across the ISR · if ISR < min.insync.replicas, acks=all writes are rejected (NotEnoughReplicas)"
+    },
+    {
+      "id": "ack-acksall",
+      "from": "leader",
+      "to": "producer",
+      "y": 700,
+      "label": "ProduceResponse — committed (HW ≥ offset)",
+      "variant": "return"
+    },
+    {
+      "id": "async-flush",
+      "from": "pagecache",
+      "to": "ebs",
+      "y": 785,
+      "label": "OS background flush (default: no application fsync)",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "leader",
+      "from": 190,
+      "to": 289,
+      "type": "backend"
+    },
+    {
+      "participant": "leader",
+      "from": 357,
+      "to": 708,
+      "type": "backend"
+    },
+    {
+      "participant": "follower1",
+      "from": 442,
+      "to": 616,
+      "type": "backend"
+    },
+    {
+      "participant": "follower2",
+      "from": 477,
+      "to": 653,
+      "type": "backend"
+    },
+    {
+      "participant": "pagecache",
+      "from": 233,
+      "to": 246,
+      "type": "database"
+    },
+    {
+      "participant": "pagecache",
+      "from": 397,
+      "to": 410,
+      "type": "database"
+    },
+    {
+      "participant": "ebs",
+      "from": 780,
+      "to": 795,
+      "type": "cloud"
+    }
+  ]
+}

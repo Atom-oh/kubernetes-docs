@@ -5,9 +5,9 @@
 
 Every benchmark report says "ClickHouse is fast" — but it's surprisingly hard to find numbers measured on **an ordinary EKS node with a default gp3 volume**. This document loads 100 million Kubernetes log rows into a deliberately modest environment — a 4 vCPU node and a default-configuration gp3 100 GiB volume — and measures what happens. Every number here is reproducible with the manifests and queries in this document.
 
-![Dataflow diagram showing the ingest path from the numbers_mt generator into the MergeTree table, and the query path through primary-index pruning, the bloom filter skip index, and column reads served from either the page cache or gp3 directly.](../.gitbook/assets/en-database-01-clickhouse-on-eks-0.png)
+![Architecture diagram showing the ingest path from the numbers_mt generator into the MergeTree table, and the query path through primary-index pruning, the bloom filter skip index, and column reads served from either the page cache or gp3 directly.](../.gitbook/assets/en-database-01-clickhouse-on-eks-0.png)
 
-[🔍 Open the interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-database-01-clickhouse-on-eks-0.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-database-01-clickhouse-on-eks-0.html)
 
 ## TL;DR — measured results
 

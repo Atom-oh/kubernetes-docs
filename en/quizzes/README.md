@@ -14,6 +14,10 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 
 ## Quiz List
 
+### Introduction
+- [Guidebook Roadmap Quiz](./roadmap-quiz.md)
+- [Reading with LLMs Quiz](./llm-guide-quiz.md)
+
 ### Basic Concepts
 - [Linux Basics Quiz](./basics/01-linux-basics-quiz.md)
 - [Linux Operations Quiz](./basics/02-linux-advanced-quiz.md)
@@ -89,6 +93,32 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 ### Database
 - [ClickHouse on EKS Measured Benchmark Quiz](./database/01-clickhouse-on-eks-quiz.md)
 
+### Data on EKS
+- [Anatomy of a Modern Data Pipeline Quiz](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
+- [Part 1: Kafka Fundamentals Quiz](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+- [Part 2: Strimzi Operator Quiz](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
+- [Part 3: Kafka Operations Quiz](./data-on-eks/kafka/03-kafka-operations-quiz.md)
+- [Part 4: Schema Registry Quiz](./data-on-eks/kafka/04-schema-registry-quiz.md)
+- [Part 5: Kafka Connect and MirrorMaker Quiz](./data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+- [Part 6: MSK Integration Quiz](./data-on-eks/kafka/06-msk-integration-quiz.md)
+- [Part 7: Monitoring Quiz](./data-on-eks/kafka/07-monitoring-quiz.md)
+- [Part 8: Best Practices Quiz](./data-on-eks/kafka/08-best-practices-quiz.md)
+- [Part 9: Kafka Measured Benchmark Quiz](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+- [Part 1: Spark on Kubernetes Fundamentals Quiz](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
+- [Part 2: Spark Operator Quiz](./data-on-eks/spark/02-spark-operator-quiz.md)
+- [Part 3: Amazon EMR on EKS Quiz](./data-on-eks/spark/03-emr-on-eks-quiz.md)
+- [Part 4: Performance and Cost Tuning Quiz](./data-on-eks/spark/04-performance-tuning-quiz.md)
+- [Part 5: Best Practices and Security Quiz](./data-on-eks/spark/05-best-practices-quiz.md)
+- [Part 1: Airflow Architecture on Kubernetes Quiz](./data-on-eks/airflow/01-architecture-quiz.md)
+- [Part 2: Helm Deployment and Executor Choice Quiz](./data-on-eks/airflow/02-helm-deployment-quiz.md)
+- [Part 3: DAG Patterns and KubernetesPodOperator Quiz](./data-on-eks/airflow/03-dag-patterns-quiz.md)
+- [Part 4: Amazon MWAA Integration Quiz](./data-on-eks/airflow/04-mwaa-integration-quiz.md)
+- [Part 5: Operations and Security Quiz](./data-on-eks/airflow/05-operations-quiz.md)
+- [Part 1: Flink Architecture on Kubernetes Quiz](./data-on-eks/flink/01-architecture-quiz.md)
+- [Part 2: Flink Kubernetes Operator Quiz](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+- [Part 3: State, Checkpointing, and Streaming Patterns Quiz](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+- [Part 4: Operations, High Availability, and Managed Flink Quiz](./data-on-eks/flink/04-operations-ha-quiz.md)
+
 ### Security & Policy
 - [Policy Management with Kyverno Quiz](./security/01-kyverno-policy-management-quiz.md)
 - [Kubernetes Authentication and Authorization Quiz](./security/02-kubernetes-auth-authz-quiz.md)
@@ -121,6 +151,24 @@ All quiz questions include answers in toggle format, so you can attempt the ques
 - [AWS Controllers for Kubernetes (ACK) Quiz](./platform-engineering/02-ack-quiz.md)
 - [Kubernetes Resource Operator (KRO) Quiz](./platform-engineering/03-kro-quiz.md)
 - [Kubernetes Extension Mechanisms Quiz](./platform-engineering/04-kubernetes-extensions-quiz.md)
+
+### Operations Guide
+- [Infrastructure Setup Quiz](./ops/01-infrastructure-setup-quiz.md)
+- [Infrastructure Advanced Quiz](./ops/02-infrastructure-advanced-quiz.md)
+- [CI Pipelines Quiz](./ops/03-ci-pipelines-quiz.md)
+- [GitOps Multi-Cluster Quiz](./ops/04-gitops-multi-cluster-quiz.md)
+- [GitOps Automation Quiz](./ops/05-gitops-automation-quiz.md)
+- [Scaling Strategies Quiz](./ops/06-scaling-strategies-quiz.md)
+- [Observability Alerts Quiz](./ops/07-observability-alerts-quiz.md)
+- [Observability Analysis Quiz](./ops/08-observability-analysis-quiz.md)
+- [Observability Stack Quiz](./ops/09-observability-stack-quiz.md)
+- [Resource Optimization Quiz](./ops/10-resource-optimization-quiz.md)
+- [Upgrade Operations Quiz](./ops/11-upgrade-operations-quiz.md)
+- [Event Capacity Planning Quiz](./ops/12-event-capacity-planning-quiz.md)
+- [FinOps Cost Visibility Platform Quiz](./ops/13-finops-cost-platform-quiz.md)
+- [Tekton Pipelines Quiz](./ops/14-tekton-pipelines-quiz.md)
+- [Zonal Cluster Operations Quiz](./ops/15-zonal-operations-guide-quiz.md)
+- [Troubleshooting Playbook Quiz](./ops/16-troubleshooting-playbook-quiz.md)
 
 ## How to Use Quizzes
 

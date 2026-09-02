@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EBS gp2 vs gp3 — same 100 GiB, where the IOPS ceilings diverge",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [1300, 640],
+    "views": [
+      { "id": "gp2-burst", "label": "gp2 burst path", "focus": ["fio", "blockdev", "gp2", "bucket", "cw"], "note": "A 3,000 IOPS burst burns 2,700 credits per second. The 5.4M bucket ran dry at 1,999 s and IOPS fell to 300." },
+      { "id": "gp3-flat", "label": "gp3 path", "focus": ["fio", "blockdev", "gp3"], "note": "gp3 has no credit concept. It held 3,001 IOPS (min 2,991) for the entire 600-second run." }
+    ]
+  },
+  "components": [
+    { "id": "fio", "type": "external", "label": "fio benchmark pod", "sublabel": "alpine · direct=1 · 4k qd32", "pos": [60, 250], "size": [200, 64] },
+    { "id": "blockdev", "type": "backend", "label": "Block device /dev/nvme*", "sublabel": "attached · mounted by EBS CSI driver", "pos": [380, 250], "size": [230, 64] },
+    { "id": "gp3", "type": "database", "label": "EBS gp3 100 GiB", "sublabel": "3,000 IOPS · 125 MiB/s, fixed", "pos": [690, 110], "size": [210, 64] },
+    { "id": "gp2", "type": "database", "label": "EBS gp2 100 GiB", "sublabel": "baseline 300 IOPS (3 per GiB)", "pos": [690, 390], "size": [210, 64] },
+    { "id": "bucket", "type": "security", "label": "I/O credit bucket", "sublabel": "5.4M credits · refills +300/s", "pos": [1060, 390], "size": [210, 64] },
+    { "id": "cw", "type": "cloud", "label": "CloudWatch BurstBalance", "sublabel": "credits remaining % — alarm on it", "pos": [1060, 110], "size": [210, 64] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "m5.xlarge node — instance EBS limit 6,000 IOPS / 1,150 Mbps", "wraps": ["fio", "blockdev"] },
+    { "kind": "region", "label": "Amazon EBS (ap-northeast-2a)", "wraps": ["gp3", "gp2", "bucket", "cw"] }
+  ],
+  "connections": [
+    { "id": "c-fio-dev", "from": "fio", "to": "blockdev", "label": "4k random I/O", "variant": "emphasis" },
+    { "id": "c-dev-gp3", "from": "blockdev", "to": "gp3", "label": "/mnt/gp3 · flat 3,001 IOPS", "variant": "emphasis" },
+    { "id": "c-dev-gp2", "from": "blockdev", "to": "gp2", "label": "/mnt/gp2 · 3,001 → 300 IOPS", "variant": "emphasis" },
+    { "id": "c-gp2-bucket", "from": "gp2", "to": "bucket", "label": "−2,700 credits/s while bursting" },
+    { "id": "c-bucket-cw", "from": "bucket", "to": "cw", "label": "balance % every minute", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Measured IOPS", "items": ["gp3: 3,001 IOPS average over 600 s, no jitter", "gp2: cliff from 3,001 to 300 IOPS at 1,999 s (AWS formula: 2,000 s)"] },
+    { "dot": "emerald", "title": "Measured latency (qd1)", "items": ["gp3 avg 0.56 ms · p99 0.87 ms", "gp2 while throttled: p50 0.60 ms · p95 3.39 ms — bimodal"] },
+    { "dot": "rose", "title": "Cost (Seoul region)", "items": ["100 GiB·month: gp2 $11.40 vs gp3 $9.12 (−20%)", "3,000 baseline IOPS on gp2 = 1 TiB = $114/month"] }
+  ]
+}

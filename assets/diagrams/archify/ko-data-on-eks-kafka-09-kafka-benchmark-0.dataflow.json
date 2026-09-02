@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Kafka on EKS 벤치마크 — RF3 복제 팬아웃과 gp3 볼륨",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      488
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "콜드 읽기 경로"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingest",
+        "label": "쓰기 경로 · RF3 팬아웃",
+        "focus": [
+          "producer",
+          "kafka0",
+          "kafka1",
+          "kafka2"
+        ],
+        "note": "각 브로커는 수집량 X를 NIC로 받아 자기 리더 파티션(1/3)을 팔로워 2개에 보내 ≈2/3·X를 송신합니다. 브로커 3개 모두 전체 스트림을 기록합니다."
+      },
+      {
+        "id": "volumes",
+        "label": "gp3 쓰기 캡 = 수집 상한",
+        "focus": [
+          "kafka0",
+          "kafka1",
+          "kafka2",
+          "vol0",
+          "vol1",
+          "vol2"
+        ],
+        "note": "실측 RF3 상한 ≈130–135 MiB/s는 gp3 볼륨 1개의 125 MiB/s 쓰기 캡과 같습니다. IOPS는 캡의 1/6만 썼습니다."
+      },
+      {
+        "id": "consume",
+        "label": "읽기 경로 · hot vs cold",
+        "focus": [
+          "consumer",
+          "kafka0",
+          "vol0"
+        ],
+        "note": "hot 434 MiB/s는 페이지 캐시에서, cold 439 MiB/s는 볼륨당 88–111 MiB/s 디스크 읽기로 채웠습니다 (클라이언트 1대 하한)."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "EKS · 부하 생성기"
+    },
+    {
+      "label": "EKS · 파티션 리더"
+    },
+    {
+      "label": "EKS · 팔로워 브로커"
+    },
+    {
+      "label": "AWS EBS · gp3 볼륨"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "producer",
+      "type": "frontend",
+      "label": "producer-perf-test",
+      "sublabel": "kafka-client Pod · m5.large 노드",
+      "tag": "ns bench-kafka",
+      "stage": 0,
+      "row": 0,
+      "width": 152
+    },
+    {
+      "id": "consumer",
+      "type": "frontend",
+      "label": "consumer-perf-test",
+      "sublabel": "kafka-client Pod · m5.large 노드",
+      "tag": "ns bench-kafka",
+      "stage": 0,
+      "row": 2,
+      "width": 152
+    },
+    {
+      "id": "kafka0",
+      "type": "messagebus",
+      "label": "kafka-0",
+      "sublabel": "이 파티션의 리더 · broker+controller",
+      "tag": "apache/kafka 4.3.1 · m5.xlarge",
+      "stage": 1,
+      "row": 1,
+      "width": 152
+    },
+    {
+      "id": "kafka1",
+      "type": "messagebus",
+      "label": "kafka-1",
+      "sublabel": "팔로워 · broker+controller",
+      "tag": "apache/kafka 4.3.1 · m5.xlarge",
+      "stage": 2,
+      "row": 0,
+      "width": 136
+    },
+    {
+      "id": "kafka2",
+      "type": "messagebus",
+      "label": "kafka-2",
+      "sublabel": "팔로워 · broker+controller",
+      "tag": "apache/kafka 4.3.1 · m5.xlarge",
+      "stage": 2,
+      "row": 2,
+      "width": 136
+    },
+    {
+      "id": "vol0",
+      "type": "database",
+      "label": "gp3 100 GiB",
+      "sublabel": "kafka-0 로그 디렉터리",
+      "tag": "3,000 IOPS · 125 MiB/s 기준",
+      "stage": 3,
+      "row": 1,
+      "width": 136
+    },
+    {
+      "id": "vol1",
+      "type": "database",
+      "label": "gp3 100 GiB",
+      "sublabel": "kafka-1 로그 디렉터리",
+      "tag": "3,000 IOPS · 125 MiB/s 기준",
+      "stage": 3,
+      "row": 0,
+      "width": 136
+    },
+    {
+      "id": "vol2",
+      "type": "database",
+      "label": "gp3 100 GiB",
+      "sublabel": "kafka-2 로그 디렉터리",
+      "tag": "3,000 IOPS · 125 MiB/s 기준",
+      "stage": 3,
+      "row": 2,
+      "width": 136
+    }
+  ],
+  "flows": [
+    {
+      "id": "produce",
+      "from": "producer",
+      "to": "kafka0",
+      "label": "produce · acks=all · 실측 134.74 MiB/s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "replicate-1",
+      "from": "kafka0",
+      "to": "kafka1",
+      "label": "복제 fetch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "replicate-2",
+      "from": "kafka0",
+      "to": "kafka2",
+      "label": "복제 fetch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "append-0",
+      "from": "kafka0",
+      "to": "vol0",
+      "label": "로그 append · 10초 피크 135 MiB/s",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "append-1",
+      "from": "kafka1",
+      "to": "vol1",
+      "label": "로그 append",
+      "route": "straight"
+    },
+    {
+      "id": "append-2",
+      "from": "kafka2",
+      "to": "vol2",
+      "label": "로그 append",
+      "route": "straight"
+    },
+    {
+      "id": "fetch-hot",
+      "from": "kafka0",
+      "to": "consumer",
+      "label": "fetch · 페이지 캐시 (hot) · 434 MiB/s"
+    },
+    {
+      "id": "read-cold",
+      "from": "vol0",
+      "to": "kafka0",
+      "label": "디스크 읽기 (cold) · 볼륨당 88–111 MiB/s",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "channelY": 340,
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "labelAt": [
+        650,
+        340
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "RF3 복제 팬아웃 — 실측 (F1, 10M × 1 KiB)",
+      "items": [
+        "리더 1개 → 팔로워 2개 (RF=3) · min.insync.replicas=2",
+        "브로커당 NIC rx 134–136 · tx 80–108 MiB/s — 수집량 X를 모두 받고 2/3·X를 팔로워에 보냄",
+        "브로커 3개 모두 전체 스트림을 기록: 디스크 쓰기 평균 115–118 · 피크 135 MiB/s · ~500 wIOPS"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "볼륨 쓰기 캡 = 클러스터 수집 상한",
+      "items": [
+        "RF3 지속 수집 상한 ≈130–135 MiB/s (140,164 rec/s) = gp3 볼륨 1개의 125 MiB/s 쓰기 캡",
+        "RF1은 337.81 MiB/s — 2.5× (F4) · IOPS는 캡(3,000)의 1/6만 사용 → 처리량이 한계",
+        "프로듀서 2개(F5)·배치 256 KiB(F6)도 상한 동일 — F6은 브로커 CPU만 0.64–0.84 → 0.40–0.50 코어로 감소"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "컨슈머 읽기 경로 — hot vs cold",
+      "items": [
+        "hot 434 MiB/s (디스크 읽기 0) · cold 439 MiB/s (볼륨당 88–111 MiB/s 읽기, 피크 124) — 클라이언트 1대 한계라 하한값",
+        "콜드 리플레이 30 GiB 중 동시 프로듀서 103 → 57 MiB/s, p99 2.1 s — 같은 볼륨에서 읽기·쓰기 경합",
+        "모든 Pod는 네임스페이스 bench-kafka · 프로듀서·컨슈머는 같은 kafka-client Pod(별도 m5.large 노드)에서 실행"
+      ]
+    }
+  ]
+}

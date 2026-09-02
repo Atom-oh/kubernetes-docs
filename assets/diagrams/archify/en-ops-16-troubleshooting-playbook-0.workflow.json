@@ -1,0 +1,310 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pod isn't serving — symptom-first diagnosis decision tree",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Symptom"
+        },
+        "security": {
+          "label": "STATUS · READY gate"
+        },
+        "backend": {
+          "label": "Diagnostic command"
+        },
+        "cloud": {
+          "label": "Network path check"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "not-starting",
+        "label": "Not starting — Pending · ImagePull",
+        "focus": [
+          "symptom",
+          "getpod",
+          "g_pending",
+          "g_imagepull",
+          "leaf_sched",
+          "leaf_image"
+        ],
+        "note": "Pending means scheduling; ImagePullBackOff means image name or registry auth. Either way, kubectl describe pod Events is the first clue."
+      },
+      {
+        "id": "crashing",
+        "label": "Starts then dies — CrashLoopBackOff",
+        "focus": [
+          "g_crash",
+          "leaf_crash"
+        ],
+        "note": "RESTARTS keeps rising: read the previous container's logs (kubectl logs --previous) and the Exit Code + Reason (OOMKilled/Error)."
+      },
+      {
+        "id": "running-unreachable",
+        "label": "Running but unreachable",
+        "focus": [
+          "g_notready",
+          "g_unreachable",
+          "leaf_ready",
+          "leaf_net"
+        ],
+        "note": "READY 0/1: look for Readiness probe failed events. READY 1/1 but no response: EndpointSlices → Service selector → NetworkPolicy → DNS → ALB."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "Symptom → first check"
+    },
+    {
+      "id": "gates",
+      "label": "STATUS · READY gates"
+    },
+    {
+      "id": "diag",
+      "label": "Matched ↓ diagnostic command"
+    }
+  ],
+  "mainPath": [
+    "symptom",
+    "getpod",
+    "g_pending",
+    "g_imagepull",
+    "g_crash",
+    "g_notready",
+    "g_unreachable",
+    "leaf_net"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "symptom"
+    ],
+    "allowedTerminals": [
+      "leaf_sched",
+      "leaf_image",
+      "leaf_crash",
+      "leaf_ready",
+      "leaf_net"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "symptom",
+      "lane": "entry",
+      "col": 0,
+      "type": "external",
+      "label": "Pod not serving",
+      "sublabel": "no service response",
+      "width": 130
+    },
+    {
+      "id": "getpod",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "kubectl get pod -o wide",
+      "sublabel": "STATUS · READY · RESTARTS",
+      "width": 190
+    },
+    {
+      "id": "g_pending",
+      "lane": "gates",
+      "col": 1,
+      "type": "security",
+      "label": "Pending",
+      "sublabel": "not scheduled to a node",
+      "width": 136
+    },
+    {
+      "id": "g_imagepull",
+      "lane": "gates",
+      "col": 2,
+      "type": "security",
+      "label": "ImagePullBackOff",
+      "sublabel": "ErrImagePull → backoff",
+      "width": 136
+    },
+    {
+      "id": "g_crash",
+      "lane": "gates",
+      "col": 3,
+      "type": "security",
+      "label": "CrashLoopBackOff",
+      "sublabel": "RESTARTS keeps rising",
+      "width": 136
+    },
+    {
+      "id": "g_notready",
+      "lane": "gates",
+      "col": 4,
+      "type": "security",
+      "label": "Running · READY 0/1",
+      "sublabel": "Ready condition False",
+      "width": 156
+    },
+    {
+      "id": "g_unreachable",
+      "lane": "gates",
+      "col": 5,
+      "type": "security",
+      "label": "Running · READY 1/1",
+      "sublabel": "still no response",
+      "width": 156
+    },
+    {
+      "id": "leaf_sched",
+      "lane": "diag",
+      "col": 1,
+      "type": "backend",
+      "label": "kubectl describe pod",
+      "sublabel": "Events: FailedScheduling",
+      "width": 190
+    },
+    {
+      "id": "leaf_image",
+      "lane": "diag",
+      "col": 2,
+      "type": "backend",
+      "label": "kubectl describe pod",
+      "sublabel": "Events: Failed to pull image",
+      "width": 190
+    },
+    {
+      "id": "leaf_crash",
+      "lane": "diag",
+      "col": 3,
+      "type": "backend",
+      "label": "kubectl logs --previous",
+      "sublabel": "describe: Exit 137 + Reason OOMKilled",
+      "width": 190
+    },
+    {
+      "id": "leaf_ready",
+      "lane": "diag",
+      "col": 4,
+      "type": "backend",
+      "label": "kubectl describe pod",
+      "sublabel": "Events: Readiness probe failed",
+      "width": 190
+    },
+    {
+      "id": "leaf_net",
+      "lane": "diag",
+      "col": 5,
+      "type": "cloud",
+      "label": "kubectl get endpointslices",
+      "sublabel": "selector · NetworkPolicy · DNS · ALB",
+      "width": 212
+    }
+  ],
+  "edges": [
+    {
+      "id": "symptom-getpod",
+      "from": "symptom",
+      "to": "getpod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "getpod-pending",
+      "from": "getpod",
+      "to": "g_pending",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pending-yes",
+      "from": "g_pending",
+      "to": "leaf_sched",
+      "role": "branch"
+    },
+    {
+      "id": "pending-no",
+      "from": "g_pending",
+      "to": "g_imagepull",
+      "label": "no",
+      "variant": "emphasis"
+    },
+    {
+      "id": "imagepull-yes",
+      "from": "g_imagepull",
+      "to": "leaf_image",
+      "role": "branch"
+    },
+    {
+      "id": "imagepull-no",
+      "from": "g_imagepull",
+      "to": "g_crash",
+      "label": "no",
+      "variant": "emphasis"
+    },
+    {
+      "id": "crash-yes",
+      "from": "g_crash",
+      "to": "leaf_crash",
+      "role": "branch"
+    },
+    {
+      "id": "crash-no",
+      "from": "g_crash",
+      "to": "g_notready",
+      "label": "no",
+      "variant": "emphasis"
+    },
+    {
+      "id": "notready-yes",
+      "from": "g_notready",
+      "to": "leaf_ready",
+      "role": "branch"
+    },
+    {
+      "id": "notready-no",
+      "from": "g_notready",
+      "to": "g_unreachable",
+      "label": "no",
+      "variant": "emphasis"
+    },
+    {
+      "id": "unreachable-yes",
+      "from": "g_unreachable",
+      "to": "leaf_net",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Pending — pin the cause from the FailedScheduling message",
+      "items": [
+        "Insufficient cpu / Insufficient memory → lower requests or add nodes",
+        "node(s) had untolerated taint → add tolerations",
+        "pod has unbound immediate PersistentVolumeClaims → check PVC · StorageClass",
+        "node(s) didn't match Pod's node affinity/selector → check nodeSelector labels"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "CrashLoopBackOff · ImagePullBackOff — what to read",
+      "items": [
+        "Reason: OOMKilled · Exit Code: 137 → raise the memory limit or fix the leak",
+        "Any other Exit Code (e.g. 1) → kubectl logs --previous shows the app error",
+        "Liveness probe failed event → check probe path · initialDelaySeconds",
+        "Failed to pull image → image name/tag, imagePullSecrets, node role's ECR permission"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Running but unreachable — work from the inside out",
+      "items": [
+        "kubectl get endpointslices -l kubernetes.io/service-name=<svc> shows no endpoints → Service selector ↔ Pod label, readinessProbe",
+        "kubectl exec <pod> -- nslookup <svc> fails → check CoreDNS",
+        "NetworkPolicy ingress rules → then Ingress/ALB target health"
+      ]
+    }
+  ]
+}

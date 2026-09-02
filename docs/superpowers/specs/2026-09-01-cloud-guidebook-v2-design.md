@@ -120,3 +120,41 @@ docs so readers can re-run them.
   for generate-llms-txt.mjs).
 - Full local VitePress build of ko+en.
 - content-review-agent quality gate ≥ 85 on new/changed pages before PR.
+
+## Slice 2 addendum (2026-09-02)
+
+Slice 1 shipped as PR #161. Slice 2 extends the same design to the two
+domains the goal named that slice 1 left out, and closes the gaps the
+first slice created:
+
+- **Data Pipeline — measured**: `data-on-eks/kafka/09-kafka-benchmark.md`
+  (ko/en + quiz). Apache Kafka 4.3.1 in KRaft combined mode, 3 brokers on
+  m5.xlarge with one gp3 100 GiB PVC each, single `kafka-client` load
+  generator on an m5.large, namespace `bench-kafka`, ap-northeast-2b.
+  Producer matrix (acks × RF, compression, record size, batch size), consumer
+  hot vs cold, sustained 30 GiB fill, mixed produce-while-replay; broker-side
+  in-pod samplers (block, cgroup CPU, NIC) and CloudWatch AWS/EBS confirm the
+  client numbers. Verified facts sheet kept outside the repo
+  (`scratchpad/s2/kafka-facts.md`); the page states the load-generator limits
+  (1.9 CPU, `--record-size` random-payload ceiling) and the padded-payload
+  compression caveat instead of hiding them.
+- **Operations playbook (Korean-first)**: `ops/16-troubleshooting-playbook.md`
+  (ko/en + quiz) — symptom-first decision tree ("pod not serving" → five
+  gates) with the kubectl/EKS commands per gate; diagram as an archify
+  workflow map.
+- **Visualization**: archify specs are now committed under
+  `assets/diagrams/archify/` (slice 1 shipped only the delivered HTML/PNG);
+  PNGs are captured deterministically (headless shell, reduced motion,
+  fontconfig that rejects DroidSansFallback so Hangul does not decompose).
+  `roadmap.md` gains a "share a diagram" section (Share Card / Route / Reach
+  cards, motion recording, deep links — the LinkedIn/talk export path) and
+  `llm-guide.md` points to it.
+- **Parity gate**: main's `validate-language-parity.mjs` (PR #162) requires a
+  quiz per content page; slice 2 adds `quizzes/llm-guide-quiz.md` and
+  `quizzes/roadmap-quiz.md` (ko/en) so the guidebook pages pass without
+  baseline entries.
+- **Not done, needs a decision**: a GPU/vLLM measured page. The cluster's
+  GPU capacity is owned by other teams' Karpenter NodePools (`gpu-qwen`,
+  `gpu-ner`); creating a dedicated `bench-gpu` NodePool or scheduling onto
+  the existing ones was not authorized in this session, so no AI benchmark
+  numbers were produced — measured data only, per "Error handling / risks".

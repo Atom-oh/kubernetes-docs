@@ -3,7 +3,7 @@
 > **Supported Versions**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
 > **Last Updated**: July 21, 2026
 
-< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) >
+< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) | [Next: Troubleshooting Playbook](16-troubleshooting-playbook.md) >
 
 ***
 
@@ -209,4 +209,4 @@ Recommended rollout order is **traffic-shifting layer -> upgrade/rollback -> dat
 
 ***
 
-< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) >
+< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) | [Next: Troubleshooting Playbook](16-troubleshooting-playbook.md) >

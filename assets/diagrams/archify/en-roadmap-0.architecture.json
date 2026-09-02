@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cloud Native Guidebook Roadmap",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      660
+    ],
+    "views": [
+      {
+        "id": "main-path",
+        "label": "Main learning path",
+        "focus": [
+          "linux-container",
+          "kubernetes",
+          "networking",
+          "storage",
+          "data-pipeline"
+        ],
+        "note": "The learning order from foundations to the data layer."
+      },
+      {
+        "id": "deep-dives",
+        "label": "Deep-dive tier",
+        "focus": [
+          "eks",
+          "service-mesh",
+          "database",
+          "ai-ml"
+        ],
+        "note": "Each domain's advanced track — EKS, service mesh, databases, AI/ML."
+      },
+      {
+        "id": "cross-cutting",
+        "label": "Cross-cutting concerns",
+        "focus": [
+          "security",
+          "gitops",
+          "platform",
+          "registry",
+          "observability",
+          "operations"
+        ],
+        "note": "Disciplines that apply at every layer, from security to operations."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "linux-container",
+      "type": "backend",
+      "label": "Linux & Container",
+      "sublabel": "kernel · namespaces · cgroups",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "core concepts · scheduling",
+      "pos": [
+        290,
+        120
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "networking",
+      "type": "messagebus",
+      "label": "Networking",
+      "sublabel": "25 protocols · CNI",
+      "pos": [
+        540,
+        120
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Storage",
+      "sublabel": "measured EBS benchmark",
+      "pos": [
+        790,
+        120
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "data-pipeline",
+      "type": "messagebus",
+      "label": "Data Pipeline",
+      "sublabel": "Kafka · Spark · Flink",
+      "pos": [
+        1040,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "sublabel": "Hybrid · Auto Mode",
+      "pos": [
+        290,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "service-mesh",
+      "type": "messagebus",
+      "label": "Service Mesh",
+      "sublabel": "measured mTLS latency",
+      "pos": [
+        540,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "database",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "100M-row ClickHouse bench",
+      "pos": [
+        790,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "ai-ml",
+      "type": "backend",
+      "label": "AI/ML",
+      "sublabel": "vLLM · Ray · Kubeflow",
+      "pos": [
+        1040,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "security",
+      "type": "security",
+      "label": "Security & Policy",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        170,
+        58
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "backend",
+      "label": "GitOps",
+      "pos": [
+        250,
+        470
+      ],
+      "size": [
+        155,
+        58
+      ]
+    },
+    {
+      "id": "platform",
+      "type": "backend",
+      "label": "Platform Eng.",
+      "pos": [
+        445,
+        470
+      ],
+      "size": [
+        155,
+        58
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Registry",
+      "pos": [
+        640,
+        470
+      ],
+      "size": [
+        130,
+        58
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "backend",
+      "label": "Observability",
+      "pos": [
+        810,
+        470
+      ],
+      "size": [
+        160,
+        58
+      ]
+    },
+    {
+      "id": "operations",
+      "type": "backend",
+      "label": "Operations",
+      "pos": [
+        1010,
+        470
+      ],
+      "size": [
+        150,
+        58
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Foundations",
+      "wraps": [
+        "linux-container"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Orchestration",
+      "wraps": [
+        "kubernetes",
+        "eks"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Connectivity",
+      "wraps": [
+        "networking",
+        "service-mesh"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "State",
+      "wraps": [
+        "storage",
+        "database"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data · AI",
+      "wraps": [
+        "data-pipeline",
+        "ai-ml"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Cross-cutting — applies at every layer",
+      "wraps": [
+        "security",
+        "gitops",
+        "platform",
+        "registry",
+        "observability",
+        "operations"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-linux-k8s",
+      "from": "linux-container",
+      "to": "kubernetes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-k8s-net",
+      "from": "kubernetes",
+      "to": "networking",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-net-storage",
+      "from": "networking",
+      "to": "storage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-storage-data",
+      "from": "storage",
+      "to": "data-pipeline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-k8s-eks",
+      "from": "kubernetes",
+      "to": "eks",
+      "label": "managed",
+      "labelDy": 24
+    },
+    {
+      "id": "c-net-mesh",
+      "from": "networking",
+      "to": "service-mesh",
+      "label": "up to L7",
+      "labelDy": 24
+    },
+    {
+      "id": "c-storage-db",
+      "from": "storage",
+      "to": "database",
+      "label": "DB on top",
+      "labelDy": 24
+    },
+    {
+      "id": "c-data-aiml",
+      "from": "data-pipeline",
+      "to": "ai-ml",
+      "label": "to models",
+      "labelDy": 24
+    },
+    {
+      "id": "c-eks-cross",
+      "from": "eks",
+      "to": "gitops",
+      "label": "disciplines under every layer",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Learning order",
+      "items": [
+        "Foundations → Orchestration → Connectivity → State → Data·AI",
+        "Every document has a quiz; major topics have labs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Measured benchmark series",
+      "items": [
+        "Istio mTLS latency (sidecar vs ambient)",
+        "EBS gp2 vs gp3 with fio",
+        "ClickHouse 100M-row ingest · queries"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Cross-cutting",
+      "items": [
+        "Security · GitOps · Platform · Registry · Observability · Operations",
+        "Applied together at every layer"
+      ]
+    }
+  ]
+}
