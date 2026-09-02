@@ -38,5 +38,5 @@ metrics, hashes, non-sensitive plots, and teardown evidence are committed.
 The AWS validation performed on September 1, 2026 stopped before GPU training
 because the created SageMaker Unified Studio project did not grant the caller
 project membership. The factual result, cleanup status, and remaining owner
-action are recorded in
-[`docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md`](../../../docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md).
+action are recorded in the repository-internal report at
+`docs/superpowers/reports/2026-09-01-sagemaker-qwen-pii-validation.md`.
