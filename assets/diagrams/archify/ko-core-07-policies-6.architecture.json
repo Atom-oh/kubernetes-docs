@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS에서의 정책 관리",
+    "output": "ko-core-07-policies-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1360, 720],
+    "views": [
+      { "id": "cluster-level", "label": "클러스터 수준 AWS 제어", "focus": ["org", "config", "fw", "cluster"], "note": "Organizations의 SCP, Config 규칙, Firewall Manager 정책이 EKS 클러스터를 제한·감사·보호한다." },
+      { "id": "pod-level", "label": "포드 수준 AWS 통합", "focus": ["iam", "sg", "pod"], "note": "IRSA가 포드에 AWS 권한을 부여하고, 포드용 보안 그룹이 포드 간 통신을 제어한다." },
+      { "id": "k8s-native", "label": "Kubernetes 기본 정책", "focus": ["k8s", "types", "cluster", "ns", "pod"], "note": "ResourceQuota, LimitRange, NetworkPolicy, PSS가 클러스터 안의 네임스페이스와 포드에 적용된다." }
+    ]
+  },
+  "components": [
+    { "id": "org", "type": "cloud", "label": "AWS Organizations", "sublabel": "서비스 제어 정책 (SCPs)", "pos": [40, 90], "size": [236, 64] },
+    { "id": "config", "type": "cloud", "label": "AWS Config", "sublabel": "Config 규칙", "pos": [300, 90], "size": [236, 64] },
+    { "id": "fw", "type": "cloud", "label": "AWS Firewall Manager", "sublabel": "방화벽 정책", "pos": [560, 90], "size": [236, 64] },
+    { "id": "iam", "type": "cloud", "label": "AWS IAM", "sublabel": "IAM 역할 및 서비스 계정 (IRSA)", "pos": [820, 90], "size": [236, 64] },
+    { "id": "sg", "type": "cloud", "label": "AWS Security Groups", "sublabel": "포드용 보안 그룹", "pos": [1080, 90], "size": [236, 64] },
+    { "id": "cluster", "type": "backend", "label": "EKS 클러스터", "sublabel": "클러스터 수준", "pos": [300, 340], "size": [236, 64] },
+    { "id": "ns", "type": "backend", "label": "네임스페이스", "sublabel": "네임스페이스 수준", "pos": [625, 340], "size": [236, 64] },
+    { "id": "pod", "type": "backend", "label": "포드", "sublabel": "포드 수준", "pos": [950, 340], "size": [236, 64] },
+    { "id": "k8s", "type": "security", "label": "Kubernetes 정책", "sublabel": "기본 정책 메커니즘", "pos": [300, 590], "size": [236, 64] },
+    { "id": "types", "type": "security", "label": "정책 유형", "sublabel": "ResourceQuota · LimitRange · NetworkPolicy · PSS", "pos": [620, 590], "size": [420, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "AWS 서비스 → EKS 통합 지점", "wraps": ["org", "config", "fw", "iam", "sg"] },
+    { "kind": "region", "label": "EKS 클러스터 (정책 적용 대상)", "wraps": ["cluster", "ns", "pod"] },
+    { "kind": "region", "label": "Kubernetes 기본 정책", "wraps": ["k8s", "types"] }
+  ],
+  "connections": [
+    { "id": "org-cluster", "from": "org", "to": "cluster", "label": "제한" },
+    { "id": "config-cluster", "from": "config", "to": "cluster", "label": "감사", "labelDy": 100 },
+    { "id": "fw-cluster", "from": "fw", "to": "cluster", "label": "보호" },
+    { "id": "iam-pod", "from": "iam", "to": "pod", "label": "권한 부여", "variant": "security", "fromSide": "bottom", "toSide": "top" },
+    { "id": "sg-pod", "from": "sg", "to": "pod", "label": "네트워크 보안", "variant": "security", "fromSide": "bottom", "toSide": "top" },
+    { "id": "cluster-ns", "from": "cluster", "to": "ns", "label": "포함" },
+    { "id": "ns-pod", "from": "ns", "to": "pod", "label": "포함" },
+    { "id": "k8s-cluster", "from": "k8s", "to": "cluster", "label": "적용", "variant": "emphasis", "labelDy": -90 },
+    { "id": "k8s-types", "from": "k8s", "to": "types", "label": "유형", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "AWS 서비스 통합", "items": [
+      "IRSA로 포드에 AWS 서비스 권한을 부여해 최소 권한 원칙을 적용",
+      "SecurityGroupPolicy로 포드 수준에 AWS 보안 그룹 적용",
+      "AWS Config·Organizations로 조직 수준 정책 적용 (예: 태그 없는 클러스터 생성 거부)",
+      "AWS Firewall Manager로 여러 EKS 클러스터의 네트워크 정책을 중앙 관리"
+    ] },
+    { "dot": "cyan", "title": "Kubernetes 기본 정책", "items": [
+      "ResourceQuota · LimitRange — 네임스페이스 리소스 제어",
+      "NetworkPolicy — 포드 간 트래픽 제어",
+      "Pod Security Standards — 포드 보안 수준 적용"
+    ] }
+  ]
+}

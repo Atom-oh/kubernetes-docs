@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How ResourceQuota Works",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Quota policy / check"
+        },
+        "backend": {
+          "label": "Quota kind"
+        },
+        "cloud": {
+          "label": "Namespace"
+        },
+        "frontend": {
+          "label": "Pod"
+        },
+        "database": {
+          "label": "Usage tally"
+        },
+        "external": {
+          "label": "Outcome"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "quota-kinds",
+        "label": "Quota kind",
+        "focus": [
+          "rq",
+          "compute",
+          "storage",
+          "object",
+          "priority"
+        ],
+        "note": "The hard entries of a ResourceQuota cap compute resources, storage (PVC), object counts, and pods per priority class."
+      },
+      {
+        "id": "quota-scope",
+        "label": "Application Scope",
+        "focus": [
+          "rq",
+          "ns",
+          "pods",
+          "usage"
+        ],
+        "note": "A quota applies per namespace; the resources used by every pod inside it add up to the namespace usage."
+      },
+      {
+        "id": "quota-check",
+        "label": "New pod check",
+        "focus": [
+          "usage",
+          "newpod",
+          "check",
+          "allow",
+          "deny"
+        ],
+        "note": "A new pod request is added to current usage: within quota it is allowed, over quota it is denied."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rq",
+      "type": "security",
+      "label": "ResourceQuota",
+      "sublabel": "spec.hard quota limits",
+      "pos": [
+        90,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "compute",
+      "type": "backend",
+      "label": "Compute Resource Quota",
+      "sublabel": "CPU, memory",
+      "pos": [
+        90,
+        196
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "backend",
+      "label": "Storage Resource Quota",
+      "sublabel": "PVC",
+      "pos": [
+        90,
+        268
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "object",
+      "type": "backend",
+      "label": "Object Count Quota",
+      "sublabel": "Pod, Service, etc.",
+      "pos": [
+        90,
+        340
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "priority",
+      "type": "backend",
+      "label": "Priority Class Quota",
+      "sublabel": "pods per PriorityClass",
+      "pos": [
+        90,
+        412
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "ns",
+      "type": "cloud",
+      "label": "Namespace",
+      "sublabel": "quota scope",
+      "pos": [
+        380,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Pod 1 · 2 · 3",
+      "sublabel": "running in the namespace",
+      "pos": [
+        380,
+        196
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "usage",
+      "type": "database",
+      "label": "Namespace Resource Usage",
+      "sublabel": "sum of pod usage",
+      "pos": [
+        640,
+        196
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "newpod",
+      "type": "frontend",
+      "label": "New Pod Creation Request",
+      "sublabel": "with resource requests",
+      "pos": [
+        640,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "check",
+      "type": "security",
+      "label": "usage + request ≤ quota?",
+      "sublabel": "quota check",
+      "pos": [
+        900,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "allow",
+      "type": "external",
+      "label": "Allow",
+      "sublabel": "pod created",
+      "pos": [
+        1160,
+        290
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "deny",
+      "type": "external",
+      "label": "Deny",
+      "sublabel": "pod not created",
+      "pos": [
+        1160,
+        400
+      ],
+      "size": [
+        120,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Resource Quota Types",
+      "wraps": [
+        "rq",
+        "compute",
+        "storage",
+        "object",
+        "priority"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Application Scope",
+      "wraps": [
+        "ns",
+        "pods"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Resource Usage",
+      "wraps": [
+        "usage",
+        "newpod",
+        "check",
+        "allow",
+        "deny"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rq-compute",
+      "from": "rq",
+      "to": "compute",
+      "label": "kind",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "rq-storage",
+      "from": "rq",
+      "to": "storage",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "rq-object",
+      "from": "rq",
+      "to": "object",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "rq-priority",
+      "from": "rq",
+      "to": "priority",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "rq-ns",
+      "from": "rq",
+      "to": "ns",
+      "label": "applied to",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ns-pods",
+      "from": "ns",
+      "to": "pods",
+      "label": "contains",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-usage",
+      "from": "pods",
+      "to": "usage",
+      "label": "contributes"
+    },
+    {
+      "id": "usage-check",
+      "from": "usage",
+      "to": "check",
+      "label": "current usage",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "newpod-check",
+      "from": "newpod",
+      "to": "check",
+      "label": "validate"
+    },
+    {
+      "id": "check-allow",
+      "from": "check",
+      "to": "allow",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-deny",
+      "from": "check",
+      "to": "deny",
+      "label": "no",
+      "variant": "security"
+    }
+  ]
+}
