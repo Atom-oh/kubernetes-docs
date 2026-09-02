@@ -16,6 +16,7 @@ import {
 } from 'sitemap'
 
 import { supportedLocales } from '../.vitepress/site-scope.mjs'
+import { generateLlmsFiles } from './generate-llms-txt.mjs'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
@@ -122,6 +123,9 @@ async function buildAllLocales() {
   )
 
   await rm(stagingRoot, { recursive: true, force: true })
+
+  console.log('Generating llms.txt endpoints')
+  generateLlmsFiles()
 
   try {
     for (const [index, locale] of supportedLocales.entries()) {

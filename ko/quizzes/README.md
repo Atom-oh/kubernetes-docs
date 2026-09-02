@@ -87,6 +87,12 @@
 ### Service Mesh
 - [Istio 퀴즈](./service-mesh/02-istio-quiz.md)
 
+### Storage
+- [EBS gp2 vs gp3 실측 벤치마크 퀴즈](./storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
+### Database
+- [ClickHouse on EKS 실측 벤치마크 퀴즈](./database/01-clickhouse-on-eks-quiz.md)
+
 ### Security & Policy
 - [Kyverno를 사용한 정책 관리 퀴즈](./security/01-kyverno-policy-management-quiz.md)
 - [Kubernetes 인증 및 권한 부여 퀴즈](./security/02-kubernetes-auth-authz-quiz.md)
