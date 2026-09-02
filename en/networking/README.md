@@ -475,6 +475,7 @@ spec:
 4. [VPC Lattice](02-vpc-lattice.md) - AWS managed networking
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB integration
 6. [Gateway API](04-gateway-api.md) - Next-generation ingress
+7. [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) - Connecting VPCs across AWS Organizations (field-verified)
 
 ---
 

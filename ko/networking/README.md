@@ -475,6 +475,7 @@ spec:
 4. [VPC Lattice](02-vpc-lattice.md) - AWS 관리형 네트워킹
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 통합
 6. [Gateway API](04-gateway-api.md) - 차세대 인그레스
+7. [Cross-Org VPC 연결](05-cross-org-vpc-connectivity.md) - 서로 다른 AWS Organization 간 VPC 연결 (실측 기반)
 
 ---
 
