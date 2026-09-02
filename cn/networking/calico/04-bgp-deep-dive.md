@@ -1,12 +1,12 @@
-# 第 4 部分：BGP 深入剖析
+# 第 4 部分：BGP 深度解析
 
-> **支持版本**：Calico v3.29+ / Kubernetes 1.28+ **最后更新**：February 23, 2026
+> **支持的版本**: Calico v3.29+ / Kubernetes 1.28+ **最后更新**: February 23, 2026
 
 ## 简介
 
-Border Gateway Protocol (BGP) 是为互联网提供路由支持的路由协议，Calico 利用它为 Kubernetes 集群提供高可扩展性、基于标准的网络。与封装流量的 overlay 网络不同，Calico 基于 BGP 的网络支持原生 IP 路由，可提供卓越性能并与现有网络基础设施无缝集成。
+Border Gateway Protocol（BGP）是驱动互联网的路由协议，Calico 利用它为 Kubernetes 集群提供高度可扩展、基于标准的网络。与封装流量的覆盖网络不同，Calico 基于 BGP 的网络支持原生 IP 路由，提供卓越性能并可与现有网络基础设施无缝集成。
 
-本深入剖析涵盖 BGP 基础知识、Calico 的 BGP 架构选项、配置资源，以及适用于企业环境的高级部署模式。
+本深度解析涵盖 BGP 基础知识、Calico 的 BGP 架构选项、配置资源，以及适用于企业环境的高级部署模式。
 
 ***
 
@@ -14,20 +14,20 @@ Border Gateway Protocol (BGP) 是为互联网提供路由支持的路由协议�
 
 ### 什么是 BGP？
 
-BGP (Border Gateway Protocol) 是一种路径向量路由协议，旨在于自治系统之间交换路由信息。在 Calico 中，BGP 会在集群节点间分发 Pod IP 路由，并可选择性地分发至外部网络基础设施。
+BGP（Border Gateway Protocol）是一种路径向量路由协议，旨在自治系统之间交换路由信息。在 Calico 中，BGP 会在集群节点之间分发 Pod IP 路由，并可选择分发至外部网络基础设施。
 
 ### BGP 核心概念
 
-| 概念                    | 说明                                                                 |
-| ----------------------- | -------------------------------------------------------------------- |
-| **Autonomous System (AS)** | 处于单一管理域下的一组 IP 网络                                        |
-| **AS Number (ASN)**        | AS 的唯一标识符（16 位：1-65534，32 位：1-4294967294）               |
-| **iBGP**                   | 内部 BGP - 同一 AS 中路由器之间的会话                                |
-| **eBGP**                   | 外部 BGP - 不同 AS 中路由器之间的会话                                |
-| **NLRI**                   | Network Layer Reachability Information - 正在通告的路由              |
-| **BGP Speaker**            | 参与 BGP 的路由器或软件                                              |
+| 概念                    | 描述                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| **自治系统 (AS)** | 处于单一管理域下的一组 IP 网络     |
+| **AS 编号 (ASN)**        | AS 的唯一标识符（16 位：1-65534，32 位：1-4294967294）  |
+| **iBGP**                   | 内部 BGP - 同一 AS 中路由器之间的会话               |
+| **eBGP**                   | 外部 BGP - 不同 AS 中路由器之间的会话            |
+| **NLRI**                   | 网络层可达性信息 - 正在通告的路由 |
+| **BGP Speaker**            | 参与 BGP 的路由器或软件                        |
 
-### 私有 AS Number 范围
+### 私有 AS 编号范围
 
 对于组织内部使用，IANA 保留了以下私有 ASN 范围：
 
@@ -36,94 +36,58 @@ BGP (Border Gateway Protocol) 是一种路径向量路由协议，旨在于自�
 32-bit Private ASN Range: 4200000000 - 4294967294
 ```
 
-Calico 通常对集群内部 BGP 使用 `64512-65534` 范围内的 ASN。
+Calico 通常将 `64512-65534` 范围内的 ASN 用于集群内部 BGP。
 
-### BGP 路由选择流程
+### BGP 路由选择过程
 
-当 BGP Speaker 收到前往同一目的地的多条路由时，会依据以下条件（按顺序）选择最佳路由：
+当 BGP Speaker 收到到达同一目的地的多条路由时，它会使用以下标准（按顺序）选择最佳路由：
 
-```mermaid
-flowchart TD
-    A[Receive Multiple Routes] --> B{Highest Weight?}
-    B -->|Tie| C{Highest LOCAL_PREF?}
-    C -->|Tie| D{Locally Originated?}
-    D -->|Tie| E{Shortest AS_PATH?}
-    E -->|Tie| F{Lowest Origin Type?}
-    F -->|Tie| G{Lowest MED?}
-    G -->|Tie| H{eBGP over iBGP?}
-    H -->|Tie| I{Lowest IGP Metric?}
-    I -->|Tie| J{Oldest Route?}
-    J -->|Tie| K{Lowest Router ID}
-    K --> L[Select Best Route]
-```
+![拥有多条到同一目的地路由的 BGP Speaker 会按顺序评估七项决胜标准；如果出现平局，则继续评估下一项，直至选出一条最佳路由。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
 
-### iBGP 与 eBGP 的行为差异
+### iBGP 与 eBGP 的行为对比
 
-| 属性                    | iBGP                               | eBGP                                   |
+| 属性               | iBGP                               | eBGP                                   |
 | ----------------------- | ---------------------------------- | -------------------------------------- |
-| AS\_PATH 修改          | 不修改                             | 添加本地 AS                            |
-| 下一跳                  | 默认不变                           | 更改为对等地址                         |
-| 默认 TTL                | 255                                | 1（非相邻节点需要 multihop）           |
-| 路由通告                | 仅通告给 eBGP 对等体（split-horizon） | 通告给所有对等体                     |
-| 管理距离                | 200                                | 20                                     |
+| AS\_PATH 修改   | 不修改                       | 前置添加本地 AS                      |
+| 下一跳                | 默认不更改             | 更改为对等地址             |
+| 默认 TTL             | 255                                | 1（非相邻节点需要 multihop） |
+| 路由通告     | 仅通告给 eBGP 对等体（split-horizon） | 通告给所有对等体                           |
+| 管理距离 | 200                                | 20                                     |
 
 ***
 
 ## Calico BGP 架构
 
-![Calico BGP Topologies](../../.gitbook/assets/calico_bgp_topology.png)
+![Calico 两种 BGP 拓扑的并排对比：左侧为默认全网状拓扑，四个节点中的每个节点都与其他每个节点直接对等（N(N−1)/2 个会话，适用于 50 个以下节点）；右侧为路由反射器拓扑，四个客户端节点仅与两个路由反射器对等，两个路由反射器也彼此对等（2N+1 个会话，建议用于 50 个以上节点）。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-9.html)
 
 ### BIRD：Calico 的 BGP 实现
 
-Calico 使用 BIRD (BIRD Internet Routing Daemon) 作为其 BGP 实现。BIRD 在每个节点上的 `calico-node` DaemonSet 中运行。
+Calico 使用 BIRD（BIRD Internet Routing Daemon）作为其 BGP 实现。BIRD 作为每个节点上 `calico-node` DaemonSet 的一部分运行。
 
-```mermaid
-graph TB
-    subgraph "Calico Node"
-        FV[Felix] --> DT[Dataplane<br/>iptables/eBPF]
-        BIRD[BIRD BGP] --> RT[Routing Table]
-        CONFD[confd] --> BIRD
-        API[Calico API] --> CONFD
-    end
-
-    BIRD <--> EXT[External Router]
-    BIRD <--> OTHER[Other Calico Nodes]
-```
+![在每个 calico-node Pod 内，Calico API 将配置提供给 confd，后者配置 BIRD；BIRD 对路由表进行编程，并通过 BGP 与外部路由器及其他 Calico 节点对等；同时 Felix 独立对 iptables/eBPF 数据平面进行编程。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
 
 ### BGP 拓扑选项
 
 Calico 支持两种主要的 BGP 拓扑：
 
-1. **节点到节点网状拓扑（Full Mesh）** - 默认配置
-2. **Route Reflectors** - 推荐用于较大的集群
+1. **节点到节点网状拓扑（全网状）** - 默认配置
+2. **路由反射器** - 建议用于较大的集群
 
 ***
 
-## Full-Mesh 拓扑
+## 全网状拓扑
 
-### Full-Mesh 的工作方式
+### 全网状的工作方式
 
-在默认的 Full-Mesh 配置中，每个 Calico 节点都会与集群中的其他每个节点建立 BGP 对等会话。
+在默认全网状配置中，每个 Calico 节点都会与集群中的每个其他节点建立 BGP 对等会话。
 
-```mermaid
-graph TB
-    subgraph "Full-Mesh BGP (5 Nodes)"
-        N1[Node 1<br/>AS 64512] <--> N2[Node 2<br/>AS 64512]
-        N1 <--> N3[Node 3<br/>AS 64512]
-        N1 <--> N4[Node 4<br/>AS 64512]
-        N1 <--> N5[Node 5<br/>AS 64512]
-        N2 <--> N3
-        N2 <--> N4
-        N2 <--> N5
-        N3 <--> N4
-        N3 <--> N5
-        N4 <--> N5
-    end
-```
+![在默认全网状配置中，每个 Calico 节点都与其他每个节点对等；图中从 Node 1 的视角显示其连接到另外四个节点。五个节点均以相同方式对等，共产生 10 个 BGP 会话。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
 
 ### 会话数量公式
 
-Full-Mesh 拓扑中的 BGP 会话数量呈二次增长：
+全网状拓扑中的 BGP 会话数量呈二次增长：
 
 ```
 Sessions = N × (N - 1) / 2
@@ -135,14 +99,14 @@ Examples:
 - 500 nodes:  500 × 499 / 2 = 124,750 sessions
 ```
 
-### Full-Mesh 的扩展性限制
+### 全网状扩展限制
 
-| 集群规模        | BGP 会话数    | 每个节点的内存 | CPU 影响 | 建议           |
-| --------------- | ------------ | -------------- | -------- | -------------- |
-| < 50 个节点     | < 1,225      | \~50 MB        | 极小     | 可使用 Full-mesh |
-| 50-100 个节点   | 1,225-4,950  | \~100 MB       | 低       | 考虑使用 RR    |
-| 100-200 个节点  | 4,950-19,900 | \~200 MB       | 中等     | 使用 RR        |
-| > 200 个节点    | > 19,900     | > 400 MB        | 高       | 必须使用 RR    |
+| 集群规模  | BGP 会话 | 每节点内存 | CPU 影响 | 建议 |
+| ------------- | ------------ | --------------- | ---------- | -------------- |
+| < 50 个节点    | < 1,225      | \~50 MB         | 极低    | 可使用全网状   |
+| 50-100 个节点  | 1,225-4,950  | \~100 MB        | 低        | 考虑使用 RR    |
+| 100-200 个节点 | 4,950-19,900 | \~200 MB        | 中等   | 使用 RR         |
+| > 200 个节点   | > 19,900     | > 400 MB        | 高       | 必须使用 RR     |
 
 ### 启用/禁用节点到节点网状拓扑
 
@@ -152,7 +116,7 @@ Examples:
 calicoctl get bgpconfiguration default -o yaml
 ```
 
-禁用节点到节点网状拓扑（使用 Route Reflectors 时）：
+禁用节点到节点网状拓扑（使用路由反射器时）：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -166,58 +130,25 @@ spec:
 
 ***
 
-## Route Reflector 拓扑
+## 路由反射器拓扑
 
-### Route Reflector 概念
+### 路由反射器概念
 
-Route Reflectors (RRs) 通过允许一部分节点向其他节点反射路由来解决 iBGP 的扩展性问题。这消除了对 Full Mesh 的需求。
+路由反射器（RR）通过允许一部分节点将路由反射给其他节点，解决 iBGP 的可扩展性问题。这消除了对全网状拓扑的需求。
 
-```mermaid
-graph TB
-    subgraph "Route Reflector Topology"
-        subgraph "Route Reflectors"
-            RR1[RR Node 1<br/>Cluster ID: 1.0.0.1]
-            RR2[RR Node 2<br/>Cluster ID: 1.0.0.1]
-        end
+![两个路由反射器彼此对等，并与每个客户端节点对等，使客户端节点无需彼此直接对等即可学习路由，从而消除对全网状拓扑的需求。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
 
-        subgraph "Client Nodes"
-            C1[Client 1]
-            C2[Client 2]
-            C3[Client 3]
-            C4[Client 4]
-            C5[Client 5]
-            C6[Client 6]
-        end
+### 路由反射器关键属性
 
-        RR1 <--> RR2
-
-        C1 --> RR1
-        C2 --> RR1
-        C3 --> RR1
-        C1 --> RR2
-        C2 --> RR2
-        C3 --> RR2
-
-        C4 --> RR1
-        C5 --> RR1
-        C6 --> RR1
-        C4 --> RR2
-        C5 --> RR2
-        C6 --> RR2
-    end
-```
-
-### Route Reflector 的关键属性
-
-| 属性                 | 说明                                                          |
+| 属性            | 描述                                                   |
 | -------------------- | ------------------------------------------------------------- |
-| **Cluster ID**       | 标识为同一批客户端提供服务的一组 RR                           |
-| **Originator ID**    | 防止路由环路（设置为发起方的 router ID）                      |
-| **Route Reflection** | RR 将从客户端学习到的路由重新通告给其他客户端                 |
+| **集群 ID**       | 标识服务于同一客户端的一组 RR              |
+| **发起者 ID**    | 防止路由环路（设为发起者的路由器 ID）   |
+| **路由反射** | RR 将从客户端学习到的路由重新通告给其他客户端 |
 
-### 使用 Route Reflectors 时的会话数量
+### 使用路由反射器时的会话数
 
-使用 2 个 Route Reflectors 和 N 个客户端节点：
+使用 2 个路由反射器和 N 个客户端节点时：
 
 ```
 Sessions = 2 × N + 1 (RR-to-RR peering)
@@ -227,16 +158,16 @@ Examples:
 - 500 nodes: 2 × 500 + 1 = 1,001 sessions (vs 124,750 in full-mesh)
 ```
 
-### 配置 Route Reflector 节点
+### 配置路由反射器节点
 
-**第 1 步：为指定为 Route Reflectors 的节点添加标签**
+**步骤 1：为指定为路由反射器的节点添加标签**
 
 ```bash
 kubectl label node rr-node-1 calico-route-reflector=true
 kubectl label node rr-node-2 calico-route-reflector=true
 ```
 
-**第 2 步：配置 Route Reflector Cluster ID**
+**步骤 2：配置路由反射器集群 ID**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -262,7 +193,7 @@ spec:
     routeReflectorClusterID: 1.0.0.1
 ```
 
-**第 3 步：禁用节点到节点网状拓扑**
+**步骤 3：禁用节点到节点网状拓扑**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -274,7 +205,7 @@ spec:
   asNumber: 64512
 ```
 
-**第 4 步：配置与 Route Reflectors 的 BGP 对等**
+**步骤 4：配置到路由反射器的 BGP 对等关系**
 
 ```yaml
 # Peering from non-RR nodes to RR nodes
@@ -296,71 +227,15 @@ spec:
   peerSelector: has(calico-route-reflector)
 ```
 
-### Route Reflector 冗余模式
+### 路由反射器冗余模式
 
-**模式 1：双 Route Reflectors（小型/中型集群）**
+**模式 1：双路由反射器（小型/中型集群）**
 
-```mermaid
-graph TB
-    subgraph "Availability Zone 1"
-        RR1[Route Reflector 1]
-        N1[Node 1]
-        N2[Node 2]
-        N3[Node 3]
-    end
+![每个可用区均部署一个路由反射器，两个可用区中的每个节点都与两个路由反射器对等，因此一个可用区的路由反射器丢失不会隔离任何节点。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
 
-    subgraph "Availability Zone 2"
-        RR2[Route Reflector 2]
-        N4[Node 4]
-        N5[Node 5]
-        N6[Node 6]
-    end
+**模式 2：分层路由反射器（大型集群）**
 
-    RR1 <--> RR2
-    N1 & N2 & N3 --> RR1
-    N1 & N2 & N3 --> RR2
-    N4 & N5 & N6 --> RR1
-    N4 & N5 & N6 --> RR2
-```
-
-**模式 2：分层 Route Reflectors（大型集群）**
-
-```mermaid
-graph TB
-    subgraph "Tier 1 - Global RRs"
-        GRR1[Global RR 1]
-        GRR2[Global RR 2]
-    end
-
-    subgraph "Tier 2 - Rack RRs"
-        RRR1[Rack 1 RR]
-        RRR2[Rack 2 RR]
-        RRR3[Rack 3 RR]
-    end
-
-    subgraph "Rack 1 Nodes"
-        R1N1[Node]
-        R1N2[Node]
-    end
-
-    subgraph "Rack 2 Nodes"
-        R2N1[Node]
-        R2N2[Node]
-    end
-
-    subgraph "Rack 3 Nodes"
-        R3N1[Node]
-        R3N2[Node]
-    end
-
-    GRR1 <--> GRR2
-    GRR1 <--> RRR1 & RRR2 & RRR3
-    GRR2 <--> RRR1 & RRR2 & RRR3
-
-    R1N1 & R1N2 --> RRR1
-    R2N1 & R2N2 --> RRR2
-    R3N1 & R3N2 --> RRR3
-```
+![双层路由反射器层级：两个全局路由反射器彼此对等，并与每个机架级路由反射器对等；每个机架中的节点仅与其所在机架的路由反射器对等，使会话数量在集群增长时保持稳定。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
 
 ***
 
@@ -368,17 +243,17 @@ graph TB
 
 `BGPPeer` 资源定义 Calico 节点与外部 BGP Speaker 之间的 BGP 对等关系。
 
-### BGPPeer 范围类型
+### BGPPeer 作用域类型
 
-| 类型                  | 说明                 | 使用场景               |
-| --------------------- | -------------------- | ---------------------- |
-| **全局**              | 应用于所有节点       | 外部路由器对等         |
-| **节点特定**          | 使用 nodeSelector    | 机架本地对等           |
-| **每节点**            | 指定确切节点         | 特殊配置               |
+| 类型              | 描述          | 使用场景                |
+| ----------------- | -------------------- | ----------------------- |
+| **全局**        | 应用于所有节点 | 外部路由器对等 |
+| **节点特定** | 使用 nodeSelector    | 机架本地对等      |
+| **每节点**      | 指定精确节点 | 特殊配置  |
 
 ### 全局 BGPPeer 示例
 
-将所有节点与外部 ToR 交换机建立对等：
+使所有节点与外部 ToR 交换机对等：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -393,7 +268,7 @@ spec:
 
 ### 节点特定 BGPPeer 示例
 
-将特定机架中的节点与其本地 ToR 交换机建立对等：
+使特定机架中的节点与其本地 ToR 交换机对等：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -415,7 +290,7 @@ spec:
   asNumber: 65002
 ```
 
-### 带有 peerSelector 的 BGPPeer
+### 使用 peerSelector 的 BGPPeer
 
 使用 `peerSelector` 动态选择 Calico 节点作为对等体：
 
@@ -493,7 +368,7 @@ spec:
 
 ### Service IP 通告
 
-Calico 可通过 BGP 通告 Kubernetes Service IP，使外部客户端能够直接访问服务。
+Calico 可以通过 BGP 通告 Kubernetes Service IP，使外部客户端能够直接访问服务。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -519,7 +394,7 @@ spec:
 
 ### BGP Communities 配置
 
-BGP communities 可让您为外部路由器上的基于策略路由标记路由：
+BGP communities 允许您为路由添加标记，以便在外部路由器上实施基于策略的路由：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -549,9 +424,9 @@ spec:
       value: "65535:65281"  # Well-known NO_EXPORT
 ```
 
-### 节点特定 AS Number
+### 节点特定 AS 编号
 
-对于复杂拓扑，您可为每个节点分配不同的 AS number：
+对于复杂拓扑，您可以为每个节点分配不同的 AS 编号：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -570,11 +445,11 @@ spec:
 
 ### 通告类型
 
-| 类型                 | 说明                  | 使用场景               |
-| -------------------- | --------------------- | ---------------------- |
-| **ClusterIP**        | 内部 Service IP       | 内部负载均衡           |
-| **ExternalIP**       | 用户分配的外部 IP     | 直接外部访问           |
-| **LoadBalancerIP**   | 云提供商分配          | 云集成                 |
+| 类型               | 描述               | 使用场景                |
+| ------------------ | ------------------------- | ----------------------- |
+| **ClusterIP**      | 内部服务 IP       | 内部负载均衡 |
+| **ExternalIP**     | 用户分配的外部 IP | 直接外部访问  |
+| **LoadBalancerIP** | 云提供商分配的 IP   | 云集成       |
 
 ### ExternalIP 通告示例
 
@@ -607,7 +482,7 @@ spec:
 
 ### LoadBalancer IP 通告
 
-对于未集成云提供商的 bare-metal 集群：
+对于没有云提供商集成的裸金属集群：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -636,7 +511,7 @@ spec:
 
 ### 选择性 Service 通告
 
-使用 annotations 控制要通告哪些服务：
+使用注释控制通告哪些服务：
 
 ```yaml
 apiVersion: v1
@@ -767,42 +642,9 @@ policy-options {
 
 ### Spine-Leaf 架构集成
 
-```mermaid
-graph TB
-    subgraph "Spine Layer (AS 65000)"
-        S1[Spine 1<br/>10.0.0.1]
-        S2[Spine 2<br/>10.0.0.2]
-    end
+![在 spine-leaf 网络中，每个 leaf 交换机都与两个 spine 交换机对等以实现冗余；每个机架中的 Kubernetes 节点仅与该机架的 leaf 交换机对等，因此 BGP 路由从节点向上流经 leaf 和 spine 层。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
 
-    subgraph "Leaf Layer"
-        subgraph "Rack 1 (AS 65001)"
-            L1[Leaf 1<br/>10.0.1.1]
-            K1[K8s Node 1<br/>AS 64512]
-            K2[K8s Node 2<br/>AS 64512]
-        end
-
-        subgraph "Rack 2 (AS 65002)"
-            L2[Leaf 2<br/>10.0.2.1]
-            K3[K8s Node 3<br/>AS 64512]
-            K4[K8s Node 4<br/>AS 64512]
-        end
-
-        subgraph "Rack 3 (AS 65003)"
-            L3[Leaf 3<br/>10.0.3.1]
-            K5[K8s Node 5<br/>AS 64512]
-            K6[K8s Node 6<br/>AS 64512]
-        end
-    end
-
-    S1 <--> L1 & L2 & L3
-    S2 <--> L1 & L2 & L3
-
-    K1 & K2 --> L1
-    K3 & K4 --> L2
-    K5 & K6 --> L3
-```
-
-适用于 spine-leaf 的 Calico 配置：
+用于 spine-leaf 的 Calico 配置：
 
 ```yaml
 # Disable node-to-node mesh
@@ -852,13 +694,13 @@ spec:
 
 ### Community 设计模式
 
-| Community     | 含义           | 操作                             |
+| Community     | 含义        | 操作                           |
 | ------------- | -------------- | -------------------------------- |
-| `64512:100`   | Pod 网络       | 接受，常规路由                   |
-| `64512:200`   | Service IP     | 接受，可能应用特殊策略           |
-| `64512:300`   | 基础设施       | 更高优先级路由                   |
-| `65535:65281` | NO\_EXPORT     | 不向 AS 外部通告                 |
-| `65535:65282` | NO\_ADVERTISE  | 不向任何对等体通告               |
+| `64512:100`   | Pod 网络   | 接受，正常路由           |
+| `64512:200`   | Service IP | 接受，可应用特殊策略 |
+| `64512:300`   | 基础设施 | 更高优先级路由          |
+| `65535:65281` | NO\_EXPORT     | 不通告到 AS 外部      |
+| `65535:65282` | NO\_ADVERTISE  | 不通告给任何对等体     |
 
 ### 基于 Community 的流量工程
 
@@ -898,7 +740,7 @@ spec:
 
 ***
 
-## BGP 安全性
+## BGP 安全
 
 ### MD5 身份验证
 
@@ -971,7 +813,7 @@ spec:
 
 ### GTSM（TTL 安全）
 
-Generalized TTL Security Mechanism 可防止伪造的 BGP 数据包：
+通用 TTL 安全机制可防止伪造的 BGP 数据包：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1008,7 +850,7 @@ spec:
 
 ### 路由聚合
 
-通过聚合 Pod CIDR 来减少通告的路由数量：
+通过聚合 Pod CIDR，减少通告的路由数量：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1027,7 +869,7 @@ spec:
 
 ### 优雅重启
 
-启用 BGP 优雅重启，以最大限度地减少 BIRD 重启期间的流量中断：
+启用 BGP 优雅重启，以在 BIRD 重启期间最大限度减少流量中断：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1073,14 +915,14 @@ birdcl -s /var/run/calico/bird.ctl show route export Mesh_10_0_1_11
 birdcl -s /var/run/calico/bird.ctl show protocols all Mesh_10_0_1_11
 ```
 
-### 常见 BGP 问题和解决方案
+### 常见 BGP 问题及解决方案
 
-| 问题                     | 症状                          | 解决方案                                  |
-| ------------------------ | ----------------------------- | ----------------------------------------- |
-| 会话卡在 Active           | 未学习到路由                  | 检查防火墙（TCP 179）、AS number          |
-| 路由未传播               | Pod 无法跨机架访问            | 验证节点到节点网状拓扑或 RR 配置          |
-| 路由抖动                 | 间歇性连接问题                | 检查 BGP 定时器、网络稳定性               |
-| 会话重置                 | 经常从 Established 变为 Active | 检查 MTU、MD5 密码                        |
+| 问题                    | 症状                      | 解决方案                              |
+| ------------------------ | ----------------------------- | ------------------------------------- |
+| 会话卡在 Active 状态 | 未学习到路由             | 检查防火墙（TCP 179）、AS 编号  |
+| 路由未传播   | Pod 无法跨机架访问 | 验证节点到节点网状拓扑或 RR 配置 |
+| 路由抖动           | 间歇性连接     | 检查 BGP 定时器、网络稳定性   |
+| 会话重置           | 频繁 Established->Active  | 检查 MTU、MD5 密码              |
 
 ### 诊断命令
 
@@ -1105,79 +947,13 @@ ip route show | grep bird
 
 ## 多机架和多数据中心设计
 
-### 使用 Route Reflectors 的多机架设计
+### 使用路由反射器的多机架设计
 
-```mermaid
-graph TB
-    subgraph "Datacenter"
-        subgraph "Management Rack"
-            RR1[Route Reflector 1<br/>Cluster ID: 1.0.0.1]
-            RR2[Route Reflector 2<br/>Cluster ID: 1.0.0.1]
-        end
-
-        subgraph "Compute Rack 1"
-            N1[Node 1]
-            N2[Node 2]
-            N3[Node 3]
-        end
-
-        subgraph "Compute Rack 2"
-            N4[Node 4]
-            N5[Node 5]
-            N6[Node 6]
-        end
-
-        subgraph "Compute Rack 3"
-            N7[Node 7]
-            N8[Node 8]
-            N9[Node 9]
-        end
-    end
-
-    RR1 <--> RR2
-
-    N1 & N2 & N3 --> RR1
-    N1 & N2 & N3 --> RR2
-    N4 & N5 & N6 --> RR1
-    N4 & N5 & N6 --> RR2
-    N7 & N8 & N9 --> RR1
-    N7 & N8 & N9 --> RR2
-```
+![管理机架中的两个路由反射器彼此对等，并与每个计算机架对等，因此每个计算机架的节点无需全网状拓扑即可访问所有其他机架的路由，且一个路由反射器丢失不会隔离任何机架。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
 
 ### 多数据中心 BGP 设计
 
-```mermaid
-graph TB
-    subgraph "DC1 (AS 64512)"
-        subgraph "DC1 RRs"
-            DC1_RR1[DC1 RR1]
-            DC1_RR2[DC1 RR2]
-        end
-        DC1_N1[DC1 Nodes]
-
-        DC1_RR1 <--> DC1_RR2
-        DC1_N1 --> DC1_RR1 & DC1_RR2
-    end
-
-    subgraph "DC2 (AS 64513)"
-        subgraph "DC2 RRs"
-            DC2_RR1[DC2 RR1]
-            DC2_RR2[DC2 RR2]
-        end
-        DC2_N1[DC2 Nodes]
-
-        DC2_RR1 <--> DC2_RR2
-        DC2_N1 --> DC2_RR1 & DC2_RR2
-    end
-
-    subgraph "WAN Edge (AS 65000)"
-        WAN1[WAN Router 1]
-        WAN2[WAN Router 2]
-    end
-
-    DC1_RR1 & DC1_RR2 <--> WAN1 & WAN2
-    DC2_RR1 & DC2_RR2 <--> WAN1 & WAN2
-```
+![每个数据中心运行自己的 AS，并拥有在内部与各自节点对等的路由反射器；每个数据中心的路由反射器通过 eBGP 与共享 WAN 边缘对等，从而连接两个数据中心。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
 
 多数据中心配置：
 
@@ -1213,34 +989,34 @@ spec:
 
 ### 设计建议
 
-1. **集群规模 < 50 个节点**：可接受 Full-mesh
-2. **集群规模为 50-200 个节点**：部署 2-3 个 Route Reflectors
-3. **集群规模 > 200 个节点**：部署分层 Route Reflectors
-4. **多机架**：使用机架感知的 Route Reflector 放置方式
+1. **集群规模 < 50 个节点**：可接受全网状拓扑
+2. **集群规模 50-200 个节点**：部署 2-3 个路由反射器
+3. **集群规模 > 200 个节点**：部署分层路由反射器
+4. **多机架**：使用感知机架的路由反射器放置方式
 5. **多数据中心**：每个 DC 使用独立 AS，DC 之间使用 eBGP
 
 ### 安全建议
 
 1. 始终为外部对等体启用 MD5 身份验证
 2. 实施前缀过滤以防止路由注入
-3. 在支持的情况下使用 GTSM（TTL 安全）
+3. 在支持时使用 GTSM（TTL 安全）
 4. 限制每个对等体接受的最大路由数
 5. 监控 BGP 会话是否存在异常
 
 ### 运维建议
 
 1. 为 BGP 拓扑一致地标记节点
-2. 记录 AS number 分配方案
+2. 记录 AS 编号分配方案
 3. 实施 BGP 监控和告警
 4. 定期测试故障转移场景
-5. 保持各对等体之间的 BGP 定时器一致
+5. 保持对等体之间的 BGP 定时器一致
 
 ***
 
 ## 参考资料
 
-* [Calico BGP Documentation](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
+* [Calico BGP 文档](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 * [BIRD Internet Routing Daemon](https://bird.network.cz/)
 * [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
-* [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
-* [RFC 5765 - GTSM for BGP](https://tools.ietf.org/html/rfc5082)
+* [RFC 4456 - BGP 路由反射](https://tools.ietf.org/html/rfc4456)
+* [RFC 5765 - BGP 的 GTSM](https://tools.ietf.org/html/rfc5082)
