@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Security Standards and Pod Security Admission",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1310,
+      720
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "NS label"
+        },
+        "security": {
+          "label": "Mode"
+        },
+        "cloud": {
+          "label": "Level"
+        },
+        "backend": {
+          "label": "Request"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "label-flow",
+        "label": "Apply standards via labels",
+        "focus": [
+          "ns",
+          "psa",
+          "pss"
+        ],
+        "note": "A namespace label selects the admission mode and the standard level to apply."
+      },
+      {
+        "id": "levels",
+        "label": "Three policy levels",
+        "focus": [
+          "pss",
+          "privileged",
+          "baseline",
+          "restricted"
+        ],
+        "note": "Privileged: no restrictions; Baseline: blocks known privilege escalation paths; Restricted: strongly hardened."
+      },
+      {
+        "id": "modes",
+        "label": "Three admission modes",
+        "focus": [
+          "psa",
+          "enforce",
+          "audit",
+          "warn"
+        ],
+        "note": "enforce blocks creation, audit records to the audit log, warn shows a warning message."
+      },
+      {
+        "id": "verdict",
+        "label": "Validating a pod request",
+        "focus": [
+          "psa",
+          "pod",
+          "allow",
+          "deny"
+        ],
+        "note": "A compliant request is allowed; under enforce mode a violating request is denied."
+      }
+    ]
+  },
+  "components": [
+    {"id": "ns", "type": "external", "label": "Namespace", "sublabel": "pod-security.kubernetes.io/<mode>", "pos": [320, 10], "size": [260, 56]},
+    {"id": "psa", "type": "security", "label": "Pod Security Admission", "sublabel": "applies standards via labels", "pos": [350, 230], "size": [200, 60]},
+    {"id": "enforce", "type": "security", "label": "enforce", "sublabel": "blocks creation on violation", "pos": [40, 162], "size": [210, 52]},
+    {"id": "audit", "type": "security", "label": "audit", "sublabel": "records violation in audit log", "pos": [40, 234], "size": [210, 52]},
+    {"id": "warn", "type": "security", "label": "warn", "sublabel": "shows warning on violation", "pos": [40, 306], "size": [210, 52]},
+    {"id": "pss", "type": "cloud", "label": "Pod Security Standards", "sublabel": "defines three policy levels", "pos": [760, 230], "size": [200, 60]},
+    {"id": "privileged", "type": "cloud", "label": "Privileged", "sublabel": "no restrictions, all permissions", "pos": [1050, 162], "size": [210, 52]},
+    {"id": "baseline", "type": "cloud", "label": "Baseline", "sublabel": "blocks known escalation paths", "pos": [1050, 234], "size": [210, 52]},
+    {"id": "restricted", "type": "cloud", "label": "Restricted", "sublabel": "strongly hardened policy", "pos": [1050, 306], "size": [210, 52]},
+    {"id": "pod", "type": "backend", "label": "Pod Creation Request", "pos": [350, 530], "size": [200, 60]},
+    {"id": "allow", "type": "backend", "label": "Allow", "pos": [650, 490], "size": [150, 52]},
+    {"id": "deny", "type": "backend", "label": "Deny", "pos": [650, 580], "size": [150, 52]}
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "Pod Security Admission", "wraps": ["psa", "enforce", "audit", "warn"]},
+    {"kind": "region", "label": "Pod Security Standards", "wraps": ["pss", "privileged", "baseline", "restricted"]}
+  ],
+  "connections": [
+    {"id": "ns-psa", "from": "ns", "to": "psa", "label": "sets label", "variant": "emphasis", "labelAt": [450, 110]},
+    {"id": "psa-enforce", "from": "psa", "to": "enforce"},
+    {"id": "psa-audit", "from": "psa", "to": "audit", "label": "mode", "labelAt": [275, 260]},
+    {"id": "psa-warn", "from": "psa", "to": "warn"},
+    {"id": "psa-pss", "from": "psa", "to": "pss", "label": "references", "variant": "dashed"},
+    {"id": "pss-privileged", "from": "pss", "to": "privileged"},
+    {"id": "pss-baseline", "from": "pss", "to": "baseline", "label": "level", "labelAt": [1028, 260]},
+    {"id": "pss-restricted", "from": "pss", "to": "restricted"},
+    {"id": "psa-pod", "from": "psa", "to": "pod", "label": "validates", "variant": "emphasis", "labelAt": [450, 450]},
+    {"id": "pod-allow", "from": "pod", "to": "allow", "label": "compliant", "variant": "emphasis"},
+    {"id": "pod-deny", "from": "pod", "to": "deny", "label": "violation (enforce)", "variant": "security"}
+  ],
+  "cards": [
+    {"dot": "rose", "title": "From PSP to PSS/PSA", "items": ["PodSecurityPolicy (PSP) was deprecated in Kubernetes 1.21 and completely removed in 1.25", "Pod Security Standards and Pod Security Admission were introduced instead"]},
+    {"dot": "cyan", "title": "Namespace label example", "items": ["pod-security.kubernetes.io/enforce: restricted", "pod-security.kubernetes.io/audit: restricted", "pod-security.kubernetes.io/warn: restricted", "The label value selects the policy level applied in that mode"]}
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "포드 보안 표준과 포드 보안 어드미션",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1310, 720],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "네임스페이스"
+        },
+        "security": {
+          "label": "어드미션 모드"
+        },
+        "cloud": {
+          "label": "정책 수준"
+        },
+        "backend": {
+          "label": "포드 요청"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "label-flow",
+        "label": "레이블로 표준 적용",
+        "focus": [
+          "ns",
+          "psa",
+          "pss"
+        ],
+        "note": "네임스페이스 레이블이 어드미션 모드와 적용할 표준 수준을 지정한다."
+      },
+      {
+        "id": "levels",
+        "label": "세 가지 정책 수준",
+        "focus": [
+          "pss",
+          "privileged",
+          "baseline",
+          "restricted"
+        ],
+        "note": "Privileged는 제한 없음, Baseline은 알려진 권한 상승 경로 차단, Restricted는 강력하게 강화된 보안."
+      },
+      {
+        "id": "modes",
+        "label": "세 가지 적용 모드",
+        "focus": [
+          "psa",
+          "enforce",
+          "audit",
+          "warn"
+        ],
+        "note": "enforce는 생성 차단, audit는 감사 로그 기록, warn은 경고 메시지 표시."
+      },
+      {
+        "id": "verdict",
+        "label": "포드 생성 요청 검증",
+        "focus": [
+          "psa",
+          "pod",
+          "allow",
+          "deny"
+        ],
+        "note": "표준을 준수하면 허용되고, enforce 모드에서 위반하면 생성이 거부된다."
+      }
+    ]
+  },
+  "components": [
+    {"id": "ns", "type": "external", "label": "네임스페이스", "sublabel": "pod-security.kubernetes.io/<mode>", "pos": [320, 10], "size": [260, 56]},
+    {"id": "psa", "type": "security", "label": "Pod Security Admission", "sublabel": "레이블 기반 표준 적용", "pos": [350, 230], "size": [200, 60]},
+    {"id": "enforce", "type": "security", "label": "enforce", "sublabel": "위반 시 생성 차단", "pos": [40, 162], "size": [210, 52]},
+    {"id": "audit", "type": "security", "label": "audit", "sublabel": "위반 시 감사 로그 기록", "pos": [40, 234], "size": [210, 52]},
+    {"id": "warn", "type": "security", "label": "warn", "sublabel": "위반 시 경고 메시지", "pos": [40, 306], "size": [210, 52]},
+    {"id": "pss", "type": "cloud", "label": "Pod Security Standards", "sublabel": "세 가지 정책 수준 정의", "pos": [760, 230], "size": [200, 60]},
+    {"id": "privileged", "type": "cloud", "label": "Privileged", "sublabel": "제한 없음, 모든 권한 허용", "pos": [1050, 162], "size": [210, 52]},
+    {"id": "baseline", "type": "cloud", "label": "Baseline", "sublabel": "알려진 권한 상승 경로 차단", "pos": [1050, 234], "size": [210, 52]},
+    {"id": "restricted", "type": "cloud", "label": "Restricted", "sublabel": "강력하게 강화된 보안 정책", "pos": [1050, 306], "size": [210, 52]},
+    {"id": "pod", "type": "backend", "label": "포드 생성 요청", "pos": [350, 530], "size": [200, 60]},
+    {"id": "allow", "type": "backend", "label": "허용", "pos": [650, 490], "size": [150, 52]},
+    {"id": "deny", "type": "backend", "label": "거부", "pos": [650, 580], "size": [150, 52]}
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "포드 보안 어드미션", "wraps": ["psa", "enforce", "audit", "warn"]},
+    {"kind": "region", "label": "포드 보안 표준", "wraps": ["pss", "privileged", "baseline", "restricted"]}
+  ],
+  "connections": [
+    {"id": "ns-psa", "from": "ns", "to": "psa", "label": "레이블 설정", "variant": "emphasis", "labelAt": [450, 110]},
+    {"id": "psa-enforce", "from": "psa", "to": "enforce"},
+    {"id": "psa-audit", "from": "psa", "to": "audit", "label": "모드", "labelAt": [275, 260]},
+    {"id": "psa-warn", "from": "psa", "to": "warn"},
+    {"id": "psa-pss", "from": "psa", "to": "pss", "label": "참조", "variant": "dashed"},
+    {"id": "pss-privileged", "from": "pss", "to": "privileged"},
+    {"id": "pss-baseline", "from": "pss", "to": "baseline", "label": "수준", "labelAt": [1028, 260]},
+    {"id": "pss-restricted", "from": "pss", "to": "restricted"},
+    {"id": "psa-pod", "from": "psa", "to": "pod", "label": "검증", "variant": "emphasis", "labelAt": [450, 450]},
+    {"id": "pod-allow", "from": "pod", "to": "allow", "label": "준수", "variant": "emphasis"},
+    {"id": "pod-deny", "from": "pod", "to": "deny", "label": "위반 (enforce)", "variant": "security"}
+  ],
+  "cards": [
+    {"dot": "rose", "title": "PSP에서 PSS/PSA로", "items": ["PodSecurityPolicy(PSP)는 Kubernetes 1.21부터 사용 중단(deprecated), 1.25에서 완전히 제거", "대신 Pod Security Standards와 Pod Security Admission이 도입"]},
+    {"dot": "cyan", "title": "네임스페이스 레이블 예시", "items": ["pod-security.kubernetes.io/enforce: restricted", "pod-security.kubernetes.io/audit: restricted", "pod-security.kubernetes.io/warn: restricted", "레이블 값이 해당 모드에 적용할 정책 수준을 지정"]}
+  ]
+}

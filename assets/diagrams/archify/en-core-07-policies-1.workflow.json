@@ -1,0 +1,212 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Resource Requests, Limits, and QoS Classes",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "settings",
+        "label": "Requests and limits",
+        "focus": [
+          "requests",
+          "limits",
+          "pod"
+        ],
+        "note": "requests is the minimum amount of resources guaranteed to the container; limits is the maximum it can use."
+      },
+      {
+        "id": "qos",
+        "label": "QoS class assignment",
+        "focus": [
+          "pod",
+          "qos",
+          "besteffort",
+          "burstable",
+          "guaranteed"
+        ],
+        "note": "Kubernetes automatically assigns a QoS class based on the pod's requests and limits settings."
+      },
+      {
+        "id": "order",
+        "label": "Eviction order",
+        "focus": [
+          "besteffort",
+          "burstable",
+          "guaranteed",
+          "eviction"
+        ],
+        "note": "When resources run short, BestEffort pods are evicted first, Burstable next, and Guaranteed pods last."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Resource settings"
+        },
+        "backend": {
+          "label": "Kubernetes decision"
+        },
+        "cloud": {
+          "label": "QoS classes"
+        },
+        "security": {
+          "label": "Eviction"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "mechanism",
+      "label": "Resource Allocation Mechanisms"
+    },
+    {
+      "id": "k8s",
+      "label": "Automatic Kubernetes Assignment"
+    },
+    {
+      "id": "classes",
+      "label": "QoS Class Types"
+    },
+    {
+      "id": "shortage",
+      "label": "Eviction Order During Resource Shortage"
+    }
+  ],
+  "mainPath": [
+    "requests",
+    "pod",
+    "qos"
+  ],
+  "nodes": [
+    {
+      "id": "requests",
+      "lane": "mechanism",
+      "col": 0,
+      "type": "frontend",
+      "label": "Requests",
+      "sublabel": "guaranteed minimum"
+    },
+    {
+      "id": "limits",
+      "lane": "mechanism",
+      "col": 1,
+      "type": "frontend",
+      "label": "Limits",
+      "sublabel": "maximum usage"
+    },
+    {
+      "id": "pod",
+      "lane": "k8s",
+      "col": 2,
+      "type": "backend",
+      "label": "Pod/Container",
+      "sublabel": "resources field"
+    },
+    {
+      "id": "qos",
+      "lane": "k8s",
+      "col": 3,
+      "type": "backend",
+      "label": "QoS Class",
+      "sublabel": "assigned automatically"
+    },
+    {
+      "id": "besteffort",
+      "lane": "classes",
+      "width": 150,
+      "col": 3,
+      "type": "cloud",
+      "label": "BestEffort",
+      "sublabel": "no requests/limits"
+    },
+    {
+      "id": "burstable",
+      "lane": "classes",
+      "width": 150,
+      "col": 4,
+      "type": "cloud",
+      "label": "Burstable",
+      "sublabel": "requests set · not Guaranteed"
+    },
+    {
+      "id": "guaranteed",
+      "lane": "classes",
+      "width": 150,
+      "col": 5,
+      "type": "cloud",
+      "label": "Guaranteed",
+      "sublabel": "all containers requests = limits"
+    },
+    {
+      "id": "eviction",
+      "lane": "shortage",
+      "col": 5,
+      "type": "security",
+      "label": "Eviction",
+      "sublabel": "in priority order"
+    }
+  ],
+  "edges": [
+    {
+      "id": "requests-pod",
+      "from": "requests",
+      "to": "pod",
+      "label": "set"
+    },
+    {
+      "id": "limits-pod",
+      "from": "limits",
+      "to": "pod",
+      "label": "set"
+    },
+    {
+      "id": "pod-qos",
+      "from": "pod",
+      "to": "qos",
+      "label": "determines"
+    },
+    {
+      "id": "qos-besteffort",
+      "from": "qos",
+      "to": "besteffort",
+      "role": "branch"
+    },
+    {
+      "id": "qos-burstable",
+      "from": "qos",
+      "to": "burstable",
+      "role": "branch"
+    },
+    {
+      "id": "qos-guaranteed",
+      "from": "qos",
+      "to": "guaranteed",
+      "role": "branch"
+    },
+    {
+      "id": "besteffort-eviction",
+      "from": "besteffort",
+      "to": "eviction",
+      "label": "1st priority",
+      "variant": "emphasis"
+    },
+    {
+      "id": "burstable-eviction",
+      "from": "burstable",
+      "to": "eviction",
+      "label": "2nd priority",
+      "toSide": "left"
+    },
+    {
+      "id": "guaranteed-eviction",
+      "from": "guaranteed",
+      "to": "eviction",
+      "label": "3rd priority",
+      "variant": "dashed"
+    }
+  ]
+}

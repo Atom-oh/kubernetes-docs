@@ -228,6 +228,31 @@ def collect_titled(nodes, out):
         collect_titled(n.children, out)
 
 
+def descendant_paths(node):
+    """Every linked path below (not including) node, in document order."""
+    out = []
+    for c in node.children:
+        if c.path is not None:
+            out.append(c.path)
+        out.extend(descendant_paths(c))
+    return out
+
+
+def node_present(n, existing_paths):
+    """A linked node is already in the destination when its own path is;
+    a plain group bullet (path None, e.g. '* Operations Guide' in the Quiz
+    Collection) has no path of its own to look up, so it counts as present
+    when ANY descendant path already is. Judging a group only by its own
+    (nonexistent) path made every follow-up run that added a single new quiz
+    re-emit the whole group line -- untranslated, since raw_group_text is
+    never translated -- as a brand-new root subtree at the block tail
+    (issue #172, score 48: '+* Operations Guide' with one child, right below
+    the already-present translated group holding the other 15 quizzes)."""
+    if n.path is not None:
+        return n.path in existing_paths
+    return any(p in existing_paths for p in descendant_paths(n))
+
+
 def render(nodes, lang, existing_paths=frozenset()):
     """Shared parent bullets (e.g. 'Lab Guides Introduction' wrapping every
     section's lab entries) get pruned back in on every section's run since
@@ -243,7 +268,7 @@ def render(nodes, lang, existing_paths=frozenset()):
     its original indent and make it appear under an unrelated preceding item."""
     out = []
     for n in nodes:
-        already_present = n.path is not None and n.path in existing_paths
+        already_present = node_present(n, existing_paths)
         file_missing = n.path is not None and not n.children and not (REPO_ROOT / lang / n.path).exists()
         if not already_present and not file_missing:
             prefix = " " * n.indent + "* "
@@ -256,15 +281,62 @@ def render(nodes, lang, existing_paths=frozenset()):
 
 
 def _subtree_end(dst_text, start_pos, parent_indent):
-    """Position right after the last descendant of a bullet at
+    """Position right after the last descendant line of a bullet at
     parent_indent, starting the scan at start_pos (its own line's end) --
     the first subsequent bullet line at indent <= parent_indent is a
     sibling or an ancestor's sibling, so everything before it belongs to
-    this node's subtree."""
-    for bm in re.finditer(r"^( *)\* ", dst_text[start_pos:], re.MULTILINE):
-        if len(bm.group(1)) <= parent_indent:
-            return start_pos + bm.start()
-    return len(dst_text)
+    this node's subtree. Returns start_pos unchanged when there are no
+    descendants.
+
+    The scan also stops at the next '## ' heading, and the returned position
+    sits right after the last NON-BLANK descendant line rather than at the
+    start of whatever bullet ended the scan. Without both, the last root of a
+    heading block (e.g. 'Operations Guide' -> ops/README.md, whose last child
+    is ops/15) has no lower-indent sibling of its own, so the old scan ran
+    through the blank line and the next '## ' heading and stopped at the NEXT
+    block's first bullet -- and a new child (ops/16) got spliced in there,
+    indented under the wrong heading (issue #172, score 48: '## 可观测性'
+    followed by '  * [故障排查手册](ops/16-troubleshooting-playbook.md)' in
+    all three languages)."""
+    end = start_pos
+    for lm in re.finditer(r"^[^\n]*\n?", dst_text[start_pos:], re.MULTILINE):
+        line = lm.group(0)
+        if not line:
+            break
+        if line.startswith("## "):
+            break
+        bm = re.match(r"^( *)\* ", line)
+        if bm and len(bm.group(1)) <= parent_indent:
+            break
+        if line.strip():
+            end = start_pos + lm.end()
+    return end
+
+
+def _find_group_line(dst_text, group, existing_paths):
+    """Locate a path-less group bullet's own line in dst_text via its
+    already-present descendants: take the first descendant path that's in
+    the destination, then walk UP the bullet lines above it along the
+    ancestor chain (each step to the nearest preceding bullet with a smaller
+    indent) until reaching one at the group's own indent. Returns the match
+    object for that line (group(1) = its indent) or None."""
+    for p in descendant_paths(group):
+        if p not in existing_paths:
+            continue
+        m = re.search(rf"^( *)\* \[.*?\]\({re.escape(p)}\)[^\n]*\n", dst_text, re.MULTILINE)
+        if not m:
+            continue
+        cur_indent = len(m.group(1))
+        above = list(re.finditer(r"^( *)\* [^\n]*\n", dst_text[:m.start()], re.MULTILINE))
+        for bm in reversed(above):
+            indent = len(bm.group(1))
+            if indent >= cur_indent:
+                continue
+            if indent <= group.indent:
+                return bm
+            cur_indent = indent
+        return None
+    return None
 
 
 def insert_new_nodes(nodes, dst_text, existing_paths, lang, tail_anchor):
@@ -286,9 +358,16 @@ def insert_new_nodes(nodes, dst_text, existing_paths, lang, tail_anchor):
     block) for a root subtree that's entirely new -- same as the old
     behavior for that case."""
     for n in nodes:
-        already_present = n.path is not None and n.path in existing_paths
+        already_present = node_present(n, existing_paths)
         if already_present:
-            m = re.search(rf"^( *)\* \[.*?\]\({re.escape(n.path)}\)[^\n]*\n", dst_text, re.MULTILINE)
+            if n.path is not None:
+                m = re.search(rf"^( *)\* \[.*?\]\({re.escape(n.path)}\)[^\n]*\n", dst_text, re.MULTILINE)
+            else:
+                # Path-less group bullet (see node_present): its own line
+                # has no path to grep for, so find it through a child that
+                # IS present and anchor new children under that same line
+                # instead of re-emitting the group at the tail (#172).
+                m = _find_group_line(dst_text, n, existing_paths)
             # Anchor after the LAST of this node's existing children (end of
             # its whole subtree), not right after its own line -- otherwise
             # a new child lands FIRST among its siblings regardless of where
@@ -298,7 +377,11 @@ def insert_new_nodes(nodes, dst_text, existing_paths, lang, tail_anchor):
             # but anchoring at the parent's own line put it first.
             child_anchor = _subtree_end(dst_text, m.end(), len(m.group(1))) if m else tail_anchor
             dst_text, new_child_anchor = insert_new_nodes(n.children, dst_text, existing_paths, lang, child_anchor)
-            tail_anchor += new_child_anchor - child_anchor
+            if child_anchor <= tail_anchor:
+                # Text inserted at/before the tail anchor shifts it; text
+                # inserted after it (a present path whose first occurrence
+                # is in a later block) must not.
+                tail_anchor += new_child_anchor - child_anchor
             continue
         file_missing = n.path is not None and not n.children and not (REPO_ROOT / lang / n.path).exists()
         if file_missing:
@@ -331,6 +414,88 @@ def extract_heading_blocks(summary_lines):
     return blocks
 
 
+def _heading_re(dst_heading, level="##"):
+    return re.compile(rf"^{re.escape(level)} {re.escape(dst_heading)}\s*$", re.MULTILINE)
+
+
+def heading_containing_paths(dst_text, paths, level="##"):
+    """Heading text of the '<level> ' block in dst_text whose items link to
+    the most of `paths` (first block wins a tie), or None if no block links
+    to any. The by-content fallback for a heading whose cached translation
+    no longer matches the file (see resolve_dst_heading)."""
+    heading_pat = re.compile(rf"^{re.escape(level)} (.+)")
+    blocks = []  # [heading, set(paths)] in document order
+    for line in dst_text.splitlines():
+        h = heading_pat.match(line)
+        if h:
+            blocks.append([h.group(1).strip(), set()])
+        elif blocks:
+            blocks[-1][1].update(re.findall(r"\]\(([^)]+)\)", line))
+    best, best_hits = None, 0
+    for heading, block_paths in blocks:
+        hits = len(block_paths & paths)
+        if hits > best_hits:
+            best, best_hits = heading, hits
+    return best
+
+
+def resolve_dst_heading(heading, lang, heading_map, dst_text, present_paths, block_paths, level="##"):
+    """-> (dst_heading, match) where match is the heading's line in dst_text
+    (None when the block doesn't exist yet and must be created).
+
+    present_paths: this run's forest paths already in dst_text (what we're
+    about to add siblings of). block_paths: every path under `heading` in
+    the en file (the whole block, not just this section's slice).
+
+    Lookup order: (1) the cached translation from i18n-heading-map.json, if a
+    '<level> <that>' line exists in the file; (2) otherwise the block that
+    already CONTAINS this forest's present paths; (3) otherwise, no block
+    yet: use the cached translation, or translate the heading now and cache
+    it.
+
+    (2) exists because the map and the file can drift apart: the map said
+    "Quiz Collection" -> cn "测验集合", but cn/SUMMARY.md's heading had since
+    become "## 测验合集" (a translate-sync re-translation rewrote the file
+    without touching the map). Trusting only the map found no such heading
+    and appended a second, brand-new "## 测验集合" block at EOF re-listing
+    every ops quiz already present two lines above (issue #172, score 48).
+    The paths under a heading never get translated, so they're the stable
+    handle for the block. (2) also short-circuits the kiro-cli call in (3) for
+    a heading the map has never seen but the file already has (e.g. en
+    renamed "Basic" -> "Linux & Container" while cn still says "## 基础").
+
+    When (2) hits, the map entry is repaired to the heading actually in the
+    file so later runs hit (1) again -- but only if that block is also the
+    one holding the most of the WHOLE en block's paths. The two can differ
+    when en has since regrouped sections (en folded autoscaling/ under
+    "Kubernetes Core Concepts"; jp still has a separate "## オートスケーリング"
+    holding those pages): the autoscaling forest correctly lands beside its
+    existing siblings, but recording "Kubernetes Core Concepts" ->
+    "オートスケーリング" would then misplace every future core/ page."""
+    dst_heading = heading_map.get(heading, {}).get(lang)
+    if dst_heading is not None:
+        m = _heading_re(dst_heading, level).search(dst_text)
+        if m:
+            return dst_heading, m
+    found = heading_containing_paths(dst_text, present_paths, level)
+    if found is not None:
+        if found != dst_heading:
+            counterpart = heading_containing_paths(dst_text, block_paths, level)
+            if counterpart == found:
+                print(f"::notice::sync-nav: heading map for '{heading}' ({lang}) said "
+                      f"{dst_heading!r} but {lang}/ file has {found!r}; repairing map", file=sys.stderr)
+                heading_map.setdefault(heading, {})[lang] = found
+            else:
+                print(f"::notice::sync-nav: '{heading}' ({lang}) items live under {found!r} "
+                      f"but the block's counterpart looks like {counterpart!r}; anchoring under "
+                      f"{found!r}, map left as {dst_heading!r}", file=sys.stderr)
+        return found, _heading_re(found, level).search(dst_text)
+    if dst_heading is None:
+        dst_heading = translate_titles([heading], lang)[0]
+        heading_map.setdefault(heading, {})[lang] = dst_heading
+    return dst_heading, None
+
+
 def sync_summary(section, lang, heading_map):
     en_path = REPO_ROOT / "en" / "SUMMARY.md"
     dst_path = REPO_ROOT / lang / "SUMMARY.md"
@@ -351,14 +516,11 @@ def sync_summary(section, lang, heading_map):
             n.title = t
 
         existing_paths = set(re.findall(r"\]\(([^)]+)\)", dst_text))
+        forest_paths = {n.path for n in titled if n.path is not None}
+        block_paths = set(re.findall(r"\]\(([^)]+)\)", "\n".join(item_lines)))
 
-        dst_heading = heading_map.get(heading, {}).get(lang)
-        if dst_heading is None:
-            dst_heading = translate_titles([heading], lang)[0]
-            heading_map.setdefault(heading, {})[lang] = dst_heading
-
-        heading_re = re.compile(rf"^## {re.escape(dst_heading)}\s*$", re.MULTILINE)
-        m = heading_re.search(dst_text)
+        dst_heading, m = resolve_dst_heading(
+            heading, lang, heading_map, dst_text, forest_paths & existing_paths, block_paths)
         if m:
             # Tail-of-block fallback anchor, for a root subtree that's
             # entirely new (no already-present ancestor to splice after) --
@@ -433,7 +595,10 @@ def sync_readme(section, lang, heading_map):
 
     j = heading_idx + 1
     body = []
-    while j < len(en_lines) and not en_lines[j].startswith("### "):
+    # Stop at the next '## ' too: the LAST '### ' block of the ToC is
+    # followed by '## Lab Guides', not another '### ', and stopping only on
+    # '### ' would copy that heading and its prose into the locale's ToC.
+    while j < len(en_lines) and not en_lines[j].startswith(("### ", "## ")):
         body.append(en_lines[j])
         j += 1
 
@@ -484,14 +649,23 @@ def sync_readme(section, lang, heading_map):
     # Contents" (mirroring sync_summary's tail-of-block insertion) so a
     # section's first-ever README sync lands inside the ToC, not appended
     # after "## License" at the absolute end of the file.
+    #
+    # Same heading-drift exposure as sync_summary (#172): the map has never
+    # held "Table of Contents", so this used to translate it fresh and, on any
+    # wording other than the file's "## 目录"/"## 目次"/"## Tabla de contenido",
+    # silently fell through to the append-at-EOF branch below. Resolve it the
+    # same way -- the ToC block is the one already holding the other
+    # sections' entries (paths are identical between en and the locale).
     en_toc_heading = "Table of Contents"
-    dst_toc_heading = heading_map.get(en_toc_heading, {}).get(lang)
-    if dst_toc_heading is None:
-        dst_toc_heading = translate_titles([en_toc_heading], lang)[0]
-        heading_map.setdefault(en_toc_heading, {})[lang] = dst_toc_heading
-
-    toc_re = re.compile(rf"^## {re.escape(dst_toc_heading)}\s*$", re.MULTILINE)
-    m = toc_re.search(dst_path_text)
+    en_toc_paths, in_toc = set(), False
+    for ln in en_lines:
+        if ln.startswith("## "):
+            in_toc = ln.rstrip() == f"## {en_toc_heading}"
+        elif in_toc:
+            en_toc_paths.update(re.findall(r"\]\(([^)]+)\)", ln))
+    dst_paths = set(re.findall(r"\]\(([^)]+)\)", dst_path_text))
+    dst_toc_heading, m = resolve_dst_heading(
+        en_toc_heading, lang, heading_map, dst_path_text, en_toc_paths & dst_paths, en_toc_paths)
     if m:
         rest = dst_path_text[m.end():]
         next_h = re.search(r"^## ", rest, re.MULTILINE)

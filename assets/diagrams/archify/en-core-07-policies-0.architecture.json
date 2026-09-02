@@ -1,0 +1,453 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Policy Architecture",
+    "locale": "en",
+    "output": "en-core-07-policies-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1130,
+      690
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Policy type"
+        },
+        "backend": {
+          "label": "K8s built-in"
+        },
+        "security": {
+          "label": "Add-on engine"
+        },
+        "cloud": {
+          "label": "Scope level"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "resource-policy",
+        "label": "Resource Policies",
+        "focus": [
+          "resource",
+          "quota",
+          "ns"
+        ],
+        "note": "ResourceQuota caps total resource usage per namespace; LimitRange sets default requests/limits and allowed ranges for containers and pods."
+      },
+      {
+        "id": "security-policy",
+        "label": "Security Policies",
+        "focus": [
+          "security",
+          "pss",
+          "admctrl",
+          "ns",
+          "pod"
+        ],
+        "note": "PSS levels (Privileged/Baseline/Restricted) are set via namespace labels (enforce/audit/warn) and validated at admission on pod creation."
+      },
+      {
+        "id": "network-policy",
+        "label": "Network Policies",
+        "focus": [
+          "network",
+          "netpol",
+          "pod"
+        ],
+        "note": "NetworkPolicy controls Ingress/Egress traffic for the pods selected by podSelector."
+      },
+      {
+        "id": "custom-policy",
+        "label": "Custom Policies",
+        "focus": [
+          "custom",
+          "opa",
+          "cluster",
+          "ns",
+          "pod"
+        ],
+        "note": "OPA Gatekeeper and Kyverno are add-on policy engines that run as admission controllers and apply policies at all three levels."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "resource",
+      "type": "external",
+      "label": "Resource Policies",
+      "sublabel": "Usage limits and management",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "security",
+      "type": "external",
+      "label": "Security Policies",
+      "sublabel": "Security context restrictions",
+      "pos": [
+        60,
+        225
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "network",
+      "type": "external",
+      "label": "Network Policies",
+      "sublabel": "Network traffic control",
+      "pos": [
+        60,
+        390
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "external",
+      "label": "Custom Policies",
+      "sublabel": "User-defined policy enforcement",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "quota",
+      "type": "backend",
+      "label": "ResourceQuota / LimitRange",
+      "sublabel": "Total caps · defaults and ranges",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "pss",
+      "type": "backend",
+      "label": "Pod Security Standards",
+      "sublabel": "Privileged / Baseline / Restricted",
+      "pos": [
+        400,
+        170
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "admctrl",
+      "type": "backend",
+      "label": "Admission Controllers",
+      "sublabel": "Validate · mutate API requests",
+      "pos": [
+        400,
+        280
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "netpol",
+      "type": "backend",
+      "label": "NetworkPolicy",
+      "sublabel": "Ingress / Egress control",
+      "pos": [
+        400,
+        390
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "opa",
+      "type": "security",
+      "label": "OPA Gatekeeper / Kyverno",
+      "sublabel": "Admission-webhook policy engines",
+      "tag": "Add-on",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "Cluster Level",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ns",
+      "type": "cloud",
+      "label": "Namespace Level",
+      "pos": [
+        820,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "cloud",
+      "label": "Pod Level",
+      "pos": [
+        820,
+        390
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Policy Types",
+      "wraps": [
+        "resource",
+        "security",
+        "network",
+        "custom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy Implementation Mechanisms",
+      "wraps": [
+        "quota",
+        "pss",
+        "admctrl",
+        "netpol",
+        "opa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy Application Layers",
+      "wraps": [
+        "cluster",
+        "ns",
+        "pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "resource-to-quota",
+      "from": "resource",
+      "to": "quota",
+      "label": "implement",
+      "variant": "emphasis"
+    },
+    {
+      "id": "security-to-pss",
+      "from": "security",
+      "to": "pss"
+    },
+    {
+      "id": "security-to-admctrl",
+      "from": "security",
+      "to": "admctrl"
+    },
+    {
+      "id": "network-to-netpol",
+      "from": "network",
+      "to": "netpol"
+    },
+    {
+      "id": "custom-to-opa",
+      "from": "custom",
+      "to": "opa"
+    },
+    {
+      "id": "quota-to-ns",
+      "from": "quota",
+      "to": "ns",
+      "label": "apply",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          760,
+          92
+        ],
+        [
+          760,
+          312
+        ]
+      ]
+    },
+    {
+      "id": "pss-to-ns",
+      "from": "pss",
+      "to": "ns",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          730,
+          202
+        ],
+        [
+          730,
+          367
+        ],
+        [
+          910,
+          367
+        ]
+      ]
+    },
+    {
+      "id": "pss-to-pod",
+      "from": "pss",
+      "to": "pod",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          700,
+          202
+        ],
+        [
+          700,
+          422
+        ]
+      ]
+    },
+    {
+      "id": "admctrl-to-pod",
+      "from": "admctrl",
+      "to": "pod",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          700,
+          312
+        ],
+        [
+          700,
+          422
+        ]
+      ]
+    },
+    {
+      "id": "netpol-to-pod",
+      "from": "netpol",
+      "to": "pod"
+    },
+    {
+      "id": "opa-to-pod",
+      "from": "opa",
+      "to": "pod",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          910,
+          532
+        ]
+      ]
+    },
+    {
+      "id": "opa-to-ns",
+      "from": "opa",
+      "to": "ns",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1050,
+          532
+        ],
+        [
+          1050,
+          312
+        ]
+      ]
+    },
+    {
+      "id": "opa-to-cluster",
+      "from": "opa",
+      "to": "cluster",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1080,
+          532
+        ],
+        [
+          1080,
+          202
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Kubernetes Version Support",
+      "items": [
+        "ResourceQuota · LimitRange: all versions",
+        "Pod Security Standards: 1.22+ (PodSecurityPolicy deprecated in 1.21, removed in 1.25)",
+        "NetworkPolicy: 1.8+",
+        "OPA Gatekeeper · Kyverno: all versions (add-on)"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Policy Engines",
+      "items": [
+        "OPA Gatekeeper: runs as an admission controller that intercepts API requests; policies are defined with ConstraintTemplate and Constraint",
+        "Kyverno: YAML-based policies that validate, mutate, and generate resources"
+      ]
+    }
+  ]
+}

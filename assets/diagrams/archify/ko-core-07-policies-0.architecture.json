@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 정책 아키텍처",
+    "output": "ko-core-07-policies-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1130, 690],
+    "legend": {
+      "entries": {
+        "external": { "label": "정책 유형" },
+        "backend": { "label": "내장 메커니즘" },
+        "security": { "label": "정책 엔진(애드온)" },
+        "cloud": { "label": "적용 계층" }
+      }
+    },
+    "views": [
+      { "id": "resource-policy", "label": "리소스 정책", "focus": ["resource", "quota", "ns"], "note": "ResourceQuota는 네임스페이스의 리소스 총량을, LimitRange는 컨테이너·포드의 기본 요청/제한과 허용 범위를 정한다." },
+      { "id": "security-policy", "label": "보안 정책", "focus": ["security", "pss", "admctrl", "ns", "pod"], "note": "PSS 수준(Privileged/Baseline/Restricted)은 네임스페이스 레이블(enforce/audit/warn)로 지정되고, 어드미션 단계에서 포드 생성 요청을 검증한다." },
+      { "id": "network-policy", "label": "네트워크 정책", "focus": ["network", "netpol", "pod"], "note": "NetworkPolicy는 podSelector로 선택한 포드의 Ingress/Egress 트래픽을 제어한다." },
+      { "id": "custom-policy", "label": "커스텀 정책", "focus": ["custom", "opa", "cluster", "ns", "pod"], "note": "OPA Gatekeeper와 Kyverno는 어드미션 컨트롤러로 동작하는 애드온 정책 엔진으로, 세 계층 모두에 정책을 적용한다." }
+    ]
+  },
+  "components": [
+    { "id": "resource", "type": "external", "label": "리소스 정책", "sublabel": "리소스 사용 제한 및 관리", "pos": [60, 60], "size": [180, 64] },
+    { "id": "security", "type": "external", "label": "보안 정책", "sublabel": "보안 컨텍스트 제한", "pos": [60, 225], "size": [180, 64] },
+    { "id": "network", "type": "external", "label": "네트워크 정책", "sublabel": "네트워크 트래픽 제어", "pos": [60, 390], "size": [180, 64] },
+    { "id": "custom", "type": "external", "label": "커스텀 정책", "sublabel": "사용자 정의 정책 적용", "pos": [60, 500], "size": [180, 64] },
+    { "id": "quota", "type": "backend", "label": "ResourceQuota / LimitRange", "sublabel": "총량 제한 · 기본값과 범위", "pos": [400, 60], "size": [240, 64] },
+    { "id": "pss", "type": "backend", "label": "Pod Security Standards", "sublabel": "Privileged / Baseline / Restricted", "pos": [400, 170], "size": [240, 64] },
+    { "id": "admctrl", "type": "backend", "label": "Admission Controllers", "sublabel": "API 요청 검증 · 변경", "pos": [400, 280], "size": [240, 64] },
+    { "id": "netpol", "type": "backend", "label": "NetworkPolicy", "sublabel": "Ingress / Egress 제어", "pos": [400, 390], "size": [240, 64] },
+    { "id": "opa", "type": "security", "label": "OPA Gatekeeper / Kyverno", "sublabel": "어드미션 웹훅 기반 정책 엔진", "tag": "애드온", "pos": [400, 500], "size": [240, 64] },
+    { "id": "cluster", "type": "cloud", "label": "클러스터 수준", "pos": [820, 170], "size": [180, 64] },
+    { "id": "ns", "type": "cloud", "label": "네임스페이스 수준", "pos": [820, 280], "size": [180, 64] },
+    { "id": "pod", "type": "cloud", "label": "포드 수준", "pos": [820, 390], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "정책 유형", "wraps": ["resource", "security", "network", "custom"] },
+    { "kind": "region", "label": "정책 구현 메커니즘", "wraps": ["quota", "pss", "admctrl", "netpol", "opa"] },
+    { "kind": "region", "label": "정책 적용 계층", "wraps": ["cluster", "ns", "pod"] }
+  ],
+  "connections": [
+    { "id": "resource-to-quota", "from": "resource", "to": "quota", "label": "구현", "variant": "emphasis" },
+    { "id": "security-to-pss", "from": "security", "to": "pss" },
+    { "id": "security-to-admctrl", "from": "security", "to": "admctrl" },
+    { "id": "network-to-netpol", "from": "network", "to": "netpol" },
+    { "id": "custom-to-opa", "from": "custom", "to": "opa" },
+    { "id": "quota-to-ns", "from": "quota", "to": "ns", "label": "적용", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[760, 92], [760, 312]] },
+    { "id": "pss-to-ns", "from": "pss", "to": "ns", "variant": "dashed", "fromSide": "right", "toSide": "bottom", "via": [[730, 202], [730, 367], [910, 367]] },
+    { "id": "pss-to-pod", "from": "pss", "to": "pod", "fromSide": "right", "toSide": "left", "via": [[700, 202], [700, 422]] },
+    { "id": "admctrl-to-pod", "from": "admctrl", "to": "pod", "fromSide": "right", "toSide": "left", "via": [[700, 312], [700, 422]] },
+    { "id": "netpol-to-pod", "from": "netpol", "to": "pod" },
+    { "id": "opa-to-pod", "from": "opa", "to": "pod", "fromSide": "right", "toSide": "bottom", "via": [[910, 532]] },
+    { "id": "opa-to-ns", "from": "opa", "to": "ns", "fromSide": "right", "toSide": "right", "via": [[1050, 532], [1050, 312]] },
+    { "id": "opa-to-cluster", "from": "opa", "to": "cluster", "fromSide": "right", "toSide": "right", "via": [[1080, 532], [1080, 202]] }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Kubernetes 버전 지원", "items": [
+      "ResourceQuota · LimitRange: 모든 버전",
+      "Pod Security Standards: 1.22+ (PodSecurityPolicy는 1.21 deprecated, 1.25 제거)",
+      "NetworkPolicy: 1.8+",
+      "OPA Gatekeeper · Kyverno: 모든 버전 (애드온)"
+    ] },
+    { "dot": "violet", "title": "정책 엔진", "items": [
+      "OPA Gatekeeper: 어드미션 컨트롤러로 API 요청을 가로채 정책을 적용, ConstraintTemplate과 Constraint로 정의",
+      "Kyverno: YAML 기반 정책으로 리소스를 검증(Validate)·변경(Mutate)·생성(Generate)"
+    ] }
+  ]
+}

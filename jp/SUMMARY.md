@@ -468,7 +468,7 @@
   * [パート 7: モニタリングクイズ](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [パート 8: ベストプラクティスクイズ](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
   * [パート 1: Kubernetes 上の Spark の基礎クイズ](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
-  * [パート 2: Spark Operator クイズ](quizzes/data-on-eks/spark/02-spark-operator.md)
+  * [パート 2: Spark Operator クイズ](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [パート 3: Amazon EMR on EKS クイズ](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
   * [パート 4: パフォーマンスとコストのチューニングクイズ](quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
   * [パート 5: ベストプラクティスとセキュリティクイズ](quizzes/data-on-eks/spark/05-best-practices-quiz.md)
