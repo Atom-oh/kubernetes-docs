@@ -277,6 +277,7 @@
   * [Part 6: MSK Integration](data-on-eks/kafka/06-msk-integration.md)
   * [Part 7: Monitoring](data-on-eks/kafka/07-monitoring.md)
   * [Part 8: Best Practices](data-on-eks/kafka/08-best-practices.md)
+  * [Part 9: Kafka Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md)
 * [Spark on EKS Deep Dive](data-on-eks/spark/README.md)
   * [Part 1: Spark on Kubernetes Fundamentals](data-on-eks/spark/01-spark-fundamentals.md)
   * [Part 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
@@ -423,6 +424,7 @@
   * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [Zonal Cluster Operations](ops/15-zonal-operations-guide.md)
+  * [Troubleshooting Playbook](ops/16-troubleshooting-playbook.md)
 
 ## Lab Guides
 
@@ -447,6 +449,8 @@
 ## Quiz Collection
 
 * [Quiz Collection - Quizzes by Topic](quizzes/README.md)
+  * [Guidebook Roadmap Quiz](quizzes/roadmap-quiz.md)
+  * [Reading with LLMs Quiz](quizzes/llm-guide-quiz.md)
   * [Linux Basics Quiz](quizzes/basics/01-linux-basics-quiz.md)
   * [Linux Operations Skills Quiz](quizzes/basics/02-linux-advanced-quiz.md)
   * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
@@ -554,6 +558,7 @@
   * [Part 6: MSK Integration Quiz](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [Part 7: Monitoring Quiz](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [Part 8: Best Practices Quiz](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+  * [Part 9: Kafka Measured Benchmark Quiz](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
   * [Part 1: Spark on Kubernetes Fundamentals Quiz](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
   * [Part 2: Spark Operator Quiz](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [Part 3: Amazon EMR on EKS Quiz](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
@@ -714,3 +719,4 @@
   * [FinOps Cost Visibility Platform Quiz](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines Quiz](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Zonal Cluster Operations Quiz](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [Troubleshooting Playbook Quiz](quizzes/ops/16-troubleshooting-playbook-quiz.md)

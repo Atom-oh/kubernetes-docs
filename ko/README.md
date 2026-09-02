@@ -11,8 +11,8 @@
 
 - [학습 자료 목차](#목차) - 주제별 학습 자료
 - [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
-- [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로
-- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법
+- [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로 | [퀴즈](./quizzes/roadmap-quiz.md)
+- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
 
 ## 목차
 
@@ -244,6 +244,7 @@
    - [Part 6: MSK 통합](./data-on-eks/kafka/06-msk-integration.md) | [퀴즈](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [Part 7: 모니터링](./data-on-eks/kafka/07-monitoring.md) | [퀴즈](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Part 8: 모범 사례](./data-on-eks/kafka/08-best-practices.md) | [퀴즈](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+   - [Part 9: Kafka 실측 벤치마크](./data-on-eks/kafka/09-kafka-benchmark.md) | [퀴즈](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
 3. **Spark on EKS 딥다이브**
    - [Spark on EKS 소개](./data-on-eks/spark/README.md)
    - [Part 1: Spark on Kubernetes 기초](./data-on-eks/spark/01-spark-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
@@ -390,6 +391,7 @@
 13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+16. [트러블슈팅 플레이북](./ops/16-troubleshooting-playbook.md) | [퀴즈](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
 
 ## 실습 가이드
 

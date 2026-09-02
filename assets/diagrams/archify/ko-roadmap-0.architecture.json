@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "클라우드 네이티브 가이드북 로드맵",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      660
+    ],
+    "views": [
+      {
+        "id": "main-path",
+        "label": "학습 메인 경로",
+        "focus": [
+          "linux-container",
+          "kubernetes",
+          "networking",
+          "storage",
+          "data-pipeline"
+        ],
+        "note": "기초에서 데이터 계층까지 이어지는 학습 순서입니다."
+      },
+      {
+        "id": "deep-dives",
+        "label": "딥다이브 계층",
+        "focus": [
+          "eks",
+          "service-mesh",
+          "database",
+          "ai-ml"
+        ],
+        "note": "각 도메인의 심화 트랙 — EKS, 서비스 메시, 데이터베이스, AI/ML."
+      },
+      {
+        "id": "cross-cutting",
+        "label": "횡단 관심사",
+        "focus": [
+          "security",
+          "gitops",
+          "platform",
+          "registry",
+          "observability",
+          "operations"
+        ],
+        "note": "보안부터 운영까지, 모든 계층에 걸쳐 적용되는 규율입니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "linux-container",
+      "type": "backend",
+      "label": "Linux & Container",
+      "sublabel": "커널 · 네임스페이스 · cgroup",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "핵심 개념 · 스케줄링",
+      "pos": [
+        290,
+        120
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "networking",
+      "type": "messagebus",
+      "label": "Networking",
+      "sublabel": "프로토콜 25 · CNI",
+      "pos": [
+        540,
+        120
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Storage",
+      "sublabel": "EBS 실측 벤치마크",
+      "pos": [
+        790,
+        120
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "data-pipeline",
+      "type": "messagebus",
+      "label": "Data Pipeline",
+      "sublabel": "Kafka · Spark · Flink",
+      "pos": [
+        1040,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "sublabel": "Hybrid · Auto Mode",
+      "pos": [
+        290,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "service-mesh",
+      "type": "messagebus",
+      "label": "Service Mesh",
+      "sublabel": "mTLS 레이턴시 실측",
+      "pos": [
+        540,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "database",
+      "type": "database",
+      "label": "Database",
+      "sublabel": "ClickHouse 1억 행 실측",
+      "pos": [
+        790,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "ai-ml",
+      "type": "backend",
+      "label": "AI/ML",
+      "sublabel": "vLLM · Ray · Kubeflow",
+      "pos": [
+        1040,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "security",
+      "type": "security",
+      "label": "Security & Policy",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        170,
+        58
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "backend",
+      "label": "GitOps",
+      "pos": [
+        250,
+        470
+      ],
+      "size": [
+        155,
+        58
+      ]
+    },
+    {
+      "id": "platform",
+      "type": "backend",
+      "label": "Platform Eng.",
+      "pos": [
+        445,
+        470
+      ],
+      "size": [
+        155,
+        58
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Registry",
+      "pos": [
+        640,
+        470
+      ],
+      "size": [
+        130,
+        58
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "backend",
+      "label": "Observability",
+      "pos": [
+        810,
+        470
+      ],
+      "size": [
+        160,
+        58
+      ]
+    },
+    {
+      "id": "operations",
+      "type": "backend",
+      "label": "Operations",
+      "pos": [
+        1010,
+        470
+      ],
+      "size": [
+        150,
+        58
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "기초",
+      "wraps": [
+        "linux-container"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "오케스트레이션",
+      "wraps": [
+        "kubernetes",
+        "eks"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "연결",
+      "wraps": [
+        "networking",
+        "service-mesh"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "상태",
+      "wraps": [
+        "storage",
+        "database"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 · AI",
+      "wraps": [
+        "data-pipeline",
+        "ai-ml"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "횡단 관심사 — 모든 계층에 적용",
+      "wraps": [
+        "security",
+        "gitops",
+        "platform",
+        "registry",
+        "observability",
+        "operations"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-linux-k8s",
+      "from": "linux-container",
+      "to": "kubernetes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-k8s-net",
+      "from": "kubernetes",
+      "to": "networking",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-net-storage",
+      "from": "networking",
+      "to": "storage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-storage-data",
+      "from": "storage",
+      "to": "data-pipeline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-k8s-eks",
+      "from": "kubernetes",
+      "to": "eks",
+      "label": "관리형으로",
+      "labelDy": 24
+    },
+    {
+      "id": "c-net-mesh",
+      "from": "networking",
+      "to": "service-mesh",
+      "label": "L7 계층으로",
+      "labelDy": 24
+    },
+    {
+      "id": "c-storage-db",
+      "from": "storage",
+      "to": "database",
+      "label": "그 위에 DB",
+      "labelDy": 24
+    },
+    {
+      "id": "c-data-aiml",
+      "from": "data-pipeline",
+      "to": "ai-ml",
+      "label": "모델까지",
+      "labelDy": 24
+    },
+    {
+      "id": "c-eks-cross",
+      "from": "eks",
+      "to": "gitops",
+      "label": "모든 계층을 받치는 규율",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "학습 순서",
+      "items": [
+        "기초 → 오케스트레이션 → 연결 → 상태 → 데이터·AI",
+        "각 문서에 퀴즈, 주요 주제에 실습 랩 제공"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "실측 벤치마크 시리즈",
+      "items": [
+        "Istio mTLS 레이턴시 (sidecar vs ambient)",
+        "EBS gp2 vs gp3 fio 실측",
+        "ClickHouse 1억 행 ingest · 쿼리"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "횡단 관심사",
+      "items": [
+        "보안 · GitOps · 플랫폼 · 레지스트리 · 옵저버빌리티 · 운영",
+        "어느 계층에서든 함께 적용"
+      ]
+    }
+  ]
+}

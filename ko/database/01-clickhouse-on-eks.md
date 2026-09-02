@@ -5,7 +5,7 @@
 
 "ClickHouse는 빠르다"는 말은 벤치마크 보고서마다 나오지만, **EKS의 평범한 노드 하나와 기본 gp3 볼륨**에서 어느 정도인지 직접 잰 숫자는 찾기 어렵습니다. 이 문서는 4 vCPU 노드 + 기본 설정 gp3 100 GiB라는 의도적으로 소박한 환경에 Kubernetes 로그 1억 행을 넣고 측정한 결과입니다. 모든 숫자는 이 문서의 매니페스트와 쿼리로 재현할 수 있습니다.
 
-![numbers_mt 생성기에서 MergeTree 테이블로의 ingest 경로와, 쿼리가 primary index 프루닝 → bloom filter skip index → 컬럼 읽기(페이지 캐시 or gp3 직행)를 거치는 조회 경로를 함께 보여주는 데이터플로우 다이어그램.](../.gitbook/assets/ko-database-01-clickhouse-on-eks-0.png)
+![numbers_mt 생성기에서 MergeTree 테이블로의 ingest 경로와, 쿼리가 primary index 프루닝 → bloom filter skip index → 컬럼 읽기(페이지 캐시 or gp3 직행)를 거치는 조회 경로를 함께 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-database-01-clickhouse-on-eks-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-database-01-clickhouse-on-eks-0.html)
 

@@ -277,6 +277,7 @@
   * [Part 6: MSK 통합](data-on-eks/kafka/06-msk-integration.md)
   * [Part 7: 모니터링](data-on-eks/kafka/07-monitoring.md)
   * [Part 8: 모범 사례](data-on-eks/kafka/08-best-practices.md)
+  * [Part 9: Kafka 실측 벤치마크](data-on-eks/kafka/09-kafka-benchmark.md)
 * [Spark on EKS 딥다이브](data-on-eks/spark/README.md)
   * [Part 1: Spark on Kubernetes 기초](data-on-eks/spark/01-spark-fundamentals.md)
   * [Part 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
@@ -423,6 +424,7 @@
   * [FinOps 비용 가시성 플랫폼](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [Zonal 클러스터 운영 전략](ops/15-zonal-operations-guide.md)
+  * [트러블슈팅 플레이북](ops/16-troubleshooting-playbook.md)
 
 ## Lab Guides
 
@@ -447,6 +449,8 @@
 ## Quiz 모음
 
 * [퀴즈 모음 - 주제별 퀴즈](quizzes/README.md)
+  * [가이드북 로드맵 퀴즈](quizzes/roadmap-quiz.md)
+  * [LLM과 함께 읽기 퀴즈](quizzes/llm-guide-quiz.md)
   * [Linux 기초 퀴즈](quizzes/basics/01-linux-basics-quiz.md)
   * [Linux 운영 기술 퀴즈](quizzes/basics/02-linux-advanced-quiz.md)
   * [컨테이너 기술 퀴즈](quizzes/basics/03-container-technology-quiz.md)
@@ -554,6 +558,7 @@
   * [Part 6: MSK 통합 퀴즈](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [Part 7: 모니터링 퀴즈](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [Part 8: 모범 사례 퀴즈](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+  * [Part 9: Kafka 실측 벤치마크 퀴즈](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
   * [Part 1: Spark on Kubernetes 기초 퀴즈](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
   * [Part 2: Spark Operator 퀴즈](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [Part 3: Amazon EMR on EKS 퀴즈](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
@@ -714,3 +719,4 @@
   * [FinOps 비용 가시성 플랫폼 퀴즈](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines 퀴즈](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Zonal 클러스터 운영 전략 퀴즈](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [트러블슈팅 플레이북 퀴즈](quizzes/ops/16-troubleshooting-playbook-quiz.md)

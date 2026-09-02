@@ -11,8 +11,8 @@ This training content provides quizzes for each topic along with the learning ma
 
 - [Learning Materials Table of Contents](#table-of-contents) - Learning materials by topic
 - [Quiz Collection](./quizzes/README.md) - Quizzes by topic
-- [Guidebook Roadmap](./roadmap.md) - The full learning map and recommended learning paths
-- [Reading with LLMs](./llm-guide.md) - How to feed this entire guidebook to an AI via llms.txt
+- [Guidebook Roadmap](./roadmap.md) - The full learning map and recommended learning paths | [Quiz](./quizzes/roadmap-quiz.md)
+- [Reading with LLMs](./llm-guide.md) - How to feed this entire guidebook to an AI via llms.txt | [Quiz](./quizzes/llm-guide-quiz.md)
 
 ## Table of Contents
 
@@ -244,6 +244,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 6: MSK Integration](./data-on-eks/kafka/06-msk-integration.md) | [Quiz](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [Part 7: Monitoring](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Part 8: Best Practices](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+   - [Part 9: Kafka Measured Benchmark](./data-on-eks/kafka/09-kafka-benchmark.md) | [Quiz](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
 3. **Spark on EKS Deep Dive**
    - [Spark on EKS Introduction](./data-on-eks/spark/README.md)
    - [Part 1: Spark on Kubernetes Fundamentals](./data-on-eks/spark/01-spark-fundamentals.md) | [Quiz](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
@@ -390,6 +391,7 @@ This training content provides quizzes for each topic along with the learning ma
 13. [FinOps Cost Visibility Platform](./ops/13-finops-cost-platform.md) | [Quiz](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+16. [Troubleshooting Playbook](./ops/16-troubleshooting-playbook.md) | [Quiz](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
 
 ## Lab Guides
 

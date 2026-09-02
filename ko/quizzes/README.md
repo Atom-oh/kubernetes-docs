@@ -14,6 +14,10 @@
 
 ## 퀴즈 목록
 
+### 소개
+- [가이드북 로드맵 퀴즈](./roadmap-quiz.md)
+- [LLM과 함께 읽기 퀴즈](./llm-guide-quiz.md)
+
 ### 기초 개념
 - [Linux 기초 퀴즈](./basics/01-linux-basics-quiz.md)
 - [Linux 운영 기술 퀴즈](./basics/02-linux-advanced-quiz.md)
@@ -93,6 +97,32 @@
 ### Database
 - [ClickHouse on EKS 실측 벤치마크 퀴즈](./database/01-clickhouse-on-eks-quiz.md)
 
+### Data on EKS
+- [모던 데이터 파이프라인 해부 퀴즈](./data-on-eks/01-data-pipeline-anatomy-quiz.md)
+- [Part 1: Kafka 핵심 개념 퀴즈](./data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+- [Part 2: Strimzi Operator 퀴즈](./data-on-eks/kafka/02-strimzi-operator-quiz.md)
+- [Part 3: Kafka 운영 퀴즈](./data-on-eks/kafka/03-kafka-operations-quiz.md)
+- [Part 4: 스키마 레지스트리 퀴즈](./data-on-eks/kafka/04-schema-registry-quiz.md)
+- [Part 5: Kafka Connect와 MirrorMaker 퀴즈](./data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+- [Part 6: MSK 통합 퀴즈](./data-on-eks/kafka/06-msk-integration-quiz.md)
+- [Part 7: 모니터링 퀴즈](./data-on-eks/kafka/07-monitoring-quiz.md)
+- [Part 8: 모범 사례 퀴즈](./data-on-eks/kafka/08-best-practices-quiz.md)
+- [Part 9: Kafka 실측 벤치마크 퀴즈](./data-on-eks/kafka/09-kafka-benchmark-quiz.md)
+- [Part 1: Spark on Kubernetes 기초 퀴즈](./data-on-eks/spark/01-spark-fundamentals-quiz.md)
+- [Part 2: Spark Operator 퀴즈](./data-on-eks/spark/02-spark-operator-quiz.md)
+- [Part 3: Amazon EMR on EKS 퀴즈](./data-on-eks/spark/03-emr-on-eks-quiz.md)
+- [Part 4: 성능 및 비용 튜닝 퀴즈](./data-on-eks/spark/04-performance-tuning-quiz.md)
+- [Part 5: 모범 사례와 보안 퀴즈](./data-on-eks/spark/05-best-practices-quiz.md)
+- [Part 1: Kubernetes에서의 Airflow 아키텍처 퀴즈](./data-on-eks/airflow/01-architecture-quiz.md)
+- [Part 2: Helm 배포와 Executor 선택 퀴즈](./data-on-eks/airflow/02-helm-deployment-quiz.md)
+- [Part 3: DAG 패턴과 KubernetesPodOperator 퀴즈](./data-on-eks/airflow/03-dag-patterns-quiz.md)
+- [Part 4: Amazon MWAA 통합 퀴즈](./data-on-eks/airflow/04-mwaa-integration-quiz.md)
+- [Part 5: 운영과 보안 퀴즈](./data-on-eks/airflow/05-operations-quiz.md)
+- [Part 1: Kubernetes에서의 Flink 아키텍처 퀴즈](./data-on-eks/flink/01-architecture-quiz.md)
+- [Part 2: Flink Kubernetes Operator 퀴즈](./data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+- [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴 퀴즈](./data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+- [Part 4: 운영, 고가용성, 그리고 매니지드 Flink 퀴즈](./data-on-eks/flink/04-operations-ha-quiz.md)
+
 ### Security & Policy
 - [Kyverno를 사용한 정책 관리 퀴즈](./security/01-kyverno-policy-management-quiz.md)
 - [Kubernetes 인증 및 권한 부여 퀴즈](./security/02-kubernetes-auth-authz-quiz.md)
@@ -125,6 +155,24 @@
 - [AWS Controllers for Kubernetes (ACK) 퀴즈](./platform-engineering/02-ack-quiz.md)
 - [Kubernetes Resource Operator (KRO) 퀴즈](./platform-engineering/03-kro-quiz.md)
 - [Kubernetes 확장 메커니즘 퀴즈](./platform-engineering/04-kubernetes-extensions-quiz.md)
+
+### 운영 가이드
+- [인프라 구성 기초 퀴즈](./ops/01-infrastructure-setup-quiz.md)
+- [인프라 구성 고급 퀴즈](./ops/02-infrastructure-advanced-quiz.md)
+- [CI 파이프라인 구성 퀴즈](./ops/03-ci-pipelines-quiz.md)
+- [GitOps 멀티 클러스터 퀴즈](./ops/04-gitops-multi-cluster-quiz.md)
+- [GitOps 자동화 퀴즈](./ops/05-gitops-automation-quiz.md)
+- [스케일링 전략 퀴즈](./ops/06-scaling-strategies-quiz.md)
+- [Observability 알림 설정 퀴즈](./ops/07-observability-alerts-quiz.md)
+- [Observability 분석 방법 퀴즈](./ops/08-observability-analysis-quiz.md)
+- [Observability 스택 구성 퀴즈](./ops/09-observability-stack-quiz.md)
+- [리소스 최적화 퀴즈](./ops/10-resource-optimization-quiz.md)
+- [EKS 업그레이드 운영 퀴즈](./ops/11-upgrade-operations-quiz.md)
+- [이벤트 용량 계획 퀴즈](./ops/12-event-capacity-planning-quiz.md)
+- [FinOps 비용 가시성 플랫폼 퀴즈](./ops/13-finops-cost-platform-quiz.md)
+- [Tekton Pipelines 퀴즈](./ops/14-tekton-pipelines-quiz.md)
+- [Zonal 클러스터 운영 전략 퀴즈](./ops/15-zonal-operations-guide-quiz.md)
+- [트러블슈팅 플레이북 퀴즈](./ops/16-troubleshooting-playbook-quiz.md)
 
 ## 퀴즈 사용 방법
 

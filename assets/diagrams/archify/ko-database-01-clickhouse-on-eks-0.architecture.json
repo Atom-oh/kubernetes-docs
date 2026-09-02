@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ClickHouse on EKS — ingest와 쿼리의 실측 경로",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1240, 620],
+    "views": [
+      { "id": "ingest-path", "label": "Ingest 경로", "focus": ["generator", "insert", "parts"], "note": "1억 행이 정렬·압축을 거쳐 gp3 볼륨의 MergeTree 파트가 되기까지 — 106.7초." },
+      { "id": "query-path", "label": "쿼리 경로", "focus": ["client", "prune", "read", "parts"], "note": "인덱스 프루닝이 읽을 granule을 정하고, 컬럼 읽기는 페이지 캐시 또는 gp3 직행으로 갈립니다." }
+    ]
+  },
+  "components": [
+    { "id": "generator", "type": "external", "label": "numbers_mt 생성기", "sublabel": "합성 K8s 로그 1억 행", "pos": [50, 120], "size": [180, 64] },
+    { "id": "insert", "type": "backend", "label": "INSERT 파이프라인", "sublabel": "정렬 · LZ4 압축 (3 threads)", "pos": [360, 120], "size": [190, 64] },
+    { "id": "parts", "type": "database", "label": "MergeTree 파트", "sublabel": "7.82 GiB · 파티션 7개", "pos": [700, 120], "size": [180, 64] },
+    { "id": "gp3", "type": "cloud", "label": "EBS gp3 100GiB", "sublabel": "3,000 IOPS · 125 MiB/s", "pos": [1000, 120], "size": [180, 64] },
+    { "id": "client", "type": "external", "label": "쿼리 클라이언트", "sublabel": "clickhouse-client", "pos": [50, 330], "size": [180, 64] },
+    { "id": "prune", "type": "backend", "label": "인덱스 프루닝", "sublabel": "primary + bloom skip", "pos": [360, 330], "size": [190, 64] },
+    { "id": "read", "type": "backend", "label": "컬럼 읽기", "sublabel": "필요한 컬럼만", "pos": [700, 330], "size": [180, 64] },
+    { "id": "cache", "type": "database", "label": "페이지 캐시", "sublabel": "warm 읽기 경로", "pos": [1000, 330], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "bench-database 네임스페이스 — m5.xlarge (limit 3.5 vCPU / 12Gi)", "wraps": ["insert", "parts", "prune", "read", "cache"] }
+  ],
+  "connections": [
+    { "id": "c-gen-insert", "from": "generator", "to": "insert", "label": "1억 행 / 106.7초", "variant": "emphasis" },
+    { "id": "c-insert-parts", "from": "insert", "to": "parts", "label": "약 94만 행/s", "variant": "emphasis" },
+    { "id": "c-parts-gp3", "from": "parts", "to": "gp3", "label": "압축 후 ~75 MiB/s 기록" },
+    { "id": "c-client-prune", "from": "client", "to": "prune", "label": "SQL", "variant": "emphasis" },
+    { "id": "c-prune-read", "from": "prune", "to": "read", "label": "granule 98.9% 스킵", "variant": "emphasis" },
+    { "id": "c-read-cache", "from": "read", "to": "cache", "label": "warm: 풀스캔 2.63초" },
+    { "id": "c-cache-gp3", "from": "cache", "to": "gp3", "label": "miss: 직행 31.5초 (125 MiB/s 병목)", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Ingest 실측", "items": ["1억 행 106.7초 (서버 내부 생성, 상한치)", "LZ4 1.97× · ZSTD(3) 3.7× (47% 절감)"] },
+    { "dot": "emerald", "title": "쿼리 실측", "items": ["키 범위 카운트 4ms (16,385행만 읽음)", "trace_id 점 조회: bloom index로 1.13s → 36ms"] },
+    { "dot": "rose", "title": "병목의 정체", "items": ["cold 풀스캔 130 MiB/s ≈ gp3 베이스라인", "풀스캔 성능은 DB가 아니라 볼륨 설정 문제일 수 있음"] }
+  ]
+}

@@ -1,0 +1,309 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "파드가 응답하지 않는다 — 증상별 진단 결정 트리",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "증상"
+        },
+        "security": {
+          "label": "STATUS · READY 게이트"
+        },
+        "backend": {
+          "label": "진단 명령"
+        },
+        "cloud": {
+          "label": "네트워크 경로 점검"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "not-starting",
+        "label": "안 뜬다 — Pending · ImagePull",
+        "focus": [
+          "symptom",
+          "getpod",
+          "g_pending",
+          "g_imagepull",
+          "leaf_sched",
+          "leaf_image"
+        ],
+        "note": "STATUS가 Pending이면 스케줄링, ImagePullBackOff면 이미지·레지스트리 권한 문제입니다. 둘 다 kubectl describe pod의 Events가 첫 단서입니다."
+      },
+      {
+        "id": "crashing",
+        "label": "뜨다가 죽는다 — CrashLoopBackOff",
+        "focus": [
+          "g_crash",
+          "leaf_crash"
+        ],
+        "note": "RESTARTS가 계속 오르면 kubectl logs --previous로 직전 컨테이너 로그를, describe pod로 Exit Code와 Reason(OOMKilled/Error)을 확인합니다."
+      },
+      {
+        "id": "running-unreachable",
+        "label": "Running인데 안 닿는다",
+        "focus": [
+          "g_notready",
+          "g_unreachable",
+          "leaf_ready",
+          "leaf_net"
+        ],
+        "note": "READY 0/1이면 Readiness probe failed 이벤트를, READY 1/1인데 응답이 없으면 EndpointSlice → Service selector → NetworkPolicy → DNS → ALB 순으로 확인합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "증상 → 1차 확인"
+    },
+    {
+      "id": "gates",
+      "label": "STATUS · READY 게이트"
+    },
+    {
+      "id": "diag",
+      "label": "일치하면 ↓ 진단 명령"
+    }
+  ],
+  "mainPath": [
+    "symptom",
+    "getpod",
+    "g_pending",
+    "g_imagepull",
+    "g_crash",
+    "g_notready",
+    "g_unreachable",
+    "leaf_net"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "symptom"
+    ],
+    "allowedTerminals": [
+      "leaf_sched",
+      "leaf_image",
+      "leaf_crash",
+      "leaf_ready",
+      "leaf_net"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "symptom",
+      "lane": "entry",
+      "col": 0,
+      "type": "external",
+      "label": "파드가 응답 없음",
+      "sublabel": "서비스 응답 없음",
+      "width": 124
+    },
+    {
+      "id": "getpod",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "kubectl get pod -o wide",
+      "sublabel": "STATUS · READY · RESTARTS",
+      "width": 190
+    },
+    {
+      "id": "g_pending",
+      "lane": "gates",
+      "col": 1,
+      "type": "security",
+      "label": "Pending",
+      "sublabel": "노드에 스케줄되지 않음",
+      "width": 136
+    },
+    {
+      "id": "g_imagepull",
+      "lane": "gates",
+      "col": 2,
+      "type": "security",
+      "label": "ImagePullBackOff",
+      "sublabel": "ErrImagePull → 백오프",
+      "width": 136
+    },
+    {
+      "id": "g_crash",
+      "lane": "gates",
+      "col": 3,
+      "type": "security",
+      "label": "CrashLoopBackOff",
+      "sublabel": "RESTARTS 계속 증가",
+      "width": 136
+    },
+    {
+      "id": "g_notready",
+      "lane": "gates",
+      "col": 4,
+      "type": "security",
+      "label": "Running · READY 0/1",
+      "sublabel": "Ready 컨디션 False",
+      "width": 156
+    },
+    {
+      "id": "g_unreachable",
+      "lane": "gates",
+      "col": 5,
+      "type": "security",
+      "label": "Running · READY 1/1",
+      "sublabel": "그래도 응답 없음",
+      "width": 156
+    },
+    {
+      "id": "leaf_sched",
+      "lane": "diag",
+      "col": 1,
+      "type": "backend",
+      "label": "kubectl describe pod",
+      "sublabel": "Events: FailedScheduling",
+      "width": 190
+    },
+    {
+      "id": "leaf_image",
+      "lane": "diag",
+      "col": 2,
+      "type": "backend",
+      "label": "kubectl describe pod",
+      "sublabel": "Events: Failed to pull image",
+      "width": 190
+    },
+    {
+      "id": "leaf_crash",
+      "lane": "diag",
+      "col": 3,
+      "type": "backend",
+      "label": "kubectl logs --previous",
+      "sublabel": "describe: Exit 137 + Reason OOMKilled",
+      "width": 190
+    },
+    {
+      "id": "leaf_ready",
+      "lane": "diag",
+      "col": 4,
+      "type": "backend",
+      "label": "kubectl describe pod",
+      "sublabel": "Readiness probe failed 이벤트",
+      "width": 190
+    },
+    {
+      "id": "leaf_net",
+      "lane": "diag",
+      "col": 5,
+      "type": "cloud",
+      "label": "kubectl get endpointslices",
+      "sublabel": "selector · NetworkPolicy · DNS · ALB",
+      "width": 212
+    }
+  ],
+  "edges": [
+    {
+      "id": "symptom-getpod",
+      "from": "symptom",
+      "to": "getpod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "getpod-pending",
+      "from": "getpod",
+      "to": "g_pending",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pending-yes",
+      "from": "g_pending",
+      "to": "leaf_sched",
+      "role": "branch"
+    },
+    {
+      "id": "pending-no",
+      "from": "g_pending",
+      "to": "g_imagepull",
+      "label": "아니오",
+      "variant": "emphasis"
+    },
+    {
+      "id": "imagepull-yes",
+      "from": "g_imagepull",
+      "to": "leaf_image",
+      "role": "branch"
+    },
+    {
+      "id": "imagepull-no",
+      "from": "g_imagepull",
+      "to": "g_crash",
+      "label": "아니오",
+      "variant": "emphasis"
+    },
+    {
+      "id": "crash-yes",
+      "from": "g_crash",
+      "to": "leaf_crash",
+      "role": "branch"
+    },
+    {
+      "id": "crash-no",
+      "from": "g_crash",
+      "to": "g_notready",
+      "label": "아니오",
+      "variant": "emphasis"
+    },
+    {
+      "id": "notready-yes",
+      "from": "g_notready",
+      "to": "leaf_ready",
+      "role": "branch"
+    },
+    {
+      "id": "notready-no",
+      "from": "g_notready",
+      "to": "g_unreachable",
+      "label": "아니오",
+      "variant": "emphasis"
+    },
+    {
+      "id": "unreachable-yes",
+      "from": "g_unreachable",
+      "to": "leaf_net",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Pending — FailedScheduling 메시지로 원인 확정",
+      "items": [
+        "Insufficient cpu / Insufficient memory → requests 조정 또는 노드 증설",
+        "node(s) had untolerated taint → tolerations 추가",
+        "pod has unbound immediate PersistentVolumeClaims → PVC·StorageClass 확인",
+        "node(s) didn't match Pod's node affinity/selector → nodeSelector 라벨 확인"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "CrashLoopBackOff · ImagePullBackOff — 무엇을 읽나",
+      "items": [
+        "Reason: OOMKilled · Exit Code: 137 → memory limit 상향 또는 누수 수정",
+        "그 외 Exit Code(예: 1) → kubectl logs --previous 로 앱 오류 확인",
+        "Liveness probe failed 이벤트 → 프로브 경로·initialDelaySeconds 점검",
+        "Failed to pull image → 이미지 이름·태그, imagePullSecrets, 노드 역할의 ECR 권한"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Running인데 안 닿을 때 — 안쪽에서 바깥으로",
+      "items": [
+        "kubectl get endpointslices -l kubernetes.io/service-name=<svc> 에 endpoint가 없음 → Service selector ↔ Pod label, readinessProbe",
+        "kubectl exec <pod> -- nslookup <svc> 실패 → CoreDNS 확인",
+        "NetworkPolicy ingress 규칙 → Ingress/ALB target health 순서로 확인"
+      ]
+    }
+  ]
+}

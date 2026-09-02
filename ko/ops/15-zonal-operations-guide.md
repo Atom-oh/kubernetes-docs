@@ -3,7 +3,7 @@
 > **지원 버전**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
 > **마지막 업데이트**: 2026년 7월 21일
 
-< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) >
+< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) | [다음: 트러블슈팅 플레이북](16-troubleshooting-playbook.md) >
 
 ***
 
@@ -209,4 +209,4 @@ Aurora의 기본 reader endpoint는 **AZ를 고려하지 않는 라운드로빈 
 
 ***
 
-< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) >
+< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) | [다음: 트러블슈팅 플레이북](16-troubleshooting-playbook.md) >

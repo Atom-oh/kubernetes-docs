@@ -62,6 +62,12 @@ Strimzi wraps all of these components as Kubernetes resources. You declare the d
 - Security with mTLS/SASL
 - Storage and instance cost optimization
 
+**[9. Kafka Measured Benchmark](09-kafka-benchmark.md)**
+- Measured RF3 vs RF1 ingest ceiling of a 3-broker KRaft cluster on gp3 volumes
+- Throughput and p99 latency trade-offs across acks=0/1/all
+- Throughput and CPU cost by compression codec and record size
+- How cold consumers and mixed workloads affect producer throughput
+
 ## References
 
 - [Strimzi Documentation](https://strimzi.io/docs/operators/latest/overview)
@@ -71,4 +77,4 @@ Strimzi wraps all of these components as Kubernetes resources. You declare the d
 
 ## Quiz
 
-To test what you've learned in this section, try the [Kafka Fundamentals Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md).
+To test what you've learned in this section, try the [Kafka Fundamentals Quiz](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md). To check whether you can turn the benchmark numbers into design decisions, also try the [Kafka Measured Benchmark Quiz](../../quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md).
