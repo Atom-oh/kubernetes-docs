@@ -77,7 +77,7 @@ test('extractDescription truncates at a word boundary with ellipsis when no sent
   assert.ok(out.endsWith('…'))
 })
 
-test('extractDescription skips HTML block lines such as quiz answer toggles', () => {
+test('extractDescription stops at a quiz answer toggle instead of leaking the answer', () => {
   const src = [
     '# Quiz',
     '',
@@ -89,7 +89,26 @@ test('extractDescription skips HTML block lines such as quiz answer toggles', ()
     '</details>'
   ].join('\n')
 
-  assert.equal(extractDescription(src), '정답: B')
+  assert.equal(extractDescription(src), undefined)
+})
+
+test('extractDescription keeps the intro paragraph that precedes a quiz answer toggle', () => {
+  const src = [
+    '# Quiz',
+    '',
+    'This quiz checks your understanding of Linux basics.',
+    '',
+    '1. Question text',
+    '',
+    '<details>',
+    '<summary>정답 보기</summary>',
+    '',
+    '**정답: B**',
+    '',
+    '</details>'
+  ].join('\n')
+
+  assert.equal(extractDescription(src), 'This quiz checks your understanding of Linux basics.')
 })
 
 test('extractDescription returns undefined when there is no body paragraph', () => {
