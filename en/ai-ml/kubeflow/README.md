@@ -1,7 +1,7 @@
 # Kubeflow on EKS Deep Dive
 
 > **Supported Versions**: Kubeflow Community Distribution 26.03
-> **Last Updated**: August 19, 2026
+> **Last Updated**: September 2, 2026
 
 ## Overview
 
@@ -22,7 +22,7 @@ Kubeflow is an open-source machine learning platform for Kubernetes that bundles
 
 ## Why Run This on EKS
 
-Kubeflow's components are designed to run on any conformant Kubernetes cluster, which means the operational practices this docs site already covers for EKS — Karpenter-driven autoscaling (including GPU node pools), IRSA/Pod Identity for AWS service access, EBS/S3 storage integration, and observability with Prometheus/Grafana — apply directly to ML workloads rather than requiring a separate ML-specific platform. The trade-off against fully managed alternatives (e.g. Amazon SageMaker) is the same one covered in [Data on EKS](../../data-on-eks/README.md): more operational responsibility (Operator upgrades, storage/identity wiring) in exchange for a single deployment/observability model shared across all workloads on the cluster, and the ability to run any of Kubeflow's components independently rather than adopting the whole platform at once.
+Kubeflow's components are designed to run on any conformant Kubernetes cluster, which means the operational practices this docs site already covers for EKS — Karpenter-driven autoscaling (including GPU node pools), IRSA/Pod Identity for AWS service access, EBS/S3 storage integration, and observability with Prometheus/Grafana — apply directly to ML workloads rather than requiring a separate ML-specific platform. The trade-off against a fully managed path such as [Amazon SageMaker AI](../sagemaker-ai/README.md) is the same one covered in [Data on EKS](../../data-on-eks/README.md): more operational responsibility (Operator upgrades, storage/identity wiring) in exchange for a single deployment/observability model shared across all workloads on the cluster, and the ability to run any of Kubeflow's components independently rather than adopting the whole platform at once.
 
 ## Currently Covered
 

@@ -1,0 +1,103 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qwen-pii-${MODE}
+  namespace: qwen-pii
+  labels:
+    app: qwen-pii-training
+    experiment-id: ${EXPERIMENT_ID}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 10800
+  template:
+    metadata:
+      labels:
+        app: qwen-pii-training
+        experiment-id: ${EXPERIMENT_ID}
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        workload: qwen-pii-training
+      containers:
+        - name: trainer
+          image: 763104351884.dkr.ecr.ap-northeast-2.amazonaws.com/pytorch-training:2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker
+          command:
+            - /bin/bash
+            - -lc
+          args:
+            - |
+              set -euo pipefail
+              mkdir -p /workspace/data /workspace/output /workspace/hf-cache
+              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["SOURCE_URL"], "/tmp/source.tar.gz")'
+              tar -xzf /tmp/source.tar.gz -C /workspace
+              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["TRAIN_URL"], "/workspace/data/train.jsonl")'
+              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["VALIDATION_URL"], "/workspace/data/validation.jsonl")'
+              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["TEST_URL"], "/workspace/data/test.jsonl")'
+              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["MANIFEST_URL"], "/workspace/data/dataset-manifest.json")'
+              python3 -m pip install --no-cache-dir -r /workspace/requirements.lock
+              cd /workspace
+              python3 -m src.train \
+                --config /workspace/config/experiment.yaml \
+                --train-jsonl /workspace/data/train.jsonl \
+                --validation-jsonl /workspace/data/validation.jsonl \
+                --test-jsonl /workspace/data/test.jsonl \
+                --dataset-manifest /workspace/data/dataset-manifest.json \
+                --output-dir /workspace/output \
+                --steps "${STEPS}" \
+                --environment eks \
+                --mode "${MODE}" \
+                --evaluation-batch-size 4
+          env:
+            - name: SOURCE_URL
+              value: ${SOURCE_URL}
+            - name: TRAIN_URL
+              value: ${TRAIN_URL}
+            - name: VALIDATION_URL
+              value: ${VALIDATION_URL}
+            - name: TEST_URL
+              value: ${TEST_URL}
+            - name: MANIFEST_URL
+              value: ${MANIFEST_URL}
+            - name: MLFLOW_TRACKING_URI
+              value: http://mlflow.qwen-pii.svc.cluster.local:5000
+            - name: MLFLOW_EXPERIMENT_NAME
+              value: qwen-pii-finetuning
+            - name: RUN_ENVIRONMENT
+              value: eks
+            - name: HF_HOME
+              value: /workspace/hf-cache
+            - name: HF_HUB_ENABLE_HF_TRANSFER
+              value: "1"
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            - name: PYTORCH_CUDA_ALLOC_CONF
+              value: expandable_segments:True
+          resources:
+            requests:
+              cpu: "8"
+              memory: 48Gi
+              nvidia.com/gpu: 1
+            limits:
+              cpu: "14"
+              memory: 58Gi
+              nvidia.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: workspace
+          emptyDir:
+            sizeLimit: 280Gi
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 8Gi

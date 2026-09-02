@@ -1,0 +1,66 @@
+{
+  "awsPreflight": {
+    "ec2OnDemandGpuVcpuQuota": 768.0,
+    "region": "ap-northeast-2",
+    "sagemakerG6e4xlargeTrainingQuota": 1.0
+  },
+  "cleanup": {
+    "deletedResourceTypes": [
+      "SageMaker MLflow App",
+      "Amazon S3 experiment bucket",
+      "IAM experiment roles"
+    ],
+    "remainingResourceCount": 1,
+    "remainingResourceType": "SageMaker Unified Studio project",
+    "requiresDomainOwner": true
+  },
+  "dataset": {
+    "counts": {
+      "test": 400,
+      "train": 1600,
+      "validation": 200
+    },
+    "languageRatio": {
+      "en": 0.2,
+      "ko": 0.8
+    },
+    "sha256": {
+      "test": "6f6ef9a6b42297738b292d5149f2e6e323f7bcd6f2325b6bfbc04ae6d9d0ec21",
+      "train": "b98429fef0b103f24e8eaded069cbd2f6def5fbf8c083a5c7baf366c9fc1d21a",
+      "validation": "25ca38198d38e04be181e15b4e21a3c96d672f46f775ae1bc6c422ee4514f820"
+    }
+  },
+  "date": "2026-09-01",
+  "localValidation": {
+    "pythonTestsPassed": 30,
+    "sourceBundleSha256": "5bfce3cf0252d341b607331ef7f0aaf5586b09f5ed7b39c983e96dc4acf49611",
+    "syntheticRecordsGenerated": 2200
+  },
+  "managedMlflow": {
+    "observedAppVersion": "3.10.1",
+    "resourceApi": "SageMaker MLflow App"
+  },
+  "modelId": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+  "provisioningAttempts": [
+    {
+      "cleanupRemainingResources": 0,
+      "outcome": "MLflow App reached Created; readiness status mismatch corrected",
+      "trainingStarted": false
+    },
+    {
+      "cleanupRemainingResources": 0,
+      "outcome": "Unified Studio domain rejected custom project resource tags",
+      "trainingStarted": false
+    },
+    {
+      "cleanupRemainingResources": 1,
+      "outcome": "Unified Studio project created without project membership; current role cannot delete it",
+      "trainingStarted": false
+    }
+  ],
+  "status": "blocked_before_training",
+  "training": {
+    "eksExecuted": false,
+    "sagemakerExecuted": false
+  }
+}

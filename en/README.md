@@ -97,6 +97,77 @@ This training content provides quizzes for each topic along with the learning ma
 9. [Workload Optimization](./eks-auto-mode/08-workload-optimization.md) | [Quiz](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
 10. [Migration Guide](./eks-auto-mode/09-migration-guide.md) | [Quiz](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
+### AI/ML
+1. [AI/ML Workloads](./ai-ml/01-ai-ml-workloads.md) | [Quiz](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
+2. [AI Infrastructure](./ai-ml/06-ai-infrastructure.md) | [Quiz](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
+3. [Model Training on EKS](./ai-ml/05-model-training.md) | [Quiz](./quizzes/ai-ml/05-model-training-quiz.md)
+4. [Inference Frameworks](./ai-ml/04-inference-frameworks.md) | [Quiz](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
+5. [vLLM Deployment & Optimization](./ai-ml/02-vllm-deployment.md) | [Quiz](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
+6. [Agentic AI Platform on EKS](./ai-ml/03-agentic-ai-platform.md) | [Quiz](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
+7. [AI/ML Best Practices](./ai-ml/07-ai-ml-best-practices.md) | [Quiz](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
+8. **Ray on EKS Deep Dive**
+   - [Ray on EKS Introduction](./ai-ml/ray/README.md)
+   - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [Quiz](./quizzes/ai-ml/ray/01-architecture-quiz.md)
+   - [Part 2: The KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [Quiz](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
+   - [Part 3: Ray Train and Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [Quiz](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
+   - [Part 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [Quiz](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
+9. **Kubeflow on EKS Deep Dive**
+   - [Kubeflow on EKS Introduction](./ai-ml/kubeflow/README.md)
+   - [Part 1: Kubeflow Architecture and Installation on EKS](./ai-ml/kubeflow/01-architecture-installation.md) | [Quiz](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
+   - [Part 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [Quiz](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
+   - [Part 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [Quiz](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
+   - [Part 4: Katib — Hyperparameter Tuning and AutoML](./ai-ml/kubeflow/04-katib.md) | [Quiz](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
+   - [Part 5: Kubeflow Trainer and Distributed Training](./ai-ml/kubeflow/05-training-operator.md) | [Quiz](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
+   - [Part 6: KServe — Model Serving on Kubernetes](./ai-ml/kubeflow/06-kserve.md) | [Quiz](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
+10. **MLflow on EKS Deep Dive**
+   - [MLflow on EKS Introduction](./ai-ml/mlflow/README.md)
+   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [Quiz](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
+   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [Quiz](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
+   - [Part 3: Deploying MLflow on EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Quiz](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+11. **SageMaker AI Qwen PII Guidebook**
+   - [Guidebook Introduction](./ai-ml/sagemaker-ai/README.md)
+   - [Part 1: Platform Architecture](./ai-ml/sagemaker-ai/01-platform-architecture.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+   - [Part 2: Synthetic PII Data and Tokenization](./ai-ml/sagemaker-ai/02-pii-data-tokenization.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+   - [Part 3: SageMaker AI and MLflow Execution](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+   - [Part 4: Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+   - [Part 5: Factual Validation Results](./ai-ml/sagemaker-ai/04-validation-results.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
+
+### Data on EKS
+1. [Data on EKS Overview](./data-on-eks/README.md)
+   - [Anatomy of a Modern Data Pipeline](./data-on-eks/01-data-pipeline-anatomy.md) | [Quiz](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+   - [SageMaker Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/README.md)
+   - [Part 4: Domain, Project, and Membership Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+2. **Kafka on EKS Deep Dive**
+   - [Kafka on EKS Introduction](./data-on-eks/kafka/README.md)
+   - [Part 1: Kafka Fundamentals](./data-on-eks/kafka/01-kafka-fundamentals.md) | [Quiz](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
+   - [Part 2: Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator.md) | [Quiz](./quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
+   - [Part 3: Kafka Operations](./data-on-eks/kafka/03-kafka-operations.md) | [Quiz](./quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
+   - [Part 4: Schema Registry](./data-on-eks/kafka/04-schema-registry.md) | [Quiz](./quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
+   - [Part 5: Kafka Connect and MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [Quiz](./quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
+   - [Part 6: MSK Integration](./data-on-eks/kafka/06-msk-integration.md) | [Quiz](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
+   - [Part 7: Monitoring](./data-on-eks/kafka/07-monitoring.md) | [Quiz](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
+   - [Part 8: Best Practices](./data-on-eks/kafka/08-best-practices.md) | [Quiz](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+3. **Spark on EKS Deep Dive**
+   - [Spark on EKS Introduction](./data-on-eks/spark/README.md)
+   - [Part 1: Spark on Kubernetes Fundamentals](./data-on-eks/spark/01-spark-fundamentals.md) | [Quiz](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
+   - [Part 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [Quiz](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
+   - [Part 3: Amazon EMR on EKS](./data-on-eks/spark/03-emr-on-eks.md) | [Quiz](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
+   - [Part 4: Performance and Cost Tuning](./data-on-eks/spark/04-performance-tuning.md) | [Quiz](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
+   - [Part 5: Best Practices and Security](./data-on-eks/spark/05-best-practices.md) | [Quiz](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
+4. **Airflow on EKS Deep Dive**
+   - [Airflow on EKS Introduction](./data-on-eks/airflow/README.md)
+   - [Part 1: Airflow Architecture on Kubernetes](./data-on-eks/airflow/01-architecture.md) | [Quiz](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
+   - [Part 2: Helm Deployment and Executor Choice](./data-on-eks/airflow/02-helm-deployment.md) | [Quiz](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
+   - [Part 3: DAG Patterns and KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [Quiz](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
+   - [Part 4: Amazon MWAA Integration](./data-on-eks/airflow/04-mwaa-integration.md) | [Quiz](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
+   - [Part 5: Operations and Security](./data-on-eks/airflow/05-operations.md) | [Quiz](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
+5. **Flink on EKS Deep Dive**
+   - [Flink on EKS Introduction](./data-on-eks/flink/README.md)
+   - [Part 1: Flink Architecture on Kubernetes](./data-on-eks/flink/01-architecture.md) | [Quiz](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
+   - [Part 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [Quiz](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
+   - [Part 3: State, Checkpointing, and Streaming Patterns](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [Quiz](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
+   - [Part 4: Operations, High Availability, and Managed Flink](./data-on-eks/flink/04-operations-ha.md) | [Quiz](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
+
 ### Networking
 1. [Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
 2. [Network Fundamentals — 25 Protocols](./basics/06-network-fundamentals-part1.md)

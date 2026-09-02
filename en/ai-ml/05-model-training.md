@@ -1,9 +1,11 @@
 # Model Training on EKS
 
 > **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 2, 2026
 
 Model training is one of the most resource-intensive workloads in the AI/ML lifecycle. This chapter covers distributed training strategies, Slurm integration with Slinky, GPU and Trainium-based training, and best practices for running large-scale training jobs on Amazon EKS.
+
+For a single-GPU QLoRA comparison between managed SageMaker AI and EKS, pair this chapter with the [Qwen3-30B-A3B PII fine-tuning guide](sagemaker-ai/README.md). It applies one data, source, and MLflow contract to both paths and separates unexecuted training from measured results.
 
 ## Training Pipeline Overview
 

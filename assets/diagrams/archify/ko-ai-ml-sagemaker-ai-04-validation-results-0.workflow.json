@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SageMaker Qwen PII 검증 워크플로와 중단 지점",
+    "output": "public/archmaps/ko-ai-ml-sagemaker-ai-04-validation-results-0.html",
+    "animation": "none",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1248,
+      600
+    ],
+    "views": [
+      {
+        "id": "local-proof",
+        "label": "로컬 증거",
+        "focus": [
+          "localValidated",
+          "preflight"
+        ],
+        "note": "데이터·토큰화·평가·요청 계약과 AWS 실행 전 점검을 분리해 확인합니다."
+      },
+      {
+        "id": "provisioning-retries",
+        "label": "프로비저닝 재시도",
+        "focus": [
+          "attempt1",
+          "cleanup1",
+          "attempt2",
+          "cleanup2",
+          "attempt3",
+          "partialCleanup"
+        ],
+        "note": "각 시도 뒤 생성 자원을 확인하고 App·S3·IAM 자원을 정리한 흐름입니다."
+      },
+      {
+        "id": "stop-before-spend",
+        "label": "비용 전 중단",
+        "focus": [
+          "partialCleanup",
+          "blocked",
+          "trainingNotRun"
+        ],
+        "note": "프로젝트 1개가 남은 상태를 기록하고 GPU 학습을 시작하지 않았습니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "local",
+      "label": "로컬 검증"
+    },
+    {
+      "id": "firstAttempt",
+      "label": "프로비저닝 시도 1–2"
+    },
+    {
+      "id": "outcome",
+      "label": "시도 3 · 2026-09-02 결과 · 비용 게이트",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "localValidated",
+    "preflight",
+    "attempt1",
+    "cleanup1",
+    "attempt2",
+    "cleanup2"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "localValidated"
+    ],
+    "allowedTerminals": [
+      "trainingNotRun"
+    ],
+    "requiredPaths": [
+      {
+        "from": "localValidated",
+        "to": "trainingNotRun"
+      },
+      {
+        "from": "attempt1",
+        "to": "partialCleanup"
+      },
+      {
+        "from": "blocked",
+        "to": "trainingNotRun"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "localValidated",
+      "lane": "local",
+      "col": 0,
+      "type": "backend",
+      "label": "로컬 통과",
+      "tag": "PASS",
+      "width": 110
+    },
+    {
+      "id": "preflight",
+      "lane": "local",
+      "col": 1,
+      "type": "security",
+      "label": "AWS preflight",
+      "tag": "READ-ONLY",
+      "width": 112
+    },
+    {
+      "id": "attempt1",
+      "lane": "firstAttempt",
+      "col": 2,
+      "type": "security",
+      "label": "App 상태 불일치",
+      "tag": "ATTEMPT 1",
+      "width": 124
+    },
+    {
+      "id": "cleanup1",
+      "lane": "firstAttempt",
+      "col": 3,
+      "type": "database",
+      "label": "정리 1",
+      "tag": "CLEANUP",
+      "width": 110
+    },
+    {
+      "id": "attempt2",
+      "lane": "firstAttempt",
+      "col": 4,
+      "type": "security",
+      "label": "Project tag 거부",
+      "tag": "ATTEMPT 2",
+      "width": 126
+    },
+    {
+      "id": "cleanup2",
+      "lane": "firstAttempt",
+      "col": 5,
+      "type": "database",
+      "label": "정리 2",
+      "tag": "CLEANUP",
+      "width": 110
+    },
+    {
+      "id": "attempt3",
+      "lane": "outcome",
+      "col": 0,
+      "type": "security",
+      "label": "membership 누락",
+      "tag": "ATTEMPT 3",
+      "width": 126
+    },
+    {
+      "id": "partialCleanup",
+      "lane": "outcome",
+      "col": 1,
+      "type": "database",
+      "label": "부분 정리",
+      "tag": "VERIFIED",
+      "width": 110
+    },
+    {
+      "id": "blocked",
+      "lane": "outcome",
+      "col": 3,
+      "type": "security",
+      "label": "프로젝트 1개 ACTIVE",
+      "tag": "2026-09-02",
+      "width": 164
+    },
+    {
+      "id": "trainingNotRun",
+      "lane": "outcome",
+      "col": 5,
+      "type": "external",
+      "label": "GPU 학습 미실행",
+      "tag": "NO SPEND",
+      "width": 142
+    }
+  ],
+  "edges": [
+    {
+      "from": "localValidated",
+      "to": "preflight",
+      "label": "tests pass",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "preflight",
+      "to": "attempt1",
+      "label": "provision",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "attempt1",
+      "to": "cleanup1",
+      "label": "inventory + delete",
+      "role": "main"
+    },
+    {
+      "from": "cleanup1",
+      "to": "attempt2",
+      "label": "retry",
+      "variant": "dashed",
+      "role": "main"
+    },
+    {
+      "from": "attempt2",
+      "to": "cleanup2",
+      "label": "inventory + delete",
+      "role": "main"
+    },
+    {
+      "from": "cleanup2",
+      "to": "attempt3",
+      "label": "retry",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "attempt3",
+      "to": "partialCleanup",
+      "label": "inventory + delete",
+      "role": "main"
+    },
+    {
+      "from": "partialCleanup",
+      "to": "blocked",
+      "label": "read-only recheck",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "blocked",
+      "to": "trainingNotRun",
+      "label": "stop before spend",
+      "variant": "security",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "실제 관측",
+      "items": [
+        "합성 데이터 2,200건 · Python 테스트 30개 · read-only preflight 통과",
+        "SageMaker MLflow App 3.10.1 · App 상태 계약 불일치 확인",
+        "App 상태 계약 불일치 · Project tag 정책 거부",
+        "Project membership 누락 · App·S3·IAM 회수 · 프로젝트 1개 ACTIVE"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "하지 않은 주장",
+      "items": [
+        "SageMaker Training Job은 실행하지 않음",
+        "EKS GPU Job도 실행하지 않음",
+        "파인튜닝 F1·학습 시간·GPU 비용은 측정값이 없음"
+      ]
+    }
+  ]
+}

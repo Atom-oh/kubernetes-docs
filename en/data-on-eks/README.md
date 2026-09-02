@@ -1,6 +1,6 @@
 # Data on EKS
 
-> **Last Updated**: July 15, 2026
+> **Last Updated**: September 2, 2026
 
 ## Overview
 
@@ -18,6 +18,7 @@ Tools in the data platform space generally fall into four categories, each solvi
 | **Batch & Analytics** | Distributed processing of large datasets for ETL, aggregation, and ML pipelines | Apache Spark | Available — [Spark on EKS](spark/README.md) |
 | **Orchestration** | Define dependencies and schedules across data jobs and manage their execution | Apache Airflow | Available — [Airflow on EKS](airflow/README.md) |
 | **Stream Processing** | Perform real-time aggregation, transformation, and stateful computation on streaming data | Apache Flink | Available — [Flink on EKS](flink/README.md) |
+| **Governed data and AI workspace** | Share data assets, project profiles, tools, and membership within a managed boundary | SageMaker Unified Studio | Available — [Unified Studio governance](sagemaker-unified-studio/README.md) |
 
 ![Airflow orchestrates scheduled jobs on both Kafka and Spark, while Kafka streams events into Flink for stream processing and lands raw data into Spark for batch analytics.](../.gitbook/assets/en-data-on-eks-README-0.png)
 
@@ -39,6 +40,7 @@ This approach does come with trade-offs: your team takes on Operator management,
 - [Spark on EKS](spark/README.md) — A 5-part deep dive covering Spark-on-Kubernetes fundamentals, the Spark Operator landscape, Amazon EMR on EKS, and performance/cost tuning.
 - [Airflow on EKS](airflow/README.md) — A 5-part deep dive covering Airflow 3's architecture, Helm-based deployment and executor choice, DAG patterns with KubernetesPodOperator, and Amazon MWAA integration.
 - [Flink on EKS](flink/README.md) — A 4-part deep dive covering Flink's architecture on Kubernetes, the Flink Kubernetes Operator, state/checkpointing, and operations/HA.
+- [SageMaker Unified Studio governance](sagemaker-unified-studio/README.md) — Domains, project profiles, projects, catalog assets, membership, and deletion lifecycle.
 
 ## Next Steps
 
@@ -46,3 +48,4 @@ This approach does come with trade-offs: your team takes on Operator management,
 2. [Spark on EKS](spark/README.md) — Spark Operator and EMR on EKS deep dive
 3. [Airflow on EKS](airflow/README.md) — Helm-based Airflow deployment and DAG patterns deep dive
 4. [Flink on EKS](flink/README.md) — Flink Kubernetes Operator and streaming patterns deep dive
+5. [SageMaker Unified Studio governance](sagemaker-unified-studio/README.md) — Governance guidance connecting a managed data/AI workspace to EKS pipelines

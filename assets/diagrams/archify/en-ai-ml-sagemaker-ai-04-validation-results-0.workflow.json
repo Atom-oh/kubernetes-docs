@@ -1,0 +1,269 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SageMaker Qwen PII Validation Workflow and Stop Point",
+    "locale": "en",
+    "output": "public/archmaps/en-ai-ml-sagemaker-ai-04-validation-results-0.html",
+    "animation": "none",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1248,
+      600
+    ],
+    "views": [
+      {
+        "id": "local-proof",
+        "label": "Local evidence",
+        "focus": [
+          "localValidated",
+          "preflight"
+        ],
+        "note": "Separate the data, tokenization, evaluation, request contracts, and pre-run AWS checks."
+      },
+      {
+        "id": "provisioning-retries",
+        "label": "Provisioning retries",
+        "focus": [
+          "attempt1",
+          "cleanup1",
+          "attempt2",
+          "cleanup2",
+          "attempt3",
+          "partialCleanup"
+        ],
+        "note": "Each attempt was inventoried, then its App, S3, and IAM resources were reclaimed."
+      },
+      {
+        "id": "stop-before-spend",
+        "label": "Stop before spend",
+        "focus": [
+          "partialCleanup",
+          "blocked",
+          "trainingNotRun"
+        ],
+        "note": "One project remained, so GPU training did not start."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "local",
+      "label": "Local validation"
+    },
+    {
+      "id": "firstAttempt",
+      "label": "Provisioning attempts 1–2"
+    },
+    {
+      "id": "outcome",
+      "label": "Attempt 3 · September 2 result · cost gate",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "localValidated",
+    "preflight",
+    "attempt1",
+    "cleanup1",
+    "attempt2",
+    "cleanup2"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "localValidated"
+    ],
+    "allowedTerminals": [
+      "trainingNotRun"
+    ],
+    "requiredPaths": [
+      {
+        "from": "localValidated",
+        "to": "trainingNotRun"
+      },
+      {
+        "from": "attempt1",
+        "to": "partialCleanup"
+      },
+      {
+        "from": "blocked",
+        "to": "trainingNotRun"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "localValidated",
+      "lane": "local",
+      "col": 0,
+      "type": "backend",
+      "label": "Local pass",
+      "tag": "PASS",
+      "width": 110
+    },
+    {
+      "id": "preflight",
+      "lane": "local",
+      "col": 1,
+      "type": "security",
+      "label": "AWS preflight",
+      "tag": "READ-ONLY",
+      "width": 112
+    },
+    {
+      "id": "attempt1",
+      "lane": "firstAttempt",
+      "col": 2,
+      "type": "security",
+      "label": "App status mismatch",
+      "tag": "ATTEMPT 1",
+      "width": 124
+    },
+    {
+      "id": "cleanup1",
+      "lane": "firstAttempt",
+      "col": 3,
+      "type": "database",
+      "label": "Cleanup 1",
+      "tag": "CLEANUP",
+      "width": 110
+    },
+    {
+      "id": "attempt2",
+      "lane": "firstAttempt",
+      "col": 4,
+      "type": "security",
+      "label": "Tag rejected",
+      "tag": "ATTEMPT 2",
+      "width": 126
+    },
+    {
+      "id": "cleanup2",
+      "lane": "firstAttempt",
+      "col": 5,
+      "type": "database",
+      "label": "Cleanup 2",
+      "tag": "CLEANUP",
+      "width": 110
+    },
+    {
+      "id": "attempt3",
+      "lane": "outcome",
+      "col": 0,
+      "type": "security",
+      "label": "Membership missing",
+      "tag": "ATTEMPT 3",
+      "width": 126
+    },
+    {
+      "id": "partialCleanup",
+      "lane": "outcome",
+      "col": 1,
+      "type": "database",
+      "label": "Partial cleanup",
+      "tag": "VERIFIED",
+      "width": 110
+    },
+    {
+      "id": "blocked",
+      "lane": "outcome",
+      "col": 3,
+      "type": "security",
+      "label": "One project ACTIVE",
+      "tag": "2026-09-02",
+      "width": 164
+    },
+    {
+      "id": "trainingNotRun",
+      "lane": "outcome",
+      "col": 5,
+      "type": "external",
+      "label": "GPU training skipped",
+      "tag": "NO SPEND",
+      "width": 142
+    }
+  ],
+  "edges": [
+    {
+      "from": "localValidated",
+      "to": "preflight",
+      "label": "tests pass",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "preflight",
+      "to": "attempt1",
+      "label": "provision",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "attempt1",
+      "to": "cleanup1",
+      "label": "inventory + delete",
+      "role": "main"
+    },
+    {
+      "from": "cleanup1",
+      "to": "attempt2",
+      "label": "retry",
+      "variant": "dashed",
+      "role": "main"
+    },
+    {
+      "from": "attempt2",
+      "to": "cleanup2",
+      "label": "inventory + delete",
+      "role": "main"
+    },
+    {
+      "from": "cleanup2",
+      "to": "attempt3",
+      "label": "retry",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "attempt3",
+      "to": "partialCleanup",
+      "label": "inventory + delete",
+      "role": "main"
+    },
+    {
+      "from": "partialCleanup",
+      "to": "blocked",
+      "label": "read-only recheck",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "blocked",
+      "to": "trainingNotRun",
+      "label": "stop before spend",
+      "variant": "security",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Observed facts",
+      "items": [
+        "2,200 synthetic records · 30 Python tests · read-only preflight passed",
+        "SageMaker MLflow App 3.10.1 · App status contract mismatch",
+        "Project tag policy rejected · owner membership missing",
+        "App, S3, and IAM resources reclaimed · one Unified Studio project remains ACTIVE"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Claims not made",
+      "items": [
+        "The SageMaker Training Job was not executed",
+        "The EKS GPU Job was not executed",
+        "No fine-tuned F1, training duration, or GPU cost was measured"
+      ]
+    }
+  ]
+}

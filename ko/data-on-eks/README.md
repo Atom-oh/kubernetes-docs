@@ -1,6 +1,6 @@
 # Data on EKS
 
-> **마지막 업데이트**: 2026년 7월 15일
+> **마지막 업데이트**: 2026년 9월 2일
 
 ## 개요
 
@@ -18,6 +18,7 @@
 | **배치/분석 (Batch & Analytics)** | 대용량 데이터를 분산 처리하여 ETL, 집계, 머신러닝 파이프라인을 수행 | Apache Spark | ✅ [Spark on EKS](spark/README.md) |
 | **워크플로우 오케스트레이션 (Orchestration)** | 여러 데이터 작업 간의 의존성과 스케줄을 정의하고 실행을 관리 | Apache Airflow | ✅ [Airflow on EKS](airflow/README.md) |
 | **스트림 처리 (Stream Processing)** | 스트리밍 데이터에 대해 실시간으로 집계·변환·상태 기반 연산을 수행 | Apache Flink | ✅ [Flink on EKS](flink/README.md) |
+| **거버넌스 기반 데이터·AI 작업 공간** | 데이터 자산, project profile, 도구와 membership을 관리형 경계에서 공유 | SageMaker Unified Studio | ✅ [Unified Studio 거버넌스](sagemaker-unified-studio/README.md) |
 
 ![Airflow가 Kafka와 Spark의 작업 스케줄링을 담당하고, Kafka는 실시간 이벤트를 Flink에 공급하는 동시에 원시 데이터를 Spark에 적재하는 Data on EKS 파이프라인 구성을 보여준다.](../.gitbook/assets/ko-data-on-eks-README-0.png)
 
@@ -39,6 +40,7 @@
 - [Spark on EKS](spark/README.md) — Spark-on-Kubernetes 기초, Spark Operator 생태계, Amazon EMR on EKS, 성능/비용 튜닝을 5개 파트로 다룹니다.
 - [Airflow on EKS](airflow/README.md) — Airflow 3의 아키텍처, Helm 기반 배포와 Executor 선택, KubernetesPodOperator를 활용한 DAG 패턴, Amazon MWAA 연동을 5개 파트로 다룹니다.
 - [Flink on EKS](flink/README.md) — Kubernetes 위에서의 Flink 아키텍처, Flink Kubernetes Operator, 상태 관리/체크포인팅, 운영 및 고가용성을 4개 파트로 다룹니다.
+- [SageMaker Unified Studio 거버넌스](sagemaker-unified-studio/README.md) — domain, project profile, project, catalog asset, membership과 삭제 lifecycle을 다룹니다.
 
 ## 다음 단계
 
@@ -46,3 +48,4 @@
 2. [Spark on EKS](spark/README.md) — Spark Operator와 EMR on EKS 딥다이브
 3. [Airflow on EKS](airflow/README.md) — Helm 기반 Airflow 배포와 DAG 패턴 딥다이브
 4. [Flink on EKS](flink/README.md) — Flink Kubernetes Operator와 스트리밍 패턴 딥다이브
+5. [SageMaker Unified Studio 거버넌스](sagemaker-unified-studio/README.md) — 관리형 데이터·AI 작업 공간과 EKS 파이프라인을 연결하는 거버넌스 가이드

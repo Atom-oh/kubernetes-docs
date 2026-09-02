@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Target Architecture for SageMaker Qwen PII Fine-Tuning",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "viewBox": [1320, 760],
+    "repository": {
+      "url": "https://github.com/Atom-oh/kubernetes-docs",
+      "revision": "16e8dea531b9d0f501bd3e390d6effc86e4d0cce"
+    }
+  },
+  "components": [
+    {
+      "id": "generator",
+      "type": "backend",
+      "label": "Synthetic PII Generator",
+      "sublabel": "2,200 records · seed 42",
+      "pos": [35, 270],
+      "size": [165, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/data/generate_dataset.py",
+          "label": "generator"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "dataset · source · artifacts",
+      "pos": [240, 270],
+      "size": [165, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/data/dataset-manifest.json",
+          "label": "manifest"
+        }
+      ]
+    },
+    {
+      "id": "unified",
+      "type": "cloud",
+      "label": "SageMaker Unified Studio",
+      "sublabel": "project · catalog · membership",
+      "tag": "Partially observed in AWS",
+      "pos": [225, 70],
+      "size": [195, 78],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/provision.sh",
+          "label": "project lifecycle"
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "type": "cloud",
+      "label": "SageMaker AI Training Job",
+      "sublabel": "ml.g6e.4xlarge · 3h limit",
+      "tag": "Not executed",
+      "pos": [445, 270],
+      "size": [180, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/sagemaker_train.py",
+          "label": "request"
+        }
+      ]
+    },
+    {
+      "id": "qwen",
+      "type": "backend",
+      "label": "Qwen3-30B-A3B",
+      "sublabel": "4-bit NF4 · QLoRA",
+      "tag": "Target design",
+      "pos": [665, 270],
+      "size": [170, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml",
+          "label": "config"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/src/train.py",
+          "label": "trainer"
+        }
+      ]
+    },
+    {
+      "id": "evaluation",
+      "type": "backend",
+      "label": "Aggregate Evaluation",
+      "sublabel": "F1 · leakage · round-trip",
+      "tag": "Code validated",
+      "pos": [875, 270],
+      "size": [170, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/src/metrics.py",
+          "label": "metrics"
+        }
+      ]
+    },
+    {
+      "id": "managedMlflow",
+      "type": "cloud",
+      "label": "SageMaker MLflow App",
+      "sublabel": "aggregate-only tracking",
+      "tag": "3.10.1 observed",
+      "pos": [1085, 270],
+      "size": [195, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json",
+          "label": "observed result"
+        }
+      ]
+    },
+    {
+      "id": "eksJob",
+      "type": "backend",
+      "label": "EKS GPU Job",
+      "sublabel": "same source + dataset",
+      "tag": "Not executed",
+      "pos": [445, 485],
+      "size": [180, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/training-job.yaml",
+          "label": "Kubernetes Job"
+        }
+      ]
+    },
+    {
+      "id": "eksMlflow",
+      "type": "backend",
+      "label": "MLflow on EKS",
+      "sublabel": "ClusterIP · ephemeral",
+      "tag": "Not executed",
+      "pos": [690, 485],
+      "size": [180, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/mlflow.yaml",
+          "label": "deployment"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "security",
+      "label": "Resource Inventory & Teardown",
+      "sublabel": "create · export · delete · verify",
+      "pos": [1040, 485],
+      "size": [230, 76],
+      "sources": [
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/teardown.sh",
+          "label": "teardown"
+        },
+        {
+          "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/verify_cleanup.sh",
+          "label": "verification"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS ap-northeast-2",
+      "wraps": [
+        "s3",
+        "unified",
+        "training",
+        "qwen",
+        "evaluation",
+        "managedMlflow",
+        "eksJob",
+        "eksMlflow",
+        "inventory"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "generator-s3",
+      "from": "generator",
+      "to": "s3",
+      "label": "JSONL + SHA-256",
+      "labelDy": -32,
+      "variant": "emphasis"
+    },
+    {
+      "id": "unified-s3",
+      "from": "unified",
+      "to": "s3",
+      "label": "project / catalog governance",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "s3-training",
+      "from": "s3",
+      "to": "training",
+      "label": "S3 input channel",
+      "labelDy": -32,
+      "variant": "emphasis"
+    },
+    {
+      "id": "training-qwen",
+      "from": "training",
+      "to": "qwen",
+      "label": "4-bit QLoRA",
+      "labelDy": -32
+    },
+    {
+      "id": "qwen-evaluation",
+      "from": "qwen",
+      "to": "evaluation",
+      "label": "TYPE<TAB>ORIGINAL",
+      "labelDy": -32
+    },
+    {
+      "id": "evaluation-managed",
+      "from": "evaluation",
+      "to": "managedMlflow",
+      "label": "aggregate metrics",
+      "labelDy": -32,
+      "variant": "emphasis"
+    },
+    {
+      "id": "s3-eks",
+      "from": "s3",
+      "to": "eksJob",
+      "label": "presigned source + data",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "eks-mlflow",
+      "from": "eksJob",
+      "to": "eksMlflow",
+      "label": "HTTP tracking",
+      "labelDy": -32
+    },
+    {
+      "id": "managed-inventory",
+      "from": "managedMlflow",
+      "to": "inventory",
+      "label": "export then delete",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "eksmlflow-inventory",
+      "from": "eksMlflow",
+      "to": "inventory",
+      "label": "export then delete cluster",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Validated Scope",
+      "items": [
+        "Synthetic data · tokenization · evaluation · request contracts",
+        "AWS preflight · MLflow App · project creation path"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Target Design",
+      "items": [
+        "SageMaker and EKS GPU training were not executed",
+        "This diagram is a rerun design, not completion evidence"
+      ]
+    }
+  ]
+}
