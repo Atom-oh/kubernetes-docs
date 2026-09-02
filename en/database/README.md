@@ -1,6 +1,6 @@
 # Databases on Kubernetes Overview
 
-> **Last Updated**: September 1, 2026
+> **Last Updated**: September 2, 2026
 
 "Should you run databases on Kubernetes?" is no longer a yes/no question. The real question is **which database, operated by which operator, on top of which storage**. This section covers that decision framework — and backs it with measured data rather than spec sheets.
 

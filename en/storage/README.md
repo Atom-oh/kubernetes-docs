@@ -1,6 +1,6 @@
 # Storage Overview
 
-> **Last Updated**: September 1, 2026
+> **Last Updated**: September 2, 2026
 
 The moment you run stateful workloads on Kubernetes, storage stops being "something you attach" and becomes a domain that dictates performance, cost, and availability. This section covers cloud storage in the order that matters in practice: **how to choose → what it actually measures → how to operate it**.
 

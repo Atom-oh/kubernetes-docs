@@ -116,6 +116,6 @@ A row-oriented database would have to read entire rows for this query; a columna
 **Answer: C) When managed offerings are limited or carry a large cost multiple, and a platform team can own operator-based operations including backup and restore rehearsals**
 
 **Explanation:**
-ClickHouse is one of the most commonly self-hosted databases relative to its managed offering. The precondition is a mature operator (Altinity) and a team to run it. Conversely, with scarce operations staffing or an adequate managed option, managed wins — and operating a raw StatefulSet is not one of the options at all.
+This is the managed-vs-self-hosted framework from the [Database section overview](../../database/README.md), not from the benchmark article itself. ClickHouse is Apache-2.0 with a mature community operator (Altinity), which is what makes self-hosting a realistic option — the precondition is that operator plus a team to run it. Conversely, with scarce operations staffing or an adequate managed option, managed wins — and operating a raw StatefulSet is not one of the options at all.
 
 </details>

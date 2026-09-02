@@ -17,7 +17,7 @@ Every benchmark report says "ClickHouse is fast" — but it's surprisingly hard 
 | Storage size (LZ4 default) | 15.37 GiB → **7.82 GiB (1.97×)** |
 | Storage size (ZSTD(3)) | 15.37 GiB → **4.16 GiB (3.7×)**, 47% smaller than LZ4 |
 | ORDER BY key-range count (1-hour window) | **4 ms** — counts 59,916 rows while reading only 16,385 of 100M |
-| Error top-10 GROUP BY (2-day window) | **0.36 s** (28M rows scanned) |
+| ERROR count per pod GROUP BY (2-day window) | **0.36 s** (28M rows scanned) |
 | `LIKE '%timeout%'` full scan | warm cache **2.63 s** / direct-to-disk **31.5 s** (12×) |
 | trace_id point lookup | full scan 1.13 s → **0.036 s with a bloom filter index (31×)** |
 
@@ -159,7 +159,7 @@ Sizes and ratios are exactly as `system.parts_columns` reported them (`formatRea
 Two lessons jump out:
 
 1. **LowCardinality plus ORDER BY locality is enormous** — namespace is the first ORDER BY key, so identical values run in long streaks: 95.7 MiB collapses to 489 KiB. pod compresses 236× for the same reason, with a caveat: this generator emits exactly one pod name per namespace (10 distinct values), so pod behaves like a second copy of namespace. A real cluster, with tens of pods per namespace and new names on every restart, will compress pod noticeably less.
-2. **High-entropy IDs eat 40% of your storage** — the 32-char hex trace_id doesn't compress at all (1.0×) and accounts for 3.08 GiB of the 7.82 GiB total (39%). When you design a log schema, "do we store IDs as strings" is the single biggest storage-cost lever. (A UUID type or FixedString(16) binary encoding halves it.)
+2. **High-entropy IDs eat ~40% of your storage** — the 32-char hex trace_id doesn't compress at all (1.0×) and accounts for 3.08 GiB of the 7.82 GiB total (39.4%). When you design a log schema, "do we store IDs as strings" is the single biggest storage-cost lever. (A UUID type or FixedString(16) binary encoding halves it.)
 
 ### LZ4 vs ZSTD(3) — 47% storage vs 1.9× scans
 
@@ -180,7 +180,7 @@ Each query ran after dropping the mark/uncompressed caches: ① once with `min_b
 | # | Query pattern | Direct-to-disk | Warm | Rows read (`read_rows`) |
 |---|--------------|----------------|------|-----------|
 | Q1 | `WHERE namespace='payment' AND timestamp BETWEEN …` (1-hour count) | 13 ms | **4 ms** | 16,385 (0.016%) — result 59,916 |
-| Q2 | ERROR top-10 pods, 2-day GROUP BY | 0.57 s | **0.36 s** | 28M |
+| Q2 | ERROR count per pod, 2-day GROUP BY (the `LIMIT 10` is trivial here — the dataset has only 10 pods) | 0.57 s | **0.36 s** | 28M |
 | Q3 | `message LIKE '%timeout%'` whole-range full scan | **31.5 s** | 2.63 s | 100M |
 | Q4 | duration p50/p99 per namespace, whole range | 1.34 s | **1.03 s** | 100M (no filter) |
 | Q5 | `trace_id = '…'` point lookup (no index) | 24.3 s | 1.13 s | 100M |
