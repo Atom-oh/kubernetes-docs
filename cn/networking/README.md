@@ -4,61 +4,23 @@
 
 ## 概述
 
-Kubernetes 网络是支持容器化应用程序之间通信的核心基础设施层。本节涵盖从基本 Kubernetes 网络概念到高级 CNI（Container Network Interface）解决方案，以及 AWS EKS 环境中的网络模式等所有内容。
+Kubernetes 网络是使容器化应用程序能够通信的核心基础设施层。本节涵盖从基本 Kubernetes 网络概念，到高级 CNI（Container Network Interface）解决方案以及 AWS EKS 环境中的网络模式等全部内容。
 
 ## Kubernetes 网络模型
 
-Kubernetes 基于以下网络要求进行设计：
+Kubernetes 基于以下网络要求设计：
 
-1. **每个 Pod 都可以无需 NAT 与其他任何 Pod 通信**
-2. **每个 Node 都可以无需 NAT 与每个 Pod 通信**
-3. **Pod 看到的自身 IP 与其他对象看到的该 Pod IP 相同**
+1. **每个 Pod 都可以在不使用 NAT 的情况下与其他任意 Pod 通信**
+2. **每个 Node 都可以在不使用 NAT 的情况下与每个 Pod 通信**
+3. **Pod 所认为的自身 IP 与其他对象所看到的 IP 相同**
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Networking Layers"
-        L1[Pod Networking<br/>Pod-to-Pod Communication]
-        L2[Service Networking<br/>Service Discovery & Load Balancing]
-        L3[Ingress Networking<br/>External Traffic Routing]
-        L4[Network Policy<br/>Network Security]
-    end
-
-    L1 --> L2
-    L2 --> L3
-    L3 --> L4
-
-    style L1 fill:#e1f5fe
-    style L2 fill:#b3e5fc
-    style L3 fill:#81d4fa
-    style L4 fill:#4fc3f7
-```
+![四个堆叠层展示 Kubernetes 网络如何从 Pod 到 Pod 连接逐步构建，涵盖 Service 发现、Ingress 路由和 Network Policy 执行。](../.gitbook/assets/en-networking-README-0.png)
 
 ### Pod 网络
 
-Pod 网络是 Kubernetes 网络中最基础的层。每个 Pod 都拥有唯一的 IP 地址，并且可以直接与集群中的所有其他 Pod 通信。
+Pod 网络是 Kubernetes 网络最基础的层。每个 Pod 都有唯一的 IP 地址，并且可以直接与集群中的所有其他 Pod 通信。
 
-```mermaid
-graph LR
-    subgraph "Node 1"
-        P1[Pod A<br/>10.244.1.10]
-        P2[Pod B<br/>10.244.1.11]
-    end
-
-    subgraph "Node 2"
-        P3[Pod C<br/>10.244.2.10]
-        P4[Pod D<br/>10.244.2.11]
-    end
-
-    P1 <--> P3
-    P2 <--> P4
-    P1 <--> P2
-    P3 <--> P4
-
-    style P1 fill:#c8e6c9
-    style P2 fill:#c8e6c9
-    style P3 fill:#fff9c4
-    style P4 fill:#fff9c4
-```
+![分布在两个 worker node 上的四个 Pod 均拥有唯一的集群 IP，并且能够直接访问其他任意 Pod，无论其位于同一 Node 还是不同 Node。](../.gitbook/assets/en-networking-README-1.png)
 
 #### Pod 网络实现方式
 
@@ -72,27 +34,9 @@ graph LR
 
 Service 为一组 Pod 提供稳定的网络端点。
 
-```mermaid
-graph TB
-    subgraph "Service Types"
-        CT[ClusterIP<br/>Internal Cluster Only]
-        NP[NodePort<br/>External via Node Port]
-        LB[LoadBalancer<br/>External Load Balancer Integration]
-        EI[ExternalName<br/>External DNS Mapping]
-    end
+![客户端、外部和集群内流量分别通过不同的 Service 类型到达 Pod：ClusterIP 用于仅限内部的调用，NodePort 和 LoadBalancer 用于外部入口，ExternalName 用于映射至外部系统的 DNS。](../.gitbook/assets/en-networking-README-2.png)
 
-    Client[Client] --> CT
-    External[External Traffic] --> NP
-    External --> LB
-    App[Application] --> EI
-
-    style CT fill:#e8eaf6
-    style NP fill:#c5cae9
-    style LB fill:#9fa8da
-    style EI fill:#7986cb
-```
-
-#### Service 类型特性
+#### Service 类型特征
 
 ```yaml
 # ClusterIP Service Example
@@ -146,26 +90,7 @@ spec:
 
 Ingress 定义将 HTTP/HTTPS 流量路由到集群内部 Service 的规则。
 
-```mermaid
-graph LR
-    Internet[Internet] --> IC[Ingress Controller]
-
-    subgraph "Cluster"
-        IC --> S1[Service A]
-        IC --> S2[Service B]
-        IC --> S3[Service C]
-
-        S1 --> P1[Pod A1]
-        S1 --> P2[Pod A2]
-        S2 --> P3[Pod B1]
-        S3 --> P4[Pod C1]
-    end
-
-    style IC fill:#ffcc80
-    style S1 fill:#a5d6a7
-    style S2 fill:#a5d6a7
-    style S3 fill:#a5d6a7
-```
+![一个 Ingress Controller 接收所有互联网流量，并根据主机和路径规则将其分发到三个 Service；每个 Service 都将负载均衡到其后端 Pod。](../.gitbook/assets/en-networking-README-3.png)
 
 ```yaml
 # Ingress Example
@@ -209,50 +134,15 @@ spec:
 
 ## CNI（Container Network Interface）
 
-CNI 是用于容器网络连接的标准接口。Kubernetes 通过 CNI 插件实现 Pod 网络。
+CNI 是容器网络连接的标准接口。Kubernetes 通过 CNI 插件实现 Pod 网络。
 
 ### CNI 的工作原理
 
-```mermaid
-sequenceDiagram
-    participant Kubelet
-    participant CNI Plugin
-    participant Network
-
-    Kubelet->>CNI Plugin: ADD call (on container creation)
-    CNI Plugin->>Network: Create network interface
-    CNI Plugin->>Network: Assign IP address
-    CNI Plugin->>Network: Configure routing rules
-    CNI Plugin-->>Kubelet: Return IP address
-
-    Note over Kubelet,Network: Pod running...
-
-    Kubelet->>CNI Plugin: DEL call (on container deletion)
-    CNI Plugin->>Network: Clean up network resources
-    CNI Plugin-->>Kubelet: Complete
-```
+![kubelet 在创建 Pod 时调用 CNI 插件的 ADD hook，该 hook 配置网络并返回 Pod 的 IP；在删除 Pod 时调用 DEL 以清理网络。](../.gitbook/assets/en-networking-README-4.png)
 
 ### CNI 插件组件
 
-```mermaid
-graph TB
-    subgraph "CNI Plugin Architecture"
-        Agent[CNI Agent/Daemon<br/>Runs on each node]
-        Binary[CNI Binary<br/>/opt/cni/bin/]
-        Config[CNI Config<br/>/etc/cni/net.d/]
-        IPAM[IPAM Plugin<br/>IP Address Management]
-    end
-
-    Kubelet[Kubelet] --> Binary
-    Binary --> Config
-    Binary --> IPAM
-    Agent --> Binary
-
-    style Agent fill:#bbdefb
-    style Binary fill:#90caf9
-    style Config fill:#64b5f6
-    style IPAM fill:#42a5f5
-```
+![kubelet 调用 Node 本地的 CNI binary，CNI agent 也会驱动该 binary；该 binary 随后读取其 config file，并调用 IPAM plugin 来分配 Pod IP。](../.gitbook/assets/en-networking-README-5.png)
 
 ## CNI 对比矩阵
 
@@ -268,15 +158,15 @@ graph TB
 | **BGP 支持** | 是 | 是 | 否 | 否 | 否 |
 | **多集群** | ClusterMesh | Federation | 否 | 否 | 是 |
 | **Windows 支持** | Beta | 是 | 是 | 是 | 是 |
-| **性能** | 优秀 | 非常好 | 良好 | 优秀 | 良好 |
-| **复杂度** | 中等偏高 | 中等 | 低 | 低 | 低 |
-| **社区** | 活跃 | 非常活跃 | 活跃 | AWS 支持 | 一般 |
+| **性能** | 优秀 | 很好 | 良好 | 优秀 | 良好 |
+| **复杂度** | 中高 | 中等 | 低 | 低 | 低 |
+| **社区** | 活跃 | 非常活跃 | 活跃 | AWS 支持 | 中等 |
 
 ### 详细功能对比
 
 #### 网络模式
 
-| CNI | Overlay | 原生路由 | BGP | 直接路由 |
+| CNI | Overlay | Native Routing | BGP | Direct Routing |
 |-----|---------|----------------|-----|----------------|
 | **Cilium** | VXLAN, Geneve | 是 | 是 | 是 |
 | **Calico** | VXLAN, IPIP | 是 | 是 | 是 |
@@ -294,67 +184,18 @@ graph TB
 | **基于 DNS 的 Policy** | 是 | 是 | 否 |
 | **FQDN Policy** | 是 | 是 | 否 |
 | **Host Policy** | 是 | 是 | 否 |
-| **全局 Policy** | 是 | 是 | 否 |
-| **Policy 层级** | 是 | 是 | 否 |
+| **Global Policy** | 是 | 是 | 否 |
+| **Policy Tiers** | 是 | 是 | 否 |
 
-#### 性能基准测试（相对比较）
+#### 性能基准测试（相对对比）
 
-```mermaid
-graph LR
-    subgraph "Throughput"
-        C1[Cilium eBPF: 100%]
-        C2[AWS VPC CNI: 98%]
-        C3[Calico eBPF: 95%]
-        C4[Calico iptables: 85%]
-        C5[Flannel: 80%]
-        C6[Weave: 75%]
-    end
+![柱状图按相对吞吐量对六种 CNI 网络模式组合进行排名，Cilium 的 eBPF 模式为 100% 基准，Weave 最慢，为 75%。](../.gitbook/assets/en-networking-README-6.png)
 
-    style C1 fill:#4caf50
-    style C2 fill:#66bb6a
-    style C3 fill:#81c784
-    style C4 fill:#a5d6a7
-    style C5 fill:#c8e6c9
-    style C6 fill:#e8f5e9
-```
-
-## CNI 选型指南
+## CNI 选择指南
 
 ### 决策流程图
 
-```mermaid
-graph TD
-    Start[Start CNI Selection] --> Q1{Using<br/>AWS EKS?}
-
-    Q1 -->|Yes| Q2{Need Advanced<br/>Network Policy?}
-    Q1 -->|No| Q3{Environment<br/>Complexity?}
-
-    Q2 -->|Yes| Q4{Need L7<br/>Policy?}
-    Q2 -->|No| VPCCNI[AWS VPC CNI<br/>Recommended]
-
-    Q4 -->|Yes| CILIUM[Cilium + VPC CNI<br/>Recommended]
-    Q4 -->|No| CALICO_EKS[Calico + VPC CNI<br/>Recommended]
-
-    Q3 -->|Simple| Q5{Multi-cloud?}
-    Q3 -->|Complex| Q6{Need BGP?}
-
-    Q5 -->|Yes| CALICO[Calico Recommended]
-    Q5 -->|No| FLANNEL[Flannel Recommended]
-
-    Q6 -->|Yes| Q7{Need Built-in<br/>Service Mesh?}
-    Q6 -->|No| CALICO
-
-    Q7 -->|Yes| CILIUM2[Cilium Recommended]
-    Q7 -->|No| CALICO2[Calico Recommended]
-
-    style CILIUM fill:#4fc3f7
-    style CILIUM2 fill:#4fc3f7
-    style CALICO fill:#81c784
-    style CALICO_EKS fill:#81c784
-    style CALICO2 fill:#81c784
-    style VPCCNI fill:#ffb74d
-    style FLANNEL fill:#ce93d8
-```
+![用于选择 Kubernetes CNI 的决策树：EKS 用户按 Network Policy 深度选择，非 EKS 用户则按环境复杂度、多云需求及 BGP/Service Mesh 要求选择，最终选择 AWS VPC CNI、Calico、Cilium 或 Flannel。](../.gitbook/assets/en-networking-README-7.png)
 
 ### 按使用场景推荐 CNI
 
@@ -385,110 +226,45 @@ addons:
 **推荐：Cilium**
 
 - 支持 L7 Network Policy
-- 基于 DNS 的 Policy
-- 进程/文件级安全 Policy
+- 基于 DNS 的 policy
+- 进程/文件级安全 policy
 - 加密通信（WireGuard）
 
-#### 3. 本地部署/裸机环境
+#### 3. 本地部署/Bare-metal 环境
 
 **推荐：Calico（BGP 模式）**
 
 - 与现有网络基础设施集成
-- 与 ToR 交换机进行 BGP 对等连接
+- 与 ToR switch 进行 BGP peering
 - 高性能（无 overlay）
 
 #### 4. 开发/测试环境
 
 **推荐：Flannel**
 
-- 简单的安装和配置
+- 安装和配置简单
 - 资源使用量低
-- 基础功能足够
+- 基础功能充足
 
 #### 5. Service Mesh 集成环境
 
 **推荐：Cilium（无 Sidecar Service Mesh）**
 
-- 可替代 Istio/Envoy
+- 可以替代 Istio/Envoy
 - mTLS、流量管理
-- 开销低
+- 低开销
 
 ## EKS 网络基础
 
 ### EKS 默认网络架构
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud"
-        subgraph "VPC"
-            subgraph "Availability Zone A"
-                PubA[Public Subnet]
-                PrivA[Private Subnet]
-            end
-            subgraph "Availability Zone B"
-                PubB[Public Subnet]
-                PrivB[Private Subnet]
-            end
-
-            IGW[Internet Gateway]
-            NAT[NAT Gateway]
-
-            subgraph "EKS Cluster"
-                CP[Control Plane<br/>AWS Managed]
-
-                subgraph "Node Group"
-                    N1[Worker Node 1]
-                    N2[Worker Node 2]
-                end
-            end
-        end
-
-        ALB[Application<br/>Load Balancer]
-        NLB[Network<br/>Load Balancer]
-    end
-
-    Internet[Internet] --> IGW
-    IGW --> ALB
-    ALB --> N1
-    ALB --> N2
-    Internet --> NLB
-    NLB --> N1
-
-    style CP fill:#ff9800
-    style N1 fill:#4caf50
-    style N2 fill:#4caf50
-    style ALB fill:#2196f3
-    style NLB fill:#9c27b0
-```
+![互联网流量通过 Internet Gateway 和 Application Load Balancer 到达 EKS worker node，或直接通过 Network Load Balancer 到达；AWS 托管的 control plane 位于 VPC 内并与 node group 相邻。](../.gitbook/assets/en-networking-README-8.png)
 
 ### VPC CNI 的工作原理
 
 AWS VPC CNI 为每个 Pod 分配实际的 VPC IP 地址。
 
-```mermaid
-graph TB
-    subgraph "EC2 Instance (Worker Node)"
-        ENI1[Primary ENI<br/>eth0]
-        ENI2[Secondary ENI<br/>eth1]
-        ENI3[Secondary ENI<br/>eth2]
-
-        subgraph "Pods"
-            P1[Pod 1<br/>Secondary IP]
-            P2[Pod 2<br/>Secondary IP]
-            P3[Pod 3<br/>Secondary IP]
-            P4[Pod 4<br/>Secondary IP]
-        end
-    end
-
-    ENI1 --> P1
-    ENI1 --> P2
-    ENI2 --> P3
-    ENI2 --> P4
-
-    style ENI1 fill:#bbdefb
-    style ENI2 fill:#bbdefb
-    style ENI3 fill:#bbdefb
-```
+![在一个 worker node 内，AWS VPC CNI 从每个已连接的 elastic network interface 中分配 secondary IP address 给调度到该 Node 的 Pod，并预留一个 ENI 作为备用。](../.gitbook/assets/en-networking-README-9.png)
 
 #### ENI 和 IP 限制
 
@@ -553,22 +329,22 @@ spec:
 基于 eBPF 的高性能 CNI 解决方案。提供 L7 Network Policy、Service Mesh 和可观测性（Hubble）等高级功能。
 
 ### [Calico 深入解析](calico/README.md)
-最广泛使用的 CNI 之一。具备强大的 Network Policy、BGP 支持和企业级功能。涵盖介绍、架构、网络模式、BGP 深入解析、Network Policy、eBPF、高级主题、EKS 集成和运维指南。
+最广泛使用的 CNI 之一。提供强大的 Network Policy、BGP 支持和企业级功能。涵盖简介、架构、网络模式、BGP 深入解析、Network Policy、eBPF、高级主题、EKS 集成和运维指南。
 
 ### [VPC Lattice](02-vpc-lattice.md)
-AWS 托管的应用程序网络服务。支持跨 VPC、跨账户的服务间通信。
+AWS 托管的应用网络服务。支持跨 VPC、跨账户的 Service 间通信。
 
 ### [AWS Load Balancer Controller](03-aws-lb-controller.md)
 将 Kubernetes Service 和 Ingress 与 AWS ELB（ALB/NLB）集成。
 
 ### [Gateway API](04-gateway-api.md)
-下一代 Kubernetes ingress API。标准化的资源模型和基于角色的配置。
+下一代 Kubernetes Ingress API。标准化资源模型和基于角色的配置。
 
 ## 网络故障排除
 
-### 常见问题和解决方案
+### 常见问题及解决方案
 
-#### Pod 间通信失败
+#### Pod 到 Pod 通信失败
 
 ```bash
 # 1. Check Pod IPs
@@ -655,7 +431,7 @@ kubectl exec -it iperf-client -- iperf3 -c <iperf-server-ip> -t 30
 
 ### 2. 应用 Network Policy
 
-- 应用默认拒绝 Policy（Zero Trust）
+- 应用默认拒绝 policy（Zero Trust）
 - 仅显式允许必需的流量
 - 隔离 namespace
 
@@ -675,9 +451,9 @@ spec:
 
 ### 3. 性能优化
 
-- 选择合适的 CNI（与工作负载匹配）
+- 选择适当的 CNI（与工作负载匹配）
 - MTU 优化
-- 内核参数调优
+- Kernel 参数调优
 
 ### 4. 安全加固
 
@@ -688,7 +464,7 @@ spec:
 ### 5. 确保可观测性
 
 - 收集网络指标
-- 启用流日志
+- 启用 flow log
 - 实施分布式追踪
 
 ## 后续步骤
@@ -698,7 +474,8 @@ spec:
 3. [Calico 深入解析](calico/README.md) - 企业级 CNI
 4. [VPC Lattice](02-vpc-lattice.md) - AWS 托管网络
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 集成
-6. [Gateway API](04-gateway-api.md) - 下一代 ingress
+6. [Gateway API](04-gateway-api.md) - 下一代 Ingress
+7. [跨组织 VPC 连接](05-cross-org-vpc-connectivity.md) - 跨 AWS Organizations 连接 VPC（已现场验证）
 
 ---
 

@@ -4,93 +4,37 @@
 
 ## 概要
 
-Kubernetes ネットワーキングは、コンテナ化されたアプリケーション間の通信を可能にする中核的なインフラストラクチャ層です。このセクションでは、基本的な Kubernetes ネットワーキングの概念から、高度な CNI (Container Network Interface) ソリューション、AWS EKS 環境でのネットワーキングパターンまでを扱います。
+Kubernetes ネットワーキングは、コンテナ化されたアプリケーション間の通信を可能にする中核的なインフラストラクチャ層です。このセクションでは、基本的な Kubernetes ネットワーキングの概念から、高度な CNI (Container Network Interface) ソリューション、AWS EKS 環境におけるネットワーキングパターンまでを扱います。
 
 ## Kubernetes ネットワーキングモデル
 
-Kubernetes は、次のネットワーク要件に基づいて設計されています。
+Kubernetes は、以下のネットワーキング要件に基づいて設計されています。
 
 1. **すべての Pod は NAT なしで他のすべての Pod と通信できる**
 2. **すべての Node は NAT なしで各 Pod と通信できる**
-3. **Pod 自身が認識する IP と、他者から認識される IP は同じである**
+3. **Pod 自身が認識する IP は、他者から認識される IP と同じである**
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Networking Layers"
-        L1[Pod Networking<br/>Pod-to-Pod Communication]
-        L2[Service Networking<br/>Service Discovery & Load Balancing]
-        L3[Ingress Networking<br/>External Traffic Routing]
-        L4[Network Policy<br/>Network Security]
-    end
-
-    L1 --> L2
-    L2 --> L3
-    L3 --> L4
-
-    style L1 fill:#e1f5fe
-    style L2 fill:#b3e5fc
-    style L3 fill:#81d4fa
-    style L4 fill:#4fc3f7
-```
+![4つの積み重ねられたレイヤーは、Pod 間接続、Service ディスカバリ、Ingress ルーティング、Network Policy 適用を通じて Kubernetes ネットワーキングがどのように構築されるかを示しています。](../.gitbook/assets/en-networking-README-0.png)
 
 ### Pod ネットワーキング
 
-Pod ネットワーキングは Kubernetes ネットワーキングの最も基本的な層です。各 Pod には一意の IP アドレスがあり、クラスター内の他のすべての Pod と直接通信できます。
+Pod ネットワーキングは Kubernetes ネットワーキングの最も基本的なレイヤーです。各 Pod には一意の IP アドレスがあり、クラスター内の他のすべての Pod と直接通信できます。
 
-```mermaid
-graph LR
-    subgraph "Node 1"
-        P1[Pod A<br/>10.244.1.10]
-        P2[Pod B<br/>10.244.1.11]
-    end
+![2つの worker node に配置された4つの Pod はそれぞれ一意のクラスター IP を持ち、同じ Node 上か別の Node 上かにかかわらず、他のすべての Pod に直接到達できます。](../.gitbook/assets/en-networking-README-1.png)
 
-    subgraph "Node 2"
-        P3[Pod C<br/>10.244.2.10]
-        P4[Pod D<br/>10.244.2.11]
-    end
+#### Pod ネットワーキングの実装方法
 
-    P1 <--> P3
-    P2 <--> P4
-    P1 <--> P2
-    P3 <--> P4
-
-    style P1 fill:#c8e6c9
-    style P2 fill:#c8e6c9
-    style P3 fill:#fff9c4
-    style P4 fill:#fff9c4
-```
-
-#### Pod ネットワーキングの実装方式
-
-| 方式 | 説明 | CNI の例 |
+| 方法 | 説明 | CNI の例 |
 |--------|-------------|-------------|
-| **オーバーレイネットワーク** | 既存ネットワーク上に構築される仮想ネットワーク | Flannel (VXLAN), Calico (IPIP), Weave Net |
-| **アンダーレイネットワーク** | 物理ネットワーク上での直接ルーティング | AWS VPC CNI, Calico (BGP), Cilium (Native Routing) |
-| **ハイブリッド** | 環境に応じてオーバーレイ/アンダーレイを選択 | Cilium, Calico |
+| **Overlay Network** | 既存ネットワーク上に構築される仮想ネットワーク | Flannel (VXLAN), Calico (IPIP), Weave Net |
+| **Underlay Network** | 物理ネットワーク上での直接ルーティング | AWS VPC CNI, Calico (BGP), Cilium (Native Routing) |
+| **Hybrid** | 環境に応じて overlay/underlay を選択 | Cilium, Calico |
 
 ### Service ネットワーキング
 
-Service は、Pod のセットに対して安定したネットワークエンドポイントを提供します。
+Service は、Pod のセットに安定したネットワークエンドポイントを提供します。
 
-```mermaid
-graph TB
-    subgraph "Service Types"
-        CT[ClusterIP<br/>Internal Cluster Only]
-        NP[NodePort<br/>External via Node Port]
-        LB[LoadBalancer<br/>External Load Balancer Integration]
-        EI[ExternalName<br/>External DNS Mapping]
-    end
-
-    Client[Client] --> CT
-    External[External Traffic] --> NP
-    External --> LB
-    App[Application] --> EI
-
-    style CT fill:#e8eaf6
-    style NP fill:#c5cae9
-    style LB fill:#9fa8da
-    style EI fill:#7986cb
-```
+![クライアント、外部、およびクラスター内トラフィックは、それぞれ異なる Service タイプを介して Pod に到達します。ClusterIP は内部専用の呼び出し、NodePort と LoadBalancer は外部からの入口、ExternalName は外部システムへの DNS マッピングを提供します。](../.gitbook/assets/en-networking-README-2.png)
 
 #### Service タイプの特性
 
@@ -144,28 +88,9 @@ spec:
 
 ### Ingress ネットワーキング
 
-Ingress は、HTTP/HTTPS トラフィックをクラスター内部の Service にルーティングするルールを定義します。
+Ingress は、HTTP/HTTPS トラフィックを内部クラスター Service にルーティングするためのルールを定義します。
 
-```mermaid
-graph LR
-    Internet[Internet] --> IC[Ingress Controller]
-
-    subgraph "Cluster"
-        IC --> S1[Service A]
-        IC --> S2[Service B]
-        IC --> S3[Service C]
-
-        S1 --> P1[Pod A1]
-        S1 --> P2[Pod A2]
-        S2 --> P3[Pod B1]
-        S3 --> P4[Pod C1]
-    end
-
-    style IC fill:#ffcc80
-    style S1 fill:#a5d6a7
-    style S2 fill:#a5d6a7
-    style S3 fill:#a5d6a7
-```
+![Ingress Controller はすべてのインターネットトラフィックを受信し、host と path のルールに基づいて3つの Service に振り分けます。各 Service はバックエンドの Pod にロードバランシングします。](../.gitbook/assets/en-networking-README-3.png)
 
 ```yaml
 # Ingress Example
@@ -209,65 +134,30 @@ spec:
 
 ## CNI (Container Network Interface)
 
-CNI は、コンテナネットワーク接続のための標準インターフェースです。Kubernetes は CNI プラグインを通じて Pod ネットワーキングを実装します。
+CNI はコンテナネットワーク接続のための標準インターフェイスです。Kubernetes は CNI プラグインを通じて Pod ネットワーキングを実装します。
 
 ### CNI の仕組み
 
-```mermaid
-sequenceDiagram
-    participant Kubelet
-    participant CNI Plugin
-    participant Network
-
-    Kubelet->>CNI Plugin: ADD call (on container creation)
-    CNI Plugin->>Network: Create network interface
-    CNI Plugin->>Network: Assign IP address
-    CNI Plugin->>Network: Configure routing rules
-    CNI Plugin-->>Kubelet: Return IP address
-
-    Note over Kubelet,Network: Pod running...
-
-    Kubelet->>CNI Plugin: DEL call (on container deletion)
-    CNI Plugin->>Network: Clean up network resources
-    CNI Plugin-->>Kubelet: Complete
-```
+![kubelet は Pod 作成時に CNI プラグインの ADD フックを呼び出し、プラグインがネットワークを設定して Pod の IP を返します。Pod 削除時には DEL を呼び出してネットワークをクリーンアップします。](../.gitbook/assets/en-networking-README-4.png)
 
 ### CNI プラグインのコンポーネント
 
-```mermaid
-graph TB
-    subgraph "CNI Plugin Architecture"
-        Agent[CNI Agent/Daemon<br/>Runs on each node]
-        Binary[CNI Binary<br/>/opt/cni/bin/]
-        Config[CNI Config<br/>/etc/cni/net.d/]
-        IPAM[IPAM Plugin<br/>IP Address Management]
-    end
+![kubelet は Node ローカルの CNI バイナリを呼び出し、CNI agent もこれを操作します。バイナリは設定ファイルを読み取り、IPAM プラグインを呼び出して Pod IP を割り当てます。](../.gitbook/assets/en-networking-README-5.png)
 
-    Kubelet[Kubelet] --> Binary
-    Binary --> Config
-    Binary --> IPAM
-    Agent --> Binary
-
-    style Agent fill:#bbdefb
-    style Binary fill:#90caf9
-    style Config fill:#64b5f6
-    style IPAM fill:#42a5f5
-```
-
-## CNI 比較マトリクス
+## CNI 比較マトリックス
 
 ### 主な CNI ソリューションの比較
 
 | 機能 | Cilium | Calico | Flannel | AWS VPC CNI | Weave Net |
 |---------|--------|--------|---------|-------------|-----------|
-| **中核技術** | eBPF | iptables/eBPF | VXLAN/host-gw | AWS ENI | VXLAN |
+| **コアテクノロジー** | eBPF | iptables/eBPF | VXLAN/host-gw | AWS ENI | VXLAN |
 | **Network Policy** | 高度 (L3-L7) | 高度 (L3-L4) | なし | 基本 (L3-L4) | 基本 |
 | **暗号化** | WireGuard/IPsec | WireGuard/IPsec | なし | なし | 組み込み |
 | **Service Mesh** | 組み込み | なし | なし | なし | なし |
 | **可観測性** | Hubble | 限定的 | なし | なし | なし |
-| **BGP サポート** | はい | はい | いいえ | いいえ | いいえ |
-| **マルチクラスター** | ClusterMesh | Federation | いいえ | いいえ | はい |
-| **Windows サポート** | ベータ | はい | はい | はい | はい |
+| **BGP サポート** | あり | あり | なし | なし | なし |
+| **マルチクラスター** | ClusterMesh | Federation | なし | なし | あり |
+| **Windows サポート** | Beta | あり | あり | あり | あり |
 | **パフォーマンス** | 優秀 | 非常に良い | 良い | 優秀 | 良い |
 | **複雑さ** | 中～高 | 中 | 低 | 低 | 低 |
 | **コミュニティ** | 活発 | 非常に活発 | 活発 | AWS サポート | 中程度 |
@@ -276,85 +166,36 @@ graph TB
 
 #### ネットワーキングモード
 
-| CNI | オーバーレイ | ネイティブルーティング | BGP | 直接ルーティング |
+| CNI | Overlay | Native Routing | BGP | Direct Routing |
 |-----|---------|----------------|-----|----------------|
-| **Cilium** | VXLAN, Geneve | はい | はい | はい |
-| **Calico** | VXLAN, IPIP | はい | はい | はい |
-| **Flannel** | VXLAN | host-gw | いいえ | いいえ |
-| **AWS VPC CNI** | いいえ | VPC ネイティブ | いいえ | はい |
-| **Weave Net** | VXLAN | いいえ | いいえ | いいえ |
+| **Cilium** | VXLAN, Geneve | あり | あり | あり |
+| **Calico** | VXLAN, IPIP | あり | あり | あり |
+| **Flannel** | VXLAN | host-gw | なし | なし |
+| **AWS VPC CNI** | なし | VPC Native | なし | あり |
+| **Weave Net** | VXLAN | なし | なし | なし |
 
 #### Network Policy 機能
 
 | 機能 | Cilium | Calico | AWS VPC CNI |
 |---------|--------|--------|-------------|
-| **Ingress Policy** | はい | はい | はい |
-| **Egress Policy** | はい | はい | はい |
-| **L7 Policy (HTTP)** | はい | いいえ | いいえ |
-| **DNS ベースの Policy** | はい | はい | いいえ |
-| **FQDN Policy** | はい | はい | いいえ |
-| **Host Policy** | はい | はい | いいえ |
-| **Global Policy** | はい | はい | いいえ |
-| **Policy Tiers** | はい | はい | いいえ |
+| **Ingress Policy** | あり | あり | あり |
+| **Egress Policy** | あり | あり | あり |
+| **L7 Policy (HTTP)** | あり | なし | なし |
+| **DNS ベース Policy** | あり | あり | なし |
+| **FQDN Policy** | あり | あり | なし |
+| **Host Policy** | あり | あり | なし |
+| **Global Policy** | あり | あり | なし |
+| **Policy Tiers** | あり | あり | なし |
 
 #### パフォーマンスベンチマーク（相対比較）
 
-```mermaid
-graph LR
-    subgraph "Throughput"
-        C1[Cilium eBPF: 100%]
-        C2[AWS VPC CNI: 98%]
-        C3[Calico eBPF: 95%]
-        C4[Calico iptables: 85%]
-        C5[Flannel: 80%]
-        C6[Weave: 75%]
-    end
+![棒グラフは、6つの CNI ネットワークモードの組み合わせを相対スループットで順位付けし、Cilium の eBPF モードを100%のベースライン、Weave を最も低い75%として示しています。](../.gitbook/assets/en-networking-README-6.png)
 
-    style C1 fill:#4caf50
-    style C2 fill:#66bb6a
-    style C3 fill:#81c784
-    style C4 fill:#a5d6a7
-    style C5 fill:#c8e6c9
-    style C6 fill:#e8f5e9
-```
+## CNI 選択ガイド
 
-## CNI 選定ガイド
+### 決定フローチャート
 
-### 判断フローチャート
-
-```mermaid
-graph TD
-    Start[Start CNI Selection] --> Q1{Using<br/>AWS EKS?}
-
-    Q1 -->|Yes| Q2{Need Advanced<br/>Network Policy?}
-    Q1 -->|No| Q3{Environment<br/>Complexity?}
-
-    Q2 -->|Yes| Q4{Need L7<br/>Policy?}
-    Q2 -->|No| VPCCNI[AWS VPC CNI<br/>Recommended]
-
-    Q4 -->|Yes| CILIUM[Cilium + VPC CNI<br/>Recommended]
-    Q4 -->|No| CALICO_EKS[Calico + VPC CNI<br/>Recommended]
-
-    Q3 -->|Simple| Q5{Multi-cloud?}
-    Q3 -->|Complex| Q6{Need BGP?}
-
-    Q5 -->|Yes| CALICO[Calico Recommended]
-    Q5 -->|No| FLANNEL[Flannel Recommended]
-
-    Q6 -->|Yes| Q7{Need Built-in<br/>Service Mesh?}
-    Q6 -->|No| CALICO
-
-    Q7 -->|Yes| CILIUM2[Cilium Recommended]
-    Q7 -->|No| CALICO2[Calico Recommended]
-
-    style CILIUM fill:#4fc3f7
-    style CILIUM2 fill:#4fc3f7
-    style CALICO fill:#81c784
-    style CALICO_EKS fill:#81c784
-    style CALICO2 fill:#81c784
-    style VPCCNI fill:#ffb74d
-    style FLANNEL fill:#ce93d8
-```
+![Kubernetes CNI を選択するための決定木です。EKS ユーザーは Network Policy の深さで選び、非 EKS ユーザーは環境の複雑さ、マルチクラウドの必要性、BGP/Service Mesh の要件で選択し、AWS VPC CNI、Calico、Cilium、または Flannel にたどり着きます。](../.gitbook/assets/en-networking-README-7.png)
 
 ### ユースケース別の推奨 CNI
 
@@ -394,8 +235,8 @@ addons:
 **推奨: Calico (BGP モード)**
 
 - 既存ネットワークインフラストラクチャとの統合
-- ToR スイッチとの BGP ピアリング
-- 高パフォーマンス（オーバーレイなし）
+- ToR switch との BGP ピアリング
+- 高パフォーマンス（overlay なし）
 
 #### 4. 開発/テスト環境
 
@@ -403,11 +244,11 @@ addons:
 
 - シンプルなインストールと設定
 - 低いリソース使用量
-- 基本機能として十分
+- 十分な基本機能
 
 #### 5. Service Mesh 統合環境
 
-**推奨: Cilium (Sidecar なしの Service Mesh)**
+**推奨: Cilium (Sidecar-less Service Mesh)**
 
 - Istio/Envoy を置き換え可能
 - mTLS、トラフィック管理
@@ -417,82 +258,17 @@ addons:
 
 ### EKS のデフォルトネットワーキングアーキテクチャ
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud"
-        subgraph "VPC"
-            subgraph "Availability Zone A"
-                PubA[Public Subnet]
-                PrivA[Private Subnet]
-            end
-            subgraph "Availability Zone B"
-                PubB[Public Subnet]
-                PrivB[Private Subnet]
-            end
-
-            IGW[Internet Gateway]
-            NAT[NAT Gateway]
-
-            subgraph "EKS Cluster"
-                CP[Control Plane<br/>AWS Managed]
-
-                subgraph "Node Group"
-                    N1[Worker Node 1]
-                    N2[Worker Node 2]
-                end
-            end
-        end
-
-        ALB[Application<br/>Load Balancer]
-        NLB[Network<br/>Load Balancer]
-    end
-
-    Internet[Internet] --> IGW
-    IGW --> ALB
-    ALB --> N1
-    ALB --> N2
-    Internet --> NLB
-    NLB --> N1
-
-    style CP fill:#ff9800
-    style N1 fill:#4caf50
-    style N2 fill:#4caf50
-    style ALB fill:#2196f3
-    style NLB fill:#9c27b0
-```
+![インターネットトラフィックは Internet Gateway と Application Load Balancer を経由して EKS worker node に到達するか、Network Load Balancer を通じて直接到達します。AWS 管理の control plane は VPC 内の node group とともに配置されます。](../.gitbook/assets/en-networking-README-8.png)
 
 ### VPC CNI の仕組み
 
-AWS VPC CNI は、各 Pod に実際の VPC IP アドレスを割り当てます。
+AWS VPC CNI は各 Pod に実際の VPC IP アドレスを割り当てます。
 
-```mermaid
-graph TB
-    subgraph "EC2 Instance (Worker Node)"
-        ENI1[Primary ENI<br/>eth0]
-        ENI2[Secondary ENI<br/>eth1]
-        ENI3[Secondary ENI<br/>eth2]
-
-        subgraph "Pods"
-            P1[Pod 1<br/>Secondary IP]
-            P2[Pod 2<br/>Secondary IP]
-            P3[Pod 3<br/>Secondary IP]
-            P4[Pod 4<br/>Secondary IP]
-        end
-    end
-
-    ENI1 --> P1
-    ENI1 --> P2
-    ENI2 --> P3
-    ENI2 --> P4
-
-    style ENI1 fill:#bbdefb
-    style ENI2 fill:#bbdefb
-    style ENI3 fill:#bbdefb
-```
+![worker node 内で、AWS VPC CNI は接続された各 elastic network interface のセカンダリ IP アドレスを、その Node にスケジュールされた Pod に割り当て、予備の ENI を確保します。](../.gitbook/assets/en-networking-README-9.png)
 
 #### ENI と IP の上限
 
-| インスタンスタイプ | 最大 ENI 数 | ENI あたりの IPv4 | 最大 Pod 数（推奨） |
+| インスタンスタイプ | 最大 ENI 数 | ENI あたりの IPv4 数 | 最大 Pod 数（推奨） |
 |---------------|----------|--------------|------------------------|
 | t3.medium | 3 | 6 | 17 |
 | t3.large | 3 | 12 | 35 |
@@ -547,24 +323,24 @@ spec:
 このセクションでは、以下のトピックを詳しく扱います。
 
 ### [VPC CNI](01-vpc-cni.md)
-デフォルトの EKS CNI。ネイティブ VPC ネットワーキングのため、各 Pod に VPC IP を割り当てます。
+デフォルトの EKS CNI。ネイティブ VPC ネットワーキングのために、各 Pod に VPC IP を割り当てます。
 
 ### [Cilium Deep Dive](cilium/README.md)
 高パフォーマンスな eBPF ベースの CNI ソリューション。L7 Network Policy、Service Mesh、可観測性 (Hubble) などの高度な機能を提供します。
 
 ### [Calico Deep Dive](calico/README.md)
-最も広く使用されている CNI の 1 つです。強力な Network Policy、BGP サポート、エンタープライズ機能を備えています。導入、アーキテクチャ、ネットワーキングモード、BGP の詳細、Network Policy、eBPF、高度なトピック、EKS 統合、運用ガイドを扱います。
+最も広く使用されている CNI の1つです。強力な Network Policy、BGP サポート、エンタープライズ機能を提供します。導入、アーキテクチャ、ネットワーキングモード、BGP Deep Dive、Network Policy、eBPF、高度なトピック、EKS 統合、運用ガイドを扱います。
 
 ### [VPC Lattice](02-vpc-lattice.md)
-AWS マネージドのアプリケーションネットワーキングサービス。VPC 間およびアカウント間のサービス間通信を実現します。
+AWS マネージドのアプリケーションネットワーキングサービス。VPC 間およびアカウント間のサービス間通信を提供します。
 
 ### [AWS Load Balancer Controller](03-aws-lb-controller.md)
-Kubernetes Service と Ingress を AWS ELB (ALB/NLB) に統合します。
+Kubernetes Service および Ingress を AWS ELB (ALB/NLB) と統合します。
 
 ### [Gateway API](04-gateway-api.md)
 次世代の Kubernetes Ingress API。標準化されたリソースモデルとロールベースの設定を提供します。
 
-## ネットワークのトラブルシューティング
+## ネットワークトラブルシューティング
 
 ### 一般的な問題と解決策
 
@@ -647,17 +423,17 @@ kubectl exec -it iperf-client -- iperf3 -c <iperf-server-ip> -t 30
 
 ## ベストプラクティス
 
-### 1. IP アドレス計画
+### 1. IP アドレスの計画
 
-- 十分な大きさの CIDR ブロックを設計する
-- Pod ネットワークを Service ネットワークから分離する
-- 将来の拡張を考慮してサブネットを設計する
+- 十分に大きな CIDR ブロックを設計する
+- Pod ネットワークと Service ネットワークを分離する
+- 将来の拡張を考慮して subnet を設計する
 
 ### 2. Network Policy の適用
 
-- デフォルト拒否 Policy（ゼロトラスト）を適用する
+- デフォルト拒否 Policy（Zero Trust）を適用する
 - 必要なトラフィックのみを明示的に許可する
-- Namespace を分離する
+- namespace を分離する
 
 ```yaml
 # Default deny policy example
@@ -673,11 +449,11 @@ spec:
     - Egress
 ```
 
-### 3. パフォーマンス最適化
+### 3. パフォーマンスの最適化
 
-- 適切な CNI を選択する（ワークロードに合わせる）
+- 適切な CNI を選択する（ワークロードに適合するもの）
 - MTU の最適化
-- カーネルパラメータのチューニング
+- Kernel パラメータのチューニング
 
 ### 4. セキュリティ強化
 
@@ -688,7 +464,7 @@ spec:
 ### 5. 可観測性の確保
 
 - ネットワークメトリクスを収集する
-- フローログを有効化する
+- flow log を有効化する
 - 分散トレーシングを実装する
 
 ## 次のステップ
@@ -699,6 +475,7 @@ spec:
 4. [VPC Lattice](02-vpc-lattice.md) - AWS マネージドネットワーキング
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 統合
 6. [Gateway API](04-gateway-api.md) - 次世代 Ingress
+7. [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) - AWS Organizations をまたぐ VPC 接続（現場検証済み）
 
 ---
 

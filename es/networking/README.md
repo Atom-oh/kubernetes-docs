@@ -4,93 +4,37 @@
 
 ## Descripción general
 
-Las redes de Kubernetes constituyen la capa central de infraestructura que permite la comunicación entre aplicaciones en contenedores. Esta sección abarca desde los conceptos básicos de redes de Kubernetes hasta soluciones avanzadas de CNI (Container Network Interface) y patrones de red en entornos de AWS EKS.
+Las redes de Kubernetes son la capa de infraestructura central que permite la comunicación entre aplicaciones en contenedores. Esta sección abarca desde los conceptos básicos de redes de Kubernetes hasta soluciones avanzadas de CNI (Container Network Interface) y patrones de redes en entornos de AWS EKS.
 
-## Modelo de red de Kubernetes
+## Modelo de redes de Kubernetes
 
-Kubernetes está diseñado con base en los siguientes requisitos de red:
+Kubernetes está diseñado con base en los siguientes requisitos de redes:
 
 1. **Cada Pod puede comunicarse con cualquier otro Pod sin NAT**
 2. **Cada Node puede comunicarse con cada Pod sin NAT**
-3. **La IP con la que un Pod se identifica es la misma IP con la que los demás lo identifican**
+3. **La IP con la que un Pod se identifica es la misma IP con la que otros lo identifican**
 
-```mermaid
-graph TB
-    subgraph "Kubernetes Networking Layers"
-        L1[Pod Networking<br/>Pod-to-Pod Communication]
-        L2[Service Networking<br/>Service Discovery & Load Balancing]
-        L3[Ingress Networking<br/>External Traffic Routing]
-        L4[Network Policy<br/>Network Security]
-    end
+![Cuatro capas apiladas muestran cómo las redes de Kubernetes se construyen desde la conectividad de Pod a Pod hasta el descubrimiento de Service, el enrutamiento de Ingress y la aplicación de Network Policy.](../.gitbook/assets/en-networking-README-0.png)
 
-    L1 --> L2
-    L2 --> L3
-    L3 --> L4
+### Redes de Pod
 
-    style L1 fill:#e1f5fe
-    style L2 fill:#b3e5fc
-    style L3 fill:#81d4fa
-    style L4 fill:#4fc3f7
-```
+Las redes de Pod son la capa más fundamental de las redes de Kubernetes. Cada Pod tiene una dirección IP única y puede comunicarse directamente con todos los demás Pods del clúster.
 
-### Redes de Pods
+![Cuatro Pods distribuidos en dos worker nodes tienen cada uno una IP de clúster única y pueden comunicarse directamente con cualquier otro Pod, ya sea que esté en el mismo Node o en uno diferente.](../.gitbook/assets/en-networking-README-1.png)
 
-Las redes de Pods son la capa más fundamental de las redes de Kubernetes. Cada Pod tiene una dirección IP única y puede comunicarse directamente con todos los demás Pods del clúster.
-
-```mermaid
-graph LR
-    subgraph "Node 1"
-        P1[Pod A<br/>10.244.1.10]
-        P2[Pod B<br/>10.244.1.11]
-    end
-
-    subgraph "Node 2"
-        P3[Pod C<br/>10.244.2.10]
-        P4[Pod D<br/>10.244.2.11]
-    end
-
-    P1 <--> P3
-    P2 <--> P4
-    P1 <--> P2
-    P3 <--> P4
-
-    style P1 fill:#c8e6c9
-    style P2 fill:#c8e6c9
-    style P3 fill:#fff9c4
-    style P4 fill:#fff9c4
-```
-
-#### Métodos de implementación de redes de Pods
+#### Métodos de implementación de redes de Pod
 
 | Método | Descripción | CNI de ejemplo |
 |--------|-------------|-------------|
-| **Overlay Network** | Red virtual construida sobre la red existente | Flannel (VXLAN), Calico (IPIP), Weave Net |
-| **Underlay Network** | Enrutamiento directo en la red física | AWS VPC CNI, Calico (BGP), Cilium (Native Routing) |
-| **Hybrid** | Elegir overlay/underlay según el entorno | Cilium, Calico |
+| **Red superpuesta** | Red virtual construida sobre la red existente | Flannel (VXLAN), Calico (IPIP), Weave Net |
+| **Red subyacente** | Enrutamiento directo en la red física | AWS VPC CNI, Calico (BGP), Cilium (Native Routing) |
+| **Híbrido** | Elige red superpuesta/subyacente según el entorno | Cilium, Calico |
 
-### Redes de Services
+### Redes de Service
 
 Los Services proporcionan endpoints de red estables para un conjunto de Pods.
 
-```mermaid
-graph TB
-    subgraph "Service Types"
-        CT[ClusterIP<br/>Internal Cluster Only]
-        NP[NodePort<br/>External via Node Port]
-        LB[LoadBalancer<br/>External Load Balancer Integration]
-        EI[ExternalName<br/>External DNS Mapping]
-    end
-
-    Client[Client] --> CT
-    External[External Traffic] --> NP
-    External --> LB
-    App[Application] --> EI
-
-    style CT fill:#e8eaf6
-    style NP fill:#c5cae9
-    style LB fill:#9fa8da
-    style EI fill:#7986cb
-```
+![El tráfico de cliente, externo y dentro del clúster llega a los Pods mediante un tipo de Service diferente: ClusterIP para llamadas solo internas, NodePort y LoadBalancer para la entrada externa, y ExternalName para la asignación DNS a un sistema externo.](../.gitbook/assets/en-networking-README-2.png)
 
 #### Características de los tipos de Service
 
@@ -144,28 +88,9 @@ spec:
 
 ### Redes de Ingress
 
-Ingress define reglas para enrutar el tráfico HTTP/HTTPS a Services internos del clúster.
+Ingress define reglas para enrutar tráfico HTTP/HTTPS a los Services internos del clúster.
 
-```mermaid
-graph LR
-    Internet[Internet] --> IC[Ingress Controller]
-
-    subgraph "Cluster"
-        IC --> S1[Service A]
-        IC --> S2[Service B]
-        IC --> S3[Service C]
-
-        S1 --> P1[Pod A1]
-        S1 --> P2[Pod A2]
-        S2 --> P3[Pod B1]
-        S3 --> P4[Pod C1]
-    end
-
-    style IC fill:#ffcc80
-    style S1 fill:#a5d6a7
-    style S2 fill:#a5d6a7
-    style S3 fill:#a5d6a7
-```
+![Un Ingress Controller recibe todo el tráfico de internet y lo distribuye según reglas de host y ruta a tres Services, cada uno de los cuales equilibra la carga entre sus Pods de respaldo.](../.gitbook/assets/en-networking-README-3.png)
 
 ```yaml
 # Ingress Example
@@ -209,50 +134,15 @@ spec:
 
 ## CNI (Container Network Interface)
 
-CNI es una interfaz estándar para la conectividad de red de contenedores. Kubernetes implementa las redes de Pods mediante plugins de CNI.
+CNI es una interfaz estándar para la conectividad de red de contenedores. Kubernetes implementa las redes de Pod mediante plugins de CNI.
 
 ### Cómo funciona CNI
 
-```mermaid
-sequenceDiagram
-    participant Kubelet
-    participant CNI Plugin
-    participant Network
-
-    Kubelet->>CNI Plugin: ADD call (on container creation)
-    CNI Plugin->>Network: Create network interface
-    CNI Plugin->>Network: Assign IP address
-    CNI Plugin->>Network: Configure routing rules
-    CNI Plugin-->>Kubelet: Return IP address
-
-    Note over Kubelet,Network: Pod running...
-
-    Kubelet->>CNI Plugin: DEL call (on container deletion)
-    CNI Plugin->>Network: Clean up network resources
-    CNI Plugin-->>Kubelet: Complete
-```
+![El kubelet llama al hook ADD del plugin de CNI al crear un Pod, lo que configura la red y devuelve la IP del Pod; luego llama a DEL al eliminar el Pod para limpiar la red.](../.gitbook/assets/en-networking-README-4.png)
 
 ### Componentes del plugin de CNI
 
-```mermaid
-graph TB
-    subgraph "CNI Plugin Architecture"
-        Agent[CNI Agent/Daemon<br/>Runs on each node]
-        Binary[CNI Binary<br/>/opt/cni/bin/]
-        Config[CNI Config<br/>/etc/cni/net.d/]
-        IPAM[IPAM Plugin<br/>IP Address Management]
-    end
-
-    Kubelet[Kubelet] --> Binary
-    Binary --> Config
-    Binary --> IPAM
-    Agent --> Binary
-
-    style Agent fill:#bbdefb
-    style Binary fill:#90caf9
-    style Config fill:#64b5f6
-    style IPAM fill:#42a5f5
-```
+![El kubelet invoca el binario de CNI local del Node, que el agente de CNI también controla; a su vez, el binario lee su archivo de configuración y llama al plugin de IPAM para asignar una IP de Pod.](../.gitbook/assets/en-networking-README-5.png)
 
 ## Matriz de comparación de CNI
 
@@ -260,14 +150,14 @@ graph TB
 
 | Característica | Cilium | Calico | Flannel | AWS VPC CNI | Weave Net |
 |---------|--------|--------|---------|-------------|-----------|
-| **Tecnología principal** | eBPF | iptables/eBPF | VXLAN/host-gw | AWS ENI | VXLAN |
+| **Tecnología central** | eBPF | iptables/eBPF | VXLAN/host-gw | AWS ENI | VXLAN |
 | **Network Policy** | Avanzada (L3-L7) | Avanzada (L3-L4) | Ninguna | Básica (L3-L4) | Básica |
 | **Cifrado** | WireGuard/IPsec | WireGuard/IPsec | Ninguno | Ninguno | Integrado |
 | **Service Mesh** | Integrado | Ninguno | Ninguno | Ninguno | Ninguno |
 | **Observabilidad** | Hubble | Limitada | Ninguna | Ninguna | Ninguna |
-| **Compatibilidad con BGP** | Sí | Sí | No | No | No |
-| **Multiclúster** | ClusterMesh | Federation | No | No | Sí |
-| **Compatibilidad con Windows** | Beta | Sí | Sí | Sí | Sí |
+| **Soporte para BGP** | Sí | Sí | No | No | No |
+| **Multiclúster** | ClusterMesh | Federación | No | No | Sí |
+| **Soporte para Windows** | Beta | Sí | Sí | Sí | Sí |
 | **Rendimiento** | Excelente | Muy bueno | Bueno | Excelente | Bueno |
 | **Complejidad** | Media-alta | Media | Baja | Baja | Baja |
 | **Comunidad** | Activa | Muy activa | Activa | Compatible con AWS | Moderada |
@@ -276,85 +166,36 @@ graph TB
 
 #### Modos de red
 
-| CNI | Overlay | Native Routing | BGP | Direct Routing |
+| CNI | Red superpuesta | Enrutamiento nativo | BGP | Enrutamiento directo |
 |-----|---------|----------------|-----|----------------|
 | **Cilium** | VXLAN, Geneve | Sí | Sí | Sí |
 | **Calico** | VXLAN, IPIP | Sí | Sí | Sí |
 | **Flannel** | VXLAN | host-gw | No | No |
-| **AWS VPC CNI** | No | VPC Native | No | Sí |
+| **AWS VPC CNI** | No | Nativo de VPC | No | Sí |
 | **Weave Net** | VXLAN | No | No | No |
 
 #### Características de Network Policy
 
 | Característica | Cilium | Calico | AWS VPC CNI |
 |---------|--------|--------|-------------|
-| **Ingress Policy** | Sí | Sí | Sí |
-| **Egress Policy** | Sí | Sí | Sí |
-| **L7 Policy (HTTP)** | Sí | No | No |
-| **DNS-based Policy** | Sí | Sí | No |
-| **FQDN Policy** | Sí | Sí | No |
-| **Host Policy** | Sí | Sí | No |
-| **Global Policy** | Sí | Sí | No |
-| **Policy Tiers** | Sí | Sí | No |
+| **Política de Ingress** | Sí | Sí | Sí |
+| **Política de Egress** | Sí | Sí | Sí |
+| **Política L7 (HTTP)** | Sí | No | No |
+| **Política basada en DNS** | Sí | Sí | No |
+| **Política de FQDN** | Sí | Sí | No |
+| **Política de Host** | Sí | Sí | No |
+| **Política global** | Sí | Sí | No |
+| **Niveles de política** | Sí | Sí | No |
 
 #### Benchmark de rendimiento (comparación relativa)
 
-```mermaid
-graph LR
-    subgraph "Throughput"
-        C1[Cilium eBPF: 100%]
-        C2[AWS VPC CNI: 98%]
-        C3[Calico eBPF: 95%]
-        C4[Calico iptables: 85%]
-        C5[Flannel: 80%]
-        C6[Weave: 75%]
-    end
-
-    style C1 fill:#4caf50
-    style C2 fill:#66bb6a
-    style C3 fill:#81c784
-    style C4 fill:#a5d6a7
-    style C5 fill:#c8e6c9
-    style C6 fill:#e8f5e9
-```
+![Gráfico de barras que clasifica seis combinaciones de modo de red de CNI por rendimiento relativo, con el modo eBPF de Cilium como referencia del 100 % y Weave como el más lento, con 75 %.](../.gitbook/assets/en-networking-README-6.png)
 
 ## Guía de selección de CNI
 
-### Diagrama de flujo de decisión
+### Diagrama de flujo de decisiones
 
-```mermaid
-graph TD
-    Start[Start CNI Selection] --> Q1{Using<br/>AWS EKS?}
-
-    Q1 -->|Yes| Q2{Need Advanced<br/>Network Policy?}
-    Q1 -->|No| Q3{Environment<br/>Complexity?}
-
-    Q2 -->|Yes| Q4{Need L7<br/>Policy?}
-    Q2 -->|No| VPCCNI[AWS VPC CNI<br/>Recommended]
-
-    Q4 -->|Yes| CILIUM[Cilium + VPC CNI<br/>Recommended]
-    Q4 -->|No| CALICO_EKS[Calico + VPC CNI<br/>Recommended]
-
-    Q3 -->|Simple| Q5{Multi-cloud?}
-    Q3 -->|Complex| Q6{Need BGP?}
-
-    Q5 -->|Yes| CALICO[Calico Recommended]
-    Q5 -->|No| FLANNEL[Flannel Recommended]
-
-    Q6 -->|Yes| Q7{Need Built-in<br/>Service Mesh?}
-    Q6 -->|No| CALICO
-
-    Q7 -->|Yes| CILIUM2[Cilium Recommended]
-    Q7 -->|No| CALICO2[Calico Recommended]
-
-    style CILIUM fill:#4fc3f7
-    style CILIUM2 fill:#4fc3f7
-    style CALICO fill:#81c784
-    style CALICO_EKS fill:#81c784
-    style CALICO2 fill:#81c784
-    style VPCCNI fill:#ffb74d
-    style FLANNEL fill:#ce93d8
-```
+![Un árbol de decisiones para elegir un CNI de Kubernetes: los usuarios de EKS eligen según la profundidad de Network Policy; los usuarios que no usan EKS eligen según la complejidad del entorno, la necesidad de multicloud y los requisitos de BGP/Service Mesh, llegando a AWS VPC CNI, Calico, Cilium o Flannel.](../.gitbook/assets/en-networking-README-7.png)
 
 ### CNI recomendado según el caso de uso
 
@@ -380,11 +221,11 @@ addons:
   - name: kube-proxy
 ```
 
-#### 2. Requisitos de seguridad avanzados
+#### 2. Requisitos avanzados de seguridad
 
 **Recomendado: Cilium**
 
-- Compatibilidad con L7 Network Policy
+- Soporte de Network Policy L7
 - Política basada en DNS
 - Políticas de seguridad a nivel de proceso/archivo
 - Comunicación cifrada (WireGuard)
@@ -395,7 +236,7 @@ addons:
 
 - Integración con la infraestructura de red existente
 - Emparejamiento BGP con switches ToR
-- Alto rendimiento (sin overlay)
+- Alto rendimiento (sin red superpuesta)
 
 #### 4. Entorno de desarrollo/pruebas
 
@@ -409,90 +250,25 @@ addons:
 
 **Recomendado: Cilium (Service Mesh sin Sidecar)**
 
-- Puede sustituir a Istio/Envoy
+- Puede reemplazar Istio/Envoy
 - mTLS, gestión de tráfico
 - Baja sobrecarga
 
 ## Fundamentos de redes de EKS
 
-### Arquitectura de red predeterminada de EKS
+### Arquitectura predeterminada de redes de EKS
 
-```mermaid
-graph TB
-    subgraph "AWS Cloud"
-        subgraph "VPC"
-            subgraph "Availability Zone A"
-                PubA[Public Subnet]
-                PrivA[Private Subnet]
-            end
-            subgraph "Availability Zone B"
-                PubB[Public Subnet]
-                PrivB[Private Subnet]
-            end
-
-            IGW[Internet Gateway]
-            NAT[NAT Gateway]
-
-            subgraph "EKS Cluster"
-                CP[Control Plane<br/>AWS Managed]
-
-                subgraph "Node Group"
-                    N1[Worker Node 1]
-                    N2[Worker Node 2]
-                end
-            end
-        end
-
-        ALB[Application<br/>Load Balancer]
-        NLB[Network<br/>Load Balancer]
-    end
-
-    Internet[Internet] --> IGW
-    IGW --> ALB
-    ALB --> N1
-    ALB --> N2
-    Internet --> NLB
-    NLB --> N1
-
-    style CP fill:#ff9800
-    style N1 fill:#4caf50
-    style N2 fill:#4caf50
-    style ALB fill:#2196f3
-    style NLB fill:#9c27b0
-```
+![El tráfico de internet llega a los worker nodes de EKS mediante un Internet Gateway y un Application Load Balancer, o directamente mediante un Network Load Balancer, mientras el control plane administrado por AWS se encuentra junto al node group dentro de la VPC.](../.gitbook/assets/en-networking-README-8.png)
 
 ### Cómo funciona VPC CNI
 
 AWS VPC CNI asigna direcciones IP reales de VPC a cada Pod.
 
-```mermaid
-graph TB
-    subgraph "EC2 Instance (Worker Node)"
-        ENI1[Primary ENI<br/>eth0]
-        ENI2[Secondary ENI<br/>eth1]
-        ENI3[Secondary ENI<br/>eth2]
-
-        subgraph "Pods"
-            P1[Pod 1<br/>Secondary IP]
-            P2[Pod 2<br/>Secondary IP]
-            P3[Pod 3<br/>Secondary IP]
-            P4[Pod 4<br/>Secondary IP]
-        end
-    end
-
-    ENI1 --> P1
-    ENI1 --> P2
-    ENI2 --> P3
-    ENI2 --> P4
-
-    style ENI1 fill:#bbdefb
-    style ENI2 fill:#bbdefb
-    style ENI3 fill:#bbdefb
-```
+![Dentro de un worker node, AWS VPC CNI asigna direcciones IP secundarias de cada elastic network interface conectada a los Pods programados en ese Node, con una ENI de reserva disponible.](../.gitbook/assets/en-networking-README-9.png)
 
 #### Límites de ENI e IP
 
-| Tipo de instancia | ENI máximos | IPv4 por ENI | Pods máximos (recomendado) |
+| Tipo de instancia | ENI máx. | IPv4 por ENI | Pods máx. (recomendado) |
 |---------------|----------|--------------|------------------------|
 | t3.medium | 3 | 6 | 17 |
 | t3.large | 3 | 12 | 35 |
@@ -501,7 +277,7 @@ graph TB
 | m5.2xlarge | 4 | 15 | 58 |
 | c5.4xlarge | 8 | 30 | 234 |
 
-### Consideraciones de red de EKS
+### Consideraciones de redes de EKS
 
 #### Gestión de direcciones IP
 
@@ -544,22 +320,22 @@ spec:
 
 ## Subpáginas de redes
 
-Esta sección cubre los siguientes temas en detalle:
+Esta sección aborda los siguientes temas en detalle:
 
 ### [VPC CNI](01-vpc-cni.md)
 CNI predeterminado de EKS. Asigna IP de VPC a cada Pod para redes nativas de VPC.
 
-### [Análisis detallado de Cilium](cilium/README.md)
-Solución de CNI de alto rendimiento basada en eBPF. Proporciona características avanzadas como L7 Network Policy, Service Mesh y observabilidad (Hubble).
+### [Profundización en Cilium](cilium/README.md)
+Solución de CNI de alto rendimiento basada en eBPF. Proporciona características avanzadas como Network Policy L7, Service Mesh y observabilidad (Hubble).
 
-### [Análisis detallado de Calico](calico/README.md)
-Uno de los CNI más utilizados. Network Policy potente, compatibilidad con BGP y características empresariales. Abarca introducción, arquitectura, modos de red, análisis detallado de BGP, Network Policy, eBPF, temas avanzados, integración de EKS y guía de operaciones.
+### [Profundización en Calico](calico/README.md)
+Uno de los CNI más utilizados. Potente Network Policy, soporte para BGP y características empresariales. Abarca introducción, arquitectura, modos de red, profundización en BGP, Network Policy, eBPF, temas avanzados, integración con EKS y guía de operaciones.
 
 ### [VPC Lattice](02-vpc-lattice.md)
-Servicio de red de aplicaciones administrado por AWS. Comunicación de Service a Service entre VPC y entre cuentas.
+Servicio administrado de redes de aplicaciones de AWS. Comunicación de Service a Service entre VPC y cuentas.
 
 ### [AWS Load Balancer Controller](03-aws-lb-controller.md)
-Integra Services e Ingress de Kubernetes con AWS ELB (ALB/NLB).
+Integra los Services y el Ingress de Kubernetes con AWS ELB (ALB/NLB).
 
 ### [Gateway API](04-gateway-api.md)
 API de Ingress de Kubernetes de próxima generación. Modelo de recursos estandarizado y configuración basada en roles.
@@ -649,15 +425,15 @@ kubectl exec -it iperf-client -- iperf3 -c <iperf-server-ip> -t 30
 
 ### 1. Planificación de direcciones IP
 
-- Diseñar bloques CIDR lo suficientemente grandes
-- Separar la red de Pods de la red de Services
-- Diseñar subnets teniendo en cuenta la expansión futura
+- Diseñe bloques CIDR suficientemente grandes
+- Separe la red de Pod de la red de Service
+- Diseñe subredes pensando en la expansión futura
 
-### 2. Aplicar Network Policies
+### 2. Aplique Network Policies
 
-- Aplicar políticas predeterminadas de denegación (Zero Trust)
-- Permitir explícitamente solo el tráfico necesario
-- Aislar namespaces
+- Aplique políticas predeterminadas de denegación (Zero Trust)
+- Permita explícitamente solo el tráfico requerido
+- Aísle los namespaces
 
 ```yaml
 # Default deny policy example
@@ -675,36 +451,37 @@ spec:
 
 ### 3. Optimización del rendimiento
 
-- Elegir el CNI adecuado (según la carga de trabajo)
+- Elija el CNI adecuado (que coincida con la carga de trabajo)
 - Optimización de MTU
 - Ajuste de parámetros del kernel
 
 ### 4. Fortalecimiento de la seguridad
 
 - Comunicación cifrada (WireGuard, IPsec)
-- Aplicar mTLS
+- Aplique mTLS
 - Auditorías de seguridad periódicas
 
-### 5. Garantizar la observabilidad
+### 5. Garantice la observabilidad
 
-- Recopilar métricas de red
-- Habilitar logs de flujo
-- Implementar trazado distribuido
+- Recopile métricas de red
+- Habilite flow logs
+- Implemente trazabilidad distribuida
 
 ## Próximos pasos
 
 1. [VPC CNI](01-vpc-cni.md) - CNI predeterminado de EKS
-2. [Análisis detallado de Cilium](cilium/README.md) - Redes basadas en eBPF
-3. [Análisis detallado de Calico](calico/README.md) - CNI empresarial
-4. [VPC Lattice](02-vpc-lattice.md) - Redes administradas por AWS
+2. [Profundización en Cilium](cilium/README.md) - Redes basadas en eBPF
+3. [Profundización en Calico](calico/README.md) - CNI empresarial
+4. [VPC Lattice](02-vpc-lattice.md) - Redes administradas de AWS
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - Integración con ELB
 6. [Gateway API](04-gateway-api.md) - Ingress de próxima generación
+7. [Conectividad de VPC entre organizaciones](05-cross-org-vpc-connectivity.md) - Conexión de VPC entre AWS Organizations (verificada en campo)
 
 ---
 
 ## Referencias
 
-- [Modelo de red de Kubernetes](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
+- [Modelo de redes de Kubernetes](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
 - [Especificación de CNI](https://github.com/containernetworking/cni/blob/master/SPEC.md)
 - [Documentación de AWS VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html)
 - [Guía de Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
