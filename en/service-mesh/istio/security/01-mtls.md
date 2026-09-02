@@ -1172,15 +1172,18 @@ spec:
 
 ## Performance and Monitoring
 
-### mTLS Performance Impact
+### mTLS Performance Impact — Measured on EKS
 
-| Metric | Plaintext | mTLS | Increase |
-|--------|-----------|------|----------|
-| **Latency (p50)** | 5ms | 6ms | +20% |
-| **Latency (p99)** | 15ms | 18ms | +20% |
-| **CPU Usage** | 10% | 15% | +50% |
-| **Memory Usage** | 100MB | 120MB | +20% |
-| **Throughput (RPS)** | 10000 | 8500 | -15% |
+The performance cost of mTLS depends entirely on which data plane does the encryption. The numbers below were measured by this guidebook on a dedicated EKS cluster (Graviton m7g.xlarge, fortio at 200 qps for 60s over 16 connections, Code 200 100% in every case):
+
+| Case (mTLS STRICT) | P50 | P90 | P99 | P50 overhead vs no-mesh |
+|--------------------|-----|-----|-----|-------------------------|
+| no-mesh (plaintext baseline) | 0.82ms | 1.73ms | 1.97ms | — |
+| sidecar | 2.11ms | 2.89ms | 3.91ms | **+1.29ms** |
+| ambient L4 (ztunnel only) | 0.86ms | 1.74ms | 1.98ms | **+0.04ms (negligible)** |
+| ambient L7 (waypoint) | 2.68ms | 3.63ms | 3.98ms | **+1.86ms** |
+
+The takeaway: there is no single "mTLS costs +20%" coefficient. Ambient L4 via ztunnel delivered mTLS with effectively zero overhead — the cost comes from traversing an **L7 proxy (Envoy)**, not from mTLS itself. See the [measured sidecar vs ambient comparison](../comparison/03-sidecar-vs-ambient.md) for methodology, 503 rates during rollouts, and reproduction steps. Different workloads require your own re-measurement.
 
 **Optimization Methods**:
 

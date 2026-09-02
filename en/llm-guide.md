@@ -41,7 +41,7 @@ curl -sL https://www.atomai.click/kubernetes-docs/llms-full-en.txt -o guidebook-
 
 ## Format notes
 
-- `llms.txt` — a standard llms.txt index: `# title` / `>` summary / `## Docs (한국어)` / `## Docs (English)` / `## Optional`. Each entry reads `- [Group · Title](URL)`, so the taxonomy survives even in a flat list.
+- `llms.txt` — a standard llms.txt index: `# title` / `>` summary / `## Docs (한국어)` / `## Docs (English)` / `## Optional`. Each entry is a link labeled with its group and title, so the taxonomy survives even in a flat list.
 - `llms-full-*.txt` — every document is preceded by a separator block:
 
 ```text

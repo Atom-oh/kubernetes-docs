@@ -41,7 +41,7 @@ curl -sL https://www.atomai.click/kubernetes-docs/llms-full-ko.txt -o guidebook-
 
 ## 형식 안내
 
-- `llms.txt` — `# 제목` / `> 요약` / `## Docs (한국어)` / `## Docs (English)` / `## Optional` 섹션으로 구성된 llms.txt 표준 색인입니다. 각 항목은 `- [그룹 · 제목](URL)` 형태라 링크만 봐도 분류를 알 수 있습니다.
+- `llms.txt` — `# 제목` / `> 요약` / `## Docs (한국어)` / `## Docs (English)` / `## Optional` 섹션으로 구성된 llms.txt 표준 색인입니다. 각 항목은 그룹명과 제목을 붙인 링크 목록이라, 링크만 봐도 분류를 알 수 있습니다.
 - `llms-full-*.txt` — 문서마다 아래 구분자 블록이 앞에 붙습니다:
 
 ```text

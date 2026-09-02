@@ -23,6 +23,8 @@ on:
           - eks-auto-mode
           - ai-ml
           - data-on-eks
+          - storage
+          - database
           - networking
           - service-mesh
           - security
