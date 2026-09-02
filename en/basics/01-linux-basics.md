@@ -75,6 +75,10 @@ The Linux kernel is the core of the operating system, acting as an intermediary 
 
 User space is the memory region where regular applications run. User space programs access kernel services through system calls.
 
+![Shows the Linux user space, kernel space, and hardware layers: applications and the shell call through system libraries and the system call interface into the kernel subsystems (process and memory management, file system, networking, security), which reach the CPU, memory, storage, and network card through device drivers.](../.gitbook/assets/en-basics-01-linux-basics-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
+
 ### System Call Examples
 
 | System Call | Description           | Related Commands    |
@@ -88,6 +92,10 @@ User space is the memory region where regular applications run. User space progr
 | `clone()`   | Create namespace      | `unshare`, `docker` |
 
 ### Linux Kernel Architecture
+
+![Layered Linux kernel architecture showing user-space applications and the shell reaching the kernel through system libraries and the system call interface, the process, memory, file system, networking, and security subsystems beneath it, and device drivers communicating with the CPU, memory, storage, and network card hardware.](../.gitbook/assets/en-basics-01-linux-basics-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
 ## Process Management
 
@@ -304,6 +312,10 @@ ip link set <veth2> netns <namespace-name>
 ### File Permissions
 
 Linux file permissions consist of read (r), write (w), and execute (x) permissions for owner, group, and other users.
+
+![Shows how the 10-character permission string from ls -l splits into a 1-character file type plus three r w x triplets for owner, group, and other users, and how the example drwxr-xr-- decodes to a directory with full owner permissions, read/execute for the group, and read-only for others.](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
 
 ### Permission-Related Commands
 

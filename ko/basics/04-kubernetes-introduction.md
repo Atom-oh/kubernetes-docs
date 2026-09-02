@@ -116,7 +116,9 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-![Kubernetes 컨트롤 플레인](../.gitbook/assets/kubernetes_control_plane.png)
+![Kubernetes 컨트롤 플레인 구성 요소: kubectl 클라이언트의 요청이 kube-apiserver를 거쳐 etcd에 저장되고, kube-scheduler·kube-controller-manager·cloud-controller-manager가 API 서버를 통해 감시·조정하는 구조](../.gitbook/assets/ko-basics-04-kubernetes-introduction-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-0.html)
 
 1. **kube-apiserver**: Kubernetes API를 노출하는 컨트롤 플레인의 프론트엔드
 2. **etcd**: 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소
@@ -134,7 +136,9 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 노드 구성 요소
 
-![Kubernetes 워커 노드](../.gitbook/assets/kubernetes_worker_node.png)
+![컨트롤 플레인의 지시를 받은 kubelet이 컨테이너 런타임(Docker, containerd, CRI-O)을 통해 Pod 안의 컨테이너를 실행하고, kube-proxy가 네트워크 규칙을 관리하는 워커 노드 내부 구성을 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-1.html)
 
 1. **kubelet**: 각 노드에서 실행되는 에이전트로, 파드 내 컨테이너가 실행되도록 관리
 2. **kube-proxy**: 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당
@@ -142,7 +146,9 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 전체 아키텍처
 
-![Kubernetes 아키텍처](../.gitbook/assets/kubernetes_architecture.svg)
+![외부 클라이언트(kubectl)의 요청이 컨트롤 플레인의 kube-apiserver를 거쳐 etcd, kube-scheduler, kube-controller-manager, cloud-controller-manager와 연결되고, 두 워커 노드에서 kubelet이 컨테이너 런타임으로 파드를 실행하며 kube-proxy가 트래픽을 전달하는 Kubernetes 전체 아키텍처를 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-2.html)
 
 ## Kubernetes 주요 구성 요소
 
@@ -666,7 +672,9 @@ Kubernetes의 네트워킹 모델은 모든 파드가 고유한 IP 주소를 가
 * **LoadBalancer**: 클라우드 제공자의 로드 밸런서를 사용하여 외부에서 접근 가능
 * **ExternalName**: 외부 서비스에 대한 CNAME 레코드 생성
 
-![Kubernetes 서비스](../.gitbook/assets/kubernetes_services.svg)
+![외부 클라이언트가 NodePort·LoadBalancer 서비스를 통해서만 클러스터 안으로 들어오고 ClusterIP 서비스는 내부 접근만 허용하며, 세 서비스 유형이 모두 같은 파드 집합(Pod 1·2·3)으로 port 80 요청을 로드 밸런싱하는 구조를 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-3.html)
 
 **서비스 예시**:
 
@@ -767,7 +775,11 @@ spec:
 
 ### 네트워크 정책 (NetworkPolicy)
 
-네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다. ![Kubernetes 네임스페이스](../.gitbook/assets/kubernetes_namespaces.svg)
+네트워크 정책은 파드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 모든 파드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
+
+![default 네임스페이스의 프론트엔드·API·데이터베이스 파드로 이어지는 요청 경로에 db-network-policy NetworkPolicy가 role=db 파드에 적용되고, monitoring 네임스페이스의 Prometheus가 네임스페이스를 넘어 세 계층의 메트릭을 수집하는 구조를 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-4.html)
 
 **주요 기능**:
 
@@ -884,7 +896,9 @@ spec:
 
 Kubernetes는 컨테이너화된 애플리케이션에 다양한 스토리지 옵션을 제공합니다. 파드가 재시작되거나 재스케줄링되더라도 데이터를 유지할 수 있는 방법을 제공합니다.
 
-![Kubernetes 스토리지](../.gitbook/assets/kubernetes_storage.svg)
+![Pod 1과 Pod 2가 PersistentVolumeClaim(pvc-1, pvc-2)을 통해 PersistentVolume(pv-1, pv-3)에 바인딩되고, StorageClass(standard)가 PV를 동적으로 프로비저닝하며, 각 PV가 클러스터 밖의 AWS EBS 볼륨(vol-1~3)에 대응하는 Kubernetes 스토리지 구조를 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-5.html)
 
 ### 볼륨 (Volume)
 
