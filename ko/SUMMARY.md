@@ -121,11 +121,18 @@
   * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
   * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
   * [Part 3: MLflow를 EKS에 배포하기](ai-ml/mlflow/03-eks-deployment.md)
+* [SageMaker AI Qwen PII 가이드북](ai-ml/sagemaker-ai/README.md)
+  * [Part 1: 플랫폼 아키텍처](ai-ml/sagemaker-ai/01-platform-architecture.md)
+  * [Part 2: 합성 PII 데이터와 토큰화](ai-ml/sagemaker-ai/02-pii-data-tokenization.md)
+  * [Part 3: SageMaker AI와 MLflow 실행](ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
+  * [Part 5: 실제 검증 결과](ai-ml/sagemaker-ai/04-validation-results.md)
 
 ## Data on EKS
 
 * [Data on EKS 개요](data-on-eks/README.md)
 * [모던 데이터 파이프라인 해부](data-on-eks/01-data-pipeline-anatomy.md)
+* [SageMaker Unified Studio 거버넌스](data-on-eks/sagemaker-unified-studio/README.md)
+  * [Part 4: Domain, Project, Membership 거버넌스](data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
 * [Kafka on EKS 딥다이브](data-on-eks/kafka/README.md)
   * [Part 1: Kafka 핵심 개념](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -468,8 +475,13 @@
   * [Part 1: MLflow Tracking 퀴즈](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
   * [Part 2: MLflow Model Registry 퀴즈](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
   * [Part 3: MLflow EKS 배포 퀴즈](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+  * [SageMaker Part 1: 플랫폼 아키텍처 퀴즈](quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+  * [SageMaker Part 2: PII 데이터와 토큰화 퀴즈](quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+  * [SageMaker Part 3: MLflow 실행 퀴즈](quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+  * [SageMaker Part 5: 실제 검증 결과 퀴즈](quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 * Data on EKS
   * [모던 데이터 파이프라인 해부 퀴즈](quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+  * [Unified Studio Domain과 Project 거버넌스 퀴즈](quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
   * [Part 1: Kafka 핵심 개념 퀴즈](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator 퀴즈](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka 운영 퀴즈](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)

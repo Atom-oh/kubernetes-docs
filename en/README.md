@@ -130,10 +130,19 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [Quiz](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
    - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [Quiz](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
    - [Part 3: Deploying MLflow on EKS](./ai-ml/mlflow/03-eks-deployment.md) | [Quiz](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+11. **SageMaker AI Qwen PII Guidebook**
+   - [Guidebook Introduction](./ai-ml/sagemaker-ai/README.md)
+   - [Part 1: Platform Architecture](./ai-ml/sagemaker-ai/01-platform-architecture.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+   - [Part 2: Synthetic PII Data and Tokenization](./ai-ml/sagemaker-ai/02-pii-data-tokenization.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+   - [Part 3: SageMaker AI and MLflow Execution](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+   - [Part 4: Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+   - [Part 5: Factual Validation Results](./ai-ml/sagemaker-ai/04-validation-results.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS Overview](./data-on-eks/README.md)
    - [Anatomy of a Modern Data Pipeline](./data-on-eks/01-data-pipeline-anatomy.md) | [Quiz](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+   - [SageMaker Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/README.md)
+   - [Part 4: Domain, Project, and Membership Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
 2. **Kafka on EKS Deep Dive**
    - [Kafka on EKS Introduction](./data-on-eks/kafka/README.md)
    - [Part 1: Kafka Fundamentals](./data-on-eks/kafka/01-kafka-fundamentals.md) | [Quiz](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)

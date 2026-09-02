@@ -130,10 +130,19 @@
    - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [퀴즈](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
    - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [퀴즈](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
    - [Part 3: MLflow를 EKS에 배포하기](./ai-ml/mlflow/03-eks-deployment.md) | [퀴즈](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+11. **SageMaker AI Qwen PII 가이드북**
+   - [가이드북 소개](./ai-ml/sagemaker-ai/README.md)
+   - [Part 1: 플랫폼 아키텍처](./ai-ml/sagemaker-ai/01-platform-architecture.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+   - [Part 2: 합성 PII 데이터와 토큰화](./ai-ml/sagemaker-ai/02-pii-data-tokenization.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+   - [Part 3: SageMaker AI와 MLflow 실행](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+   - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+   - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
 ### Data on EKS
 1. [Data on EKS 개요](./data-on-eks/README.md)
    - [모던 데이터 파이프라인 해부](./data-on-eks/01-data-pipeline-anatomy.md) | [퀴즈](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+   - [SageMaker Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/README.md)
+   - [Part 4: Domain, Project, Membership 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
 2. **Kafka on EKS 딥다이브**
    - [Kafka on EKS 소개](./data-on-eks/kafka/README.md)
    - [Part 1: Kafka 핵심 개념](./data-on-eks/kafka/01-kafka-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
@@ -358,4 +367,3 @@
 ## 라이선스
 
 이 교육 자료는 학습 목적으로 자유롭게 사용할 수 있습니다.
-

@@ -1,7 +1,7 @@
 # MLflow on EKS 딥다이브
 
 > **지원 버전**: MLflow 3.15.1
-> **마지막 업데이트**: 2026년 8월 19일
+> **마지막 업데이트**: 2026년 9월 2일
 
 ## 개요
 
@@ -20,6 +20,8 @@ MLflow는 머신러닝 라이프사이클 전체 — 실험 추적, 모델 패�
 ## 왜 EKS에서 운영하는가
 
 트레이드오프는 이 문서 사이트의 다른 데이터/ML 섹션과 동일합니다. 이미 EKS를 운영 중인 팀은 클러스터의 다른 워크로드와 동일한 배포, IAM(IRSA/Pod Identity), 관측성 패턴을 MLflow 트래킹 서버에도 그대로 적용할 수 있는 대신, 관리형 대안을 쓰는 것보다 트래킹 서버·백엔드 데이터베이스·아티팩트 저장소를 직접 운영해야 하는 부담을 지게 됩니다.
+
+관리형 MLflow App과 EKS MLflow를 동일한 Qwen PII 파인튜닝 계약으로 비교하려면 [SageMaker AI Qwen PII 가이드북](../sagemaker-ai/README.md)과 [Part 3 실행 가이드](../sagemaker-ai/03-sagemaker-mlflow-execution.md)를 참고하세요.
 
 ## 현재 제공 중인 문서
 

@@ -1,7 +1,7 @@
 # MLflow on EKS Deep Dive
 
 > **Supported Versions**: MLflow 3.15.1
-> **Last Updated**: August 19, 2026
+> **Last Updated**: September 2, 2026
 
 ## Overview
 
@@ -20,6 +20,8 @@ MLflow is an open-source platform for managing the machine learning lifecycle â€
 ## Why Run This on EKS
 
 The trade-off is the same one covered elsewhere in this documentation site's data/ML sections: a team already running EKS can reuse the same deployment, IAM (IRSA/Pod Identity), and observability patterns for MLflow's tracking server as for everything else on the cluster, in exchange for operating the tracking server, its backend database, and its artifact store directly rather than using a managed alternative.
+
+For a comparison of a managed MLflow App and MLflow on EKS using one Qwen PII fine-tuning contract, see the [SageMaker AI Qwen PII guidebook](../sagemaker-ai/README.md) and its [Part 3 execution guide](../sagemaker-ai/03-sagemaker-mlflow-execution.md).
 
 ## Currently Covered
 

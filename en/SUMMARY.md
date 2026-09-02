@@ -121,11 +121,18 @@
   * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
   * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
   * [Part 3: Deploying MLflow on EKS](ai-ml/mlflow/03-eks-deployment.md)
+* [SageMaker AI Qwen PII Guidebook](ai-ml/sagemaker-ai/README.md)
+  * [Part 1: Platform Architecture](ai-ml/sagemaker-ai/01-platform-architecture.md)
+  * [Part 2: Synthetic PII Data and Tokenization](ai-ml/sagemaker-ai/02-pii-data-tokenization.md)
+  * [Part 3: SageMaker AI and MLflow Execution](ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
+  * [Part 5: Factual Validation Results](ai-ml/sagemaker-ai/04-validation-results.md)
 
 ## Data on EKS
 
 * [Data on EKS Overview](data-on-eks/README.md)
 * [Anatomy of a Modern Data Pipeline](data-on-eks/01-data-pipeline-anatomy.md)
+* [SageMaker Unified Studio Governance](data-on-eks/sagemaker-unified-studio/README.md)
+  * [Part 4: Domain, Project, and Membership Governance](data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
 * [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
   * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -468,8 +475,13 @@
   * [Part 1: MLflow Tracking Quiz](quizzes/ai-ml/mlflow/01-tracking-quiz.md)
   * [Part 2: MLflow Model Registry Quiz](quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
   * [Part 3: Deploying MLflow on EKS Quiz](quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+  * [SageMaker Part 1: Platform Architecture Quiz](quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+  * [SageMaker Part 2: PII Data and Tokenization Quiz](quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+  * [SageMaker Part 3: MLflow Execution Quiz](quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+  * [SageMaker Part 5: Factual Validation Results Quiz](quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 * Data on EKS
   * [Anatomy of a Modern Data Pipeline Quiz](quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+  * [Unified Studio Domain and Project Governance Quiz](quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
   * [Part 1: Kafka Fundamentals Quiz](quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
   * [Part 2: Strimzi Operator Quiz](quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
   * [Part 3: Kafka Operations Quiz](quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)

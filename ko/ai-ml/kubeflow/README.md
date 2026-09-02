@@ -1,7 +1,7 @@
 # Kubeflow on EKS 딥다이브
 
 > **지원 버전**: Kubeflow Community Distribution 26.03
-> **마지막 업데이트**: 2026년 8월 19일
+> **마지막 업데이트**: 2026년 9월 2일
 
 ## 개요
 
@@ -22,7 +22,7 @@ Kubeflow는 파이프라인 오케스트레이션, 노트북, 하이퍼파라미
 
 ## 왜 EKS에서 운영하는가
 
-Kubeflow의 각 컴포넌트는 표준을 준수하는 모든 Kubernetes 클러스터에서 동작하도록 설계되어 있습니다. 즉, 이 문서 사이트가 이미 다루고 있는 EKS 운영 방식 — Karpenter 기반 오토스케일링(GPU 노드 풀 포함), AWS 서비스 접근을 위한 IRSA/Pod Identity, EBS/S3 스토리지 연동, Prometheus/Grafana 기반 관측성 — 을 별도의 ML 전용 플랫폼 없이 ML 워크로드에도 그대로 적용할 수 있습니다. Amazon SageMaker 같은 완전관리형 서비스 대비 트레이드오프는 [Data on EKS](../../data-on-eks/README.md)에서 다룬 것과 동일합니다: 운영 부담(Operator 업그레이드, 스토리지/자격증명 연동)은 더 크지만, 클러스터의 모든 워크로드에 걸쳐 동일한 배포/관측 모델을 유지할 수 있고, 플랫폼 전체를 한 번에 도입하지 않고도 Kubeflow의 각 컴포넌트를 독립적으로 사용할 수 있습니다.
+Kubeflow의 각 컴포넌트는 표준을 준수하는 모든 Kubernetes 클러스터에서 동작하도록 설계되어 있습니다. 즉, 이 문서 사이트가 이미 다루고 있는 EKS 운영 방식 — Karpenter 기반 오토스케일링(GPU 노드 풀 포함), AWS 서비스 접근을 위한 IRSA/Pod Identity, EBS/S3 스토리지 연동, Prometheus/Grafana 기반 관측성 — 을 별도의 ML 전용 플랫폼 없이 ML 워크로드에도 그대로 적용할 수 있습니다. [Amazon SageMaker AI 관리형 경로](../sagemaker-ai/README.md) 같은 완전관리형 서비스 대비 트레이드오프는 [Data on EKS](../../data-on-eks/README.md)에서 다룬 것과 동일합니다: 운영 부담(Operator 업그레이드, 스토리지/자격증명 연동)은 더 크지만, 클러스터의 모든 워크로드에 걸쳐 동일한 배포/관측 모델을 유지할 수 있고, 플랫폼 전체를 한 번에 도입하지 않고도 Kubeflow의 각 컴포넌트를 독립적으로 사용할 수 있습니다.
 
 ## 현재 제공 중인 문서
 
