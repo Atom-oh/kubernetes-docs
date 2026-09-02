@@ -11,7 +11,7 @@
 **Answer: B) Pruning via PARTITION BY (day) and ORDER BY (namespace, timestamp) meant only 16,385 of 100M rows were read**
 
 **Explanation:**
-When query conditions line up with the partition key (daily) and the sorting key (namespace, timestamp), ClickHouse prunes at granule granularity using the primary index. In this benchmark only two granules — 16,385 rows, 0.016% — were read. Most of ClickHouse's speed comes from this "don't read it" design.
+When query conditions line up with the partition key (daily) and the sorting key (namespace, timestamp), ClickHouse prunes at granule granularity using the primary index. In this benchmark the query counted 59,916 rows but read only 16,385 (0.016%): granules that lie entirely inside the primary-key range are counted from the index (a ClickHouse 24.6+ optimization), and only the partial granules at the range edges are decompressed. Most of ClickHouse's speed comes from this "don't read it" design.
 
 </details>
 
@@ -26,7 +26,7 @@ When query conditions line up with the partition key (daily) and the sorting key
 **Answer: C) trace_id is high-entropy (32 random hex chars) with nothing to compress, while namespace is low-cardinality and the first ORDER BY key, so identical values run in long streaks**
 
 **Explanation:**
-Random IDs have high information entropy, so no general-purpose compressor can shrink them (3.08 GiB → 3.07 GiB). namespace has only 10 distinct values and is the first sort key, so identical values are stored in contiguous runs: 96 MiB collapsed to 0.5 MiB. This is why "how do we store IDs" is the biggest storage-cost lever in a log schema.
+Random IDs have high information entropy, so no general-purpose compressor can shrink them (3.08 GiB → 3.07 GiB). namespace has only 10 distinct values and is the first sort key, so identical values are stored in contiguous runs: 95.72 MiB collapsed to 488.63 KiB (201×). This is why "how do we store IDs" is the biggest storage-cost lever in a log schema.
 
 </details>
 
@@ -56,7 +56,7 @@ Measured: LZ4 7.82 GiB (1.97×) vs ZSTD(3) 4.16 GiB (3.7×) — 47% less storage
 **Answer: B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — pinned at the gp3 baseline throughput (125 MiB/s)**
 
 **Explanation:**
-The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property — gp3 throughput can be raised to 1,000 MiB/s for an extra fee.
+The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property — gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well) — but on this m5.xlarge the instance's own EBS baseline of about 137 MiB/s would bind first, so the node has to grow with the volume.
 
 </details>
 

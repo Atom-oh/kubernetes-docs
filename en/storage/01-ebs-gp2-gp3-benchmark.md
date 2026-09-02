@@ -1,7 +1,7 @@
 # EBS gp2 vs gp3 Measured Benchmark
 
 > **Supported Versions**: Kubernetes 1.36 (Amazon EKS), EBS CSI driver, fio 3.36
-> **Last Updated**: September 1, 2026
+> **Last Updated**: September 2, 2026
 
 The AWS one-liner — "move gp2 to gp3, save 20%, get equal or better performance" — is famous, but a graph showing **when and in what shape** that difference appears on a Kubernetes PVC is hard to find. This article attaches **one 100 GiB gp2 PVC and one 100 GiB gp3 PVC** to a single EKS node and hammers both with fio for 45 minutes. The point is not "gp2 is slow." It is this: **gp2 is indistinguishable from gp3 for 33 minutes, and then drops to one tenth within a single second.** Every number reproduces from the manifest and fio commands below.
 
@@ -18,7 +18,7 @@ The AWS one-liner — "move gp2 to gp3, save 20%, get equal or better performanc
 | 4k random write IOPS (qd32, after credit depletion) | **3,025** | 601 (includes a partially refilled bucket) |
 | 4k random read latency (qd1) | avg **0.56 ms** / p99 0.87 ms | avg 1.65 ms — bimodal: p50 0.60 / p95 3.39 ms |
 | 1 MiB sequential read / write | 127 / 126 MiB/s (125 MiB/s baseline) | 130 / 129 MiB/s (128 MiB/s cap for ≤170 GiB) |
-| Monthly cost (Seoul region, 100 GB) | **$9.12** | $11.40 |
+| Monthly cost (Seoul region, 100 GiB) | **$9.12** | $11.40 |
 
 One sentence: **for the same capacity, gp2 sells you 33 minutes of 3,000 IOPS at a 25% higher price.**
 
@@ -140,7 +140,7 @@ How to read it:
 
 - **Before the cliff, gp2 is indistinguishable from gp3.** Both deliver 3,001 IOPS, both sit at a p50 of 10.0–10.2 ms. "gp2 is slow" is simply false here: a gp2 volume with credits is a 3,000 IOPS volume.
 - **The cliff took one second.** 3,001 IOPS at 1,998 s, 2,659 at 1,999 s, 300 at 2,000 s. It does not degrade gradually; 90% of the capacity disappears as if a switch were flipped. From the application's point of view this is the incident pattern "database queries suddenly got 10x slower and nobody deployed anything."
-- **The numbers match the AWS documentation exactly.** A 100 GiB gp2 volume has a baseline of 3 IOPS/GiB × 100 = **300 IOPS**, a 5.4M-credit bucket, and a burst duration of `5,400,000 ÷ (3,000 − 300) = 2,000 s`. The AWS table lists "100 GiB → 2,000 seconds"; we measured 1,999.
+- **The numbers line up with the AWS documentation to within a second.** A 100 GiB gp2 volume has a baseline of 3 IOPS/GiB × 100 = **300 IOPS**, a 5.4M-credit bucket, and a burst duration of `5,400,000 ÷ (3,000 − 300) = 2,000 s`. The AWS table lists "100 GiB → 2,000 seconds"; we measured 1,999.
 - **The 106 ms latency is not the volume being slow.** Little's law (average latency = outstanding I/Os ÷ throughput) gives 32 ÷ 300 = 106.7 ms. We keep 32 I/Os in flight while only 300 per second complete, so the queue grows. The 10.4 ms at 3,000 IOPS is the same arithmetic (32 ÷ 3,000 = 10.7 ms). **Latency in a qd32 benchmark is queueing time; device latency is what Measurement 3 shows.**
 
 > **Disclosure of test conditions**: about 13 minutes before the recorded run, the first attempt (cut short by the Karpenter eviction) had already loaded this same gp2 volume at 3,000 IOPS for roughly 8 minutes (14:55–15:03 UTC). A naive credit model says that pre-drain should have moved the cliff earlier than 2,000 s; we observed it at 2,000 s. We could not pin down the reason (the actual I/O duration before the eviction is uncertain). Treat **the shape of the cliff (a 90% drop within one second) and the floor (300 IOPS) as definitive results**, and **use the AWS formula (2,000 s) as the planning number for the exact duration**.
@@ -196,7 +196,7 @@ Priced in the Seoul region (Pricing API, September 2026), "how do I get 3,000 IO
 | gp3 100 GiB + 250 MiB/s | $14.82 ($9.12 + 125 × $0.0456) | 3,000 | 250 MiB/s |
 | gp2 1,000 GiB (a volume "sized for IOPS") | $114.00 | 3,000 | 250 MiB/s |
 
-The last row is the most common waste in practice. In the gp2 era, the standard move for a 100 GiB dataset that needed IOPS was to allocate 1 TiB. gp3 100 GiB delivers the same 3,000 IOPS for **$9.12** — one twelfth of the price. Decoupling IOPS from capacity is the essence of gp3, and this table is the consequence.
+The last row is the most common waste in practice. In the gp2 era, the standard move for a 100 GiB dataset that needed IOPS was to allocate 1 TiB. gp3 100 GiB delivers the same 3,000 IOPS for **$9.12** — 12.5× cheaper ($114.00 ÷ $9.12). Decoupling IOPS from capacity is the essence of gp3, and this table is the consequence.
 
 ## Moving to gp3 on Kubernetes
 
@@ -243,7 +243,7 @@ kubectl patch pvc data-postgres-0 -p '{"spec":{"volumeAttributesClassName":"gp3-
 kubectl get pvc data-postgres-0 -o jsonpath='{.status.currentVolumeAttributesClassName}'
 ```
 
-Two caveats: EBS allows **one modification per volume every six hours** (the cooldown), so batch type, IOPS, and throughput changes together; and on Kubernetes 1.31–1.33 the API is `v1beta1` behind a feature gate. Running `aws ec2 modify-volume --volume-type gp3` directly also works, but the PV object keeps `gp2` as its StorageClass name, which causes confusion later.
+Two caveats: EBS requires each modification to reach the `completed` state before the next one on the same volume (a 1 TiB volume can take up to six hours to finish) and allows **at most four modifications per volume in a rolling 24-hour period**, so batch type, IOPS, and throughput changes into one request; and on Kubernetes 1.31–1.33 the API is `v1beta1` behind a feature gate. Running `aws ec2 modify-volume --volume-type gp3` directly also works, but the PV object keeps `gp2` as its StorageClass name, which causes confusion later.
 
 ### Alarm on whatever gp2 remains
 

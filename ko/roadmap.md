@@ -2,9 +2,9 @@
 
 > **마지막 업데이트**: 2026년 9월 1일
 
-이 가이드북은 Linux 커널에서 시작해 컨테이너, Kubernetes, Amazon EKS, 네트워킹, 서비스 메시, 스토리지, 데이터베이스, 데이터 파이프라인, AI/ML, 그리고 보안·GitOps·플랫폼 엔지니어링·옵저버빌리티·운영까지 — 클라우드 네이티브 스택 전체를 하나의 서사로 다룹니다. 이 페이지는 전체 지도이자 추천 학습 경로입니다.
+이 가이드북은 Linux 커널에서 시작해 컨테이너, Kubernetes, Amazon EKS, 네트워킹, 서비스 메시, 스토리지, 데이터베이스, 데이터 파이프라인, AI/ML, 그리고 보안·GitOps·플랫폼 엔지니어링·컨테이너 레지스트리·옵저버빌리티·운영까지 — 클라우드 네이티브 스택 전체를 하나의 서사로 다룹니다. 이 페이지는 전체 지도이자 추천 학습 경로입니다.
 
-![클라우드 네이티브 가이드북의 15개 도메인이 기초(Linux/Container) → 오케스트레이션(Kubernetes/EKS) → 연결(Networking/Service Mesh) → 상태(Storage/Database) → 데이터·AI(Data Pipeline/AI-ML) → 횡단 관심사(Security/GitOps/Platform/Observability/Operations)로 이어지는 학습 흐름 지도.](.gitbook/assets/ko-roadmap-0.png)
+![클라우드 네이티브 가이드북의 15개 도메인이 기초(Linux/Container) → 오케스트레이션(Kubernetes/EKS) → 연결(Networking/Service Mesh) → 상태(Storage/Database) → 데이터·AI(Data Pipeline/AI-ML) → 횡단 관심사(Security/GitOps/Platform/Container Registry/Observability/Operations)로 이어지는 학습 흐름 지도.](.gitbook/assets/ko-roadmap-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-roadmap-0.html)
 

@@ -29,7 +29,7 @@ The core principle: **operating a raw StatefulSet is not one of the options.** T
 | PostgreSQL | CloudNativePG, Crunchy PGO, Zalando | CloudNativePG is converging on de-facto standard status in the CNCF ecosystem |
 | MySQL | Percona Operator, Vitess (sharding), MySQL Operator (Oracle) | Vitess if you need horizontal sharding, otherwise Percona |
 | Redis/Valkey | OT-CONTAINER-KIT redis-operator, Valkey Operator | For cache use, always compare against ElastiCache pricing first |
-| ClickHouse | Altinity clickhouse-operator | One of the most commonly self-hosted databases relative to its managed offering |
+| ClickHouse | Altinity clickhouse-operator | Apache-2.0 database with a mature community operator; the managed alternative is ClickHouse Cloud |
 | MongoDB | MongoDB Community Operator, Percona | Mind the SSPL license |
 | Kafka | Strimzi | Streaming lives in the [Data Pipeline section](../data-on-eks/kafka/README.md) |
 

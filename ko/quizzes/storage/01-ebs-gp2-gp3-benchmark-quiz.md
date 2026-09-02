@@ -116,6 +116,6 @@ gp2 100 GiB는 $11.40에 지속 300 IOPS(버스트 3,000은 최대 33분)만 보
 **정답: B) `VolumeAttributesClass`(storage.k8s.io/v1, Kubernetes 1.34 GA)를 만들고 PVC의 `volumeAttributesClassName`을 지정하면 EBS CSI 드라이버가 ModifyVolume을 호출한다**
 
 **설명:**
-StorageClass의 파라미터는 새 볼륨 생성 시에만 적용되고 기존 PV에는 영향이 없습니다. VolumeAttributesClass는 `type`, `iops`, `throughput`을 파드 실행 중에 변경할 수 있게 해 주며 내부적으로 EBS Elastic Volumes를 사용합니다. 단, EBS는 볼륨당 6시간에 한 번만 수정할 수 있으므로 타입·IOPS·처리량 변경을 한 번에 묶어야 하고, 1.31~1.33에서는 v1beta1 API와 피처 게이트가 필요합니다. `aws ec2 modify-volume`을 직접 쓰면 동작은 하지만 PV 오브젝트의 StorageClass 이름이 gp2로 남아 혼란을 만듭니다.
+StorageClass의 파라미터는 새 볼륨 생성 시에만 적용되고 기존 PV에는 영향이 없습니다. VolumeAttributesClass는 `type`, `iops`, `throughput`을 파드 실행 중에 변경할 수 있게 해 주며 내부적으로 EBS Elastic Volumes를 사용합니다. 단, EBS는 같은 볼륨의 다음 수정을 이전 수정이 `completed`된 뒤에만 허용하고(1 TiB 볼륨은 최대 6시간 소요) 24시간 롤링 구간에 볼륨당 최대 4회까지만 수정할 수 있으므로 타입·IOPS·처리량 변경을 한 번의 요청에 묶어야 하고, 1.31~1.33에서는 v1beta1 API와 피처 게이트가 필요합니다. `aws ec2 modify-volume`을 직접 쓰면 동작은 하지만 PV 오브젝트의 StorageClass 이름이 gp2로 남아 혼란을 만듭니다.
 
 </details>

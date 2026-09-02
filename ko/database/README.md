@@ -29,7 +29,7 @@
 | PostgreSQL | CloudNativePG, Crunchy PGO, Zalando | CloudNativePG가 CNCF 생태계에서 사실상 표준으로 수렴 중 |
 | MySQL | Percona Operator, Vitess(샤딩), MySQL Operator(Oracle) | 수평 샤딩이 필요하면 Vitess, 아니면 Percona |
 | Redis/Valkey | OT-CONTAINER-KIT redis-operator, Valkey Operator | 캐시 용도는 ElastiCache와의 비용 비교 필수 |
-| ClickHouse | Altinity clickhouse-operator | 관리형(ClickHouse Cloud) 대비 self-hosted 채택률이 높은 대표적 DB |
+| ClickHouse | Altinity clickhouse-operator | Apache-2.0 DB에 성숙한 커뮤니티 오퍼레이터가 있고, 관리형 대안은 ClickHouse Cloud |
 | MongoDB | MongoDB Community Operator, Percona | 라이선스(SSPL) 고려 |
 | Kafka | Strimzi | 메시징/스트리밍은 [Data Pipeline 섹션](../data-on-eks/kafka/README.md) 참고 |
 

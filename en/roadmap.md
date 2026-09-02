@@ -2,9 +2,9 @@
 
 > **Last Updated**: September 1, 2026
 
-This guidebook tells one continuous story: from the Linux kernel through containers, Kubernetes, Amazon EKS, networking, service mesh, storage, databases, data pipelines, and AI/ML — plus the cross-cutting disciplines of security, GitOps, platform engineering, observability, and operations. This page is the map, and the recommended paths through it.
+This guidebook tells one continuous story: from the Linux kernel through containers, Kubernetes, Amazon EKS, networking, service mesh, storage, databases, data pipelines, and AI/ML — plus the cross-cutting disciplines of security, GitOps, platform engineering, container registries, observability, and operations. This page is the map, and the recommended paths through it.
 
-![Learning-flow map of the guidebook's fifteen domains, flowing from foundations (Linux/Container) through orchestration (Kubernetes/EKS), connectivity (Networking/Service Mesh), state (Storage/Database), data and AI (Data Pipeline/AI-ML), to cross-cutting concerns (Security/GitOps/Platform/Observability/Operations).](.gitbook/assets/en-roadmap-0.png)
+![Learning-flow map of the guidebook's fifteen domains, flowing from foundations (Linux/Container) through orchestration (Kubernetes/EKS), connectivity (Networking/Service Mesh), state (Storage/Database), data and AI (Data Pipeline/AI-ML), to cross-cutting concerns (Security/GitOps/Platform/Container Registry/Observability/Operations).](.gitbook/assets/en-roadmap-0.png)
 
 [🔍 Open the interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-roadmap-0.html)
 

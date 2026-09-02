@@ -116,6 +116,6 @@ gp2 100 GiB at $11.40 guarantees only 300 sustained IOPS (the 3,000 burst lasts 
 **Answer: B) Create a `VolumeAttributesClass` (storage.k8s.io/v1, GA in Kubernetes 1.34) and set the PVC's `volumeAttributesClassName`; the EBS CSI driver calls ModifyVolume**
 
 **Explanation:**
-StorageClass parameters apply only when new volumes are created; existing PVs are unaffected. VolumeAttributesClass lets you change `type`, `iops`, and `throughput` while the pod runs, using EBS Elastic Volumes underneath. Caveats: EBS allows one modification per volume every six hours, so batch type, IOPS, and throughput changes together, and Kubernetes 1.31–1.33 needs the v1beta1 API plus a feature gate. Running `aws ec2 modify-volume` directly works, but the PV object keeps `gp2` as its StorageClass name, which causes confusion later.
+StorageClass parameters apply only when new volumes are created; existing PVs are unaffected. VolumeAttributesClass lets you change `type`, `iops`, and `throughput` while the pod runs, using EBS Elastic Volumes underneath. Caveats: each modification must reach the `completed` state before the next one on the same volume (up to six hours for a 1 TiB volume) and EBS allows at most four modifications per volume in a rolling 24-hour period, so batch type, IOPS, and throughput changes into one request; and Kubernetes 1.31–1.33 needs the v1beta1 API plus a feature gate. Running `aws ec2 modify-volume` directly works, but the PV object keeps `gp2` as its StorageClass name, which causes confusion later.
 
 </details>

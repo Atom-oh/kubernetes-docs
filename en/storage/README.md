@@ -21,7 +21,7 @@ The Kubernetes storage fundamentals and hands-on EKS configuration are covered i
 
 Understanding the path from an application write to the physical volume tells you which layer to blame when performance disappoints:
 
-```
+```text
 application write()
   → container filesystem (ext4/xfs)
     → kernel block layer (io scheduler, page cache or O_DIRECT)
