@@ -319,6 +319,7 @@
   * [Plataforma de visibilidad de costos FinOps](ops/13-finops-cost-platform.md)
   * [Pipelines de Tekton](ops/14-tekton-pipelines.md)
   * [Operaciones de clúster zonal](ops/15-zonal-operations-guide.md)
+  * [Guía de resolución de problemas](ops/16-troubleshooting-playbook.md)
 
 ## Observabilidad
 
@@ -623,3 +624,4 @@
   * [Cuestionario de plataforma de visibilidad de costos FinOps](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Cuestionario de Pipelines de Tekton](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Cuestionario de operaciones de clúster zonal](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [Cuestionario: Guía de resolución de problemas](quizzes/ops/16-troubleshooting-playbook-quiz.md)

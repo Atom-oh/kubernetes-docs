@@ -319,6 +319,7 @@
   * [FinOps 成本可见性平台](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [可用区集群运维](ops/15-zonal-operations-guide.md)
+  * [故障排查手册](ops/16-troubleshooting-playbook.md)
 
 ## 可观测性
 
@@ -623,3 +624,4 @@
   * [FinOps 成本可见性平台测验](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines 测验](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [可用区集群运维测验](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [故障排查手册测验](quizzes/ops/16-troubleshooting-playbook-quiz.md)

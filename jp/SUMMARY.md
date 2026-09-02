@@ -319,6 +319,7 @@
   * [FinOps コスト可視化プラットフォーム](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [ゾーンクラスター運用](ops/15-zonal-operations-guide.md)
+  * [トラブルシューティング手順書](ops/16-troubleshooting-playbook.md)
 
 ## オブザーバビリティ
 
@@ -623,3 +624,4 @@
   * [FinOps コスト可視化プラットフォームクイズ](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines クイズ](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [ゾーンクラスター運用クイズ](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [トラブルシューティング手順書クイズ](quizzes/ops/16-troubleshooting-playbook-quiz.md)
