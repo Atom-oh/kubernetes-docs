@@ -128,12 +128,12 @@ fio --name=gp2-seqwrite --filename=/mnt/gp2/testfile --size=8G --rw=write --bs=1
 
 ![IOPS time series: gp3 holds a flat 3,000 IOPS for 10 minutes; gp2 holds 3,000 IOPS and then drops vertically to 300 IOPS at 1,999 seconds.](../.gitbook/assets/en-storage-01-ebs-gp2-gp3-iops-timeline.svg)
 
-This is the per-second IOPS log fio recorded (2,699 samples for gp2, 600 for gp3), plotted as is.
+This is the per-second IOPS log fio recorded (2,699 samples for gp2, 600 for gp3), plotted as is. The table below excludes each log's first one-second sample (5,997 on both volumes — the initial queue fill, which fio's summary counts and which is why fio itself reports 3,005 IOPS for gp3).
 
 | | gp3 (600 s) | gp2 before the cliff (0–1,999 s) | gp2 after the cliff (2,000–2,700 s) |
 |---|---|---|---|
 | Average IOPS | **3,001** | **3,001** | **300** |
-| Min / max | 2,991 / 3,004 | — | 298 / 304 |
+| Min / max | 2,991 / 3,004 | 2,997 / 3,005 | 297 / 304 |
 | Average latency (qd32) | 10.4 ms | ≈10.4 ms | ≈106 ms |
 
 How to read it:
