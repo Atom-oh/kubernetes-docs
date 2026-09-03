@@ -1,0 +1,169 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "VPC CIDR Planning Procedure",
+    "output": "en-eks-03-eks-networking-part1-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Workload"
+        },
+        "cloud": {
+          "label": "AWS service"
+        },
+        "external": {
+          "label": "External"
+        },
+        "security": {
+          "label": "Security gate"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "plan",
+      "label": "CIDR 계획"
+    },
+    {
+      "id": "risk",
+      "label": "중복 검사",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "size",
+    "ipcalc",
+    "growth",
+    "overlap",
+    "cidr"
+  ],
+  "nodes": [
+    {
+      "id": "size",
+      "lane": "plan",
+      "col": 0,
+      "type": "external",
+      "label": "Cluster scale",
+      "sublabel": "Estimate node count",
+      "width": 145
+    },
+    {
+      "id": "ipcalc",
+      "lane": "plan",
+      "col": 1,
+      "type": "backend",
+      "label": "Calculate IP demand",
+      "sublabel": "nodes × max pods",
+      "width": 150
+    },
+    {
+      "id": "growth",
+      "lane": "plan",
+      "col": 2,
+      "type": "backend",
+      "label": "Reserve headroom",
+      "sublabel": "20-30% spare",
+      "width": 150
+    },
+    {
+      "id": "overlap",
+      "lane": "plan",
+      "col": 3,
+      "type": "security",
+      "label": "Check existing networks",
+      "sublabel": "On-premises · peering",
+      "width": 165
+    },
+    {
+      "id": "cidr",
+      "lane": "plan",
+      "col": 5,
+      "type": "cloud",
+      "label": "Finalize VPC CIDR",
+      "sublabel": "RFC 1918 private range",
+      "width": 160
+    },
+    {
+      "id": "conflict",
+      "lane": "risk",
+      "col": 4,
+      "type": "security",
+      "label": "Range overlap",
+      "sublabel": "Needs redesign",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "size",
+      "to": "ipcalc"
+    },
+    {
+      "id": "e2",
+      "from": "ipcalc",
+      "to": "growth"
+    },
+    {
+      "id": "e3",
+      "from": "growth",
+      "to": "overlap"
+    },
+    {
+      "id": "e4",
+      "from": "overlap",
+      "to": "cidr",
+      "label": "no overlap",
+      "role": "main"
+    },
+    {
+      "id": "e5",
+      "from": "overlap",
+      "to": "conflict",
+      "label": "overlap found",
+      "role": "error"
+    },
+    {
+      "id": "e6",
+      "from": "conflict",
+      "to": "growth",
+      "label": "pick a new range",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Recommended CIDR by scale",
+      "items": [
+        "Small (1-10 nodes): /24 · 256 IPs · dev and test",
+        "Medium (10-100 nodes): /20 · 4,096 IPs · multi-AZ recommended",
+        "Large (100+ nodes): /16 · 65,536 IPs · multi-AZ required"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Worked IP calculation",
+      "items": [
+        "m5.large: 3 ENIs × 10 IPs per ENI → up to 29 pods",
+        "Required IPs = node count × max pods per node + system reservations",
+        "Split subnets with small public ranges (/24) and larger private ranges (/20-/22)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Common mistakes",
+      "items": [
+        "Sizing the CIDR too small and running out of pod IPs",
+        "Overlapping on-premises or peered ranges, which blocks connectivity later",
+        "Unbalanced subnet sizes per AZ, so scheduling fails in one AZ only"
+      ]
+    }
+  ]
+}
