@@ -1,80 +1,98 @@
 {
-  "schema_version": 1,
-  "diagram_type": "lifecycle",
+  "schema_version": 2,
+  "diagram_type": "workflow",
   "meta": {
     "title": "Alert Lifecycle",
     "output": "en-ops-07-observability-alerts-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "대기 상태"
+        },
+        "backend": {
+          "label": "평가 상태"
+        },
+        "security": {
+          "label": "발생 상태"
+        },
+        "cloud": {
+          "label": "종료 상태"
+        }
+      }
+    },
     "locale": "en"
   },
   "lanes": [
     {
-      "id": "main",
+      "id": "state",
       "label": "알림 상태"
     }
   ],
-  "states": [
+  "mainPath": [
+    "inactive",
+    "pending",
+    "firing",
+    "resolved"
+  ],
+  "nodes": [
     {
       "id": "inactive",
-      "type": "start",
+      "lane": "state",
+      "col": 0,
+      "type": "external",
       "label": "Inactive",
       "sublabel": "condition not met",
-      "lane": "main",
-      "col": 0,
-      "step": "01"
+      "width": 160
     },
     {
       "id": "pending",
-      "type": "waiting",
+      "lane": "state",
+      "col": 1,
+      "type": "backend",
       "label": "Pending",
       "sublabel": "waiting out for",
-      "lane": "main",
-      "col": 1,
-      "step": "02"
+      "width": 165
     },
     {
       "id": "firing",
-      "type": "active",
+      "lane": "state",
+      "col": 2,
+      "type": "security",
       "label": "Firing",
       "sublabel": "sent to Alertmanager",
-      "lane": "main",
-      "col": 2,
-      "step": "03"
+      "width": 175
     },
     {
       "id": "resolved",
-      "type": "success",
+      "lane": "state",
+      "col": 3,
+      "type": "cloud",
       "label": "Resolved",
       "sublabel": "condition cleared",
-      "lane": "main",
-      "col": 3,
-      "step": "04"
+      "width": 160
     }
   ],
-  "transitions": [
+  "edges": [
     {
       "id": "t1",
       "from": "inactive",
       "to": "pending",
-      "label": "met",
-      "labelDy": 54,
-      "labelDx": 14
+      "label": "condition met"
     },
     {
       "id": "t2",
       "from": "pending",
       "to": "firing",
-      "label": "for elapsed",
-      "labelDy": 54
+      "label": "for elapsed"
     },
     {
       "id": "t3",
       "from": "firing",
       "to": "resolved",
-      "label": "cleared",
-      "labelDy": 54,
-      "labelDx": -14
+      "label": "condition cleared"
     },
     {
       "id": "t4",
@@ -82,14 +100,15 @@
       "to": "inactive",
       "label": "cleared early",
       "variant": "dashed",
-      "route": "top-channel"
+      "role": "return"
     },
     {
       "id": "t5",
       "from": "resolved",
       "to": "inactive",
+      "label": "next evaluation",
       "variant": "dashed",
-      "route": "bottom-channel"
+      "role": "return"
     }
   ],
   "cards": [

@@ -1,94 +1,113 @@
 {
-  "schema_version": 1,
-  "diagram_type": "lifecycle",
+  "schema_version": 2,
+  "diagram_type": "workflow",
   "meta": {
     "title": "알림 라이프사이클",
     "output": "ko-ops-07-observability-alerts-1.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "대기 상태"
+        },
+        "backend": {
+          "label": "평가 상태"
+        },
+        "security": {
+          "label": "발생 상태"
+        },
+        "cloud": {
+          "label": "종료 상태"
+        }
+      }
+    }
   },
   "lanes": [
     {
-      "id": "main",
+      "id": "state",
       "label": "알림 상태"
     }
   ],
-  "states": [
+  "mainPath": [
+    "inactive",
+    "pending",
+    "firing",
+    "resolved"
+  ],
+  "nodes": [
     {
       "id": "inactive",
-      "type": "start",
+      "lane": "state",
+      "col": 0,
+      "type": "external",
       "label": "Inactive",
       "sublabel": "조건 미충족",
-      "lane": "main",
-      "col": 0,
-      "step": "01"
+      "width": 160
     },
     {
       "id": "pending",
-      "type": "waiting",
+      "lane": "state",
+      "col": 1,
+      "type": "backend",
       "label": "Pending",
       "sublabel": "for 기간 대기",
-      "lane": "main",
-      "col": 1,
-      "step": "02"
+      "width": 165
     },
     {
       "id": "firing",
-      "type": "active",
+      "lane": "state",
+      "col": 2,
+      "type": "security",
       "label": "Firing",
       "sublabel": "Alertmanager 전송",
-      "lane": "main",
-      "col": 2,
-      "step": "03"
+      "width": 175
     },
     {
       "id": "resolved",
-      "type": "success",
+      "lane": "state",
+      "col": 3,
+      "type": "cloud",
       "label": "Resolved",
       "sublabel": "조건 해소",
-      "lane": "main",
-      "col": 3,
-      "step": "04"
+      "width": 160
     }
   ],
-  "transitions": [
+  "edges": [
     {
       "id": "t1",
       "from": "inactive",
       "to": "pending",
-      "label": "충족",
-      "labelDy": 54,
-      "labelDx": 14
+      "label": "조건 충족"
     },
     {
       "id": "t2",
       "from": "pending",
       "to": "firing",
-      "label": "for 경과",
-      "labelDy": 54
+      "label": "for 기간 경과"
     },
     {
       "id": "t3",
       "from": "firing",
       "to": "resolved",
-      "label": "해소",
-      "labelDy": 54,
-      "labelDx": -14
+      "label": "조건 해소"
     },
     {
       "id": "t4",
       "from": "pending",
       "to": "inactive",
-      "label": "조기 해소",
+      "label": "for 이전 해소",
       "variant": "dashed",
-      "route": "top-channel"
+      "role": "return"
     },
     {
       "id": "t5",
       "from": "resolved",
       "to": "inactive",
+      "label": "다음 평가 주기",
       "variant": "dashed",
-      "route": "bottom-channel"
+      "role": "return"
     }
   ],
   "cards": [
