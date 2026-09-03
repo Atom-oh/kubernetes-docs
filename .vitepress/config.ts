@@ -71,9 +71,13 @@ const config = defineConfig({
             `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${base}" loading="lazy" allowfullscreen></iframe>` +
             `<p class="archmap-embed__caption"><a href="${href}" target="_blank" rel="noopener">${caption}</a></p>` +
             `</div>\n`
-          let start = i
-          // Drop the static PNG paragraph directly above (same diagram) — the
-          // iframe replaces it on the VitePress site.
+          // Tag the static PNG paragraph directly above (same diagram) instead
+          // of dropping it. On wide screens CSS hides it and only the iframe
+          // shows; under 768px the iframe is hidden and this PNG takes over,
+          // because the viewer's toolbar and nodes get clipped at that width
+          // with no way to scroll to them. Keeping the original tokens (rather
+          // than emitting a raw <img>) lets VitePress rewrite the asset path as
+          // usual, and medium-zoom still picks it up for tap-to-zoom.
           const prevInline = tokens[i - 2]
           if (
             i >= 3 &&
@@ -83,10 +87,14 @@ const config = defineConfig({
               (t) => t.type === 'image' && (t.attrGet('src') || '').includes(`${base}.png`)
             )
           ) {
-            start = i - 3
+            const existing = tokens[i - 3].attrGet('class')
+            tokens[i - 3].attrSet(
+              'class',
+              existing ? `${existing} archmap-embed__fallback` : 'archmap-embed__fallback'
+            )
           }
-          tokens.splice(start, i + 3 - start, html)
-          i = start
+          // Replace only the link paragraph; the PNG paragraph above stays.
+          tokens.splice(i, 3, html)
         }
       })
     }
