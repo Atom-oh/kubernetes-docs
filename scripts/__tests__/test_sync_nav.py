@@ -275,5 +275,143 @@ class ReadmeTocTests(SyncNavCase):
         self.assertNotIn(["Table of Contents"], self.translate_calls)
 
 
+class ReadmeIncrementalTests(SyncNavCase):
+    """Issue #179 (networking backfill, score 82): a section whose README ToC
+    block was copied by an earlier backfill never received the pages en
+    gained afterwards -- sync_readme() returned on seeing the first path."""
+    EN = """
+        # Docs
+
+        ## Table of Contents
+
+        ### Networking
+        1. [Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
+        2. [Network Fundamentals](./basics/06-network-fundamentals-part1.md)
+        3. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
+        4. **Calico Deep Dive**
+           - [Calico Introduction](./networking/calico/README.md)
+           - [Part 9: Operations](./networking/calico/09-operations.md) | [Quiz](./quizzes/networking/calico/09-operations-quiz.md)
+           - [Part 10: Upgrades](./networking/calico/10-upgrades.md) | [Quiz](./quizzes/networking/calico/10-upgrades-quiz.md)
+        5. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
+        6. [Cross-Org VPC Connectivity](./networking/05-cross-org-vpc-connectivity.md) | [Quiz](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+        7. [Pod Network Benchmark](./networking/06-pod-network-benchmark.md) | [Quiz](./quizzes/networking/06-pod-network-benchmark-quiz.md)
+
+        ### Service Mesh
+        1. [Istio](./service-mesh/02-istio.md)
+
+        ## License
+
+        MIT
+        """
+    CN = """
+        # 文档
+
+        ## 目录
+
+        ### 网络
+        1. [网络概览](./networking/README.md) | [测验](./quizzes/networking/00-networking-overview-quiz.md)
+        2. [VPC CNI](./networking/01-vpc-cni.md) | [测验](./quizzes/networking/01-vpc-cni-quiz.md)
+        3. **Calico 深入解析**
+           - [Calico 简介](./networking/calico/README.md)
+           - [第 9 部分：运维](./networking/calico/09-operations.md) | [测验](./quizzes/networking/calico/09-operations-quiz.md)
+        4. [Gateway API](./networking/04-gateway-api.md) | [测验](./quizzes/networking/04-gateway-api-quiz.md)
+        5. [仅本地保留的页面](./networking/99-local-only.md)
+
+        ### Service Mesh
+        1. [Istio](./service-mesh/02-istio.md)
+
+        ## 许可证
+
+        MIT
+        """
+    FILES = [
+        "networking/README.md", "quizzes/networking/00-networking-overview-quiz.md",
+        "networking/01-vpc-cni.md", "quizzes/networking/01-vpc-cni-quiz.md",
+        "networking/calico/README.md",
+        "networking/calico/09-operations.md", "quizzes/networking/calico/09-operations-quiz.md",
+        "networking/calico/10-upgrades.md", "quizzes/networking/calico/10-upgrades-quiz.md",
+        "networking/04-gateway-api.md", "quizzes/networking/04-gateway-api-quiz.md",
+        "networking/05-cross-org-vpc-connectivity.md",
+        "quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+        "networking/06-pod-network-benchmark.md",  # its quiz is NOT translated yet
+        "networking/99-local-only.md",
+        "service-mesh/02-istio.md",
+    ]
+
+    def run_networking(self, heading_map=None):
+        self.make_repo("", "", self.FILES, en_readme=self.EN, dst_readme=self.CN)
+        sync_nav.sync_readme("networking", "cn", heading_map if heading_map is not None else {})
+        return self.dst(name="README.md")
+
+    def test_new_pages_are_spliced_in_en_order_and_renumbered(self):
+        out = self.run_networking()
+        self.assertIn(_dedent("""
+            ### 网络
+            1. [网络概览](./networking/README.md) | [测验](./quizzes/networking/00-networking-overview-quiz.md)
+            2. [VPC CNI](./networking/01-vpc-cni.md) | [测验](./quizzes/networking/01-vpc-cni-quiz.md)
+            3. **Calico 深入解析**
+               - [Calico 简介](./networking/calico/README.md)
+               - [第 9 部分：运维](./networking/calico/09-operations.md) | [测验](./quizzes/networking/calico/09-operations-quiz.md)
+               - [Part 10: Upgrades](./networking/calico/10-upgrades.md) | [测验](./quizzes/networking/calico/10-upgrades-quiz.md)
+            4. [Gateway API](./networking/04-gateway-api.md) | [测验](./quizzes/networking/04-gateway-api-quiz.md)
+            5. [Cross-Org VPC Connectivity](./networking/05-cross-org-vpc-connectivity.md) | [测验](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+            6. [Pod Network Benchmark](./networking/06-pod-network-benchmark.md)
+            7. [仅本地保留的页面](./networking/99-local-only.md)
+
+            ### Service Mesh
+            1. [Istio](./service-mesh/02-istio.md)
+
+            ## 许可证
+            """), out)
+        # untranslated page (no cn/basics/06-...) is not added; nothing duplicated
+        self.assertNotIn("06-network-fundamentals", out)
+        self.assertEqual(out.count("### 网络"), 1)
+        self.assertEqual(out.count("networking/01-vpc-cni.md"), 1)
+        self.assertEqual(out.count("**Calico"), 1)
+        # spliced lines reuse the block's own quiz label, not en's "Quiz"
+        self.assertNotIn("[Quiz](", out)
+
+    def test_only_new_titles_are_translated(self):
+        self.run_networking()
+        self.assertEqual(self.translate_calls,
+                         [["Part 10: Upgrades", "Cross-Org VPC Connectivity", "Pod Network Benchmark"]])
+
+    def test_rerun_is_idempotent_and_silent(self):
+        first = self.run_networking()
+        self.translate_calls.clear()
+        sync_nav.sync_readme("networking", "cn", {})
+        self.assertEqual(self.dst(name="README.md"), first)
+        self.assertEqual(self.translate_calls, [])
+
+    def test_new_group_with_children_lands_after_its_predecessor(self):
+        pad = " " * 8  # self.EN is dedented by make_repo; keep the inserted lines aligned
+        en = self.EN.replace(
+            f"{pad}5. [Gateway API]",
+            f"{pad}5. **Cilium Deep Dive**\n{pad}   - [Cilium Introduction](./networking/cilium/README.md)\n"
+            f"{pad}   - [Part 1: Introduction](./networking/cilium/01-introduction.md)\n{pad}6. [Gateway API]")
+        self.make_repo("", "", self.FILES + ["networking/cilium/README.md", "networking/cilium/01-introduction.md"],
+                       en_readme=en, dst_readme=self.CN)
+        sync_nav.sync_readme("networking", "cn", {})
+        out = self.dst(name="README.md")
+        self.assertIn(_dedent("""
+               - [Part 10: Upgrades](./networking/calico/10-upgrades.md) | [测验](./quizzes/networking/calico/10-upgrades-quiz.md)
+            4. **Cilium Deep Dive**
+               - [Cilium Introduction](./networking/cilium/README.md)
+               - [Part 1: Introduction](./networking/cilium/01-introduction.md)
+            5. [Gateway API](./networking/04-gateway-api.md) | [测验](./quizzes/networking/04-gateway-api-quiz.md)
+            """), out)
+        self.assertEqual(out.count("**Cilium Deep Dive**"), 1)
+
+    def test_first_ever_sync_still_copies_whole_block(self):
+        cn = self.CN.replace("### 网络", "### 占位").replace("networking/", "placeholder/")
+        self.make_repo("", "", self.FILES, en_readme=self.EN, dst_readme=cn)
+        heading_map = {"Networking": {"cn": "网络"}}
+        sync_nav.sync_readme("networking", "cn", heading_map)
+        out = self.dst(name="README.md")
+        self.assertIn("### 网络\n1. [Networking Overview](./networking/README.md)", out)
+        self.assertIn("7. [Pod Network Benchmark](./networking/06-pod-network-benchmark.md)\n", out)
+        self.assertNotIn("06-network-fundamentals", out)
+
+
 if __name__ == "__main__":
     unittest.main()

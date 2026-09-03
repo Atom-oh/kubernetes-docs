@@ -575,6 +575,145 @@ def _filter_readme_line(line, lang):
     return line
 
 
+def _primary_path(line):
+    """Target of a README ToC line's first link (None for a blank line or a
+    link-less group label such as '4. **Cilium Deep Dive**')."""
+    m = re.search(r"\]\(([^)]+)\)", line)
+    return m.group(1) if m else None
+
+
+def _translate_readme_lines(lines, lang):
+    """Translate the link titles in README ToC lines. Bare "Quiz"/"Lab"
+    labels stay English for consistency with SUMMARY.md's untranslated nav
+    chrome; only real titles go through kiro-cli."""
+    titles = re.findall(r"\[([^\]]+)\]\([^)]+\)", "\n".join(lines))
+    real_titles = [t for t in titles if t not in ("Quiz", "Lab")]
+    translated_map = dict(zip(real_titles, translate_titles(real_titles, lang))) if real_titles else {}
+
+    def sub_title(m):
+        t = m.group(1)
+        return f"[{translated_map.get(t, t)}]({m.group(2)})"
+
+    return [re.sub(r"\[([^\]]+)\]\(([^)]+)\)", sub_title, line) for line in lines]
+
+
+def _renumber_readme_block(lines):
+    """Rewrite the 'N. ' prefixes of a ToC block's top-level items to 1..n in
+    document order. A block whose en counterpart lost or gained items (a
+    dropped untranslated page, a spliced-in new one) would otherwise read
+    '7.' then '9.'; CommonMark renders the list correctly either way, but
+    the quality gate reads the source."""
+    n = 0
+    out = []
+    for ln in lines:
+        m = re.match(r"^(\d+)\. ", ln)
+        if m:
+            n += 1
+            ln = f"{n}. " + ln[m.end():]
+        out.append(ln)
+    return out
+
+
+def _block_chrome_labels(block):
+    """-> {'Quiz': <label>, 'Lab': <label>} for the labels the locale block
+    already uses on its quizzes/ and labs/ links (most common wins), omitting
+    a key when the block has no such link."""
+    counts = {"Quiz": {}, "Lab": {}}
+    for ln in block:
+        for label, path in re.findall(r"\[([^\]]+)\]\(([^)]+)\)", ln):
+            key = "Quiz" if "/quizzes/" in path else "Lab" if "/labs/" in path else None
+            if key:
+                counts[key][label] = counts[key].get(label, 0) + 1
+    return {k: max(v, key=v.get) for k, v in counts.items() if v}
+
+
+def _splice_readme_block(body, dst_text, lang):
+    """Incremental README sync (issue #179, score 82: 'the diff adds no
+    README.md nav entries in any of the three languages').
+
+    The section's ToC block already exists in the locale -- an earlier
+    backfill copied it whole -- so sync_readme() used to return as soon as it
+    saw the block's first path, and pages en gained afterwards (networking/05,
+    06) never reached cn/jp/es README.md even though SUMMARY.md got them.
+
+    Splice in every en body line whose primary link the locale block lacks,
+    each right after the locale line of its nearest preceding en sibling (at
+    the top of the block when none precedes it), so en's order and the
+    '   - ' nesting of sub-items under their parent survive. A link-less
+    group label ('4. **Calico Deep Dive**') is new only when its first linked
+    child is new; an existing one is never re-emitted. Lines the locale has
+    that en no longer lists are left alone. Only the new lines' titles are
+    translated. Top-level items are renumbered afterwards."""
+    body_paths = [p for p in (_primary_path(ln) for ln in body) if p]
+    dst_lines = dst_text.splitlines()
+    anchor = next(i for i, ln in enumerate(dst_lines) if f"]({body_paths[0]})" in ln)
+    start = anchor
+    while start > 0 and not dst_lines[start].startswith("### "):
+        start -= 1
+    if not dst_lines[start].startswith("### "):
+        print(f"::notice::sync-nav: README line {anchor + 1} ({lang}) is not under a '### ' "
+              f"ToC heading; leaving README.md unchanged", file=sys.stderr)
+        return dst_text
+    end = start + 1
+    while end < len(dst_lines) and not dst_lines[end].startswith(("### ", "## ")):
+        end += 1
+    # Trailing blank lines are the separator before the next heading, not
+    # part of the block -- keep them where they are.
+    block_end = end
+    while block_end > start + 1 and not dst_lines[block_end - 1].strip():
+        block_end -= 1
+    block = dst_lines[start + 1:block_end]
+
+    present = set()
+    for ln in block:
+        present.update(re.findall(r"\]\(([^)]+)\)", ln))
+
+    def first_child_path(i):
+        for ln in body[i + 1:]:
+            p = _primary_path(ln)
+            if p:
+                return p
+        return None
+
+    items = [ln for ln in body if ln.strip()]
+    is_new = []
+    for i, ln in enumerate(body):
+        if not ln.strip():
+            continue
+        p = _primary_path(ln)
+        if p is None:
+            child = first_child_path(i)
+            is_new.append(child is not None and child not in present)
+        else:
+            is_new.append(p not in present)
+    new_lines = [ln for ln, new in zip(items, is_new) if new]
+    if not new_lines:
+        return dst_text
+    translated_lines = _translate_readme_lines(new_lines, lang)
+    # The locale's earlier blocks label the quiz/lab links in their own
+    # language ('测验', 'クイズ', 'Cuestionario'); a spliced line saying
+    # '[Quiz]' between them would be the one odd entry in the block.
+    chrome = _block_chrome_labels(block)
+    for en_label, dst_label in chrome.items():
+        translated_lines = [ln.replace(f"[{en_label}](", f"[{dst_label}](") for ln in translated_lines]
+    translated = dict(zip(new_lines, translated_lines))
+
+    prev = None  # index in `block` of the last en line located or inserted
+    for ln, new in zip(items, is_new):
+        p = _primary_path(ln)
+        if not new:
+            if p is not None:
+                prev = next(i for i, d in enumerate(block) if f"]({p})" in d)
+            continue
+        insert_at = 0 if prev is None else prev + 1
+        block.insert(insert_at, translated[ln])
+        prev = insert_at
+    block = _renumber_readme_block(block)
+
+    new_dst = dst_lines[:start + 1] + block + dst_lines[block_end:]
+    return "\n".join(new_dst) + ("\n" if dst_text.endswith("\n") else "")
+
+
 def sync_readme(section, lang, heading_map):
     en_path = REPO_ROOT / "en" / "README.md"
     dst_path = REPO_ROOT / lang / "README.md"
@@ -612,23 +751,6 @@ def sync_readme(section, lang, heading_map):
             filtered_body.append(kept)
     body = filtered_body
 
-    titles = re.findall(r"\[([^\]]+)\]\([^)]+\)", "\n".join(body))
-    # Skip bare "Quiz"/"Lab" labels -- keep those in English for consistency
-    # with SUMMARY.md's untranslated nav chrome, only translate real titles.
-    real_titles = [t for t in titles if t not in ("Quiz", "Lab")]
-    translated_map = dict(zip(real_titles, translate_titles(real_titles, lang)))
-
-    def sub_title(m):
-        t = m.group(1)
-        return f"[{translated_map.get(t, t)}]({m.group(2)})"
-
-    translated_body = [re.sub(r"\[([^\]]+)\]\(([^)]+)\)", sub_title, line) for line in body]
-
-    dst_heading = heading_map.get(heading_text, {}).get(lang)
-    if dst_heading is None:
-        dst_heading = translate_titles([heading_text], lang)[0]
-        heading_map.setdefault(heading_text, {})[lang] = dst_heading
-
     dst_path_text = dst_path.read_text(encoding="utf-8")
 
     # Match "already synced" by a body link path, not the heading text.
@@ -641,9 +763,22 @@ def sync_readme(section, lang, heading_map):
     # sync_readme() never recognized already-scaffolded content and kept
     # duplicating it at the file tail on every run -- confirmed live across
     # cn/jp/es for 7-10 sections each.
-    body_paths = re.findall(r"\]\(([^)]+)\)", "\n".join(body))
-    if body_paths and body_paths[0] in dst_path_text:
-        return  # already synced for this lang
+    body_paths = [p for p in (_primary_path(ln) for ln in body) if p]
+    if body_paths and f"]({body_paths[0]})" in dst_path_text:
+        # Synced before: add only what en gained since (issue #179), and
+        # translate only those lines -- this used to translate the whole
+        # block and then return without writing anything.
+        spliced = _splice_readme_block(body, dst_path_text, lang)
+        if spliced != dst_path_text:
+            dst_path.write_text(spliced, encoding="utf-8")
+        return
+
+    translated_body = _translate_readme_lines(body, lang)
+
+    dst_heading = heading_map.get(heading_text, {}).get(lang)
+    if dst_heading is None:
+        dst_heading = translate_titles([heading_text], lang)[0]
+        heading_map.setdefault(heading_text, {})[lang] = dst_heading
 
     # Insert new blocks right before the heading that follows "## Table of
     # Contents" (mirroring sync_summary's tail-of-block insertion) so a
