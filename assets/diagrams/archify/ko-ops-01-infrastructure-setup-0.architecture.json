@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Terraform 3계층 데이터 흐름",
+    "output": "ko-ops-01-infrastructure-setup-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      580
+    ]
+  },
+  "components": [
+    {
+      "id": "shared",
+      "type": "database",
+      "label": "00-shared",
+      "sublabel": "S3 백엔드 · use_lockfile = true",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        260,
+        96
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "01-network",
+      "sublabel": "network/terraform.tfstate",
+      "pos": [
+        350,
+        280
+      ],
+      "size": [
+        260,
+        96
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "02-cluster",
+      "sublabel": "cluster/terraform.tfstate",
+      "pos": [
+        660,
+        280
+      ],
+      "size": [
+        260,
+        96
+      ]
+    },
+    {
+      "id": "platform",
+      "type": "cloud",
+      "label": "03-platform",
+      "sublabel": "platform/terraform.tfstate",
+      "pos": [
+        970,
+        280
+      ],
+      "size": [
+        260,
+        96
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s-n",
+      "from": "shared",
+      "to": "network",
+      "label": "백엔드"
+    },
+    {
+      "id": "n-c",
+      "from": "network",
+      "to": "cluster",
+      "label": "참조"
+    },
+    {
+      "id": "c-p",
+      "from": "cluster",
+      "to": "platform",
+      "label": "참조"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "01-network 출력",
+      "items": [
+        "vpc_id, private_subnet_ids, public_subnet_ids",
+        "blue_zone_subnets / green_zone_subnets",
+        "cluster_names — 아래 계층이 참조하는 이름 규칙"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "02-cluster 입출력",
+      "items": [
+        "입력(01-network): vpc_id, subnet_ids, cluster_names",
+        "출력: blue_cluster_name, blue_cluster_endpoint, blue_oidc_provider_arn",
+        "출력: green_cluster_name, green_cluster_endpoint, green_oidc_provider_arn"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "03-platform 입력과 생성물",
+      "items": [
+        "입력(01-network + 02-cluster): vpc_id, cluster_names, oidc_provider_arns",
+        "생성: Pod Identity 연결, EKS 애드온, 액세스 엔트리",
+        "적용 순서는 00 → 01 → 02 → 03이고 삭제는 역순으로 진행한다"
+      ]
+    }
+  ]
+}

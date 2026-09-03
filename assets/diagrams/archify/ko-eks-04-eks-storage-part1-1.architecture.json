@@ -1,0 +1,40 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "Amazon EKS 스토리지 옵션", "output": "ko-eks-04-eks-storage-part1-1.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1160, 780] },
+  "components": [
+    { "id": "ebs", "type": "database", "label": "Amazon EBS", "sublabel": "블록 · 단일 AZ", "pos": [40, 120], "size": [200, 70] },
+    { "id": "ebscsi", "type": "backend", "label": "EBS CSI 드라이버", "sublabel": "ebs.csi.aws.com", "pos": [400, 120], "size": [220, 70] },
+    { "id": "ebsmode", "type": "messagebus", "label": "RWO · RWOP", "sublabel": "단일 노드 전용", "pos": [780, 120], "size": [200, 70] },
+    { "id": "efs", "type": "database", "label": "Amazon EFS", "sublabel": "NFS · 리전 공유", "pos": [40, 350], "size": [200, 70] },
+    { "id": "efscsi", "type": "backend", "label": "EFS CSI 드라이버", "sublabel": "efs.csi.aws.com", "pos": [400, 350], "size": [220, 70] },
+    { "id": "efsmode", "type": "messagebus", "label": "RWO · ROX · RWX", "sublabel": "다중 노드 공유", "pos": [780, 350], "size": [210, 70] },
+    { "id": "fsx", "type": "database", "label": "FSx for Lustre", "sublabel": "고성능 병렬 파일", "pos": [40, 580], "size": [200, 70] },
+    { "id": "fsxcsi", "type": "backend", "label": "FSx CSI 드라이버", "sublabel": "fsx.csi.aws.com", "pos": [400, 580], "size": [220, 70] },
+    { "id": "fsxmode", "type": "messagebus", "label": "RWO · ROX · RWX", "sublabel": "HPC · 머신러닝", "pos": [780, 580], "size": [210, 70] }
+  ],
+  "connections": [
+    { "id": "ebs-csi", "from": "ebs", "to": "ebscsi", "label": "프로비저닝" },
+    { "id": "ebs-mode", "from": "ebscsi", "to": "ebsmode", "label": "액세스 모드" },
+    { "id": "efs-csi", "from": "efs", "to": "efscsi", "label": "프로비저닝" },
+    { "id": "efs-mode", "from": "efscsi", "to": "efsmode", "label": "액세스 모드" },
+    { "id": "fsx-csi", "from": "fsx", "to": "fsxcsi", "label": "프로비저닝" },
+    { "id": "fsx-mode", "from": "fsxcsi", "to": "fsxmode", "label": "액세스 모드" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Amazon EBS", "items": [
+      "단일 가용 영역에 묶이는 블록 스토리지로 하나의 노드에만 연결된다",
+      "gp3 기준으로 IOPS와 처리량을 볼륨 크기와 독립적으로 설정할 수 있다",
+      "데이터베이스처럼 지연이 중요한 단일 쓰기 워크로드에 적합하다"
+    ]},
+    { "dot": "emerald", "title": "Amazon EFS", "items": [
+      "리전 단위 NFS 파일 시스템으로 여러 AZ의 여러 파드가 동시에 쓴다",
+      "RWX가 필요한 공유 콘텐츠, 로그 수집, 사용자 업로드에 적합하다",
+      "탄력적 처리량 모드를 쓰면 워크로드에 따라 처리량이 자동 조정된다"
+    ]},
+    { "dot": "amber", "title": "FSx for Lustre", "items": [
+      "수백 GB/s 수준 처리량을 내는 고성능 병렬 파일 시스템이다",
+      "S3와 연동해 데이터 리포지토리로 쓸 수 있어 학습 데이터셋에 유리하다",
+      "HPC 시뮬레이션과 대규모 머신러닝 학습에 사용한다"
+    ]}
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zonal Cell 아키텍처와 가중치 트래픽 전환",
+    "output": "ko-ops-15-zonal-operations-guide-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      800
+    ]
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "HTTPS 요청",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        170,
+        76
+      ]
+    },
+    {
+      "id": "r53",
+      "type": "cloud",
+      "label": "Route 53 + ARC",
+      "sublabel": "가중치 레코드",
+      "pos": [
+        250,
+        340
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "tga",
+      "type": "cloud",
+      "label": "ALB/NLB + Target Group",
+      "sublabel": "클러스터 외부에서 IaC로 생성",
+      "pos": [
+        580,
+        110
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "cla",
+      "type": "backend",
+      "label": "EKS Zonal Cluster",
+      "sublabel": "AZ-a 전용",
+      "pos": [
+        950,
+        110
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "tgc",
+      "type": "cloud",
+      "label": "ALB/NLB + Target Group",
+      "sublabel": "클러스터 외부에서 IaC로 생성",
+      "pos": [
+        580,
+        570
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "clc",
+      "type": "backend",
+      "label": "EKS Zonal Cluster",
+      "sublabel": "AZ-c 전용",
+      "pos": [
+        950,
+        570
+      ],
+      "size": [
+        230,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC (ap-northeast-2)",
+      "wraps": [
+        "tga",
+        "cla",
+        "tgc",
+        "clc"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "AZ-a (Cell A, weight 80%)",
+      "wraps": [
+        "tga",
+        "cla"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "AZ-c (Cell C, weight 20%)",
+      "wraps": [
+        "tgc",
+        "clc"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "u-r53",
+      "from": "users",
+      "to": "r53",
+      "label": "HTTPS",
+      "labelDy": 60
+    },
+    {
+      "id": "r53-tga",
+      "from": "r53",
+      "to": "tga",
+      "label": "weight 80%"
+    },
+    {
+      "id": "r53-tgc",
+      "from": "r53",
+      "to": "tgc",
+      "label": "weight 20%"
+    },
+    {
+      "id": "tga-cla",
+      "from": "tga",
+      "to": "cla",
+      "label": "TargetGroupBinding"
+    },
+    {
+      "id": "tgc-clc",
+      "from": "tgc",
+      "to": "clc",
+      "label": "TargetGroupBinding"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "로드밸런서를 클러스터 밖에 두는 이유",
+      "items": [
+        "NLB/ALB와 Target Group을 Terraform 등 IaC로 클러스터 외부에 만든다",
+        "클러스터를 지우거나 재생성해도 로드밸런서와 DNS 이름이 그대로 남는다",
+        "각 zonal 클러스터의 Service를 TargetGroupBinding CRD로 해당 Target Group에 붙인다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "가중치 전환",
+      "items": [
+        "Route 53 가중치 레코드로 셀 사이 트래픽 비율을 조정한다",
+        "새 버전을 한 셀에만 올리고 가중치를 20% → 50% → 100%로 옮긴다",
+        "문제가 보이면 가중치를 0으로 내려 해당 셀을 즉시 격리한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "셀 격리 원칙",
+      "items": [
+        "셀은 AZ 경계와 일치시켜 장애 영향 범위를 AZ 하나로 묶는다",
+        "셀 간 공유 자원을 최소화해야 격리가 실제로 성립한다",
+        "Application Recovery Controller(ARC)로 존 시프트를 자동화할 수 있다"
+      ]
+    }
+  ]
+}

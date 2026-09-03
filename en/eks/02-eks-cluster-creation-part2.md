@@ -6,7 +6,9 @@ eksctl is the simplest way to create and manage EKS clusters. eksctl uses CloudF
 
 The following diagram shows the EKS cluster creation process using eksctl:
 
-![eksctl Cluster Creation Process](../.gitbook/assets/eksctl_cluster_creation_process.png)
+![Diagram of the eksctl cluster creation process, building VPC, IAM, control plane, and node group in order through CloudFormation stacks.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-0.html)
 
 ### Basic Cluster Creation
 
@@ -108,7 +110,9 @@ eksctl create cluster -f cluster.yaml
 
 The following diagram shows the managed node group architecture for an EKS cluster:
 
-![EKS Managed Node Group Architecture](../.gitbook/assets/eks_managed_node_group_detailed.png)
+![Architecture diagram of the control plane managing a node group whose Auto Scaling group launches EC2 instances that run pods.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-1.html)
 
 To add a managed node group to an existing cluster, run the following command:
 
@@ -157,7 +161,9 @@ eksctl create nodegroup -f nodegroup.yaml
 
 The following diagram shows the EKS Fargate profile architecture:
 
-![EKS Fargate Profile Architecture](../.gitbook/assets/eks_fargate_profile_architecture.png)
+![Architecture diagram showing pods that match a Fargate profile's namespace and label selectors being placed on dedicated microVMs.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-2.html)
 
 To create a Fargate profile, run the following command:
 
@@ -218,7 +224,9 @@ eksctl delete cluster --name=my-cluster --region=us-west-2
 
 The following diagram shows the overall lifecycle management process for an EKS cluster:
 
-![EKS Cluster Lifecycle Management](../.gitbook/assets/eks_cluster_lifecycle_management.png)
+![EKS cluster lifecycle diagram running from creation and configuration through version updates to deletion.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-3.html)
 
 ## Quiz
 

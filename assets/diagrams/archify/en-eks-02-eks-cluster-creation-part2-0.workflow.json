@@ -1,0 +1,163 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eksctl Cluster Creation Process",
+    "output": "en-eks-02-eks-cluster-creation-part2-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "사용자"
+        },
+        "cloud": {
+          "label": "AWS 리소스"
+        },
+        "security": {
+          "label": "권한"
+        },
+        "backend": {
+          "label": "노드"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "cli",
+      "label": "eksctl 실행"
+    },
+    {
+      "id": "aws",
+      "label": "AWS 리소스 생성"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "cfn",
+    "vpc",
+    "iam",
+    "cp",
+    "ng"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "cli",
+      "col": 0,
+      "type": "external",
+      "label": "User",
+      "sublabel": "eksctl create",
+      "width": 150
+    },
+    {
+      "id": "cfn",
+      "lane": "cli",
+      "col": 1,
+      "type": "cloud",
+      "label": "CloudFormation",
+      "sublabel": "Creates stacks",
+      "width": 155
+    },
+    {
+      "id": "vpc",
+      "lane": "aws",
+      "col": 2,
+      "type": "cloud",
+      "label": "VPC · subnets",
+      "sublabel": "Network",
+      "width": 150
+    },
+    {
+      "id": "iam",
+      "lane": "aws",
+      "col": 3,
+      "type": "security",
+      "label": "IAM · security groups",
+      "sublabel": "Roles · rules",
+      "width": 155
+    },
+    {
+      "id": "cp",
+      "lane": "aws",
+      "col": 4,
+      "type": "cloud",
+      "label": "Control plane",
+      "sublabel": "API endpoint",
+      "width": 155
+    },
+    {
+      "id": "ng",
+      "lane": "aws",
+      "col": 5,
+      "type": "backend",
+      "label": "Node group",
+      "sublabel": "EC2 · kubeconfig",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "user",
+      "to": "cfn",
+      "label": "1 run"
+    },
+    {
+      "id": "e2",
+      "from": "cfn",
+      "to": "vpc",
+      "label": "2 network"
+    },
+    {
+      "id": "e3",
+      "from": "vpc",
+      "to": "iam",
+      "label": "3 permissions"
+    },
+    {
+      "id": "e4",
+      "from": "iam",
+      "to": "cp",
+      "label": "4 cluster"
+    },
+    {
+      "id": "e5",
+      "from": "cp",
+      "to": "ng",
+      "label": "5 nodes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Creation order",
+      "items": [
+        "eksctl creates everything as CloudFormation stacks, which makes tracking and rollback possible",
+        "Order: VPC and subnets → IAM roles and security groups → control plane → node group",
+        "It refreshes kubeconfig at the end, so kubectl works immediately"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Timing and checks",
+      "items": [
+        "The control plane usually takes about 10 minutes; with the node group, 15-20 minutes",
+        "aws cloudformation describe-stack-events shows where it stalled",
+        "eksctl utils write-kubeconfig regenerates the kubeconfig"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Using a config file",
+      "items": [
+        "eksctl create cluster -f cluster.yaml keeps the definition declarative and reproducible",
+        "A config file covers add-ons, IRSA, and logging in one place, unlike command-line flags",
+        "Keep the config file in Git so the cluster definition lives as code"
+      ]
+    }
+  ]
+}

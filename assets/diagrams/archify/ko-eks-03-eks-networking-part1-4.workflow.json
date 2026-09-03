@@ -1,0 +1,168 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "VPC CIDR 계획 절차",
+    "output": "ko-eks-03-eks-networking-part1-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "워크로드"
+        },
+        "cloud": {
+          "label": "AWS 서비스"
+        },
+        "external": {
+          "label": "외부"
+        },
+        "security": {
+          "label": "보안 게이트"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "plan",
+      "label": "CIDR 계획"
+    },
+    {
+      "id": "risk",
+      "label": "중복 검사",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "size",
+    "ipcalc",
+    "growth",
+    "overlap",
+    "cidr"
+  ],
+  "nodes": [
+    {
+      "id": "size",
+      "lane": "plan",
+      "col": 0,
+      "type": "external",
+      "label": "클러스터 규모",
+      "sublabel": "노드 수 산정",
+      "width": 145
+    },
+    {
+      "id": "ipcalc",
+      "lane": "plan",
+      "col": 1,
+      "type": "backend",
+      "label": "IP 수요 계산",
+      "sublabel": "노드 × 최대 파드",
+      "width": 150
+    },
+    {
+      "id": "growth",
+      "lane": "plan",
+      "col": 2,
+      "type": "backend",
+      "label": "확장 여유 확보",
+      "sublabel": "20~30% 예약",
+      "width": 150
+    },
+    {
+      "id": "overlap",
+      "lane": "plan",
+      "col": 3,
+      "type": "security",
+      "label": "기존 네트워크 확인",
+      "sublabel": "온프레미스 · 피어링",
+      "width": 165
+    },
+    {
+      "id": "cidr",
+      "lane": "plan",
+      "col": 5,
+      "type": "cloud",
+      "label": "VPC CIDR 확정",
+      "sublabel": "RFC 1918 사설 대역",
+      "width": 160
+    },
+    {
+      "id": "conflict",
+      "lane": "risk",
+      "col": 4,
+      "type": "security",
+      "label": "대역 중복",
+      "sublabel": "재설계 필요",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "size",
+      "to": "ipcalc"
+    },
+    {
+      "id": "e2",
+      "from": "ipcalc",
+      "to": "growth"
+    },
+    {
+      "id": "e3",
+      "from": "growth",
+      "to": "overlap"
+    },
+    {
+      "id": "e4",
+      "from": "overlap",
+      "to": "cidr",
+      "label": "중복 없음",
+      "role": "main"
+    },
+    {
+      "id": "e5",
+      "from": "overlap",
+      "to": "conflict",
+      "label": "중복 발견",
+      "role": "error"
+    },
+    {
+      "id": "e6",
+      "from": "conflict",
+      "to": "growth",
+      "label": "대역 재선정",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "규모별 권장 CIDR",
+      "items": [
+        "소규모(1~10 노드): /24 · 256개 IP · 개발·테스트",
+        "중간 규모(10~100 노드): /20 · 4,096개 IP · 다중 AZ 권장",
+        "대규모(100+ 노드): /16 · 65,536개 IP · 다중 AZ 필수"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "IP 수요 계산 예시",
+      "items": [
+        "m5.large: 최대 ENI 3개 × ENI당 IP 10개 → 파드 최대 29개",
+        "필요 IP = 노드 수 × 노드당 최대 파드 수 + 시스템 예약분",
+        "서브넷 분할은 퍼블릭을 작게(/24), 프라이빗을 크게(/20~/22) 잡는다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "흔한 실수",
+      "items": [
+        "CIDR을 너무 작게 잡아 파드 IP가 고갈된다",
+        "온프레미스·피어링 대역과 중복되어 나중에 연결할 수 없게 된다",
+        "AZ별 서브넷 크기가 불균형해 특정 AZ에서만 스케줄링이 실패한다"
+      ]
+    }
+  ]
+}

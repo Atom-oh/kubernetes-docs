@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Troubleshooting Services and Load Balancers",
+    "output": "en-eks-03-eks-networking-part3-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      820
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "External request",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "messagebus",
+      "label": "Service",
+      "sublabel": "ClusterIP · selector",
+      "pos": [
+        310,
+        130
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "ep",
+      "type": "backend",
+      "label": "EndpointSlice",
+      "sublabel": "Ready pod list",
+      "pos": [
+        600,
+        130
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Pods 1 · 2",
+      "sublabel": "readinessProbe passing",
+      "pos": [
+        900,
+        130
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "lbc",
+      "type": "security",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "Watches Ingress · Service",
+      "pos": [
+        40,
+        620
+      ],
+      "size": [
+        260,
+        70
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "ALB / NLB",
+      "sublabel": "Listeners · scheme",
+      "pos": [
+        400,
+        620
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "tg",
+      "type": "cloud",
+      "label": "Target Group",
+      "sublabel": "Health checks",
+      "pos": [
+        680,
+        620
+      ],
+      "size": [
+        180,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "svc",
+        "ep",
+        "pods",
+        "lbc"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-svc",
+      "from": "client",
+      "to": "svc",
+      "label": "Request",
+      "labelDy": -20
+    },
+    {
+      "id": "svc-ep",
+      "from": "svc",
+      "to": "ep",
+      "label": "Selector match"
+    },
+    {
+      "id": "ep-pods",
+      "from": "ep",
+      "to": "pods",
+      "label": "Ready pods"
+    },
+    {
+      "id": "lbc-lb",
+      "from": "lbc",
+      "to": "lb",
+      "label": "Creates LB"
+    },
+    {
+      "id": "lb-tg",
+      "from": "lb",
+      "to": "tg",
+      "label": "Listener rules"
+    },
+    {
+      "id": "tg-pods",
+      "from": "tg",
+      "to": "pods",
+      "label": "Registers IP targets"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Service connection fails",
+      "items": [
+        "If the Service selector and pod labels disagree, the EndpointSlice is empty and connections fail",
+        "kubectl get endpointslices confirms whether the target pods are actually registered",
+        "A failing readinessProbe removes the pod from the endpoints"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Load balancer creation fails",
+      "items": [
+        "Missing subnet tags are the most common cause (role/elb, role/internal-elb)",
+        "Check the controller's IAM permissions and its service account (IRSA) setup",
+        "The events on kubectl describe ingress or service carry the failure reason"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Health checks fail",
+      "items": [
+        "Confirm the target group health check path and port match the application",
+        "Node and pod security groups must allow health check traffic from the load balancer",
+        "In IP target mode you also have to check the pod security groups"
+      ]
+    }
+  ]
+}

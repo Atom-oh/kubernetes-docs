@@ -10,7 +10,9 @@
 
 ## 아키텍처 개요
 
-![Infrastructure Architecture](../../.gitbook/assets/architecture-overview.png)
+![관리 클러스터의 GitOps와 관측 스택, 서비스 클러스터의 MSA 애플리케이션, AWS 관리형 관측 백엔드로 이어지는 실습 환경 아키텍처.](../../.gitbook/assets/ko-labs-observability-overview-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-0.html)
 
 ![관리형 클러스터의 ArgoCD가 GitOps로 서비스 클러스터(Karpenter, MSA Apps)에 배포하고, 관리형 클러스터의 관측성 스택과 서비스 클러스터의 앱이 각각 AWS 관리형 관측성 서비스(AMP·AMG·OpenSearch)와 데이터·메시징 서비스(Aurora·SQS·SNS·MWAA)를 사용하는 실습 인프라 구조를 보여준다.](../../../assets/diagrams/rendered/ko-labs-observability-01-infrastructure-setup-lab-0.svg)
 

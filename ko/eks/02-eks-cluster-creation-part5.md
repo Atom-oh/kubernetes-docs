@@ -6,7 +6,9 @@ EKS 클러스터를 생성한 후에는 클러스터에 액세스하기 위한 �
 
 ### 클러스터 액세스 구성 프로세스
 
-![EKS 클러스터 액세스 구성 프로세스](../.gitbook/assets/eks_cluster_access_configuration.png)
+![kubeconfig 구성과 IAM 주체 선택, 액세스 엔트리 생성, RBAC 구성과 바인딩을 거쳐 액세스를 테스트하는 흐름 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part5-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part5-0.html)
 
 ### kubeconfig 구성
 
@@ -24,7 +26,9 @@ aws eks update-kubeconfig \
 
 기본적으로 EKS 클러스터를 생성한 IAM 엔터티(사용자 또는 역할)만 클러스터에 액세스할 수 있습니다. 다른 IAM 사용자 또는 역할에 클러스터 액세스 권한을 부여하는 방법에는 두 가지가 있습니다: 전통적인 aws-auth ConfigMap 방식과 새로운 EKS Access Entry 방식입니다.
 
-![EKS IAM 액세스 방법 비교](../.gitbook/assets/eks_iam_access_methods.png)
+![IAM 주체가 EKS 액세스 엔트리 또는 aws-auth ConfigMap을 통해 쿠버네티스 API에 매핑되는 두 방식을 비교한 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part5-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part5-1.html)
 
 #### 방법 1: EKS Access Entry (권장)
 
@@ -180,7 +184,9 @@ EKS 클러스터를 생성한 후에는 클러스터가 올바르게 작동하�
 
 ### 클러스터 검증 프로세스
 
-![EKS 클러스터 검증 프로세스](../.gitbook/assets/eks_cluster_validation_process.png)
+![노드와 시스템 파드 확인, 테스트 앱 배포와 서비스 노출, 로그 확인 순서로 진행하는 클러스터 검증 프로세스 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part5-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part5-2.html)
 
 ### 노드 확인
 
@@ -274,7 +280,9 @@ EKS 클러스터를 최신 상태로 유지하려면 정기적으로 업그레�
 
 ### 클러스터 업그레이드 프로세스
 
-![EKS 클러스터 업그레이드 프로세스](../.gitbook/assets/eks_cluster_upgrade_process.png)
+![업그레이드 계획과 버전 확인부터 컨트롤 플레인, 노드 그룹, 애드온 업그레이드와 기능 테스트까지 이어지는 프로세스 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part5-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part5-3.html)
 
 ### 컨트롤 플레인 업그레이드
 
@@ -347,7 +355,9 @@ EKS 클러스터가 더 이상 필요하지 않은 경우 삭제하여 비용을
 
 ### 클러스터 삭제 프로세스
 
-![EKS 클러스터 삭제 프로세스](../.gitbook/assets/eks_cluster_deletion_process.png)
+![로드 밸런서와 PVC 정리, 노드 그룹과 Fargate 프로필 삭제를 거쳐 클러스터를 지우고 잔여 리소스를 확인하는 삭제 프로세스 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part5-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part5-4.html)
 
 ### 리소스 정리
 

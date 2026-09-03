@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Remote Pod CIDRs on Hybrid Nodes",
+    "output": "en-eks-hybrid-nodes-02-network-configuration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      820
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Hybrid node 10.80.0.2",
+      "sublabel": "Pod CIDR 10.85.1.0/24 · CNI",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Hybrid node 10.80.0.3",
+      "sublabel": "Pod CIDR 10.85.2.0/24 · CNI",
+      "pos": [
+        410,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "On-prem router",
+      "sublabel": "Routing table",
+      "pos": [
+        230,
+        420
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "On-prem ↔ AWS link · VPC 10.0.0.0/16",
+      "pos": [
+        230,
+        660
+      ],
+      "size": [
+        280,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Remote Node CIDR 10.80.0.0/16 · Remote Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "node1",
+        "node2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-r",
+      "from": "node1",
+      "to": "router",
+      "label": "advertises pod CIDR",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-r",
+      "from": "node2",
+      "to": "router",
+      "label": "advertises pod CIDR",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-gw",
+      "from": "router",
+      "to": "gw",
+      "label": "carries VPC range",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 75
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod CIDR per node",
+      "items": [
+        "Each hybrid node receives a slice of the Remote Pod CIDR",
+        "Node 10.80.0.2 uses 10.85.1.0/24 and node 10.80.0.3 uses 10.85.2.0/24",
+        "The CNI on the node allocates pod IPs from that range (10.85.1.10, 10.85.1.11, and so on)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What the router must know",
+      "items": [
+        "The on-prem router has to know which pod CIDR sits on which node",
+        "Three mechanisms convey that: static routes, BGP, and ARP proxy",
+        "Without it, traffic addressed to a pod IP never arrives"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Toward AWS",
+      "items": [
+        "The gateway owns the route toward the VPC range (10.0.0.0/16)",
+        "In the other direction, the VPC route table needs routes for the remote node and pod ranges",
+        "Pod-to-VPC traffic works only when both directions are routed"
+      ]
+    }
+  ]
+}

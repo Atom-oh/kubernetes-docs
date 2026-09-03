@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Node Placement and Locality Tuning",
+    "output": "en-eks-03-eks-networking-part3-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      780
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "web1",
+      "type": "frontend",
+      "label": "Web server pod",
+      "sublabel": "Node 1",
+      "pos": [
+        160,
+        130
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cache1",
+      "type": "database",
+      "label": "Cache pod",
+      "sublabel": "Node 2",
+      "pos": [
+        160,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "db1",
+      "type": "database",
+      "label": "DB pod (primary)",
+      "sublabel": "Node 2",
+      "pos": [
+        160,
+        590
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "web2",
+      "type": "frontend",
+      "label": "Web server pod",
+      "sublabel": "Node 3",
+      "pos": [
+        740,
+        130
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cache2",
+      "type": "database",
+      "label": "Cache pod",
+      "sublabel": "Node 4",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "db2",
+      "type": "database",
+      "label": "DB pod (replica)",
+      "sublabel": "Node 4",
+      "pos": [
+        740,
+        590
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Availability Zone 1 (us-west-2a)",
+      "wraps": [
+        "web1",
+        "cache1",
+        "db1"
+      ],
+      "pad": 26
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone 2 (us-west-2b)",
+      "wraps": [
+        "web2",
+        "cache2",
+        "db2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "web1-cache1",
+      "from": "web1",
+      "to": "cache1",
+      "label": "High-frequency (intra-AZ)",
+      "labelDy": 86
+    },
+    {
+      "id": "web2-cache2",
+      "from": "web2",
+      "to": "cache2",
+      "label": "High-frequency (intra-AZ)",
+      "labelDy": 86
+    },
+    {
+      "id": "db1-db2",
+      "from": "db1",
+      "to": "db2",
+      "label": "DB replication (cross-AZ)",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod affinity",
+      "items": [
+        "Use podAffinity to co-locate chatty pairs such as web server and cache in one zone",
+        "preferredDuringSchedulingIgnoredDuringExecution + topologyKey: topology.kubernetes.io/zone",
+        "Intra-AZ traffic has lower latency than cross-AZ and no data transfer charge"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Node affinity",
+      "items": [
+        "nodeAffinity on node.kubernetes.io/instance-type pins workloads to the instance types they need",
+        "Use requiredDuringScheduling for hard constraints and preferredDuringScheduling for soft ones"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Topology spread",
+      "items": [
+        "topologySpreadConstraints with maxSkew: 1 spreads pods evenly across zones and nodes",
+        "whenUnsatisfiable: DoNotSchedule is strict; ScheduleAnyway is permissive",
+        "Keep only durability-driven traffic, such as DB replication, deliberately cross-AZ"
+      ]
+    }
+  ]
+}

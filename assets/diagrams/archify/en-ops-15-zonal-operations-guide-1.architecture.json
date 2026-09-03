@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Data-Layer AZ-Affinity Read Path",
+    "output": "en-ops-15-zonal-operations-guide-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      860
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Users",
+      "sublabel": "HTTPS",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        160,
+        76
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB",
+      "sublabel": "Regional entry point",
+      "pos": [
+        250,
+        130
+      ],
+      "size": [
+        170,
+        76
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "App Pod",
+      "sublabel": "AZ-a",
+      "pos": [
+        490,
+        130
+      ],
+      "size": [
+        190,
+        76
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka Broker",
+      "sublabel": "AZ-a",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        200,
+        76
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis Node",
+      "sublabel": "AZ-a replica",
+      "pos": [
+        530,
+        440
+      ],
+      "size": [
+        200,
+        76
+      ]
+    },
+    {
+      "id": "auroraA",
+      "type": "database",
+      "label": "Aurora reader",
+      "sublabel": "AZ-a",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        200,
+        76
+      ]
+    },
+    {
+      "id": "auroraC",
+      "type": "database",
+      "label": "Aurora writer",
+      "sublabel": "AZ-c",
+      "pos": [
+        1000,
+        690
+      ],
+      "size": [
+        200,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "AZ-a",
+      "wraps": [
+        "pod",
+        "kafka",
+        "redis",
+        "auroraA"
+      ],
+      "pad": 26
+    },
+    {
+      "kind": "security-group",
+      "label": "AZ-c",
+      "wraps": [
+        "auroraC"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "u-alb",
+      "from": "users",
+      "to": "alb",
+      "label": "HTTPS",
+      "labelDy": 60
+    },
+    {
+      "id": "alb-pod",
+      "from": "alb",
+      "to": "pod",
+      "label": "routes"
+    },
+    {
+      "id": "pod-kafka",
+      "from": "pod",
+      "to": "kafka",
+      "label": "read (KIP-392)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-redis",
+      "from": "pod",
+      "to": "redis",
+      "label": "read (GLIDE)",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "pod-auroraA",
+      "from": "pod",
+      "to": "auroraA",
+      "label": "read (reader)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-auroraC",
+      "from": "pod",
+      "to": "auroraC",
+      "label": "write (cross-AZ)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One principle",
+      "items": [
+        "Writes must reach the leader or primary, so cross-AZ hops can happen",
+        "Send reads only to a replica in the same AZ and the inter-AZ charge disappears",
+        "The gain is largest for read-heavy workloads: caches, lookup queries, consumers"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "How a pod learns its own AZ",
+      "items": [
+        "The pod or a sidecar queries placement/availability-zone from EC2 IMDS",
+        "A mutating policy such as Kyverno copies the node's topology.k8s.aws/zone-id into a pod annotation",
+        "Use an operator that treats rack awareness as a first-class feature, as Strimzi does"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Per-service settings",
+      "items": [
+        "Kafka reads from a same-rack broker through KIP-392 follower fetch",
+        "Redis enables the AZ-affinity read option in the GLIDE client",
+        "Aurora points at the same-AZ instance endpoint instead of the reader endpoint"
+      ]
+    }
+  ]
+}

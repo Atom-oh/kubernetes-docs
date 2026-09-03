@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "노드 배치 및 지역성 최적화",
+    "output": "ko-eks-03-eks-networking-part3-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      780
+    ]
+  },
+  "components": [
+    {
+      "id": "web1",
+      "type": "frontend",
+      "label": "웹 서버 파드",
+      "sublabel": "노드 1",
+      "pos": [
+        160,
+        130
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cache1",
+      "type": "database",
+      "label": "캐시 파드",
+      "sublabel": "노드 2",
+      "pos": [
+        160,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "db1",
+      "type": "database",
+      "label": "DB 파드 (프라이머리)",
+      "sublabel": "노드 2",
+      "pos": [
+        160,
+        590
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "web2",
+      "type": "frontend",
+      "label": "웹 서버 파드",
+      "sublabel": "노드 3",
+      "pos": [
+        740,
+        130
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cache2",
+      "type": "database",
+      "label": "캐시 파드",
+      "sublabel": "노드 4",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "db2",
+      "type": "database",
+      "label": "DB 파드 (레플리카)",
+      "sublabel": "노드 4",
+      "pos": [
+        740,
+        590
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "가용 영역 1 (us-west-2a)",
+      "wraps": [
+        "web1",
+        "cache1",
+        "db1"
+      ],
+      "pad": 26
+    },
+    {
+      "kind": "security-group",
+      "label": "가용 영역 2 (us-west-2b)",
+      "wraps": [
+        "web2",
+        "cache2",
+        "db2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "web1-cache1",
+      "from": "web1",
+      "to": "cache1",
+      "label": "고빈도 통신 (AZ 내부)",
+      "labelDy": 86
+    },
+    {
+      "id": "web2-cache2",
+      "from": "web2",
+      "to": "cache2",
+      "label": "고빈도 통신 (AZ 내부)",
+      "labelDy": 86
+    },
+    {
+      "id": "db1-db2",
+      "from": "db1",
+      "to": "db2",
+      "label": "DB 복제 (크로스 AZ)",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "파드 어피니티",
+      "items": [
+        "웹 서버와 캐시처럼 통신이 빈번한 쌍은 podAffinity로 같은 존에 모은다",
+        "preferredDuringSchedulingIgnoredDuringExecution + topologyKey: topology.kubernetes.io/zone",
+        "AZ 내부 통신은 크로스 AZ 대비 지연이 낮고 데이터 전송 요금이 없다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "노드 어피니티",
+      "items": [
+        "nodeAffinity의 node.kubernetes.io/instance-type으로 필요한 인스턴스 유형을 강제한다",
+        "requiredDuringScheduling은 필수 조건, preferredDuringScheduling은 선호 조건에 쓴다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "토폴로지 스프레드",
+      "items": [
+        "topologySpreadConstraints의 maxSkew: 1로 존과 노드에 균등 분산한다",
+        "whenUnsatisfiable: DoNotSchedule은 엄격, ScheduleAnyway는 완화 정책",
+        "DB 복제처럼 내구성이 목적인 트래픽만 의도적으로 크로스 AZ에 둔다"
+      ]
+    }
+  ]
+}

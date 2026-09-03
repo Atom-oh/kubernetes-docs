@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EBS CSI Driver Architecture",
+    "output": "en-eks-04-eks-storage-part1-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      660
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pod1",
+      "type": "frontend",
+      "label": "Pod 1",
+      "sublabel": "Node 1",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "csi1",
+      "type": "backend",
+      "label": "EBS CSI driver",
+      "sublabel": "Node 1 DaemonSet",
+      "pos": [
+        340,
+        130
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "ebs1",
+      "type": "database",
+      "label": "EBS volume 1",
+      "sublabel": "gp3 · single AZ",
+      "pos": [
+        700,
+        130
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "frontend",
+      "label": "Pod 2",
+      "sublabel": "Node 2",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "csi2",
+      "type": "backend",
+      "label": "EBS CSI driver",
+      "sublabel": "Node 2 DaemonSet",
+      "pos": [
+        340,
+        440
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "ebs2",
+      "type": "database",
+      "label": "EBS volume 2",
+      "sublabel": "gp3 · single AZ",
+      "pos": [
+        700,
+        440
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS cluster",
+      "wraps": [
+        "pod1",
+        "csi1",
+        "pod2",
+        "csi2"
+      ],
+      "pad": 34
+    }
+  ],
+  "connections": [
+    {
+      "id": "p1-c1",
+      "from": "pod1",
+      "to": "csi1",
+      "label": "Mounts volume"
+    },
+    {
+      "id": "c1-e1",
+      "from": "csi1",
+      "to": "ebs1",
+      "label": "AttachVolume"
+    },
+    {
+      "id": "p2-c2",
+      "from": "pod2",
+      "to": "csi2",
+      "label": "Mounts volume"
+    },
+    {
+      "id": "c2-e2",
+      "from": "csi2",
+      "to": "ebs2",
+      "label": "AttachVolume"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Volume types",
+      "items": [
+        "gp3 starts at 3,000 IOPS and 125 MiB/s, tunable regardless of size",
+        "io1 and io2 target transactional workloads needing hundreds of thousands of IOPS",
+        "st1 and sc1 are low-cost HDD options for sequential throughput"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "StorageClass configuration",
+      "items": [
+        "Default to provisioner: ebs.csi.aws.com, type: gp3, encrypted: \"true\"",
+        "volumeBindingMode: WaitForFirstConsumer creates the volume in the AZ where the pod lands",
+        "Setting allowVolumeExpansion: true keeps online expansion available later"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Best practices",
+      "items": [
+        "An EBS volume is a single-AZ resource, so a pod moved to another AZ cannot mount it",
+        "Give the driver a least-privilege IAM role through IRSA or Pod Identity",
+        "Back up with snapshots and rehearse recovery through CSI VolumeSnapshot"
+      ]
+    }
+  ]
+}

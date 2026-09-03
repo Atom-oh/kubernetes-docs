@@ -1,0 +1,163 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes Storage Provisioning Workflow",
+    "output": "en-eks-04-eks-storage-part1-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "워크로드"
+        },
+        "messagebus": {
+          "label": "요청 객체"
+        },
+        "backend": {
+          "label": "제어 객체"
+        },
+        "cloud": {
+          "label": "AWS 스토리지"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "req",
+      "label": "스토리지 요청"
+    },
+    {
+      "id": "prov",
+      "label": "동적 프로비저닝"
+    }
+  ],
+  "mainPath": [
+    "pod",
+    "pvc",
+    "sc",
+    "csi",
+    "pv",
+    "bind"
+  ],
+  "nodes": [
+    {
+      "id": "pod",
+      "lane": "req",
+      "col": 0,
+      "type": "frontend",
+      "label": "Create pod",
+      "sublabel": "refs PVC",
+      "width": 150
+    },
+    {
+      "id": "pvc",
+      "lane": "req",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Create PVC",
+      "sublabel": "size · mode",
+      "width": 150
+    },
+    {
+      "id": "sc",
+      "lane": "req",
+      "col": 2,
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "provisioner",
+      "width": 155
+    },
+    {
+      "id": "csi",
+      "lane": "prov",
+      "col": 3,
+      "type": "cloud",
+      "label": "CSI driver",
+      "sublabel": "AWS API",
+      "width": 155
+    },
+    {
+      "id": "pv",
+      "lane": "prov",
+      "col": 4,
+      "type": "backend",
+      "label": "PV created",
+      "sublabel": "automatic",
+      "width": 150
+    },
+    {
+      "id": "bind",
+      "lane": "prov",
+      "col": 5,
+      "type": "backend",
+      "label": "PVC-PV bound",
+      "sublabel": "mountable",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "pod",
+      "to": "pvc",
+      "label": "1 request"
+    },
+    {
+      "id": "e2",
+      "from": "pvc",
+      "to": "sc",
+      "label": "2 lookup"
+    },
+    {
+      "id": "e3",
+      "from": "sc",
+      "to": "csi",
+      "label": "3 delegate"
+    },
+    {
+      "id": "e4",
+      "from": "csi",
+      "to": "pv",
+      "label": "4 create"
+    },
+    {
+      "id": "e5",
+      "from": "pv",
+      "to": "bind",
+      "label": "5 bind"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request stage",
+      "items": [
+        "The pod manifest references the PVC and mounts it into the container with volumeMounts",
+        "The PVC declares the size, access mode, and storageClassName it needs",
+        "The StorageClass provisioner decides which CSI driver handles it"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Volume binding modes",
+      "items": [
+        "Immediate provisions and binds a PV as soon as the PVC is created",
+        "WaitForFirstConsumer delays provisioning until a pod is scheduled",
+        "For AZ-bound volumes like EBS, WaitForFirstConsumer is effectively mandatory"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reclaim policies",
+      "items": [
+        "Delete removes the PV and the underlying AWS volume along with the PVC",
+        "Retain keeps the PV so the data can be recovered by hand",
+        "For production data, Retain plus a separate deletion procedure is the safer choice"
+      ]
+    }
+  ]
+}

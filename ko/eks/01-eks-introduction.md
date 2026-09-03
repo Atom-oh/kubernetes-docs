@@ -97,7 +97,9 @@ EKS 클러스터를 운영할 때 발생하는 비용은 다음과 같습니다:
 
 EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 
-![EKS AWS 서비스 통합](../.gitbook/assets/eks_aws_services_integration.png)
+![Amazon EKS를 중심으로 IAM, VPC, 스토리지, CloudWatch, ECR, SageMaker·Bedrock이 연결되는 AWS 서비스 통합 다이어그램.](../.gitbook/assets/ko-eks-01-eks-introduction-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-01-eks-introduction-0.html)
 
 1. **IAM**: Kubernetes RBAC와 통합하여 인증 및 권한 부여를 관리합니다.
 2. **VPC**: 네트워킹 인프라를 제공합니다.

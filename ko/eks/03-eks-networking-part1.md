@@ -8,7 +8,9 @@ Amazon EKS의 네트워킹은 Kubernetes 클러스터의 통신을 관리하는 
 
 EKS 네트워킹 아키텍처는 다음과 같은 구성 요소로 이루어져 있습니다:
 
-![EKS 네트워킹 아키텍처 개요](../.gitbook/assets/eks_networking_architecture_overview.png)
+![인터넷에서 IGW를 거쳐 퍼블릭 서브넷의 ALB와 프라이빗 서브넷 워커 노드로 이어지는 EKS 네트워킹 아키텍처 개요 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-0.html)
 
 1. **VPC(Virtual Private Cloud)**: EKS 클러스터가 실행되는 격리된 네트워크 환경
 2. **서브넷**: VPC 내의 IP 주소 범위를 나누는 단위
@@ -23,7 +25,9 @@ EKS 네트워킹 아키텍처는 다음과 같은 구성 요소로 이루어져 
 
 EKS 클러스터에서 네트워크 트래픽은 다음과 같이 흐릅니다:
 
-![EKS 네트워크 트래픽 흐름](../.gitbook/assets/eks_network_traffic_flow.png)
+![kubectl 호출, kubelet 통신, 파드 간 통신, 서비스 트래픽이 EKS 클러스터 안에서 흐르는 경로를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-1.html)
 
 1. **포드 간 통신**: 동일한 노드 또는 다른 노드의 포드 간 통신
 2. **포드와 서비스 간 통신**: 포드와 클러스터 내 서비스 간 통신
@@ -32,13 +36,17 @@ EKS 클러스터에서 네트워크 트래픽은 다음과 같이 흐릅니다:
 
 ### EKS 네트워킹 구성 요소 간 관계
 
-![EKS 네트워킹 구성 요소 간 관계](../.gitbook/assets/eks_networking_components_relationship.png)
+![인바운드, 아웃바운드, 컨트롤 플레인 통신 세 갈래로 나눠 EKS 네트워킹 구성 요소가 이어지는 순서를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-2.html)
 
 ## VPC 요구 사항
 
 EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다:
 
-![EKS VPC 요구 사항](../.gitbook/assets/eks_vpc_requirements.png)
+![서브넷, IP 주소, DNS, 인터넷 액세스 순으로 EKS VPC 사전 요구 사항을 점검하는 흐름을 보여주는 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-3.html)
 
 1. **서브넷**: 최소 2개 이상의 가용 영역에 서브넷이 있어야 함
 2. **IP 주소**: 충분한 수의 IP 주소를 제공해야 함
@@ -49,7 +57,9 @@ EKS 클러스터를 위한 VPC는 다음 요구 사항을 충족해야 합니다
 
 VPC CIDR 블록을 계획할 때 고려해야 할 사항:
 
-![VPC CIDR 계획 고려사항](../.gitbook/assets/eks_vpc_cidr_planning.png)
+![클러스터 규모 산정부터 IP 수요 계산, 확장 여유, 기존 네트워크 중복 검사를 거쳐 VPC CIDR을 확정하는 절차 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-4.html)
 
 1. **클러스터 크기**: 예상되는 노드 및 포드 수
 2. **IP 주소 요구 사항**: 각 노드 및 포드에 필요한 IP 주소 수
@@ -64,7 +74,9 @@ VPC CIDR 블록을 계획할 때 고려해야 할 사항:
 
 ### 서브넷 설계
 
-![EKS 서브넷 설계](../.gitbook/assets/eks_subnet_design.png)
+![두 개의 가용 영역에 퍼블릭 서브넷, NAT 게이트웨이, 프라이빗 서브넷을 쌍으로 배치한 EKS 서브넷 설계 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-5.html)
 
 EKS 클러스터를 위한 서브넷 설계 모범 사례:
 
@@ -89,7 +101,9 @@ EKS 클러스터를 위한 서브넷 설계 모범 사례:
 
 ### 서브넷 태그
 
-![EKS 서브넷 태그 구성](../.gitbook/assets/eks_subnet_tags.png)
+![AWS Load Balancer Controller가 서브넷 태그로 퍼블릭·프라이빗 서브넷을 찾아 인터넷 연결 및 내부 로드 밸런서를 배치하는 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-6.html)
 
 EKS는 서브넷에 특정 태그를 사용하여 리소스를 자동으로 검색합니다:
 
@@ -110,7 +124,9 @@ aws ec2 create-tags \
 
 ### 보안 그룹 구성
 
-![EKS 보안 그룹 구성](../.gitbook/assets/eks_security_groups.png)
+![컨트롤 플레인 보안 그룹과 워커 노드 보안 그룹 사이의 443/TCP, 1025-65535/TCP 규칙과 노드 간 통신, 아웃바운드 경로를 보여주는 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part1-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part1-7.html)
 
 EKS 클러스터에는 두 가지 주요 보안 그룹이 있습니다:
 

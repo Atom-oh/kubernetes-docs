@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 네트워크 트래픽 흐름",
+    "output": "ko-eks-03-eks-networking-part1-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      820
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "인터넷 / kubectl",
+      "sublabel": "관리자 · 클라이언트",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "컨트롤 플레인",
+      "sublabel": "API 서버 · 스케줄러 · 컨트롤러",
+      "pos": [
+        330,
+        120
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "messagebus",
+      "label": "ClusterIP 서비스",
+      "sublabel": "클러스터 내부 가상 IP",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ext",
+      "type": "external",
+      "label": "외부 서비스",
+      "sublabel": "사용자 트래픽",
+      "pos": [
+        40,
+        660
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "LoadBalancer 서비스",
+      "sublabel": "NLB / ALB",
+      "pos": [
+        330,
+        660
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "노드 1",
+      "sublabel": "kubelet · 파드 1, 2",
+      "pos": [
+        700,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "노드 2",
+      "sublabel": "kubelet · 파드 3, 4",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "cp",
+        "svc",
+        "lb",
+        "node1",
+        "node2"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-cp",
+      "from": "client",
+      "to": "cp",
+      "label": "kubectl API 호출 (443)",
+      "labelDy": 78
+    },
+    {
+      "id": "cp-node1",
+      "from": "cp",
+      "to": "node1",
+      "label": "kubelet 통신 (10250)"
+    },
+    {
+      "id": "node1-node2",
+      "from": "node1",
+      "to": "node2",
+      "label": "크로스 노드 파드 통신",
+      "labelDy": 80
+    },
+    {
+      "id": "svc-node1",
+      "from": "svc",
+      "to": "node1",
+      "label": "내부 트래픽"
+    },
+    {
+      "id": "ext-lb",
+      "from": "ext",
+      "to": "lb",
+      "label": "외부 트래픽"
+    },
+    {
+      "id": "lb-node2",
+      "from": "lb",
+      "to": "node2",
+      "label": "NodePort / 타깃 그룹"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "트래픽 종류",
+      "items": [
+        "외부 API 호출: kubectl과 CI가 API 서버 443 포트로 접속",
+        "컨트롤 플레인 통신: API 서버가 각 노드의 kubelet(10250)과 통신",
+        "파드 간 통신: VPC CNI가 파드에 VPC IP를 부여해 NAT 없이 직접 통신"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "서비스 트래픽",
+      "items": [
+        "ClusterIP는 클러스터 내부에서만 도달하는 가상 IP",
+        "NodePort는 모든 노드의 30000-32767 포트를 개방",
+        "LoadBalancer는 NLB/ALB를 프로비저닝해 외부 트래픽을 파드로 전달"
+      ]
+    }
+  ]
+}

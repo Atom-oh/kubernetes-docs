@@ -1,0 +1,144 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Alert Lifecycle",
+    "output": "en-ops-07-observability-alerts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "대기 상태"
+        },
+        "backend": {
+          "label": "평가 상태"
+        },
+        "security": {
+          "label": "발생 상태"
+        },
+        "cloud": {
+          "label": "종료 상태"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "state",
+      "label": "알림 상태"
+    }
+  ],
+  "mainPath": [
+    "inactive",
+    "pending",
+    "firing",
+    "resolved"
+  ],
+  "nodes": [
+    {
+      "id": "inactive",
+      "lane": "state",
+      "col": 0,
+      "type": "external",
+      "label": "Inactive",
+      "sublabel": "condition not met",
+      "width": 160
+    },
+    {
+      "id": "pending",
+      "lane": "state",
+      "col": 1,
+      "type": "backend",
+      "label": "Pending",
+      "sublabel": "waiting out for",
+      "width": 165
+    },
+    {
+      "id": "firing",
+      "lane": "state",
+      "col": 2,
+      "type": "security",
+      "label": "Firing",
+      "sublabel": "sent to Alertmanager",
+      "width": 175
+    },
+    {
+      "id": "resolved",
+      "lane": "state",
+      "col": 3,
+      "type": "cloud",
+      "label": "Resolved",
+      "sublabel": "condition cleared",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "t1",
+      "from": "inactive",
+      "to": "pending",
+      "label": "condition met"
+    },
+    {
+      "id": "t2",
+      "from": "pending",
+      "to": "firing",
+      "label": "for elapsed"
+    },
+    {
+      "id": "t3",
+      "from": "firing",
+      "to": "resolved",
+      "label": "condition cleared"
+    },
+    {
+      "id": "t4",
+      "from": "pending",
+      "to": "inactive",
+      "label": "cleared early",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "id": "t5",
+      "from": "resolved",
+      "to": "inactive",
+      "label": "next evaluation",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "State definitions",
+      "items": [
+        "Inactive — the alert condition is not met",
+        "Pending — the condition is met but the for duration has not elapsed",
+        "Firing — the alert has fired and gone to Alertmanager",
+        "Resolved — the condition cleared and the alert closed"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What the for duration buys",
+      "items": [
+        "It stops a transient spike from paging anyone",
+        "If the condition clears inside the window, the alert returns to Inactive without ever firing",
+        "Too long delays detection; too short raises false positives"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "What to watch in operations",
+      "items": [
+        "The Alerts page in the Prometheus UI shows Pending and Firing directly",
+        "Resolved alerts also reach Alertmanager, so a resolution notice can be sent",
+        "The ALERTS metric tracks alert state itself as a time series"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Managed Node Group Architecture",
+    "output": "en-eks-02-eks-cluster-creation-part2-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "EKS control plane",
+      "sublabel": "AWS-managed",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "ng",
+      "type": "backend",
+      "label": "Managed node group",
+      "sublabel": "Launch template · AMI",
+      "pos": [
+        350,
+        300
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "asg",
+      "type": "cloud",
+      "label": "Auto Scaling group",
+      "sublabel": "min · max · desired",
+      "pos": [
+        670,
+        300
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "ec2",
+      "type": "backend",
+      "label": "EC2 instances 1-3",
+      "sublabel": "Bootstrap · kubelet join",
+      "pos": [
+        990,
+        150
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Pods",
+      "sublabel": "Scheduled workloads",
+      "pos": [
+        990,
+        450
+      ],
+      "size": [
+        250,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "cp",
+        "ng",
+        "asg",
+        "ec2",
+        "pods"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-ng",
+      "from": "cp",
+      "to": "ng",
+      "label": "manages"
+    },
+    {
+      "id": "ng-asg",
+      "from": "ng",
+      "to": "asg",
+      "label": "delegates capacity"
+    },
+    {
+      "id": "asg-ec2",
+      "from": "asg",
+      "to": "ec2",
+      "label": "launches instances"
+    },
+    {
+      "id": "ec2-pods",
+      "from": "ec2",
+      "to": "pods",
+      "label": "runs pods",
+      "labelDy": 130
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What a managed node group handles",
+      "items": [
+        "It picks the EKS-optimized AMI and injects the bootstrap script for you",
+        "On update it performs a rolling replacement, including cordon and drain",
+        "It applies the eks.amazonaws.com tags and labels to nodes automatically"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Capacity and scaling",
+      "items": [
+        "min, max, and desired define the Auto Scaling group's range",
+        "Capacity type, on-demand or spot, is chosen per node group",
+        "Cluster Autoscaler adjusts this ASG; Karpenter creates nodes directly without node groups"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operational cautions",
+      "items": [
+        "Editing the launch template by hand can drift from the version the node group tracks",
+        "Set PodDisruptionBudgets before a node group upgrade to protect availability",
+        "Put taints and labels in the node group definition to steer workload placement"
+      ]
+    }
+  ]
+}

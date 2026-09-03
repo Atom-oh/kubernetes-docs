@@ -1,0 +1,168 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS VPC Requirements Checklist",
+    "output": "en-eks-03-eks-networking-part1-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Workload"
+        },
+        "cloud": {
+          "label": "AWS service"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "check",
+      "label": "VPC 사전 요구 사항"
+    },
+    {
+      "id": "egress",
+      "label": "인터넷 액세스 경로"
+    }
+  ],
+  "mainPath": [
+    "subnets",
+    "ipspace",
+    "dns",
+    "egress",
+    "ready"
+  ],
+  "nodes": [
+    {
+      "id": "subnets",
+      "lane": "check",
+      "col": 0,
+      "type": "cloud",
+      "label": "Provision subnets",
+      "sublabel": "Two or more AZs",
+      "width": 140
+    },
+    {
+      "id": "ipspace",
+      "lane": "check",
+      "col": 1,
+      "type": "cloud",
+      "label": "Size IP space",
+      "sublabel": "nodes × max pods",
+      "width": 150
+    },
+    {
+      "id": "dns",
+      "lane": "check",
+      "col": 2,
+      "type": "backend",
+      "label": "Enable DNS",
+      "sublabel": "Hostnames · resolution",
+      "width": 145
+    },
+    {
+      "id": "egress",
+      "lane": "check",
+      "col": 3,
+      "type": "cloud",
+      "label": "Internet access",
+      "sublabel": "Nodes need egress",
+      "width": 150
+    },
+    {
+      "id": "ready",
+      "lane": "check",
+      "col": 5,
+      "type": "backend",
+      "label": "Ready to create cluster",
+      "sublabel": "Requirements met",
+      "width": 155
+    },
+    {
+      "id": "natgw",
+      "lane": "egress",
+      "col": 4,
+      "type": "cloud",
+      "label": "NAT Gateway",
+      "sublabel": "Recommended for private subnets",
+      "width": 155
+    },
+    {
+      "id": "igw",
+      "lane": "egress",
+      "col": 5,
+      "type": "cloud",
+      "label": "Internet Gateway",
+      "sublabel": "Public Subnet",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "subnets",
+      "to": "ipspace"
+    },
+    {
+      "id": "e2",
+      "from": "ipspace",
+      "to": "dns"
+    },
+    {
+      "id": "e3",
+      "from": "dns",
+      "to": "egress"
+    },
+    {
+      "id": "e4",
+      "from": "egress",
+      "to": "natgw",
+      "label": "Private nodes",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "natgw",
+      "to": "igw",
+      "label": "Egress after SNAT"
+    },
+    {
+      "id": "e6",
+      "from": "egress",
+      "to": "ready",
+      "label": "met",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Subnets and IPs",
+      "items": [
+        "Place subnets in at least two Availability Zones, pairing a public and a private subnet per AZ",
+        "You need pods-per-node × node count IPs, counting ENI secondary IPs",
+        "By scale: /24 for small, /20 for medium, /16 for large"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "DNS settings",
+      "items": [
+        "Both enableDnsHostnames: true and enableDnsSupport: true are required",
+        "Node-to-node traffic, service discovery, and AWS service integration all depend on DNS"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Why egress is required",
+      "items": [
+        "Pulling container images and calling AWS APIs both need an outbound path",
+        "Nodes in private subnets use a NAT Gateway; fully private clusters use VPC endpoints"
+      ]
+    }
+  ]
+}

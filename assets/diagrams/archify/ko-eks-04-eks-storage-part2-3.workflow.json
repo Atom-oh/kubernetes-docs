@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "볼륨 확장 프로세스",
+    "output": "ko-eks-04-eks-storage-part2-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "쿠버네티스 객체"
+        },
+        "messagebus": {
+          "label": "클레임"
+        },
+        "cloud": {
+          "label": "AWS 볼륨"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "req",
+      "label": "확장 요청"
+    },
+    {
+      "id": "apply",
+      "label": "실제 적용"
+    }
+  ],
+  "mainPath": [
+    "sc",
+    "pvc",
+    "csi",
+    "ebs",
+    "pv",
+    "fs"
+  ],
+  "nodes": [
+    {
+      "id": "sc",
+      "lane": "req",
+      "col": 0,
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "확장 허용",
+      "width": 150
+    },
+    {
+      "id": "pvc",
+      "lane": "req",
+      "col": 1,
+      "type": "messagebus",
+      "label": "PVC 수정",
+      "sublabel": "10Gi → 20Gi",
+      "width": 150
+    },
+    {
+      "id": "csi",
+      "lane": "req",
+      "col": 2,
+      "type": "cloud",
+      "label": "CSI 드라이버",
+      "sublabel": "ModifyVolume",
+      "width": 150
+    },
+    {
+      "id": "ebs",
+      "lane": "apply",
+      "col": 3,
+      "type": "cloud",
+      "label": "EBS 볼륨 확장",
+      "sublabel": "20Gi",
+      "width": 150
+    },
+    {
+      "id": "pv",
+      "lane": "apply",
+      "col": 4,
+      "type": "backend",
+      "label": "PV 용량 갱신",
+      "sublabel": "capacity 20Gi",
+      "width": 150
+    },
+    {
+      "id": "fs",
+      "lane": "apply",
+      "col": 5,
+      "type": "backend",
+      "label": "파일 시스템 확장",
+      "sublabel": "온라인 리사이즈",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "sc",
+      "to": "pvc",
+      "label": "전제"
+    },
+    {
+      "id": "e2",
+      "from": "pvc",
+      "to": "csi",
+      "label": "요청"
+    },
+    {
+      "id": "e3",
+      "from": "csi",
+      "to": "ebs",
+      "label": "AWS API"
+    },
+    {
+      "id": "e4",
+      "from": "ebs",
+      "to": "pv",
+      "label": "반영"
+    },
+    {
+      "id": "e5",
+      "from": "pv",
+      "to": "fs",
+      "label": "리사이즈"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "전제 조건",
+      "items": [
+        "StorageClass에 allowVolumeExpansion: true가 있어야 확장 요청이 받아들여진다",
+        "PVC의 spec.resources.requests.storage 값을 키우는 것으로 확장을 요청한다",
+        "축소는 지원되지 않으므로 처음부터 과도하게 크게 잡지 않도록 계획한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "온라인과 오프라인",
+      "items": [
+        "최신 커널과 CSI 드라이버 조합에서는 파드 실행 중 온라인 확장이 가능하다",
+        "온라인 확장이 지원되지 않으면 파드를 재시작해야 파일 시스템이 늘어난다",
+        "PVC 상태의 FileSystemResizePending 조건으로 어느 단계인지 확인한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "운영 모범 사례",
+      "items": [
+        "kubelet_volume_stats_available_bytes 같은 지표로 사용량을 모니터링한다",
+        "80% 임계치에 경고를 걸어 확장 시점을 놓치지 않게 한다",
+        "한 번에 크게 늘리지 말고 점진적으로 확장하며 EBS 수정 쿨다운(6시간)을 고려한다"
+      ]
+    }
+  ]
+}

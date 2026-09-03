@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Network Traffic Flow",
+    "output": "en-eks-03-eks-networking-part1-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      820
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Internet / kubectl",
+      "sublabel": "Operators · clients",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "Control Plane",
+      "sublabel": "API server · scheduler · controllers",
+      "pos": [
+        330,
+        120
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "messagebus",
+      "label": "ClusterIP Service",
+      "sublabel": "In-cluster virtual IP",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ext",
+      "type": "external",
+      "label": "External Clients",
+      "sublabel": "User traffic",
+      "pos": [
+        40,
+        660
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "LoadBalancer Service",
+      "sublabel": "NLB / ALB",
+      "pos": [
+        330,
+        660
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "kubelet · pods 1, 2",
+      "pos": [
+        700,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "kubelet · pods 3, 4",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "cp",
+        "svc",
+        "lb",
+        "node1",
+        "node2"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-cp",
+      "from": "client",
+      "to": "cp",
+      "label": "kubectl API calls (443)",
+      "labelDy": 78
+    },
+    {
+      "id": "cp-node1",
+      "from": "cp",
+      "to": "node1",
+      "label": "kubelet traffic (10250)"
+    },
+    {
+      "id": "node1-node2",
+      "from": "node1",
+      "to": "node2",
+      "label": "Cross-node pod traffic",
+      "labelDy": 80
+    },
+    {
+      "id": "svc-node1",
+      "from": "svc",
+      "to": "node1",
+      "label": "Internal traffic"
+    },
+    {
+      "id": "ext-lb",
+      "from": "ext",
+      "to": "lb",
+      "label": "External traffic"
+    },
+    {
+      "id": "lb-node2",
+      "from": "lb",
+      "to": "node2",
+      "label": "NodePort / target group"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Traffic types",
+      "items": [
+        "External API calls: kubectl and CI reach the API server on port 443",
+        "Control-plane traffic: the API server talks to each node's kubelet on 10250",
+        "Pod-to-pod traffic: the VPC CNI gives each pod a VPC IP, so pods talk directly without NAT"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Service traffic",
+      "items": [
+        "ClusterIP is a virtual IP reachable only inside the cluster",
+        "NodePort opens ports 30000-32767 on every node",
+        "LoadBalancer provisions an NLB/ALB that forwards external traffic to pods"
+      ]
+    }
+  ]
+}

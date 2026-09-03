@@ -17,7 +17,9 @@ This document is the second part of the Amazon EKS storage series, covering FSx 
 
 Amazon FSx for Lustre is a high-performance file system for compute-intensive workloads such as high-performance computing (HPC), machine learning, and big data processing. Lustre is a parallel distributed file system that provides high throughput and low latency accessible simultaneously from thousands of clients.
 
-![FSx for Lustre CSI Architecture](../.gitbook/assets/fsx_lustre_csi_architecture.png)
+![Architecture diagram of ML training and inference pods mounting FSx for Lustre through the FSx CSI driver, with FSx syncing data to S3.](../.gitbook/assets/en-eks-04-eks-storage-part2-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-0.html)
 
 ### Installing FSx for Lustre CSI Driver
 
@@ -215,7 +217,9 @@ This configuration provides the following benefits:
 
 Amazon S3 is an object storage service that can store and retrieve unlimited amounts of data. In Kubernetes, S3 cannot be directly mounted as a volume, but there are various ways to integrate with S3.
 
-![S3 Integration Methods](../.gitbook/assets/s3_integration_methods.png)
+![Diagram of S3 integration methods: application pods take credentials via IRSA and reach S3 through the Mountpoint S3 CSI driver or the AWS SDK.](../.gitbook/assets/en-eks-04-eks-storage-part2-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-1.html)
 
 ### IRSA Setup for S3 Access
 
@@ -371,7 +375,9 @@ Amazon S3 is suitable for the following use cases:
 
 In Kubernetes, you can use volume snapshots to backup and restore PV data.
 
-![Volume Snapshot System](../.gitbook/assets/volume_snapshot_system.png)
+![Diagram of the snapshot flow from the source PVC through VolumeSnapshot and SnapshotContent to an EBS snapshot, then restore into a new PVC.](../.gitbook/assets/en-eks-04-eks-storage-part2-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-2.html)
 
 ### Installing Volume Snapshot Controller
 
@@ -477,7 +483,9 @@ velero restore create --from-backup daily-backup-20250710010000
 
 In Kubernetes, you can expand PVC size to increase storage capacity.
 
-![Volume Expansion Process](../.gitbook/assets/volume_expansion_process.png)
+![Volume expansion process diagram from the StorageClass allowing expansion through the PVC edit, CSI call, EBS growth, and file system resize.](../.gitbook/assets/en-eks-04-eks-storage-part2-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-3.html)
 
 ### Enabling Volume Expansion
 
@@ -907,7 +915,9 @@ Key optimizations in this example:
 
 Let's explore various strategies for optimizing storage performance in EKS.
 
-![Storage Performance Optimization](../.gitbook/assets/storage_performance_optimization.png)
+![Storage performance tuning diagram mapping database, web server, analytics, and machine learning workloads onto EBS, EFS, and FSx for Lustre.](../.gitbook/assets/en-eks-04-eks-storage-part2-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part2-4.html)
 
 ### EBS Performance Optimization
 

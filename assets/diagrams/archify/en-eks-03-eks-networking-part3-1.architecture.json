@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Networking Modes",
+    "output": "en-eks-03-eks-networking-part3-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      760
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "vpccni",
+      "type": "backend",
+      "label": "AWS VPC CNI",
+      "sublabel": "aws-node DaemonSet",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "eni1",
+      "type": "cloud",
+      "label": "ENI 1",
+      "sublabel": "Secondary IP pool",
+      "pos": [
+        330,
+        120
+      ],
+      "size": [
+        170,
+        70
+      ]
+    },
+    {
+      "id": "eni2",
+      "type": "cloud",
+      "label": "ENI 2",
+      "sublabel": "Secondary IP pool",
+      "pos": [
+        330,
+        550
+      ],
+      "size": [
+        170,
+        70
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "Security Group",
+      "sublabel": "Applied per ENI",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "pod12",
+      "type": "frontend",
+      "label": "Pods 1 · 2",
+      "sublabel": "Native VPC IP",
+      "pos": [
+        910,
+        120
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "frontend",
+      "label": "Pod 3",
+      "sublabel": "Native VPC IP",
+      "pos": [
+        910,
+        550
+      ],
+      "size": [
+        190,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster (AWS VPC)",
+      "wraps": [
+        "vpccni",
+        "eni1",
+        "eni2",
+        "sg",
+        "pod12",
+        "pod3"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "cni-eni1",
+      "from": "vpccni",
+      "to": "eni1",
+      "label": "attaches ENI"
+    },
+    {
+      "id": "cni-eni2",
+      "from": "vpccni",
+      "to": "eni2",
+      "label": "adds ENI"
+    },
+    {
+      "id": "eni1-pod",
+      "from": "eni1",
+      "to": "pod12",
+      "label": "assigns IP"
+    },
+    {
+      "id": "eni2-pod",
+      "from": "eni2",
+      "to": "pod3",
+      "label": "assigns IP"
+    },
+    {
+      "id": "eni1-sg",
+      "from": "eni1",
+      "to": "sg",
+      "label": "SG association"
+    },
+    {
+      "id": "eni2-sg",
+      "from": "eni2",
+      "to": "sg"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "AWS VPC CNI (default)",
+      "items": [
+        "Native VPC networking that hands each pod a real VPC IP",
+        "No overlay, so it performs best",
+        "Per-instance-type ENI and IP limits cap pod density"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Custom networking",
+      "items": [
+        "Assigns pods IPs from a separate, designated subnet",
+        "A secondary CIDR block widens the IP address space",
+        "It needs extra ENIConfig setup, so configuration gets more complex"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Alternative CNI plugins",
+      "items": [
+        "Calico or Cilium add advanced network policy and observability",
+        "Overlay networking reduces VPC IP consumption",
+        "Encapsulation overhead raises latency and CPU use"
+      ]
+    }
+  ]
+}

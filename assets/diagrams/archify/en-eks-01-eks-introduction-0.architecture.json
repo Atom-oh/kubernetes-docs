@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS and AWS Service Integration",
+    "output": "en-eks-01-eks-introduction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      760
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "IRSA · Pod Identity · RBAC",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "Amazon VPC",
+      "sublabel": "VPC CNI · ELB · Lattice",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "EBS · EFS · FSx · S3",
+      "sublabel": "Attached via CSI drivers",
+      "pos": [
+        40,
+        580
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "sublabel": "Managed control plane",
+      "pos": [
+        520,
+        360
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "database",
+      "label": "Amazon CloudWatch",
+      "sublabel": "Logs · Metrics · Insights",
+      "pos": [
+        1000,
+        140
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "database",
+      "label": "Amazon ECR",
+      "sublabel": "Container image registry",
+      "pos": [
+        1000,
+        360
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "aiml",
+      "type": "backend",
+      "label": "SageMaker · Bedrock",
+      "sublabel": "Training · inference",
+      "pos": [
+        1000,
+        580
+      ],
+      "size": [
+        250,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-iam",
+      "from": "eks",
+      "to": "iam",
+      "label": "Auth",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-vpc",
+      "from": "eks",
+      "to": "vpc",
+      "label": "Pod networking"
+    },
+    {
+      "id": "eks-storage",
+      "from": "eks",
+      "to": "storage",
+      "label": "Persistent volumes",
+      "toSide": "bottom"
+    },
+    {
+      "id": "eks-cw",
+      "from": "eks",
+      "to": "cw",
+      "label": "Metrics · logs",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-ecr",
+      "from": "eks",
+      "to": "ecr",
+      "label": "Image pulls"
+    },
+    {
+      "id": "eks-aiml",
+      "from": "eks",
+      "to": "aiml",
+      "label": "AI/ML workloads",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Security and networking",
+      "items": [
+        "IRSA or EKS Pod Identity maps an IAM role straight onto a pod",
+        "EKS access entries connect IAM principals to Kubernetes RBAC",
+        "The VPC CNI gives pods VPC IPs and the AWS Load Balancer Controller creates ALBs and NLBs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Storage and images",
+      "items": [
+        "Install and manage the EBS, EFS, and FSx CSI drivers as EKS add-ons",
+        "Pulling from ECR needs permission on the node role or through IRSA",
+        "Reach S3 through the Mountpoint CSI driver or the SDK"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Observability and AI/ML",
+      "items": [
+        "Ship control plane logs to CloudWatch Logs and read metrics in Container Insights",
+        "Add distributed tracing with X-Ray or an ADOT collector",
+        "Integrate SageMaker and Bedrock to run training and inference workloads on EKS"
+      ]
+    }
+  ]
+}

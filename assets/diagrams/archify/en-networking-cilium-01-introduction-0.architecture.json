@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Architecture",
+    "output": "en-networking-cilium-01-introduction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      940,
+      800
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "Pods · Services · NetworkPolicy",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        270,
+        76
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "messagebus",
+      "label": "Container Network Interface",
+      "sublabel": "kubelet ↔ plugin contract",
+      "pos": [
+        300,
+        200
+      ],
+      "size": [
+        270,
+        76
+      ]
+    },
+    {
+      "id": "cilium",
+      "type": "backend",
+      "label": "Cilium",
+      "sublabel": "cilium-agent · Operator",
+      "pos": [
+        300,
+        340
+      ],
+      "size": [
+        270,
+        76
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF",
+      "sublabel": "In-kernel programs · maps",
+      "pos": [
+        300,
+        480
+      ],
+      "size": [
+        270,
+        76
+      ]
+    },
+    {
+      "id": "kernel",
+      "type": "external",
+      "label": "Linux Kernel",
+      "sublabel": "Packet processing path",
+      "pos": [
+        300,
+        620
+      ],
+      "size": [
+        270,
+        76
+      ]
+    },
+    {
+      "id": "hubble",
+      "type": "database",
+      "label": "Hubble",
+      "sublabel": "Flow observability · UI",
+      "pos": [
+        640,
+        340
+      ],
+      "size": [
+        230,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-cni",
+      "from": "k8s",
+      "to": "cni",
+      "label": "pod network request",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "cni-cilium",
+      "from": "cni",
+      "to": "cilium",
+      "label": "invokes CNI plugin",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "cilium-ebpf",
+      "from": "cilium",
+      "to": "ebpf",
+      "label": "loads programs",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "ebpf-kernel",
+      "from": "ebpf",
+      "to": "kernel",
+      "label": "attaches to hooks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "cilium-hubble",
+      "from": "cilium",
+      "to": "hubble",
+      "label": "flow events"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Layering",
+      "items": [
+        "Kubernetes declares Pods, Services, and NetworkPolicies and delegates through the CNI contract",
+        "The Cilium agent compiles those declarations into eBPF programs and maps",
+        "Packet processing happens in the kernel, bypassing iptables chains"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What eBPF buys you",
+      "items": [
+        "Lookups are hash-map based, so performance degrades gently as rules grow",
+        "It can replace kube-proxy and handle Service load balancing in the kernel",
+        "Policy reaches beyond L3/L4 into L7 (HTTP, gRPC, Kafka)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Hubble",
+      "items": [
+        "It collects the flow events Cilium emits and renders service dependencies",
+        "Traffic dropped by policy shows up with the reason attached",
+        "You query it either through the CLI (hubble observe) or the UI"
+      ]
+    }
+  ]
+}

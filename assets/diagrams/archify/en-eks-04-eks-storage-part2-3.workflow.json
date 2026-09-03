@@ -1,0 +1,160 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Volume Expansion Process",
+    "output": "en-eks-04-eks-storage-part2-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "쿠버네티스 객체"
+        },
+        "messagebus": {
+          "label": "클레임"
+        },
+        "cloud": {
+          "label": "AWS 볼륨"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "req",
+      "label": "확장 요청"
+    },
+    {
+      "id": "apply",
+      "label": "실제 적용"
+    }
+  ],
+  "mainPath": [
+    "sc",
+    "pvc",
+    "csi",
+    "ebs",
+    "pv",
+    "fs"
+  ],
+  "nodes": [
+    {
+      "id": "sc",
+      "lane": "req",
+      "col": 0,
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "Expansion allowed",
+      "width": 150
+    },
+    {
+      "id": "pvc",
+      "lane": "req",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Edit PVC",
+      "sublabel": "10Gi → 20Gi",
+      "width": 150
+    },
+    {
+      "id": "csi",
+      "lane": "req",
+      "col": 2,
+      "type": "cloud",
+      "label": "CSI driver",
+      "sublabel": "ModifyVolume",
+      "width": 150
+    },
+    {
+      "id": "ebs",
+      "lane": "apply",
+      "col": 3,
+      "type": "cloud",
+      "label": "EBS volume grows",
+      "sublabel": "20Gi",
+      "width": 150
+    },
+    {
+      "id": "pv",
+      "lane": "apply",
+      "col": 4,
+      "type": "backend",
+      "label": "PV capacity updated",
+      "sublabel": "capacity 20Gi",
+      "width": 150
+    },
+    {
+      "id": "fs",
+      "lane": "apply",
+      "col": 5,
+      "type": "backend",
+      "label": "File system grows",
+      "sublabel": "Online resize",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "sc",
+      "to": "pvc",
+      "label": "prereq"
+    },
+    {
+      "id": "e2",
+      "from": "pvc",
+      "to": "csi",
+      "label": "request"
+    },
+    {
+      "id": "e3",
+      "from": "csi",
+      "to": "ebs",
+      "label": "AWS API"
+    },
+    {
+      "id": "e4",
+      "from": "ebs",
+      "to": "pv",
+      "label": "reflected"
+    },
+    {
+      "id": "e5",
+      "from": "pv",
+      "to": "fs",
+      "label": "resize"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Prerequisites",
+      "items": [
+        "The StorageClass must set allowVolumeExpansion: true for the request to be accepted",
+        "You request expansion by raising the PVC's spec.resources.requests.storage",
+        "Shrinking is not supported, so plan sizes rather than over-provisioning up front"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Online versus offline",
+      "items": [
+        "With a recent kernel and CSI driver, expansion happens online while the pod runs",
+        "Without online support, the pod must restart before the file system grows",
+        "The PVC's FileSystemResizePending condition shows which stage it is in"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operational best practices",
+      "items": [
+        "Track usage with metrics such as kubelet_volume_stats_available_bytes",
+        "Alert at an 80% threshold so you do not miss the moment to expand",
+        "Expand incrementally rather than in one jump, and account for the 6-hour EBS modification cooldown"
+      ]
+    }
+  ]
+}

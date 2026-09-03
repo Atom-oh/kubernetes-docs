@@ -1,0 +1,38 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "Amazon EBS CSI 드라이버 아키텍처", "output": "ko-eks-04-eks-storage-part1-2.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1120, 660] },
+  "components": [
+    { "id": "pod1", "type": "frontend", "label": "파드 1", "sublabel": "노드 1", "pos": [40, 130], "size": [170, 64] },
+    { "id": "csi1", "type": "backend", "label": "EBS CSI 드라이버", "sublabel": "노드 1 DaemonSet", "pos": [340, 130], "size": [220, 64] },
+    { "id": "ebs1", "type": "database", "label": "EBS 볼륨 1", "sublabel": "gp3 · 단일 AZ", "pos": [700, 130], "size": [200, 64] },
+    { "id": "pod2", "type": "frontend", "label": "파드 2", "sublabel": "노드 2", "pos": [40, 440], "size": [170, 64] },
+    { "id": "csi2", "type": "backend", "label": "EBS CSI 드라이버", "sublabel": "노드 2 DaemonSet", "pos": [340, 440], "size": [220, 64] },
+    { "id": "ebs2", "type": "database", "label": "EBS 볼륨 2", "sublabel": "gp3 · 단일 AZ", "pos": [700, 440], "size": [200, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Amazon EKS 클러스터", "wraps": ["pod1", "csi1", "pod2", "csi2"], "pad": 34 }
+  ],
+  "connections": [
+    { "id": "p1-c1", "from": "pod1", "to": "csi1", "label": "볼륨 마운트" },
+    { "id": "c1-e1", "from": "csi1", "to": "ebs1", "label": "AttachVolume" },
+    { "id": "p2-c2", "from": "pod2", "to": "csi2", "label": "볼륨 마운트" },
+    { "id": "c2-e2", "from": "csi2", "to": "ebs2", "label": "AttachVolume" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "볼륨 타입", "items": [
+      "gp3는 기본 3,000 IOPS와 125 MiB/s를 제공하고 크기와 무관하게 조정 가능하다",
+      "io1·io2는 최대 수십만 IOPS가 필요한 트랜잭션 워크로드용이다",
+      "st1·sc1은 순차 처리량 위주의 저비용 HDD 옵션이다"
+    ]},
+    { "dot": "emerald", "title": "스토리지 클래스 구성", "items": [
+      "provisioner: ebs.csi.aws.com, type: gp3, encrypted: \"true\"를 기본으로 둔다",
+      "volumeBindingMode: WaitForFirstConsumer로 파드가 뜨는 AZ에 볼륨을 만든다",
+      "allowVolumeExpansion: true를 켜두면 나중에 온라인 확장이 가능하다"
+    ]},
+    { "dot": "amber", "title": "모범 사례", "items": [
+      "EBS 볼륨은 단일 AZ 자원이므로 파드가 다른 AZ로 옮겨가면 마운트할 수 없다",
+      "드라이버는 IRSA 또는 Pod Identity로 최소 권한 IAM 역할을 부여한다",
+      "스냅샷으로 백업하고 CSI VolumeSnapshot으로 복구 절차를 검증한다"
+    ]}
+  ]
+}

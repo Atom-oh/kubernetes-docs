@@ -1,0 +1,36 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "워크로드별 스토리지 성능 최적화", "output": "ko-eks-04-eks-storage-part2-4.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1020, 820] },
+  "components": [
+    { "id": "db", "type": "frontend", "label": "데이터베이스", "sublabel": "낮은 지연 · 랜덤 I/O", "pos": [40, 110], "size": [210, 70] },
+    { "id": "web", "type": "frontend", "label": "웹 서버", "sublabel": "공유 콘텐츠 · RWX", "pos": [40, 320], "size": [210, 70] },
+    { "id": "analytics", "type": "frontend", "label": "데이터 분석", "sublabel": "대용량 순차 읽기", "pos": [40, 530], "size": [210, 70] },
+    { "id": "ml", "type": "frontend", "label": "머신러닝 · LLM", "sublabel": "모델 로딩 처리량", "pos": [40, 700], "size": [220, 70] },
+    { "id": "ebs", "type": "database", "label": "EBS gp3 · io2", "sublabel": "IOPS · 처리량 분리 설정", "pos": [600, 110], "size": [240, 70] },
+    { "id": "efs", "type": "database", "label": "EFS", "sublabel": "탄력적 처리량 모드", "pos": [600, 320], "size": [210, 70] },
+    { "id": "fsx", "type": "database", "label": "FSx for Lustre", "sublabel": "스트라이핑 · 압축", "pos": [600, 600], "size": [230, 70] }
+  ],
+  "connections": [
+    { "id": "db-ebs", "from": "db", "to": "ebs", "label": "IOPS 중심" },
+    { "id": "web-efs", "from": "web", "to": "efs", "label": "다중 노드 공유" },
+    { "id": "an-fsx", "from": "analytics", "to": "fsx", "label": "처리량 중심" },
+    { "id": "ml-fsx", "from": "ml", "to": "fsx", "label": "대용량 순차" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "EBS 최적화", "items": [
+      "gp3는 IOPS와 처리량을 용량과 분리해 설정하므로 과도한 용량 구매를 피할 수 있다",
+      "수십만 IOPS가 필요하면 io2 Block Express를 쓰고 EBS 최적화 인스턴스를 고른다",
+      "인스턴스의 EBS 대역폭 상한이 볼륨 성능보다 낮으면 인스턴스가 병목이 된다"
+    ]},
+    { "dot": "emerald", "title": "EFS 최적화", "items": [
+      "탄력적 처리량 모드를 기본으로 쓰고 일정한 성능이 필요할 때만 프로비저닝한다",
+      "작은 파일을 많이 읽는 패턴은 지연에 취약하므로 캐싱 계층을 함께 둔다",
+      "마운트 옵션에서 읽기·쓰기 버퍼 크기를 조정해 처리량을 끌어올린다"
+    ]},
+    { "dot": "amber", "title": "FSx와 LLM 워크로드", "items": [
+      "배포 유형과 프로비저닝 처리량(1 TiB당 125~1,000 MB/s)을 먼저 정한다",
+      "스트라이핑으로 큰 파일을 여러 스토리지 타깃에 분산해 병렬 읽기를 늘린다",
+      "vLLM처럼 모델 가중치를 반복 로딩하는 워크로드는 FSx for Lustre가 유리하다"
+    ]}
+  ]
+}

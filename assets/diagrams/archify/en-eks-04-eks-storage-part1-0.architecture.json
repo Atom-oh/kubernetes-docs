@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Storage Concepts",
+    "output": "en-eks-04-eks-storage-part1-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      640
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "containers",
+      "type": "frontend",
+      "label": "Containers in a pod",
+      "sublabel": "volumeMounts",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "Provisioner · parameters",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "messagebus",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "Requests size · access mode",
+      "pos": [
+        340,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PersistentVolume",
+      "sublabel": "Represents the real volume",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "backends",
+      "type": "database",
+      "label": "EBS · EFS · FSx · S3",
+      "sublabel": "AWS storage backends",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-pvc",
+      "from": "containers",
+      "to": "pvc",
+      "label": "Mounts volume",
+      "labelDy": 60
+    },
+    {
+      "id": "pvc-sc",
+      "from": "pvc",
+      "to": "sc",
+      "label": "References storageClassName",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sc-pv",
+      "from": "sc",
+      "to": "pv",
+      "label": "Dynamic provisioning",
+      "toSide": "top"
+    },
+    {
+      "id": "pvc-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "Binds"
+    },
+    {
+      "id": "pv-backend",
+      "from": "pv",
+      "to": "backends",
+      "label": "Backs onto"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Storage workflow",
+      "items": [
+        "An administrator defines the StorageClass and developers request storage with a PVC",
+        "The StorageClass drives dynamic PV creation, and the PV binds to the PVC automatically",
+        "Pods reach storage through the PVC and containers mount the volume"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Key properties",
+      "items": [
+        "A PV's lifecycle is independent of the pod, so data survives the pod",
+        "One API covers EBS, EFS, FSx, S3, and other AWS storage services",
+        "Access modes range from single-pod exclusive to shared across many nodes"
+      ]
+    }
+  ]
+}
