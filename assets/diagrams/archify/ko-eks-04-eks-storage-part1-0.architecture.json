@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 스토리지 개념",
+    "output": "ko-eks-04-eks-storage-part1-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "containers",
+      "type": "frontend",
+      "label": "파드의 컨테이너",
+      "sublabel": "volumeMounts",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "프로비저너 · 파라미터",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "messagebus",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "용량 · 액세스 모드 요청",
+      "pos": [
+        340,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PersistentVolume",
+      "sublabel": "실제 볼륨 표현",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "backends",
+      "type": "database",
+      "label": "EBS · EFS · FSx · S3",
+      "sublabel": "AWS 스토리지 백엔드",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-pvc",
+      "from": "containers",
+      "to": "pvc",
+      "label": "볼륨 마운트",
+      "labelDy": 60
+    },
+    {
+      "id": "pvc-sc",
+      "from": "pvc",
+      "to": "sc",
+      "label": "storageClassName 참조",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sc-pv",
+      "from": "sc",
+      "to": "pv",
+      "label": "동적 프로비저닝",
+      "toSide": "top"
+    },
+    {
+      "id": "pvc-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "바인딩"
+    },
+    {
+      "id": "pv-backend",
+      "from": "pv",
+      "to": "backends",
+      "label": "백엔드 연결"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "스토리지 워크플로",
+      "items": [
+        "관리자가 StorageClass를 정의하고 개발자는 PVC로 스토리지를 요청한다",
+        "StorageClass에 따라 PV가 동적으로 생성되고 PVC와 자동 바인딩된다",
+        "파드는 PVC를 통해 스토리지에 접근하고 컨테이너가 볼륨을 마운트한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "핵심 특징",
+      "items": [
+        "PV의 수명 주기는 파드와 독립적이라 파드가 사라져도 데이터가 남는다",
+        "EBS, EFS, FSx, S3 등 여러 AWS 스토리지 서비스를 같은 API로 다룬다",
+        "액세스 모드에 따라 단일 파드 전용부터 다중 노드 공유까지 선택할 수 있다"
+      ]
+    }
+  ]
+}

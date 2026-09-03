@@ -16,7 +16,9 @@ When running applications on Amazon EKS, there are various storage options for s
 
 Let's first understand the key concepts for managing storage in Kubernetes.
 
-![Kubernetes Storage Concepts](../.gitbook/assets/kubernetes_storage_concepts.png)
+![Kubernetes storage concepts diagram running from containers through the PVC, StorageClass, and PV to the EBS, EFS, FSx, and S3 backends.](../.gitbook/assets/en-eks-04-eks-storage-part1-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-0.html)
 
 ### Volume
 
@@ -47,7 +49,9 @@ Kubernetes supports the following access modes:
 
 In Amazon EKS, you can leverage various AWS storage services to provide storage for containerized applications.
 
-![EKS Storage Options](../.gitbook/assets/eks_storage_options.png)
+![EKS storage options diagram comparing EBS, EFS, and FSx for Lustre alongside their CSI drivers and supported access modes.](../.gitbook/assets/en-eks-04-eks-storage-part1-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-1.html)
 
 ### Main Storage Options
 
@@ -87,7 +91,9 @@ In Amazon EKS, you can leverage various AWS storage services to provide storage 
 
 Amazon EBS provides block-level storage volumes that can be attached to EC2 instances. In EKS, you can mount EBS volumes to Kubernetes pods through the EBS CSI (Container Storage Interface) driver.
 
-![EBS CSI Driver Architecture](../.gitbook/assets/ebs_csi_architecture.png)
+![EBS CSI architecture diagram showing pods on two nodes attaching separate EBS volumes through their node-local CSI drivers.](../.gitbook/assets/en-eks-04-eks-storage-part1-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-2.html)
 
 ### Installing EBS CSI Driver
 
@@ -208,7 +214,9 @@ For EKS, the gp3 volume type is recommended. gp3 is cost-effective while providi
 
 Amazon EFS is a fully managed NFS file system that can be accessed simultaneously from multiple EC2 instances. In EKS, you can mount EFS file systems to multiple pods simultaneously through the EFS CSI driver.
 
-![EFS CSI Driver Architecture](../.gitbook/assets/efs_csi_architecture.png)
+![EFS CSI architecture diagram showing pods on multiple nodes sharing one EFS file system over NFS 4.1 through the CSI driver.](../.gitbook/assets/en-eks-04-eks-storage-part1-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-3.html)
 
 ### Installing EFS CSI Driver
 
@@ -369,7 +377,9 @@ Amazon EFS provides two performance modes and three throughput modes:
 
 Using Kubernetes storage classes allows persistent volumes to be dynamically provisioned. In EKS, you can configure storage classes for various AWS storage services.
 
-![Kubernetes Storage Workflow](../.gitbook/assets/storage_workflow.png)
+![Storage provisioning workflow diagram from a pod's PVC request through the StorageClass and CSI driver to PV creation and binding.](../.gitbook/assets/en-eks-04-eks-storage-part1-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-4.html)
 
 ### Volume Binding Modes
 

@@ -17,7 +17,9 @@
 
 Amazon FSx for Lustre는 고성능 컴퓨팅(HPC), 기계 학습, 빅 데이터 처리와 같은 컴퓨팅 집약적 워크로드를 위한 고성능 파일 시스템입니다. Lustre는 병렬 분산 파일 시스템으로, 수천 개의 클라이언트에서 동시에 액세스할 수 있는 높은 처리량과 낮은 지연 시간을 제공합니다.
 
-![FSx for Lustre CSI 아키텍처](../.gitbook/assets/fsx_lustre_csi_architecture.png)
+![ML 훈련과 추론 파드가 FSx CSI 드라이버로 FSx for Lustre를 마운트하고 FSx가 S3와 데이터를 동기화하는 아키텍처 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part2-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-04-eks-storage-part2-0.html)
 
 ### FSx for Lustre CSI 드라이버 설치
 
@@ -215,7 +217,9 @@ parameters:
 
 Amazon S3는 객체 스토리지 서비스로, 무제한 양의 데이터를 저장하고 검색할 수 있습니다. Kubernetes에서는 S3를 직접 볼륨으로 마운트할 수는 없지만, 다양한 방법으로 S3와 통합할 수 있습니다.
 
-![S3 통합 방법](../.gitbook/assets/s3_integration_methods.png)
+![애플리케이션 파드가 IRSA로 자격 증명을 받고 Mountpoint S3 CSI 또는 AWS SDK로 S3에 접근하는 통합 방법 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part2-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-04-eks-storage-part2-1.html)
 
 ### S3 액세스를 위한 IRSA 설정
 
@@ -371,7 +375,9 @@ Amazon S3는 다음과 같은 사용 사례에 적합합니다:
 
 Kubernetes에서는 볼륨 스냅샷을 사용하여 PV의 데이터를 백업하고 복원할 수 있습니다.
 
-![볼륨 스냅샷 시스템](../.gitbook/assets/volume_snapshot_system.png)
+![원본 PVC에서 VolumeSnapshot과 SnapshotContent를 거쳐 EBS 스냅샷을 만들고 새 PVC로 복원하는 흐름 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part2-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-04-eks-storage-part2-2.html)
 
 ### 볼륨 스냅샷 컨트롤러 설치
 
@@ -477,7 +483,9 @@ velero restore create --from-backup daily-backup-20250710010000
 
 Kubernetes에서는 PVC의 크기를 확장하여 스토리지 용량을 늘릴 수 있습니다.
 
-![볼륨 확장 프로세스](../.gitbook/assets/volume_expansion_process.png)
+![StorageClass의 확장 허용부터 PVC 수정, CSI 드라이버 호출, EBS 볼륨과 파일 시스템 확장까지 이어지는 볼륨 확장 프로세스 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part2-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-04-eks-storage-part2-3.html)
 
 ### 볼륨 확장 활성화
 
@@ -929,7 +937,9 @@ spec:
 
 EKS에서 스토리지 성능을 최적화하기 위한 다양한 전략을 살펴보겠습니다.
 
-![스토리지 성능 최적화](../.gitbook/assets/storage_performance_optimization.png)
+![데이터베이스, 웹 서버, 데이터 분석, 머신러닝 워크로드를 EBS, EFS, FSx for Lustre에 각각 대응시킨 스토리지 성능 최적화 다이어그램.](../.gitbook/assets/ko-eks-04-eks-storage-part2-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-04-eks-storage-part2-4.html)
 
 ### EBS 성능 최적화
 
