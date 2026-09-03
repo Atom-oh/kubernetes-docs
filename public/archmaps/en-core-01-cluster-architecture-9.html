@@ -5035,8 +5035,8 @@
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="pod" data-edge-to="pvc" data-edge-label="volume claim reference" data-edge-key="0" data-edge-id="pod-pvc" data-composition-points="220,112;400,112" d="M 220 112 L 400 112" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="pvc" data-edge-to="pv" data-edge-label="binding" data-edge-key="1" data-edge-id="pvc-pv" data-composition-points="560,112;740,112" d="M 560 112 L 740 112" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="pv" data-edge-to="csi" data-edge-label="provisioning request" data-edge-key="2" data-edge-id="pv-csi" data-composition-points="820,144;820,330" d="M 820 144 L 820 330" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="csi" data-edge-to="storage" data-edge-label="create · attach volume" data-edge-key="3" data-edge-id="csi-storage" data-composition-points="740,362;560,362" d="M 740 362 L 560 362" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="pv" data-edge-to="csi" data-edge-label="volume attach" data-edge-key="2" data-edge-id="pv-csi" data-composition-points="820,144;820,330" d="M 820 144 L 820 330" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="csi" data-edge-to="storage" data-edge-label="create volume" data-edge-key="3" data-edge-id="csi-storage" data-composition-points="740,362;560,362" d="M 740 362 L 560 362" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
         <g id="node-pod" data-node-id="pod" data-node-label="Pod" tabindex="0" role="button" aria-label="Focus Pod, volume mount, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="volume mount" data-node-context="Architecture component">
@@ -5107,13 +5107,13 @@
           <rect x="628.2" y="92" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="650" y="102" class="t-backend" font-size="8" text-anchor="middle">binding</text>
         </g>
-        <g data-detail="context" data-edge-from="pv" data-edge-to="csi" data-edge-label="provisioning request" data-edge-key="2" data-edge-id="pv-csi">
-          <rect x="767" y="166" width="106" height="14" rx="3" class="c-mask"/>
-          <text x="820" y="176" class="t-muted" font-size="8" text-anchor="middle">provisioning request</text>
+        <g data-detail="context" data-edge-from="pv" data-edge-to="csi" data-edge-label="volume attach" data-edge-key="2" data-edge-id="pv-csi">
+          <rect x="783.8" y="166" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="820" y="176" class="t-muted" font-size="8" text-anchor="middle">volume attach</text>
         </g>
-        <g data-detail="context" data-edge-from="csi" data-edge-to="storage" data-edge-label="create · attach volume" data-edge-key="3" data-edge-id="csi-storage">
-          <rect x="592.2" y="342" width="115.6" height="14" rx="3" class="c-mask"/>
-          <text x="650" y="352" class="t-muted" font-size="8" text-anchor="middle">create · attach volume</text>
+        <g data-detail="context" data-edge-from="csi" data-edge-to="storage" data-edge-label="create volume" data-edge-key="3" data-edge-id="csi-storage">
+          <rect x="613.8" y="342" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="650" y="352" class="t-muted" font-size="8" text-anchor="middle">create volume</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

@@ -445,7 +445,7 @@ Container runtime is software that runs containers. Kubernetes supports various 
 
 **Container Runtime Layer Structure**:
 
-![Tree diagram showing Kubernetes calling the Container Runtime Interface, which delegates to containerd or CRI-O, each backed by a low-level runtime (runc or crun).](../.gitbook/assets/en-core-01-cluster-architecture-1.png)
+![Layered architecture diagram showing Kubernetes calling the Container Runtime Interface, which delegates to containerd or CRI-O, each backed by a low-level runtime (runc or crun).](../.gitbook/assets/en-core-01-cluster-architecture-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-1.html)
 
@@ -634,7 +634,7 @@ Communication between control plane and nodes is as follows:
 
 ### Inter-Node Communication
 
-![Architecture diagram showing four pods, potentially on different nodes, all communicating with each other bidirectionally through the shared CNI network.](../.gitbook/assets/en-core-01-cluster-architecture-4.png)
+![Architecture diagram showing pods on two nodes reaching each other directly through the CNI network without NAT, with one cross-node flow highlighted from a pod on Node A to a pod on Node B.](../.gitbook/assets/en-core-01-cluster-architecture-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-4.html)
 
@@ -712,7 +712,7 @@ High availability of the control plane is implemented through the following meth
 
 **etcd Cluster Configuration**:
 
-![Architecture diagram showing three etcd nodes forming a ring, each pair connected bidirectionally to replicate state via the Raft consensus protocol.](../.gitbook/assets/en-core-01-cluster-architecture-7.png)
+![Architecture diagram showing three etcd nodes in a full mesh, where the leader replicates writes to both followers via Raft consensus and the followers exchange leader-election votes.](../.gitbook/assets/en-core-01-cluster-architecture-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-7.html)
 

@@ -99,14 +99,14 @@
       "id": "pv-csi",
       "from": "pv",
       "to": "csi",
-      "label": "provisioning request",
+      "label": "volume attach",
       "labelDy": 42
     },
     {
       "id": "csi-storage",
       "from": "csi",
       "to": "storage",
-      "label": "create · attach volume"
+      "label": "create volume"
     }
   ],
   "cards": [

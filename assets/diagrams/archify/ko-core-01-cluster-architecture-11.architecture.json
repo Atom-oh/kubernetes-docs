@@ -8,21 +8,133 @@
     "animation": "trace"
   },
   "components": [
-    { "id": "cp", "type": "cloud", "label": "EKS 컨트롤 플레인", "sublabel": "apiserver · etcd · scheduler", "tag": "AWS 관리", "pos": [60, 90], "size": [230, 70] },
-    { "id": "workers", "type": "backend", "label": "워커 노드", "sublabel": "노드 그룹 / Fargate", "tag": "고객 관리", "pos": [620, 90], "size": [230, 70] },
-    { "id": "awssvc", "type": "cloud", "label": "AWS 서비스", "sublabel": "IAM · ECR · CloudWatch", "pos": [60, 380], "size": [230, 70] },
-    { "id": "vpc", "type": "cloud", "label": "VPC 네트워킹", "sublabel": "서브넷 · SG · VPC CNI", "pos": [620, 380], "size": [230, 70] }
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "apiserver · etcd · scheduler",
+      "tag": "AWS 관리",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "워커 노드",
+      "sublabel": "노드 그룹 / Fargate",
+      "tag": "고객 관리",
+      "pos": [
+        620,
+        90
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "awssvc",
+      "type": "cloud",
+      "label": "AWS 서비스",
+      "sublabel": "IAM · ECR · CloudWatch",
+      "pos": [
+        60,
+        380
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC 네트워킹",
+      "sublabel": "서브넷 · SG · VPC CNI",
+      "pos": [
+        620,
+        380
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "AWS 클라우드", "wraps": ["cp", "workers", "awssvc", "vpc"] }
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "cp",
+        "workers",
+        "awssvc",
+        "vpc"
+      ]
+    }
   ],
   "connections": [
-    { "id": "cp-workers", "from": "cp", "to": "workers", "label": "관리형 ENI 통신", "variant": "emphasis" },
-    { "id": "workers-vpc", "from": "workers", "to": "vpc", "label": "파드 네트워킹", "labelDy": 40 },
-    { "id": "workers-awssvc", "from": "workers", "to": "awssvc", "label": "IAM 인증 · 이미지 풀 · 로그", "fromSide": "left", "toSide": "top", "via": [[500, 125], [500, 300], [175, 300]] }
+    {
+      "id": "cp-workers",
+      "from": "cp",
+      "to": "workers",
+      "label": "관리형 ENI 통신",
+      "variant": "emphasis"
+    },
+    {
+      "id": "workers-vpc",
+      "from": "workers",
+      "to": "vpc",
+      "label": "파드 네트워킹",
+      "labelDy": 40
+    },
+    {
+      "id": "workers-awssvc",
+      "from": "workers",
+      "to": "awssvc",
+      "label": "IAM 인증 · 이미지 풀 · 로그",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          500,
+          125
+        ],
+        [
+          500,
+          300
+        ],
+        [
+          175,
+          300
+        ]
+      ],
+      "labelSegment": 2,
+      "labelDy": -16
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "책임 분담", "items": ["컨트롤 플레인은 AWS가 다중 AZ로 운영", "워커 노드와 워크로드는 고객이 관리"] },
-    { "dot": "emerald", "title": "AWS 통합", "items": ["IAM으로 인증, ECR에서 이미지, CloudWatch로 관측", "VPC CNI가 파드에 VPC IP를 직접 부여"] }
+    {
+      "dot": "cyan",
+      "title": "책임 분담",
+      "items": [
+        "컨트롤 플레인은 AWS가 다중 AZ로 운영",
+        "워커 노드와 워크로드는 고객이 관리"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "AWS 통합",
+      "items": [
+        "IAM으로 인증, ECR에서 이미지, CloudWatch로 관측",
+        "VPC CNI가 파드에 VPC IP를 직접 부여"
+      ]
+    }
   ]
 }

@@ -5,6 +5,22 @@
     "title": "eBPF Program Development and Execution Flow",
     "quality_profile": "showcase",
     "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "User space"
+        },
+        "backend": {
+          "label": "Kernel processing"
+        },
+        "security": {
+          "label": "Verify"
+        },
+        "database": {
+          "label": "Data sharing"
+        }
+      }
+    },
     "locale": "en"
   },
   "lanes": [
@@ -37,7 +53,8 @@
       "col": 0,
       "type": "frontend",
       "label": "Write/compile",
-      "sublabel": "C/Rust → Clang/LLVM"
+      "sublabel": "C/Rust → Clang/LLVM",
+      "width": 128
     },
     {
       "id": "load",
@@ -45,7 +62,8 @@
       "col": 1,
       "type": "backend",
       "label": "Load via bpf()",
-      "sublabel": "deliver bytecode"
+      "sublabel": "deliver bytecode",
+      "width": 132
     },
     {
       "id": "verify",
@@ -61,7 +79,8 @@
       "col": 3,
       "type": "backend",
       "label": "JIT compile",
-      "sublabel": "machine code"
+      "sublabel": "machine code",
+      "width": 118
     },
     {
       "id": "attachexec",
@@ -70,7 +89,7 @@
       "type": "backend",
       "label": "Attach · run",
       "sublabel": "per event",
-      "width": 110
+      "width": 132
     },
     {
       "id": "map",
@@ -79,7 +98,7 @@
       "type": "database",
       "label": "Store in eBPF map",
       "sublabel": "kernel ↔ user shared",
-      "width": 110
+      "width": 130
     },
     {
       "id": "read",
@@ -88,7 +107,7 @@
       "type": "frontend",
       "label": "User-space read",
       "sublabel": "consume results",
-      "width": 125
+      "width": 140
     },
     {
       "id": "reject",

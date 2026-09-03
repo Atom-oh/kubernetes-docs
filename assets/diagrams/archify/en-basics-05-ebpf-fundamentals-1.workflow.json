@@ -5,17 +5,30 @@
     "title": "Kernel Modules vs eBPF",
     "quality_profile": "showcase",
     "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Authoring"
+        },
+        "backend": {
+          "label": "Build · load"
+        },
+        "security": {
+          "label": "Risk / verify"
+        }
+      }
+    },
     "locale": "en"
   },
   "lanes": [
     {
+      "id": "ebpf",
+      "label": "eBPF way"
+    },
+    {
       "id": "legacy",
       "label": "Traditional · kernel module",
       "variant": "exception"
-    },
-    {
-      "id": "ebpf",
-      "label": "eBPF way"
     }
   ],
   "mainPath": [
@@ -30,7 +43,8 @@
       "col": 0,
       "type": "frontend",
       "label": "Kernel module",
-      "sublabel": "C code"
+      "sublabel": "C code",
+      "width": 132
     },
     {
       "id": "modbuild",
@@ -38,7 +52,8 @@
       "col": 1,
       "type": "backend",
       "label": "Kernel compile",
-      "sublabel": "reboot required"
+      "sublabel": "per-kernel rebuild",
+      "width": 135
     },
     {
       "id": "modrisk",
@@ -47,16 +62,16 @@
       "type": "security",
       "label": "Instability risk",
       "sublabel": "kernel panic possible",
-      "width": 135
+      "width": 152
     },
     {
       "id": "write",
       "lane": "ebpf",
       "col": 0,
       "type": "frontend",
-      "label": "Write eBPF program",
+      "label": "Write eBPF",
       "sublabel": "C / Rust",
-      "width": 135
+      "width": 120
     },
     {
       "id": "loadrt",
@@ -64,7 +79,8 @@
       "col": 1,
       "type": "backend",
       "label": "Runtime load",
-      "sublabel": "no reboot needed"
+      "sublabel": "no reboot needed",
+      "width": 124
     },
     {
       "id": "safe",
@@ -72,7 +88,8 @@
       "col": 2,
       "type": "backend",
       "label": "Run verified",
-      "sublabel": "safe by design"
+      "sublabel": "safe by design",
+      "width": 124
     }
   ],
   "edges": [

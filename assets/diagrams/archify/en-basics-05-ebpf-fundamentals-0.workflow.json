@@ -5,6 +5,19 @@
     "title": "How eBPF Works",
     "quality_profile": "showcase",
     "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Dev stages"
+        },
+        "backend": {
+          "label": "Kernel processing"
+        },
+        "security": {
+          "label": "Verify"
+        }
+      }
+    },
     "locale": "en"
   },
   "lanes": [
@@ -32,7 +45,8 @@
       "col": 0,
       "type": "frontend",
       "label": "Write program",
-      "sublabel": "C / Rust"
+      "sublabel": "C / Rust",
+      "width": 128
     },
     {
       "id": "compile",
@@ -49,7 +63,7 @@
       "type": "backend",
       "label": "bpf() syscall",
       "sublabel": "load into kernel",
-      "width": 115
+      "width": 142
     },
     {
       "id": "verifier",
@@ -65,7 +79,8 @@
       "col": 4,
       "type": "backend",
       "label": "JIT compile",
-      "sublabel": "native code"
+      "sublabel": "native code",
+      "width": 118
     },
     {
       "id": "run",
@@ -73,7 +88,8 @@
       "col": 5,
       "type": "backend",
       "label": "Run program",
-      "sublabel": "at event hooks"
+      "sublabel": "at event hooks",
+      "width": 128
     }
   ],
   "edges": [

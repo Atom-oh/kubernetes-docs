@@ -80,6 +80,12 @@ try {
     // screenshot before that captures pre-font-swap text widths.
     await page.evaluate(() => document.fonts.ready)
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+    // Stills are captured at the viewer's "read" detail level, whose CSS hides
+    // [data-detail="fine"] content (component tags). Force the lens level so
+    // the PNG carries everything the interactive view shows.
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('[data-detail-level]')) el.setAttribute('data-detail-level', 'lens')
+    })
     await page.waitForTimeout(400)
     const tall = await page.evaluate(() =>
       Math.max(document.documentElement.scrollHeight, document.body.scrollHeight))

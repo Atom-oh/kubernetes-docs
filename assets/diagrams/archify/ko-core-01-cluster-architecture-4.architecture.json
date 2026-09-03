@@ -103,7 +103,8 @@
       "from": "pod2",
       "to": "cni",
       "label": "NAT 없이 직접 통신",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": -18
     },
     {
       "id": "cni-to-pod3",
@@ -115,7 +116,8 @@
       "id": "pod1-to-cni",
       "from": "pod1",
       "to": "cni",
-      "variant": "dashed"
+      "variant": "dashed",
+      "label": "동일 경로"
     },
     {
       "id": "cni-to-pod4",

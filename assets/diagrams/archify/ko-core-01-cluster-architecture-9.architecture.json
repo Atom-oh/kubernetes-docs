@@ -98,14 +98,14 @@
       "id": "pv-csi",
       "from": "pv",
       "to": "csi",
-      "label": "프로비저닝 요청",
+      "label": "볼륨 연결",
       "labelDy": 42
     },
     {
       "id": "csi-storage",
       "from": "csi",
       "to": "storage",
-      "label": "볼륨 생성 · 연결"
+      "label": "볼륨 생성"
     }
   ],
   "cards": [

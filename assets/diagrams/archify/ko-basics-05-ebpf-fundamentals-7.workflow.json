@@ -4,17 +4,33 @@
   "meta": {
     "title": "관측 방식 비교: 에이전트 vs eBPF",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "애플리케이션"
+        },
+        "backend": {
+          "label": "수집 경로"
+        },
+        "security": {
+          "label": "eBPF 계측"
+        },
+        "database": {
+          "label": "백엔드 저장소"
+        }
+      }
+    }
   },
   "lanes": [
+    {
+      "id": "ebpf",
+      "label": "eBPF 방식"
+    },
     {
       "id": "legacy",
       "label": "기존 방식 · SDK/에이전트",
       "variant": "exception"
-    },
-    {
-      "id": "ebpf",
-      "label": "eBPF 방식"
     }
   ],
   "mainPath": [
@@ -29,7 +45,8 @@
       "col": 0,
       "type": "frontend",
       "label": "애플리케이션",
-      "sublabel": "코드 수정 필요"
+      "sublabel": "코드 수정 필요",
+      "width": 112
     },
     {
       "id": "sdk",
@@ -37,14 +54,16 @@
       "col": 1,
       "type": "backend",
       "label": "SDK / 에이전트",
-      "sublabel": "언어별 계측"
+      "sublabel": "언어별 계측",
+      "width": 112
     },
     {
       "id": "collect",
       "lane": "legacy",
       "col": 2,
       "type": "backend",
-      "label": "메트릭 수집"
+      "label": "메트릭 수집",
+      "width": 104
     },
     {
       "id": "backend1",
@@ -52,7 +71,7 @@
       "col": 3,
       "type": "database",
       "label": "모니터링 백엔드",
-      "width": 115
+      "width": 132
     },
     {
       "id": "app2",
@@ -60,7 +79,8 @@
       "col": 0,
       "type": "frontend",
       "label": "애플리케이션",
-      "sublabel": "수정 불필요"
+      "sublabel": "수정 불필요",
+      "width": 112
     },
     {
       "id": "probe",
@@ -69,7 +89,7 @@
       "type": "security",
       "label": "커널 eBPF 프로그램",
       "sublabel": "자동 계측",
-      "width": 135
+      "width": 152
     },
     {
       "id": "backend2",
@@ -77,7 +97,7 @@
       "col": 3,
       "type": "database",
       "label": "모니터링 백엔드",
-      "width": 115
+      "width": 132
     }
   ],
   "edges": [

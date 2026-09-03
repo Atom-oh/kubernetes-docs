@@ -4,17 +4,30 @@
   "meta": {
     "title": "커널 모듈 방식과 eBPF 방식 비교",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "작성"
+        },
+        "backend": {
+          "label": "빌드·로드"
+        },
+        "security": {
+          "label": "위험 / 검증"
+        }
+      }
+    }
   },
   "lanes": [
+    {
+      "id": "ebpf",
+      "label": "eBPF 방식"
+    },
     {
       "id": "legacy",
       "label": "기존 방식 · 커널 모듈",
       "variant": "exception"
-    },
-    {
-      "id": "ebpf",
-      "label": "eBPF 방식"
     }
   ],
   "mainPath": [
@@ -29,7 +42,8 @@
       "col": 0,
       "type": "frontend",
       "label": "커널 모듈 개발",
-      "sublabel": "C 코드"
+      "sublabel": "C 코드",
+      "width": 132
     },
     {
       "id": "modbuild",
@@ -37,7 +51,8 @@
       "col": 1,
       "type": "backend",
       "label": "커널 컴파일",
-      "sublabel": "재부팅 필요"
+      "sublabel": "커널별 재컴파일",
+      "width": 135
     },
     {
       "id": "modrisk",
@@ -46,16 +61,16 @@
       "type": "security",
       "label": "시스템 불안정 위험",
       "sublabel": "커널 패닉 가능",
-      "width": 135
+      "width": 152
     },
     {
       "id": "write",
       "lane": "ebpf",
       "col": 0,
       "type": "frontend",
-      "label": "eBPF 프로그램 작성",
+      "label": "eBPF 작성",
       "sublabel": "C / Rust",
-      "width": 135
+      "width": 120
     },
     {
       "id": "loadrt",
@@ -63,7 +78,8 @@
       "col": 1,
       "type": "backend",
       "label": "런타임 로드",
-      "sublabel": "재부팅 불필요"
+      "sublabel": "재부팅 불필요",
+      "width": 124
     },
     {
       "id": "safe",
@@ -71,7 +87,8 @@
       "col": 2,
       "type": "backend",
       "label": "검증 후 실행",
-      "sublabel": "안전한 실행 보장"
+      "sublabel": "안전한 실행 보장",
+      "width": 124
     }
   ],
   "edges": [

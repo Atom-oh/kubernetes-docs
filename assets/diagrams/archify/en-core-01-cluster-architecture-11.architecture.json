@@ -115,7 +115,9 @@
           175,
           300
         ]
-      ]
+      ],
+      "labelSegment": 2,
+      "labelDy": -16
     }
   ],
   "cards": [

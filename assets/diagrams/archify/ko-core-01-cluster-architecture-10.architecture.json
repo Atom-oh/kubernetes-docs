@@ -8,18 +8,102 @@
     "animation": "trace"
   },
   "components": [
-    { "id": "kubernetes", "type": "backend", "label": "Kubernetes", "sublabel": "kubelet · controller", "pos": [390, 40], "size": [200, 60] },
-    { "id": "csi", "type": "messagebus", "label": "CSI", "sublabel": "Container Storage Interface", "pos": [380, 190], "size": [220, 60] },
-    { "id": "driver", "type": "backend", "label": "CSI Driver", "sublabel": "예: AWS EBS CSI Driver", "pos": [380, 340], "size": [220, 60] },
-    { "id": "storage", "type": "database", "label": "Storage System", "sublabel": "예: Amazon EBS", "pos": [380, 490], "size": [220, 60] }
+    {
+      "id": "kubernetes",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "kubelet · controller",
+      "pos": [
+        390,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "messagebus",
+      "label": "CSI",
+      "sublabel": "Container Storage Interface",
+      "pos": [
+        380,
+        190
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "CSI Driver",
+      "sublabel": "예: AWS EBS CSI Driver",
+      "pos": [
+        380,
+        340
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Storage System",
+      "sublabel": "예: Amazon EBS",
+      "pos": [
+        380,
+        490
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
   ],
   "connections": [
-    { "id": "k8s-csi", "from": "kubernetes", "to": "csi", "label": "표준 gRPC 호출", "variant": "emphasis", "labelDy": 30 },
-    { "id": "csi-driver", "from": "csi", "to": "driver", "labelDy": 30 },
-    { "id": "driver-storage", "from": "driver", "to": "storage", "label": "볼륨 생성 · 연결 · 마운트", "labelDy": 34 }
+    {
+      "id": "k8s-csi",
+      "from": "kubernetes",
+      "to": "csi",
+      "label": "표준 gRPC 호출",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "csi-driver",
+      "from": "csi",
+      "to": "driver",
+      "labelDy": 30
+    },
+    {
+      "id": "driver-storage",
+      "from": "driver",
+      "to": "storage",
+      "label": "볼륨 생성 · 연결 · 마운트",
+      "labelDy": 34
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "표준 인터페이스", "items": ["Kubernetes는 CSI 스펙만 호출", "스토리지 벤더가 드라이버를 구현"] },
-    { "dot": "emerald", "title": "교체 가능성", "items": ["EBS·EFS·Ceph 등 드라이버만 바꾸면 동일 워크플로", "인트리 플러그인은 CSI로 대체 완료"] }
+    {
+      "dot": "cyan",
+      "title": "표준 인터페이스",
+      "items": [
+        "Kubernetes는 CSI 스펙만 호출",
+        "스토리지 벤더가 드라이버를 구현"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "교체 가능성",
+      "items": [
+        "EBS·EFS·Ceph 등 드라이버만 바꾸면 동일 워크플로",
+        "클라우드 인트리 볼륨 플러그인은 CSI로 이전 완료"
+      ]
+    }
   ]
 }

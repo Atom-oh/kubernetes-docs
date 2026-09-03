@@ -89,7 +89,7 @@ eBPF is revolutionary for the following reasons:
 4. **Dynamic loading**: Load/unload programs without reboot
 5. **Production stability**: Safe execution without crashes or infinite loops
 
-![A side-by-side comparison showing the traditional kernel-module path, which risks a reboot and instability, against the eBPF path, which loads and verifies code at runtime for guaranteed safe execution.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-1.png)
+![A side-by-side comparison showing the traditional kernel-module path, which requires per-kernel recompilation and risks system instability, against the eBPF path, which loads and verifies code at runtime for guaranteed safe execution.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-1.html)
 
@@ -221,7 +221,7 @@ int bpf_get_current_comm(void *buf, u32 size);  // Process name
 
 ### 2.6 Program Lifecycle
 
-![State machine diagram of an eBPF program's lifecycle: written code is compiled and loaded via the bpf() syscall, then the verifier either rejects it or passes it to JIT compilation; the JIT-compiled program attaches to a hook point where it either executes repeatedly on each event trigger or is explicitly detached, unloading the program.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-3.png)
+![Workflow diagram of an eBPF program's lifecycle: a program loaded via the bpf() syscall passes verification, attaches to an event hook, runs repeatedly per event, and ends with an explicit detach and unload — with the verification-failure path shown alongside.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-3.html)
 

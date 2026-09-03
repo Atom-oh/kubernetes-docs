@@ -39,7 +39,7 @@
     },
     {
       "id": "cloudcontroller",
-      "type": "cloud",
+      "type": "backend",
       "label": "cloud-controller-manager",
       "sublabel": "cloud integration",
       "pos": [

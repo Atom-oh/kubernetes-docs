@@ -38,7 +38,7 @@
     },
     {
       "id": "cloudcontroller",
-      "type": "cloud",
+      "type": "backend",
       "label": "cloud-controller-manager",
       "sublabel": "클라우드 연동",
       "pos": [

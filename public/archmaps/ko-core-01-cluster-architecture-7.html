@@ -5035,7 +5035,7 @@
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="etcd1" data-edge-to="etcd2" data-edge-label="Raft 복제" data-edge-key="0" data-edge-id="e1-e2" data-composition-points="400,82;195,82;195,330" d="M 400 82 L 203 82 Q 195 82 195 90 L 195 330" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="etcd1" data-edge-to="etcd3" data-edge-label="Raft 복제" data-edge-key="1" data-edge-id="e1-e3" data-composition-points="570,82;775,82;775,330" d="M 570 82 L 767 82 Q 775 82 775 90 L 775 330" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="하트비트 · 리더 선출" data-edge-key="2" data-edge-id="e2-e3" data-composition-points="280,362;690,362" d="M 280 362 L 690 362" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="리더 선출 투표" data-edge-key="2" data-edge-id="e2-e3" data-composition-points="280,362;690,362" d="M 280 362 L 690 362" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
         <g id="node-etcd1" data-node-id="etcd1" data-node-label="etcd Node 1" tabindex="0" role="button" aria-label="Focus etcd Node 1, 리더, Architecture component" aria-pressed="false" data-node-kind="database" data-node-sublabel="리더" data-node-context="Architecture component">
@@ -5083,9 +5083,9 @@
           <rect x="748.4" y="186" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
           <text x="775" y="196" class="t-muted" font-size="8" text-anchor="middle">Raft 복제</text>
         </g>
-        <g data-detail="context" data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="하트비트 · 리더 선출" data-edge-key="2" data-edge-id="e2-e3">
-          <rect x="432" y="342" width="106" height="14" rx="3" class="c-mask"/>
-          <text x="485" y="352" class="t-muted" font-size="8" text-anchor="middle">하트비트 · 리더 선출</text>
+        <g data-detail="context" data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="리더 선출 투표" data-edge-key="2" data-edge-id="e2-e3">
+          <rect x="446.4" y="342" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="485" y="352" class="t-muted" font-size="8" text-anchor="middle">리더 선출 투표</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

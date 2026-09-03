@@ -65,24 +65,27 @@ const config = defineConfig({
           if (!match) continue
           const base = match[1]
           const caption = base.startsWith('ko-') ? '전체 화면으로 열기 ↗' : 'Open full screen ↗'
+          // The static PNG paragraph directly above (same diagram) is dropped
+          // below; carry its alt text onto the iframe so the accessible name
+          // is the diagram description, not the file slug.
+          const prevInline = tokens[i - 2]
+          const imageToken =
+            i >= 3 && tokens[i - 3].type === 'paragraph_open' &&
+            prevInline && prevInline.type === 'inline' && prevInline.children
+              ? prevInline.children.find(
+                  (t) => t.type === 'image' && (t.attrGet('src') || '').includes(`${base}.png`)
+                )
+              : undefined
+          const title = ((imageToken && imageToken.content) || base)
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
           const html = new state.Token('html_block', '', 0)
           html.content =
             `<div class="archmap-embed">` +
-            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${base}" loading="lazy" allowfullscreen></iframe>` +
+            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${title}" loading="lazy" allowfullscreen></iframe>` +
             `<p class="archmap-embed__caption"><a href="${href}" target="_blank" rel="noopener">${caption}</a></p>` +
             `</div>\n`
           let start = i
-          // Drop the static PNG paragraph directly above (same diagram) — the
-          // iframe replaces it on the VitePress site.
-          const prevInline = tokens[i - 2]
-          if (
-            i >= 3 &&
-            tokens[i - 3].type === 'paragraph_open' &&
-            prevInline && prevInline.type === 'inline' && prevInline.children &&
-            prevInline.children.some(
-              (t) => t.type === 'image' && (t.attrGet('src') || '').includes(`${base}.png`)
-            )
-          ) {
+          if (imageToken) {
             start = i - 3
           }
           tokens.splice(start, i + 3 - start, html)

@@ -104,7 +104,8 @@
       "from": "pod2",
       "to": "cni",
       "label": "Direct, no NAT",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": -18
     },
     {
       "id": "cni-to-pod3",
@@ -116,7 +117,8 @@
       "id": "pod1-to-cni",
       "from": "pod1",
       "to": "cni",
-      "variant": "dashed"
+      "variant": "dashed",
+      "label": "same path"
     },
     {
       "id": "cni-to-pod4",

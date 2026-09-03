@@ -5035,8 +5035,8 @@
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="pod" data-edge-to="pvc" data-edge-label="볼륨 클레임 참조" data-edge-key="0" data-edge-id="pod-pvc" data-composition-points="220,112;400,112" d="M 220 112 L 400 112" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="pvc" data-edge-to="pv" data-edge-label="바인딩" data-edge-key="1" data-edge-id="pvc-pv" data-composition-points="560,112;740,112" d="M 560 112 L 740 112" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="pv" data-edge-to="csi" data-edge-label="프로비저닝 요청" data-edge-key="2" data-edge-id="pv-csi" data-composition-points="820,144;820,330" d="M 820 144 L 820 330" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="csi" data-edge-to="storage" data-edge-label="볼륨 생성 · 연결" data-edge-key="3" data-edge-id="csi-storage" data-composition-points="740,362;560,362" d="M 740 362 L 560 362" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="pv" data-edge-to="csi" data-edge-label="볼륨 연결" data-edge-key="2" data-edge-id="pv-csi" data-composition-points="820,144;820,330" d="M 820 144 L 820 330" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="csi" data-edge-to="storage" data-edge-label="볼륨 생성" data-edge-key="3" data-edge-id="csi-storage" data-composition-points="740,362;560,362" d="M 740 362 L 560 362" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
         <g id="node-pod" data-node-id="pod" data-node-label="파드" tabindex="0" role="button" aria-label="Focus 파드, 볼륨 마운트, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="볼륨 마운트" data-node-context="Architecture component">
@@ -5107,13 +5107,13 @@
           <rect x="630.6" y="92" width="38.8" height="14" rx="3" class="c-mask"/>
           <text x="650" y="102" class="t-backend" font-size="8" text-anchor="middle">바인딩</text>
         </g>
-        <g data-detail="context" data-edge-from="pv" data-edge-to="csi" data-edge-label="프로비저닝 요청" data-edge-key="2" data-edge-id="pv-csi">
-          <rect x="779" y="166" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="820" y="176" class="t-muted" font-size="8" text-anchor="middle">프로비저닝 요청</text>
+        <g data-detail="context" data-edge-from="pv" data-edge-to="csi" data-edge-label="볼륨 연결" data-edge-key="2" data-edge-id="pv-csi">
+          <rect x="793.4" y="166" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="820" y="176" class="t-muted" font-size="8" text-anchor="middle">볼륨 연결</text>
         </g>
-        <g data-detail="context" data-edge-from="csi" data-edge-to="storage" data-edge-label="볼륨 생성 · 연결" data-edge-key="3" data-edge-id="csi-storage">
-          <rect x="606.6" y="342" width="86.8" height="14" rx="3" class="c-mask"/>
-          <text x="650" y="352" class="t-muted" font-size="8" text-anchor="middle">볼륨 생성 · 연결</text>
+        <g data-detail="context" data-edge-from="csi" data-edge-to="storage" data-edge-label="볼륨 생성" data-edge-key="3" data-edge-id="csi-storage">
+          <rect x="623.4" y="342" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="650" y="352" class="t-muted" font-size="8" text-anchor="middle">볼륨 생성</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

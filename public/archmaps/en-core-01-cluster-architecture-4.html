@@ -5037,7 +5037,7 @@
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="pod2" data-edge-to="cni" data-edge-label="Direct, no NAT" data-edge-key="0" data-edge-id="pod2-to-cni" data-composition-points="210,310;315,310;315,219;420,219" d="M 210 310 L 307 310 Q 315 310 315 302 L 315 227 Q 315 219 323 219 L 420 219" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="cni" data-edge-to="pod3" data-edge-key="1" data-edge-id="cni-to-pod3" data-composition-points="590,205;690,205;690,110;790,110" d="M 590 205 L 682 205 Q 690 205 690 197 L 690 118 Q 690 110 698 110 L 790 110" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="pod1" data-edge-to="cni" data-edge-key="2" data-edge-id="pod1-to-cni" data-composition-points="210,110;315,110;315,205;420,205" d="M 210 110 L 307 110 Q 315 110 315 118 L 315 197 Q 315 205 323 205 L 420 205" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="pod1" data-edge-to="cni" data-edge-label="same path" data-edge-key="2" data-edge-id="pod1-to-cni" data-composition-points="210,110;315,110;315,205;420,205" d="M 210 110 L 307 110 Q 315 110 315 118 L 315 197 Q 315 205 323 205 L 420 205" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="cni" data-edge-to="pod4" data-edge-key="3" data-edge-id="cni-to-pod4" data-composition-points="590,219;690,219;690,310;790,310" d="M 590 219 L 682 219 Q 690 219 690 227 L 690 302 Q 690 310 698 310 L 790 310" class="a-dashed" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
@@ -5113,11 +5113,14 @@
 
         <!-- Connection labels -->
         <g data-detail="context" data-edge-from="pod2" data-edge-to="cni" data-edge-label="Direct, no NAT" data-edge-key="0" data-edge-id="pod2-to-cni">
-          <rect x="276.4" y="244.5" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="315" y="254.5" class="t-backend" font-size="8" text-anchor="middle">Direct, no NAT</text>
+          <rect x="276.4" y="226.5" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="315" y="236.5" class="t-backend" font-size="8" text-anchor="middle">Direct, no NAT</text>
         </g>
 
-
+        <g data-detail="context" data-edge-from="pod1" data-edge-to="cni" data-edge-label="same path" data-edge-key="2" data-edge-id="pod1-to-cni">
+          <rect x="288.4" y="137.5" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="315" y="147.5" class="t-messagebus" font-size="8" text-anchor="middle">same path</text>
+        </g>
 
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

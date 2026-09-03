@@ -25,7 +25,7 @@
     },
     {
       "id": "wa1",
-      "type": "cloud",
+      "type": "backend",
       "label": "Worker Node",
       "sublabel": "a-1",
       "pos": [
@@ -39,7 +39,7 @@
     },
     {
       "id": "wa2",
-      "type": "cloud",
+      "type": "backend",
       "label": "Worker Node",
       "sublabel": "a-2",
       "pos": [
@@ -53,7 +53,7 @@
     },
     {
       "id": "wb1",
-      "type": "cloud",
+      "type": "backend",
       "label": "Worker Node",
       "sublabel": "b-1",
       "pos": [
@@ -67,7 +67,7 @@
     },
     {
       "id": "wb2",
-      "type": "cloud",
+      "type": "backend",
       "label": "Worker Node",
       "sublabel": "b-2",
       "pos": [
@@ -81,7 +81,7 @@
     },
     {
       "id": "wc1",
-      "type": "cloud",
+      "type": "backend",
       "label": "Worker Node",
       "sublabel": "c-1",
       "pos": [
@@ -95,7 +95,7 @@
     },
     {
       "id": "wc2",
-      "type": "cloud",
+      "type": "backend",
       "label": "Worker Node",
       "sublabel": "c-2",
       "pos": [

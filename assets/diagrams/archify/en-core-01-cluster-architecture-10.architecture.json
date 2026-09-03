@@ -103,7 +103,7 @@
       "title": "Swappability",
       "items": [
         "Same workflow across EBS, EFS, Ceph — swap the driver",
-        "In-tree plugins fully replaced by CSI"
+        "Cloud in-tree volume plugins migrated to CSI"
       ]
     }
   ]

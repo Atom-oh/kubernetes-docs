@@ -73,7 +73,7 @@
       "id": "e2-e3",
       "from": "etcd2",
       "to": "etcd3",
-      "label": "heartbeat · leader election",
+      "label": "leader election votes",
       "fromSide": "right",
       "toSide": "left"
     }

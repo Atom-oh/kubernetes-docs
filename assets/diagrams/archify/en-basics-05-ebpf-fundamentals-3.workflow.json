@@ -5,6 +5,22 @@
     "title": "eBPF Program Lifecycle",
     "quality_profile": "showcase",
     "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Authoring"
+        },
+        "backend": {
+          "label": "Kernel processing"
+        },
+        "security": {
+          "label": "Verify"
+        },
+        "external": {
+          "label": "Teardown"
+        }
+      }
+    },
     "locale": "en"
   },
   "lanes": [
@@ -19,95 +35,98 @@
     }
   ],
   "mainPath": [
-    "write",
     "load",
     "verify",
-    "jit",
-    "attachexec",
-    "detach"
+    "attach",
+    "exec",
+    "detach",
+    "unload"
   ],
   "nodes": [
     {
-      "id": "write",
-      "lane": "life",
-      "col": 0,
-      "type": "frontend",
-      "label": "Write/compile"
-    },
-    {
       "id": "load",
       "lane": "life",
-      "col": 1,
+      "col": 0,
       "type": "backend",
-      "label": "Load"
+      "label": "Load",
+      "sublabel": "bpf() syscall"
     },
     {
       "id": "verify",
       "lane": "life",
-      "col": 2,
+      "col": 1,
       "type": "security",
-      "label": "Verify"
+      "label": "Verify",
+      "sublabel": "Verifier"
     },
     {
-      "id": "jit",
+      "id": "attach",
+      "lane": "life",
+      "col": 2,
+      "type": "backend",
+      "label": "Attach",
+      "sublabel": "event hook"
+    },
+    {
+      "id": "exec",
       "lane": "life",
       "col": 3,
       "type": "backend",
-      "label": "JIT"
-    },
-    {
-      "id": "reject",
-      "lane": "fail",
-      "col": 2,
-      "type": "security",
-      "label": "Load rejected"
-    },
-    {
-      "id": "attachexec",
-      "lane": "life",
-      "col": 4,
-      "type": "backend",
-      "label": "Attach · run",
+      "label": "Run",
       "sublabel": "repeats per event"
     },
     {
       "id": "detach",
       "lane": "life",
+      "col": 4,
+      "type": "external",
+      "label": "Detach",
+      "sublabel": "explicit teardown"
+    },
+    {
+      "id": "unload",
+      "lane": "life",
       "col": 5,
       "type": "external",
-      "label": "Detach · unload",
-      "sublabel": "explicit teardown",
-      "width": 110
+      "label": "Unload",
+      "sublabel": "when refs drop"
+    },
+    {
+      "id": "reject",
+      "lane": "fail",
+      "col": 1,
+      "type": "security",
+      "label": "Load rejected"
     }
   ],
   "edges": [
-    {
-      "id": "write-load",
-      "from": "write",
-      "to": "load"
-    },
     {
       "id": "load-verify",
       "from": "load",
       "to": "verify"
     },
     {
-      "id": "verify-jit",
+      "id": "verify-attach",
       "from": "verify",
-      "to": "jit",
+      "to": "attach",
       "label": "pass",
       "variant": "emphasis"
     },
     {
-      "id": "jit-attach",
-      "from": "jit",
-      "to": "attachexec"
+      "id": "attach-exec",
+      "from": "attach",
+      "to": "exec"
     },
     {
       "id": "exec-detach",
-      "from": "attachexec",
+      "from": "exec",
       "to": "detach",
       "label": "explicit detach"
+    },
+    {
+      "id": "detach-unload",
+      "from": "detach",
+      "to": "unload"
     },
     {
       "id": "verify-reject",

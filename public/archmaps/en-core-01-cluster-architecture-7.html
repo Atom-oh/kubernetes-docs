@@ -5035,7 +5035,7 @@
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="etcd1" data-edge-to="etcd2" data-edge-label="Raft replication" data-edge-key="0" data-edge-id="e1-e2" data-composition-points="400,82;195,82;195,330" d="M 400 82 L 203 82 Q 195 82 195 90 L 195 330" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="etcd1" data-edge-to="etcd3" data-edge-label="Raft replication" data-edge-key="1" data-edge-id="e1-e3" data-composition-points="570,82;775,82;775,330" d="M 570 82 L 767 82 Q 775 82 775 90 L 775 330" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="heartbeat · leader election" data-edge-key="2" data-edge-id="e2-e3" data-composition-points="280,362;690,362" d="M 280 362 L 690 362" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="leader election votes" data-edge-key="2" data-edge-id="e2-e3" data-composition-points="280,362;690,362" d="M 280 362 L 690 362" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
         <g id="node-etcd1" data-node-id="etcd1" data-node-label="etcd Node 1" tabindex="0" role="button" aria-label="Focus etcd Node 1, leader, Architecture component" aria-pressed="false" data-node-kind="database" data-node-sublabel="leader" data-node-context="Architecture component">
@@ -5083,9 +5083,9 @@
           <rect x="731.6" y="186" width="86.8" height="14" rx="3" class="c-mask"/>
           <text x="775" y="196" class="t-muted" font-size="8" text-anchor="middle">Raft replication</text>
         </g>
-        <g data-detail="context" data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="heartbeat · leader election" data-edge-key="2" data-edge-id="e2-e3">
-          <rect x="415.2" y="342" width="139.6" height="14" rx="3" class="c-mask"/>
-          <text x="485" y="352" class="t-muted" font-size="8" text-anchor="middle">heartbeat · leader election</text>
+        <g data-detail="context" data-edge-from="etcd2" data-edge-to="etcd3" data-edge-label="leader election votes" data-edge-key="2" data-edge-id="e2-e3">
+          <rect x="429.6" y="342" width="110.8" height="14" rx="3" class="c-mask"/>
+          <text x="485" y="352" class="t-muted" font-size="8" text-anchor="middle">leader election votes</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

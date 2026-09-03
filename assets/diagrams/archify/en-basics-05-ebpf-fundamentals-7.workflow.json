@@ -5,17 +5,33 @@
     "title": "Observability: Agent vs eBPF",
     "quality_profile": "showcase",
     "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Application"
+        },
+        "backend": {
+          "label": "Collection path"
+        },
+        "security": {
+          "label": "eBPF instrumentation"
+        },
+        "database": {
+          "label": "Backends"
+        }
+      }
+    },
     "locale": "en"
   },
   "lanes": [
     {
+      "id": "ebpf",
+      "label": "eBPF way"
+    },
+    {
       "id": "legacy",
       "label": "Traditional · SDK/agent",
       "variant": "exception"
-    },
-    {
-      "id": "ebpf",
-      "label": "eBPF way"
     }
   ],
   "mainPath": [
@@ -30,7 +46,8 @@
       "col": 0,
       "type": "frontend",
       "label": "Application",
-      "sublabel": "code changes needed"
+      "sublabel": "code changes needed",
+      "width": 112
     },
     {
       "id": "sdk",
@@ -38,14 +55,16 @@
       "col": 1,
       "type": "backend",
       "label": "SDK / agent",
-      "sublabel": "per-lang SDKs"
+      "sublabel": "per-lang SDKs",
+      "width": 112
     },
     {
       "id": "collect",
       "lane": "legacy",
       "col": 2,
       "type": "backend",
-      "label": "Metrics"
+      "label": "Metrics",
+      "width": 104
     },
     {
       "id": "backend1",
@@ -53,7 +72,7 @@
       "col": 3,
       "type": "database",
       "label": "Monitoring",
-      "width": 115
+      "width": 132
     },
     {
       "id": "app2",
@@ -61,7 +80,8 @@
       "col": 0,
       "type": "frontend",
       "label": "Application",
-      "sublabel": "no changes needed"
+      "sublabel": "no changes needed",
+      "width": 112
     },
     {
       "id": "probe",
@@ -70,7 +90,7 @@
       "type": "security",
       "label": "Kernel eBPF program",
       "sublabel": "automatic instrumentation",
-      "width": 135
+      "width": 152
     },
     {
       "id": "backend2",
@@ -78,7 +98,7 @@
       "col": 3,
       "type": "database",
       "label": "Monitoring",
-      "width": 115
+      "width": 132
     }
   ],
   "edges": [
