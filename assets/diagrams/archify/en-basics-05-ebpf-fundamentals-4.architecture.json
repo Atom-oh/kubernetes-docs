@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "XDP Packet Processing Verdicts",
+    "output": "en-basics-05-ebpf-fundamentals-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "nic",
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "incoming packets",
+      "pos": [
+        50,
+        280
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "security",
+      "label": "XDP programs",
+      "sublabel": "driver-level hook",
+      "pos": [
+        340,
+        280
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "drop",
+      "type": "security",
+      "label": "XDP_DROP",
+      "sublabel": "Drop packet",
+      "pos": [
+        720,
+        40
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "pass",
+      "type": "backend",
+      "label": "XDP_PASS",
+      "sublabel": "Pass to kernel stack",
+      "pos": [
+        720,
+        160
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "tx",
+      "type": "backend",
+      "label": "XDP_TX",
+      "sublabel": "Bounce out same NIC",
+      "pos": [
+        720,
+        280
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "redirect",
+      "type": "backend",
+      "label": "XDP_REDIRECT",
+      "sublabel": "Forward to another interface",
+      "pos": [
+        720,
+        400
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "aborted",
+      "type": "security",
+      "label": "XDP_ABORTED",
+      "sublabel": "Error handling",
+      "pos": [
+        720,
+        520
+      ],
+      "size": [
+        190,
+        56
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nic-xdp",
+      "from": "nic",
+      "to": "xdp",
+      "label": "packet arrives",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xdp-drop",
+      "from": "xdp",
+      "to": "drop",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          68
+        ]
+      ]
+    },
+    {
+      "id": "xdp-pass",
+      "from": "xdp",
+      "to": "pass",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          600,
+          312
+        ],
+        [
+          600,
+          188
+        ]
+      ]
+    },
+    {
+      "id": "xdp-tx",
+      "from": "xdp",
+      "to": "tx"
+    },
+    {
+      "id": "xdp-redirect",
+      "from": "xdp",
+      "to": "redirect",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          640,
+          312
+        ],
+        [
+          640,
+          428
+        ]
+      ]
+    },
+    {
+      "id": "xdp-aborted",
+      "from": "xdp",
+      "to": "aborted",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          548
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Before the kernel stack",
+      "items": [
+        "Decides before packets reach the kernel network stack",
+        "Ideal spot for DDoS defense and load balancing"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Five verdicts",
+      "items": [
+        "DROP discards before any sk_buff allocation",
+        "REDIRECT hands off to another NIC, CPU, or AF_XDP socket"
+      ]
+    }
+  ]
+}

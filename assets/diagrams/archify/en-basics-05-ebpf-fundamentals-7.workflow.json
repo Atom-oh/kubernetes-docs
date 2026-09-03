@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Observability: Agent vs eBPF",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "legacy",
+      "label": "Traditional · SDK/agent",
+      "variant": "exception"
+    },
+    {
+      "id": "ebpf",
+      "label": "eBPF way"
+    }
+  ],
+  "mainPath": [
+    "app2",
+    "probe",
+    "backend2"
+  ],
+  "nodes": [
+    {
+      "id": "app1",
+      "lane": "legacy",
+      "col": 0,
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "code changes needed"
+    },
+    {
+      "id": "sdk",
+      "lane": "legacy",
+      "col": 1,
+      "type": "backend",
+      "label": "SDK / agent",
+      "sublabel": "per-lang SDKs"
+    },
+    {
+      "id": "collect",
+      "lane": "legacy",
+      "col": 2,
+      "type": "backend",
+      "label": "Metrics"
+    },
+    {
+      "id": "backend1",
+      "lane": "legacy",
+      "col": 3,
+      "type": "database",
+      "label": "Monitoring",
+      "width": 115
+    },
+    {
+      "id": "app2",
+      "lane": "ebpf",
+      "col": 0,
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "no changes needed"
+    },
+    {
+      "id": "probe",
+      "lane": "ebpf",
+      "col": 1,
+      "type": "security",
+      "label": "Kernel eBPF program",
+      "sublabel": "automatic instrumentation",
+      "width": 135
+    },
+    {
+      "id": "backend2",
+      "lane": "ebpf",
+      "col": 3,
+      "type": "database",
+      "label": "Monitoring",
+      "width": 115
+    }
+  ],
+  "edges": [
+    {
+      "id": "app1-sdk",
+      "from": "app1",
+      "to": "sdk",
+      "variant": "dashed"
+    },
+    {
+      "id": "sdk-collect",
+      "from": "sdk",
+      "to": "collect",
+      "variant": "dashed"
+    },
+    {
+      "id": "collect-backend1",
+      "from": "collect",
+      "to": "backend1",
+      "variant": "dashed"
+    },
+    {
+      "id": "app2-probe",
+      "from": "app2",
+      "to": "probe",
+      "label": "observes syscalls",
+      "variant": "emphasis"
+    },
+    {
+      "id": "probe-backend2",
+      "from": "probe",
+      "to": "backend2",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Cost of the agent way",
+      "items": [
+        "SDK integration per language and framework",
+        "Instrumentation maintained per deployment"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What eBPF wins",
+      "items": [
+        "Observes every process at once from the kernel",
+        "Applied without redeploying applications"
+      ]
+    }
+  ]
+}

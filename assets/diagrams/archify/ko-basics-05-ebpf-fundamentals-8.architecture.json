@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tetragon 아키텍처",
+    "output": "ko-basics-05-ebpf-fundamentals-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "crd", "type": "external", "label": "TracingPolicy CRD", "sublabel": "정책 정의", "pos": [50, 200], "size": [200, 64] },
+    { "id": "agent", "type": "backend", "label": "Tetragon Agent", "sublabel": "노드별 데몬셋", "pos": [370, 200], "size": [200, 64] },
+    { "id": "proc", "type": "security", "label": "프로세스 추적", "sublabel": "exec · exit", "pos": [700, 50], "size": [200, 56] },
+    { "id": "net", "type": "security", "label": "네트워크 추적", "sublabel": "연결 · 소켓", "pos": [700, 200], "size": [200, 56] },
+    { "id": "file", "type": "security", "label": "파일 추적", "sublabel": "열기 · 쓰기", "pos": [700, 350], "size": [200, 56] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "eBPF 센서", "wraps": ["proc", "net", "file"] }
+  ],
+  "connections": [
+    { "id": "crd-agent", "from": "crd", "to": "agent", "label": "정책 적용", "variant": "emphasis" },
+    { "id": "agent-proc", "from": "agent", "to": "proc", "fromSide": "top", "toSide": "left", "via": [[470, 78]] },
+    { "id": "agent-net", "from": "agent", "to": "net", "label": "센서 로드" },
+    { "id": "agent-file", "from": "agent", "to": "file", "fromSide": "bottom", "toSide": "left", "via": [[470, 378]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "런타임 관측", "items": ["커널 이벤트를 프로세스 컨텍스트와 함께 기록", "Kubernetes 파드·네임스페이스 정보로 보강"] },
+    { "dot": "rose", "title": "정책 적용", "items": ["프로세스 킬 · 네트워크 차단", "파일 접근 거부까지 커널에서 즉시 실행"] }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Control Plane ↔ Node Communication",
+    "output": "en-core-01-cluster-architecture-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "control plane",
+      "pos": [
+        60,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "HTTPS :10250",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "service proxy",
+      "pos": [
+        600,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Worker Nodes",
+      "wraps": [
+        "kubelet",
+        "kubeproxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-kubelet",
+      "from": "apiserver",
+      "to": "kubelet",
+      "label": "exec / logs / status",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          150,
+          120
+        ],
+        [
+          430,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "kubelet-to-api",
+      "from": "kubelet",
+      "to": "apiserver",
+      "label": "Node & pod status reports",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          685,
+          252
+        ]
+      ]
+    },
+    {
+      "id": "proxy-watch",
+      "from": "kubeproxy",
+      "to": "apiserver",
+      "label": "Service/EndpointSlice watch",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "via": [
+        [
+          150,
+          390
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Bidirectional HTTPS",
+      "items": [
+        "kubelet reports status; apiserver requests exec/logs",
+        "Every channel is TLS-encrypted"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Service propagation",
+      "items": [
+        "kube-proxy watches Service changes",
+        "Applies the rules to iptables/IPVS"
+      ]
+    }
+  ]
+}

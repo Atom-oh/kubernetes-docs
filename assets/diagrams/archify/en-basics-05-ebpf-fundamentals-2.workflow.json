@@ -1,0 +1,161 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF Program Development and Execution Flow",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "dev",
+      "label": "User space"
+    },
+    {
+      "id": "kernel",
+      "label": "Kernel space"
+    },
+    {
+      "id": "fail",
+      "label": "Verification failure",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "load",
+    "verify",
+    "jit",
+    "attachexec",
+    "map"
+  ],
+  "nodes": [
+    {
+      "id": "write",
+      "lane": "dev",
+      "col": 0,
+      "type": "frontend",
+      "label": "Write/compile",
+      "sublabel": "C/Rust → Clang/LLVM"
+    },
+    {
+      "id": "load",
+      "lane": "dev",
+      "col": 1,
+      "type": "backend",
+      "label": "Load via bpf()",
+      "sublabel": "deliver bytecode"
+    },
+    {
+      "id": "verify",
+      "lane": "kernel",
+      "col": 2,
+      "type": "security",
+      "label": "Verifier",
+      "sublabel": "Verifier"
+    },
+    {
+      "id": "jit",
+      "lane": "kernel",
+      "col": 3,
+      "type": "backend",
+      "label": "JIT compile",
+      "sublabel": "machine code"
+    },
+    {
+      "id": "attachexec",
+      "lane": "kernel",
+      "col": 4,
+      "type": "backend",
+      "label": "Attach · run",
+      "sublabel": "per event",
+      "width": 110
+    },
+    {
+      "id": "map",
+      "lane": "kernel",
+      "col": 5,
+      "type": "database",
+      "label": "Store in eBPF map",
+      "sublabel": "kernel ↔ user shared",
+      "width": 110
+    },
+    {
+      "id": "read",
+      "lane": "dev",
+      "col": 5,
+      "type": "frontend",
+      "label": "User-space read",
+      "sublabel": "consume results",
+      "width": 125
+    },
+    {
+      "id": "reject",
+      "lane": "fail",
+      "col": 2,
+      "type": "security",
+      "label": "Load rejected",
+      "sublabel": "error message"
+    }
+  ],
+  "edges": [
+    {
+      "id": "write-load",
+      "from": "write",
+      "to": "load"
+    },
+    {
+      "id": "load-verify",
+      "from": "load",
+      "to": "verify"
+    },
+    {
+      "id": "verify-jit",
+      "from": "verify",
+      "to": "jit",
+      "label": "pass",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-attach",
+      "from": "jit",
+      "to": "attachexec"
+    },
+    {
+      "id": "exec-map",
+      "from": "attachexec",
+      "to": "map"
+    },
+    {
+      "id": "map-read",
+      "from": "map",
+      "to": "read"
+    },
+    {
+      "id": "verify-reject",
+      "from": "verify",
+      "to": "reject",
+      "label": "fail",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Data path",
+      "items": [
+        "eBPF maps bridge kernel and user space",
+        "Many map types: ring buffers, hash maps, and more"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "On failure",
+      "items": [
+        "Failed programs never enter the kernel",
+        "Fix using the error message as the guide"
+      ]
+    }
+  ]
+}

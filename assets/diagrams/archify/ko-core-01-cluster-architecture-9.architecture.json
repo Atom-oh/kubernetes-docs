@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 추상화 흐름",
+    "output": "ko-core-01-cluster-architecture-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "파드",
+      "sublabel": "볼륨 마운트",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PVC",
+      "sublabel": "스토리지 요청",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PV",
+      "sublabel": "실제 볼륨 표현",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "backend",
+      "label": "CSI 드라이버",
+      "sublabel": "프로비저닝 · 연결",
+      "pos": [
+        740,
+        330
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "실제 스토리지",
+      "sublabel": "EBS · EFS · NFS",
+      "pos": [
+        400,
+        330
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "볼륨 클레임 참조",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pv-csi",
+      "from": "pv",
+      "to": "csi",
+      "label": "프로비저닝 요청",
+      "labelDy": 42
+    },
+    {
+      "id": "csi-storage",
+      "from": "csi",
+      "to": "storage",
+      "label": "볼륨 생성 · 연결"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "역할 분리",
+      "items": [
+        "개발자는 PVC로 필요한 용량·모드만 선언",
+        "운영자와 CSI가 실제 스토리지를 책임"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "동적 프로비저닝",
+      "items": [
+        "StorageClass가 PVC를 보고 PV를 자동 생성",
+        "파드는 스토리지 구현을 몰라도 된다"
+      ]
+    }
+  ]
+}

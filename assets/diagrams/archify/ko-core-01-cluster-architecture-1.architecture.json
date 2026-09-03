@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컨테이너 런타임 계층 구조",
+    "output": "ko-core-01-cluster-architecture-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "kubernetes",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "kubelet",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cri",
+      "type": "messagebus",
+      "label": "CRI",
+      "sublabel": "Container Runtime Interface",
+      "pos": [
+        390,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "containerd",
+      "type": "backend",
+      "label": "containerd",
+      "sublabel": "고수준 런타임",
+      "pos": [
+        200,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "crio",
+      "type": "backend",
+      "label": "CRI-O",
+      "sublabel": "고수준 런타임",
+      "pos": [
+        610,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "runc",
+      "type": "external",
+      "label": "runc",
+      "sublabel": "저수준 OCI 런타임",
+      "pos": [
+        200,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "crun",
+      "type": "external",
+      "label": "crun",
+      "sublabel": "저수준 OCI 런타임",
+      "pos": [
+        610,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-cri",
+      "from": "kubernetes",
+      "to": "cri",
+      "label": "gRPC 호출",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "cri-to-containerd",
+      "from": "cri",
+      "to": "containerd",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "cri-to-crio",
+      "from": "cri",
+      "to": "crio",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "containerd-to-runc",
+      "from": "containerd",
+      "to": "runc",
+      "label": "컨테이너 생성",
+      "labelDy": 40
+    },
+    {
+      "id": "crio-to-crun",
+      "from": "crio",
+      "to": "crun",
+      "label": "컨테이너 생성",
+      "labelDy": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "표준 인터페이스",
+      "items": [
+        "kubelet은 CRI gRPC API만 알면 된다",
+        "런타임 교체가 워크로드에 투명하다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "고수준 런타임",
+      "items": [
+        "containerd: Docker에서 분리된 CNCF 졸업 프로젝트",
+        "CRI-O: Kubernetes 전용 경량 런타임"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "저수준 런타임",
+      "items": [
+        "runc / crun이 OCI 스펙대로 실제 컨테이너를 생성",
+        "crun은 C로 작성되어 더 빠르고 가볍다"
+      ]
+    }
+  ]
+}

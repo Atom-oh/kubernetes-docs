@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컨트롤 플레인 내부 통신",
+    "output": "ko-core-01-cluster-architecture-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "파드 배치 결정",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "상태 조정 루프",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cloudcontroller",
+      "type": "cloud",
+      "label": "cloud-controller-manager",
+      "sublabel": "클라우드 연동",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "유일한 통신 허브",
+      "pos": [
+        450,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장소",
+      "pos": [
+        780,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sched-watch",
+      "from": "scheduler",
+      "to": "apiserver",
+      "label": "watch / bind",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          540,
+          90
+        ],
+        [
+          540,
+          214
+        ]
+      ]
+    },
+    {
+      "id": "ctrl-watch",
+      "from": "controller",
+      "to": "apiserver",
+      "label": "watch / update"
+    },
+    {
+      "id": "ccm-watch",
+      "from": "cloudcontroller",
+      "to": "apiserver",
+      "label": "watch / update",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          540,
+          470
+        ],
+        [
+          540,
+          350
+        ]
+      ]
+    },
+    {
+      "id": "api-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "읽기/쓰기",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "허브-스포크 구조",
+      "items": [
+        "모든 컴포넌트는 kube-apiserver하고만 통신",
+        "컴포넌트끼리 직접 통신하지 않는다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "etcd 접근 통제",
+      "items": [
+        "etcd에 직접 접근하는 것은 kube-apiserver뿐",
+        "인증·인가·검증을 한 지점에서 강제"
+      ]
+    }
+  ]
+}

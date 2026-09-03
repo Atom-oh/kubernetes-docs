@@ -1,0 +1,137 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF 프로그램 생명주기",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "lanes": [
+    {
+      "id": "life",
+      "label": "프로그램 생명주기"
+    },
+    {
+      "id": "fail",
+      "label": "검증 실패",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "load",
+    "verify",
+    "jit",
+    "attachexec",
+    "detach"
+  ],
+  "nodes": [
+    {
+      "id": "write",
+      "lane": "life",
+      "col": 0,
+      "type": "frontend",
+      "label": "작성 · 컴파일"
+    },
+    {
+      "id": "load",
+      "lane": "life",
+      "col": 1,
+      "type": "backend",
+      "label": "로드"
+    },
+    {
+      "id": "verify",
+      "lane": "life",
+      "col": 2,
+      "type": "security",
+      "label": "검증"
+    },
+    {
+      "id": "jit",
+      "lane": "life",
+      "col": 3,
+      "type": "backend",
+      "label": "JIT"
+    },
+    {
+      "id": "reject",
+      "lane": "fail",
+      "col": 2,
+      "type": "security",
+      "label": "로드 거부"
+    },
+    {
+      "id": "attachexec",
+      "lane": "life",
+      "col": 4,
+      "type": "backend",
+      "label": "연결 · 실행",
+      "sublabel": "이벤트마다 반복"
+    },
+    {
+      "id": "detach",
+      "lane": "life",
+      "col": 5,
+      "type": "external",
+      "label": "분리 · 언로드",
+      "sublabel": "명시적 종료",
+      "width": 110
+    }
+  ],
+  "edges": [
+    {
+      "id": "write-load",
+      "from": "write",
+      "to": "load"
+    },
+    {
+      "id": "load-verify",
+      "from": "load",
+      "to": "verify"
+    },
+    {
+      "id": "verify-jit",
+      "from": "verify",
+      "to": "jit",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-attach",
+      "from": "jit",
+      "to": "attachexec"
+    },
+    {
+      "id": "exec-detach",
+      "from": "attachexec",
+      "to": "detach",
+      "label": "명시적 분리"
+    },
+    {
+      "id": "verify-reject",
+      "from": "verify",
+      "to": "reject",
+      "label": "실패",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "이벤트 구동",
+      "items": [
+        "연결된 훅에서 이벤트가 발생할 때마다 실행",
+        "실행 사이에 상태는 eBPF 맵에 유지"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "정리",
+      "items": [
+        "훅에서 분리하면 실행이 멈춘다",
+        "참조가 사라지면 커널이 프로그램을 언로드"
+      ]
+    }
+  ]
+}

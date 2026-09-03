@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hubble Architecture",
+    "output": "en-basics-05-ebpf-fundamentals-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Cilium Agent",
+      "sublabel": "eBPF dataplane",
+      "pos": [
+        50,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "observer",
+      "type": "backend",
+      "label": "Hubble Observer",
+      "sublabel": "per-node collection",
+      "pos": [
+        340,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "relay",
+      "type": "backend",
+      "label": "Hubble Relay",
+      "sublabel": "cluster-wide aggregation",
+      "pos": [
+        630,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Hubble UI",
+      "sublabel": "service map",
+      "pos": [
+        630,
+        330
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "Hubble CLI",
+      "sublabel": "flow queries",
+      "pos": [
+        340,
+        330
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "agent-observer",
+      "from": "agent",
+      "to": "observer",
+      "label": "flow events",
+      "variant": "emphasis"
+    },
+    {
+      "id": "observer-relay",
+      "from": "observer",
+      "to": "relay",
+      "label": "gRPC"
+    },
+    {
+      "id": "relay-ui",
+      "from": "relay",
+      "to": "ui",
+      "labelDy": 40
+    },
+    {
+      "id": "relay-cli",
+      "from": "relay",
+      "to": "cli",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          725,
+          250
+        ],
+        [
+          560,
+          250
+        ],
+        [
+          560,
+          360
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Collected data",
+      "items": [
+        "Network flows · DNS queries",
+        "HTTP requests · policy verdicts (allow/deny)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Uses",
+      "items": [
+        "Visualizes service dependencies as a service map",
+        "Traces denied traffic back to the policy"
+      ]
+    }
+  ]
+}

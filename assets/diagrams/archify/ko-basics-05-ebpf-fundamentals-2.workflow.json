@@ -1,0 +1,160 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF 프로그램 개발·실행 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "lanes": [
+    {
+      "id": "dev",
+      "label": "사용자 공간"
+    },
+    {
+      "id": "kernel",
+      "label": "커널 공간"
+    },
+    {
+      "id": "fail",
+      "label": "검증 실패",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "load",
+    "verify",
+    "jit",
+    "attachexec",
+    "map"
+  ],
+  "nodes": [
+    {
+      "id": "write",
+      "lane": "dev",
+      "col": 0,
+      "type": "frontend",
+      "label": "작성 · 컴파일",
+      "sublabel": "C/Rust → Clang/LLVM"
+    },
+    {
+      "id": "load",
+      "lane": "dev",
+      "col": 1,
+      "type": "backend",
+      "label": "bpf()로 로드",
+      "sublabel": "바이트코드 전달"
+    },
+    {
+      "id": "verify",
+      "lane": "kernel",
+      "col": 2,
+      "type": "security",
+      "label": "검증기",
+      "sublabel": "Verifier"
+    },
+    {
+      "id": "jit",
+      "lane": "kernel",
+      "col": 3,
+      "type": "backend",
+      "label": "JIT 컴파일",
+      "sublabel": "머신 코드"
+    },
+    {
+      "id": "attachexec",
+      "lane": "kernel",
+      "col": 4,
+      "type": "backend",
+      "label": "훅 연결 · 실행",
+      "sublabel": "이벤트마다",
+      "width": 110
+    },
+    {
+      "id": "map",
+      "lane": "kernel",
+      "col": 5,
+      "type": "database",
+      "label": "eBPF 맵 저장",
+      "sublabel": "커널 ↔ 사용자 공유",
+      "width": 110
+    },
+    {
+      "id": "read",
+      "lane": "dev",
+      "col": 5,
+      "type": "frontend",
+      "label": "사용자 공간 읽기",
+      "sublabel": "결과 소비",
+      "width": 125
+    },
+    {
+      "id": "reject",
+      "lane": "fail",
+      "col": 2,
+      "type": "security",
+      "label": "로드 거부",
+      "sublabel": "에러 메시지"
+    }
+  ],
+  "edges": [
+    {
+      "id": "write-load",
+      "from": "write",
+      "to": "load"
+    },
+    {
+      "id": "load-verify",
+      "from": "load",
+      "to": "verify"
+    },
+    {
+      "id": "verify-jit",
+      "from": "verify",
+      "to": "jit",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-attach",
+      "from": "jit",
+      "to": "attachexec"
+    },
+    {
+      "id": "exec-map",
+      "from": "attachexec",
+      "to": "map"
+    },
+    {
+      "id": "map-read",
+      "from": "map",
+      "to": "read"
+    },
+    {
+      "id": "verify-reject",
+      "from": "verify",
+      "to": "reject",
+      "label": "실패",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "데이터 통로",
+      "items": [
+        "eBPF 맵이 커널과 사용자 공간을 잇는다",
+        "링 버퍼·해시맵 등 다양한 맵 타입"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "실패 시",
+      "items": [
+        "검증 실패 프로그램은 커널에 진입 불가",
+        "에러 메시지로 원인 확인 후 수정"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컨트롤 플레인 ↔ 노드 통신",
+    "output": "ko-core-01-cluster-architecture-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        60,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "HTTPS :10250",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "서비스 프록시",
+      "pos": [
+        600,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "kubelet",
+        "kubeproxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-kubelet",
+      "from": "apiserver",
+      "to": "kubelet",
+      "label": "exec / logs / 상태 조회",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          150,
+          120
+        ],
+        [
+          430,
+          120
+        ]
+      ]
+    },
+    {
+      "id": "kubelet-to-api",
+      "from": "kubelet",
+      "to": "apiserver",
+      "label": "노드·파드 상태 보고",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          685,
+          252
+        ]
+      ]
+    },
+    {
+      "id": "proxy-watch",
+      "from": "kubeproxy",
+      "to": "apiserver",
+      "label": "Service/EndpointSlice watch",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "via": [
+        [
+          150,
+          390
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "양방향 HTTPS",
+      "items": [
+        "kubelet이 상태를 보고하고, apiserver가 exec/logs를 요청",
+        "모든 채널은 TLS로 암호화"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "서비스 정보 전파",
+      "items": [
+        "kube-proxy는 Service 변화를 watch로 수신",
+        "받은 규칙을 iptables/IPVS에 반영"
+      ]
+    }
+  ]
+}

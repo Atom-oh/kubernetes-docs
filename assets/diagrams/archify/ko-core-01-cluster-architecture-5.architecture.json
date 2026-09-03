@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "클러스터 외부 접근 경로",
+    "output": "ko-core-01-cluster-architecture-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "외부 클라이언트",
+      "sublabel": "kubectl / 브라우저",
+      "pos": [
+        60,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "클러스터 제어",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "cloud",
+      "label": "Service / Ingress",
+      "sublabel": "L4 / L7 진입점",
+      "pos": [
+        480,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "애플리케이션",
+      "pos": [
+        800,
+        370
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-api",
+      "from": "client",
+      "to": "apiserver",
+      "label": "관리 트래픽 (HTTPS :6443)",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          145,
+          100
+        ]
+      ]
+    },
+    {
+      "id": "client-to-ingress",
+      "from": "client",
+      "to": "ingress",
+      "label": "애플리케이션 트래픽",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          145,
+          400
+        ]
+      ]
+    },
+    {
+      "id": "ingress-to-pod",
+      "from": "ingress",
+      "to": "pod",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "두 가지 진입 경로",
+      "items": [
+        "운영자는 kube-apiserver로 클러스터를 제어",
+        "사용자는 Service/Ingress를 거쳐 앱에 도달"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "노출 최소화",
+      "items": [
+        "파드는 외부에 직접 노출되지 않는다",
+        "모든 외부 트래픽은 정의된 진입점을 거친다"
+      ]
+    }
+  ]
+}

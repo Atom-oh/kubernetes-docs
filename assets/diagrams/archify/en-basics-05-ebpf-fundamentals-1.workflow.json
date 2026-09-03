@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kernel Modules vs eBPF",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "legacy",
+      "label": "Traditional · kernel module",
+      "variant": "exception"
+    },
+    {
+      "id": "ebpf",
+      "label": "eBPF way"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "loadrt",
+    "safe"
+  ],
+  "nodes": [
+    {
+      "id": "moddev",
+      "lane": "legacy",
+      "col": 0,
+      "type": "frontend",
+      "label": "Kernel module",
+      "sublabel": "C code"
+    },
+    {
+      "id": "modbuild",
+      "lane": "legacy",
+      "col": 1,
+      "type": "backend",
+      "label": "Kernel compile",
+      "sublabel": "reboot required"
+    },
+    {
+      "id": "modrisk",
+      "lane": "legacy",
+      "col": 2,
+      "type": "security",
+      "label": "Instability risk",
+      "sublabel": "kernel panic possible",
+      "width": 135
+    },
+    {
+      "id": "write",
+      "lane": "ebpf",
+      "col": 0,
+      "type": "frontend",
+      "label": "Write eBPF program",
+      "sublabel": "C / Rust",
+      "width": 135
+    },
+    {
+      "id": "loadrt",
+      "lane": "ebpf",
+      "col": 1,
+      "type": "backend",
+      "label": "Runtime load",
+      "sublabel": "no reboot needed"
+    },
+    {
+      "id": "safe",
+      "lane": "ebpf",
+      "col": 2,
+      "type": "backend",
+      "label": "Run verified",
+      "sublabel": "safe by design"
+    }
+  ],
+  "edges": [
+    {
+      "id": "moddev-modbuild",
+      "from": "moddev",
+      "to": "modbuild",
+      "variant": "dashed"
+    },
+    {
+      "id": "modbuild-modrisk",
+      "from": "modbuild",
+      "to": "modrisk",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "id": "write-loadrt",
+      "from": "write",
+      "to": "loadrt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loadrt-safe",
+      "from": "loadrt",
+      "to": "safe",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Kernel module burden",
+      "items": [
+        "Recompile for every kernel version",
+        "One bug can take the whole system down"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF advantages",
+      "items": [
+        "Loads into the running kernel instantly",
+        "The verifier guarantees safety"
+      ]
+    }
+  ]
+}

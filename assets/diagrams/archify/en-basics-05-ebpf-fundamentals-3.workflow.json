@@ -1,0 +1,138 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF Program Lifecycle",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "life",
+      "label": "Program lifecycle"
+    },
+    {
+      "id": "fail",
+      "label": "Verification failure",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "load",
+    "verify",
+    "jit",
+    "attachexec",
+    "detach"
+  ],
+  "nodes": [
+    {
+      "id": "write",
+      "lane": "life",
+      "col": 0,
+      "type": "frontend",
+      "label": "Write/compile"
+    },
+    {
+      "id": "load",
+      "lane": "life",
+      "col": 1,
+      "type": "backend",
+      "label": "Load"
+    },
+    {
+      "id": "verify",
+      "lane": "life",
+      "col": 2,
+      "type": "security",
+      "label": "Verify"
+    },
+    {
+      "id": "jit",
+      "lane": "life",
+      "col": 3,
+      "type": "backend",
+      "label": "JIT"
+    },
+    {
+      "id": "reject",
+      "lane": "fail",
+      "col": 2,
+      "type": "security",
+      "label": "Load rejected"
+    },
+    {
+      "id": "attachexec",
+      "lane": "life",
+      "col": 4,
+      "type": "backend",
+      "label": "Attach · run",
+      "sublabel": "repeats per event"
+    },
+    {
+      "id": "detach",
+      "lane": "life",
+      "col": 5,
+      "type": "external",
+      "label": "Detach · unload",
+      "sublabel": "explicit teardown",
+      "width": 110
+    }
+  ],
+  "edges": [
+    {
+      "id": "write-load",
+      "from": "write",
+      "to": "load"
+    },
+    {
+      "id": "load-verify",
+      "from": "load",
+      "to": "verify"
+    },
+    {
+      "id": "verify-jit",
+      "from": "verify",
+      "to": "jit",
+      "label": "pass",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-attach",
+      "from": "jit",
+      "to": "attachexec"
+    },
+    {
+      "id": "exec-detach",
+      "from": "attachexec",
+      "to": "detach",
+      "label": "explicit detach"
+    },
+    {
+      "id": "verify-reject",
+      "from": "verify",
+      "to": "reject",
+      "label": "fail",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Event driven",
+      "items": [
+        "Runs every time the attached hook fires",
+        "State persists in eBPF maps between runs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cleanup",
+      "items": [
+        "Detaching from the hook stops execution",
+        "The kernel unloads the program when references drop"
+      ]
+    }
+  ]
+}

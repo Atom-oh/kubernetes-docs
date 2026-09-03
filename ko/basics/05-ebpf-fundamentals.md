@@ -51,7 +51,9 @@ sudo bpftool feature
 
 > **핵심 개념**: eBPF를 사용하면 커널 소스 코드를 수정하거나 커널 모듈을 로드하지 않고도 커널의 동작을 확장하고 관찰할 수 있습니다.
 
-![사용자 공간에서 작성된 eBPF 프로그램이 컴파일과 커널 로드를 거쳐, 커널 공간에서 검증기와 JIT 컴파일을 통과한 뒤 네트워크 패킷·시스템 콜·함수 호출·트레이스포인트 등 다양한 이벤트 훅 포인트에서 실행되는 흐름을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-0.svg)
+![사용자 공간에서 작성된 eBPF 프로그램이 컴파일과 커널 로드를 거쳐, 커널 공간에서 검증기와 JIT 컴파일을 통과한 뒤 네트워크 패킷·시스템 콜·함수 호출·트레이스포인트 등 다양한 이벤트 훅 포인트에서 실행되는 흐름을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-0.html)
 
 ### 1.2 전통적인 BPF에서 eBPF로의 진화
 
@@ -87,7 +89,9 @@ eBPF는 다음과 같은 이유로 혁신적입니다:
 4. **동적 로딩**: 재부팅 없이 프로그램 로드/언로드 가능
 5. **프로덕션 안정성**: 크래시나 무한 루프 없이 안전하게 실행
 
-![기존 커널 모듈 개발 방식은 재부팅과 시스템 불안정 위험을 동반하지만 eBPF 방식은 런타임 로드와 검증을 거쳐 안전한 실행을 보장한다는 것을 비교하는 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-1.svg)
+![기존 커널 모듈 개발 방식은 재부팅과 시스템 불안정 위험을 동반하지만 eBPF 방식은 런타임 로드와 검증을 거쳐 안전한 실행을 보장한다는 것을 비교하는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-1.html)
 
 ### 1.4 eBPF vs 커널 모듈 비교
 
@@ -108,7 +112,9 @@ eBPF는 다음과 같은 이유로 혁신적입니다:
 
 ### 2.1 eBPF 실행 흐름
 
-![C/Rust로 작성된 eBPF 프로그램이 컴파일과 커널 로드, 검증기 통과를 거쳐 JIT 컴파일되고 이벤트 훅에 연결되어 실행된 뒤 맵에 데이터를 저장하고 사용자 공간에서 읽히는 절차를, 검증 실패 시 로드가 거부되는 분기와 함께 보여주는 순서도.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-2.svg)
+![C/Rust로 작성된 eBPF 프로그램이 컴파일과 커널 로드, 검증기 통과를 거쳐 JIT 컴파일되고 이벤트 훅에 연결되어 실행된 뒤 맵에 데이터를 저장하고 사용자 공간에서 읽히는 절차를, 검증 실패 시 로드가 거부되는 분기와 함께 보여주는 순서도.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-2.html)
 
 ### 2.2 검증기 (Verifier)
 
@@ -215,7 +221,9 @@ int bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
 
 ### 2.6 프로그램 라이프사이클
 
-![코드 작성부터 컴파일, 로드, 검증을 거쳐 JIT 컴파일과 훅 연결, 반복 실행에 이르는 eBPF 프로그램의 생명주기를, 검증 실패와 명시적 분리 후 언로드로 종료되는 두 경로와 함께 보여주는 상태 머신.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-3.svg)
+![코드 작성부터 컴파일, 로드, 검증을 거쳐 JIT 컴파일과 훅 연결, 반복 실행에 이르는 eBPF 프로그램의 생명주기를, 검증 실패와 명시적 분리 후 언로드로 종료되는 두 경로와 함께 보여주는 상태 머신.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-3.html)
 
 ---
 
@@ -225,7 +233,9 @@ int bpf_get_current_comm(void *buf, u32 size);  // 프로세스 이름
 
 XDP는 네트워크 드라이버 레벨에서 패킷을 처리하는 가장 빠른 방법입니다.
 
-![NIC에 도착한 패킷이 XDP 프로그램의 판정에 따라 드롭, 커널 스택 전달, 같은 인터페이스로 반환, 다른 인터페이스로 리다이렉트, 에러 처리 중 하나의 경로로 분기하는 것을 보여주는 흐름도.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-4.svg)
+![NIC에 도착한 패킷이 XDP 프로그램의 판정에 따라 드롭, 커널 스택 전달, 같은 인터페이스로 반환, 다른 인터페이스로 리다이렉트, 에러 처리 중 하나의 경로로 분기하는 것을 보여주는 흐름도.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-4.html)
 
 **XDP 동작 모드**:
 | 모드 | 설명 | 성능 |
@@ -560,7 +570,9 @@ bpftool prog show id <ID> --pretty
 
 Cilium은 eBPF를 활용한 가장 대표적인 Kubernetes CNI(Container Network Interface)입니다.
 
-![Cilium Agent가 Kubernetes API로부터 받은 설정을 eBPF 데이터플레인으로 내려보내고, XDP·TC·소켓 프로그램이 각각 DDoS 방어, 네트워크 정책, 로드 밸런싱, 소켓 레벨 라우팅 기능을 구현하는 과정을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-5.svg)
+![Cilium Agent가 Kubernetes API로부터 받은 설정을 eBPF 데이터플레인으로 내려보내고, XDP·TC·소켓 프로그램이 각각 DDoS 방어, 네트워크 정책, 로드 밸런싱, 소켓 레벨 라우팅 기능을 구현하는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-5.html)
 
 #### kube-proxy 대체
 
@@ -695,7 +707,9 @@ eBPF는 시스템과 애플리케이션의 동작을 심층적으로 관찰할 �
 
 Hubble은 Cilium에 내장된 네트워크 관찰성 플랫폼입니다.
 
-![Cilium Agent의 eBPF 데이터플레인에서 Hubble Observer가 네트워크 플로우, DNS 쿼리, HTTP 요청, 정책 결정 데이터를 수집하고 Hubble Relay를 거쳐 UI와 CLI로 제공하는 과정을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-6.svg)
+![Cilium Agent의 eBPF 데이터플레인에서 Hubble Observer가 네트워크 플로우, DNS 쿼리, HTTP 요청, 정책 결정 데이터를 수집하고 Hubble Relay를 거쳐 UI와 CLI로 제공하는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-6.html)
 
 ```bash
 # Hubble 설치
@@ -821,7 +835,9 @@ curl localhost:9103/metrics | grep kepler
 | **데이터 깊이** | 애플리케이션 레벨 | 커널 레벨 |
 | **프로토콜 지원** | 명시적 지원 필요 | 자동 파싱 |
 
-![기존 방식은 애플리케이션에 SDK나 에이전트를 심어 메트릭을 수집하지만, eBPF 방식은 애플리케이션 코드 변경 없이 커널에서 eBPF 프로그램으로 직접 관측 데이터를 모니터링 백엔드로 전달한다는 것을 비교하는 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-7.svg)
+![기존 방식은 애플리케이션에 SDK나 에이전트를 심어 메트릭을 수집하지만, eBPF 방식은 애플리케이션 코드 변경 없이 커널에서 eBPF 프로그램으로 직접 관측 데이터를 모니터링 백엔드로 전달한다는 것을 비교하는 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-7.html)
 
 ---
 
@@ -831,7 +847,9 @@ curl localhost:9103/metrics | grep kepler
 
 Tetragon은 Cilium 프로젝트에서 제공하는 eBPF 기반 런타임 보안 솔루션입니다.
 
-![TracingPolicy CRD로 정의된 정책에 따라 Tetragon Agent의 eBPF 센서가 프로세스, 네트워크, 파일 활동을 추적하고 위반 시 프로세스 킬, 네트워크 차단, 파일 접근 거부로 정책을 즉시 적용하는 과정을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-basics-05-ebpf-fundamentals-8.svg)
+![TracingPolicy CRD로 정의된 정책에 따라 Tetragon Agent의 eBPF 센서가 프로세스, 네트워크, 파일 활동을 추적하고 위반 시 프로세스 킬, 네트워크 차단, 파일 접근 거부로 정책을 즉시 적용하는 과정을 보여주는 아키텍처 다이어그램.](../.gitbook/assets/ko-basics-05-ebpf-fundamentals-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-05-ebpf-fundamentals-8.html)
 
 ```bash
 # Tetragon 설치
