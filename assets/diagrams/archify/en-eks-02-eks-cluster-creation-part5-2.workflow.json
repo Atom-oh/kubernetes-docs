@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Cluster Validation Process",
+    "output": "en-eks-02-eks-cluster-creation-part5-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "검증 단계"
+        },
+        "frontend": {
+          "label": "테스트 워크로드"
+        },
+        "database": {
+          "label": "로그"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "infra",
+      "label": "인프라 검증"
+    },
+    {
+      "id": "app",
+      "label": "워크로드 검증"
+    }
+  ],
+  "mainPath": [
+    "nodes",
+    "syspods",
+    "testapp",
+    "svc"
+  ],
+  "nodes": [
+    {
+      "id": "nodes",
+      "lane": "infra",
+      "col": 0,
+      "type": "backend",
+      "label": "Node status",
+      "sublabel": "get nodes",
+      "width": 150
+    },
+    {
+      "id": "syspods",
+      "lane": "infra",
+      "col": 1,
+      "type": "backend",
+      "label": "System pods",
+      "sublabel": "kube-system",
+      "width": 155
+    },
+    {
+      "id": "testapp",
+      "lane": "app",
+      "col": 2,
+      "type": "frontend",
+      "label": "Deploy test app",
+      "sublabel": "nginx pod",
+      "width": 160
+    },
+    {
+      "id": "svc",
+      "lane": "app",
+      "col": 3,
+      "type": "frontend",
+      "label": "Service reachability",
+      "sublabel": "LB · NodePort",
+      "width": 155
+    },
+    {
+      "id": "logs",
+      "lane": "infra",
+      "col": 4,
+      "type": "database",
+      "label": "Cluster logs",
+      "sublabel": "CloudWatch",
+      "width": 155
+    },
+    {
+      "id": "done",
+      "lane": "infra",
+      "col": 5,
+      "type": "backend",
+      "label": "Validation done",
+      "sublabel": "Criteria met",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "nodes",
+      "to": "syspods",
+      "label": "1 check Ready"
+    },
+    {
+      "id": "e2",
+      "from": "syspods",
+      "to": "testapp",
+      "label": "2 deploy",
+      "role": "branch"
+    },
+    {
+      "id": "e3",
+      "from": "testapp",
+      "to": "svc",
+      "label": "3 expose"
+    },
+    {
+      "id": "e4",
+      "from": "svc",
+      "to": "logs",
+      "label": "4 check logs"
+    },
+    {
+      "id": "e5",
+      "from": "logs",
+      "to": "done",
+      "label": "5 close out"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Infrastructure checklist",
+      "items": [
+        "kubectl get nodes shows whether every node is Ready",
+        "kubectl get pods -n kube-system confirms CoreDNS, kube-proxy, and aws-node are Running",
+        "kubectl get storageclass confirms a default StorageClass exists"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Workload checklist",
+      "items": [
+        "Run an nginx pod to confirm scheduling and image pulls work",
+        "Expose a Service as LoadBalancer to confirm the AWS Load Balancer Controller works",
+        "Check pod-to-pod traffic and DNS resolution (nslookup kubernetes.default) together"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Observability checks",
+      "items": [
+        "If control plane logging is on, confirm the CloudWatch Logs group appeared",
+        "Confirm Container Insights metrics are being collected",
+        "kubectl auth can-i confirms RBAC behaves as intended"
+      ]
+    }
+  ]
+}

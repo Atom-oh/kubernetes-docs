@@ -6,7 +6,9 @@ After creating an EKS cluster, configuration is required to access the cluster. 
 
 ### Cluster Access Configuration Process
 
-![EKS Cluster Access Configuration Process](../.gitbook/assets/eks_cluster_access_configuration.png)
+![Diagram of the access configuration flow: kubeconfig, IAM principal, access entry, RBAC rules and binding, then an access test.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-0.html)
 
 ### kubeconfig Configuration
 
@@ -24,7 +26,9 @@ This command updates the `~/.kube/config` file to enable access to the EKS clust
 
 By default, only the IAM entity (user or role) that created the EKS cluster can access the cluster. There are two methods to grant cluster access to other IAM users or roles: the traditional aws-auth ConfigMap method and the new EKS Access Entry method.
 
-![EKS IAM Access Methods Comparison](../.gitbook/assets/eks_iam_access_methods.png)
+![Diagram comparing the two ways an IAM principal maps to the Kubernetes API: EKS access entries and the aws-auth ConfigMap.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-1.html)
 
 #### Method 1: EKS Access Entry (Recommended)
 
@@ -180,7 +184,9 @@ After creating an EKS cluster, you need to verify that the cluster is working co
 
 ### Cluster Validation Process
 
-![EKS Cluster Validation Process](../.gitbook/assets/eks_cluster_validation_process.png)
+![Cluster validation diagram checking nodes and system pods, deploying a test app and exposing it, then reviewing logs.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-2.html)
 
 ### Verify Nodes
 
@@ -274,7 +280,9 @@ To keep an EKS cluster up to date, regular upgrades are required. In this sectio
 
 ### Cluster Upgrade Process
 
-![EKS Cluster Upgrade Process](../.gitbook/assets/eks_cluster_upgrade_process.png)
+![Upgrade process diagram from planning and version checks through the control plane, node groups, add-ons, and function tests.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-3.html)
 
 ### Control Plane Upgrade
 
@@ -347,7 +355,9 @@ When an EKS cluster is no longer needed, you can delete it to save costs. In thi
 
 ### Cluster Deletion Process
 
-![EKS Cluster Deletion Process](../.gitbook/assets/eks_cluster_deletion_process.png)
+![Deletion process diagram clearing load balancers and PVCs, deleting node groups and Fargate profiles, then the cluster, then checking leftovers.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-4.html)
 
 ### Resource Cleanup
 

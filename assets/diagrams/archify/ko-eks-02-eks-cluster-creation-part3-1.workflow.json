@@ -1,0 +1,42 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "AWS CLI로 EKS 클러스터 생성", "output": "ko-eks-02-eks-cluster-creation-part3-1.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "security": {"label": "IAM"}, "cloud": {"label": "AWS 리소스"}, "backend": {"label": "접근 설정"} } } },
+  "lanes": [
+    { "id": "prep", "label": "사전 리소스" },
+    { "id": "cluster", "label": "클러스터와 노드" }
+  ],
+  "mainPath": ["iamrole", "vpc", "sg", "cluster"],
+  "nodes": [
+    { "id": "iamrole", "lane": "prep", "col": 0, "type": "security", "label": "클러스터 역할", "sublabel": "create-role", "width": 155 },
+    { "id": "vpc", "lane": "prep", "col": 1, "type": "cloud", "label": "VPC · 서브넷", "sublabel": "create-subnet", "width": 155 },
+    { "id": "sg", "lane": "prep", "col": 2, "type": "cloud", "label": "보안 그룹", "sublabel": "인그레스 허용", "width": 155 },
+    { "id": "cluster", "lane": "cluster", "col": 3, "type": "cloud", "label": "클러스터 생성", "sublabel": "create-cluster", "width": 160 },
+    { "id": "ng", "lane": "cluster", "col": 4, "type": "cloud", "label": "노드 그룹", "sublabel": "create-nodegroup", "width": 165 },
+    { "id": "kubeconfig", "lane": "cluster", "col": 5, "type": "backend", "label": "접근 구성", "sublabel": "update-kubeconfig", "width": 165 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "iamrole", "to": "vpc", "label": "1 네트워크" },
+    { "id": "e2", "from": "vpc", "to": "sg", "label": "2 보안" },
+    { "id": "e3", "from": "sg", "to": "cluster", "label": "3 클러스터" },
+    { "id": "e4", "from": "cluster", "to": "ng", "label": "4 ACTIVE 후" },
+    { "id": "e5", "from": "ng", "to": "kubeconfig", "label": "5 접근" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "IAM 준비", "items": [
+      "클러스터 역할에 AmazonEKSClusterPolicy를 연결한다",
+      "노드 역할에는 AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy, AmazonEC2ContainerRegistryReadOnly를 연결한다",
+      "aws iam create-role + attach-role-policy 두 단계로 만든다"
+    ]},
+    { "dot": "emerald", "title": "클러스터와 노드 생성", "items": [
+      "aws eks create-cluster --name my-cluster --role-arn <역할> --resources-vpc-config subnetIds=...",
+      "aws eks describe-cluster --name my-cluster --query cluster.status로 ACTIVE를 기다린다",
+      "aws eks create-nodegroup 후 describe-nodegroup으로 상태를 확인한다"
+    ]},
+    { "dot": "amber", "title": "접근 확인", "items": [
+      "aws eks update-kubeconfig --name my-cluster로 kubeconfig를 갱신한다",
+      "kubectl get nodes로 노드 등록을 확인한다",
+      "CLI 직접 생성은 단계가 많아 실습·학습에 적합하고 운영에는 eksctl이나 IaC를 권한다"
+    ]}
+  ]
+}

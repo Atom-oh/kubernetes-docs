@@ -1,0 +1,42 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "EKS 클러스터 삭제 프로세스", "output": "ko-eks-02-eks-cluster-creation-part5-4.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "frontend": {"label": "워크로드 정리"}, "cloud": {"label": "AWS 리소스"}, "security": {"label": "최종 삭제"} } } },
+  "lanes": [
+    { "id": "cleanup", "label": "선행 정리" },
+    { "id": "delete", "label": "클러스터 삭제" }
+  ],
+  "mainPath": ["lb", "pvc", "ng", "fargate"],
+  "nodes": [
+    { "id": "lb", "lane": "cleanup", "col": 0, "type": "frontend", "label": "로드 밸런서 정리", "sublabel": "Service · Ingress", "width": 170 },
+    { "id": "pvc", "lane": "cleanup", "col": 1, "type": "frontend", "label": "PVC 삭제", "sublabel": "볼륨 회수", "width": 150 },
+    { "id": "ng", "lane": "cleanup", "col": 2, "type": "cloud", "label": "노드 그룹 삭제", "sublabel": "EC2 종료", "width": 160 },
+    { "id": "fargate", "lane": "cleanup", "col": 3, "type": "cloud", "label": "Fargate 프로필", "sublabel": "프로필 삭제", "width": 160 },
+    { "id": "cluster", "lane": "delete", "col": 4, "type": "security", "label": "클러스터 삭제", "sublabel": "delete-cluster", "width": 160 },
+    { "id": "verify", "lane": "delete", "col": 5, "type": "security", "label": "잔여 리소스 확인", "sublabel": "VPC · IAM", "width": 170 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "lb", "to": "pvc", "label": "1 스토리지" },
+    { "id": "e2", "from": "pvc", "to": "ng", "label": "2 노드" },
+    { "id": "e3", "from": "ng", "to": "fargate", "label": "3 서버리스" },
+    { "id": "e4", "from": "fargate", "to": "cluster", "label": "4 클러스터", "role": "branch" },
+    { "id": "e5", "from": "cluster", "to": "verify", "label": "5 확인" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "왜 순서가 중요한가", "items": [
+      "LoadBalancer Service와 Ingress를 먼저 지우지 않으면 ALB·NLB가 남아 요금이 계속 나간다",
+      "PVC를 먼저 지워야 회수 정책에 따라 EBS 볼륨이 정리된다",
+      "노드 그룹과 Fargate 프로필이 남아 있으면 클러스터 삭제가 실패한다"
+    ]},
+    { "dot": "emerald", "title": "명령", "items": [
+      "kubectl delete svc --all-namespaces --field-selector spec.type=LoadBalancer",
+      "eksctl delete cluster --name my-cluster는 CloudFormation 스택 단위로 순서를 지켜 지운다",
+      "CLI로 만들었다면 delete-nodegroup → delete-fargate-profile → delete-cluster 순서로 지운다"
+    ]},
+    { "dot": "amber", "title": "삭제 후 확인", "items": [
+      "직접 만든 VPC, 보안 그룹, IAM 역할은 남으므로 따로 정리한다",
+      "CloudWatch 로그 그룹과 EBS 스냅샷도 보관 정책에 따라 확인한다",
+      "삭제 전 필요한 데이터는 반드시 백업하고 복구 가능 여부를 확인한다"
+    ]}
+  ]
+}

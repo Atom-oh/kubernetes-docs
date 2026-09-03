@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Comparing EKS IAM Access Methods",
+    "output": "en-eks-02-eks-cluster-creation-part5-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      700
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM users · roles",
+      "sublabel": "AWS account",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "entry",
+      "type": "backend",
+      "label": "EKS access entry",
+      "sublabel": "Recommended",
+      "pos": [
+        370,
+        110
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "authcm",
+      "type": "backend",
+      "label": "aws-auth ConfigMap",
+      "sublabel": "Legacy",
+      "pos": [
+        370,
+        490
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API",
+      "sublabel": "Auth",
+      "pos": [
+        730,
+        300
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "EKS cluster",
+      "sublabel": "Resource access",
+      "pos": [
+        1050,
+        300
+      ],
+      "size": [
+        210,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "iam-entry",
+      "from": "iam",
+      "to": "entry",
+      "label": "new path"
+    },
+    {
+      "id": "iam-cm",
+      "from": "iam",
+      "to": "authcm",
+      "label": "legacy path"
+    },
+    {
+      "id": "entry-api",
+      "from": "entry",
+      "to": "api",
+      "label": "subject mapping"
+    },
+    {
+      "id": "cm-api",
+      "from": "authcm",
+      "to": "api"
+    },
+    {
+      "id": "api-cluster",
+      "from": "api",
+      "to": "cluster",
+      "label": "serves requests"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EKS access entry",
+      "items": [
+        "Managed through a native AWS API, so CloudTrail auditing and IaC come easily",
+        "Access policies grant admin, edit, or view levels directly",
+        "Works with authenticationMode set to API or API_AND_CONFIG_MAP"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Limits of the aws-auth ConfigMap",
+      "items": [
+        "It is hand-edited, so one YAML mistake can lock everyone out",
+        "The ConfigMap size limit makes many principals hard to manage",
+        "It is not an AWS API surface, so changes are hard to trace"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Migration stance",
+      "items": [
+        "Start new clusters in API mode with access entries only",
+        "Move existing clusters to API_AND_CONFIG_MAP, then migrate to entries gradually",
+        "Once migrated, remove the aws-auth entries and pin the cluster to API mode"
+      ]
+    }
+  ]
+}

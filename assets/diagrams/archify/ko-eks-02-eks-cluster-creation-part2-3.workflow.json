@@ -1,0 +1,39 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "EKS 클러스터 라이프사이클 관리", "output": "ko-eks-02-eks-cluster-creation-part2-3.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "cloud": {"label": "클러스터 작업"}, "backend": {"label": "구성 작업"}, "security": {"label": "정리"} } } },
+  "lanes": [
+    { "id": "build", "label": "생성과 구성" },
+    { "id": "ops", "label": "운영과 정리" }
+  ],
+  "mainPath": ["create", "configure", "update", "delete"],
+  "nodes": [
+    { "id": "create", "lane": "build", "col": 0, "type": "cloud", "label": "클러스터 생성", "sublabel": "eksctl create", "width": 160 },
+    { "id": "configure", "lane": "build", "col": 1, "type": "backend", "label": "클러스터 구성", "sublabel": "노드 그룹 · Fargate", "width": 175 },
+    { "id": "update", "lane": "ops", "col": 2, "type": "cloud", "label": "버전 업데이트", "sublabel": "클러스터 · 노드 · 애드온", "width": 185 },
+    { "id": "delete", "lane": "ops", "col": 3, "type": "security", "label": "클러스터 삭제", "sublabel": "eksctl delete", "width": 160 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "create", "to": "configure", "label": "1 구성 추가" },
+    { "id": "e2", "from": "configure", "to": "update", "label": "2 운영 전환" },
+    { "id": "e3", "from": "update", "to": "delete", "label": "3 수명 종료" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "생성과 구성", "items": [
+      "eksctl create cluster --name=my-cluster 또는 -f cluster.yaml로 만든다",
+      "eksctl create nodegroup --cluster=my-cluster로 노드 그룹을 추가한다",
+      "eksctl create fargateprofile --cluster=my-cluster로 Fargate 프로필을 추가한다"
+    ]},
+    { "dot": "emerald", "title": "업데이트", "items": [
+      "eksctl upgrade cluster --name=my-cluster --version=1.31로 컨트롤 플레인을 올린다",
+      "eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup으로 노드를 올린다",
+      "eksctl update addon --cluster=my-cluster --name=vpc-cni로 애드온을 갱신한다",
+      "컨트롤 플레인을 먼저 올리고 노드는 한 마이너 버전 차이 안에서 따라 올린다"
+    ]},
+    { "dot": "amber", "title": "삭제 전 확인", "items": [
+      "eksctl delete cluster --name=my-cluster는 CloudFormation 스택 단위로 지운다",
+      "삭제 전에 PVC와 로드 밸런서 같은 외부 리소스를 먼저 정리한다",
+      "중요한 데이터는 스냅샷으로 백업하고 복구 가능 여부를 확인한다"
+    ]}
+  ]
+}

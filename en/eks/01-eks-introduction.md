@@ -90,7 +90,9 @@ The costs incurred when operating an EKS cluster are as follows:
 
 EKS integrates with the following AWS services:
 
-![EKS AWS Services Integration](../.gitbook/assets/eks_aws_services_integration.png)
+![Diagram of AWS service integration around Amazon EKS: IAM, VPC, storage, CloudWatch, ECR, and SageMaker/Bedrock.](../.gitbook/assets/en-eks-01-eks-introduction-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-01-eks-introduction-0.html)
 
 1. **IAM**: Manages authentication and authorization by integrating with Kubernetes RBAC.
 2. **VPC**: Provides networking infrastructure.

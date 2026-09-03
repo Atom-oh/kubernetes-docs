@@ -1,0 +1,157 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Cluster Upgrade Process",
+    "output": "en-eks-02-eks-cluster-creation-part5-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "준비 · 검증"
+        },
+        "cloud": {
+          "label": "업그레이드 대상"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "plan",
+      "label": "계획과 컨트롤 플레인"
+    },
+    {
+      "id": "after",
+      "label": "노드와 검증"
+    }
+  ],
+  "mainPath": [
+    "plan",
+    "version",
+    "cp",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "plan",
+      "lane": "plan",
+      "col": 0,
+      "type": "backend",
+      "label": "Upgrade plan",
+      "sublabel": "Compatibility",
+      "width": 150
+    },
+    {
+      "id": "version",
+      "lane": "plan",
+      "col": 1,
+      "type": "backend",
+      "label": "Check version",
+      "sublabel": "One step",
+      "width": 150
+    },
+    {
+      "id": "cp",
+      "lane": "plan",
+      "col": 2,
+      "type": "cloud",
+      "label": "Control plane",
+      "sublabel": "update-cluster",
+      "width": 150
+    },
+    {
+      "id": "status",
+      "lane": "plan",
+      "col": 3,
+      "type": "backend",
+      "label": "Check status",
+      "sublabel": "Await ACTIVE",
+      "width": 150
+    },
+    {
+      "id": "ng",
+      "lane": "after",
+      "col": 4,
+      "type": "cloud",
+      "label": "Node group",
+      "sublabel": "Rolling replace",
+      "width": 150
+    },
+    {
+      "id": "addon",
+      "lane": "after",
+      "col": 5,
+      "type": "cloud",
+      "label": "Add-ons · tests",
+      "sublabel": "Function tests",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "plan",
+      "to": "version",
+      "label": "1 confirm"
+    },
+    {
+      "id": "e2",
+      "from": "version",
+      "to": "cp",
+      "label": "2 run"
+    },
+    {
+      "id": "e3",
+      "from": "cp",
+      "to": "status",
+      "label": "3 check"
+    },
+    {
+      "id": "e4",
+      "from": "status",
+      "to": "ng",
+      "label": "4 done",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "ng",
+      "to": "addon",
+      "label": "5 add-ons"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pre-upgrade checklist",
+      "items": [
+        "Review the removed and deprecated APIs between the current and target versions",
+        "Check whether application manifests use API versions that were removed",
+        "Upgrade dev and staging first and prepare a rollback plan"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Order and commands",
+      "items": [
+        "Start with the control plane: aws eks update-cluster-version --name my-cluster --kubernetes-version 1.31",
+        "Raise node groups with aws eks update-nodegroup-version (cordon and drain are automatic)",
+        "Finally align the VPC CNI, CoreDNS, and kube-proxy add-ons with the cluster version",
+        "Move one minor version at a time (1.29 → 1.30 → 1.31)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Rollback constraints",
+      "items": [
+        "The EKS control plane cannot be downgraded",
+        "Only node groups can be rolled back to an earlier version",
+        "Assume it is irreversible and put the weight on prior testing and backups"
+      ]
+    }
+  ]
+}

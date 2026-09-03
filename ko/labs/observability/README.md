@@ -8,7 +8,9 @@
 
 ### 아키텍처 개요
 
-![Observability Architecture Overview](../../.gitbook/assets/architecture-overview.png)
+![관리 클러스터의 GitOps와 관측 스택, 서비스 클러스터의 MSA 애플리케이션, AWS 관리형 관측 백엔드로 이어지는 실습 환경 아키텍처.](../../.gitbook/assets/ko-labs-observability-overview-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-overview-0.html)
 
 ![EKS 관리 클러스터의 ArgoCD·관측 스택과 EKS 서비스 클러스터의 MSA 애플리케이션이 Aurora, SQS/SNS, 관측 백엔드, MWAA 등 AWS 관리형 서비스와 연동되는 실습 플랫폼 전체 아키텍처](../../.gitbook/assets/ko-labs-observability-README-0.png)
 

@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Cluster Access Configuration",
+    "output": "en-eks-02-eks-cluster-creation-part5-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "구성 단계"
+        },
+        "security": {
+          "label": "권한"
+        },
+        "cloud": {
+          "label": "AWS 설정"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "auth",
+      "label": "인증 구성"
+    },
+    {
+      "id": "authz",
+      "label": "인가와 검증"
+    }
+  ],
+  "mainPath": [
+    "kubeconfig",
+    "iam",
+    "entry",
+    "rbac"
+  ],
+  "nodes": [
+    {
+      "id": "kubeconfig",
+      "lane": "auth",
+      "col": 0,
+      "type": "backend",
+      "label": "Set kubeconfig",
+      "sublabel": "update-kubeconfig",
+      "width": 165
+    },
+    {
+      "id": "iam",
+      "lane": "auth",
+      "col": 1,
+      "type": "security",
+      "label": "IAM principal",
+      "sublabel": "User · role",
+      "width": 160
+    },
+    {
+      "id": "entry",
+      "lane": "auth",
+      "col": 2,
+      "type": "cloud",
+      "label": "Access entry",
+      "sublabel": "Attach policy",
+      "width": 155
+    },
+    {
+      "id": "rbac",
+      "lane": "authz",
+      "col": 3,
+      "type": "security",
+      "label": "Define RBAC",
+      "sublabel": "Role rules",
+      "width": 150
+    },
+    {
+      "id": "binding",
+      "lane": "authz",
+      "col": 4,
+      "type": "security",
+      "label": "RoleBinding",
+      "sublabel": "Bind subject",
+      "width": 155
+    },
+    {
+      "id": "test",
+      "lane": "authz",
+      "col": 5,
+      "type": "backend",
+      "label": "Test access",
+      "sublabel": "auth can-i",
+      "width": 155
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "kubeconfig",
+      "to": "iam",
+      "label": "1 target"
+    },
+    {
+      "id": "e2",
+      "from": "iam",
+      "to": "entry",
+      "label": "2 entry"
+    },
+    {
+      "id": "e3",
+      "from": "entry",
+      "to": "rbac",
+      "label": "3 narrow",
+      "role": "branch"
+    },
+    {
+      "id": "e4",
+      "from": "rbac",
+      "to": "binding",
+      "label": "4 bind"
+    },
+    {
+      "id": "e5",
+      "from": "binding",
+      "to": "test",
+      "label": "5 verify"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EKS access entries (recommended)",
+      "items": [
+        "aws eks create-access-entry registers an IAM principal with the cluster",
+        "aws eks associate-access-policy attaches a policy such as AmazonEKSClusterAdminPolicy",
+        "Access entries are managed through the AWS API, so they fit audit logs and IaC naturally"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "aws-auth ConfigMap (legacy)",
+      "items": [
+        "You edit mapRoles and mapUsers by hand in the aws-auth ConfigMap in kube-system",
+        "ConfigMap size limits and hand-editing mistakes make it a poor choice for new clusters",
+        "authenticationMode: API_AND_CONFIG_MAP lets both mechanisms coexist"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Narrowing scope with RBAC",
+      "items": [
+        "Namespace-scoped Roles and RoleBindings split permissions per team",
+        "Reach for ClusterRole and ClusterRoleBinding only when cluster-wide access is required",
+        "kubectl auth can-i --as <principal> shows the effective permissions"
+      ]
+    }
+  ]
+}

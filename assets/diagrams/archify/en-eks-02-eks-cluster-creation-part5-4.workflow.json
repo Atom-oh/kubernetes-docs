@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Cluster Deletion Process",
+    "output": "en-eks-02-eks-cluster-creation-part5-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "워크로드 정리"
+        },
+        "cloud": {
+          "label": "AWS 리소스"
+        },
+        "security": {
+          "label": "최종 삭제"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "cleanup",
+      "label": "선행 정리"
+    },
+    {
+      "id": "delete",
+      "label": "클러스터 삭제"
+    }
+  ],
+  "mainPath": [
+    "lb",
+    "pvc",
+    "ng",
+    "fargate"
+  ],
+  "nodes": [
+    {
+      "id": "lb",
+      "lane": "cleanup",
+      "col": 0,
+      "type": "frontend",
+      "label": "Remove LBs",
+      "sublabel": "Service · Ingress",
+      "width": 150
+    },
+    {
+      "id": "pvc",
+      "lane": "cleanup",
+      "col": 1,
+      "type": "frontend",
+      "label": "Delete PVCs",
+      "sublabel": "Reclaim volumes",
+      "width": 150
+    },
+    {
+      "id": "ng",
+      "lane": "cleanup",
+      "col": 2,
+      "type": "cloud",
+      "label": "Delete node groups",
+      "sublabel": "EC2 terminated",
+      "width": 150
+    },
+    {
+      "id": "fargate",
+      "lane": "cleanup",
+      "col": 3,
+      "type": "cloud",
+      "label": "Fargate profile",
+      "sublabel": "Delete profile",
+      "width": 150
+    },
+    {
+      "id": "cluster",
+      "lane": "delete",
+      "col": 4,
+      "type": "security",
+      "label": "Delete cluster",
+      "sublabel": "delete-cluster",
+      "width": 150
+    },
+    {
+      "id": "verify",
+      "lane": "delete",
+      "col": 5,
+      "type": "security",
+      "label": "Leftovers",
+      "sublabel": "VPC · IAM",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "lb",
+      "to": "pvc",
+      "label": "1 storage"
+    },
+    {
+      "id": "e2",
+      "from": "pvc",
+      "to": "ng",
+      "label": "2 nodes"
+    },
+    {
+      "id": "e3",
+      "from": "ng",
+      "to": "fargate",
+      "label": "3 serverless"
+    },
+    {
+      "id": "e4",
+      "from": "fargate",
+      "to": "cluster",
+      "label": "4 cluster",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "cluster",
+      "to": "verify",
+      "label": "5 verify"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Why the order matters",
+      "items": [
+        "Leave LoadBalancer Services and Ingresses behind and the ALBs and NLBs keep billing",
+        "Deleting PVCs first lets the reclaim policy clean up the EBS volumes",
+        "Cluster deletion fails while node groups or Fargate profiles still exist"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Commands",
+      "items": [
+        "kubectl delete svc --all-namespaces --field-selector spec.type=LoadBalancer",
+        "eksctl delete cluster --name my-cluster removes stacks in the right order",
+        "If you built it with the CLI, delete in this order: delete-nodegroup → delete-fargate-profile → delete-cluster"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "After deletion",
+      "items": [
+        "A hand-built VPC, security groups, and IAM roles survive and need separate cleanup",
+        "Check CloudWatch log groups and EBS snapshots against your retention policy",
+        "Back up anything you need before deleting and confirm it can be restored"
+      ]
+    }
+  ]
+}
