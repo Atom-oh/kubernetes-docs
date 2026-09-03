@@ -1,0 +1,31 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "Terraform Layer Integration Flow", "locale": "en", "output": "en-ops-01-infrastructure-setup-1.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1260, 660] },
+  "components": [
+    { "id": "network", "type": "cloud", "label": "01-network", "sublabel": "Outputs: vpc_id, subnets, azs", "pos": [40, 320], "size": [270, 90] },
+    { "id": "cluster", "type": "cloud", "label": "02-cluster", "sublabel": "In: vpc_id, subnets · Out: cluster_name, oidc_arn", "pos": [450, 320], "size": [290, 96] },
+    { "id": "platform", "type": "cloud", "label": "03-platform", "sublabel": "In: vpc_id, cluster_name, oidc_arn", "pos": [880, 320], "size": [280, 90] }
+  ],
+  "connections": [
+    { "id": "n-c", "from": "network", "to": "cluster", "label": "vpc_id, subnets" },
+    { "id": "c-p", "from": "cluster", "to": "platform", "label": "cluster_name, oidc_arn" },
+    { "id": "n-p", "from": "network", "to": "platform", "label": "vpc_id", "fromSide": "top", "toSide": "top", "via": [[175, 140], [1020, 140]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "terraform_remote_state references", "items": [
+      "02-cluster reads from the network state",
+      "03-platform reads from both the network and cluster states",
+      "Only declared outputs cross a layer boundary, which keeps the contract explicit"
+    ]},
+    { "dot": "emerald", "title": "Keeping the contract stable", "items": [
+      "Treat outputs as a public API: renaming one breaks every downstream layer",
+      "Prefer passing IDs and ARNs over passing whole objects",
+      "Add a new output rather than changing the meaning of an existing one"
+    ]},
+    { "dot": "amber", "title": "Apply order", "items": [
+      "Apply bottom-up: 01-network, then 02-cluster, then 03-platform",
+      "Destroy in reverse order, or the dependent layers lose their inputs mid-plan",
+      "A layer whose upstream state is missing fails at plan time, not apply time"
+    ]}
+  ]
+}

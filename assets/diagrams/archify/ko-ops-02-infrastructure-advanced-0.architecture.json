@@ -1,0 +1,39 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "NLB 기반 Blue/Green 아키텍처", "output": "ko-ops-02-infrastructure-advanced-0.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1280, 780] },
+  "components": [
+    { "id": "r53", "type": "cloud", "label": "Route 53", "sublabel": "api.example.com", "pos": [40, 340], "size": [200, 80] },
+    { "id": "nlb", "type": "cloud", "label": "NLB (공유)", "sublabel": "가중치 80 / 20", "pos": [290, 340], "size": [200, 80] },
+    { "id": "tgblue", "type": "cloud", "label": "Target Group (Blue)", "sublabel": "weight 80%", "pos": [590, 110], "size": [240, 80] },
+    { "id": "blue", "type": "backend", "label": "EKS 클러스터 (Blue)", "sublabel": "ap-northeast-2a · Pods · EBS", "pos": [910, 110], "size": [280, 80] },
+    { "id": "tggreen", "type": "cloud", "label": "Target Group (Green)", "sublabel": "weight 20%", "pos": [590, 570], "size": [240, 80] },
+    { "id": "green", "type": "backend", "label": "EKS 클러스터 (Green)", "sublabel": "ap-northeast-2c · Pods · EBS", "pos": [910, 570], "size": [280, 80] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "VPC 10.0.0.0/16", "wraps": ["tgblue", "blue", "tggreen", "green"], "pad": 38 }
+  ],
+  "connections": [
+    { "id": "r53-nlb", "from": "r53", "to": "nlb", "label": "DNS", "labelDy": 62 },
+    { "id": "nlb-blue", "from": "nlb", "to": "tgblue", "label": "weight 80%" },
+    { "id": "nlb-green", "from": "nlb", "to": "tggreen", "label": "weight 20%" },
+    { "id": "tg-blue", "from": "tgblue", "to": "blue", "label": "타깃 등록" },
+    { "id": "tg-green", "from": "tggreen", "to": "green", "label": "타깃 등록" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "공유 NLB + 두 Target Group", "items": [
+      "NLB 하나를 두고 Blue·Green Target Group에 가중치로 트래픽을 나눈다",
+      "DNS를 바꾸지 않으므로 TTL 전파를 기다릴 필요가 없다",
+      "가중치는 리스너 규칙 수준에서 즉시 반영된다"
+    ]},
+    { "dot": "emerald", "title": "전환 절차", "items": [
+      "Green 클러스터를 올리고 Target Group을 헬스 체크 통과 상태로 만든다",
+      "Green 가중치를 20% → 50% → 100%로 단계적으로 올린다",
+      "지표에 이상이 없으면 Blue 가중치를 0으로 내리고 나중에 정리한다"
+    ]},
+    { "dot": "amber", "title": "주의할 점", "items": [
+      "클러스터마다 EBS 볼륨이 따로이므로 상태 저장 워크로드는 별도 마이그레이션 계획이 필요하다",
+      "Blue와 Green이 같은 데이터베이스를 쓰면 스키마 호환성을 먼저 확인해야 한다",
+      "롤백은 가중치를 되돌리는 것으로 끝나므로 Blue를 성급히 삭제하지 않는다"
+    ]}
+  ]
+}

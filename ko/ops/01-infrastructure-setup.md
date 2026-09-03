@@ -1660,7 +1660,9 @@ local {
 
 ### 데이터 흐름 다이어그램
 
-![Terraform 3-Layer 데이터 흐름](../.gitbook/assets/terraform_3layer_dataflow.png)
+![00-shared의 S3 백엔드에서 01-network, 02-cluster, 03-platform으로 terraform_remote_state를 통해 출력이 전달되는 3계층 데이터 흐름 다이어그램.](../.gitbook/assets/ko-ops-01-infrastructure-setup-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-01-infrastructure-setup-0.html)
 
 ### 상태 관리 모범 사례
 
