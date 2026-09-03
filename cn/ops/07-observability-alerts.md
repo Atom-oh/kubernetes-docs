@@ -1,7 +1,7 @@
-# 操作告警配置：核心指标监控
+# 运维告警配置：核心指标监控
 
-> **支持版本**: Prometheus 2.50+, Alertmanager 0.27+, Karpenter 0.35+
-> **最后更新**: February 23, 2026
+> **支持的版本**：Prometheus 2.50+、Alertmanager 0.27+、Karpenter 0.35+
+> **最后更新**：February 23, 2026
 
 < [上一节：扩缩容策略](./06-scaling-strategies.md) | [目录](./README.md) | [下一节：可观测性分析](./08-observability-analysis.md) >
 
@@ -9,11 +9,15 @@
 
 ## 1. 告警架构
 
-Kubernetes 中的有效告警需要一个设计良好的流水线，既能最大限度减少噪音，又能确保关键问题及时到达运维人员。本节介绍 EKS 操作告警的基础架构。
+Kubernetes 中有效的告警需要精心设计的管道，以在减少噪声的同时确保关键问题能够及时传达给运维人员。本节介绍 EKS 运维告警的基础架构。
 
 ### Prometheus 到 Alertmanager 的流程
 
-告警流水线遵循从指标收集到通知投递的结构化流程：
+告警管道遵循从指标采集到通知交付的结构化流程：
+
+![告警架构图：Prometheus 评估 PrometheusRule CRD，并将触发中的告警发送到 Alertmanager；后者将告警路由到 Slack、PagerDuty、电子邮件和 Webhook。](../.gitbook/assets/en-ops-07-observability-alerts-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-0.html)
 
 ```
 ┌─────────────┐    ┌──────────────────┐    ┌───────────────┐    ┌──────────────┐
@@ -26,19 +30,23 @@ Kubernetes 中的有效告警需要一个设计良好的流水线，既能最大
    every 15-30s      every 30-60s          Group by labels     Based on routing
 ```
 
-### 严重级别
+### 严重性级别
 
-标准化的严重级别可确保一致的响应流程：
+标准化的严重性级别可确保响应流程保持一致：
 
-| 严重级别 | 响应时间 | 示例 | 通知 |
+| 严重性 | 响应时间 | 示例 | 通知 |
 |----------|---------------|----------|--------------|
-| **critical** | 立即（< 5 分钟） | Node 宕机、API server 不可达、数据丢失风险 | PagerDuty + Slack |
-| **warning** | 1 小时内 | 资源使用率高、性能下降 | Slack channel |
+| **critical** | 立即（< 5 分钟） | Node 宕机、API server 无法访问、存在数据丢失风险 | PagerDuty + Slack |
+| **warning** | 1 小时内 | 资源使用率高、性能下降 | Slack 频道 |
 | **info** | 下一个工作日 | 扩缩容事件、维护通知 | Slack（可选） |
 
 ### 告警生命周期
 
-理解告警生命周期有助于配置合适的时序：
+了解告警生命周期有助于配置合适的时机：
+
+![告警状态转换图：从 Inactive 经由 Pending 和 Firing 转换到 Resolved；条件提前解除时则返回 Inactive。](../.gitbook/assets/en-ops-07-observability-alerts-1.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-1.html)
 
 ```yaml
 # Alert state transitions
@@ -50,7 +58,7 @@ Inactive → Pending → Firing → Resolved
     └── Condition false, no alert
 ```
 
-### PrometheusRule CRD 概述
+### PrometheusRule CRD 概览
 
 PrometheusRule CRD 定义告警规则和记录规则：
 
@@ -80,20 +88,20 @@ spec:
 ```
 
 关键字段：
-- **expr**：当结果为 true 时触发告警的 PromQL 表达式
-- **for**：条件在触发告警前必须保持为 true 的持续时间
+- **expr**：值为 true 时触发告警的 PromQL 表达式
+- **for**：触发前条件必须保持为 true 的时长
 - **labels**：用于路由和分组的附加标签
-- **annotations**：人类可读的信息和 runbook 链接
+- **annotations**：供人阅读的信息和 Runbook 链接
 
 ---
 
 ## 2. 网络告警
 
-EKS 中的网络问题可能表现为丢包、带宽饱和、CNI 故障和 DNS 问题。这些告警可为连通性问题提供早期预警。
+EKS 中的网络问题可能表现为丢包、带宽饱和、CNI 故障和 DNS 问题。这些告警可为连接问题提供早期预警。
 
 ### 丢包率
 
-同时在 Node 和 Pod（容器组）级别监控丢包：
+同时监控 Node 和 Pod 级别的丢包：
 
 ```promql
 # Node-level packet drops (received)
@@ -108,7 +116,7 @@ rate(pod_network_receive_packets_dropped_total[5m]) > 50
 
 ### 带宽饱和
 
-在网络接口饱和影响应用之前检测它：
+在网络接口饱和影响应用程序之前进行检测：
 
 ```promql
 # Network interface utilization (assuming 10Gbps NICs)
@@ -123,7 +131,7 @@ avg_over_time(
 
 ### VPC CNI 告警
 
-面向 IP 和 ENI 管理的 Amazon VPC CNI 专用告警：
+用于 IP 和 ENI 管理的 Amazon VPC CNI 专用告警：
 
 ```promql
 # IP address exhaustion per node
@@ -141,7 +149,7 @@ awscni_ip_pool_available_addresses < 5
 
 ### DNS 故障告警
 
-CoreDNS 故障可能导致广泛的应用问题：
+CoreDNS 故障可能导致广泛的应用程序问题：
 
 ```promql
 # DNS query failures
@@ -158,9 +166,9 @@ increase(kube_pod_container_status_restarts_total{
 }[1h]) > 2
 ```
 
-### Network Policy 拒绝
+### 网络策略拒绝
 
-如果使用带策略指标的 Cilium 或 Calico：
+如果使用带有策略指标的 Cilium 或 Calico：
 
 ```promql
 # Cilium policy denials
@@ -336,11 +344,11 @@ spec:
 
 ## 3. CPU 告警
 
-CPU 相关告警有助于在影响应用性能之前识别 throttling、资源争用和容量问题。
+CPU 相关告警有助于在影响应用程序性能之前识别限流、资源争用和容量问题。
 
-### CPU Throttling
+### CPU 限流
 
-Container CPU throttling 表示 CPU limit 不足：
+Container CPU 限流表明 CPU limit 不足：
 
 ```promql
 # Container CPU throttling percentage
@@ -362,7 +370,7 @@ and
 
 ### CFS 配额耗尽
 
-跟踪 container 何时持续触及其 CPU 配额：
+跟踪 Container 持续达到其 CPU 配额的情况：
 
 ```promql
 # Containers hitting CFS quota
@@ -393,7 +401,7 @@ avg by(instance) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10
 
 ### Container CPU 与 Request 比率
 
-识别需要调整 request 的 container：
+识别需要调整 Request 的 Container：
 
 ```promql
 # CPU usage significantly higher than requests
@@ -409,7 +417,7 @@ sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, p
 
 ### 系统进程 CPU
 
-监控系统级 CPU 消耗者：
+监控系统级 CPU 使用者：
 
 ```promql
 # Kubelet CPU usage
@@ -576,11 +584,11 @@ spec:
 
 ## 4. 磁盘告警
 
-存储告警对于防止数据丢失和确保应用稳定性至关重要。EKS 工作负载通常使用 EBS volume、EFS 和 ephemeral storage。
+存储告警对于防止数据丢失和确保应用程序稳定性至关重要。EKS 工作负载通常使用 EBS 卷、EFS 和临时存储。
 
-### EBS Volume 饱和
+### EBS 卷饱和
 
-监控 persistent volume 使用情况：
+监控 Persistent Volume 使用情况：
 
 ```promql
 # PVC usage percentage
@@ -603,7 +611,7 @@ and
 
 ### Inode 耗尽
 
-即使还有可用空间，Inode 耗尽也可能阻止文件创建：
+即使仍有可用空间，Inode 耗尽也可能阻止创建文件：
 
 ```promql
 # Inode usage percentage
@@ -619,7 +627,7 @@ node_filesystem_files_free{fstype!~"tmpfs|overlay"}
 
 ### PVC 使用趋势
 
-预测 volume 何时会被填满：
+预测卷何时会被占满：
 
 ```promql
 # Predict volume exhaustion within 4 hours
@@ -633,7 +641,7 @@ predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[6h], 2
 
 ### Node 磁盘压力
 
-监控 Node 级磁盘状态：
+监控 Node 级别的磁盘状况：
 
 ```promql
 # Node root filesystem usage
@@ -645,9 +653,9 @@ predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[6h], 2
 kube_node_status_condition{condition="DiskPressure", status="true"} == 1
 ```
 
-### Ephemeral Storage
+### 临时存储
 
-监控 Node 和 Pod 的 ephemeral storage：
+监控 Node 和 Pod 的临时存储：
 
 ```promql
 # Node ephemeral storage usage
@@ -818,7 +826,7 @@ spec:
 
 ## 5. Auto Mode Node 终止告警
 
-使用 Karpenter 的 EKS Auto Mode 会动态预置和终止 Node。监控这些事件对于理解集群行为和检测问题至关重要。
+采用 Karpenter 的 EKS Auto Mode 会动态创建和终止 Node。监控这些事件对于了解集群行为和检测问题至关重要。
 
 ### Karpenter 中断事件
 
@@ -837,7 +845,7 @@ increase(karpenter_voluntary_disruption_blocked_total[1h]) > 0
 
 ### Spot 中断处理
 
-跟踪 Spot instance 中断事件：
+跟踪 Spot 实例中断事件：
 
 ```promql
 # Spot interruption warnings received
@@ -853,9 +861,9 @@ increase(karpenter_interruption_received_messages_total{message_type="StateChang
 histogram_quantile(0.99, rate(karpenter_interruption_actions_performed_bucket[5m]))
 ```
 
-### 意外 Node 终止
+### 意外的 Node 终止
 
-检测意外终止的 Node（不是由 Karpenter 终止）：
+检测意外终止的 Node（非由 Karpenter 终止）：
 
 ```promql
 # Nodes terminated not by Karpenter
@@ -873,7 +881,7 @@ unless
 
 ### Node NotReady 检测
 
-监控 Node readiness 以便早期预警：
+监控 Node 就绪状态以获得早期预警：
 
 ```promql
 # Nodes in NotReady state
@@ -888,7 +896,7 @@ kube_node_status_condition{condition="Ready", status="unknown"} == 1
 
 ### Pod 驱逐跟踪
 
-跟踪由于 Node 问题导致的 Pod 驱逐：
+跟踪因 Node 问题导致的 Pod 驱逐：
 
 ```promql
 # Pod eviction rate
@@ -1143,7 +1151,7 @@ spec:
 
 ## 6. Alertmanager 配置
 
-Alertmanager 负责告警路由、分组、去重和通知投递。配置良好的 Alertmanager 可确保告警在正确的时间到达正确的团队。
+Alertmanager 处理告警路由、分组、去重和通知交付。经过良好配置的 Alertmanager 可确保告警在正确的时间送达正确的团队。
 
 ### 完整的 Alertmanager 配置
 
@@ -1410,7 +1418,7 @@ alertname%3D%22{{ .CommonLabels.alertname }}%22%7D
 
 ### 告警分组策略
 
-有效分组可减少通知噪音：
+有效的分组可减少通知噪声：
 
 ```yaml
 # Group by alertname to see all instances of the same issue
@@ -1429,7 +1437,7 @@ group_by: ['alertname', 'node']
 group_by: ['alertname', 'namespace', 'pod', 'container']
 ```
 
-### 创建 Silence
+### 创建静默规则
 
 在维护期间静默告警：
 
@@ -1457,7 +1465,7 @@ amtool silence expire <silence-id>
 
 ### 静默时间配置
 
-使用 mute timings 在特定时段抑制非关键告警：
+使用静默时间在特定时段抑制非关键告警：
 
 ```yaml
 route:
@@ -1484,7 +1492,7 @@ route:
 
 - [监控栈](../observability/README.md) - Prometheus 和 Grafana 设置
 - [Node 生命周期管理](../eks-auto-mode/07-node-lifecycle.md) - Karpenter Node 管理
-- [可观测性分析](./08-observability-analysis.md) - Log、metric 和 trace 关联
+- [可观测性分析](./08-observability-analysis.md) - 日志、指标和追踪关联
 
 ---
 

@@ -1,14 +1,16 @@
-# Part 5: Cluster Access, Validation, Upgrade and Deletion
+# Part 5: Cluster Access、検証、アップグレード、削除
 
-## Configuring Cluster Access
+## Cluster Access の設定
 
 EKS cluster を作成した後、cluster にアクセスするための設定が必要です。このセクションでは、cluster access の設定方法を学びます。
 
-### Cluster Access Configuration Process
+### Cluster Access の設定プロセス
 
-![EKS Cluster Access Configuration Process](../.gitbook/assets/eks_cluster_access_configuration.png)
+![アクセス設定フローの図: kubeconfig、IAM principal、access entry、RBAC rules と binding、そして access test。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-0.png)
 
-### kubeconfig Configuration
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-0.html)
+
+### kubeconfig の設定
 
 EKS cluster にアクセスするには、kubeconfig file を設定する必要があります。AWS CLI を使用して kubeconfig を設定できます。
 
@@ -18,17 +20,19 @@ aws eks update-kubeconfig \
   --region us-west-2
 ```
 
-この command は `~/.kube/config` file を更新し、EKS cluster へのアクセスを有効にします。
+このコマンドは `~/.kube/config` file を更新し、EKS cluster へのアクセスを有効にします。
 
-### Configuring IAM User and Role Access
+### IAM User および Role Access の設定
 
-デフォルトでは、EKS cluster を作成した IAM entity（user または role）のみが cluster にアクセスできます。他の IAM user または role に cluster access を付与する方法は 2 つあります。従来の aws-auth ConfigMap method と、新しい EKS Access Entry method です。
+デフォルトでは、EKS cluster を作成した IAM entity（user または role）のみが cluster にアクセスできます。他の IAM user または role に cluster access を付与する方法は、従来の aws-auth ConfigMap method と新しい EKS Access Entry method の 2 つです。
 
-![EKS IAM Access Methods Comparison](../.gitbook/assets/eks_iam_access_methods.png)
+![IAM principal が Kubernetes API にマッピングされる 2 つの方法を比較する図: EKS access entries と aws-auth ConfigMap。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-1.png)
 
-#### Method 1: EKS Access Entry (Recommended)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-1.html)
 
-EKS Access Entry は aws-auth ConfigMap を置き換える新しい method であり、より安定していて管理しやすい approach を提供します。
+#### Method 1: EKS Access Entry（推奨）
+
+EKS Access Entry は aws-auth ConfigMap に代わる新しい方法で、より安定し、管理しやすいアプローチを提供します。
 
 1. cluster の Access Entry を有効にします。
 
@@ -59,7 +63,7 @@ aws eks create-access-entry \
   --kubernetes-groups system:masters
 ```
 
-4. Access Entries を一覧表示します。
+4. Access Entry を一覧表示します。
 
 ```bash
 aws eks list-access-entries --cluster-name my-cluster
@@ -73,9 +77,9 @@ aws eks describe-access-entry \
   --principal-arn arn:aws:iam::123456789012:user/my-user
 ```
 
-#### Method 2: aws-auth ConfigMap (Legacy)
+#### Method 2: aws-auth ConfigMap（レガシー）
 
-aws-auth ConfigMap は従来の method であり、現在も support されていますが、新しい cluster には Access Entry の使用が推奨されます。
+aws-auth ConfigMap は従来の方法であり、現在もサポートされていますが、新しい cluster では Access Entry の使用が推奨されます。
 
 1. 現在の `aws-auth` ConfigMap を取得します。
 
@@ -83,7 +87,7 @@ aws-auth ConfigMap は従来の method であり、現在も support されて�
 kubectl get configmap aws-auth -n kube-system -o yaml > aws-auth.yaml
 ```
 
-2. user または role を追加するために `aws-auth.yaml` file を編集します。
+2. `aws-auth.yaml` file を編集して、user または role を追加します。
 
 ```yaml
 apiVersion: v1
@@ -117,11 +121,11 @@ data:
 kubectl apply -f aws-auth.yaml
 ```
 
-> **Note**: EKS Access Entry は 2023 年に導入され、新しい cluster には Access Entry の使用が推奨されます。既存の cluster は、両方の method を support する hybrid mode に移行できます。
+> **注記**: EKS Access Entry は 2023 年に導入され、新しい cluster では Access Entry の使用が推奨されます。既存の cluster は、両方の方法をサポートする hybrid mode に移行できます。
 
-### RBAC Configuration
+### RBAC の設定
 
-Kubernetes Role-Based Access Control (RBAC) を使用して、cluster 内の resource への access を制御できます。
+Kubernetes Role-Based Access Control（RBAC）を使用して、cluster 内の resource へのアクセスを制御できます。
 
 1. namespace を作成します。
 
@@ -174,37 +178,39 @@ roleRef:
 kubectl apply -f rolebinding.yaml
 ```
 
-## Cluster Validation
+## Cluster の検証
 
-EKS cluster を作成した後、cluster が正しく動作していることを確認する必要があります。このセクションでは、cluster を検証する方法を学びます。
+EKS cluster を作成した後、cluster が正しく動作していることを確認する必要があります。このセクションでは、cluster の検証方法を学びます。
 
-### Cluster Validation Process
+### Cluster の検証プロセス
 
-![EKS Cluster Validation Process](../.gitbook/assets/eks_cluster_validation_process.png)
+![node と system Pod を確認し、test app を Deployment して公開した後、log を確認する cluster validation の図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-2.png)
 
-### Verify Nodes
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-2.html)
 
-cluster 内の nodes を確認します。
+### Node の確認
+
+cluster 内の node を確認します。
 
 ```bash
 kubectl get nodes
 ```
 
-すべての nodes が `Ready` state であることを確認します。
+すべての node が `Ready` state であることを確認します。
 
-### Verify System Pods
+### System Pod の確認
 
-kube-system namespace 内の pods を確認します。
+kube-system namespace の Pod を確認します。
 
 ```bash
 kubectl get pods -n kube-system
 ```
 
-すべての system pods が `Running` state であることを確認します。
+すべての system Pod が `Running` state であることを確認します。
 
-### Deploy Test Application
+### Test Application の Deployment
 
-cluster が正しく動作していることを確認するため、簡単な test application を deploy します。
+cluster が正しく動作していることを確認するため、シンプルな test application を Deployment します。
 
 ```yaml
 # nginx.yaml
@@ -245,7 +251,7 @@ spec:
 kubectl apply -f nginx.yaml
 ```
 
-deployment と service の status を確認します。
+Deployment と Service の status を確認します。
 
 ```bash
 kubectl get deployments
@@ -253,34 +259,36 @@ kubectl get pods
 kubectl get services
 ```
 
-LoadBalancer service の external IP を使用して application にアクセスできることを確認します。
+LoadBalancer Service の external IP を使用して application にアクセスできることを確認します。
 
 ```bash
 curl http://<EXTERNAL-IP>
 ```
 
-### Verify Cluster Logs
+### Cluster Log の確認
 
-CloudWatch Logs で cluster logs を確認します。
+CloudWatch Logs で cluster log を確認します。
 
 ```bash
 aws logs describe-log-groups \
   --log-group-name-prefix /aws/eks/my-cluster
 ```
 
-## Cluster Upgrade
+## Cluster のアップグレード
 
-EKS cluster を最新の状態に保つには、定期的な upgrade が必要です。このセクションでは、cluster を upgrade する方法を学びます。
+EKS cluster を最新の状態に保つには、定期的なアップグレードが必要です。このセクションでは、cluster のアップグレード方法を学びます。
 
-### Cluster Upgrade Process
+### Cluster のアップグレードプロセス
 
-![EKS Cluster Upgrade Process](../.gitbook/assets/eks_cluster_upgrade_process.png)
+![planning と version check から control plane、node group、add-on、function test へと進むアップグレードプロセスの図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-3.png)
 
-### Control Plane Upgrade
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-3.html)
 
-EKS control plane を upgrade するには、次の手順に従います。
+### Control Plane のアップグレード
 
-1. 利用可能な Kubernetes versions を確認します。
+EKS control plane をアップグレードするには、次の手順に従います。
+
+1. 利用可能な Kubernetes version を確認します。
 
 ```bash
 aws eks describe-addon-versions \
@@ -288,7 +296,7 @@ aws eks describe-addon-versions \
   --query "addons[].addonVersions[].compatibilities[].clusterVersion"
 ```
 
-2. cluster を upgrade します。
+2. cluster をアップグレードします。
 
 ```bash
 aws eks update-cluster-version \
@@ -296,7 +304,7 @@ aws eks update-cluster-version \
   --kubernetes-version 1.27
 ```
 
-3. upgrade status を確認します。
+3. アップグレードの status を確認します。
 
 ```bash
 aws eks describe-update \
@@ -304,11 +312,11 @@ aws eks describe-update \
   --update-id <UPDATE-ID>
 ```
 
-### Node Upgrade
+### Node のアップグレード
 
-control plane を upgrade した後、nodes も upgrade する必要があります。
+control plane をアップグレードした後、node もアップグレードする必要があります。
 
-#### Managed Node Group Upgrade
+#### Managed Node Group のアップグレード
 
 ```bash
 aws eks update-nodegroup-version \
@@ -316,15 +324,15 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-#### Self-Managed Node Upgrade
+#### Self-Managed Node のアップグレード
 
-self-managed nodes の場合、新しい node group を作成し、workloads を移行してから古い node group を削除する必要があります。
+self-managed node の場合、新しい node group を作成し、workload を移行してから、古い node group を削除する必要があります。
 
-### Add-on Upgrade
+### Add-on のアップグレード
 
-EKS add-ons を upgrade するには、次の手順に従います。
+EKS add-on をアップグレードするには、次の手順に従います。
 
-1. 利用可能な add-on versions を確認します。
+1. 利用可能な add-on version を確認します。
 
 ```bash
 aws eks describe-addon-versions \
@@ -332,7 +340,7 @@ aws eks describe-addon-versions \
   --kubernetes-version 1.27
 ```
 
-2. add-on を upgrade します。
+2. add-on をアップグレードします。
 
 ```bash
 aws eks update-addon \
@@ -341,19 +349,21 @@ aws eks update-addon \
   --addon-version <VERSION>
 ```
 
-## Cluster Deletion
+## Cluster の削除
 
-EKS cluster が不要になったら、cost を節約するために削除できます。このセクションでは、cluster を削除する方法を学びます。
+EKS cluster が不要になった場合、cost を削減するために削除できます。このセクションでは、cluster の削除方法を学びます。
 
-### Cluster Deletion Process
+### Cluster の削除プロセス
 
-![EKS Cluster Deletion Process](../.gitbook/assets/eks_cluster_deletion_process.png)
+![LoadBalancer と PVC を削除し、node group と Fargate profile、cluster を削除してから、残存 resource を確認する削除プロセスの図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-4.png)
 
-### Resource Cleanup
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-4.html)
 
-cluster を削除する前に、cluster 内で作成されたすべての resources を clean up する必要があります。
+### Resource のクリーンアップ
 
-1. LoadBalancer services を削除します。
+cluster を削除する前に、cluster 内に作成されたすべての resource をクリーンアップする必要があります。
+
+1. LoadBalancer Service を削除します。
 
 ```bash
 kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.type == "LoadBalancer") | .metadata.name + " " + .metadata.namespace' | while read name namespace; do
@@ -361,21 +371,21 @@ kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.t
 done
 ```
 
-2. PersistentVolumeClaims を削除します。
+2. PersistentVolumeClaim を削除します。
 
 ```bash
 kubectl delete pvc --all --all-namespaces
 ```
 
-### Delete Cluster Using eksctl
+### eksctl を使用した Cluster の削除
 
-eksctl を使用して cluster を作成した場合、次の command で削除できます。
+cluster を eksctl で作成した場合は、次のコマンドで削除できます。
 
 ```bash
 eksctl delete cluster --name my-cluster --region us-west-2
 ```
 
-### Delete Cluster Using AWS CLI
+### AWS CLI を使用した Cluster の削除
 
 AWS CLI を使用して cluster を削除するには、次の手順に従います。
 
@@ -402,17 +412,17 @@ aws eks delete-cluster \
   --name my-cluster
 ```
 
-### Clean Up Related Resources
+### 関連 Resource のクリーンアップ
 
-EKS cluster を削除した後、次の関連 resources が残る場合があります。
+EKS cluster を削除した後、次の関連 resource が残る場合があります。
 
-1. VPC と関連 resources:
+1. VPC と関連 resource:
 
 ```bash
 aws ec2 delete-vpc --vpc-id vpc-xxxxxxxxxxxxxxxxx
 ```
 
-2. IAM roles と policies:
+2. IAM role と policy:
 
 ```bash
 aws iam detach-role-policy \
@@ -436,13 +446,13 @@ aws iam detach-role-policy \
 aws iam delete-role --role-name EKSNodeRole
 ```
 
-3. CloudWatch log groups:
+3. CloudWatch log group:
 
 ```bash
 aws logs delete-log-group \
   --log-group-name /aws/eks/my-cluster/cluster
 ```
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するため、[EKS Cluster Creation - Part 5 Quiz](../quizzes/eks/02-eks-cluster-creation-part5-quiz.md) を試してください。
+この章で学んだ内容を確認するには、[EKS Cluster Creation - Part 5 クイズ](../quizzes/eks/02-eks-cluster-creation-part5-quiz.md)に挑戦してください。
