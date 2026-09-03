@@ -10,6 +10,26 @@
       1200,
       640
     ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Frontend "
+        },
+        "backend": {
+          "label": "App pod "
+        },
+        "database": {
+          "label": "DB pod "
+        },
+        "security": {
+          "label": "NetPolicy "
+        },
+        "external": {
+          "label": "Internet "
+        }
+      }
+    },
     "views": [
       {
         "id": "request-path",
