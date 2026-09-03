@@ -40,7 +40,9 @@ The key challenge becomes connecting the existing environment (ORG A) with the G
 
 All five options were built across accounts in two different Organizations and tested through both control plane (connection establishment) and data plane (real traffic). **All five are implementable.** Nothing is blocked by the organization boundary itself — the boundary shows up only as explicit procedures: **naming the account ID plus acceptance on the receiving side**.
 
-![Cross-org five-path measured topology](../../assets/cross-org-5paths-latency.png)
+![Topology of five cross-organization VPC paths — VPC Peering, shared TGW, TGW Peering, PrivateLink, and VPC Lattice — annotated with each path's measured p50 latency.](../.gitbook/assets/en-networking-05-cross-org-vpc-connectivity-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-05-cross-org-vpc-connectivity-0.html)
 
 ## Latency Measurements (M1–M7)
 

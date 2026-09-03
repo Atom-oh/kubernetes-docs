@@ -40,7 +40,9 @@ GPU 인스턴스(P5/P6 등)는 비용 규모가 커서 기존 MSP Payer가 아�
 
 서로 다른 두 Organization의 계정에 5가지를 전부 구축하고 control plane(연결 수립)과 data plane(실제 트래픽)까지 테스트한 결과 **5가지 모두 구현 가능**했습니다. 조직 경계로 인한 차단은 없으며, 경계는 전부 "**계정 ID 명시 + 수신 측 수락**"이라는 명시적 절차로 나타납니다.
 
-![Cross-Org 5가지 연결 경로 실측 토폴로지](../../assets/cross-org-5paths-latency.png)
+![두 Organization 계정 사이의 VPC Peering, 공유 TGW, TGW Peering, PrivateLink, VPC Lattice 다섯 경로와 각 경로의 실측 p50 지연을 함께 보여주는 토폴로지.](../.gitbook/assets/ko-networking-05-cross-org-vpc-connectivity-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-05-cross-org-vpc-connectivity-0.html)
 
 ## Latency 실측 (M1~M7)
 

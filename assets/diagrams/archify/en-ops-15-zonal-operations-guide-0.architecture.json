@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zonal Cell Architecture with Weighted Traffic Shift",
+    "output": "en-ops-15-zonal-operations-guide-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      800
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Users",
+      "sublabel": "HTTPS requests",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        170,
+        76
+      ]
+    },
+    {
+      "id": "r53",
+      "type": "cloud",
+      "label": "Route 53 + ARC",
+      "sublabel": "Weighted records",
+      "pos": [
+        250,
+        340
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "tga",
+      "type": "cloud",
+      "label": "ALB/NLB + Target Group",
+      "sublabel": "Created outside the cluster via IaC",
+      "pos": [
+        580,
+        110
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "cla",
+      "type": "backend",
+      "label": "EKS Zonal Cluster",
+      "sublabel": "AZ-a only",
+      "pos": [
+        950,
+        110
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "tgc",
+      "type": "cloud",
+      "label": "ALB/NLB + Target Group",
+      "sublabel": "Created outside the cluster via IaC",
+      "pos": [
+        580,
+        570
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "clc",
+      "type": "backend",
+      "label": "EKS Zonal Cluster",
+      "sublabel": "AZ-c only",
+      "pos": [
+        950,
+        570
+      ],
+      "size": [
+        230,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC (ap-northeast-2)",
+      "wraps": [
+        "tga",
+        "cla",
+        "tgc",
+        "clc"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "AZ-a (Cell A, weight 80%)",
+      "wraps": [
+        "tga",
+        "cla"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "AZ-c (Cell C, weight 20%)",
+      "wraps": [
+        "tgc",
+        "clc"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "u-r53",
+      "from": "users",
+      "to": "r53",
+      "label": "HTTPS",
+      "labelDy": 60
+    },
+    {
+      "id": "r53-tga",
+      "from": "r53",
+      "to": "tga",
+      "label": "weight 80%"
+    },
+    {
+      "id": "r53-tgc",
+      "from": "r53",
+      "to": "tgc",
+      "label": "weight 20%"
+    },
+    {
+      "id": "tga-cla",
+      "from": "tga",
+      "to": "cla",
+      "label": "TargetGroupBinding"
+    },
+    {
+      "id": "tgc-clc",
+      "from": "tgc",
+      "to": "clc",
+      "label": "TargetGroupBinding"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Why the load balancer lives outside the cluster",
+      "items": [
+        "Create the NLB/ALB and target group outside the cluster with IaC such as Terraform",
+        "Deleting or rebuilding the cluster leaves the load balancer and its DNS name intact",
+        "Bind each zonal cluster's Service to that target group with the TargetGroupBinding CRD"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Weighted shift",
+      "items": [
+        "Route 53 weighted records adjust the traffic split between cells",
+        "Roll a new version into one cell and move its weight 20% → 50% → 100%",
+        "If something looks wrong, drop the weight to 0 to isolate that cell immediately"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cell isolation",
+      "items": [
+        "Align cells with AZ boundaries so a failure stays inside one AZ",
+        "Isolation only holds if shared resources between cells are minimized",
+        "Application Recovery Controller (ARC) can automate the zonal shift"
+      ]
+    }
+  ]
+}

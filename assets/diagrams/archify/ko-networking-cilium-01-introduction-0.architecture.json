@@ -1,0 +1,36 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "Cilium 아키텍처", "output": "ko-networking-cilium-01-introduction-0.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [940, 800] },
+  "components": [
+    { "id": "k8s", "type": "cloud", "label": "Kubernetes", "sublabel": "파드 · 서비스 · 네트워크 정책", "pos": [300, 60], "size": [270, 76] },
+    { "id": "cni", "type": "messagebus", "label": "Container Network Interface", "sublabel": "kubelet ↔ 플러그인 규약", "pos": [300, 200], "size": [270, 76] },
+    { "id": "cilium", "type": "backend", "label": "Cilium", "sublabel": "cilium-agent · Operator", "pos": [300, 340], "size": [270, 76] },
+    { "id": "ebpf", "type": "backend", "label": "eBPF", "sublabel": "커널 내 프로그램 · 맵", "pos": [300, 480], "size": [270, 76] },
+    { "id": "kernel", "type": "external", "label": "Linux Kernel", "sublabel": "패킷 처리 경로", "pos": [300, 620], "size": [270, 76] },
+    { "id": "hubble", "type": "database", "label": "Hubble", "sublabel": "플로우 관측 · UI", "pos": [640, 340], "size": [230, 76] }
+  ],
+  "connections": [
+    { "id": "k8s-cni", "from": "k8s", "to": "cni", "label": "파드 네트워크 요청", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "cni-cilium", "from": "cni", "to": "cilium", "label": "CNI 플러그인 호출", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "cilium-ebpf", "from": "cilium", "to": "ebpf", "label": "프로그램 로드", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "ebpf-kernel", "from": "ebpf", "to": "kernel", "label": "훅 지점 연결", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "cilium-hubble", "from": "cilium", "to": "hubble", "label": "플로우 이벤트" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "계층 구조", "items": [
+      "Kubernetes는 파드·서비스·NetworkPolicy를 선언하고 CNI 규약으로 위임한다",
+      "Cilium 에이전트가 이 선언을 eBPF 프로그램과 맵으로 컴파일한다",
+      "패킷 처리가 커널에서 일어나므로 iptables 체인을 거치지 않는다"
+    ]},
+    { "dot": "emerald", "title": "eBPF가 주는 이점", "items": [
+      "규칙 수가 늘어도 해시 맵 조회라 성능 저하가 완만하다",
+      "kube-proxy를 대체해 서비스 로드밸런싱까지 커널에서 처리할 수 있다",
+      "L3/L4를 넘어 L7(HTTP, gRPC, Kafka) 정책까지 표현할 수 있다"
+    ]},
+    { "dot": "amber", "title": "Hubble", "items": [
+      "Cilium이 만드는 플로우 이벤트를 수집해 서비스 의존 관계를 보여준다",
+      "정책으로 차단된 트래픽을 이유와 함께 확인할 수 있다",
+      "CLI(hubble observe)와 UI 두 가지 방식으로 조회한다"
+    ]}
+  ]
+}
