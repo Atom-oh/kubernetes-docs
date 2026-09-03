@@ -112,10 +112,11 @@
     {
       "id": "reject",
       "lane": "fail",
-      "col": 2,
+      "col": 3,
       "type": "security",
       "label": "Load rejected",
-      "sublabel": "error message"
+      "sublabel": "error message",
+      "width": 110
     }
   ],
   "edges": [

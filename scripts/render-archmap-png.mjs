@@ -81,10 +81,11 @@ try {
     await page.evaluate(() => document.fonts.ready)
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
     // Stills are captured at the viewer's "read" detail level, whose CSS hides
-    // [data-detail="fine"] content (component tags). Force the lens level so
-    // the PNG carries everything the interactive view shows.
+    // [data-detail="fine"] content (component tags). The viewer defines
+    // map/read/full; force full so the PNG carries everything the
+    // interactive view shows.
     await page.evaluate(() => {
-      for (const el of document.querySelectorAll('[data-detail-level]')) el.setAttribute('data-detail-level', 'lens')
+      for (const el of document.querySelectorAll('[data-detail-level]')) el.setAttribute('data-detail-level', 'full')
     })
     await page.waitForTimeout(400)
     const tall = await page.evaluate(() =>

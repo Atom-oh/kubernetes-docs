@@ -7,9 +7,6 @@
     "animation": "trace",
     "legend": {
       "entries": {
-        "frontend": {
-          "label": "Authoring"
-        },
         "backend": {
           "label": "Kernel processing"
         },
@@ -49,7 +46,8 @@
       "col": 0,
       "type": "backend",
       "label": "Load",
-      "sublabel": "bpf() syscall"
+      "sublabel": "bpf() syscall",
+      "width": 112
     },
     {
       "id": "verify",
@@ -57,7 +55,8 @@
       "col": 1,
       "type": "security",
       "label": "Verify",
-      "sublabel": "Verifier"
+      "sublabel": "Verifier",
+      "width": 112
     },
     {
       "id": "attach",
@@ -65,7 +64,8 @@
       "col": 2,
       "type": "backend",
       "label": "Attach",
-      "sublabel": "event hook"
+      "sublabel": "event hook",
+      "width": 112
     },
     {
       "id": "exec",
@@ -73,7 +73,8 @@
       "col": 3,
       "type": "backend",
       "label": "Run",
-      "sublabel": "repeats per event"
+      "sublabel": "repeats per event",
+      "width": 112
     },
     {
       "id": "detach",
@@ -81,7 +82,8 @@
       "col": 4,
       "type": "external",
       "label": "Detach",
-      "sublabel": "explicit teardown"
+      "sublabel": "explicit teardown",
+      "width": 112
     },
     {
       "id": "unload",
@@ -89,14 +91,16 @@
       "col": 5,
       "type": "external",
       "label": "Unload",
-      "sublabel": "when refs drop"
+      "sublabel": "when refs drop",
+      "width": 112
     },
     {
       "id": "reject",
       "lane": "fail",
       "col": 1,
       "type": "security",
-      "label": "Load rejected"
+      "label": "Load rejected",
+      "width": 112
     }
   ],
   "edges": [
@@ -109,8 +113,9 @@
       "id": "verify-attach",
       "from": "verify",
       "to": "attach",
-      "label": "pass",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
       "id": "attach-exec",

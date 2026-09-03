@@ -118,7 +118,7 @@
       "from": "pod1",
       "to": "cni",
       "variant": "dashed",
-      "label": "same path"
+      "label": "same mechanism"
     },
     {
       "id": "cni-to-pod4",

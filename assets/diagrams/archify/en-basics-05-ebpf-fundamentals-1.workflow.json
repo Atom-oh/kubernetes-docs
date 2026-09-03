@@ -14,7 +14,7 @@
           "label": "Build · load"
         },
         "security": {
-          "label": "Risk / verify"
+          "label": "Risk"
         }
       }
     },
@@ -121,19 +121,19 @@
   ],
   "cards": [
     {
-      "dot": "rose",
-      "title": "Kernel module burden",
-      "items": [
-        "Recompile for every kernel version",
-        "One bug can take the whole system down"
-      ]
-    },
-    {
       "dot": "emerald",
       "title": "eBPF advantages",
       "items": [
         "Loads into the running kernel instantly",
         "The verifier guarantees safety"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Kernel module burden",
+      "items": [
+        "Recompile for every kernel version",
+        "One bug can take the whole system down"
       ]
     }
   ]

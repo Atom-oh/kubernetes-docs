@@ -7,9 +7,6 @@
     "animation": "trace",
     "legend": {
       "entries": {
-        "frontend": {
-          "label": "작성"
-        },
         "backend": {
           "label": "커널 처리"
         },
@@ -48,7 +45,8 @@
       "col": 0,
       "type": "backend",
       "label": "로드",
-      "sublabel": "bpf() 시스템 콜"
+      "sublabel": "bpf() 시스템 콜",
+      "width": 112
     },
     {
       "id": "verify",
@@ -56,7 +54,8 @@
       "col": 1,
       "type": "security",
       "label": "검증",
-      "sublabel": "Verifier"
+      "sublabel": "Verifier",
+      "width": 112
     },
     {
       "id": "attach",
@@ -64,7 +63,8 @@
       "col": 2,
       "type": "backend",
       "label": "연결",
-      "sublabel": "이벤트 훅"
+      "sublabel": "이벤트 훅",
+      "width": 112
     },
     {
       "id": "exec",
@@ -72,7 +72,8 @@
       "col": 3,
       "type": "backend",
       "label": "실행",
-      "sublabel": "이벤트마다 반복"
+      "sublabel": "이벤트마다 반복",
+      "width": 112
     },
     {
       "id": "detach",
@@ -80,7 +81,8 @@
       "col": 4,
       "type": "external",
       "label": "분리",
-      "sublabel": "명시적 종료"
+      "sublabel": "명시적 종료",
+      "width": 112
     },
     {
       "id": "unload",
@@ -88,14 +90,16 @@
       "col": 5,
       "type": "external",
       "label": "언로드",
-      "sublabel": "참조 소멸 시"
+      "sublabel": "참조 소멸 시",
+      "width": 112
     },
     {
       "id": "reject",
       "lane": "fail",
       "col": 1,
       "type": "security",
-      "label": "로드 거부"
+      "label": "로드 거부",
+      "width": 112
     }
   ],
   "edges": [
@@ -108,8 +112,9 @@
       "id": "verify-attach",
       "from": "verify",
       "to": "attach",
-      "label": "성공",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
       "id": "attach-exec",

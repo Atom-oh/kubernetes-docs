@@ -117,7 +117,7 @@
       "from": "pod1",
       "to": "cni",
       "variant": "dashed",
-      "label": "동일 경로"
+      "label": "동일 방식"
     },
     {
       "id": "cni-to-pod4",

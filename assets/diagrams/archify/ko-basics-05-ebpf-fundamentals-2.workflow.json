@@ -111,10 +111,11 @@
     {
       "id": "reject",
       "lane": "fail",
-      "col": 2,
+      "col": 3,
       "type": "security",
       "label": "로드 거부",
-      "sublabel": "에러 메시지"
+      "sublabel": "에러 메시지",
+      "width": 110
     }
   ],
   "edges": [
