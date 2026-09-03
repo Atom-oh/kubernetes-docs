@@ -113,8 +113,8 @@
       "from": "verify",
       "to": "attach",
       "variant": "emphasis",
-      "fromSide": "right",
-      "toSide": "left"
+      "toSide": "left",
+      "label": "성공"
     },
     {
       "id": "attach-exec",

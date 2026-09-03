@@ -29,7 +29,7 @@
       "sublabel": "Container Storage Interface",
       "pos": [
         380,
-        190
+        170
       ],
       "size": [
         220,
@@ -43,7 +43,7 @@
       "sublabel": "예: AWS EBS CSI Driver",
       "pos": [
         380,
-        340
+        300
       ],
       "size": [
         220,
@@ -57,7 +57,7 @@
       "sublabel": "예: Amazon EBS",
       "pos": [
         380,
-        490
+        430
       ],
       "size": [
         220,

@@ -114,8 +114,8 @@
       "from": "verify",
       "to": "attach",
       "variant": "emphasis",
-      "fromSide": "right",
-      "toSide": "left"
+      "toSide": "left",
+      "label": "pass"
     },
     {
       "id": "attach-exec",
