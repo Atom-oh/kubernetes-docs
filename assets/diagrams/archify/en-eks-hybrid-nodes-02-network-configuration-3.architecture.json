@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Answering for Pod IPs with ARP Proxy",
+    "output": "en-eks-hybrid-nodes-02-network-configuration-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      820
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Hybrid node 10.80.0.2",
+      "sublabel": "Pod CIDR 10.85.1.0/24 · CNI",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Hybrid node 10.80.0.3",
+      "sublabel": "Pod CIDR 10.85.2.0/24 · CNI",
+      "pos": [
+        410,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "On-prem router",
+      "sublabel": "Routing table",
+      "pos": [
+        230,
+        420
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "On-prem ↔ AWS link · VPC 10.0.0.0/16",
+      "pos": [
+        230,
+        660
+      ],
+      "size": [
+        280,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Remote Node CIDR 10.80.0.0/16 · Remote Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "node1",
+        "node2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-r",
+      "from": "node1",
+      "to": "router",
+      "label": "ARP REPLY (Node 1 MAC)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-r",
+      "from": "node2",
+      "to": "router",
+      "label": "ARP REPLY (Node 2 MAC)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-gw",
+      "from": "router",
+      "to": "gw",
+      "label": "10.0.0.0/16 static",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 75
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How ARP proxy works",
+      "items": [
+        "The router sends an ARP REQUEST asking for the MAC of a pod IP (10.85.1.10)",
+        "The node hosting that pod answers with an ARP REPLY carrying its own MAC",
+        "The router then treats the pod IP as a host on the same link"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Router routing table",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED)",
+        "10.85.1.10/32 · 10.85.1.11/32 · 10.85.2.10/32 [local] via eth0 (CONNECTED)",
+        "10.0.0.0/16 [static] via Gateway (STATIC)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Strengths and limits",
+      "items": [
+        "No route configuration on the router, so it needs the least coordination with the network team",
+        "Every pod produces a /32 host route, so the ARP table grows with pod count",
+        "The node's CNI must support ARP proxy and the subnet must be one broadcast domain"
+      ]
+    }
+  ]
+}

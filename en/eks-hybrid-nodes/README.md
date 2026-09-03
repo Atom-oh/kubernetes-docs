@@ -21,11 +21,15 @@ Amazon EKS Hybrid Nodes is a feature that allows you to manage on-premises serve
 
 EKS Hybrid Nodes is a feature that enables you to register servers in your on-premises data center or edge environment as Kubernetes nodes managed by the AWS EKS control plane. This allows you to manage cloud and on-premises infrastructure as a single Kubernetes cluster.
 
-![EKS Hybrid Nodes High-Level Network Architecture](../.gitbook/assets/hybrid-nodes-highlevel-network.png)
+![EKS hybrid nodes network overview diagram running from the on-prem router and gateway to the control plane ENI in the AWS cluster VPC.](../.gitbook/assets/en-eks-hybrid-nodes-highlevel-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-highlevel-0.html)
 
 The following diagram shows the network prerequisites including VPC, subnets, Transit Gateway/Virtual Private Gateway, and Remote Node/Pod CIDR connectivity.
 
-![EKS Hybrid Nodes Network Prerequisites](../.gitbook/assets/hybrid-prereq-diagram.png)
+![Hybrid nodes prerequisites diagram tying the cluster's RemoteNodeNetwork and RemotePodNetwork settings to route tables on both the VPC and on-prem sides.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
 ## Why Use Hybrid Nodes?
 
