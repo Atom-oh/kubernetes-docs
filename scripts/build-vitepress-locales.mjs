@@ -4,6 +4,7 @@ import {
   copyFile,
   mkdir,
   readdir,
+  readFile,
   rm,
   writeFile
 } from 'node:fs/promises'
@@ -62,6 +63,39 @@ async function mergeSitemaps(sitemapPaths, destination) {
   await writeFile(destination, await streamToPromise(sitemapStream))
 }
 
+const NOINDEX_META = '<meta name="robots" content="noindex, follow">'
+
+// The archmap viewers are standalone diagram pages linked from the docs. They
+// are thin, duplicate the diagram already embedded in the article, and would
+// otherwise compete with it in search. robots.txt is deliberately not used
+// here: disallowing the path would stop crawlers from ever reading this tag.
+export async function markArchmapsNoindex(destination) {
+  const archmaps = path.join(destination, 'archmaps')
+  let entries
+  try {
+    entries = await readdir(archmaps, { withFileTypes: true })
+  } catch {
+    return 0
+  }
+
+  let marked = 0
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.html')) continue
+    const filePath = path.join(archmaps, entry.name)
+    const html = await readFile(filePath, 'utf8')
+    if (html.includes('name="robots"')) continue
+    const headIndex = html.indexOf('<head>')
+    if (headIndex === -1) continue
+    const insertAt = headIndex + '<head>'.length
+    await writeFile(
+      filePath,
+      `${html.slice(0, insertAt)}\n  ${NOINDEX_META}${html.slice(insertAt)}`
+    )
+    marked += 1
+  }
+  return marked
+}
+
 export async function mergeLocaleOutputs(localeOutputs, destination) {
   await rm(destination, { recursive: true, force: true })
   await mkdir(destination, { recursive: true })
@@ -74,6 +108,9 @@ export async function mergeLocaleOutputs(localeOutputs, destination) {
     localeOutputs.map((localeOutput) => path.join(localeOutput, 'sitemap.xml')),
     path.join(destination, 'sitemap.xml')
   )
+
+  const marked = await markArchmapsNoindex(destination)
+  if (marked > 0) console.log(`Marked ${marked} archmap pages noindex`)
 }
 
 function runVitepressBuild(locale, outputDirectory) {

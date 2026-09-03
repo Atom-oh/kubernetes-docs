@@ -128,3 +128,144 @@ export function localeAlternates(relativePath, { fileExists = defaultFileExists 
 function defaultFileExists(relativeSourcePath) {
   return fs.existsSync(path.join(projectRoot, relativeSourcePath))
 }
+
+export const siteName = 'Cloud Native Operations'
+export const ogImageUrl = `${siteHostname}og-cover.png`
+
+// Self-referencing canonical. The same pages are also published on GitBook, so
+// without this the two copies compete as duplicates for the same queries.
+export function canonicalUrl(relativePath) {
+  return `${siteHostname}${cleanUrlPath(relativePath)}`
+}
+
+const KO_DATE_RE = /^>\s*\*\*마지막 업데이트\*\*\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/m
+const EN_DATE_RE = /^>\s*\*\*(?:Supported Versions|Last Updated)\*\*\s*:\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
+const EN_MONTHS = [
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december'
+]
+
+function isoDate(year, month, day) {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+// The document header carries the human-readable update date in one of two
+// locale formats; sitemap lastmod needs it as ISO 8601.
+export function extractLastUpdated(source) {
+  const ko = source.match(KO_DATE_RE)
+  if (ko) return isoDate(Number(ko[1]), Number(ko[2]), Number(ko[3]))
+
+  const en = source.match(EN_DATE_RE)
+  if (!en) return undefined
+  const month = EN_MONTHS.indexOf(en[1].toLowerCase()) + 1
+  if (month === 0) return undefined
+  return isoDate(Number(en[3]), month, Number(en[2]))
+}
+
+// Open Graph + Twitter card tags. Link previews in Slack, X, and LinkedIn are a
+// real share-to-click path for these pages, and neither was emitted before.
+export function socialHeadTags({ title, description, url, locale }) {
+  const tags = [
+    ['meta', { property: 'og:type', content: 'article' }],
+    ['meta', { property: 'og:site_name', content: siteName }],
+    ['meta', { property: 'og:title', content: title }],
+    ['meta', { property: 'og:url', content: url }],
+    ['meta', { property: 'og:image', content: ogImageUrl }],
+    ['meta', { property: 'og:locale', content: locale === 'en' ? 'en_US' : 'ko_KR' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: title }],
+    ['meta', { name: 'twitter:image', content: ogImageUrl }]
+  ]
+  if (description) {
+    tags.push(['meta', { property: 'og:description', content: description }])
+    tags.push(['meta', { name: 'twitter:description', content: description }])
+  }
+  return tags
+}
+
+// Directory names are the only breadcrumb label source, and most of this tree
+// is named after acronyms and products that read wrong when naively capitalized.
+const SEGMENT_LABELS = {
+  'ai-ml': 'AI/ML',
+  'container-registry': 'Container Registry',
+  'data-on-eks': 'Data on EKS',
+  eks: 'EKS',
+  'eks-auto-mode': 'EKS Auto Mode',
+  'eks-hybrid-nodes': 'EKS Hybrid Nodes',
+  gitops: 'GitOps',
+  argocd: 'Argo CD',
+  'service-mesh': 'Service Mesh',
+  istio: 'Istio',
+  linkerd: 'Linkerd',
+  'cilium-service-mesh': 'Cilium Service Mesh',
+  cilium: 'Cilium',
+  calico: 'Calico',
+  grafana: 'Grafana',
+  'platform-engineering': 'Platform Engineering',
+  ops: 'Ops',
+  labs: 'Labs',
+  quizzes: 'Quizzes'
+}
+
+function titleCase(segment) {
+  const known = SEGMENT_LABELS[segment]
+  if (known) return known
+  return segment
+    .replace(/^\d+-/, '')
+    .split('-')
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(' ')
+}
+
+// Breadcrumb trail from the rendered path, e.g. "ko/eks/03-eks-networking-part1.md"
+// → site root, "eks", page. Directory names are the only label source available.
+export function breadcrumbTrail(relativePath, pageTitle) {
+  const [locale, ...rest] = relativePath.split('/')
+  if (!supportedLocales.includes(locale) || rest.length === 0) return []
+
+  // A section index page *is* its last directory, so that directory must not
+  // appear both as a crumb and as the page itself.
+  const isIndex = rest[rest.length - 1] === 'index.md'
+  if (isIndex && rest.length === 1) return []
+
+  const crumbs = [{ name: siteName, url: `${siteHostname}${locale}/` }]
+  const directories = isIndex ? rest.slice(0, -2) : rest.slice(0, -1)
+  let walked = `${locale}`
+  for (const directory of directories) {
+    walked += `/${directory}`
+    crumbs.push({ name: titleCase(directory), url: `${siteHostname}${walked}/` })
+  }
+  if (pageTitle) {
+    crumbs.push({ name: pageTitle, url: `${siteHostname}${cleanUrlPath(relativePath)}` })
+  }
+  return crumbs
+}
+
+// TechArticle + BreadcrumbList, so search engines can read what the page is and
+// where it sits instead of inferring both from the URL.
+export function structuredData({ title, description, url, locale, lastUpdated, crumbs }) {
+  const graph = [
+    {
+      '@type': 'TechArticle',
+      headline: title,
+      ...(description ? { description } : {}),
+      inLanguage: locale === 'en' ? 'en-US' : 'ko-KR',
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      ...(lastUpdated ? { dateModified: lastUpdated } : {}),
+      isPartOf: { '@type': 'WebSite', name: siteName, url: siteHostname }
+    }
+  ]
+  if (crumbs && crumbs.length > 1) {
+    graph.push({
+      '@type': 'BreadcrumbList',
+      itemListElement: crumbs.map((crumb, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: crumb.name,
+        item: crumb.url
+      }))
+    })
+  }
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })
+}

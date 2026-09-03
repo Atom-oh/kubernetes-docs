@@ -97,7 +97,35 @@
 }
 
 .archmap-embed__caption {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
   margin: 6px 2px 0;
   font-size: 13px;
-  text-align: right;
+}
+
+/* The diagram description: the accessible name for the iframe and the only
+   prose account of the diagram in the page text. */
+.archmap-embed__alt {
+  flex: 1;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.archmap-embed__caption a {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .archmap-embed__caption {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .archmap-embed__caption a {
+    align-self: flex-end;
+  }
 }

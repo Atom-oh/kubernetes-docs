@@ -12,7 +12,10 @@ import path from 'node:path'
 import test from 'node:test'
 import { parseSitemap } from 'sitemap'
 
-import { mergeLocaleOutputs } from '../build-vitepress-locales.mjs'
+import {
+  markArchmapsNoindex,
+  mergeLocaleOutputs
+} from '../build-vitepress-locales.mjs'
 
 const sitemap = (url) => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -66,6 +69,47 @@ test('locale build outputs are merged with a combined sitemap', async () => {
         'https://www.atomai.click/kubernetes-docs/ko/'
       ]
     )
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('archmap viewer pages are marked noindex after the merge', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'archmap-noindex-'))
+  const dist = path.join(root, 'dist')
+  const archmaps = path.join(dist, 'archmaps')
+
+  try {
+    await mkdir(archmaps, { recursive: true })
+    await writeFile(
+      path.join(archmaps, 'ko-example-0.html'),
+      '<!doctype html><html><head><title>Diagram</title></head><body></body></html>'
+    )
+    await writeFile(
+      path.join(archmaps, 'already.html'),
+      '<!doctype html><html><head><meta name="robots" content="noindex"><title>D</title></head><body></body></html>'
+    )
+    await writeFile(path.join(archmaps, 'notes.txt'), 'not html')
+
+    const marked = await markArchmapsNoindex(dist)
+    assert.equal(marked, 1)
+
+    const patched = await readFile(path.join(archmaps, 'ko-example-0.html'), 'utf8')
+    assert.match(patched, /<head>\s*<meta name="robots" content="noindex, follow">/)
+    assert.match(patched, /<title>Diagram<\/title>/)
+
+    // Already-marked pages are left byte-identical rather than double-tagged.
+    const untouched = await readFile(path.join(archmaps, 'already.html'), 'utf8')
+    assert.equal((untouched.match(/name="robots"/g) || []).length, 1)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('markArchmapsNoindex is a no-op when the archmaps directory is absent', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'archmap-noindex-missing-'))
+  try {
+    assert.equal(await markArchmapsNoindex(root), 0)
   } finally {
     await rm(root, { recursive: true, force: true })
   }
