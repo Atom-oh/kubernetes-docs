@@ -1,0 +1,158 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS 네트워크 성능 최적화 순서",
+    "output": "ko-eks-03-eks-networking-part3-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "노드·커널 튜닝"
+        },
+        "cloud": {
+          "label": "AWS 리소스"
+        },
+        "security": {
+          "label": "정책"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "infra",
+      "label": "인프라 · 커널 최적화"
+    },
+    {
+      "id": "sched",
+      "label": "배치 · 정책 최적화"
+    }
+  ],
+  "mainPath": [
+    "instance",
+    "mode",
+    "mtu",
+    "tcp",
+    "placement",
+    "policy"
+  ],
+  "nodes": [
+    {
+      "id": "instance",
+      "lane": "infra",
+      "col": 0,
+      "type": "cloud",
+      "label": "인스턴스 유형 선택",
+      "sublabel": "C5n · M5n · R5n",
+      "width": 165
+    },
+    {
+      "id": "mode",
+      "lane": "infra",
+      "col": 1,
+      "type": "cloud",
+      "label": "네트워킹 모드 결정",
+      "sublabel": "VPC CNI · 사용자 정의",
+      "width": 170
+    },
+    {
+      "id": "mtu",
+      "lane": "infra",
+      "col": 2,
+      "type": "backend",
+      "label": "MTU 최적화",
+      "sublabel": "점보 프레임 9001",
+      "width": 155
+    },
+    {
+      "id": "tcp",
+      "lane": "infra",
+      "col": 3,
+      "type": "backend",
+      "label": "TCP 튜닝",
+      "sublabel": "윈도우 스케일링 · BBR",
+      "width": 170
+    },
+    {
+      "id": "placement",
+      "lane": "sched",
+      "col": 4,
+      "type": "backend",
+      "label": "배치 지역성",
+      "sublabel": "어피니티 · 토폴로지",
+      "width": 150
+    },
+    {
+      "id": "policy",
+      "lane": "sched",
+      "col": 5,
+      "type": "security",
+      "label": "네트워크 정책 정리",
+      "sublabel": "정책 수 · 범위 축소",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "instance",
+      "to": "mode",
+      "label": "대역폭 확보"
+    },
+    {
+      "id": "e2",
+      "from": "mode",
+      "to": "mtu",
+      "label": "CNI 확정 후"
+    },
+    {
+      "id": "e3",
+      "from": "mtu",
+      "to": "tcp"
+    },
+    {
+      "id": "e4",
+      "from": "tcp",
+      "to": "placement",
+      "label": "커널 튜닝 후"
+    },
+    {
+      "id": "e5",
+      "from": "placement",
+      "to": "policy",
+      "label": "마지막 점검"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "인스턴스와 CNI",
+      "items": [
+        "C5n·M5n·R5n처럼 25Gbps 이상 대역폭과 향상된 네트워킹(SR-IOV)을 지원하는 유형을 고른다",
+        "WARM_IP_TARGET과 MINIMUM_IP_TARGET으로 IP 할당 지연을 줄인다",
+        "IP가 부족하면 사용자 정의 네트워킹으로 보조 CIDR을 붙인다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "MTU와 TCP",
+      "items": [
+        "점보 프레임(9001 MTU)으로 패킷 오버헤드를 줄이되 경로 전체에서 MTU를 일치시킨다",
+        "TCP 윈도우 스케일링을 켜고 혼잡 제어를 BBR로 바꾸는 것을 검토한다",
+        "TCP 버퍼 크기와 keepalive 값을 워크로드에 맞춘다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "배치와 모니터링",
+      "items": [
+        "통신이 빈번한 파드는 파드 어피니티와 토폴로지 스프레드로 같은 AZ에 모은다",
+        "토폴로지 인식 라우팅으로 크로스 AZ 홉을 줄인다",
+        "VPC Flow Logs와 CloudWatch 지표로 개선 전후를 비교하고 iperf3로 검증한다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Networking Troubleshooting Triage",
+    "output": "en-eks-03-eks-networking-part3-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "클러스터 계층"
+        },
+        "cloud": {
+          "label": "AWS 계층"
+        },
+        "external": {
+          "label": "증상"
+        },
+        "database": {
+          "label": "진단 도구"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "triage",
+      "label": "증상 분류"
+    },
+    {
+      "id": "tools",
+      "label": "진단과 조치"
+    }
+  ],
+  "mainPath": [
+    "symptom",
+    "podnet",
+    "svclb",
+    "vpcsub"
+  ],
+  "nodes": [
+    {
+      "id": "symptom",
+      "lane": "triage",
+      "col": 0,
+      "type": "external",
+      "label": "Network fault",
+      "sublabel": "Timeouts",
+      "width": 150
+    },
+    {
+      "id": "podnet",
+      "lane": "triage",
+      "col": 1,
+      "type": "backend",
+      "label": "Pod networking",
+      "sublabel": "IP · comms · DNS",
+      "width": 150
+    },
+    {
+      "id": "svclb",
+      "lane": "triage",
+      "col": 2,
+      "type": "cloud",
+      "label": "Service · LB",
+      "sublabel": "LB · Ingress",
+      "width": 150
+    },
+    {
+      "id": "vpcsub",
+      "lane": "triage",
+      "col": 3,
+      "type": "cloud",
+      "label": "VPC · subnets",
+      "sublabel": "IP · routing",
+      "width": 150
+    },
+    {
+      "id": "tooling",
+      "lane": "tools",
+      "col": 4,
+      "type": "database",
+      "label": "Deep diagnostics",
+      "sublabel": "netshoot",
+      "width": 150
+    },
+    {
+      "id": "fix",
+      "lane": "tools",
+      "col": 5,
+      "type": "backend",
+      "label": "Confirm · remediate",
+      "sublabel": "Fix · restart",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "symptom",
+      "to": "podnet",
+      "label": "pods first"
+    },
+    {
+      "id": "e2",
+      "from": "podnet",
+      "to": "svclb",
+      "label": "not this"
+    },
+    {
+      "id": "e3",
+      "from": "svclb",
+      "to": "vpcsub",
+      "label": "not this"
+    },
+    {
+      "id": "e4",
+      "from": "vpcsub",
+      "to": "tooling",
+      "label": "go deeper",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "tooling",
+      "to": "fix",
+      "label": "act"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod IP allocation fails",
+      "items": [
+        "Symptom: pods stay in ContainerCreating with an IP allocation failure message",
+        "Cause: the node is out of free IPs, or it hit the ENI limit",
+        "Fix: raise WARM_IP_TARGET, move to a larger instance type, or use custom networking",
+        "Diagnose: kubectl describe node · kubectl logs -n kube-system -l k8s-app=aws-node"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Pod-to-pod traffic and DNS",
+      "items": [
+        "Symptom: pod-to-pod connections fail, time out, or service names do not resolve",
+        "Cause: a network policy blocks it, a security group rule, or CoreDNS trouble",
+        "Diagnose: kubectl get networkpolicy, then run ping and nslookup through kubectl exec",
+        "Check CoreDNS pod status and logs together"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Load balancers and tooling",
+      "items": [
+        "For load balancer creation failures, check subnet tags, security groups, and IAM permissions first",
+        "Required tags: kubernetes.io/role/elb=1 (public), kubernetes.io/role/internal-elb=1 (private)",
+        "Run tcpdump and traceroute from a netshoot pod, then confirm the path with VPC Flow Logs"
+      ]
+    }
+  ]
+}

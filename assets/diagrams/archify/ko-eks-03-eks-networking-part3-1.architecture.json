@@ -1,0 +1,40 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "EKS 네트워킹 모드", "output": "ko-eks-03-eks-networking-part3-1.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1240, 760] },
+  "components": [
+    { "id": "vpccni", "type": "backend", "label": "AWS VPC CNI", "sublabel": "aws-node DaemonSet", "pos": [40, 330], "size": [200, 70] },
+    { "id": "eni1", "type": "cloud", "label": "ENI 1", "sublabel": "보조 IP 풀", "pos": [330, 120], "size": [170, 70] },
+    { "id": "eni2", "type": "cloud", "label": "ENI 2", "sublabel": "보조 IP 풀", "pos": [330, 550], "size": [170, 70] },
+    { "id": "sg", "type": "security", "label": "보안 그룹", "sublabel": "ENI 단위로 적용", "pos": [620, 330], "size": [180, 70] },
+    { "id": "pod12", "type": "frontend", "label": "파드 1 · 2", "sublabel": "VPC IP 직접 할당", "pos": [910, 120], "size": [200, 70] },
+    { "id": "pod3", "type": "frontend", "label": "파드 3", "sublabel": "VPC IP 직접 할당", "pos": [910, 550], "size": [190, 70] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "EKS 클러스터 (AWS VPC)", "wraps": ["vpccni", "eni1", "eni2", "sg", "pod12", "pod3"], "pad": 40 }
+  ],
+  "connections": [
+    { "id": "cni-eni1", "from": "vpccni", "to": "eni1", "label": "ENI 연결" },
+    { "id": "cni-eni2", "from": "vpccni", "to": "eni2", "label": "ENI 추가 할당" },
+    { "id": "eni1-pod", "from": "eni1", "to": "pod12", "label": "보조 IP 할당" },
+    { "id": "eni2-pod", "from": "eni2", "to": "pod3", "label": "보조 IP 할당" },
+    { "id": "eni1-sg", "from": "eni1", "to": "sg", "label": "보안 그룹 연결" },
+    { "id": "eni2-sg", "from": "eni2", "to": "sg" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "AWS VPC CNI (기본값)", "items": [
+      "파드에 VPC IP를 직접 할당하는 네이티브 VPC 네트워킹",
+      "오버레이가 없어 성능이 가장 좋다",
+      "인스턴스 유형별 ENI·IP 한도가 파드 밀도를 제한한다"
+    ]},
+    { "dot": "emerald", "title": "사용자 정의 네트워킹", "items": [
+      "파드를 지정한 별도 서브넷의 IP로 할당한다",
+      "보조 CIDR 블록으로 IP 주소 공간을 넓힌다",
+      "ENIConfig 설정이 추가로 필요해 구성이 복잡해진다"
+    ]},
+    { "dot": "amber", "title": "대체 CNI 플러그인", "items": [
+      "Calico, Cilium 등으로 고급 네트워크 정책과 관측 기능을 얻는다",
+      "오버레이 네트워킹을 쓰면 VPC IP 소모를 줄일 수 있다",
+      "캡슐화 오버헤드로 지연과 CPU 사용이 늘어난다"
+    ]}
+  ]
+}

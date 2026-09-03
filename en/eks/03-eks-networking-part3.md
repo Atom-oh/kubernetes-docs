@@ -8,7 +8,9 @@ This document covers performance optimization, troubleshooting methods, and adva
 
 There are several strategies for optimizing network performance in EKS clusters.
 
-![EKS Network Performance Optimization](../.gitbook/assets/network_performance_optimization.png)
+![Diagram of the EKS network performance tuning order, from instance type through CNI mode, MTU, TCP tuning, placement locality, and network policy cleanup.](../.gitbook/assets/en-eks-03-eks-networking-part3-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-0.html)
 
 ### Instance Type Selection
 
@@ -28,7 +30,9 @@ Network performance varies significantly depending on the instance type. For net
 
 EKS supports multiple networking modes, each with different performance characteristics.
 
-![EKS Networking Modes](../.gitbook/assets/eks_networking_modes.png)
+![Diagram of EKS networking modes, with the AWS VPC CNI assigning native VPC IPs to pods through ENIs and security groups applied per ENI.](../.gitbook/assets/en-eks-03-eks-networking-part3-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-1.html)
 
 1. **AWS VPC CNI (Default)**:
    * Assigns VPC IP addresses directly to pods.
@@ -99,7 +103,9 @@ sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
 
 Network performance can be improved by optimizing node placement and locality.
 
-![Node Placement and Locality Optimization](../.gitbook/assets/node_placement_locality.png)
+![Diagram separating high-frequency intra-AZ traffic from cross-AZ DB replication across web, cache, and DB pods in two Availability Zones.](../.gitbook/assets/en-eks-03-eks-networking-part3-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-2.html)
 
 1. **Availability Zone Locality**:
    * Place frequently communicating pods in the same availability zone to reduce latency.
@@ -205,11 +211,15 @@ Network policies enhance security but can impact performance.
 
 Let's explore common networking issues that can occur in EKS clusters and how to resolve them.
 
-![EKS Networking Troubleshooting](../.gitbook/assets/networking_troubleshooting.png)
+![EKS networking triage diagram narrowing from pod networking to services and load balancing to VPC and subnets before deep diagnostics.](../.gitbook/assets/en-eks-03-eks-networking-part3-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-3.html)
 
 ### Pod Networking Issues
 
-![Pod Networking Issues](../.gitbook/assets/pod_networking_issues.png)
+![Diagram of the pod networking diagnosis flow, moving from state inspection through path testing and cause classification to IP pool resizing and restarts.](../.gitbook/assets/en-eks-03-eks-networking-part3-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-4.html)
 
 1. **Pod IP Assignment Failure**:
    * Symptom: Pod stuck in `ContainerCreating` state
@@ -249,7 +259,9 @@ kubectl exec -it <pod-name> -- dig kubernetes.default.svc.cluster.local
 
 ### Service and Load Balancing Issues
 
-![Service and Load Balancer Issues](../.gitbook/assets/service_loadbalancer_issues.png)
+![Troubleshooting diagram showing the Service to EndpointSlice to pod path alongside the ALB and target group created by the AWS Load Balancer Controller.](../.gitbook/assets/en-eks-03-eks-networking-part3-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part3-5.html)
 
 1. **Service Connection Issues**:
    * Symptom: Cannot connect to pods through the service
