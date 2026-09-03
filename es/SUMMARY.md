@@ -175,6 +175,8 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [Conectividad de VPC entre organizaciones](networking/05-cross-org-vpc-connectivity.md)
+* [Prueba de rendimiento de red de Pods](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -508,6 +510,8 @@
   * [Cuestionario de VPC Lattice](quizzes/networking/02-vpc-lattice-quiz.md)
   * [Cuestionario de AWS Load Balancer Controller](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Cuestionario de Gateway API](quizzes/networking/04-gateway-api-quiz.md)
+  * [Cuestionario: Conectividad de VPC entre organizaciones](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Cuestionario: Prueba de rendimiento de red de Pods](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Cuestionario de Istio](quizzes/service-mesh/02-istio-quiz.md)
   * Cuestionario detallado de Istio

@@ -175,6 +175,8 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [組織間 VPC 接続](networking/05-cross-org-vpc-connectivity.md)
+* [Pod ネットワークのベンチマーク](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -508,6 +510,8 @@
   * [VPC Lattice クイズ](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller クイズ](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API クイズ](quizzes/networking/04-gateway-api-quiz.md)
+  * [組織間 VPC 接続クイズ](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Pod ネットワークのベンチマーククイズ](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Istio クイズ](quizzes/service-mesh/02-istio-quiz.md)
   * Istio 詳細クイズ
