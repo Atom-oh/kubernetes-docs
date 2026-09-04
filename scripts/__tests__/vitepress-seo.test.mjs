@@ -7,6 +7,7 @@ import {
   extractDescription,
   extractLastUpdated,
   localeAlternates,
+  markdownAlternateUrl,
   normalizeReadmeHref,
   socialHeadTags,
   structuredData
@@ -114,6 +115,48 @@ test('extractDescription keeps the intro paragraph that precedes a quiz answer t
   ].join('\n')
 
   assert.equal(extractDescription(src), 'This quiz checks your understanding of Linux basics.')
+})
+
+test('extractDescription skips a lead-in paragraph that only introduces a list', () => {
+  const src = [
+    '# Cluster Architecture',
+    '',
+    'To practice the concepts in this document you need the following tools:',
+    '',
+    '- kubectl',
+    '- eksctl',
+    '',
+    'The control plane runs the API server, scheduler, and controllers.'
+  ].join('\n')
+  assert.equal(
+    extractDescription(src),
+    'The control plane runs the API server, scheduler, and controllers.'
+  )
+})
+
+test('extractDescription returns undefined when the only paragraph is a lead-in', () => {
+  assert.equal(
+    extractDescription('# T\n\n다음과 같은 도구와 환경이 필요합니다:\n\n- kubectl'),
+    undefined
+  )
+})
+
+test('markdownAlternateUrl points content pages at their raw Markdown twin', () => {
+  assert.equal(
+    markdownAlternateUrl('ko/core/01-cluster-architecture.md'),
+    'https://www.atomai.click/kubernetes-docs/llms/ko/core/01-cluster-architecture.md'
+  )
+  assert.equal(
+    markdownAlternateUrl('en/networking/index.md'),
+    'https://www.atomai.click/kubernetes-docs/llms/en/networking/README.md'
+  )
+})
+
+test('markdownAlternateUrl is absent for quizzes, labs, locale roots, and other paths', () => {
+  assert.equal(markdownAlternateUrl('ko/quizzes/core/01-quiz.md'), undefined)
+  assert.equal(markdownAlternateUrl('en/labs/basics/01-lab.md'), undefined)
+  assert.equal(markdownAlternateUrl('ko/index.md'), undefined)
+  assert.equal(markdownAlternateUrl('404.md'), undefined)
 })
 
 test('extractDescription returns undefined when there is no body paragraph', () => {

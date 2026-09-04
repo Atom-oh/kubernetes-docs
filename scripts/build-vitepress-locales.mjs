@@ -96,6 +96,76 @@ export async function markArchmapsNoindex(destination) {
   return marked
 }
 
+const SITE_ROOT = 'https://www.atomai.click/kubernetes-docs/'
+
+// Locales that were once published here (five-locale build, .html URLs) and
+// still sit in search indexes; those URLs now 404. Only ko/en are built, so
+// each legacy URL gets a stub that redirects to the English twin — a 0-second
+// meta refresh is treated as a permanent redirect by Google, which lets the
+// stale entries hand their ranking to the live page instead of decaying as
+// 404s. GitHub Pages has no server-side redirects, hence stubs.
+export const LEGACY_LOCALES = ['cn', 'jp', 'es']
+
+function redirectStub(target) {
+  return [
+    '<!doctype html>',
+    '<html lang="en"><head><meta charset="utf-8">',
+    `<meta http-equiv="refresh" content="0; url=${target}">`,
+    `<link rel="canonical" href="${target}">`,
+    '<title>Redirecting…</title></head>',
+    `<body><a href="${target}">${target}</a></body></html>`,
+    ''
+  ].join('\n')
+}
+
+async function listHtmlFiles(directory, prefix = '') {
+  const files = []
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      files.push(...(await listHtmlFiles(path.join(directory, entry.name), relative)))
+    } else if (entry.name.endsWith('.html')) {
+      files.push(relative)
+    }
+  }
+  return files
+}
+
+export async function writeLegacyLocaleRedirects(destination, sourceLocale = 'en') {
+  let pages
+  try {
+    pages = await listHtmlFiles(path.join(destination, sourceLocale))
+  } catch {
+    return 0
+  }
+
+  let written = 0
+  for (const page of pages) {
+    const isIndex = page === 'index.html' || page.endsWith('/index.html')
+    const cleanPath = isIndex
+      ? page.slice(0, -'index.html'.length)
+      : page.replace(/\.html$/, '')
+    const target = `${SITE_ROOT}${sourceLocale}/${cleanPath}`
+    const stub = redirectStub(target)
+
+    // The old build had no README→index rewrite, so section indexes were
+    // published as README.html; cover both spellings.
+    const variants = isIndex
+      ? [page, `${cleanPath}README.html`]
+      : [page]
+
+    for (const locale of LEGACY_LOCALES) {
+      for (const variant of variants) {
+        const filePath = path.join(destination, locale, variant)
+        await mkdir(path.dirname(filePath), { recursive: true })
+        await writeFile(filePath, stub)
+        written += 1
+      }
+    }
+  }
+  return written
+}
+
 export async function mergeLocaleOutputs(localeOutputs, destination) {
   await rm(destination, { recursive: true, force: true })
   await mkdir(destination, { recursive: true })
@@ -111,6 +181,11 @@ export async function mergeLocaleOutputs(localeOutputs, destination) {
 
   const marked = await markArchmapsNoindex(destination)
   if (marked > 0) console.log(`Marked ${marked} archmap pages noindex`)
+
+  const redirected = await writeLegacyLocaleRedirects(destination)
+  if (redirected > 0) {
+    console.log(`Wrote ${redirected} legacy ${LEGACY_LOCALES.join('/')} redirect stubs`)
+  }
 }
 
 function runVitepressBuild(locale, outputDirectory) {

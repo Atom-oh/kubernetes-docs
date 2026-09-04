@@ -13,8 +13,10 @@ import test from 'node:test'
 import { parseSitemap } from 'sitemap'
 
 import {
+  LEGACY_LOCALES,
   markArchmapsNoindex,
-  mergeLocaleOutputs
+  mergeLocaleOutputs,
+  writeLegacyLocaleRedirects
 } from '../build-vitepress-locales.mjs'
 
 const sitemap = (url) => `<?xml version="1.0" encoding="UTF-8"?>
@@ -101,6 +103,51 @@ test('archmap viewer pages are marked noindex after the merge', async () => {
     // Already-marked pages are left byte-identical rather than double-tagged.
     const untouched = await readFile(path.join(archmaps, 'already.html'), 'utf8')
     assert.equal((untouched.match(/name="robots"/g) || []).length, 1)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('legacy cn/jp/es URLs get redirect stubs to the English page', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'legacy-redirects-'))
+  const dist = path.join(root, 'dist')
+
+  try {
+    await mkdir(path.join(dist, 'en', 'networking', 'calico'), { recursive: true })
+    await writeFile(path.join(dist, 'en', 'index.html'), 'en root')
+    await writeFile(path.join(dist, 'en', 'networking', 'calico', 'index.html'), 'section')
+    await writeFile(path.join(dist, 'en', 'networking', 'calico', '02-architecture.html'), 'page')
+
+    const written = await writeLegacyLocaleRedirects(dist)
+    // 3 locales × (root index + README, section index + README, one page)
+    assert.equal(written, LEGACY_LOCALES.length * 5)
+
+    const page = await readFile(
+      path.join(dist, 'cn', 'networking', 'calico', '02-architecture.html'),
+      'utf8'
+    )
+    const target = 'https://www.atomai.click/kubernetes-docs/en/networking/calico/02-architecture'
+    assert.match(page, new RegExp(`http-equiv="refresh" content="0; url=${target}"`))
+    assert.match(page, new RegExp(`rel="canonical" href="${target}"`))
+
+    // The five-locale build published section indexes as README.html.
+    const legacyReadme = await readFile(
+      path.join(dist, 'es', 'networking', 'calico', 'README.html'),
+      'utf8'
+    )
+    assert.match(legacyReadme, /url=https:\/\/www\.atomai\.click\/kubernetes-docs\/en\/networking\/calico\//)
+
+    const root404 = await readFile(path.join(dist, 'jp', 'index.html'), 'utf8')
+    assert.match(root404, /url=https:\/\/www\.atomai\.click\/kubernetes-docs\/en\//)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('writeLegacyLocaleRedirects is a no-op without an English build', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'legacy-redirects-missing-'))
+  try {
+    assert.equal(await writeLegacyLocaleRedirects(root), 0)
   } finally {
     await rm(root, { recursive: true, force: true })
   }

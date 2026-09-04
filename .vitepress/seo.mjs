@@ -89,12 +89,20 @@ export function extractDescription(markdown) {
     if (isContent) {
       paragraph.push(trimmed)
     } else if (paragraph.length) {
+      // A paragraph that ends with a colon is a lead-in to the list or block
+      // that follows ("You will need the following tools:"), not a summary of
+      // the page. Skip it and keep looking for the first real paragraph.
+      if (/[:：]\s*$/.test(paragraph[paragraph.length - 1])) {
+        paragraph.length = 0
+        continue
+      }
       break // paragraph ended
     }
   }
 
   const text = stripInlineMarkdown(paragraph.join(' '))
-  return text ? truncateAtBoundary(text) : undefined
+  if (!text || /[:：]$/.test(text)) return undefined
+  return truncateAtBoundary(text)
 }
 
 function cleanUrlPath(relativePath) {
@@ -127,6 +135,20 @@ export function localeAlternates(relativePath, { fileExists = defaultFileExists 
 
 function defaultFileExists(relativeSourcePath) {
   return fs.existsSync(path.join(projectRoot, relativeSourcePath))
+}
+
+// Raw-Markdown twin of a rendered page, served from /llms/<locale>/<source>.md
+// by scripts/generate-llms-txt.mjs. Advertised as <link rel="alternate"
+// type="text/markdown"> so agents and AI crawlers can fetch the document
+// without the navigation shell. Quiz and lab pages are deliberately not
+// mirrored there (answers stay out of LLM context), and the locale root is a
+// navigation page, so neither gets a twin.
+export function markdownAlternateUrl(relativePath) {
+  const [locale, ...rest] = relativePath.split('/')
+  if (!supportedLocales.includes(locale) || rest.length === 0) return undefined
+  const source = rest.join('/').replace(/(^|\/)index\.md$/, '$1README.md')
+  if (source === 'README.md' || /^(quizzes|labs)\//.test(source)) return undefined
+  return `${siteHostname}llms/${locale}/${source}`
 }
 
 export const siteName = 'Cloud Native Operations'
