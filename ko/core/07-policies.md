@@ -546,7 +546,7 @@ spec:
 
 Amazon EKS에서는 Kubernetes의 기본 정책 메커니즘과 함께 AWS의 다양한 서비스를 활용하여 정책을 관리할 수 있습니다.
 
-![AWS 서비스와 그 EKS 통합 지점이 포드 또는 클러스터 수준에 적용되고, Kubernetes 정책이 EKS 클러스터 내 네임스페이스와 포드에 적용되는 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-6.png)
+![AWS Organizations·Config·Firewall Manager가 EKS 클러스터를 제한·감사·보호하고, IAM과 Security Groups가 포드에 작용하며, Kubernetes 기본 정책이 클러스터·네임스페이스·포드에 적용되는 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-6.html)
 
