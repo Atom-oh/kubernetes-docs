@@ -14,6 +14,10 @@ const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
 
 export const SITE_BASE = 'https://www.atomai.click/kubernetes-docs'
+// Images and other non-page assets are referenced relatively from the source
+// tree and get content-hashed by VitePress, so the raw repo is the only stable
+// absolute address for them.
+export const RAW_BASE = 'https://raw.githubusercontent.com/Atom-oh/kubernetes-docs/main'
 
 const LOCALE_LABELS = { ko: '한국어', en: 'English' }
 const QUIZ_GROUP = /quiz/i
@@ -56,7 +60,101 @@ export function markdownPageUrl(locale, mdPath) {
   return `${SITE_BASE}/llms/${locale}/${mdPath}`
 }
 
-export function buildLlmsTxt(summariesByLocale, readPagesByLocale = {}) {
+export function sectionBundleUrl(locale, slug) {
+  return `${SITE_BASE}/llms-full-${locale}-${slug}.txt`
+}
+
+const NOT_MIRRORED = /^(quizzes|labs)\//
+
+// Relative links only resolve inside the repo checkout. An LLM reading a page
+// out of context needs every reference to be fetchable, so rewrite them:
+//   - links to a ko/en content page → that page's raw Markdown twin
+//   - links to quizzes/labs/locale roots (not mirrored) → the rendered page
+//   - anything else (images, root README, code) → the raw file on GitHub
+// Absolute URLs, anchors, and paths escaping the repo are left untouched.
+export function absolutizeLinks(content, locale, mdPath, locales = supportedLocales) {
+  const fromDir = path.posix.dirname(path.posix.join(locale, mdPath))
+
+  return content.replace(
+    /(!?\[[^\]]*\]\()([^)\s]+)(\))/g,
+    (whole, open, target, close) => {
+      if (
+        /^[a-z][a-z0-9+.-]*:/i.test(target) ||
+        target.startsWith('#') ||
+        target.startsWith('//') ||
+        target.startsWith('/')
+      ) {
+        return whole
+      }
+
+      const hashIndex = target.indexOf('#')
+      const hash = hashIndex === -1 ? '' : target.slice(hashIndex)
+      const bare = hashIndex === -1 ? target : target.slice(0, hashIndex)
+      if (!bare) return whole
+
+      const resolved = path.posix.normalize(path.posix.join(fromDir, bare))
+      if (resolved.startsWith('../')) return whole
+
+      const [head, ...rest] = resolved.split('/')
+      const inLocale = locales.includes(head) && rest.length > 0
+      const inner = rest.join('/')
+
+      let url
+      if (inLocale && inner.endsWith('.md')) {
+        url =
+          inner === ROOT_INDEX || NOT_MIRRORED.test(inner)
+            ? pageUrl(head, inner)
+            : markdownPageUrl(head, inner)
+      } else {
+        url = `${RAW_BASE}/${resolved}`
+      }
+      return `${open}${url}${hash}${close}`
+    }
+  )
+}
+
+// A SUMMARY group's bundle slug is the top-level directory most of its pages
+// live in (e.g. "Kubernetes 핵심 개념" → core); language-independent, so the
+// ko and en bundles for the same section share a name. Groups made of
+// root-level pages (roadmap, llm-guide) collapse to "intro".
+export function groupSlug({ items }) {
+  const counts = new Map()
+  for (const { path: mdPath } of items) {
+    const segment = mdPath.includes('/') ? mdPath.split('/')[0] : 'intro'
+    counts.set(segment, (counts.get(segment) ?? 0) + 1)
+  }
+  let best
+  for (const [segment, count] of counts) {
+    if (!best || count > best.count) best = { segment, count }
+  }
+  return best ? best.segment.toLowerCase() : 'intro'
+}
+
+// [{ group, slug, count }] for every content group of a locale, slugs made
+// unique in SUMMARY order.
+export function sectionBundles(groups, readPage) {
+  const bundles = []
+  const used = new Set()
+  for (const group of groups) {
+    if (QUIZ_GROUP.test(group.group) || LAB_GROUP.test(group.group)) continue
+    const pages = group.items.filter(
+      ({ path: mdPath }) => mdPath !== ROOT_INDEX && readPage(mdPath) !== null
+    )
+    if (pages.length === 0) continue
+
+    let slug = groupSlug(group)
+    for (let n = 2; used.has(slug); n += 1) slug = `${groupSlug(group)}-${n}`
+    used.add(slug)
+    bundles.push({ group: group.group, slug, count: pages.length, items: pages })
+  }
+  return bundles
+}
+
+export function buildLlmsTxt(
+  summariesByLocale,
+  readPagesByLocale = {},
+  bundlesByLocale = {}
+) {
   const lines = [
     '# Cloud Native Operations',
     '',
@@ -65,7 +163,9 @@ export function buildLlmsTxt(summariesByLocale, readPagesByLocale = {}) {
     '> storage, databases, data pipelines, AI/ML, security, GitOps, platform',
     '> engineering, observability, and operations, with measured-on-AWS benchmark',
     '> data. Korean (ko) is the primary human-edited language; English (en) mirrors',
-    '> its coverage. Full-content dumps: llms-full-ko.txt and llms-full-en.txt.',
+    '> its coverage. Full-content dumps: llms-full-ko.txt and llms-full-en.txt;',
+    '> per-section dumps (a few hundred KiB each) are listed under "Section',
+    '> bundles". Every link below returns raw Markdown with absolute URLs.',
     ''
   ]
   for (const locale of Object.keys(summariesByLocale)) {
@@ -88,6 +188,19 @@ export function buildLlmsTxt(summariesByLocale, readPagesByLocale = {}) {
           }`
         )
       }
+    }
+    lines.push('')
+  }
+  for (const locale of Object.keys(bundlesByLocale)) {
+    const bundles = bundlesByLocale[locale]
+    if (!bundles || bundles.length === 0) continue
+    lines.push(`## Section bundles (${LOCALE_LABELS[locale] ?? locale})`, '')
+    for (const { group, slug, count } of bundles) {
+      lines.push(
+        `- [${group}](${sectionBundleUrl(locale, slug)}): ${count} page${
+          count === 1 ? '' : 's'
+        } concatenated, each preceded by a "Source:" block`
+      )
     }
     lines.push('')
   }
@@ -152,23 +265,43 @@ export function generateLlmsFiles(root = projectRoot) {
   fs.mkdirSync(outDir, { recursive: true })
   fs.rmSync(path.join(outDir, 'llms'), { recursive: true, force: true })
 
+  for (const stale of fs.readdirSync(outDir)) {
+    if (/^llms-full-.*\.txt$/.test(stale)) fs.rmSync(path.join(outDir, stale))
+  }
+
   const summaries = {}
   const readPages = {}
+  const bundles = {}
   for (const locale of supportedLocales) {
     summaries[locale] = parseSummary(
       fs.readFileSync(path.join(root, locale, 'SUMMARY.md'), 'utf8')
     )
     readPages[locale] = (mdPath) => {
       const filePath = path.join(root, locale, mdPath)
-      return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
+      if (!fs.existsSync(filePath)) return null
+      return absolutizeLinks(fs.readFileSync(filePath, 'utf8'), locale, mdPath)
     }
+    bundles[locale] = sectionBundles(summaries[locale], readPages[locale])
     writeMarkdownPages(root, locale, summaries[locale], readPages[locale])
   }
 
   const written = []
   const indexPath = path.join(outDir, 'llms.txt')
-  fs.writeFileSync(indexPath, buildLlmsTxt(summaries, readPages))
+  fs.writeFileSync(indexPath, buildLlmsTxt(summaries, readPages, bundles))
   written.push(indexPath)
+
+  for (const locale of supportedLocales) {
+    for (const bundle of bundles[locale]) {
+      const { text } = buildLlmsFull(
+        locale,
+        [{ group: bundle.group, items: bundle.items }],
+        readPages[locale]
+      )
+      const bundlePath = path.join(outDir, `llms-full-${locale}-${bundle.slug}.txt`)
+      fs.writeFileSync(bundlePath, text)
+      written.push(bundlePath)
+    }
+  }
 
   for (const locale of supportedLocales) {
     const { text, missing } = buildLlmsFull(

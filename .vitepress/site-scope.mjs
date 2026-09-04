@@ -6,6 +6,7 @@ const baseSrcExclude = [
   'CLAUDE.md',
   '**/SUMMARY.md',
   'docs/**', // internal plans/specs — never publish
+  'examples/**', // runnable code packages referenced by path, not pages; leaked into the sitemap
   'public/llms/**', // generated raw Markdown — copied as static files
   'cn/**',
   'jp/**',

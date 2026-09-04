@@ -10,6 +10,7 @@ import {
   extractDescription,
   extractLastUpdated,
   localeAlternates,
+  markdownAlternateUrl,
   normalizeReadmeHref,
   siteName,
   socialHeadTags,
@@ -189,9 +190,13 @@ const config = defineConfig({
     const title = pageData.title || siteName
     const description = pageData.description || pageData.frontmatter.description
     const crumbs = breadcrumbTrail(pageData.relativePath, pageData.title)
+    const markdownUrl = markdownAlternateUrl(pageData.relativePath)
 
     return [
       ['link', { rel: 'canonical', href: url }],
+      ...(markdownUrl
+        ? [['link', { rel: 'alternate', type: 'text/markdown', href: markdownUrl }]]
+        : []),
       ...localeAlternates(pageData.relativePath).map(({ hreflang, href }) => [
         'link',
         { rel: 'alternate', hreflang, href }
@@ -215,8 +220,13 @@ const config = defineConfig({
     hostname: 'https://www.atomai.click/kubernetes-docs/',
     // Stamp each entry with the document's own "last updated" header so
     // recrawls follow real edits instead of the whole tree looking equally old.
+    // VitePress derives xhtml:link alternates from the locales config, but with
+    // per-locale builds it only sees one locale at a time and emits wrong
+    // pairs (e.g. hreflang="en-US" for both / and /en/). The <head> already
+    // carries correct ko/en/x-default alternates for every page, so drop the
+    // sitemap ones rather than ship contradictory signals.
     transformItems: (items) =>
-      items.map((item) => {
+      items.map(({ links, ...item }) => {
         const lastmod = lastUpdatedIndex.get(normalizeSitemapUrl(item.url))
         return lastmod ? { ...item, lastmod } : item
       })
