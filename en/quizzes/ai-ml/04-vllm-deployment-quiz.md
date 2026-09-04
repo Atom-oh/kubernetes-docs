@@ -1802,3 +1802,24 @@ spec:
 - C. Pod security policy configuration: Part of container security, but doesn't include model weight and API key protection.
 - D. Enabling audit logging: Important for security monitoring, but lower priority than preventive security measures.
 </details>
+
+### 11. In the measured Qwen2.5-7B-Instruct benchmark on a single NVIDIA L4 GPU on this page, what happened to per-request latency as concurrency went from 1 to 16?
+
+A. It grew nearly 16x, in proportion to the added load
+B. It stayed almost flat (+33%, from p50 5.65s to 7.52s) while aggregate throughput scaled close to linearly
+C. It dropped, because more requests let vLLM skip the prefill stage
+D. It could not be measured because the GPU ran out of KV cache memory before reaching concurrency 16
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B. It stayed almost flat (+33%, from p50 5.65s to 7.52s) while aggregate throughput scaled close to linearly**
+
+**Explanation:**
+This is the core lesson of continuous batching: vLLM does not queue a new request behind the ones already running. It joins the batch on the next scheduler step, so the GPU processes many sequences in parallel instead of serially. In this measured run, p50 latency for a full ~100-128 token response only grew from 5.65s at concurrency 1 to 7.52s at concurrency 16 (+33%), while aggregate completion throughput scaled from roughly 17 tokens/s to 208 tokens/s (client-measured) — because GPU KV cache usage stayed under 3% the whole time, meaning the GPU was compute-bound, not memory-bound, at these concurrency levels.
+
+**Why the other options are wrong:**
+- A. This describes what would happen with serial (non-batched) request handling, not continuous batching.
+- C. Continuous batching does not skip prefill; every new request still goes through prefill before decode, it just happens alongside other requests' decode steps.
+- D. GPU KV cache usage peaked at only 2.6% at concurrency 16 on this 24 GiB L4 — nowhere near exhausted. The benchmark did not push concurrency high enough to find that limit.
+</details>
