@@ -1,155 +1,44 @@
-# パート2: アーキテクチャ
+# パート 2: アーキテクチャ
 
-> **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
+> **サポート対象バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
 
 ## 概要
 
-このセクションでは、Calico のアーキテクチャを詳しく解説します。各コンポーネントの動作と相互作用を理解することは、本番環境における Calico の効果的なデプロイ、トラブルシューティング、最適化に不可欠です。
+このセクションでは、Calico のアーキテクチャを詳しく解説します。本番環境で Calico を効果的にデプロイ、トラブルシューティング、最適化するには、各コンポーネントの動作と相互作用を理解することが不可欠です。
 
 ## アーキテクチャ全体図
 
-![Calico アーキテクチャ](../../.gitbook/assets/calico_architecture.png)
+![Kubernetes control plane、Calico control plane（API server、kube-controllers、Typha）、および Felix がローカル Data Plane をプログラムし、confd/BIRD がノード間の BGP mesh を介して route を配布する代表的な worker node を示すアーキテクチャ図。](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
-```mermaid
-flowchart TD
-    subgraph KubernetesAPI["Kubernetes Control Plane"]
-        K8sAPI[Kubernetes API Server]
-        ETCD[(etcd)]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
 
-    subgraph CalicoControl["Calico Control Plane"]
-        APIServer[Calico API Server]
-        KubeControllers[kube-controllers]
-        Typha1[Typha Pod 1]
-        Typha2[Typha Pod 2]
-        Typha3[Typha Pod 3]
-    end
+## Felix: Calico Agent
 
-    subgraph Node1["Worker Node 1"]
-        Felix1[Felix]
-        BIRD1[BIRD]
-        confd1[confd]
-        IPTables1[iptables/eBPF]
-        Routes1[Routing Table]
-    end
-
-    subgraph Node2["Worker Node 2"]
-        Felix2[Felix]
-        BIRD2[BIRD]
-        confd2[confd]
-        IPTables2[iptables/eBPF]
-        Routes2[Routing Table]
-    end
-
-    subgraph Node3["Worker Node 3"]
-        Felix3[Felix]
-        BIRD3[BIRD]
-        confd3[confd]
-        IPTables3[iptables/eBPF]
-        Routes3[Routing Table]
-    end
-
-    %% Control plane connections
-    K8sAPI <--> ETCD
-    K8sAPI <--> APIServer
-    K8sAPI --> KubeControllers
-    KubeControllers --> K8sAPI
-
-    %% Typha connections
-    K8sAPI --> Typha1
-    K8sAPI --> Typha2
-    K8sAPI --> Typha3
-
-    %% Node 1 connections
-    Typha1 --> Felix1
-    Felix1 --> IPTables1
-    Felix1 --> Routes1
-    Felix1 --> confd1
-    confd1 --> BIRD1
-
-    %% Node 2 connections
-    Typha2 --> Felix2
-    Felix2 --> IPTables2
-    Felix2 --> Routes2
-    Felix2 --> confd2
-    confd2 --> BIRD2
-
-    %% Node 3 connections
-    Typha3 --> Felix3
-    Felix3 --> IPTables3
-    Felix3 --> Routes3
-    Felix3 --> confd3
-    confd3 --> BIRD3
-
-    %% BGP mesh
-    BIRD1 <-.->|BGP| BIRD2
-    BIRD2 <-.->|BGP| BIRD3
-    BIRD1 <-.->|BGP| BIRD3
-
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef calico fill:#FA8320,stroke:#333,stroke-width:1px,color:white
-    classDef node fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class K8sAPI,ETCD k8s
-    class APIServer,KubeControllers,Typha1,Typha2,Typha3 calico
-    class Felix1,Felix2,Felix3,BIRD1,BIRD2,BIRD3,confd1,confd2,confd3,IPTables1,IPTables2,IPTables3,Routes1,Routes2,Routes3 node
-```
-
-## Felix: Calico エージェント
-
-Felix はクラスター内のすべての node で実行される主要な Calico エージェントです。ホスト上でルートと ACL（Access Control List）をプログラムし、必要な接続性と NetworkPolicy の適用を提供します。
+Felix は、cluster 内のすべての node で実行される主要な Calico Agent です。目的の接続性と Network Policy の適用を実現するために、host 上の route と ACL（Access Control List）をプログラムします。
 
 ### Felix の責務
 
-```mermaid
-flowchart LR
-    subgraph Felix["Felix Agent"]
-        A[Datastore Watcher]
-        B[Route Manager]
-        C[ACL Manager]
-        D[Interface Manager]
-        E[IPAM Manager]
-    end
-
-    subgraph Outputs["System Configuration"]
-        F[iptables Rules]
-        G[IP Sets]
-        H[Routing Table]
-        I[Network Interfaces]
-    end
-
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-
-    B --> H
-    C --> F
-    C --> G
-    D --> I
-
-    style Felix fill:#FA8320,stroke:#333,color:white
-```
+![Felix の Datastore Watcher が route、ACL、interface、IPAM manager に更新を配信し、それらが node の routing table、iptables rule、IP set、network interface をプログラムすることを示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
 
 ### コア機能
 
-1. **ルートのプログラミング**: Pod CIDR ブロックのルートを管理します
-2. **ACL の適用**: NetworkPolicy 用の iptables/nftables/eBPF ルールをプログラムします
-3. **インターフェース管理**: workload endpoint インターフェースを設定します
-4. **ヘルスレポート**: node と endpoint のヘルスを datastore に報告します
-5. **IPAM の調整**: ローカル workload の IP アドレス割り当てを管理します
+1. **Route のプログラミング**: Pod CIDR block の route を管理します
+2. **ACL の適用**: Network Policy 用の iptables/nftables/eBPF rule をプログラムします
+3. **Interface の管理**: workload endpoint interface を設定します
+4. **Health の報告**: node と endpoint の health を datastore に報告します
+5. **IPAM の調整**: ローカル workload の IP address allocation を管理します
 
-### Felix のデータプレーンオプション
+### Felix Data Plane のオプション
 
-Felix は複数のデータプレーンバックエンドをサポートしています。
+Felix は複数の Data Plane backend をサポートしています。
 
-| データプレーン | 説明                     | 最適な用途                                  |
-| ------------ | ------------------------ | ------------------------------------------- |
-| **iptables** | 従来の Linux ファイアウォール | 互換性、成熟したデプロイメント                     |
-| **nftables** | 最新の Linux ファイアウォール | 新しいカーネル、より高いパフォーマンス                 |
-| **eBPF**     | カーネル内でプログラム可能       | 最大のパフォーマンス、kube-proxy の置き換え           |
+| Data Plane   | 説明                | 最適な用途                                    |
+| ------------ | -------------------------- | ------------------------------------------- |
+| **iptables** | 従来の Linux firewall | 互換性、成熟したデプロイメント           |
+| **nftables** | 最新の Linux firewall      | 新しい kernel、より優れた performance           |
+| **eBPF**     | Kernel 内でプログラム可能     | 最高の performance、kube-proxy の置き換え |
 
-### FelixConfiguration リソース
+### FelixConfiguration Resource
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -211,9 +100,9 @@ spec:
   reportingTTLSecs: 90
 ```
 
-### Felix の iptables ルール構造
+### Felix iptables Rule の構造
 
-Felix は効率的に処理するため、iptables ルールをチェーンに整理します。
+Felix は、効率的に処理するため iptables rule を chain に整理します。
 
 ```
                          ┌─────────────────────────────────────────┐
@@ -237,85 +126,25 @@ Felix は効率的に処理するため、iptables ルールをチェーンに�
 └───────────────────────────┘ └─────────────────────────┘ └───────────────────────────┘
 ```
 
-### Felix のデータフロー
+### Felix Data Flow
 
-```mermaid
-sequenceDiagram
-    participant DS as Datastore (via Typha)
-    participant F as Felix
-    participant IPT as iptables/eBPF
-    participant RT as Routing Table
-    participant IF as Network Interface
+![Felix が datastore から policy、endpoint、IP pool の更新を受け取り、それぞれを iptables rule、route table entry、または network interface 設定に変換することを示すシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
 
-    DS->>F: Policy Update
-    F->>F: Calculate required rules
-    F->>IPT: Program iptables rules
-    F->>IPT: Update IP sets
+## BIRD: BGP Routing Daemon
 
-    DS->>F: Workload Endpoint Update
-    F->>IF: Configure veth interface
-    F->>RT: Add/update routes
-    F->>IPT: Program endpoint rules
-
-    DS->>F: IPPool Update
-    F->>RT: Update IPIP/VXLAN routes
-    F->>IF: Configure tunnel interface
-```
-
-## BIRD: BGP ルーティングデーモン
-
-BIRD（BIRD Internet Routing Daemon）は、node 間でルートを配布するために Calico が使用する BGP デーモンです。
+BIRD（BIRD Internet Routing Daemon）は、Calico が node 間で route を配布するために使用する BGP daemon です。
 
 ### Calico アーキテクチャにおける BIRD
 
-```mermaid
-flowchart TD
-    subgraph Cluster["Kubernetes Cluster"]
-        subgraph Node1["Node 1"]
-            BIRD1[BIRD]
-            RT1[Routes: 192.168.1.0/26]
-        end
+![各 node の BIRD instance が完全な iBGP mesh を形成して Pod route を交換し、その後 top-of-rack switch および core router と eBGP peer を確立してそれらの route を外部に advertise することを示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
 
-        subgraph Node2["Node 2"]
-            BIRD2[BIRD]
-            RT2[Routes: 192.168.2.0/26]
-        end
+### BGP Session のタイプ
 
-        subgraph Node3["Node 3"]
-            BIRD3[BIRD]
-            RT3[Routes: 192.168.3.0/26]
-        end
-    end
-
-    subgraph External["External Network"]
-        TOR[ToR Switch]
-        Router[Core Router]
-    end
-
-    BIRD1 <-->|iBGP| BIRD2
-    BIRD2 <-->|iBGP| BIRD3
-    BIRD1 <-->|iBGP| BIRD3
-
-    BIRD1 <-->|eBGP| TOR
-    BIRD2 <-->|eBGP| TOR
-    BIRD3 <-->|eBGP| TOR
-
-    TOR <--> Router
-
-    classDef bird fill:#FA8320,stroke:#333,color:white
-    classDef external fill:#326CE5,stroke:#333,color:white
-
-    class BIRD1,BIRD2,BIRD3 bird
-    class TOR,Router external
-```
-
-### BGP セッションの種類
-
-| セッションタイプ            | ユースケース                    | 設定                       |
+| Session タイプ          | Use Case                    | 設定          |
 | --------------------- | --------------------------- | ---------------------- |
-| **Node-to-Node Mesh** | 小規模クラスターのデフォルト              | 自動、フルメッシュ               |
-| **Route Reflector**   | 大規模クラスター（100+ nodes）        | 専用の RR node             |
-| **External Peering**  | オンプレミス統合                    | 手動の BGP ピア設定            |
+| **Node-to-Node Mesh** | 小規模 cluster のデフォルト  | 自動、full mesh   |
+| **Route Reflector**   | 大規模 cluster（100+ node） | 専用 RR node     |
+| **External Peering**  | On-premises integration     | 手動 BGP peer 設定 |
 
 ### BGP 設定例
 
@@ -332,7 +161,7 @@ spec:
   asNumber: 64512
 ```
 
-#### Route Reflector の設定
+#### Route Reflector 設定
 
 ```yaml
 # Disable node-to-node mesh
@@ -365,7 +194,7 @@ spec:
   peerSelector: route-reflector == "true"
 ```
 
-#### 外部 BGP ピアリング
+#### External BGP Peering
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -384,29 +213,11 @@ spec:
   keepOriginalNextHop: false
 ```
 
-### ルート伝播プロセス
+### Route 伝播プロセス
 
-```mermaid
-sequenceDiagram
-    participant Pod as New Pod
-    participant Felix as Felix
-    participant BIRD as BIRD (Local)
-    participant Peer as BIRD (Peer Nodes)
+![新しい Pod の route が Felix によって割り当てられ、BIRD のローカル routing table に追加され、BGP UPDATE によって peer node へ伝播されることで、peer node が route をインストールして Felix が適切に routing することを示すシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
 
-    Pod->>Felix: Pod Created
-    Felix->>Felix: Allocate IP from block
-    Felix->>Felix: Program local route
-    Felix->>BIRD: Route available
-
-    BIRD->>BIRD: Add to RIB
-    BIRD->>Peer: BGP UPDATE message
-    Peer->>Peer: Process UPDATE
-    Peer->>Peer: Install in RIB
-    Peer->>Felix: Route update
-    Felix->>Felix: Program route
-```
-
-### BIRD ステータスコマンド
+### BIRD Status Command
 
 ```bash
 # Access BIRD CLI on a Calico node
@@ -430,52 +241,17 @@ birdcl> show route protocol Mesh_10_0_1_10
 birdcl> show route 192.168.1.0/26 all
 ```
 
-## confd: 設定管理
+## confd: Configuration Management
 
-confd は、Calico datastore を監視し、BIRD 設定ファイルを生成する軽量な設定管理ツールです。
+confd は、Calico datastore を監視し、BIRD configuration file を生成する軽量な configuration management tool です。
 
 ### confd のワークフロー
 
-```mermaid
-flowchart LR
-    subgraph Datastore["Calico Datastore"]
-        BGPConfig[BGPConfiguration]
-        BGPPeers[BGPPeer]
-        Nodes[Node Resources]
-    end
+![confd の watcher が Calico datastore 内の BGP configuration、peer、node resource に反応し、template から bird.cfg file をレンダリングして、実行中の BIRD process に渡すことを示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
 
-    subgraph confd["confd Process"]
-        Watcher[Datastore Watcher]
-        Templates[Config Templates]
-        Generator[Config Generator]
-    end
+### confd Template 処理
 
-    subgraph BIRD["BIRD Daemon"]
-        Config[bird.cfg]
-        Daemon[BIRD Process]
-    end
-
-    BGPConfig --> Watcher
-    BGPPeers --> Watcher
-    Nodes --> Watcher
-
-    Watcher --> Generator
-    Templates --> Generator
-    Generator --> Config
-    Config --> Daemon
-
-    classDef store fill:#326CE5,stroke:#333,color:white
-    classDef process fill:#FA8320,stroke:#333,color:white
-    classDef bird fill:#00C7B7,stroke:#333,color:white
-
-    class BGPConfig,BGPPeers,Nodes store
-    class Watcher,Templates,Generator process
-    class Config,Daemon bird
-```
-
-### confd テンプレート処理
-
-confd は Go テンプレートを使用して BIRD 設定を生成します。
+confd は Go template を使用して BIRD configuration を生成します。
 
 ```
 # Template: /etc/calico/confd/templates/bird.cfg.template
@@ -507,45 +283,17 @@ protocol bgp {{.Name}} {
 {{end}}
 ```
 
-## Typha: スケーリングコンポーネント
+## Typha: Scaling Component
 
-Typha は Kubernetes API server と Felix エージェントの間に位置する fan-out プロキシです。datastore の更新をキャッシュして配布することで、API server の負荷を軽減します。
+Typha は、Kubernetes API server と Felix Agent の間に配置される fan-out proxy です。datastore update を cache して配布することで、API server の負荷を軽減します。
 
-### Typha を使用する理由
+### Typha が必要な理由
 
-```mermaid
-flowchart TD
-    subgraph Without["Without Typha (Small Cluster)"]
-        API1[Kubernetes API]
-        F1[Felix 1]
-        F2[Felix 2]
-        F3[Felix 3]
+![小規模 cluster ではすべての Felix が Kubernetes API を直接 watch する一方、大規模 cluster では Typha Pod が cache した update を数百の Felix Agent に fan-out することを比較した図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg)
 
-        API1 -->|Watch| F1
-        API1 -->|Watch| F2
-        API1 -->|Watch| F3
-    end
+### Typha Scaling の計算
 
-    subgraph With["With Typha (Large Cluster)"]
-        API2[Kubernetes API]
-        T1[Typha 1]
-        T2[Typha 2]
-        FF1[Felix 1-100]
-        FF2[Felix 101-200]
-
-        API2 -->|Watch| T1
-        API2 -->|Watch| T2
-        T1 -->|Fan-out| FF1
-        T2 -->|Fan-out| FF2
-    end
-
-    style Without fill:#ffcccc,stroke:#333
-    style With fill:#ccffcc,stroke:#333
-```
-
-### Typha のスケーリング計算
-
-推奨される Typha レプリカ数は、クラスターの規模によって異なります。
+推奨する Typha replica 数は cluster size によって異なります。
 
 ```
 Typha Replicas = max(3, ceil(Nodes / 200))
@@ -647,96 +395,27 @@ spec:
     k8s-app: calico-typha
 ```
 
-### Typha の fan-out アーキテクチャ
+### Typha Fan-out アーキテクチャ
 
-```mermaid
-flowchart TD
-    subgraph APIServer["Kubernetes API Server"]
-        Watch1[Watch Stream 1]
-        Watch2[Watch Stream 2]
-    end
+![2 つの API server watch stream が 2 つの Typha Pod に入力され、各 Pod が update をローカルに cache して、その node group 内の約 100 の Felix Agent に fan-out することを示すアーキテクチャ図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
 
-    subgraph Typha["Typha Layer"]
-        T1[Typha Pod 1]
-        T2[Typha Pod 2]
-        Cache1[(Local Cache)]
-        Cache2[(Local Cache)]
-    end
+## kube-controllers: Kubernetes Integration
 
-    subgraph Nodes["Worker Nodes"]
-        subgraph Group1["Node Group 1"]
-            F1[Felix]
-            F2[Felix]
-            F3[Felix]
-            Fn1[Felix...]
-        end
-        subgraph Group2["Node Group 2"]
-            F4[Felix]
-            F5[Felix]
-            F6[Felix]
-            Fn2[Felix...]
-        end
-    end
-
-    Watch1 --> T1
-    Watch2 --> T2
-    T1 --> Cache1
-    T2 --> Cache2
-
-    Cache1 --> F1
-    Cache1 --> F2
-    Cache1 --> F3
-    Cache1 --> Fn1
-
-    Cache2 --> F4
-    Cache2 --> F5
-    Cache2 --> F6
-    Cache2 --> Fn2
-
-    classDef api fill:#326CE5,stroke:#333,color:white
-    classDef typha fill:#FA8320,stroke:#333,color:white
-    classDef felix fill:#00C7B7,stroke:#333,color:white
-
-    class Watch1,Watch2 api
-    class T1,T2,Cache1,Cache2 typha
-    class F1,F2,F3,F4,F5,F6,Fn1,Fn2 felix
-```
-
-## kube-controllers: Kubernetes 統合
-
-calico-kube-controllers Pod は、Kubernetes リソースを Calico datastore と同期する一連の controller を実行します。
+calico-kube-controllers Pod は、Kubernetes resource を Calico datastore と sync する一連の controller を実行します。
 
 ### Controller の概要
 
-| Controller                      | 目的                                                |
+| Controller                      | 目的                                           |
 | ------------------------------- | ------------------------------------------------- |
-| **Node Controller**             | Kubernetes node を Calico node リソースと同期します      |
-| **Policy Controller**           | Kubernetes NetworkPolicy を Calico policy と同期します |
-| **Namespace Controller**        | profile 管理用に namespace ラベルを同期します             |
-| **ServiceAccount Controller**   | RBAC 用に service account ラベルを同期します             |
-| **WorkloadEndpoint Controller** | 古い workload endpoint をクリーンアップします              |
+| **Node Controller**             | Kubernetes node を Calico node resource と sync します |
+| **Policy Controller**           | Kubernetes NetworkPolicy を Calico policy と sync します |
+| **Namespace Controller**        | profile management 用に namespace label を sync します     |
+| **ServiceAccount Controller**   | RBAC 用に service account label を sync します             |
+| **WorkloadEndpoint Controller** | 古い workload endpoint をクリーンアップします                |
 
-### Controller の調整ループ
+### Controller Reconciliation Loop
 
-```mermaid
-sequenceDiagram
-    participant K8s as Kubernetes API
-    participant KC as kube-controllers
-    participant DS as Calico Datastore
-
-    loop Every reconciliation interval
-        KC->>K8s: List Kubernetes resources
-        KC->>DS: List Calico resources
-        KC->>KC: Compare and calculate diff
-
-        alt Resources out of sync
-            KC->>DS: Create/Update/Delete resources
-            KC->>KC: Log reconciliation action
-        else Resources in sync
-            KC->>KC: No action needed
-        end
-    end
-```
+![kube-controllers が Kubernetes と Calico の resource を繰り返し list して差分を比較し、変更を Calico datastore に書き込むか、両者がすでに sync している場合は何もしないことを示すシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
 
 ### kube-controllers 設定
 
@@ -776,191 +455,57 @@ data:
     }
 ```
 
-## Datastore オプション
+## Datastore のオプション
 
-Calico は、設定と状態を保存するための 2 つの datastore バックエンドをサポートしています。
+Calico は、configuration と state を保存するための 2 つの datastore backend をサポートしています。
 
 ### Kubernetes API Datastore（推奨）
 
-```mermaid
-flowchart LR
-    subgraph Components["Calico Components"]
-        Felix[Felix]
-        Typha[Typha]
-        KC[kube-controllers]
-    end
-
-    subgraph K8s["Kubernetes"]
-        API[API Server]
-        ETCD[(etcd)]
-    end
-
-    Felix <--> Typha
-    Typha <--> API
-    KC <--> API
-    API <--> ETCD
-
-    classDef calico fill:#FA8320,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class Felix,Typha,KC calico
-    class API,ETCD k8s
-```
+![Felix、Typha、kube-controllers のすべてが Kubernetes API server を介して Calico state の read/write を行い、API server 自体は etcd に永続化することを示す図。独立した Calico etcd cluster は必要ありません。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
 
 **利点:**
 
-* 管理する個別の etcd クラスターが不要
-* アクセス制御に Kubernetes RBAC を使用
-* 運用モデルがシンプル
-* すべての Kubernetes ディストリビューションで動作
+* 管理する独立した etcd cluster が不要
+* access control に Kubernetes RBAC を使用
+* よりシンプルな operational model
+* あらゆる Kubernetes distribution で動作
 
 ### etcd Datastore（レガシー）
 
-```mermaid
-flowchart LR
-    subgraph Components["Calico Components"]
-        Felix[Felix]
-        Typha[Typha]
-        KC[kube-controllers]
-    end
-
-    subgraph Datastores["Datastores"]
-        K8sAPI[K8s API Server]
-        CalicoETCD[(Calico etcd)]
-    end
-
-    Felix <--> Typha
-    Typha <--> CalicoETCD
-    KC <--> K8sAPI
-    KC <--> CalicoETCD
-
-    classDef calico fill:#FA8320,stroke:#333,color:white
-    classDef store fill:#326CE5,stroke:#333,color:white
-
-    class Felix,Typha,KC calico
-    class K8sAPI,CalicoETCD store
-```
+![Felix と Typha が専用の Calico etcd cluster を直接 read/write する一方、kube-controllers がその cluster と Kubernetes API server を橋渡しする、レガシーで分離された datastore オプションを示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
 
 **利点:**
 
-* Kubernetes API server から分離されている
+* Kubernetes API server から分離
 * 非 Kubernetes workload（VM、bare metal）に使用可能
-* 非常に大規模なクラスター向けの従来の選択肢
+* 非常に大規模な cluster 向けの歴史的な選択肢
 
 ### Datastore の比較
 
-| 機能                         | Kubernetes API    | etcd               |
+| 機能                    | Kubernetes API    | etcd               |
 | -------------------------- | ----------------- | ------------------ |
-| **運用の複雑さ**                | 低い                | 高い                 |
-| **スケーラビリティ**              | 良好（Typha 使用時）     | 優れている              |
-| **非 K8s Workload**         | 制限あり              | 完全サポート             |
-| **バックアップ/リストア**          | K8s 経由            | 個別ツール              |
-| **アクセス制御**                | K8s RBAC          | etcd 認証            |
-| **推奨事項**                  | デフォルトの選択肢         | 特殊なケースのみ           |
+| **運用の複雑さ** | 低い             | 高い             |
+| **Scalability**            | 良好（Typha 使用時） | 優れている          |
+| **Non-K8s Workloads**      | 限定的           | 完全サポート       |
+| **Backup/Restore**         | K8s 経由           | 個別の tool   |
+| **Access Control**         | K8s RBAC          | etcd auth          |
+| **推奨**         | デフォルトの選択    | 特別なケースのみ |
 
-## コンポーネント相互作用のシーケンス
+## Component Interaction Sequence
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8sAPI as Kubernetes API
-    participant KC as kube-controllers
-    participant Typha
-    participant Felix
-    participant BIRD
-    participant DataPlane as iptables/eBPF
+![Kubernetes API を通じた NetworkPolicy と Pod の作成を、kube-controllers と Typha を経由して Felix まで追跡し、Felix がローカル Data Plane をプログラムして BGP route を更新することを示すシーケンス図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg)
 
-    User->>K8sAPI: Create NetworkPolicy
-    K8sAPI->>KC: Policy event
-    KC->>K8sAPI: Create CalicoNetworkPolicy
+## Packet Flow の分析
 
-    K8sAPI->>Typha: Policy update
-    Typha->>Felix: Distribute policy
-    Felix->>Felix: Calculate rules
-    Felix->>DataPlane: Program rules
+### Ingress Packet Flow（Pod-to-Pod、同一 Node）
 
-    User->>K8sAPI: Create Pod
-    K8sAPI->>KC: Pod event
-    KC->>K8sAPI: Create WorkloadEndpoint
+![同じ node にある一方の Pod からもう一方の Pod へ、veth interface と host の iptables/eBPF policy check を通過して packet が移動することを示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
 
-    K8sAPI->>Typha: Endpoint update
-    Typha->>Felix: Distribute endpoint
-    Felix->>DataPlane: Program endpoint rules
-    Felix->>BIRD: Update routes
-    BIRD->>BIRD: Distribute via BGP
-```
+### Egress Packet Flow（Pod-to-Pod、IPIP を使用する異なる Node）
 
-## パケットフロー分析
+![一方の node の Pod から出る packet が veth と iptables check を通過し、物理 network switch を越えて IPIP encapsulate され、2 つ目の node で decapsulate されて Pod に配信されることを示す図。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
 
-### Ingress パケットフロー（Pod 間、同一 Node）
-
-```mermaid
-flowchart TD
-    subgraph SameNode["Single Node"]
-        PodA[Pod A - 192.168.1.10]
-        VethA[veth: caliXXXXXX]
-        IPT[iptables/eBPF]
-        VethB[veth: caliYYYYYY]
-        PodB[Pod B - 192.168.1.11]
-    end
-
-    PodA -->|1. Send packet| VethA
-    VethA -->|2. Enter host namespace| IPT
-    IPT -->|3. Policy check + forward| VethB
-    VethB -->|4. Deliver| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef infra fill:#FA8320,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VethA,VethB,IPT infra
-```
-
-### Egress パケットフロー（Pod 間、IPIP を使用する異なる Node）
-
-```mermaid
-flowchart TD
-    subgraph Node1["Node 1 - 10.0.1.10"]
-        PodA[Pod A - 192.168.1.10]
-        VethA[veth: caliXXXXXX]
-        IPT1[iptables/eBPF]
-        Tunl1[tunl0 - IPIP]
-        Eth1[eth0]
-    end
-
-    subgraph Network["Physical Network"]
-        Switch[Network Switch]
-    end
-
-    subgraph Node2["Node 2 - 10.0.1.11"]
-        Eth2[eth0]
-        Tunl2[tunl0 - IPIP]
-        IPT2[iptables/eBPF]
-        VethB[veth: caliYYYYYY]
-        PodB[Pod B - 192.168.2.10]
-    end
-
-    PodA -->|1. Original packet| VethA
-    VethA -->|2. Route lookup| IPT1
-    IPT1 -->|3. Policy check| Tunl1
-    Tunl1 -->|4. IPIP encap| Eth1
-    Eth1 -->|5. Outer: 10.0.1.10->10.0.1.11| Switch
-    Switch -->|6. Forward| Eth2
-    Eth2 -->|7. Receive| Tunl2
-    Tunl2 -->|8. IPIP decap| IPT2
-    IPT2 -->|9. Policy check| VethB
-    VethB -->|10. Deliver| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef infra fill:#FA8320,stroke:#333,color:white
-    classDef network fill:#00C7B7,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VethA,VethB,IPT1,IPT2,Tunl1,Tunl2,Eth1,Eth2 infra
-    class Switch network
-```
-
-### パケット構造の比較
+### Packet Structure の比較
 
 ```
 Original Pod-to-Pod Packet:
@@ -981,28 +526,28 @@ IPIP Encapsulated Packet:
 
 ## まとめ
 
-Calico のアーキテクチャは、スケーラビリティ、パフォーマンス、運用のシンプルさを考慮して設計されています。
+Calico のアーキテクチャは、scalability、performance、operational simplicity を考慮して設計されています。
 
-1. **Felix**: すべての node でルートと ACL をプログラムする主力エージェント
-2. **BIRD**: BGP 経由でルートを配布し、ネイティブなルーティング統合を実現
-3. **confd**: datastore と BIRD 設定を橋渡し
-4. **Typha**: API server の負荷を軽減してシステムをスケール
-5. **kube-controllers**: Kubernetes と Calico の同期を維持
-6. **Datastore**: 設定を保存する Kubernetes API（推奨）または etcd
+1. **Felix**: すべての node 上の主力 Agent で、route と ACL をプログラムします
+2. **BIRD**: BGP により route を配布し、native routing integration を実現します
+3. **confd**: datastore を BIRD configuration に橋渡しします
+4. **Typha**: API server の負荷を軽減して system を scale します
+5. **kube-controllers**: Kubernetes と Calico を sync します
+6. **Datastore**: configuration storage 用の Kubernetes API（推奨）または etcd
 
-これらのコンポーネントとその相互作用を理解することは、次の点に不可欠です。
+これらのコンポーネントと相互作用を理解することは、次のために不可欠です。
 
 * 接続性の問題のトラブルシューティング
-* 大規模環境でのパフォーマンス最適化
-* キャパシティとアーキテクチャの計画
-* 既存のネットワークインフラストラクチャとの統合
+* 大規模環境での performance 最適化
+* capacity とアーキテクチャの計画
+* 既存の network infrastructure との integration
 
-[前へ: パート1 - Calico の概要](01-introduction.md)
+[前へ: パート 1 - Calico の紹介](01-introduction.md)
 
-[次へ: パート3 - ネットワークモード](03-networking-modes.md)
+[次へ: パート 3 - Networking Modes](03-networking-modes.md)
 
 [Calico の概要に戻る](./README.md)
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[アーキテクチャクイズ](../../quizzes/networking/calico/02-architecture-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[Architecture Quiz](../../quizzes/networking/calico/02-architecture-quiz.md)に挑戦してください。

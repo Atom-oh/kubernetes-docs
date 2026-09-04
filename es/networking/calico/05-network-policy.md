@@ -4,9 +4,9 @@
 
 ## Introducción
 
-Las políticas de red son fundamentales para la seguridad de Kubernetes y controlan el flujo de tráfico entre Pods, namespaces y endpoints externos. Aunque Kubernetes proporciona una API básica de NetworkPolicy, Calico la amplía con potentes funciones que incluyen políticas globales, evaluación de políticas por niveles, reglas basadas en DNS y filtrado de Layer 7.
+Las políticas de red son fundamentales para la seguridad de Kubernetes y controlan el flujo de tráfico entre pods, namespaces y endpoints externos. Aunque Kubernetes proporciona una API básica de NetworkPolicy, Calico la amplía con funcionalidades potentes, incluidas las políticas globales, la evaluación de políticas por niveles, las reglas basadas en DNS y el filtrado de Layer 7.
 
-Este análisis detallado abarca tanto las políticas estándar de Kubernetes como las capacidades ampliadas de Calico, y proporciona patrones y ejemplos para los requisitos de seguridad empresariales.
+Este análisis detallado cubre tanto las políticas estándar de Kubernetes como las capacidades ampliadas de Calico, y proporciona patrones y ejemplos para requisitos de seguridad empresariales.
 
 ***
 
@@ -14,22 +14,9 @@ Este análisis detallado abarca tanto las políticas estándar de Kubernetes com
 
 ### Fundamentos de NetworkPolicy
 
-Kubernetes NetworkPolicy es un recurso con ámbito de namespace que controla el tráfico hacia y desde los Pods según labels, namespaces y bloques de IP.
+Kubernetes NetworkPolicy es un recurso con ámbito de namespace que controla el tráfico hacia y desde los pods según labels, namespaces y bloques de IP.
 
-```mermaid
-flowchart LR
-    subgraph "Without NetworkPolicy"
-        A1[Pod A] <--> B1[Pod B]
-        A1 <--> C1[Pod C]
-        B1 <--> C1
-    end
-
-    subgraph "With NetworkPolicy"
-        A2[Pod A] --> B2[Pod B]
-        A2 -.X.-> C2[Pod C]
-        B2 -.X.-> A2
-    end
-```
+![Comparación que muestra que, sin una NetworkPolicy, cada pod puede alcanzar libremente a todos los demás, mientras que una NetworkPolicy reduce esa malla a una ruta permitida explícitamente y bloquea el resto.](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg)
 
 ### Estructura básica de NetworkPolicy
 
@@ -82,19 +69,19 @@ spec:
 
 | Limitación            | Descripción                         | Solución de Calico          |
 | --------------------- | ----------------------------------- | -------------------------- |
-| Solo con ámbito de namespace | No se pueden crear políticas para todo el cluster | GlobalNetworkPolicy |
-| Sin orden de políticas | Todas las políticas se evalúan por igual | Políticas por niveles |
-| Sin reglas de denegación | Solo permitir (denegación implícita) | Acciones Deny explícitas |
-| Filtrado L4 limitado | Solo puertos/protocolos básicos | Rangos de puertos, puertos con nombre |
-| Sin filtrado L7 | No se puede filtrar por métodos HTTP | Reglas de coincidencia HTTP |
-| Sin compatibilidad con FQDN | No se pueden usar nombres de dominio | Política DNS |
-| Solo centrado en Pods | No se pueden proteger nodos | Host endpoints |
+| Solo ámbito de namespace | No se pueden crear políticas para todo el clúster | GlobalNetworkPolicy      |
+| Sin ordenamiento de políticas | Todas las políticas se evalúan por igual      | Políticas por niveles          |
+| Sin reglas de denegación         | Solo permitir (denegación implícita)          | Acciones Deny explícitas    |
+| Filtrado L4 limitado  | Solo puerto/protocolo básico            | Rangos de puertos, puertos con nombre |
+| Sin filtrado L7       | No se puede filtrar por métodos HTTP       | Reglas de coincidencia HTTP         |
+| Sin compatibilidad con FQDN       | No se pueden usar nombres de dominio             | Política DNS               |
+| Solo centrado en Pods      | No se pueden proteger los nodos                | Host endpoints           |
 
 ***
 
-## Extensiones de NetworkPolicy de Calico
+## Extensiones de Calico NetworkPolicy
 
-### Compatibilidad ampliada con protocolos
+### Compatibilidad ampliada de protocolos
 
 Calico admite protocolos adicionales además de TCP y UDP:
 
@@ -225,7 +212,7 @@ spec:
 
 ## GlobalNetworkPolicy
 
-GlobalNetworkPolicy se aplica en todos los namespaces, por lo que es ideal para las reglas de seguridad de todo el cluster.
+GlobalNetworkPolicy se aplica en todos los namespaces y es ideal para reglas de seguridad de todo el clúster.
 
 ### Estructura de GlobalNetworkPolicy
 
@@ -260,7 +247,7 @@ spec:
         notSelector: k8s-app == 'kube-dns'
 ```
 
-### Patrones habituales de GlobalNetworkPolicy
+### Patrones comunes de GlobalNetworkPolicy
 
 **Denegar todo el tráfico de forma predeterminada:**
 
@@ -313,7 +300,7 @@ spec:
           - 443
 ```
 
-**Bloquear namespaces sensibles:**
+**Bloquear namespaces confidenciales:**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -344,7 +331,7 @@ spec:
 
 ## NetworkSet y GlobalNetworkSet
 
-Los NetworkSets agrupan direcciones IP para reutilizarlas en distintas políticas.
+Los NetworkSets agrupan direcciones IP para reutilizarlas entre políticas.
 
 ### NetworkSet (con ámbito de namespace)
 
@@ -378,7 +365,7 @@ spec:
         selector: network-type == 'corporate'  # References NetworkSet by label
 ```
 
-### GlobalNetworkSet (con ámbito de cluster)
+### GlobalNetworkSet (con ámbito de clúster)
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -434,28 +421,15 @@ spec:
 
 ## Políticas por niveles
 
-![Evaluación de niveles de Network Policy de Calico](../../.gitbook/assets/calico_network_policy_tiers.png)
+![Evaluación por niveles de Calico Network Policy: un paquete pasa por los niveles Security (100), Platform (200), Application (500) y Default en orden; una coincidencia Allow o Deny en cualquier nivel finaliza la evaluación inmediatamente, Pass transfiere el control al siguiente nivel y, si no hay coincidencia, se aplica la acción predeterminada del perfil del endpoint.](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
 
-Los niveles proporcionan una evaluación jerárquica de políticas, lo que permite separar las responsabilidades entre los equipos de plataforma, seguridad y aplicaciones.
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-2.html)
+
+Los niveles proporcionan una evaluación jerárquica de políticas, lo que permite separar responsabilidades entre los equipos de plataforma, seguridad y aplicaciones.
 
 ### Orden de evaluación de políticas
 
-```mermaid
-flowchart TD
-    T[Traffic] --> SEC[Security Tier<br/>Order: 100]
-    SEC -->|Pass| PLAT[Platform Tier<br/>Order: 200]
-    PLAT -->|Pass| APP[Application Tier<br/>Order: 500]
-    APP -->|Pass| DEF[Default Tier<br/>Order: 1000]
-    DEF -->|No Match| DENY[Implicit Deny]
-
-    SEC -->|Deny| DROP1[Drop Packet]
-    PLAT -->|Deny| DROP2[Drop Packet]
-    APP -->|Deny| DROP3[Drop Packet]
-
-    SEC -->|Allow| ALLOW1[Allow Packet]
-    PLAT -->|Allow| ALLOW2[Allow Packet]
-    APP -->|Allow| ALLOW3[Allow Packet]
-```
+![Diagrama de flujo que muestra el tráfico pasando en orden por los niveles Security, Platform y Application, donde cada nivel puede denegar el paquete, permitirlo o pasarlo al siguiente nivel, y termina en una denegación implícita si ningún nivel coincide.](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg)
 
 ### Creación de niveles
 
@@ -581,7 +555,7 @@ spec:
           - 8080
 ```
 
-### Integración de RBAC por niveles
+### Integración de RBAC de niveles
 
 ```yaml
 # ClusterRole for security team
@@ -616,7 +590,7 @@ rules:
 
 ## Política de Egress basada en FQDN
 
-Calico puede filtrar el tráfico de Egress según nombres de dominio, lo que resulta útil para controlar el acceso a servicios externos.
+Calico puede filtrar el tráfico de Egress según nombres de dominio, lo cual resulta útil para controlar el acceso a servicios externos.
 
 ### Configuración de la política DNS
 
@@ -633,7 +607,7 @@ spec:
   policySyncPathPrefix: /var/run/nodeagent
 ```
 
-### Reglas de Egress de FQDN
+### Reglas de Egress FQDN
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -679,7 +653,7 @@ spec:
           - 192.168.0.0/16
 ```
 
-### Patrones de dominios con wildcard
+### Patrones de dominio con comodines
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -793,7 +767,7 @@ spec:
 
 ## Protección de Host Endpoint
 
-Los Host endpoints protegen el tráfico hacia y desde el propio nodo, no solo desde los Pods.
+Los host endpoints protegen el tráfico hacia y desde el propio nodo, no solo hacia los pods.
 
 ### Habilitación de Host Endpoints
 
@@ -867,7 +841,7 @@ spec:
 
 ### Host Endpoints automáticos
 
-Cree Host endpoints automáticamente para todos los nodos:
+Cree automáticamente host endpoints para todos los nodos:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -893,7 +867,7 @@ spec:
 
 ### Políticas DoNotTrack
 
-Las políticas DoNotTrack omiten el seguimiento de conexiones, lo que es útil para escenarios de alto rendimiento:
+Las políticas DoNotTrack omiten el seguimiento de conexiones, lo cual resulta útil para escenarios de alto rendimiento:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -924,7 +898,7 @@ spec:
 
 ### Políticas PreDNAT
 
-Las políticas PreDNAT se aplican antes del NAT de destino, lo que es útil para controlar el acceso de NodePort:
+Las políticas PreDNAT se aplican antes de la NAT de destino, lo cual resulta útil para controlar el acceso a NodePort:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -1027,7 +1001,7 @@ kubectl exec -it test-pod -- nc -zv target-pod 8080
 
 ***
 
-## Biblioteca de patrones de políticas habituales
+## Biblioteca de patrones comunes de políticas
 
 ### Patrón de microservicios
 
@@ -1102,7 +1076,7 @@ spec:
           - 5432
 ```
 
-### Aislamiento multiinquilino
+### Aislamiento multitenant
 
 ```yaml
 # Each tenant namespace is fully isolated
@@ -1138,7 +1112,7 @@ spec:
           - 53
 ```
 
-### Patrón de confianza cero
+### Patrón Zero Trust
 
 ```yaml
 # Default deny everything
@@ -1256,7 +1230,7 @@ spec:
     - action: Deny
 ```
 
-### Patrón de aislamiento de namespace
+### Patrón de aislamiento de namespaces
 
 ```yaml
 # Isolate namespaces by default
@@ -1290,25 +1264,25 @@ spec:
 
 ***
 
-## Impacto de las políticas en el rendimiento
+## Impacto de rendimiento de las políticas
 
 ### Consideraciones de rendimiento
 
 | Factor              | Impacto                  | Mitigación                              |
-| ------------------- | ------------------------ | --------------------------------------- |
-| Número de políticas | Evaluación lineal de reglas | Use políticas por niveles, optimice los selectores |
-| Complejidad de los selectores | Mayor tiempo de coincidencia | Use coincidencias de labels simples |
-| Tamaño del conjunto de IP | Uso de memoria | Agregue rangos de IP |
-| Frecuencia de logs | CPU y almacenamiento | Use muestreo para gran volumen |
-| Seguimiento de conexiones | Memoria para el estado | DoNotTrack para tráfico sin estado |
+| ------------------- | ----------------------- | --------------------------------------- |
+| Número de políticas  | Evaluación lineal de reglas  | Use políticas por niveles, optimice los selectores |
+| Complejidad del selector | Mayor tiempo de coincidencia | Use coincidencias simples de labels                |
+| Tamaño del conjunto de IP         | Uso de memoria            | Agregue rangos de IP                     |
+| Frecuencia de logs       | CPU y almacenamiento         | Use muestreo para alto volumen            |
+| Seguimiento de conexiones | Memoria para estadoful     | DoNotTrack para stateless                |
 
 ### Consejos de optimización
 
 1. **Use políticas por niveles**: Evalúe primero las reglas de denegación
-2. **Minimice la complejidad de los selectores**: Prefiera la igualdad frente a las operaciones de conjuntos
+2. **Minimice la complejidad de los selectores**: Prefiera la igualdad a las operaciones de conjuntos
 3. **Agregue rangos de IP**: Use bloques CIDR en lugar de IP individuales
 4. **Use GlobalNetworkSet**: Reutilice grupos de IP entre políticas
-5. **Habilite el caché de políticas**: Predeterminado en las versiones recientes de Calico
+5. **Habilite la caché de políticas**: Predeterminada en versiones recientes de Calico
 
 ### Evaluación comparativa del rendimiento de las políticas
 
@@ -1327,23 +1301,23 @@ iptables -L -n | wc -l
 
 ***
 
-## Resumen de prácticas recomendadas
+## Resumen de buenas prácticas
 
 ### Principios de diseño
 
-1. **Comience con denegación predeterminada**: Incluya en una lista de permitidos el tráfico necesario
-2. **Use el mínimo privilegio**: Permita únicamente los puertos y protocolos necesarios
-3. **Organice sus políticas en capas**: Seguridad -> Plataforma -> Aplicación
-4. **Etiquete de forma coherente**: Use labels estándar para orientar las políticas
+1. **Comience con denegación predeterminada**: Incluya en la lista de permitidos el tráfico necesario
+2. **Use el mínimo privilegio**: Permita solo los puertos y protocolos necesarios
+3. **Organice sus políticas en capas**: Security -> Platform -> Application
+4. **Etiquete de forma coherente**: Use labels estándar para el direccionamiento de políticas
 5. **Documente las políticas**: Incluya comentarios que expliquen la intención
 
 ### Recomendaciones operativas
 
 1. **Pruebe primero en staging**: Valide las políticas antes de producción
 2. **Use el modo de auditoría**: Registre antes de aplicar nuevas políticas
-3. **Supervise los recuentos de coincidencias de políticas**: Identifique reglas sin uso
-4. **Revise las políticas regularmente**: Elimine las reglas obsoletas
-5. **Automatice el despliegue de políticas**: Use GitOps para gestionar las políticas
+3. **Supervise los recuentos de coincidencias de políticas**: Identifique reglas no utilizadas
+4. **Revise las políticas periódicamente**: Elimine reglas obsoletas
+5. **Automatice el despliegue de políticas**: Use GitOps para la gestión de políticas
 
 ### Recomendaciones de seguridad
 
@@ -1359,5 +1333,5 @@ iptables -L -n | wc -l
 
 * [Documentación de Calico Network Policy](https://docs.tigera.io/calico/latest/network-policy/)
 * [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-* [Tutorial de políticas de Calico](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
-* [Prácticas recomendadas de políticas de Tigera](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)
+* [Tutorial de Calico Policy](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
+* [Mejores prácticas de políticas de Tigera](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)

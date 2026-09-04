@@ -1,12 +1,12 @@
-# パート 6: eBPF Dataplane
+# Part 6: eBPF Dataplane
 
 > **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
 
 ## はじめに
 
-Calico の eBPF Dataplane は、従来の iptables ベースのパケット処理を最新の eBPF プログラムに置き換える、Kubernetes ネットワーキングにおける重要な進化です。このアプローチにより、大幅なパフォーマンス向上、レイテンシの低減、オブザーバビリティ機能の強化が実現します。
+Calico の eBPF dataplane は Kubernetes networking の大きな進化を表しており、従来の iptables ベースのパケット処理を最新の eBPF program に置き換えます。このアプローチにより、大幅なパフォーマンス向上、レイテンシ削減、強化された observability 機能が実現します。
 
-この詳細解説では、ネットワーキングの観点から eBPF の基礎、Calico の eBPF アーキテクチャ、移行戦略、パフォーマンス最適化の手法を取り上げます。
+この詳細解説では、networking の観点から eBPF の基礎、Calico の eBPF architecture、移行戦略、パフォーマンス最適化手法を取り上げます。
 
 ***
 
@@ -14,110 +14,52 @@ Calico の eBPF Dataplane は、従来の iptables ベースのパケット処�
 
 ### eBPF とは？
 
-eBPF（extended Berkeley Packet Filter）は、Linux カーネルのソースコードを変更したりカーネルモジュールをロードしたりせずに、サンドボックス化されたプログラムを Linux カーネル内で実行できる革新的な技術です。
+eBPF（extended Berkeley Packet Filter）は、Linux kernel source code を変更したり kernel module をロードしたりすることなく、sandbox 化された program を Linux kernel 内で実行できる画期的な技術です。
 
-```mermaid
-flowchart TB
-    subgraph "User Space"
-        APP[Application]
-        EBPF_PROG[eBPF Program<br/>C/Rust]
-        LOADER[eBPF Loader<br/>libbpf]
-    end
+![eBPF program が user space から libbpf loader、kernel verifier、JIT compiler を経て kernel hook に移動し、検証アプリケーションと BPF map を共有する様子を示す図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
 
-    subgraph "Kernel Space"
-        VERIFIER[eBPF Verifier]
-        JIT[JIT Compiler]
-        MAPS[BPF Maps]
-        HOOKS[Kernel Hooks<br/>XDP, TC, Socket]
-    end
-
-    EBPF_PROG --> LOADER
-    LOADER --> VERIFIER
-    VERIFIER -->|Valid| JIT
-    JIT --> HOOKS
-    HOOKS <--> MAPS
-    APP <--> MAPS
-```
-
-### ネットワーキングにおける主要な eBPF の概念
+### Networking 向けの主要な eBPF 概念
 
 | 概念      | 説明                              | Calico での用途                       |
 | ------------ | ---------------------------------------- | ----------------------------------- |
-| **Programs** | カーネルフックで実行されるバイトコード        | パケットフィルタリング、ルーティング           |
-| **Maps**     | プログラム間で共有される Key-value ストア | ルートテーブル、ポリシールール          |
-| **Hooks**    | カーネル内のアタッチポイント              | XDP、TC、socket                     |
-| **Helpers**  | eBPF から呼び出せるカーネル関数      | パケット操作、Map 操作 |
-| **BTF**      | Map／プログラムの型情報       | デバッグ情報、CO-RE                   |
+| **Program** | kernel hook で実行される bytecode        | パケット filtering、routing           |
+| **Map**     | program 間で共有される key-value store | route table、policy rule          |
+| **Hook**    | kernel 内の attachment point              | XDP、TC、socket                     |
+| **Helper**  | eBPF から呼び出し可能な kernel function      | パケット操作、map 操作 |
+| **BTF**      | map/program の type information       | debug info、CO-RE                   |
 
-### eBPF と iptables の比較
+### eBPF と iptables
 
 | 観点               | iptables                  | eBPF              |
 | -------------------- | ------------------------- | ----------------- |
-| **アーキテクチャ**     | 順次的なルールチェーン    | 直接実行  |
-| **複雑性**       | O(n) のルールマッチング        | O(1) の Map ルックアップ   |
-| **カーネル境界の通過** | パケットごとに複数回       | 最小限           |
-| **プログラマビリティ**  | 固定されたルールタイプ          | 柔軟なプログラム |
-| **オブザーバビリティ**    | 限定的なカウンター          | 豊富なメトリクス      |
-| **CPU 効率**   | より高い割り込みオーバーヘッド | より低いオーバーヘッド    |
+| **Architecture**     | 順次的な rule chain    | 直接実行  |
+| **Complexity**       | O(n) rule matching        | O(1) map lookup   |
+| **Kernel Crossings** | パケットごとに複数回       | 最小限           |
+| **Programmability**  | 固定された rule type          | 柔軟な program |
+| **Observability**    | 限定的な counter          | 豊富な metric      |
+| **CPU Efficiency**   | より高い interrupt overhead | より低い overhead    |
 
 ***
 
-## Calico eBPF アーキテクチャ
+## Calico eBPF Architecture
 
-![Calico Dataplane: iptables vs eBPF](../../.gitbook/assets/calico_ebpf_vs_iptables.png)
+![2 つの Calico dataplane を比較する図。iptables mode では、NIC からの packet が PREROUTING、FORWARD、kube-proxy rule、POSTROUTING chain を通って宛先 Pod に到達します。eBPF mode では、TC hook の単一 BPF program が O(1) BPF map lookup を実行し、socket-level の connect-time load balancing に渡して、kube-proxy を介さず Pod に到達します。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
 
-### アーキテクチャの比較
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-9.html)
 
-```mermaid
-flowchart TB
-    subgraph "iptables Dataplane"
-        PKT1[Packet In] --> PREROUTE[PREROUTING]
-        PREROUTE --> CONNTRACK1[Connection Track]
-        CONNTRACK1 --> INPUT1[INPUT Chain]
-        INPUT1 --> FILTER1[FILTER Chain]
-        FILTER1 --> FORWARD1[FORWARD Chain]
-        FORWARD1 --> OUTPUT1[OUTPUT Chain]
-        OUTPUT1 --> POSTROUTE[POSTROUTING]
-        POSTROUTE --> PKT1_OUT[Packet Out]
-    end
+### Architecture の比較
 
-    subgraph "eBPF Dataplane"
-        PKT2[Packet In] --> TC_IN[TC Ingress]
-        TC_IN --> BPF_PROG[eBPF Program]
-        BPF_PROG --> BPF_MAP[BPF Maps<br/>Routes, Policies]
-        BPF_MAP --> TC_OUT[TC Egress]
-        TC_OUT --> PKT2_OUT[Packet Out]
-    end
-```
+![7 個の順次的な iptables chain を通過する packet と、TC ingress および egress hook 間で BPF map を参照する単一 eBPF program を通過する同じ packet を対比する図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
 
-### Calico の eBPF プログラムタイプ
+### Calico の eBPF Program Type
 
-Calico は、異なる機能のために複数の eBPF プログラムタイプを使用します。
+Calico は、異なる機能のために複数の eBPF program type を使用します。
 
-```mermaid
-flowchart LR
-    subgraph "Ingress Path"
-        XDP[XDP<br/>Early Drop] --> TC_IN[TC Ingress<br/>Policy/Route]
-    end
+![XDP と TC ingress hook が socket-level の sockops および sk_msg program に入力され、TC egress hook に渡される様子を示す図。cgroup scope program は、接続されていない socket-level primitive として示されています。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
 
-    subgraph "Socket Level"
-        SOCK_OPS[sockops<br/>Connection Setup]
-        SK_MSG[sk_msg<br/>Socket Data]
-        CGROUP[cgroup<br/>Container Scope]
-    end
+### TC（Traffic Control）Program
 
-    subgraph "Egress Path"
-        TC_OUT[TC Egress<br/>Policy/NAT]
-    end
-
-    TC_IN --> SOCK_OPS
-    SOCK_OPS --> SK_MSG
-    SK_MSG --> TC_OUT
-```
-
-### TC（Traffic Control）プログラム
-
-TC プログラムは Calico における主要な Dataplane フックです。
+TC program は Calico の主要な dataplane hook です。
 
 ```
 Ingress TC Program Functions:
@@ -134,22 +76,15 @@ Egress TC Program Functions:
 └── DSR return path handling
 ```
 
-### XDP（eXpress Data Path）プログラム
+### XDP（eXpress Data Path）Program
 
-XDP は最も早い段階でパケットを処理するフックを提供します。
+XDP は最も早いパケット処理 hook を提供します。
 
-```mermaid
-flowchart LR
-    NIC[Network Card] --> XDP{XDP Program}
-    XDP -->|XDP_DROP| DROP[Drop<br/>DDoS Protection]
-    XDP -->|XDP_PASS| TC[TC Programs<br/>Normal Processing]
-    XDP -->|XDP_TX| TX[TX<br/>Direct Return]
-    XDP -->|XDP_REDIRECT| REDIRECT[Redirect<br/>Other Interface]
-```
+![network card から XDP program に到着した packet が、DDoS protection 用の drop、通常の TC 処理へ pass、直接的な TX return、または別 interface への redirect という 4 つの verdict のいずれかを返す flowchart。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
 
-### Socket プログラム
+### Socket Program
 
-Service Mesh 統合のための Socket レベル eBPF:
+service mesh integration 向けの socket-level eBPF：
 
 ```yaml
 # sockops: Intercept socket operations
@@ -164,19 +99,19 @@ Service Mesh 統合のための Socket レベル eBPF:
 
 ***
 
-## BPF Map 構造
+## BPF Map Structure
 
-### Calico が使用する Map タイプ
+### Calico が使用する Map Type
 
-| Map タイプ          | 目的              | 使用例         |
+| Map Type          | 目的              | 使用例         |
 | ----------------- | -------------------- | ------------------- |
-| **Hash Map**      | Key-value ルックアップ     | Connection tracking |
-| **LRU Hash**      | 自動退避キャッシュ  | NAT テーブル           |
-| **Array**         | 固定サイズのインデックス   | Endpoint 設定     |
-| **LPM Trie**      | 最長プレフィックス一致 | ルートルックアップ        |
-| **Per-CPU Array** | スケーラブルなカウンター    | 統計情報          |
+| **Hash Map**      | Key-value lookup     | connection tracking |
+| **LRU Hash**      | 自動退避 cache  | NAT table           |
+| **Array**         | 固定サイズの index   | endpoint config     |
+| **LPM Trie**      | 最長 prefix match | route lookup        |
+| **Per-CPU Array** | 拡張可能な counter    | 統計          |
 
-### Route Map 構造
+### Route Map Structure
 
 ```c
 // Simplified route map entry
@@ -215,7 +150,7 @@ struct calico_ct_value {
 };
 ```
 
-### Policy Map 構造
+### Policy Map Structure
 
 ```c
 // Policy rule entry
@@ -242,31 +177,17 @@ struct calico_policy_value {
 
 ### DSR の概要
 
-DSR では、レスポンストラフィックが Load Balancer をバイパスできるため、レイテンシと Load Balancer のリソース消費を削減できます。
+DSR では、response traffic が load balancer を迂回できるため、レイテンシと load balancer のリソース消費を削減できます。
 
-```mermaid
-flowchart LR
-    subgraph "Without DSR"
-        C1[Client] -->|Request| LB1[Load Balancer]
-        LB1 -->|Request| S1[Server]
-        S1 -->|Response| LB1
-        LB1 -->|Response| C1
-    end
+![server response が load balancer を経由して client に戻る通常の load-balanced flow と、response が load balancer を迂回して server から client へ直接送られる Direct Server Return flow を比較する図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
 
-    subgraph "With DSR"
-        C2[Client] -->|Request| LB2[Load Balancer]
-        LB2 -->|Request| S2[Server]
-        S2 -->|Response| C2
-    end
-```
+### Calico の DSR Mode
 
-### Calico の DSR モード
-
-| モード         | 説明              | ユースケース                  |
+| Mode         | 説明              | Use Case                  |
 | ------------ | ------------------------ | ------------------------- |
-| **Disabled** | すべてのトラフィックが LB を経由   | デフォルト、すべての環境 |
-| **IPIP**     | IPIP Tunnel 経由のレスポンス | サブネット間              |
-| **DSR**      | 直接レスポンス          | 同一 L2 ネットワーク           |
+| **Disabled** | すべての traffic が LB を経由   | default、すべての environment |
+| **IPIP**     | IPIP tunnel 経由の response | subnet 間              |
+| **DSR**      | 直接 response          | 同一 L2 network           |
 
 ### DSR の有効化
 
@@ -282,41 +203,27 @@ spec:
 
 ### DSR の要件
 
-* Server と Client が同じ L2 ネットワーク上にある、または
-* サブネット間には IPIP/VXLAN カプセル化を使用する
-* External Client IP が Server からルーティング可能である
-* Ingress パスに SNAT がない
+* Server と client は同じ L2 network 上にある必要があります。または
+* subnet 間では IPIP/VXLAN encapsulation を使用します
+* external client IP は server から route 可能である必要があります
+* ingress path に SNAT がないこと
 
 ***
 
 ## Connect-Time Load Balancing
 
-### 従来の LB と Connect-Time LB
+### 従来型と Connect-Time LB
 
-```mermaid
-flowchart TB
-    subgraph "Per-Packet LB (kube-proxy)"
-        REQ1[SYN] -->|DNAT to Pod A| PA1[Pod A]
-        REQ2[DATA] -->|DNAT to Pod A| PA1
-        REQ3[FIN] -->|DNAT to Pod A| PA1
-    end
-
-    subgraph "Connect-Time LB (eBPF)"
-        CONN[connect<br/>syscall] -->|Pick Pod B| DEST[Destination:<br/>Pod B IP]
-        REQ4[SYN] -->|Direct to Pod B| PB1[Pod B]
-        REQ5[DATA] -->|Direct to Pod B| PB1
-        REQ6[FIN] -->|Direct to Pod B| PB1
-    end
-```
+![kube-proxy の packet ごとのアプローチ（すべての SYN、data、FIN packet が Pod A に DNAT される）と、eBPF connect-time load balancing（単一の connect() syscall が一度だけ Pod B を選択し、その connection のすべての packet が直接そこに送られる）を対比する図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
 
 ### Connect-Time LB の利点
 
-| 観点                  | パケットごと          | Connect-Time          |
+| 観点                  | Per-Packet          | Connect-Time          |
 | ----------------------- | ------------------- | --------------------- |
-| **NAT オーバーヘッド**        | すべてのパケット        | 接続確立時のみ |
-| **Connection tracking** | 必須            | 最小限               |
-| **レイテンシ**             | 高い（NAT ルックアップ） | 低い（直接）        |
-| **CPU 使用率**           | 高い              | 低い                 |
+| **NAT overhead**        | すべての packet        | connection setup 時のみ |
+| **Connection tracking** | 必要            | 最小限               |
+| **Latency**             | 高い（NAT lookup） | 低い（direct）        |
+| **CPU usage**           | 高い              | 低い                 |
 
 ### Connect-Time LB の仕組み
 
@@ -338,32 +245,21 @@ int bpf_connect4(struct bpf_sock_addr *ctx) {
 
 ***
 
-## XDP アクセラレーション
+## XDP Acceleration
 
-### XDP 処理レベル
+### XDP Processing Level
 
-```mermaid
-flowchart TB
-    subgraph "Processing Location"
-        NIC[Network Card]
-        DRIVER[Driver]
-        GENERIC[Generic/SKB]
-    end
+![NIC に offload された XDP program が最速であり、driver 内で native に実行される program は高速、generic network stack で実行される program は最も低速ですが任意の NIC で動作することを示す図。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
 
-    NIC -->|Offload| OFF[XDP Offload<br/>Fastest, NIC Support]
-    DRIVER -->|Native| NAT[XDP Native<br/>Fast, Driver Support]
-    GENERIC -->|Generic| GEN[XDP Generic<br/>Slowest, All NICs]
-```
+### XDP Mode
 
-### XDP モード
-
-| モード        | 場所      | パフォーマンス | 要件   |
+| Mode        | 場所      | Performance | 要件   |
 | ----------- | ------------- | ----------- | -------------- |
-| **Offload** | NIC ハードウェア  | 最速     | SmartNIC       |
-| **Native**  | NIC Driver    | 高速        | Driver サポート |
-| **Generic** | Network Stack | ベースライン    | 任意の NIC        |
+| **Offload** | NIC hardware  | 最速     | SmartNIC       |
+| **Native**  | NIC driver    | 高速        | driver support |
+| **Generic** | Network stack | 基準値    | 任意の NIC        |
 
-### Calico での XDP の有効化
+### Calico で XDP を有効にする
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -380,27 +276,27 @@ spec:
   # Uses same detection as BPF dataplane interface
 ```
 
-### Calico における XDP のユースケース
+### Calico における XDP Use Case
 
-1. **DDoS Protection**: NIC で悪意のあるトラフィックを Drop
-2. **Blocklist Enforcement**: ブロックされた IP を早期に拒否
-3. **Rate Limiting**: Stack より前でのパケットレート制限
-4. **Metrics Collection**: ワイヤスピードでのパケットカウント
+1. **DDoS Protection**: NIC で malicious traffic を drop
+2. **Blocklist Enforcement**: block された IP を早期に拒否
+3. **Rate Limiting**: stack より前で packet rate を制限
+4. **Metrics Collection**: wire-speed での packet counting
 
 ***
 
-## eBPF モードの要件
+## eBPF Mode の要件
 
-### カーネル要件
+### Kernel の要件
 
-| 要件      | 最小バージョン | 備考                     |
+| 要件      | Minimum Version | 注記                     |
 | ---------------- | --------------- | ------------------------- |
-| **Linux Kernel** | 5.3+            | 5.8+ 推奨          |
+| **Linux Kernel** | 5.3+            | 5.8+ を推奨          |
 | **BTF Support**  | 必須        | `CONFIG_DEBUG_INFO_BTF=y` |
 | **BPF Syscall**  | 必須        | `CONFIG_BPF_SYSCALL=y`    |
 | **BPF JIT**      | 必須        | `CONFIG_BPF_JIT=y`        |
 
-### カーネルサポートの検証
+### Kernel Support の確認
 
 ```bash
 # Check kernel version
@@ -419,18 +315,18 @@ cat /boot/config-$(uname -r) | grep -E "CONFIG_BPF|CONFIG_DEBUG_INFO_BTF"
 # CONFIG_DEBUG_INFO_BTF=y
 ```
 
-### Distribution のサポート
+### Distribution Support
 
-| Distribution      | eBPF 対応 | 備考                        |
+| Distribution      | eBPF 対応 | 注記                        |
 | ----------------- | ---------- | ---------------------------- |
 | Ubuntu 20.04+     | はい        | Kernel 5.4+                  |
 | Ubuntu 22.04+     | はい        | Kernel 5.15+（推奨）   |
-| RHEL/CentOS 8.2+  | はい        | バックポート付き Kernel 4.18+  |
-| Amazon Linux 2    | 部分的    | Kernel のアップグレードが必要な場合あり      |
+| RHEL/CentOS 8.2+  | はい        | backport 付き Kernel 4.18+  |
+| Amazon Linux 2    | 部分的    | kernel upgrade が必要な場合あり      |
 | Amazon Linux 2023 | はい        | Kernel 6.1+                  |
-| Bottlerocket      | はい        | Container 用に特化 |
+| Bottlerocket      | はい        | container 専用に構築 |
 
-### Calico バージョンの要件
+### Calico Version の要件
 
 ```yaml
 # Minimum Calico versions for eBPF features
@@ -441,7 +337,7 @@ Dual-stack eBPF:         v3.20.0
 Host-networked pods:      v3.13.0 (with limitations)
 ```
 
-### Node 設定
+### Node Configuration
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -497,7 +393,7 @@ ls /etc/cni/net.d/
 
 ### 移行手順
 
-**ステップ 1: FelixConfiguration の更新（dry-run）**
+**ステップ 1: FelixConfiguration を更新（dry-run）**
 
 ```yaml
 # Save current configuration
@@ -516,7 +412,7 @@ spec:
   bpfKubeProxyIptablesCleanupEnabled: false  # Don't cleanup yet
 ```
 
-**ステップ 2: kube-proxy の無効化（Calico を置き換えとして使用する場合）**
+**ステップ 2: kube-proxy を無効化（Calico を replacement として使用する場合）**
 
 ```bash
 # Option A: Scale down kube-proxy
@@ -526,7 +422,7 @@ kubectl -n kube-system patch daemonset kube-proxy -p '{"spec":{"template":{"spec
 # Only if running both temporarily
 ```
 
-**ステップ 3: テスト Node で eBPF を有効化**
+**ステップ 3: test node で eBPF を有効化**
 
 ```bash
 # Label test node
@@ -543,7 +439,7 @@ spec:
 EOF
 ```
 
-**ステップ 4: テスト Node を検証**
+**ステップ 4: test node を検証**
 
 ```bash
 # Check BPF programs loaded
@@ -558,7 +454,7 @@ kubectl exec test-pod -- wget -O- http://kubernetes.default.svc
 kubectl logs -n kube-system -l k8s-app=calico-node -c calico-node | grep -i bpf
 ```
 
-**ステップ 5: すべての Node にロールアウト**
+**ステップ 5: すべての node に rollout**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -574,7 +470,7 @@ spec:
   bpfConnectTimeLoadBalancingEnabled: true
 ```
 
-**ステップ 6: iptables ルールのクリーンアップ**
+**ステップ 6: iptables rule を cleanup**
 
 ```bash
 # After confirming eBPF is working
@@ -584,7 +480,7 @@ calicoctl patch felixconfiguration default -p '{"spec":{"bpfKubeProxyIptablesCle
 iptables -L -n | wc -l  # Should be significantly reduced
 ```
 
-### ロールバック手順
+### Rollback 手順
 
 ```bash
 # Disable eBPF
@@ -602,27 +498,27 @@ iptables -L -n -v
 
 ***
 
-## パフォーマンスベンチマーク
+## Performance Benchmark
 
-### レイテンシの比較
+### Latency の比較
 
-| シナリオ                | iptables | eBPF  | 改善率 |
+| Scenario                | iptables | eBPF  | 改善率 |
 | ----------------------- | -------- | ----- | ----------- |
-| Pod 間（同一 Node）  | 45 μs    | 25 μs | 44%         |
-| Pod 間（Node 間） | 120 μs   | 80 μs | 33%         |
+| Pod-to-Pod（同じ node）  | 45 μs    | 25 μs | 44%         |
+| Pod-to-Pod（node 間） | 120 μs   | 80 μs | 33%         |
 | Service（ClusterIP）     | 150 μs   | 60 μs | 60%         |
 | Service（NodePort）      | 180 μs   | 70 μs | 61%         |
 
-### スループットの比較
+### Throughput の比較
 
-| シナリオ            | iptables | eBPF    | 改善率 |
+| Scenario            | iptables | eBPF    | 改善率 |
 | ------------------- | -------- | ------- | ----------- |
-| TCP 単一ストリーム   | 15 Gbps  | 23 Gbps | 53%         |
-| TCP 複数ストリーム    | 35 Gbps  | 48 Gbps | 37%         |
-| UDP 単一ストリーム   | 8 Gbps   | 18 Gbps | 125%        |
-| 小さいパケット（64B） | 2M pps   | 5M pps  | 150%        |
+| TCP single stream   | 15 Gbps  | 23 Gbps | 53%         |
+| TCP multi-stream    | 35 Gbps  | 48 Gbps | 37%         |
+| UDP single stream   | 8 Gbps   | 18 Gbps | 125%        |
+| Small packet（64B） | 2M pps   | 5M pps  | 150%        |
 
-### CPU 効率
+### CPU Efficiency
 
 ```
 Connection rate test (connections/sec):
@@ -640,7 +536,7 @@ eBPF dataplane:
 Note: eBPF performance remains nearly constant regardless of rule count
 ```
 
-### 独自のベンチマークの実行
+### 独自 Benchmark の実行
 
 ```bash
 # Install netperf
@@ -661,9 +557,9 @@ kubectl exec client-pod -- iperf3 -c server-pod-ip -t 30
 
 ***
 
-## eBPF のデバッグ
+## eBPF Debugging
 
-### bpftool コマンド
+### bpftool Command
 
 ```bash
 # List loaded BPF programs
@@ -685,7 +581,7 @@ bpftool map dump id 456
 bpftool map lookup id 456 key 0x0a 0x00 0x01 0x0a
 ```
 
-### TC Filter の調査
+### TC Filter Inspection
 
 ```bash
 # Show TC filters on interface
@@ -699,7 +595,7 @@ tc filter show dev eth0 ingress | grep bpf
 tc -s filter show dev eth0 ingress
 ```
 
-### Calico BPF のデバッグ
+### Calico BPF Debugging
 
 ```bash
 # Enable debug logging
@@ -721,9 +617,9 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
   calico-bpf nat dump
 ```
 
-### 一般的なデバッグシナリオ
+### 一般的な Debug Scenario
 
-**接続性の問題:**
+**Connectivity Issue：**
 
 ```bash
 # Check if BPF programs are loaded
@@ -742,7 +638,7 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
   calico-bpf policy dump
 ```
 
-**Service Load Balancing の問題:**
+**Service Load Balancing Issue：**
 
 ```bash
 # Check service backends in NAT map
@@ -760,13 +656,13 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 
 ### 現在の制限事項
 
-| 制限事項              | 説明            | 回避策                      |
+| 制限事項              | 説明            | Workaround                      |
 | ----------------------- | ---------------------- | ------------------------------- |
-| **Host-networked pods** | 限定的な Policy サポート | Host Pod には iptables を使用      |
-| **IPv6**                | 部分的なサポート        | Dual-stack モードを使用             |
-| **Wireguard**           | eBPF とは併用不可          | IPsec を使用するか暗号化を無効化 |
-| **Service topology**    | 限定的なサポート        | 標準の kube-proxy を使用         |
-| **Windows nodes**       | 未サポート          | iptables Dataplane を使用          |
+| **Host-networked pod** | 限定的な policy support | host pod には iptables を使用      |
+| **IPv6**                | 部分的な support        | dual-stack mode を使用             |
+| **Wireguard**           | eBPF とは併用不可          | IPsec を使用するか encryption を無効化 |
+| **Service topology**    | 限定的な support        | 標準の kube-proxy を使用         |
+| **Windows node**       | 未対応          | iptables dataplane を使用          |
 
 ### 既知の問題
 
@@ -803,11 +699,11 @@ cat /proc/sys/kernel/bpf_map_max_entries
 
 ***
 
-## Kube-proxy の置き換え
+## Kube-proxy Replacement
 
-### Kube-proxy の完全な置き換え
+### Kube-proxy の完全な Replacement
 
-Calico eBPF は、Service Load Balancing で kube-proxy を完全に置き換えることができます。
+Calico eBPF は、Service load balancing で kube-proxy を完全に置き換えられます。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -823,7 +719,7 @@ spec:
   # (Calico will manage service rules)
 ```
 
-### kube-proxy の無効化
+### kube-proxy を無効化する
 
 ```bash
 # Method 1: Scale to zero
@@ -836,7 +732,7 @@ kubectl -n kube-system delete ds kube-proxy
 kubectl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico":"true"}}}}}'
 ```
 
-### 置き換えの検証
+### Replacement の検証
 
 ```bash
 # Check no kube-proxy rules in iptables
@@ -851,9 +747,9 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.svc
 ```
 
-### Service 機能の比較
+### Service Feature の比較
 
-| 機能         | kube-proxy（iptables） | kube-proxy（IPVS） | Calico eBPF |
+| Feature         | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
 | --------------- | --------------------- | ----------------- | ----------- |
 | ClusterIP       | はい                   | はい               | はい         |
 | NodePort        | はい                   | はい               | はい         |
@@ -869,13 +765,13 @@ kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.
 
 ### Deployment の推奨事項
 
-1. eBPF を有効化する前に**カーネル要件を検証**する
-2. まず**本番以外の** Cluster でテストする
-3. Node Selector を使用して**段階的に有効化**する
-4. ロールアウト中に**パフォーマンスを監視**する
-5. **ロールバック計画を準備**しておく
+1. eBPF を有効化する前に **kernel の要件を確認** する
+2. 最初に **non-production** cluster でテストする
+3. node selector を使用して **段階的に有効化** する
+4. rollout 中に **パフォーマンスを monitor** する
+5. **rollback plan** を準備しておく
 
-### 設定のベストプラクティス
+### Configuration のベストプラクティス
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -900,7 +796,7 @@ spec:
   bpfKubeProxyIptablesCleanupEnabled: true
 ```
 
-### eBPF Dataplane のモニタリング
+### eBPF Dataplane の Monitoring
 
 ```yaml
 # Prometheus metrics to monitor
@@ -916,31 +812,31 @@ felix_bpf_dataplane_apply_time_seconds # Dataplane sync time
 
 ## まとめ
 
-Calico の eBPF Dataplane は、Kubernetes ネットワーキングにおける大きな進歩をもたらします。
+Calico の eBPF dataplane は、Kubernetes networking における大きな進歩です。
 
 | 利点           | 影響                      |
 | ----------------- | --------------------------- |
-| **パフォーマンス**   | 最大 60% のレイテンシ削減 |
-| **スケーラビリティ**   | O(n) に対して O(1) のルールルックアップ    |
-| **効率性**    | CPU 使用率の低減             |
-| **オブザーバビリティ** | 豊富な BPF ベースのメトリクス      |
-| **シンプルさ**    | kube-proxy を置き換え         |
+| **Performance**   | レイテンシを最大 60% 削減 |
+| **Scalability**   | O(n) ではなく O(1) の rule lookup    |
+| **Efficiency**    | より低い CPU usage             |
+| **Observability** | 豊富な BPF ベースの metric      |
+| **Simplicity**    | kube-proxy を置き換え         |
 
-### eBPF Dataplane を使用すべき場合
+### eBPF Dataplane を使用する場合
 
-* 高スループットのワークロード
-* レイテンシに敏感なアプリケーション
-* 多数の Service を持つ大規模 Cluster
-* 詳細なオブザーバビリティが必要な環境
-* Linux Kernel 5.3+ が利用可能
+* 高 throughput の workload
+* latency-sensitive application
+* 多数の Service を持つ大規模 cluster
+* 詳細な observability が必要な environment
+* Linux kernel 5.3+ が利用可能
 
-### iptables を維持すべき場合
+### iptables を継続して使用する場合
 
-* Windows Node のサポートが必要
-* 古い Kernel バージョン
-* Wireguard 暗号化が必要
-* 複雑な Service Topology の要件
-* 実績ある技術を必要とするリスク回避的な環境
+* Windows node support が必要
+* 古い kernel version
+* Wireguard encryption が必要
+* 複雑な Service topology の要件
+* 実績のある技術を必要とする risk-averse な environment
 
 ***
 

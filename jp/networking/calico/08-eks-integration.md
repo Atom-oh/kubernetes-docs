@@ -4,127 +4,36 @@
 
 ## 概要
 
-この章では、アーキテクチャパターン、インストール方法、EKS 固有の最適化を含む、Amazon EKS との Calico 統合について扱います。最適な EKS ネットワーキングのために、AWS VPC CNI と併用して Calico の NetworkPolicy 機能を活用する方法を学びます。
+この章では、アーキテクチャパターン、インストール方法、EKS 固有の最適化を含む、Amazon EKS と Calico の統合について説明します。最適な EKS ネットワーキングのために、AWS VPC CNI と組み合わせて Calico のネットワークポリシー機能を活用する方法を学びます。
 
-```mermaid
-graph TB
-    subgraph "EKS with Calico"
-        subgraph "Control Plane (AWS Managed)"
-            API[EKS API Server]
-            ETCD[etcd]
-        end
-
-        subgraph "Data Plane (Customer Managed)"
-            subgraph "Node 1"
-                VPC1[VPC CNI<br/>Pod Networking]
-                CAL1[Calico<br/>Network Policy]
-                POD1[Pods]
-            end
-
-            subgraph "Node 2"
-                VPC2[VPC CNI]
-                CAL2[Calico]
-                POD2[Pods]
-            end
-        end
-    end
-
-    API --> VPC1
-    API --> VPC2
-    API --> CAL1
-    API --> CAL2
-    VPC1 --> POD1
-    VPC2 --> POD2
-    CAL1 -.->|Policy| POD1
-    CAL2 -.->|Policy| POD2
-
-    style API fill:#ff9800
-    style VPC1 fill:#4fc3f7
-    style VPC2 fill:#4fc3f7
-    style CAL1 fill:#81c784
-    style CAL2 fill:#81c784
-```
+![EKS API サーバーは 2 つの worker node に接続し、VPC CNI が Pod ネットワーキングを処理する一方で、Calico は同じ Pod にネットワークポリシーを適用します。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
 
 ## VPC CNI + Calico アーキテクチャ
 
-![Amazon EKS 上の Calico](../../.gitbook/assets/calico_eks_integration.png)
+![Typha は EKS control plane の kube-apiserver を監視し、2 つの worker node 上の calico-node (Felix) にポリシーを配信します。そこでは aws-node (VPC CNI) が ENI を管理して VPC CIDR から Pod IP を割り当て、Calico は同じ Pod に NetworkPolicy を適用し、node 間の Pod トラフィックは VPC によってネイティブにルーティングされます。](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
 
-Amazon EKS は、デフォルトで Pod ネットワーキングに AWS VPC CNI を使用します。VPC CNI が IP アドレス管理を処理する一方で、高度な NetworkPolicy 機能のために Calico を追加できます。
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-4.html)
+
+Amazon EKS は、デフォルトで Pod ネットワーキングに AWS VPC CNI を使用します。VPC CNI が IP address management を処理する一方で、高度なネットワークポリシー機能のために Calico を追加できます。
 
 ### アーキテクチャの詳細
 
-```mermaid
-graph TB
-    subgraph "EKS Node"
-        subgraph "Pod Network Stack"
-            POD[Pod<br/>10.0.1.15]
-            VETH[veth pair]
-        end
+![Pod のトラフィックは veth pair を通って VPC CNI 管理の secondary ENI に到達し、Calico の Felix agent が同じパス上で iptables/eBPF ルールをプログラムした後、primary ENI がトラフィックを VPC subnet と internet gateway に運びます。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
 
-        subgraph "VPC CNI"
-            IPAMD[aws-node<br/>IPAMD]
-            ENI[Secondary ENI<br/>10.0.1.0/24]
-        end
+### VPC CNI + Calico でのトラフィックフロー
 
-        subgraph "Calico"
-            FELIX[Felix Agent]
-            IPTABLES[iptables/eBPF<br/>Policy Rules]
-        end
-
-        ETH0[eth0<br/>Primary ENI]
-    end
-
-    subgraph "AWS VPC"
-        SUBNET[VPC Subnet<br/>10.0.0.0/16]
-        IGW[Internet Gateway]
-    end
-
-    POD --> VETH
-    VETH --> ENI
-    IPAMD --> ENI
-    FELIX --> IPTABLES
-    IPTABLES --> VETH
-    ENI --> ETH0
-    ETH0 --> SUBNET
-    SUBNET --> IGW
-
-    style IPAMD fill:#ff9800
-    style FELIX fill:#81c784
-    style ENI fill:#4fc3f7
-```
-
-### VPC CNI + Calico のトラフィックフロー
-
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A
-    participant CalA as Calico (Node A)
-    participant VPCNIA as VPC CNI (Node A)
-    participant VPC as AWS VPC
-    participant VPCNIB as VPC CNI (Node B)
-    participant CalB as Calico (Node B)
-    participant PodB as Pod B
-
-    PodA->>CalA: Egress traffic
-    CalA->>CalA: Evaluate egress policy
-    CalA->>VPCNIA: Allow (if policy permits)
-    VPCNIA->>VPC: Route via ENI
-    VPC->>VPCNIB: Deliver to Node B ENI
-    VPCNIB->>CalB: Incoming traffic
-    CalB->>CalB: Evaluate ingress policy
-    CalB->>PodB: Allow (if policy permits)
-```
+![Pod A の egress トラフィックは、その node 上で Calico により評価された後、VPC CNI が AWS VPC を経由して宛先 node へルーティングします。宛先 node では、Calico が ingress ポリシーを評価してからパケットを Pod B に配信します。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
 
 ## インストール方法の比較
 
 ### 方法の概要
 
-| 方法            | 複雑さ | 柔軟性 | アップグレードパス | EKS 統合 |
-| --------------- | ------ | ------ | ------------------ | -------- |
-| EKS Add-on      | 低     | 制限あり | 自動             | ネイティブ |
-| Tigera Operator | 中     | 高     | 半自動             | 良好     |
-| Helm            | 中     | 最高   | 手動               | 良好     |
-| Manifest        | 高     | 中     | 手動               | 基本的   |
+| 方法          | 複雑さ | 柔軟性 | アップグレードパス | EKS 統合 |
+| --------------- | ---------- | ----------- | ------------ | --------------- |
+| EKS Add-on      | 低        | 制限あり     | 自動         | ネイティブ      |
+| Tigera Operator | 中        | 高           | 半自動       | 良好            |
+| Helm            | 中        | 最高         | 手動         | 良好            |
+| Manifest        | 高        | 中           | 手動         | 基本            |
 
 ### 方法 1: EKS Add-on（最も簡単）
 
@@ -163,14 +72,14 @@ addons:
         enablePolicyEventLogs: "true"
 ```
 
-**利点:**
+**長所:**
 
 * EKS による自動更新
-* AWS サポートが含まれる
+* AWS サポートを含む
 * シンプルな設定
 * ネイティブな CloudWatch 統合
 
-**欠点:**
+**短所:**
 
 * Kubernetes NetworkPolicy に限定される
 * Calico 固有の機能がない
@@ -233,16 +142,16 @@ kubectl get tigerastatus
 kubectl get pods -n calico-system
 ```
 
-**利点:**
+**長所:**
 
-* 完全な Calico 機能（GlobalNetworkPolicy、Tiers など）
+* Calico の全機能（GlobalNetworkPolicy、Tier など）
 * Operator がライフサイクルを管理
-* 自動コンポーネント照合
-* eBPF dataplane のサポート
+* コンポーネントの自動調整
+* eBPF dataplane をサポート
 
-**欠点:**
+**短所:**
 
-* 追加の Operator デプロイメントが必要
+* 追加の Operator Deployment が必要
 * EKS とは別にアップグレードが必要
 
 ### 方法 3: Helm インストール
@@ -299,21 +208,21 @@ apiServer:
   enabled: false  # Set to true for Calico Enterprise
 ```
 
-**利点:**
+**長所:**
 
 * GitOps に適している
-* 設定をバージョン管理できる
-* 簡単にロールバックできる
-* 値をカスタマイズ可能
+* 設定のバージョン管理
+* 簡単なロールバック
+* カスタマイズ可能な値
 
-**欠点:**
+**短所:**
 
 * Helm の知識が必要
-* 手動のアップグレード管理が必要
+* 手動によるアップグレード管理
 
 ## EKS Network Policy Controller（v1.14+）
 
-EKS 1.25+ には、VPC CNI を介したネイティブな Network Policy サポートが含まれています。
+EKS 1.25+ には、VPC CNI を介したネイティブな Network Policy サポートが含まれます。
 
 ### ネイティブ Network Policy の有効化
 
@@ -345,37 +254,37 @@ kubectl get pods -n kube-system -l k8s-app=aws-node
 kubectl logs -n kube-system -l k8s-app=aws-node -c aws-network-policy-agent
 ```
 
-### EKS ネイティブと Calico Network Policy の比較
+### EKS ネイティブと Calico Network Policy
 
-| 機能                     | EKS ネイティブ（VPC CNI） | Calico           |
-| ------------------------ | ------------------------- | ---------------- |
-| Kubernetes NetworkPolicy | はい                      | はい             |
-| GlobalNetworkPolicy      | いいえ                    | はい             |
-| Policy Tiers             | いいえ                    | はい             |
-| L7 Policy（HTTP）        | いいえ                    | はい（Enterprise） |
-| DNS ベースの Policy      | いいえ                    | はい             |
-| FQDN Egress Rules        | いいえ                    | はい             |
-| Host Endpoint Policy     | いいえ                    | はい             |
-| Policy Preview           | いいえ                    | はい（Enterprise） |
-| Flow Logs                | CloudWatch                | Prometheus/File  |
-| パフォーマンス           | eBPF 最適化済み           | iptables/eBPF    |
+| 機能                  | EKS ネイティブ（VPC CNI） | Calico           |
+| ------------------------ | -------------------- | ---------------- |
+| Kubernetes NetworkPolicy | はい                  | はい              |
+| GlobalNetworkPolicy      | いいえ                | はい              |
+| Policy Tier              | いいえ                | はい              |
+| L7 Policy（HTTP）         | いいえ                | はい（Enterprise） |
+| DNS ベースの Policy         | いいえ                | はい              |
+| FQDN Egress Rule        | いいえ                | はい              |
+| Host Endpoint Policy     | いいえ                | はい              |
+| Policy Preview           | いいえ                | はい（Enterprise） |
+| Flow Log                | CloudWatch           | Prometheus/File  |
+| パフォーマンス              | eBPF 最適化済み       | iptables/eBPF    |
 
 ## Node タイプに関する考慮事項
 
 ### Node タイプ別の機能マトリクス
 
-| 機能             | Managed Nodes | Self-Managed | Fargate |
-| ---------------- | ------------- | ------------ | ------- |
-| Calico CNI       | いいえ（VPC CNI） | はい      | いいえ  |
-| Calico Policy    | はい          | はい         | 制限あり |
-| eBPF Dataplane   | はい          | はい         | いいえ  |
-| BGP              | いいえ        | はい         | いいえ  |
-| WireGuard        | はい          | はい         | いいえ  |
-| Host Endpoints   | はい          | はい         | いいえ  |
-| Custom IPAM      | いいえ        | はい         | いいえ  |
-| Node Taints      | はい          | はい         | N/A     |
+| 機能        | Managed Node | Self-Managed | Fargate |
+| -------------- | ------------- | ------------ | ------- |
+| Calico CNI     | いいえ（VPC CNI）  | はい          | いいえ      |
+| Calico Policy  | はい           | はい          | 制限あり |
+| eBPF Dataplane | はい           | はい          | いいえ      |
+| BGP            | いいえ           | はい          | いいえ      |
+| WireGuard      | はい           | はい          | いいえ      |
+| Host Endpoint | はい           | はい          | いいえ      |
+| Custom IPAM    | いいえ           | はい          | いいえ      |
+| Node Taint    | はい           | はい          | N/A     |
 
-### Managed Node Groups
+### Managed Node Group
 
 ```yaml
 # eksctl with managed nodes and Calico
@@ -411,7 +320,7 @@ managedNodeGroups:
         effect: NoSchedule
 ```
 
-### Self-Managed Nodes（完全な Calico）
+### Self-Managed Node（完全な Calico）
 
 ```yaml
 # Self-managed nodes with full Calico networking
@@ -471,15 +380,15 @@ fargateProfiles:
 
 **Fargate の制限事項:**
 
-* Kubernetes 標準 NetworkPolicy のみ
+* Kubernetes 標準の NetworkPolicy のみ
 * Calico GlobalNetworkPolicy は利用不可
 * eBPF dataplane は利用不可
-* Host endpoint policy は利用不可
-* Custom IPAM は利用不可
+* host endpoint policy は利用不可
+* custom IPAM は利用不可
 
 ## IRSA 設定
 
-IAM Roles for Service Accounts（IRSA）は、Calico コンポーネントにきめ細かな IAM 権限を提供します。
+Service Account 用の IAM Role（IRSA）は、Calico コンポーネントにきめ細かな IAM 権限を提供します。
 
 ```yaml
 # Create IAM policy for Calico
@@ -550,48 +459,18 @@ spec:
 
 ### 比較
 
-```mermaid
-graph TB
-    subgraph "AWS Security Groups"
-        SG[Security Group<br/>Instance Level]
-        ENI_SG[ENI Security Group<br/>Network Interface]
-    end
+![AWS security group は粗い粒度の instance および ENI レベルの L3-L4 ルールを適用する一方で、Calico の GlobalNetworkPolicy、namespace NetworkPolicy、HostEndpointPolicy はすべて同じ Pod に適用され、その Pod は peer Pod と直接トラフィックを交換します。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
 
-    subgraph "Calico Network Policy"
-        GNP[GlobalNetworkPolicy<br/>Cluster-wide]
-        NP[NetworkPolicy<br/>Namespace-scoped]
-        HEP[HostEndpointPolicy<br/>Node Level]
-    end
-
-    subgraph "Pod Traffic Flow"
-        POD1[Pod A]
-        POD2[Pod B]
-    end
-
-    SG -->|L3-L4 only| ENI_SG
-    ENI_SG --> POD1
-
-    GNP --> NP
-    NP --> POD1
-    HEP --> POD1
-
-    POD1 <--> POD2
-
-    style SG fill:#ff9800
-    style GNP fill:#81c784
-    style NP fill:#81c784
-```
-
-| 項目             | Security Groups | Calico Policy         |
-| ---------------- | --------------- | --------------------- |
-| スコープ         | Instance/ENI    | Pod/Namespace/Cluster |
-| 粒度             | IP/Port         | Labels/Selectors/FQDN |
-| レイヤー         | L3-L4           | L3-L7                 |
-| Pod の選択       | Instance 単位   | Labels 単位           |
-| 動的な更新       | 制限あり        | リアルタイム          |
-| 監査             | CloudTrail      | Flow Logs             |
-| Cross-AZ         | はい            | はい                  |
-| コスト           | 無料            | 無料（OSS）           |
+| 観点          | Security Group | Calico Policy         |
+| --------------- | --------------- | --------------------- |
+| スコープ           | Instance/ENI    | Pod/Namespace/Cluster |
+| 粒度     | IP/Port         | Label/Selector/FQDN |
+| レイヤー           | L3-L4           | L3-L7                 |
+| Pod 選択   | Instance 単位     | Label 単位             |
+| 動的更新 | 制限あり         | リアルタイム             |
+| 監査           | CloudTrail      | Flow Log             |
+| Cross-AZ        | はい             | はい                   |
+| コスト            | 無料            | 無料（OSS）            |
 
 ### 両方を併用する
 
@@ -645,12 +524,12 @@ spec:
 ### 互換性マトリクス
 
 | EKS バージョン | Calico 3.26 | Calico 3.27 | Calico 3.28 | Calico 3.29 |
-| -------------- | ----------- | ----------- | ----------- | ----------- |
-| 1.27           | はい        | はい        | はい        | はい        |
-| 1.28           | はい        | はい        | はい        | はい        |
-| 1.29           | 制限あり    | はい        | はい        | はい        |
-| 1.30           | いいえ      | はい        | はい        | はい        |
-| 1.31           | いいえ      | 制限あり    | はい        | はい        |
+| ----------- | ----------- | ----------- | ----------- | ----------- |
+| 1.27        | はい         | はい         | はい         | はい         |
+| 1.28        | はい         | はい         | はい         | はい         |
+| 1.29        | 制限あり     | はい         | はい         | はい         |
+| 1.30        | いいえ          | はい         | はい         | はい         |
+| 1.31        | いいえ          | 制限あり     | はい         | はい         |
 
 ### アップグレード手順
 
@@ -688,13 +567,13 @@ eksctl upgrade nodegroup \
 
 ### コスト要因
 
-| コンポーネント | コスト要因                    | 最適化                 |
-| -------------- | ----------------------------- | ---------------------- |
-| VPC CNI IPs    | ENI のアタッチ、IP 割り当て   | prefix delegation を使用 |
-| Calico Typha   | Instance リソース             | レプリカを適正化       |
-| Flow Logs      | ストレージ、処理              | 集約、フィルタリング   |
-| Cross-AZ       | データ転送                    | Zone affinity          |
-| eBPF           | CPU 効率                      | サポートされる場所で有効化 |
+| コンポーネント    | コスト要因                   | 最適化           |
+| ------------ | ----------------------------- | ---------------------- |
+| VPC CNI IP  | ENI のアタッチ、IP 割り当て | prefix delegation を使用  |
+| Calico Typha | Instance リソース            | replica を適正化    |
+| Flow Log    | ストレージ、処理           | 集約、フィルタリング      |
+| Cross-AZ     | データ転送                 | zone affinity          |
+| eBPF         | CPU 効率                | サポートされる場合に有効化 |
 
 ### コスト最適化戦略
 
@@ -753,7 +632,7 @@ data:
   warm-ip-target: "4"
 ```
 
-### EKS 上の eBPF
+### EKS での eBPF
 
 ```yaml
 # Enable eBPF dataplane on EKS
@@ -780,7 +659,7 @@ spec:
   bpfDataIfacePattern: "^(eth.*)"
 ```
 
-**注:** EKS では、VPC CNI 統合で必要となるため、eBPF モードでも kube-proxy を実行したままにしてください。
+**注:** EKS では、VPC CNI 統合に必要なため、eBPF mode でも kube-proxy を実行し続けてください。
 
 ## 完全な eksctl 設定
 
@@ -996,8 +875,8 @@ echo "Calico installation complete!"
 * [EKS ベストプラクティス - ネットワーキング](https://aws.github.io/aws-eks-best-practices/networking/)
 * [EKS 上の Calico ドキュメント](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
 * [VPC CNI ドキュメント](https://github.com/aws/amazon-vpc-cni-k8s)
-* [EKS Add-ons](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
-* [Pod の Security Groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+* [EKS Add-on](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
+* [Pod 用 Security Group](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 
 ## クイズ
 
