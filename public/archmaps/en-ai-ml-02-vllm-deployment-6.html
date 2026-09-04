@@ -5359,7 +5359,7 @@
         </div>
         <ul>
           <li>&bull; GPU KV cache usage: 0.1% (c=1) to 2.6% (c=16) — never the constraint</li>
-          <li>&bull; Batch-1 decode: ~15.2GB bf16 weights per token via ~300GB/s HBM caps it near the measured 17-18 tok/s</li>
+          <li>&bull; Batch-1 decode: ~15.2GB bf16 weights per token via ~300GB/s GDDR6 caps it near the measured 17-18 tok/s</li>
           <li>&bull; Compute: ~3 TFLOP/s at peak vs L4&#39;s ~121 TFLOPS bf16 — a few percent of ceiling</li>
         </ul>
       </div>

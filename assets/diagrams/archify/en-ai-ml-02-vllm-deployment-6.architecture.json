@@ -32,6 +32,6 @@
   "cards": [
     { "dot": "cyan", "title": "Measured throughput scaling", "items": ["Concurrency 1: ~17 tokens/s (server-reported)", "Concurrency 8: 109 tokens/s aggregate (client), 123-129 tokens/s peak (server)", "Concurrency 16: 208 tokens/s aggregate (client), up to 243 tokens/s peak (server)"] },
     { "dot": "emerald", "title": "Measured latency (full ~100-128 token response)", "items": ["Concurrency 1: p50 5.65 s, p90 7.43 s", "Concurrency 16: p50 7.52 s, p90 8.74 s — latency barely grows despite 16x the load"] },
-    { "dot": "rose", "title": "Bandwidth, not compute, is the limit", "items": ["GPU KV cache usage: 0.1% (c=1) to 2.6% (c=16) — never the constraint", "Batch-1 decode: ~15.2GB bf16 weights per token via ~300GB/s HBM caps it near the measured 17-18 tok/s", "Compute: ~3 TFLOP/s at peak vs L4's ~121 TFLOPS bf16 — a few percent of ceiling"] }
+    { "dot": "rose", "title": "Bandwidth, not compute, is the limit", "items": ["GPU KV cache usage: 0.1% (c=1) to 2.6% (c=16) — never the constraint", "Batch-1 decode: ~15.2GB bf16 weights per token via ~300GB/s GDDR6 caps it near the measured 17-18 tok/s", "Compute: ~3 TFLOP/s at peak vs L4's ~121 TFLOPS bf16 — a few percent of ceiling"] }
   ]
 }

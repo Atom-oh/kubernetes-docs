@@ -77,7 +77,7 @@ vLLM supports the following models:
 4. **Quantization**: Supports INT8/INT4 quantization to reduce memory usage and improve throughput.
 5. **OpenAI Compatible API**: Provides an interface compatible with the OpenAI API.
 
-### Latest vLLM Features (v0.6+)
+### vLLM Features Added in the v0.6 Line
 
 vLLM is evolving rapidly with significant new capabilities in recent releases:
 
@@ -609,7 +609,7 @@ affinity:
 
 Every other number on this page so far is a general vLLM project claim or a configuration flag description. This section is different: it is one measured run against a real vLLM server, so you can see what "continuous batching improves throughput" actually looks like on one concrete model and GPU.
 
-![A client Job reaches the vLLM server through a ClusterIP Service, which batches requests onto a single NVIDIA L4 GPU, alongside the measured throughput, latency, and GPU headroom results.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
+![A client Job reaches the vLLM server through a ClusterIP Service, which batches requests onto a single NVIDIA L4 GPU, alongside the measured throughput, latency, and why memory bandwidth, not compute, was the limit.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
 
@@ -623,7 +623,7 @@ Every other number on this page so far is a general vLLM project claim or a conf
 ### Reproduce
 
 ```yaml
-# NodePool (Karpenter) - dedicated, deleted after the run
+# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata: { name: bench-gpu }
@@ -639,12 +639,15 @@ spec:
         - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
       taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
 ---
-# vLLM server
+# vLLM server (namespace bench-gpu) + the ClusterIP Service the client calls
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: vllm-server }
+metadata: { name: vllm-server, namespace: bench-gpu }
 spec:
+  replicas: 1
+  selector: { matchLabels: { app: vllm-server } }
   template:
+    metadata: { labels: { app: vllm-server } }
     spec:
       nodeSelector: { node-type: bench-gpu }
       tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
@@ -653,7 +656,18 @@ spec:
           image: vllm/vllm-openai:v0.6.4.post1
           args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
                  "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
-          resources: { limits: { nvidia.com/gpu: "1" } }
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: "1" }
+            requests: { nvidia.com/gpu: "1", cpu: "3", memory: 20Gi }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 60 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  selector: { app: vllm-server }
+  ports: [{ port: 8000, targetPort: 8000 }]
 ```
 
 The client is a plain Python script using `urllib` + `concurrent.futures.ThreadPoolExecutor` to fire N requests at `http://vllm-server:8000/v1/chat/completions` and time each one; run it as a `batch/v1` Job in the same namespace. One gotcha worth calling out: the `nvidia.com/device-plugin.config: default` node label above is required — without it the shared `nvidia-device-plugin` DaemonSet never schedules onto the new node, and `nvidia.com/gpu` never registers as an allocatable resource even though the taint and toleration match correctly.
@@ -673,7 +687,7 @@ The client is a plain Python script using `urllib` + `concurrent.futures.ThreadP
 
 - **Per-request latency barely moves.** Going from 1 concurrent request to 16 only pushes p50 latency from 5.65 s to 7.52 s (+33%) for the same ~100-128 token response — this is continuous batching working as intended: new requests join the running batch instead of queuing behind it.
 - **Aggregate throughput scales close to linearly.** 4 → 8 → 16 concurrent requests roughly doubles aggregate throughput each time (58.67 → 109.04 → 208.08 tokens/s).
-- **This is bandwidth-bound decode, not compute-bound — which is exactly why batching helps.** At batch 1, ~15.2 GB of bf16 weights have to be streamed from HBM for every single token; on this L4's ~300 GB/s of memory bandwidth that caps single-request decode at roughly 20 tokens/s, matching the measured ~17-18. Compute tells a completely different story: even at the busiest measured point (208 tokens/s aggregate) the GPU is doing roughly 3 TFLOP/s of work against an L4's ~121 TFLOPS of dense bf16 compute — a couple of percent of its ceiling. KV cache capacity was never the limit either (it stayed under 3% the whole run). Continuous batching is the fix for exactly this kind of bandwidth-bound decode: once the weights are already in HBM for one request, serving 16 requests off the same weight read is nearly free, which is why throughput scales close to linearly while latency barely grows.
+- **This is bandwidth-bound decode, not compute-bound — which is exactly why batching helps.** At batch 1, ~15.2 GB of bf16 weights have to be streamed from GDDR6 memory for every single token; on this L4's ~300 GB/s of memory bandwidth that caps single-request decode at roughly 20 tokens/s, matching the measured ~17-18. Compute tells a completely different story: even at the busiest measured point (208 tokens/s aggregate) the GPU is doing roughly 3 TFLOP/s of work against an L4's ~121 TFLOPS of dense bf16 compute — a couple of percent of its ceiling. KV cache capacity was never the limit either (it stayed under 3% the whole run). Continuous batching is the fix for exactly this kind of bandwidth-bound decode: once the weights have already been read from memory for one request, serving 16 requests off the same weight read is nearly free, which is why throughput scales close to linearly while latency barely grows.
 
 ### Caveats
 
