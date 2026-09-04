@@ -1,0 +1,162 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF Program Lifecycle",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kernel processing"
+        },
+        "security": {
+          "label": "Verify"
+        },
+        "external": {
+          "label": "Teardown"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "life",
+      "label": "Program lifecycle"
+    },
+    {
+      "id": "fail",
+      "label": "Verification failure",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "load",
+    "verify",
+    "attach",
+    "exec",
+    "detach",
+    "unload"
+  ],
+  "nodes": [
+    {
+      "id": "load",
+      "lane": "life",
+      "col": 0,
+      "type": "backend",
+      "label": "Load",
+      "sublabel": "bpf() syscall",
+      "width": 112
+    },
+    {
+      "id": "verify",
+      "lane": "life",
+      "col": 1,
+      "type": "security",
+      "label": "Verify",
+      "sublabel": "Verifier",
+      "width": 112
+    },
+    {
+      "id": "attach",
+      "lane": "life",
+      "col": 2,
+      "type": "backend",
+      "label": "Attach",
+      "sublabel": "event hook",
+      "width": 112
+    },
+    {
+      "id": "exec",
+      "lane": "life",
+      "col": 3,
+      "type": "backend",
+      "label": "Run",
+      "sublabel": "repeats per event",
+      "width": 112
+    },
+    {
+      "id": "detach",
+      "lane": "life",
+      "col": 4,
+      "type": "external",
+      "label": "Detach",
+      "sublabel": "explicit teardown",
+      "width": 112
+    },
+    {
+      "id": "unload",
+      "lane": "life",
+      "col": 5,
+      "type": "external",
+      "label": "Unload",
+      "sublabel": "when refs drop",
+      "width": 112
+    },
+    {
+      "id": "reject",
+      "lane": "fail",
+      "col": 1,
+      "type": "security",
+      "label": "Load rejected",
+      "width": 112
+    }
+  ],
+  "edges": [
+    {
+      "id": "load-verify",
+      "from": "load",
+      "to": "verify"
+    },
+    {
+      "id": "verify-attach",
+      "from": "verify",
+      "to": "attach",
+      "variant": "emphasis",
+      "toSide": "left",
+      "label": "pass"
+    },
+    {
+      "id": "attach-exec",
+      "from": "attach",
+      "to": "exec"
+    },
+    {
+      "id": "exec-detach",
+      "from": "exec",
+      "to": "detach",
+      "label": "explicit detach"
+    },
+    {
+      "id": "detach-unload",
+      "from": "detach",
+      "to": "unload"
+    },
+    {
+      "id": "verify-reject",
+      "from": "verify",
+      "to": "reject",
+      "label": "fail",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Event driven",
+      "items": [
+        "Runs every time the attached hook fires",
+        "State persists in eBPF maps between runs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cleanup",
+      "items": [
+        "Detaching from the hook stops execution",
+        "The kernel unloads the program when references drop"
+      ]
+    }
+  ]
+}

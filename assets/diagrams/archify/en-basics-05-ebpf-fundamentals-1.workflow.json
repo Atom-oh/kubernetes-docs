@@ -1,0 +1,140 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kernel Modules vs eBPF",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Authoring"
+        },
+        "backend": {
+          "label": "Build · load"
+        },
+        "security": {
+          "label": "Risk"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "ebpf",
+      "label": "eBPF way"
+    },
+    {
+      "id": "legacy",
+      "label": "Traditional · kernel module",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "loadrt",
+    "safe"
+  ],
+  "nodes": [
+    {
+      "id": "moddev",
+      "lane": "legacy",
+      "col": 0,
+      "type": "frontend",
+      "label": "Kernel module",
+      "sublabel": "C code",
+      "width": 132
+    },
+    {
+      "id": "modbuild",
+      "lane": "legacy",
+      "col": 1,
+      "type": "backend",
+      "label": "Kernel compile",
+      "sublabel": "per-kernel rebuild",
+      "width": 135
+    },
+    {
+      "id": "modrisk",
+      "lane": "legacy",
+      "col": 2,
+      "type": "security",
+      "label": "Instability risk",
+      "sublabel": "kernel panic possible",
+      "width": 152
+    },
+    {
+      "id": "write",
+      "lane": "ebpf",
+      "col": 0,
+      "type": "frontend",
+      "label": "Write eBPF",
+      "sublabel": "C / Rust",
+      "width": 120
+    },
+    {
+      "id": "loadrt",
+      "lane": "ebpf",
+      "col": 1,
+      "type": "backend",
+      "label": "Runtime load",
+      "sublabel": "no reboot needed",
+      "width": 124
+    },
+    {
+      "id": "safe",
+      "lane": "ebpf",
+      "col": 2,
+      "type": "backend",
+      "label": "Run verified",
+      "sublabel": "safe by design",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "id": "moddev-modbuild",
+      "from": "moddev",
+      "to": "modbuild",
+      "variant": "dashed"
+    },
+    {
+      "id": "modbuild-modrisk",
+      "from": "modbuild",
+      "to": "modrisk",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "id": "write-loadrt",
+      "from": "write",
+      "to": "loadrt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loadrt-safe",
+      "from": "loadrt",
+      "to": "safe",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "eBPF advantages",
+      "items": [
+        "Loads into the running kernel instantly",
+        "The verifier guarantees safety"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Kernel module burden",
+      "items": [
+        "Recompile for every kernel version",
+        "One bug can take the whole system down"
+      ]
+    }
+  ]
+}

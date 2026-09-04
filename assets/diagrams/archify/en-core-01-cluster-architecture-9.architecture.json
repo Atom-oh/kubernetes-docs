@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Abstraction Flow",
+    "output": "en-core-01-cluster-architecture-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "volume mount",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PVC",
+      "sublabel": "storage request",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PV",
+      "sublabel": "actual volume record",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "backend",
+      "label": "CSI driver",
+      "sublabel": "provision · attach",
+      "pos": [
+        740,
+        330
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Actual storage",
+      "sublabel": "EBS · EFS · NFS",
+      "pos": [
+        400,
+        330
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "volume claim reference",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "binding",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pv-csi",
+      "from": "pv",
+      "to": "csi",
+      "label": "volume attach",
+      "labelDy": 42
+    },
+    {
+      "id": "csi-storage",
+      "from": "csi",
+      "to": "storage",
+      "label": "create volume"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Separation of concerns",
+      "items": [
+        "Developers declare only size and mode via PVC",
+        "Operators and CSI own the actual storage"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dynamic provisioning",
+      "items": [
+        "StorageClass provisions a PV automatically from the PVC",
+        "Pods stay ignorant of the storage implementation"
+      ]
+    }
+  ]
+}

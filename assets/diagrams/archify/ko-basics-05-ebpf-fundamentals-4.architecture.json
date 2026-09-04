@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "XDP 프로그램의 패킷 처리 결정",
+    "output": "ko-basics-05-ebpf-fundamentals-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "nic", "type": "external", "label": "NIC", "sublabel": "수신 패킷", "pos": [50, 280], "size": [140, 64] },
+    { "id": "xdp", "type": "security", "label": "XDP 프로그램", "sublabel": "드라이버 레벨 훅", "pos": [340, 280], "size": [180, 64] },
+    { "id": "drop", "type": "security", "label": "XDP_DROP", "sublabel": "패킷 드롭", "pos": [720, 40], "size": [190, 56] },
+    { "id": "pass", "type": "backend", "label": "XDP_PASS", "sublabel": "커널 스택으로 전달", "pos": [720, 160], "size": [190, 56] },
+    { "id": "tx", "type": "backend", "label": "XDP_TX", "sublabel": "같은 NIC로 반환", "pos": [720, 280], "size": [190, 56] },
+    { "id": "redirect", "type": "backend", "label": "XDP_REDIRECT", "sublabel": "다른 인터페이스로 전달", "pos": [720, 400], "size": [190, 56] },
+    { "id": "aborted", "type": "security", "label": "XDP_ABORTED", "sublabel": "에러 처리", "pos": [720, 520], "size": [190, 56] }
+  ],
+  "connections": [
+    { "id": "nic-xdp", "from": "nic", "to": "xdp", "label": "패킷 도착", "variant": "emphasis" },
+    { "id": "xdp-drop", "from": "xdp", "to": "drop", "fromSide": "top", "toSide": "left", "via": [[430, 68]] },
+    { "id": "xdp-pass", "from": "xdp", "to": "pass", "fromSide": "right", "toSide": "left", "via": [[600, 312], [600, 188]] },
+    { "id": "xdp-tx", "from": "xdp", "to": "tx" },
+    { "id": "xdp-redirect", "from": "xdp", "to": "redirect", "fromSide": "right", "toSide": "left", "via": [[640, 312], [640, 428]] },
+    { "id": "xdp-aborted", "from": "xdp", "to": "aborted", "fromSide": "bottom", "toSide": "left", "via": [[430, 548]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "커널 스택 이전 처리", "items": ["패킷이 커널 네트워크 스택에 도달하기 전에 결정", "DDoS 방어·로드 밸런싱에 유리한 지점"] },
+    { "dot": "emerald", "title": "다섯 가지 판정", "items": ["DROP은 sk_buff 할당 없이 즉시 폐기", "REDIRECT로 다른 NIC·CPU·AF_XDP 소켓 전달"] }
+  ]
+}

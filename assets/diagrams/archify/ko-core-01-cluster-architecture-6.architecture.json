@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "고가용성 컨트롤 플레인",
+    "output": "ko-core-01-cluster-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "apiserver 엔드포인트",
+      "pos": [
+        400,
+        50
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "cp1",
+      "type": "backend",
+      "label": "컨트롤 플레인 1",
+      "sublabel": "apiserver · etcd · scheduler · CM",
+      "pos": [
+        70,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "cp2",
+      "type": "backend",
+      "label": "컨트롤 플레인 2",
+      "sublabel": "apiserver · etcd · scheduler · CM",
+      "pos": [
+        380,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "cp3",
+      "type": "backend",
+      "label": "컨트롤 플레인 3",
+      "sublabel": "apiserver · etcd · scheduler · CM",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lb-cp1",
+      "from": "lb",
+      "to": "cp1",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "lb-cp2",
+      "from": "lb",
+      "to": "cp2",
+      "label": "트래픽 분산",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lb-cp3",
+      "from": "lb",
+      "to": "cp3",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "단일 장애점 제거",
+      "items": [
+        "동일 구성의 컨트롤 플레인 노드 3대",
+        "한 노드가 죽어도 나머지가 요청을 처리"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "동작 방식",
+      "items": [
+        "apiserver는 무상태라 LB 뒤에 수평 확장",
+        "scheduler/CM은 리더 선출로 한 인스턴스만 활성"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "etcd 정족수",
+      "items": [
+        "etcd는 3·5대 홀수 구성",
+        "과반(quorum)이 살아 있어야 쓰기 가능"
+      ]
+    }
+  ]
+}

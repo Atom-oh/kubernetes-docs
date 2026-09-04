@@ -1,0 +1,142 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "eBPF 동작 원리",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "개발 단계"
+        },
+        "backend": {
+          "label": "커널 처리"
+        },
+        "security": {
+          "label": "검증"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자 공간"
+    },
+    {
+      "id": "kernel",
+      "label": "커널 공간"
+    }
+  ],
+  "mainPath": [
+    "write",
+    "compile",
+    "load",
+    "verifier",
+    "jit",
+    "run"
+  ],
+  "nodes": [
+    {
+      "id": "write",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "프로그램 작성",
+      "sublabel": "C / Rust",
+      "width": 128
+    },
+    {
+      "id": "compile",
+      "lane": "user",
+      "col": 1,
+      "type": "frontend",
+      "label": "컴파일",
+      "sublabel": "바이트코드"
+    },
+    {
+      "id": "load",
+      "lane": "user",
+      "col": 2,
+      "type": "backend",
+      "label": "bpf() 시스템 콜",
+      "sublabel": "커널에 로드",
+      "width": 142
+    },
+    {
+      "id": "verifier",
+      "lane": "kernel",
+      "col": 3,
+      "type": "security",
+      "label": "검증기",
+      "sublabel": "Verifier"
+    },
+    {
+      "id": "jit",
+      "lane": "kernel",
+      "col": 4,
+      "type": "backend",
+      "label": "JIT 컴파일",
+      "sublabel": "네이티브 코드",
+      "width": 118
+    },
+    {
+      "id": "run",
+      "lane": "kernel",
+      "col": 5,
+      "type": "backend",
+      "label": "프로그램 실행",
+      "sublabel": "이벤트 훅에서",
+      "width": 128
+    }
+  ],
+  "edges": [
+    {
+      "id": "write-compile",
+      "from": "write",
+      "to": "compile"
+    },
+    {
+      "id": "compile-load",
+      "from": "compile",
+      "to": "load"
+    },
+    {
+      "id": "load-verifier",
+      "from": "load",
+      "to": "verifier",
+      "label": "경계 통과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "verifier-jit",
+      "from": "verifier",
+      "to": "jit",
+      "label": "통과"
+    },
+    {
+      "id": "jit-run",
+      "from": "jit",
+      "to": "run"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "이벤트 훅 대상",
+      "items": [
+        "네트워크 패킷 · 시스템 콜",
+        "함수 호출 · 트레이스포인트"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "안전 장치",
+      "items": [
+        "검증기가 무한 루프·메모리 위반을 사전 차단",
+        "검증을 통과한 코드만 커널에서 실행"
+      ]
+    }
+  ]
+}

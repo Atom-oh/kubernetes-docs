@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Container Runtime Hierarchy",
+    "output": "en-core-01-cluster-architecture-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "kubernetes",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "kubelet",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cri",
+      "type": "messagebus",
+      "label": "CRI",
+      "sublabel": "Container Runtime Interface",
+      "pos": [
+        390,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "containerd",
+      "type": "backend",
+      "label": "containerd",
+      "sublabel": "high-level runtime",
+      "pos": [
+        200,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "crio",
+      "type": "backend",
+      "label": "CRI-O",
+      "sublabel": "high-level runtime",
+      "pos": [
+        610,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "runc",
+      "type": "external",
+      "label": "runc",
+      "sublabel": "low-level OCI runtime",
+      "pos": [
+        200,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "crun",
+      "type": "external",
+      "label": "crun",
+      "sublabel": "low-level OCI runtime",
+      "pos": [
+        610,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-cri",
+      "from": "kubernetes",
+      "to": "cri",
+      "label": "gRPC calls",
+      "variant": "emphasis",
+      "labelDy": 30
+    },
+    {
+      "id": "cri-to-containerd",
+      "from": "cri",
+      "to": "containerd",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "cri-to-crio",
+      "from": "cri",
+      "to": "crio",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "containerd-to-runc",
+      "from": "containerd",
+      "to": "runc",
+      "label": "create containers",
+      "labelDy": 40
+    },
+    {
+      "id": "crio-to-crun",
+      "from": "crio",
+      "to": "crun",
+      "label": "create containers",
+      "labelDy": 40
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Standard interface",
+      "items": [
+        "kubelet only needs the CRI gRPC API",
+        "Runtime swaps are transparent to workloads"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "high-level runtime",
+      "items": [
+        "containerd: CNCF-graduated, split out of Docker",
+        "CRI-O: a lightweight Kubernetes-only runtime"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Low-level runtimes",
+      "items": [
+        "runc / crun create containers per the OCI spec",
+        "crun is written in C — faster and lighter"
+      ]
+    }
+  ]
+}
