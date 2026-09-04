@@ -9,6 +9,26 @@
       1200,
       640
     ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "프론트엔드"
+        },
+        "backend": {
+          "label": "앱 파드"
+        },
+        "database": {
+          "label": "DB 파드"
+        },
+        "security": {
+          "label": "네트워크 정책"
+        },
+        "external": {
+          "label": "인터넷"
+        }
+      }
+    },
     "views": [
       {
         "id": "request-path",

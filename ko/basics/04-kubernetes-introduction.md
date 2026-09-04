@@ -116,7 +116,7 @@ Kubernetes는 마스터-노드 아키텍처를 따릅니다. 마스터 노드(�
 
 ### 컨트롤 플레인 (마스터) 구성 요소
 
-![Kubernetes 컨트롤 플레인 구성 요소: kubectl 클라이언트의 요청이 kube-apiserver를 거쳐 etcd에 저장되고, kube-scheduler·kube-controller-manager·cloud-controller-manager가 API 서버를 통해 감시·조정하는 구조](../.gitbook/assets/ko-basics-04-kubernetes-introduction-0.png)
+![kubectl 클라이언트의 요청이 kube-apiserver를 거쳐 etcd에 저장되고, kube-scheduler·kube-controller-manager·cloud-controller-manager가 API 서버를 통해 감시·조정하는 Kubernetes 컨트롤 플레인 구성을 보여준다.](../.gitbook/assets/ko-basics-04-kubernetes-introduction-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-04-kubernetes-introduction-0.html)
 

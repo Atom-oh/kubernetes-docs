@@ -58,7 +58,7 @@ When a BGP speaker receives multiple routes to the same destination, it selects 
 
 ## Calico BGP Architecture
 
-![Side-by-side comparison of Calico's two BGP topologies: on the left the default full mesh where four nodes each peer directly with every other node (N(N−1)/2 sessions, fine below 50 nodes); on the right a route-reflector topology where four client nodes peer only with two route reflectors that also peer with each other (2N+1 sessions, recommended at 50+ nodes).](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
+![Calico BGP topologies side by side: the default full mesh where four nodes peer with every other node (N(N−1)/2 sessions) versus a route-reflector design where nodes peer only with two mutually peered reflectors (2N+1 sessions).](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-9.html)
 

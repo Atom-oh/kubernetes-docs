@@ -8,7 +8,7 @@ Calico supports multiple networking modes to accommodate different infrastructur
 
 ## Networking Mode Summary
 
-![Side-by-side comparison of Calico's IPIP, VXLAN, and Direct/BGP networking modes, showing in each row how a pod packet from Node 1 reaches Node 2 through the tunl0 IPIP tunnel (+20 bytes, MTU 1480), the vxlan.calico VXLAN tunnel (+50 bytes, MTU 1450), or a BGP-peered ToR/L3 router with no encapsulation (MTU 1500, best performance), with each mode's packet structure summarized below.](../../.gitbook/assets/en-networking-calico-03-networking-modes-7.png)
+![Calico IPIP, VXLAN, and Direct/BGP modes side by side: a packet from Pod A on Node 1 reaches Pod B on Node 2 via the tunl0 IPIP tunnel (+20 bytes), the vxlan.calico VXLAN tunnel (+50 bytes), or a BGP-peered L3 router with no encapsulation.](../../.gitbook/assets/en-networking-calico-03-networking-modes-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-7.html)
 

@@ -9,8 +9,8 @@
     "legend": {
       "mode": "auto",
       "entries": {
-        "backend": { "label": "Kubernetes 노드 (BIRD)" },
-        "messagebus": { "label": "Route Reflector 노드" }
+        "backend": { "label": "BIRD 노드" },
+        "messagebus": { "label": "RR 노드" }
       }
     },
     "views": [
@@ -20,8 +20,8 @@
     ]
   },
   "components": [
-    { "id": "fm1", "type": "backend", "label": "Node 1", "pos": [250, 100], "size": [120, 52] },
-    { "id": "fm4", "type": "backend", "label": "Node 4", "pos": [250, 250], "size": [120, 52] },
+    { "id": "fm1", "type": "backend", "label": "Node 1", "pos": [230, 100], "size": [160, 52] },
+    { "id": "fm4", "type": "backend", "label": "Node 4", "pos": [270, 250], "size": [80, 52] },
     { "id": "fm2", "type": "backend", "label": "Node 2", "pos": [70, 400], "size": [120, 52] },
     { "id": "fm3", "type": "backend", "label": "Node 3", "pos": [430, 400], "size": [120, 52] },
     { "id": "rr1", "type": "messagebus", "label": "Route Reflector 1", "sublabel": "route-reflector=true", "pos": [670, 100], "size": [180, 352] },
