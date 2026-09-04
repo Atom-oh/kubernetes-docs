@@ -118,18 +118,11 @@ const config = defineConfig({
           if (!match) continue
           const base = match[1]
           const caption = base.startsWith('ko-') ? '전체 화면으로 열기 ↗' : 'Open full screen ↗'
-          let start = i
           // The static PNG paragraph directly above describes the same diagram.
           // The iframe replaces the image, but its alt text is the only prose
           // description of the diagram on the page — keep it as the accessible
           // name and as indexable text instead of dropping it with the image.
           let alt = ''
-          const html = new state.Token('html_block', '', 0)
-          html.content =
-            `<div class="archmap-embed">` +
-            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${base}" loading="lazy" allowfullscreen></iframe>` +
-            `<p class="archmap-embed__caption"><a href="${href}" target="_blank" rel="noopener">${caption}</a></p>` +
-            `</div>\n`
           // Tag the static PNG paragraph directly above (same diagram) instead
           // of dropping it. On wide screens CSS hides it and only the iframe
           // shows; under 768px the iframe is hidden and this PNG takes over,
@@ -148,7 +141,11 @@ const config = defineConfig({
             )
             if (image) {
               alt = image.attrGet('alt') || image.content || ''
-              start = i - 3
+              const existing = tokens[i - 3].attrGet('class')
+              tokens[i - 3].attrSet(
+                'class',
+                existing ? `${existing} archmap-embed__fallback` : 'archmap-embed__fallback'
+              )
             }
           }
           const html = new state.Token('html_block', '', 0)
@@ -160,15 +157,6 @@ const config = defineConfig({
             `<a href="${href}" target="_blank" rel="noopener">${caption}</a>` +
             `</figcaption>` +
             `</figure>\n`
-          tokens.splice(start, i + 3 - start, html)
-          i = start
-          ) {
-            const existing = tokens[i - 3].attrGet('class')
-            tokens[i - 3].attrSet(
-              'class',
-              existing ? `${existing} archmap-embed__fallback` : 'archmap-embed__fallback'
-            )
-          }
           // Replace only the link paragraph; the PNG paragraph above stays.
           tokens.splice(i, 3, html)
         }
