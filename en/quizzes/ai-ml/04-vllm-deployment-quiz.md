@@ -1816,10 +1816,10 @@ D. It could not be measured because the GPU ran out of KV cache memory before re
 **Answer: B. It stayed almost flat (+33%, from p50 5.65s to 7.52s) while aggregate throughput scaled close to linearly**
 
 **Explanation:**
-This is the core lesson of continuous batching: vLLM does not queue a new request behind the ones already running. It joins the batch on the next scheduler step, so the GPU processes many sequences in parallel instead of serially. In this measured run, p50 latency for a full ~100-128 token response only grew from 5.65s at concurrency 1 to 7.52s at concurrency 16 (+33%), while aggregate completion throughput scaled from roughly 17 tokens/s to 208 tokens/s (client-measured) — because GPU KV cache usage stayed under 3% the whole time, meaning the GPU was compute-bound, not memory-bound, at these concurrency levels.
+This is the core lesson of continuous batching: vLLM does not queue a new request behind the ones already running. It joins the batch on the next scheduler step, so the GPU processes many sequences in parallel instead of serially. In this measured run, p50 latency for a full ~100-128 token response only grew from 5.65s at concurrency 1 to 7.52s at concurrency 16 (+33%), while aggregate completion throughput scaled from roughly 17 tokens/s to 208 tokens/s (client-measured). That scaling is the signature of a bandwidth-bound decode: at concurrency 1, streaming ~15.2 GB of bf16 weights from HBM for every token caps single-request decode at roughly the measured 17-18 tokens/s on this L4's ~300 GB/s of memory bandwidth, while compute stays at only a couple of percent of the GPU's ~121 TFLOPS bf16 ceiling even at the busiest measured point. Batching lets many requests share that same weight read almost for free, which is exactly why throughput scales close to linearly while latency barely moves.
 
 **Why the other options are wrong:**
 - A. This describes what would happen with serial (non-batched) request handling, not continuous batching.
 - C. Continuous batching does not skip prefill; every new request still goes through prefill before decode, it just happens alongside other requests' decode steps.
-- D. GPU KV cache usage peaked at only 2.6% at concurrency 16 on this 24 GiB L4 — nowhere near exhausted. The benchmark did not push concurrency high enough to find that limit.
+- D. GPU KV cache usage peaked at only 2.6% at concurrency 16 on this 24GB L4 — nowhere near exhausted. The benchmark did not push concurrency high enough to find that limit.
 </details>

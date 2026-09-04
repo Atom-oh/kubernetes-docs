@@ -5030,7 +5030,7 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)" x="310" y="210" width="600" height="114" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)" x="10" y="210" width="900" height="114" rx="12" class="c-region" stroke-width="1"/>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="security-group" data-composition-frame-id="1" data-composition-frame-label="bench-gpu NodePool — 전용, 측정 후 삭제" x="950" y="70" width="280" height="394" rx="8" class="c-security-group" stroke-width="1"/>
 
@@ -5041,20 +5041,19 @@
         <path data-edge-from="vllm" data-edge-to="kv" data-edge-label="block_size=16, max_model_len=4096" data-edge-key="3" data-edge-id="c-vllm-kv" data-composition-points="880,279;930,279;930,412;980,412" d="M 880 279 L 922 279 Q 930 279 930 287 L 930 404 Q 930 412 938 412 L 980 412" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-client" data-node-id="client" data-node-label="bench client Job" tabindex="0" role="button" aria-label="Focus bench client Job, Python · ThreadPoolExecutor, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="Python · ThreadPoolExecutor" data-node-context="Architecture component">
-          <title>bench client Job · Python · ThreadPoolExecutor · Architecture component</title>
+        <g id="node-client" data-node-id="client" data-node-label="bench client Job" tabindex="0" role="button" aria-label="Focus bench client Job, Python · ThreadPoolExecutor, fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Python · ThreadPoolExecutor" data-node-context="fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)">
+          <title>bench client Job · Python · ThreadPoolExecutor · fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)</title>
           <rect x="40" y="240" width="200" height="64" rx="6" class="c-mask"/>
-          <rect x="40" y="240" width="200" height="64" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 246) scale(0.6875)">
-            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
-            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          <rect x="40" y="240" width="200" height="64" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(46 246) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="140" y="270" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">bench client Job</text>
         <text data-detail="context" x="140" y="286" class="t-muted" font-size="9" text-anchor="middle">Python · ThreadPoolExecutor</text>
         </g>
 
-        <g id="node-svc" data-node-id="svc" data-node-label="vllm-server Service" tabindex="0" role="button" aria-label="Focus vllm-server Service, ClusterIP :8000, fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ClusterIP :8000" data-node-context="fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)">
-          <title>vllm-server Service · ClusterIP :8000 · fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)</title>
+        <g id="node-svc" data-node-id="svc" data-node-label="vllm-server Service" tabindex="0" role="button" aria-label="Focus vllm-server Service, ClusterIP :8000, fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="ClusterIP :8000" data-node-context="fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)">
+          <title>vllm-server Service · ClusterIP :8000 · fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)</title>
           <rect x="340" y="240" width="200" height="64" rx="6" class="c-mask"/>
           <rect x="340" y="240" width="200" height="64" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(346 246) scale(0.6875)">
@@ -5064,8 +5063,8 @@
         <text data-detail="context" x="440" y="286" class="t-muted" font-size="9" text-anchor="middle">ClusterIP :8000</text>
         </g>
 
-        <g id="node-vllm" data-node-id="vllm" data-node-label="vLLM OpenAI 서버" tabindex="0" role="button" aria-label="Focus vLLM OpenAI 서버, v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16, fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16" data-node-context="fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)">
-          <title>vLLM OpenAI 서버 · v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16 · fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)</title>
+        <g id="node-vllm" data-node-id="vllm" data-node-label="vLLM OpenAI 서버" tabindex="0" role="button" aria-label="Focus vLLM OpenAI 서버, v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16, fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16" data-node-context="fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)">
+          <title>vLLM OpenAI 서버 · v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16 · fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)</title>
           <rect x="640" y="240" width="240" height="64" rx="6" class="c-mask"/>
           <rect x="640" y="240" width="240" height="64" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(646 246) scale(0.6875)">
@@ -5075,8 +5074,8 @@
         <text data-detail="context" x="760" y="286" class="t-muted" font-size="9" text-anchor="middle">v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16</text>
         </g>
 
-        <g id="node-gpu" data-node-id="gpu" data-node-label="NVIDIA L4 GPU" tabindex="0" role="button" aria-label="Focus NVIDIA L4 GPU, 24 GiB VRAM · g6.2xlarge, bench-gpu NodePool — 전용, 측정 후 삭제" aria-pressed="false" data-node-kind="database" data-node-sublabel="24 GiB VRAM · g6.2xlarge" data-node-context="bench-gpu NodePool — 전용, 측정 후 삭제">
-          <title>NVIDIA L4 GPU · 24 GiB VRAM · g6.2xlarge · bench-gpu NodePool — 전용, 측정 후 삭제</title>
+        <g id="node-gpu" data-node-id="gpu" data-node-label="NVIDIA L4 GPU" tabindex="0" role="button" aria-label="Focus NVIDIA L4 GPU, 24GB · g6.2xlarge, bench-gpu NodePool — 전용, 측정 후 삭제" aria-pressed="false" data-node-kind="database" data-node-sublabel="24GB · g6.2xlarge" data-node-context="bench-gpu NodePool — 전용, 측정 후 삭제">
+          <title>NVIDIA L4 GPU · 24GB · g6.2xlarge · bench-gpu NodePool — 전용, 측정 후 삭제</title>
           <rect x="980" y="100" width="220" height="64" rx="6" class="c-mask"/>
           <rect x="980" y="100" width="220" height="64" rx="6" class="c-database" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(986 106) scale(0.6875)">
@@ -5084,7 +5083,7 @@
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1090" y="130" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">NVIDIA L4 GPU</text>
-        <text data-detail="context" x="1090" y="146" class="t-muted" font-size="9" text-anchor="middle">24 GiB VRAM · g6.2xlarge</text>
+        <text data-detail="context" x="1090" y="146" class="t-muted" font-size="9" text-anchor="middle">24GB · g6.2xlarge</text>
         </g>
 
         <g id="node-kv" data-node-id="kv" data-node-label="KV 캐시 블록" tabindex="0" role="button" aria-label="Focus KV 캐시 블록, gpu-memory-utilization 0.9, bench-gpu NodePool — 전용, 측정 후 삭제" aria-pressed="false" data-node-kind="security" data-node-sublabel="gpu-memory-utilization 0.9" data-node-context="bench-gpu NodePool — 전용, 측정 후 삭제">
@@ -5118,9 +5117,9 @@
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)">
-          <rect data-graph-role="structural-frame-label-mask" x="314" y="220" width="301.59999999999997" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="318" y="233" class="t-cloud" font-size="9" font-weight="600">fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)">
+          <rect data-graph-role="structural-frame-label-mask" x="14" y="220" width="393.4" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="18" y="233" class="t-cloud" font-size="9" font-weight="600">fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)</text>
         </g>
 
         <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="security-group" data-composition-frame-label="bench-gpu NodePool — 전용, 측정 후 삭제">
@@ -5142,10 +5141,6 @@
           <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Security" data-legend-x="245" data-legend-baseline="544" data-legend-width="83">
             <rect x="245" y="535" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
             <text x="267" y="544" class="t-muted" font-size="10" font-weight="500">Security</text>
-          </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="350" data-legend-baseline="544" data-legend-width="83">
-            <rect x="350" y="535" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="372" y="544" class="t-muted" font-size="10" font-weight="500">External</text>
           </g>
         </g>
       </svg>
@@ -5360,12 +5355,12 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot rose"></div>
-          <h3>여유 자원</h3>
+          <h3>병목은 연산이 아니라 대역폭</h3>
         </div>
         <ul>
-          <li>&bull; GPU KV 캐시 사용률: 동시성 1에서 0.1%, 16에서 2.6%</li>
-          <li>&bull; 24 GiB VRAM 중 gpu-memory-utilization=0.9로 19.2 GiB를 미리 할당하지만 이 동시성 구간에서는 대부분 미사용</li>
-          <li>&bull; 동시성 16 이하에서는 메모리가 아니라 연산이 병목</li>
+          <li>&bull; GPU KV 캐시 사용률: 동시성 1에서 0.1%, 16에서 2.6% — 한계였던 적이 없음</li>
+          <li>&bull; 동시성 1 디코딩: 토큰당 bf16 가중치 약 15.2GB를 약 300GB/s HBM으로 읽어야 해 실측 17~18 tok/s 근처에서 한계</li>
+          <li>&bull; 연산: 피크에서도 약 3 TFLOP/s, L4 bf16 한계(약 121 TFLOPS)의 몇 % 수준</li>
         </ul>
       </div>
     </div>

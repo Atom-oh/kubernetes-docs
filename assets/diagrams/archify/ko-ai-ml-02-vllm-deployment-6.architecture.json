@@ -12,14 +12,14 @@
     ]
   },
   "components": [
-    { "id": "client", "type": "external", "label": "bench client Job", "sublabel": "Python · ThreadPoolExecutor", "pos": [40, 240], "size": [200, 64] },
+    { "id": "client", "type": "backend", "label": "bench client Job", "sublabel": "Python · ThreadPoolExecutor", "pos": [40, 240], "size": [200, 64] },
     { "id": "svc", "type": "backend", "label": "vllm-server Service", "sublabel": "ClusterIP :8000", "pos": [340, 240], "size": [200, 64] },
     { "id": "vllm", "type": "backend", "label": "vLLM OpenAI 서버", "sublabel": "v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16", "pos": [640, 240], "size": [240, 64] },
-    { "id": "gpu", "type": "database", "label": "NVIDIA L4 GPU", "sublabel": "24 GiB VRAM · g6.2xlarge", "pos": [980, 100], "size": [220, 64] },
+    { "id": "gpu", "type": "database", "label": "NVIDIA L4 GPU", "sublabel": "24GB · g6.2xlarge", "pos": [980, 100], "size": [220, 64] },
     { "id": "kv", "type": "security", "label": "KV 캐시 블록", "sublabel": "gpu-memory-utilization 0.9", "pos": [980, 380], "size": [220, 64] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "fsi-demo-cluster bench-gpu 네임스페이스 (측정 후 삭제)", "wraps": ["svc", "vllm"] },
+    { "kind": "region", "label": "fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)", "wraps": ["client", "svc", "vllm"] },
     { "kind": "security-group", "label": "bench-gpu NodePool — 전용, 측정 후 삭제", "wraps": ["gpu", "kv"] }
   ],
   "connections": [
@@ -31,6 +31,6 @@
   "cards": [
     { "dot": "cyan", "title": "처리량 스케일링 실측", "items": ["동시성 1: 서버 기준 약 17 tokens/s", "동시성 8: 클라이언트 집계 109 tokens/s, 서버 피크 123~129 tokens/s", "동시성 16: 클라이언트 집계 208 tokens/s, 서버 피크 최대 243 tokens/s"] },
     { "dot": "emerald", "title": "지연시간 실측 (약 100~128 토큰 전체 응답)", "items": ["동시성 1: p50 5.65 s, p90 7.43 s", "동시성 16: p50 7.52 s, p90 8.74 s — 부하가 16배 늘어도 지연시간은 거의 그대로"] },
-    { "dot": "rose", "title": "여유 자원", "items": ["GPU KV 캐시 사용률: 동시성 1에서 0.1%, 16에서 2.6%", "24 GiB VRAM 중 gpu-memory-utilization=0.9로 19.2 GiB를 미리 할당하지만 이 동시성 구간에서는 대부분 미사용", "동시성 16 이하에서는 메모리가 아니라 연산이 병목"] }
+    { "dot": "rose", "title": "병목은 연산이 아니라 대역폭", "items": ["GPU KV 캐시 사용률: 동시성 1에서 0.1%, 16에서 2.6% — 한계였던 적이 없음", "동시성 1 디코딩: 토큰당 bf16 가중치 약 15.2GB를 약 300GB/s HBM으로 읽어야 해 실측 17~18 tok/s 근처에서 한계", "연산: 피크에서도 약 3 TFLOP/s, L4 bf16 한계(약 121 TFLOPS)의 몇 % 수준"] }
   ]
 }

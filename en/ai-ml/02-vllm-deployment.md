@@ -615,31 +615,69 @@ Every other number on this page so far is a general vLLM project claim or a conf
 
 ### Setup
 
-- **Cluster**: a dedicated Karpenter NodePool (`bench-gpu`, on-demand `g6.2xlarge` — 1x NVIDIA L4, 24 GiB VRAM, 8 vCPU, 32 GiB RAM), tainted `nvidia.com/gpu=true:NoSchedule` and labeled to join the existing `nvidia-device-plugin` daemonsets, deleted immediately after the run.
-- **Server**: `vllm/vllm-openai:v0.6.4.post1`, model `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. No quantization, no speculative decoding, no prefix caching — the plain defaults this page describes elsewhere.
-- **Client**: a Python `ThreadPoolExecutor` running as a Job inside the cluster, hitting `/v1/chat/completions` through the `vllm-server` ClusterIP Service. Non-streaming, `temperature=0`, `max_tokens=128`, 8 rotating short prompts (Kubernetes concept questions, 1-2 sentence answers expected).
+- **Cluster**: a dedicated Karpenter NodePool (`bench-gpu`, on-demand `g6.2xlarge` — 1x NVIDIA L4, 24GB GPU memory, 8 vCPU, 32 GiB RAM), tainted `nvidia.com/gpu=true:NoSchedule` and labeled to join the existing `nvidia-device-plugin` daemonsets, deleted immediately after the run.
+- **Server**: `vllm/vllm-openai:v0.6.4.post1` (released 2024-11-15 — the vLLM project has since shipped its V1 engine with prefix caching on by default, so treat this as a snapshot of that release line, not current vLLM), model `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. One precision (bf16, the model's native dtype) with no quantization, speculative decoding, or prefix caching — the plain defaults this page describes elsewhere.
+- **Client**: a Python `ThreadPoolExecutor` running as a Job **inside the cluster** (a separate, non-GPU node), hitting `/v1/chat/completions` through the `vllm-server` ClusterIP Service. Non-streaming, `temperature=0`, `max_tokens=128`, 8 rotating short prompts (Kubernetes concept questions asking for 1-2 sentence answers). In practice every response ran close to the 128-token cap (a consistent ~102-token mean across all three concurrent batches) rather than stopping at 1-2 sentences — useful for comparing throughput apples-to-apples across concurrency levels, but worth knowing before reading the latency numbers as "time to answer a short question."
 - **Cold start**: from the vLLM engine's startup log to its `/health` endpoint returning `200`, about 4.5 minutes — dominated by downloading the ~15 GB of Qwen2.5-7B-Instruct weights from Hugging Face into the pod's ephemeral cache. Image pull time is not included; it was not measured separately.
+
+### Reproduce
+
+```yaml
+# NodePool (Karpenter) - dedicated, deleted after the run
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata: { name: bench-gpu }
+spec:
+  limits: { cpu: "16", memory: 128Gi, nvidia.com/gpu: "1" }
+  template:
+    metadata:
+      labels: { node-type: bench-gpu, nvidia.com/device-plugin.config: default }
+    spec:
+      expireAfter: 6h
+      nodeClassRef: { group: karpenter.k8s.aws, kind: EC2NodeClass, name: gpu }
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
+      taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+---
+# vLLM server
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vllm-server }
+spec:
+  template:
+    spec:
+      nodeSelector: { node-type: bench-gpu }
+      tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.6.4.post1
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
+                 "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
+          resources: { limits: { nvidia.com/gpu: "1" } }
+```
+
+The client is a plain Python script using `urllib` + `concurrent.futures.ThreadPoolExecutor` to fire N requests at `http://vllm-server:8000/v1/chat/completions` and time each one; run it as a `batch/v1` Job in the same namespace. One gotcha worth calling out: the `nvidia.com/device-plugin.config: default` node label above is required — without it the shared `nvidia-device-plugin` DaemonSet never schedules onto the new node, and `nvidia.com/gpu` never registers as an allocatable resource even though the taint and toleration match correctly.
 
 ### Results
 
 | Concurrency | Requests | Wall time | Client latency p50 / p90 | Client aggregate throughput | Server-reported peak generation throughput | GPU KV cache usage |
 |---|---|---|---|---|---|---|
-| 1 (serial) | 10 | — | 5.65 s / 7.43 s | — (~17 tokens/s per request) | ~17 tokens/s | 0.1-0.2% |
+| 1 (serial) | 10 | ~53.2 s (sum of request latencies) | 5.65 s / 7.43 s | ~17-18 tokens/s per request | ~17 tokens/s | 0.1-0.2% |
 | 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65-66 tokens/s | 0.4-0.7% |
 | 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123-129 tokens/s | 0.8-1.4% |
 | 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | up to 243 tokens/s | 1.5-2.6% |
 
-"Client aggregate throughput" is total completion tokens across all requests in that batch divided by wall-clock time, as measured from outside the pod. "Server-reported" is vLLM's own periodic `Avg generation throughput` log line at `Running: <concurrency>` — it runs slightly ahead of the client number because it excludes HTTP/JSON overhead and catches the true peak between measurement intervals, not just the average.
+"Client aggregate throughput" is total completion tokens across all requests in that batch divided by wall-clock time, as measured from outside the pod. "Server-reported" is vLLM's own periodic `Avg generation throughput` log line at `Running: <concurrency>` — it runs slightly ahead of the client number because it excludes HTTP/JSON overhead and catches the true peak between measurement intervals, not just the average. GPU memory used (measured with `nvidia-smi` after the run): 19.2 GiB of the 23.0 GiB the driver reports as total on this instance — `gpu-memory-utilization=0.90` tells vLLM to pre-allocate most of that up front for weights plus KV cache blocks, so the KV cache percentages below describe usage of that reserved pool, not literal free VRAM.
 
 ### Analysis
 
 - **Per-request latency barely moves.** Going from 1 concurrent request to 16 only pushes p50 latency from 5.65 s to 7.52 s (+33%) for the same ~100-128 token response — this is continuous batching working as intended: new requests join the running batch instead of queuing behind it.
-- **Aggregate throughput scales close to linearly.** 4 → 8 → 16 concurrent requests roughly doubles aggregate throughput each time (58.67 → 109.04 → 208.08 tokens/s), because the GPU was nowhere near saturated at any of these levels.
-- **GPU KV cache usage stayed under 3% the entire run.** With `max-model-len=4096` and only up to 16 concurrent sequences, this L4's 24 GiB of VRAM (19.2 GiB pre-allocated once at startup by `gpu-memory-utilization=0.9`, not proportional to actual load) has enormous headroom left. The bottleneck at these concurrencies is GPU compute (matmul throughput), not memory — pushing concurrency well past 16 would likely keep scaling before KV cache became the limit, though that was not tested here.
+- **Aggregate throughput scales close to linearly.** 4 → 8 → 16 concurrent requests roughly doubles aggregate throughput each time (58.67 → 109.04 → 208.08 tokens/s).
+- **This is bandwidth-bound decode, not compute-bound — which is exactly why batching helps.** At batch 1, ~15.2 GB of bf16 weights have to be streamed from HBM for every single token; on this L4's ~300 GB/s of memory bandwidth that caps single-request decode at roughly 20 tokens/s, matching the measured ~17-18. Compute tells a completely different story: even at the busiest measured point (208 tokens/s aggregate) the GPU is doing roughly 3 TFLOP/s of work against an L4's ~121 TFLOPS of dense bf16 compute — a couple of percent of its ceiling. KV cache capacity was never the limit either (it stayed under 3% the whole run). Continuous batching is the fix for exactly this kind of bandwidth-bound decode: once the weights are already in HBM for one request, serving 16 requests off the same weight read is nearly free, which is why throughput scales close to linearly while latency barely grows.
 
 ### Caveats
 
-This is a single run (n=1) on one model, one quantization (bf16), one GPU type, and one context length — treat it as one calibrated data point, not a general vLLM/L4 performance claim. The client ran inside the cluster on a separate (non-GPU) node, so network latency reflects intra-cluster hops, not an external caller. Latency here is full end-to-end HTTP response time, not time-to-first-token (TTFT) — no streaming was tested. Prefix caching, speculative decoding, FP8, and multi-GPU tensor parallelism (all described earlier on this page) were not exercised. Reproduce with the NodePool and manifests above; do not extrapolate these numbers to a different model size, GPU, or prompt length.
+This is a single run (n=1) on one model, one precision (bf16), one GPU type, and one context length — treat it as one calibrated data point, not a general vLLM/L4 performance claim. The client ran inside the cluster (a separate, non-GPU node), so network latency reflects intra-cluster hops, not an external caller. Latency here is full end-to-end HTTP response time, not time-to-first-token (TTFT) — no streaming was tested. Prefix caching, speculative decoding, FP8, and multi-GPU tensor parallelism (all described earlier on this page) were not exercised. Reproduce with the manifests above; do not extrapolate these numbers to a different model size, GPU, or prompt length.
 
 ## Monitoring and Logging
 
