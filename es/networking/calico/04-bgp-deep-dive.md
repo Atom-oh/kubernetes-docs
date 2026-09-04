@@ -4,9 +4,9 @@
 
 ## Introducción
 
-Border Gateway Protocol (BGP) es el protocolo de enrutamiento que impulsa Internet, y Calico lo aprovecha para proporcionar redes altamente escalables y basadas en estándares para clústeres de Kubernetes. A diferencia de las redes overlay que encapsulan el tráfico, las redes basadas en BGP de Calico permiten el enrutamiento IP nativo, ofreciendo un rendimiento superior y una integración fluida con la infraestructura de red existente.
+Border Gateway Protocol (BGP) es el protocolo de enrutamiento que impulsa Internet, y Calico lo aprovecha para proporcionar redes altamente escalables y basadas en estándares para clústeres de Kubernetes. A diferencia de las redes de superposición que encapsulan el tráfico, las redes de Calico basadas en BGP habilitan el enrutamiento IP nativo, ofreciendo un rendimiento superior y una integración fluida con la infraestructura de red existente.
 
-Este análisis detallado cubre los fundamentos de BGP, las opciones de arquitectura BGP de Calico, los recursos de configuración y los patrones de implementación avanzados para entornos empresariales.
+Este análisis detallado abarca los fundamentos de BGP, las opciones de arquitectura BGP de Calico, los recursos de configuración y los patrones de despliegue avanzados para entornos empresariales.
 
 ***
 
@@ -14,22 +14,22 @@ Este análisis detallado cubre los fundamentos de BGP, las opciones de arquitect
 
 ### ¿Qué es BGP?
 
-BGP (Border Gateway Protocol) es un protocolo de enrutamiento de vector de ruta diseñado para intercambiar información de enrutamiento entre sistemas autónomos. En Calico, BGP distribuye rutas de IP de Pod entre los nodos del clúster y, opcionalmente, a la infraestructura de red externa.
+BGP (Border Gateway Protocol) es un protocolo de enrutamiento de vector de ruta diseñado para intercambiar información de enrutamiento entre sistemas autónomos. En Calico, BGP distribuye rutas de IP de Pod entre los nodos del clúster y, opcionalmente, hacia la infraestructura de red externa.
 
 ### Conceptos clave de BGP
 
 | Concepto                    | Descripción                                                          |
 | -------------------------- | -------------------------------------------------------------------- |
 | **Sistema autónomo (AS)** | Una colección de redes IP bajo un único dominio administrativo     |
-| **Número de AS (ASN)**        | Identificador único para un AS (16 bits: 1-65534, 32 bits: 1-4294967294)  |
+| **Número de AS (ASN)**        | Identificador único de un AS (16 bits: 1-65534, 32 bits: 1-4294967294)  |
 | **iBGP**                   | BGP interno: sesiones entre routers en el mismo AS               |
-| **eBGP**                   | BGP externo: sesiones entre routers en distintos AS            |
-| **NLRI**                   | Información de alcanzabilidad de capa de red: las rutas anunciadas |
+| **eBGP**                   | BGP externo: sesiones entre routers en AS diferentes            |
+| **NLRI**                   | Información de alcanzabilidad de la capa de red: las rutas anunciadas |
 | **BGP Speaker**            | Un router o software que participa en BGP                        |
 
 ### Rangos de números de AS privados
 
-Para uso interno dentro de las organizaciones, IANA reserva los siguientes rangos de ASN privados:
+Para el uso interno dentro de las organizaciones, IANA reserva los siguientes rangos de ASN privados:
 
 ```
 16-bit Private ASN Range: 64512 - 65534
@@ -40,40 +40,40 @@ Calico normalmente utiliza ASN en el rango `64512-65534` para BGP interno del cl
 
 ### Proceso de selección de rutas BGP
 
-Cuando un BGP speaker recibe varias rutas hacia el mismo destino, selecciona la mejor ruta usando los siguientes criterios (en orden):
+Cuando un BGP Speaker recibe varias rutas al mismo destino, selecciona la mejor ruta mediante los siguientes criterios (en orden):
 
-![Un BGP speaker con varias rutas hacia el mismo destino evalúa siete criterios de desempate en orden, pasando al siguiente criterio en caso de empate, hasta que una ruta se selecciona como la mejor.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
+![Un BGP Speaker con varias rutas al mismo destino evalúa siete criterios de desempate en orden, pasando al siguiente criterio en caso de empate, hasta que se selecciona una ruta como la mejor.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
 
 ### Comportamiento de iBGP frente a eBGP
 
 | Atributo               | iBGP                               | eBGP                                   |
 | ----------------------- | ---------------------------------- | -------------------------------------- |
-| Modificación de AS\_PATH   | No se modifica                       | Anteponer AS local                      |
-| Next-hop                | No cambia de forma predeterminada             | Cambia a la dirección de peering             |
-| TTL predeterminado             | 255                                | 1 (se requiere multihop para nodos no adyacentes) |
-| Anuncio de rutas     | Solo a pares eBGP (split-horizon) | A todos los pares                           |
+| Modificación de AS\_PATH   | No se modifica                       | Antecede el AS local                      |
+| Siguiente salto                | No cambia de forma predeterminada             | Cambia a la dirección de peering             |
+| TTL predeterminado             | 255                                | 1 (se requiere multihop para no adyacentes) |
+| Anuncio de rutas     | Solo a pares eBGP (horizonte dividido) | A todos los pares                           |
 | Distancia administrativa | 200                                | 20                                     |
 
 ***
 
 ## Arquitectura BGP de Calico
 
-![Comparación en paralelo de las dos topologías BGP de Calico: a la izquierda, la malla completa predeterminada donde cuatro nodos establecen peering directamente entre sí (N(N−1)/2 sesiones, adecuada por debajo de 50 nodos); a la derecha, una topología de route reflector donde cuatro nodos cliente establecen peering solo con dos route reflectors, que también establecen peering entre sí (2N+1 sesiones, recomendada para más de 50 nodos).](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
+![Topologías BGP de Calico lado a lado: la malla completa predeterminada, donde cuatro nodos establecen peering con todos los demás (N(N−1)/2 sesiones), frente a un diseño de Route Reflector donde los nodos establecen peering solo con dos reflectores conectados entre sí (2N+1 sesiones).](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-9.html)
 
-### BIRD: implementación BGP de Calico
+### BIRD: implementación de BGP de Calico
 
-Calico utiliza BIRD (BIRD Internet Routing Daemon) como su implementación BGP. BIRD se ejecuta como parte del DaemonSet `calico-node` en cada nodo.
+Calico utiliza BIRD (BIRD Internet Routing Daemon) como su implementación de BGP. BIRD se ejecuta como parte del DaemonSet `calico-node` en cada nodo.
 
-![Dentro de cada Pod calico-node, la API de Calico alimenta a confd, que configura BIRD; BIRD programa la tabla de enrutamiento y establece peering mediante BGP con routers externos y otros nodos Calico, mientras Felix programa de forma independiente el dataplane iptables/eBPF.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
+![Dentro de cada Pod calico-node, la API de Calico alimenta a confd, que configura BIRD; BIRD programa la tabla de enrutamiento y establece peering mediante BGP con routers externos y otros nodos de Calico, mientras que Felix programa de forma independiente el plano de datos iptables/eBPF.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
 
 ### Opciones de topología BGP
 
 Calico admite dos topologías BGP principales:
 
-1. **Malla de nodo a nodo (malla completa)**: configuración predeterminada
-2. **Route Reflectors**: recomendada para clústeres más grandes
+1. **Malla de nodo a nodo (malla completa)** - Configuración predeterminada
+2. **Route Reflectors** - Recomendados para clústeres más grandes
 
 ***
 
@@ -81,13 +81,13 @@ Calico admite dos topologías BGP principales:
 
 ### Cómo funciona la malla completa
 
-En la configuración de malla completa predeterminada, cada nodo Calico establece una sesión de peering BGP con todos los demás nodos del clúster.
+En la configuración predeterminada de malla completa, cada nodo de Calico establece una sesión de peering BGP con todos los demás nodos del clúster.
 
-![En la configuración de malla completa predeterminada, cada nodo Calico establece peering con todos los demás nodos, mostrado desde la perspectiva del nodo 1 conectándose con los otros cuatro; lo mismo sucede simétricamente para los cinco nodos, produciendo 10 sesiones BGP en total.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
+![En la configuración predeterminada de malla completa, cada nodo de Calico establece peering con todos los demás, mostrado desde la perspectiva del Nodo 1 conectándose con los otros cuatro; lo mismo ocurre simétricamente para los cinco nodos, produciendo 10 sesiones BGP en total.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
 
-### Fórmula de recuento de sesiones
+### Fórmula del número de sesiones
 
-El número de sesiones BGP en una topología de malla completa crece cuadráticamente:
+El número de sesiones BGP en una topología de malla completa crece de forma cuadrática:
 
 ```
 Sessions = N × (N - 1) / 2
@@ -104,11 +104,11 @@ Examples:
 | Tamaño del clúster  | Sesiones BGP | Memoria por nodo | Impacto de CPU | Recomendación |
 | ------------- | ------------ | --------------- | ---------- | -------------- |
 | < 50 nodos    | < 1,225      | \~50 MB         | Mínimo    | Malla completa aceptable   |
-| 50-100 nodos  | 1,225-4,950  | \~100 MB        | Bajo        | Considerar RR    |
-| 100-200 nodos | 4,950-19,900 | \~200 MB        | Moderado   | Usar RR         |
+| 50-100 nodos  | 1,225-4,950  | \~100 MB        | Bajo        | Considere RR    |
+| 100-200 nodos | 4,950-19,900 | \~200 MB        | Moderado   | Use RR         |
 | > 200 nodos   | > 19,900     | > 400 MB        | Alto       | Requiere RR     |
 
-### Habilitar/deshabilitar la malla de nodo a nodo
+### Activar/desactivar la malla de nodo a nodo
 
 Compruebe el estado actual:
 
@@ -116,7 +116,7 @@ Compruebe el estado actual:
 calicoctl get bgpconfiguration default -o yaml
 ```
 
-Deshabilite la malla de nodo a nodo (al utilizar Route Reflectors):
+Desactive la malla de nodo a nodo (al usar Route Reflectors):
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -136,17 +136,17 @@ spec:
 
 Los Route Reflectors (RR) resuelven el problema de escalabilidad de iBGP al permitir que un subconjunto de nodos refleje rutas a otros nodos. Esto elimina la necesidad de una malla completa.
 
-![Dos route reflectors establecen peering entre sí y con cada nodo cliente, lo que permite que los nodos cliente aprendan rutas sin establecer peering directamente entre ellos y elimina la necesidad de una malla completa.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
+![Dos Route Reflectors establecen peering entre sí y con cada nodo cliente, permitiendo que los nodos cliente aprendan rutas sin establecer peering directamente entre sí, lo que elimina la necesidad de una malla completa.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
 
 ### Atributos clave de Route Reflector
 
 | Atributo            | Descripción                                                   |
 | -------------------- | ------------------------------------------------------------- |
 | **ID de clúster**       | Identifica un conjunto de RR que atienden a los mismos clientes              |
-| **ID del originador**    | Evita bucles de enrutamiento (se establece en el ID del router originador)   |
-| **Reflexión de rutas** | RR vuelve a anunciar las rutas aprendidas de clientes a otros clientes |
+| **ID de originador**    | Evita bucles de enrutamiento (se establece en el ID de router del originador)   |
+| **Reflexión de rutas** | El RR vuelve a anunciar rutas aprendidas de los clientes a otros clientes |
 
-### Recuento de sesiones con Route Reflectors
+### Número de sesiones con Route Reflectors
 
 Con 2 Route Reflectors y N nodos cliente:
 
@@ -193,7 +193,7 @@ spec:
     routeReflectorClusterID: 1.0.0.1
 ```
 
-**Paso 3: Deshabilite la malla de nodo a nodo**
+**Paso 3: Desactive la malla de nodo a nodo**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -205,7 +205,7 @@ spec:
   asNumber: 64512
 ```
 
-**Paso 4: Configure el peering BGP con Route Reflectors**
+**Paso 4: Configure el peering BGP hacia los Route Reflectors**
 
 ```yaml
 # Peering from non-RR nodes to RR nodes
@@ -231,24 +231,24 @@ spec:
 
 **Patrón 1: Route Reflectors duales (clústeres pequeños/medianos)**
 
-![Cada zona de disponibilidad aloja un route reflector y cada nodo de ambas zonas establece peering con ambos route reflectors, por lo que la pérdida del route reflector de una zona no aísla a ningún nodo.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
+![Cada zona de disponibilidad aloja un Route Reflector, y cada nodo de ambas zonas establece peering con ambos Route Reflectors, de modo que la pérdida del Route Reflector de una zona no aísla ningún nodo.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
 
 **Patrón 2: Route Reflectors jerárquicos (clústeres grandes)**
 
-![Una jerarquía de route reflector de dos niveles: dos route reflectors globales establecen peering entre sí y con cada route reflector a nivel de rack, y los nodos de cada rack establecen peering solo con el route reflector de su rack, manteniendo planos los recuentos de sesiones a medida que crece el clúster.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
+![Una jerarquía de Route Reflectors de dos niveles: dos Route Reflectors globales establecen peering entre sí y con cada Route Reflector de nivel de rack, y los nodos de cada rack establecen peering solo con el Route Reflector de su rack, manteniendo estable el número de sesiones a medida que crece el clúster.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
 
 ***
 
 ## Recurso BGPPeer
 
-El recurso `BGPPeer` define relaciones de peering BGP entre nodos Calico y BGP speakers externos.
+El recurso `BGPPeer` define las relaciones de peering BGP entre los nodos de Calico y BGP Speakers externos.
 
-### Tipos de alcance de BGPPeer
+### Tipos de ámbito de BGPPeer
 
 | Tipo              | Descripción          | Caso de uso                |
 | ----------------- | -------------------- | ----------------------- |
-| **Global**        | Se aplica a todos los nodos | Peering con router externo |
-| **Específico de nodo** | Usa nodeSelector    | Peering local al rack      |
+| **Global**        | Se aplica a todos los nodos | Peering de router externo |
+| **Específico del nodo** | Utiliza nodeSelector    | Peering local del rack      |
 | **Por nodo**      | Especifica el nodo exacto | Configuraciones especiales  |
 
 ### Ejemplo de BGPPeer global
@@ -268,7 +268,7 @@ spec:
 
 ### Ejemplo de BGPPeer específico de nodo
 
-Establezca peering de los nodos de racks específicos con su switch ToR local:
+Establezca peering de los nodos en racks específicos con su switch ToR local:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -292,7 +292,7 @@ spec:
 
 ### BGPPeer con peerSelector
 
-Use `peerSelector` para seleccionar dinámicamente nodos Calico como pares:
+Utilice `peerSelector` para seleccionar dinámicamente nodos de Calico como pares:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -368,7 +368,7 @@ spec:
 
 ### Anuncio de IP de Service
 
-Calico puede anunciar IP de Service de Kubernetes mediante BGP, permitiendo que clientes externos accedan directamente a los servicios.
+Calico puede anunciar IP de Service de Kubernetes mediante BGP, lo que permite a los clientes externos acceder directamente a los servicios.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -424,7 +424,7 @@ spec:
       value: "65535:65281"  # Well-known NO_EXPORT
 ```
 
-### Número de AS específico de nodo
+### Número de AS específico del nodo
 
 Para topologías complejas, puede asignar distintos números de AS por nodo:
 
@@ -447,9 +447,9 @@ spec:
 
 | Tipo               | Descripción               | Caso de uso                |
 | ------------------ | ------------------------- | ----------------------- |
-| **ClusterIP**      | IP de servicio interna       | Balanceo de carga interno |
+| **ClusterIP**      | IP de Service interna       | Balanceo de carga interno |
 | **ExternalIP**     | IP externa asignada por el usuario | Acceso externo directo  |
-| **LoadBalancerIP** | Asignada por el proveedor de cloud   | Integración con cloud       |
+| **LoadBalancerIP** | Asignada por el proveedor de nube   | Integración con la nube       |
 
 ### Ejemplo de anuncio de ExternalIP
 
@@ -482,7 +482,7 @@ spec:
 
 ### Anuncio de IP de LoadBalancer
 
-Para clústeres bare-metal sin integración con proveedor de cloud:
+Para clústeres bare-metal sin integración de proveedor de nube:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -511,7 +511,7 @@ spec:
 
 ### Anuncio selectivo de Service
 
-Use anotaciones para controlar qué servicios se anuncian:
+Utilice anotaciones para controlar qué servicios se anuncian:
 
 ```yaml
 apiVersion: v1
@@ -640,9 +640,9 @@ policy-options {
 }
 ```
 
-### Integración de arquitectura spine-leaf
+### Integración con arquitectura spine-leaf
 
-![En una red spine-leaf, cada switch leaf establece peering con ambos switches spine para redundancia, y los nodos de Kubernetes de cada rack establecen peering solo con el switch leaf de su rack, por lo que las rutas BGP fluyen desde los nodos a través de las capas leaf y spine.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
+![En una estructura spine-leaf, cada switch leaf establece peering con ambos switches spine para redundancia, y los nodos de Kubernetes de cada rack establecen peering solo con el switch leaf de su rack, de modo que las rutas BGP fluyen desde los nodos a través de las capas leaf y spine.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
 
 Configuración de Calico para spine-leaf:
 
@@ -774,7 +774,7 @@ spec:
 
 ### Filtrado de prefijos
 
-Limite qué prefijos se aceptan o anuncian:
+Limite qué prefijos se aceptan/anuncian:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -813,7 +813,7 @@ spec:
 
 ### GTSM (seguridad TTL)
 
-El mecanismo de seguridad TTL generalizado evita paquetes BGP suplantados:
+El mecanismo Generalized TTL Security Mechanism evita los paquetes BGP suplantados:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -869,7 +869,7 @@ spec:
 
 ### Reinicio elegante
 
-Habilite el reinicio elegante de BGP para minimizar la interrupción del tráfico durante los reinicios de BIRD:
+Active BGP Graceful Restart para minimizar la interrupción del tráfico durante los reinicios de BIRD:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -915,14 +915,14 @@ birdcl -s /var/run/calico/bird.ctl show route export Mesh_10_0_1_11
 birdcl -s /var/run/calico/bird.ctl show protocols all Mesh_10_0_1_11
 ```
 
-### Problemas y soluciones comunes de BGP
+### Problemas comunes de BGP y soluciones
 
 | Problema                    | Síntomas                      | Solución                              |
 | ------------------------ | ----------------------------- | ------------------------------------- |
 | Sesiones bloqueadas en Active | No se aprenden rutas             | Compruebe el firewall (TCP 179), los números de AS  |
-| Las rutas no se propagan   | Pods inalcanzables entre racks | Verifique la configuración de malla de nodo a nodo o RR |
-| Flapping de rutas           | Conectividad intermitente     | Compruebe los temporizadores BGP, la estabilidad de la red   |
-| Reinicios de sesión           | Established->Active frecuentes  | Compruebe MTU, contraseñas MD5              |
+| Rutas no se propagan   | Pods inaccesibles entre racks | Verifique la configuración de malla de nodo a nodo o RR |
+| Fluctuación de rutas           | Conectividad intermitente     | Compruebe los temporizadores BGP, la estabilidad de red   |
+| Restablecimientos de sesión           | Established->Active frecuente  | Compruebe MTU, contraseñas MD5              |
 
 ### Comandos de diagnóstico
 
@@ -945,17 +945,17 @@ ip route show | grep bird
 
 ***
 
-## Diseño multi-rack y multi-datacenter
+## Diseño de varios racks y varios centros de datos
 
-### Multi-rack con Route Reflectors
+### Varios racks con Route Reflectors
 
-![Dos route reflectors en un rack de administración establecen peering entre sí y con cada rack de cómputo, por lo que los nodos de cada rack de cómputo alcanzan las rutas de todos los demás racks sin una malla completa, y la pérdida de un route reflector no aísla ningún rack.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
+![Dos Route Reflectors en un rack de administración establecen peering entre sí y con cada rack de cómputo, de modo que los nodos de cada rack de cómputo alcanzan las rutas de todos los demás racks sin una malla completa, y la pérdida de un Route Reflector no aísla ningún rack.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
 
-### Diseño BGP multi-datacenter
+### Diseño BGP de varios centros de datos
 
-![Cada datacenter ejecuta su propio AS con sus propios route reflectors estableciendo peering interno con sus nodos, y los route reflectors de cada datacenter establecen peering mediante eBGP con un borde WAN compartido, conectando los dos datacenters.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
+![Cada centro de datos ejecuta su propio AS con sus propios Route Reflectors que establecen peering internamente con sus nodos, y los Route Reflectors de cada centro de datos establecen peering mediante eBGP con un borde WAN compartido, conectando los dos centros de datos.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
 
-Configuración para multi-datacenter:
+Configuración para varios centros de datos:
 
 ```yaml
 # DC1 Configuration
@@ -989,25 +989,25 @@ spec:
 
 ### Recomendaciones de diseño
 
-1. **Tamaño de clúster < 50 nodos**: La malla completa es aceptable
-2. **Tamaño de clúster de 50-200 nodos**: Implemente 2-3 Route Reflectors
-3. **Tamaño de clúster > 200 nodos**: Implemente Route Reflectors jerárquicos
-4. **Multi-rack**: Use una ubicación de Route Reflector consciente del rack
-5. **Multi-datacenter**: Use un AS separado por DC con eBGP entre DC
+1. **Tamaño del clúster < 50 nodos**: La malla completa es aceptable
+2. **Tamaño del clúster 50-200 nodos**: Despliegue 2-3 Route Reflectors
+3. **Tamaño del clúster > 200 nodos**: Despliegue Route Reflectors jerárquicos
+4. **Varios racks**: Use una ubicación de Route Reflector consciente del rack
+5. **Varios centros de datos**: Use un AS independiente por DC con eBGP entre DC
 
 ### Recomendaciones de seguridad
 
-1. Habilite siempre la autenticación MD5 para pares externos
+1. Active siempre la autenticación MD5 para pares externos
 2. Implemente filtrado de prefijos para evitar la inyección de rutas
 3. Use GTSM (seguridad TTL) donde sea compatible
-4. Limite el máximo de rutas aceptadas por par
+4. Limite las rutas máximas aceptadas por par
 5. Supervise las sesiones BGP en busca de anomalías
 
 ### Recomendaciones operativas
 
 1. Etiquete los nodos de forma coherente para la topología BGP
 2. Documente el esquema de asignación de números de AS
-3. Implemente monitorización y alertas de BGP
+3. Implemente supervisión y alertas de BGP
 4. Pruebe regularmente los escenarios de failover
 5. Mantenga los temporizadores BGP coherentes entre pares
 
@@ -1018,5 +1018,5 @@ spec:
 * [Documentación de BGP de Calico](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 * [BIRD Internet Routing Daemon](https://bird.network.cz/)
 * [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
-* [RFC 4456 - Reflexión de rutas BGP](https://tools.ietf.org/html/rfc4456)
+* [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
 * [RFC 5765 - GTSM para BGP](https://tools.ietf.org/html/rfc5082)

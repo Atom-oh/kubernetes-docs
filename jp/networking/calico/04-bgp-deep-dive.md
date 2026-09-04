@@ -1,79 +1,79 @@
-# Part 4: BGP 詳細解説
+# Part 4: BGP 詳解
 
 > **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
 
 ## はじめに
 
-Border Gateway Protocol（BGP）はインターネットを支えるルーティングプロトコルであり、Calico はこれを活用して Kubernetes クラスター向けに高い拡張性と標準ベースのネットワーキングを提供します。トラフィックをカプセル化するオーバーレイネットワークとは異なり、Calico の BGP ベースのネットワーキングはネイティブ IP ルーティングを可能にし、優れたパフォーマンスと既存のネットワークインフラストラクチャとのシームレスな統合を実現します。
+Border Gateway Protocol（BGP）はインターネットを支えるルーティングプロトコルであり、Calico はこれを活用して Kubernetes クラスター向けに高いスケーラビリティと標準ベースのネットワーキングを提供します。トラフィックをカプセル化するオーバーレイネットワークとは異なり、Calico の BGP ベースネットワーキングはネイティブ IP ルーティングを可能にし、優れたパフォーマンスと既存ネットワークインフラストラクチャとのシームレスな統合を実現します。
 
-この詳細解説では、BGP の基礎、Calico の BGP アーキテクチャオプション、設定リソース、およびエンタープライズ環境向けの高度なデプロイメントパターンを取り上げます。
+この詳解では、BGP の基本、Calico の BGP アーキテクチャオプション、設定リソース、およびエンタープライズ環境向けの高度なデプロイメントパターンを扱います。
 
 ***
 
-## BGP の基礎
+## BGP の基本
 
-### BGP とは？
+### BGP とは
 
-BGP（Border Gateway Protocol）は、自律システム間でルーティング情報を交換するために設計されたパスベクタールーティングプロトコルです。Calico では、BGP がクラスターのノード間、および必要に応じて外部ネットワークインフラストラクチャへ Pod IP ルートを配布します。
+BGP（Border Gateway Protocol）は、自律システム間でルーティング情報を交換するために設計されたパスベクタールーティングプロトコルです。Calico では、BGP はクラスターのノード間で Pod IP ルートを配布し、必要に応じて外部ネットワークインフラストラクチャにも配布します。
 
-### BGP の主要な概念
+### BGP の主要概念
 
-| 概念                    | 説明                                                                   |
-| ----------------------- | ---------------------------------------------------------------------- |
-| **自律システム（AS）** | 単一の管理ドメイン下にある IP ネットワークの集合                        |
-| **AS 番号（ASN）**     | AS の一意の識別子（16 ビット: 1-65534、32 ビット: 1-4294967294）        |
-| **iBGP**                | 内部 BGP - 同じ AS 内のルーター間のセッション                          |
-| **eBGP**                | 外部 BGP - 異なる AS にあるルーター間のセッション                      |
-| **NLRI**                | Network Layer Reachability Information - 広告されるルート              |
-| **BGP Speaker**         | BGP に参加するルーターまたはソフトウェア                               |
+| 概念                    | 説明                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| **自律システム（AS）** | 単一の管理ドメイン下にある IP ネットワークの集合     |
+| **AS 番号（ASN）**        | AS の一意の識別子（16 ビット: 1-65534、32 ビット: 1-4294967294）  |
+| **iBGP**                   | 内部 BGP - 同じ AS 内のルーター間のセッション               |
+| **eBGP**                   | 外部 BGP - 異なる AS 内のルーター間のセッション            |
+| **NLRI**                   | Network Layer Reachability Information - 広報されるルート |
+| **BGP Speaker**            | BGP に参加するルーターまたはソフトウェア                        |
 
 ### プライベート AS 番号の範囲
 
-組織内での内部利用のため、IANA は次のプライベート ASN 範囲を予約しています。
+組織内での内部使用向けに、IANA は次のプライベート ASN 範囲を予約しています。
 
 ```
 16-bit Private ASN Range: 64512 - 65534
 32-bit Private ASN Range: 4200000000 - 4294967294
 ```
 
-Calico は通常、クラスター内部の BGP に `64512-65534` の範囲の ASN を使用します。
+Calico は通常、クラスター内部 BGP に `64512-65534` の範囲の ASN を使用します。
 
 ### BGP ルート選択プロセス
 
-BGP Speaker が同一宛先への複数のルートを受信すると、次の基準を（順番に）使用して最適なルートを選択します。
+BGP Speaker が同じ宛先への複数のルートを受信すると、次の基準を順に使用して最適なルートを選択します。
 
-![同一宛先への複数のルートを持つ BGP Speaker は、同点の場合に次の基準へ進みながら、7 つのタイブレーク基準を順番に評価し、最適なルートを 1 つ選択します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
+![同じ宛先への複数のルートを持つ BGP Speaker は、7 つのタイブレーク基準を順に評価し、同点の場合は次の基準へ進み、最適なルートを 1 つ選択します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-0.svg)
 
 ### iBGP と eBGP の動作
 
-| 属性                    | iBGP                               | eBGP                                   |
+| 属性               | iBGP                               | eBGP                                   |
 | ----------------------- | ---------------------------------- | -------------------------------------- |
-| AS\_PATH の変更        | 変更されない                       | ローカル AS を追加する                  |
-| Next-hop                | デフォルトでは変更されない         | ピアリングアドレスに変更される         |
-| デフォルト TTL          | 255                                | 1（隣接していない場合はマルチホップが必要） |
-| ルート広告              | eBGP ピアにのみ送信（スプリットホライズン） | すべてのピアに送信                     |
+| AS\_PATH の変更   | 変更なし                       | ローカル AS を追加                      |
+| Next-hop                | デフォルトでは変更なし             | ピアリングアドレスに変更             |
+| デフォルト TTL             | 255                                | 1（隣接していない場合はマルチホップが必要） |
+| ルート広報     | eBGP ピアにのみ送信（スプリットホライズン） | すべてのピアに送信                           |
 | Administrative Distance | 200                                | 20                                     |
 
 ***
 
 ## Calico BGP アーキテクチャ
 
-![Calico の 2 つの BGP トポロジーの比較: 左はデフォルトのフルメッシュで、4 つのノードがそれぞれ他のすべてのノードと直接ピアリングします（N(N−1)/2 セッション、50 ノード未満に適しています）。右は Route Reflector トポロジーで、4 つのクライアントノードは相互にピアリングする 2 つの Route Reflector とのみピアリングします（2N+1 セッション、50 ノード以上で推奨）。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
+![Calico BGP トポロジーを並べて比較します。デフォルトのフルメッシュでは 4 つのノードが他のすべてのノードとピアリングします（N(N−1)/2 セッション）。一方、Route Reflector 設計ではノードは相互にピアリングした 2 つの Reflector とのみピアリングします（2N+1 セッション）。](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-9.html)
 
 ### BIRD: Calico の BGP 実装
 
-Calico は BGP 実装として BIRD（BIRD Internet Routing Daemon）を使用します。BIRD は各ノード上の `calico-node` DaemonSet の一部として実行されます。
+Calico は BGP 実装として BIRD（BIRD Internet Routing Daemon）を使用します。BIRD はすべてのノード上の `calico-node` DaemonSet の一部として実行されます。
 
-![各 calico-node Pod 内では、Calico API が confd に入力を渡して BIRD を設定し、BIRD はルーティングテーブルを設定して外部ルーターおよび他の Calico ノードと BGP でピアリングします。一方、Felix は独立して iptables/eBPF データプレーンを設定します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
+![各 calico-node Pod 内では、Calico API が confd に情報を渡して BIRD を設定し、BIRD がルーティングテーブルをプログラムして外部ルーターおよび他の Calico ノードと BGP でピアリングします。一方、Felix は独立して iptables/eBPF データプレーンをプログラムします。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
 
-### BGP トポロジーのオプション
+### BGP トポロジーオプション
 
-Calico は主に 2 種類の BGP トポロジーをサポートします。
+Calico は主に 2 つの BGP トポロジーをサポートします。
 
 1. **ノード間メッシュ（フルメッシュ）** - デフォルト設定
-2. **Route Reflector** - 大規模クラスターで推奨
+2. **Route Reflector** - 大規模クラスターに推奨
 
 ***
 
@@ -83,11 +83,11 @@ Calico は主に 2 種類の BGP トポロジーをサポートします。
 
 デフォルトのフルメッシュ設定では、すべての Calico ノードがクラスター内の他のすべてのノードと BGP ピアリングセッションを確立します。
 
-![デフォルトのフルメッシュ設定では、すべての Calico ノードが他のすべてのノードとピアリングします。Node 1 の視点では他の 4 ノードに接続しており、同じ関係が 5 ノードすべてで対称的に成り立つため、BGP セッションは合計 10 個になります。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
+![デフォルトのフルメッシュ設定では、すべての Calico ノードが他のすべてのノードとピアリングします。Node 1 の視点では残りの 4 ノードに接続し、同じ関係が 5 ノードすべてで対称的に成立するため、合計 10 の BGP セッションが生成されます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-2.svg)
 
 ### セッション数の計算式
 
-フルメッシュトポロジーの BGP セッション数は二次関数的に増加します。
+フルメッシュトポロジーの BGP セッション数は二次的に増加します。
 
 ```
 Sessions = N × (N - 1) / 2
@@ -99,14 +99,14 @@ Examples:
 - 500 nodes:  500 × 499 / 2 = 124,750 sessions
 ```
 
-### フルメッシュのスケーリング上の制限
+### フルメッシュのスケーリング上の制約
 
-| クラスターサイズ | BGP セッション | ノードあたりのメモリ | CPU への影響 | 推奨事項       |
-| ---------------- | -------------- | -------------------- | ------------ | -------------- |
-| < 50 ノード      | < 1,225        | \~50 MB             | 最小限       | フルメッシュで可 |
-| 50-100 ノード    | 1,225-4,950    | \~100 MB            | 低           | RR を検討      |
-| 100-200 ノード   | 4,950-19,900   | \~200 MB            | 中           | RR を使用      |
-| > 200 ノード     | > 19,900       | > 400 MB             | 高           | RR が必須      |
+| クラスターサイズ  | BGP セッション | ノードあたりのメモリ | CPU への影響 | 推奨事項 |
+| ------------- | ------------ | --------------- | ---------- | -------------- |
+| < 50 ノード    | < 1,225      | \~50 MB         | 最小限    | フルメッシュで可   |
+| 50-100 ノード  | 1,225-4,950  | \~100 MB        | 低        | RR を検討    |
+| 100-200 ノード | 4,950-19,900 | \~200 MB        | 中程度   | RR を使用         |
+| > 200 ノード   | > 19,900     | > 400 MB        | 高       | RR が必須     |
 
 ### ノード間メッシュの有効化/無効化
 
@@ -116,7 +116,7 @@ Examples:
 calicoctl get bgpconfiguration default -o yaml
 ```
 
-ノード間メッシュを無効にします（Route Reflector 使用時）。
+ノード間メッシュを無効化します（Route Reflector を使用する場合）。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -134,17 +134,17 @@ spec:
 
 ### Route Reflector の概念
 
-Route Reflector（RR）は、一部のノードが他のノードにルートをリフレクトできるようにすることで、iBGP のスケーラビリティ問題を解決します。これにより、フルメッシュは不要になります。
+Route Reflector（RR）は、ノードの一部が他のノードへルートを反射できるようにすることで iBGP のスケーラビリティ問題を解決します。これによりフルメッシュが不要になります。
 
-![2 つの Route Reflector は相互に、かつすべてのクライアントノードとピアリングします。これにより、クライアントノードは相互に直接ピアリングせずにルートを学習でき、フルメッシュが不要になります。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
+![2 つの Route Reflector は相互に、かつすべてのクライアントノードとピアリングし、クライアントノード同士が直接ピアリングしなくてもルートを学習できるようにするため、フルメッシュが不要になります。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-3.svg)
 
-### Route Reflector の主要な属性
+### Route Reflector の主要属性
 
-| 属性                 | 説明                                                         |
-| -------------------- | ------------------------------------------------------------ |
-| **Cluster ID**       | 同じクライアントにサービスを提供する RR のセットを識別する   |
-| **Originator ID**    | ルーティングループを防止する（発信元の router ID に設定）    |
-| **Route Reflection** | RR はクライアントから学習したルートを他のクライアントへ再広告する |
+| 属性            | 説明                                                   |
+| -------------------- | ------------------------------------------------------------- |
+| **Cluster ID**       | 同じクライアントにサービスを提供する RR のセットを識別します              |
+| **Originator ID**    | ルーティングループを防止します（送信元の router ID に設定）   |
+| **Route Reflection** | RR はクライアントから学習したルートを他のクライアントへ再広報します |
 
 ### Route Reflector 使用時のセッション数
 
@@ -160,14 +160,14 @@ Examples:
 
 ### Route Reflector ノードの設定
 
-**ステップ 1: Route Reflector として指定したノードにラベルを付与する**
+**手順 1: Route Reflector として指定するノードにラベルを付与する**
 
 ```bash
 kubectl label node rr-node-1 calico-route-reflector=true
 kubectl label node rr-node-2 calico-route-reflector=true
 ```
 
-**ステップ 2: Route Reflector の Cluster ID を設定する**
+**手順 2: Route Reflector の Cluster ID を設定する**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -193,7 +193,7 @@ spec:
     routeReflectorClusterID: 1.0.0.1
 ```
 
-**ステップ 3: ノード間メッシュを無効にする**
+**手順 3: ノード間メッシュを無効化する**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -205,7 +205,7 @@ spec:
   asNumber: 64512
 ```
 
-**ステップ 4: Route Reflector への BGP ピアリングを設定する**
+**手順 4: Route Reflector への BGP ピアリングを設定する**
 
 ```yaml
 # Peering from non-RR nodes to RR nodes
@@ -231,11 +231,11 @@ spec:
 
 **パターン 1: デュアル Route Reflector（小規模/中規模クラスター）**
 
-![各アベイラビリティゾーンには Route Reflector が 1 つずつ配置され、両方のゾーン内のすべてのノードが両方の Route Reflector とピアリングします。そのため、あるゾーンの Route Reflector が失われても、どのノードも孤立しません。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
+![各 Availability Zone に 1 つの Route Reflector を配置し、両方の Zone にあるすべてのノードが両方の Route Reflector とピアリングします。そのため、1 つの Zone の Route Reflector を失っても、どのノードも孤立しません。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
 
 **パターン 2: 階層型 Route Reflector（大規模クラスター）**
 
-![2 層の Route Reflector 階層: 2 つのグローバル Route Reflector が相互に、かつ各ラックレベルの Route Reflector とピアリングします。各ラックのノードは自ラックの Route Reflector とのみピアリングするため、クラスターの成長に対してセッション数を一定に保てます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
+![2 階層の Route Reflector 構成です。2 つのグローバル Route Reflector が相互に、かつすべてのラックレベル Route Reflector とピアリングし、各ラックのノードはそのラックの Route Reflector とのみピアリングします。これにより、クラスターの成長に伴ってもセッション数を低く抑えられます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
 
 ***
 
@@ -243,13 +243,13 @@ spec:
 
 `BGPPeer` リソースは、Calico ノードと外部 BGP Speaker 間の BGP ピアリング関係を定義します。
 
-### BGPPeer のスコープタイプ
+### BGPPeer スコープタイプ
 
-| タイプ               | 説明                         | ユースケース             |
-| -------------------- | ---------------------------- | ------------------------ |
-| **グローバル**       | すべてのノードに適用される   | 外部ルーターとのピアリング |
-| **ノード固有**       | nodeSelector を使用する      | ラックローカルのピアリング |
-| **ノードごと**       | 正確なノードを指定する       | 特別な設定               |
+| タイプ              | 説明          | ユースケース                |
+| ----------------- | -------------------- | ----------------------- |
+| **グローバル**        | すべてのノードに適用 | 外部ルーターピアリング |
+| **ノード固有** | nodeSelector を使用    | ラックローカルピアリング      |
+| **ノード単位**      | 正確なノードを指定 | 特別な設定  |
 
 ### グローバル BGPPeer の例
 
@@ -268,7 +268,7 @@ spec:
 
 ### ノード固有 BGPPeer の例
 
-特定ラックのノードをローカル ToR スイッチとピアリングします。
+特定のラックにあるノードをローカル ToR スイッチとピアリングします。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -290,7 +290,7 @@ spec:
   asNumber: 65002
 ```
 
-### peerSelector を使用した BGPPeer
+### peerSelector を使用する BGPPeer
 
 `peerSelector` を使用して、Calico ノードをピアとして動的に選択します。
 
@@ -366,9 +366,9 @@ spec:
   logSeverityScreen: Info
 ```
 
-### Service IP の広告
+### Service IP の広報
 
-Calico は Kubernetes Service IP を BGP 経由で広告でき、外部クライアントがサービスに直接到達できるようにします。
+Calico は BGP を介して Kubernetes Service IP を広報できるため、外部クライアントは Service に直接到達できます。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -394,7 +394,7 @@ spec:
 
 ### BGP Community の設定
 
-BGP Community を使用すると、外部ルーターでポリシーベースルーティングを行うためにルートへタグを付けることができます。
+BGP Community を使用すると、外部ルーター上でポリシーベースルーティングを行うためにルートへタグ付けできます。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -441,17 +441,17 @@ spec:
 
 ***
 
-## Service IP の広告
+## Service IP の広報
 
-### 広告のタイプ
+### 広報タイプ
 
-| タイプ               | 説明                     | ユースケース                 |
-| -------------------- | ------------------------ | ---------------------------- |
-| **ClusterIP**        | 内部 Service IP          | 内部ロードバランシング       |
-| **ExternalIP**       | ユーザー割り当ての外部 IP | 外部からの直接アクセス       |
-| **LoadBalancerIP**   | クラウドプロバイダーが割り当て | クラウド統合                 |
+| タイプ               | 説明               | ユースケース                |
+| ------------------ | ------------------------- | ----------------------- |
+| **ClusterIP**      | 内部 Service IP       | 内部負荷分散 |
+| **ExternalIP**     | ユーザー割り当ての外部 IP | 外部からの直接アクセス  |
+| **LoadBalancerIP** | Cloud provider が割り当て   | Cloud 統合       |
 
-### ExternalIP 広告の例
+### ExternalIP 広報の例
 
 ```yaml
 # BGPConfiguration for ExternalIP advertisement
@@ -480,9 +480,9 @@ spec:
       targetPort: 8080
 ```
 
-### LoadBalancer IP の広告
+### LoadBalancer IP の広報
 
-クラウドプロバイダー統合がないベアメタルクラスター向け:
+Cloud provider 統合のないベアメタルクラスターの場合:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -509,9 +509,9 @@ spec:
       targetPort: 8443
 ```
 
-### 選択的な Service 広告
+### 選択的な Service 広報
 
-アノテーションを使用して、広告する Service を制御します。
+アノテーションを使用して、広報する Service を制御します。
 
 ```yaml
 apiVersion: v1
@@ -642,7 +642,7 @@ policy-options {
 
 ### Spine-Leaf アーキテクチャとの統合
 
-![Spine-Leaf ファブリックでは、各 Leaf スイッチが冗長性のため両方の Spine スイッチとピアリングし、各ラック内の Kubernetes ノードは自ラックの Leaf スイッチとのみピアリングします。そのため、BGP ルートはノードから Leaf 層と Spine 層を経由して流れます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
+![Spine-Leaf ファブリックでは、各 Leaf スイッチが冗長性のために両方の Spine スイッチとピアリングし、各ラックの Kubernetes ノードはそのラックの Leaf スイッチとのみピアリングします。したがって、BGP ルートはノードから Leaf 層、Spine 層へと流れます。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-6.svg)
 
 Spine-Leaf 向けの Calico 設定:
 
@@ -694,13 +694,13 @@ spec:
 
 ### Community 設計パターン
 
-| Community     | 意味             | アクション                       |
-| ------------- | ---------------- | -------------------------------- |
-| `64512:100`   | Pod ネットワーク | 受け入れ、通常ルーティング       |
-| `64512:200`   | Service IP       | 受け入れ、特別なポリシーを適用可能 |
-| `64512:300`   | インフラストラクチャ | 高優先度ルーティング             |
-| `65535:65281` | NO\_EXPORT      | AS 外部へ広告しない              |
-| `65535:65282` | NO\_ADVERTISE   | どのピアにも広告しない           |
+| Community     | 意味        | アクション                           |
+| ------------- | -------------- | -------------------------------- |
+| `64512:100`   | Pod ネットワーク   | 受け入れ、通常のルーティング           |
+| `64512:200`   | Service IP    | 受け入れ、特別なポリシーを適用する場合がある |
+| `64512:300`   | インフラストラクチャ | より優先度の高いルーティング          |
+| `65535:65281` | NO\_EXPORT     | AS 外へ広報しない      |
+| `65535:65282` | NO\_ADVERTISE  | どのピアにも広報しない     |
 
 ### Community ベースのトラフィックエンジニアリング
 
@@ -772,9 +772,9 @@ spec:
       key: bgp-password
 ```
 
-### プレフィックスフィルタリング
+### Prefix フィルタリング
 
-受け入れ/広告するプレフィックスを制限します。
+受け入れる/広報する Prefix を制限します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -813,7 +813,7 @@ spec:
 
 ### GTSM（TTL セキュリティ）
 
-Generalized TTL Security Mechanism は、スプーフィングされた BGP パケットを防止します。
+Generalized TTL Security Mechanism は、偽装された BGP パケットを防ぎます。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -850,7 +850,7 @@ spec:
 
 ### ルート集約
 
-Pod CIDR を集約して、広告するルート数を削減します。
+Pod CIDR を集約して、広報するルート数を削減します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -867,9 +867,9 @@ spec:
         - "64512:100"
 ```
 
-### グレースフルリスタート
+### Graceful Restart
 
-BIRD の再起動中にトラフィックの中断を最小限に抑えるため、BGP Graceful Restart を有効にします。
+BIRD の再起動中のトラフィック中断を最小限にするため、BGP Graceful Restart を有効化します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -890,7 +890,7 @@ spec:
 
 ### birdcl コマンド
 
-calico-node Pod から BIRD コマンドラインインターフェイスにアクセスします。
+calico-node Pod から BIRD コマンドラインインターフェースにアクセスします。
 
 ```bash
 # Enter calico-node pod
@@ -917,12 +917,12 @@ birdcl -s /var/run/calico/bird.ctl show protocols all Mesh_10_0_1_11
 
 ### 一般的な BGP の問題と解決策
 
-| 問題                     | 症状                           | 解決策                                  |
-| ------------------------ | ------------------------------ | --------------------------------------- |
-| セッションが Active のまま | ルートを学習しない             | ファイアウォール（TCP 179）、AS 番号を確認 |
-| ルートが伝播しない       | ラック間で Pod に到達できない  | ノード間メッシュまたは RR 設定を確認    |
-| ルートフラッピング       | 断続的な接続性                 | BGP タイマー、ネットワークの安定性を確認 |
-| セッションのリセット     | Established->Active が頻繁に発生 | MTU、MD5 パスワードを確認               |
+| 問題                    | 症状                      | 解決策                              |
+| ------------------------ | ----------------------------- | ------------------------------------- |
+| セッションが Active で停止 | ルートを学習しない             | ファイアウォール（TCP 179）、AS 番号を確認  |
+| ルートが伝播しない   | ラック間で Pod に到達できない | ノード間メッシュまたは RR 設定を確認 |
+| ルートフラッピング           | 断続的な接続性     | BGP タイマー、ネットワーク安定性を確認   |
+| セッションリセット           | Established->Active が頻発  | MTU、MD5 パスワードを確認              |
 
 ### 診断コマンド
 
@@ -945,17 +945,17 @@ ip route show | grep bird
 
 ***
 
-## 複数ラックおよび複数データセンターの設計
+## マルチラックおよびマルチデータセンターの設計
 
-### Route Reflector を使用した複数ラック
+### Route Reflector を使用するマルチラック
 
-![管理ラックの 2 つの Route Reflector は相互に、かつすべてのコンピュートラックとピアリングします。これにより、各コンピュートラックのノードはフルメッシュなしですべての他ラックのルートに到達でき、片方の Route Reflector を失ってもどのラックも孤立しません。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
+![管理ラックにある 2 つの Route Reflector は相互に、かつすべてのコンピュートラックとピアリングします。そのため、各コンピュートラックのノードはフルメッシュなしですべての他ラックのルートに到達でき、1 つの Route Reflector を失ってもどのラックも孤立しません。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
 
-### 複数データセンターの BGP 設計
+### マルチデータセンター BGP 設計
 
-![各データセンターは独自の AS で動作し、それぞれの Route Reflector が内部でノードとピアリングします。各データセンターの Route Reflector は、共有 WAN エッジと eBGP でピアリングし、2 つのデータセンターを接続します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
+![各データセンターは独自の AS を実行し、各自の Route Reflector が内部でノードとピアリングします。また、各データセンターの Route Reflector は共有 WAN エッジと eBGP でピアリングし、2 つのデータセンターを接続します。](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-8.svg)
 
-複数データセンター向けの設定:
+マルチデータセンター向けの設定:
 
 ```yaml
 # DC1 Configuration
@@ -990,26 +990,26 @@ spec:
 ### 設計に関する推奨事項
 
 1. **クラスターサイズ < 50 ノード**: フルメッシュで問題ありません
-2. **クラスターサイズ 50-200 ノード**: 2～3 台の Route Reflector をデプロイします
+2. **クラスターサイズ 50-200 ノード**: 2～3 個の Route Reflector をデプロイします
 3. **クラスターサイズ > 200 ノード**: 階層型 Route Reflector をデプロイします
-4. **複数ラック**: ラックを考慮した Route Reflector 配置を使用します
-5. **複数データセンター**: DC ごとに別の AS を使用し、DC 間で eBGP を使用します
+4. **マルチラック**: ラックを考慮した Route Reflector 配置を使用します
+5. **マルチデータセンター**: DC ごとに個別の AS を使用し、DC 間には eBGP を使用します
 
 ### セキュリティに関する推奨事項
 
-1. 外部ピアには常に MD5 認証を有効にします
-2. ルートインジェクションを防ぐためにプレフィックスフィルタリングを実装します
-3. サポートされている場合は GTSM（TTL セキュリティ）を使用します
+1. 外部ピアには常に MD5 認証を有効化します
+2. ルートインジェクションを防ぐため Prefix フィルタリングを実装します
+3. サポートされる場合は GTSM（TTL セキュリティ）を使用します
 4. ピアごとに受け入れる最大ルート数を制限します
 5. BGP セッションの異常を監視します
 
 ### 運用に関する推奨事項
 
-1. BGP トポロジー向けにノードへ一貫してラベルを付けます
-2. AS 番号の割り当て方式を文書化します
-3. BGP の監視とアラートを実装します
+1. BGP トポロジー用に一貫してノードにラベルを付けます
+2. AS 番号の割り当てスキームを文書化します
+3. BGP のモニタリングとアラートを実装します
 4. フェイルオーバーシナリオを定期的にテストします
-5. ピア間で BGP タイマーの整合性を保ちます
+5. ピア間で BGP タイマーを一貫させます
 
 ***
 
@@ -1019,4 +1019,4 @@ spec:
 * [BIRD Internet Routing Daemon](https://bird.network.cz/)
 * [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
 * [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
-* [RFC 5765 - BGP 向け GTSM](https://tools.ietf.org/html/rfc5082)
+* [RFC 5765 - BGP の GTSM](https://tools.ietf.org/html/rfc5082)

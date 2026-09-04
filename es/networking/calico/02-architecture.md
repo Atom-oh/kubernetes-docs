@@ -4,11 +4,11 @@
 
 ## Descripción general
 
-Esta sección ofrece una exploración detallada de la arquitectura de Calico. Comprender cómo funciona e interactúa cada componente es esencial para la implementación, la resolución de problemas y la optimización eficaces de Calico en entornos de producción.
+Esta sección ofrece una exploración detallada de la arquitectura de Calico. Comprender cómo funciona e interactúa cada componente es esencial para implementar, solucionar problemas y optimizar Calico eficazmente en entornos de producción.
 
-## Diagrama de arquitectura completo
+## Diagrama completo de la arquitectura
 
-![Diagrama de arquitectura que muestra el plano de control de Kubernetes, el plano de control de Calico (API server, kube-controllers, Typha) y un nodo de trabajo representativo donde Felix programa el plano de datos local y confd/BIRD distribuyen rutas a través de una malla BGP entre nodos.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
+![Plano de control de Kubernetes, plano de control de Calico (servidor API, kube-controllers, Typha) y un nodo worker donde Felix programa el plano de datos local y confd/BIRD distribuyen rutas a través de la malla BGP de nodos.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
 
@@ -18,25 +18,25 @@ Felix es el agente principal de Calico que se ejecuta en cada nodo del clúster.
 
 ### Responsabilidades de Felix
 
-![Diagrama que muestra el Datastore Watcher de Felix distribuyéndose a sus administradores de rutas, ACL, interfaces e IPAM, que a su vez programan la tabla de enrutamiento del nodo, las reglas de iptables, los conjuntos de IP y las interfaces de red.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
+![Diagrama que muestra el Datastore Watcher de Felix distribuyendo actualizaciones a sus administradores de rutas, ACL, interfaces e IPAM, que a su vez programan la tabla de enrutamiento del nodo, las reglas de iptables, los conjuntos de IP y las interfaces de red.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
 
 ### Funciones principales
 
-1. **Programación de rutas**: administra rutas para bloques CIDR de Pod
-2. **Aplicación de ACL**: programa reglas de iptables/nftables/eBPF para políticas de red
-3. **Administración de interfaces**: configura interfaces de endpoint de carga de trabajo
-4. **Informe de estado**: informa el estado del nodo y del endpoint al datastore
-5. **Coordinación de IPAM**: administra la asignación de direcciones IP para cargas de trabajo locales
+1. **Programación de rutas**: Administra las rutas para bloques CIDR de Pod
+2. **Aplicación de ACL**: Programa reglas de iptables/nftables/eBPF para políticas de red
+3. **Administración de interfaces**: Configura las interfaces de endpoint de carga de trabajo
+4. **Informes de estado**: Informa el estado de nodos y endpoints al datastore
+5. **Coordinación de IPAM**: Administra la asignación de direcciones IP para las cargas de trabajo locales
 
-### Opciones del plano de datos de Felix
+### Opciones de plano de datos de Felix
 
 Felix admite múltiples backends de plano de datos:
 
-| Plano de datos   | Descripción                | Ideal para                                    |
+| Plano de datos   | Descripción                | Ideal para                                  |
 | ------------ | -------------------------- | ------------------------------------------- |
-| **iptables** | Firewall tradicional de Linux | Compatibilidad, implementaciones consolidadas           |
+| **iptables** | Firewall tradicional de Linux | Compatibilidad, implementaciones maduras           |
 | **nftables** | Firewall moderno de Linux      | Kernels más recientes, mejor rendimiento           |
-| **eBPF**     | Programable en el kernel     | Máximo rendimiento, reemplazo de kube-proxy |
+| **eBPF**     | Programable dentro del kernel     | Máximo rendimiento, reemplazo de kube-proxy |
 
 ### Recurso FelixConfiguration
 
@@ -128,27 +128,27 @@ Felix organiza las reglas de iptables en cadenas para un procesamiento eficiente
 
 ### Flujo de datos de Felix
 
-![Diagrama de secuencia que muestra a Felix recibiendo actualizaciones de políticas, endpoints y grupos de IP desde el datastore, y traduciendo cada una en reglas de iptables, entradas de tabla de rutas o configuración de interfaces de red.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
+![Diagrama de secuencia que muestra a Felix recibiendo actualizaciones de políticas, endpoints y pools de IP del datastore y traduciendo cada una en reglas de iptables, entradas de tabla de rutas o configuración de interfaces de red.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
 
-## BIRD: demonio de enrutamiento BGP
+## BIRD: daemon de enrutamiento BGP
 
-BIRD (BIRD Internet Routing Daemon) es el demonio BGP utilizado por Calico para distribuir rutas entre nodos.
+BIRD (BIRD Internet Routing Daemon) es el daemon BGP que Calico utiliza para distribuir rutas entre nodos.
 
 ### BIRD en la arquitectura de Calico
 
-![Diagrama que muestra instancias de BIRD en cada nodo formando una malla iBGP completa para intercambiar rutas de Pod, y estableciendo peering mediante eBGP con el switch top-of-rack y el router central para anunciar esas rutas externamente.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
+![Diagrama que muestra instancias de BIRD en cada nodo formando una malla iBGP completa para intercambiar rutas de Pod y, a continuación, estableciendo peering mediante eBGP con el switch top-of-rack y el router central para anunciar esas rutas externamente.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
 
 ### Tipos de sesión BGP
 
 | Tipo de sesión          | Caso de uso                    | Configuración          |
 | --------------------- | --------------------------- | ---------------------- |
-| **Malla nodo a nodo** | Predeterminada para clústeres pequeños  | Automática, malla completa   |
-| **Route Reflector**   | Clústeres grandes (más de 100 nodos) | Nodos RR dedicados     |
-| **Peering externo**  | Integración on-premises     | Configuración manual de peers BGP |
+| **Malla de nodo a nodo** | Predeterminado para clústeres pequeños  | Automática, malla completa   |
+| **Route Reflector**   | Clústeres grandes (100+ nodos) | Nodos RR dedicados     |
+| **Peering externo**  | Integración on-premises     | Configuración manual de pares BGP |
 
 ### Ejemplos de configuración BGP
 
-#### Malla nodo a nodo (predeterminada)
+#### Malla de nodo a nodo (predeterminada)
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -215,7 +215,7 @@ spec:
 
 ### Proceso de propagación de rutas
 
-![Diagrama de secuencia que muestra cómo la ruta de un nuevo Pod es asignada por Felix, añadida a la tabla de enrutamiento local de BIRD y propagada a nodos peer mediante un BGP UPDATE para que la instalen y enruten a Felix según corresponda.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
+![Diagrama de secuencia que muestra cómo Felix asigna la ruta de un nuevo Pod, la añade a la tabla de enrutamiento local de BIRD y la propaga a los nodos pares mediante una actualización BGP UPDATE para que la instalen y enruten Felix según corresponda.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
 
 ### Comandos de estado de BIRD
 
@@ -243,15 +243,15 @@ birdcl> show route 192.168.1.0/26 all
 
 ## confd: administración de configuración
 
-confd es una herramienta ligera de administración de configuración que supervisa el datastore de Calico y genera archivos de configuración de BIRD.
+confd es una herramienta ligera de administración de configuración que observa el datastore de Calico y genera archivos de configuración de BIRD.
 
 ### Flujo de trabajo de confd
 
-![Diagrama que muestra al observador de confd reaccionando a recursos de configuración BGP, peers y nodos en el datastore de Calico, generando un archivo bird.cfg a partir de plantillas y entregándoselo al proceso BIRD en ejecución.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
+![Diagrama que muestra al watcher de confd reaccionando a recursos de configuración BGP, pares y nodos en el datastore de Calico, generando un archivo bird.cfg a partir de plantillas y entregándolo al proceso BIRD en ejecución.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
 
 ### Procesamiento de plantillas de confd
 
-confd utiliza plantillas de Go para generar la configuración de BIRD:
+confd utiliza plantillas Go para generar la configuración de BIRD:
 
 ```
 # Template: /etc/calico/confd/templates/bird.cfg.template
@@ -285,7 +285,7 @@ protocol bgp {{.Name}} {
 
 ## Typha: componente de escalado
 
-Typha es un proxy de fan-out que se sitúa entre el API server de Kubernetes y los agentes Felix. Reduce la carga en el API server al almacenar en caché y distribuir actualizaciones del datastore.
+Typha es un proxy de fan-out que se sitúa entre el servidor API de Kubernetes y los agentes Felix. Reduce la carga en el servidor API al almacenar en caché y distribuir actualizaciones del datastore.
 
 ### ¿Por qué Typha?
 
@@ -306,7 +306,7 @@ Examples:
 - 2000 nodes: 10 Typha replicas
 ```
 
-### Configuración de Deployment de Typha
+### Configuración del Deployment de Typha
 
 ```yaml
 apiVersion: apps/v1
@@ -397,25 +397,25 @@ spec:
 
 ### Arquitectura de fan-out de Typha
 
-![Diagrama de arquitectura que muestra dos flujos de observación del API server alimentando a dos Pods de Typha, cada uno almacenando actualizaciones localmente en caché y distribuyéndolas a aproximadamente cien agentes Felix de su grupo de nodos.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
+![Diagrama de arquitectura que muestra dos flujos de observación del servidor API alimentando dos Pods de Typha, cada uno almacenando actualizaciones localmente en caché y distribuyéndolas a aproximadamente cien agentes Felix en su grupo de nodos.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
 
 ## kube-controllers: integración con Kubernetes
 
 El Pod calico-kube-controllers ejecuta un conjunto de controllers que sincronizan los recursos de Kubernetes con el datastore de Calico.
 
-### Descripción general de los controllers
+### Descripción general de controllers
 
 | Controller                      | Propósito                                           |
 | ------------------------------- | ------------------------------------------------- |
-| **Node Controller**             | Sincroniza nodos de Kubernetes con recursos de nodo de Calico |
-| **Policy Controller**           | Sincroniza NetworkPolicy de Kubernetes con políticas de Calico |
-| **Namespace Controller**        | Sincroniza etiquetas de namespace para la administración de perfiles     |
-| **ServiceAccount Controller**   | Sincroniza etiquetas de service account para RBAC             |
+| **Node Controller**             | Sincroniza los nodos de Kubernetes con los recursos de nodos de Calico |
+| **Policy Controller**           | Sincroniza NetworkPolicy de Kubernetes con la política de Calico |
+| **Namespace Controller**        | Sincroniza las etiquetas de namespace para la administración de perfiles     |
+| **ServiceAccount Controller**   | Sincroniza las etiquetas de service account para RBAC             |
 | **WorkloadEndpoint Controller** | Limpia endpoints de carga de trabajo obsoletos                |
 
-### Bucle de reconciliación de controllers
+### Bucle de reconciliación del controller
 
-![Diagrama de secuencia que muestra kube-controllers enumerando repetidamente recursos de Kubernetes y Calico, comparándolos y escribiendo cambios en el datastore de Calico o no realizando ninguna acción cuando ambos ya están sincronizados.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
+![Diagrama de secuencia que muestra a kube-controllers listando repetidamente recursos de Kubernetes y Calico, comparándolos y escribiendo los cambios en el datastore de Calico o no realizando ninguna acción cuando ambos ya están sincronizados.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
 
 ### Configuración de kube-controllers
 
@@ -459,25 +459,25 @@ data:
 
 Calico admite dos backends de datastore para almacenar su configuración y estado.
 
-### Datastore de la API de Kubernetes (recomendado)
+### Datastore de API de Kubernetes (recomendado)
 
-![Diagrama que muestra Felix, Typha y kube-controllers leyendo y escribiendo el estado de Calico a través del API server de Kubernetes, que a su vez persiste en etcd; no se requiere un clúster etcd de Calico independiente.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
+![Diagrama que muestra a Felix, Typha y kube-controllers leyendo y escribiendo el estado de Calico mediante el servidor API de Kubernetes, que a su vez persiste en etcd; no se requiere un clúster etcd de Calico independiente.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
 
 **Ventajas:**
 
 * No hay un clúster etcd independiente que administrar
-* Utiliza RBAC de Kubernetes para el control de acceso
+* Utiliza Kubernetes RBAC para el control de acceso
 * Modelo operativo más sencillo
 * Funciona con cualquier distribución de Kubernetes
 
 ### Datastore etcd (heredado)
 
-![Diagrama que muestra Felix y Typha leyendo y escribiendo directamente en un clúster etcd de Calico dedicado, mientras kube-controllers conecta ese clúster con el API server de Kubernetes: la opción de datastore heredada y desacoplada.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
+![Diagrama que muestra a Felix y Typha leyendo y escribiendo directamente en un clúster etcd de Calico dedicado mientras kube-controllers conecta ese clúster con el servidor API de Kubernetes: la opción de datastore heredada y desacoplada.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
 
 **Ventajas:**
 
-* Desacoplado del API server de Kubernetes
-* Puede utilizarse para cargas de trabajo que no son de Kubernetes (VM, bare metal)
+* Desacoplado del servidor API de Kubernetes
+* Se puede utilizar para cargas de trabajo que no son de Kubernetes (VM, bare metal)
 * Opción histórica para clústeres muy grandes
 
 ### Comparación de datastores
@@ -487,8 +487,8 @@ Calico admite dos backends de datastore para almacenar su configuración y estad
 | **Complejidad operativa** | Menor             | Mayor             |
 | **Escalabilidad**            | Buena (con Typha) | Excelente          |
 | **Cargas de trabajo no K8s**      | Limitadas           | Compatibilidad completa       |
-| **Copia de seguridad/restauración**         | Mediante K8s           | Herramientas independientes   |
-| **Control de acceso**         | RBAC de K8s          | Autenticación de etcd          |
+| **Backup/Restore**         | Mediante K8s           | Herramientas independientes   |
+| **Control de acceso**         | K8s RBAC          | Autenticación de etcd          |
 | **Recomendación**         | Opción predeterminada    | Solo casos especiales |
 
 ## Secuencia de interacción de componentes
@@ -499,11 +499,11 @@ Calico admite dos backends de datastore para almacenar su configuración y estad
 
 ### Flujo de paquetes de entrada (Pod a Pod, mismo nodo)
 
-![Diagrama que muestra un paquete pasando de un Pod a otro en el mismo nodo a través de sus interfaces veth y la comprobación de políticas iptables/eBPF del host.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
+![Diagrama que muestra un paquete que pasa de un Pod a otro en el mismo nodo mediante sus interfaces veth y la comprobación de políticas de iptables/eBPF del host.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
 
 ### Flujo de paquetes de salida (Pod a Pod, nodos diferentes con IPIP)
 
-![Diagrama que muestra un paquete saliendo del Pod de un nodo a través de su veth y comprobación de iptables, encapsulado en IPIP a través del switch de red físico, y desencapsulado y entregado a un Pod en un segundo nodo.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
+![Diagrama que muestra un paquete que sale del Pod de un nodo mediante su veth y la comprobación de iptables, se encapsula con IPIP a través del switch de red física y se desencapsula y entrega a un Pod en un segundo nodo.](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
 
 ### Comparación de estructuras de paquetes
 
@@ -528,16 +528,16 @@ IPIP Encapsulated Packet:
 
 La arquitectura de Calico está diseñada para ofrecer escalabilidad, rendimiento y simplicidad operativa:
 
-1. **Felix**: el agente principal en cada nodo, que programa rutas y ACL
-2. **BIRD**: distribuye rutas mediante BGP, lo que permite la integración de enrutamiento nativo
-3. **confd**: conecta el datastore con la configuración de BIRD
-4. **Typha**: escala el sistema al reducir la carga del API server
-5. **kube-controllers**: mantiene Kubernetes y Calico sincronizados
+1. **Felix**: El agente principal en cada nodo, que programa rutas y ACL
+2. **BIRD**: Distribuye rutas mediante BGP, lo que permite la integración con el enrutamiento nativo
+3. **confd**: Conecta el datastore con la configuración de BIRD
+4. **Typha**: Escala el sistema al reducir la carga del servidor API
+5. **kube-controllers**: Mantiene Kubernetes y Calico sincronizados
 6. **Datastore**: API de Kubernetes (recomendada) o etcd para el almacenamiento de configuración
 
 Comprender estos componentes y sus interacciones es esencial para:
 
-* Resolver problemas de conectividad
+* Solucionar problemas de conectividad
 * Optimizar el rendimiento a escala
 * Planificar la capacidad y la arquitectura
 * Integrarse con la infraestructura de red existente
@@ -550,4 +550,4 @@ Comprender estos componentes y sus interacciones es esencial para:
 
 ## Cuestionario
 
-Para poner a prueba lo que has aprendido en este capítulo, prueba el [Cuestionario de arquitectura](../../quizzes/networking/calico/02-architecture-quiz.md).
+Para poner a prueba lo aprendido en este capítulo, prueba el [Cuestionario de arquitectura](../../quizzes/networking/calico/02-architecture-quiz.md).

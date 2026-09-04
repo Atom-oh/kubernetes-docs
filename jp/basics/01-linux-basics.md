@@ -2,11 +2,11 @@
 
 > **対応バージョン**: すべての主要な Linux ディストリビューション（Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+） **最終更新**: February 11, 2026
 
-Linux の基礎を理解することは、Kubernetes とコンテナ技術を理解するために不可欠です。このドキュメントでは、Kubernetes 環境で特に重要な Linux の主要概念を取り上げます。
+Linux の基礎を理解することは、Kubernetes とコンテナ技術を理解するうえで不可欠です。このドキュメントでは、Kubernetes 環境で特に重要となる Linux の中核概念を扱います。
 
 ## ラボ環境のセットアップ
 
-このドキュメント内の例に沿って進めるには、以下の環境が必要です。
+このドキュメントの例に沿って操作するには、以下の環境が必要です。
 
 ### 必要な環境
 
@@ -16,7 +16,7 @@ Linux の基礎を理解することは、Kubernetes とコンテナ技術を理
 
 ### クラウド環境のセットアップ（任意）
 
-AWS EC2 インスタンスを使用する場合:
+AWS EC2 インスタンスを使用する場合：
 
 ```bash
 # Start an Amazon Linux 2 instance
@@ -33,24 +33,24 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 
 ### ローカル環境のセットアップ（任意）
 
-ローカルで練習するには、以下のいずれかを使用できます。
+ローカルで練習するには、次のいずれかを使用できます。
 
-* **VirtualBox + Vagrant**: 仮想マシン環境をセットアップ
-* **WSL2**: Windows 上で Linux 環境を使用
-* **Docker**: コンテナ環境で練習
+* **VirtualBox + Vagrant**: 仮想マシン環境をセットアップする
+* **WSL2**: Windows 上で Linux 環境を使用する
+* **Docker**: コンテナ環境で練習する
 
 ## 目次
 
 * [Linux カーネルとユーザー空間](01-linux-basics.md#linux-kernel-and-user-space)
 * [プロセス管理](01-linux-basics.md#process-management)
-* [Namespace](01-linux-basics.md#namespaces)
-* [cgroups（Control Groups）](01-linux-basics.md#cgroups-control-groups)
+* [名前空間](01-linux-basics.md#namespaces)
+* [cgroups（コントロールグループ）](01-linux-basics.md#cgroups-control-groups)
 * [ファイルシステム](01-linux-basics.md#file-system)
 * [ネットワークの基礎](01-linux-basics.md#networking-basics)
-* [Security Context](01-linux-basics.md#security-context)
+* [セキュリティコンテキスト](01-linux-basics.md#security-context)
 * [systemd とサービス管理](01-linux-basics.md#systemd-and-service-management)
 * [カーネルパラメータとモジュール](01-linux-basics.md#kernel-parameters-and-modules)
-* [システムリソース制限](01-linux-basics.md#system-resource-limits)
+* [システムリソースの制限](01-linux-basics.md#system-resource-limits)
 * [ログ管理](01-linux-basics.md#log-management)
 * [DNS とネットワーク設定](01-linux-basics.md#dns-and-network-configuration)
 * [時刻同期](01-linux-basics.md#time-synchronization)
@@ -69,47 +69,47 @@ Linux カーネルはオペレーティングシステムの中核であり、�
 * **プロセス管理**: プロセスの作成、スケジューリング、終了
 * **メモリ管理**: 仮想メモリと物理メモリの割り当て
 * **デバイス管理**: ハードウェアデバイスとの通信
-* **システムコールインターフェース**: ユーザー空間プログラムがカーネルサービスにアクセスする手段を提供
+* **システムコールインターフェース**: ユーザー空間プログラムがカーネルサービスにアクセスする方法を提供する
 
 ### ユーザー空間
 
-ユーザー空間は、通常のアプリケーションが実行されるメモリ領域です。ユーザー空間のプログラムは、システムコールを通じてカーネルサービスにアクセスします。
+ユーザー空間は、通常のアプリケーションが実行されるメモリ領域です。ユーザー空間プログラムは、システムコールを通じてカーネルサービスにアクセスします。
 
-![Linux のユーザー空間、カーネル空間、ハードウェア層を示します。アプリケーションとシェルは、システムライブラリおよびシステムコールインターフェースを通じてカーネルサブシステム（プロセス・メモリ管理、ファイルシステム、ネットワーク、セキュリティ）を呼び出し、デバイスドライバーを介して CPU、メモリ、ストレージ、ネットワークカードに到達します。](../.gitbook/assets/en-basics-01-linux-basics-0.png)
+![Linux のユーザー空間、カーネル空間、ハードウェアのレイヤー: アプリケーションとシェルはシステムライブラリおよびシステムコールインターフェースを通じてカーネルサブシステムに到達し、デバイスドライバーは CPU、メモリ、ストレージ、ネットワークカードに到達します。](../.gitbook/assets/en-basics-01-linux-basics-0.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
 
 ### システムコールの例
 
 | システムコール | 説明           | 関連コマンド    |
 | ----------- | --------------------- | ------------------- |
-| `fork()`    | 新しいプロセスを作成    | `ps`, `top`         |
-| `exec()`    | プログラムを実行       | `bash`, `sh`        |
+| `fork()`    | 新しいプロセスを作成する    | `ps`, `top`         |
+| `exec()`    | プログラムを実行する       | `bash`, `sh`        |
 | `open()`    | ファイルを開く             | `cat`, `less`       |
 | `read()`    | ファイルからデータを読み取る   | `cat`, `grep`       |
-| `write()`   | ファイルにデータを書き込む    | `echo`, `tee`       |
-| `socket()`  | ネットワークソケットを作成 | `netstat`, `ss`     |
-| `clone()`   | Namespace を作成      | `unshare`, `docker` |
+| `write()`   | ファイルにデータを書き込む   | `echo`, `tee`       |
+| `socket()`  | ネットワークソケットを作成する | `netstat`, `ss`     |
+| `clone()`   | 名前空間を作成する          | `unshare`, `docker` |
 
 ### Linux カーネルアーキテクチャ
 
-![階層化された Linux カーネルアーキテクチャを示します。ユーザー空間のアプリケーションとシェルは、システムライブラリおよびシステムコールインターフェースを通じてカーネルに到達し、その下にプロセス、メモリ、ファイルシステム、ネットワーク、セキュリティのサブシステムがあり、デバイスドライバーが CPU、メモリ、ストレージ、ネットワークカードのハードウェアと通信します。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
+![レイヤー化された Linux カーネルアーキテクチャ: アプリケーションとシェルはシステムライブラリおよびシステムコールインターフェースを通じてカーネルに入り、カーネルサブシステムはデバイスドライバーを通じてハードウェアを駆動します。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
 ## プロセス管理
 
 ### プロセスとスレッド
 
-* **プロセス**: 独自の独立したメモリ空間を持つ、実行中のプログラムのインスタンス
-* **スレッド**: プロセス内で実行される作業単位。同じプロセスのスレッドはメモリ空間を共有します
+* **プロセス**: 独立したメモリ空間を持つ、実行中のプログラムのインスタンス
+* **スレッド**: プロセス内で実行される作業単位。同じプロセスのスレッドはメモリ空間を共有する
 
 ### プロセスの状態
 
-* **実行中**: 現在 CPU 上で実行中
-* **待機中**: I/O の完了またはイベントの発生を待機中
-* **実行可能**: 実行の準備はできているが、CPU の割り当てを待機中
-* **ゾンビ**: 終了したが、親プロセスがその状態を確認していない
+* **実行中**: 現在 CPU 上で実行されている
+* **待機中**: I/O の完了またはイベントの発生を待機している
+* **実行可能**: 実行準備はできているが、CPU の割り当てを待機している
+* **ゾンビ**: 終了済みだが、親プロセスが状態を確認していない
 * **停止中**: 一時停止状態
 
 ### 主なプロセス管理コマンド
@@ -137,22 +137,22 @@ fg %<job-number>
 bg %<job-number>
 ```
 
-## Namespaces
+## 名前空間
 
-Namespaces は、プロセスグループを分離し、各グループがシステムリソースを独立して認識できるようにする Linux カーネルの機能です。これはコンテナ技術の中核要素です。
+名前空間は、プロセスグループを分離し、各グループがシステムリソースを独立して認識できるようにする Linux カーネル機能です。これはコンテナ技術の中核要素です。
 
-### 主な Namespace の種類
+### 主な名前空間の種類
 
-* **PID Namespace**: プロセス ID を分離し、コンテナが独自の PID 1（init）を持つことを可能にします
-* **Network Namespace**: ネットワークスタック（インターフェース、IP アドレス、ルーティングテーブル、ファイアウォールなど）を分離し、コンテナネットワーキングの基盤となります
-* **Mount Namespace**: ファイルシステムのマウントポイントを分離し、コンテナごとに独立したファイルシステムを提供します
-* **UTS Namespace**: ホスト名とドメイン名を分離し、各コンテナに一意のホスト識別子を与えます
-* **IPC Namespace**: プロセス間通信リソース（共有メモリ、セマフォ、メッセージキューなど）を分離し、マイクロサービスアーキテクチャにおけるサービス分離で重要です
-* **User Namespace**: ユーザーおよびグループ ID を分離し、セキュリティを高める rootless コンテナ実行をサポートします
-* **cgroup Namespace**: cgroup のルートディレクトリを分離し、コンテナ内でリソース制限を可視化します
-* **Time Namespace**: システムクロックを分離し、コンテナごとに独立した時刻設定を可能にします（Linux 5.6+）
+* **PID Namespace**: プロセス ID の分離。コンテナが独自の PID 1（init）を持つことを可能にする
+* **Network Namespace**: ネットワークスタックの分離（インターフェース、IP アドレス、ルーティングテーブル、ファイアウォールなど）。コンテナネットワーキングの基盤
+* **Mount Namespace**: ファイルシステムのマウントポイントを分離し、コンテナごとに独立したファイルシステムを提供する
+* **UTS Namespace**: ホスト名とドメイン名を分離し、各コンテナに一意のホスト識別子を付与する
+* **IPC Namespace**: プロセス間通信リソース（共有メモリ、セマフォ、メッセージキューなど）の分離。マイクロサービスアーキテクチャにおけるサービス分離で重要
+* **User Namespace**: ユーザー ID とグループ ID の分離。セキュリティを強化する rootless コンテナ実行をサポートする
+* **cgroup Namespace**: cgroup ルートディレクトリの分離。コンテナ内でリソース制限を可視化できるようにする
+* **Time Namespace**: システムクロックの分離。コンテナごとに独立した時刻設定を可能にする（Linux 5.6+）
 
-### Namespace 関連コマンド
+### 名前空間関連コマンド
 
 ```bash
 # Check process namespaces
@@ -175,26 +175,26 @@ unshare --user --map-root-user --mount --net bash
 unshare --time bash
 ```
 
-## cgroups（Control Groups）
+## cgroups（コントロールグループ）
 
-cgroups は、プロセスグループのリソース使用量を制限・分離する Linux カーネルの機能です。コンテナのリソース制限を実装するために使用されます。クラウドネイティブ環境と Kubernetes におけるリソース管理の中核技術です。
+cgroups は、プロセスグループのリソース使用量を制限および分離する Linux カーネル機能です。コンテナのリソース制限を実装するために使用されます。これは、クラウドネイティブ環境および Kubernetes におけるリソース管理の中核技術です。
 
 ### cgroups の主な機能
 
-* **CPU 時間の制限**: プロセスグループが使用できる CPU 時間を制限し、CPU コアを割り当てます
-* **メモリ制限**: プロセスグループが使用できるメモリを制限し、OOM（Out of Memory）動作を制御します
-* **ブロック I/O 制限**: ディスク I/O 帯域幅の制限と優先度設定
-* **ネットワーク帯域幅制限**: ネットワークトラフィックの制限（tc と組み合わせて使用）
+* **CPU 時間の制限**: プロセスグループが利用できる CPU 時間を制限し、CPU コアを割り当てる
+* **メモリの制限**: プロセスグループが利用できるメモリを制限し、OOM（Out of Memory）の動作を制御する
+* **ブロック I/O の制限**: ディスク I/O 帯域幅の制限と優先度設定
+* **ネットワーク帯域幅の制限**: ネットワークトラフィックの制限（tc と組み合わせて使用）
 * **デバイスアクセス制御**: 特定デバイスへのアクセス制御と権限管理
-* **PIDs 制御**: fork bomb を防ぐためにプロセス作成数を制限
-* **Freezer**: プロセスグループを一時停止・再開（コンテナの一時停止に使用）
-* **cpuset**: プロセスを特定の CPU コアおよび NUMA ノードにバインド
+* **PIDs 制御**: fork bomb を防ぐためにプロセス作成数を制限する
+* **Freezer**: プロセスグループを一時停止および再開する（コンテナの一時停止に使用）
+* **cpuset**: プロセスを特定の CPU コアおよび NUMA ノードにバインドする
 
 ### cgroups v1 と v2
 
-* **cgroups v1**: リソースタイプごとに個別の階層を持ち、レガシーシステムで現在も使用されています
-* **cgroups v2**: より一貫した管理のための統合された単一階層で、最新のディストリビューションではデフォルトです
-* **ハイブリッドモード**: v1 と v2 を併用し、互換性を維持しながら新機能を活用します
+* **cgroups v1**: リソースタイプごとに個別の階層を持つ。レガシーシステムでは現在も使用されている
+* **cgroups v2**: より一貫した管理のための統合単一階層。最新のディストリビューションではデフォルト
+* **ハイブリッドモード**: 新機能を活用しつつ互換性を維持するため、v1 と v2 を併用する
 
 ### cgroups 関連コマンド
 
@@ -227,7 +227,7 @@ docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 
 Linux には、単一のルートディレクトリ（`/`）から始まる階層的なファイルシステム構造があります。
 
-主要なディレクトリ:
+主なディレクトリ：
 
 * `/bin`: 基本コマンド
 * `/sbin`: システム管理コマンド
@@ -242,9 +242,9 @@ Linux には、単一のルートディレクトリ（`/`）から始まる階�
 ### ファイルシステムの種類
 
 * **ext4**: デフォルトの Linux ファイルシステム
-* **XFS**: 大規模なファイルシステムに適しています
-* **Btrfs**: スナップショットや圧縮などの高度な機能を提供します
-* **OverlayFS**: 複数のディレクトリを単一のディレクトリとして表現します（コンテナで一般的に使用）
+* **XFS**: 大規模なファイルシステムに適している
+* **Btrfs**: スナップショットや圧縮などの高度な機能を提供する
+* **OverlayFS**: 複数のディレクトリを単一のディレクトリとして表す（コンテナで一般的に使用される）
 * **tmpfs**: メモリベースの一時ファイルシステム
 
 ### マウントとボリューム
@@ -266,8 +266,8 @@ umount <mount-point>
 ### ネットワークインターフェース
 
 * **lo**: ループバックインターフェース（127.0.0.1）
-* **eth0, ens3, etc.**: 物理ネットワークインターフェース
-* **docker0, cni0, etc.**: 仮想ブリッジインターフェース（コンテナネットワーキング）
+* **eth0, ens3 など**: 物理ネットワークインターフェース
+* **docker0, cni0 など**: 仮想ブリッジインターフェース（コンテナネットワーキング）
 
 ### ネットワーク設定コマンド
 
@@ -288,7 +288,7 @@ ss -tuln
 tcpdump -i <interface>
 ```
 
-### Network Namespace と仮想インターフェース
+### ネットワーク名前空間と仮想インターフェース
 
 ```bash
 # Create network namespace
@@ -301,7 +301,7 @@ ip link add <veth1> type veth peer name <veth2>
 ip link set <veth2> netns <namespace-name>
 ```
 
-## Security Context
+## セキュリティコンテキスト
 
 ### ユーザーとグループ
 
@@ -313,9 +313,9 @@ ip link set <veth2> netns <namespace-name>
 
 Linux のファイル権限は、所有者、グループ、その他のユーザーに対する読み取り（r）、書き込み（w）、実行（x）権限で構成されます。
 
-![ls -l の 10 文字の権限文字列が、1 文字のファイルタイプと、所有者・グループ・その他のユーザー向けの 3 組の r w x に分かれることを示します。また、例の drwxr-xr-- は、所有者にはすべての権限、グループには読み取り・実行権限、その他には読み取り専用権限を持つディレクトリであることを表します。](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+![10 文字の ls -l 権限文字列が、ファイルタイプ文字と所有者、グループ、その他の r w x の組に分かれる仕組み。drwxr-xr-- は、所有者にはすべて、グループには読み取りと実行、その他には読み取り専用アクセスを持つディレクトリを表します。](../.gitbook/assets/en-basics-01-linux-basics-2.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
 
 ### 権限関連コマンド
 
@@ -360,20 +360,20 @@ systemd は、最新の Linux システムの init システムおよびサー�
 
 ### systemd の主な機能
 
-* **サービス管理**: システムサービスの開始、停止、再起動、有効化・無効化
-* **依存関係管理**: サービス依存関係の自動管理と並列起動
+* **サービス管理**: システムサービスの開始、停止、再起動、有効化/無効化
+* **依存関係管理**: サービスの依存関係の自動管理と並列起動
 * **ロギング**: journald による統合ログ管理
-* **Timers**: cron の代替となるタイマーユニット
+* **タイマー**: cron の代替となるタイマーユニット
 * **リソース管理**: cgroups によるサービスごとのリソース制限
 
-### systemd Unit の種類
+### systemd ユニットの種類
 
 * **service**: システムサービス（例: kubelet.service、containerd.service）
 * **socket**: ソケットベースのアクティベーション
-* **target**: Unit グループ（runlevel に類似）
+* **target**: ユニットグループ（runlevel に類似）
 * **timer**: スケジュールされたタスク
 * **mount**: ファイルシステムのマウント
-* **device**: デバイス Unit
+* **device**: デバイスユニット
 
 ### systemd コマンド
 
@@ -408,9 +408,9 @@ systemctl --failed
 systemctl daemon-reload
 ```
 
-### systemd Unit ファイルの作成
+### systemd ユニットファイルの作成
 
-Kubernetes 関連サービス用の systemd Unit ファイルの例:
+Kubernetes 関連サービス用の systemd ユニットファイルの例：
 
 ```ini
 # /etc/systemd/system/kubelet.service
@@ -430,7 +430,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-### systemd リソース制限
+### systemd のリソース制限
 
 ```bash
 # CPU limit (20%)
@@ -448,11 +448,11 @@ systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
 
 ## カーネルパラメータとモジュール
 
-### sysctl によるカーネルパラメータ設定
+### sysctl によるカーネルパラメータの設定
 
-sysctl は、実行中のカーネルパラメータを照会および変更するツールです。Kubernetes クラスターを設定する際のネットワークおよびシステムパラメータのチューニングに不可欠です。
+sysctl は、実行中のカーネルパラメータを照会および変更するためのツールです。Kubernetes クラスターを構成する際のネットワークおよびシステムパラメータのチューニングに不可欠です。
 
-#### Kubernetes に必要な主要 sysctl 設定
+#### Kubernetes に必要な主な sysctl 設定
 
 ```bash
 # Enable IP forwarding (required for container networking)
@@ -493,7 +493,7 @@ sysctl --system
 
 ### カーネルモジュール管理
 
-多くの CNI プラグインとストレージドライバーには、特定のカーネルモジュールが必要です。
+多くの CNI プラグインおよびストレージドライバーには、特定のカーネルモジュールが必要です。
 
 ```bash
 # Load modules
@@ -540,11 +540,11 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
-## システムリソース制限
+## システムリソースの制限
 
 ### ulimit - ユーザーごとのリソース制限
 
-ulimit はプロセスが使用できるシステムリソースを制限します。十分なリソースを確保するため、Kubernetes ノードでは調整が必要になる場合があります。
+ulimit は、プロセスが使用できるシステムリソースを制限します。十分なリソースを確保するため、Kubernetes ノードでは調整が必要になる場合があります。
 
 ```bash
 # Check current limits
@@ -576,7 +576,7 @@ root            hard    nofile          65536
 EOF
 ```
 
-### PAM 制限設定
+### PAM の制限設定
 
 ```bash
 # Check PAM settings
@@ -601,7 +601,7 @@ ls -l /proc/<PID>/fd | wc -l
 
 ### journald - systemd 統合ロギング
 
-journald は、Kubernetes ノード上のシステムサービスログを管理する systemd のロギングシステムです。
+journald は systemd のロギングシステムであり、Kubernetes ノード上のシステムサービスログを管理します。
 
 ```bash
 # Full system logs
@@ -679,7 +679,7 @@ grep -i "error" /var/log/syslog
 
 ### ログローテーション
 
-ログファイルが無制限に大きくなることを防ぐため、ログローテーションを設定します。
+ログファイルが無制限に増大しないよう、ログローテーションを設定します。
 
 ```bash
 # logrotate configuration
@@ -702,7 +702,7 @@ sudo logrotate -f /etc/logrotate.d/kubernetes
 
 ## DNS とネットワーク設定
 
-### DNS 設定
+### DNS の設定
 
 DNS は Kubernetes クラスター内のサービスディスカバリーの中核です。
 
@@ -771,7 +771,7 @@ sudo netplan apply
 
 ### chronyd（推奨）
 
-chronyd は、ntpd より速く時刻を同期する最新の NTP クライアントです。
+chronyd は ntpd よりも高速に時刻を同期する最新の NTP クライアントです。
 
 ```bash
 # Install chronyd (RHEL/CentOS)
@@ -839,7 +839,7 @@ FallbackNTP=time.google.com
 sudo systemctl restart systemd-timesyncd
 ```
 
-### タイムゾーン設定
+### タイムゾーンの設定
 
 ```bash
 # Check current time and timezone
@@ -860,7 +860,7 @@ sudo timedatectl set-ntp true
 
 ## パッケージ管理
 
-Kubernetes および関連ツールのインストールと管理に使用するパッケージマネージャー。
+Kubernetes および関連ツールをインストール・管理するためのパッケージマネージャーの使用方法です。
 
 ### apt（Debian/Ubuntu）
 
@@ -944,7 +944,7 @@ sudo dnf clean all
 
 ### パッケージバージョンの固定
 
-Kubernetes コンポーネントにはバージョン互換性の要件があるため、自動更新を防ぐ必要があります。
+Kubernetes コンポーネントにはバージョン互換性の要件があるため、自動更新を防止する必要があります。
 
 ```bash
 # apt (Ubuntu/Debian)
@@ -1008,34 +1008,34 @@ journalctl -u <service> # View service logs
 
 ### OverlayFS
 
-OverlayFS は、複数のディレクトリを単一のディレクトリとして表現する union mount ファイルシステムです。Docker などのコンテナランタイムがイメージレイヤーを実装するために使用します。
+OverlayFS は、複数のディレクトリを単一のディレクトリとして表すユニオンマウントファイルシステムです。Docker などのコンテナランタイムがイメージレイヤーを実装するために使用します。
 
 ### ネットワークブリッジと NAT
 
-コンテナネットワーキングは、主にブリッジインターフェースと NAT（Network Address Translation）を使用して実装されます。
+コンテナネットワーキングは主にブリッジインターフェースと NAT（Network Address Translation）を使用して実装されます。
 
-![Docker bridge networking on a single host](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![単一ホスト上の Docker ブリッジネットワーキング](../../assets/diagrams/rendered/docker-bridge-networking.svg)
 
 ### システムコールフィルタリング（seccomp）
 
-seccomp（Secure Computing Mode）は、プロセスが利用できるシステムコールを制限する Linux カーネルの機能です。コンテナのセキュリティを強化するために使用されます。
+seccomp（Secure Computing Mode）は、プロセスが利用できるシステムコールを制限する Linux カーネル機能です。コンテナのセキュリティを強化するために使用されます。
 
 ### Capabilities の制限
 
-Linux capabilities は、従来の root 権限をより小さな権限単位に分割します。コンテナには、セキュリティを向上させるために必要な capabilities のみが付与されます。
+Linux Capabilities は、従来の root 権限をより小さな権限単位に分割します。コンテナには必要な Capabilities のみが付与され、セキュリティが強化されます。
 
-主な capabilities:
+主な Capabilities：
 
 * `CAP_NET_ADMIN`: ネットワーク設定の変更
 * `CAP_SYS_ADMIN`: システム管理タスク
-* `CAP_CHOWN`: ファイル所有者の変更
-* `CAP_DAC_OVERRIDE`: ファイル権限をバイパス
+* `CAP_CHOWN`: ファイル所有権の変更
+* `CAP_DAC_OVERRIDE`: ファイル権限のバイパス
 
 ## まとめ
 
-Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するために不可欠です。このドキュメントで扱った主なトピックを以下にまとめます。
+Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するうえで不可欠です。このドキュメントで扱った主なトピックを以下にまとめます。
 
-### コア技術
+### 中核技術
 
 * **Namespaces と cgroups**: コンテナの分離とリソース管理の基盤
 * **OverlayFS**: コンテナイメージのレイヤリングの中核
@@ -1043,7 +1043,7 @@ Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するた
 
 ### 必須の運用知識
 
-* **カーネルパラメータのチューニング**: sysctl によるネットワークとシステムの最適化
+* **カーネルパラメータのチューニング**: sysctl によるネットワークおよびシステムの最適化
 * **モジュール管理**: CNI プラグインとストレージドライバーのサポート
 * **ログ管理**: journald によるシステムおよびサービスログの分析
 * **時刻同期**: 分散システムにおける一貫性の維持
@@ -1051,14 +1051,14 @@ Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するた
 ### トラブルシューティング
 
 * **リソース制限**: ulimit と cgroups によるリソース管理
-* **ネットワーキング**: DNS、bridge、iptables の設定
+* **ネットワーキング**: DNS、ブリッジ、iptables の設定
 * **パッケージ管理**: Kubernetes コンポーネントのバージョン管理
 
-この Linux の基盤知識があれば、Kubernetes 環境で問題を効果的にトラブルシューティングし、クラスターを最適化して、信頼性高く運用できます。
+この Linux の基礎を身につけることで、Kubernetes 環境で問題を効果的にトラブルシューティングし、クラスターを最適化して、信頼性高く運用できます。
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Linux の基礎クイズ](../quizzes/basics/01-linux-basics-quiz.md)に挑戦してください。
+この章で学んだ内容を確認するには、[Linux の基礎クイズ](../quizzes/basics/01-linux-basics-quiz.md)に取り組んでください。
 
 ## 参考資料
 

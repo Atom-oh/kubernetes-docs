@@ -4,25 +4,25 @@
 
 ## Descripción general
 
-Este capítulo cubre la integración de Calico con Amazon EKS, incluidos los patrones de arquitectura, los métodos de instalación y las optimizaciones específicas de EKS. Aprenda a aprovechar las capacidades de políticas de red de Calico junto con AWS VPC CNI para obtener una conectividad de EKS óptima.
+Este capítulo cubre la integración de Calico con Amazon EKS, incluidos patrones de arquitectura, métodos de instalación y optimizaciones específicas de EKS. Aprenda a aprovechar las capacidades de política de red de Calico junto con AWS VPC CNI para lograr una red de EKS óptima.
 
-![El servidor de API de EKS se conecta a dos nodos de trabajo, donde VPC CNI gestiona la conectividad de los pods y Calico aplica la política de red en los mismos pods.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
+![El servidor de API de EKS llega a dos nodos worker, donde VPC CNI gestiona la red de los pods y Calico aplica políticas de red en los mismos pods.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
 
 ## Arquitectura de VPC CNI + Calico
 
-![Typha observa kube-apiserver en el plano de control de EKS y envía políticas a calico-node (Felix) en dos nodos de trabajo, donde aws-node (VPC CNI) gestiona las ENI y asigna IP de pod desde el CIDR de la VPC, mientras Calico aplica NetworkPolicy en los mismos pods y el tráfico de pods entre nodos se enruta de forma nativa mediante la VPC.](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
+![En EKS, Typha observa kube-apiserver y envía las políticas a calico-node (Felix) en cada nodo worker, donde aws-node (VPC CNI) administra las ENI y asigna IP de pod desde el CIDR de VPC, mientras Calico aplica NetworkPolicy en los mismos pods.](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-4.html)
 
-Amazon EKS utiliza AWS VPC CNI de forma predeterminada para la conectividad de pods. Se puede añadir Calico para obtener capacidades avanzadas de políticas de red mientras VPC CNI gestiona las direcciones IP.
+Amazon EKS usa AWS VPC CNI de forma predeterminada para la red de los pods. Calico se puede añadir para obtener capacidades avanzadas de política de red, mientras VPC CNI gestiona la administración de direcciones IP.
 
 ### Análisis detallado de la arquitectura
 
-![El tráfico de un pod atraviesa un par veth hacia una ENI secundaria gestionada por VPC CNI, mientras el agente Felix de Calico programa reglas de iptables/eBPF en esa misma ruta, antes de que la ENI primaria transporte el tráfico a la subred de la VPC y la puerta de enlace de Internet.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
+![El tráfico de un pod cruza un par veth hacia una ENI secundaria gestionada por VPC CNI, mientras el agente Felix de Calico programa reglas de iptables/eBPF en esa misma ruta, antes de que la ENI principal transporte el tráfico a la subred de VPC y a la puerta de enlace de Internet.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
 
 ### Flujo de tráfico con VPC CNI + Calico
 
-![El tráfico de salida del Pod A es evaluado por Calico en su nodo antes de que VPC CNI lo enrute a través de la VPC de AWS al nodo de destino, donde Calico evalúa la política de entrada antes de entregar el paquete al Pod B.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
+![El tráfico de salida de Pod A es evaluado por Calico en su nodo antes de que VPC CNI lo enrute a través de AWS VPC hasta el nodo de destino, donde Calico evalúa la política de entrada antes de entregar el paquete a Pod B.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
 
 ## Comparación de métodos de instalación
 
@@ -30,10 +30,10 @@ Amazon EKS utiliza AWS VPC CNI de forma predeterminada para la conectividad de p
 
 | Método          | Complejidad | Flexibilidad | Ruta de actualización | Integración con EKS |
 | --------------- | ---------- | ----------- | --------------------- | ------------------- |
-| Complemento de EKS | Baja     | Limitada    | Automática            | Nativa              |
-| Tigera Operator | Media      | Alta        | Semiautomática        | Buena               |
-| Helm            | Media      | Máxima      | Manual                | Buena               |
-| Manifiesto      | Alta       | Media       | Manual                | Básica              |
+| Complemento de EKS      | Baja        | Limitada     | Automática    | Nativa          |
+| Tigera Operator | Media     | Alta        | Semiautomática    | Buena            |
+| Helm            | Media     | Máxima     | Manual       | Buena            |
+| Manifest        | Alta       | Media      | Manual       | Básica           |
 
 ### Método 1: Complemento de EKS (el más sencillo)
 
@@ -144,14 +144,14 @@ kubectl get pods -n calico-system
 
 **Ventajas:**
 
-* Características completas de Calico (GlobalNetworkPolicy, Tiers, etc.)
-* Operator administra el ciclo de vida
+* Todas las características de Calico (GlobalNetworkPolicy, Tiers, etc.)
+* El Operator administra el ciclo de vida
 * Conciliación automática de componentes
 * Soporte para dataplane eBPF
 
 **Desventajas:**
 
-* Despliegue adicional de Operator
+* Implementación de Operator adicional
 * Requiere actualizaciones independientes de EKS
 
 ### Método 3: Instalación con Helm
@@ -222,9 +222,9 @@ apiServer:
 
 ## Controlador de políticas de red de EKS (v1.14+)
 
-EKS 1.25+ incluye soporte nativo para NetworkPolicy a través de VPC CNI.
+EKS 1.25+ incluye soporte nativo para Network Policy mediante VPC CNI.
 
-### Habilitación de NetworkPolicy nativa
+### Habilitación de Network Policy nativa
 
 ```yaml
 # eksctl configuration
@@ -254,35 +254,35 @@ kubectl get pods -n kube-system -l k8s-app=aws-node
 kubectl logs -n kube-system -l k8s-app=aws-node -c aws-network-policy-agent
 ```
 
-### NetworkPolicy nativa de EKS frente a Calico
+### Network Policy nativa de EKS frente a Calico
 
-| Característica            | Nativa de EKS (VPC CNI) | Calico           |
-| ------------------------- | ----------------------- | ---------------- |
-| Kubernetes NetworkPolicy  | Sí                      | Sí               |
-| GlobalNetworkPolicy       | No                      | Sí               |
-| Tiers de políticas        | No                      | Sí               |
-| Política L7 (HTTP)        | No                      | Sí (Enterprise)  |
-| Política basada en DNS    | No                      | Sí               |
-| Reglas de salida FQDN     | No                      | Sí               |
-| Política de Host Endpoint | No                      | Sí               |
-| Vista previa de políticas | No                      | Sí (Enterprise)  |
-| Registros de flujo        | CloudWatch              | Prometheus/archivo |
-| Rendimiento               | Optimizado para eBPF    | iptables/eBPF    |
+| Característica                  | EKS nativo (VPC CNI) | Calico           |
+| ------------------------ | -------------------- | ---------------- |
+| Kubernetes NetworkPolicy | Sí                  | Sí              |
+| GlobalNetworkPolicy      | No                   | Sí              |
+| Tiers de políticas             | No                   | Sí              |
+| Política L7 (HTTP)         | No                   | Sí (Enterprise) |
+| Política basada en DNS         | No                   | Sí              |
+| Reglas de salida FQDN        | No                   | Sí              |
+| Política de Host Endpoint     | No                   | Sí              |
+| Vista previa de políticas           | No                   | Sí (Enterprise) |
+| Flow Logs                | CloudWatch           | Prometheus/archivo  |
+| Rendimiento              | Optimizado para eBPF       | iptables/eBPF    |
 
-## Consideraciones sobre tipos de nodo
+## Consideraciones sobre el tipo de nodo
 
 ### Matriz de características por tipo de nodo
 
-| Característica  | Nodos administrados | Autoadministrados | Fargate   |
-| --------------- | ------------------- | ----------------- | --------- |
-| Calico CNI      | No (VPC CNI)        | Sí                | No        |
-| Política Calico | Sí                  | Sí                | Limitada  |
-| Dataplane eBPF  | Sí                  | Sí                | No        |
-| BGP             | No                  | Sí                | No        |
-| WireGuard       | Sí                  | Sí                | No        |
-| Host Endpoints  | Sí                  | Sí                | No        |
-| IPAM personalizado | No                | Sí                | No        |
-| Taints de nodo  | Sí                  | Sí                | N/D       |
+| Característica        | Nodos administrados | Autoadministrados | Fargate |
+| -------------- | ------------- | ------------ | ------- |
+| Calico CNI     | No (VPC CNI)  | Sí          | No      |
+| Política de Calico  | Sí           | Sí          | Limitada |
+| Dataplane eBPF | Sí           | Sí          | No      |
+| BGP            | No            | Sí          | No      |
+| WireGuard      | Sí           | Sí          | No      |
+| Host Endpoints | Sí           | Sí          | No      |
+| IPAM personalizado    | No            | Sí          | No      |
+| Taints de nodo    | Sí           | Sí          | N/A     |
 
 ### Grupos de nodos administrados
 
@@ -383,7 +383,7 @@ fargateProfiles:
 * Solo Kubernetes NetworkPolicy estándar
 * Sin Calico GlobalNetworkPolicy
 * Sin dataplane eBPF
-* Sin políticas de Host Endpoint
+* Sin políticas de host endpoint
 * Sin IPAM personalizado
 
 ## Configuración de IRSA
@@ -455,24 +455,24 @@ spec:
     bgp: Disabled
 ```
 
-## Security Group frente a la política de Calico
+## Security Group frente a política de Calico
 
 ### Comparación
 
-![Los security groups de AWS aplican reglas L3-L4 generales a nivel de instancia y ENI, mientras GlobalNetworkPolicy de Calico, NetworkPolicy de namespace y HostEndpointPolicy convergen en el mismo pod, que también intercambia tráfico directamente con su pod par.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
+![Los security groups de AWS aplican reglas L3-L4 generales a nivel de instancia y ENI, mientras GlobalNetworkPolicy, NetworkPolicy de namespace y HostEndpointPolicy de Calico convergen en el mismo pod, que también intercambia tráfico directamente con su pod par.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
 
-| Aspecto         | Security Groups | Política de Calico    |
+| Aspecto          | Security Groups | Política de Calico         |
 | --------------- | --------------- | --------------------- |
-| Alcance         | Instancia/ENI   | Pod/Namespace/Cluster |
-| Granularidad    | IP/puerto       | Labels/selectores/FQDN |
-| Capa            | L3-L4           | L3-L7                 |
-| Selección de Pod | Por instancia  | Por Labels            |
-| Actualizaciones dinámicas | Limitadas | En tiempo real        |
-| Auditoría       | CloudTrail      | Registros de flujo    |
-| Entre AZ        | Sí              | Sí                    |
-| Costo           | Gratis          | Gratis (OSS)          |
+| Alcance           | Instancia/ENI    | Pod/Namespace/Cluster |
+| Granularidad     | IP/puerto         | Labels/Selectors/FQDN |
+| Capa           | L3-L4           | L3-L7                 |
+| Selección de Pod   | Por instancia     | Por Labels             |
+| Actualizaciones dinámicas | Limitadas         | En tiempo real             |
+| Auditoría           | CloudTrail      | Flow Logs             |
+| Entre AZ        | Sí             | Sí                   |
+| Costo            | Gratuito            | Gratuito (OSS)            |
 
-### Uso de ambos conjuntamente
+### Uso conjunto de ambos
 
 ```yaml
 # Security Group for node-level protection
@@ -519,17 +519,17 @@ spec:
       - sg-0123456789abcdef0
 ```
 
-## Consideraciones para la actualización de EKS
+## Consideraciones sobre la actualización de EKS
 
 ### Matriz de compatibilidad
 
 | Versión de EKS | Calico 3.26 | Calico 3.27 | Calico 3.28 | Calico 3.29 |
-| -------------- | ----------- | ----------- | ----------- | ----------- |
-| 1.27           | Sí          | Sí          | Sí          | Sí          |
-| 1.28           | Sí          | Sí          | Sí          | Sí          |
-| 1.29           | Limitada    | Sí          | Sí          | Sí          |
-| 1.30           | No          | Sí          | Sí          | Sí          |
-| 1.31           | No          | Limitada    | Sí          | Sí          |
+| ----------- | ----------- | ----------- | ----------- | ----------- |
+| 1.27        | Sí         | Sí         | Sí         | Sí         |
+| 1.28        | Sí         | Sí         | Sí         | Sí         |
+| 1.29        | Limitada     | Sí         | Sí         | Sí         |
+| 1.30        | No          | Sí         | Sí         | Sí         |
+| 1.31        | No          | Limitada     | Sí         | Sí         |
 
 ### Procedimiento de actualización
 
@@ -563,17 +563,17 @@ eksctl upgrade nodegroup \
   --kubernetes-version 1.30
 ```
 
-## Consideraciones sobre costos
+## Consideraciones de costos
 
 ### Factores de costo
 
-| Componente    | Factor de costo                | Optimización              |
-| ------------- | ------------------------------ | ------------------------- |
-| IP de VPC CNI | Asociación ENI, asignación de IP | Usar delegación de prefijos |
-| Calico Typha  | Recursos de instancia          | Ajustar el tamaño de las réplicas |
-| Registros de flujo | Almacenamiento, procesamiento | Agregar, filtrar       |
-| Entre AZ      | Transferencia de datos         | Afinidad de zona          |
-| eBPF          | Eficiencia de CPU              | Habilitar donde sea compatible |
+| Componente    | Factor de costo                   | Optimización           |
+| ------------ | ----------------------------- | ---------------------- |
+| IP de VPC CNI  | Asociación de ENI, asignación de IP | Usar delegación de prefijo  |
+| Calico Typha | Recursos de instancia            | Ajustar el tamaño de las réplicas    |
+| Flow Logs    | Almacenamiento, procesamiento           | Agregar, filtrar      |
+| Entre AZ     | Transferencia de datos                 | Afinidad de zona          |
+| eBPF         | Eficiencia de CPU                | Habilitar donde sea compatible |
 
 ### Estrategias de optimización de costos
 
@@ -616,7 +616,7 @@ spec:
 
 ## Optimización del rendimiento de EKS
 
-### Delegación de prefijos
+### Delegación de prefijo
 
 ```yaml
 # Enable prefix delegation for better IP density
@@ -659,7 +659,7 @@ spec:
   bpfDataIfacePattern: "^(eth.*)"
 ```
 
-**Nota:** En EKS, mantenga kube-proxy en ejecución incluso con el modo eBPF, ya que la integración de VPC CNI lo requiere.
+**Nota:** En EKS, mantenga kube-proxy en ejecución incluso con el modo eBPF, ya que la integración con VPC CNI lo requiere.
 
 ## Configuración completa de eksctl
 
@@ -872,7 +872,7 @@ echo "Calico installation complete!"
 
 ## Referencias
 
-* [Prácticas recomendadas de EKS - Conectividad](https://aws.github.io/aws-eks-best-practices/networking/)
+* [Prácticas recomendadas de EKS - Redes](https://aws.github.io/aws-eks-best-practices/networking/)
 * [Documentación de Calico en EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
 * [Documentación de VPC CNI](https://github.com/aws/amazon-vpc-cni-k8s)
 * [Complementos de EKS](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
@@ -880,4 +880,4 @@ echo "Calico installation complete!"
 
 ## Cuestionario
 
-Para comprobar lo que aprendió en este capítulo, pruebe el [cuestionario de integración con EKS](../../quizzes/networking/calico/08-eks-integration-quiz.md).
+Para poner a prueba lo que aprendió en este capítulo, intente el [Cuestionario de integración con EKS](../../quizzes/networking/calico/08-eks-integration-quiz.md).

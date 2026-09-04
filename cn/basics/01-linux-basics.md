@@ -1,8 +1,8 @@
 # Linux 基础
 
-> **支持的版本**：所有主流 Linux 发行版（Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+） **最后更新**：February 11, 2026
+> **支持的版本**：所有主流 Linux 发行版（建议使用 Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+）**最后更新**：February 11, 2026
 
-理解 Linux 基础知识对于掌握 Kubernetes 和容器技术至关重要。本文档涵盖了在 Kubernetes 环境中特别重要的核心 Linux 概念。
+理解 Linux 基础知识对于掌握 Kubernetes 和容器技术至关重要。本文档介绍在 Kubernetes 环境中特别重要的核心 Linux 概念。
 
 ## 实验环境设置
 
@@ -10,7 +10,7 @@
 
 ### 必需环境
 
-* Linux 操作系统（推荐 Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+）
+* Linux 操作系统（建议使用 Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+）
 * 终端访问权限
 * sudo 权限
 
@@ -33,9 +33,9 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 
 ### 本地环境设置（可选）
 
-如需在本地练习，您可以使用以下任一环境：
+如需进行本地练习，您可以使用以下任一环境：
 
-* **VirtualBox + Vagrant**：搭建虚拟机环境
+* **VirtualBox + Vagrant**：设置虚拟机环境
 * **WSL2**：在 Windows 上使用 Linux 环境
 * **Docker**：在容器环境中练习
 
@@ -55,8 +55,8 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 * [DNS 和网络配置](01-linux-basics.md#dns-and-network-configuration)
 * [时间同步](01-linux-basics.md#time-synchronization)
 * [软件包管理](01-linux-basics.md#package-management)
-* [基本 Linux 命令](01-linux-basics.md#essential-linux-commands)
-* [容器相关 Linux 功能](01-linux-basics.md#container-related-linux-features)
+* [常用 Linux 命令](01-linux-basics.md#essential-linux-commands)
+* [容器相关的 Linux 功能](01-linux-basics.md#container-related-linux-features)
 
 ## Linux 内核和用户空间
 
@@ -66,34 +66,34 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 
 Linux 内核是操作系统的核心，充当硬件和软件之间的中介。其主要功能包括：
 
-* **进程管理**：进程的创建、调度和终止
+* **进程管理**：进程创建、调度和终止
 * **内存管理**：虚拟内存和物理内存分配
 * **设备管理**：与硬件设备通信
-* **系统调用接口**：为用户空间程序提供访问内核服务的方式
+* **系统调用接口**：为用户空间程序提供访问内核服务的方法
 
 ### 用户空间
 
 用户空间是常规应用程序运行的内存区域。用户空间程序通过系统调用访问内核服务。
 
-![展示 Linux 用户空间、内核空间和硬件层：应用程序和 Shell 通过系统库及系统调用接口调用内核子系统（进程与内存管理、文件系统、网络、安全），内核子系统再通过设备驱动程序访问 CPU、内存、存储和网卡。](../.gitbook/assets/en-basics-01-linux-basics-0.png)
+![Linux 用户空间、内核空间和硬件层：应用程序和 shell 通过系统库及系统调用接口访问内核子系统，设备驱动程序则访问 CPU、内存、存储和网卡。](../.gitbook/assets/en-basics-01-linux-basics-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
 
 ### 系统调用示例
 
-| 系统调用 | 描述 | 相关命令 |
+| 系统调用 | 描述           | 相关命令    |
 | ----------- | --------------------- | ------------------- |
-| `fork()`    | 创建新进程 | `ps`, `top`         |
-| `exec()`    | 执行程序 | `bash`, `sh`        |
-| `open()`    | 打开文件 | `cat`, `less`       |
-| `read()`    | 从文件读取数据 | `cat`, `grep`       |
-| `write()`   | 向文件写入数据 | `echo`, `tee`       |
+| `fork()`    | 创建新进程    | `ps`, `top`         |
+| `exec()`    | 执行程序       | `bash`, `sh`        |
+| `open()`    | 打开文件             | `cat`, `less`       |
+| `read()`    | 从文件读取数据   | `cat`, `grep`       |
+| `write()`   | 向文件写入数据    | `echo`, `tee`       |
 | `socket()`  | 创建网络套接字 | `netstat`, `ss`     |
-| `clone()`   | 创建命名空间 | `unshare`, `docker` |
+| `clone()`   | 创建命名空间      | `unshare`, `docker` |
 
 ### Linux 内核架构
 
-![分层的 Linux 内核架构展示了用户空间的应用程序和 Shell 如何通过系统库及系统调用接口访问内核，下方是进程、内存、文件系统、网络和安全子系统，以及通过设备驱动程序与 CPU、内存、存储和网卡硬件通信的结构。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
+![分层的 Linux 内核架构：应用程序和 shell 通过系统库及系统调用接口进入内核，内核子系统则通过设备驱动程序驱动硬件。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
@@ -101,18 +101,18 @@ Linux 内核是操作系统的核心，充当硬件和软件之间的中介。�
 
 ### 进程和线程
 
-* **进程**：正在运行的程序实例，具有独立的内存空间
-* **线程**：在进程中执行的工作单元；同一进程的线程共享内存空间
+* **进程**：正在运行的程序实例，拥有独立的内存空间
+* **线程**：在进程内执行的工作单元；同一进程的线程共享内存空间
 
 ### 进程状态
 
 * **运行中**：当前正在 CPU 上执行
-* **等待中**：正在等待 I/O 完成或事件发生
-* **就绪**：准备运行但正在等待 CPU 分配
-* **僵尸**：已终止，但父进程尚未检查其状态
+* **等待中**：等待 I/O 完成或事件发生
+* **就绪**：已准备运行但正在等待 CPU 分配
+* **僵尸**：已终止但父进程尚未检查其状态
 * **已停止**：暂停状态
 
-### 关键进程管理命令
+### 主要进程管理命令
 
 ```bash
 # View process list
@@ -139,7 +139,7 @@ bg %<job-number>
 
 ## 命名空间
 
-命名空间是 Linux 内核的一项功能，可隔离进程组，使每个组能够独立看到系统资源。这是容器技术的核心要素。
+命名空间是 Linux 内核的一项功能，可隔离进程组，使每个组能够独立查看系统资源。这是容器技术的核心要素。
 
 ### 主要命名空间类型
 
@@ -148,8 +148,8 @@ bg %<job-number>
 * **Mount Namespace**：文件系统挂载点隔离，为每个容器提供独立的文件系统
 * **UTS Namespace**：主机名和域名隔离，为每个容器提供唯一的主机标识
 * **IPC Namespace**：进程间通信资源隔离（共享内存、信号量、消息队列等），对微服务架构中的服务隔离非常重要
-* **User Namespace**：用户和组 ID 隔离，支持以 rootless 方式执行容器以增强安全性
-* **cgroup Namespace**：cgroup 根目录隔离，提供容器内部的资源限制可见性
+* **User Namespace**：用户和组 ID 隔离，支持以 rootless 方式执行容器，从而增强安全性
+* **cgroup Namespace**：cgroup 根目录隔离，提供容器内的资源限制可见性
 * **Time Namespace**：系统时钟隔离，允许每个容器独立设置时间（Linux 5.6+）
 
 ### 命名空间相关命令
@@ -177,23 +177,23 @@ unshare --time bash
 
 ## cgroups（控制组）
 
-cgroups 是 Linux 内核的一项功能，可限制和隔离进程组的资源使用。它用于实现容器资源限制，是云原生环境和 Kubernetes 中资源管理的核心技术。
+cgroups 是 Linux 内核的一项功能，用于限制和隔离进程组的资源使用量。它用于实现容器资源限制，是云原生环境和 Kubernetes 中资源管理的核心技术。
 
 ### cgroups 的主要功能
 
 * **CPU 时间限制**：限制进程组可用的 CPU 时间并分配 CPU 核心
-* **内存限制**：限制进程组可用的内存并控制 OOM（内存不足）行为
+* **内存限制**：限制进程组可用的内存并控制 OOM（Out of Memory）行为
 * **块 I/O 限制**：磁盘 I/O 带宽限制和优先级设置
 * **网络带宽限制**：网络流量限制（结合 tc 使用）
-* **设备访问控制**：针对特定设备的访问控制和权限管理
-* **PIDs 控制**：限制进程创建数量，防止 fork bomb
+* **设备访问控制**：特定设备的访问控制和权限管理
+* **PIDs 控制**：限制进程创建数量，以防止 fork 炸弹
 * **Freezer**：暂停和恢复进程组（用于暂停容器）
 * **cpuset**：将进程绑定到特定 CPU 核心和 NUMA 节点
 
 ### cgroups v1 和 v2
 
-* **cgroups v1**：每种资源类型具有独立的层级结构，仍用于旧版系统
-* **cgroups v2**：统一的单一层级结构，可实现更一致的管理，是现代发行版的默认配置
+* **cgroups v1**：每种资源类型使用独立层级，仍用于旧版系统
+* **cgroups v2**：使用统一的单一层级以实现更一致的管理，是现代发行版的默认配置
 * **混合模式**：同时使用 v1 和 v2，在利用新功能的同时保持兼容性
 
 ### cgroups 相关命令
@@ -225,9 +225,9 @@ docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 
 ### 文件系统层级结构
 
-Linux 使用从单个根目录（`/`）开始的层级文件系统结构。
+Linux 具有分层文件系统结构，从单一根目录（`/`）开始。
 
-关键目录：
+主要目录：
 
 * `/bin`：基本命令
 * `/sbin`：系统管理命令
@@ -241,10 +241,10 @@ Linux 使用从单个根目录（`/`）开始的层级文件系统结构。
 
 ### 文件系统类型
 
-* **ext4**：默认 Linux 文件系统
+* **ext4**：默认的 Linux 文件系统
 * **XFS**：适用于大型文件系统
 * **Btrfs**：提供快照和压缩等高级功能
-* **OverlayFS**：将多个目录表示为单个目录（常用于容器）
+* **OverlayFS**：将多个目录表示为单一目录（常用于容器）
 * **tmpfs**：基于内存的临时文件系统
 
 ### 挂载和卷
@@ -305,15 +305,15 @@ ip link set <veth2> netns <namespace-name>
 
 ### 用户和组
 
-* **UID（用户 ID）**：用户标识符
-* **GID（组 ID）**：组标识符
+* **UID（User ID）**：用户标识符
+* **GID（Group ID）**：组标识符
 * **root（UID 0）**：具有管理权限的特殊用户
 
 ### 文件权限
 
 Linux 文件权限由所有者、组和其他用户的读取（r）、写入（w）和执行（x）权限组成。
 
-![展示 ls -l 输出的 10 个字符权限字符串如何分为 1 个字符的文件类型和三组分别对应所有者、组及其他用户的 r w x 三元组，以及示例 drwxr-xr-- 如何表示一个所有者拥有全部权限、组拥有读/执行权限、其他用户仅有读取权限的目录。](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+![10 个字符的 ls -l 权限字符串如何划分为文件类型字符及所有者、组和其他用户的 r w x 三元组：drwxr-xr-- 表示一个目录，所有者拥有完整权限，组拥有读取和执行权限，其他用户仅有读取权限。](../.gitbook/assets/en-basics-01-linux-basics-2.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
 
@@ -336,7 +336,7 @@ chmod 1755 <filename>  # Set sticky bit
 ### SELinux 和 AppArmor
 
 * **SELinux（Security-Enhanced Linux）**：由 NSA 开发的强制访问控制系统
-* **AppArmor**：使用按程序划分的安全配置文件的访问控制系统
+* **AppArmor**：使用每个程序的安全配置文件的访问控制系统
 
 ```bash
 # Check SELinux status
@@ -361,16 +361,16 @@ systemd 是现代 Linux 系统的 init 系统和服务管理器。它用于管�
 ### systemd 的主要功能
 
 * **服务管理**：启动、停止、重启、启用/禁用系统服务
-* **依赖关系管理**：自动管理服务依赖关系并支持并行启动
-* **日志记录**：通过 journald 实现集成的日志管理
+* **依赖关系管理**：自动管理服务依赖关系和并行启动
+* **日志记录**：通过 journald 实现集成式日志管理
 * **定时器**：可替代 cron 的定时器单元
-* **资源管理**：通过 cgroups 为每项服务设置资源限制
+* **资源管理**：通过 cgroups 实现每服务资源限制
 
 ### systemd 单元类型
 
 * **service**：系统服务（例如 kubelet.service、containerd.service）
-* **socket**：基于套接字的激活
-* **target**：单元组（类似运行级别）
+* **socket**：基于 socket 的激活
+* **target**：单元组（类似于运行级别）
 * **timer**：计划任务
 * **mount**：文件系统挂载
 * **device**：设备单元
@@ -544,7 +544,7 @@ cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 
 ### ulimit - 每用户资源限制
 
-ulimit 限制进程可使用的系统资源。为了确保 Kubernetes 节点具有充足资源，可能需要进行调整。
+ulimit 限制进程可以使用的系统资源。为确保资源充足，可能需要在 Kubernetes 节点上进行调整。
 
 ```bash
 # Check current limits
@@ -599,7 +599,7 @@ ls -l /proc/<PID>/fd | wc -l
 
 ## 日志管理
 
-### journald - systemd 集成日志记录
+### journald - systemd 集成式日志记录
 
 journald 是 systemd 的日志系统，用于管理 Kubernetes 节点上的系统服务日志。
 
@@ -662,7 +662,7 @@ sudo systemctl restart systemd-journald
 
 ### 传统 syslog
 
-有些系统仍然使用 syslog。
+一些系统仍使用 syslog。
 
 ```bash
 # syslog file locations
@@ -767,11 +767,11 @@ sudo netplan apply
 
 ## 时间同步
 
-时间同步在分布式系统中非常重要。Kubernetes 集群中的所有节点都必须保持准确的时间。
+时间同步在分布式系统中非常重要。Kubernetes 集群中的所有节点都必须保持准确时间。
 
 ### chronyd（推荐）
 
-chronyd 是现代 NTP 客户端，其时间同步速度比 ntpd 更快。
+chronyd 是一种现代 NTP 客户端，比 ntpd 能更快地同步时间。
 
 ```bash
 # Install chronyd (RHEL/CentOS)
@@ -860,7 +860,7 @@ sudo timedatectl set-ntp true
 
 ## 软件包管理
 
-用于安装和管理 Kubernetes 及相关工具的软件包管理器。
+用于安装和管理 Kubernetes 及相关工具的软件包管理器用法。
 
 ### apt（Debian/Ubuntu）
 
@@ -944,7 +944,7 @@ sudo dnf clean all
 
 ### 软件包版本锁定
 
-Kubernetes 组件存在版本兼容性要求，因此应防止自动更新。
+Kubernetes 组件具有版本兼容性要求，因此应避免自动更新。
 
 ```bash
 # apt (Ubuntu/Debian)
@@ -961,7 +961,7 @@ sudo yum versionlock add kubelet kubeadm kubectl
 sudo yum versionlock delete kubelet kubeadm kubectl
 ```
 
-## 基本 Linux 命令
+## 常用 Linux 命令
 
 ### 文件和目录管理
 
@@ -1004,27 +1004,27 @@ systemctl start/stop/restart <service> # Service control
 journalctl -u <service> # View service logs
 ```
 
-## 容器相关 Linux 功能
+## 容器相关的 Linux 功能
 
 ### OverlayFS
 
-OverlayFS 是一种联合挂载文件系统，可将多个目录表示为单个目录。Docker 等容器运行时使用它来实现镜像层。
+OverlayFS 是一种联合挂载文件系统，将多个目录表示为单一目录。Docker 等容器运行时使用它来实现镜像层。
 
 ### 网络网桥和 NAT
 
-容器网络主要使用网桥接口和 NAT（网络地址转换）实现。
+容器网络主要使用网桥接口和 NAT（Network Address Translation）实现。
 
-![单台主机上的 Docker 网桥网络](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![单个主机上的 Docker 网桥网络](../../assets/diagrams/rendered/docker-bridge-networking.svg)
 
 ### 系统调用过滤（seccomp）
 
-seccomp（安全计算模式）是 Linux 内核的一项功能，可限制进程可用的系统调用。它用于增强容器安全性。
+seccomp（Secure Computing Mode）是 Linux 内核的一项功能，用于限制进程可使用的系统调用。它用于增强容器安全性。
 
 ### Capabilities 限制
 
-Linux capabilities 将传统 root 权限划分为更小的权限单元。容器仅获得必要的 capabilities，以增强安全性。
+Linux capabilities 将传统的 root 权限划分为更小的权限单元。容器仅获得必要的 capabilities，从而增强安全性。
 
-关键 capabilities：
+主要 capabilities：
 
 * `CAP_NET_ADMIN`：网络配置更改
 * `CAP_SYS_ADMIN`：系统管理任务
@@ -1033,20 +1033,20 @@ Linux capabilities 将传统 root 权限划分为更小的权限单元。容器�
 
 ## 结论
 
-Linux 基础知识和功能对于理解 Kubernetes 和容器技术至关重要。以下是本文档涵盖的关键主题总结：
+Linux 基础知识和功能对于理解 Kubernetes 与容器技术至关重要。以下是本文档所涵盖主要主题的总结：
 
 ### 核心技术
 
-* **命名空间和 cgroups**：容器隔离和资源管理的基础
+* **Namespaces 和 cgroups**：容器隔离和资源管理的基础
 * **OverlayFS**：容器镜像分层的核心
 * **systemd**：Kubernetes 节点服务管理
 
-### 基本运维知识
+### 必要的运维知识
 
-* **内核参数调优**：通过 sysctl 进行网络和系统优化
+* **内核参数调优**：通过 sysctl 实现网络和系统优化
 * **模块管理**：CNI 插件和存储驱动程序支持
 * **日志管理**：通过 journald 分析系统和服务日志
-* **时间同步**：在分布式系统中保持一致性
+* **时间同步**：保持分布式系统中的一致性
 
 ### 故障排除
 
@@ -1054,7 +1054,7 @@ Linux 基础知识和功能对于理解 Kubernetes 和容器技术至关重要�
 * **网络**：DNS、网桥、iptables 配置
 * **软件包管理**：Kubernetes 组件的版本管理
 
-掌握这些 Linux 基础知识后，您可以有效排查 Kubernetes 环境中的问题、优化集群并可靠地运行它们。
+借助这些 Linux 基础知识，您可以有效排查 Kubernetes 环境中的问题、优化集群并可靠地运维它们。
 
 ## 测验
 

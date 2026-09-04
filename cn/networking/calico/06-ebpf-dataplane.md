@@ -1,12 +1,12 @@
-# 第 6 部分：eBPF 数据平面
+# 第 6 部分：eBPF Dataplane
 
-> **支持的版本**：Calico v3.29+ / Kubernetes 1.28+ **最后更新**：February 23, 2026
+> **支持版本**: Calico v3.29+ / Kubernetes 1.28+ **最后更新**: February 23, 2026
 
 ## 简介
 
-Calico 的 eBPF 数据平面代表了 Kubernetes 网络的一项重大演进，它以现代 eBPF 程序替代了传统的基于 iptables 的数据包处理。这种方法可带来显著的性能提升、更低的延迟以及增强的可观测性能力。
+Calico 的 eBPF Dataplane 是 Kubernetes 网络的一项重大演进，它以现代 eBPF 程序取代传统的基于 iptables 的数据包处理。这种方法可显著提升性能、降低延迟并增强可观测性能力。
 
-本文将从网络视角深入探讨 eBPF 基础知识、Calico 的 eBPF 架构、迁移策略和性能优化技术。
+本深入讲解将从网络视角探讨 eBPF 基础知识、Calico 的 eBPF 架构、迁移策略和性能优化技术。
 
 ***
 
@@ -14,52 +14,52 @@ Calico 的 eBPF 数据平面代表了 Kubernetes 网络的一项重大演进，�
 
 ### 什么是 eBPF？
 
-eBPF（扩展 Berkeley Packet Filter）是一项革命性技术，可在无需修改内核源代码或加载内核模块的情况下，在 Linux 内核中运行沙盒程序。
+eBPF（extended Berkeley Packet Filter）是一项革命性技术，可在不修改内核源代码或加载内核模块的情况下，在 Linux 内核中运行沙盒化程序。
 
-![展示 eBPF 程序从用户空间经由 libbpf 加载器、内核验证器和 JIT 编译器，进入内核钩子的示意图；内核钩子通过 BPF map 与验证应用程序共享数据。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
+![展示 eBPF 程序从用户空间经过 libbpf 加载器、内核验证器和 JIT 编译器，进入内核挂钩点的示意图；内核挂钩点通过 BPF map 与验证应用程序共享数据。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
 
-### 网络场景下的 eBPF 核心概念
+### 网络场景中的 eBPF 核心概念
 
-| 概念         | 描述                               | 在 Calico 中的用途              |
-| ------------ | ---------------------------------- | ------------------------------- |
-| **程序**     | 在内核钩子处执行的字节码           | 数据包过滤、路由                |
-| **Map**      | 由程序共享的键值存储               | 路由表、策略规则                |
-| **钩子**     | 内核中的附加点                     | XDP、TC、socket                 |
-| **Helper**   | 可从 eBPF 调用的内核函数           | 数据包处理、map 操作            |
-| **BTF**      | map/程序的类型信息                 | 调试信息、CO-RE                 |
+| 概念         | 说明                                 | 在 Calico 中的用途                  |
+| ------------ | ------------------------------------ | ----------------------------------- |
+| **程序**     | 在内核挂钩点执行的字节码             | 数据包过滤、路由                    |
+| **Map**      | 在程序之间共享的键值存储             | 路由表、策略规则                    |
+| **挂钩点**   | 内核中的附加点                       | XDP、TC、socket                     |
+| **辅助函数** | 可从 eBPF 调用的内核函数             | 数据包操作、Map 操作                |
+| **BTF**      | 用于 Map/程序的类型信息              | 调试信息、CO-RE                     |
 
-### eBPF 与 iptables
+### eBPF 与 iptables 对比
 
 | 方面                 | iptables                  | eBPF              |
 | -------------------- | ------------------------- | ----------------- |
 | **架构**             | 顺序规则链                | 直接执行          |
-| **复杂度**           | O(n) 规则匹配             | O(1) map 查找     |
-| **内核跨越次数**     | 每个数据包多次            | 最少              |
+| **复杂度**           | O(n) 规则匹配             | O(1) Map 查找     |
+| **内核切换**         | 每个数据包多次切换        | 最少              |
 | **可编程性**         | 固定规则类型              | 灵活的程序        |
 | **可观测性**         | 有限的计数器              | 丰富的指标        |
-| **CPU 效率**         | 更高的中断开销            | 更低的开销        |
+| **CPU 效率**         | 中断开销较高              | 开销较低          |
 
 ***
 
 ## Calico eBPF 架构
 
-![对比两种 Calico 数据平面的示意图：在 iptables 模式中，来自 NIC 的数据包依次经过 PREROUTING、FORWARD、kube-proxy 规则和 POSTROUTING 链以到达目标 Pod；在 eBPF 模式中，TC 钩子上的单个 BPF 程序执行 O(1) BPF map 查找，并交由 socket 层 connect-time 负载均衡来抵达 Pod，无需 kube-proxy。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
+![Calico Dataplane 对比：在 iptables 模式下，数据包依次经过 PREROUTING、FORWARD、kube-proxy 规则和 POSTROUTING 才到达 Pod；在 eBPF 模式下，连接时 LB 在 socket 处选择后端，一个 TC 挂钩 BPF 程序即可转发数据包。](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-9.html)
 
 ### 架构对比
 
-![对比数据包依次遍历七个 iptables 链，与同一个数据包通过单个 eBPF 程序在 TC 入站和出站钩子之间查询 BPF map 的示意图。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
+![对比示意图：一个数据包依次经过七个 iptables 链；另一个数据包在 TC 入站和出站挂钩点之间经过单个 eBPF 程序，该程序查询 BPF Map。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
 
 ### Calico 中的 eBPF 程序类型
 
 Calico 针对不同功能使用多种 eBPF 程序类型：
 
-![展示 XDP 和 TC 入站钩子如何接入 socket 层 sockops 和 sk_msg 程序，再交由 TC 出站钩子的示意图；cgroup scope 程序显示为一个未连接的 socket 层原语。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
+![展示 XDP 和 TC 入站挂钩点如何连接到 socket 层 sockops 和 sk_msg 程序，再交给 TC 出站挂钩点的示意图；cgroup 范围程序显示为未连接的 socket 层原语。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
 
 ### TC（Traffic Control）程序
 
-TC 程序是 Calico 的主要数据平面钩子：
+TC 程序是 Calico 的主要 Dataplane 挂钩：
 
 ```
 Ingress TC Program Functions:
@@ -78,9 +78,9 @@ Egress TC Program Functions:
 
 ### XDP（eXpress Data Path）程序
 
-XDP 提供最早的数据包处理钩子：
+XDP 提供最早期的数据包处理挂钩：
 
-![展示数据包从网卡到达 XDP 程序后，程序返回四种判定结果之一的流程图：为 DDoS 防护而丢弃、传递给常规 TC 处理、直接 TX 返回，或重定向到另一个接口。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
+![流程图展示数据包从网卡到达 XDP 程序后，返回四种判决之一：为 DDoS 防护而丢弃、传递给正常 TC 处理、直接 TX 返回，或重定向至另一接口。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
 
 ### Socket 程序
 
@@ -103,13 +103,13 @@ XDP 提供最早的数据包处理钩子：
 
 ### Calico 使用的 Map 类型
 
-| Map 类型           | 用途                 | 示例用途             |
-| ------------------ | -------------------- | -------------------- |
-| **Hash Map**       | 键值查找             | 连接跟踪             |
-| **LRU Hash**       | 自动驱逐的缓存       | NAT 表               |
-| **Array**          | 固定大小的索引       | Endpoint 配置        |
-| **LPM Trie**       | 最长前缀匹配         | 路由查找             |
-| **Per-CPU Array**  | 可扩展计数器         | 统计信息             |
+| Map 类型           | 用途                 | 示例用途              |
+| ------------------ | -------------------- | --------------------- |
+| **Hash Map**       | 键值查找             | 连接跟踪              |
+| **LRU Hash**       | 自动逐出缓存         | NAT 表                |
+| **Array**          | 固定大小的索引       | Endpoint 配置         |
+| **LPM Trie**       | 最长前缀匹配         | 路由查找              |
+| **Per-CPU Array**  | 可扩展的计数器       | 统计信息              |
 
 ### 路由 Map 结构
 
@@ -179,15 +179,15 @@ struct calico_policy_value {
 
 DSR 允许响应流量绕过负载均衡器，从而降低延迟和负载均衡器资源消耗。
 
-![对比常规负载均衡流量和 Direct Server Return 流量的示意图：在常规流量中，服务器响应通过负载均衡器返回客户端；在 Direct Server Return 流量中，响应绕过负载均衡器，直接从服务器发送至客户端。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
+![对比普通负载均衡流与 Direct Server Return 流的示意图：在普通流中，服务器响应经由负载均衡器返回客户端；在 Direct Server Return 流中，响应绕过负载均衡器，直接从服务器发送到客户端。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
 
 ### Calico 中的 DSR 模式
 
-| 模式         | 描述                     | 使用场景                  |
-| ------------ | ------------------------ | ------------------------- |
-| **Disabled** | 所有流量通过 LB          | 默认设置，所有环境        |
-| **IPIP**     | 响应通过 IPIP 隧道      | 跨子网                    |
-| **DSR**      | 直接响应                 | 相同 L2 网络              |
+| 模式           | 说明                   | 使用场景              |
+| -------------- | ---------------------- | --------------------- |
+| **已禁用**     | 所有流量都经由 LB      | 默认，所有环境        |
+| **IPIP**       | 响应经由 IPIP 隧道     | 跨子网                |
+| **DSR**        | 直接响应               | 相同 L2 网络          |
 
 ### 启用 DSR
 
@@ -203,29 +203,29 @@ spec:
 
 ### DSR 要求
 
-* 服务器和客户端必须位于相同的 L2 网络，或者
-* 对跨子网使用 IPIP/VXLAN 封装
-* 外部客户端 IP 必须可从服务器路由到
-* 入站路径上不得使用 SNAT
+* 服务器和客户端必须处于相同的 L2 网络，或者
+* 对于跨子网，使用 IPIP/VXLAN 封装
+* 服务器必须可路由到外部客户端 IP
+* 入站路径上不得有 SNAT
 
 ***
 
-## Connect-Time 负载均衡
+## 连接时负载均衡
 
-### 传统方式与 Connect-Time LB
+### 传统方式与连接时 LB
 
-![对比 kube-proxy 的逐数据包方法与 eBPF connect-time 负载均衡的示意图：前者将每个 SYN、数据和 FIN 数据包 DNAT 到 Pod A；后者的一次 connect() 系统调用仅选择一次 Pod B，且该连接中的每个数据包都直接发送到该 Pod。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
+![对比 kube-proxy 的逐数据包方法和 eBPF 连接时负载均衡的示意图：前者将每个 SYN、数据和 FIN 数据包 DNAT 到 Pod A；后者由一次 connect() 系统调用选择 Pod B，连接中的每个数据包都直接发送到该 Pod。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
 
-### Connect-Time LB 的优势
+### 连接时 LB 的优势
 
-| 方面                   | 逐数据包            | Connect-Time          |
-| ---------------------- | ------------------- | --------------------- |
-| **NAT 开销**           | 每个数据包          | 仅连接建立时          |
-| **连接跟踪**           | 必需                | 最少                  |
-| **延迟**               | 更高（NAT 查找）    | 更低（直接）          |
-| **CPU 使用率**         | 更高                | 更低                  |
+| 方面                     | 逐数据包            | 连接时                |
+| ------------------------ | ------------------- | --------------------- |
+| **NAT 开销**             | 每个数据包          | 仅在连接建立时        |
+| **连接跟踪**             | 必需                | 最少                  |
+| **延迟**                 | 较高（NAT 查找）    | 较低（直接）          |
+| **CPU 使用量**           | 较高                | 较低                  |
 
-### Connect-Time LB 的工作原理
+### 连接时 LB 的工作原理
 
 ```c
 // Simplified connect-time LB logic
@@ -249,15 +249,15 @@ int bpf_connect4(struct bpf_sock_addr *ctx) {
 
 ### XDP 处理级别
 
-![展示 XDP 程序卸载到 NIC 时速度最快、在驱动程序中原生运行时很快，以及在通用网络栈中运行时最慢但适用于任何 NIC 的示意图。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
+![示意图展示：卸载到 NIC 上的 XDP 程序速度最快，在驱动程序中原生运行的程序速度很快，而在通用网络栈中运行的程序最慢，但适用于任何 NIC。](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
 
 ### XDP 模式
 
-| 模式         | 位置         | 性能     | 要求           |
-| ------------ | ------------ | -------- | -------------- |
-| **Offload**  | NIC 硬件     | 最快     | SmartNIC       |
-| **Native**   | NIC 驱动程序 | 快       | 驱动程序支持   |
-| **Generic**  | 网络栈       | 基准     | 任意 NIC       |
+| 模式          | 位置         | 性能      | 要求             |
+| ------------- | ------------ | --------- | ---------------- |
+| **Offload**   | NIC 硬件     | 最快      | SmartNIC         |
+| **Native**    | NIC 驱动程序 | 快        | 驱动程序支持     |
+| **Generic**   | 网络栈       | 基准      | 任意 NIC         |
 
 ### 在 Calico 中启用 XDP
 
@@ -276,11 +276,11 @@ spec:
   # Uses same detection as BPF dataplane interface
 ```
 
-### Calico 中的 XDP 用例
+### Calico 中的 XDP 使用场景
 
 1. **DDoS 防护**：在 NIC 处丢弃恶意流量
 2. **Blocklist 强制执行**：提前拒绝被阻止的 IP
-3. **速率限制**：数据包在进入网络栈前的速率限制
+3. **速率限制**：在进入网络栈前限制数据包速率
 4. **指标收集**：线速数据包计数
 
 ***
@@ -291,9 +291,9 @@ spec:
 
 | 要求             | 最低版本        | 说明                      |
 | ---------------- | --------------- | ------------------------- |
-| **Linux 内核**   | 5.3+            | 建议使用 5.8+             |
+| **Linux Kernel** | 5.3+            | 建议使用 5.8+             |
 | **BTF 支持**     | 必需            | `CONFIG_DEBUG_INFO_BTF=y` |
-| **BPF 系统调用** | 必需            | `CONFIG_BPF_SYSCALL=y`    |
+| **BPF Syscall**  | 必需            | `CONFIG_BPF_SYSCALL=y`    |
 | **BPF JIT**      | 必需            | `CONFIG_BPF_JIT=y`        |
 
 ### 验证内核支持
@@ -317,14 +317,14 @@ cat /boot/config-$(uname -r) | grep -E "CONFIG_BPF|CONFIG_DEBUG_INFO_BTF"
 
 ### 发行版支持
 
-| 发行版             | eBPF 就绪 | 说明                         |
-| ------------------ | --------- | ---------------------------- |
-| Ubuntu 20.04+      | 是        | 内核 5.4+                    |
-| Ubuntu 22.04+      | 是        | 内核 5.15+（建议）           |
-| RHEL/CentOS 8.2+   | 是        | 内核 4.18+，包含 backport    |
-| Amazon Linux 2     | 部分支持  | 可能需要升级内核             |
-| Amazon Linux 2023  | 是        | 内核 6.1+                    |
-| Bottlerocket       | 是        | 专为容器构建                 |
+| 发行版               | 已支持 eBPF  | 说明                         |
+| -------------------- | ----------- | ---------------------------- |
+| Ubuntu 20.04+        | 是          | Kernel 5.4+                  |
+| Ubuntu 22.04+        | 是          | Kernel 5.15+（建议）         |
+| RHEL/CentOS 8.2+     | 是          | Kernel 4.18+，包含 backport  |
+| Amazon Linux 2       | 部分支持    | 可能需要升级 Kernel          |
+| Amazon Linux 2023    | 是          | Kernel 6.1+                  |
+| Bottlerocket         | 是          | 专为容器构建                 |
 
 ### Calico 版本要求
 
@@ -393,7 +393,7 @@ ls /etc/cni/net.d/
 
 ### 迁移步骤
 
-**第 1 步：更新 FelixConfiguration（dry-run）**
+**第 1 步：更新 FelixConfiguration（演练）**
 
 ```yaml
 # Save current configuration
@@ -412,7 +412,7 @@ spec:
   bpfKubeProxyIptablesCleanupEnabled: false  # Don't cleanup yet
 ```
 
-**第 2 步：禁用 kube-proxy（若将 Calico 用作替代方案）**
+**第 2 步：禁用 kube-proxy（如果使用 Calico 替代它）**
 
 ```bash
 # Option A: Scale down kube-proxy
@@ -502,21 +502,21 @@ iptables -L -n -v
 
 ### 延迟对比
 
-| 场景                    | iptables | eBPF  | 改善幅度    |
-| ----------------------- | -------- | ----- | ----------- |
-| Pod 到 Pod（同一 Node） | 45 μs    | 25 μs | 44%         |
-| Pod 到 Pod（跨 Node）   | 120 μs   | 80 μs | 33%         |
-| Service（ClusterIP）    | 150 μs   | 60 μs | 60%         |
-| Service（NodePort）     | 180 μs   | 70 μs | 61%         |
+| 场景                    | iptables | eBPF  | 改进幅度      |
+| ----------------------- | -------- | ----- | ------------- |
+| Pod 到 Pod（同一 Node） | 45 μs    | 25 μs | 44%           |
+| Pod 到 Pod（跨 Node）   | 120 μs   | 80 μs | 33%           |
+| Service（ClusterIP）    | 150 μs   | 60 μs | 60%           |
+| Service（NodePort）     | 180 μs   | 70 μs | 61%           |
 
 ### 吞吐量对比
 
-| 场景                | iptables | eBPF    | 改善幅度    |
-| ------------------- | -------- | ------- | ----------- |
-| TCP 单流            | 15 Gbps  | 23 Gbps | 53%         |
-| TCP 多流            | 35 Gbps  | 48 Gbps | 37%         |
-| UDP 单流            | 8 Gbps   | 18 Gbps | 125%        |
-| 小数据包（64B）     | 2M pps   | 5M pps  | 150%        |
+| 场景                  | iptables | eBPF    | 改进幅度      |
+| --------------------- | -------- | ------- | ------------- |
+| TCP 单流              | 15 Gbps  | 23 Gbps | 53%           |
+| TCP 多流              | 35 Gbps  | 48 Gbps | 37%           |
+| UDP 单流              | 8 Gbps   | 18 Gbps | 125%          |
+| 小数据包（64B）       | 2M pps   | 5M pps  | 150%          |
 
 ### CPU 效率
 
@@ -581,7 +581,7 @@ bpftool map dump id 456
 bpftool map lookup id 456 key 0x0a 0x00 0x01 0x0a
 ```
 
-### TC Filter 检查
+### TC 过滤器检查
 
 ```bash
 # Show TC filters on interface
@@ -619,7 +619,7 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 
 ### 常见调试场景
 
-**连接问题：**
+**连通性问题：**
 
 ```bash
 # Check if BPF programs are loaded
@@ -652,17 +652,17 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 
 ***
 
-## 限制与已知问题
+## 限制和已知问题
 
 ### 当前限制
 
-| 限制                   | 描述                 | 解决方法                        |
-| ---------------------- | -------------------- | ------------------------------- |
-| **使用 host 网络的 Pod** | 策略支持有限         | 对 host Pod 使用 iptables       |
-| **IPv6**               | 部分支持             | 使用 dual-stack 模式            |
-| **Wireguard**          | 不支持与 eBPF 并用   | 使用 IPsec 或禁用加密           |
-| **Service topology**   | 支持有限             | 使用标准 kube-proxy             |
-| **Windows Node**       | 不支持               | 使用 iptables 数据平面          |
+| 限制                    | 说明                 | 解决方法                        |
+| ----------------------- | -------------------- | ------------------------------- |
+| **使用主机网络的 Pod**  | 策略支持有限         | 对主机 Pod 使用 iptables        |
+| **IPv6**                | 部分支持             | 使用双栈模式                    |
+| **Wireguard**           | 不可与 eBPF 共用     | 使用 IPsec 或禁用加密           |
+| **Service topology**    | 支持有限             | 使用标准 kube-proxy             |
+| **Windows Node**        | 不支持               | 使用 iptables Dataplane         |
 
 ### 已知问题
 
@@ -703,7 +703,7 @@ cat /proc/sys/kernel/bpf_map_max_entries
 
 ### 完整替代 kube-proxy
 
-Calico eBPF 可完全替代 kube-proxy，处理 Service 负载均衡：
+Calico eBPF 可以完全替代 kube-proxy 来实现 Service 负载均衡：
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -749,26 +749,26 @@ kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.
 
 ### Service 功能对比
 
-| 功能             | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
-| ---------------- | --------------------- | ----------------- | ----------- |
-| ClusterIP        | 是                    | 是                | 是          |
-| NodePort         | 是                    | 是                | 是          |
-| LoadBalancer     | 是                    | 是                | 是          |
-| ExternalIPs      | 是                    | 是                | 是          |
-| SessionAffinity  | 是                    | 是                | 是          |
-| Topology         | 是                    | 是                | 有限        |
-| ProxyMode        | iptables              | IPVS              | eBPF        |
+| 功能            | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
+| --------------- | --------------------- | ----------------- | ----------- |
+| ClusterIP       | 是                    | 是                | 是          |
+| NodePort        | 是                    | 是                | 是          |
+| LoadBalancer    | 是                    | 是                | 是          |
+| ExternalIPs     | 是                    | 是                | 是          |
+| SessionAffinity | 是                    | 是                | 是          |
+| Topology        | 是                    | 是                | 有限        |
+| ProxyMode       | iptables              | IPVS              | eBPF        |
 
 ***
 
 ## 最佳实践
 
-### 部署建议
+### Deployment 建议
 
 1. 在启用 eBPF 前**验证内核要求**
-2. 先在**非生产环境**集群中测试
+2. 首先在**非生产环境**集群中测试
 3. 使用 Node selector **逐步启用**
-4. 在推出期间**监控性能**
+4. 在推广期间**监控性能**
 5. 随时准备好**回滚计划**
 
 ### 配置最佳实践
@@ -796,7 +796,7 @@ spec:
   bpfKubeProxyIptablesCleanupEnabled: true
 ```
 
-### 监控 eBPF 数据平面
+### 监控 eBPF Dataplane
 
 ```yaml
 # Prometheus metrics to monitor
@@ -812,31 +812,31 @@ felix_bpf_dataplane_apply_time_seconds # Dataplane sync time
 
 ## 总结
 
-Calico 的 eBPF 数据平面代表了 Kubernetes 网络的一项重大进步：
+Calico 的 eBPF Dataplane 代表着 Kubernetes 网络领域的重大进步：
 
-| 优势               | 影响                        |
-| ------------------ | --------------------------- |
-| **性能**           | 延迟最多降低 60%            |
-| **可扩展性**       | O(1) 规则查找，相较于 O(n)  |
-| **效率**           | 更低的 CPU 使用率           |
-| **可观测性**       | 丰富的基于 BPF 的指标       |
-| **简洁性**         | 替代 kube-proxy             |
+| 优势              | 影响                        |
+| ----------------- | --------------------------- |
+| **性能**          | 延迟最多降低 60%            |
+| **可扩展性**      | O(1) 规则查找，相比 O(n)    |
+| **效率**          | 更低的 CPU 使用量           |
+| **可观测性**      | 丰富的基于 BPF 的指标       |
+| **简洁性**        | 替代 kube-proxy             |
 
-### 何时使用 eBPF 数据平面
+### 何时使用 eBPF Dataplane
 
 * 高吞吐量工作负载
 * 对延迟敏感的应用程序
-* 拥有众多 Service 的大型集群
+* 拥有许多 Service 的大型集群
 * 需要详细可观测性的环境
-* 可使用 Linux 内核 5.3+
+* 可使用 Linux Kernel 5.3+
 
 ### 何时继续使用 iptables
 
 * 需要支持 Windows Node
-* 使用较旧的内核版本
+* 使用较旧的 Kernel 版本
 * 需要 Wireguard 加密
 * 具有复杂的 Service topology 要求
-* 需要成熟技术的风险规避型环境
+* 需要经过验证技术的风险规避型环境
 
 ***
 

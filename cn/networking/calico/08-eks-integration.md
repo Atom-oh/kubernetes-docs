@@ -4,40 +4,40 @@
 
 ## 概述
 
-本章介绍 Calico 与 Amazon EKS 的集成，包括架构模式、安装方法和 EKS 专属优化。了解如何在 AWS VPC CNI 的基础上利用 Calico 的网络策略功能，实现最佳的 EKS 网络。
+本章介绍 Calico 与 Amazon EKS 的集成，包括架构模式、安装方法和 EKS 专属优化。了解如何结合 AWS VPC CNI 使用 Calico 的网络策略功能，以实现最佳 EKS 网络。
 
-![EKS API server 连接到两个工作节点，其中 VPC CNI 负责 Pod 网络，而 Calico 在相同的 Pod 上强制执行网络策略。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
+![EKS API server 连接到两个 worker node，其中 VPC CNI 处理 Pod 网络，而 Calico 在相同的 Pod 上执行网络策略。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
 
 ## VPC CNI + Calico 架构
 
-![Typha 监视 EKS 控制平面中的 kube-apiserver，并将策略推送到两个工作节点上的 calico-node (Felix)；其中 aws-node (VPC CNI) 管理 ENI 并从 VPC CIDR 分配 Pod IP，而 Calico 在相同的 Pod 上强制执行 NetworkPolicy，跨节点 Pod 流量则由 VPC 原生路由。](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
+![在 EKS 中，Typha 监视 kube-apiserver 并将策略推送到每个 worker node 上的 calico-node (Felix)，其中 aws-node (VPC CNI) 管理 ENI 并从 VPC CIDR 分配 Pod IP，而 Calico 在相同的 Pod 上执行 NetworkPolicy。](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-4.html)
 
-Amazon EKS 默认使用 AWS VPC CNI 进行 Pod 网络连接。VPC CNI 负责 IP 地址管理，Calico 则可用于提供高级网络策略功能。
+Amazon EKS 默认使用 AWS VPC CNI 提供 Pod 网络。VPC CNI 负责 IP 地址管理时，可以添加 Calico 以获得高级网络策略功能。
 
 ### 架构深入解析
 
-![Pod 的流量通过 veth pair 到达由 VPC CNI 管理的辅助 ENI，同时 Calico 的 Felix agent 在该路径上编排 iptables/eBPF 规则，随后主 ENI 将流量传输到 VPC 子网和 internet gateway。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
+![一个 Pod 的流量通过 veth pair 到达由 VPC CNI 管理的次要 ENI，同时 Calico 的 Felix agent 在相同路径上配置 iptables/eBPF 规则，然后主 ENI 将流量传输到 VPC subnet 和 internet gateway。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
 
 ### 使用 VPC CNI + Calico 的流量流向
 
-![Pod A 的出口流量先由所在节点上的 Calico 评估，然后 VPC CNI 通过 AWS VPC 将其路由到目标节点；该节点上的 Calico 会评估入口策略，然后将数据包交付给 Pod B。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
+![Pod A 的出口流量会先由其 node 上的 Calico 评估，然后 VPC CNI 会将其经由 AWS VPC 路由到目标 node，Calico 在该处评估入口策略后再将数据包传递给 Pod B。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
 
-## 安装方法对比
+## 安装方法比较
 
 ### 方法概览
 
 | 方法          | 复杂度 | 灵活性 | 升级路径 | EKS 集成 |
 | --------------- | ---------- | ----------- | ------------ | --------------- |
-| EKS Add-on      | 低        | 有限     | 自动    | 原生          |
+| EKS Add-on      | 低        | 有限     | 自动     | 原生          |
 | Tigera Operator | 中        | 高        | 半自动    | 良好            |
 | Helm            | 中        | 最高     | 手动       | 良好            |
-| Manifest        | 高       | 中      | 手动       | 基础           |
+| Manifest        | 高       | 中        | 手动       | 基础           |
 
 ### 方法 1：EKS Add-on（最简单）
 
-EKS add-on 提供与 EKS 生命周期管理的原生集成。
+EKS Add-on 提供与 EKS 生命周期管理的原生集成。
 
 ```bash
 # Enable via AWS CLI
@@ -81,8 +81,8 @@ addons:
 
 **缺点：**
 
-* 仅限 Kubernetes NetworkPolicy
-* 不提供 Calico 专属功能
+* 仅限于 Kubernetes NetworkPolicy
+* 没有 Calico 专属功能
 * 配置灵活性较低
 
 ### 方法 2：Tigera Operator（推荐）
@@ -146,7 +146,7 @@ kubectl get pods -n calico-system
 
 * 完整的 Calico 功能（GlobalNetworkPolicy、Tiers 等）
 * Operator 管理生命周期
-* 自动协调组件状态
+* 自动协调组件
 * 支持 eBPF dataplane
 
 **缺点：**
@@ -211,16 +211,16 @@ apiServer:
 **优点：**
 
 * 适合 GitOps
-* 可对配置进行版本控制
+* 配置版本控制
 * 易于回滚
-* 可自定义 values
+* 值可自定义
 
 **缺点：**
 
-* 需要具备 Helm 知识
-* 需要手动管理升级
+* 需要了解 Helm
+* 手动管理升级
 
-## EKS Network Policy Controller（v1.14+）
+## EKS Network Policy Controller (v1.14+)
 
 EKS 1.25+ 通过 VPC CNI 提供原生 Network Policy 支持。
 
@@ -254,26 +254,26 @@ kubectl get pods -n kube-system -l k8s-app=aws-node
 kubectl logs -n kube-system -l k8s-app=aws-node -c aws-network-policy-agent
 ```
 
-### EKS 原生 Network Policy 与 Calico Network Policy
+### EKS 原生与 Calico Network Policy 对比
 
-| 功能                  | EKS 原生（VPC CNI） | Calico           |
+| 功能                  | EKS 原生 (VPC CNI) | Calico           |
 | ------------------------ | -------------------- | ---------------- |
 | Kubernetes NetworkPolicy | 是                  | 是              |
 | GlobalNetworkPolicy      | 否                   | 是              |
 | Policy Tiers             | 否                   | 是              |
-| L7 Policy（HTTP）         | 否                   | 是（Enterprise） |
-| 基于 DNS 的 Policy         | 否                   | 是              |
-| FQDN Egress Rules        | 否                   | 是              |
+| L7 Policy (HTTP)         | 否                   | 是（Enterprise） |
+| 基于 DNS 的策略         | 否                   | 是              |
+| FQDN 出口规则        | 否                   | 是              |
 | Host Endpoint Policy     | 否                   | 是              |
-| Policy Preview           | 否                   | 是（Enterprise） |
-| Flow Logs                | CloudWatch           | Prometheus/File  |
+| 策略预览           | 否                   | 是（Enterprise） |
+| Flow Logs                | CloudWatch           | Prometheus/文件  |
 | 性能              | eBPF 优化       | iptables/eBPF    |
 
-## 节点类型注意事项
+## Node 类型注意事项
 
-### 按节点类型划分的功能矩阵
+### 按 Node 类型划分的功能矩阵
 
-| 功能        | 托管节点 | 自托管节点 | Fargate |
+| 功能        | 托管 Node | 自管理 | Fargate |
 | -------------- | ------------- | ------------ | ------- |
 | Calico CNI     | 否（VPC CNI）  | 是          | 否      |
 | Calico Policy  | 是           | 是          | 有限 |
@@ -281,10 +281,10 @@ kubectl logs -n kube-system -l k8s-app=aws-node -c aws-network-policy-agent
 | BGP            | 否            | 是          | 否      |
 | WireGuard      | 是           | 是          | 否      |
 | Host Endpoints | 是           | 是          | 否      |
-| Custom IPAM    | 否            | 是          | 否      |
-| Node Taints    | 是           | 是          | 不适用      |
+| 自定义 IPAM    | 否            | 是          | 否      |
+| Node Taints    | 是           | 是          | 不适用     |
 
-### 托管节点组
+### 托管 Node Groups
 
 ```yaml
 # eksctl with managed nodes and Calico
@@ -320,7 +320,7 @@ managedNodeGroups:
         effect: NoSchedule
 ```
 
-### 自托管节点（完整 Calico）
+### 自管理 Node（完整 Calico）
 
 ```yaml
 # Self-managed nodes with full Calico networking
@@ -383,12 +383,12 @@ fargateProfiles:
 * 仅支持 Kubernetes 标准 NetworkPolicy
 * 不支持 Calico GlobalNetworkPolicy
 * 不支持 eBPF dataplane
-* 不支持 host endpoint policies
-* 不支持 custom IPAM
+* 不支持 host endpoint 策略
+* 不支持自定义 IPAM
 
 ## IRSA 配置
 
-IAM Roles for Service Accounts (IRSA) 为 Calico 组件提供精细化的 IAM 权限。
+IAM Roles for Service Accounts (IRSA) 为 Calico 组件提供细粒度的 IAM 权限。
 
 ```yaml
 # Create IAM policy for Calico
@@ -459,14 +459,14 @@ spec:
 
 ### 对比
 
-![AWS security groups 在实例和 ENI 层面实施粗粒度 L3-L4 规则，而 Calico 的 GlobalNetworkPolicy、namespace NetworkPolicy 和 HostEndpointPolicy 均作用于同一个 Pod；该 Pod 也会直接与其对等 Pod 交换流量。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
+![AWS security group 在粗粒度的 instance 和 ENI 层级执行 L3-L4 规则，而 Calico 的 GlobalNetworkPolicy、namespace NetworkPolicy 和 HostEndpointPolicy 都汇聚到同一个 Pod 上，该 Pod 还会与其对等 Pod 直接交换流量。](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
 
 | 方面          | Security Groups | Calico Policy         |
 | --------------- | --------------- | --------------------- |
-| 范围           | 实例/ENI    | Pod/Namespace/Cluster |
+| 范围           | Instance/ENI    | Pod/Namespace/Cluster |
 | 粒度     | IP/Port         | Labels/Selectors/FQDN |
 | 层级           | L3-L4           | L3-L7                 |
-| Pod 选择   | 按实例     | 按 Labels             |
+| Pod 选择   | 按 Instance     | 按 Labels             |
 | 动态更新 | 有限         | 实时             |
 | 审计           | CloudTrail      | Flow Logs             |
 | 跨 AZ        | 是             | 是                   |
@@ -531,7 +531,7 @@ spec:
 | 1.30        | 否          | 是         | 是         | 是         |
 | 1.31        | 否          | 有限     | 是         | 是         |
 
-### 升级过程
+### 升级流程
 
 ```bash
 # 1. Check current versions
@@ -567,13 +567,13 @@ eksctl upgrade nodegroup \
 
 ### 成本因素
 
-| 组件    | 成本驱动因素                   | 优化方案           |
+| 组件    | 成本驱动因素                   | 优化方式           |
 | ------------ | ----------------------------- | ---------------------- |
 | VPC CNI IPs  | ENI 附加、IP 分配 | 使用 prefix delegation  |
-| Calico Typha | 实例资源            | 合理设置副本规模    |
-| Flow Logs    | 存储、处理           | 聚合、过滤      |
-| 跨 AZ     | 数据传输                 | 可用区亲和性          |
-| eBPF         | CPU 效率                | 在支持的位置启用 |
+| Calico Typha | Instance 资源            | 合理设置 replica 数量    |
+| Flow Logs    | 存储、处理           | 聚合、筛选      |
+| 跨 AZ     | 数据传输                 | Zone affinity          |
+| eBPF         | CPU 效率                | 在支持处启用 |
 
 ### 成本优化策略
 
@@ -876,8 +876,8 @@ echo "Calico installation complete!"
 * [EKS 上的 Calico 文档](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
 * [VPC CNI 文档](https://github.com/aws/amazon-vpc-cni-k8s)
 * [EKS Add-ons](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
-* [Pods 的 Security Groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+* [适用于 Pod 的 Security Groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 
 ## 测验
 
-要检验本章所学内容，请尝试 [EKS 集成测验](../../quizzes/networking/calico/08-eks-integration-quiz.md)。
+要测试您在本章所学的内容，请尝试 [EKS 集成测验](../../quizzes/networking/calico/08-eks-integration-quiz.md)。

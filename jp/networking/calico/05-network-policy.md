@@ -1,22 +1,22 @@
 # パート 5: Network Policy
 
-> **サポート対象バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
+> **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
 
 ## はじめに
 
-Network policy は Kubernetes セキュリティの基盤であり、Pod、namespace、外部 endpoint 間のトラフィックフローを制御します。Kubernetes は基本的な NetworkPolicy API を提供しますが、Calico は Global policy、階層化された policy 評価、DNS ベースのルール、Layer 7 フィルタリングなどの強力な機能でこれを拡張します。
+Network Policy は Kubernetes セキュリティの基本要素であり、Pod、namespace、外部 endpoint 間のトラフィックフローを制御します。Kubernetes は基本的な NetworkPolicy API を提供しますが、Calico は Global Policy、階層化された Policy 評価、DNS ベースのルール、Layer 7 フィルタリングなどの強力な機能でこれを拡張します。
 
-この詳細解説では、Kubernetes 標準 policy と Calico の拡張機能の両方を取り上げ、エンタープライズのセキュリティ要件向けのパターンと例を提供します。
+この詳細解説では、Kubernetes 標準 Policy と Calico の拡張機能の両方を取り上げ、エンタープライズのセキュリティ要件に対応するパターンと例を紹介します。
 
 ***
 
 ## Kubernetes 標準 NetworkPolicy
 
-### NetworkPolicy の基本
+### NetworkPolicy の基礎
 
 Kubernetes NetworkPolicy は namespace スコープのリソースであり、label、namespace、IP block に基づいて Pod への、および Pod からのトラフィックを制御します。
 
-![NetworkPolicy がない場合はすべての Pod が他のすべての Pod に自由に到達できる一方、NetworkPolicy はメッシュを明示的に許可された1つのパスに絞り込み、残りをブロックすることを示す比較。](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg)
+![NetworkPolicy がない場合はすべての Pod が他のすべての Pod に自由に到達できる一方、NetworkPolicy はメッシュを明示的に許可された 1 つのパスに絞り、残りをブロックすることを示す比較図。](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-0.svg)
 
 ### 基本的な NetworkPolicy 構造
 
@@ -65,25 +65,25 @@ spec:
           port: 5432
 ```
 
-### Kubernetes NetworkPolicy の制限
+### Kubernetes NetworkPolicy の制限事項
 
-| 制限            | 説明                         | Calico の解決策          |
+| 制限事項            | 説明                         | Calico の解決策          |
 | --------------------- | ----------------------------------- | ------------------------ |
-| Namespace スコープのみ | クラスター全体の policy を作成できない | GlobalNetworkPolicy      |
-| Policy の順序なし    | すべての policy が同等に評価される      | 階層化された policy          |
-| Deny ルールなし         | Allow のみ（暗黙の deny）          | 明示的な Deny action    |
-| 限定的な L4 フィルタリング  | 基本的な port/protocol のみ            | Port range、名前付き port |
+| Namespace スコープのみ | クラスター全体の Policy を作成できない | GlobalNetworkPolicy      |
+| Policy の順序付けなし    | すべての Policy が同等に評価される      | 階層化 Policy          |
+| Deny ルールなし         | Allow のみ（暗黙的な Deny）          | 明示的な Deny action    |
+| 限定的な L4 フィルタリング  | 基本的な port/protocol のみ            | Port 範囲、名前付き port |
 | L7 フィルタリングなし       | HTTP method でフィルタリングできない       | HTTP match ルール         |
-| FQDN サポートなし       | domain name を使用できない             | DNS policy               |
+| FQDN サポートなし       | domain name を使用できない             | DNS Policy               |
 | Pod 中心のみ      | node を保護できない                | Host endpoint           |
 
 ***
 
 ## Calico NetworkPolicy 拡張機能
 
-### 拡張 protocol サポート
+### 拡張 Protocol サポート
 
-Calico は TCP および UDP 以外の追加 protocol をサポートします。
+Calico は TCP と UDP 以外の追加 Protocol をサポートします。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -123,7 +123,7 @@ spec:
           - 5000:6000  # Port range
 ```
 
-### Port range と名前付き port
+### Port 範囲と名前付き Port
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -161,7 +161,7 @@ spec:
           - 3000:3100
 ```
 
-### 強化された selector 構文
+### 強化された Selector 構文
 
 Calico は Kubernetes よりも表現力の高い selector 構文を使用します。
 
@@ -300,7 +300,7 @@ spec:
           - 443
 ```
 
-**機密 namespace をブロック:**
+**機密性の高い Namespace をブロック:**
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -331,9 +331,9 @@ spec:
 
 ## NetworkSet と GlobalNetworkSet
 
-NetworkSet は、policy 間で再利用するために IP address をグループ化します。
+NetworkSet は Policy 間で再利用するための IP address をグループ化します。
 
-### NetworkSet（namespace スコープ）
+### NetworkSet（Namespace スコープ）
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -419,17 +419,17 @@ spec:
 
 ***
 
-## 階層化された Policy
+## 階層化 Policy
 
-![Calico Network Policy の tier 評価: パケットは Security (100)、Platform (200)、Application (500)、Default tier を順に通過します。任意の tier で Allow または Deny に一致すると評価は直ちに終了し、Pass は次の tier に渡し、一致しない場合は endpoint profile のデフォルト action が適用されます。](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
+![Calico Policy の Tier 評価: パケットは Security（100）、Platform（200）、Application（500）、Default の Tier を順に通過します。Allow または Deny で評価は終了し、Pass は次の Tier に渡し、一致しない場合は profile のデフォルトにフォールスルーします。](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-2.html)
 
-Tier は階層的な policy 評価を提供し、platform、security、application team 間で責務を分離できます。
+Tier は階層的な Policy 評価を提供し、platform、security、application team 間の関心の分離を実現します。
 
 ### Policy 評価順序
 
-![トラフィックが Security、Platform、Application tier を順に通過し、各 tier でパケットを deny、allow、または次の tier に pass でき、どの tier も一致しない場合は暗黙的な deny で終了することを示すフローチャート。](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg)
+![トラフィックが Security、Platform、Application の Tier を順に通過し、各 Tier でパケットを deny、allow、または次の Tier に pass でき、どの Tier も一致しない場合は暗黙的な deny で終了することを示すフローチャート。](../../../assets/diagrams/rendered/en-networking-calico-05-network-policy-1.svg)
 
 ### Tier の作成
 
@@ -465,7 +465,7 @@ spec:
 # order: 1000
 ```
 
-### 階層化された Policy の例
+### 階層化 Policy の例
 
 ```yaml
 # Security tier: Block known threats
@@ -590,11 +590,11 @@ rules:
 
 ## FQDN ベースの Egress Policy
 
-Calico は domain name に基づいて egress トラフィックをフィルタリングできます。これは外部 Service へのアクセス制御に役立ちます。
+Calico は domain name に基づいて Egress トラフィックをフィルタリングできます。これは外部 Service へのアクセス制御に役立ちます。
 
 ### DNS Policy の設定
 
-まず、Felix で DNS policy を有効化します。
+まず、Felix で DNS Policy を有効にします。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -653,7 +653,7 @@ spec:
           - 192.168.0.0/16
 ```
 
-### ワイルドカード domain パターン
+### Wildcard Domain パターン
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -678,7 +678,7 @@ spec:
 
 ## HTTP Method フィルタリング（Layer 7）
 
-Calico Enterprise と Calico Cloud は HTTP トラフィック向けの Layer 7 policy をサポートします。
+Calico Enterprise と Calico Cloud は HTTP トラフィック向けの Layer 7 Policy をサポートします。
 
 ### HTTP Match ルール
 
@@ -841,7 +841,7 @@ spec:
 
 ### Auto Host Endpoint
 
-すべての node に対して Host endpoint を自動的に作成します。
+すべての node に対する Host endpoint を自動的に作成します。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -867,7 +867,7 @@ spec:
 
 ### DoNotTrack Policy
 
-DoNotTrack policy は connection tracking をバイパスするため、高スループットのシナリオで役立ちます。
+DoNotTrack Policy は connection tracking をバイパスするため、高スループットのシナリオに役立ちます。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -898,7 +898,7 @@ spec:
 
 ### PreDNAT Policy
 
-PreDNAT policy は destination NAT の前に適用され、NodePort アクセスの制御に役立ちます。
+PreDNAT Policy は destination NAT の前に適用され、NodePort アクセスの制御に役立ちます。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -973,7 +973,7 @@ iptables -L cali-fw-xxxxx -n -v
 watch -n 1 'iptables -L cali-fw-xxxxx -n -v'
 ```
 
-### Felix Log
+### Felix ログ
 
 ```bash
 # View Felix logs
@@ -1001,7 +1001,7 @@ kubectl exec -it test-pod -- nc -zv target-pod 8080
 
 ***
 
-## 一般的な Policy パターンライブラリ
+## 一般的な Policy パターン ライブラリ
 
 ### Microservices パターン
 
@@ -1170,7 +1170,7 @@ spec:
           - 53
 ```
 
-### Egress Control パターン
+### Egress 制御パターン
 
 ```yaml
 # Control outbound internet access
@@ -1268,21 +1268,21 @@ spec:
 
 ### パフォーマンスに関する考慮事項
 
-| 要因              | 影響                  | 軽減策                              |
+| 要因              | 影響                  | 緩和策                              |
 | ------------------- | ----------------------- | --------------------------------------- |
-| Policy の数  | 線形のルール評価  | 階層化された policy を使用し、selector を最適化 |
+| Policy の数  | 線形的なルール評価  | 階層化 Policy を使用し、selector を最適化 |
 | Selector の複雑さ | 一致判定時間の増加 | 単純な label 一致を使用                |
-| IP set のサイズ         | メモリ使用量            | IP range を集約する                     |
-| Log の頻度       | CPU と storage         | 大容量では sampling を使用する            |
-| Connection tracking | stateful 用のメモリ     | stateless には DoNotTrack を使用する                |
+| IP set のサイズ         | メモリ使用量            | IP 範囲を集約する                     |
+| Log の頻度       | CPU とストレージ         | 大量トラフィックには sampling を使用            |
+| Connection tracking | stateful 接続のメモリ     | stateless 接続には DoNotTrack を使用                |
 
 ### 最適化のヒント
 
-1. **階層化された policy を使用する**: Deny ルールを最初に評価する
+1. **階層化 Policy を使用する**: 最初に Deny ルールを評価する
 2. **Selector の複雑さを最小化する**: set operation より equality を優先する
-3. **IP range を集約する**: 個々の IP ではなく CIDR block を使用する
-4. **GlobalNetworkSet を使用する**: policy 間で IP group を再利用する
-5. **Policy caching を有効化する**: 最近の Calico version ではデフォルト
+3. **IP 範囲を集約する**: 個別の IP ではなく CIDR block を使用する
+4. **GlobalNetworkSet を使用する**: Policy 間で IP group を再利用する
+5. **Policy caching を有効にする**: 最近の Calico version ではデフォルト
 
 ### Policy パフォーマンスのベンチマーク
 
@@ -1305,33 +1305,33 @@ iptables -L -n | wc -l
 
 ### 設計原則
 
-1. **デフォルト deny から始める**: 必要なトラフィックを whitelist に登録する
+1. **デフォルト Deny から始める**: 必要なトラフィックを Allow list に登録する
 2. **最小権限を使用する**: 必要な port と protocol のみを Allow する
-3. **Policy を階層化する**: Security -> Platform -> Application
-4. **一貫して label を付与する**: policy の対象指定には標準 label を使用する
+3. **Policy をレイヤー化する**: Security -> Platform -> Application
+4. **一貫して label を付ける**: Policy targeting には標準 label を使用する
 5. **Policy を文書化する**: 意図を説明する comment を含める
 
 ### 運用上の推奨事項
 
-1. **まず staging でテストする**: production の前に policy を検証する
-2. **監査 mode を使用する**: 新しい policy を強制する前に log を取得する
+1. **最初に staging でテストする**: production の前に Policy を検証する
+2. **audit mode を使用する**: 新しい Policy を強制する前に Log を記録する
 3. **Policy hit count を監視する**: 未使用のルールを特定する
-4. **Policy を定期的にレビューする**: 古いルールを削除する
-5. **Policy deployment を自動化する**: policy 管理には GitOps を使用する
+4. **定期的に Policy をレビューする**: 古いルールを削除する
+5. **Policy deployment を自動化する**: Policy 管理に GitOps を使用する
 
 ### セキュリティの推奨事項
 
-1. **Metadata Service をブロックする**: SSRF attack を防止する
-2. **Egress を制御する**: 承認済み destination に外部アクセスを制限する
-3. **Control plane を保護する**: kube-system へのアクセスを制限する
-4. **Logging を有効化する**: deny された connection を監査する
-5. **FQDN policy を使用する**: 名前で外部 Service へのアクセスを制御する
+1. **metadata Service をブロックする**: SSRF attack を防止する
+2. **Egress を制御する**: 承認済み destination への外部アクセスを制限する
+3. **control plane を保護する**: kube-system へのアクセスを制限する
+4. **logging を有効にする**: deny された接続を監査する
+5. **FQDN Policy を使用する**: 名前によって外部 Service へのアクセスを制御する
 
 ***
 
 ## 参考資料
 
-* [Calico Network Policy Documentation](https://docs.tigera.io/calico/latest/network-policy/)
-* [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-* [Calico Policy Tutorial](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
-* [Tigera Policy Best Practices](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)
+* [Calico Network Policy ドキュメント](https://docs.tigera.io/calico/latest/network-policy/)
+* [Kubernetes Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+* [Calico Policy チュートリアル](https://docs.tigera.io/calico/latest/network-policy/get-started/calico-policy/calico-policy-tutorial)
+* [Tigera Policy ベストプラクティス](https://docs.tigera.io/calico/latest/network-policy/policy-best-practices)
