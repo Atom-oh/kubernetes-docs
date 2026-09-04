@@ -1,22 +1,22 @@
 # vLLM 部署与优化
 
 > **支持的版本**: Kubernetes 1.31, 1.32, 1.33  
-> **最后更新**: April 9, 2026
+> **最后更新**: September 4, 2026
 
-vLLM 是面向大型语言模型 (LLMs) 最广泛采用的开源高性能推理引擎。在本章中，我们将探索 vLLM 的最新功能和架构，并学习如何在 EKS 上以生产规模部署和优化它。
+vLLM 是应用最广泛的开源高性能 Large Language Models（LLMs）推理引擎。在本章中，我们将探讨 vLLM 的最新功能和架构，并学习如何在 EKS 上以生产规模部署和优化它。
 
 ## 实验环境设置
 
-要跟随本文档中的示例进行操作，你需要以下工具和环境：
+要跟随本文档中的示例操作，您需要以下工具和环境：
 
-### 必需工具和资源
+### 所需工具和资源
 - kubectl v1.31 或更高版本
 - Helm v3.10 或更高版本
 - 配备 NVIDIA GPUs 的 EKS 集群（最低推荐：g5.2xlarge 实例）
-- 已安装 NVIDIA drivers 和 NVIDIA Device Plugin
+- 已安装 NVIDIA 驱动程序和 NVIDIA Device Plugin
 - 至少 50GB 磁盘空间
 
-### GPU Node 设置
+### GPU 节点设置
 
 ```bash
 # Install NVIDIA Device Plugin
@@ -30,54 +30,9 @@ kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable
 
 vLLM 是具有以下特性的 LLM 推理引擎：
 
-```mermaid
-flowchart TD
-    subgraph vLLM [vLLM Architecture]
-        subgraph Features [Key Features]
-            PagedAttention[PagedAttention]
-            ContinuousBatching[Continuous Batching]
-            DistributedInference[Distributed Inference]
-            Quantization[Quantization]
-            OpenAIAPI[OpenAI Compatible API]
-        end
+![展示 vLLM 核心功能、其内部组件流水线，以及内存效率和高吞吐量等最终优势的图表。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg)
 
-        subgraph Components [Core Components]
-            Engine[Inference Engine]
-            Scheduler[Request Scheduler]
-            KVCache[KV Cache Manager]
-            ModelLoader[Model Loader]
-            APIServer[API Server]
-        end
-
-        subgraph Benefits [Key Benefits]
-            MemoryEfficiency[Memory Efficiency]
-            HighThroughput[High Throughput]
-            LowLatency[Low Latency]
-            Scalability[Scalability]
-        end
-    end
-
-    PagedAttention --> MemoryEfficiency
-    ContinuousBatching --> HighThroughput
-    DistributedInference --> Scalability
-    Quantization --> MemoryEfficiency
-
-    Engine --> KVCache
-    Scheduler --> Engine
-    ModelLoader --> Engine
-    Engine --> APIServer
-
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
-    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
-    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
-    class vLLM default;
-```
-
-### vLLM 的关键特性
+### vLLM 的关键功能
 
 1. **PagedAttention**:
    - 高效管理 KV cache 的内存管理技术
@@ -91,7 +46,7 @@ flowchart TD
 
 3. **Distributed Inference**:
    - 通过 tensor parallelization 支持大规模模型
-   - 在多个 GPUs 之间进行模型分片
+   - 跨多个 GPU 进行模型分片
    - 支持 175B+ 参数模型
 
 4. **Quantization**:
@@ -103,7 +58,7 @@ flowchart TD
 
 vLLM 支持以下模型：
 
-| Model Family | Supported Models | Quantization Options |
+| 模型系列 | 支持的模型 | 量化选项 |
 |-------------|-----------------|---------------------|
 | **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
 | **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
@@ -116,19 +71,19 @@ vLLM 支持以下模型：
 | **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
 | **Vision Models (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
 
-1. **PagedAttention**: 内存高效的 attention 机制，可在处理长序列时优化内存使用。
-2. **Continuous Batching**: 动态批处理请求以提升吞吐量。
-3. **Distributed Inference**: 将模型分布到多个 GPUs 和 Nodes 上，以处理大规模模型。
-4. **Quantization**: 支持 INT8/INT4 quantization，以降低内存使用并提升吞吐量。
+1. **PagedAttention**: 在处理长序列时优化内存使用的内存高效注意力机制。
+2. **Continuous Batching**: 动态批处理请求以提高吞吐量。
+3. **Distributed Inference**: 将模型分布到多个 GPU 和节点上，以处理大规模模型。
+4. **Quantization**: 支持 INT8/INT4 量化，以降低内存使用并提高吞吐量。
 5. **OpenAI Compatible API**: 提供与 OpenAI API 兼容的接口。
 
-### 最新 vLLM 功能 (v0.6+)
+### v0.6 系列中新增的 vLLM 功能
 
-vLLM 正在快速演进，近期版本带来了重要的新能力：
+vLLM 正在快速发展，最近的版本带来了重要的新功能：
 
 #### Speculative Decoding
 
-使用较小的 draft model 生成多个候选 tokens，再由较大的模型在单次 pass 中验证，从而将推理速度提升 2-3 倍：
+使用较小的草稿模型生成多个候选 token，再由较大的模型在一次传递中验证，从而将推理速度提升 2-3 倍：
 
 ```bash
 python -m vllm.entrypoints.openai.api_server \
@@ -139,7 +94,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 #### Prefix Caching
 
-在共享相同 system prompt 或 context 的请求之间自动复用 KV cache，显著降低 TTFT (Time to First Token)：
+自动在共享相同 system prompt 或上下文的请求间复用 KV cache，显著缩短 TTFT（Time to First Token）：
 
 ```bash
 --enable-prefix-caching
@@ -147,7 +102,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 #### Chunked Prefill
 
-将长 prompt prefill 拆分为更小的 chunks，并与 decode steps 交错执行，从而降低长上下文请求对其他请求延迟的影响：
+将长 prompt prefill 拆分成与 decode 步骤交错执行的较小块，降低长上下文请求对其他请求延迟的影响：
 
 ```bash
 --enable-chunked-prefill --max-num-batched-tokens 2048
@@ -155,7 +110,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 #### Dynamic LoRA Adapter Loading
 
-在运行时动态加载/卸载多个 LoRA adapters，从单个 base model 服务多个定制模型：
+在运行时动态加载/卸载多个 LoRA adapter，从单个基础模型提供许多定制模型：
 
 ```bash
 --enable-lora --max-loras 4 --max-lora-rank 64
@@ -171,7 +126,7 @@ response = client.chat.completions.create(
 
 #### Structured Output
 
-通过 JSON Schema、regex patterns 和 CFG (Context-Free Grammar) 支持受约束的输出生成，用于可靠地生成结构化数据：
+通过 JSON Schema、regex patterns 和 CFG（Context-Free Grammar）支持受约束的输出生成，以实现可靠的结构化数据生成：
 
 ```python
 from openai import OpenAI
@@ -200,7 +155,7 @@ response = client.chat.completions.create(
 
 #### Tool Calling
 
-支持与 OpenAI 兼容的 Tool/Function Calling，用于与 agent workflows 集成：
+支持与 OpenAI 兼容的 Tool/Function Calling，以集成 agent 工作流：
 
 ```python
 response = client.chat.completions.create(
@@ -225,7 +180,7 @@ response = client.chat.completions.create(
 
 #### FP8 Quantization
 
-支持在 Hopper (H100) 和 Ada Lovelace (L4, L40S) GPUs 上使用 FP8 quantization，在保持几乎相同精度的同时将内存使用减半：
+在 Hopper (H100) 和 Ada Lovelace (L4, L40S) GPUs 上支持 FP8 quantization，在保持近乎相同精度的同时将内存使用减半：
 
 ```bash
 --quantization fp8 --kv-cache-dtype fp8
@@ -252,127 +207,31 @@ response = client.chat.completions.create(
 
 在 EKS 上部署 vLLM 的系统要求：
 
-```mermaid
-flowchart TD
-    subgraph Requirements [System Requirements]
-        subgraph Hardware [Hardware]
-            GPU[NVIDIA GPU]
-            Memory[GPU Memory]
-            CPU[CPU Cores]
-        end
+![展示 vLLM 的硬件和软件前提条件，以及 GPU 内存如何决定支持的模型规模层级的图表。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg)
 
-        subgraph Software [Software]
-            CUDA[CUDA 12.1+]
-            Python[Python 3.9+]
-            PyTorch[PyTorch 2.4.0+]
-        end
-
-        subgraph ModelSize [Requirements by Model Size]
-            Model7B[7B Model: 16GB+ GPU Memory]
-            Model13B[13B Model: 24GB+ GPU Memory]
-            Model70B[70B Model: 80GB+ GPU Memory]
-        end
-    end
-
-    GPU --> Memory
-    Memory --> ModelSize
-
-    classDef hardwareNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef softwareNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef modelNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class GPU,Memory,CPU,Hardware hardwareNode;
-    class CUDA,Python,PyTorch,Software softwareNode;
-    class Model7B,Model13B,Model70B,ModelSize modelNode;
-    class Requirements default;
-```
-
-1. **Hardware**:
+1. **硬件**:
    - NVIDIA GPU（Volta、Turing、Ampere、Hopper 架构）
    - 最低 GPU 内存：因模型大小而异
-     - 7B model：最低 16GB GPU 内存
-     - 13B model：最低 24GB GPU 内存
-     - 70B model：最低 80GB GPU 内存（或分布到多个 GPUs 上）
+     - 7B 模型：最低 16GB GPU 内存
+     - 13B 模型：最低 24GB GPU 内存
+     - 70B 模型：最低 80GB GPU 内存（或分布到多个 GPU）
 
-2. **Software**:
+2. **软件**:
    - CUDA 12.1 或更高版本（FP8 推荐 CUDA 12.4）
    - Python 3.9 或更高版本
    - PyTorch 2.4.0 或更高版本
 
-3. **EKS Node Types**:
-   - p5.48xlarge：8x NVIDIA H100 GPU，每个 80GB（最高性能）
-   - p4d.24xlarge：8x NVIDIA A100 GPU，每个 40GB 或 80GB
-   - g6.12xlarge：4x NVIDIA L4 GPU，每个 24GB（高性价比）
-   - g5.12xlarge：4x NVIDIA A10G GPU，每个 24GB
-   - g6e.12xlarge：4x NVIDIA L40S GPU，每个 48GB
-   - trn1.32xlarge：16x AWS Trainium，每个 32GB（AWS silicon）
+3. **EKS 节点类型**:
+   - p5.48xlarge: 8x NVIDIA H100 GPU，每个 80GB（最高性能）
+   - p4d.24xlarge: 8x NVIDIA A100 GPU，每个 40GB 或 80GB
+   - g6.12xlarge: 4x NVIDIA L4 GPU，每个 24GB（经济高效）
+   - g5.12xlarge: 4x NVIDIA A10G GPU，每个 24GB
+   - g6e.12xlarge: 4x NVIDIA L40S GPU，每个 48GB
+   - trn1.32xlarge: 16x AWS Trainium，每个 32GB（AWS 芯片）
 
 ## EKS 基础设施配置
 
-```mermaid
-flowchart TD
-    subgraph AWS [AWS Cloud]
-        subgraph EKS [Amazon EKS]
-            subgraph ControlPlane [Control Plane]
-                APIServer[API Server]
-                Scheduler[Scheduler]
-                ControllerManager[Controller Manager]
-            end
-
-            subgraph NodeGroups [Node Groups]
-                subgraph GPUNodes [GPU Nodes]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.12xlarge]
-                end
-
-                subgraph CPUNodes [CPU Nodes]
-                    C5[c5.4xlarge]
-                    M5[m5.4xlarge]
-                end
-            end
-
-            subgraph Storage [Storage]
-                FSx[FSx for Lustre]
-                EBS[Amazon EBS]
-                S3[Amazon S3]
-            end
-
-            subgraph Networking [Networking]
-                VPC[VPC]
-                Subnet[Subnet]
-                SecurityGroup[Security Group]
-                EFA[Elastic Fabric Adapter]
-            end
-        end
-
-        subgraph Services [AWS Services]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-            IAM[IAM]
-        end
-    end
-
-    GPUNodes --> Storage
-    GPUNodes --> Networking
-    CPUNodes --> Storage
-    CPUNodes --> Networking
-
-    EKS --> Services
-
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ECR,CloudWatch,IAM,FSx,EBS,S3 awsService;
-    class APIServer,Scheduler,ControllerManager,ControlPlane,Networking,VPC,Subnet,SecurityGroup,EFA k8sComponent;
-    class P4d,P3,G5,GPUNodes gpuNode;
-    class C5,M5,CPUNodes cpuNode;
-    class AWS,EKS,NodeGroups,Storage default;
-```
+![在 Amazon EKS 集群中运行 vLLM 的架构图：包含 control plane、GPU 和 CPU node groups、存储与网络资源，以及支持性的 AWS 服务。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg)
 
 ## 存储配置
 
@@ -420,7 +279,7 @@ spec:
 
 ### 从 S3 下载模型
 
-用于将 Hugging Face 模型存储在 S3 中并下载到 FSx for Lustre 的 Job：
+将 Hugging Face 模型存储到 S3 并下载到 FSx for Lustre 的 Job：
 
 ```yaml
 apiVersion: batch/v1
@@ -467,110 +326,11 @@ spec:
 
 下图展示了在 EKS 上部署 vLLM 的两种主要架构：
 
-```mermaid
-flowchart TD
-    subgraph Deployment [vLLM Deployment Architecture]
-        subgraph SingleNode [Single Node Deployment]
-            Pod1[vLLM Pod]
+![比较单节点 vLLM Pod 部署和多节点 NCCL 同步部署的图表，两者均由 load balancer 提供流量并共享由 FSx/S3 支持的存储。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg)
 
-            subgraph Pod1Components [Pod Components]
-                Container1[vLLM Container]
-                Volume1[Model Volume]
-            end
+### 单节点部署
 
-            subgraph GPUs1 [GPU]
-                GPU1[GPU 0]
-                GPU2[GPU 1]
-                GPU3["..."]
-                GPU4[GPU 7]
-            end
-        end
-
-        subgraph MultiNode [Multi-Node Deployment]
-            Pod2[vLLM Pod 0]
-            Pod3[vLLM Pod 1]
-
-            subgraph Pod2Components [Pod 0 Components]
-                Container2[vLLM Container]
-                Volume2[Model Volume]
-            end
-
-            subgraph Pod3Components [Pod 1 Components]
-                Container3[vLLM Container]
-                Volume3[Model Volume]
-            end
-
-            subgraph GPUs2 [Node 0 GPU]
-                GPU5[GPU 0]
-                GPU6[GPU 1]
-                GPU7["..."]
-                GPU8[GPU 7]
-            end
-
-            subgraph GPUs3 [Node 1 GPU]
-                GPU9[GPU 0]
-                GPU10[GPU 1]
-                GPU11["..."]
-                GPU12[GPU 7]
-            end
-
-            NCCL[NCCL Communication]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSx[FSx for Lustre]
-            S3[Amazon S3]
-        end
-
-        subgraph Networking [Networking]
-            Service[Kubernetes Service]
-            LoadBalancer[Load Balancer]
-            Client[Client]
-        end
-    end
-
-    Pod1 --> Pod1Components
-    Pod1Components --> GPUs1
-    Container1 --> Volume1
-
-    Pod2 --> Pod2Components
-    Pod3 --> Pod3Components
-    Pod2Components --> GPUs2
-    Pod3Components --> GPUs3
-    Container2 --> Volume2
-    Container3 --> Volume3
-
-    Pod2 <--> NCCL
-    Pod3 <--> NCCL
-
-    Volume1 --> FSx
-    Volume2 --> FSx
-    Volume3 --> FSx
-    FSx --> S3
-
-    Client --> LoadBalancer
-    LoadBalancer --> Service
-    Service --> Pod1
-    Service --> Pod2
-
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef containerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef networkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod1Components,Pod2Components,Pod3Components podComponent;
-    class Container1,Container2,Container3,Volume1,Volume2,Volume3,NCCL containerComponent;
-    class GPU1,GPU2,GPU3,GPU4,GPU5,GPU6,GPU7,GPU8,GPU9,GPU10,GPU11,GPU12,GPUs1,GPUs2,GPUs3 gpuComponent;
-    class FSx,S3,Storage storageComponent;
-    class Service,LoadBalancer,Client,Networking networkComponent;
-    class Deployment,SingleNode,MultiNode default;
-```
-
-### 单 Node 部署
-
-在单个 GPU 或单个 Node 上的多个 GPUs 运行 vLLM 的 Deployment：
+在单个 GPU 或单节点上的多个 GPU 上运行 vLLM 的 Deployment：
 
 ```yaml
 apiVersion: apps/v1
@@ -630,9 +390,9 @@ spec:
   type: LoadBalancer
 ```
 
-### 多 Node 分布式部署
+### 多节点分布式部署
 
-将大型模型分布到多个 Nodes 的方法：
+跨多个节点分配大型模型的方法：
 
 ```yaml
 apiVersion: v1
@@ -758,70 +518,25 @@ spec:
 
 ## 性能优化
 
-```mermaid
-flowchart TD
-    subgraph Optimization [Performance Optimization]
-        subgraph GPUMemory [GPU Memory Optimization]
-            MemoryUtil[GPU Memory Utilization Adjustment]
-            Quantization[Quantization Application]
-            SwapSpace[Swap Space Utilization]
-        end
-
-        subgraph Throughput [Throughput Optimization]
-            BatchSize[Batch Size Adjustment]
-            KVCache[KV Cache Optimization]
-            TensorParallel[Tensor Parallel Processing]
-        end
-
-        subgraph NetworkOpt [Network Optimization]
-            EFA[EFA Utilization]
-            NCCLSettings[NCCL Settings Optimization]
-            NodePlacement[Node Placement Optimization]
-        end
-    end
-
-    MemoryUtil -->|--gpu-memory-utilization=0.9| Performance([Performance Improvement])
-    Quantization -->|--quantization awq| Performance
-    SwapSpace -->|--swap-space=16| Performance
-
-    BatchSize -->|--max-num-batched-tokens=8192| Performance
-    KVCache -->|--block-size=16| Performance
-    TensorParallel -->|--tensor-parallel-size=8| Performance
-
-    EFA -->|vpc.amazonaws.com/efa: 1| Performance
-    NCCLSettings -->|NCCL_DEBUG=INFO| Performance
-    NodePlacement -->|topology.kubernetes.io/zone| Performance
-
-    classDef gpuMemNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef throughputNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef performanceNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class MemoryUtil,Quantization,SwapSpace,GPUMemory gpuMemNode;
-    class BatchSize,KVCache,TensorParallel,Throughput throughputNode;
-    class EFA,NCCLSettings,NodePlacement,NetworkOpt networkNode;
-    class Performance performanceNode;
-    class Optimization default;
-```
+![展示 GPU 内存、吞吐量和网络优化技术及其各自配置 flag 的图表，它们共同带来整体性能提升。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg)
 
 ### GPU 内存优化
 
 优化 vLLM GPU 内存使用的方法：
 
-1. **GPU Memory Utilization Adjustment**:
+1. **GPU 内存利用率调整**:
 
 ```bash
 --gpu-memory-utilization=0.9
 ```
 
-2. **Quantization Application**:
+2. **应用量化**:
 
 ```bash
 --quantization awq
 ```
 
-3. **Swap Space Utilization**:
+3. **使用 Swap Space**:
 
 ```bash
 --swap-space=16
@@ -831,19 +546,19 @@ flowchart TD
 
 优化 vLLM 吞吐量的方法：
 
-1. **Batch Size Adjustment**:
+1. **批处理大小调整**:
 
 ```bash
 --max-num-batched-tokens=8192
 ```
 
-2. **KV Cache Optimization**:
+2. **KV Cache 优化**:
 
 ```bash
 --block-size=16
 ```
 
-3. **Tensor Parallel Processing Adjustment**:
+3. **Tensor Parallel Processing 调整**:
 
 ```bash
 --tensor-parallel-size=8
@@ -853,7 +568,7 @@ flowchart TD
 
 在分布式部署中优化网络性能的方法：
 
-1. **EFA (Elastic Fabric Adapter) Utilization**:
+1. **使用 EFA (Elastic Fabric Adapter)**:
 
 ```yaml
 resources:
@@ -862,7 +577,7 @@ resources:
     vpc.amazonaws.com/efa: 1
 ```
 
-2. **NCCL Settings Optimization**:
+2. **NCCL 设置优化**:
 
 ```yaml
 env:
@@ -876,7 +591,7 @@ env:
   value: "1"
 ```
 
-3. **Node Placement Optimization**:
+3. **节点放置优化**:
 
 ```yaml
 affinity:
@@ -890,78 +605,101 @@ affinity:
           - us-west-2a
 ```
 
-## 监控和日志
+## 实测基准：单个 L4 GPU 上的 Qwen2.5-7B
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [Monitoring and Logging]
-        subgraph MetricsCollection [Metrics Collection]
-            vLLMMetrics[vLLM Metrics]
-            GPUMetrics[GPU Metrics]
-            KubeMetrics[Kubernetes Metrics]
-        end
+到目前为止，本页中的其他数字都是通用的 vLLM 项目声明或配置 flag 描述。本节有所不同：它针对真实的 vLLM server 进行了一次测量运行，因此您可以了解在一个具体的模型和 GPU 上，“continuous batching 改善吞吐量”实际是什么样子。
 
-        subgraph MonitoringStack [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
+![客户端 Job 通过 ClusterIP Service 访问 vLLM server，后者将请求批处理到单个 NVIDIA L4 GPU 上；图中同时展示测得的吞吐量、延迟，以及限制因素是内存带宽而非计算能力的原因。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
-        subgraph LoggingStack [Logging Stack]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
 
-        subgraph Dashboards [Dashboards]
-            GPUUtilization[GPU Utilization]
-            Throughput[Throughput]
-            Latency[Latency]
-            ErrorRate[Error Rate]
-        end
+### 设置
 
-        subgraph Alerts [Alerts]
-            HighLatency[High Latency]
-            LowThroughput[Low Throughput]
-            GPUError[GPU Error]
-            OOMError[Out of Memory Error]
-        end
-    end
+- **集群**: 专用 Karpenter NodePool（`bench-gpu`，按需 `g6.2xlarge` — 1x NVIDIA L4、24GB GPU 内存、8 vCPU、32 GiB RAM），带有污点 `nvidia.com/gpu=true:NoSchedule`，并带有标签以加入现有的 `nvidia-device-plugin` daemonsets，运行后立即删除。
+- **Server**: `vllm/vllm-openai:v0.6.4.post1`（于 2024-11-15 发布 — vLLM 项目此后已推出默认启用 prefix caching 的 V1 engine，因此应将此视为该发布系列的快照，而不是当前的 vLLM），模型 `Qwen/Qwen2.5-7B-Instruct`，`--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`。使用一种精度（bf16，即模型的原生 dtype），不使用 quantization、speculative decoding 或 prefix caching — 即本页其他部分所述的普通默认设置。
+- **Client**: 一个作为 Job 在**集群内部**（单独的非 GPU 节点）运行的 Python `ThreadPoolExecutor`，通过 `vllm-server` ClusterIP Service 访问 `/v1/chat/completions`。非流式，`temperature=0`、`max_tokens=128`，8 个轮换的短 prompt（询问 Kubernetes 概念的问题，要求回答 1-2 句话）。实际上，每个响应都接近 128-token 上限（全部三个并发批次的平均值约为 102 tokens），而不是在 1-2 句话后停止 — 这有助于在不同并发级别之间进行可比的吞吐量比较，但在将延迟数字理解为“回答简短问题的时间”之前值得注意。
+- **冷启动**: 从 vLLM engine 的启动日志到其 `/health` endpoint 返回 `200`，约 4.5 分钟 — 主要耗时是将约 15 GB 的 Qwen2.5-7B-Instruct 权重从 Hugging Face 下载到 Pod 的 ephemeral cache。未包含 image pull 时间；未单独测量。
 
-    vLLMMetrics --> Prometheus
-    GPUMetrics --> Prometheus
-    KubeMetrics --> Prometheus
+### 复现
 
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-
-    AlertManager --> Alerts
-    Grafana --> Dashboards
-
-    vLLMMetrics --> Fluentd
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-
-    classDef metricsNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class vLLMMetrics,GPUMetrics,KubeMetrics,MetricsCollection metricsNode;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringNode;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingNode;
-    class GPUUtilization,Throughput,Latency,ErrorRate,Dashboards dashboardNode;
-    class HighLatency,LowThroughput,GPUError,OOMError,Alerts alertNode;
-    class Monitoring default;
+```yaml
+# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata: { name: bench-gpu }
+spec:
+  limits: { cpu: "16", memory: 128Gi, nvidia.com/gpu: "1" }
+  template:
+    metadata:
+      labels: { node-type: bench-gpu, nvidia.com/device-plugin.config: default }
+    spec:
+      expireAfter: 6h
+      nodeClassRef: { group: karpenter.k8s.aws, kind: EC2NodeClass, name: gpu }
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
+      taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+---
+# vLLM server (namespace bench-gpu) + the ClusterIP Service the client calls
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vllm-server } }
+  template:
+    metadata: { labels: { app: vllm-server } }
+    spec:
+      nodeSelector: { node-type: bench-gpu }
+      tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.6.4.post1
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
+                 "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: "1" }
+            requests: { nvidia.com/gpu: "1", cpu: "3", memory: 20Gi }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 60 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  selector: { app: vllm-server }
+  ports: [{ port: 8000, targetPort: 8000 }]
 ```
+
+客户端是一个普通的 Python 脚本，使用 `urllib` + `concurrent.futures.ThreadPoolExecutor` 向 `http://vllm-server:8000/v1/chat/completions` 发送 N 个请求并计时；请将其作为同一 namespace 中的 `batch/v1` Job 运行。有一个值得强调的注意事项：需要上面的 `nvidia.com/device-plugin.config: default` 节点标签 — 没有它，共享的 `nvidia-device-plugin` DaemonSet 永远不会调度到新节点上，即使污点和 toleration 正确匹配，`nvidia.com/gpu` 也不会注册为可分配资源。
+
+### 结果
+
+| 并发数 | 请求数 | 总耗时 | Client 延迟 p50 / p90 | Client 聚合吞吐量 | Server 报告的生成吞吐量峰值 | GPU KV cache 使用率 |
+|---|---|---|---|---|---|---|
+| 1（串行） | 10 | ~53.2 s（请求延迟之和） | 5.65 s / 7.43 s | 每个请求约 17-18 tokens/s | ~17 tokens/s | 0.1-0.2% |
+| 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65-66 tokens/s | 0.4-0.7% |
+| 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123-129 tokens/s | 0.8-1.4% |
+| 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | 最高 243 tokens/s | 1.5-2.6% |
+
+“Client 聚合吞吐量”是该批次中所有请求的 completion tokens 总数除以 wall-clock time，从 Pod 外部测得。“Server 报告的”是 vLLM 自己在 `Running: <concurrency>` 时定期记录的 `Avg generation throughput` 日志行 — 它略高于 Client 数字，因为它排除了 HTTP/JSON 开销，并捕获了测量间隔之间的真实峰值，而不只是平均值。GPU 使用的内存（在运行后使用 `nvidia-smi` 测量）：该实例中 driver 报告总量 23.0 GiB 中的 19.2 GiB — `gpu-memory-utilization=0.90` 指示 vLLM 预先分配其中大部分用于权重加 KV cache blocks，因此下方 KV cache 百分比描述的是该预留池的使用率，而非实际空闲 VRAM。
+
+### 分析
+
+- **单请求延迟几乎不变。** 对相同的约 100-128 token 响应，并发请求从 1 增加到 16 时，p50 延迟仅从 5.65 s 增至 7.52 s（+33%）— 这正是 continuous batching 按预期工作的结果：新请求加入正在运行的 batch，而不是在它后面排队。
+- **聚合吞吐量接近线性扩展。** 4 → 8 → 16 个并发请求每次都大致使聚合吞吐量翻倍（58.67 → 109.04 → 208.08 tokens/s）。
+- **这是受带宽限制的 decode，而非受计算限制 — 这正是 batching 有帮助的原因。** 在 batch 1 时，每生成一个 token 都必须从 GDDR6 内存流式读取约 15.2 GB 的 bf16 权重；在该 L4 约 300 GB/s 的内存带宽下，这将单请求 decode 限制在约 20 tokens/s，与测得的约 17-18 相符。计算能力则呈现完全不同的情况：即使在最繁忙的测量点（208 tokens/s 聚合）下，GPU 的工作量约为 3 TFLOP/s，而 L4 的密集 bf16 计算能力约为 121 TFLOPS — 只达到其上限的百分之几。KV cache 容量也从未成为限制（整个运行过程保持在 3% 以下）。Continuous batching 正是解决这类受带宽限制 decode 的方法：当权重已为一个请求从内存读取后，使用同一份权重读取为 16 个请求提供服务几乎没有额外成本，因此吞吐量接近线性扩展，而延迟几乎不会增长。
+
+### 注意事项
+
+这是在一个模型、一种精度（bf16）、一种 GPU 类型和一种上下文长度上的单次运行（n=1）— 应将其视为一个经过校准的数据点，而不是通用的 vLLM/L4 性能声明。Client 在集群内部（单独的非 GPU 节点）运行，因此网络延迟反映的是集群内跳数，而非外部调用方。此处的延迟是完整的端到端 HTTP 响应时间，而不是 time-to-first-token (TTFT) — 未测试流式传输。未测试 prefix caching、speculative decoding、FP8 和多 GPU tensor parallelism（均在本页前文中描述）。请使用上面的 manifests 复现；不要将这些数字外推到不同的模型大小、GPU 或 prompt 长度。
+
+## 监控和日志记录
+
+![展示 vLLM、GPU 和 Kubernetes 指标流入 Prometheus/Grafana 监控栈以生成仪表板和告警，同时还有独立日志栈的图表。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg)
 
 ### Prometheus 指标
 
-从 vLLM server 收集 Prometheus metrics 的方法：
+从 vLLM server 收集 Prometheus 指标的方法：
 
 ```yaml
 apiVersion: v1
@@ -1033,54 +771,11 @@ data:
 
 ## 自动扩缩容
 
-```mermaid
-flowchart TD
-    subgraph Autoscaling [Autoscaling]
-        subgraph PodScaling [Pod Scaling]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            CustomMetrics[Custom Metrics]
-        end
-
-        subgraph NodeScaling [Node Scaling]
-            Karpenter[Karpenter]
-            ClusterAutoscaler[Cluster Autoscaler]
-            SpotInstances[Spot Instances]
-        end
-
-        subgraph ScalingTriggers [Scaling Triggers]
-            CPUUtilization[CPU Utilization]
-            GPUUtilization[GPU Utilization]
-            RequestsPerSecond[Requests Per Second]
-            QueueLength[Queue Length]
-        end
-    end
-
-    CPUUtilization --> HPA
-    GPUUtilization --> CustomMetrics
-    RequestsPerSecond --> KEDA
-    QueueLength --> KEDA
-
-    HPA --> Karpenter
-    KEDA --> Karpenter
-    CustomMetrics --> ClusterAutoscaler
-
-    Karpenter --> SpotInstances
-
-    classDef podScalingNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeScalingNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef triggerNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class HPA,KEDA,CustomMetrics,PodScaling podScalingNode;
-    class Karpenter,ClusterAutoscaler,SpotInstances,NodeScaling nodeScalingNode;
-    class CPUUtilization,GPUUtilization,RequestsPerSecond,QueueLength,ScalingTriggers triggerNode;
-    class Autoscaling default;
-```
+![展示 CPU、GPU、请求速率和队列长度信号如何驱动 Pod 级自动扩缩容，进而驱动 GPU 节点自动扩缩容和 Spot 容量的图表。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg)
 
 ### HPA (Horizontal Pod Autoscaler)
 
-基于请求量自动扩缩 vLLM servers 的方法：
+基于请求量自动扩缩容 vLLM servers 的方法：
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -1110,9 +805,9 @@ spec:
         averageValue: 100
 ```
 
-### 使用 Karpenter 进行 Node 自动扩缩容
+### 使用 Karpenter 进行节点自动扩缩容
 
-自动预置 GPU Nodes 的方法：
+自动预置 GPU 节点的方法：
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1161,7 +856,7 @@ spec:
 
 ### Network Policy
 
-限制对 vLLM servers 网络访问的方法：
+限制对 vLLM servers 的网络访问的方法：
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1206,7 +901,7 @@ spec:
 
 ### Security Context
 
-配置 container security context 的方法：
+配置容器 Security Context 的方法：
 
 ```yaml
 securityContext:
@@ -1219,65 +914,9 @@ securityContext:
     - ALL
 ```
 
-## 客户端集成
+## Client 集成
 
-```mermaid
-flowchart TD
-    subgraph ClientIntegration [Client Integration]
-        subgraph Gateway [API Gateway]
-            Nginx[Nginx]
-            APIGateway[API Gateway]
-            Envoy[Envoy Proxy]
-        end
-
-        subgraph Clients [Clients]
-            PythonClient[Python Client]
-            JavaScriptClient[JavaScript Client]
-            CurlClient[Curl Client]
-        end
-
-        subgraph Security [Security]
-            Auth[Authentication]
-            RateLimit[Rate Limiting]
-            CORS[CORS]
-        end
-
-        subgraph Backend [Backend]
-            vLLMService[vLLM Service]
-            LoadBalancer[Load Balancer]
-        end
-    end
-
-    Clients --> Gateway
-    Gateway --> Security
-    Security --> Backend
-
-    PythonClient -->|HTTP Request| Nginx
-    JavaScriptClient -->|HTTP Request| APIGateway
-    CurlClient -->|HTTP Request| Envoy
-
-    Nginx --> Auth
-    APIGateway --> RateLimit
-    Envoy --> CORS
-
-    Auth --> LoadBalancer
-    RateLimit --> LoadBalancer
-    CORS --> LoadBalancer
-
-    LoadBalancer --> vLLMService
-
-    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef clientNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef backendNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Nginx,APIGateway,Envoy,Gateway gatewayNode;
-    class PythonClient,JavaScriptClient,CurlClient,Clients clientNode;
-    class Auth,RateLimit,CORS,Security securityNode;
-    class vLLMService,LoadBalancer,Backend backendNode;
-    class ClientIntegration default;
-```
+![展示 Client SDKs 通过 API gateway 到达 vLLM 的图表，途经用于身份验证和速率限制的 security layer，最后到达负载均衡的 backend service。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg)
 
 ### API Gateway
 
@@ -1371,54 +1010,54 @@ print(response.json())
 ### 资源管理
 
 1. **考虑内存开销**:
-   - 除 GPU 内存外，还应分配足够的 CPU 内存。
+   - 除 GPU 内存外，还应分配充足的 CPU 内存。
    - 建议分配约为模型大小两倍的 CPU 内存。
 
-2. **CPU Core 分配**:
-   - 每个 GPU 至少分配 4 个 CPU cores。
-   - 使用 tensor parallelization 时可能需要更多 CPU cores。
+2. **CPU 核心分配**:
+   - 每个 GPU 至少分配 4 个 CPU 核心。
+   - 使用 tensor parallelization 时可能需要更多 CPU 核心。
 
-3. **Node 选择**:
-   - 根据模型大小选择合适的 Node types。
-   - 选择具有高内存带宽的 Nodes。
+3. **节点选择**:
+   - 根据模型大小选择合适的节点类型。
+   - 选择内存带宽高的节点。
 
 ### 高可用性
 
-1. **多可用区部署**:
-   - 将 vLLM servers 部署到多个可用区。
-   - 确保每个可用区都有足够容量。
+1. **多 Availability Zone 部署**:
+   - 跨多个 availability zones 部署 vLLM servers。
+   - 确保每个 availability zone 中都有充足容量。
 
-2. **Load Balancing**:
-   - 将请求分发到多个 vLLM server instances。
-   - 配置 session affinity，使来自同一用户的请求路由到同一 server。
+2. **负载均衡**:
+   - 将请求分发到多个 vLLM server 实例。
+   - 配置 session affinity，使同一用户的请求路由到同一 server。
 
 3. **故障恢复**:
-   - 配置 health checks 以检测故障 servers。
+   - 配置 health checks 以检测失败的 servers。
    - 实现自动恢复机制。
 
 ### 成本优化
 
 1. **使用 Spot Instances**:
    - 使用 Spot instances 降低成本。
-   - 适用于可容忍中断的 workloads。
+   - 适用于可容忍中断的工作负载。
 
-2. **Model Quantization**:
+2. **模型量化**:
    - 应用 INT8 或 INT4 quantization 以降低内存使用。
-   - 考虑精度和性能之间的平衡。
+   - 考虑精度与性能之间的平衡。
 
-3. **Autoscaling**:
-   - 基于请求量自动扩缩 servers。
-   - 在空闲时段缩减 servers 以降低成本。
+3. **自动扩缩容**:
+   - 基于请求量自动扩缩容 servers。
+   - 在空闲时缩减 servers 以降低成本。
 
-## 总结
+## 结论
 
-vLLM 是当前最活跃开发的开源 LLM 推理引擎，全面支持 Speculative Decoding、Prefix Caching、dynamic LoRA loading、Structured Output 和 Tool Calling 等生产环境必需功能。结合适当的 GPU instance 选择、高性能存储、网络优化以及 EKS 上的 auto-scaling，你可以构建一个具有成本效益且可扩展的 LLM serving platform。关于与 SGLang 和 TGI 等其他框架的比较，请参阅 [Inference Frameworks](./04-inference-frameworks.md) 章节。
+vLLM 是最活跃开发的开源 LLM 推理引擎，全面支持生产环境必需的功能，包括 Speculative Decoding、Prefix Caching、动态 LoRA 加载、Structured Output 和 Tool Calling。结合在 EKS 上适当的 GPU 实例选择、高性能存储、网络优化和自动扩缩容，您可以构建一个经济高效且可扩展的 LLM serving platform。有关与 SGLang 和 TGI 等其他框架的比较，请参阅 [Inference Frameworks](./04-inference-frameworks.md) 章节。
 
 ## 参考资料
 
-- [vLLM Official Documentation](https://docs.vllm.ai/) - 官方 vLLM 文档和最新功能指南
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - 用于在 EKS 上部署 AI/ML workloads 的 AWS 指南和示例
+- [vLLM 官方文档](https://docs.vllm.ai/) - vLLM 官方文档和最新功能指南
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - 在 EKS 上部署 AI/ML workloads 的 AWS 指南和示例
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试 [Topic Quiz](../quizzes/ai-ml/04-vllm-deployment-quiz.md)。
+要测试您在本章中学到的知识，请尝试 [主题测验](../quizzes/ai-ml/04-vllm-deployment-quiz.md)。
