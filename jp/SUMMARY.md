@@ -246,6 +246,11 @@
   * [Ingress と Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [ベストプラクティス](service-mesh/cilium-service-mesh/06-best-practices.md)
 
+## ストレージ
+
+* [ストレージの概要](storage/README.md)
+* [EBS gp2 と gp3 の実測ベンチマーク比較](storage/01-ebs-gp2-gp3-benchmark.md)
+
 ## セキュリティとポリシー
 
 * [Kyverno によるポリシー管理](security/01-kyverno-policy-management.md)
@@ -629,3 +634,5 @@
   * [Tekton Pipelines クイズ](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [ゾーンクラスター運用クイズ](quizzes/ops/15-zonal-operations-guide-quiz.md)
   * [トラブルシューティング手順書クイズ](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+* Storage
+  * [EBS gp2 と gp3 の実測ベンチマーク比較クイズ](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)

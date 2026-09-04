@@ -287,6 +287,10 @@
 6. [Grafana](./observability/grafana/README.md) | [クイズ](./quizzes/observability/grafana/grafana-quiz.md)
 7. [Observability Optimization Guide](./observability/09-observability-optimization.md) | [クイズ](./quizzes/observability/09-observability-optimization-quiz.md)
 
+### ストレージ
+1. [ストレージの概要](./storage/README.md)
+2. [EBS gp2 と gp3 の実測ベンチマーク比較](./storage/01-ebs-gp2-gp3-benchmark.md) | [Quiz](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
 ## ラボガイド
 
 理論を学んだ後、実際の環境で練習するためのハンズオンラボガイドを提供します。

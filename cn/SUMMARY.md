@@ -246,6 +246,11 @@
   * [Ingress 与 Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [最佳实践](service-mesh/cilium-service-mesh/06-best-practices.md)
 
+## 存储
+
+* [存储概述](storage/README.md)
+* [EBS gp2 与 gp3 实测基准测试](storage/01-ebs-gp2-gp3-benchmark.md)
+
 ## 安全与策略
 
 * [使用 Kyverno 管理策略](security/01-kyverno-policy-management.md)
@@ -629,3 +634,5 @@
   * [Tekton Pipelines 测验](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [可用区集群运维测验](quizzes/ops/15-zonal-operations-guide-quiz.md)
   * [故障排查手册测验](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+* Storage
+  * [EBS gp2 与 gp3 实测基准测试测验](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)

@@ -287,6 +287,10 @@
 6. [Grafana](./observability/grafana/README.md) | [测验](./quizzes/observability/grafana/grafana-quiz.md)
 7. [可观测性优化指南](./observability/09-observability-optimization.md) | [测验](./quizzes/observability/09-observability-optimization-quiz.md)
 
+### 存储
+1. [存储概述](./storage/README.md)
+2. [EBS gp2 与 gp3 实测基准测试](./storage/01-ebs-gp2-gp3-benchmark.md) | [Quiz](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
 ## 实验指南
 
 我们提供动手实验指南，帮助你在学习理论后在真实环境中练习。

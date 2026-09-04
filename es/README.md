@@ -287,6 +287,10 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 6. [Grafana](./observability/grafana/README.md) | [Cuestionario](./quizzes/observability/grafana/grafana-quiz.md)
 7. [Guía de optimización de Observability](./observability/09-observability-optimization.md) | [Cuestionario](./quizzes/observability/09-observability-optimization-quiz.md)
 
+### Almacenamiento
+1. [Descripción general del almacenamiento](./storage/README.md)
+2. [Comparativa de rendimiento medida de EBS gp2 frente a gp3](./storage/01-ebs-gp2-gp3-benchmark.md) | [Quiz](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
+
 ## Guías de laboratorio
 
 Proporcionamos guías de laboratorio prácticas para ejercitarse en entornos reales después de aprender la teoría.

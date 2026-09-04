@@ -246,6 +246,11 @@
   * [Ingress y Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [Mejores prácticas](service-mesh/cilium-service-mesh/06-best-practices.md)
 
+## Almacenamiento
+
+* [Descripción general del almacenamiento](storage/README.md)
+* [Comparativa de rendimiento medida de EBS gp2 frente a gp3](storage/01-ebs-gp2-gp3-benchmark.md)
+
 ## Seguridad y políticas
 
 * [Gestión de políticas con Kyverno](security/01-kyverno-policy-management.md)
@@ -629,3 +634,5 @@
   * [Cuestionario de Pipelines de Tekton](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Cuestionario de operaciones de clúster zonal](quizzes/ops/15-zonal-operations-guide-quiz.md)
   * [Cuestionario: Guía de resolución de problemas](quizzes/ops/16-troubleshooting-playbook-quiz.md)
+* Storage
+  * [Cuestionario: Comparativa de rendimiento medida de EBS gp2 frente a gp3](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
