@@ -43,7 +43,9 @@ eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows
 
 ## Calico eBPF Architecture
 
-![Calico Dataplane: iptables vs eBPF](../../.gitbook/assets/calico_ebpf_vs_iptables.png)
+![Calico dataplanes compared: in iptables mode a packet walks PREROUTING, FORWARD, kube-proxy rules, and POSTROUTING to reach the Pod; in eBPF mode connect-time LB picks the backend at the socket and one TC-hook BPF program forwards it.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-9.html)
 
 ### Architecture Comparison
 

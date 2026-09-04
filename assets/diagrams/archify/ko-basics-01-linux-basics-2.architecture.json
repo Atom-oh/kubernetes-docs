@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "파일 권한 구조",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "ls -l 출력"
+        },
+        "backend": {
+          "label": "파일 타입 필드"
+        },
+        "security": {
+          "label": "권한 필드 (r w x)"
+        },
+        "frontend": {
+          "label": "예시 값"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "fields",
+        "label": "4개 필드 구조",
+        "focus": [
+          "src",
+          "ft",
+          "own",
+          "grp",
+          "oth"
+        ],
+        "note": "10자리 권한 문자열을 왼쪽부터 파일 타입 1자리, 소유자·그룹·기타 사용자 권한 3자리씩으로 나눠 읽습니다."
+      },
+      {
+        "id": "filetype",
+        "label": "파일 타입 문자",
+        "focus": [
+          "ft",
+          "ex_ft"
+        ],
+        "note": "첫 글자는 -(일반 파일), d(디렉토리), l(심볼릭 링크), c(문자 장치), b(블록 장치) 중 하나입니다."
+      },
+      {
+        "id": "example",
+        "label": "예시 drwxr-xr-- 해석",
+        "focus": [
+          "ex_str",
+          "ex_ft",
+          "ex_own",
+          "ex_grp",
+          "ex_oth"
+        ],
+        "note": "디렉토리이며 소유자는 모든 권한, 그룹은 읽기·실행, 기타 사용자는 읽기만 가능합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "ls -l 출력",
+      "sublabel": "권한 문자열 10자리",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ft",
+      "type": "backend",
+      "label": "파일 타입",
+      "sublabel": "1번째 · - d l c b",
+      "pos": [
+        290,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "own",
+      "type": "security",
+      "label": "소유자 권한",
+      "sublabel": "2–4번째 · r w x",
+      "pos": [
+        520,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "grp",
+      "type": "security",
+      "label": "그룹 권한",
+      "sublabel": "5–7번째 · r w x",
+      "pos": [
+        750,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "oth",
+      "type": "security",
+      "label": "기타 사용자 권한",
+      "sublabel": "8–10번째 · r w x",
+      "pos": [
+        980,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_str",
+      "type": "external",
+      "label": "drwxr-xr--",
+      "sublabel": "예시 출력",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_ft",
+      "type": "frontend",
+      "label": "d",
+      "sublabel": "디렉토리",
+      "pos": [
+        290,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_own",
+      "type": "frontend",
+      "label": "rwx",
+      "sublabel": "소유자 · 모든 권한",
+      "pos": [
+        520,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_grp",
+      "type": "frontend",
+      "label": "r-x",
+      "sublabel": "그룹 · 읽기, 실행",
+      "pos": [
+        750,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ex_oth",
+      "type": "frontend",
+      "label": "r--",
+      "sublabel": "기타 사용자 · 읽기만",
+      "pos": [
+        980,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "권한 문자열의 4개 필드",
+      "wraps": [
+        "ft",
+        "own",
+        "grp",
+        "oth"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "예시 해석",
+      "wraps": [
+        "ex_str",
+        "ex_ft",
+        "ex_own",
+        "ex_grp",
+        "ex_oth"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "src",
+      "to": "ft",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "ft",
+      "to": "own",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3",
+      "from": "own",
+      "to": "grp",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4",
+      "from": "grp",
+      "to": "oth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e0",
+      "from": "src",
+      "to": "ex_str",
+      "label": "예시",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 100
+    },
+    {
+      "id": "e1",
+      "from": "ft",
+      "to": "ex_ft",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e2",
+      "from": "own",
+      "to": "ex_own",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e3",
+      "from": "grp",
+      "to": "ex_grp",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e4",
+      "from": "oth",
+      "to": "ex_oth",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "파일 타입 (1번째 문자)",
+      "items": [
+        "- : 일반 파일",
+        "d : 디렉토리",
+        "l : 심볼릭 링크",
+        "c : 문자 장치",
+        "b : 블록 장치"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "권한 3자리 (소유자 · 그룹 · 기타 사용자)",
+      "items": [
+        "r : 읽기",
+        "w : 쓰기",
+        "x : 실행",
+        "- : 해당 권한 없음"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "예시 — drwxr-xr--",
+      "items": [
+        "d → 디렉토리",
+        "rwx → 소유자: 읽기·쓰기·실행 (모든 권한)",
+        "r-x → 그룹: 읽기·실행",
+        "r-- → 기타 사용자: 읽기만"
+      ]
+    }
+  ]
+}

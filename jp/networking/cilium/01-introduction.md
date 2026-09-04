@@ -1,16 +1,16 @@
 # パート 1: はじめに
 
-> **サポート対象バージョン**: Cilium 1.18 **最終更新**: February 23, 2026
+> **対応バージョン**: Cilium 1.18 **最終更新**: February 23, 2026
 
 ## Lab 環境のセットアップ
 
-このドキュメントの例を実行するには、以下のツールと環境が必要です。
+このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
 
 ### 必要なツール
 
 * kubectl v1.33 以降
 * Helm v3.12 以降
-* 動作する Kubernetes cluster（EKS、minikube、kind など）
+* 動作する Kubernetes クラスタ（EKS、minikube、kind など）
 * Linux kernel 4.19 以降（eBPF 機能のサポート用）
 
 ### Cilium のインストール
@@ -30,89 +30,93 @@ cilium status
 
 ## Cilium とは？
 
-Cilium は、Linux kernel の強力な eBPF 技術を活用して、コンテナ化されたアプリケーションにネットワーキング、セキュリティ、および可観測性を提供するオープンソースソフトウェアです。Kubernetes、Docker、Mesos などのコンテナオーケストレーションプラットフォーム向けに、ネットワーキング、セキュリティ、および可観測性を提供するよう設計されています。
+Cilium は、Linux kernel の強力な eBPF 技術を活用して、コンテナ化されたアプリケーションにネットワーキング、セキュリティ、オブザーバビリティを提供するオープンソースソフトウェアです。Kubernetes、Docker、Mesos などのコンテナオーケストレーションプラットフォームに、ネットワーキング、セキュリティ、オブザーバビリティを提供するよう設計されています。
 
 ### 主な機能:
 
-* **eBPF ベース**: kernel 内のプログラム可能な datapath により、高性能なネットワーキングおよびセキュリティ機能を提供
-* **API 対応ネットワーキング**: L3-L7 レイヤーで API 対応の network security policy をサポート
+* **eBPF ベース**: kernel 内のプログラマブルなデータパスを通じて、高性能なネットワーキングとセキュリティ機能を提供
+* **API 対応ネットワーキング**: L3-L7 レイヤーで API 対応の Network Policy をサポート
 * **Kubernetes 統合**: Kubernetes CNI（Container Network Interface）実装を提供
-* **分散 Load Balancing**: service-to-service 通信向けの効率的な分散 Load Balancing
-* **Network Visibility**: Hubble による network flow の監視とトラブルシューティング
-* **Multi-cluster サポート**: cluster 間ネットワーキングおよび security policy のサポート
+* **分散ロードバランシング**: Service 間通信に効率的な分散ロードバランシングを提供
+* **ネットワーク可視性**: Hubble によるネットワークフローの監視とトラブルシューティング
+* **マルチクラスタサポート**: クラスタ間ネットワーキングとセキュリティポリシーをサポート
 * **Kubernetes 互換性**: Kubernetes 1.32 以降のバージョンと完全互換
-* **強化された BGP サポート**: Cilium 1.18 の改善された BGP control plane による、より柔軟な routing 設定
-* **強化された可観測性**: 改善された metrics および tracing 機能による、より深い洞察
+* **強化された BGP サポート**: Cilium 1.18 の改善された BGP コントロールプレーンによる、より柔軟なルーティング設定
+* **強化されたオブザーバビリティ**: 改善されたメトリクスとトレーシング機能による、より深いインサイト
 
 ### Cilium アーキテクチャ
 
-## コンテナネットワーキングの基本
+![Kubernetes から CNI、Cilium、eBPF、Linux kernel に至るレイヤーと、Cilium から Hubble にフローイベントが送信される様子を示す図。](../../.gitbook/assets/en-networking-cilium-01-introduction-0.png)
 
-コンテナネットワーキングは、コンテナ化されたアプリケーション同士、および外部との通信を可能にする仕組みを提供します。
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-01-introduction-0.html)
+
+## コンテナネットワーキングの基礎
+
+コンテナネットワーキングは、コンテナ化されたアプリケーション同士、および外部との通信を可能にするメカニズムを提供します。
 
 ### コンテナネットワーキングモデル:
 
-1. **Host Network**: コンテナが host の network namespace を共有
-2. **Bridge Network**: コンテナが host 内の仮想 bridge に接続
-3. **Overlay Network**: 複数の host にまたがって仮想 network を作成
-4. **Underlay Network**: 物理 network infrastructure を直接利用
+1. **Host Network**: コンテナがホストのネットワーク名前空間を共有
+2. **Bridge Network**: コンテナがホスト内の仮想ブリッジに接続
+3. **Overlay Network**: 複数のホストにまたがって仮想ネットワークを作成
+4. **Underlay Network**: 物理ネットワークインフラストラクチャを直接利用
 
 ### コンテナネットワーキングの課題:
 
-* **Scalability**: 数千のコンテナと Service をサポート
-* **Performance**: latency を最小化し、throughput を最大化
-* **Security**: microservice 間の通信を保護
-* **Observability**: network flow の監視とトラブルシューティング
-* **Portability**: さまざまな環境で一貫したネットワーキング体験を提供
+* **スケーラビリティ**: 数千のコンテナと Service をサポート
+* **パフォーマンス**: レイテンシを最小化し、スループットを最大化
+* **セキュリティ**: マイクロサービス間の通信を保護
+* **オブザーバビリティ**: ネットワークフローの監視とトラブルシューティング
+* **ポータビリティ**: さまざまな環境で一貫したネットワーキング体験を提供
 
-## CNI（Container Network Interface）を理解する
+## CNI（Container Network Interface）の理解
 
-> **重要な概念**: CNI（Container Network Interface）は、container runtime と network plugin 間の標準インターフェースを定義する CNCF project です。
+> **重要な概念**: CNI（Container Network Interface）は、コンテナランタイムとネットワークプラグイン間の標準インターフェースを定義する CNCF プロジェクトです。
 
 ### CNI の主要コンポーネント:
 
-* **Plugin Architecture**: さまざまなネットワーキングソリューションの統合を可能にするモジュール設計
-* **Network Configuration**: JSON 形式で定義される network 設定
-* **IPAM（IP Address Management）**: IP address の割り当てと管理
-* **Standard API**: container の追加・削除時に network を設定するための標準 API
+* **プラグインアーキテクチャ**: さまざまなネットワーキングソリューションとの統合を可能にするモジュール設計
+* **ネットワーク設定**: JSON 形式で定義されるネットワーク設定
+* **IPAM（IP Address Management）**: IP アドレスの割り当てと管理
+* **標準 API**: コンテナの追加・削除時にネットワークをセットアップするための標準 API
 
-### 主な CNI Plugin の比較:
+### 主要な CNI プラグインの比較:
 
 | 機能                      | Cilium                    | Calico         | Flannel        | AWS VPC CNI            |
 | ---------------------------- | ------------------------- | -------------- | -------------- | ---------------------- |
-| **基本技術**          | eBPF                      | iptables/IPVS  | VXLAN/host-gw  | AWS ENI                |
+| **基盤技術**          | eBPF                      | iptables/IPVS  | VXLAN/host-gw  | AWS ENI                |
 | **Network Policy**           | L3-L7                     | L3-L4          | 限定的        | AWS Security Groups    |
 | **暗号化**               | IPsec/WireGuard           | IPsec          | なし           | なし                   |
-| **可観測性**            | Hubble                    | Flow Logs      | 限定的        | VPC Flow Logs          |
+| **オブザーバビリティ**            | Hubble                    | Flow Logs      | 限定的        | VPC Flow Logs          |
 | **Service Mesh**             | 組み込み                  | Istio が必要 | Istio が必要 | Istio/AppMesh が必要 |
-| **Performance**              | 非常に高い                | 高い           | 中程度         | 高い                   |
+| **パフォーマンス**              | 非常に高い                 | 高い           | 中程度         | 高い                   |
 | **IPAM**                     | Cluster Pool, CRD         | IPAM Plugin    | Host Subnet    | AWS IPAM               |
 | **Kubernetes 互換性** | 1.32+                     | 1.29+          | 1.28+          | 1.29+                  |
-| **BGP サポート**              | 強化された control (v1.18+) | 限定的        | なし           | VPC Routing            |
+| **BGP サポート**              | 強化された制御（v1.18+） | 限定的        | なし           | VPC Routing            |
 
-* **Weave Net**: Multi-host コンテナネットワーキング
+* **Weave Net**: マルチホストのコンテナネットワーキング
 * **AWS VPC CNI**: AWS VPC との直接統合
 
 ## Cilium の差別化機能
 
-Cilium は、他の CNI ソリューションと比較していくつかの独自の利点を提供します。
+Cilium は、ほかの CNI ソリューションと比較して、いくつかの独自の利点を提供します。
 
 ### 技術的な差別化:
 
-* **eBPF の活用**: kernel 内のプログラム可能な datapath による高性能と柔軟性
-* **API 対応ネットワーキング**: L7 レイヤーまでの Network Policy サポート
-* **XDP（eXpress Data Path）**: packet processing 性能の最適化
-* **Kube-proxy の置き換え**: より効率的な Service Load Balancing
-* **Hubble 統合**: 強力な network observability tool
+* **eBPF の活用**: kernel 内のプログラマブルなデータパスによる高いパフォーマンスと柔軟性
+* **API 対応ネットワーキング**: L7 レイヤーまでの Network Policy をサポート
+* **XDP（eXpress Data Path）**: パケット処理パフォーマンスの最適化
+* **Kube-proxy の置き換え**: より効率的な Service ロードバランシング
+* **Hubble 統合**: 強力なネットワークオブザーバビリティツール
 * **最新 Kubernetes 互換性**: Kubernetes 1.32 以降のバージョンと完全互換
 
 ### ユースケース別の利点:
 
-* **Microservices Architecture**: きめ細かな Network Policy と可観測性
-* **Multi-cluster Deployment**: cluster 間のシームレスなネットワーキング
-* **Security 重視の環境**: 強力な Network Security Policy
-* **高性能要件**: 最適化された datapath
-* **Service Mesh 統合**: Istio などの Service Mesh との統合
+* **マイクロサービスアーキテクチャ**: きめ細かな Network Policy とオブザーバビリティ
+* **マルチクラスタデプロイメント**: クラスタ間のシームレスなネットワーキング
+* **セキュリティ重視の環境**: 強力なネットワークセキュリティポリシー
+* **高パフォーマンス要件**: 最適化されたデータパス
+* **Service Mesh 統合**: Istio のような Service Mesh との統合
 
 ## Lab: Cilium のインストールと基本設定
 

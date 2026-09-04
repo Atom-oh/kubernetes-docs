@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "etcd 클러스터 완전 연결 구성",
+    "output": "ko-core-01-cluster-architecture-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "etcd1",
+      "type": "database",
+      "label": "etcd Node 1",
+      "sublabel": "리더",
+      "pos": [
+        400,
+        50
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "etcd2",
+      "type": "database",
+      "label": "etcd Node 2",
+      "sublabel": "팔로워",
+      "pos": [
+        110,
+        330
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "etcd3",
+      "type": "database",
+      "label": "etcd Node 3",
+      "sublabel": "팔로워",
+      "pos": [
+        690,
+        330
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1-e2",
+      "from": "etcd1",
+      "to": "etcd2",
+      "label": "Raft 복제",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "e1-e3",
+      "from": "etcd1",
+      "to": "etcd3",
+      "label": "Raft 복제",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "e2-e3",
+      "from": "etcd2",
+      "to": "etcd3",
+      "label": "리더 선출 투표",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "완전 연결 메시",
+      "items": [
+        "모든 노드가 서로 직접 통신",
+        "리더가 쓰기를 받아 팔로워에 복제"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Raft 합의",
+      "items": [
+        "과반 승인 시에만 커밋 확정",
+        "3노드 구성은 1대 장애까지 허용"
+      ]
+    }
+  ]
+}

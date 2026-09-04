@@ -19,6 +19,7 @@ test('VitePress excludes GitBook-only sources and translated mirrors', () => {
     'CLAUDE.md',
     '**/SUMMARY.md',
     'docs/**',
+    'public/llms/**',
     'cn/**',
     'jp/**',
     'es/**'
@@ -43,6 +44,7 @@ test('a locale build excludes the other published locale', () => {
       'CLAUDE.md',
       '**/SUMMARY.md',
       'docs/**',
+      'public/llms/**',
       'cn/**',
       'jp/**',
       'es/**',

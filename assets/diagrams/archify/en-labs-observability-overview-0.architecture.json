@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Observability Lab Environment Architecture",
+    "output": "en-labs-observability-overview-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      620
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "mgmt",
+      "type": "backend",
+      "label": "Management cluster (VPC 1)",
+      "sublabel": "ArgoCD · Argo Rollouts",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "obs",
+      "type": "database",
+      "label": "Observability stack",
+      "sublabel": "Prometheus · Grafana · Loki · Tempo",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        280,
+        76
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "frontend",
+      "label": "Service cluster (VPC 2)",
+      "sublabel": "MSA apps · Karpenter · KEDA",
+      "pos": [
+        400,
+        120
+      ],
+      "size": [
+        290,
+        76
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "messagebus",
+      "label": "OTel Agent",
+      "sublabel": "DaemonSet collection",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "awsapp",
+      "type": "cloud",
+      "label": "SQS · SNS · Aurora · MWAA",
+      "sublabel": "App-dependency services",
+      "pos": [
+        780,
+        120
+      ],
+      "size": [
+        280,
+        76
+      ]
+    },
+    {
+      "id": "awsobs",
+      "type": "database",
+      "label": "AMP · AMG · CloudWatch",
+      "sublabel": "Managed observability backends",
+      "pos": [
+        700,
+        400
+      ],
+      "size": [
+        280,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mgmt-svc",
+      "from": "mgmt",
+      "to": "svc",
+      "label": "GitOps deploy"
+    },
+    {
+      "id": "svc-awsapp",
+      "from": "svc",
+      "to": "awsapp",
+      "label": "messaging"
+    },
+    {
+      "id": "svc-otel",
+      "from": "svc",
+      "to": "otel",
+      "label": "Metrics · logs · traces",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "otel-obs",
+      "from": "otel",
+      "to": "obs",
+      "label": "ships data"
+    },
+    {
+      "id": "obs-awsobs",
+      "from": "obs",
+      "to": "awsobs",
+      "label": "Remote write"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Two clusters",
+      "items": [
+        "The management cluster in VPC 1 hosts ArgoCD, Argo Rollouts, and the observability stack",
+        "The service cluster in VPC 2 runs the MSA applications and load generators",
+        "Separating what you observe from what observes keeps monitoring alive during an incident"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Telemetry path",
+      "items": [
+        "The OTel Agent runs as a DaemonSet and gathers metrics, logs, and traces per node",
+        "The OTel Collector fans each signal out to Prometheus, Loki, and Tempo",
+        "A single Grafana explores all three signals together"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Managed backend integration",
+      "items": [
+        "Prometheus remote-writes to AMP for long retention and high availability",
+        "Logs can also go to CloudWatch Logs or OpenSearch",
+        "Include the scaling events Karpenter and KEDA produce in what you observe"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Policy Engines",
+    "locale": "en",
+    "output": "en-core-07-policies-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      500
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes API"
+        },
+        "security": {
+          "label": "Policy engine"
+        },
+        "database": {
+          "label": "Policy definition"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "admission-path",
+        "label": "Admission request path",
+        "focus": [
+          "api",
+          "webhook",
+          "opa",
+          "kyverno",
+          "kubewarden"
+        ],
+        "note": "The API server calls the admission webhook, which hands the request to the policy engines so they can apply their policies."
+      },
+      {
+        "id": "policy-definitions",
+        "label": "How policies are defined",
+        "focus": [
+          "opa",
+          "ct",
+          "constraint",
+          "kyverno",
+          "clusterpolicy",
+          "kubewarden",
+          "cap"
+        ],
+        "note": "Gatekeeper uses Rego-based ConstraintTemplates and Constraints, Kyverno uses YAML ClusterPolicy/Policy, Kubewarden uses WebAssembly modules."
+      },
+      {
+        "id": "policy-types",
+        "label": "Supported policy types",
+        "focus": [
+          "opa",
+          "kyverno",
+          "kubewarden"
+        ],
+        "note": "All three engines support Validate and Mutate; Generate is supported by Kyverno only."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "Admission Webhook",
+      "sublabel": "Dynamic Admission Control",
+      "pos": [
+        540,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "opa",
+      "type": "security",
+      "label": "OPA Gatekeeper",
+      "sublabel": "supports Validate · Mutate",
+      "tag": "Open Policy Agent",
+      "pos": [
+        120,
+        200
+      ],
+      "size": [
+        260,
+        72
+      ]
+    },
+    {
+      "id": "kyverno",
+      "type": "security",
+      "label": "Kyverno",
+      "sublabel": "supports Validate · Mutate · Generate",
+      "tag": "Kubernetes-native",
+      "pos": [
+        540,
+        200
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "kubewarden",
+      "type": "security",
+      "label": "Kubewarden",
+      "sublabel": "supports Validate · Mutate",
+      "tag": "WebAssembly-based",
+      "pos": [
+        940,
+        200
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "ct",
+      "type": "database",
+      "label": "ConstraintTemplate",
+      "sublabel": "Rego language",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "constraint",
+      "type": "database",
+      "label": "Constraint",
+      "sublabel": "policy instance",
+      "pos": [
+        260,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "clusterpolicy",
+      "type": "database",
+      "label": "ClusterPolicy / Policy",
+      "sublabel": "YAML-based",
+      "pos": [
+        540,
+        360
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cap",
+      "type": "database",
+      "label": "ClusterAdmissionPolicy",
+      "sublabel": "WebAssembly",
+      "pos": [
+        940,
+        360
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API",
+      "wraps": [
+        "api",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy engines",
+      "wraps": [
+        "opa",
+        "kyverno",
+        "kubewarden"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy definitions",
+      "wraps": [
+        "ct",
+        "constraint",
+        "clusterpolicy",
+        "cap"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-webhook",
+      "from": "api",
+      "to": "webhook",
+      "label": "calls",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-opa",
+      "from": "webhook",
+      "to": "opa",
+      "label": "processes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-kyverno",
+      "from": "webhook",
+      "to": "kyverno",
+      "label": "processes",
+      "variant": "emphasis",
+      "labelDy": 60
+    },
+    {
+      "id": "webhook-kubewarden",
+      "from": "webhook",
+      "to": "kubewarden",
+      "label": "processes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "opa-ct",
+      "from": "opa",
+      "to": "ct",
+      "label": "uses",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          250,
+          316
+        ],
+        [
+          140,
+          316
+        ]
+      ]
+    },
+    {
+      "id": "opa-constraint",
+      "from": "opa",
+      "to": "constraint",
+      "label": "uses",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          250,
+          316
+        ],
+        [
+          360,
+          316
+        ]
+      ]
+    },
+    {
+      "id": "kyverno-clusterpolicy",
+      "from": "kyverno",
+      "to": "clusterpolicy",
+      "label": "uses",
+      "labelDy": 56
+    },
+    {
+      "id": "kubewarden-cap",
+      "from": "kubewarden",
+      "to": "cap",
+      "label": "uses",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "OPA Gatekeeper",
+      "items": [
+        "ConstraintTemplate: a template that defines the policy logic (Rego)",
+        "Constraint: an instance of a ConstraintTemplate that applies the policy to specific resources",
+        "Runs as an admission controller, intercepting requests sent to the API server and applying policies"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kyverno · Kubewarden",
+      "items": [
+        "Kyverno: YAML-based ClusterPolicy/Policy — no need to learn Rego",
+        "Kyverno additionally supports Verify Images and Clean Up policy types",
+        "Kubewarden: policies written in various languages are compiled to Wasm modules and run on its policy server"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Policy types",
+      "items": [
+        "Validate: checks that resources meet specific conditions — all three engines",
+        "Mutate: automatically modifies resources — all three engines",
+        "Generate: automatically creates other resources when a resource is created — Kyverno only"
+      ]
+    }
+  ]
+}

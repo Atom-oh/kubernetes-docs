@@ -1,47 +1,20 @@
-# Part 3: ネットワーキングモード
+# パート 3: ネットワーキングモード
 
-> **サポート対象バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
+> **対応バージョン**: Calico v3.29+ / Kubernetes 1.28+ **最終更新**: February 23, 2026
 
 ## 概要
 
-Calico は、さまざまなインフラストラクチャ要件、パフォーマンスニーズ、運用上の制約に対応するため、複数のネットワーキングモードをサポートしています。このセクションでは各ネットワーキングモードを詳しく解説し、環境に最適なモードの選択と設定を支援します。
+Calico は、さまざまなインフラストラクチャ要件、パフォーマンスニーズ、運用上の制約に対応するため、複数のネットワーキングモードをサポートしています。このセクションでは、各ネットワーキングモードを詳しく解説し、環境に最適なモードを選択して構成できるようにします。
 
 ## ネットワーキングモードの概要
 
-![Calico ネットワーキングモードの比較](../../.gitbook/assets/calico_networking_modes.png)
+![Calico の IPIP、VXLAN、Direct/BGP モードを並べて比較: Node 1 の Pod A から Node 2 の Pod B へのパケットは、tunl0 IPIP トンネル（+20 バイト）、vxlan.calico VXLAN トンネル（+50 バイト）、またはカプセル化なしの BGP ピアリングされた L3 ルーターを経由します。](../../.gitbook/assets/en-networking-calico-03-networking-modes-7.png)
 
-```mermaid
-flowchart TD
-    subgraph Modes["Calico Networking Modes"]
-        IPIP[IPIP Mode]
-        VXLAN[VXLAN Mode]
-        Direct[Direct/Native Mode]
-    end
-
-    subgraph Characteristics["Key Characteristics"]
-        IPIP --> |MTU: 1480| IPIP_MTU[IP-in-IP Encapsulation]
-        VXLAN --> |MTU: 1450| VXLAN_MTU[UDP/VXLAN Encapsulation]
-        Direct --> |MTU: 1500| Direct_MTU[No Encapsulation]
-    end
-
-    subgraph UseCases["Best Use Cases"]
-        IPIP_MTU --> UC1[Cloud environments<br>Simple setup]
-        VXLAN_MTU --> UC2[Multicast restrictions<br>Standard overlay]
-        Direct_MTU --> UC3[On-premises BGP<br>Maximum performance]
-    end
-
-    classDef mode fill:#FA8320,stroke:#333,color:white
-    classDef char fill:#326CE5,stroke:#333,color:white
-    classDef use fill:#00C7B7,stroke:#333,color:white
-
-    class IPIP,VXLAN,Direct mode
-    class IPIP_MTU,VXLAN_MTU,Direct_MTU char
-    class UC1,UC2,UC3 use
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-7.html)
 
 ## IPIP モード
 
-IP-in-IP（IPIP）は、Calico のデフォルトのカプセル化モードです。サブネット間通信のために、元の IP パケットを別の IP パケット内にラップします。
+IP-in-IP (IPIP) は Calico のデフォルトのカプセル化モードです。サブネット間通信のために、元の IP パケットを別の IP パケットでラップします。
 
 ### IPIP パケット構造
 
@@ -68,39 +41,19 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 ### IPIP モードのオプション
 
-| モード            | 説明                                      | ユースケース                                 |
+| モード            | 説明                               | ユースケース                                   |
 | --------------- | ----------------------------------------- | ------------------------------------------ |
-| **Always**      | すべての Pod 間トラフィックをカプセル化する | クラウド環境、シンプルなセットアップ           |
-| **CrossSubnet** | サブネット間トラフィックのみをカプセル化する | ハイブリッド環境、最適化されたパフォーマンス |
-| **Never**       | IPIP を無効化する（Direct ルーティングと併用） | BGP を使用するオンプレミス                   |
+| **Always**      | すべての Pod 間トラフィックをカプセル化する    | クラウド環境、シンプルなセットアップ           |
+| **CrossSubnet** | サブネット間のトラフィックのみをカプセル化する | ハイブリッド環境、最適化されたパフォーマンス |
+| **Never**       | IPIP を無効化する（Direct ルーティングで使用）   | BGP を使用するオンプレミス環境                       |
 
 ### IPIP CrossSubnet モード
 
-CrossSubnet は、L3 境界をまたぐトラフィックのみをカプセル化する最適化です。
+CrossSubnet は、L3 境界を越えるトラフィックのみをカプセル化する最適化です:
 
-```mermaid
-flowchart TD
-    subgraph Subnet1["Subnet 10.0.1.0/24"]
-        Node1[Node 1<br>10.0.1.10]
-        Node2[Node 2<br>10.0.1.11]
-    end
+![同じサブネット上の 2 つの Node はカプセル化なしで直接ルーティングされ、別のサブネットへ渡るトラフィックは、そのサブネット間ホップでのみ IPIP カプセル化されます。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-1.svg)
 
-    subgraph Subnet2["Subnet 10.0.2.0/24"]
-        Node3[Node 3<br>10.0.2.10]
-        Node4[Node 4<br>10.0.2.11]
-    end
-
-    Node1 <-->|Direct routing<br>No encapsulation| Node2
-    Node3 <-->|Direct routing<br>No encapsulation| Node4
-    Node1 <-.->|IPIP encapsulation<br>Cross-subnet| Node3
-    Node2 <-.->|IPIP encapsulation<br>Cross-subnet| Node4
-
-    classDef node fill:#FA8320,stroke:#333,color:white
-
-    class Node1,Node2,Node3,Node4 node
-```
-
-### IPIP IPPool 設定
+### IPIP IPPool 構成
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -149,31 +102,11 @@ ip route | grep tunl0
 
 ### IPIP パケットフロー図
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A<br>192.168.1.10
-    participant Felix1 as Felix (Node 1)
-    participant Tunl1 as tunl0 (Node 1)
-    participant Network as Physical Network
-    participant Tunl2 as tunl0 (Node 2)
-    participant Felix2 as Felix (Node 2)
-    participant PodB as Pod B<br>192.168.2.10
-
-    PodA->>Felix1: IP packet to 192.168.2.10
-    Felix1->>Felix1: Route lookup: via tunl0
-    Felix1->>Tunl1: Forward to tunnel
-    Tunl1->>Tunl1: Encapsulate in IPIP
-    Note over Tunl1: Outer: 10.0.1.10 → 10.0.1.11<br>Inner: 192.168.1.10 → 192.168.2.10
-    Tunl1->>Network: Send encapsulated packet
-    Network->>Tunl2: Deliver to Node 2
-    Tunl2->>Tunl2: Decapsulate IPIP
-    Tunl2->>Felix2: Forward inner packet
-    Felix2->>PodB: Deliver to destination
-```
+![Pod A からのパケットは Node 1 で tunl0 インターフェイスにルーティングされ、IPIP カプセル化されて物理ネットワークを通じて Node 2 に運ばれ、デカプセル化された後に Pod B へ配信されます。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-2.svg)
 
 ## VXLAN モード
 
-VXLAN（Virtual Extensible LAN）は、Layer 2 フレームを UDP パケットにカプセル化する業界標準のオーバーレイプロトコルです。
+VXLAN (Virtual Extensible LAN) は、Layer 2 フレームを UDP パケットにカプセル化する業界標準のオーバーレイプロトコルです。
 
 ### VXLAN パケット構造
 
@@ -192,14 +125,14 @@ VXLAN Encapsulated Packet:
 
 ### VXLAN コンポーネント
 
-| コンポーネント         | 説明                                             |
+| コンポーネント             | 説明                                      |
 | --------------------- | ------------------------------------------------ |
-| **VTEP**              | VXLAN Tunnel Endpoint - encap/decap ポイント     |
-| **VNI**               | VXLAN Network Identifier（Calico は固定 VNI を使用） |
-| **UDP Port**          | 4789（IANA 割り当て）                            |
-| **Multicast/Unicast** | Calico は既知のピア VTEP とのユニキャストを使用  |
+| **VTEP**              | VXLAN Tunnel Endpoint - カプセル化/デカプセル化ポイント        |
+| **VNI**               | VXLAN Network Identifier (Calico は固定 VNI を使用) |
+| **UDP Port**          | 4789 (IANA 割り当て)                             |
+| **Multicast/Unicast** | Calico は既知のピア VTEP との unicast を使用        |
 
-### VXLAN IPPool 設定
+### VXLAN IPPool 構成
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -228,7 +161,7 @@ spec:
   nodeSelector: all()
 ```
 
-### VXLAN インターフェイス設定
+### VXLAN インターフェイス構成
 
 ```bash
 # View VXLAN interface
@@ -255,86 +188,25 @@ ip route | grep vxlan
 
 ### VXLAN パケットフロー
 
-```mermaid
-flowchart TD
-    subgraph Node1["Node 1 (10.0.1.10)"]
-        PodA[Pod A<br>10.244.0.10]
-        VTEP1[VTEP<br>vxlan.calico]
-    end
-
-    subgraph VXLAN["VXLAN Encapsulation"]
-        Outer[Outer Headers<br>UDP:4789, VNI:4096]
-        Inner[Inner Frame<br>Original L2+L3]
-    end
-
-    subgraph Node2["Node 2 (10.0.1.11)"]
-        VTEP2[VTEP<br>vxlan.calico]
-        PodB[Pod B<br>10.244.1.10]
-    end
-
-    PodA -->|1. Original packet| VTEP1
-    VTEP1 -->|2. Lookup VTEP for dest| Outer
-    Outer -->|3. Encapsulate| Inner
-    Inner -->|4. UDP to remote VTEP| VTEP2
-    VTEP2 -->|5. Decapsulate| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef vtep fill:#FA8320,stroke:#333,color:white
-    classDef encap fill:#00C7B7,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VTEP1,VTEP2 vtep
-    class Outer,Inner encap
-```
+![Pod A のパケットは、その Node の VTEP により UDP/VXLAN フレームにカプセル化され、物理ネットワークを通過し、宛先 VTEP でデカプセル化された後に Pod B に到達します。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-3.svg)
 
 ## Direct/非カプセル化モード
 
-Direct ルーティングモードはカプセル化なしでネイティブ IP ルーティングを使用し、可能な限り最高のパフォーマンスを提供します。
+Direct ルーティングモードは、カプセル化を使用せずネイティブ IP ルーティングを使用するため、可能な限り最高のパフォーマンスを提供します。
 
 ### Direct モードの要件
 
-| 要件                  | 説明                                           |
+| 要件           | 説明                                    |
 | --------------------- | ---------------------------------------------- |
-| **L2 隣接性**         | Node が同一の L2 ネットワーク上にあること、または |
-| **BGP ルーティング**  | 外部ルーターが BGP 経由で Pod ルートを学習すること |
-| **ルート伝播**        | 物理ネットワークが Pod CIDR をルーティングすること |
+| **L2 隣接性**      | Node は同じ L2 ネットワーク上にある必要があります、または       |
+| **BGP ルーティング**       | 外部ルーターは BGP 経由で Pod ルートを学習する必要があります |
+| **ルート伝播** | 物理ネットワークは Pod CIDR をルーティングする必要があります          |
 
-### Direct モードトポロジー
+### Direct モードのトポロジー
 
-```mermaid
-flowchart TD
-    subgraph Rack1["Rack 1"]
-        Node1[Node 1<br>10.0.1.10<br>Pods: 192.168.1.0/26]
-        Node2[Node 2<br>10.0.1.11<br>Pods: 192.168.1.64/26]
-        ToR1[ToR Switch 1]
-    end
+![各ラックの Node はそのラックの top-of-rack スイッチと BGP ピアリングし、両方の top-of-rack スイッチは共有 spine スイッチとピアリングします。これにより、Pod ルートはオーバーレイなしでネイティブに伝播されます。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-4.svg)
 
-    subgraph Rack2["Rack 2"]
-        Node3[Node 3<br>10.0.2.10<br>Pods: 192.168.2.0/26]
-        Node4[Node 4<br>10.0.2.11<br>Pods: 192.168.2.64/26]
-        ToR2[ToR Switch 2]
-    end
-
-    subgraph Core["Core Network"]
-        Spine[Spine Switch]
-    end
-
-    Node1 <-->|BGP| ToR1
-    Node2 <-->|BGP| ToR1
-    Node3 <-->|BGP| ToR2
-    Node4 <-->|BGP| ToR2
-
-    ToR1 <-->|BGP| Spine
-    ToR2 <-->|BGP| Spine
-
-    classDef node fill:#FA8320,stroke:#333,color:white
-    classDef switch fill:#326CE5,stroke:#333,color:white
-
-    class Node1,Node2,Node3,Node4 node
-    class ToR1,ToR2,Spine switch
-```
-
-### Direct モードの IPPool 設定
+### Direct モードの IPPool 構成
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -350,7 +222,7 @@ spec:
   nodeSelector: all()
 ```
 
-### Direct モードの BGP 設定
+### Direct モードの BGP 構成
 
 ```yaml
 # Global BGP configuration
@@ -402,17 +274,17 @@ ip route
 
 ### IPIP vs VXLAN vs Direct
 
-| 機能                  | IPIP                | VXLAN                | Direct       |
+| 機能               | IPIP                | VXLAN                | Direct       |
 | --------------------- | ------------------- | -------------------- | ------------ |
-| **プロトコル**        | IP Protocol 4       | UDP Port 4789        | ネイティブ IP |
-| **オーバーヘッド**    | 20 bytes            | 50 bytes             | 0 bytes      |
+| **プロトコル**          | IP Protocol 4       | UDP Port 4789        | ネイティブ IP    |
+| **オーバーヘッド**          | 20 バイト            | 50 バイト             | 0 バイト      |
 | **MTU**               | 1480                | 1450                 | 1500         |
-| **ファイアウォール対応** | IP proto 4 が必要な場合あり | UDP パススルー       | ネイティブ   |
-| **ハードウェアオフロード** | 制限あり            | より良いサポート     | 完全サポート |
-| **L2 要件**           | なし                | なし                 | あり（または BGP） |
-| **Multicast**         | 不要                | 不要（ユニキャスト） | 不要         |
-| **パフォーマンス**    | 良い                | 良い                 | 最良         |
-| **複雑さ**            | 低                  | 低                   | 中           |
+| **ファイアウォール互換性** | IP proto 4 が必要な場合がある | UDP パススルー     | ネイティブ       |
+| **ハードウェアオフロード**  | 制限あり             | より優れたサポート       | 完全サポート |
+| **L2 要件**    | いいえ                  | いいえ                   | はい（または BGP） |
+| **Multicast**         | 不要          | 不要（unicast） | 不要   |
+| **パフォーマンス**       | 良好                | 良好                 | 最高         |
+| **複雑性**        | 低                   | 低                  | 中       |
 
 ### パフォーマンスベンチマーク比較
 
@@ -455,57 +327,21 @@ CPU Usage (% per Gbps):
 
 ### パケットフロー比較
 
-```mermaid
-flowchart TD
-    subgraph Direct["Direct Mode"]
-        D1[Pod A] --> D2[eth0]
-        D2 --> D3[Physical Network]
-        D3 --> D4[eth0]
-        D4 --> D5[Pod B]
-    end
+![3 つのレーンが Direct、IPIP、VXLAN モードで同じ Pod A から Pod B へのホップをたどり、物理ネットワーク境界におけるカプセル化ステップだけが異なることを示します。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-5.svg)
 
-    subgraph IPIP["IPIP Mode"]
-        I1[Pod A] --> I2[tunl0 encap]
-        I2 --> I3[eth0]
-        I3 --> I4[Physical Network]
-        I4 --> I5[eth0]
-        I5 --> I6[tunl0 decap]
-        I6 --> I7[Pod B]
-    end
+## クラウドプロバイダー互換性
 
-    subgraph VXLAN["VXLAN Mode"]
-        V1[Pod A] --> V2[VTEP encap]
-        V2 --> V3[UDP:4789]
-        V3 --> V4[eth0]
-        V4 --> V5[Physical Network]
-        V5 --> V6[eth0]
-        V6 --> V7[UDP:4789]
-        V7 --> V8[VTEP decap]
-        V8 --> V9[Pod B]
-    end
-
-    classDef direct fill:#00C7B7,stroke:#333,color:white
-    classDef ipip fill:#FA8320,stroke:#333,color:white
-    classDef vxlan fill:#326CE5,stroke:#333,color:white
-
-    class D1,D2,D3,D4,D5 direct
-    class I1,I2,I3,I4,I5,I6,I7 ipip
-    class V1,V2,V3,V4,V5,V6,V7,V8,V9 vxlan
-```
-
-## クラウドプロバイダーの互換性
-
-| プロバイダー        | IPIP | VXLAN | Direct           | 推奨                      |
+| プロバイダー        | IPIP | VXLAN | Direct           | 推奨               |
 | --------------- | ---- | ----- | ---------------- | ------------------------- |
-| **AWS EC2**     | はい | はい  | VPC ルーティング使用 | VXLAN または IPIP CrossSubnet |
-| **AWS EKS**     | はい | はい  | 制限あり          | VXLAN（デフォルト）        |
-| **Azure**       | はい | はい  | UDR 使用          | VXLAN                     |
-| **GCP**         | はい | はい  | VPC ルート使用    | IPIP CrossSubnet          |
-| **オンプレミス** | はい | はい  | はい（BGP）       | Direct（BGP 使用）         |
-| **Bare Metal**  | はい | はい  | はい              | Direct（BGP 使用）         |
-| **OpenStack**   | はい | はい  | はい              | neutron 設定に依存         |
+| **AWS EC2**     | はい  | はい   | VPC ルーティングあり | VXLAN または IPIP CrossSubnet |
+| **AWS EKS**     | はい  | はい   | 制限あり          | VXLAN（デフォルト）           |
+| **Azure**       | はい  | はい   | UDR あり         | VXLAN                     |
+| **GCP**         | はい  | はい   | VPC ルートあり  | IPIP CrossSubnet          |
+| **オンプレミス** | はい  | はい   | はい（BGP）        | Direct（BGP 使用）         |
+| **ベアメタル**  | はい  | はい   | はい              | Direct（BGP 使用）         |
+| **OpenStack**   | はい  | はい   | はい              | neutron 構成に依存 |
 
-### AWS 固有の設定
+### AWS 固有の構成
 
 ```yaml
 # For AWS EC2/EKS with VXLAN
@@ -614,15 +450,15 @@ spec:
 
 ### モード別 MTU 計算
 
-| モード             | ベース MTU | オーバーヘッド | 実効 MTU | 設定                 |
+| モード             | ベース MTU | オーバーヘッド | 有効 MTU | 構成        |
 | ---------------- | -------- | -------- | ------------- | -------------------- |
-| Direct           | 1500     | 0        | 1500          | 変更不要              |
+| Direct           | 1500     | 0        | 1500          | 変更不要     |
 | IPIP             | 1500     | 20       | 1480          | `ipipMTU: 1480`      |
 | VXLAN            | 1500     | 50       | 1450          | `vxlanMTU: 1450`     |
 | WireGuard        | 1500     | 60       | 1440          | `wireguardMTU: 1440` |
-| IPIP + WireGuard | 1500     | 80       | 1420          | オーバーヘッドの合計  |
+| IPIP + WireGuard | 1500     | 80       | 1420          | 合計オーバーヘッド    |
 
-### MTU 設定
+### MTU 構成
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -639,7 +475,7 @@ spec:
   wireguardMTU: 1440
 ```
 
-### ジャンボフレーム設定
+### ジャンボフレーム構成
 
 ```yaml
 # For networks supporting jumbo frames (MTU 9000)
@@ -667,61 +503,28 @@ ping -M do -s 1422 <destination-pod-ip>   # For VXLAN (1450 MTU)
 tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 ```
 
-## 判断フローチャート
+## 決定フローチャート
 
-```mermaid
-flowchart TD
-    Start[Select Networking Mode] --> Q1{Cloud or On-Prem?}
-
-    Q1 -->|Cloud| Q2{Which Provider?}
-    Q1 -->|On-Premises| Q3{BGP Available?}
-
-    Q2 -->|AWS| AWS[VXLAN or IPIP CrossSubnet]
-    Q2 -->|Azure| Azure[VXLAN]
-    Q2 -->|GCP| GCP[IPIP CrossSubnet]
-    Q2 -->|Other| Q4{VPC supports IP routing?}
-
-    Q3 -->|Yes| Direct[Direct Mode + BGP]
-    Q3 -->|No| Q5{L2 Adjacency?}
-
-    Q4 -->|Yes| IPIP[IPIP CrossSubnet]
-    Q4 -->|No| VXLAN[VXLAN Mode]
-
-    Q5 -->|Yes| Direct
-    Q5 -->|No| VXLAN
-
-    AWS --> Done[Configuration Complete]
-    Azure --> Done
-    GCP --> Done
-    Direct --> Done
-    IPIP --> Done
-    VXLAN --> Done
-
-    classDef decision fill:#FFD700,stroke:#333,color:black
-    classDef result fill:#00C7B7,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class AWS,Azure,GCP,Direct,IPIP,VXLAN,Done result
-```
+![クラウド対オンプレミスの分岐から始まり、プロバイダー、VPC ルーティング、BGP/L2 隣接性に関する質問を経て、VXLAN、IPIP CrossSubnet、または Direct モードに到達する決定木です。オンプレミスの BGP パスは最高のパフォーマンスを得るルートとして強調されています。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-6.svg)
 
 ## まとめ
 
-最適な Calico パフォーマンスを得るには、適切なネットワーキングモードの選択が重要です。
+最適な Calico パフォーマンスを得るには、適切なネットワーキングモードを選択することが重要です:
 
-1. **IPIP モード**: クラウド環境向けのデフォルトの選択肢で、設定がシンプル
-2. **VXLAN モード**: ファイアウォールとの互換性に優れた標準オーバーレイプロトコル
-3. **Direct モード**: BGP インフラストラクチャを持つオンプレミス環境で最大のパフォーマンスを実現
+1. **IPIP モード**: クラウド環境向けのデフォルトの選択肢で、構成が簡単です
+2. **VXLAN モード**: より優れたファイアウォール互換性を備えた標準オーバーレイプロトコルです
+3. **Direct モード**: BGP インフラストラクチャを備えたオンプレミス環境で最大のパフォーマンスを発揮します
 
 主な考慮事項:
 
-* **クラウドデプロイメント**: VXLAN または IPIP CrossSubnet を使用
-* **BGP を使用するオンプレミス**: 最良のパフォーマンスには Direct モードを使用
-* **混在環境**: IPIP または VXLAN CrossSubnet が優れたバランスを提供
-* **パフォーマンスが重要**: 適切な BGP 設定を備えた Direct モード
+* **クラウドデプロイメント**: VXLAN または IPIP CrossSubnet を使用します
+* **BGP を使用するオンプレミス**: 最高のパフォーマンスには Direct モードを使用します
+* **混在環境**: IPIP または VXLAN CrossSubnet が適切なバランスを提供します
+* **パフォーマンスが重要**: 適切な BGP 構成で Direct モードを使用します
 
-[前へ: Part 2 - Calico アーキテクチャの詳細](02-architecture.md)
+[前へ: パート 2 - Calico アーキテクチャの詳細](02-architecture.md)
 
-[Calico の概要に戻る](./README.md)
+[Calico 概要に戻る](./README.md)
 
 ## クイズ
 

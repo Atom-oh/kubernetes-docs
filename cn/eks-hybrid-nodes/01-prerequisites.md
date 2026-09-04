@@ -1,34 +1,36 @@
-# 前置条件
+# 前提条件
 
-< [目录](./README.md) | [下一步：网络配置](02-network-configuration.md) >
+< [目录](./README.md) | [下一篇：网络配置](02-network-configuration.md) >
 
-> **支持的版本**：EKS 1.31+、nodeadm 0.1+ **最后更新**：February 23, 2026
+> **支持的版本**：EKS 1.31+，nodeadm 0.1+ **最后更新**：February 23, 2026
 
 本文档介绍部署 EKS Hybrid Nodes 所需的本地节点、GPU 服务器和网络基础设施的系统要求。
 
-## 网络前置条件概览
+## 网络前提条件概述
 
-下图展示了将本地节点连接到 EKS 集群所需的网络前置条件，包括 VPC 配置、Transit Gateway/Virtual Private Gateway 以及 CIDR 要求。
+下图展示了将本地节点连接到 EKS 集群的网络前提条件，包括 VPC 配置、Transit Gateway/Virtual Private Gateway 以及 CIDR 要求。
 
-![EKS Hybrid Nodes 网络前置条件](../.gitbook/assets/hybrid-prereq-diagram.png)
+![Hybrid 节点前提条件图，展示集群的 RemoteNodeNetwork 和 RemotePodNetwork 设置如何关联到 VPC 端和本地端的路由表。](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
 ## 本地节点要求
 
 ### 支持的操作系统
 
-| 操作系统 | 版本                                  | 架构   |
+| 操作系统 | 版本                                     | 架构           |
 | ---------------- | ---------------------------------------- | -------------- |
 | Ubuntu LTS       | 20.04, 22.04, 24.04                      | x86\_64, arm64 |
 | RHEL             | 8, 9                                     | x86\_64, arm64 |
 | Amazon Linux     | 2023                                     | x86\_64, arm64 |
-| Bottlerocket     | v1.37.0 及更高版本（仅 VMware 变体） | 仅 x86\_64   |
+| Bottlerocket     | v1.37.0 及更高版本（仅 VMware 变体）     | 仅 x86\_64     |
 
-> **Bottlerocket 注意事项**：EKS Hybrid Nodes 仅支持 Bottlerocket 的 VMware 变体，并且要求 Kubernetes v1.28 或更高版本。Bottlerocket 会自动包含所有必需的依赖项，因此不需要 `nodeadm` CLI。不支持 Bottlerocket 的 ARM 架构。
+> **Bottlerocket 注意事项**：EKS Hybrid Nodes 仅支持 Bottlerocket 的 VMware 变体，并且需要 Kubernetes v1.28 或更高版本。Bottlerocket 会自动包含所有必需的依赖项，因此不需要 `nodeadm` CLI。不支持 Bottlerocket 的 ARM 架构。
 
 > **ARM 架构注意事项**：
 >
-> * ARM 节点需要 **带 Crypto 扩展的 ARMv8.2 或更高版本**（适用于 kube-proxy v1.31+）
-> * **Raspberry Pi（Pi 5 之前）不兼容** — 仅支持缺少 Crypto 扩展的 ARMv8.0
+> * ARM 节点需要 **具备 Crypto 扩展的 ARMv8.2 或更高版本**（用于 kube-proxy v1.31+）
+> * **Raspberry Pi（Pi 5 之前）不兼容** — 仅支持 ARMv8.0，缺少 Crypto 扩展
 > * Pi 5（ARMv8.2）及更高版本兼容
 
 ### 容器运行时
@@ -47,16 +49,16 @@ docker --version
 >
 > * **Ubuntu 24.04**：需要 containerd v1.7.19 或更高版本，或者更改 AppArmor profile 配置
 > * **RHEL**：`--containerd-source distro` **无效**。必须使用 `--containerd-source docker`
-> * **Ubuntu 20.04 / RHEL 8**：默认 kernel 低于 Cilium v1.18.x 所要求的 5.10
+> * **Ubuntu 20.04 / RHEL 8**：默认内核低于 5.10，而 Cilium v1.18.x 需要 5.10 或更高版本
 
 ### 最低硬件规格
 
-| 资源 | 最低要求（AWS 官方） | 建议配置     |
+| 资源 | 最低要求（AWS 官方） | 建议配置       |
 | -------- | ---------------------- | --------------- |
-| CPU      | 1 vCPU                 | 4 核或更多 |
-| RAM      | 1 GiB                  | 8 GB 或更多    |
+| CPU      | 1 vCPU                 | 4 核或更多      |
+| RAM      | 1 GiB                  | 8 GB 或更多     |
 | 磁盘     | 50 GB SSD              | 100 GB NVMe SSD |
-| 网络  | 100 Mbps               | 10 Gbps 或更高    |
+| 网络     | 100 Mbps               | 10 Gbps 或更高  |
 
 > **注意**：AWS 官方最低要求为 1 vCPU / 1 GiB，但建议使用 2 核 / 4 GB 或更高配置来运行实际工作负载。
 
@@ -90,47 +92,47 @@ EOF
 sudo sysctl --system
 ```
 
-## 使用 AWS Packer Templates 构建节点镜像
+## 使用 AWS Packer 模板构建节点镜像
 
-AWS 提供了用于构建 EKS Hybrid Nodes 节点镜像的示例 Packer templates。这些模板支持 OVA（vSphere）、Qcow2 和 Raw 输出格式。
+AWS 提供了用于为 EKS Hybrid Nodes 构建节点镜像的示例 Packer 模板。这些模板支持 OVA（vSphere）、Qcow2 和 Raw 输出格式。
 
-### Packer 前置条件
+### Packer 前提条件
 
 | 工具                  | 最低版本 |
 | --------------------- | --------------- |
 | Packer                | v1.11.0+        |
 | VMware vSphere Plugin | v1.4.0+         |
-| QEMU Plugin           | 最新版本          |
+| QEMU Plugin           | 最新版          |
 
 ### 环境变量
 
-| 变量              | 说明                          | 默认值 |
+| 变量                  | 说明                                 | 默认值 |
 | --------------------- | ------------------------------------ | ------- |
-| `PKR_SSH_PASSWORD`    | SSH 密码                         | -       |
-| `ISO_URL`             | 操作系统 ISO 镜像 URL                     | -       |
-| `ISO_CHECKSUM`        | ISO 校验和                         | -       |
-| `CREDENTIAL_PROVIDER` | 凭证提供程序（`ssm` 或 `iam`） | `ssm`   |
-| `K8S_VERSION`         | Kubernetes 版本                   | -       |
-| `NODEADM_ARCH`        | 架构（`amd64` 或 `arm64`）    | `amd64` |
+| `PKR_SSH_PASSWORD`    | SSH 密码                             | -       |
+| `ISO_URL`             | 操作系统 ISO 镜像 URL                | -       |
+| `ISO_CHECKSUM`        | ISO 校验和                           | -       |
+| `CREDENTIAL_PROVIDER` | 凭证提供程序（`ssm` 或 `iam`）       | `ssm`   |
+| `K8S_VERSION`         | Kubernetes 版本                      | -       |
+| `NODEADM_ARCH`        | 架构（`amd64` 或 `arm64`）           | `amd64` |
 
-**RHEL 专用变量：**
+**RHEL 特定变量：**
 
-| 变量      | 说明                   |
+| 变量      | 说明                        |
 | ------------- | ----------------------------- |
-| `RH_USERNAME` | Red Hat 订阅用户名 |
-| `RH_PASSWORD` | Red Hat 订阅密码       |
+| `RH_USERNAME` | Red Hat 订阅用户名           |
+| `RH_PASSWORD` | Red Hat 订阅密码             |
 
-**vSphere 专用变量：**
+**vSphere 特定变量：**
 
-| 变量             | 说明            |
+| 变量             | 说明               |
 | -------------------- | ---------------------- |
-| `VSPHERE_SERVER`     | vCenter 服务器地址 |
-| `VSPHERE_USER`       | vCenter 用户名       |
-| `VSPHERE_PASSWORD`   | vCenter 密码       |
-| `VSPHERE_DATACENTER` | 数据中心名称        |
-| `VSPHERE_CLUSTER`    | 集群名称           |
-| `VSPHERE_DATASTORE`  | 数据存储名称         |
-| `VSPHERE_NETWORK`    | 网络名称           |
+| `VSPHERE_SERVER`     | vCenter 服务器地址     |
+| `VSPHERE_USER`       | vCenter 用户名         |
+| `VSPHERE_PASSWORD`   | vCenter 密码           |
+| `VSPHERE_DATACENTER` | 数据中心名称           |
+| `VSPHERE_CLUSTER`    | 集群名称               |
+| `VSPHERE_DATASTORE`  | 数据存储名称           |
+| `VSPHERE_NETWORK`    | 网络名称               |
 
 ### 构建命令
 
@@ -149,7 +151,7 @@ packer build -only=general-build.qemu.al2023 template.pkr.hcl
 
 ## GPU 服务器要求（可选）
 
-### NVIDIA Driver
+### NVIDIA 驱动程序
 
 ```bash
 # Check NVIDIA driver version
@@ -163,14 +165,14 @@ nvcc --version
 
 ### 支持的 GPU 型号
 
-| GPU 型号   | VRAM     | 主要用途                        |
+| GPU 型号    | VRAM     | 主要用途                         |
 | ----------- | -------- | ---------------------------------- |
-| NVIDIA H100 | 80 GB    | 大规模 LLM 训练/推理 |
-| NVIDIA H200 | 141 GB   | 超大模型                  |
-| NVIDIA A100 | 40/80 GB | AI/ML 通用用途              |
-| NVIDIA L40S | 48 GB    | 推理优化                |
+| NVIDIA H100 | 80 GB    | 大规模 LLM 训练/推理              |
+| NVIDIA H200 | 141 GB   | 超大型模型                        |
+| NVIDIA A100 | 40/80 GB | 通用 AI/ML                        |
+| NVIDIA L40S | 48 GB    | 推理优化                          |
 
-### GPU Driver 安装
+### GPU 驱动程序安装
 
 **Ubuntu 22.04 LTS（推荐）：**
 
@@ -226,12 +228,12 @@ sudo systemctl restart containerd
 
 ### 带宽和延迟
 
-| 项目        | 最低要求            | 建议配置        |
+| 项目        | 最低要求            | 建议配置          |
 | ----------- | ------------------ | ------------------ |
-| 带宽   | 100 Mbps           | 10 Gbps 或更高    |
-| 延迟     | 200 ms RTT 或以下 | 5 ms 或以下       |
-| 丢包率 | 0.1% 或以下       | 0.01% 或以下      |
-| MTU         | 1500               | 9000（Jumbo Frame） |
+| 带宽        | 100 Mbps           | 10 Gbps 或更高     |
+| 延迟        | 200 ms RTT 或更低  | 5 ms 或更低        |
+| 丢包率      | 0.1% 或更低        | 0.01% 或更低       |
+| MTU         | 1500               | 9000（Jumbo Frame）|
 
 ### Jumbo Frame 配置
 
@@ -252,7 +254,7 @@ nmcli connection show "System eth0" | grep mtu
 
 ## IAM 凭证提供程序设置
 
-EKS Hybrid Nodes 需要使用两种凭证提供程序之一来向 AWS 验证本地节点。
+EKS Hybrid Nodes 需要使用以下两种凭证提供程序之一，以便使用 AWS 对本地节点进行身份验证。
 
 ### 选项 A：SSM Hybrid Activations
 
@@ -290,7 +292,7 @@ aws ssm create-activation \
 
 ### 选项 B：IAM Roles Anywhere
 
-IAM Roles Anywhere 使用现有 PKI 中的 X.509 证书，适合 air-gap 环境。
+IAM Roles Anywhere 使用现有 PKI 中的 X.509 证书，非常适合隔离网络环境。
 
 ```bash
 # 1. Create Trust Anchor with your CA certificate
@@ -317,9 +319,9 @@ sudo cp node.key /etc/iam/pki/server.key
 
 ### 基于 CloudFormation 的 IAM 设置
 
-除了 CLI，您还可以使用 CloudFormation 设置 IAM roles 和相关资源。
+除了 CLI，您还可以使用 CloudFormation 设置 IAM role 和相关资源。
 
-**用于 SSM 的 CloudFormation Template：**
+**用于 SSM 的 CloudFormation 模板：**
 
 ```bash
 # Download template
@@ -342,7 +344,7 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-**用于 IAM Roles Anywhere 的 CloudFormation Template：**
+**用于 IAM Roles Anywhere 的 CloudFormation 模板：**
 
 ```bash
 # Download template
@@ -365,26 +367,26 @@ aws cloudformation create-stack \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### IAM Policy 详细信息
+### IAM 策略详细信息
 
-混合节点 role 所需 IAM policies 的详细信息。
+混合节点 role 所需 IAM 策略的详细信息。
 
-**必需的 Managed Policies：**
+**必需的托管策略：**
 
-| Policy                               | 用途                                       |
+| 策略                                | 用途                                          |
 | ------------------------------------ | --------------------------------------------- |
-| `AmazonEC2ContainerRegistryPullOnly` | 从 ECR 拉取容器镜像                |
-| `AmazonSSMManagedInstanceCore`       | SSM agent 核心功能（使用 SSM 时） |
+| `AmazonEC2ContainerRegistryPullOnly` | 从 ECR 拉取容器镜像                           |
+| `AmazonSSMManagedInstanceCore`       | SSM agent 核心功能（使用 SSM 时）             |
 
-**可选 Policies：**
+**可选策略：**
 
-| Policy                              | 用途                  |
+| 策略                              | 用途                     |
 | ----------------------------------- | ------------------------ |
-| `eks-auth:AssumeRoleForPodIdentity` | EKS Pod Identity 支持 |
+| `eks-auth:AssumeRoleForPodIdentity` | EKS Pod Identity 支持    |
 
-**SSM 注销条件 Policy：**
+**SSM 注销条件策略：**
 
-在多集群环境中，使用 `EKSClusterARN` 条件标签确保节点只能从特定集群注销：
+在多集群环境中，使用 `EKSClusterARN` 条件标签可确保节点仅能从特定集群注销：
 
 ```json
 {
@@ -404,13 +406,13 @@ aws cloudformation create-stack \
 }
 ```
 
-### IAM Roles Anywhere Trust Policy 详细信息
+### IAM Roles Anywhere 信任策略详细信息
 
-使用 IAM Roles Anywhere 时，Trust policy 配置至关重要。
+使用 IAM Roles Anywhere 时，信任策略配置至关重要。
 
 **x509Subject/CN 映射：**
 
-证书的 CN（Common Name）必须与节点名称匹配。这用于审计跟踪和节点识别。
+证书的 CN（Common Name）必须与节点名称匹配。这用于审计跟踪和节点标识。
 
 ```json
 {
@@ -441,31 +443,31 @@ aws cloudformation create-stack \
 
 **关键组件：**
 
-| 组件               | 说明                             |
+| 组件                    | 说明                                  |
 | ----------------------- | --------------------------------------- |
-| `sts:SetSourceIdentity` | 设置用于审计跟踪的源身份 |
-| `sts:RoleSessionName`   | 与证书 CN 绑定的会话名称    |
-| `x509Subject/CN`        | 证书 CN 必须匹配 nodeName      |
+| `sts:SetSourceIdentity` | 设置用于审计跟踪的源身份                |
+| `sts:RoleSessionName`   | 与证书 CN 绑定的会话名称                |
+| `x509Subject/CN`        | 证书 CN 必须与 nodeName 匹配            |
 
-### 凭证时长比较
+### 凭证有效期比较
 
 | 方面               | SSM              | IAM Roles Anywhere                                     |
 | -------------------- | ---------------- | ------------------------------------------------------ |
-| 默认时长     | 1 小时（固定）   | 1 小时（可配置）                                  |
-| 最长时长     | 1 小时           | 12 小时                                               |
-| 轮换             | 由 AWS 自动执行 | 自动执行，遵循 `durationSeconds`                  |
-| `MaxSessionDuration` | 不适用              | IAM role 值必须超过 profile 的 `durationSeconds` |
-| 配置        | 不可配置 | 通过 profile 的 `durationSeconds` 参数设置          |
+| 默认有效期           | 1 小时（固定）   | 1 小时（可配置）                                       |
+| 最大有效期           | 1 小时           | 12 小时                                                |
+| 轮换                 | 由 AWS 自动进行  | 自动进行，遵循 `durationSeconds`                       |
+| `MaxSessionDuration` | 不适用           | IAM role 值必须超过 profile 的 `durationSeconds`       |
+| 配置                 | 不可配置         | 通过 profile 的 `durationSeconds` 参数设置             |
 
 > **注意**：使用 IAM Roles Anywhere 时，IAM role 的 `MaxSessionDuration` 必须大于 profile 的 `durationSeconds` 值。否则，获取凭证将失败。
 
 ## 集群访问准备
 
-混合节点需要相应的 access entries 才能加入 EKS 集群。
+混合节点需要适当的访问条目才能加入 EKS 集群。
 
-### HYBRID\_LINUX Access Entry（推荐）
+### HYBRID\_LINUX 访问条目（推荐）
 
-`HYBRID_LINUX` access entry 类型专为混合节点设计：
+`HYBRID_LINUX` 访问条目类型专为混合节点设计：
 
 ```bash
 aws eks create-access-entry \
@@ -477,11 +479,11 @@ aws eks create-access-entry \
 此命令会自动设置：
 
 * 用户名：<code v-pre>system:node:{{SessionName}}</code>
-* Kubernetes groups：`system:bootstrappers`、`system:nodes`
+* Kubernetes 组：`system:bootstrappers`、`system:nodes`
 
 ### aws-auth ConfigMap 替代方案
 
-使用 `API_AND_CONFIG_MAP` authentication mode 时，可以将 `aws-auth` ConfigMap 用作替代方案：
+使用 `API_AND_CONFIG_MAP` 身份验证模式时，可以使用 `aws-auth` ConfigMap 作为替代方案：
 
 ```yaml
 apiVersion: v1
@@ -502,55 +504,55 @@ data:
 kubectl apply -f aws-auth-cm.yaml
 ```
 
-> **注意**：`aws-auth` ConfigMap 方法属于 legacy 方法。对于新集群，建议使用 `HYBRID_LINUX` access entry。
+> **注意**：`aws-auth` ConfigMap 方法是旧版方式。对于新集群，建议使用 `HYBRID_LINUX` 访问条目。
 
 ## VPC 配置要求
 
-必须正确配置 EKS 集群 VPC 以支持 Hybrid Nodes 连接。
+必须正确配置 EKS 集群 VPC，以支持 Hybrid Nodes 连接。
 
-### Route Table 配置
+### 路由表配置
 
-VPC route tables 必须包含指向本地 CIDR 的路由：
+VPC 路由表必须包含本地 CIDR 的路由：
 
-| 目标                     | Target  | 用途                    |
+| 目标地址                        | 目标    | 用途                       |
 | ------------------------------- | ------- | -------------------------- |
-| 10.0.0.0/16 (VPC CIDR)          | local   | VPC 内部流量       |
-| 10.80.0.0/16 (Remote Node CIDR) | TGW/VGW | 路由到本地节点 |
-| 10.85.0.0/16 (Remote Pod CIDR)  | TGW/VGW | 路由到本地 Pods  |
+| 10.0.0.0/16 (VPC CIDR)          | local   | VPC 内部流量               |
+| 10.80.0.0/16 (Remote Node CIDR) | TGW/VGW | 到本地节点的路由           |
+| 10.85.0.0/16 (Remote Pod CIDR)  | TGW/VGW | 到本地 Pod 的路由          |
 
 ### Security Group 要求
 
 指定 `RemoteNodeNetwork` / `RemotePodNetwork` 时，EKS 会自动创建入站规则。必须手动配置额外的出站规则：
 
-| 方向         | Protocol | Port          | Source/Destination | 用途               |
+| 方向              | 协议 | 端口          | 源/目标地址         | 用途                  |
 | ----------------- | -------- | ------------- | ------------------ | --------------------- |
-| 入站（自动）    | TCP      | 443           | Remote Node CIDR   | Kubelet → API Server  |
-| 入站（自动）    | TCP      | 443           | Remote Pod CIDR    | Pod → API Server      |
-| 入站（自动）    | TCP      | 10250         | Remote Node CIDR   | API Server → Kubelet  |
-| 出站（手动） | TCP      | 10250         | Remote Node CIDR   | API Server → Kubelet  |
-| 出站（手动） | TCP      | Webhook ports | Remote Pod CIDR    | API Server → Webhooks |
+| 入站（自动）      | TCP      | 443           | Remote Node CIDR   | Kubelet → API Server  |
+| 入站（自动）      | TCP      | 443           | Remote Pod CIDR    | Pod → API Server      |
+| 入站（自动）      | TCP      | 10250         | Remote Node CIDR   | API Server → Kubelet  |
+| 出站（手动）      | TCP      | 10250         | Remote Node CIDR   | API Server → Kubelet  |
+| 出站（手动）      | TCP      | Webhook 端口  | Remote Pod CIDR    | API Server → Webhooks |
 
-> **注意**：每个 security group 最多只能包含 60 条入站规则。使用多个 CIDR 时请验证规则数量。
+> **注意**：每个 Security Group 最多可有 60 条入站规则。使用多个 CIDR 时，请验证规则数量。
 
 ### API Server Endpoint 访问模式
 
-| 模式        | Kubelet 路径                  | 使用场景                                     |
+| 模式        | Kubelet 路径                 | 使用场景                                    |
 | ----------- | ----------------------------- | -------------------------------------------- |
-| **Public**  | Internet → EKS API endpoint   | 设置简单，本地需要 Internet 连接 |
-| **Private** | VPN/DX → VPC ENI → API Server | air-gap，最高安全性 **（推荐）**  |
+| **Public**  | Internet → EKS API endpoint   | 简单设置，本地端需要互联网连接               |
+| **Private** | VPN/DX → VPC ENI → API Server | 隔离网络、最高安全性 **（推荐）**            |
 
-> **警告**：**请勿将“Public and Private”模式与混合节点配合使用。** 在此模式下，混合节点只能将 EKS API endpoint 解析为公共 IP，导致私有 VPN/Direct Connect 连接失败。这将导致**节点无法加入集群**。必须选择 Public 或 Private 之一，不能同时选择两者。
+> **警告**：**请勿对混合节点使用 “Public and Private” 模式。** 在此模式下，混合节点仅将 EKS API endpoint 解析为公共 IP，导致私有 VPN/Direct Connect 连接失败。这会导致**节点无法加入集群**。您必须仅选择 Public 或 Private，而不能同时选择两者。
 
-> **建议**：对于生产混合环境，请使用 **Private** endpoint access。
+> **建议**：生产混合环境请使用 **Private** endpoint 访问。
 
 ## 为 Hybrid Nodes 创建 EKS 集群
 
-创建支持混合节点的 EKS 集群时，适用以下要求：
+创建支持混合节点的 EKS 集群时，需满足以下要求：
 
-* **Authentication mode**：必须使用 `API` 或 `API_AND_CONFIG_MAP`
-* **IP address family**：必须使用 IPv4
-* **Endpoint connectivity**：必须仅使用 Public 或 Private（不支持“Public and Private” — 会导致混合节点加入失败）
-* **Remote networks**：指定 `RemoteNodeNetwork` 和 `RemotePodNetwork` CIDR
+* **身份验证模式**：必须使用 `API` 或 `API_AND_CONFIG_MAP`
+* **IP 地址族**：必须使用 IPv4
+* **Endpoint 连接性**：必须仅使用 Public 或 Private（不支持 “Public and Private” — 会导致混合节点加入失败）
+* **远程网络**：指定 `RemoteNodeNetwork` 和 `RemotePodNetwork` CIDR
 
 ### 使用 eksctl
 
@@ -600,13 +602,13 @@ aws eks update-kubeconfig --name my-hybrid-cluster --region ap-northeast-2
 kubectl get svc
 ```
 
-## Hybrid Nodes 支持的 Add-ons
+## Hybrid Nodes 支持的 Add-on
 
-并非所有 EKS add-ons 都与混合节点兼容。Amazon VPC CNI **不**兼容。
+并非所有 EKS Add-on 都与混合节点兼容。Amazon VPC CNI **不**兼容。
 
-### AWS Add-ons
+### AWS Add-on
 
-| Add-on                   | 最低兼容版本 |
+| Add-on                   | 最低兼容版本                 |
 | ------------------------ | -------------------------- |
 | kube-proxy               | v1.25.14-eksbuild.2+       |
 | CoreDNS                  | v1.9.3-eksbuild.7+         |
@@ -616,16 +618,16 @@ kubectl get svc
 | Node monitoring agent    | v1.2.0-eksbuild.1+         |
 | CSI snapshot controller  | v8.1.0-eksbuild.1+         |
 
-### Community Add-ons
+### 社区 Add-on
 
-| Add-on                    | 最低兼容版本 |
+| Add-on                    | 最低兼容版本                 |
 | ------------------------- | -------------------------- |
 | Kubernetes Metrics Server | v0.7.2-eksbuild.1+         |
 | cert-manager              | v1.17.2-eksbuild.1+        |
-| Prometheus Node Exporter  | v1.9.1-eksbuild.2+        |
+| Prometheus Node Exporter  | v1.9.1-eksbuild.2+         |
 | kube-state-metrics        | v2.15.0-eksbuild.4+        |
 | External DNS              | v0.19.0-eksbuild.1+        |
 
 ***
 
-< [目录](./README.md) | [下一步：网络配置](02-network-configuration.md) >
+< [目录](./README.md) | [下一篇：网络配置](02-network-configuration.md) >

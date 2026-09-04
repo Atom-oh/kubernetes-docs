@@ -1,0 +1,42 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "EKS 클러스터 검증 프로세스", "output": "ko-eks-02-eks-cluster-creation-part5-2.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "backend": {"label": "검증 단계"}, "frontend": {"label": "테스트 워크로드"}, "database": {"label": "로그"} } } },
+  "lanes": [
+    { "id": "infra", "label": "인프라 검증" },
+    { "id": "app", "label": "워크로드 검증" }
+  ],
+  "mainPath": ["nodes", "syspods", "testapp", "svc"],
+  "nodes": [
+    { "id": "nodes", "lane": "infra", "col": 0, "type": "backend", "label": "노드 상태", "sublabel": "get nodes", "width": 150 },
+    { "id": "syspods", "lane": "infra", "col": 1, "type": "backend", "label": "시스템 파드", "sublabel": "kube-system", "width": 155 },
+    { "id": "testapp", "lane": "app", "col": 2, "type": "frontend", "label": "테스트 앱 배포", "sublabel": "nginx 파드", "width": 160 },
+    { "id": "svc", "lane": "app", "col": 3, "type": "frontend", "label": "서비스 접근", "sublabel": "LB · NodePort", "width": 155 },
+    { "id": "logs", "lane": "infra", "col": 4, "type": "database", "label": "클러스터 로그", "sublabel": "CloudWatch", "width": 155 },
+    { "id": "done", "lane": "infra", "col": 5, "type": "backend", "label": "검증 완료", "sublabel": "인수 기준 충족", "width": 160 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "nodes", "to": "syspods", "label": "1 Ready 확인" },
+    { "id": "e2", "from": "syspods", "to": "testapp", "label": "2 배포", "role": "branch" },
+    { "id": "e3", "from": "testapp", "to": "svc", "label": "3 노출" },
+    { "id": "e4", "from": "svc", "to": "logs", "label": "4 로그 확인" },
+    { "id": "e5", "from": "logs", "to": "done", "label": "5 종료" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "인프라 확인 항목", "items": [
+      "kubectl get nodes로 모든 노드가 Ready 상태인지 본다",
+      "kubectl get pods -n kube-system으로 CoreDNS, kube-proxy, aws-node가 Running인지 본다",
+      "kubectl get storageclass로 기본 스토리지 클래스가 있는지 확인한다"
+    ]},
+    { "dot": "emerald", "title": "워크로드 확인 항목", "items": [
+      "nginx 파드를 띄워 스케줄링과 이미지 풀이 정상인지 본다",
+      "Service를 LoadBalancer로 노출해 AWS Load Balancer Controller 동작을 확인한다",
+      "파드 간 통신과 DNS 해결(nslookup kubernetes.default)을 함께 확인한다"
+    ]},
+    { "dot": "amber", "title": "관측성 확인", "items": [
+      "컨트롤 플레인 로깅을 켰다면 CloudWatch Logs에 로그 그룹이 생겼는지 본다",
+      "Container Insights 지표가 수집되는지 확인한다",
+      "kubectl auth can-i로 RBAC 권한이 의도대로 동작하는지 확인한다"
+    ]}
+  ]
+}

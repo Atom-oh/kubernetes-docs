@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How EKS Integrates with AWS Services",
+    "output": "en-core-01-cluster-architecture-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "EKS Control Plane",
+      "sublabel": "apiserver · etcd · scheduler",
+      "tag": "AWS managed",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker Nodes",
+      "sublabel": "Node groups / Fargate",
+      "tag": "customer managed",
+      "pos": [
+        620,
+        90
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "awssvc",
+      "type": "cloud",
+      "label": "AWS Services",
+      "sublabel": "IAM · ECR · CloudWatch",
+      "pos": [
+        60,
+        380
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC Networking",
+      "sublabel": "Subnets · SGs · VPC CNI",
+      "pos": [
+        620,
+        380
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Cloud",
+      "wraps": [
+        "cp",
+        "workers",
+        "awssvc",
+        "vpc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-workers",
+      "from": "cp",
+      "to": "workers",
+      "label": "Managed ENI channel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "workers-vpc",
+      "from": "workers",
+      "to": "vpc",
+      "label": "Pod networking",
+      "labelDy": 40
+    },
+    {
+      "id": "workers-awssvc",
+      "from": "workers",
+      "to": "awssvc",
+      "label": "IAM auth · image pulls · logs",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          500,
+          125
+        ],
+        [
+          500,
+          300
+        ],
+        [
+          175,
+          300
+        ]
+      ],
+      "labelSegment": 2,
+      "labelDy": -16
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Shared responsibility",
+      "items": [
+        "AWS runs the control plane across multiple AZs",
+        "Customers manage worker nodes and workloads"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "AWS integration",
+      "items": [
+        "IAM for auth, ECR for images, CloudWatch for observability",
+        "VPC CNI gives pods VPC IPs directly"
+      ]
+    }
+  ]
+}

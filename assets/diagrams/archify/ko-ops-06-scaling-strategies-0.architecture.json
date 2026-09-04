@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "커스텀 메트릭 파이프라인",
+    "output": "ko-ops-06-scaling-strategies-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      660
+    ]
+  },
+  "components": [
+    {
+      "id": "appmetrics",
+      "type": "frontend",
+      "label": "애플리케이션 메트릭",
+      "sublabel": "/metrics 엔드포인트",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus 서버",
+      "sublabel": "수집 · 저장 · 질의",
+      "pos": [
+        340,
+        220
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "adapter",
+      "type": "backend",
+      "label": "Prometheus Adapter",
+      "sublabel": "PromQL 변환",
+      "pos": [
+        650,
+        220
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "Kubernetes API 서버",
+      "sublabel": "custom.metrics.k8s.io · external.metrics.k8s.io",
+      "pos": [
+        960,
+        220
+      ],
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HorizontalPodAutoscaler",
+      "sublabel": "커스텀 · 외부 메트릭",
+      "pos": [
+        960,
+        470
+      ],
+      "size": [
+        250,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-prom",
+      "from": "appmetrics",
+      "to": "prom",
+      "label": "수집"
+    },
+    {
+      "id": "prom-adapter",
+      "from": "prom",
+      "to": "adapter",
+      "label": "PromQL"
+    },
+    {
+      "id": "adapter-api",
+      "from": "adapter",
+      "to": "apiserver",
+      "label": "APIService"
+    },
+    {
+      "id": "api-hpa",
+      "from": "apiserver",
+      "to": "hpa",
+      "label": "메트릭 값 조회",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "어댑터가 필요한 이유",
+      "items": [
+        "HPA는 Prometheus를 직접 보지 않고 Kubernetes 메트릭 API를 통해서만 값을 읽는다",
+        "Prometheus Adapter가 custom.metrics.k8s.io와 external.metrics.k8s.io APIService를 등록한다",
+        "어댑터의 rules가 PromQL 질의를 HPA가 참조할 수 있는 메트릭 이름으로 매핑한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "커스텀 메트릭과 외부 메트릭",
+      "items": [
+        "커스텀 메트릭은 Deployment의 초당 요청 수처럼 Kubernetes 객체에 붙는다",
+        "외부 메트릭은 SQS 큐 길이처럼 클러스터 밖에서 온다",
+        "외부 메트릭 쪽은 KEDA가 더 많은 내장 스케일러로 폭넓게 지원한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "운영 참고",
+      "items": [
+        "kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1로 API가 응답하는지 확인한다",
+        "수집 주기와 어댑터 캐시가 겹쳐 HPA 반응은 수십 초 단위가 된다",
+        "메트릭이 불안정하면 behavior.scaleDown.stabilizationWindowSeconds로 요동을 막는다"
+      ]
+    }
+  ]
+}

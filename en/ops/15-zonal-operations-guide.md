@@ -3,7 +3,7 @@
 > **Supported Versions**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
 > **Last Updated**: July 21, 2026
 
-< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) >
+< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) | [Next: Troubleshooting Playbook](16-troubleshooting-playbook.md) >
 
 ***
 
@@ -40,7 +40,9 @@ Zonal/blue-green architecture itself is already covered in [`ops/02-infrastructu
 
 ## Traffic Layer: Target Group + TargetGroupBinding + Weight Shifting
 
-![Zonal cell architecture with weighted traffic shifting](../../assets/ops-zonal-traffic-architecture.png)
+![Architecture diagram of Route 53 weighted records splitting traffic 80/20 across per-AZ target groups, each bound to a zonal cluster by TargetGroupBinding.](../.gitbook/assets/en-ops-15-zonal-operations-guide-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-0.html)
 
 The standard pattern for moving traffic across multiple zonal clusters:
 
@@ -107,7 +109,9 @@ Traffic shifting and upgrades are usually already in place for a team with a zon
 
 The underlying principle is the same everywhere: **writes have to go to the leader/primary, so they may cross AZs regardless — but reads can be routed to a same-AZ replica.** For workloads that are mostly reads (caches, lookup queries, consumers), that alone removes a large share of the inter-AZ cost.
 
-![Data-layer AZ-affinity read path](../../assets/ops-zonal-data-az-affinity.png)
+![Diagram of the data-layer AZ-affinity path: the app pod reads from the same-AZ Kafka broker, Redis replica, and Aurora reader, and only writes cross-AZ.](../.gitbook/assets/en-ops-15-zonal-operations-guide-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-15-zonal-operations-guide-1.html)
 
 Doing this requires the pod to know which AZ it's in. The Kubernetes Downward API does not inject the node's zone label (`topology.kubernetes.io/zone`) into a pod directly, so one of the following is needed:
 
@@ -209,4 +213,4 @@ Recommended rollout order is **traffic-shifting layer -> upgrade/rollback -> dat
 
 ***
 
-< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) >
+< [Previous: Tekton Pipelines](14-tekton-pipelines.md) | [Table of Contents](./README.md) | [Next: Troubleshooting Playbook](16-troubleshooting-playbook.md) >

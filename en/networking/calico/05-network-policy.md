@@ -421,7 +421,9 @@ spec:
 
 ## Tiered Policies
 
-![Calico Network Policy Tier Evaluation](../../.gitbook/assets/calico_network_policy_tiers.png)
+![Calico policy tier evaluation: a packet passes the Security (100), Platform (200), Application (500), and Default tiers in order; Allow or Deny ends evaluation, Pass hands off to the next tier, and no match falls to the profile default.](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-2.html)
 
 Tiers provide hierarchical policy evaluation, enabling separation of concerns between platform, security, and application teams.
 

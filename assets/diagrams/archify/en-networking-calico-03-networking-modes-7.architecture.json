@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Networking Modes Comparison",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Node"
+        },
+        "messagebus": {
+          "label": "Tunnel"
+        },
+        "cloud": {
+          "label": "Router"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ipip",
+        "label": "IPIP mode",
+        "focus": [
+          "ipip-n1",
+          "ipip-tunnel",
+          "ipip-n2"
+        ],
+        "note": "tunl0 wraps the pod packet in a new IP header (Protocol 4). 20 bytes overhead, recommended MTU 1480."
+      },
+      {
+        "id": "vxlan",
+        "label": "VXLAN mode",
+        "focus": [
+          "vxlan-n1",
+          "vxlan-tunnel",
+          "vxlan-n2"
+        ],
+        "note": "vxlan.calico wraps the packet in UDP 4789. 50 bytes overhead, recommended MTU 1450. Passes most firewalls."
+      },
+      {
+        "id": "bgp",
+        "label": "Direct / BGP mode",
+        "focus": [
+          "bgp-n1",
+          "tor",
+          "bgp-n2"
+        ],
+        "note": "No encapsulation: the ToR / L3 router forwards along BGP-advertised routes. 0 bytes overhead, MTU 1500."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ipip-n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "Pod A 192.168.1.10 · eth0 10.0.1.10",
+      "pos": [
+        80,
+        100
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "ipip-tunnel",
+      "type": "messagebus",
+      "label": "IPIP tunnel",
+      "sublabel": "tunl0 · IP Protocol 4",
+      "pos": [
+        550,
+        100
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "tag": "MTU 1480"
+    },
+    {
+      "id": "ipip-n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "Pod B 192.168.2.10 · eth0 10.0.1.11",
+      "pos": [
+        1020,
+        100
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "vxlan-n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "Pod A 192.168.1.10 · eth0 10.0.1.10",
+      "pos": [
+        80,
+        290
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "vxlan-tunnel",
+      "type": "messagebus",
+      "label": "VXLAN tunnel",
+      "sublabel": "vxlan.calico · UDP 4789",
+      "pos": [
+        550,
+        290
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "tag": "MTU 1450"
+    },
+    {
+      "id": "vxlan-n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "Pod B 192.168.2.10 · eth0 10.0.1.11",
+      "pos": [
+        1020,
+        290
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "bgp-n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "Pod A 192.168.1.10 · eth0 10.0.1.10",
+      "pos": [
+        80,
+        480
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "tor",
+      "type": "cloud",
+      "label": "ToR switch / L3 router",
+      "sublabel": "BGP peering · no encapsulation",
+      "pos": [
+        550,
+        480
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "tag": "MTU 1500 · best performance"
+    },
+    {
+      "id": "bgp-n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "Pod B 192.168.2.10 · eth0 10.0.1.11",
+      "pos": [
+        1020,
+        480
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "IPIP mode — IP-in-IP encapsulation",
+      "wraps": [
+        "ipip-n1",
+        "ipip-tunnel",
+        "ipip-n2"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "VXLAN mode — VXLAN encapsulation",
+      "wraps": [
+        "vxlan-n1",
+        "vxlan-tunnel",
+        "vxlan-n2"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "Direct / BGP mode — direct routing, no encapsulation · best performance",
+      "wraps": [
+        "bgp-n1",
+        "tor",
+        "bgp-n2"
+      ],
+      "pad": 36
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-ipip-encap",
+      "from": "ipip-n1",
+      "to": "ipip-tunnel",
+      "label": "encapsulate (+20 bytes)"
+    },
+    {
+      "id": "c-ipip-decap",
+      "from": "ipip-tunnel",
+      "to": "ipip-n2",
+      "label": "decapsulate"
+    },
+    {
+      "id": "c-vxlan-encap",
+      "from": "vxlan-n1",
+      "to": "vxlan-tunnel",
+      "label": "encapsulate (+50 bytes)"
+    },
+    {
+      "id": "c-vxlan-decap",
+      "from": "vxlan-tunnel",
+      "to": "vxlan-n2",
+      "label": "decapsulate"
+    },
+    {
+      "id": "c-bgp-out",
+      "from": "bgp-n1",
+      "to": "tor",
+      "label": "native L3 routing (+0 bytes)"
+    },
+    {
+      "id": "c-bgp-in",
+      "from": "tor",
+      "to": "bgp-n2",
+      "label": "native L3 routing"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "IPIP — MTU 1480",
+      "items": [
+        "Packet: outer IP header (10.0.1.10 → 10.0.1.11) + inner IP header (192.168.1.10 → 192.168.2.10) + original payload",
+        "Overhead 20 bytes (one IP header)",
+        "Use case: cross-subnet routing when BGP is not available"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "VXLAN — MTU 1450",
+      "items": [
+        "Packet: outer IP + UDP 4789 + VXLAN header (VNI) + inner IP header + original payload",
+        "Overhead 50 bytes (IP + UDP + VXLAN)",
+        "Use case: cloud environments, works through most firewalls"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Direct / BGP — MTU 1500",
+      "items": [
+        "Packet: IP header (192.168.1.10 → 192.168.2.10) + original payload, no encapsulation",
+        "Overhead 0 bytes",
+        "Use case: best performance, requires a BGP-capable network"
+      ]
+    }
+  ]
+}

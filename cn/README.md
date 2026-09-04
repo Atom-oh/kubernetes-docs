@@ -168,6 +168,8 @@
 5. [VPC Lattice](./networking/02-vpc-lattice.md) | [测验](./quizzes/networking/02-vpc-lattice-quiz.md)
 6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [测验](./quizzes/networking/03-aws-lb-controller-quiz.md)
 7. [Gateway API](./networking/04-gateway-api.md) | [测验](./quizzes/networking/04-gateway-api-quiz.md)
+8. [跨组织 VPC 连接](./networking/05-cross-org-vpc-connectivity.md) | [测验](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+9. [Pod 网络基准测试](./networking/06-pod-network-benchmark.md) | [测验](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [测验](./quizzes/service-mesh/02-istio-quiz.md)

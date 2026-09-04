@@ -1,0 +1,37 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "Amazon EFS CSI 드라이버 아키텍처", "output": "ko-eks-04-eks-storage-part1-3.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1140, 660] },
+  "components": [
+    { "id": "pod1", "type": "frontend", "label": "파드 1 · 2", "sublabel": "노드 1", "pos": [40, 130], "size": [190, 64] },
+    { "id": "csi1", "type": "backend", "label": "EFS CSI 드라이버", "sublabel": "노드 1 DaemonSet", "pos": [340, 130], "size": [220, 64] },
+    { "id": "pod2", "type": "frontend", "label": "파드 3 · 4", "sublabel": "노드 2", "pos": [40, 440], "size": [190, 64] },
+    { "id": "csi2", "type": "backend", "label": "EFS CSI 드라이버", "sublabel": "노드 2 DaemonSet", "pos": [340, 440], "size": [220, 64] },
+    { "id": "efs", "type": "database", "label": "Amazon EFS 파일 시스템", "sublabel": "다중 AZ 동시 마운트", "pos": [720, 270], "size": [240, 76] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Amazon EKS 클러스터", "wraps": ["pod1", "csi1", "pod2", "csi2"], "pad": 34 }
+  ],
+  "connections": [
+    { "id": "p1-c1", "from": "pod1", "to": "csi1", "label": "볼륨 마운트" },
+    { "id": "p2-c2", "from": "pod2", "to": "csi2", "label": "볼륨 마운트" },
+    { "id": "c1-efs", "from": "csi1", "to": "efs", "label": "NFS 4.1 (2049)" },
+    { "id": "c2-efs", "from": "csi2", "to": "efs" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "성능 모드", "items": [
+      "범용(General Purpose)은 지연이 가장 낮아 대부분의 워크로드 기본값이다",
+      "최대 I/O는 수천 개 클라이언트가 붙는 병렬 워크로드에서 총 처리량을 높인다",
+      "여러 AZ의 파드가 같은 파일 시스템을 동시에 읽고 쓸 수 있다"
+    ]},
+    { "dot": "emerald", "title": "처리량 모드", "items": [
+      "탄력적(Elastic)은 사용량에 따라 자동 조정되며 권장 기본값이다",
+      "프로비저닝은 일정한 처리량을 보장해야 할 때 고정값으로 지정한다",
+      "버스팅은 저장 용량에 비례해 기준 처리량이 결정된다"
+    ]},
+    { "dot": "amber", "title": "구성 주의점", "items": [
+      "각 AZ에 마운트 타깃이 있어야 하고 보안 그룹에서 2049/TCP를 허용해야 한다",
+      "액세스 포인트로 디렉터리별 POSIX 권한을 분리하면 멀티테넌시에 안전하다",
+      "수명 주기 정책으로 오래된 파일을 IA 클래스로 내려 비용을 줄인다"
+    ]}
+  ]
+}

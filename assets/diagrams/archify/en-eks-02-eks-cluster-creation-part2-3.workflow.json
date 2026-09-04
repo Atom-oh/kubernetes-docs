@@ -1,0 +1,129 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Cluster Lifecycle Management",
+    "output": "en-eks-02-eks-cluster-creation-part2-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "클러스터 작업"
+        },
+        "backend": {
+          "label": "구성 작업"
+        },
+        "security": {
+          "label": "정리"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "build",
+      "label": "생성과 구성"
+    },
+    {
+      "id": "ops",
+      "label": "운영과 정리"
+    }
+  ],
+  "mainPath": [
+    "create",
+    "configure",
+    "update",
+    "delete"
+  ],
+  "nodes": [
+    {
+      "id": "create",
+      "lane": "build",
+      "col": 0,
+      "type": "cloud",
+      "label": "Create cluster",
+      "sublabel": "eksctl create",
+      "width": 160
+    },
+    {
+      "id": "configure",
+      "lane": "build",
+      "col": 1,
+      "type": "backend",
+      "label": "Configure cluster",
+      "sublabel": "Node groups · Fargate",
+      "width": 175
+    },
+    {
+      "id": "update",
+      "lane": "ops",
+      "col": 2,
+      "type": "cloud",
+      "label": "Version update",
+      "sublabel": "Cluster · nodes · add-ons",
+      "width": 185
+    },
+    {
+      "id": "delete",
+      "lane": "ops",
+      "col": 3,
+      "type": "security",
+      "label": "Delete cluster",
+      "sublabel": "eksctl delete",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "create",
+      "to": "configure",
+      "label": "1 add config"
+    },
+    {
+      "id": "e2",
+      "from": "configure",
+      "to": "update",
+      "label": "2 go live"
+    },
+    {
+      "id": "e3",
+      "from": "update",
+      "to": "delete",
+      "label": "3 end of life"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Create and configure",
+      "items": [
+        "Create with eksctl create cluster --name=my-cluster, or -f cluster.yaml",
+        "Add node groups with eksctl create nodegroup --cluster=my-cluster",
+        "Add Fargate profiles with eksctl create fargateprofile --cluster=my-cluster"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Updates",
+      "items": [
+        "Raise the control plane with eksctl upgrade cluster --name=my-cluster --version=1.31",
+        "Raise nodes with eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup",
+        "Refresh add-ons with eksctl update addon --cluster=my-cluster --name=vpc-cni",
+        "Upgrade the control plane first and keep nodes within one minor version of it"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Before deleting",
+      "items": [
+        "eksctl delete cluster --name=my-cluster removes things stack by stack",
+        "Clean up external resources such as PVCs and load balancers first",
+        "Snapshot important data and confirm it can actually be restored"
+      ]
+    }
+  ]
+}

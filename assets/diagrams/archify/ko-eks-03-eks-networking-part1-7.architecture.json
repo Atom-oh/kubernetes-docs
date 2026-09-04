@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 보안 그룹 구성",
+    "output": "ko-eks-03-eks-networking-part1-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      780
+    ]
+  },
+  "components": [
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서",
+      "sublabel": "80 / 443 인바운드",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "EKS API 서버",
+      "sublabel": "컨트롤 플레인 보안 그룹",
+      "pos": [
+        450,
+        110
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "다른 워커 노드",
+      "sublabel": "워커 노드 보안 그룹",
+      "pos": [
+        860,
+        110
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "워커 노드",
+      "sublabel": "워커 노드 보안 그룹",
+      "pos": [
+        450,
+        550
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "인터넷 · ECR · S3",
+      "sublabel": "이미지 · 패키지",
+      "pos": [
+        860,
+        550
+      ],
+      "size": [
+        220,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lb-workers",
+      "from": "lb",
+      "to": "workers",
+      "label": "NodePort 전달"
+    },
+    {
+      "id": "workers-api",
+      "from": "workers",
+      "to": "api",
+      "label": "443/TCP",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-node2",
+      "from": "api",
+      "to": "node2",
+      "label": "1025-65535/TCP kubelet"
+    },
+    {
+      "id": "workers-node2",
+      "from": "workers",
+      "to": "node2",
+      "label": "ALL 노드 간 통신"
+    },
+    {
+      "id": "workers-internet",
+      "from": "workers",
+      "to": "internet",
+      "label": "ALL → 0.0.0.0/0",
+      "labelDy": 26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인 보안 그룹",
+      "items": [
+        "인바운드 443/TCP — 워커 노드 보안 그룹에서만 허용",
+        "아웃바운드 1025-65535/TCP — 워커 노드 보안 그룹으로만 송신",
+        "kubelet exec·logs·port-forward가 이 아웃바운드 범위를 사용한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워커 노드 보안 그룹",
+      "items": [
+        "인바운드 443/TCP와 1025-65535/TCP — 컨트롤 플레인 보안 그룹에서 허용",
+        "인바운드 ALL — 같은 워커 노드 보안 그룹(노드 간 파드 통신)",
+        "아웃바운드 ALL 0.0.0.0/0 — 이미지 내려받기와 AWS API 호출"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "모범 사례",
+      "items": [
+        "0.0.0.0/0 인바운드는 쓰지 않고 소스를 보안 그룹 ID로 지정한다",
+        "포트 범위를 최소로 좁히고 불필요한 규칙은 정기적으로 제거한다",
+        "로드 밸런서·데이터베이스·관리용 보안 그룹을 역할별로 분리한다"
+      ]
+    }
+  ]
+}

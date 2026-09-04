@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "BGP로 원격 파드 CIDR 전파",
+    "output": "ko-eks-hybrid-nodes-02-network-configuration-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      820
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.2",
+      "sublabel": "파드 CIDR 10.85.1.0/24 · CNI",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.3",
+      "sublabel": "파드 CIDR 10.85.2.0/24 · CNI",
+      "pos": [
+        410,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "온프레미스 라우터",
+      "sublabel": "라우팅 테이블",
+      "pos": [
+        230,
+        420
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "게이트웨이",
+      "sublabel": "온프레미스 ↔ AWS 링크 · VPC 10.0.0.0/16",
+      "pos": [
+        230,
+        660
+      ],
+      "size": [
+        280,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Remote Node CIDR 10.80.0.0/16 · Remote Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "node1",
+        "node2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-r",
+      "from": "node1",
+      "to": "router",
+      "label": "BGP UPDATE 10.85.1.0/24",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-r",
+      "from": "node2",
+      "to": "router",
+      "label": "BGP UPDATE 10.85.2.0/24",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-gw",
+      "from": "router",
+      "to": "gw",
+      "label": "10.0.0.0/16 static",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 75
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "BGP 동작",
+      "items": [
+        "각 노드가 라우터와 BGP 피어를 맺고 자기 파드 CIDR을 광고한다",
+        "노드 10.80.0.2는 10.85.1.0/24 via 10.80.0.2를 ANNOUNCE 한다",
+        "노드 10.80.0.3은 10.85.2.0/24 via 10.80.0.3을 ANNOUNCE 한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라우터 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED)",
+        "10.0.0.0/16 [static] via Gateway (STATIC)",
+        "10.85.1.0/24 [dynamic] via 10.80.0.2 (BGP)",
+        "10.85.2.0/24 [dynamic] via 10.80.0.3 (BGP)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "장단점",
+      "items": [
+        "노드를 추가하거나 교체해도 경로가 자동으로 갱신된다",
+        "Cilium이나 Calico의 BGP 컨트롤 플레인을 노드 쪽에서 활용할 수 있다",
+        "라우터에 BGP 설정 권한이 필요하고 피어 상태를 모니터링해야 한다"
+      ]
+    }
+  ]
+}

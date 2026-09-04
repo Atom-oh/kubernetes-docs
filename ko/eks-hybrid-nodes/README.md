@@ -23,11 +23,15 @@ Amazon EKS Hybrid Nodes는 온프레미스 서버를 AWS EKS 컨트롤 플레인
 
 EKS Hybrid Nodes는 온프레미스 데이터센터나 엣지 환경에 있는 서버를 AWS EKS 컨트롤 플레인에서 관리되는 Kubernetes 노드로 등록할 수 있게 해주는 기능입니다. 이를 통해 클라우드와 온프레미스 인프라를 단일 Kubernetes 클러스터로 통합 관리할 수 있습니다.
 
-![EKS Hybrid Nodes 하이레벨 네트워크 아키텍처](../.gitbook/assets/hybrid-nodes-highlevel-network.png)
+![온프레미스 라우터와 게이트웨이를 거쳐 AWS VPC의 컨트롤 플레인 ENI까지 이어지는 EKS 하이브리드 노드 네트워크 개요 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-highlevel-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-highlevel-0.html)
 
 아래 다이어그램은 VPC, 서브넷, Transit Gateway/Virtual Private Gateway, 원격 노드/파드 CIDR 연결을 포함한 네트워크 사전 요구 사항을 보여줍니다.
 
-![EKS Hybrid Nodes 네트워크 사전 요구 사항](../.gitbook/assets/hybrid-prereq-diagram.png)
+![EKS 클러스터의 RemoteNodeNetwork·RemotePodNetwork 설정과 VPC·온프레미스 양쪽 라우팅 테이블이 맞물리는 하이브리드 노드 사전 요구 사항 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-prereq-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-prereq-0.html)
 
 ### 왜 Hybrid Nodes를 사용하는가?
 

@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "리소스 쿼터(ResourceQuota) 동작 방식",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "쿼터 정책 · 검증"
+        },
+        "backend": {
+          "label": "쿼터 유형"
+        },
+        "cloud": {
+          "label": "네임스페이스"
+        },
+        "frontend": {
+          "label": "포드"
+        },
+        "database": {
+          "label": "사용량 집계"
+        },
+        "external": {
+          "label": "검증 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "quota-kinds",
+        "label": "쿼터 유형",
+        "focus": [
+          "rq",
+          "compute",
+          "storage",
+          "object",
+          "priority"
+        ],
+        "note": "ResourceQuota의 hard 항목은 컴퓨팅 리소스, 스토리지(PVC), 오브젝트 수, 우선순위 클래스별 포드 수를 제한합니다."
+      },
+      {
+        "id": "quota-scope",
+        "label": "적용 범위",
+        "focus": [
+          "rq",
+          "ns",
+          "pods",
+          "usage"
+        ],
+        "note": "쿼터는 네임스페이스 단위로 적용되며, 그 안의 모든 포드가 사용하는 리소스가 합산되어 네임스페이스 사용량이 됩니다."
+      },
+      {
+        "id": "quota-check",
+        "label": "새 포드 검증",
+        "focus": [
+          "usage",
+          "newpod",
+          "check",
+          "allow",
+          "deny"
+        ],
+        "note": "새 포드 요청은 현재 사용량과 합산해 쿼터 이내면 허용, 초과하면 거부됩니다."
+      }
+    ]
+  },
+  "components": [
+    {"id": "rq", "type": "security", "label": "ResourceQuota", "sublabel": "spec.hard 쿼터 제한", "pos": [90, 90], "size": [200, 64]},
+    {"id": "compute", "type": "backend", "label": "컴퓨팅 리소스 쿼터", "sublabel": "CPU, 메모리", "pos": [90, 196], "size": [200, 56]},
+    {"id": "storage", "type": "backend", "label": "스토리지 리소스 쿼터", "sublabel": "PVC", "pos": [90, 268], "size": [200, 56]},
+    {"id": "object", "type": "backend", "label": "오브젝트 수 쿼터", "sublabel": "Pod, Service 등", "pos": [90, 340], "size": [200, 56]},
+    {"id": "priority", "type": "backend", "label": "우선순위 클래스 쿼터", "sublabel": "PriorityClass별 포드 수", "pos": [90, 412], "size": [200, 56]},
+    {"id": "ns", "type": "cloud", "label": "네임스페이스", "sublabel": "쿼터 적용 대상", "pos": [380, 90], "size": [170, 64]},
+    {"id": "pods", "type": "frontend", "label": "포드 1 · 2 · 3", "sublabel": "네임스페이스 내 실행 중", "pos": [380, 196], "size": [170, 64]},
+    {"id": "usage", "type": "database", "label": "네임스페이스 리소스 사용량", "sublabel": "포드 사용량 합산", "pos": [640, 196], "size": [200, 64]},
+    {"id": "newpod", "type": "frontend", "label": "새 포드 생성 요청", "sublabel": "requests 포함", "pos": [640, 340], "size": [200, 64]},
+    {"id": "check", "type": "security", "label": "사용량 + 요청 ≤ 쿼터?", "sublabel": "쿼터 검증", "pos": [900, 340], "size": [200, 64]},
+    {"id": "allow", "type": "external", "label": "허용", "sublabel": "포드 생성", "pos": [1160, 290], "size": [120, 56]},
+    {"id": "deny", "type": "external", "label": "거부", "sublabel": "포드 생성 실패", "pos": [1160, 400], "size": [120, 56]}
+  ],
+  "boundaries": [
+    {"kind": "region", "label": "리소스 쿼터 유형", "wraps": ["rq", "compute", "storage", "object", "priority"]},
+    {"kind": "region", "label": "적용 범위", "wraps": ["ns", "pods"]},
+    {"kind": "region", "label": "리소스 사용량", "wraps": ["usage", "newpod", "check", "allow", "deny"]}
+  ],
+  "connections": [
+    {"id": "rq-compute", "from": "rq", "to": "compute", "label": "유형", "fromSide": "bottom", "toSide": "top", "labelDy": 24},
+    {"id": "rq-storage", "from": "rq", "to": "storage", "fromSide": "left", "toSide": "left"},
+    {"id": "rq-object", "from": "rq", "to": "object", "fromSide": "left", "toSide": "left"},
+    {"id": "rq-priority", "from": "rq", "to": "priority", "fromSide": "left", "toSide": "left"},
+    {"id": "rq-ns", "from": "rq", "to": "ns", "label": "적용", "variant": "emphasis"},
+    {"id": "ns-pods", "from": "ns", "to": "pods", "label": "포함", "fromSide": "bottom", "toSide": "top", "labelDy": 24},
+    {"id": "pods-usage", "from": "pods", "to": "usage", "label": "사용량 기여"},
+    {"id": "usage-check", "from": "usage", "to": "check", "label": "현재 사용량", "variant": "dashed", "fromSide": "right", "toSide": "top"},
+    {"id": "newpod-check", "from": "newpod", "to": "check", "label": "검증"},
+    {"id": "check-allow", "from": "check", "to": "allow", "label": "예", "variant": "emphasis"},
+    {"id": "check-deny", "from": "check", "to": "deny", "label": "아니오", "variant": "security"}
+  ]
+}

@@ -3,7 +3,7 @@
 > **지원 버전**: Amazon EKS 1.33+, AWS Load Balancer Controller 2.9+, Kafka 2.4+ (KIP-392), Valkey GLIDE 1.x
 > **마지막 업데이트**: 2026년 7월 21일
 
-< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) >
+< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) | [다음: 트러블슈팅 플레이북](16-troubleshooting-playbook.md) >
 
 ***
 
@@ -40,7 +40,9 @@ AWS도 이 패턴을 [Cell-Based Architecture for Amazon EKS 공식 가이드](h
 
 ## 트래픽 계층: Target Group + TargetGroupBinding + Weight 전환
 
-![Zonal Cell 아키텍처와 가중치 트래픽 전환](../../assets/ops-zonal-traffic-architecture.png)
+![Route 53 가중치 레코드가 AZ별 Target Group으로 80대 20으로 트래픽을 나누고 TargetGroupBinding이 각 zonal 클러스터에 연결되는 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-15-zonal-operations-guide-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-15-zonal-operations-guide-0.html)
 
 zonal 클러스터 여러 개를 운영할 때 트래픽을 옮기는 표준 패턴은 다음과 같습니다.
 
@@ -107,7 +109,9 @@ TargetGroupBinding의 기본/고급/멀티포트 설정은 [`networking/03-aws-l
 
 공통 원리는 하나입니다: **write는 leader/primary로 가야 하니 어차피 cross-AZ가 발생할 수 있지만, read는 같은 AZ의 replica로만 보내면 됩니다.** 트래픽의 대부분이 read인 워크로드(캐시, 조회성 쿼리, 컨슈머)에서는 이것만으로도 인터-AZ 비용의 상당 부분이 사라집니다.
 
-![데이터 계층 AZ 친화 Read 경로](../../assets/ops-zonal-data-az-affinity.png)
+![App Pod가 같은 AZ의 Kafka 브로커, Redis 레플리카, Aurora reader에서 읽고 write만 크로스 AZ로 나가는 데이터 계층 AZ 친화 경로 다이어그램.](../.gitbook/assets/ko-ops-15-zonal-operations-guide-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-15-zonal-operations-guide-1.html)
 
 이걸 하려면 먼저 파드가 "나는 어느 AZ에 있는가"를 알아야 합니다. Kubernetes Downward API는 Pod에 노드의 zone 라벨(`topology.kubernetes.io/zone`)을 직접 주입해주지 않으므로, 다음 중 하나가 필요합니다.
 
@@ -209,4 +213,4 @@ Aurora의 기본 reader endpoint는 **AZ를 고려하지 않는 라운드로빈 
 
 ***
 
-< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) >
+< [이전: Tekton Pipelines](14-tekton-pipelines.md) | [목차](./README.md) | [다음: 트러블슈팅 플레이북](16-troubleshooting-playbook.md) >

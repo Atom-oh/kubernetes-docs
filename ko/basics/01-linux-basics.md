@@ -75,7 +75,9 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 사용자 공간은 일반 응용 프로그램이 실행되는 메모리 영역입니다. 사용자 공간 프로그램은 시스템 호출을 통해 커널 서비스에 접근합니다.
 
-![Linux 아키텍처](../.gitbook/assets/linux_architecture.svg)
+![애플리케이션과 셸이 시스템 라이브러리와 시스템 호출 인터페이스를 거쳐 커널 서브시스템(프로세스·메모리 관리, 파일 시스템, 네트워킹, 보안)에 접근하고, 장치 드라이버를 통해 CPU·메모리·스토리지·네트워크 카드와 통신하는 Linux의 사용자 공간–커널 공간–하드웨어 계층 구조를 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-01-linux-basics-0.html)
 
 ### 시스템 호출 예시
 
@@ -91,7 +93,9 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 
 ### 리눅스 커널 아키텍처
 
-![리눅스 커널 아키텍처](../.gitbook/assets/linux_kernel_architecture.svg)
+![사용자 공간의 애플리케이션과 셸이 시스템 라이브러리를 거쳐 시스템 호출 인터페이스로 커널 공간에 진입하고, 프로세스·메모리·파일 시스템·네트워킹·보안 서브시스템이 장치 드라이버를 통해 CPU·메모리·스토리지·네트워크 카드 하드웨어와 통신하는 리눅스 커널 아키텍처의 계층 구조를 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-01-linux-basics-1.html)
 
 ## 프로세스 관리
 
@@ -309,7 +313,9 @@ ip link set <veth2> netns <네임스페이스명>
 
 Linux 파일 권한은 소유자, 그룹, 기타 사용자에 대한 읽기(r), 쓰기(w), 실행(x) 권한으로 구성됩니다.
 
-![파일 권한 구조](../.gitbook/assets/file_permissions.svg)
+![ls -l 출력의 10자리 권한 문자열을 파일 타입 1자리와 소유자·그룹·기타 사용자 권한 3자리씩(r w x)으로 나눠 읽는 구조와, 예시 drwxr-xr--가 디렉토리 · 소유자 모든 권한 · 그룹 읽기/실행 · 기타 사용자 읽기만으로 해석되는 과정을 보여준다.](../.gitbook/assets/ko-basics-01-linux-basics-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-basics-01-linux-basics-2.html)
 
 ### 권한 관련 명령어
 
@@ -1004,7 +1010,7 @@ journalctl -u <서비스> # 서비스 로그 확인
 
 OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하는 유니온 마운트 파일 시스템입니다. Docker와 같은 컨테이너 런타임에서 이미지 레이어를 구현하는 데 사용됩니다.
 
-![](../.gitbook/assets/linux_basics_overlayfs.svg)
+![클라이언트(앱)가 OverlayFS의 병합된 뷰(merged view)를 통해 파일에 접근하고, 그 아래에 쓰기 가능한 upperdir, 스크래치 공간인 workdir, 읽기 전용 lowerdir 레이어가 겹쳐 있는 구조를 보여준다.](../.gitbook/assets/linux_basics_overlayfs.svg)
 
 ### 네트워크 브릿지와 NAT
 

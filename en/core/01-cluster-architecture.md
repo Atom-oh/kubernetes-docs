@@ -445,7 +445,9 @@ Container runtime is software that runs containers. Kubernetes supports various 
 
 **Container Runtime Layer Structure**:
 
-![Tree diagram showing Kubernetes calling the Container Runtime Interface, which delegates to containerd or CRI-O, each backed by a low-level runtime (runc or crun).](../../assets/diagrams/rendered/en-core-01-cluster-architecture-1.svg)
+![Layered architecture diagram showing Kubernetes calling the Container Runtime Interface, which delegates to containerd or CRI-O, each backed by a low-level runtime (runc or crun).](../.gitbook/assets/en-core-01-cluster-architecture-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-1.html)
 
 **containerd Configuration Example**:
 ```toml
@@ -581,7 +583,9 @@ Communication between various components occurs within a Kubernetes cluster. Und
 
 ### Control Plane Internal Communication
 
-![Architecture diagram showing the scheduler, controller manager, and cloud controller manager all calling the kube-apiserver, which in turn reads and writes cluster state to etcd over gRPC.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-2.svg)
+![Architecture diagram showing the scheduler, controller manager, and cloud controller manager all calling the kube-apiserver, which in turn reads and writes cluster state to etcd over gRPC.](../.gitbook/assets/en-core-01-cluster-architecture-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-2.html)
 
 Communication between control plane components is as follows:
 
@@ -607,7 +611,9 @@ Communication between control plane components is as follows:
 
 ### Control Plane and Node Communication
 
-![Architecture diagram showing bidirectional HTTPS communication between the kube-apiserver and each node's kubelet and kube-proxy.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-3.svg)
+![Architecture diagram showing bidirectional HTTPS communication between the kube-apiserver and each node's kubelet and kube-proxy.](../.gitbook/assets/en-core-01-cluster-architecture-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-3.html)
 
 Communication between control plane and nodes is as follows:
 
@@ -628,7 +634,9 @@ Communication between control plane and nodes is as follows:
 
 ### Inter-Node Communication
 
-![Architecture diagram showing four pods, potentially on different nodes, all communicating with each other bidirectionally through the shared CNI network.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-4.svg)
+![Architecture diagram showing pods on two nodes reaching each other directly through the CNI network without NAT, with one cross-node flow highlighted from a pod on Node A to a pod on Node B.](../.gitbook/assets/en-core-01-cluster-architecture-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-4.html)
 
 Inter-node communication is as follows:
 
@@ -644,7 +652,9 @@ Inter-node communication is as follows:
 
 ### External Communication
 
-![Architecture diagram showing an external client reaching the kube-apiserver directly for cluster management, and reaching application traffic through a Service or Ingress into a pod.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-5.svg)
+![Architecture diagram showing an external client reaching the kube-apiserver directly for cluster management, and reaching application traffic through a Service or Ingress into a pod.](../.gitbook/assets/en-core-01-cluster-architecture-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-5.html)
 
 Communication with external entities is as follows:
 
@@ -696,11 +706,15 @@ High availability of the control plane is implemented through the following meth
 
 **High Availability Control Plane Architecture**:
 
-![Architecture diagram showing a load balancer distributing traffic across three replicated control plane nodes, each running its own kube-apiserver, etcd, kube-scheduler, and kube-controller-manager.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-6.svg)
+![Architecture diagram showing a load balancer distributing traffic across three replicated control plane nodes, each running its own kube-apiserver, etcd, kube-scheduler, and kube-controller-manager.](../.gitbook/assets/en-core-01-cluster-architecture-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-6.html)
 
 **etcd Cluster Configuration**:
 
-![Architecture diagram showing three etcd nodes forming a ring, each pair connected bidirectionally to replicate state via the Raft consensus protocol.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-7.svg)
+![Architecture diagram showing three etcd nodes in a full mesh, where the leader replicates writes to both followers via Raft consensus and the followers exchange leader-election votes.](../.gitbook/assets/en-core-01-cluster-architecture-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-7.html)
 
 ### Worker Node High Availability
 
@@ -713,7 +727,9 @@ High availability of worker nodes is implemented through the following methods:
 
 **Worker Node Distributed Deployment**:
 
-![Architecture diagram showing worker nodes spread two-per-zone across three availability zones for fault isolation.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-8.svg)
+![Architecture diagram showing worker nodes spread two-per-zone across three availability zones for fault isolation.](../.gitbook/assets/en-core-01-cluster-architecture-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-8.html)
 
 ### Application High Availability
 
@@ -1024,7 +1040,9 @@ Kubernetes storage architecture consists of the following components:
 
 **Storage Architecture Flow**:
 
-![Architecture diagram showing a pod's volume mount resolving through a PVC and PV to the actual storage backend via a CSI driver.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-9.svg)
+![Architecture diagram showing a pod's volume mount resolving through a PVC and PV to the actual storage backend via a CSI driver.](../.gitbook/assets/en-core-01-cluster-architecture-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-9.html)
 
 ### Volume Types
 
@@ -1123,7 +1141,9 @@ CSI provides a standard interface between Kubernetes and storage systems. Throug
 
 **CSI Architecture**:
 
-![Architecture diagram showing Kubernetes calling the Container Storage Interface, which delegates to a vendor CSI driver that provisions the underlying storage system.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-10.svg)
+![Architecture diagram showing Kubernetes calling the Container Storage Interface, which delegates to a vendor CSI driver that provisions the underlying storage system.](../.gitbook/assets/en-core-01-cluster-architecture-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-10.html)
 
 **CSI Driver Deployment Example**:
 ```yaml
@@ -1588,7 +1608,9 @@ EKS clusters consist of the following components:
 
 **EKS Architecture Diagram**:
 
-![Architecture diagram showing AWS Cloud hosting a managed EKS control plane, customer-operated worker nodes, and the supporting AWS services and VPC networking that the cluster depends on.](../../assets/diagrams/rendered/en-core-01-cluster-architecture-11.svg)
+![Architecture diagram showing AWS Cloud hosting a managed EKS control plane, customer-operated worker nodes, and the supporting AWS services and VPC networking that the cluster depends on.](../.gitbook/assets/en-core-01-cluster-architecture-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-11.html)
 
 ### EKS Control Plane
 

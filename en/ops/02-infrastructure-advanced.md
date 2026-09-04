@@ -42,7 +42,9 @@ The Blue/Green architecture eliminates these risks by maintaining two independen
 
 ### Architecture Diagram
 
-![NLB Blue/Green Architecture](../.gitbook/assets/nlb_bluegreen_architecture.png)
+![Diagram of a shared NLB splitting traffic 80/20 across Blue and Green target groups, each bound to its own EKS cluster.](../.gitbook/assets/en-ops-02-infrastructure-advanced-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-02-infrastructure-advanced-0.html)
 
 ### Single-Zone Design Rationale
 

@@ -23,7 +23,9 @@
 
 Kubernetes 환경에서 효과적인 알림 시스템은 운영 가시성과 신속한 장애 대응의 핵심입니다. Prometheus와 Alertmanager를 기반으로 한 알림 아키텍처는 다음과 같은 흐름으로 동작합니다.
 
-![알림 아키텍처](../.gitbook/assets/alerting_architecture.png)
+![PrometheusRule CRD를 Prometheus가 평가해 Alertmanager로 보내고 Alertmanager가 Slack, PagerDuty, Email, Webhook으로 라우팅하는 알림 아키텍처 다이어그램.](../.gitbook/assets/ko-ops-07-observability-alerts-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-07-observability-alerts-0.html)
 
 ### Alert Severity 레벨
 
@@ -37,7 +39,9 @@ Kubernetes 환경에서 효과적인 알림 시스템은 운영 가시성과 신
 
 ### 알림 라이프사이클
 
-![알림 라이프사이클](../.gitbook/assets/alert_lifecycle.png)
+![Inactive에서 Pending, Firing, Resolved로 이동하고 조기 해소 시 Inactive로 돌아오는 알림 상태 전이 다이어그램.](../.gitbook/assets/ko-ops-07-observability-alerts-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-07-observability-alerts-1.html)
 
 * **Inactive**: 알림 조건이 충족되지 않은 상태
 * **Pending**: 알림 조건이 충족되었지만 `for` 기간이 경과하지 않은 상태

@@ -88,70 +88,6 @@
   * [Workload Optimization](eks-auto-mode/08-workload-optimization.md)
   * [Migration Guide](eks-auto-mode/09-migration-guide.md)
 
-## AI/ML
-
-* [AI/ML Workloads](ai-ml/01-ai-ml-workloads.md)
-* [AI Infrastructure](ai-ml/06-ai-infrastructure.md)
-* [Model Training on EKS](ai-ml/05-model-training.md)
-* [Inference Frameworks](ai-ml/04-inference-frameworks.md)
-* [vLLM Deployment & Optimization](ai-ml/02-vllm-deployment.md)
-* [Agentic AI Platform on EKS](ai-ml/03-agentic-ai-platform.md)
-* [AI/ML Best Practices](ai-ml/07-ai-ml-best-practices.md)
-* [Ray on EKS Deep Dive](ai-ml/ray/README.md)
-  * [Part 1: Ray Architecture](ai-ml/ray/01-architecture.md)
-  * [Part 2: The KubeRay Operator](ai-ml/ray/02-kuberay-operator.md)
-  * [Part 3: Ray Train and Ray Tune](ai-ml/ray/03-ray-train-tune.md)
-  * [Part 4: Ray Serve](ai-ml/ray/04-ray-serve.md)
-* [Kubeflow on EKS Deep Dive](ai-ml/kubeflow/README.md)
-  * [Part 1: Kubeflow Architecture and Installation on EKS](ai-ml/kubeflow/01-architecture-installation.md)
-  * [Part 2: Kubeflow Pipelines](ai-ml/kubeflow/02-pipelines.md)
-  * [Part 3: Kubeflow Notebooks](ai-ml/kubeflow/03-notebooks.md)
-  * [Part 4: Katib — Hyperparameter Tuning and AutoML](ai-ml/kubeflow/04-katib.md)
-  * [Part 5: Kubeflow Trainer and Distributed Training](ai-ml/kubeflow/05-training-operator.md)
-  * [Part 6: KServe — Model Serving on Kubernetes](ai-ml/kubeflow/06-kserve.md)
-* [MLflow on EKS Deep Dive](ai-ml/mlflow/README.md)
-  * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
-  * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
-  * [Part 3: Deploying MLflow on EKS](ai-ml/mlflow/03-eks-deployment.md)
-* [SageMaker AI Qwen PII Guidebook](ai-ml/sagemaker-ai/README.md)
-  * [Part 1: Platform Architecture](ai-ml/sagemaker-ai/01-platform-architecture.md)
-  * [Part 2: Synthetic PII Data and Tokenization](ai-ml/sagemaker-ai/02-pii-data-tokenization.md)
-  * [Part 3: SageMaker AI and MLflow Execution](ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
-  * [Part 5: Factual Validation Results](ai-ml/sagemaker-ai/04-validation-results.md)
-
-## Data on EKS
-
-* [Data on EKS Overview](data-on-eks/README.md)
-* [Anatomy of a Modern Data Pipeline](data-on-eks/01-data-pipeline-anatomy.md)
-* [SageMaker Unified Studio Governance](data-on-eks/sagemaker-unified-studio/README.md)
-  * [Part 4: Domain, Project, and Membership Governance](data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
-* [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
-  * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
-  * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
-  * [Part 3: Kafka Operations](data-on-eks/kafka/03-kafka-operations.md)
-  * [Part 4: Schema Registry](data-on-eks/kafka/04-schema-registry.md)
-  * [Part 5: Kafka Connect and MirrorMaker](data-on-eks/kafka/05-kafka-connect-mirrormaker.md)
-  * [Part 6: MSK Integration](data-on-eks/kafka/06-msk-integration.md)
-  * [Part 7: Monitoring](data-on-eks/kafka/07-monitoring.md)
-  * [Part 8: Best Practices](data-on-eks/kafka/08-best-practices.md)
-* [Spark on EKS Deep Dive](data-on-eks/spark/README.md)
-  * [Part 1: Spark on Kubernetes Fundamentals](data-on-eks/spark/01-spark-fundamentals.md)
-  * [Part 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
-  * [Part 3: Amazon EMR on EKS](data-on-eks/spark/03-emr-on-eks.md)
-  * [Part 4: Performance and Cost Tuning](data-on-eks/spark/04-performance-tuning.md)
-  * [Part 5: Best Practices and Security](data-on-eks/spark/05-best-practices.md)
-* [Airflow on EKS Deep Dive](data-on-eks/airflow/README.md)
-  * [Part 1: Airflow Architecture on Kubernetes](data-on-eks/airflow/01-architecture.md)
-  * [Part 2: Helm Deployment and Executor Choice](data-on-eks/airflow/02-helm-deployment.md)
-  * [Part 3: DAG Patterns and KubernetesPodOperator](data-on-eks/airflow/03-dag-patterns.md)
-  * [Part 4: Amazon MWAA Integration](data-on-eks/airflow/04-mwaa-integration.md)
-  * [Part 5: Operations and Security](data-on-eks/airflow/05-operations.md)
-* [Flink on EKS Deep Dive](data-on-eks/flink/README.md)
-  * [Part 1: Flink Architecture on Kubernetes](data-on-eks/flink/01-architecture.md)
-  * [Part 2: Flink Kubernetes Operator](data-on-eks/flink/02-flink-kubernetes-operator.md)
-  * [Part 3: State, Checkpointing, and Streaming Patterns](data-on-eks/flink/03-state-checkpointing-streaming.md)
-  * [Part 4: Operations, High Availability, and Managed Flink](data-on-eks/flink/04-operations-ha.md)
-
 ## Networking
 
 * [Networking Overview](networking/README.md)
@@ -185,6 +121,8 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [Cross-Org VPC Connectivity](networking/05-cross-org-vpc-connectivity.md)
+* [Pod Network Benchmark](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -268,6 +206,8 @@
 
 * [Data on EKS Overview](data-on-eks/README.md)
 * [Anatomy of a Modern Data Pipeline](data-on-eks/01-data-pipeline-anatomy.md)
+* [SageMaker Unified Studio Governance](data-on-eks/sagemaker-unified-studio/README.md)
+  * [Part 4: Domain, Project, and Membership Governance](data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md)
 * [Kafka on EKS Deep Dive](data-on-eks/kafka/README.md)
   * [Part 1: Kafka Fundamentals](data-on-eks/kafka/01-kafka-fundamentals.md)
   * [Part 2: Strimzi Operator](data-on-eks/kafka/02-strimzi-operator.md)
@@ -277,6 +217,7 @@
   * [Part 6: MSK Integration](data-on-eks/kafka/06-msk-integration.md)
   * [Part 7: Monitoring](data-on-eks/kafka/07-monitoring.md)
   * [Part 8: Best Practices](data-on-eks/kafka/08-best-practices.md)
+  * [Part 9: Kafka Measured Benchmark](data-on-eks/kafka/09-kafka-benchmark.md)
 * [Spark on EKS Deep Dive](data-on-eks/spark/README.md)
   * [Part 1: Spark on Kubernetes Fundamentals](data-on-eks/spark/01-spark-fundamentals.md)
   * [Part 2: Spark Operator](data-on-eks/spark/02-spark-operator.md)
@@ -320,6 +261,11 @@
   * [Part 1: MLflow Tracking](ai-ml/mlflow/01-tracking.md)
   * [Part 2: MLflow Model Registry](ai-ml/mlflow/02-model-registry.md)
   * [Part 3: Deploying MLflow on EKS](ai-ml/mlflow/03-eks-deployment.md)
+* [SageMaker AI Qwen PII Guidebook](ai-ml/sagemaker-ai/README.md)
+  * [Part 1: Platform Architecture](ai-ml/sagemaker-ai/01-platform-architecture.md)
+  * [Part 2: Synthetic PII Data and Tokenization](ai-ml/sagemaker-ai/02-pii-data-tokenization.md)
+  * [Part 3: SageMaker AI and MLflow Execution](ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
+  * [Part 5: Factual Validation Results](ai-ml/sagemaker-ai/04-validation-results.md)
 
 ## Security & Policy
 
@@ -423,6 +369,7 @@
   * [FinOps Cost Visibility Platform](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [Zonal Cluster Operations](ops/15-zonal-operations-guide.md)
+  * [Troubleshooting Playbook](ops/16-troubleshooting-playbook.md)
 
 ## Lab Guides
 
@@ -447,6 +394,8 @@
 ## Quiz Collection
 
 * [Quiz Collection - Quizzes by Topic](quizzes/README.md)
+  * [Guidebook Roadmap Quiz](quizzes/roadmap-quiz.md)
+  * [Reading with LLMs Quiz](quizzes/llm-guide-quiz.md)
   * [Linux Basics Quiz](quizzes/basics/01-linux-basics-quiz.md)
   * [Linux Operations Skills Quiz](quizzes/basics/02-linux-advanced-quiz.md)
   * [Container Technology Quiz](quizzes/basics/03-container-technology-quiz.md)
@@ -554,6 +503,7 @@
   * [Part 6: MSK Integration Quiz](quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
   * [Part 7: Monitoring Quiz](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [Part 8: Best Practices Quiz](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+  * [Part 9: Kafka Measured Benchmark Quiz](quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
   * [Part 1: Spark on Kubernetes Fundamentals Quiz](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
   * [Part 2: Spark Operator Quiz](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [Part 3: Amazon EMR on EKS Quiz](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
@@ -595,6 +545,8 @@
   * [VPC Lattice Quiz](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller Quiz](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API Quiz](quizzes/networking/04-gateway-api-quiz.md)
+  * [Cross-Org VPC Connectivity Quiz](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Pod Network Benchmark Quiz](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Istio Quiz](quizzes/service-mesh/02-istio-quiz.md)
   * Istio Detailed Quiz
@@ -714,3 +666,4 @@
   * [FinOps Cost Visibility Platform Quiz](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines Quiz](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Zonal Cluster Operations Quiz](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [Troubleshooting Playbook Quiz](quizzes/ops/16-troubleshooting-playbook-quiz.md)

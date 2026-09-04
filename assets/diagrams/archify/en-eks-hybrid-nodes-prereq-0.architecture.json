@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hybrid Nodes Prerequisites and Routing",
+    "output": "en-eks-hybrid-nodes-prereq-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      680
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "clusterconf",
+      "type": "backend",
+      "label": "EKS cluster configuration",
+      "sublabel": "RemoteNodeNetwork 10.80.0.0/16 · RemotePodNetwork 10.85.0.0/16",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        300,
+        90
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC 10.226.0.0/16",
+      "sublabel": "Subnets · route table",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        300,
+        84
+      ]
+    },
+    {
+      "id": "link",
+      "type": "messagebus",
+      "label": "Private connectivity",
+      "sublabel": "Direct Connect · VPN (gateway ↔ on-prem gateway)",
+      "pos": [
+        430,
+        350
+      ],
+      "size": [
+        290,
+        96
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "On-prem router",
+      "sublabel": "On-prem routing table",
+      "pos": [
+        810,
+        350
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "backend",
+      "label": "Hybrid nodes 1 · 2",
+      "sublabel": "Nodes 10.80.0.0/16 · pods 10.85.1.0/24, 10.85.2.0/24",
+      "pos": [
+        810,
+        90
+      ],
+      "size": [
+        270,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Region",
+      "wraps": [
+        "clusterconf",
+        "vpc"
+      ],
+      "pad": 30
+    },
+    {
+      "kind": "region",
+      "label": "On-prem environment",
+      "wraps": [
+        "router",
+        "nodes"
+      ],
+      "pad": 30
+    }
+  ],
+  "connections": [
+    {
+      "id": "conf-vpc",
+      "from": "clusterconf",
+      "to": "vpc",
+      "label": "declares remote CIDRs",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 90
+    },
+    {
+      "id": "vpc-link",
+      "from": "vpc",
+      "to": "link",
+      "label": "remote CIDRs"
+    },
+    {
+      "id": "link-router",
+      "from": "link",
+      "to": "router",
+      "label": "both ways"
+    },
+    {
+      "id": "router-nodes",
+      "from": "router",
+      "to": "nodes",
+      "label": "per-node pod routes",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -90
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "VPC route table",
+      "items": [
+        "10.80.0.0/16 → Gateway (remote node range)",
+        "10.85.0.0/16 → Gateway (remote pod range)",
+        "10.226.0.0/16 → local (the VPC's own range)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "On-prem routing table",
+      "items": [
+        "10.85.1.0/24 → hybrid node 1",
+        "10.85.2.0/24 → hybrid node 2",
+        "10.226.0.0/16 → on-prem gateway (toward the VPC)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Requirements at a glance",
+      "items": [
+        "RemoteNodeNetwork and RemotePodNetwork are set at cluster creation and must not overlap the VPC CIDR",
+        "Nodes can be bare metal or virtualized hosts and take IPs from the node range",
+        "Pod traffic works only when both routing tables know the other side's range"
+      ]
+    }
+  ]
+}

@@ -1,84 +1,96 @@
-# EKS Networking
+# EKS ネットワーキング
 
-## Overview
+## 概要
 
-Amazon EKS networking は、Kubernetes clusters の通信を管理する中核コンポーネントです。このドキュメントでは、EKS networking の基本概念、VPC configuration、subnet design、および security group configuration について説明します。
+Amazon EKS ネットワーキングは、Kubernetes クラスターの通信を管理する中核コンポーネントです。このドキュメントでは、EKS ネットワーキングの基本概念、VPC 設定、Subnet 設計、Security Group 設定について説明します。
 
-## EKS Networking Architecture
+## EKS ネットワーキングアーキテクチャ
 
-EKS networking architecture は、次の components で構成されます。
+EKS ネットワーキングアーキテクチャは、以下のコンポーネントで構成されます。
 
-![EKS Networking Architecture Overview](../.gitbook/assets/eks_networking_architecture_overview.png)
+![インターネットから IGW を経由して Public Subnet の ALB と Private Subnet の worker node に至るトラフィックを示す EKS ネットワーキングアーキテクチャの概要。](../.gitbook/assets/en-eks-03-eks-networking-part1-0.png)
 
-1. **VPC (Virtual Private Cloud)**: EKS cluster が実行される分離された network environment
-2. **Subnets**: VPC 内の IP address ranges を分割する単位
-3. **Route Tables**: network traffic paths を決定する rule sets
-4. **Internet Gateway**: VPC と internet の間の通信を可能にする component
-5. **NAT Gateway**: private subnets 内の resources が internet にアクセスできるようにする component
-6. **Security Groups**: instance-level virtual firewalls
-7. **Network ACLs**: subnet-level virtual firewalls
-8. **CNI (Container Network Interface)**: container networking を管理する plugin
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-0.html)
 
-### EKS Networking Flow
+1. **VPC (Virtual Private Cloud)**: EKS クラスターが稼働する分離されたネットワーク環境
+2. **Subnets**: VPC 内の IP アドレス範囲を分割する単位
+3. **Route Tables**: ネットワークトラフィックの経路を決定するルールセット
+4. **Internet Gateway**: VPC とインターネット間の通信を可能にするコンポーネント
+5. **NAT Gateway**: Private Subnet 内のリソースがインターネットへアクセスできるようにするコンポーネント
+6. **Security Groups**: インスタンスレベルの仮想ファイアウォール
+7. **Network ACLs**: Subnet レベルの仮想ファイアウォール
+8. **CNI (Container Network Interface)**: コンテナネットワーキングを管理するプラグイン
 
-EKS cluster では、network traffic は次のように流れます。
+### EKS ネットワーキングフロー
 
-![EKS Network Traffic Flow](../.gitbook/assets/eks_network_traffic_flow.png)
+EKS クラスター内のネットワークトラフィックは次のように流れます。
 
-1. **Pod-to-Pod Communication**: 同じ node または異なる nodes 上の pods 間の communication
-2. **Pod-to-Service Communication**: cluster 内の pods と services の間の communication
-3. **Internal to External Cluster Communication**: internal cluster resources と external resources の間の communication
-4. **Control Plane to Node Communication**: EKS control plane と worker nodes の間の communication
+![kubectl 呼び出し、kubelet トラフィック、Pod 間トラフィック、Service トラフィックが EKS クラスター内で流れる仕組みを示す図。](../.gitbook/assets/en-eks-03-eks-networking-part1-1.png)
 
-### Relationship Between EKS Networking Components
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-1.html)
 
-![Relationship Between EKS Networking Components](../.gitbook/assets/eks_networking_components_relationship.png)
+1. **Pod-to-Pod Communication**: 同一 Node または異なる Node 上の Pod 間の通信
+2. **Pod-to-Service Communication**: クラスター内の Pod と Service 間の通信
+3. **Internal to External Cluster Communication**: クラスター内部リソースと外部リソース間の通信
+4. **Control Plane to Node Communication**: EKS Control Plane と worker node 間の通信
 
-## VPC Requirements
+### EKS ネットワーキングコンポーネント間の関係
 
-EKS cluster 用の VPC は、次の要件を満たす必要があります。
+![インバウンド、アウトバウンド、Control Plane のトラフィックという 3 つのレーンにまたがる EKS ネットワーキングコンポーネントの接続を示す図。](../.gitbook/assets/en-eks-03-eks-networking-part1-2.png)
 
-![EKS VPC Requirements](../.gitbook/assets/eks_vpc_requirements.png)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-2.html)
 
-1. **Subnets**: 少なくとも 2 つの availability zones に subnets が存在する必要があります
-2. **IP Addresses**: 十分な数の IP addresses を提供する必要があります
-3. **DNS Hostnames**: DNS hostnames と DNS resolution を有効にする必要があります
-4. **Internet Access**: Nodes は internet にアクセスできる必要があります（NAT gateway または internet gateway 経由）
+## VPC の要件
 
-### VPC CIDR Planning
+EKS クラスター用の VPC は、次の要件を満たす必要があります。
 
-VPC CIDR blocks を計画する際の considerations:
+![Subnet から IP アドレス空間、DNS、インターネットアクセスへと進む EKS VPC 前提条件チェックリストの図。](../.gitbook/assets/en-eks-03-eks-networking-part1-3.png)
 
-![VPC CIDR Planning Considerations](../.gitbook/assets/eks_vpc_cidr_planning.png)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-3.html)
 
-1. **Cluster Size**: 予想される nodes と pods の数
-2. **IP Address Requirements**: 各 node と pod に必要な IP addresses の数
-3. **Future Expansion**: future expansion のための余地
-4. **Integration with Existing Networks**: existing networks との overlap を避ける
+1. **Subnets**: 少なくとも 2 つの Availability Zone に Subnet が必要です
+2. **IP Addresses**: 十分な数の IP アドレスを提供する必要があります
+3. **DNS Hostnames**: DNS hostname と DNS resolution を有効にする必要があります
+4. **Internet Access**: Node はインターネットにアクセスできる必要があります（NAT Gateway または Internet Gateway 経由）
 
-一般的な VPC CIDR block sizes:
+### VPC CIDR の計画
 
-* 小規模 clusters: /24 (256 IP addresses)
-* 中規模 clusters: /20 (4,096 IP addresses)
-* 大規模 clusters: /16 (65,536 IP addresses)
+VPC CIDR block を計画する際の考慮事項:
 
-### Subnet Design
+![クラスターの規模から IP 需要、余裕、重複確認を経て最終 CIDR に至る VPC CIDR 計画手順の図。](../.gitbook/assets/en-eks-03-eks-networking-part1-4.png)
 
-![EKS Subnet Design](../.gitbook/assets/eks_subnet_design.png)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-4.html)
 
-EKS clusters の subnet design に関する best practices:
+1. **Cluster Size**: 想定される Node と Pod の数
+2. **IP Address Requirements**: 各 Node と Pod に必要な IP アドレス数
+3. **Future Expansion**: 将来の拡張のための余裕
+4. **Integration with Existing Networks**: 既存ネットワークとの重複回避
 
-1. **Public Subnets**: internet gateway に直接接続された subnets
-   * 用途: Public load balancers, NAT gateways, bastion hosts
-   * 一般的な size: /24 (256 IP addresses)
-2. **Private Subnets**: internet gateway に直接接続されていない subnets
-   * 用途: EKS worker nodes, internal load balancers
-   * 一般的な size: /22 (1,024 IP addresses)
-3. **Availability Zone Distribution**: subnets を複数の availability zones に分散する
-   * 少なくとも 2 つの availability zones を使用する
-   * 各 availability zone に public と private subnets を配置する
+一般的な VPC CIDR block のサイズ:
 
-subnet design の例:
+* 小規模クラスター: /24（256 IP アドレス）
+* 中規模クラスター: /20（4,096 IP アドレス）
+* 大規模クラスター: /16（65,536 IP アドレス）
+
+### Subnet 設計
+
+![2 つの Availability Zone それぞれで Public Subnet、NAT Gateway、Private Subnet を組み合わせた EKS Subnet 設計図。](../.gitbook/assets/en-eks-03-eks-networking-part1-5.png)
+
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-5.html)
+
+EKS クラスターの Subnet 設計におけるベストプラクティス:
+
+1. **Public Subnets**: Internet Gateway に直接接続される Subnet
+   * 用途: Public Load Balancer、NAT Gateway、bastion host
+   * 一般的なサイズ: /24（256 IP アドレス）
+2. **Private Subnets**: Internet Gateway に直接接続されない Subnet
+   * 用途: EKS worker node、Internal Load Balancer
+   * 一般的なサイズ: /22（1,024 IP アドレス）
+3. **Availability Zone Distribution**: 複数の Availability Zone に Subnet を分散
+   * 少なくとも 2 つの Availability Zone を使用
+   * 各 Availability Zone に Public Subnet と Private Subnet を配置
+
+Subnet 設計例:
 
 | Subnet Type | Availability Zone | CIDR Block  | Use                          |
 | ----------- | ----------------- | ----------- | ---------------------------- |
@@ -87,18 +99,20 @@ subnet design の例:
 | Private     | us-west-2a        | 10.0.2.0/22 | EKS worker nodes             |
 | Private     | us-west-2b        | 10.0.6.0/22 | EKS worker nodes             |
 
-### Subnet Tags
+### Subnet タグ
 
-![EKS Subnet Tag Configuration](../.gitbook/assets/eks_subnet_tags.png)
+![AWS Load Balancer Controller がタグを使用して Public Subnet と Private Subnet を検出し、internet-facing および internal Load Balancer を配置する様子を示す図。](../.gitbook/assets/en-eks-03-eks-networking-part1-6.png)
 
-EKS は resources を自動的に検出するため、subnets 上の specific tags を使用します。
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-6.html)
 
-1. **Public Subnet Tags**:
-   * `kubernetes.io/role/elb`: internet-facing load balancers で使用するため value を `1` に設定する
-   * `kubernetes.io/cluster/<cluster-name>`: value を `shared` または `owned` に設定する
-2. **Private Subnet Tags**:
-   * `kubernetes.io/role/internal-elb`: internal load balancers で使用するため value を `1` に設定する
-   * `kubernetes.io/cluster/<cluster-name>`: value を `shared` または `owned` に設定する
+EKS は、Subnet 上の特定のタグを使用してリソースを自動検出します。
+
+1. **Public Subnet タグ**:
+   * `kubernetes.io/role/elb`: internet-facing Load Balancer で使用するには、値を `1` に設定します
+   * `kubernetes.io/cluster/<cluster-name>`: 値を `shared` または `owned` に設定します
+2. **Private Subnet タグ**:
+   * `kubernetes.io/role/internal-elb`: Internal Load Balancer で使用するには、値を `1` に設定します
+   * `kubernetes.io/cluster/<cluster-name>`: 値を `shared` または `owned` に設定します
 
 例:
 
@@ -108,29 +122,31 @@ aws ec2 create-tags \
   --tags Key=kubernetes.io/cluster/my-cluster,Value=shared Key=kubernetes.io/role/elb,Value=1
 ```
 
-### Security Group Configuration
+### Security Group 設定
 
-![EKS Security Group Configuration](../.gitbook/assets/eks_security_groups.png)
+![Control Plane と worker node の Security Group 間の 443/TCP および 1025-65535/TCP ルール、さらに Node 間とアウトバウンドの経路を示す図。](../.gitbook/assets/en-eks-03-eks-networking-part1-7.png)
 
-EKS clusters には 2 つの main security groups があります。
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-7.html)
+
+EKS クラスターには、主に 2 つの Security Group があります。
 
 1. **Cluster Security Group (Control Plane)**:
-   * Inbound rules:
-     * 443/TCP: worker node security group からの traffic を許可する
-   * Outbound rules:
-     * 1025-65535/TCP: worker node security group への traffic を許可する
+   * インバウンドルール:
+     * 443/TCP: worker node の Security Group からのトラフィックを許可
+   * アウトバウンドルール:
+     * 1025-65535/TCP: worker node の Security Group へのトラフィックを許可
 2. **Node Security Group (Worker Nodes)**:
-   * Inbound rules:
-     * 443/TCP: cluster security group からの traffic を許可する
-     * 1025-65535/TCP: cluster security group からの traffic を許可する
-     * ALL: 同じ security group 内の traffic を許可する
-   * Outbound rules:
-     * ALL: すべての destinations への traffic を許可する
+   * インバウンドルール:
+     * 443/TCP: Cluster Security Group からのトラフィックを許可
+     * 1025-65535/TCP: Cluster Security Group からのトラフィックを許可
+     * ALL: 同一 Security Group 内のトラフィックを許可
+   * アウトバウンドルール:
+     * ALL: すべての宛先へのトラフィックを許可
 
-## Conclusion
+## まとめ
 
-このドキュメントでは、EKS networking と VPC configuration の基本概念について学びました。次のドキュメントでは、services、load balancing、network policies など、より高度な networking topics を扱います。
+このドキュメントでは、EKS ネットワーキングの基本概念と VPC 設定について学びました。次のドキュメントでは、Service、Load Balancing、Network Policy など、より高度なネットワーキングトピックを扱います。
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するため、[EKS Networking - Part 1 Quiz](../quizzes/eks/03-eks-networking-part1-quiz.md) を試してみてください。
+この章で学んだ内容を確認するには、[EKS Networking - Part 1 クイズ](../quizzes/eks/03-eks-networking-part1-quiz.md)に挑戦してください。

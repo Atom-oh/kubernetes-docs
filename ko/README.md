@@ -11,8 +11,8 @@
 
 - [학습 자료 목차](#목차) - 주제별 학습 자료
 - [퀴즈 모음](./quizzes/README.md) - 주제별 퀴즈
-- [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로
-- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법
+- [가이드북 로드맵](./roadmap.md) - 전체 학습 지도와 추천 학습 경로 | [퀴즈](./quizzes/roadmap-quiz.md)
+- [LLM과 함께 읽기](./llm-guide.md) - llms.txt로 AI에게 이 가이드북 전체를 읽히는 방법 | [퀴즈](./quizzes/llm-guide-quiz.md)
 
 ## 목차
 
@@ -97,77 +97,6 @@
 9. [워크로드별 최적화](./eks-auto-mode/08-workload-optimization.md) | [퀴즈](./quizzes/eks-auto-mode/08-workload-optimization-quiz.md)
 10. [마이그레이션 가이드](./eks-auto-mode/09-migration-guide.md) | [퀴즈](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
-### AI/ML
-1. [AI/ML 워크로드](./ai-ml/01-ai-ml-workloads.md) | [퀴즈](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
-2. [AI 인프라스트럭처](./ai-ml/06-ai-infrastructure.md) | [퀴즈](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
-3. [모델 트레이닝](./ai-ml/05-model-training.md) | [퀴즈](./quizzes/ai-ml/05-model-training-quiz.md)
-4. [추론 프레임워크](./ai-ml/04-inference-frameworks.md) | [퀴즈](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
-5. [vLLM 배포 및 최적화](./ai-ml/02-vllm-deployment.md) | [퀴즈](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
-6. [Agentic AI 플랫폼](./ai-ml/03-agentic-ai-platform.md) | [퀴즈](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)
-7. [AI/ML 모범 사례](./ai-ml/07-ai-ml-best-practices.md) | [퀴즈](./quizzes/ai-ml/07-ai-ml-best-practices-quiz.md)
-8. **Ray on EKS 딥다이브**
-   - [Ray on EKS 소개](./ai-ml/ray/README.md)
-   - [Part 1: Ray Architecture](./ai-ml/ray/01-architecture.md) | [퀴즈](./quizzes/ai-ml/ray/01-architecture-quiz.md)
-   - [Part 2: The KubeRay Operator](./ai-ml/ray/02-kuberay-operator.md) | [퀴즈](./quizzes/ai-ml/ray/02-kuberay-operator-quiz.md)
-   - [Part 3: Ray Train and Ray Tune](./ai-ml/ray/03-ray-train-tune.md) | [퀴즈](./quizzes/ai-ml/ray/03-ray-train-tune-quiz.md)
-   - [Part 4: Ray Serve](./ai-ml/ray/04-ray-serve.md) | [퀴즈](./quizzes/ai-ml/ray/04-ray-serve-quiz.md)
-9. **Kubeflow on EKS 딥다이브**
-   - [Kubeflow on EKS 소개](./ai-ml/kubeflow/README.md)
-   - [Part 1: EKS에서의 Kubeflow 아키텍처와 설치](./ai-ml/kubeflow/01-architecture-installation.md) | [퀴즈](./quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md)
-   - [Part 2: Kubeflow Pipelines](./ai-ml/kubeflow/02-pipelines.md) | [퀴즈](./quizzes/ai-ml/kubeflow/02-pipelines-quiz.md)
-   - [Part 3: Kubeflow Notebooks](./ai-ml/kubeflow/03-notebooks.md) | [퀴즈](./quizzes/ai-ml/kubeflow/03-notebooks-quiz.md)
-   - [Part 4: Katib — 하이퍼파라미터 튜닝과 AutoML](./ai-ml/kubeflow/04-katib.md) | [퀴즈](./quizzes/ai-ml/kubeflow/04-katib-quiz.md)
-   - [Part 5: Kubeflow Trainer와 분산 학습](./ai-ml/kubeflow/05-training-operator.md) | [퀴즈](./quizzes/ai-ml/kubeflow/05-training-operator-quiz.md)
-   - [Part 6: KServe — Kubernetes 위에서의 모델 서빙](./ai-ml/kubeflow/06-kserve.md) | [퀴즈](./quizzes/ai-ml/kubeflow/06-kserve-quiz.md)
-10. **MLflow on EKS 딥다이브**
-   - [MLflow on EKS 소개](./ai-ml/mlflow/README.md)
-   - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [퀴즈](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
-   - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [퀴즈](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
-   - [Part 3: MLflow를 EKS에 배포하기](./ai-ml/mlflow/03-eks-deployment.md) | [퀴즈](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
-11. **SageMaker AI Qwen PII 가이드북**
-   - [가이드북 소개](./ai-ml/sagemaker-ai/README.md)
-   - [Part 1: 플랫폼 아키텍처](./ai-ml/sagemaker-ai/01-platform-architecture.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
-   - [Part 2: 합성 PII 데이터와 토큰화](./ai-ml/sagemaker-ai/02-pii-data-tokenization.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
-   - [Part 3: SageMaker AI와 MLflow 실행](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
-   - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
-   - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
-
-### Data on EKS
-1. [Data on EKS 개요](./data-on-eks/README.md)
-   - [모던 데이터 파이프라인 해부](./data-on-eks/01-data-pipeline-anatomy.md) | [퀴즈](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
-   - [SageMaker Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/README.md)
-   - [Part 4: Domain, Project, Membership 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
-2. **Kafka on EKS 딥다이브**
-   - [Kafka on EKS 소개](./data-on-eks/kafka/README.md)
-   - [Part 1: Kafka 핵심 개념](./data-on-eks/kafka/01-kafka-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
-   - [Part 2: Strimzi Operator](./data-on-eks/kafka/02-strimzi-operator.md) | [퀴즈](./quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
-   - [Part 3: Kafka 운영](./data-on-eks/kafka/03-kafka-operations.md) | [퀴즈](./quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md)
-   - [Part 4: 스키마 레지스트리](./data-on-eks/kafka/04-schema-registry.md) | [퀴즈](./quizzes/data-on-eks/kafka/04-schema-registry-quiz.md)
-   - [Part 5: Kafka Connect와 MirrorMaker](./data-on-eks/kafka/05-kafka-connect-mirrormaker.md) | [퀴즈](./quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md)
-   - [Part 6: MSK 통합](./data-on-eks/kafka/06-msk-integration.md) | [퀴즈](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
-   - [Part 7: 모니터링](./data-on-eks/kafka/07-monitoring.md) | [퀴즈](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
-   - [Part 8: 모범 사례](./data-on-eks/kafka/08-best-practices.md) | [퀴즈](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
-3. **Spark on EKS 딥다이브**
-   - [Spark on EKS 소개](./data-on-eks/spark/README.md)
-   - [Part 1: Spark on Kubernetes 기초](./data-on-eks/spark/01-spark-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
-   - [Part 2: Spark Operator](./data-on-eks/spark/02-spark-operator.md) | [퀴즈](./quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
-   - [Part 3: Amazon EMR on EKS](./data-on-eks/spark/03-emr-on-eks.md) | [퀴즈](./quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
-   - [Part 4: 성능 및 비용 튜닝](./data-on-eks/spark/04-performance-tuning.md) | [퀴즈](./quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
-   - [Part 5: 모범 사례와 보안](./data-on-eks/spark/05-best-practices.md) | [퀴즈](./quizzes/data-on-eks/spark/05-best-practices-quiz.md)
-4. **Airflow on EKS 딥다이브**
-   - [Airflow on EKS 소개](./data-on-eks/airflow/README.md)
-   - [Part 1: Kubernetes에서의 Airflow 아키텍처](./data-on-eks/airflow/01-architecture.md) | [퀴즈](./quizzes/data-on-eks/airflow/01-architecture-quiz.md)
-   - [Part 2: Helm 배포와 Executor 선택](./data-on-eks/airflow/02-helm-deployment.md) | [퀴즈](./quizzes/data-on-eks/airflow/02-helm-deployment-quiz.md)
-   - [Part 3: DAG 패턴과 KubernetesPodOperator](./data-on-eks/airflow/03-dag-patterns.md) | [퀴즈](./quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md)
-   - [Part 4: Amazon MWAA 통합](./data-on-eks/airflow/04-mwaa-integration.md) | [퀴즈](./quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md)
-   - [Part 5: 운영과 보안](./data-on-eks/airflow/05-operations.md) | [퀴즈](./quizzes/data-on-eks/airflow/05-operations-quiz.md)
-5. **Flink on EKS 딥다이브**
-   - [Flink on EKS 소개](./data-on-eks/flink/README.md)
-   - [Part 1: Kubernetes에서의 Flink 아키텍처](./data-on-eks/flink/01-architecture.md) | [퀴즈](./quizzes/data-on-eks/flink/01-architecture-quiz.md)
-   - [Part 2: Flink Kubernetes Operator](./data-on-eks/flink/02-flink-kubernetes-operator.md) | [퀴즈](./quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)
-   - [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴](./data-on-eks/flink/03-state-checkpointing-streaming.md) | [퀴즈](./quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
-   - [Part 4: 운영, 고가용성, 그리고 매니지드 Flink](./data-on-eks/flink/04-operations-ha.md) | [퀴즈](./quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
-
 ### Networking
 1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
 2. [네트워크 기초 — 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
@@ -202,6 +131,8 @@
 6. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
 7. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
 8. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
+9. [Cross-Org VPC 연결](./networking/05-cross-org-vpc-connectivity.md) | [퀴즈](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+10. [Pod 네트워크 실측 벤치마크](./networking/06-pod-network-benchmark.md) | [퀴즈](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
@@ -234,6 +165,8 @@
 ### Data Pipeline
 1. [Data on EKS 개요](./data-on-eks/README.md)
    - [모던 데이터 파이프라인 해부](./data-on-eks/01-data-pipeline-anatomy.md) | [퀴즈](./quizzes/data-on-eks/01-data-pipeline-anatomy-quiz.md)
+   - [SageMaker Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/README.md)
+   - [Part 4: Domain, Project, Membership 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
 2. **Kafka on EKS 딥다이브**
    - [Kafka on EKS 소개](./data-on-eks/kafka/README.md)
    - [Part 1: Kafka 핵심 개념](./data-on-eks/kafka/01-kafka-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)
@@ -244,6 +177,7 @@
    - [Part 6: MSK 통합](./data-on-eks/kafka/06-msk-integration.md) | [퀴즈](./quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)
    - [Part 7: 모니터링](./data-on-eks/kafka/07-monitoring.md) | [퀴즈](./quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
    - [Part 8: 모범 사례](./data-on-eks/kafka/08-best-practices.md) | [퀴즈](./quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
+   - [Part 9: Kafka 실측 벤치마크](./data-on-eks/kafka/09-kafka-benchmark.md) | [퀴즈](./quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)
 3. **Spark on EKS 딥다이브**
    - [Spark on EKS 소개](./data-on-eks/spark/README.md)
    - [Part 1: Spark on Kubernetes 기초](./data-on-eks/spark/01-spark-fundamentals.md) | [퀴즈](./quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
@@ -292,6 +226,13 @@
    - [Part 1: MLflow Tracking](./ai-ml/mlflow/01-tracking.md) | [퀴즈](./quizzes/ai-ml/mlflow/01-tracking-quiz.md)
    - [Part 2: MLflow Model Registry](./ai-ml/mlflow/02-model-registry.md) | [퀴즈](./quizzes/ai-ml/mlflow/02-model-registry-quiz.md)
    - [Part 3: MLflow를 EKS에 배포하기](./ai-ml/mlflow/03-eks-deployment.md) | [퀴즈](./quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md)
+11. **SageMaker AI Qwen PII 가이드북**
+   - [가이드북 소개](./ai-ml/sagemaker-ai/README.md)
+   - [Part 1: 플랫폼 아키텍처](./ai-ml/sagemaker-ai/01-platform-architecture.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md)
+   - [Part 2: 합성 PII 데이터와 토큰화](./ai-ml/sagemaker-ai/02-pii-data-tokenization.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md)
+   - [Part 3: SageMaker AI와 MLflow 실행](./ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md)
+   - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
+   - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -390,6 +331,7 @@
 13. [FinOps 비용 가시성 플랫폼](./ops/13-finops-cost-platform.md) | [퀴즈](./quizzes/ops/13-finops-cost-platform-quiz.md)
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [퀴즈](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal 클러스터 운영 전략](./ops/15-zonal-operations-guide.md) | [퀴즈](./quizzes/ops/15-zonal-operations-guide-quiz.md)
+16. [트러블슈팅 플레이북](./ops/16-troubleshooting-playbook.md) | [퀴즈](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
 
 ## 실습 가이드
 

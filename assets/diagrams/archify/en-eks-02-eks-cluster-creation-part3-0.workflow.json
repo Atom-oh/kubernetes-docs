@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Creating an EKS Cluster in the AWS Console",
+    "output": "en-eks-02-eks-cluster-creation-part3-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "사용자 작업"
+        },
+        "cloud": {
+          "label": "콘솔 화면"
+        },
+        "backend": {
+          "label": "결과"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "cluster",
+      "label": "클러스터 생성"
+    },
+    {
+      "id": "nodes",
+      "label": "노드 그룹과 연결"
+    }
+  ],
+  "mainPath": [
+    "login",
+    "select",
+    "config",
+    "review"
+  ],
+  "nodes": [
+    {
+      "id": "login",
+      "lane": "cluster",
+      "col": 0,
+      "type": "external",
+      "label": "Console sign-in",
+      "sublabel": "Pick a region",
+      "width": 150
+    },
+    {
+      "id": "select",
+      "lane": "cluster",
+      "col": 1,
+      "type": "cloud",
+      "label": "EKS service",
+      "sublabel": "Create cluster",
+      "width": 150
+    },
+    {
+      "id": "config",
+      "lane": "cluster",
+      "col": 2,
+      "type": "cloud",
+      "label": "Configure cluster",
+      "sublabel": "Network · logging",
+      "width": 160
+    },
+    {
+      "id": "review",
+      "lane": "cluster",
+      "col": 3,
+      "type": "cloud",
+      "label": "Review and create",
+      "sublabel": "About 10 minutes",
+      "width": 155
+    },
+    {
+      "id": "ng",
+      "lane": "nodes",
+      "col": 4,
+      "type": "cloud",
+      "label": "Add node group",
+      "sublabel": "Compute · size",
+      "width": 160
+    },
+    {
+      "id": "connect",
+      "lane": "nodes",
+      "col": 5,
+      "type": "backend",
+      "label": "Connect to cluster",
+      "sublabel": "kubeconfig",
+      "width": 155
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "login",
+      "to": "select",
+      "label": "1 navigate"
+    },
+    {
+      "id": "e2",
+      "from": "select",
+      "to": "config",
+      "label": "2 configure"
+    },
+    {
+      "id": "e3",
+      "from": "config",
+      "to": "review",
+      "label": "3 review"
+    },
+    {
+      "id": "e4",
+      "from": "review",
+      "to": "ng",
+      "label": "4 created",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "ng",
+      "to": "connect",
+      "label": "5 nodes ready"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What the cluster configuration screen asks for",
+      "items": [
+        "Cluster name, Kubernetes version, and the cluster IAM role",
+        "VPC and subnets, the cluster security group, and endpoint access (public/private)",
+        "Control plane log types and which add-ons to install (VPC CNI, CoreDNS, kube-proxy)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Node group configuration",
+      "items": [
+        "Specify the node IAM role, AMI type, instance type, and disk size",
+        "Desired, minimum, and maximum size define the Auto Scaling range",
+        "Choose the subnets for the nodes and decide whether to allow remote (SSH) access"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Confirming access",
+      "items": [
+        "Build the kubeconfig with aws eks update-kubeconfig --name <cluster-name> --region <region>",
+        "kubectl get nodes confirms the nodes reached Ready",
+        "The IAM principal that created the cluster gets administrator access by default"
+      ]
+    }
+  ]
+}

@@ -4,7 +4,9 @@
 
 AWS Management Console을 사용하여 EKS 클러스터를 생성하는 단계는 다음과 같습니다:
 
-![AWS Management Console을 통한 EKS 클러스터 생성 워크플로우](../.gitbook/assets/eks_console_cluster_creation_workflow.png)
+![콘솔 로그인부터 클러스터 구성, 검토 및 생성, 노드 그룹 추가, 클러스터 연결까지 이어지는 콘솔 기반 생성 워크플로 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part3-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part3-0.html)
 
 1. [AWS Management Console](https://console.aws.amazon.com/)에 로그인합니다.
 2. "EKS"를 검색하거나 서비스 목록에서 "Elastic Kubernetes Service"를 선택합니다.
@@ -78,7 +80,9 @@ AWS Management Console을 사용하여 EKS 클러스터를 생성하는 단계�
 
 AWS CLI를 사용하여 EKS 클러스터를 생성하는 과정은 여러 단계로 이루어져 있습니다. 이 방법은 더 많은 제어가 필요한 경우에 유용합니다.
 
-![AWS CLI를 통한 EKS 클러스터 생성 워크플로우](../.gitbook/assets/eks_cli_cluster_creation_workflow.png)
+![IAM 역할과 VPC, 보안 그룹을 먼저 만들고 클러스터와 노드 그룹을 생성한 뒤 kubeconfig를 갱신하는 AWS CLI 워크플로 다이어그램.](../.gitbook/assets/ko-eks-02-eks-cluster-creation-part3-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-02-eks-cluster-creation-part3-1.html)
 
 ### 1. 클러스터 IAM 역할 생성
 

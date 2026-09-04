@@ -40,6 +40,7 @@
 | 10 | [리소스 최적화](./10-resource-optimization.md) | Requests/Limits, JVM 튜닝, 프레임워크별 가이드 |
 | 11 | [EKS 업그레이드](./11-upgrade-operations.md) | Auto Mode 무중단 업그레이드, 블루/그린 전략 |
 | 15 | [Zonal 클러스터 운영 전략](./15-zonal-operations-guide.md) | TargetGroupBinding weight 전환, 네이티브 롤백, Kafka/Redis/Aurora AZ 친화 read |
+| 16 | [트러블슈팅 플레이북](./16-troubleshooting-playbook.md) | 증상 → 진단 → 원인 → 조치: Pending/ImagePull/CrashLoop/NotReady/PVC, IRSA·VPC CNI·Karpenter, kubectl 치트시트 |
 
 ---
 

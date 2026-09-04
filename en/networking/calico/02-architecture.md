@@ -8,9 +8,7 @@ This section provides an in-depth exploration of Calico's architecture. Understa
 
 ## Full Architecture Diagram
 
-![Calico Architecture](../../.gitbook/assets/calico_architecture.png)
-
-![Architecture diagram showing Kubernetes control plane, Calico control plane (API server, kube-controllers, Typha), and a representative worker node where Felix programs the local data plane and confd/BIRD distribute routes over a BGP mesh between nodes.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
+![Kubernetes control plane, Calico control plane (API server, kube-controllers, Typha), and a worker node where Felix programs the local data plane and confd/BIRD distribute routes over the node BGP mesh.](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
 

@@ -1,33 +1,33 @@
 # Parte 1: Requisitos previos
 
-Hay varias formas de crear un Amazon EKS cluster. En este capítulo, aprenderemos cómo crear un EKS cluster usando varias herramientas y métodos.
+Hay varias formas de crear un clúster de Amazon EKS. En este capítulo, aprenderemos a crear un clúster de EKS utilizando diversas herramientas y métodos.
 
-## Tabla de contenidos
+## Tabla de contenido
 
 1. [Requisitos previos](02-eks-cluster-creation-part1.md#prerequisites)
-2. [Crear un cluster usando eksctl](02-eks-cluster-creation-part1.md#creating-a-cluster-using-eksctl)
-3. [Crear un cluster usando AWS Management Console](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-management-console)
-4. [Crear un cluster usando AWS CLI](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-cli)
-5. [Crear un cluster usando Terraform](02-eks-cluster-creation-part1.md#creating-a-cluster-using-terraform)
+2. [Creación de un clúster con eksctl](02-eks-cluster-creation-part1.md#creating-a-cluster-using-eksctl)
+3. [Creación de un clúster con AWS Management Console](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-management-console)
+4. [Creación de un clúster con AWS CLI](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-cli)
+5. [Creación de un clúster con Terraform](02-eks-cluster-creation-part1.md#creating-a-cluster-using-terraform)
 
 ## Requisitos previos
 
-Antes de crear un EKS cluster, se requieren los siguientes requisitos previos:
+Antes de crear un clúster de EKS, se requieren los siguientes requisitos previos:
 
-### 1. AWS Account
+### 1. Cuenta de AWS
 
-Se requiere una AWS account válida. Si no tienes una AWS account, puedes registrarte en el [sitio web de AWS](https://aws.amazon.com/).
+Se requiere una cuenta válida de AWS. Si no tiene una cuenta de AWS, puede registrarse en el [sitio web de AWS](https://aws.amazon.com/).
 
-### 2. IAM Permissions
+### 2. Permisos de IAM
 
-Se requieren los siguientes IAM permissions para crear y administrar un EKS cluster:
+Se requieren los siguientes permisos de IAM para crear y administrar un clúster de EKS:
 
 * `eks:*`
 * `ec2:*`
 * `iam:*`
 * `cloudformation:*`
 
-Si tienes administrator permissions, no se requieren configuraciones de permisos adicionales. De lo contrario, necesitas adjuntar la siguiente IAM policy al user o role:
+Si tiene permisos de administrador, no se requieren configuraciones de permisos adicionales. De lo contrario, debe adjuntar la siguiente política de IAM al usuario o rol:
 
 ```json
 {
@@ -49,11 +49,11 @@ Si tienes administrator permissions, no se requieren configuraciones de permisos
 
 ### 3. Instalación de herramientas
 
-Las siguientes herramientas deben estar instaladas para crear y administrar un EKS cluster:
+Se deben instalar las siguientes herramientas para crear y administrar un clúster de EKS:
 
 #### AWS CLI
 
-AWS CLI es una herramienta unificada para controlar los AWS services desde la línea de comandos.
+AWS CLI es una herramienta unificada para controlar los servicios de AWS desde la línea de comandos.
 
 **macOS**:
 
@@ -76,7 +76,7 @@ sudo ./aws/install
 https://awscli.amazonaws.com/AWSCLIV2.msi
 ```
 
-Después de instalar AWS CLI, ejecuta el siguiente comando para configurar las credenciales:
+Después de instalar AWS CLI, ejecute el siguiente comando para configurar las credenciales:
 
 ```bash
 aws configure
@@ -84,7 +84,7 @@ aws configure
 
 #### kubectl
 
-kubectl es una herramienta de línea de comandos para comunicarse con Kubernetes clusters.
+kubectl es una herramienta de línea de comandos para comunicarse con clústeres de Kubernetes.
 
 **macOS**:
 
@@ -110,7 +110,7 @@ curl -LO "https://dl.k8s.io/release/v1.26.0/bin/windows/amd64/kubectl.exe"
 
 #### eksctl
 
-eksctl es una sencilla herramienta CLI para crear y administrar EKS clusters.
+eksctl es una herramienta CLI sencilla para crear y administrar clústeres de EKS.
 
 **macOS**:
 
@@ -143,35 +143,37 @@ Expand-Archive -Path eksctl.zip -DestinationPath $env:USERPROFILE\.eksctl\bin
 $env:PATH += ";$env:USERPROFILE\.eksctl\bin"
 ```
 
-### 4. VPC y subnets
+### 4. VPC y subredes
 
-Un EKS cluster requiere una VPC y subnets (subredes). Puedes usar una VPC existente o crear una nueva. La VPC para un EKS cluster debe cumplir los siguientes requisitos:
+Un clúster de EKS requiere una VPC y subredes. Puede utilizar una VPC existente o crear una nueva. La VPC para un clúster de EKS debe cumplir los siguientes requisitos:
 
-![Arquitectura de VPC de EKS](../.gitbook/assets/eks_vpc_architecture.png)
+![Diagrama de arquitectura de VPC de EKS que ubica los balanceadores de carga en subredes públicas, las NAT Gateways y los nodos de trabajo en subredes privadas distribuidas en dos zonas de disponibilidad.](../.gitbook/assets/en-eks-02-eks-cluster-creation-part1-0.png)
 
-* Al menos 2 subnets deben estar en diferentes Availability Zones.
-* Las subnets deben tener acceso a internet (a través de un NAT gateway o internet gateway).
-* Las subnets deben tener suficientes direcciones IP.
-* Las subnets deben tener tags adecuados.
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part1-0.html)
 
-#### VPC Tags para EKS Cluster
+* Al menos 2 subredes deben estar en diferentes zonas de disponibilidad.
+* Las subredes deben tener acceso a Internet (a través de una NAT gateway o Internet gateway).
+* Las subredes deben tener suficientes direcciones IP.
+* Las subredes deben tener las etiquetas adecuadas.
 
-Los siguientes tags (etiquetas) deben aplicarse para permitir que el EKS cluster use correctamente la VPC y las subnets:
+#### Etiquetas de VPC para el clúster de EKS
 
-**VPC Tags**:
+Se deben aplicar las siguientes etiquetas para que el clúster de EKS pueda utilizar correctamente la VPC y las subredes:
 
-* `kubernetes.io/cluster/<cluster-name>`: `shared` o `owned`
+**Etiquetas de VPC**:
 
-**Public Subnet Tags**:
+* `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
 
-* `kubernetes.io/cluster/<cluster-name>`: `shared` o `owned`
+**Etiquetas de subred pública**:
+
+* `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
 * `kubernetes.io/role/elb`: `1`
 
-**Private Subnet Tags**:
+**Etiquetas de subred privada**:
 
-* `kubernetes.io/cluster/<cluster-name>`: `shared` o `owned`
+* `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
 * `kubernetes.io/role/internal-elb`: `1`
 
 ## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta resolver el [cuestionario Creación de EKS Cluster - Parte 1](../quizzes/eks/02-eks-cluster-creation-part1-quiz.md).
+Para comprobar lo que aprendió en este capítulo, pruebe el [Cuestionario de creación de clúster de EKS - Parte 1](../quizzes/eks/02-eks-cluster-creation-part1-quiz.md).

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "EKS 서브넷 태그와 로드 밸런서 배치", "output": "ko-eks-03-eks-networking-part1-6.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1180, 760] },
+  "components": [
+    { "id": "lbc", "type": "security", "label": "AWS Load Balancer Controller", "sublabel": "태그로 서브넷 자동 탐색", "pos": [40, 330], "size": [250, 70] },
+    { "id": "pub", "type": "cloud", "label": "퍼블릭 서브넷 (AZ-a, AZ-b)", "sublabel": "kubernetes.io/role/elb: 1", "pos": [430, 120], "size": [270, 70] },
+    { "id": "priv", "type": "backend", "label": "프라이빗 서브넷 (AZ-a, AZ-b)", "sublabel": "kubernetes.io/role/internal-elb: 1", "pos": [430, 560], "size": [280, 70] },
+    { "id": "elb", "type": "cloud", "label": "인터넷 연결 ALB/NLB", "sublabel": "외부 트래픽 수신", "pos": [840, 120], "size": [230, 70] },
+    { "id": "ielb", "type": "cloud", "label": "내부 ALB/NLB", "sublabel": "VPC 내부 트래픽", "pos": [840, 560], "size": [210, 70] }
+  ],
+  "connections": [
+    { "id": "lbc-pub", "from": "lbc", "to": "pub", "label": "elb 태그 탐색" },
+    { "id": "lbc-priv", "from": "lbc", "to": "priv", "label": "internal-elb 태그 탐색" },
+    { "id": "pub-elb", "from": "pub", "to": "elb", "label": "scheme: internet-facing" },
+    { "id": "priv-ielb", "from": "priv", "to": "ielb", "label": "scheme: internal" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "퍼블릭 서브넷 태그", "items": [
+      "kubernetes.io/role/elb: 1 — 인터넷 연결 로드 밸런서 배치 대상",
+      "kubernetes.io/cluster/<클러스터 이름>: shared 또는 owned",
+      "shared는 다른 클러스터와 공유 가능, owned는 해당 클러스터 전용"
+    ]},
+    { "dot": "emerald", "title": "프라이빗 서브넷 태그", "items": [
+      "kubernetes.io/role/internal-elb: 1 — 내부 로드 밸런서 배치 대상",
+      "워커 노드가 배치되는 서브넷이며 내부 트래픽만 처리한다",
+      "Name, Environment 같은 운영 태그를 함께 붙인다"
+    ]},
+    { "dot": "amber", "title": "주의 사항", "items": [
+      "태그 값은 대소문자를 구분하며 클러스터 이름을 정확히 입력해야 한다",
+      "태그가 없으면 컨트롤러가 서브넷을 찾지 못해 로드 밸런서 생성이 실패한다",
+      "aws ec2 create-tags로 서브넷마다 일괄 적용하고 정기적으로 감사한다"
+    ]}
+  ]
+}

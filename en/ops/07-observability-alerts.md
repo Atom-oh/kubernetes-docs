@@ -15,6 +15,10 @@ Effective alerting in Kubernetes requires a well-designed pipeline that minimize
 
 The alerting pipeline follows a structured flow from metric collection to notification delivery:
 
+![Alerting architecture diagram: Prometheus evaluates PrometheusRule CRDs and sends firing alerts to Alertmanager, which routes them to Slack, PagerDuty, email, and webhooks.](../.gitbook/assets/en-ops-07-observability-alerts-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-0.html)
+
 ```
 ┌─────────────┐    ┌──────────────────┐    ┌───────────────┐    ┌──────────────┐
 │  Prometheus │───▶│ PrometheusRule   │───▶│ Alertmanager  │───▶│  Receivers   │
@@ -39,6 +43,10 @@ Standardized severity levels ensure consistent response procedures:
 ### Alert Lifecycle
 
 Understanding the alert lifecycle helps configure appropriate timing:
+
+![Alert state transition diagram moving from Inactive through Pending and Firing to Resolved, returning to Inactive when the condition clears early.](../.gitbook/assets/en-ops-07-observability-alerts-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-1.html)
 
 ```yaml
 # Alert state transitions

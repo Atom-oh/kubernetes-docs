@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Measured Topology of Five Cross-Org VPC Paths",
+    "output": "en-networking-05-cross-org-vpc-connectivity-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      900
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "EC2 c7g.large (client)",
+      "sublabel": "ORG A · VPC A 10.100.0.0/24",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        270,
+        84
+      ]
+    },
+    {
+      "id": "pcx",
+      "type": "cloud",
+      "label": "VPC Peering",
+      "sublabel": "② p50 0.048 ms",
+      "pos": [
+        470,
+        90
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "tgwshared",
+      "type": "cloud",
+      "label": "Shared TGW (via RAM)",
+      "sublabel": "① p50 0.619 ms",
+      "pos": [
+        470,
+        250
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "plink",
+      "type": "security",
+      "label": "PrivateLink → NLB",
+      "sublabel": "③ p50 0.961 ms · TCP passthrough",
+      "pos": [
+        470,
+        410
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "tgwpeer",
+      "type": "cloud",
+      "label": "TGW Peering (A ↔ B)",
+      "sublabel": "④ p50 0.599 ms",
+      "pos": [
+        470,
+        570
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "lattice",
+      "type": "messagebus",
+      "label": "VPC Lattice (L7 proxy)",
+      "sublabel": "⑤ p50 1.635 ms",
+      "pos": [
+        470,
+        730
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "responder",
+      "type": "backend",
+      "label": "EC2 responder (nginx 200)",
+      "sublabel": "ORG B · VPC B 10.200.0.0/24",
+      "pos": [
+        880,
+        400
+      ],
+      "size": [
+        270,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ORG A account",
+      "wraps": [
+        "client"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "ORG B account (GPU)",
+      "wraps": [
+        "responder"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-pcx",
+      "from": "client",
+      "to": "pcx",
+      "via": [
+        [
+          360,
+          442
+        ],
+        [
+          360,
+          130
+        ]
+      ]
+    },
+    {
+      "id": "c-tgw",
+      "from": "client",
+      "to": "tgwshared",
+      "via": [
+        [
+          385,
+          442
+        ],
+        [
+          385,
+          290
+        ]
+      ]
+    },
+    {
+      "id": "c-plink",
+      "from": "client",
+      "to": "plink"
+    },
+    {
+      "id": "c-tgwpeer",
+      "from": "client",
+      "to": "tgwpeer",
+      "via": [
+        [
+          410,
+          442
+        ],
+        [
+          410,
+          610
+        ]
+      ]
+    },
+    {
+      "id": "c-lattice",
+      "from": "client",
+      "to": "lattice",
+      "via": [
+        [
+          435,
+          442
+        ],
+        [
+          435,
+          770
+        ]
+      ]
+    },
+    {
+      "id": "pcx-r",
+      "from": "pcx",
+      "to": "responder",
+      "via": [
+        [
+          830,
+          130
+        ],
+        [
+          830,
+          442
+        ]
+      ]
+    },
+    {
+      "id": "tgw-r",
+      "from": "tgwshared",
+      "to": "responder",
+      "via": [
+        [
+          805,
+          290
+        ],
+        [
+          805,
+          442
+        ]
+      ]
+    },
+    {
+      "id": "plink-r",
+      "from": "plink",
+      "to": "responder"
+    },
+    {
+      "id": "tgwpeer-r",
+      "from": "tgwpeer",
+      "to": "responder",
+      "via": [
+        [
+          780,
+          610
+        ],
+        [
+          780,
+          442
+        ]
+      ]
+    },
+    {
+      "id": "lattice-r",
+      "from": "lattice",
+      "to": "responder",
+      "via": [
+        [
+          755,
+          770
+        ],
+        [
+          755,
+          442
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Measurement design",
+      "items": [
+        "TCP_RR persistent p50, 1,500 samples per path, M1-M7 round-robin interleaved over 5 rounds",
+        "Both accounts pinned to apne2-az1, c7g.large (no burstable), a single EC2 responder serving a fixed nginx 200",
+        "Three ENIs on the responder separate per-path subnets and return routes, removing route swaps"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "p50 by path (2026-09-01, ap-northeast-2)",
+      "items": [
+        "① Shared TGW (RAM): EC2 → TGW-A → responder · 0.619 ms (ICMP 0.535)",
+        "② VPC Peering: EC2 → PCX → responder · 0.048 ms — identical to the M1=0.049 baseline",
+        "③ PrivateLink: EC2 → endpoint → NLB → responder · 0.961 ms",
+        "④ TGW Peering: EC2 → TGW-A → TGW-B → responder · 0.599 ms (ICMP 0.912)",
+        "⑤ VPC Lattice: EC2 → service network → responder · 1.635 ms"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Verdict",
+      "items": [
+        "A TGW hop costs 0.4-0.6 ms, an NLB hop adds 0.4-0.6 ms, and the PrivateLink ENI overhead is +0.04 ms, effectively zero",
+        "Normalizing every path behind an NLB: Peering+NLB 0.62 ≈ PrivateLink 0.66 < TGW+NLB 1.27-1.43 < Lattice 1.68 ms",
+        "No path is blocked by the organization boundary; the boundary shows up only as an explicit step: name the account ID, then have the receiver accept"
+      ]
+    }
+  ]
+}

@@ -75,6 +75,10 @@ The Linux kernel is the core of the operating system, acting as an intermediary 
 
 User space is the memory region where regular applications run. User space programs access kernel services through system calls.
 
+![Linux user space, kernel space, and hardware layers: applications and the shell reach the kernel subsystems through system libraries and the system call interface, and device drivers reach the CPU, memory, storage, and network card.](../.gitbook/assets/en-basics-01-linux-basics-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
+
 ### System Call Examples
 
 | System Call | Description           | Related Commands    |
@@ -88,6 +92,10 @@ User space is the memory region where regular applications run. User space progr
 | `clone()`   | Create namespace      | `unshare`, `docker` |
 
 ### Linux Kernel Architecture
+
+![Linux kernel architecture in layers: applications and the shell enter the kernel through system libraries and the system call interface, and the kernel subsystems drive the hardware through device drivers.](../.gitbook/assets/en-basics-01-linux-basics-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
 ## Process Management
 
@@ -304,6 +312,10 @@ ip link set <veth2> netns <namespace-name>
 ### File Permissions
 
 Linux file permissions consist of read (r), write (w), and execute (x) permissions for owner, group, and other users.
+
+![How the 10-character ls -l permission string splits into a file-type character plus r w x triplets for owner, group, and others, decoding drwxr-xr-- as a directory with full owner, read/execute group, and read-only other access.](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
 
 ### Permission-Related Commands
 

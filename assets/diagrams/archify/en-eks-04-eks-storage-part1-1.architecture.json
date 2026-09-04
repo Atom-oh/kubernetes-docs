@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS Storage Options",
+    "output": "en-eks-04-eks-storage-part1-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      780
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "Amazon EBS",
+      "sublabel": "Block · single AZ",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "ebscsi",
+      "type": "backend",
+      "label": "EBS CSI driver",
+      "sublabel": "ebs.csi.aws.com",
+      "pos": [
+        400,
+        120
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "ebsmode",
+      "type": "messagebus",
+      "label": "RWO · RWOP",
+      "sublabel": "Single node only",
+      "pos": [
+        780,
+        120
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "database",
+      "label": "Amazon EFS",
+      "sublabel": "NFS · regional",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "efscsi",
+      "type": "backend",
+      "label": "EFS CSI driver",
+      "sublabel": "efs.csi.aws.com",
+      "pos": [
+        400,
+        350
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "efsmode",
+      "type": "messagebus",
+      "label": "RWO · ROX · RWX",
+      "sublabel": "Shared across nodes",
+      "pos": [
+        780,
+        350
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "High-performance parallel",
+      "pos": [
+        40,
+        580
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "fsxcsi",
+      "type": "backend",
+      "label": "FSx CSI driver",
+      "sublabel": "fsx.csi.aws.com",
+      "pos": [
+        400,
+        580
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "fsxmode",
+      "type": "messagebus",
+      "label": "RWO · ROX · RWX",
+      "sublabel": "HPC · machine learning",
+      "pos": [
+        780,
+        580
+      ],
+      "size": [
+        210,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-csi",
+      "from": "ebs",
+      "to": "ebscsi",
+      "label": "Provisions"
+    },
+    {
+      "id": "ebs-mode",
+      "from": "ebscsi",
+      "to": "ebsmode",
+      "label": "Access modes"
+    },
+    {
+      "id": "efs-csi",
+      "from": "efs",
+      "to": "efscsi",
+      "label": "Provisions"
+    },
+    {
+      "id": "efs-mode",
+      "from": "efscsi",
+      "to": "efsmode",
+      "label": "Access modes"
+    },
+    {
+      "id": "fsx-csi",
+      "from": "fsx",
+      "to": "fsxcsi",
+      "label": "Provisions"
+    },
+    {
+      "id": "fsx-mode",
+      "from": "fsxcsi",
+      "to": "fsxmode",
+      "label": "Access modes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Amazon EBS",
+      "items": [
+        "Block storage pinned to one Availability Zone and attached to a single node",
+        "With gp3 you set IOPS and throughput independently of volume size",
+        "Suits latency-sensitive single-writer workloads such as databases"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Amazon EFS",
+      "items": [
+        "A regional NFS file system that many pods across AZs write to at once",
+        "Fits shared content, log collection, and user uploads that need RWX",
+        "Elastic throughput mode scales throughput automatically with the workload"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "FSx for Lustre",
+      "items": [
+        "A high-performance parallel file system reaching hundreds of GB/s",
+        "Linking it to S3 as a data repository suits training datasets",
+        "Used for HPC simulation and large-scale machine learning training"
+      ]
+    }
+  ]
+}

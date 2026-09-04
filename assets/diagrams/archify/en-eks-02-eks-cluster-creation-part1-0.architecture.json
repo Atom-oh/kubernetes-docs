@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS VPC Architecture",
+    "output": "en-eks-02-eks-cluster-creation-part1-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      800
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "igw",
+      "type": "cloud",
+      "label": "Internet Gateway",
+      "pos": [
+        240,
+        350
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pub-a",
+      "type": "cloud",
+      "label": "Public subnet AZ-a",
+      "sublabel": "Load balancers",
+      "pos": [
+        490,
+        110
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "nat-a",
+      "type": "cloud",
+      "label": "NAT Gateway AZ-a",
+      "sublabel": "Outbound",
+      "pos": [
+        770,
+        110
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "priv-a",
+      "type": "backend",
+      "label": "Private subnet AZ-a",
+      "sublabel": "EKS worker nodes",
+      "pos": [
+        1020,
+        110
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "pub-b",
+      "type": "cloud",
+      "label": "Public subnet AZ-b",
+      "sublabel": "Load balancers",
+      "pos": [
+        490,
+        580
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "nat-b",
+      "type": "cloud",
+      "label": "NAT Gateway AZ-b",
+      "sublabel": "Outbound",
+      "pos": [
+        770,
+        580
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "priv-b",
+      "type": "backend",
+      "label": "Private subnet AZ-b",
+      "sublabel": "EKS worker nodes",
+      "pos": [
+        1020,
+        580
+      ],
+      "size": [
+        240,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC",
+      "wraps": [
+        "igw",
+        "pub-a",
+        "nat-a",
+        "priv-a",
+        "pub-b",
+        "nat-b",
+        "priv-b"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone a",
+      "wraps": [
+        "pub-a",
+        "nat-a",
+        "priv-a"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone b",
+      "wraps": [
+        "pub-b",
+        "nat-b",
+        "priv-b"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "i-igw",
+      "from": "internet",
+      "to": "igw",
+      "label": "Inbound · outbound",
+      "labelDy": 62
+    },
+    {
+      "id": "igw-a",
+      "from": "igw",
+      "to": "pub-a"
+    },
+    {
+      "id": "igw-b",
+      "from": "igw",
+      "to": "pub-b"
+    },
+    {
+      "id": "priv-nat-a",
+      "from": "priv-a",
+      "to": "nat-a",
+      "label": "0.0.0.0/0"
+    },
+    {
+      "id": "priv-nat-b",
+      "from": "priv-b",
+      "to": "nat-b",
+      "label": "0.0.0.0/0"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What eksctl builds",
+      "items": [
+        "By default it creates one VPC, a public and private subnet per AZ, and a NAT Gateway per AZ",
+        "Load balancers go in the public subnets and worker nodes in the private ones",
+        "It also applies the subnet tags (role/elb, role/internal-elb) for you"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "If you build it yourself",
+      "items": [
+        "At least two AZs, plus DNS hostnames and DNS resolution enabled, are mandatory",
+        "A private subnet's 0.0.0.0/0 must point at the NAT Gateway in the same AZ",
+        "To reuse an existing VPC, list the subnet IDs under vpc.subnets in the eksctl config"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cost considerations",
+      "items": [
+        "A NAT Gateway per AZ raises availability but multiplies the hourly charge",
+        "A single NAT Gateway (--vpc-nat-mode=Single) costs less but is exposed to AZ failure",
+        "Routing ECR and S3 traffic through VPC endpoints cuts NAT processing charges"
+      ]
+    }
+  ]
+}

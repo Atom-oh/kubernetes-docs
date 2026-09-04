@@ -44,7 +44,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ## Calico eBPF vs iptables 아키텍처
 
-![Calico 데이터플레인: iptables vs eBPF](../../.gitbook/assets/calico_ebpf_vs_iptables.png)
+![iptables 모드에서는 NIC로 들어온 패킷이 PREROUTING, FORWARD, kube-proxy 규칙, POSTROUTING 체인을 차례로 순회해 목적지 Pod에 도달하고, eBPF 모드에서는 소켓 레벨 connect-time LB가 먼저 백엔드를 고른 뒤 TC Hook의 BPF 프로그램 하나가 BPF Map을 조회해 kube-proxy 없이 전달하는 두 데이터플레인을 위아래로 비교해 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-9.html)
 
 ### iptables 모드 아키텍처
 

@@ -46,6 +46,10 @@ Cilium is an open-source software that provides networking, security, and observ
 
 ### Cilium Architecture
 
+![Diagram of the layering from Kubernetes down through the CNI, Cilium, eBPF, and the Linux kernel, with Cilium emitting flow events to Hubble.](../../.gitbook/assets/en-networking-cilium-01-introduction-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-01-introduction-0.html)
+
 ## Container Networking Basics
 
 Container networking provides the mechanisms that enable containerized applications to communicate with each other and with the outside world.

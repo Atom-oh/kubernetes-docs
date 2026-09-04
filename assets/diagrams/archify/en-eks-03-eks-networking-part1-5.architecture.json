@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Subnet Design (Multi-AZ)",
+    "output": "en-eks-03-eks-networking-part1-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      780
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "igw",
+      "type": "cloud",
+      "label": "Internet Gateway",
+      "pos": [
+        230,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pub1",
+      "type": "cloud",
+      "label": "Public Subnet",
+      "sublabel": "10.0.0.0/24 · ALB",
+      "pos": [
+        470,
+        110
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "nat1",
+      "type": "cloud",
+      "label": "NAT Gateway 1",
+      "sublabel": "Egress via IGW",
+      "pos": [
+        730,
+        110
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "priv1",
+      "type": "backend",
+      "label": "Private subnet",
+      "sublabel": "10.0.2.0/22 · worker nodes",
+      "pos": [
+        960,
+        110
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "pub2",
+      "type": "cloud",
+      "label": "Public Subnet",
+      "sublabel": "10.0.1.0/24 · ALB",
+      "pos": [
+        470,
+        570
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "nat2",
+      "type": "cloud",
+      "label": "NAT Gateway 2",
+      "sublabel": "Egress via IGW",
+      "pos": [
+        730,
+        570
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "priv2",
+      "type": "backend",
+      "label": "Private subnet",
+      "sublabel": "10.0.6.0/22 · worker nodes",
+      "pos": [
+        960,
+        570
+      ],
+      "size": [
+        220,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC (10.0.0.0/16)",
+      "wraps": [
+        "igw",
+        "pub1",
+        "nat1",
+        "priv1",
+        "pub2",
+        "nat2",
+        "priv2"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone 1 (us-west-2a)",
+      "wraps": [
+        "pub1",
+        "nat1",
+        "priv1"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "security-group",
+      "label": "Availability Zone 2 (us-west-2b)",
+      "wraps": [
+        "pub2",
+        "nat2",
+        "priv2"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet-igw",
+      "from": "internet",
+      "to": "igw",
+      "label": "Inbound · outbound",
+      "labelDy": 60
+    },
+    {
+      "id": "igw-pub1",
+      "from": "igw",
+      "to": "pub1"
+    },
+    {
+      "id": "igw-pub2",
+      "from": "igw",
+      "to": "pub2"
+    },
+    {
+      "id": "priv1-nat1",
+      "from": "priv1",
+      "to": "nat1",
+      "label": "0.0.0.0/0"
+    },
+    {
+      "id": "priv2-nat2",
+      "from": "priv2",
+      "to": "nat2",
+      "label": "0.0.0.0/0"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Public Subnet",
+      "items": [
+        "Hosts public load balancers (ALB/NLB), NAT Gateways, and bastion hosts",
+        "A /24 (256 IPs) is normally large enough",
+        "Its route table sends 0.0.0.0/0 to the Internet Gateway"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Private subnet",
+      "items": [
+        "Hosts EKS worker nodes, internal load balancers, and databases",
+        "Because pods consume VPC IPs, size it at /22 (1,024 IPs) or larger",
+        "Point 0.0.0.0/0 at the NAT Gateway in the same AZ"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AZ spread",
+      "items": [
+        "Use at least two AZs (three preferred), each with a public/private subnet pair",
+        "A NAT Gateway per AZ avoids cross-AZ charges and a single point of failure",
+        "The sample allocation uses 10.0.0.0/19 and reserves 10.0.32.0/19 for growth"
+      ]
+    }
+  ]
+}

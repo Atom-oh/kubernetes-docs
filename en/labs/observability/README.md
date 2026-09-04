@@ -8,7 +8,9 @@ This lab series provides a comprehensive, hands-on journey through building a fu
 
 The architecture simulates a production-grade environment with a **Managed Cluster** hosting the observability stack and a **Service Cluster** running MSA applications with OTel instrumentation.
 
-![Architecture Overview](../../.gitbook/assets/architecture-overview.png)
+![Lab environment architecture from the management cluster's GitOps and observability stack through the service cluster's MSA apps to the AWS managed observability backends.](../../.gitbook/assets/en-labs-observability-overview-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-overview-0.html)
 
 ## Architecture Diagram
 

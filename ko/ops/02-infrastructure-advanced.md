@@ -34,7 +34,9 @@
 
 ### 아키텍처 다이어그램
 
-![NLB 블루/그린 아키텍처](../.gitbook/assets/nlb_bluegreen_architecture.png)
+![공유 NLB가 Blue와 Green Target Group에 80대 20 가중치로 트래픽을 나누고 각 Target Group이 별도 EKS 클러스터에 연결되는 다이어그램.](../.gitbook/assets/ko-ops-02-infrastructure-advanced-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-02-infrastructure-advanced-0.html)
 
 ### 싱글존 설계의 이점
 

@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Fargate Profile Architecture",
+    "output": "en-eks-02-eks-cluster-creation-part2-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1330,
+      700
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "cloud",
+      "label": "EKS control plane",
+      "sublabel": "Fargate scheduler",
+      "pos": [
+        40,
+        310
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "fp",
+      "type": "security",
+      "label": "Fargate profile",
+      "sublabel": "Selectors · execution role",
+      "pos": [
+        330,
+        310
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "sel1",
+      "type": "messagebus",
+      "label": "Selector 1",
+      "sublabel": "namespace=default, env=fargate",
+      "pos": [
+        650,
+        110
+      ],
+      "size": [
+        290,
+        76
+      ]
+    },
+    {
+      "id": "sel2",
+      "type": "messagebus",
+      "label": "Selector 2",
+      "sublabel": "kube-system, k8s-app=kube-dns",
+      "pos": [
+        650,
+        510
+      ],
+      "size": [
+        300,
+        76
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "frontend",
+      "label": "Fargate pods",
+      "sublabel": "One microVM per pod",
+      "pos": [
+        1010,
+        310
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-fp",
+      "from": "cp",
+      "to": "fp",
+      "label": "evaluates"
+    },
+    {
+      "id": "fp-sel1",
+      "from": "fp",
+      "to": "sel1",
+      "label": "match rule"
+    },
+    {
+      "id": "fp-sel2",
+      "from": "fp",
+      "to": "sel2",
+      "label": "match rule"
+    },
+    {
+      "id": "sel1-pods",
+      "from": "sel1",
+      "to": "pods",
+      "label": "placed on match"
+    },
+    {
+      "id": "sel2-pods",
+      "from": "sel2",
+      "to": "pods"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How selectors work",
+      "items": [
+        "A pod matching both the profile's namespace and label selector is scheduled onto Fargate",
+        "With only a namespace and no labels, every pod in that namespace matches",
+        "If several profiles match, one is chosen arbitrarily, so design rules that do not overlap"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Limitations",
+      "items": [
+        "DaemonSets, privileged containers, and HostNetwork or HostPort are unavailable",
+        "GPUs and EBS volumes are unsupported, so use EFS for persistent volumes",
+        "Pods land only in private subnets, and Classic Load Balancers are not supported"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operational tips",
+      "items": [
+        "A pod execution role is required before images can be pulled",
+        "Requested CPU and memory round up to a Fargate size, so state resource requests precisely",
+        "You skip node management, but pod startup is slower than on node groups"
+      ]
+    }
+  ]
+}

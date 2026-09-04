@@ -10,7 +10,9 @@
 
 아래 다이어그램은 VPC 구성, Transit Gateway/Virtual Private Gateway, CIDR 요구 사항을 포함한 온프레미스 노드와 EKS 클러스터 연결을 위한 네트워크 사전 요구 사항을 보여줍니다.
 
-![EKS Hybrid Nodes 네트워크 사전 요구 사항](../.gitbook/assets/hybrid-prereq-diagram.png)
+![EKS 클러스터의 RemoteNodeNetwork·RemotePodNetwork 설정과 VPC·온프레미스 양쪽 라우팅 테이블이 맞물리는 하이브리드 노드 사전 요구 사항 다이어그램.](../.gitbook/assets/ko-eks-hybrid-nodes-prereq-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-prereq-0.html)
 
 ## 온프레미스 노드 요구 사항
 

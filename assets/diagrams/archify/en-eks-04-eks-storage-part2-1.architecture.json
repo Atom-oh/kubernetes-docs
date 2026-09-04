@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon S3 Integration Methods",
+    "output": "en-eks-04-eks-storage-part2-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      740
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "frontend",
+      "label": "Application pods",
+      "sublabel": "Web · data · ML · logs",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "irsa",
+      "type": "security",
+      "label": "IRSA / Pod Identity",
+      "sublabel": "Temporary credentials",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "s3csi",
+      "type": "backend",
+      "label": "Mountpoint S3 CSI",
+      "sublabel": "Mounts as a file system",
+      "pos": [
+        520,
+        330
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "sdk",
+      "type": "backend",
+      "label": "AWS SDK · Hadoop S3A",
+      "sublabel": "Direct object API calls",
+      "pos": [
+        520,
+        570
+      ],
+      "size": [
+        250,
+        70
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "Data lake · backup · models",
+      "pos": [
+        940,
+        320
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-irsa",
+      "from": "apps",
+      "to": "irsa",
+      "label": "Assumes role"
+    },
+    {
+      "id": "a-csi",
+      "from": "apps",
+      "to": "s3csi",
+      "label": "Mounts volume",
+      "labelDx": 90
+    },
+    {
+      "id": "a-sdk",
+      "from": "apps",
+      "to": "sdk",
+      "label": "Library calls"
+    },
+    {
+      "id": "irsa-s3",
+      "from": "irsa",
+      "to": "s3",
+      "label": "SigV4 authorization",
+      "variant": "dashed",
+      "toSide": "top"
+    },
+    {
+      "id": "csi-s3",
+      "from": "s3csi",
+      "to": "s3",
+      "label": "GET / PUT"
+    },
+    {
+      "id": "sdk-s3",
+      "from": "sdk",
+      "to": "s3",
+      "label": "GET / PUT",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Choosing an approach",
+      "items": [
+        "Mountpoint for Amazon S3 CSI helps when existing code expects files",
+        "Direct AWS SDK calls give fine control over multipart uploads and conditional requests",
+        "Hadoop S3A is the standard path for analytics engines such as Spark and Hive"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Permission design",
+      "items": [
+        "Take temporary credentials through IRSA or EKS Pod Identity instead of static access keys",
+        "Grant least privilege per prefix in both the bucket policy and the IAM policy",
+        "s3:GetObject must name the object path, as in arn:aws:s3:::bucket/*"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Common use cases",
+      "items": [
+        "Raw data lake storage and landing analytics output",
+        "Backup and archive, with lifecycle policies tiering to Glacier",
+        "Machine learning model artifacts and long-term log retention"
+      ]
+    }
+  ]
+}

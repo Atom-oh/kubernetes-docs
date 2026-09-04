@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico on Amazon EKS — VPC CNI + Calico Architecture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Kubernetes"
+        },
+        "security": {
+          "label": "Calico"
+        },
+        "cloud": {
+          "label": "VPC CNI"
+        },
+        "frontend": {
+          "label": "Pod"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "calico-policy-path",
+        "label": "Calico policy path",
+        "focus": [
+          "apiserver",
+          "typha",
+          "ckc",
+          "caliconode1",
+          "caliconode2",
+          "pods1",
+          "pods2"
+        ],
+        "note": "kube-apiserver → Typha → calico-node (Felix) on each node enforces NetworkPolicy on the pods. It never touches the networking itself."
+      },
+      {
+        "id": "vpc-cni-network-path",
+        "label": "VPC CNI networking path",
+        "focus": [
+          "awsnode1",
+          "eni1",
+          "pods1",
+          "pods2",
+          "eni2",
+          "awsnode2"
+        ],
+        "note": "aws-node manages ENIs and secondary IPs to assign pod IPs from the VPC CIDR. Cross-node pod traffic is routed natively by the VPC."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "etcd · Controllers",
+      "pos": [
+        120,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "typha",
+      "type": "security",
+      "label": "Typha",
+      "sublabel": "Calico scale layer · 3 replicas",
+      "pos": [
+        565,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ckc",
+      "type": "security",
+      "label": "calico-kube-controllers",
+      "sublabel": "Calico controllers",
+      "pos": [
+        980,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "awsnode1",
+      "type": "cloud",
+      "label": "aws-node (VPC CNI)",
+      "sublabel": "IPAMD · ENI Manager",
+      "pos": [
+        80,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "caliconode1",
+      "type": "security",
+      "label": "calico-node",
+      "sublabel": "Felix · eBPF (optional)",
+      "tag": "BGP Disabled",
+      "pos": [
+        390,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "eni1",
+      "type": "cloud",
+      "label": "ENI",
+      "sublabel": "Primary eth0 · Secondary eth1/eth2",
+      "pos": [
+        80,
+        470
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pods1",
+      "type": "frontend",
+      "label": "Pod A ~ D",
+      "sublabel": "10.0.1.10 ~ 10.0.1.13",
+      "tag": "Policy Enforced",
+      "pos": [
+        390,
+        470
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "caliconode2",
+      "type": "security",
+      "label": "calico-node",
+      "sublabel": "Felix · eBPF (optional)",
+      "tag": "BGP Disabled",
+      "pos": [
+        740,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "awsnode2",
+      "type": "cloud",
+      "label": "aws-node (VPC CNI)",
+      "sublabel": "IPAMD · ENI Manager",
+      "pos": [
+        1050,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pods2",
+      "type": "frontend",
+      "label": "Pod E ~ H",
+      "sublabel": "10.0.2.10 ~ 10.0.2.13",
+      "tag": "Policy Enforced",
+      "pos": [
+        740,
+        470
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "eni2",
+      "type": "cloud",
+      "label": "ENI",
+      "sublabel": "Primary eth0 · Secondary eth1/eth2",
+      "pos": [
+        1050,
+        470
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Control Plane (AWS managed)",
+      "wraps": [
+        "apiserver",
+        "typha",
+        "ckc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 10.0.0.0/16",
+      "wraps": [
+        "awsnode1",
+        "caliconode1",
+        "eni1",
+        "pods1",
+        "caliconode2",
+        "awsnode2",
+        "pods2",
+        "eni2"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Worker Node 1 (EC2) · Subnet 10.0.1.0/24 · Security Group",
+      "wraps": [
+        "awsnode1",
+        "caliconode1",
+        "eni1",
+        "pods1"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "security-group",
+      "label": "Worker Node 2 (EC2) · Subnet 10.0.2.0/24 · Security Group",
+      "wraps": [
+        "caliconode2",
+        "awsnode2",
+        "pods2",
+        "eni2"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-typha",
+      "from": "apiserver",
+      "to": "typha",
+      "label": "watch policy · endpoints"
+    },
+    {
+      "id": "ckc-typha",
+      "from": "ckc",
+      "to": "typha",
+      "label": "sync",
+      "variant": "dashed"
+    },
+    {
+      "id": "typha-cn1",
+      "from": "typha",
+      "to": "caliconode1",
+      "label": "policy push",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "typha-cn2",
+      "from": "typha",
+      "to": "caliconode2",
+      "label": "policy push",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cn1-pods1",
+      "from": "caliconode1",
+      "to": "pods1",
+      "label": "enforce policy",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "cn2-pods2",
+      "from": "caliconode2",
+      "to": "pods2",
+      "label": "enforce policy",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "awsnode1-eni1",
+      "from": "awsnode1",
+      "to": "eni1",
+      "label": "manage ENI · IP pool",
+      "labelDy": 24
+    },
+    {
+      "id": "awsnode2-eni2",
+      "from": "awsnode2",
+      "to": "eni2",
+      "label": "manage ENI · IP pool",
+      "labelDy": 24
+    },
+    {
+      "id": "eni1-pods1",
+      "from": "eni1",
+      "to": "pods1",
+      "label": "assign pod IP"
+    },
+    {
+      "id": "eni2-pods2",
+      "from": "eni2",
+      "to": "pods2",
+      "label": "assign pod IP"
+    },
+    {
+      "id": "pods1-pods2",
+      "from": "pods1",
+      "to": "pods2",
+      "label": "VPC routed",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "VPC CNI = Networking",
+      "items": [
+        "aws-node (IPAMD · ENI Manager) attaches ENIs and assigns pod IPs from the VPC CIDR",
+        "Because pod IPs are VPC addresses, cross-node pod-to-pod traffic is routed directly by the VPC"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Calico = Policy",
+      "items": [
+        "Felix in calico-node enforces NetworkPolicy via iptables/eBPF without changing the networking",
+        "Running alongside VPC CNI, BGP/IPAM are disabled (bgp: Disabled) — policy-only mode",
+        "Typha fans out the API server watch to every calico-node — required beyond 50 nodes"
+      ]
+    }
+  ]
+}

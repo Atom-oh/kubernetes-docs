@@ -8,7 +8,9 @@ Amazon EKS networking is a core component that manages communication for Kuberne
 
 The EKS networking architecture consists of the following components:
 
-![EKS Networking Architecture Overview](../.gitbook/assets/eks_networking_architecture_overview.png)
+![EKS networking architecture overview showing traffic from the internet through the IGW to the ALB in the public subnet and worker nodes in the private subnet.](../.gitbook/assets/en-eks-03-eks-networking-part1-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-0.html)
 
 1. **VPC (Virtual Private Cloud)**: Isolated network environment where the EKS cluster runs
 2. **Subnets**: Units that divide IP address ranges within the VPC
@@ -23,7 +25,9 @@ The EKS networking architecture consists of the following components:
 
 Network traffic flows in an EKS cluster as follows:
 
-![EKS Network Traffic Flow](../.gitbook/assets/eks_network_traffic_flow.png)
+![Diagram of how kubectl calls, kubelet traffic, pod-to-pod traffic, and service traffic flow inside an EKS cluster.](../.gitbook/assets/en-eks-03-eks-networking-part1-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-1.html)
 
 1. **Pod-to-Pod Communication**: Communication between pods on the same node or different nodes
 2. **Pod-to-Service Communication**: Communication between pods and services within the cluster
@@ -32,13 +36,17 @@ Network traffic flows in an EKS cluster as follows:
 
 ### Relationship Between EKS Networking Components
 
-![Relationship Between EKS Networking Components](../.gitbook/assets/eks_networking_components_relationship.png)
+![Diagram showing how EKS networking components connect across three lanes: inbound, outbound, and control-plane traffic.](../.gitbook/assets/en-eks-03-eks-networking-part1-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-2.html)
 
 ## VPC Requirements
 
 A VPC for an EKS cluster must meet the following requirements:
 
-![EKS VPC Requirements](../.gitbook/assets/eks_vpc_requirements.png)
+![Diagram of the EKS VPC prerequisite checklist, moving from subnets through IP space and DNS to internet access.](../.gitbook/assets/en-eks-03-eks-networking-part1-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-3.html)
 
 1. **Subnets**: Must have subnets in at least 2 availability zones
 2. **IP Addresses**: Must provide a sufficient number of IP addresses
@@ -49,7 +57,9 @@ A VPC for an EKS cluster must meet the following requirements:
 
 Considerations when planning VPC CIDR blocks:
 
-![VPC CIDR Planning Considerations](../.gitbook/assets/eks_vpc_cidr_planning.png)
+![Diagram of the VPC CIDR planning procedure, from cluster sizing through IP demand, headroom, and overlap checks to the final CIDR.](../.gitbook/assets/en-eks-03-eks-networking-part1-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-4.html)
 
 1. **Cluster Size**: Expected number of nodes and pods
 2. **IP Address Requirements**: Number of IP addresses needed for each node and pod
@@ -64,7 +74,9 @@ Common VPC CIDR block sizes:
 
 ### Subnet Design
 
-![EKS Subnet Design](../.gitbook/assets/eks_subnet_design.png)
+![EKS subnet design diagram pairing a public subnet, NAT Gateway, and private subnet in each of two Availability Zones.](../.gitbook/assets/en-eks-03-eks-networking-part1-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-5.html)
 
 Best practices for subnet design for EKS clusters:
 
@@ -89,7 +101,9 @@ Example subnet design:
 
 ### Subnet Tags
 
-![EKS Subnet Tag Configuration](../.gitbook/assets/eks_subnet_tags.png)
+![Diagram of the AWS Load Balancer Controller discovering public and private subnets by tag to place internet-facing and internal load balancers.](../.gitbook/assets/en-eks-03-eks-networking-part1-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-6.html)
 
 EKS uses specific tags on subnets to automatically discover resources:
 
@@ -110,7 +124,9 @@ aws ec2 create-tags \
 
 ### Security Group Configuration
 
-![EKS Security Group Configuration](../.gitbook/assets/eks_security_groups.png)
+![Diagram of the 443/TCP and 1025-65535/TCP rules between the control plane and worker node security groups, plus node-to-node and outbound paths.](../.gitbook/assets/en-eks-03-eks-networking-part1-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part1-7.html)
 
 EKS clusters have two main security groups:
 

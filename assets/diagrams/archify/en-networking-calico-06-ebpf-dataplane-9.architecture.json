@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Dataplane: iptables vs eBPF",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      1300,
+      540
+    ],
+    "views": [
+      {
+        "id": "iptables-path",
+        "label": "iptables packet path",
+        "focus": [
+          "nic-ipt",
+          "prerouting",
+          "forward",
+          "kubeproxy",
+          "postrouting",
+          "pod-ipt"
+        ],
+        "note": "One packet walks the PREROUTING → FORWARD → POSTROUTING chains in turn. O(N) rule evaluation grows with the rule count, so latency climbs."
+      },
+      {
+        "id": "ebpf-path",
+        "label": "eBPF packet path",
+        "focus": [
+          "src-pod",
+          "connect-lb",
+          "nic-tc",
+          "bpf-maps",
+          "pod-ebpf"
+        ],
+        "note": "Socket-level connect-time LB picks the backend first; then one BPF program at the TC hook does O(1) map lookups for policy and routing."
+      },
+      {
+        "id": "kube-proxy-replacement",
+        "label": "kube-proxy replacement",
+        "focus": [
+          "kubeproxy",
+          "connect-lb",
+          "bpf-maps"
+        ],
+        "note": "iptables mode needs kube-proxy rules for Service LB; eBPF mode picks the backend in the cgroup connect() hook before any packet exists."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Endpoint"
+        },
+        "backend": {
+          "label": "iptables"
+        },
+        "cloud": {
+          "label": "eBPF prog"
+        },
+        "database": {
+          "label": "BPF map"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "nic-ipt",
+      "type": "external",
+      "label": "NIC",
+      "sublabel": "packet ingress",
+      "pos": [
+        60,
+        56
+      ],
+      "size": [
+        110,
+        64
+      ]
+    },
+    {
+      "id": "prerouting",
+      "type": "backend",
+      "label": "PREROUTING",
+      "sublabel": "raw · mangle · nat + conntrack",
+      "pos": [
+        214,
+        56
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "forward",
+      "type": "backend",
+      "label": "FORWARD",
+      "sublabel": "mangle · filter",
+      "pos": [
+        438,
+        56
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy iptables rules",
+      "sublabel": "Service LB (DNAT)",
+      "tag": "O(N) rule evaluation",
+      "pos": [
+        642,
+        56
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "postrouting",
+      "type": "backend",
+      "label": "POSTROUTING",
+      "sublabel": "mangle · nat",
+      "pos": [
+        876,
+        56
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod-ipt",
+      "type": "external",
+      "label": "Destination Pod",
+      "sublabel": "high latency",
+      "pos": [
+        1090,
+        56
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "src-pod",
+      "type": "external",
+      "label": "Source Pod",
+      "sublabel": "app socket · connect()",
+      "pos": [
+        60,
+        222
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "connect-lb",
+      "type": "cloud",
+      "label": "Connect-time LB",
+      "sublabel": "cgroup connect() hook · socket level",
+      "tag": "no kube-proxy · DSR capable",
+      "pos": [
+        300,
+        222
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "nic-tc",
+      "type": "cloud",
+      "label": "veth TC Hook",
+      "sublabel": "one BPF program: policy + routing",
+      "pos": [
+        700,
+        222
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "bpf-maps",
+      "type": "database",
+      "label": "BPF Maps",
+      "sublabel": "Policy · Service/NAT · Endpoint",
+      "tag": "O(1) map lookup",
+      "pos": [
+        700,
+        360
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "pod-ebpf",
+      "type": "external",
+      "label": "Destination Pod",
+      "sublabel": "low latency",
+      "pos": [
+        1090,
+        222
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "iptables dataplane (Legacy) · O(N) rule evaluation",
+      "wraps": [
+        "nic-ipt",
+        "prerouting",
+        "forward",
+        "kubeproxy",
+        "postrouting",
+        "pod-ipt"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "eBPF dataplane (Modern) · O(1) map lookup",
+      "wraps": [
+        "src-pod",
+        "connect-lb",
+        "nic-tc",
+        "bpf-maps",
+        "pod-ebpf"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-nic-pre",
+      "from": "nic-ipt",
+      "to": "prerouting"
+    },
+    {
+      "id": "c-pre-fwd",
+      "from": "prerouting",
+      "to": "forward"
+    },
+    {
+      "id": "c-fwd-kp",
+      "from": "forward",
+      "to": "kubeproxy"
+    },
+    {
+      "id": "c-kp-post",
+      "from": "kubeproxy",
+      "to": "postrouting"
+    },
+    {
+      "id": "c-post-pod",
+      "from": "postrouting",
+      "to": "pod-ipt",
+      "label": "multiple chain traversals",
+      "labelDy": -26
+    },
+    {
+      "id": "c-src-lb",
+      "from": "src-pod",
+      "to": "connect-lb",
+      "label": "connect(VIP)",
+      "variant": "emphasis",
+      "labelDy": 26
+    },
+    {
+      "id": "c-lb-tc",
+      "from": "connect-lb",
+      "to": "nic-tc",
+      "label": "dest rewritten",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "c-tc-maps",
+      "from": "nic-tc",
+      "to": "bpf-maps",
+      "label": "map lookup",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "c-tc-pod",
+      "from": "nic-tc",
+      "to": "pod-ebpf",
+      "label": "single processing path",
+      "variant": "emphasis",
+      "labelDy": -26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "iptables mode",
+      "items": [
+        "Every packet traverses multiple chains, so latency is high",
+        "Rules are matched sequentially, so performance degrades as the rule count grows (O(N))",
+        "kube-proxy NAT rules grow in proportion to the number of Services and endpoints"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "eBPF mode",
+      "items": [
+        "Hash-based BPF map lookup gives O(1) matching regardless of scale",
+        "One BPF program at the TC hook handles policy, NAT, and routing in a single pass, keeping latency low",
+        "Socket-level LB picks the backend at connect() time, before any packet exists, so Services work without kube-proxy and DSR is supported"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Performance comparison",
+      "items": [
+        "Latency: iptables higher / eBPF lower",
+        "CPU usage: iptables higher / eBPF lower",
+        "Rule scalability: iptables limited / eBPF excellent"
+      ]
+    }
+  ]
+}

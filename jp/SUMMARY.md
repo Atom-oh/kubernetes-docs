@@ -175,6 +175,8 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [組織間 VPC 接続](networking/05-cross-org-vpc-connectivity.md)
+* [Pod ネットワークのベンチマーク](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -243,6 +245,11 @@
   * [オブザーバビリティ](service-mesh/cilium-service-mesh/04-observability.md)
   * [Ingress と Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [ベストプラクティス](service-mesh/cilium-service-mesh/06-best-practices.md)
+
+## ストレージ
+
+* [ストレージの概要](storage/README.md)
+* [EBS gp2 と gp3 の実測ベンチマーク比較](storage/01-ebs-gp2-gp3-benchmark.md)
 
 ## セキュリティとポリシー
 
@@ -319,6 +326,7 @@
   * [FinOps コスト可視化プラットフォーム](ops/13-finops-cost-platform.md)
   * [Tekton Pipelines](ops/14-tekton-pipelines.md)
   * [ゾーンクラスター運用](ops/15-zonal-operations-guide.md)
+  * [トラブルシューティング手順書](ops/16-troubleshooting-playbook.md)
 
 ## オブザーバビリティ
 
@@ -468,7 +476,7 @@
   * [パート 7: モニタリングクイズ](quizzes/data-on-eks/kafka/07-monitoring-quiz.md)
   * [パート 8: ベストプラクティスクイズ](quizzes/data-on-eks/kafka/08-best-practices-quiz.md)
   * [パート 1: Kubernetes 上の Spark の基礎クイズ](quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md)
-  * [パート 2: Spark Operator クイズ](quizzes/data-on-eks/spark/02-spark-operator.md)
+  * [パート 2: Spark Operator クイズ](quizzes/data-on-eks/spark/02-spark-operator-quiz.md)
   * [パート 3: Amazon EMR on EKS クイズ](quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
   * [パート 4: パフォーマンスとコストのチューニングクイズ](quizzes/data-on-eks/spark/04-performance-tuning-quiz.md)
   * [パート 5: ベストプラクティスとセキュリティクイズ](quizzes/data-on-eks/spark/05-best-practices-quiz.md)
@@ -508,6 +516,8 @@
   * [VPC Lattice クイズ](quizzes/networking/02-vpc-lattice-quiz.md)
   * [AWS Load Balancer Controller クイズ](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Gateway API クイズ](quizzes/networking/04-gateway-api-quiz.md)
+  * [組織間 VPC 接続クイズ](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Pod ネットワークのベンチマーククイズ](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Istio クイズ](quizzes/service-mesh/02-istio-quiz.md)
   * Istio 詳細クイズ
@@ -623,10 +633,6 @@
   * [FinOps コスト可視化プラットフォームクイズ](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Tekton Pipelines クイズ](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [ゾーンクラスター運用クイズ](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [トラブルシューティング手順書クイズ](quizzes/ops/16-troubleshooting-playbook-quiz.md)
 * Storage
   * [EBS gp2 と gp3 の実測ベンチマーク比較クイズ](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
-
-## ストレージ
-
-* [ストレージの概要](storage/README.md)
-* [EBS gp2 と gp3 の実測ベンチマーク比較](storage/01-ebs-gp2-gp3-benchmark.md)

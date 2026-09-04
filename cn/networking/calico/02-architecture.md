@@ -2,154 +2,43 @@
 
 > **支持的版本**：Calico v3.29+ / Kubernetes 1.28+ **最后更新**：February 23, 2026
 
-## 概述
+## 概览
 
-本节将深入探讨 Calico 的架构。了解各个组件的工作方式及其相互作用，对于在生产环境中有效部署、排查和优化 Calico 至关重要。
+本节深入介绍 Calico 的架构。了解每个组件的工作方式及其交互对于在生产环境中有效部署、排障和优化 Calico 至关重要。
 
 ## 完整架构图
 
-![Calico Architecture](../../.gitbook/assets/calico_architecture.png)
+![展示 Kubernetes 控制平面、Calico 控制平面（API server、kube-controllers、Typha）以及一个 worker node；其中 Felix 编程本地数据平面，confd/BIRD 通过节点 BGP 网格分发路由。](../../.gitbook/assets/en-networking-calico-02-architecture-0.png)
 
-```mermaid
-flowchart TD
-    subgraph KubernetesAPI["Kubernetes Control Plane"]
-        K8sAPI[Kubernetes API Server]
-        ETCD[(etcd)]
-    end
-
-    subgraph CalicoControl["Calico Control Plane"]
-        APIServer[Calico API Server]
-        KubeControllers[kube-controllers]
-        Typha1[Typha Pod 1]
-        Typha2[Typha Pod 2]
-        Typha3[Typha Pod 3]
-    end
-
-    subgraph Node1["Worker Node 1"]
-        Felix1[Felix]
-        BIRD1[BIRD]
-        confd1[confd]
-        IPTables1[iptables/eBPF]
-        Routes1[Routing Table]
-    end
-
-    subgraph Node2["Worker Node 2"]
-        Felix2[Felix]
-        BIRD2[BIRD]
-        confd2[confd]
-        IPTables2[iptables/eBPF]
-        Routes2[Routing Table]
-    end
-
-    subgraph Node3["Worker Node 3"]
-        Felix3[Felix]
-        BIRD3[BIRD]
-        confd3[confd]
-        IPTables3[iptables/eBPF]
-        Routes3[Routing Table]
-    end
-
-    %% Control plane connections
-    K8sAPI <--> ETCD
-    K8sAPI <--> APIServer
-    K8sAPI --> KubeControllers
-    KubeControllers --> K8sAPI
-
-    %% Typha connections
-    K8sAPI --> Typha1
-    K8sAPI --> Typha2
-    K8sAPI --> Typha3
-
-    %% Node 1 connections
-    Typha1 --> Felix1
-    Felix1 --> IPTables1
-    Felix1 --> Routes1
-    Felix1 --> confd1
-    confd1 --> BIRD1
-
-    %% Node 2 connections
-    Typha2 --> Felix2
-    Felix2 --> IPTables2
-    Felix2 --> Routes2
-    Felix2 --> confd2
-    confd2 --> BIRD2
-
-    %% Node 3 connections
-    Typha3 --> Felix3
-    Felix3 --> IPTables3
-    Felix3 --> Routes3
-    Felix3 --> confd3
-    confd3 --> BIRD3
-
-    %% BGP mesh
-    BIRD1 <-.->|BGP| BIRD2
-    BIRD2 <-.->|BGP| BIRD3
-    BIRD1 <-.->|BGP| BIRD3
-
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef calico fill:#FA8320,stroke:#333,stroke-width:1px,color:white
-    classDef node fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-
-    class K8sAPI,ETCD k8s
-    class APIServer,KubeControllers,Typha1,Typha2,Typha3 calico
-    class Felix1,Felix2,Felix3,BIRD1,BIRD2,BIRD3,confd1,confd2,confd3,IPTables1,IPTables2,IPTables3,Routes1,Routes2,Routes3 node
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-02-architecture-0.html)
 
 ## Felix：Calico Agent
 
-Felix 是运行在集群中每个节点上的主要 Calico Agent。它负责在主机上配置路由和 ACL（访问控制列表），以提供所需的连通性并实施网络策略。
+Felix 是运行在集群中每个节点上的主要 Calico Agent。它负责在主机上配置路由和 ACL（Access Control Lists，访问控制列表），以提供所需的连通性和网络策略执行。
 
 ### Felix 职责
 
-```mermaid
-flowchart LR
-    subgraph Felix["Felix Agent"]
-        A[Datastore Watcher]
-        B[Route Manager]
-        C[ACL Manager]
-        D[Interface Manager]
-        E[IPAM Manager]
-    end
-
-    subgraph Outputs["System Configuration"]
-        F[iptables Rules]
-        G[IP Sets]
-        H[Routing Table]
-        I[Network Interfaces]
-    end
-
-    A --> B
-    A --> C
-    A --> D
-    A --> E
-
-    B --> H
-    C --> F
-    C --> G
-    D --> I
-
-    style Felix fill:#FA8320,stroke:#333,color:white
-```
+![展示 Felix 的 Datastore Watcher 向其路由、ACL、接口和 IPAM 管理器分发信息，这些管理器进而配置节点的路由表、iptables 规则、IP 集合和网络接口。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-1.svg)
 
 ### 核心功能
 
 1. **路由配置**：管理 Pod CIDR 块的路由
-2. **ACL 实施**：为网络策略配置 iptables/nftables/eBPF 规则
-3. **接口管理**：配置工作负载端点接口
-4. **健康状况报告**：向 datastore 报告节点和端点的健康状况
-5. **IPAM 协调**：管理本地工作负载的 IP 地址分配
+2. **ACL 执行**：为网络策略配置 iptables/nftables/eBPF 规则
+3. **接口管理**：配置 workload endpoint 接口
+4. **健康状态报告**：向 datastore 报告节点和 endpoint 的健康状态
+5. **IPAM 协调**：管理本地 workload 的 IP 地址分配
 
 ### Felix 数据平面选项
 
-Felix 支持多种数据平面后端：
+Felix 支持多个数据平面后端：
 
-| 数据平面     | 描述                       | 最适用场景                                  |
-| ------------ | -------------------------- | ------------------------------------------- |
-| **iptables** | 传统 Linux 防火墙          | 兼容性、成熟部署                            |
-| **nftables** | 现代 Linux 防火墙          | 较新的内核、更好的性能                      |
-| **eBPF**     | 内核内可编程               | 最大性能、替代 kube-proxy                   |
+| 数据平面     | 描述                 | 最适用场景                              |
+| ------------ | -------------------- | --------------------------------------- |
+| **iptables** | 传统 Linux 防火墙    | 兼容性、成熟部署                        |
+| **nftables** | 现代 Linux 防火墙    | 较新的内核、更好的性能                  |
+| **eBPF**     | 内核内可编程         | 极致性能、替代 kube-proxy               |
 
-### FelixConfiguration 资源
+### FelixConfiguration Resource
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -213,7 +102,7 @@ spec:
 
 ### Felix iptables 规则结构
 
-Felix 将 iptables 规则组织到链中，以便高效处理：
+Felix 将 iptables 规则组织为链，以实现高效处理：
 
 ```
                          ┌─────────────────────────────────────────┐
@@ -239,28 +128,7 @@ Felix 将 iptables 规则组织到链中，以便高效处理：
 
 ### Felix 数据流
 
-```mermaid
-sequenceDiagram
-    participant DS as Datastore (via Typha)
-    participant F as Felix
-    participant IPT as iptables/eBPF
-    participant RT as Routing Table
-    participant IF as Network Interface
-
-    DS->>F: Policy Update
-    F->>F: Calculate required rules
-    F->>IPT: Program iptables rules
-    F->>IPT: Update IP sets
-
-    DS->>F: Workload Endpoint Update
-    F->>IF: Configure veth interface
-    F->>RT: Add/update routes
-    F->>IPT: Program endpoint rules
-
-    DS->>F: IPPool Update
-    F->>RT: Update IPIP/VXLAN routes
-    F->>IF: Configure tunnel interface
-```
+![时序图展示 Felix 从 datastore 接收策略、endpoint 和 IP pool 更新，并将每项更新转换为 iptables 规则、路由表条目或网络接口配置。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-2.svg)
 
 ## BIRD：BGP 路由守护进程
 
@@ -268,58 +136,19 @@ BIRD（BIRD Internet Routing Daemon）是 Calico 用于在节点之间分发路�
 
 ### Calico 架构中的 BIRD
 
-```mermaid
-flowchart TD
-    subgraph Cluster["Kubernetes Cluster"]
-        subgraph Node1["Node 1"]
-            BIRD1[BIRD]
-            RT1[Routes: 192.168.1.0/26]
-        end
-
-        subgraph Node2["Node 2"]
-            BIRD2[BIRD]
-            RT2[Routes: 192.168.2.0/26]
-        end
-
-        subgraph Node3["Node 3"]
-            BIRD3[BIRD]
-            RT3[Routes: 192.168.3.0/26]
-        end
-    end
-
-    subgraph External["External Network"]
-        TOR[ToR Switch]
-        Router[Core Router]
-    end
-
-    BIRD1 <-->|iBGP| BIRD2
-    BIRD2 <-->|iBGP| BIRD3
-    BIRD1 <-->|iBGP| BIRD3
-
-    BIRD1 <-->|eBGP| TOR
-    BIRD2 <-->|eBGP| TOR
-    BIRD3 <-->|eBGP| TOR
-
-    TOR <--> Router
-
-    classDef bird fill:#FA8320,stroke:#333,color:white
-    classDef external fill:#326CE5,stroke:#333,color:white
-
-    class BIRD1,BIRD2,BIRD3 bird
-    class TOR,Router external
-```
+![展示每个节点上的 BIRD 实例构成完整 iBGP 网格来交换 Pod 路由，然后通过 eBGP 与 top-of-rack switch 和 core router 建立对等连接，以向外部通告这些路由。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-3.svg)
 
 ### BGP 会话类型
 
-| 会话类型                 | 使用场景                    | 配置                   |
-| ------------------------ | --------------------------- | ---------------------- |
-| **节点到节点 Mesh**      | 小型集群的默认选项          | 自动、全 Mesh          |
-| **路由反射器**           | 大型集群（100+ 节点）       | 专用 RR 节点           |
-| **外部 Peering**         | 本地部署环境集成            | 手动配置 BGP peer      |
+| 会话类型              | 使用场景                    | 配置                   |
+| --------------------- | --------------------------- | ---------------------- |
+| **Node-to-Node Mesh** | 小型集群的默认选项          | 自动配置，全网状        |
+| **Route Reflector**   | 大型集群（100+ 节点）       | 专用 RR 节点           |
+| **External Peering**  | 本地部署集成                | 手动 BGP peer 配置     |
 
 ### BGP 配置示例
 
-#### 节点到节点 Mesh（默认）
+#### Node-to-Node Mesh（默认）
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -332,7 +161,7 @@ spec:
   asNumber: 64512
 ```
 
-#### 路由反射器配置
+#### Route Reflector 配置
 
 ```yaml
 # Disable node-to-node mesh
@@ -386,25 +215,7 @@ spec:
 
 ### 路由传播过程
 
-```mermaid
-sequenceDiagram
-    participant Pod as New Pod
-    participant Felix as Felix
-    participant BIRD as BIRD (Local)
-    participant Peer as BIRD (Peer Nodes)
-
-    Pod->>Felix: Pod Created
-    Felix->>Felix: Allocate IP from block
-    Felix->>Felix: Program local route
-    Felix->>BIRD: Route available
-
-    BIRD->>BIRD: Add to RIB
-    BIRD->>Peer: BGP UPDATE message
-    Peer->>Peer: Process UPDATE
-    Peer->>Peer: Install in RIB
-    Peer->>Felix: Route update
-    Felix->>Felix: Program route
-```
+![时序图展示新 Pod 的路由由 Felix 分配、添加到 BIRD 的本地路由表，并通过 BGP UPDATE 传播到 peer 节点，使其安装该路由并相应地路由 Felix。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-4.svg)
 
 ### BIRD 状态命令
 
@@ -432,46 +243,11 @@ birdcl> show route 192.168.1.0/26 all
 
 ## confd：配置管理
 
-confd 是一个轻量级配置管理工具，它会监视 Calico datastore 并生成 BIRD 配置文件。
+confd 是一款轻量级配置管理工具，它监视 Calico datastore 并生成 BIRD 配置文件。
 
 ### confd 工作流
 
-```mermaid
-flowchart LR
-    subgraph Datastore["Calico Datastore"]
-        BGPConfig[BGPConfiguration]
-        BGPPeers[BGPPeer]
-        Nodes[Node Resources]
-    end
-
-    subgraph confd["confd Process"]
-        Watcher[Datastore Watcher]
-        Templates[Config Templates]
-        Generator[Config Generator]
-    end
-
-    subgraph BIRD["BIRD Daemon"]
-        Config[bird.cfg]
-        Daemon[BIRD Process]
-    end
-
-    BGPConfig --> Watcher
-    BGPPeers --> Watcher
-    Nodes --> Watcher
-
-    Watcher --> Generator
-    Templates --> Generator
-    Generator --> Config
-    Config --> Daemon
-
-    classDef store fill:#326CE5,stroke:#333,color:white
-    classDef process fill:#FA8320,stroke:#333,color:white
-    classDef bird fill:#00C7B7,stroke:#333,color:white
-
-    class BGPConfig,BGPPeers,Nodes store
-    class Watcher,Templates,Generator process
-    class Config,Daemon bird
-```
+![展示 confd 的 watcher 对 Calico datastore 中的 BGP 配置、peer 和节点 Resource 作出响应，从模板渲染 bird.cfg 文件，并将其交给运行中的 BIRD 进程。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-5.svg)
 
 ### confd 模板处理
 
@@ -513,39 +289,11 @@ Typha 是位于 Kubernetes API server 与 Felix Agent 之间的扇出代理。�
 
 ### 为什么使用 Typha？
 
-```mermaid
-flowchart TD
-    subgraph Without["Without Typha (Small Cluster)"]
-        API1[Kubernetes API]
-        F1[Felix 1]
-        F2[Felix 2]
-        F3[Felix 3]
-
-        API1 -->|Watch| F1
-        API1 -->|Watch| F2
-        API1 -->|Watch| F3
-    end
-
-    subgraph With["With Typha (Large Cluster)"]
-        API2[Kubernetes API]
-        T1[Typha 1]
-        T2[Typha 2]
-        FF1[Felix 1-100]
-        FF2[Felix 101-200]
-
-        API2 -->|Watch| T1
-        API2 -->|Watch| T2
-        T1 -->|Fan-out| FF1
-        T2 -->|Fan-out| FF2
-    end
-
-    style Without fill:#ffcccc,stroke:#333
-    style With fill:#ccffcc,stroke:#333
-```
+![对比图展示在小型集群中，每个 Felix 直接监视 Kubernetes API；而在大型集群中，Typha Pod 将缓存的更新扇出分发给数百个 Felix Agent。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-6.svg)
 
 ### Typha 扩缩容计算
 
-推荐的 Typha 副本数取决于集群规模：
+建议的 Typha 副本数量取决于集群规模：
 
 ```
 Typha Replicas = max(3, ceil(Nodes / 200))
@@ -649,94 +397,25 @@ spec:
 
 ### Typha 扇出架构
 
-```mermaid
-flowchart TD
-    subgraph APIServer["Kubernetes API Server"]
-        Watch1[Watch Stream 1]
-        Watch2[Watch Stream 2]
-    end
-
-    subgraph Typha["Typha Layer"]
-        T1[Typha Pod 1]
-        T2[Typha Pod 2]
-        Cache1[(Local Cache)]
-        Cache2[(Local Cache)]
-    end
-
-    subgraph Nodes["Worker Nodes"]
-        subgraph Group1["Node Group 1"]
-            F1[Felix]
-            F2[Felix]
-            F3[Felix]
-            Fn1[Felix...]
-        end
-        subgraph Group2["Node Group 2"]
-            F4[Felix]
-            F5[Felix]
-            F6[Felix]
-            Fn2[Felix...]
-        end
-    end
-
-    Watch1 --> T1
-    Watch2 --> T2
-    T1 --> Cache1
-    T2 --> Cache2
-
-    Cache1 --> F1
-    Cache1 --> F2
-    Cache1 --> F3
-    Cache1 --> Fn1
-
-    Cache2 --> F4
-    Cache2 --> F5
-    Cache2 --> F6
-    Cache2 --> Fn2
-
-    classDef api fill:#326CE5,stroke:#333,color:white
-    classDef typha fill:#FA8320,stroke:#333,color:white
-    classDef felix fill:#00C7B7,stroke:#333,color:white
-
-    class Watch1,Watch2 api
-    class T1,T2,Cache1,Cache2 typha
-    class F1,F2,F3,F4,F5,F6,Fn1,Fn2 felix
-```
+![架构图展示两个 API server watch 流输入两个 Typha Pod，每个 Pod 在本地缓存更新，并将其扇出分发给其节点组中约一百个 Felix Agent。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-7.svg)
 
 ## kube-controllers：Kubernetes 集成
 
-calico-kube-controllers Pod 运行一组控制器，用于将 Kubernetes 资源与 Calico datastore 同步。
+calico-kube-controllers Pod 运行一组 Controller，用于将 Kubernetes Resource 与 Calico datastore 同步。
 
-### 控制器概述
+### Controller 概览
 
-| 控制器                         | 用途                                              |
-| ------------------------------ | ------------------------------------------------- |
-| **Node Controller**            | 将 Kubernetes 节点同步到 Calico 节点资源          |
-| **Policy Controller**          | 将 Kubernetes NetworkPolicy 同步到 Calico 策略    |
-| **Namespace Controller**       | 同步 namespace 标签以进行 profile 管理            |
-| **ServiceAccount Controller**  | 同步 service account 标签以用于 RBAC              |
-| **WorkloadEndpoint Controller**| 清理过期的工作负载端点                            |
+| Controller                      | 用途                                              |
+| ------------------------------- | ------------------------------------------------- |
+| **Node Controller**             | 将 Kubernetes 节点与 Calico 节点 Resource 同步    |
+| **Policy Controller**           | 将 Kubernetes NetworkPolicy 与 Calico 策略同步    |
+| **Namespace Controller**        | 同步 namespace 标签以进行 profile 管理           |
+| **ServiceAccount Controller**   | 同步 service account 标签以支持 RBAC              |
+| **WorkloadEndpoint Controller** | 清理过期的 workload endpoint                     |
 
-### 控制器协调循环
+### Controller 协调循环
 
-```mermaid
-sequenceDiagram
-    participant K8s as Kubernetes API
-    participant KC as kube-controllers
-    participant DS as Calico Datastore
-
-    loop Every reconciliation interval
-        KC->>K8s: List Kubernetes resources
-        KC->>DS: List Calico resources
-        KC->>KC: Compare and calculate diff
-
-        alt Resources out of sync
-            KC->>DS: Create/Update/Delete resources
-            KC->>KC: Log reconciliation action
-        else Resources in sync
-            KC->>KC: No action needed
-        end
-    end
-```
+![时序图展示 kube-controllers 反复列出 Kubernetes 和 Calico Resource、比较它们的差异，并在两者已同步时将变更写入 Calico datastore 或不执行任何操作。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-8.svg)
 
 ### kube-controllers 配置
 
@@ -778,74 +457,28 @@ data:
 
 ## Datastore 选项
 
-Calico 支持两种 datastore 后端来存储其配置和状态。
+Calico 支持两种用于存储其配置和状态的 datastore 后端。
 
 ### Kubernetes API Datastore（推荐）
 
-```mermaid
-flowchart LR
-    subgraph Components["Calico Components"]
-        Felix[Felix]
-        Typha[Typha]
-        KC[kube-controllers]
-    end
-
-    subgraph K8s["Kubernetes"]
-        API[API Server]
-        ETCD[(etcd)]
-    end
-
-    Felix <--> Typha
-    Typha <--> API
-    KC <--> API
-    API <--> ETCD
-
-    classDef calico fill:#FA8320,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class Felix,Typha,KC calico
-    class API,ETCD k8s
-```
+![展示 Felix、Typha 和 kube-controllers 都通过 Kubernetes API server 读取和写入 Calico 状态，API server 本身持久化到 etcd，无需单独的 Calico etcd 集群。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-9.svg)
 
 **优点：**
 
 * 无需管理单独的 etcd 集群
 * 使用 Kubernetes RBAC 进行访问控制
 * 运维模型更简单
-* 可与任何 Kubernetes 发行版配合使用
+* 适用于任何 Kubernetes 发行版
 
 ### etcd Datastore（旧版）
 
-```mermaid
-flowchart LR
-    subgraph Components["Calico Components"]
-        Felix[Felix]
-        Typha[Typha]
-        KC[kube-controllers]
-    end
-
-    subgraph Datastores["Datastores"]
-        K8sAPI[K8s API Server]
-        CalicoETCD[(Calico etcd)]
-    end
-
-    Felix <--> Typha
-    Typha <--> CalicoETCD
-    KC <--> K8sAPI
-    KC <--> CalicoETCD
-
-    classDef calico fill:#FA8320,stroke:#333,color:white
-    classDef store fill:#326CE5,stroke:#333,color:white
-
-    class Felix,Typha,KC calico
-    class K8sAPI,CalicoETCD store
-```
+![展示 Felix 和 Typha 直接从专用 Calico etcd 集群读取和写入，而 kube-controllers 将该集群与 Kubernetes API server 连接起来——这是旧版的解耦 datastore 选项。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-10.svg)
 
 **优点：**
 
 * 与 Kubernetes API server 解耦
-* 可用于非 Kubernetes 工作负载（VM、裸金属）
-* 面向超大集群的历史选项
+* 可用于非 Kubernetes workload（VM、裸金属）
+* 面向超大型集群的历史选项
 
 ### Datastore 对比
 
@@ -853,112 +486,24 @@ flowchart LR
 | -------------------------- | ----------------- | ------------------ |
 | **运维复杂度**             | 较低              | 较高               |
 | **可扩展性**               | 良好（配合 Typha）| 卓越               |
-| **非 K8s 工作负载**        | 有限              | 完全支持           |
-| **备份/恢复**              | 通过 K8s          | 独立工具           |
-| **访问控制**               | K8s RBAC          | etcd auth          |
-| **建议**                   | 默认选择          | 仅特殊情况         |
+| **非 K8s Workload**        | 有限              | 完整支持           |
+| **备份/恢复**              | 通过 K8s          | 单独的工具         |
+| **访问控制**               | K8s RBAC          | etcd 认证          |
+| **建议**                   | 默认选择          | 仅适用于特殊场景   |
 
-## 组件交互序列
+## 组件交互时序
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8sAPI as Kubernetes API
-    participant KC as kube-controllers
-    participant Typha
-    participant Felix
-    participant BIRD
-    participant DataPlane as iptables/eBPF
-
-    User->>K8sAPI: Create NetworkPolicy
-    K8sAPI->>KC: Policy event
-    KC->>K8sAPI: Create CalicoNetworkPolicy
-
-    K8sAPI->>Typha: Policy update
-    Typha->>Felix: Distribute policy
-    Felix->>Felix: Calculate rules
-    Felix->>DataPlane: Program rules
-
-    User->>K8sAPI: Create Pod
-    K8sAPI->>KC: Pod event
-    KC->>K8sAPI: Create WorkloadEndpoint
-
-    K8sAPI->>Typha: Endpoint update
-    Typha->>Felix: Distribute endpoint
-    Felix->>DataPlane: Program endpoint rules
-    Felix->>BIRD: Update routes
-    BIRD->>BIRD: Distribute via BGP
-```
+![时序图跟踪 NetworkPolicy 和 Pod 创建过程：从 Kubernetes API 经由 kube-controllers 和 Typha 到 Felix，后者配置本地数据平面并更新 BGP 路由。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-11.svg)
 
 ## 数据包流分析
 
 ### 入站数据包流（Pod 到 Pod，同一节点）
 
-```mermaid
-flowchart TD
-    subgraph SameNode["Single Node"]
-        PodA[Pod A - 192.168.1.10]
-        VethA[veth: caliXXXXXX]
-        IPT[iptables/eBPF]
-        VethB[veth: caliYYYYYY]
-        PodB[Pod B - 192.168.1.11]
-    end
-
-    PodA -->|1. Send packet| VethA
-    VethA -->|2. Enter host namespace| IPT
-    IPT -->|3. Policy check + forward| VethB
-    VethB -->|4. Deliver| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef infra fill:#FA8320,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VethA,VethB,IPT infra
-```
+![展示数据包通过其 veth 接口和主机的 iptables/eBPF 策略检查，从一个 Pod 到达同一节点上的另一个 Pod。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-12.svg)
 
 ### 出站数据包流（Pod 到 Pod，使用 IPIP 的不同节点）
 
-```mermaid
-flowchart TD
-    subgraph Node1["Node 1 - 10.0.1.10"]
-        PodA[Pod A - 192.168.1.10]
-        VethA[veth: caliXXXXXX]
-        IPT1[iptables/eBPF]
-        Tunl1[tunl0 - IPIP]
-        Eth1[eth0]
-    end
-
-    subgraph Network["Physical Network"]
-        Switch[Network Switch]
-    end
-
-    subgraph Node2["Node 2 - 10.0.1.11"]
-        Eth2[eth0]
-        Tunl2[tunl0 - IPIP]
-        IPT2[iptables/eBPF]
-        VethB[veth: caliYYYYYY]
-        PodB[Pod B - 192.168.2.10]
-    end
-
-    PodA -->|1. Original packet| VethA
-    VethA -->|2. Route lookup| IPT1
-    IPT1 -->|3. Policy check| Tunl1
-    Tunl1 -->|4. IPIP encap| Eth1
-    Eth1 -->|5. Outer: 10.0.1.10->10.0.1.11| Switch
-    Switch -->|6. Forward| Eth2
-    Eth2 -->|7. Receive| Tunl2
-    Tunl2 -->|8. IPIP decap| IPT2
-    IPT2 -->|9. Policy check| VethB
-    VethB -->|10. Deliver| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef infra fill:#FA8320,stroke:#333,color:white
-    classDef network fill:#00C7B7,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VethA,VethB,IPT1,IPT2,Tunl1,Tunl2,Eth1,Eth2 infra
-    class Switch network
-```
+![展示数据包从一个节点的 Pod 经由其 veth 和 iptables 检查离开，通过物理网络交换机以 IPIP 封装传输，在第二个节点解封装后送达一个 Pod。](../../../assets/diagrams/rendered/en-networking-calico-02-architecture-13.svg)
 
 ### 数据包结构对比
 
@@ -983,14 +528,14 @@ IPIP Encapsulated Packet:
 
 Calico 的架构专为可扩展性、性能和运维简洁性而设计：
 
-1. **Felix**：每个节点上的核心 Agent，负责配置路由和 ACL
+1. **Felix**：每个节点上的核心 Agent，配置路由和 ACL
 2. **BIRD**：通过 BGP 分发路由，实现原生路由集成
-3. **confd**：连接 datastore 与 BIRD 配置
+3. **confd**：将 datastore 桥接到 BIRD 配置
 4. **Typha**：通过降低 API server 负载来扩展系统
 5. **kube-controllers**：保持 Kubernetes 与 Calico 同步
 6. **Datastore**：使用 Kubernetes API（推荐）或 etcd 存储配置
 
-了解这些组件及其相互作用，对于以下事项至关重要：
+了解这些组件及其交互对于以下事项至关重要：
 
 * 排查连通性问题
 * 大规模优化性能
@@ -1001,8 +546,8 @@ Calico 的架构专为可扩展性、性能和运维简洁性而设计：
 
 [下一节：第 3 部分 - 网络模式](03-networking-modes.md)
 
-[返回 Calico 概述](./README.md)
+[返回 Calico 概览](./README.md)
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试[架构测验](../../quizzes/networking/calico/02-architecture-quiz.md)。
+要检验您在本章所学的内容，请尝试[架构测验](../../quizzes/networking/calico/02-architecture-quiz.md)。

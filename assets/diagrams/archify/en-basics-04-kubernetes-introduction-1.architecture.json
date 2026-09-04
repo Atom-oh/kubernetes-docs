@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Worker Node",
+    "locale": "en",
+    "output": "en-basics-04-kubernetes-introduction-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "kubelet-path",
+        "label": "kubelet path",
+        "focus": [
+          "cp",
+          "kubelet",
+          "runtime"
+        ],
+        "note": "kubelet takes instructions from the control plane, manages containers through the container runtime, and reports node status."
+      },
+      {
+        "id": "container-run",
+        "label": "Running containers",
+        "focus": [
+          "runtime",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "The container runtime pulls images and runs the containers inside the Pods."
+      },
+      {
+        "id": "network-proxy",
+        "label": "Network proxy",
+        "focus": [
+          "kubeproxy",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "kube-proxy maintains network rules that implement the Service abstraction and enable Pod-to-Pod communication."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Node components"
+        },
+        "frontend": {
+          "label": "Container"
+        },
+        "external": {
+          "label": "Control plane"
+        }
+      }
+    },
+    "viewBox": [
+      1230,
+      630
+    ]
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "external",
+      "label": "Control Plane",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "node agent",
+      "pos": [
+        340,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Container Runtime",
+      "sublabel": "Docker · containerd · CRI-O",
+      "pos": [
+        630,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "frontend",
+      "label": "Container 1",
+      "sublabel": "runs an image",
+      "pos": [
+        960,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "frontend",
+      "label": "Container 2",
+      "sublabel": "runs an image",
+      "pos": [
+        960,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "frontend",
+      "label": "Container 3",
+      "sublabel": "… and more containers",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "network proxy",
+      "pos": [
+        960,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node (Worker)",
+      "wraps": [
+        "kubelet",
+        "runtime",
+        "c1",
+        "c2",
+        "c3",
+        "kubeproxy"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "Pods (shared storage · network)",
+      "wraps": [
+        "c1",
+        "c2",
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-kubelet",
+      "from": "cp",
+      "to": "kubelet",
+      "label": "instructs · reports",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubelet-runtime",
+      "from": "kubelet",
+      "to": "runtime",
+      "label": "manages containers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "runtime-c1",
+      "from": "runtime",
+      "to": "c1"
+    },
+    {
+      "id": "runtime-c2",
+      "from": "runtime",
+      "to": "c2",
+      "label": "run",
+      "variant": "emphasis",
+      "labelDx": 32
+    },
+    {
+      "id": "runtime-c3",
+      "from": "runtime",
+      "to": "c3"
+    },
+    {
+      "id": "proxy-pods",
+      "from": "kubeproxy",
+      "to": "c3",
+      "label": "network rules",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "kubelet",
+      "items": [
+        "Agent running on each node; takes instructions from the control plane and ensures the containers in Pods are running",
+        "Reports node status back to the control plane"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "kube-proxy",
+      "items": [
+        "Network proxy running on each node; implements the Kubernetes Service concept",
+        "Maintains network rules that enable Pod-to-Pod communication"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Container Runtime · Pods",
+      "items": [
+        "Software that pulls container images and runs them (Docker, containerd, CRI-O, etc.)",
+        "A Pod is a group of one or more containers sharing storage and network — the unit of deployment"
+      ]
+    }
+  ]
+}

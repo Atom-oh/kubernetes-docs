@@ -36,7 +36,7 @@ This approach does come with trade-offs: your team takes on Operator management,
 ## Currently Covered
 
 - [Anatomy of a Modern Data Pipeline](01-data-pipeline-anatomy.md) — An introductory map of the full pipeline in five layers, from sources to consumption, showing which layer each deep dive covers.
-- [Kafka on EKS](kafka/README.md) — An 8-part deep dive into deploying and operating Apache Kafka on EKS using the Strimzi Operator.
+- [Kafka on EKS](kafka/README.md) — An 8-part deep dive into deploying and operating Apache Kafka on EKS using the Strimzi Operator, plus a Part 9 measured benchmark of a 3-broker RF3 cluster's ingest ceiling on gp3.
 - [Spark on EKS](spark/README.md) — A 5-part deep dive covering Spark-on-Kubernetes fundamentals, the Spark Operator landscape, Amazon EMR on EKS, and performance/cost tuning.
 - [Airflow on EKS](airflow/README.md) — A 5-part deep dive covering Airflow 3's architecture, Helm-based deployment and executor choice, DAG patterns with KubernetesPodOperator, and Amazon MWAA integration.
 - [Flink on EKS](flink/README.md) — A 4-part deep dive covering Flink's architecture on Kubernetes, the Flink Kubernetes Operator, state/checkpointing, and operations/HA.

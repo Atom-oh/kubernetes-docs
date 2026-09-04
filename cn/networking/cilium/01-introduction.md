@@ -10,7 +10,7 @@
 
 * kubectl v1.33 或更高版本
 * Helm v3.12 或更高版本
-* 可正常运行的 Kubernetes 集群（EKS、minikube、kind 等）
+* 一个可正常运行的 Kubernetes 集群（EKS、minikube、kind 等）
 * Linux kernel 4.19 或更高版本（用于 eBPF 功能支持）
 
 ### 安装 Cilium
@@ -30,21 +30,25 @@ cilium status
 
 ## 什么是 Cilium？
 
-Cilium 是一款开源软件，它利用 Linux kernel 中强大的 eBPF 技术，为容器化应用程序提供网络、安全性和可观测性。它旨在为 Kubernetes、Docker 和 Mesos 等容器编排平台提供网络、安全性和可观测性。
+Cilium 是一款开源软件，通过利用 Linux kernel 中强大的 eBPF 技术，为容器化应用程序提供网络、安全和可观测性。它旨在为 Kubernetes、Docker 和 Mesos 等容器编排平台提供网络、安全和可观测性。
 
-### 主要功能：
+### 主要特性：
 
-* **基于 eBPF**：通过 kernel 内可编程的数据路径提供高性能网络和安全功能
+* **基于 eBPF**：通过 kernel 内的可编程数据路径提供高性能网络和安全功能
 * **API 感知网络**：支持 L3-L7 层的 API 感知网络安全策略
 * **Kubernetes 集成**：提供 Kubernetes CNI（Container Network Interface）实现
 * **分布式负载均衡**：为服务间通信提供高效的分布式负载均衡
 * **网络可见性**：通过 Hubble 进行网络流监控和故障排除
 * **多集群支持**：支持跨集群网络和安全策略
 * **Kubernetes 兼容性**：完全兼容 Kubernetes 1.32 及更高版本
-* **增强的 BGP 支持**：借助 Cilium 1.18 改进的 BGP 控制平面，实现更灵活的路由配置
+* **增强的 BGP 支持**：通过 Cilium 1.18 改进的 BGP 控制平面实现更灵活的路由配置
 * **增强的可观测性**：通过改进的指标和追踪功能获得更深入的洞察
 
 ### Cilium 架构
+
+![从 Kubernetes 向下经由 CNI、Cilium、eBPF 和 Linux kernel 的分层图，其中 Cilium 向 Hubble 发出流事件。](../../.gitbook/assets/en-networking-cilium-01-introduction-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-01-introduction-0.html)
 
 ## 容器网络基础
 
@@ -54,12 +58,12 @@ Cilium 是一款开源软件，它利用 Linux kernel 中强大的 eBPF 技术�
 
 1. **主机网络**：容器共享主机的网络命名空间
 2. **桥接网络**：容器连接到主机内的虚拟网桥
-3. **Overlay 网络**：跨多个主机创建虚拟网络
-4. **Underlay 网络**：直接利用物理网络基础设施
+3. **覆盖网络**：在多个主机之间创建虚拟网络
+4. **底层网络**：直接利用物理网络基础设施
 
 ### 容器网络挑战：
 
-* **可扩展性**：支持数千个容器和 Service
+* **可扩展性**：支持数千个容器和服务
 * **性能**：尽可能降低延迟并最大化吞吐量
 * **安全性**：保护微服务之间的通信
 * **可观测性**：监控网络流并进行故障排除
@@ -67,16 +71,16 @@ Cilium 是一款开源软件，它利用 Linux kernel 中强大的 eBPF 技术�
 
 ## 了解 CNI（Container Network Interface）
 
-> **关键概念**：CNI（Container Network Interface）是一个 CNCF 项目，用于定义容器运行时与网络插件之间的标准接口。
+> **关键概念**：CNI（Container Network Interface）是一个 CNCF 项目，它定义了容器运行时与网络插件之间的标准接口。
 
-### CNI 的主要组件：
+### CNI 的关键组件：
 
-* **插件架构**：支持集成各种网络解决方案的模块化设计
+* **插件架构**：允许集成各种网络解决方案的模块化设计
 * **网络配置**：以 JSON 格式定义的网络设置
 * **IPAM（IP Address Management）**：IP 地址分配和管理
-* **标准 API**：在添加/删除容器时用于网络设置的标准 API
+* **标准 API**：在添加/移除容器时用于网络设置的标准 API
 
-### 主要 CNI 插件对比：
+### 主流 CNI 插件对比：
 
 | 功能                         | Cilium                    | Calico         | Flannel        | AWS VPC CNI            |
 | ---------------------------- | ------------------------- | -------------- | -------------- | ---------------------- |
@@ -85,33 +89,33 @@ Cilium 是一款开源软件，它利用 Linux kernel 中强大的 eBPF 技术�
 | **加密**                     | IPsec/WireGuard           | IPsec          | 无             | 无                     |
 | **可观测性**                 | Hubble                    | Flow Logs      | 有限           | VPC Flow Logs          |
 | **Service Mesh**             | 内置                      | 需要 Istio     | 需要 Istio     | 需要 Istio/AppMesh     |
-| **性能**                     | 非常高                    | 高             | 中             | 高                     |
-| **IPAM**                     | Cluster Pool, CRD         | IPAM Plugin    | Host Subnet    | AWS IPAM               |
+| **性能**                     | 极高                      | 高             | 中             | 高                     |
+| **IPAM**                     | Cluster Pool、CRD         | IPAM 插件      | Host Subnet    | AWS IPAM               |
 | **Kubernetes 兼容性**        | 1.32+                     | 1.29+          | 1.28+          | 1.29+                  |
 | **BGP 支持**                 | 增强的控制平面（v1.18+）  | 有限           | 无             | VPC 路由               |
 
 * **Weave Net**：多主机容器网络
 * **AWS VPC CNI**：与 AWS VPC 直接集成
 
-## Cilium 的差异化功能
+## Cilium 的差异化特性
 
 与其他 CNI 解决方案相比，Cilium 提供了多项独特优势。
 
 ### 技术差异化：
 
-* **eBPF 利用**：通过 kernel 内可编程的数据路径实现高性能和灵活性
-* **API 感知网络**：支持最高到 L7 层的网络策略
-* **XDP（eXpress Data Path）**：数据包处理性能优化
-* **Kube-proxy 替代**：更高效的 Service 负载均衡
+* **eBPF 利用**：通过 kernel 内的可编程数据路径实现高性能和灵活性
+* **API 感知网络**：支持最高至 L7 层的网络策略
+* **XDP（eXpress Data Path）**：优化数据包处理性能
+* **Kube-proxy 替代**：更高效的服务负载均衡
 * **Hubble 集成**：强大的网络可观测性工具
 * **最新 Kubernetes 兼容性**：完全兼容 Kubernetes 1.32 及更高版本
 
 ### 按使用场景划分的优势：
 
 * **微服务架构**：细粒度网络策略和可观测性
-* **多集群 Deployment**：跨集群无缝网络连接
+* **多集群部署**：跨集群的无缝网络连接
 * **以安全为重点的环境**：强大的网络安全策略
-* **高性能需求**：优化的数据路径
+* **高性能要求**：优化的数据路径
 * **Service Mesh 集成**：与 Istio 等 Service Mesh 集成
 
 ## 实验：Cilium 安装和基本配置
@@ -157,4 +161,4 @@ spec:
 
 ## 测验
 
-要测试您在本章中所学的内容，请尝试[主题测验](../../quizzes/networking/cilium/01-introduction-quiz.md)。
+要测试您在本章中所学的内容，请尝试完成[主题测验](../../quizzes/networking/cilium/01-introduction-quiz.md)。

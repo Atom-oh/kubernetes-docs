@@ -1,0 +1,163 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS 네트워킹 문제 해결 분류",
+    "output": "ko-eks-03-eks-networking-part3-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "클러스터 계층"
+        },
+        "cloud": {
+          "label": "AWS 계층"
+        },
+        "external": {
+          "label": "증상"
+        },
+        "database": {
+          "label": "진단 도구"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "triage",
+      "label": "증상 분류"
+    },
+    {
+      "id": "tools",
+      "label": "진단과 조치"
+    }
+  ],
+  "mainPath": [
+    "symptom",
+    "podnet",
+    "svclb",
+    "vpcsub"
+  ],
+  "nodes": [
+    {
+      "id": "symptom",
+      "lane": "triage",
+      "col": 0,
+      "type": "external",
+      "label": "네트워킹 이상",
+      "sublabel": "연결 실패",
+      "width": 150
+    },
+    {
+      "id": "podnet",
+      "lane": "triage",
+      "col": 1,
+      "type": "backend",
+      "label": "파드 네트워킹",
+      "sublabel": "IP · 통신 · DNS",
+      "width": 150
+    },
+    {
+      "id": "svclb",
+      "lane": "triage",
+      "col": 2,
+      "type": "cloud",
+      "label": "서비스 · 로드 밸런싱",
+      "sublabel": "LB · Ingress",
+      "width": 150
+    },
+    {
+      "id": "vpcsub",
+      "lane": "triage",
+      "col": 3,
+      "type": "cloud",
+      "label": "VPC · 서브넷",
+      "sublabel": "IP · 라우팅",
+      "width": 150
+    },
+    {
+      "id": "tooling",
+      "lane": "tools",
+      "col": 4,
+      "type": "database",
+      "label": "진단 도구 투입",
+      "sublabel": "netshoot",
+      "width": 150
+    },
+    {
+      "id": "fix",
+      "lane": "tools",
+      "col": 5,
+      "type": "backend",
+      "label": "원인 확정 · 조치",
+      "sublabel": "수정 · 재시작",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "symptom",
+      "to": "podnet",
+      "label": "파드부터"
+    },
+    {
+      "id": "e2",
+      "from": "podnet",
+      "to": "svclb",
+      "label": "해당 없음"
+    },
+    {
+      "id": "e3",
+      "from": "svclb",
+      "to": "vpcsub",
+      "label": "해당 없음"
+    },
+    {
+      "id": "e4",
+      "from": "vpcsub",
+      "to": "tooling",
+      "label": "심층 진단",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "tooling",
+      "to": "fix",
+      "label": "조치"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "파드 IP 할당 실패",
+      "items": [
+        "증상: 파드가 ContainerCreating에 머물고 IP 할당 실패 메시지가 남는다",
+        "원인: 노드의 가용 IP 부족 또는 ENI 한도 도달",
+        "조치: WARM_IP_TARGET 증가, 인스턴스 유형 상향, 사용자 정의 네트워킹",
+        "진단: kubectl describe node · kubectl logs -n kube-system -l k8s-app=aws-node"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "파드 간 통신 · DNS",
+      "items": [
+        "증상: 파드 간 연결 실패, 타임아웃, 서비스 이름 해결 실패",
+        "원인: 네트워크 정책 차단, 보안 그룹 규칙, CoreDNS 이상",
+        "진단: kubectl get networkpolicy · kubectl exec으로 ping·nslookup 수행",
+        "CoreDNS 파드 상태와 로그를 함께 확인한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "로드 밸런서와 진단 도구",
+      "items": [
+        "LB 생성 실패는 서브넷 태그 누락, 보안 그룹, IAM 권한을 먼저 본다",
+        "필수 태그: kubernetes.io/role/elb=1(퍼블릭), kubernetes.io/role/internal-elb=1(프라이빗)",
+        "netshoot 파드로 tcpdump·traceroute를 돌리고 VPC Flow Logs로 경로를 확인한다"
+      ]
+    }
+  ]
+}

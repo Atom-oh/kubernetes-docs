@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "네트워크 정책 구성과 트래픽 흐름",
+    "output": "ko-core-07-policies-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      780
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "정책 리소스 · 선택자"
+        },
+        "frontend": {
+          "label": "프론트엔드"
+        },
+        "backend": {
+          "label": "백엔드"
+        },
+        "database": {
+          "label": "데이터베이스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "policy-spec",
+        "label": "정책 구성",
+        "focus": [
+          "np",
+          "podselector",
+          "policytypes",
+          "ingress",
+          "egress"
+        ],
+        "note": "NetworkPolicy는 대상 포드(podSelector), 적용 방향(policyTypes), 인바운드(ingress)·아웃바운드(egress) 규칙으로 구성된다."
+      },
+      {
+        "id": "traffic-control",
+        "label": "트래픽 제어",
+        "focus": [
+          "np",
+          "frontend",
+          "api",
+          "db"
+        ],
+        "note": "api 포드에 적용된 정책이 프론트엔드에서 들어오는 인바운드와 데이터베이스로 나가는 아웃바운드만 허용한다."
+      },
+      {
+        "id": "selector-kinds",
+        "label": "선택자 유형",
+        "focus": [
+          "selectors",
+          "podsel",
+          "nssel",
+          "ipblock"
+        ],
+        "note": "규칙의 from/to는 podSelector, namespaceSelector, ipBlock 세 가지 선택자로 대상을 지정하며 조합할 수 있다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "np",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "api-allow",
+      "pos": [
+        50,
+        327
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "podselector",
+      "type": "security",
+      "label": "podSelector",
+      "sublabel": "대상 포드 (app: api)",
+      "pos": [
+        310,
+        110
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "policytypes",
+      "type": "security",
+      "label": "policyTypes",
+      "sublabel": "Ingress / Egress",
+      "pos": [
+        310,
+        235
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "security",
+      "label": "ingress",
+      "sublabel": "인바운드 규칙",
+      "pos": [
+        310,
+        425
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "egress",
+      "sublabel": "아웃바운드 규칙",
+      "pos": [
+        310,
+        550
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "프론트엔드 포드",
+      "sublabel": "app: frontend",
+      "pos": [
+        810,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 포드",
+      "sublabel": "app: api",
+      "pos": [
+        620,
+        327
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "데이터베이스 포드",
+      "sublabel": "app: database",
+      "pos": [
+        1000,
+        327
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "selectors",
+      "type": "security",
+      "label": "선택자",
+      "sublabel": "규칙의 from / to 대상 지정",
+      "pos": [
+        620,
+        545
+      ],
+      "size": [
+        170,
+        58
+      ]
+    },
+    {
+      "id": "podsel",
+      "type": "security",
+      "label": "podSelector",
+      "sublabel": "포드 레이블",
+      "pos": [
+        900,
+        470
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "nssel",
+      "type": "security",
+      "label": "namespaceSelector",
+      "sublabel": "네임스페이스 레이블",
+      "pos": [
+        900,
+        546
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "ipblock",
+      "type": "security",
+      "label": "ipBlock",
+      "sublabel": "IP CIDR 범위",
+      "pos": [
+        900,
+        622
+      ],
+      "size": [
+        230,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "네트워크 정책 구성",
+      "wraps": [
+        "np",
+        "podselector",
+        "policytypes",
+        "ingress",
+        "egress"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "트래픽 흐름",
+      "wraps": [
+        "frontend",
+        "api",
+        "db"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "선택자 유형",
+      "wraps": [
+        "selectors",
+        "podsel",
+        "nssel",
+        "ipblock"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "np-podselector",
+      "from": "np",
+      "to": "podselector"
+    },
+    {
+      "id": "np-policytypes",
+      "from": "np",
+      "to": "policytypes"
+    },
+    {
+      "id": "np-ingress",
+      "from": "np",
+      "to": "ingress"
+    },
+    {
+      "id": "np-egress",
+      "from": "np",
+      "to": "egress"
+    },
+    {
+      "id": "np-api",
+      "from": "np",
+      "to": "api",
+      "label": "적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "인바운드 허용 :8080"
+    },
+    {
+      "id": "api-db",
+      "from": "api",
+      "to": "db",
+      "label": "아웃바운드 허용 :5432"
+    },
+    {
+      "id": "frontend-db",
+      "from": "frontend",
+      "to": "db",
+      "label": "이 정책의 대상 아님",
+      "variant": "dashed"
+    },
+    {
+      "id": "selectors-podsel",
+      "from": "selectors",
+      "to": "podsel"
+    },
+    {
+      "id": "selectors-nssel",
+      "from": "selectors",
+      "to": "nssel"
+    },
+    {
+      "id": "selectors-ipblock",
+      "from": "selectors",
+      "to": "ipblock"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "api-allow 예시 정책",
+      "items": [
+        "app: api 레이블 포드에 적용, policyTypes는 Ingress와 Egress",
+        "app: frontend 포드에서 TCP 8080으로 들어오는 인바운드만 허용",
+        "app: database 포드의 TCP 5432로 나가는 아웃바운드만 허용"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "선택자와 전제 조건",
+      "items": [
+        "podSelector, namespaceSelector, ipBlock을 from/to에서 조합할 수 있다",
+        "기본적으로 모든 포드가 서로 통신할 수 있으며 정책으로 이를 제한한다",
+        "Calico, Cilium, Antrea 등 네트워크 정책을 지원하는 CNI 플러그인이 필요하다"
+      ]
+    }
+  ]
+}

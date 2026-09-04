@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "하이브리드 노드의 원격 파드 CIDR",
+    "output": "ko-eks-hybrid-nodes-02-network-configuration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      820
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.2",
+      "sublabel": "파드 CIDR 10.85.1.0/24 · CNI",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.3",
+      "sublabel": "파드 CIDR 10.85.2.0/24 · CNI",
+      "pos": [
+        410,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "온프레미스 라우터",
+      "sublabel": "라우팅 테이블",
+      "pos": [
+        230,
+        420
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "게이트웨이",
+      "sublabel": "온프레미스 ↔ AWS 링크 · VPC 10.0.0.0/16",
+      "pos": [
+        230,
+        660
+      ],
+      "size": [
+        280,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Remote Node CIDR 10.80.0.0/16 · Remote Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "node1",
+        "node2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-r",
+      "from": "node1",
+      "to": "router",
+      "label": "파드 CIDR 노출",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-r",
+      "from": "node2",
+      "to": "router",
+      "label": "파드 CIDR 노출",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-gw",
+      "from": "router",
+      "to": "gw",
+      "label": "VPC 대역 전달",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 75
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "노드별 파드 CIDR",
+      "items": [
+        "각 하이브리드 노드는 Remote Pod CIDR을 노드 단위로 잘라 받는다",
+        "노드 10.80.0.2는 10.85.1.0/24, 노드 10.80.0.3은 10.85.2.0/24를 쓴다",
+        "노드 안의 CNI가 그 대역에서 파드 IP(10.85.1.10, 10.85.1.11 등)를 할당한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라우터가 알아야 하는 것",
+      "items": [
+        "온프레미스 라우터는 어느 파드 CIDR이 어느 노드에 있는지 알아야 한다",
+        "이 정보를 알리는 방법이 정적 라우트, BGP, ARP 프록시 세 가지다",
+        "라우터가 모르면 파드 IP로 오는 트래픽이 도달하지 못한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AWS 방향",
+      "items": [
+        "게이트웨이가 VPC 대역(10.0.0.0/16)으로 가는 경로를 담당한다",
+        "반대로 VPC 라우팅 테이블에도 원격 노드·파드 대역 경로가 있어야 한다",
+        "양쪽 경로가 모두 있어야 파드 ↔ VPC 통신이 성립한다"
+      ]
+    }
+  ]
+}

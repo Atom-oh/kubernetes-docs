@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Hybrid Nodes Network Overview",
+    "output": "en-eks-hybrid-nodes-highlevel-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      640
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "ekscp",
+      "type": "cloud",
+      "label": "EKS control plane",
+      "sublabel": "AWS-managed account",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        210,
+        80
+      ]
+    },
+    {
+      "id": "cpeni",
+      "type": "cloud",
+      "label": "Control plane ENI",
+      "sublabel": "Placed in the cluster VPC",
+      "pos": [
+        300,
+        150
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "vpcsub",
+      "type": "cloud",
+      "label": "Cluster VPC subnets",
+      "sublabel": "172.16.0.0/16",
+      "pos": [
+        550,
+        150
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "cloudnodes",
+      "type": "backend",
+      "label": "Cloud nodes",
+      "sublabel": "EC2 workers in the VPC",
+      "pos": [
+        300,
+        420
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "vpce",
+      "type": "security",
+      "label": "VPC endpoints",
+      "sublabel": "Access to other AWS services",
+      "pos": [
+        580,
+        420
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "link",
+      "type": "messagebus",
+      "label": "On-prem ↔ AWS link",
+      "sublabel": "Direct Connect · Site-to-Site VPN",
+      "pos": [
+        860,
+        150
+      ],
+      "size": [
+        280,
+        80
+      ]
+    },
+    {
+      "id": "onprem",
+      "type": "backend",
+      "label": "Hybrid nodes",
+      "sublabel": "On-prem workers subnet",
+      "pos": [
+        880,
+        420
+      ],
+      "size": [
+        260,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Region",
+      "wraps": [
+        "ekscp",
+        "cpeni",
+        "vpcsub",
+        "cloudnodes",
+        "vpce"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "On-prem environment",
+      "wraps": [
+        "onprem"
+      ],
+      "pad": 30
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-eni",
+      "from": "ekscp",
+      "to": "cpeni",
+      "label": "ENI"
+    },
+    {
+      "id": "eni-sub",
+      "from": "cpeni",
+      "to": "vpcsub",
+      "label": "kubelet"
+    },
+    {
+      "id": "cloud-sub",
+      "from": "cloudnodes",
+      "to": "vpcsub",
+      "label": "node IP"
+    },
+    {
+      "id": "vpce-sub",
+      "from": "vpce",
+      "to": "vpcsub",
+      "label": "private",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sub-link",
+      "from": "vpcsub",
+      "to": "link",
+      "label": "remote CIDRs"
+    },
+    {
+      "id": "link-onprem",
+      "from": "link",
+      "to": "onprem",
+      "label": "via router",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 95
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How it connects",
+      "items": [
+        "The EKS control plane creates ENIs in the cluster VPC to reach nodes",
+        "Hybrid nodes must reach those ENIs from on-premises over a private path",
+        "Cloud nodes and hybrid nodes can coexist in the same cluster"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Required private connectivity",
+      "items": [
+        "Either AWS Direct Connect or Site-to-Site VPN is mandatory",
+        "Going over the public internet is unsupported, and routing must work both ways",
+        "Add routes for the remote node and pod CIDRs to the gateway in the VPC route table"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Reaching AWS services",
+      "items": [
+        "Hybrid nodes also need credentials, through SSM or IAM Roles Anywhere",
+        "Services such as ECR and S3 can be reached privately through VPC endpoints",
+        "The DNS resolution path out of on-premises needs designing too"
+      ]
+    }
+  ]
+}

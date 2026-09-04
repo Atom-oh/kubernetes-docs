@@ -1,0 +1,171 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How EKS Networking Components Relate",
+    "output": "en-eks-03-eks-networking-part1-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Workload"
+        },
+        "cloud": {
+          "label": "AWS service"
+        },
+        "external": {
+          "label": "External"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "inbound",
+      "label": "인바운드 트래픽"
+    },
+    {
+      "id": "outbound",
+      "label": "아웃바운드 트래픽"
+    },
+    {
+      "id": "control",
+      "label": "컨트롤 플레인 통신"
+    }
+  ],
+  "mainPath": [
+    "internet",
+    "igw",
+    "pubsub",
+    "workers"
+  ],
+  "nodes": [
+    {
+      "id": "internet",
+      "lane": "inbound",
+      "col": 0,
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "Client requests",
+      "width": 140
+    },
+    {
+      "id": "igw",
+      "lane": "inbound",
+      "col": 1,
+      "type": "cloud",
+      "label": "Internet Gateway",
+      "sublabel": "VPC entry point",
+      "width": 150
+    },
+    {
+      "id": "pubsub",
+      "lane": "inbound",
+      "col": 2,
+      "type": "cloud",
+      "label": "Public Subnet",
+      "sublabel": "ALB / NLB",
+      "width": 140
+    },
+    {
+      "id": "workers",
+      "lane": "inbound",
+      "col": 3,
+      "type": "backend",
+      "label": "Worker Nodes",
+      "sublabel": "Private subnet",
+      "width": 140
+    },
+    {
+      "id": "natgw",
+      "lane": "outbound",
+      "col": 2,
+      "type": "cloud",
+      "label": "NAT Gateway",
+      "sublabel": "SNAT translation",
+      "width": 150
+    },
+    {
+      "id": "ekscp",
+      "lane": "control",
+      "col": 4,
+      "type": "cloud",
+      "label": "EKS Control Plane",
+      "sublabel": "AWS-managed account",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "internet",
+      "to": "igw",
+      "label": "1 enters"
+    },
+    {
+      "id": "e2",
+      "from": "igw",
+      "to": "pubsub",
+      "label": "2 routed to load balancer"
+    },
+    {
+      "id": "e3",
+      "from": "pubsub",
+      "to": "workers",
+      "label": "3 target group forward"
+    },
+    {
+      "id": "e4",
+      "from": "workers",
+      "to": "natgw",
+      "label": "4 outbound",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "natgw",
+      "to": "igw",
+      "label": "5 egress to internet",
+      "role": "return"
+    },
+    {
+      "id": "e6",
+      "from": "workers",
+      "to": "ekscp",
+      "label": "6 API calls (443)",
+      "role": "async"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Inbound · outbound",
+      "items": [
+        "Inbound flows IGW → load balancer in the public subnet → worker nodes in the private subnet",
+        "Outbound flows worker nodes → NAT Gateway → IGW → internet",
+        "Worker nodes and the EKS control plane use a direct path governed by security groups"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "High-availability design",
+      "items": [
+        "Use at least two Availability Zones with a public and a private subnet in each",
+        "Put a NAT Gateway in every AZ to remove the single point of failure",
+        "Spread load balancers across multiple AZs"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Security · cost",
+      "items": [
+        "Keep worker nodes in private subnets and apply least privilege to security groups",
+        "Reach AWS services through VPC endpoints to cut NAT data-processing charges",
+        "Minimize unnecessary cross-AZ traffic"
+      ]
+    }
+  ]
+}

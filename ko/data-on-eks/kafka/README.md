@@ -62,6 +62,12 @@ Strimzi는 이 모든 구성 요소를 Kubernetes 리소스로 감쌉니다. 사
 - mTLS/SASL 기반 보안 구성
 - 스토리지·인스턴스 비용 최적화
 
+**[9. Kafka 실측 벤치마크](09-kafka-benchmark.md)**
+- gp3 볼륨 위 3-브로커 KRaft 클러스터의 RF3 vs RF1 ingest 상한 실측
+- acks=0/1/all 설정별 처리량·p99 레이턴시 트레이드오프
+- 압축 코덱·레코드 크기에 따른 처리량과 CPU 비용
+- 콜드 컨슈머·혼합 워크로드가 프로듀서 처리량에 미치는 영향
+
 ## 참고 자료
 
 - [Strimzi 공식 문서](https://strimzi.io/docs/operators/latest/overview)
@@ -71,4 +77,4 @@ Strimzi는 이 모든 구성 요소를 Kubernetes 리소스로 감쌉니다. 사
 
 ## 퀴즈
 
-이 섹션에서 배운 내용을 테스트하려면 [Kafka 핵심 개념 퀴즈](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)를 풀어보세요.
+이 섹션에서 배운 내용을 테스트하려면 [Kafka 핵심 개념 퀴즈](../../quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md)를 풀어보세요. 벤치마크 수치를 근거로 설계 판단을 내릴 수 있는지 확인하려면 [Kafka 실측 벤치마크 퀴즈](../../quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md)도 함께 풀어보세요.

@@ -1,0 +1,170 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS 네트워킹 구성 요소 간 관계",
+    "output": "ko-eks-03-eks-networking-part1-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "워크로드"
+        },
+        "cloud": {
+          "label": "AWS 서비스"
+        },
+        "external": {
+          "label": "외부"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "inbound",
+      "label": "인바운드 트래픽"
+    },
+    {
+      "id": "outbound",
+      "label": "아웃바운드 트래픽"
+    },
+    {
+      "id": "control",
+      "label": "컨트롤 플레인 통신"
+    }
+  ],
+  "mainPath": [
+    "internet",
+    "igw",
+    "pubsub",
+    "workers"
+  ],
+  "nodes": [
+    {
+      "id": "internet",
+      "lane": "inbound",
+      "col": 0,
+      "type": "external",
+      "label": "인터넷",
+      "sublabel": "클라이언트 요청",
+      "width": 140
+    },
+    {
+      "id": "igw",
+      "lane": "inbound",
+      "col": 1,
+      "type": "cloud",
+      "label": "인터넷 게이트웨이",
+      "sublabel": "VPC 진입점",
+      "width": 150
+    },
+    {
+      "id": "pubsub",
+      "lane": "inbound",
+      "col": 2,
+      "type": "cloud",
+      "label": "퍼블릭 서브넷",
+      "sublabel": "ALB / NLB",
+      "width": 140
+    },
+    {
+      "id": "workers",
+      "lane": "inbound",
+      "col": 3,
+      "type": "backend",
+      "label": "워커 노드",
+      "sublabel": "프라이빗 서브넷",
+      "width": 140
+    },
+    {
+      "id": "natgw",
+      "lane": "outbound",
+      "col": 2,
+      "type": "cloud",
+      "label": "NAT 게이트웨이",
+      "sublabel": "SNAT 변환",
+      "width": 150
+    },
+    {
+      "id": "ekscp",
+      "lane": "control",
+      "col": 4,
+      "type": "cloud",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "AWS 관리 계정",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "internet",
+      "to": "igw",
+      "label": "1 진입"
+    },
+    {
+      "id": "e2",
+      "from": "igw",
+      "to": "pubsub",
+      "label": "2 로드 밸런서로 라우팅"
+    },
+    {
+      "id": "e3",
+      "from": "pubsub",
+      "to": "workers",
+      "label": "3 타깃 그룹 전달"
+    },
+    {
+      "id": "e4",
+      "from": "workers",
+      "to": "natgw",
+      "label": "4 아웃바운드",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "natgw",
+      "to": "igw",
+      "label": "5 인터넷 송신",
+      "role": "return"
+    },
+    {
+      "id": "e6",
+      "from": "workers",
+      "to": "ekscp",
+      "label": "6 API 호출 (443)",
+      "role": "async"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "인바운드 · 아웃바운드",
+      "items": [
+        "인바운드는 IGW → 퍼블릭 서브넷의 로드 밸런서 → 프라이빗 서브넷 워커 노드 순서로 흐른다",
+        "아웃바운드는 워커 노드 → NAT 게이트웨이 → IGW → 인터넷 순서로 흐른다",
+        "워커 노드와 EKS 컨트롤 플레인은 보안 그룹으로 제어되는 직접 통신 경로를 쓴다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "고가용성 설계",
+      "items": [
+        "최소 2개 이상의 가용 영역을 사용하고 각 AZ에 퍼블릭·프라이빗 서브넷을 둔다",
+        "AZ마다 NAT 게이트웨이를 배치해 단일 장애점을 없앤다",
+        "로드 밸런서를 여러 AZ에 분산 배치한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "보안 · 비용",
+      "items": [
+        "워커 노드는 프라이빗 서브넷에 두고 보안 그룹에 최소 권한을 적용한다",
+        "VPC 엔드포인트로 AWS 서비스에 접근해 NAT 데이터 처리 비용을 줄인다",
+        "불필요한 크로스 AZ 트래픽을 최소화한다"
+      ]
+    }
+  ]
+}

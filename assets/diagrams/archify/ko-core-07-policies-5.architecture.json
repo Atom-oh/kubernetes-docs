@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 정책 엔진",
+    "output": "ko-core-07-policies-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      500
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes API"
+        },
+        "security": {
+          "label": "정책 엔진"
+        },
+        "database": {
+          "label": "정책 정의"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "admission-path",
+        "label": "어드미션 요청 경로",
+        "focus": [
+          "api",
+          "webhook",
+          "opa",
+          "kyverno",
+          "kubewarden"
+        ],
+        "note": "API 서버가 어드미션 웹훅을 호출하고, 웹훅이 요청을 정책 엔진에 전달해 정책을 적용한다."
+      },
+      {
+        "id": "policy-definitions",
+        "label": "정책 정의 방식",
+        "focus": [
+          "opa",
+          "ct",
+          "constraint",
+          "kyverno",
+          "clusterpolicy",
+          "kubewarden",
+          "cap"
+        ],
+        "note": "Gatekeeper는 Rego 기반 ConstraintTemplate과 Constraint, Kyverno는 YAML 기반 ClusterPolicy/Policy, Kubewarden은 WebAssembly 정책을 사용한다."
+      },
+      {
+        "id": "policy-types",
+        "label": "지원 정책 유형",
+        "focus": [
+          "opa",
+          "kyverno",
+          "kubewarden"
+        ],
+        "note": "세 엔진 모두 검증(Validate)과 변경(Mutate)을 지원하고, 생성(Generate)은 Kyverno만 지원한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "어드미션 웹훅",
+      "sublabel": "Admission Webhook",
+      "pos": [
+        540,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "opa",
+      "type": "security",
+      "label": "OPA Gatekeeper",
+      "sublabel": "검증 · 변경 지원",
+      "tag": "Open Policy Agent",
+      "pos": [
+        120,
+        200
+      ],
+      "size": [
+        260,
+        72
+      ]
+    },
+    {
+      "id": "kyverno",
+      "type": "security",
+      "label": "Kyverno",
+      "sublabel": "검증 · 변경 · 생성 지원",
+      "tag": "Kubernetes 네이티브",
+      "pos": [
+        540,
+        200
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "kubewarden",
+      "type": "security",
+      "label": "Kubewarden",
+      "sublabel": "검증 · 변경 지원",
+      "tag": "WebAssembly 기반",
+      "pos": [
+        940,
+        200
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "ct",
+      "type": "database",
+      "label": "ConstraintTemplate",
+      "sublabel": "Rego 언어",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "constraint",
+      "type": "database",
+      "label": "Constraint",
+      "sublabel": "정책 인스턴스",
+      "pos": [
+        260,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "clusterpolicy",
+      "type": "database",
+      "label": "ClusterPolicy / Policy",
+      "sublabel": "YAML 기반",
+      "pos": [
+        540,
+        360
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cap",
+      "type": "database",
+      "label": "ClusterAdmissionPolicy",
+      "sublabel": "WebAssembly",
+      "pos": [
+        940,
+        360
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API",
+      "wraps": [
+        "api",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "정책 엔진",
+      "wraps": [
+        "opa",
+        "kyverno",
+        "kubewarden"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "정책 정의",
+      "wraps": [
+        "ct",
+        "constraint",
+        "clusterpolicy",
+        "cap"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-webhook",
+      "from": "api",
+      "to": "webhook",
+      "label": "호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-opa",
+      "from": "webhook",
+      "to": "opa",
+      "label": "처리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-kyverno",
+      "from": "webhook",
+      "to": "kyverno",
+      "label": "처리",
+      "variant": "emphasis",
+      "labelDy": 60
+    },
+    {
+      "id": "webhook-kubewarden",
+      "from": "webhook",
+      "to": "kubewarden",
+      "label": "처리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "opa-ct",
+      "from": "opa",
+      "to": "ct",
+      "label": "사용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          250,
+          316
+        ],
+        [
+          140,
+          316
+        ]
+      ]
+    },
+    {
+      "id": "opa-constraint",
+      "from": "opa",
+      "to": "constraint",
+      "label": "사용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          250,
+          316
+        ],
+        [
+          360,
+          316
+        ]
+      ]
+    },
+    {
+      "id": "kyverno-clusterpolicy",
+      "from": "kyverno",
+      "to": "clusterpolicy",
+      "label": "사용",
+      "labelDy": 56
+    },
+    {
+      "id": "kubewarden-cap",
+      "from": "kubewarden",
+      "to": "cap",
+      "label": "사용",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "OPA Gatekeeper",
+      "items": [
+        "ConstraintTemplate: 정책 논리를 정의하는 템플릿 (Rego)",
+        "Constraint: ConstraintTemplate의 인스턴스로 특정 리소스에 정책 적용",
+        "어드미션 컨트롤러로 동작해 API 서버로 온 요청을 가로채 정책 적용"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kyverno · Kubewarden",
+      "items": [
+        "Kyverno: YAML 기반 ClusterPolicy/Policy — Rego를 배울 필요 없음",
+        "Kyverno는 Verify Images, Clean Up 유형도 추가로 지원",
+        "Kubewarden: 다양한 언어로 작성한 정책을 Wasm 모듈로 컴파일해 정책 서버에서 실행"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "정책 유형",
+      "items": [
+        "검증(Validate): 리소스가 조건을 충족하는지 검증 — 세 엔진 모두",
+        "변경(Mutate): 리소스를 자동으로 수정 — 세 엔진 모두",
+        "생성(Generate): 리소스 생성 시 다른 리소스를 자동 생성 — Kyverno만"
+      ]
+    }
+  ]
+}

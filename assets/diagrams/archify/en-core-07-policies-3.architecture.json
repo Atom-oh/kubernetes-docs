@@ -1,0 +1,355 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NetworkPolicy Spec and Traffic Flow",
+    "locale": "en",
+    "output": "en-core-07-policies-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      780
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Policy/selector"
+        },
+        "frontend": {
+          "label": "Frontend"
+        },
+        "backend": {
+          "label": "Backend"
+        },
+        "database": {
+          "label": "Database"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "policy-spec",
+        "label": "Policy structure",
+        "focus": [
+          "np",
+          "podselector",
+          "policytypes",
+          "ingress",
+          "egress"
+        ],
+        "note": "A NetworkPolicy has target pods (podSelector), applied directions (policyTypes), and inbound (ingress) / outbound (egress) rules."
+      },
+      {
+        "id": "traffic-control",
+        "label": "Traffic control",
+        "focus": [
+          "np",
+          "frontend",
+          "api",
+          "db"
+        ],
+        "note": "The policy applied to the api pod allows only inbound traffic from the frontend and outbound traffic to the database."
+      },
+      {
+        "id": "selector-kinds",
+        "label": "Selector types",
+        "focus": [
+          "selectors",
+          "podsel",
+          "nssel",
+          "ipblock"
+        ],
+        "note": "Rule from/to targets are specified with three selector kinds, podSelector, namespaceSelector and ipBlock, which can be combined."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "np",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "api-allow",
+      "pos": [
+        50,
+        327
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "podselector",
+      "type": "security",
+      "label": "podSelector",
+      "sublabel": "target pods (app: api)",
+      "pos": [
+        310,
+        110
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "policytypes",
+      "type": "security",
+      "label": "policyTypes",
+      "sublabel": "Ingress / Egress",
+      "pos": [
+        310,
+        235
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "security",
+      "label": "ingress",
+      "sublabel": "inbound rules",
+      "pos": [
+        310,
+        425
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "egress",
+      "sublabel": "outbound rules",
+      "pos": [
+        310,
+        550
+      ],
+      "size": [
+        200,
+        58
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend Pod",
+      "sublabel": "app: frontend",
+      "pos": [
+        810,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Pod",
+      "sublabel": "app: api",
+      "pos": [
+        620,
+        327
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database Pod",
+      "sublabel": "app: database",
+      "pos": [
+        1000,
+        327
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "selectors",
+      "type": "security",
+      "label": "Selectors",
+      "sublabel": "targets in rule from / to",
+      "pos": [
+        620,
+        545
+      ],
+      "size": [
+        170,
+        58
+      ]
+    },
+    {
+      "id": "podsel",
+      "type": "security",
+      "label": "podSelector",
+      "sublabel": "pod labels",
+      "pos": [
+        900,
+        470
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "nssel",
+      "type": "security",
+      "label": "namespaceSelector",
+      "sublabel": "namespace labels",
+      "pos": [
+        900,
+        546
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "ipblock",
+      "type": "security",
+      "label": "ipBlock",
+      "sublabel": "IP CIDR range",
+      "pos": [
+        900,
+        622
+      ],
+      "size": [
+        230,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Network Policy Configuration",
+      "wraps": [
+        "np",
+        "podselector",
+        "policytypes",
+        "ingress",
+        "egress"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "Traffic Flow",
+      "wraps": [
+        "frontend",
+        "api",
+        "db"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "Selector Types",
+      "wraps": [
+        "selectors",
+        "podsel",
+        "nssel",
+        "ipblock"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "np-podselector",
+      "from": "np",
+      "to": "podselector"
+    },
+    {
+      "id": "np-policytypes",
+      "from": "np",
+      "to": "policytypes"
+    },
+    {
+      "id": "np-ingress",
+      "from": "np",
+      "to": "ingress"
+    },
+    {
+      "id": "np-egress",
+      "from": "np",
+      "to": "egress"
+    },
+    {
+      "id": "np-api",
+      "from": "np",
+      "to": "api",
+      "label": "applied to",
+      "variant": "emphasis"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "inbound allowed :8080"
+    },
+    {
+      "id": "api-db",
+      "from": "api",
+      "to": "db",
+      "label": "outbound allowed :5432"
+    },
+    {
+      "id": "frontend-db",
+      "from": "frontend",
+      "to": "db",
+      "label": "not selected by this policy",
+      "variant": "dashed"
+    },
+    {
+      "id": "selectors-podsel",
+      "from": "selectors",
+      "to": "podsel"
+    },
+    {
+      "id": "selectors-nssel",
+      "from": "selectors",
+      "to": "nssel"
+    },
+    {
+      "id": "selectors-ipblock",
+      "from": "selectors",
+      "to": "ipblock"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "api-allow example policy",
+      "items": [
+        "Applies to pods labeled app: api; policyTypes are Ingress and Egress",
+        "Allows only inbound traffic from app: frontend pods on TCP 8080",
+        "Allows only outbound traffic to app: database pods on TCP 5432"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Selectors and prerequisites",
+      "items": [
+        "podSelector, namespaceSelector and ipBlock can be combined in from/to",
+        "By default all pods can talk to each other; network policies restrict this",
+        "Requires a CNI plugin that supports network policies (Calico, Cilium, Antrea)"
+      ]
+    }
+  ]
+}

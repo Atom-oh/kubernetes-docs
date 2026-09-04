@@ -1,0 +1,156 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS 클러스터 업그레이드 프로세스",
+    "output": "ko-eks-02-eks-cluster-creation-part5-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "준비 · 검증"
+        },
+        "cloud": {
+          "label": "업그레이드 대상"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "plan",
+      "label": "계획과 컨트롤 플레인"
+    },
+    {
+      "id": "after",
+      "label": "노드와 검증"
+    }
+  ],
+  "mainPath": [
+    "plan",
+    "version",
+    "cp",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "plan",
+      "lane": "plan",
+      "col": 0,
+      "type": "backend",
+      "label": "업그레이드 계획",
+      "sublabel": "호환성 검토",
+      "width": 150
+    },
+    {
+      "id": "version",
+      "lane": "plan",
+      "col": 1,
+      "type": "backend",
+      "label": "버전 확인",
+      "sublabel": "한 단계씩",
+      "width": 150
+    },
+    {
+      "id": "cp",
+      "lane": "plan",
+      "col": 2,
+      "type": "cloud",
+      "label": "컨트롤 플레인",
+      "sublabel": "update-cluster",
+      "width": 150
+    },
+    {
+      "id": "status",
+      "lane": "plan",
+      "col": 3,
+      "type": "backend",
+      "label": "상태 확인",
+      "sublabel": "ACTIVE 대기",
+      "width": 150
+    },
+    {
+      "id": "ng",
+      "lane": "after",
+      "col": 4,
+      "type": "cloud",
+      "label": "노드 그룹",
+      "sublabel": "롤링 교체",
+      "width": 150
+    },
+    {
+      "id": "addon",
+      "lane": "after",
+      "col": 5,
+      "type": "cloud",
+      "label": "애드온 · 검증",
+      "sublabel": "기능 테스트",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "plan",
+      "to": "version",
+      "label": "1 확정"
+    },
+    {
+      "id": "e2",
+      "from": "version",
+      "to": "cp",
+      "label": "2 실행"
+    },
+    {
+      "id": "e3",
+      "from": "cp",
+      "to": "status",
+      "label": "3 확인"
+    },
+    {
+      "id": "e4",
+      "from": "status",
+      "to": "ng",
+      "label": "4 완료",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "ng",
+      "to": "addon",
+      "label": "5 애드온"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "업그레이드 전 체크리스트",
+      "items": [
+        "현재 버전과 목표 버전 사이의 API 제거·폐기 목록을 확인한다",
+        "애플리케이션 매니페스트가 제거된 API 버전을 쓰는지 점검한다",
+        "개발·스테이징에서 먼저 올려 보고 롤백 계획을 준비한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "순서와 명령",
+      "items": [
+        "aws eks update-cluster-version --name my-cluster --kubernetes-version 1.31로 컨트롤 플레인부터 올린다",
+        "aws eks update-nodegroup-version으로 노드 그룹을 올린다 (코든·드레인 자동 수행)",
+        "마지막에 VPC CNI, CoreDNS, kube-proxy 애드온을 클러스터 버전에 맞춘다",
+        "한 번에 한 마이너 버전씩 올린다 (1.29 → 1.30 → 1.31)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "롤백 제약",
+      "items": [
+        "EKS 컨트롤 플레인은 다운그레이드할 수 없다",
+        "노드 그룹만 이전 버전으로 되돌릴 수 있다",
+        "되돌릴 수 없다는 전제로 사전 테스트와 백업에 무게를 둔다"
+      ]
+    }
+  ]
+}

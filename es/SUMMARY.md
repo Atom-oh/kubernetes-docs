@@ -175,6 +175,8 @@
 * [VPC Lattice](networking/02-vpc-lattice.md)
 * [AWS Load Balancer Controller](networking/03-aws-lb-controller.md)
 * [Gateway API](networking/04-gateway-api.md)
+* [Conectividad de VPC entre organizaciones](networking/05-cross-org-vpc-connectivity.md)
+* [Prueba de rendimiento de red de Pods](networking/06-pod-network-benchmark.md)
 
 ## Service Mesh
 
@@ -243,6 +245,11 @@
   * [Observabilidad](service-mesh/cilium-service-mesh/04-observability.md)
   * [Ingress y Gateway](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [Mejores prácticas](service-mesh/cilium-service-mesh/06-best-practices.md)
+
+## Almacenamiento
+
+* [Descripción general del almacenamiento](storage/README.md)
+* [Comparativa de rendimiento medida de EBS gp2 frente a gp3](storage/01-ebs-gp2-gp3-benchmark.md)
 
 ## Seguridad y políticas
 
@@ -319,6 +326,7 @@
   * [Plataforma de visibilidad de costos FinOps](ops/13-finops-cost-platform.md)
   * [Pipelines de Tekton](ops/14-tekton-pipelines.md)
   * [Operaciones de clúster zonal](ops/15-zonal-operations-guide.md)
+  * [Guía de resolución de problemas](ops/16-troubleshooting-playbook.md)
 
 ## Observabilidad
 
@@ -508,6 +516,8 @@
   * [Cuestionario de VPC Lattice](quizzes/networking/02-vpc-lattice-quiz.md)
   * [Cuestionario de AWS Load Balancer Controller](quizzes/networking/03-aws-lb-controller-quiz.md)
   * [Cuestionario de Gateway API](quizzes/networking/04-gateway-api-quiz.md)
+  * [Cuestionario: Conectividad de VPC entre organizaciones](quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+  * [Cuestionario: Prueba de rendimiento de red de Pods](quizzes/networking/06-pod-network-benchmark-quiz.md)
 * Service Mesh
   * [Cuestionario de Istio](quizzes/service-mesh/02-istio-quiz.md)
   * Cuestionario detallado de Istio
@@ -623,10 +633,6 @@
   * [Cuestionario de plataforma de visibilidad de costos FinOps](quizzes/ops/13-finops-cost-platform-quiz.md)
   * [Cuestionario de Pipelines de Tekton](quizzes/ops/14-tekton-pipelines-quiz.md)
   * [Cuestionario de operaciones de clúster zonal](quizzes/ops/15-zonal-operations-guide-quiz.md)
+  * [Cuestionario: Guía de resolución de problemas](quizzes/ops/16-troubleshooting-playbook-quiz.md)
 * Storage
   * [Cuestionario: Comparativa de rendimiento medida de EBS gp2 frente a gp3](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
-
-## Almacenamiento
-
-* [Descripción general del almacenamiento](storage/README.md)
-* [Comparativa de rendimiento medida de EBS gp2 frente a gp3](storage/01-ebs-gp2-gp3-benchmark.md)

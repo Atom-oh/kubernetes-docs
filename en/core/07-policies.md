@@ -55,7 +55,9 @@ kubectl -n policy-demo get resourcequota,networkpolicy
 
 ## Kubernetes Policy Architecture
 
-![Diagram showing how the four Kubernetes policy types are implemented by concrete mechanisms (ResourceQuota/LimitRange, Pod Security Standards, NetworkPolicy, OPA Gatekeeper/Kyverno, Admission Controllers), which are applied at the cluster, namespace, or pod level.](../../assets/diagrams/rendered/en-core-07-policies-0.svg)
+![The four Kubernetes policy types are implemented by ResourceQuota/LimitRange, Pod Security Standards, Admission Controllers, NetworkPolicy, and OPA Gatekeeper/Kyverno, applied at the cluster, namespace, or pod level.](../.gitbook/assets/en-core-07-policies-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-0.html)
 
 ## Policy Type Comparison
 
@@ -147,7 +149,9 @@ Kubernetes can implement various types of policies through built-in resources (e
 
 Resource allocation policies control the amount of resources such as CPU and memory that pods and containers can use.
 
-![Diagram showing how resource requests and limits set on a pod determine its QoS class (Guaranteed, Burstable, BestEffort), and how QoS class governs eviction order when a node runs short on resources.](../../assets/diagrams/rendered/en-core-07-policies-1.svg)
+![Requests and limits set in a pod's resources field decide its QoS class, and that class sets the eviction order when a node runs short: BestEffort first, Burstable next, Guaranteed last.](../.gitbook/assets/en-core-07-policies-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-1.html)
 
 ### Resource Requests and Limits
 
@@ -197,7 +201,9 @@ QoS classes determine the pod eviction order during resource shortage:
 
 Pod Security Policy (PSP) was deprecated starting from Kubernetes 1.21 and completely removed in version 1.25. Instead, Pod Security Standards and Pod Security Admission have been introduced.
 
-![Diagram showing how a namespace label configures Pod Security Admission, which enforces, audits, or warns against one of the three Pod Security Standards levels when a pod creation request is validated, allowing or denying it.](../../assets/diagrams/rendered/en-core-07-policies-2.svg)
+![A namespace label sets the Pod Security Admission mode and the Pod Security Standards level against which each pod creation request is validated and then allowed or denied.](../.gitbook/assets/en-core-07-policies-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-2.html)
 
 ### Pod Security Standards
 
@@ -231,7 +237,9 @@ Meaning of each label:
 
 Network Policy provides a way to control communication between pods. By default, all pods in a Kubernetes cluster can communicate with each other, but network policies can restrict this.
 
-![Diagram showing how a NetworkPolicy's selector, policy types, and ingress/egress rules govern which pod-to-pod traffic is allowed or blocked, and the three selector kinds a policy can use.](../../assets/diagrams/rendered/en-core-07-policies-3.svg)
+![The api-allow NetworkPolicy's podSelector, policyTypes and ingress/egress rules apply to the API pod and allow only inbound from the frontend and outbound to the database, alongside the three selector kinds.](../.gitbook/assets/en-core-07-policies-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-3.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -305,7 +313,9 @@ ingress:
 
 ResourceQuota limits the total amount of resources that can be used within a namespace. This prevents one team from monopolizing all resources when multiple teams or projects share cluster resources.
 
-![Diagram showing the four kinds of ResourceQuota applied to a namespace, how pod resource usage accumulates against that quota, and how a new pod request is admitted or denied based on whether it fits within the remaining quota.](../../assets/diagrams/rendered/en-core-07-policies-4.svg)
+![Four ResourceQuota types applied to a namespace, pod usage summed against that quota, and a new pod request admitted or denied by whether usage plus request stays within the quota.](../.gitbook/assets/en-core-07-policies-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-4.html)
 
 ```yaml
 apiVersion: v1
@@ -414,7 +424,9 @@ LimitRange can be applied to the following resource types:
 
 The Kubernetes ecosystem has several policy engines that can implement more complex and flexible policies.
 
-![Diagram showing how the API server routes admission requests through the Admission Webhook to the OPA Gatekeeper, Kyverno, or Kubewarden policy engines, each of which supports a subset of validate, mutate, and generate policy types.](../../assets/diagrams/rendered/en-core-07-policies-5.svg)
+![The API server calls the Admission Webhook, which hands requests to OPA Gatekeeper, Kyverno, and Kubewarden; each engine uses its own policy resources and supports validate and mutate, with generate on Kyverno only.](../.gitbook/assets/en-core-07-policies-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-5.html)
 
 ### OPA Gatekeeper
 
@@ -534,7 +546,9 @@ spec:
 
 In Amazon EKS, you can manage policies using Kubernetes' default policy mechanisms along with various AWS services.
 
-![Diagram showing how AWS-side controls (IAM, Security Groups, Organizations, Config, Firewall Manager) integrate with EKS-specific mechanisms and built-in Kubernetes policies to govern the EKS cluster, its namespaces, and pods.](../../assets/diagrams/rendered/en-core-07-policies-6.svg)
+![AWS Organizations, Config, and Firewall Manager restrict, audit, and protect the EKS cluster, IAM and Security Groups act on pods, and built-in Kubernetes policies apply across the cluster, namespaces, and pods.](../.gitbook/assets/en-core-07-policies-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-07-policies-6.html)
 
 ### Integration with AWS IAM
 

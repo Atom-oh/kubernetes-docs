@@ -1,0 +1,43 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "EKS VPC 아키텍처", "output": "ko-eks-02-eks-cluster-creation-part1-0.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1380, 800] },
+  "components": [
+    { "id": "internet", "type": "external", "label": "인터넷", "pos": [40, 350], "size": [150, 64] },
+    { "id": "igw", "type": "cloud", "label": "인터넷 게이트웨이", "pos": [240, 350], "size": [170, 64] },
+    { "id": "pub-a", "type": "cloud", "label": "퍼블릭 서브넷 AZ-a", "sublabel": "로드 밸런서", "pos": [490, 110], "size": [230, 70] },
+    { "id": "nat-a", "type": "cloud", "label": "NAT 게이트웨이 AZ-a", "sublabel": "아웃바운드", "pos": [770, 110], "size": [200, 70] },
+    { "id": "priv-a", "type": "backend", "label": "프라이빗 서브넷 AZ-a", "sublabel": "EKS 워커 노드", "pos": [1020, 110], "size": [240, 70] },
+    { "id": "pub-b", "type": "cloud", "label": "퍼블릭 서브넷 AZ-b", "sublabel": "로드 밸런서", "pos": [490, 580], "size": [230, 70] },
+    { "id": "nat-b", "type": "cloud", "label": "NAT 게이트웨이 AZ-b", "sublabel": "아웃바운드", "pos": [770, 580], "size": [200, 70] },
+    { "id": "priv-b", "type": "backend", "label": "프라이빗 서브넷 AZ-b", "sublabel": "EKS 워커 노드", "pos": [1020, 580], "size": [240, 70] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "VPC", "wraps": ["igw", "pub-a", "nat-a", "priv-a", "pub-b", "nat-b", "priv-b"], "pad": 40 },
+    { "kind": "security-group", "label": "가용 영역 a", "wraps": ["pub-a", "nat-a", "priv-a"], "pad": 18 },
+    { "kind": "security-group", "label": "가용 영역 b", "wraps": ["pub-b", "nat-b", "priv-b"], "pad": 18 }
+  ],
+  "connections": [
+    { "id": "i-igw", "from": "internet", "to": "igw", "label": "인바운드 · 아웃바운드", "labelDy": 62 },
+    { "id": "igw-a", "from": "igw", "to": "pub-a" },
+    { "id": "igw-b", "from": "igw", "to": "pub-b" },
+    { "id": "priv-nat-a", "from": "priv-a", "to": "nat-a", "label": "0.0.0.0/0" },
+    { "id": "priv-nat-b", "from": "priv-b", "to": "nat-b", "label": "0.0.0.0/0" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "eksctl이 만드는 VPC", "items": [
+      "기본 설정으로 VPC 하나, AZ별 퍼블릭·프라이빗 서브넷, AZ별 NAT 게이트웨이를 만든다",
+      "퍼블릭 서브넷에는 로드 밸런서, 프라이빗 서브넷에는 워커 노드를 배치한다",
+      "서브넷 태그(role/elb, role/internal-elb)도 함께 붙여 준다"
+    ]},
+    { "dot": "emerald", "title": "직접 만들 때 확인할 것", "items": [
+      "최소 2개 AZ, DNS 호스트네임과 DNS 확인 활성화가 필수다",
+      "프라이빗 서브넷의 0.0.0.0/0은 같은 AZ의 NAT 게이트웨이를 향해야 한다",
+      "기존 VPC를 쓰려면 eksctl 구성 파일의 vpc.subnets에 서브넷 ID를 명시한다"
+    ]},
+    { "dot": "amber", "title": "비용 고려", "items": [
+      "NAT 게이트웨이는 AZ마다 두면 가용성이 오르지만 시간 요금이 배로 든다",
+      "단일 NAT 게이트웨이(--vpc-nat-mode=Single)는 비용을 줄이지만 AZ 장애에 취약하다",
+      "VPC 엔드포인트로 ECR·S3 트래픽을 우회시키면 NAT 처리 요금을 줄인다"
+    ]}
+  ]
+}

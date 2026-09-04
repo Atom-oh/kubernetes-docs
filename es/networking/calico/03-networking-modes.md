@@ -4,40 +4,13 @@
 
 ## Descripción general
 
-Calico admite varios modos de red para adaptarse a diferentes requisitos de infraestructura, necesidades de rendimiento y restricciones operativas. Esta sección analiza en profundidad cada modo de red y le ayuda a elegir y configurar el modo óptimo para su entorno.
+Calico admite varios modos de red para adaptarse a diferentes requisitos de infraestructura, necesidades de rendimiento y restricciones operativas. Esta sección profundiza en cada modo de red y le ayuda a elegir y configurar el modo óptimo para su entorno.
 
 ## Resumen de los modos de red
 
-![Comparación de los modos de red de Calico](../../.gitbook/assets/calico_networking_modes.png)
+![Los modos IPIP, VXLAN y Direct/BGP de Calico lado a lado: un paquete del Pod A en el Node 1 llega al Pod B en el Node 2 a través del túnel IPIP tunl0 (+20 bytes), el túnel VXLAN vxlan.calico (+50 bytes) o un router L3 emparejado mediante BGP sin encapsulación.](../../.gitbook/assets/en-networking-calico-03-networking-modes-7.png)
 
-```mermaid
-flowchart TD
-    subgraph Modes["Calico Networking Modes"]
-        IPIP[IPIP Mode]
-        VXLAN[VXLAN Mode]
-        Direct[Direct/Native Mode]
-    end
-
-    subgraph Characteristics["Key Characteristics"]
-        IPIP --> |MTU: 1480| IPIP_MTU[IP-in-IP Encapsulation]
-        VXLAN --> |MTU: 1450| VXLAN_MTU[UDP/VXLAN Encapsulation]
-        Direct --> |MTU: 1500| Direct_MTU[No Encapsulation]
-    end
-
-    subgraph UseCases["Best Use Cases"]
-        IPIP_MTU --> UC1[Cloud environments<br>Simple setup]
-        VXLAN_MTU --> UC2[Multicast restrictions<br>Standard overlay]
-        Direct_MTU --> UC3[On-premises BGP<br>Maximum performance]
-    end
-
-    classDef mode fill:#FA8320,stroke:#333,color:white
-    classDef char fill:#326CE5,stroke:#333,color:white
-    classDef use fill:#00C7B7,stroke:#333,color:white
-
-    class IPIP,VXLAN,Direct mode
-    class IPIP_MTU,VXLAN_MTU,Direct_MTU char
-    class UC1,UC2,UC3 use
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-7.html)
 
 ## Modo IPIP
 
@@ -70,35 +43,15 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 | Modo            | Descripción                               | Caso de uso                                   |
 | --------------- | ----------------------------------------- | --------------------------------------------- |
-| **Siempre**     | Todo el tráfico de Pod a Pod se encapsula | Entornos de nube, configuración sencilla      |
+| **Always**      | Todo el tráfico de Pod a Pod se encapsula | Entornos cloud, configuración sencilla        |
 | **CrossSubnet** | Solo se encapsula el tráfico entre subredes | Entornos híbridos, rendimiento optimizado    |
-| **Nunca**       | IPIP deshabilitado (usar con enrutamiento Direct) | Entornos on-premises con BGP             |
+| **Never**       | IPIP deshabilitado (usar con enrutamiento Direct) | On-premises con BGP                     |
 
 ### Modo IPIP CrossSubnet
 
-CrossSubnet es una optimización que solo encapsula el tráfico que cruza límites L3:
+CrossSubnet es una optimización que encapsula únicamente el tráfico que cruza límites L3:
 
-```mermaid
-flowchart TD
-    subgraph Subnet1["Subnet 10.0.1.0/24"]
-        Node1[Node 1<br>10.0.1.10]
-        Node2[Node 2<br>10.0.1.11]
-    end
-
-    subgraph Subnet2["Subnet 10.0.2.0/24"]
-        Node3[Node 3<br>10.0.2.10]
-        Node4[Node 4<br>10.0.2.11]
-    end
-
-    Node1 <-->|Direct routing<br>No encapsulation| Node2
-    Node3 <-->|Direct routing<br>No encapsulation| Node4
-    Node1 <-.->|IPIP encapsulation<br>Cross-subnet| Node3
-    Node2 <-.->|IPIP encapsulation<br>Cross-subnet| Node4
-
-    classDef node fill:#FA8320,stroke:#333,color:white
-
-    class Node1,Node2,Node3,Node4 node
-```
+![Dos Nodes en la misma subred se enrutan directamente entre sí sin encapsulación, mientras que el tráfico que cruza a la otra subred se encapsula con IPIP solo para ese salto entre subredes.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-1.svg)
 
 ### Configuración de IPPool de IPIP
 
@@ -149,31 +102,11 @@ ip route | grep tunl0
 
 ### Diagrama de flujo de paquetes IPIP
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A<br>192.168.1.10
-    participant Felix1 as Felix (Node 1)
-    participant Tunl1 as tunl0 (Node 1)
-    participant Network as Physical Network
-    participant Tunl2 as tunl0 (Node 2)
-    participant Felix2 as Felix (Node 2)
-    participant PodB as Pod B<br>192.168.2.10
-
-    PodA->>Felix1: IP packet to 192.168.2.10
-    Felix1->>Felix1: Route lookup: via tunl0
-    Felix1->>Tunl1: Forward to tunnel
-    Tunl1->>Tunl1: Encapsulate in IPIP
-    Note over Tunl1: Outer: 10.0.1.10 → 10.0.1.11<br>Inner: 192.168.1.10 → 192.168.2.10
-    Tunl1->>Network: Send encapsulated packet
-    Network->>Tunl2: Deliver to Node 2
-    Tunl2->>Tunl2: Decapsulate IPIP
-    Tunl2->>Felix2: Forward inner packet
-    Felix2->>PodB: Deliver to destination
-```
+![Un paquete del Pod A se enruta a la interfaz tunl0 en el Node 1, se encapsula con IPIP, atraviesa la red física hasta el Node 2, se desencapsula y se entrega al Pod B.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-2.svg)
 
 ## Modo VXLAN
 
-VXLAN (Virtual Extensible LAN) es un protocolo de superposición estándar del sector que encapsula tramas de capa 2 en paquetes UDP.
+VXLAN (Virtual Extensible LAN) es un protocolo de superposición estándar de la industria que encapsula tramas de Layer 2 en paquetes UDP.
 
 ### Estructura de paquetes VXLAN
 
@@ -194,7 +127,7 @@ VXLAN Encapsulated Packet:
 
 | Componente             | Descripción                                      |
 | --------------------- | ------------------------------------------------ |
-| **VTEP**              | Endpoint de túnel VXLAN: punto de encapsulación/descapsulación |
+| **VTEP**              | Punto de terminación del túnel VXLAN: punto de encapsulación/desencapsulación |
 | **VNI**               | Identificador de red VXLAN (Calico usa un VNI fijo) |
 | **Puerto UDP**        | 4789 (asignado por IANA)                         |
 | **Multicast/Unicast** | Calico usa unicast con VTEP de pares conocidos   |
@@ -255,41 +188,11 @@ ip route | grep vxlan
 
 ### Flujo de paquetes VXLAN
 
-```mermaid
-flowchart TD
-    subgraph Node1["Node 1 (10.0.1.10)"]
-        PodA[Pod A<br>10.244.0.10]
-        VTEP1[VTEP<br>vxlan.calico]
-    end
-
-    subgraph VXLAN["VXLAN Encapsulation"]
-        Outer[Outer Headers<br>UDP:4789, VNI:4096]
-        Inner[Inner Frame<br>Original L2+L3]
-    end
-
-    subgraph Node2["Node 2 (10.0.1.11)"]
-        VTEP2[VTEP<br>vxlan.calico]
-        PodB[Pod B<br>10.244.1.10]
-    end
-
-    PodA -->|1. Original packet| VTEP1
-    VTEP1 -->|2. Lookup VTEP for dest| Outer
-    Outer -->|3. Encapsulate| Inner
-    Inner -->|4. UDP to remote VTEP| VTEP2
-    VTEP2 -->|5. Decapsulate| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef vtep fill:#FA8320,stroke:#333,color:white
-    classDef encap fill:#00C7B7,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VTEP1,VTEP2 vtep
-    class Outer,Inner encap
-```
+![El paquete del Pod A se encapsula mediante el VTEP de su Node en una trama UDP/VXLAN, atraviesa la red física y el VTEP de destino lo desencapsula antes de llegar al Pod B.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-3.svg)
 
 ## Modo Direct/sin encapsulación
 
-El modo de enrutamiento Direct utiliza enrutamiento IP nativo sin encapsulación, lo que proporciona el mejor rendimiento posible.
+El modo de enrutamiento Direct usa enrutamiento IP nativo sin encapsulación, lo que proporciona el mejor rendimiento posible.
 
 ### Requisitos para el modo Direct
 
@@ -301,38 +204,7 @@ El modo de enrutamiento Direct utiliza enrutamiento IP nativo sin encapsulación
 
 ### Topología del modo Direct
 
-```mermaid
-flowchart TD
-    subgraph Rack1["Rack 1"]
-        Node1[Node 1<br>10.0.1.10<br>Pods: 192.168.1.0/26]
-        Node2[Node 2<br>10.0.1.11<br>Pods: 192.168.1.64/26]
-        ToR1[ToR Switch 1]
-    end
-
-    subgraph Rack2["Rack 2"]
-        Node3[Node 3<br>10.0.2.10<br>Pods: 192.168.2.0/26]
-        Node4[Node 4<br>10.0.2.11<br>Pods: 192.168.2.64/26]
-        ToR2[ToR Switch 2]
-    end
-
-    subgraph Core["Core Network"]
-        Spine[Spine Switch]
-    end
-
-    Node1 <-->|BGP| ToR1
-    Node2 <-->|BGP| ToR1
-    Node3 <-->|BGP| ToR2
-    Node4 <-->|BGP| ToR2
-
-    ToR1 <-->|BGP| Spine
-    ToR2 <-->|BGP| Spine
-
-    classDef node fill:#FA8320,stroke:#333,color:white
-    classDef switch fill:#326CE5,stroke:#333,color:white
-
-    class Node1,Node2,Node3,Node4 node
-    class ToR1,ToR2,Spine switch
-```
+![Los Nodes de cada rack se emparejan mediante BGP con el switch top-of-rack de su rack, y ambos switches top-of-rack se emparejan con un switch spine compartido, de modo que las rutas de Pod se propagan de forma nativa sin ninguna superposición.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-4.svg)
 
 ### Configuración de IPPool del modo Direct
 
@@ -400,21 +272,21 @@ ip route
 
 ## Comparación de modos
 
-### IPIP vs VXLAN vs Direct
+### IPIP frente a VXLAN frente a Direct
 
 | Característica               | IPIP                | VXLAN                | Direct       |
 | ---------------------------- | ------------------- | -------------------- | ------------ |
 | **Protocolo**                | Protocolo IP 4      | Puerto UDP 4789      | IP nativo    |
 | **Sobrecarga**               | 20 bytes            | 50 bytes             | 0 bytes      |
 | **MTU**                      | 1480                | 1450                 | 1500         |
-| **Compatible con firewall**  | Puede requerir proto IP 4 | Paso de UDP     | Nativo       |
-| **Descarga de hardware**     | Limitada            | Mejor compatibilidad | Compatibilidad total |
+| **Compatible con firewall**  | Puede necesitar protocolo IP 4 | Paso de UDP | Nativo       |
+| **Descarga de hardware**     | Limitada            | Mejor soporte        | Soporte completo |
 | **Requisito L2**             | No                  | No                   | Sí (o BGP)   |
 | **Multicast**                | No necesario        | No necesario (unicast) | No necesario |
-| **Rendimiento**              | Bueno               | Bueno                | Mejor        |
+| **Rendimiento**              | Bueno               | Bueno                | El mejor     |
 | **Complejidad**              | Baja                | Baja                 | Media        |
 
-### Comparación de benchmarks de rendimiento
+### Comparación de pruebas de rendimiento
 
 ```
 Test Environment:
@@ -455,45 +327,9 @@ CPU Usage (% per Gbps):
 
 ### Comparación de flujo de paquetes
 
-```mermaid
-flowchart TD
-    subgraph Direct["Direct Mode"]
-        D1[Pod A] --> D2[eth0]
-        D2 --> D3[Physical Network]
-        D3 --> D4[eth0]
-        D4 --> D5[Pod B]
-    end
+![Tres carriles trazan el mismo salto del Pod A al Pod B en los modos Direct, IPIP y VXLAN, y muestran que solo difiere entre ellos el paso de encapsulación en el límite de la red física.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-5.svg)
 
-    subgraph IPIP["IPIP Mode"]
-        I1[Pod A] --> I2[tunl0 encap]
-        I2 --> I3[eth0]
-        I3 --> I4[Physical Network]
-        I4 --> I5[eth0]
-        I5 --> I6[tunl0 decap]
-        I6 --> I7[Pod B]
-    end
-
-    subgraph VXLAN["VXLAN Mode"]
-        V1[Pod A] --> V2[VTEP encap]
-        V2 --> V3[UDP:4789]
-        V3 --> V4[eth0]
-        V4 --> V5[Physical Network]
-        V5 --> V6[eth0]
-        V6 --> V7[UDP:4789]
-        V7 --> V8[VTEP decap]
-        V8 --> V9[Pod B]
-    end
-
-    classDef direct fill:#00C7B7,stroke:#333,color:white
-    classDef ipip fill:#FA8320,stroke:#333,color:white
-    classDef vxlan fill:#326CE5,stroke:#333,color:white
-
-    class D1,D2,D3,D4,D5 direct
-    class I1,I2,I3,I4,I5,I6,I7 ipip
-    class V1,V2,V3,V4,V5,V6,V7,V8,V9 vxlan
-```
-
-## Compatibilidad con proveedores de nube
+## Compatibilidad con proveedores cloud
 
 | Proveedor        | IPIP | VXLAN | Direct           | Recomendado               |
 | ---------------- | ---- | ----- | ---------------- | ------------------------- |
@@ -526,7 +362,7 @@ spec:
       nodeSelector: all()
 ```
 
-### On-premises con BGP
+### On-Premises con BGP
 
 ```yaml
 # For on-premises with BGP peering
@@ -614,9 +450,9 @@ spec:
 
 ### Cálculo de MTU por modo
 
-| Modo             | MTU base | Sobrecarga | MTU efectivo | Configuración        |
+| Modo             | MTU base | Sobrecarga | MTU efectiva | Configuración        |
 | ---------------- | -------- | --------- | ------------ | -------------------- |
-| Direct           | 1500     | 0         | 1500         | No se requiere ningún cambio |
+| Direct           | 1500     | 0         | 1500         | No se necesita ningún cambio |
 | IPIP             | 1500     | 20        | 1480         | `ipipMTU: 1480`      |
 | VXLAN            | 1500     | 50        | 1450         | `vxlanMTU: 1450`     |
 | WireGuard        | 1500     | 60        | 1440         | `wireguardMTU: 1440` |
@@ -669,60 +505,27 @@ tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 
 ## Diagrama de flujo de decisiones
 
-```mermaid
-flowchart TD
-    Start[Select Networking Mode] --> Q1{Cloud or On-Prem?}
-
-    Q1 -->|Cloud| Q2{Which Provider?}
-    Q1 -->|On-Premises| Q3{BGP Available?}
-
-    Q2 -->|AWS| AWS[VXLAN or IPIP CrossSubnet]
-    Q2 -->|Azure| Azure[VXLAN]
-    Q2 -->|GCP| GCP[IPIP CrossSubnet]
-    Q2 -->|Other| Q4{VPC supports IP routing?}
-
-    Q3 -->|Yes| Direct[Direct Mode + BGP]
-    Q3 -->|No| Q5{L2 Adjacency?}
-
-    Q4 -->|Yes| IPIP[IPIP CrossSubnet]
-    Q4 -->|No| VXLAN[VXLAN Mode]
-
-    Q5 -->|Yes| Direct
-    Q5 -->|No| VXLAN
-
-    AWS --> Done[Configuration Complete]
-    Azure --> Done
-    GCP --> Done
-    Direct --> Done
-    IPIP --> Done
-    VXLAN --> Done
-
-    classDef decision fill:#FFD700,stroke:#333,color:black
-    classDef result fill:#00C7B7,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class AWS,Azure,GCP,Direct,IPIP,VXLAN,Done result
-```
+![Un árbol de decisiones que parte de ramas cloud frente a on-premises y pasa por preguntas sobre el proveedor, el enrutamiento VPC y la adyacencia BGP/L2 para llegar a los modos VXLAN, IPIP CrossSubnet o Direct, con la ruta on-premises con BGP resaltada como la ruta de mayor rendimiento.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-6.svg)
 
 ## Resumen
 
-Elegir el modo de red adecuado es fundamental para un rendimiento óptimo de Calico:
+Elegir el modo de red correcto es fundamental para obtener un rendimiento óptimo de Calico:
 
-1. **Modo IPIP**: Opción predeterminada para entornos de nube, fácil de configurar
+1. **Modo IPIP**: Opción predeterminada para entornos cloud, sencilla de configurar
 2. **Modo VXLAN**: Mejor compatibilidad con firewall, protocolo de superposición estándar
-3. **Modo Direct**: Máximo rendimiento para entornos on-premises con infraestructura BGP
+3. **Modo Direct**: Máximo rendimiento para on-premises con infraestructura BGP
 
 Consideraciones clave:
 
-* **Implementaciones en la nube**: Use VXLAN o IPIP CrossSubnet
+* **Implementaciones cloud**: Use VXLAN o IPIP CrossSubnet
 * **On-premises con BGP**: Use el modo Direct para obtener el mejor rendimiento
 * **Entornos mixtos**: IPIP o VXLAN CrossSubnet proporcionan un buen equilibrio
-* **Rendimiento crítico**: Modo Direct con la configuración BGP adecuada
+* **Rendimiento crítico**: Modo Direct con una configuración BGP adecuada
 
-[Anterior: Parte 2 - Análisis profundo de la arquitectura de Calico](02-architecture.md)
+[Anterior: Parte 2 - Análisis detallado de la arquitectura de Calico](02-architecture.md)
 
 [Volver a la descripción general de Calico](./README.md)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario sobre modos de red](../../quizzes/networking/calico/03-networking-modes-quiz.md).
+Para comprobar lo que ha aprendido en este capítulo, pruebe el [Cuestionario de modos de red](../../quizzes/networking/calico/03-networking-modes-quiz.md).

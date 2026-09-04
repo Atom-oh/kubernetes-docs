@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon FSx for Lustre CSI Architecture",
+    "output": "en-eks-04-eks-storage-part2-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      660
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "pods1",
+      "type": "frontend",
+      "label": "ML training · data processing pods",
+      "sublabel": "Node 1",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        250,
+        70
+      ]
+    },
+    {
+      "id": "csi1",
+      "type": "backend",
+      "label": "FSx CSI driver",
+      "sublabel": "Node 1 DaemonSet",
+      "pos": [
+        400,
+        130
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "pods2",
+      "type": "frontend",
+      "label": "ML inference · analysis pods",
+      "sublabel": "Node 2",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        250,
+        70
+      ]
+    },
+    {
+      "id": "csi2",
+      "type": "backend",
+      "label": "FSx CSI driver",
+      "sublabel": "Node 2 DaemonSet",
+      "pos": [
+        400,
+        440
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "High-performance parallel FS",
+      "pos": [
+        780,
+        270
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "Data repository",
+      "pos": [
+        1120,
+        270
+      ],
+      "size": [
+        200,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS cluster",
+      "wraps": [
+        "pods1",
+        "csi1",
+        "pods2",
+        "csi2"
+      ],
+      "pad": 34
+    }
+  ],
+  "connections": [
+    {
+      "id": "p1-c1",
+      "from": "pods1",
+      "to": "csi1",
+      "label": "Mounts volume"
+    },
+    {
+      "id": "p2-c2",
+      "from": "pods2",
+      "to": "csi2",
+      "label": "Mounts volume"
+    },
+    {
+      "id": "c1-fsx",
+      "from": "csi1",
+      "to": "fsx",
+      "label": "Lustre client"
+    },
+    {
+      "id": "c2-fsx",
+      "from": "csi2",
+      "to": "fsx"
+    },
+    {
+      "id": "fsx-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "Data sync"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Performance profile",
+      "items": [
+        "Choose throughput from 125 MB/s up to 1,000 MB/s per TiB of provisioned capacity",
+        "Aggregate throughput scales close to linearly when thousands of clients read in parallel",
+        "Metadata IOPS can be provisioned separately"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Deployment types",
+      "items": [
+        "Scratch is for temporary high-performance work: no replication, lower cost",
+        "Persistent replicates within the AZ, for longer retention and retryable workloads",
+        "Scratch fits one-off training runs; persistent fits repeated training pipelines"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "S3 integration and use cases",
+      "items": [
+        "A data repository association lazy-loads S3 objects as files",
+        "Export results back to S3 to keep training artifacts durably",
+        "Use it for throughput-bound work: HPC simulation, large model training, genomics"
+      ]
+    }
+  ]
+}

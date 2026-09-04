@@ -1,0 +1,296 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Calico Network Policy Tier 평가 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "들어오는 트래픽"
+        },
+        "security": {
+          "label": "Tier 정책"
+        },
+        "backend": {
+          "label": "즉시 종료 (Allow / Deny)"
+        },
+        "cloud": {
+          "label": "Profile 기본 동작"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "tier-order",
+        "label": "Tier 순서대로 평가",
+        "focus": [
+          "packet",
+          "sec",
+          "plat",
+          "app",
+          "def"
+        ],
+        "note": "order가 낮은 Tier부터 평가하며 Pass가 나오면 다음 Tier로 넘어갑니다."
+      },
+      {
+        "id": "immediate-exit",
+        "label": "매치 시 즉시 종료",
+        "focus": [
+          "sec_exit",
+          "plat_exit",
+          "app_exit",
+          "def_exit"
+        ],
+        "note": "어느 Tier에서든 Allow 또는 Deny 규칙에 매치되면 평가가 바로 끝납니다."
+      },
+      {
+        "id": "fallthrough",
+        "label": "최종 기본 동작",
+        "focus": [
+          "def",
+          "def_exit",
+          "profile"
+        ],
+        "note": "Default Tier의 K8s NetworkPolicy에는 Pass가 없고, 매치되는 정책이 없으면 Profile 기본 동작이 적용됩니다."
+      }
+    ],
+    "viewBox": [
+      1222,
+      408
+    ]
+  },
+  "lanes": [
+    {
+      "id": "eval",
+      "label": "정책 평가 (order 오름차순)"
+    },
+    {
+      "id": "exit",
+      "label": "규칙 매치 → 즉시 종료",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph_sec",
+      "label": "Security Tier · 보안팀",
+      "fromCol": 1,
+      "toCol": 1,
+      "variant": "security"
+    },
+    {
+      "id": "ph_plat",
+      "label": "Platform Tier · 플랫폼팀",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "ph_app",
+      "label": "Application Tier · 개발팀",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "ph_def",
+      "label": "Default Tier · 기본 제공",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "packet",
+    "sec",
+    "plat",
+    "app",
+    "def"
+  ],
+  "nodes": [
+    {
+      "id": "packet",
+      "lane": "eval",
+      "col": 0,
+      "type": "external",
+      "label": "패킷 도착",
+      "sublabel": "Pod ingress / egress",
+      "width": 128
+    },
+    {
+      "id": "sec",
+      "lane": "eval",
+      "col": 1,
+      "type": "security",
+      "label": "GlobalNetworkPolicy",
+      "sublabel": "order 100 · 악성 IP 차단",
+      "tag": "security.block-malicious",
+      "width": 168
+    },
+    {
+      "id": "plat",
+      "lane": "eval",
+      "col": 2,
+      "type": "security",
+      "label": "GlobalNetworkPolicy",
+      "sublabel": "order 200 · 모니터링·로깅 허용",
+      "tag": "platform.allow-monitoring",
+      "width": 168
+    },
+    {
+      "id": "app",
+      "lane": "eval",
+      "col": 3,
+      "type": "security",
+      "label": "Calico NetworkPolicy",
+      "sublabel": "order 300 · frontend → backend",
+      "tag": "application.frontend-policy",
+      "width": 172
+    },
+    {
+      "id": "def",
+      "lane": "eval",
+      "col": 4,
+      "type": "security",
+      "label": "K8s NetworkPolicy",
+      "sublabel": "order ∞ · 기본 Deny / Allow",
+      "tag": "Kubernetes 표준 API",
+      "width": 160
+    },
+    {
+      "id": "profile",
+      "lane": "eval",
+      "col": 5,
+      "type": "cloud",
+      "label": "Profile 기본 동작",
+      "sublabel": "매치되는 정책 없음",
+      "width": 150
+    },
+    {
+      "id": "sec_exit",
+      "lane": "exit",
+      "col": 1,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "예: 악성 IP → Deny",
+      "width": 150
+    },
+    {
+      "id": "plat_exit",
+      "lane": "exit",
+      "col": 2,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "예: Prometheus → Allow",
+      "width": 150
+    },
+    {
+      "id": "app_exit",
+      "lane": "exit",
+      "col": 3,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "예: backend:8080 → Allow",
+      "width": 150
+    },
+    {
+      "id": "def_exit",
+      "lane": "exit",
+      "col": 4,
+      "type": "backend",
+      "label": "Allow / Deny",
+      "sublabel": "Pass 없음 · 즉시 결정",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "packet-sec",
+      "from": "packet",
+      "to": "sec"
+    },
+    {
+      "id": "sec-plat",
+      "from": "sec",
+      "to": "plat",
+      "label": "Pass"
+    },
+    {
+      "id": "plat-app",
+      "from": "plat",
+      "to": "app",
+      "label": "Pass"
+    },
+    {
+      "id": "app-def",
+      "from": "app",
+      "to": "def",
+      "label": "Pass"
+    },
+    {
+      "id": "def-profile",
+      "from": "def",
+      "to": "profile",
+      "label": "매치 없음",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "sec-exit",
+      "from": "sec",
+      "to": "sec_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "plat-exit",
+      "from": "plat",
+      "to": "plat_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "app-exit",
+      "from": "app",
+      "to": "app_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "def-exit",
+      "from": "def",
+      "to": "def_exit",
+      "variant": "emphasis",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "결정 동작",
+      "items": [
+        "Allow: 규칙에 매치되면 트래픽을 허용하고 평가 종료",
+        "Deny: 규칙에 매치되면 트래픽을 차단하고 평가 종료",
+        "Pass: 이 Tier의 판단을 보류하고 다음 Tier로 넘김"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "팀별 Tier 소유",
+      "items": [
+        "security(100) 보안팀 · platform(200) 플랫폼팀 · application(300) 개발팀",
+        "RBAC로 각 팀은 자기 Tier의 정책만 관리",
+        "모든 Kubernetes NetworkPolicy는 Default Tier에 속함"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "최종 기본 동작",
+      "items": [
+        "Default Tier는 order ∞로 가장 마지막에 평가",
+        "K8s NetworkPolicy에는 Pass 동작이 없음",
+        "어느 Tier에도 매치되지 않으면 엔드포인트 Profile의 기본 동작 적용"
+      ]
+    }
+  ]
+}

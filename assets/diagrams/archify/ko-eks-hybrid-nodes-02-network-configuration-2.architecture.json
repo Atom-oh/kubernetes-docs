@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "정적 라우트로 원격 파드 CIDR 지정",
+    "output": "ko-eks-hybrid-nodes-02-network-configuration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      820
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.2",
+      "sublabel": "파드 CIDR 10.85.1.0/24 · CNI",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.3",
+      "sublabel": "파드 CIDR 10.85.2.0/24 · CNI",
+      "pos": [
+        410,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "온프레미스 라우터",
+      "sublabel": "라우팅 테이블",
+      "pos": [
+        230,
+        420
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "게이트웨이",
+      "sublabel": "온프레미스 ↔ AWS 링크 · VPC 10.0.0.0/16",
+      "pos": [
+        230,
+        660
+      ],
+      "size": [
+        280,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Remote Node CIDR 10.80.0.0/16 · Remote Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "node1",
+        "node2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-r",
+      "from": "node1",
+      "to": "router",
+      "label": "10.85.1.0/24 static",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-r",
+      "from": "node2",
+      "to": "router",
+      "label": "10.85.2.0/24 static",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-gw",
+      "from": "router",
+      "to": "gw",
+      "label": "10.0.0.0/16 static",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 75
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "정적 라우트 구성",
+      "items": [
+        "라우터에 파드 CIDR과 다음 홉(노드 IP)을 직접 등록한다",
+        "10.85.1.0/24는 10.80.0.2, 10.85.2.0/24는 10.80.0.3을 다음 홉으로 지정한다",
+        "노드가 늘어날 때마다 라우터에 항목을 추가해야 한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라우터 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED)",
+        "10.0.0.0/16 [static] via Gateway (STATIC)",
+        "10.85.1.0/24 [static] via 10.80.0.2 (STATIC)",
+        "10.85.2.0/24 [static] via 10.80.0.3 (STATIC)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "언제 쓰나",
+      "items": [
+        "노드 수가 적고 고정된 환경에서 가장 단순하고 예측 가능하다",
+        "BGP를 켤 수 없는 네트워크 장비 환경에서 현실적인 선택이다",
+        "노드 장애 시 경로가 자동으로 바뀌지 않으므로 운영 절차가 필요하다"
+      ]
+    }
+  ]
+}

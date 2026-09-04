@@ -8,8 +8,6 @@ Calico의 아키텍처는 확장성, 성능, 유연성을 중심으로 설계되
 
 ## 전체 아키텍처 다이어그램
 
-![Calico 아키텍처](../../.gitbook/assets/calico_architecture.png)
-
 ![쿠버네티스 API 서버가 Typha를 거쳐 각 노드의 Felix·BIRD로 정책과 라우팅 정보를 전달하고, BIRD가 ToR 스위치·Spine을 통해 외부 네트워크와 BGP로 연결되는 Calico 전체 아키텍처를 보여준다.](../../.gitbook/assets/ko-networking-calico-02-architecture-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-02-architecture-0.html)

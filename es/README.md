@@ -168,6 +168,8 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 5. [VPC Lattice](./networking/02-vpc-lattice.md) | [Cuestionario](./quizzes/networking/02-vpc-lattice-quiz.md)
 6. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Cuestionario](./quizzes/networking/03-aws-lb-controller-quiz.md)
 7. [Gateway API](./networking/04-gateway-api.md) | [Cuestionario](./quizzes/networking/04-gateway-api-quiz.md)
+8. [Conectividad de VPC entre organizaciones](./networking/05-cross-org-vpc-connectivity.md) | [Cuestionario](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+9. [Prueba de rendimiento de red de Pods](./networking/06-pod-network-benchmark.md) | [Cuestionario](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [Cuestionario](./quizzes/service-mesh/02-istio-quiz.md)

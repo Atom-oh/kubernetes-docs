@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Namespaces and NetworkPolicy",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Frontend"
+        },
+        "backend": {
+          "label": "App pod"
+        },
+        "database": {
+          "label": "DB pod"
+        },
+        "security": {
+          "label": "NetPolicy"
+        },
+        "external": {
+          "label": "Internet"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "internet",
+          "frontend",
+          "api",
+          "db"
+        ],
+        "note": "The default path: external requests flow frontend → API → database pods. Without a policy, every pod can talk to every other pod."
+      },
+      {
+        "id": "network-policy",
+        "label": "Applying a NetworkPolicy",
+        "focus": [
+          "policy",
+          "db"
+        ],
+        "note": "db-network-policy selects the role=db pods and restricts their ingress and egress."
+      },
+      {
+        "id": "cross-namespace",
+        "label": "Cross-namespace traffic",
+        "focus": [
+          "prometheus",
+          "frontend",
+          "api",
+          "db"
+        ],
+        "note": "Prometheus in the monitoring namespace scrapes pods in the default namespace. This path can be controlled by a policy too."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "External traffic",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend Pods",
+      "sublabel": "frontend-1 · frontend-2",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Pods",
+      "sublabel": "api-1 · api-2",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database Pods",
+      "sublabel": "db-1 · db-2",
+      "tag": "role=db",
+      "pos": [
+        910,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "db-network-policy",
+      "pos": [
+        910,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "Metrics collection",
+      "pos": [
+        620,
+        470
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "default namespace",
+      "wraps": [
+        "frontend",
+        "api",
+        "db",
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "monitoring namespace",
+      "wraps": [
+        "prometheus"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-internet-frontend",
+      "from": "internet",
+      "to": "frontend",
+      "label": "external requests",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "API calls",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-api-db",
+      "from": "api",
+      "to": "db",
+      "label": "DB queries",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-policy-db",
+      "from": "policy",
+      "to": "db",
+      "label": "applies to role=db pods",
+      "variant": "security",
+      "labelAt": [
+        1000,
+        162
+      ]
+    },
+    {
+      "id": "c-prom-frontend",
+      "from": "prometheus",
+      "to": "frontend",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "c-prom-api",
+      "from": "prometheus",
+      "to": "api",
+      "label": "metrics scrape",
+      "variant": "dashed",
+      "labelAt": [
+        778,
+        360
+      ]
+    },
+    {
+      "id": "c-prom-db",
+      "from": "prometheus",
+      "to": "db",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Default behavior",
+      "items": [
+        "By default, all pods can communicate with each other",
+        "A NetworkPolicy lets you selectively restrict that traffic"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "What it controls",
+      "items": [
+        "Communication between pods and between namespaces",
+        "Ingress (incoming) and egress (outgoing) traffic",
+        "Port- and protocol-based filtering"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Example policy db-network-policy",
+      "items": [
+        "Applies to podSelector role=db pods in the default namespace",
+        "Ingress: only TCP 3306 from role=frontend pods · Egress: only TCP 9090 to role=monitoring pods"
+      ]
+    }
+  ]
+}

@@ -72,7 +72,9 @@ eks-terraform/
 
 ### Change Flow Visualization
 
-![Terraform Change Flow](../.gitbook/assets/terraform_change_flow.png)
+![Diagram of the three Terraform layers by change frequency — network quarterly, cluster monthly, platform weekly — each with its own state file in S3.](../.gitbook/assets/en-ops-01-infrastructure-setup-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-0.html)
 
 ***
 
@@ -1416,7 +1418,9 @@ locals {
 
 ### Output/Data Flow
 
-![Layer Integration Flow](../.gitbook/assets/terraform_layer_integration.png)
+![Diagram of how Terraform layer outputs feed the next layer's inputs through terraform_remote_state references.](../.gitbook/assets/en-ops-01-infrastructure-setup-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-1.html)
 
 ### State Management Best Practices
 

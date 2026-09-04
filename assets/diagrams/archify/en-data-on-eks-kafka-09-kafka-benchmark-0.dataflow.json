@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Kafka on EKS benchmark topology — RF3 replication fan-out and gp3 volumes",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      488
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "cold read path"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Write path · RF3 fan-out",
+        "focus": [
+          "producer",
+          "kafka0",
+          "kafka1",
+          "kafka2"
+        ],
+        "note": "Each broker receives ≈X on its NIC and sends ≈2/3·X (its third of the leader partitions to two followers). All three keep the full stream."
+      },
+      {
+        "id": "volumes",
+        "label": "gp3 write cap = ingest ceiling",
+        "focus": [
+          "kafka0",
+          "kafka1",
+          "kafka2",
+          "vol0",
+          "vol1",
+          "vol2"
+        ],
+        "note": "Measured RF3 ceiling ≈130–135 MiB/s equals one gp3 volume's 125 MiB/s write cap. Only 1/6 of the IOPS cap was used."
+      },
+      {
+        "id": "consume",
+        "label": "Read path · hot vs cold",
+        "focus": [
+          "consumer",
+          "kafka0",
+          "vol0"
+        ],
+        "note": "hot 434 MiB/s came from the page cache; cold 439 MiB/s needed 88–111 MiB/s of disk reads per volume (single-client lower bound)."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "EKS · load generator"
+    },
+    {
+      "label": "EKS · partition leader"
+    },
+    {
+      "label": "EKS · follower brokers"
+    },
+    {
+      "label": "AWS EBS · gp3 volumes"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "producer",
+      "type": "frontend",
+      "label": "producer-perf-test",
+      "sublabel": "kafka-client pod · m5.large node",
+      "tag": "ns bench-kafka",
+      "stage": 0,
+      "row": 0,
+      "width": 152
+    },
+    {
+      "id": "consumer",
+      "type": "frontend",
+      "label": "consumer-perf-test",
+      "sublabel": "kafka-client pod · m5.large node",
+      "tag": "ns bench-kafka",
+      "stage": 0,
+      "row": 2,
+      "width": 152
+    },
+    {
+      "id": "kafka0",
+      "type": "messagebus",
+      "label": "kafka-0",
+      "sublabel": "leader · broker+controller",
+      "tag": "apache/kafka 4.3.1 · m5.xlarge",
+      "stage": 1,
+      "row": 1,
+      "width": 152
+    },
+    {
+      "id": "kafka1",
+      "type": "messagebus",
+      "label": "kafka-1",
+      "sublabel": "follower · broker+controller",
+      "tag": "apache/kafka 4.3.1 · m5.xlarge",
+      "stage": 2,
+      "row": 0,
+      "width": 136
+    },
+    {
+      "id": "kafka2",
+      "type": "messagebus",
+      "label": "kafka-2",
+      "sublabel": "follower · broker+controller",
+      "tag": "apache/kafka 4.3.1 · m5.xlarge",
+      "stage": 2,
+      "row": 2,
+      "width": 136
+    },
+    {
+      "id": "vol0",
+      "type": "database",
+      "label": "gp3 100 GiB",
+      "sublabel": "kafka-0 log dir",
+      "tag": "3,000 IOPS · 125 MiB/s baseline",
+      "stage": 3,
+      "row": 1,
+      "width": 136
+    },
+    {
+      "id": "vol1",
+      "type": "database",
+      "label": "gp3 100 GiB",
+      "sublabel": "kafka-1 log dir",
+      "tag": "3,000 IOPS · 125 MiB/s baseline",
+      "stage": 3,
+      "row": 0,
+      "width": 136
+    },
+    {
+      "id": "vol2",
+      "type": "database",
+      "label": "gp3 100 GiB",
+      "sublabel": "kafka-2 log dir",
+      "tag": "3,000 IOPS · 125 MiB/s baseline",
+      "stage": 3,
+      "row": 2,
+      "width": 136
+    }
+  ],
+  "flows": [
+    {
+      "id": "produce",
+      "from": "producer",
+      "to": "kafka0",
+      "label": "produce · acks=all · measured 134.74 MiB/s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "replicate-1",
+      "from": "kafka0",
+      "to": "kafka1",
+      "label": "replica fetch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "replicate-2",
+      "from": "kafka0",
+      "to": "kafka2",
+      "label": "replica fetch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "append-0",
+      "from": "kafka0",
+      "to": "vol0",
+      "label": "log append · 10-s peak 135 MiB/s",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "append-1",
+      "from": "kafka1",
+      "to": "vol1",
+      "label": "log append",
+      "route": "straight"
+    },
+    {
+      "id": "append-2",
+      "from": "kafka2",
+      "to": "vol2",
+      "label": "log append",
+      "route": "straight"
+    },
+    {
+      "id": "fetch-hot",
+      "from": "kafka0",
+      "to": "consumer",
+      "label": "fetch · page cache (hot) · 434 MiB/s"
+    },
+    {
+      "id": "read-cold",
+      "from": "vol0",
+      "to": "kafka0",
+      "label": "disk read (cold) · 88–111 MiB/s per volume",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "channelY": 340,
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "labelAt": [
+        650,
+        340
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "RF3 replication fan-out — measured (F1, 10M × 1 KiB)",
+      "items": [
+        "1 leader → 2 followers (RF=3) · min.insync.replicas=2",
+        "Per broker NIC rx 134–136 · tx 80–108 MiB/s — receives all of ingest X, sends 2/3·X to followers",
+        "All 3 brokers persist the full stream: disk write avg 115–118 · peak 135 MiB/s · ~500 wIOPS"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Volume write cap = cluster ingest ceiling",
+      "items": [
+        "RF3 sustained ingest ceiling ≈130–135 MiB/s (140,164 rec/s) = one gp3 volume's 125 MiB/s write cap",
+        "RF1 reached 337.81 MiB/s — 2.5× (F4) · only 1/6 of the 3,000 IOPS cap used → throughput, not IOPS, is the limit",
+        "2 producers (F5) and 256 KiB batches (F6) hit the same ceiling — F6 only cut broker CPU 0.64–0.84 → 0.40–0.50 cores"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Consumer read path — hot vs cold",
+      "items": [
+        "hot 434 MiB/s (zero disk reads) · cold 439 MiB/s (88–111 MiB/s read per volume, peak 124) — single-client bound, so lower bounds",
+        "Replaying 30 GiB cold dropped a concurrent producer 103 → 57 MiB/s with p99 2.1 s — reads and writes share the volume",
+        "All pods in namespace bench-kafka · producer and consumer ran from the single kafka-client pod on a separate m5.large node"
+      ]
+    }
+  ]
+}

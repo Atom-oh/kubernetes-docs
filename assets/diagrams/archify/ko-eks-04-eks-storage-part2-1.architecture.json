@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon S3 통합 방법",
+    "output": "ko-eks-04-eks-storage-part2-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      740
+    ]
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "frontend",
+      "label": "애플리케이션 파드",
+      "sublabel": "웹 · 데이터 · ML · 로그",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        220,
+        76
+      ]
+    },
+    {
+      "id": "irsa",
+      "type": "security",
+      "label": "IRSA / Pod Identity",
+      "sublabel": "임시 자격 증명",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "s3csi",
+      "type": "backend",
+      "label": "Mountpoint S3 CSI",
+      "sublabel": "파일처럼 마운트",
+      "pos": [
+        520,
+        330
+      ],
+      "size": [
+        230,
+        70
+      ]
+    },
+    {
+      "id": "sdk",
+      "type": "backend",
+      "label": "AWS SDK · Hadoop S3A",
+      "sublabel": "객체 API 직접 호출",
+      "pos": [
+        520,
+        570
+      ],
+      "size": [
+        250,
+        70
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "데이터 레이크 · 백업 · 모델",
+      "pos": [
+        940,
+        320
+      ],
+      "size": [
+        240,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-irsa",
+      "from": "apps",
+      "to": "irsa",
+      "label": "역할 위임"
+    },
+    {
+      "id": "a-csi",
+      "from": "apps",
+      "to": "s3csi",
+      "label": "볼륨 마운트",
+      "labelDx": 90
+    },
+    {
+      "id": "a-sdk",
+      "from": "apps",
+      "to": "sdk",
+      "label": "라이브러리 호출"
+    },
+    {
+      "id": "irsa-s3",
+      "from": "irsa",
+      "to": "s3",
+      "label": "SigV4 서명 권한",
+      "variant": "dashed",
+      "toSide": "top"
+    },
+    {
+      "id": "csi-s3",
+      "from": "s3csi",
+      "to": "s3",
+      "label": "GET / PUT"
+    },
+    {
+      "id": "sdk-s3",
+      "from": "sdk",
+      "to": "s3",
+      "label": "GET / PUT",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "접근 방식 선택",
+      "items": [
+        "Mountpoint for Amazon S3 CSI는 기존 파일 기반 코드를 그대로 쓸 때 유용하다",
+        "AWS SDK 직접 호출은 멀티파트 업로드나 조건부 요청까지 세밀하게 제어할 수 있다",
+        "Hadoop S3A는 Spark·Hive 같은 분석 엔진의 표준 접근 경로다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "권한 설계",
+      "items": [
+        "정적 액세스 키 대신 IRSA 또는 EKS Pod Identity로 임시 자격 증명을 받는다",
+        "버킷 정책과 IAM 정책에서 접두사 단위로 최소 권한을 준다",
+        "s3:GetObject 권한은 arn:aws:s3:::bucket/* 형태로 객체 경로까지 지정해야 한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "주요 사용 사례",
+      "items": [
+        "데이터 레이크 원본 저장과 분석 결과 적재",
+        "백업·아카이브와 수명 주기 정책으로 Glacier 계층 이동",
+        "머신러닝 모델 아티팩트 저장과 로그 장기 보관"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "리눅스 커널 아키텍처",
+    "output": "ko-basics-01-linux-basics-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "사용자 공간 구성 요소"
+        },
+        "backend": {
+          "label": "커널 구성 요소"
+        },
+        "security": {
+          "label": "보안 서브시스템"
+        },
+        "external": {
+          "label": "하드웨어"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "user-to-kernel",
+        "label": "사용자 공간 → 시스템 호출",
+        "focus": [
+          "apps",
+          "shell",
+          "libs",
+          "syscall"
+        ],
+        "note": "애플리케이션과 셸은 시스템 라이브러리를 거쳐 시스템 호출로 커널 서비스에 접근한다."
+      },
+      {
+        "id": "kernel-subsystems",
+        "label": "커널 서브시스템",
+        "focus": [
+          "syscall",
+          "proc",
+          "mem",
+          "fs",
+          "net",
+          "sec"
+        ],
+        "note": "시스템 호출 인터페이스 아래에서 프로세스·메모리·파일 시스템·네트워킹·보안 서브시스템이 커널 서비스를 제공한다."
+      },
+      {
+        "id": "drivers-to-hardware",
+        "label": "장치 드라이버 → 하드웨어",
+        "focus": [
+          "drivers",
+          "hardware"
+        ],
+        "note": "장치 드라이버가 CPU, 메모리, 스토리지, 네트워크 카드 등 하드웨어 장치와 통신한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "일반 응용 프로그램",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "shell",
+      "type": "frontend",
+      "label": "셸",
+      "sublabel": "Bash, Zsh",
+      "pos": [
+        920,
+        40
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "libs",
+      "type": "frontend",
+      "label": "시스템 라이브러리",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "syscall",
+      "type": "backend",
+      "label": "시스템 호출 인터페이스",
+      "sublabel": "System Call Interface",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        1160,
+        60
+      ]
+    },
+    {
+      "id": "proc",
+      "type": "backend",
+      "label": "프로세스 관리",
+      "pos": [
+        90,
+        290
+      ],
+      "size": [
+        196,
+        60
+      ]
+    },
+    {
+      "id": "mem",
+      "type": "backend",
+      "label": "메모리 관리",
+      "pos": [
+        316,
+        290
+      ],
+      "size": [
+        196,
+        60
+      ]
+    },
+    {
+      "id": "fs",
+      "type": "backend",
+      "label": "파일 시스템",
+      "pos": [
+        542,
+        290
+      ],
+      "size": [
+        196,
+        60
+      ]
+    },
+    {
+      "id": "net",
+      "type": "backend",
+      "label": "네트워킹",
+      "pos": [
+        768,
+        290
+      ],
+      "size": [
+        196,
+        60
+      ]
+    },
+    {
+      "id": "sec",
+      "type": "security",
+      "label": "보안",
+      "pos": [
+        994,
+        290
+      ],
+      "size": [
+        196,
+        60
+      ]
+    },
+    {
+      "id": "drivers",
+      "type": "backend",
+      "label": "장치 드라이버",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        1160,
+        60
+      ]
+    },
+    {
+      "id": "hardware",
+      "type": "external",
+      "label": "하드웨어",
+      "sublabel": "CPU · 메모리 · 스토리지 · 네트워크 카드",
+      "pos": [
+        60,
+        540
+      ],
+      "size": [
+        1160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사용자 공간",
+      "wraps": [
+        "apps",
+        "shell",
+        "libs"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "커널 공간",
+      "wraps": [
+        "syscall",
+        "proc",
+        "mem",
+        "fs",
+        "net",
+        "sec",
+        "drivers"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "커널 서브시스템",
+      "wraps": [
+        "proc",
+        "mem",
+        "fs",
+        "net",
+        "sec"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apps-libs",
+      "from": "apps",
+      "to": "libs"
+    },
+    {
+      "id": "shell-libs",
+      "from": "shell",
+      "to": "libs"
+    },
+    {
+      "id": "libs-syscall",
+      "from": "libs",
+      "to": "syscall",
+      "label": "시스템 호출",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "syscall-proc",
+      "from": "syscall",
+      "to": "proc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "syscall-mem",
+      "from": "syscall",
+      "to": "mem",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "syscall-fs",
+      "from": "syscall",
+      "to": "fs"
+    },
+    {
+      "id": "syscall-net",
+      "from": "syscall",
+      "to": "net",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "syscall-sec",
+      "from": "syscall",
+      "to": "sec",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "proc-drivers",
+      "from": "proc",
+      "to": "drivers",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mem-drivers",
+      "from": "mem",
+      "to": "drivers",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fs-drivers",
+      "from": "fs",
+      "to": "drivers"
+    },
+    {
+      "id": "net-drivers",
+      "from": "net",
+      "to": "drivers",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sec-drivers",
+      "from": "sec",
+      "to": "drivers",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "drivers-hardware",
+      "from": "drivers",
+      "to": "hardware",
+      "label": "하드웨어 장치와 통신",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "사용자 공간",
+      "items": [
+        "일반 응용 프로그램이 실행되는 메모리 영역",
+        "시스템 호출(fork, exec, open, read, write, socket, clone)로 커널 서비스에 접근"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "커널의 역할",
+      "items": [
+        "하드웨어와 소프트웨어 사이의 중개자",
+        "프로세스 생성·스케줄링·종료, 가상 메모리와 물리 메모리 할당",
+        "장치 관리: 하드웨어 장치와의 통신"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "하드웨어",
+      "items": [
+        "CPU · 메모리 · 스토리지 · 네트워크 카드",
+        "장치 드라이버를 통해서만 커널 서브시스템과 연결"
+      ]
+    }
+  ]
+}

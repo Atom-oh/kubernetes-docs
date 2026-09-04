@@ -4,9 +4,9 @@
 
 ## Introducción
 
-El dataplane eBPF de Calico representa una evolución significativa en las redes de Kubernetes, ya que reemplaza el procesamiento tradicional de paquetes basado en iptables por programas eBPF modernos. Este enfoque ofrece mejoras sustanciales de rendimiento, menor latencia y capacidades de observabilidad mejoradas.
+El dataplane eBPF de Calico representa una evolución significativa en las redes de Kubernetes, al reemplazar el procesamiento tradicional de paquetes basado en iptables por programas eBPF modernos. Este enfoque ofrece mejoras sustanciales de rendimiento, menor latencia y capacidades de observabilidad mejoradas.
 
-Este análisis en profundidad explora los fundamentos de eBPF desde una perspectiva de redes, la arquitectura eBPF de Calico, estrategias de migración y técnicas de optimización del rendimiento.
+Este análisis detallado explora los fundamentos de eBPF desde una perspectiva de redes, la arquitectura eBPF de Calico, las estrategias de migración y las técnicas de optimización del rendimiento.
 
 ***
 
@@ -14,48 +14,27 @@ Este análisis en profundidad explora los fundamentos de eBPF desde una perspect
 
 ### ¿Qué es eBPF?
 
-eBPF (extended Berkeley Packet Filter) es una tecnología revolucionaria que permite ejecutar programas en un entorno aislado dentro del kernel de Linux sin modificar el código fuente del kernel ni cargar módulos del kernel.
+eBPF (extended Berkeley Packet Filter) es una tecnología revolucionaria que permite ejecutar programas aislados en un sandbox dentro del kernel de Linux sin modificar el código fuente del kernel ni cargar módulos del kernel.
 
-```mermaid
-flowchart TB
-    subgraph "User Space"
-        APP[Application]
-        EBPF_PROG[eBPF Program<br/>C/Rust]
-        LOADER[eBPF Loader<br/>libbpf]
-    end
-
-    subgraph "Kernel Space"
-        VERIFIER[eBPF Verifier]
-        JIT[JIT Compiler]
-        MAPS[BPF Maps]
-        HOOKS[Kernel Hooks<br/>XDP, TC, Socket]
-    end
-
-    EBPF_PROG --> LOADER
-    LOADER --> VERIFIER
-    VERIFIER -->|Valid| JIT
-    JIT --> HOOKS
-    HOOKS <--> MAPS
-    APP <--> MAPS
-```
+![Diagrama que muestra un programa eBPF moviéndose desde el espacio de usuario, a través del cargador libbpf y el verificador del kernel y el compilador JIT, hasta hooks del kernel que comparten mapas BPF con la aplicación de verificación.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
 
 ### Conceptos clave de eBPF para redes
 
 | Concepto      | Descripción                              | Uso en Calico                       |
 | ------------ | ---------------------------------------- | ----------------------------------- |
 | **Programas** | Bytecode ejecutado en hooks del kernel        | Filtrado de paquetes, enrutamiento           |
-| **Maps**     | Almacenes de clave-valor compartidos entre programas | Tablas de rutas, reglas de políticas          |
+| **Mapas**     | Almacenes clave-valor compartidos entre programas | Tablas de rutas, reglas de políticas          |
 | **Hooks**    | Puntos de conexión en el kernel              | XDP, TC, socket                     |
-| **Helpers**  | Funciones del kernel invocables desde eBPF      | Manipulación de paquetes, operaciones de maps |
-| **BTF**      | Información de tipos para maps/programas       | Información de depuración, CO-RE                   |
+| **Helpers**  | Funciones del kernel invocables desde eBPF      | Manipulación de paquetes, operaciones de mapas |
+| **BTF**      | Información de tipos para mapas/programas       | Información de depuración, CO-RE                   |
 
 ### eBPF frente a iptables
 
 | Aspecto               | iptables                  | eBPF              |
 | -------------------- | ------------------------- | ----------------- |
 | **Arquitectura**     | Cadenas de reglas secuenciales    | Ejecución directa  |
-| **Complejidad**       | Coincidencia de reglas O(n)        | Búsqueda en map O(1)   |
-| **Cruces del kernel** | Múltiples por paquete       | Mínimos           |
+| **Complejidad**       | Coincidencia de reglas O(n)        | Búsqueda en mapas O(1)   |
+| **Cruces del kernel** | Varios por paquete       | Mínimos           |
 | **Programabilidad**  | Tipos de reglas fijos          | Programas flexibles |
 | **Observabilidad**    | Contadores limitados          | Métricas enriquecidas      |
 | **Eficiencia de CPU**   | Mayor sobrecarga de interrupciones | Menor sobrecarga    |
@@ -64,56 +43,19 @@ flowchart TB
 
 ## Arquitectura eBPF de Calico
 
-![Calico Dataplane: iptables vs eBPF](../../.gitbook/assets/calico_ebpf_vs_iptables.png)
+![Comparación de dataplanes de Calico: en modo iptables, un paquete recorre PREROUTING, FORWARD, reglas de kube-proxy y POSTROUTING para llegar al Pod; en modo eBPF, el LB en tiempo de conexión elige el backend en el socket y un programa BPF conectado al hook TC lo reenvía.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-9.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-9.html)
 
 ### Comparación de arquitecturas
 
-```mermaid
-flowchart TB
-    subgraph "iptables Dataplane"
-        PKT1[Packet In] --> PREROUTE[PREROUTING]
-        PREROUTE --> CONNTRACK1[Connection Track]
-        CONNTRACK1 --> INPUT1[INPUT Chain]
-        INPUT1 --> FILTER1[FILTER Chain]
-        FILTER1 --> FORWARD1[FORWARD Chain]
-        FORWARD1 --> OUTPUT1[OUTPUT Chain]
-        OUTPUT1 --> POSTROUTE[POSTROUTING]
-        POSTROUTE --> PKT1_OUT[Packet Out]
-    end
-
-    subgraph "eBPF Dataplane"
-        PKT2[Packet In] --> TC_IN[TC Ingress]
-        TC_IN --> BPF_PROG[eBPF Program]
-        BPF_PROG --> BPF_MAP[BPF Maps<br/>Routes, Policies]
-        BPF_MAP --> TC_OUT[TC Egress]
-        TC_OUT --> PKT2_OUT[Packet Out]
-    end
-```
+![Diagrama que contrasta un paquete que atraviesa siete cadenas secuenciales de iptables con el mismo paquete que atraviesa un único programa eBPF que consulta mapas BPF entre los hooks de entrada y salida de TC.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
 
 ### Tipos de programas eBPF en Calico
 
-Calico usa varios tipos de programas eBPF para distintas funciones:
+Calico utiliza varios tipos de programas eBPF para diferentes funciones:
 
-```mermaid
-flowchart LR
-    subgraph "Ingress Path"
-        XDP[XDP<br/>Early Drop] --> TC_IN[TC Ingress<br/>Policy/Route]
-    end
-
-    subgraph "Socket Level"
-        SOCK_OPS[sockops<br/>Connection Setup]
-        SK_MSG[sk_msg<br/>Socket Data]
-        CGROUP[cgroup<br/>Container Scope]
-    end
-
-    subgraph "Egress Path"
-        TC_OUT[TC Egress<br/>Policy/NAT]
-    end
-
-    TC_IN --> SOCK_OPS
-    SOCK_OPS --> SK_MSG
-    SK_MSG --> TC_OUT
-```
+![Diagrama que muestra hooks XDP y de entrada de TC que alimentan programas sockops y sk_msg de nivel socket, que se transfieren a un hook de salida de TC, con el programa de ámbito cgroup mostrado como una primitiva de nivel socket sin conexión.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
 
 ### Programas TC (Traffic Control)
 
@@ -136,20 +78,13 @@ Egress TC Program Functions:
 
 ### Programas XDP (eXpress Data Path)
 
-XDP proporciona el hook más temprano para el procesamiento de paquetes:
+XDP proporciona el hook de procesamiento de paquetes más temprano:
 
-```mermaid
-flowchart LR
-    NIC[Network Card] --> XDP{XDP Program}
-    XDP -->|XDP_DROP| DROP[Drop<br/>DDoS Protection]
-    XDP -->|XDP_PASS| TC[TC Programs<br/>Normal Processing]
-    XDP -->|XDP_TX| TX[TX<br/>Direct Return]
-    XDP -->|XDP_REDIRECT| REDIRECT[Redirect<br/>Other Interface]
-```
+![Diagrama de flujo que muestra un paquete que llega desde la tarjeta de red a un programa XDP, el cual devuelve uno de cuatro veredictos: descartar para protección contra DDoS, pasar al procesamiento TC normal, retorno TX directo o redirigir a otra interfaz.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
 
 ### Programas de socket
 
-eBPF en el nivel de socket para la integración con service mesh:
+eBPF de nivel socket para la integración de service mesh:
 
 ```yaml
 # sockops: Intercept socket operations
@@ -164,19 +99,19 @@ eBPF en el nivel de socket para la integración con service mesh:
 
 ***
 
-## Estructuras de BPF Map
+## Estructuras de mapas BPF
 
-### Tipos de Map usados por Calico
+### Tipos de mapas utilizados por Calico
 
-| Tipo de Map          | Propósito              | Ejemplo de uso         |
+| Tipo de mapa          | Propósito              | Ejemplo de uso         |
 | ----------------- | -------------------- | ------------------- |
-| **Hash Map**      | Búsqueda de clave-valor     | Seguimiento de conexiones |
+| **Hash Map**      | Búsqueda clave-valor     | Seguimiento de conexiones |
 | **LRU Hash**      | Caché con expulsión automática  | Tabla NAT           |
-| **Array**         | Indexado de tamaño fijo   | Configuración de Endpoint     |
+| **Array**         | Indexado de tamaño fijo   | Configuración de endpoint     |
 | **LPM Trie**      | Coincidencia de prefijo más largo | Búsqueda de rutas        |
 | **Per-CPU Array** | Contadores escalables    | Estadísticas          |
 
-### Estructura del Map de rutas
+### Estructura del mapa de rutas
 
 ```c
 // Simplified route map entry
@@ -193,7 +128,7 @@ struct calico_route_value {
 };
 ```
 
-### Map de seguimiento de conexiones
+### Mapa de seguimiento de conexiones
 
 ```c
 // Connection tracking key
@@ -215,7 +150,7 @@ struct calico_ct_value {
 };
 ```
 
-### Estructura del Map de políticas
+### Estructura del mapa de políticas
 
 ```c
 // Policy rule entry
@@ -242,29 +177,15 @@ struct calico_policy_value {
 
 ### Descripción general de DSR
 
-DSR permite que el tráfico de respuesta omita el Load Balancer, lo que reduce la latencia y el consumo de recursos del Load Balancer.
+DSR permite que el tráfico de respuesta omita el balanceador de carga, reduciendo la latencia y el consumo de recursos del balanceador de carga.
 
-```mermaid
-flowchart LR
-    subgraph "Without DSR"
-        C1[Client] -->|Request| LB1[Load Balancer]
-        LB1 -->|Request| S1[Server]
-        S1 -->|Response| LB1
-        LB1 -->|Response| C1
-    end
+![Diagrama que compara un flujo normal con balanceo de carga, donde la respuesta del servidor vuelve a través del balanceador de carga al cliente, con un flujo Direct Server Return, donde la respuesta omite el balanceador de carga y va directamente del servidor al cliente.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
 
-    subgraph "With DSR"
-        C2[Client] -->|Request| LB2[Load Balancer]
-        LB2 -->|Request| S2[Server]
-        S2 -->|Response| C2
-    end
-```
-
-### Modos de DSR en Calico
+### Modos DSR en Calico
 
 | Modo         | Descripción              | Caso de uso                  |
 | ------------ | ------------------------ | ------------------------- |
-| **Desactivado** | Todo el tráfico a través del LB   | Predeterminado, todos los entornos |
+| **Deshabilitado** | Todo el tráfico a través de LB   | Predeterminado, todos los entornos |
 | **IPIP**     | Respuesta mediante túnel IPIP | Entre subredes              |
 | **DSR**      | Respuesta directa          | Misma red L2           |
 
@@ -284,8 +205,8 @@ spec:
 
 * El servidor y el cliente deben estar en la misma red L2 O
 * Usar encapsulación IPIP/VXLAN entre subredes
-* La IP del cliente externo debe ser enrutable desde los servidores
-* Sin SNAT en la ruta de ingreso
+* La IP del cliente externo debe poder enrutarse desde los servidores
+* Sin SNAT en la ruta de entrada
 
 ***
 
@@ -293,27 +214,13 @@ spec:
 
 ### LB tradicional frente a LB en tiempo de conexión
 
-```mermaid
-flowchart TB
-    subgraph "Per-Packet LB (kube-proxy)"
-        REQ1[SYN] -->|DNAT to Pod A| PA1[Pod A]
-        REQ2[DATA] -->|DNAT to Pod A| PA1
-        REQ3[FIN] -->|DNAT to Pod A| PA1
-    end
-
-    subgraph "Connect-Time LB (eBPF)"
-        CONN[connect<br/>syscall] -->|Pick Pod B| DEST[Destination:<br/>Pod B IP]
-        REQ4[SYN] -->|Direct to Pod B| PB1[Pod B]
-        REQ5[DATA] -->|Direct to Pod B| PB1
-        REQ6[FIN] -->|Direct to Pod B| PB1
-    end
-```
+![Diagrama que contrasta el enfoque por paquete de kube-proxy, donde cada paquete SYN, de datos y FIN se somete a DNAT hacia el Pod A, con el balanceo de carga eBPF en tiempo de conexión, donde una única llamada al sistema connect() elige el Pod B una vez y cada paquete de esa conexión se le envía directamente.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
 
 ### Beneficios del LB en tiempo de conexión
 
 | Aspecto                  | Por paquete          | En tiempo de conexión          |
 | ----------------------- | ------------------- | --------------------- |
-| **Sobrecarga de NAT**        | Cada paquete        | Solo durante la configuración de la conexión |
+| **Sobrecarga de NAT**        | Cada paquete        | Solo en la configuración de la conexión |
 | **Seguimiento de conexiones** | Requerido            | Mínimo               |
 | **Latencia**             | Mayor (búsqueda NAT) | Menor (directa)        |
 | **Uso de CPU**           | Mayor              | Menor                 |
@@ -342,26 +249,15 @@ int bpf_connect4(struct bpf_sock_addr *ctx) {
 
 ### Niveles de procesamiento XDP
 
-```mermaid
-flowchart TB
-    subgraph "Processing Location"
-        NIC[Network Card]
-        DRIVER[Driver]
-        GENERIC[Generic/SKB]
-    end
-
-    NIC -->|Offload| OFF[XDP Offload<br/>Fastest, NIC Support]
-    DRIVER -->|Native| NAT[XDP Native<br/>Fast, Driver Support]
-    GENERIC -->|Generic| GEN[XDP Generic<br/>Slowest, All NICs]
-```
+![Diagrama que muestra que los programas XDP descargados en la NIC son los más rápidos, los programas ejecutados de forma nativa en el driver son rápidos y los programas ejecutados en la pila de red genérica son los más lentos, pero funcionan en cualquier NIC.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
 
 ### Modos XDP
 
 | Modo        | Ubicación      | Rendimiento | Requisitos   |
 | ----------- | ------------- | ----------- | -------------- |
-| **Offload** | Hardware NIC  | Más rápido     | SmartNIC       |
-| **Native**  | Driver NIC    | Rápido        | Compatibilidad del driver |
-| **Generic** | Stack de red | Base    | Cualquier NIC        |
+| **Offload** | Hardware de NIC  | Más rápido     | SmartNIC       |
+| **Native**  | Driver de NIC    | Rápido        | Compatibilidad del driver |
+| **Generic** | Pila de red | Base    | Cualquier NIC        |
 
 ### Habilitar XDP en Calico
 
@@ -382,9 +278,9 @@ spec:
 
 ### Casos de uso de XDP en Calico
 
-1. **Protección DDoS**: Descartar tráfico malicioso en la NIC
-2. **Aplicación de listas de bloqueo**: Rechazo temprano de IP bloqueadas
-3. **Limitación de tasa**: Límites de tasa de paquetes antes del stack
+1. **Protección contra DDoS**: Descartar tráfico malicioso en la NIC
+2. **Aplicación de blocklist**: Rechazo temprano de IP bloqueadas
+3. **Limitación de tasa**: Límites de tasa de paquetes antes de la pila
 4. **Recopilación de métricas**: Conteo de paquetes a velocidad de línea
 
 ***
@@ -395,12 +291,12 @@ spec:
 
 | Requisito      | Versión mínima | Notas                     |
 | ---------------- | --------------- | ------------------------- |
-| **Kernel Linux** | 5.3+            | Se recomienda 5.8+          |
-| **Compatibilidad con BTF**  | Obligatoria        | `CONFIG_DEBUG_INFO_BTF=y` |
-| **BPF Syscall**  | Obligatorio        | `CONFIG_BPF_SYSCALL=y`    |
-| **BPF JIT**      | Obligatorio        | `CONFIG_BPF_JIT=y`        |
+| **Kernel de Linux** | 5.3+            | Se recomienda 5.8+          |
+| **Compatibilidad con BTF**  | Requerido        | `CONFIG_DEBUG_INFO_BTF=y` |
+| **Llamada al sistema BPF**  | Requerido        | `CONFIG_BPF_SYSCALL=y`    |
+| **BPF JIT**      | Requerido        | `CONFIG_BPF_JIT=y`        |
 
-### Verificar compatibilidad del kernel
+### Verificar la compatibilidad del kernel
 
 ```bash
 # Check kernel version
@@ -421,14 +317,14 @@ cat /boot/config-$(uname -r) | grep -E "CONFIG_BPF|CONFIG_DEBUG_INFO_BTF"
 
 ### Compatibilidad de distribuciones
 
-| Distribución      | Lista para eBPF | Notas                        |
+| Distribución      | Preparada para eBPF | Notas                        |
 | ----------------- | ---------- | ---------------------------- |
 | Ubuntu 20.04+     | Sí        | Kernel 5.4+                  |
 | Ubuntu 22.04+     | Sí        | Kernel 5.15+ (recomendado)   |
 | RHEL/CentOS 8.2+  | Sí        | Kernel 4.18+ con backports  |
 | Amazon Linux 2    | Parcial    | Puede necesitar actualización del kernel      |
 | Amazon Linux 2023 | Sí        | Kernel 6.1+                  |
-| Bottlerocket      | Sí        | Diseñado específicamente para contenedores |
+| Bottlerocket      | Sí        | Creado específicamente para contenedores |
 
 ### Requisitos de versión de Calico
 
@@ -441,7 +337,7 @@ Dual-stack eBPF:         v3.20.0
 Host-networked pods:      v3.13.0 (with limitations)
 ```
 
-### Configuración de nodos
+### Configuración del nodo
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -474,7 +370,7 @@ spec:
 
 ## Migración de iptables a eBPF
 
-### Lista de comprobación previa a la migración
+### Lista de verificación previa a la migración
 
 ```bash
 # 1. Verify kernel requirements
@@ -516,7 +412,7 @@ spec:
   bpfKubeProxyIptablesCleanupEnabled: false  # Don't cleanup yet
 ```
 
-**Paso 2: Deshabilitar kube-proxy (si se usa Calico como reemplazo)**
+**Paso 2: Deshabilitar kube-proxy (si se utiliza Calico como reemplazo)**
 
 ```bash
 # Option A: Scale down kube-proxy
@@ -574,7 +470,7 @@ spec:
   bpfConnectTimeLoadBalancingEnabled: true
 ```
 
-**Paso 6: Limpiar reglas de iptables**
+**Paso 6: Limpiar las reglas de iptables**
 
 ```bash
 # After confirming eBPF is working
@@ -613,7 +509,7 @@ iptables -L -n -v
 | Service (ClusterIP)     | 150 μs   | 60 μs | 60%         |
 | Service (NodePort)      | 180 μs   | 70 μs | 61%         |
 
-### Comparación de rendimiento
+### Comparación de throughput
 
 | Escenario            | iptables | eBPF    | Mejora |
 | ------------------- | -------- | ------- | ----------- |
@@ -699,7 +595,7 @@ tc filter show dev eth0 ingress | grep bpf
 tc -s filter show dev eth0 ingress
 ```
 
-### Depuración de Calico BPF
+### Depuración de BPF de Calico
 
 ```bash
 # Enable debug logging
@@ -721,7 +617,7 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
   calico-bpf nat dump
 ```
 
-### Escenarios comunes de depuración
+### Escenarios de depuración comunes
 
 **Problemas de conectividad:**
 
@@ -762,9 +658,9 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 
 | Limitación              | Descripción            | Solución alternativa                      |
 | ----------------------- | ---------------------- | ------------------------------- |
-| **Pods en red del host** | Compatibilidad de políticas limitada | Usar iptables para Pods del host      |
+| **Pods en red de host** | Compatibilidad limitada con políticas | Usar iptables para Pods de host      |
 | **IPv6**                | Compatibilidad parcial        | Usar modo dual-stack             |
-| **Wireguard**           | No con eBPF          | Usar IPsec o deshabilitar el cifrado |
+| **Wireguard**           | No compatible con eBPF          | Usar IPsec o deshabilitar el cifrado |
 | **Topología de Service**    | Compatibilidad limitada        | Usar kube-proxy estándar         |
 | **Nodos Windows**       | No compatible          | Usar dataplane iptables          |
 
@@ -788,7 +684,7 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 # Solution: Tune conntrack limits
 ```
 
-### Comprobación de problemas
+### Comprobar si hay problemas
 
 ```bash
 # Check for BPF verifier errors
@@ -807,7 +703,7 @@ cat /proc/sys/kernel/bpf_map_max_entries
 
 ### Reemplazo completo de Kube-proxy
 
-eBPF de Calico puede reemplazar por completo kube-proxy para el balanceo de carga de Service:
+Calico eBPF puede reemplazar por completo a kube-proxy para el balanceo de carga de Service:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -851,31 +747,31 @@ kubectl exec -n kube-system calico-node-xxxxx -c calico-node -- \
 kubectl run test --image=busybox --rm -it -- wget -O- http://kubernetes.default.svc
 ```
 
-### Comparación de características de Service
+### Comparación de funcionalidades de Service
 
-| Característica         | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
+| Funcionalidad         | kube-proxy (iptables) | kube-proxy (IPVS) | Calico eBPF |
 | --------------- | --------------------- | ----------------- | ----------- |
 | ClusterIP       | Sí                   | Sí               | Sí         |
 | NodePort        | Sí                   | Sí               | Sí         |
 | LoadBalancer    | Sí                   | Sí               | Sí         |
 | ExternalIPs     | Sí                   | Sí               | Sí         |
 | SessionAffinity | Sí                   | Sí               | Sí         |
-| Topology        | Sí                   | Sí               | Limitado     |
+| Topología        | Sí                   | Sí               | Limitada     |
 | ProxyMode       | iptables              | IPVS              | eBPF        |
 
 ***
 
-## Mejores prácticas
+## Prácticas recomendadas
 
 ### Recomendaciones de implementación
 
 1. **Verifica los requisitos del kernel** antes de habilitar eBPF
-2. **Prueba primero en un cluster que no sea de producción**
-3. **Habilita de forma incremental** mediante selectores de nodo
-4. **Supervisa el rendimiento** durante el rollout
-5. **Mantén listo un plan de reversión**
+2. **Prueba primero en un clúster que no sea de producción**
+3. **Habilita de forma incremental** utilizando selectores de nodos
+4. **Supervisa el rendimiento** durante el despliegue
+5. **Ten listo un plan de reversión**
 
-### Mejores prácticas de configuración
+### Prácticas recomendadas de configuración
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -928,26 +824,26 @@ El dataplane eBPF de Calico representa un avance significativo en las redes de K
 
 ### Cuándo usar el dataplane eBPF
 
-* Cargas de trabajo de alto rendimiento
+* Cargas de trabajo de alto throughput
 * Aplicaciones sensibles a la latencia
-* Clusters grandes con muchos servicios
+* Clústeres grandes con muchos servicios
 * Entornos que requieren observabilidad detallada
-* Kernel Linux 5.3+ disponible
+* Kernel de Linux 5.3+ disponible
 
-### Cuándo seguir usando iptables
+### Cuándo mantener iptables
 
 * Se requiere compatibilidad con nodos Windows
-* Versiones antiguas del kernel
+* Versiones de kernel más antiguas
 * Se necesita cifrado Wireguard
-* Requisitos de topología de Service complejos
-* Entornos con aversión al riesgo que requieren tecnología probada
+* Requisitos complejos de topología de Service
+* Entornos reacios al riesgo que requieren tecnología probada
 
 ***
 
 ## Referencias
 
-* [Documentación de eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/)
-* [Documentación de eBPF de Linux](https://ebpf.io/what-is-ebpf/)
+* [Documentación eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/)
+* [Documentación eBPF de Linux](https://ebpf.io/what-is-ebpf/)
 * [Guía de referencia de BPF y XDP](https://docs.cilium.io/en/stable/bpf/)
-* [Guía de migración a eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
+* [Guía de migración eBPF de Calico](https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf)
 * [Manual de bpftool](https://man7.org/linux/man-pages/man8/bpftool.8.html)

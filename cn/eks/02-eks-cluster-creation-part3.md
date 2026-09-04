@@ -1,88 +1,92 @@
-# 第 3 部分：使用 AWS Management Console 和 CLI 创建 Cluster
+# 第 3 部分：使用 AWS Management Console 和 CLI 创建集群
 
-## 使用 AWS Management Console 创建 Cluster
+## 使用 AWS Management Console 创建集群
 
-使用 AWS Management Console 创建 EKS cluster 的步骤如下：
+使用 AWS Management Console 创建 EKS 集群的步骤如下：
 
-![通过 AWS Management Console 创建 EKS Cluster 的工作流程](../.gitbook/assets/eks_console_cluster_creation_workflow.png)
+![基于 Console 的创建工作流程图：从登录到集群配置、审核并创建、添加节点组以及连接。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-0.png)
 
-1. 登录到 [AWS Management Console](https://console.aws.amazon.com/)。
-2. 搜索 "EKS"，或从 services 列表中选择 "Elastic Kubernetes Service"。
-3. 在 "Clusters" 页面上，点击 "Create cluster" 按钮。
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-0.html)
 
-### Cluster 配置
+1. 登录 [AWS Management Console](https://console.aws.amazon.com/)。
+2. 搜索“EKS”，或从服务列表中选择“Elastic Kubernetes Service”。
+3. 在“Clusters”页面上，单击“Create cluster”按钮。
 
-4. 在 "Configure cluster" 页面上，输入以下信息：
-   * **Cluster name**：输入 cluster 的唯一名称。
-   * **Kubernetes version**：选择要使用的 Kubernetes version。
-   * **Cluster service role**：创建新的 role 或选择现有 role。
-   * **Tags**：根据需要添加 tags。
-   * 点击 "Next" 按钮。
+### 集群配置
 
-### 指定 Networking
+4. 在“Configure cluster”页面上，输入以下信息：
+   * **Cluster name**：输入集群的唯一名称。
+   * **Kubernetes version**：选择要使用的 Kubernetes 版本。
+   * **Cluster service role**：创建新角色或选择现有角色。
+   * **Tags**：如有需要，添加标签。
+   * 单击“Next”按钮。
 
-5. 在 "Specify networking" 页面上，输入以下信息：
+### 指定网络
+
+5. 在“Specify networking”页面上，输入以下信息：
    * **VPC**：创建新的 VPC 或选择现有 VPC。
-   * **Subnets**：选择要用于 cluster 的 subnets。至少 2 个 subnets 必须位于不同的 availability zones。
-   * **Security groups**：选择要用于 cluster 的 security groups。
-   * **Cluster endpoint access**：配置对 cluster API server endpoint 的访问。
-     * **Public**：可以从互联网访问 API server。
+   * **Subnets**：选择要用于集群的子网。至少 2 个子网必须位于不同的可用区。
+   * **Security groups**：选择要用于集群的安全组。
+   * **Cluster endpoint access**：配置对集群 API server 端点的访问。
+     * **Public**：可从互联网访问 API server。
      * **Private**：只能从 VPC 内部访问 API server。
-     * **Public and Private**：可以同时从互联网和 VPC 内部访问 API server。
-   * 点击 "Next" 按钮。
+     * **Public and Private**：可从互联网和 VPC 内部访问 API server。
+   * 单击“Next”按钮。
 
-### 配置 Logging
+### 配置日志记录
 
-6. 在 "Configure logging" 页面上，输入以下信息：
-   * **Control plane logging**：选择要启用的 log types。
-     * API server logs
-     * Audit logs
-     * Authenticator logs
-     * Controller manager logs
-     * Scheduler logs
-   * 点击 "Next" 按钮。
+6. 在“Configure logging”页面上，输入以下信息：
+   * **Control plane logging**：选择要启用的日志类型。
+     * API server 日志
+     * 审计日志
+     * Authenticator 日志
+     * Controller manager 日志
+     * Scheduler 日志
+   * 单击“Next”按钮。
 
-### 选择 Add-ons
+### 选择 Add-on
 
-7. 在 "Select add-ons" 页面上，输入以下信息：
-   * **Amazon VPC CNI**：用于 pod networking 的 CNI plugin。
-   * **CoreDNS**：cluster 内的 DNS service。
-   * **kube-proxy**：提供 network proxy 和 load balancing。
-   * 点击 "Next" 按钮。
+7. 在“Select add-ons”页面上，输入以下信息：
+   * **Amazon VPC CNI**：用于 Pod 网络的 CNI 插件。
+   * **CoreDNS**：集群内的 DNS 服务。
+   * **kube-proxy**：提供网络代理和负载均衡。
+   * 单击“Next”按钮。
 
-### Review and Create
+### 审核并创建
 
-8. 在 "Review and create" 页面上，检查配置并点击 "Create" 按钮。
+8. 在“Review and create”页面上，审核配置并单击“Create”按钮。
 
-Cluster 创建完成后，你可以点击 "Add node group" 按钮来添加 node group。
+集群创建完成后，您可以单击“Add node group”按钮来添加节点组。
 
-### 添加 Node Group
+### 添加节点组
 
-1. 在 "Node group configuration" 页面上，输入以下信息：
-   * **Node group name**：输入 node group 的唯一名称。
-   * **Node IAM role**：创建新的 role 或选择现有 role。
-   * 点击 "Next" 按钮。
-2. 在 "Set compute and scaling configuration" 页面上，输入以下信息：
-   * **AMI type**：选择要用于 nodes 的 AMI type。
-   * **Instance type**：选择要用于 nodes 的 EC2 instance type。
-   * **Disk size**：指定 nodes 的 disk size。
-   * **Node count**：指定 nodes 的最小、最大和期望数量。
-   * 点击 "Next" 按钮。
-3. 在 "Specify networking" 页面上，输入以下信息：
-   * **Subnets**：选择要用于 node group 的 subnets。
-   * **Remote access configuration**：配置 SSH access。
-   * 点击 "Next" 按钮。
-4. 在 "Review and create" 页面上，检查配置并点击 "Create" 按钮。
+1. 在“Node group configuration”页面上，输入以下信息：
+   * **Node group name**：输入节点组的唯一名称。
+   * **Node IAM role**：创建新角色或选择现有角色。
+   * 单击“Next”按钮。
+2. 在“Set compute and scaling configuration”页面上，输入以下信息：
+   * **AMI type**：选择要用于节点的 AMI 类型。
+   * **Instance type**：选择要用于节点的 EC2 实例类型。
+   * **Disk size**：指定节点的磁盘大小。
+   * **Node count**：指定节点的最小、最大和期望数量。
+   * 单击“Next”按钮。
+3. 在“Specify networking”页面上，输入以下信息：
+   * **Subnets**：选择要用于节点组的子网。
+   * **Remote access configuration**：配置 SSH 访问。
+   * 单击“Next”按钮。
+4. 在“Review and create”页面上，审核配置并单击“Create”按钮。
 
-## 使用 AWS CLI 创建 Cluster
+## 使用 AWS CLI 创建集群
 
-使用 AWS CLI 创建 EKS cluster 的过程包含多个步骤。当需要更多控制时，这种方法很有用。
+使用 AWS CLI 创建 EKS 集群的过程由多个步骤组成。当需要更多控制时，此方法非常有用。
 
-![通过 AWS CLI 创建 EKS Cluster 的工作流程](../.gitbook/assets/eks_cli_cluster_creation_workflow.png)
+![AWS CLI 工作流程图：先创建 IAM 角色、VPC 和安全组，然后创建集群和节点组，最后刷新 kubeconfig。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-1.png)
 
-### 1. 创建 Cluster IAM Role
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-1.html)
 
-EKS cluster 需要一个 IAM role，允许 Kubernetes control plane 管理 AWS resources。
+### 1. 创建集群 IAM 角色
+
+EKS 集群需要一个 IAM 角色，以允许 Kubernetes control plane 管理 AWS 资源。
 
 ```bash
 # Create role
@@ -107,9 +111,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
 ```
 
-### 2. 创建 VPC 和 Subnets
+### 2. 创建 VPC 和子网
 
-EKS cluster 需要 VPC 和 subnets。你可以使用现有 VPC，也可以创建新的 VPC。
+EKS 集群需要 VPC 和子网。您可以使用现有 VPC 或创建新的 VPC。
 
 ```bash
 # Create VPC
@@ -137,9 +141,9 @@ aws ec2 create-subnet \
   --output text
 ```
 
-### 3. 创建 Cluster Security Group
+### 3. 创建集群安全组
 
-EKS cluster 需要 security group。
+EKS 集群需要一个安全组。
 
 ```bash
 # Create security group
@@ -158,9 +162,9 @@ aws ec2 authorize-security-group-ingress \
   --cidr 0.0.0.0/0
 ```
 
-### 4. 创建 EKS Cluster
+### 4. 创建 EKS 集群
 
-现在可以创建 EKS cluster。
+现在您可以创建 EKS 集群。
 
 ```bash
 aws eks create-cluster \
@@ -170,7 +174,7 @@ aws eks create-cluster \
   --kubernetes-version 1.26
 ```
 
-等待 cluster 创建完成。要检查 cluster status，请运行以下命令：
+等待集群创建完成。要检查集群状态，请运行以下命令：
 
 ```bash
 aws eks describe-cluster \
@@ -178,9 +182,9 @@ aws eks describe-cluster \
   --query "cluster.status"
 ```
 
-### 5. 创建 Node IAM Role
+### 5. 创建节点 IAM 角色
 
-EKS nodes 需要 IAM role 才能访问 AWS resources。
+EKS 节点需要 IAM 角色来访问 AWS 资源。
 
 ```bash
 # Create role
@@ -213,9 +217,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 ```
 
-### 6. 创建 Node Group
+### 6. 创建节点组
 
-现在可以创建 node group。
+现在您可以创建节点组。
 
 ```bash
 aws eks create-nodegroup \
@@ -228,7 +232,7 @@ aws eks create-nodegroup \
   --instance-types m5.large
 ```
 
-等待 node group 创建完成。要检查 node group status，请运行以下命令：
+等待节点组创建完成。要检查节点组状态，请运行以下命令：
 
 ```bash
 aws eks describe-nodegroup \
@@ -239,7 +243,7 @@ aws eks describe-nodegroup \
 
 ### 7. 配置 kubeconfig
 
-你需要配置 kubeconfig 文件以访问 cluster。
+您需要配置 kubeconfig 文件以访问集群。
 
 ```bash
 aws eks update-kubeconfig \
@@ -247,9 +251,9 @@ aws eks update-kubeconfig \
   --region us-west-2
 ```
 
-### 8. 验证 Cluster
+### 8. 验证集群
 
-验证 cluster 是否已正确配置。
+验证集群是否配置正确。
 
 ```bash
 kubectl get nodes
@@ -257,4 +261,4 @@ kubectl get nodes
 
 ## 测验
 
-为了测试你在本章学到的内容，请尝试 [EKS Cluster Creation - Part 3 Quiz](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md)。
+要测试您在本章中学到的内容，请尝试 [EKS 集群创建 - 第 3 部分测验](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md)。

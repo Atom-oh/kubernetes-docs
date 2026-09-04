@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Performance Tuning by Workload",
+    "output": "en-eks-04-eks-storage-part2-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1020,
+      820
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "db",
+      "type": "frontend",
+      "label": "Database",
+      "sublabel": "Low latency · random I/O",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "web",
+      "type": "frontend",
+      "label": "Web server",
+      "sublabel": "Shared content · RWX",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "analytics",
+      "type": "frontend",
+      "label": "Data analytics",
+      "sublabel": "Large sequential reads",
+      "pos": [
+        40,
+        530
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "ml",
+      "type": "frontend",
+      "label": "Machine learning · LLM",
+      "sublabel": "Model load throughput",
+      "pos": [
+        40,
+        700
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS gp3 · io2",
+      "sublabel": "IOPS and throughput set apart",
+      "pos": [
+        600,
+        110
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "database",
+      "label": "EFS",
+      "sublabel": "Elastic throughput mode",
+      "pos": [
+        600,
+        320
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "Striping · compression",
+      "pos": [
+        600,
+        600
+      ],
+      "size": [
+        230,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "db-ebs",
+      "from": "db",
+      "to": "ebs",
+      "label": "IOPS-bound"
+    },
+    {
+      "id": "web-efs",
+      "from": "web",
+      "to": "efs",
+      "label": "Shared across nodes"
+    },
+    {
+      "id": "an-fsx",
+      "from": "analytics",
+      "to": "fsx",
+      "label": "Throughput-bound"
+    },
+    {
+      "id": "ml-fsx",
+      "from": "ml",
+      "to": "fsx",
+      "label": "Large sequential"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EBS tuning",
+      "items": [
+        "gp3 decouples IOPS and throughput from capacity, so you avoid buying size you do not need",
+        "For hundreds of thousands of IOPS, use io2 Block Express on an EBS-optimized instance",
+        "If the instance's EBS bandwidth ceiling is below the volume's, the instance is the bottleneck"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "EFS tuning",
+      "items": [
+        "Default to elastic throughput and switch to provisioned only when you need steady performance",
+        "Many-small-file reads are latency-sensitive, so add a caching layer",
+        "Tune read and write buffer sizes in the mount options to raise throughput"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "FSx and LLM workloads",
+      "items": [
+        "Decide deployment type and provisioned throughput (125-1,000 MB/s per TiB) first",
+        "Striping spreads large files across storage targets to widen parallel reads",
+        "Workloads that reload model weights repeatedly, such as vLLM, favor FSx for Lustre"
+      ]
+    }
+  ]
+}

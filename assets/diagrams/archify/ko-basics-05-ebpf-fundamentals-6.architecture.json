@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hubble 아키텍처",
+    "output": "ko-basics-05-ebpf-fundamentals-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "agent", "type": "backend", "label": "Cilium Agent", "sublabel": "eBPF 데이터플레인", "pos": [50, 100], "size": [190, 64] },
+    { "id": "observer", "type": "backend", "label": "Hubble Observer", "sublabel": "노드별 수집", "pos": [340, 100], "size": [190, 64] },
+    { "id": "relay", "type": "backend", "label": "Hubble Relay", "sublabel": "클러스터 전체 집계", "pos": [630, 100], "size": [190, 64] },
+    { "id": "ui", "type": "frontend", "label": "Hubble UI", "sublabel": "서비스 맵", "pos": [630, 330], "size": [190, 60] },
+    { "id": "cli", "type": "frontend", "label": "Hubble CLI", "sublabel": "플로우 질의", "pos": [340, 330], "size": [190, 60] }
+  ],
+  "connections": [
+    { "id": "agent-observer", "from": "agent", "to": "observer", "label": "플로우 이벤트", "variant": "emphasis" },
+    { "id": "observer-relay", "from": "observer", "to": "relay", "label": "gRPC" },
+    { "id": "relay-ui", "from": "relay", "to": "ui", "labelDy": 40 },
+    { "id": "relay-cli", "from": "relay", "to": "cli", "fromSide": "bottom", "toSide": "right", "via": [[725, 250], [560, 250], [560, 360]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "수집 데이터", "items": ["네트워크 플로우 · DNS 쿼리", "HTTP 요청 · 정책 결정(허용/거부)"] },
+    { "dot": "emerald", "title": "활용", "items": ["서비스 간 의존성을 서비스 맵으로 시각화", "차단된 트래픽의 원인 정책 추적"] }
+  ]
+}

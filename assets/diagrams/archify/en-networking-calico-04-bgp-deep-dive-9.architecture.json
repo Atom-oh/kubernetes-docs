@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico BGP Topologies",
+    "locale": "en",
+    "output": "en-networking-calico-04-bgp-deep-dive-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "BIRD node"
+        },
+        "messagebus": {
+          "label": "RR node"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "full-mesh",
+        "label": "Full-Mesh (default)",
+        "focus": [
+          "fm1",
+          "fm2",
+          "fm3",
+          "fm4"
+        ],
+        "note": "Every node pair opens a direct iBGP session: 4 nodes = 6, 5 = 10, 100 nodes = 4,950. Grows as N², so it only suits clusters under 50 nodes."
+      },
+      {
+        "id": "route-reflector",
+        "label": "Route Reflector",
+        "focus": [
+          "rr1",
+          "rr2",
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ],
+        "note": "With nodeToNodeMeshEnabled: false, clients peer only with the RRs, which re-advertise routes learned from one client to the others."
+      },
+      {
+        "id": "rr-pair",
+        "label": "RR redundancy",
+        "focus": [
+          "rr1",
+          "rr2"
+        ],
+        "note": "The two RRs peer with each other and every client peers with both. Cluster ID and Originator ID prevent routing loops."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "fm1",
+      "type": "backend",
+      "label": "Node 1",
+      "pos": [
+        230,
+        100
+      ],
+      "size": [
+        160,
+        52
+      ]
+    },
+    {
+      "id": "fm4",
+      "type": "backend",
+      "label": "Node 4",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        80,
+        52
+      ]
+    },
+    {
+      "id": "fm2",
+      "type": "backend",
+      "label": "Node 2",
+      "pos": [
+        70,
+        400
+      ],
+      "size": [
+        120,
+        52
+      ]
+    },
+    {
+      "id": "fm3",
+      "type": "backend",
+      "label": "Node 3",
+      "pos": [
+        430,
+        400
+      ],
+      "size": [
+        120,
+        52
+      ]
+    },
+    {
+      "id": "rr1",
+      "type": "messagebus",
+      "label": "Route Reflector 1",
+      "sublabel": "calico-route-reflector=true",
+      "pos": [
+        670,
+        100
+      ],
+      "size": [
+        180,
+        352
+      ]
+    },
+    {
+      "id": "rr2",
+      "type": "messagebus",
+      "label": "Route Reflector 2",
+      "sublabel": "calico-route-reflector=true",
+      "pos": [
+        1130,
+        100
+      ],
+      "size": [
+        180,
+        352
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "client",
+      "pos": [
+        930,
+        100
+      ],
+      "size": [
+        110,
+        52
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "client",
+      "pos": [
+        930,
+        200
+      ],
+      "size": [
+        110,
+        52
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "client",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        110,
+        52
+      ]
+    },
+    {
+      "id": "c4",
+      "type": "backend",
+      "label": "Node 4",
+      "sublabel": "client",
+      "pos": [
+        930,
+        400
+      ],
+      "size": [
+        110,
+        52
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Full-Mesh (default) · sessions N(N−1)/2 = O(N²) · fine below 50 nodes",
+      "wraps": [
+        "fm1",
+        "fm2",
+        "fm3",
+        "fm4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Route Reflector · sessions 2N+1 = O(N) · recommended at 50+ nodes",
+      "wraps": [
+        "rr1",
+        "rr2",
+        "c1",
+        "c2",
+        "c3",
+        "c4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fm4-fm1",
+      "from": "fm4",
+      "to": "fm1",
+      "variant": "dashed"
+    },
+    {
+      "id": "fm2-fm3",
+      "from": "fm2",
+      "to": "fm3",
+      "variant": "dashed",
+      "label": "iBGP session (all pairs)"
+    },
+    {
+      "id": "fm4-fm2",
+      "from": "fm4",
+      "to": "fm2",
+      "variant": "dashed"
+    },
+    {
+      "id": "fm4-fm3",
+      "from": "fm4",
+      "to": "fm3",
+      "variant": "dashed"
+    },
+    {
+      "id": "fm1-fm2",
+      "from": "fm1",
+      "to": "fm2",
+      "variant": "dashed"
+    },
+    {
+      "id": "fm1-fm3",
+      "from": "fm1",
+      "to": "fm3",
+      "variant": "dashed"
+    },
+    {
+      "id": "rr1-rr2",
+      "from": "rr1",
+      "to": "rr2",
+      "variant": "emphasis",
+      "label": "RR-to-RR peering"
+    },
+    {
+      "id": "c1-rr1",
+      "from": "c1",
+      "to": "rr1",
+      "label": "iBGP session"
+    },
+    {
+      "id": "c2-rr1",
+      "from": "c2",
+      "to": "rr1"
+    },
+    {
+      "id": "c3-rr1",
+      "from": "c3",
+      "to": "rr1"
+    },
+    {
+      "id": "c4-rr1",
+      "from": "c4",
+      "to": "rr1"
+    },
+    {
+      "id": "c1-rr2",
+      "from": "c1",
+      "to": "rr2",
+      "label": "iBGP session"
+    },
+    {
+      "id": "c2-rr2",
+      "from": "c2",
+      "to": "rr2"
+    },
+    {
+      "id": "c3-rr2",
+      "from": "c3",
+      "to": "rr2"
+    },
+    {
+      "id": "c4-rr2",
+      "from": "c4",
+      "to": "rr2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Full-Mesh (default)",
+      "items": [
+        "Sessions = N × (N − 1) / 2 — 10 nodes: 45, 50 nodes: 1,225, 100 nodes: 4,950",
+        "Full-mesh is OK below 50 nodes; consider RRs from 50 nodes and require them above 200"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Route Reflector",
+      "items": [
+        "RR re-advertises routes learned from clients to the other clients",
+        "Cluster ID and Originator ID prevent routing loops",
+        "Set nodeToNodeMeshEnabled: false in BGPConfiguration"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "RR design guidance",
+      "items": [
+        "50–200 nodes: deploy 2–3 Route Reflectors, one per availability zone",
+        "> 200 nodes: hierarchical (two-tier) Route Reflectors",
+        "Multi-rack: rack-aware Route Reflector placement"
+      ]
+    }
+  ]
+}

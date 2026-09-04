@@ -1,0 +1,42 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "Kubernetes 볼륨 스냅샷과 복원", "output": "ko-eks-04-eks-storage-part2-2.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "messagebus": {"label": "클레임"}, "backend": {"label": "스냅샷 객체"}, "cloud": {"label": "AWS 스냅샷"} } } },
+  "lanes": [
+    { "id": "snap", "label": "스냅샷 생성" },
+    { "id": "restore", "label": "복원" }
+  ],
+  "mainPath": ["pvc", "vs", "vsc", "snapshot"],
+  "nodes": [
+    { "id": "pvc", "lane": "snap", "col": 0, "type": "messagebus", "label": "원본 PVC", "sublabel": "PV → EBS", "width": 150 },
+    { "id": "vs", "lane": "snap", "col": 1, "type": "backend", "label": "VolumeSnapshot", "sublabel": "클래스 참조", "width": 160 },
+    { "id": "vsc", "lane": "snap", "col": 2, "type": "backend", "label": "SnapshotContent", "sublabel": "CSI 위임", "width": 160 },
+    { "id": "snapshot", "lane": "snap", "col": 3, "type": "cloud", "label": "EBS 스냅샷", "sublabel": "증분 백업", "width": 150 },
+    { "id": "newpvc", "lane": "restore", "col": 4, "type": "messagebus", "label": "복원 PVC", "sublabel": "dataSource", "width": 150 },
+    { "id": "newpv", "lane": "restore", "col": 5, "type": "backend", "label": "새 PV 바인딩", "sublabel": "복원 완료", "width": 155 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "pvc", "to": "vs", "label": "1 스냅샷 요청" },
+    { "id": "e2", "from": "vs", "to": "vsc", "label": "2 바인딩" },
+    { "id": "e3", "from": "vsc", "to": "snapshot", "label": "3 생성" },
+    { "id": "e4", "from": "snapshot", "to": "newpvc", "label": "4 dataSource", "role": "branch" },
+    { "id": "e5", "from": "newpvc", "to": "newpv", "label": "5 프로비저닝" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "스냅샷 객체 구조", "items": [
+      "VolumeSnapshotClass가 어떤 CSI 드라이버로 스냅샷을 만들지 정한다",
+      "VolumeSnapshot은 사용자 요청, VolumeSnapshotContent는 실제 스냅샷을 가리킨다",
+      "EBS 스냅샷은 증분 방식이라 두 번째 이후 스냅샷은 변경 블록만 저장한다"
+    ]},
+    { "dot": "emerald", "title": "복원 절차", "items": [
+      "새 PVC의 spec.dataSource에 VolumeSnapshot 이름과 kind를 지정한다",
+      "복원 볼륨은 원본과 같거나 더 큰 용량이어야 한다",
+      "복원된 PV는 스냅샷을 만든 리전·AZ 제약을 그대로 따른다"
+    ]},
+    { "dot": "amber", "title": "운영 자동화", "items": [
+      "Velero로 스냅샷 스케줄과 복원 작업을 선언적으로 관리한다",
+      "네임스페이스 단위 백업에 PVC 스냅샷을 함께 포함시킨다",
+      "복원 리허설을 정기적으로 수행해 실제로 복구되는지 확인한다"
+    ]}
+  ]
+}

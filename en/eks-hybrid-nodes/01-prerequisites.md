@@ -10,7 +10,9 @@ This document covers the system requirements for on-premises nodes, GPU servers,
 
 The following diagram shows the network prerequisites for connecting on-premises nodes to an EKS cluster, including VPC configuration, Transit Gateway/Virtual Private Gateway, and CIDR requirements.
 
-![EKS Hybrid Nodes Network Prerequisites](../.gitbook/assets/hybrid-prereq-diagram.png)
+![Hybrid nodes prerequisites diagram tying the cluster's RemoteNodeNetwork and RemotePodNetwork settings to route tables on both the VPC and on-prem sides.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
 ## On-Premises Node Requirements
 
