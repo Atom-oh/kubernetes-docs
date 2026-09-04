@@ -1,7 +1,7 @@
 # vLLM 배포 및 최적화
 
 > **지원 버전**: Kubernetes 1.31, 1.32, 1.33  
-> **마지막 업데이트**: 2026년 4월 9일
+> **마지막 업데이트**: 2026년 9월 4일
 
 vLLM은 대규모 언어 모델(LLM)을 위한 고성능 오픈소스 추론 엔진으로, 현재 가장 널리 사용되는 LLM 서빙 프레임워크입니다. 이 장에서는 vLLM의 최신 기능과 아키텍처를 이해하고, EKS에서 프로덕션 수준으로 배포 및 최적화하는 방법을 알아보겠습니다.
 
@@ -77,7 +77,7 @@ vLLM은 다음과 같은 모델을 지원합니다:
 4. **양자화**: INT8/INT4 양자화를 지원하여 메모리 사용량을 줄이고 처리량을 향상시킵니다.
 5. **OpenAI 호환 API**: OpenAI API와 호환되는 인터페이스를 제공합니다.
 
-### vLLM 최신 기능 (v0.6+)
+### v0.6 라인에서 추가된 vLLM 기능
 
 vLLM은 빠르게 발전하고 있으며, 최근 버전에서 다음과 같은 주요 기능이 추가되었습니다:
 
@@ -604,6 +604,94 @@ affinity:
           values:
           - us-west-2a
 ```
+
+## 실측 벤치마크: L4 GPU 1장에서 돌린 Qwen2.5-7B
+
+이 문서의 다른 수치는 모두 vLLM 프로젝트의 일반적인 주장이거나 설정 플래그 설명입니다. 이 절은 다릅니다 — 실제 vLLM 서버를 대상으로 한 번 측정한 결과이므로, "continuous batching이 처리량을 개선한다"는 말이 구체적인 모델·GPU 조합에서 실제로 어떤 모습인지 보여줍니다.
+
+![클라이언트 Job이 ClusterIP Service를 거쳐 vLLM 서버에 도달하고 vLLM이 이를 배칭해 NVIDIA L4 GPU 1장에서 처리하는 벤치마크 구성과, 실측한 처리량·지연시간과 연산이 아닌 메모리 대역폭이 한계였던 이유를 함께 보여준다.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-6.html)
+
+### 구성
+
+- **클러스터**: 전용 Karpenter NodePool(`bench-gpu`, on-demand `g6.2xlarge` — NVIDIA L4 1장, GPU 메모리 24GB, vCPU 8, RAM 32 GiB)을 만들어 `nvidia.com/gpu=true:NoSchedule` taint와 기존 `nvidia-device-plugin` DaemonSet이 인식하는 라벨을 붙였고, 측정이 끝난 뒤 즉시 삭제했습니다.
+- **서버**: `vllm/vllm-openai:v0.6.4.post1` 이미지, 모델 `Qwen/Qwen2.5-7B-Instruct`, `--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`. 정밀도는 1가지(bf16, 모델의 네이티브 dtype)입니다. 양자화·스펙큘레이티브 디코딩·프리픽스 캐싱은 쓰지 않았으며, 이 문서 다른 곳에서 설명한 순수 기본값입니다. 이 이미지는 2024-11-15 릴리스입니다. 이후 vLLM은 프리픽스 캐싱이 기본으로 켜진 V1 엔진을 냈으므로, 이 수치는 그 릴리스 라인의 한 시점 스냅샷으로 봐야 합니다.
+- **클라이언트**: **클러스터 내부**(GPU가 없는 별도 노드)에서 Job으로 실행한 Python `ThreadPoolExecutor`가 `vllm-server` ClusterIP Service를 거쳐 `/v1/chat/completions`를 호출합니다. Non-streaming, `temperature=0`, `max_tokens=128`, 짧은 Kubernetes 개념 질문 8개를 순환시켰습니다(1~2문장 답변을 요청하는 질문들). 실제로는 대부분의 응답이 1~2문장에서 멈추지 않고 128 토큰 한도 근처까지 이어졌습니다(세 동시성 배치 모두 평균 약 102 토큰). 동시성 구간 사이의 처리량을 동일 조건으로 비교하기엔 유용하지만, 아래 지연시간을 "짧은 질문에 답하는 시간"으로 읽기 전에 알아둘 만한 사실입니다.
+- **콜드 스타트**: vLLM 엔진의 시작 로그부터 `/health` 엔드포인트가 `200`을 반환하기까지 약 4분 30초 — Hugging Face에서 Qwen2.5-7B-Instruct 가중치(약 15GB)를 파드의 임시 캐시로 내려받는 시간이 대부분을 차지합니다. 이미지 pull 시간은 별도로 측정하지 않아 포함되지 않았습니다.
+
+### 재현 방법
+
+```yaml
+# NodePool (Karpenter) - 전용, 측정 후 삭제 — nodeClassRef는 클러스터에 이미 있는 GPU용 EC2NodeClass(AMI·서브넷·SG)를 가리키며 여기에는 싣지 않았습니다
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata: { name: bench-gpu }
+spec:
+  limits: { cpu: "16", memory: 128Gi, nvidia.com/gpu: "1" }
+  template:
+    metadata:
+      labels: { node-type: bench-gpu, nvidia.com/device-plugin.config: default }
+    spec:
+      expireAfter: 6h
+      nodeClassRef: { group: karpenter.k8s.aws, kind: EC2NodeClass, name: gpu }
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
+      taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+---
+# vLLM 서버 (bench-gpu 네임스페이스) + 클라이언트가 호출하는 ClusterIP Service
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vllm-server } }
+  template:
+    metadata: { labels: { app: vllm-server } }
+    spec:
+      nodeSelector: { node-type: bench-gpu }
+      tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.6.4.post1
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
+                 "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: "1" }
+            requests: { nvidia.com/gpu: "1", cpu: "3", memory: 20Gi }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 60 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  selector: { app: vllm-server }
+  ports: [{ port: 8000, targetPort: 8000 }]
+```
+
+클라이언트는 `urllib`과 `concurrent.futures.ThreadPoolExecutor`로 `http://vllm-server:8000/v1/chat/completions`에 요청 N개를 보내고 각각의 시간을 재는 평범한 Python 스크립트로, 같은 네임스페이스의 `batch/v1` Job으로 실행합니다. 한 가지 주의할 점: 위 NodePool의 `nvidia.com/device-plugin.config: default` 노드 라벨은 필수입니다 — 이 라벨이 없으면 taint와 toleration이 정확히 맞아도 공유 `nvidia-device-plugin` DaemonSet이 새 노드에 스케줄되지 않아 `nvidia.com/gpu`가 할당 가능한 리소스로 등록되지 않습니다.
+
+### 결과
+
+| 동시성 | 요청 수 | Wall time | 클라이언트 지연시간 p50 / p90 | 클라이언트 집계 처리량 | 서버 기준 피크 생성 처리량 | GPU KV 캐시 사용률 |
+|---|---|---|---|---|---|---|
+| 1 (순차) | 10 | 약 53.2 s(요청별 지연시간 합산) | 5.65 s / 7.43 s | 요청당 약 17~18 tokens/s | 약 17 tokens/s | 0.1~0.2% |
+| 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65~66 tokens/s | 0.4~0.7% |
+| 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123~129 tokens/s | 0.8~1.4% |
+| 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | 최대 243 tokens/s | 1.5~2.6% |
+
+"클라이언트 집계 처리량"은 해당 배치의 전체 completion 토큰 수를 파드 밖에서 측정한 wall-clock 시간으로 나눈 값입니다. "서버 기준"은 vLLM이 주기적으로 남기는 `Avg generation throughput` 로그 줄(`Running: <동시성>` 시점)의 값으로, HTTP/JSON 오버헤드가 없고 측정 구간 사이의 진짜 피크를 잡아내기 때문에 클라이언트 수치보다 약간 앞섭니다. GPU 메모리 사용량(측정 종료 후 `nvidia-smi` 기준): 이 인스턴스에서 드라이버가 보고하는 전체 23.0 GiB 중 19.2 GiB — `gpu-memory-utilization=0.90`은 vLLM에게 가중치와 KV 캐시 블록을 위해 이 중 대부분을 시작 시점에 미리 확보하라고 지시하는 값이므로, 아래 KV 캐시 비율은 남은 실제 여유 VRAM이 아니라 이 확보된 풀 안에서의 사용률을 뜻합니다.
+
+### 분석
+
+- **요청당 지연시간은 거의 그대로입니다.** 동시 요청 1개에서 16개로 늘려도 같은 ~100~128 토큰 응답의 p50 지연시간이 5.65 s → 7.52 s(+33%)로만 늘어납니다 — 새 요청이 대기열 뒤에 줄 서는 게 아니라 이미 실행 중인 배치에 합류하는, continuous batching이 의도한 그대로의 동작입니다.
+- **집계 처리량은 거의 선형으로 늘어납니다.** 동시성 4 → 8 → 16을 거치며 매번 처리량이 거의 두 배씩 늘었습니다(58.67 → 109.04 → 208.08 tokens/s).
+- **이는 메모리 대역폭에 의한 병목(memory-bandwidth-bound)이며, 오히려 이 때문에 배칭이 효과가 있는 것입니다.** 동시성 1에서는 토큰 하나를 낼 때마다 약 15.2GB의 bf16 가중치를 GDDR6 메모리에서 통째로 읽어야 합니다. 이 L4의 메모리 대역폭(약 300GB/s)만으로 계산하면 단일 요청 디코딩은 초당 약 20토큰이 한계인데, 실측값 약 17~18 tokens/s와 거의 일치합니다. 연산 측면은 전혀 다른 이야기입니다 — 가장 바쁜 구간(집계 208 tokens/s)에서도 GPU는 초당 약 3 TFLOP만 수행하는데, 이는 L4의 dense bf16 연산 한계(약 121 TFLOPS)의 몇 % 수준에 불과합니다. GPU KV 캐시 사용률도 전체 구간에서 3% 미만으로, 애초에 한계가 아니었습니다. Continuous batching은 바로 이런 대역폭 병목형 디코딩을 위한 해법입니다 — 한 요청을 위해 가중치를 이미 메모리에서 읽어 왔다면 같은 가중치로 16개 요청을 함께 처리하는 건 거의 공짜에 가깝고, 그래서 지연시간은 거의 그대로인 채 처리량만 거의 선형으로 늘어나는 것입니다.
+
+### 한계
+
+이번 측정은 모델 1개·정밀도 1가지(bf16)·GPU 유형 1가지·컨텍스트 길이 1가지에 대한 단 1회(n=1) 실행입니다 — vLLM/L4 성능에 대한 일반적 주장이 아니라 하나의 보정된 데이터 포인트로 봐야 합니다. 클라이언트는 클러스터 내부(GPU가 없는 별도 노드)에서 실행했으므로, 지연시간은 클러스터 내부 홉을 반영할 뿐 외부 호출자의 것이 아닙니다. 여기서의 지연시간은 전체 HTTP 응답이 끝나기까지의 종단 시간이며, 첫 토큰까지의 시간(TTFT)이 아닙니다 — 스트리밍은 테스트하지 않았습니다. 이 문서 앞부분에서 설명한 프리픽스 캐싱·스펙큘레이티브 디코딩·FP8·멀티 GPU 텐서 병렬화는 사용하지 않았습니다. 위 매니페스트로 재현할 수 있으며, 이 수치를 다른 모델 크기·GPU·프롬프트 길이로 확대 해석하지 마십시오.
 
 ## 모니터링 및 로깅
 

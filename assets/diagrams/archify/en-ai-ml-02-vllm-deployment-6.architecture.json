@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM benchmark setup — Qwen2.5-7B on one L4 GPU",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [1280, 560],
+    "views": [
+      { "id": "request-path", "label": "Request path", "focus": ["client", "svc", "vllm", "gpu"], "note": "The client Job's requests reach vLLM through a ClusterIP Service; vLLM batches them onto the L4 GPU." },
+      { "id": "scaling", "label": "Concurrency scaling", "focus": ["vllm", "gpu", "kv"], "note": "Latency stays flat from concurrency 1 to 16 while throughput scales near-linearly; KV cache stays under 3%." }
+    ]
+  },
+  "components": [
+    { "id": "client", "type": "backend", "label": "bench client Job", "sublabel": "Python · ThreadPoolExecutor", "pos": [40, 240], "size": [200, 64] },
+    { "id": "svc", "type": "backend", "label": "vllm-server Service", "sublabel": "ClusterIP :8000", "pos": [340, 240], "size": [200, 64] },
+    { "id": "vllm", "type": "backend", "label": "vLLM OpenAI server", "sublabel": "v0.6.4.post1 · Qwen2.5-7B-Instruct · bf16", "pos": [640, 240], "size": [240, 64] },
+    { "id": "gpu", "type": "database", "label": "NVIDIA L4 GPU", "sublabel": "24GB · g6.2xlarge", "pos": [980, 100], "size": [220, 64] },
+    { "id": "kv", "type": "security", "label": "KV cache blocks", "sublabel": "gpu-memory-utilization 0.9", "pos": [980, 380], "size": [220, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "bench-gpu namespace on fsi-demo-cluster (namespace deleted after the run)", "wraps": ["client", "svc", "vllm"] },
+    { "kind": "security-group", "label": "bench-gpu NodePool — dedicated, deleted after the run", "wraps": ["gpu", "kv"] }
+  ],
+  "connections": [
+    { "id": "c-client-svc", "from": "client", "to": "svc", "label": "chat completion request", "variant": "emphasis", "labelDy": 56 },
+    { "id": "c-svc-vllm", "from": "svc", "to": "vllm", "label": "1..16 concurrent" },
+    { "id": "c-vllm-gpu", "from": "vllm", "to": "gpu", "label": "continuous batching" },
+    { "id": "c-vllm-kv", "from": "vllm", "to": "kv", "label": "block_size=16, max_model_len=4096" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Measured throughput scaling", "items": ["Concurrency 1: ~17 tokens/s (server-reported)", "Concurrency 8: 109 tokens/s aggregate (client), 123-129 tokens/s peak (server)", "Concurrency 16: 208 tokens/s aggregate (client), up to 243 tokens/s peak (server)"] },
+    { "dot": "emerald", "title": "Measured latency (full ~100-128 token response)", "items": ["Concurrency 1: p50 5.65 s, p90 7.43 s", "Concurrency 16: p50 7.52 s, p90 8.74 s — latency barely grows despite 16x the load"] },
+    { "dot": "rose", "title": "Bandwidth, not compute, is the limit", "items": ["GPU KV cache usage: 0.1% (c=1) to 2.6% (c=16) — never the constraint", "Batch-1 decode: ~15.2GB bf16 weights per token via ~300GB/s GDDR6 caps it near the measured 17-18 tok/s", "Compute: ~3 TFLOP/s at peak vs L4's ~121 TFLOPS bf16 — a few percent of ceiling"] }
+  ]
+}
