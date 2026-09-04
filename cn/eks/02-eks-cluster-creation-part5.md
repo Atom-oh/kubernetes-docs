@@ -1,16 +1,18 @@
-# 第 5 部分：Cluster 访问、验证、升级和删除
+# 第 5 部分：集群访问、验证、升级和删除
 
-## 配置 Cluster 访问
+## 配置集群访问
 
-创建 EKS cluster 后，需要进行配置才能访问该 cluster。在本节中，我们将学习如何配置 cluster 访问。
+创建 EKS 集群后，需要进行配置才能访问集群。本节将学习如何配置集群访问。
 
-### Cluster 访问配置流程
+### 集群访问配置流程
 
-![EKS Cluster 访问配置流程](../.gitbook/assets/eks_cluster_access_configuration.png)
+![访问配置流程图：kubeconfig、IAM 主体、访问条目、RBAC 规则和绑定，然后进行访问测试。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-0.html)
 
 ### kubeconfig 配置
 
-你需要配置 kubeconfig 文件来访问 EKS cluster。可以使用 AWS CLI 配置 kubeconfig：
+您需要配置 kubeconfig 文件才能访问 EKS 集群。您可以使用 AWS CLI 配置 kubeconfig：
 
 ```bash
 aws eks update-kubeconfig \
@@ -18,19 +20,21 @@ aws eks update-kubeconfig \
   --region us-west-2
 ```
 
-此命令会更新 `~/.kube/config` 文件，以启用对 EKS cluster 的访问。
+此命令会更新 `~/.kube/config` 文件，以便访问 EKS 集群。
 
-### 配置 IAM User 和 Role 访问
+### 配置 IAM 用户和角色访问权限
 
-默认情况下，只有创建 EKS cluster 的 IAM 实体（user 或 role）可以访问该 cluster。有两种方法可以向其他 IAM users 或 roles 授予 cluster 访问权限：传统的 aws-auth ConfigMap 方法和新的 EKS Access Entry 方法。
+默认情况下，只有创建 EKS 集群的 IAM 实体（用户或角色）可以访问该集群。可通过两种方法向其他 IAM 用户或角色授予集群访问权限：传统的 aws-auth ConfigMap 方法和新的 EKS Access Entry 方法。
 
-![EKS IAM 访问方法比较](../.gitbook/assets/eks_iam_access_methods.png)
+![展示 IAM 主体映射到 Kubernetes API 的两种方式的图表：EKS 访问条目和 aws-auth ConfigMap。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-1.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-1.html)
 
 #### 方法 1：EKS Access Entry（推荐）
 
-EKS Access Entry 是一种替代 aws-auth ConfigMap 的新方法，提供了更稳定且更易于管理的方式。
+EKS Access Entry 是一种用于替代 aws-auth ConfigMap 的新方法，提供了更稳定且更易于管理的方式。
 
-1. 为 cluster 启用 Access Entry：
+1. 为集群启用 Access Entry：
 
 ```bash
 aws eks update-cluster-config \
@@ -39,7 +43,7 @@ aws eks update-cluster-config \
   --access-config authenticationMode=API_AND_CONFIG_MAP
 ```
 
-2. 为 IAM role 创建 Access Entry：
+2. 为 IAM 角色创建 Access Entry：
 
 ```bash
 aws eks create-access-entry \
@@ -49,7 +53,7 @@ aws eks create-access-entry \
   --kubernetes-groups system:masters
 ```
 
-3. 为 IAM user 创建 Access Entry：
+3. 为 IAM 用户创建 Access Entry：
 
 ```bash
 aws eks create-access-entry \
@@ -59,13 +63,13 @@ aws eks create-access-entry \
   --kubernetes-groups system:masters
 ```
 
-4. 列出 Access Entries：
+4. 列出 Access Entry：
 
 ```bash
 aws eks list-access-entries --cluster-name my-cluster
 ```
 
-5. 描述 Access Entry 详细信息：
+5. 查看 Access Entry 详情：
 
 ```bash
 aws eks describe-access-entry \
@@ -73,9 +77,9 @@ aws eks describe-access-entry \
   --principal-arn arn:aws:iam::123456789012:user/my-user
 ```
 
-#### 方法 2：aws-auth ConfigMap（传统）
+#### 方法 2：aws-auth ConfigMap（旧版）
 
-aws-auth ConfigMap 是传统方法，并且仍然受支持，但建议为新的 clusters 使用 Access Entry。
+aws-auth ConfigMap 是传统方法，目前仍受支持，但建议新集群使用 Access Entry。
 
 1. 获取当前的 `aws-auth` ConfigMap：
 
@@ -83,7 +87,7 @@ aws-auth ConfigMap 是传统方法，并且仍然受支持，但建议为新的 
 kubectl get configmap aws-auth -n kube-system -o yaml > aws-auth.yaml
 ```
 
-2. 编辑 `aws-auth.yaml` 文件以添加 users 或 roles：
+2. 编辑 `aws-auth.yaml` 文件以添加用户或角色：
 
 ```yaml
 apiVersion: v1
@@ -117,11 +121,11 @@ data:
 kubectl apply -f aws-auth.yaml
 ```
 
-> **注意**：EKS Access Entry 于 2023 年推出，建议新的 clusters 使用 Access Entry。现有 clusters 可以迁移到同时支持两种方法的混合模式。
+> **注意**：EKS Access Entry 于 2023 年推出，建议新集群使用 Access Entry。现有集群可以迁移到同时支持两种方法的混合模式。
 
 ### RBAC 配置
 
-你可以使用 Kubernetes Role-Based Access Control (RBAC) 控制对 cluster 内资源的访问。
+您可以使用 Kubernetes Role-Based Access Control (RBAC) 控制对集群内资源的访问。
 
 1. 创建 namespace：
 
@@ -129,7 +133,7 @@ kubectl apply -f aws-auth.yaml
 kubectl create namespace dev
 ```
 
-2. 创建 role：
+2. 创建角色：
 
 ```yaml
 # role.yaml
@@ -151,7 +155,7 @@ rules:
 kubectl apply -f role.yaml
 ```
 
-3. 创建 role binding：
+3. 创建角色绑定：
 
 ```yaml
 # rolebinding.yaml
@@ -174,37 +178,39 @@ roleRef:
 kubectl apply -f rolebinding.yaml
 ```
 
-## Cluster 验证
+## 集群验证
 
-创建 EKS cluster 后，你需要验证该 cluster 是否正常工作。在本节中，我们将学习如何验证 cluster。
+创建 EKS 集群后，您需要验证集群是否正常工作。本节将学习如何验证集群。
 
-### Cluster 验证流程
+### 集群验证流程
 
-![EKS Cluster 验证流程](../.gitbook/assets/eks_cluster_validation_process.png)
+![集群验证流程图：检查节点和系统 Pod，部署并公开测试应用，然后查看日志。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-2.png)
 
-### 验证 Nodes
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-2.html)
 
-验证 cluster 中的 nodes：
+### 验证节点
+
+验证集群中的节点：
 
 ```bash
 kubectl get nodes
 ```
 
-验证所有 nodes 都处于 `Ready` 状态。
+确认所有节点均处于 `Ready` 状态。
 
-### 验证 System Pods
+### 验证系统 Pod
 
-验证 kube-system namespace 中的 pods：
+验证 kube-system namespace 中的 Pod：
 
 ```bash
 kubectl get pods -n kube-system
 ```
 
-验证所有 system pods 都处于 `Running` 状态。
+确认所有系统 Pod 均处于 `Running` 状态。
 
-### 部署测试应用程序
+### 部署测试应用
 
-部署一个简单的测试应用程序，以验证 cluster 是否正常工作：
+部署一个简单的测试应用，以验证集群是否正常工作：
 
 ```yaml
 # nginx.yaml
@@ -245,7 +251,7 @@ spec:
 kubectl apply -f nginx.yaml
 ```
 
-验证 deployment 和 service 状态：
+验证 Deployment 和 Service 状态：
 
 ```bash
 kubectl get deployments
@@ -253,34 +259,36 @@ kubectl get pods
 kubectl get services
 ```
 
-验证你可以使用 LoadBalancer service 的外部 IP 访问该应用程序：
+确认您可以通过 LoadBalancer Service 的外部 IP 访问该应用：
 
 ```bash
 curl http://<EXTERNAL-IP>
 ```
 
-### 验证 Cluster Logs
+### 验证集群日志
 
-在 CloudWatch Logs 中验证 cluster logs：
+在 CloudWatch Logs 中验证集群日志：
 
 ```bash
 aws logs describe-log-groups \
   --log-group-name-prefix /aws/eks/my-cluster
 ```
 
-## Cluster 升级
+## 集群升级
 
-为了让 EKS cluster 保持最新，需要定期升级。在本节中，我们将学习如何升级 cluster。
+为使 EKS 集群保持最新状态，需要定期升级。本节将学习如何升级集群。
 
-### Cluster 升级流程
+### 集群升级流程
 
-![EKS Cluster 升级流程](../.gitbook/assets/eks_cluster_upgrade_process.png)
+![升级流程图：从规划和版本检查，依次经过控制平面、节点组、附加组件，直至功能测试。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-3.png)
 
-### Control Plane 升级
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-3.html)
 
-要升级 EKS control plane，请按照以下步骤操作：
+### 控制平面升级
 
-1. 检查可用的 Kubernetes versions：
+要升级 EKS 控制平面，请执行以下步骤：
+
+1. 检查可用的 Kubernetes 版本：
 
 ```bash
 aws eks describe-addon-versions \
@@ -288,7 +296,7 @@ aws eks describe-addon-versions \
   --query "addons[].addonVersions[].compatibilities[].clusterVersion"
 ```
 
-2. 升级 cluster：
+2. 升级集群：
 
 ```bash
 aws eks update-cluster-version \
@@ -304,11 +312,11 @@ aws eks describe-update \
   --update-id <UPDATE-ID>
 ```
 
-### Node 升级
+### 节点升级
 
-升级 control plane 后，nodes 也必须升级：
+升级控制平面后，也必须升级节点：
 
-#### Managed Node Group 升级
+#### 托管节点组升级
 
 ```bash
 aws eks update-nodegroup-version \
@@ -316,15 +324,15 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-#### Self-Managed Node 升级
+#### 自管理节点升级
 
-对于 self-managed nodes，你需要创建新的 node group、迁移 workloads，然后删除旧的 node group。
+对于自管理节点，您需要创建新的节点组、迁移工作负载，然后删除旧节点组。
 
-### Add-on 升级
+### 附加组件升级
 
-要升级 EKS add-ons，请按照以下步骤操作：
+要升级 EKS 附加组件，请执行以下步骤：
 
-1. 检查可用的 add-on versions：
+1. 检查可用的附加组件版本：
 
 ```bash
 aws eks describe-addon-versions \
@@ -332,7 +340,7 @@ aws eks describe-addon-versions \
   --kubernetes-version 1.27
 ```
 
-2. 升级 add-on：
+2. 升级附加组件：
 
 ```bash
 aws eks update-addon \
@@ -341,19 +349,21 @@ aws eks update-addon \
   --addon-version <VERSION>
 ```
 
-## Cluster 删除
+## 删除集群
 
-当不再需要 EKS cluster 时，你可以删除它以节省成本。在本节中，我们将学习如何删除 cluster。
+当不再需要 EKS 集群时，您可以删除它以节省成本。本节将学习如何删除集群。
 
-### Cluster 删除流程
+### 集群删除流程
 
-![EKS Cluster 删除流程](../.gitbook/assets/eks_cluster_deletion_process.png)
+![删除流程图：清理负载均衡器和 PVC，删除节点组和 Fargate 配置文件，然后删除集群，最后检查遗留资源。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part5-4.png)
 
-### Resource 清理
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part5-4.html)
 
-删除 cluster 之前，必须清理 cluster 中创建的所有 resources：
+### 资源清理
 
-1. 删除 LoadBalancer services：
+删除集群之前，必须清理在集群中创建的所有资源：
+
+1. 删除 LoadBalancer Service：
 
 ```bash
 kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.type == "LoadBalancer") | .metadata.name + " " + .metadata.namespace' | while read name namespace; do
@@ -361,25 +371,25 @@ kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.t
 done
 ```
 
-2. 删除 PersistentVolumeClaims：
+2. 删除 PersistentVolumeClaim：
 
 ```bash
 kubectl delete pvc --all --all-namespaces
 ```
 
-### 使用 eksctl 删除 Cluster
+### 使用 eksctl 删除集群
 
-如果你使用 eksctl 创建了 cluster，可以使用以下命令删除它：
+如果您使用 eksctl 创建了集群，可以使用以下命令删除它：
 
 ```bash
 eksctl delete cluster --name my-cluster --region us-west-2
 ```
 
-### 使用 AWS CLI 删除 Cluster
+### 使用 AWS CLI 删除集群
 
-要使用 AWS CLI 删除 cluster，请按照以下步骤操作：
+要使用 AWS CLI 删除集群，请执行以下步骤：
 
-1. 删除 node group：
+1. 删除节点组：
 
 ```bash
 aws eks delete-nodegroup \
@@ -387,7 +397,7 @@ aws eks delete-nodegroup \
   --nodegroup-name my-nodegroup
 ```
 
-2. 删除 Fargate profile：
+2. 删除 Fargate 配置文件：
 
 ```bash
 aws eks delete-fargate-profile \
@@ -395,24 +405,24 @@ aws eks delete-fargate-profile \
   --fargate-profile-name my-fargate-profile
 ```
 
-3. 删除 cluster：
+3. 删除集群：
 
 ```bash
 aws eks delete-cluster \
   --name my-cluster
 ```
 
-### 清理相关 Resources
+### 清理相关资源
 
-删除 EKS cluster 后，以下相关 resources 可能仍会保留：
+删除 EKS 集群后，可能仍会保留以下相关资源：
 
-1. VPC 和相关 resources：
+1. VPC 及相关资源：
 
 ```bash
 aws ec2 delete-vpc --vpc-id vpc-xxxxxxxxxxxxxxxxx
 ```
 
-2. IAM roles 和 policies：
+2. IAM 角色和策略：
 
 ```bash
 aws iam detach-role-policy \
@@ -436,13 +446,13 @@ aws iam detach-role-policy \
 aws iam delete-role --role-name EKSNodeRole
 ```
 
-3. CloudWatch log groups：
+3. CloudWatch 日志组：
 
 ```bash
 aws logs delete-log-group \
   --log-group-name /aws/eks/my-cluster/cluster
 ```
 
-## Quiz
+## 测验
 
-要测试你在本章中学到的内容，请尝试 [EKS Cluster Creation - Part 5 Quiz](../quizzes/eks/02-eks-cluster-creation-part5-quiz.md)。
+要测试您在本章中学到的内容，请尝试 [EKS 集群创建 - 第 5 部分测验](../quizzes/eks/02-eks-cluster-creation-part5-quiz.md)。

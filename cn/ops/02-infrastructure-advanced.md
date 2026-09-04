@@ -2,20 +2,20 @@
 
 > **支持的版本**: Terraform >= 1.5, AWS Provider >= 5.40, EKS >= 1.29 **最后更新**: February 19, 2026
 
-< [上一节：Terraform 三层基础设施](01-infrastructure-setup.md) | [目录](./README.md) | [下一节：CI 流水线](03-ci-pipelines.md) >
+< [上一章：Terraform 三层基础设施](01-infrastructure-setup.md) | [目录](./README.md) | [下一章：CI Pipelines](03-ci-pipelines.md) >
 
 ***
 
 ## 概述
 
-本指南介绍用于运行具有高可用性和零停机部署的生产 EKS 工作负载的高级基础设施模式。Blue/Green 集群架构可实现跨多个可用区的无缝集群升级、灾难恢复和流量管理。
+本指南介绍了用于运行生产 EKS 工作负载的高级基础设施模式，以实现高可用性和零停机部署。Blue/Green 集群架构可实现跨多个可用区的无缝集群升级、灾难恢复和流量管理。
 
-**核心主题：**
+**关键主题：**
 
 * Blue/Green 双集群架构
-* 用于流量分配的 NLB 加权目标组
+* 使用 NLB 加权目标组进行流量分配
 * 使用 Route53 的基于 DNS 的流量切换
-* 有状态工作负载的区域感知数据放置
+* 面向有状态工作负载的可用区感知数据放置
 * 使用 CloudWatch 和 Lambda 的自动故障转移
 
 ***
@@ -24,48 +24,50 @@
 
 ### 为什么选择 Blue/Green 集群？
 
-传统的原地集群升级存在显著风险：
+传统的原地集群升级存在重大风险：
 
 * 控制平面更新期间的工作负载中断
-* 节点排空可能导致容量问题
+* Node 腾空可能导致容量问题
 * 出现问题时回滚复杂
 * 维护窗口延长
 
-Blue/Green 架构通过维护两个独立集群来消除这些风险：
+Blue/Green 架构通过维护两个独立的集群来消除这些风险：
 
-| 方面        | 原地升级 | Blue/Green                     |
+| 方面          | 原地升级         | Blue/Green                     |
 | ------------- | ---------------- | ------------------------------ |
-| 停机风险 | 中高      | 接近零                      |
-| 回滚时间 | 30-60 分钟    | 数秒（DNS/NLB）              |
-| 测试       | 有限          | 完整生产流量        |
-| 成本          | 单集群   | 2 倍集群（过渡期间） |
+| 停机风险      | 中高             | 接近零                         |
+| 回滚时间      | 30-60 分钟       | 数秒（DNS/NLB）                |
+| 测试          | 有限             | 完整生产流量                   |
+| 成本          | 单个集群         | 2 倍集群（过渡期间）           |
 
 ### 架构图
 
-![NLB Blue/Green Architecture](../.gitbook/assets/nlb_bluegreen_architecture.png)
+![共享 NLB 将流量按 80/20 分配至 Blue 和 Green 目标组的示意图，每个目标组均绑定到各自的 EKS 集群。](../.gitbook/assets/en-ops-02-infrastructure-advanced-0.png)
 
-### 单区域设计原理
+[🔍 查看交互式架构图](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-02-infrastructure-advanced-0.html)
 
-每个集群在单个可用区中运行：
+### 单可用区设计的理由
 
-**优势：**
+每个集群都在单个可用区中运行：
 
-1. **数据本地性**：Pod 始终调度到靠近其存储卷的位置
-2. **成本优化**：零跨 AZ 数据传输成本
+**优点：**
+
+1. **数据本地性**：Pod 始终被调度到靠近其存储卷的位置
+2. **成本优化**：零跨 AZ 数据传输费用
 3. **故障隔离**：AZ 故障仅影响一个集群
 4. **简化网络**：无需复杂的多 AZ 负载均衡
 
 **权衡：**
 
 * 更高的单 AZ 风险（通过 Blue/Green 故障转移缓解）
-* 每个区域需要谨慎的容量规划
+* 每个可用区都需要谨慎的容量规划
 
-### 区域分配
+### 可用区分配
 
-| 集群 | 可用区 | 用途                  |
+| 集群    | 可用区              | 用途                     |
 | ------- | ----------------- | ------------------------ |
-| Blue    | ap-northeast-2a   | 主要生产环境       |
-| Green   | ap-northeast-2c   | 次要/升级目标 |
+| Blue    | ap-northeast-2a   | 主要生产环境             |
+| Green   | ap-northeast-2c   | 次要环境/升级目标        |
 
 ***
 
@@ -411,9 +413,9 @@ output "current_weights" {
 }
 ```
 
-### 部署时调整权重
+### 部署的权重调整
 
-为金丝雀式部署逐步调整权重：
+针对金丝雀式部署逐步调整权重：
 
 ```hcl
 # terraform.tfvars examples for different deployment stages
@@ -435,7 +437,7 @@ blue_weight  = 0
 green_weight = 100
 ```
 
-应用权重更改：
+应用权重变更：
 
 ```bash
 # Update weights
@@ -453,7 +455,7 @@ aws elbv2 describe-listeners \
 
 ### Route53 加权路由
 
-如需更精细的控制和全局路由，请与 NLB 权重结合使用或改用 Route53 加权记录。
+如需更精细的控制和全局路由，可将 Route53 加权记录与 NLB 权重结合使用，或使用其替代 NLB 权重。
 
 ```hcl
 # dns/main.tf
@@ -702,27 +704,27 @@ variable "green_dns_weight" {
 
 ### TTL 策略
 
-DNS TTL 会影响权重更改时流量切换的速度：
+DNS TTL 会影响权重变化时流量切换的速度：
 
-| TTL 值    | 切换时间     | 使用场景          |
+| TTL 值       | 切换时间         | 使用场景          |
 | ------------ | --------------- | ----------------- |
-| 60 秒   | \~2-3 分钟   | 快速故障转移    |
-| 300 秒  | \~10-15 分钟 | 正常运行 |
-| 3600 秒 | \~1-2 小时     | 稳定路由    |
+| 60 秒        | \~2-3 分钟      | 快速故障转移      |
+| 300 秒       | \~10-15 分钟    | 常规操作          |
+| 3600 秒      | \~1-2 小时      | 稳定路由          |
 
-对于 Route53 Alias 记录，TTL 从目标（NLB）继承。如需显式控制 TTL，请使用带有 IP 地址的非 Alias 记录。
+对于 Route53 Alias 记录，TTL 从目标（NLB）继承。如需显式控制 TTL，请使用带 IP 地址的非 Alias 记录。
 
 ***
 
-## 4. 数据节点放置
+## 4. 数据 Node 放置
 
-### 区域亲和性概念
+### 可用区亲和性概念
 
-对于有状态工作负载，Pod 必须调度到与其持久卷相同的区域。EKS Auto Mode 会自动处理其中大部分工作，但了解这些概念有助于排查问题。
+对于有状态工作负载，Pod 必须调度到与其持久卷相同的可用区。EKS Auto Mode 会自动处理大部分工作，但理解这些概念有助于排查问题。
 
-### NodePool 区域配置
+### NodePool 可用区配置
 
-实际的 NodePool YAML 由 ArgoCD GitOps 管理（参见 [GitOps 流水线配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)），但以下是核心概念：
+实际的 NodePool YAML 由 ArgoCD GitOps 管理（请参阅 [GitOps Pipeline Configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)），但以下是关键概念：
 
 ```yaml
 # Conceptual NodePool for Blue cluster (zone: ap-northeast-2a)
@@ -763,7 +765,7 @@ spec:
 
 ### TopologySpreadConstraints
 
-确保工作负载在单区域集群内正确分布：
+确保工作负载在单可用区集群内正确分布：
 
 ```yaml
 # Example Deployment with topology constraints
@@ -838,9 +840,9 @@ spec:
           image: redis:7-alpine
 ```
 
-### 采用特定区域存储的 StatefulSet
+### 使用可用区专属存储的 StatefulSet
 
-适用于数据库和其他有状态工作负载：
+对于数据库和其他有状态工作负载：
 
 ```yaml
 # PostgreSQL StatefulSet with zone-locked storage
@@ -887,7 +889,7 @@ spec:
             storage: 100Gi
 ```
 
-### 用于特定区域预配置的 StorageClass
+### 用于可用区专属预配的 StorageClass
 
 ```yaml
 # StorageClass that provisions in specific zone
@@ -987,7 +989,7 @@ resource "aws_sns_topic_subscription" "email" {
 
 ### Lambda 故障转移函数
 
-当集群变为不健康状态时自动切换权重：
+当集群变得不健康时自动切换权重：
 
 ```hcl
 # failover/lambda.tf
@@ -1257,7 +1259,7 @@ resource "aws_lambda_permission" "eventbridge" {
 
 ### 手动切换流程
 
-用于计划维护或手动故障转移：
+用于计划内维护或手动故障转移：
 
 ```bash
 #!/bin/bash
@@ -1378,19 +1380,19 @@ echo "All traffic now routed to: $TO_CLUSTER"
 
 采用 NLB 加权路由的 Blue/Green 集群架构提供：
 
-1. **零停机部署**：渐进或即时切换流量
-2. **快速回滚**：数秒内切回上一个集群
+1. **零停机部署**：逐步或即时转移流量
+2. **快速回滚**：数秒内切换回之前的集群
 3. **隔离的故障域**：AZ 故障仅影响一个集群
-4. **生产环境测试**：将小部分流量路由到新集群
+4. **在生产环境中测试**：将小部分流量路由到新集群
 5. **自动恢复**：CloudWatch + Lambda 实现自动故障转移
 
 ### 相关文档
 
 * [Terraform 三层基础设施](01-infrastructure-setup.md)
-* [CI 流水线](03-ci-pipelines.md)
-* [GitOps 流水线配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
+* [CI Pipelines](03-ci-pipelines.md)
+* [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
 * [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)
 
 ***
 
-< [上一节：Terraform 三层基础设施](01-infrastructure-setup.md) | [目录](./README.md) | [下一节：CI 流水线](03-ci-pipelines.md) >
+< [上一章：Terraform 三层基础设施](01-infrastructure-setup.md) | [目录](./README.md) | [下一章：CI Pipelines](03-ci-pipelines.md) >
