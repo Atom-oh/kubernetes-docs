@@ -55,7 +55,9 @@ kubectl -n policy-demo get resourcequota,networkpolicy
 
 ## Kubernetes 정책 아키텍처
 
-![정책 유형(리소스/보안/네트워크/커스텀)이 구현 메커니즘(ResourceQuota·LimitRange, Pod Security Standards, NetworkPolicy, Admission Controllers, OPA Gatekeeper/Kyverno)으로 이어지고, 각 메커니즘이 클러스터·네임스페이스·포드 수준에 적용되는 3단 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-0.svg)
+![정책 유형(리소스/보안/네트워크/커스텀)이 구현 메커니즘(ResourceQuota·LimitRange, Pod Security Standards, Admission Controllers, NetworkPolicy, OPA Gatekeeper/Kyverno)으로 이어지고, 각 메커니즘이 클러스터·네임스페이스·포드 수준에 적용되는 3단 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-0.html)
 
 ## 정책 유형 비교
 
@@ -147,7 +149,9 @@ Kubernetes에서는 다양한 유형의 정책을 구현할 수 있으며, 이�
 
 리소스 할당 정책은 포드와 컨테이너가 사용할 수 있는 CPU, 메모리 등의 리소스 양을 제어합니다.
 
-![포드의 리소스 요청·제한 설정이 QoS 클래스를 결정하고, 이 클래스가 리소스 부족 시 축출 순서를 정하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-1.svg)
+![포드의 리소스 요청·제한 설정이 QoS 클래스를 결정하고, 이 클래스가 리소스 부족 시 축출 순서를 정하는 과정을 보여준다.](../.gitbook/assets/ko-core-07-policies-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-1.html)
 
 ### 리소스 요청과 제한
 
@@ -197,7 +201,9 @@ QoS 클래스는 리소스 부족 시 포드 축출 순서를 결정합니다:
 
 포드 보안 정책(Pod Security Policy, PSP)은 Kubernetes 1.21 버전부터 사용 중단(deprecated)되었으며, 1.25 버전에서 완전히 제거되었습니다. 대신 포드 보안 표준(Pod Security Standards)과 포드 보안 어드미션(Pod Security Admission)이 도입되었습니다.
 
-![네임스페이스 레이블로 지정된 포드 보안 표준 수준을 포드 보안 어드미션이 검증하여 포드 생성 요청을 허용하거나 거부하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-2.svg)
+![네임스페이스 레이블로 지정된 포드 보안 표준 수준을 포드 보안 어드미션이 검증하여 포드 생성 요청을 허용하거나 거부하는 과정을 보여준다.](../.gitbook/assets/ko-core-07-policies-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-2.html)
 
 ### 포드 보안 표준(Pod Security Standards)
 
@@ -231,7 +237,9 @@ metadata:
 
 네트워크 정책(Network Policy)은 포드 간의 통신을 제어하는 방법을 제공합니다. 기본적으로 Kubernetes 클러스터의 모든 포드는 서로 통신할 수 있지만, 네트워크 정책을 사용하면 이를 제한할 수 있습니다.
 
-![NetworkPolicy가 선택자로 대상 포드를 지정하고 인그레스/이그레스 규칙을 통해 프론트엔드-API-데이터베이스 간 트래픽을 제어하는 방식을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-3.svg)
+![api-allow NetworkPolicy가 podSelector, policyTypes, ingress·egress 규칙으로 구성되어 API 포드에 적용되고 프론트엔드에서 오는 인바운드와 데이터베이스로 가는 아웃바운드만 허용하며, 규칙의 from/to에 쓰이는 세 가지 선택자 유형을 보여준다.](../.gitbook/assets/ko-core-07-policies-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-3.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -305,7 +313,9 @@ ingress:
 
 리소스 쿼터(ResourceQuota)는 네임스페이스 내에서 사용할 수 있는 리소스의 총량을 제한합니다. 이를 통해 여러 팀이나 프로젝트가 클러스터 리소스를 공유할 때 한 팀이 모든 리소스를 독점하는 것을 방지할 수 있습니다.
 
-![ResourceQuota가 네임스페이스에 적용되고, 포드들이 쌓은 리소스 사용량과 새 포드 요청을 합산해 쿼터 초과 여부를 검증하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-4.svg)
+![ResourceQuota의 네 가지 쿼터 유형이 네임스페이스에 적용되고, 포드들이 쌓은 리소스 사용량과 새 포드 요청을 합산해 쿼터 이내면 허용하고 초과하면 거부하는 검증 과정을 보여준다.](../.gitbook/assets/ko-core-07-policies-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-4.html)
 
 ```yaml
 apiVersion: v1
@@ -414,7 +424,9 @@ LimitRange는 다음과 같은 리소스 유형에 적용할 수 있습니다:
 
 Kubernetes 생태계에는 더 복잡하고 유연한 정책을 구현할 수 있는 여러 정책 엔진이 있습니다.
 
-![API 서버의 어드미션 웹훅이 OPA Gatekeeper, Kyverno, Kubewarden 세 정책 엔진으로 요청을 전달하고, 각 엔진이 자체 정책 정의 방식과 검증/변경/생성 기능을 지원하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-5.svg)
+![API 서버가 호출한 어드미션 웹훅이 요청을 OPA Gatekeeper, Kyverno, Kubewarden 세 정책 엔진에 전달하고, 각 엔진이 ConstraintTemplate/Constraint, ClusterPolicy/Policy, ClusterAdmissionPolicy라는 자체 정책 정의 리소스를 사용하며 검증·변경(Kyverno는 생성까지) 정책 유형을 지원하는 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-5.html)
 
 ### OPA Gatekeeper
 
@@ -534,7 +546,9 @@ spec:
 
 Amazon EKS에서는 Kubernetes의 기본 정책 메커니즘과 함께 AWS의 다양한 서비스를 활용하여 정책을 관리할 수 있습니다.
 
-![AWS 서비스와 그 EKS 통합 지점이 포드 또는 클러스터 수준에 적용되고, Kubernetes 정책이 EKS 클러스터 내 네임스페이스와 포드에 적용되는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-07-policies-6.svg)
+![AWS Organizations·Config·Firewall Manager가 EKS 클러스터를 제한·감사·보호하고, IAM과 Security Groups가 포드에 작용하며, Kubernetes 기본 정책이 클러스터·네임스페이스·포드에 적용되는 구조를 보여준다.](../.gitbook/assets/ko-core-07-policies-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-07-policies-6.html)
 
 ### AWS IAM과의 통합
 

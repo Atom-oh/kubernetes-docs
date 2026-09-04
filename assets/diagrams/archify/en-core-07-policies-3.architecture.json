@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Network Policy Configuration and Traffic Flow",
+    "title": "NetworkPolicy Spec and Traffic Flow",
     "locale": "en",
     "output": "en-core-07-policies-3.html",
     "quality_profile": "showcase",
@@ -14,7 +14,7 @@
     "legend": {
       "entries": {
         "security": {
-          "label": "Policy resource / rules"
+          "label": "Policy/selector"
         },
         "frontend": {
           "label": "Frontend"
@@ -313,7 +313,7 @@
       "id": "frontend-db",
       "from": "frontend",
       "to": "db",
-      "label": "direct communication blocked",
+      "label": "not selected by this policy",
       "variant": "dashed"
     },
     {

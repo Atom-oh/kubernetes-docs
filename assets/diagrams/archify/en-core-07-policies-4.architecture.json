@@ -9,10 +9,10 @@
     "legend": {
       "entries": {
         "security": {
-          "label": "Quota policy / check"
+          "label": "Quota check"
         },
         "backend": {
-          "label": "Quota kind"
+          "label": "Quota type"
         },
         "cloud": {
           "label": "Namespace"
@@ -31,7 +31,7 @@
     "views": [
       {
         "id": "quota-kinds",
-        "label": "Quota kind",
+        "label": "Quota type",
         "focus": [
           "rq",
           "compute",
@@ -273,7 +273,7 @@
       "id": "rq-compute",
       "from": "rq",
       "to": "compute",
-      "label": "kind",
+      "label": "type",
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 24

@@ -13,7 +13,7 @@
     "legend": {
       "entries": {
         "security": {
-          "label": "정책 리소스 / 규칙"
+          "label": "정책 리소스 · 선택자"
         },
         "frontend": {
           "label": "프론트엔드"
@@ -312,7 +312,7 @@
       "id": "frontend-db",
       "from": "frontend",
       "to": "db",
-      "label": "직접 통신 차단",
+      "label": "이 정책의 대상 아님",
       "variant": "dashed"
     },
     {

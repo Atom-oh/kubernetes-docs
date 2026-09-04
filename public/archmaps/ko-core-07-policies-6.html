@@ -5038,11 +5038,11 @@
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="org" data-edge-to="cluster" data-edge-label="제한" data-edge-key="0" data-edge-id="org-cluster" data-composition-points="276,122;288,122;288,372;300,372" d="M 276 122 L 282 122 Q 288 122 288 128 L 288 366 Q 288 372 294 372 L 300 372" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="config" data-edge-to="cluster" data-edge-label="감사" data-edge-key="1" data-edge-id="config-cluster" data-composition-points="418,154;418,340" d="M 418 154 L 418 340" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="fw" data-edge-to="cluster" data-edge-label="보호" data-edge-key="2" data-edge-id="fw-cluster" data-composition-points="560,122;548,122;548,365;536,365" d="M 560 122 L 554 122 Q 548 122 548 128 L 548 359 Q 548 365 542 365 L 536 365" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="config" data-edge-to="cluster" data-edge-label="감사" data-edge-key="1" data-edge-id="config-cluster" data-composition-points="411,154;411,340" d="M 411 154 L 411 340" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="fw" data-edge-to="cluster" data-edge-label="보호" data-edge-key="2" data-edge-id="fw-cluster" data-composition-points="678,154;678,247;425,247;425,340" d="M 678 154 L 678 239 Q 678 247 670 247 L 433 247 Q 425 247 425 255 L 425 340" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="iam" data-edge-to="pod" data-edge-label="권한 부여" data-edge-key="3" data-edge-id="iam-pod" data-composition-points="938,154;938,247;1061,247;1061,340" d="M 938 154 L 938 239 Q 938 247 946 247 L 1053 247 Q 1061 247 1061 255 L 1061 340" class="a-security" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
         <path data-edge-from="sg" data-edge-to="pod" data-edge-label="네트워크 보안" data-edge-key="4" data-edge-id="sg-pod" data-composition-points="1198,154;1198,247;1075,247;1075,340" d="M 1198 154 L 1198 239 Q 1198 247 1190 247 L 1083 247 Q 1075 247 1075 255 L 1075 340" class="a-security" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="cluster" data-edge-to="ns" data-edge-label="포함" data-edge-key="5" data-edge-id="cluster-ns" data-composition-points="536,379;625,379" d="M 536 379 L 625 379" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="cluster" data-edge-to="ns" data-edge-label="포함" data-edge-key="5" data-edge-id="cluster-ns" data-composition-points="536,372;625,372" d="M 536 372 L 625 372" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="ns" data-edge-to="pod" data-edge-label="포함" data-edge-key="6" data-edge-id="ns-pod" data-composition-points="861,372;950,372" d="M 861 372 L 950 372" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="k8s" data-edge-to="cluster" data-edge-label="적용" data-edge-key="7" data-edge-id="k8s-cluster" data-composition-points="418,590;418,404" d="M 418 590 L 418 404" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="k8s" data-edge-to="types" data-edge-label="유형" data-edge-key="8" data-edge-id="k8s-types" data-composition-points="536,622;620,622" d="M 536 622 L 620 622" class="a-dashed" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
@@ -5166,12 +5166,12 @@
           <text x="288" y="237" class="t-muted" font-size="8" text-anchor="middle">제한</text>
         </g>
         <g data-detail="context" data-edge-from="config" data-edge-to="cluster" data-edge-label="감사" data-edge-key="1" data-edge-id="config-cluster">
-          <rect x="403" y="234" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="418" y="244" class="t-muted" font-size="8" text-anchor="middle">감사</text>
+          <rect x="396" y="190" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="411" y="200" class="t-muted" font-size="8" text-anchor="middle">감사</text>
         </g>
         <g data-detail="context" data-edge-from="fw" data-edge-to="cluster" data-edge-label="보호" data-edge-key="2" data-edge-id="fw-cluster">
-          <rect x="533" y="223.5" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="548" y="233.5" class="t-muted" font-size="8" text-anchor="middle">보호</text>
+          <rect x="536.5" y="227" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="551.5" y="237" class="t-muted" font-size="8" text-anchor="middle">보호</text>
         </g>
         <g data-detail="context" data-edge-from="iam" data-edge-to="pod" data-edge-label="권한 부여" data-edge-key="3" data-edge-id="iam-pod">
           <rect x="972.9" y="227" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
@@ -5182,8 +5182,8 @@
           <text x="1136.5" y="237" class="t-security" font-size="8" text-anchor="middle">네트워크 보안</text>
         </g>
         <g data-detail="context" data-edge-from="cluster" data-edge-to="ns" data-edge-label="포함" data-edge-key="5" data-edge-id="cluster-ns">
-          <rect x="565.5" y="359" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="580.5" y="369" class="t-muted" font-size="8" text-anchor="middle">포함</text>
+          <rect x="565.5" y="352" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="580.5" y="362" class="t-muted" font-size="8" text-anchor="middle">포함</text>
         </g>
         <g data-detail="context" data-edge-from="ns" data-edge-to="pod" data-edge-label="포함" data-edge-key="6" data-edge-id="ns-pod">
           <rect x="890.5" y="352" width="30" height="14" rx="3" class="c-mask"/>
