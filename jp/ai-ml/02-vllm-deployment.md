@@ -1,22 +1,22 @@
-# vLLM Deployment & Optimization
+# vLLM のデプロイと最適化
 
-> **サポート対象バージョン**: Kubernetes 1.31, 1.32, 1.33  
-> **最終更新**: April 9, 2026
+> **対応バージョン**: Kubernetes 1.31, 1.32, 1.33  
+> **最終更新**: September 4, 2026
 
-vLLM は、Large Language Models (LLMs) 向けの、最も広く採用されているオープンソースの高性能 inference engine です。この章では、vLLM の最新機能とアーキテクチャを見ていき、EKS 上で本番規模でデプロイおよび最適化する方法を学びます。
+vLLM は、大規模言語モデル（LLM）向けに最も広く採用されている、オープンソースの高性能推論エンジンです。本章では、vLLM の最新機能とアーキテクチャを確認し、EKS 上で本番規模にデプロイして最適化する方法を学びます。
 
-## Lab Environment Setup
+## ラボ環境のセットアップ
 
-このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
+このドキュメントの例を実行するには、以下のツールと環境が必要です。
 
-### Required Tools and Resources
-- kubectl v1.31 or higher
-- Helm v3.10 or higher
-- EKS cluster with NVIDIA GPUs (minimum recommended: g5.2xlarge instance)
-- NVIDIA drivers and NVIDIA Device Plugin installed
-- At least 50GB of disk space
+### 必要なツールとリソース
+- kubectl v1.31 以降
+- Helm v3.10 以降
+- NVIDIA GPU を搭載した EKS クラスター（最小推奨: g5.2xlarge インスタンス）
+- NVIDIA ドライバーおよび NVIDIA Device Plugin がインストール済み
+- 少なくとも 50GB のディスク容量
 
-### GPU Node Setup
+### GPU ノードのセットアップ
 
 ```bash
 # Install NVIDIA Device Plugin
@@ -26,84 +26,39 @@ kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.1
 kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
 ```
 
-## Introduction to vLLM
+## vLLM の紹介
 
-vLLM は、以下の特徴を持つ LLM inference engine です。
+vLLM は、以下の特性を備えた LLM 推論エンジンです。
 
-```mermaid
-flowchart TD
-    subgraph vLLM [vLLM Architecture]
-        subgraph Features [Key Features]
-            PagedAttention[PagedAttention]
-            ContinuousBatching[Continuous Batching]
-            DistributedInference[Distributed Inference]
-            Quantization[Quantization]
-            OpenAIAPI[OpenAI Compatible API]
-        end
+![vLLM の主要機能、その内部コンポーネントのパイプライン、メモリ効率や高スループットなどの利点をまとめた図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg)
 
-        subgraph Components [Core Components]
-            Engine[Inference Engine]
-            Scheduler[Request Scheduler]
-            KVCache[KV Cache Manager]
-            ModelLoader[Model Loader]
-            APIServer[API Server]
-        end
-
-        subgraph Benefits [Key Benefits]
-            MemoryEfficiency[Memory Efficiency]
-            HighThroughput[High Throughput]
-            LowLatency[Low Latency]
-            Scalability[Scalability]
-        end
-    end
-
-    PagedAttention --> MemoryEfficiency
-    ContinuousBatching --> HighThroughput
-    DistributedInference --> Scalability
-    Quantization --> MemoryEfficiency
-
-    Engine --> KVCache
-    Scheduler --> Engine
-    ModelLoader --> Engine
-    Engine --> APIServer
-
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef componentNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef benefitNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    class PagedAttention,ContinuousBatching,DistributedInference,Quantization,OpenAIAPI,Features featureNode;
-    class Engine,Scheduler,KVCache,ModelLoader,APIServer,Components componentNode;
-    class MemoryEfficiency,HighThroughput,LowLatency,Scalability,Benefits benefitNode;
-    class vLLM default;
-```
-
-### Key Features of vLLM
+### vLLM の主要機能
 
 1. **PagedAttention**:
-   - KV cache を効率的に管理する memory management technology
-   - operating system の virtual memory management から着想を得ています
-   - 最大 10 倍多くの concurrent request processing を可能にします
+   - KV cache を効率的に管理するメモリ管理技術
+   - オペレーティングシステムの仮想メモリ管理から着想
+   - 同時リクエスト処理を最大 10 倍に増加
 
 2. **Continuous Batching**:
-   - GPU utilization を最大化するために request を動的に batch 化します
-   - 新しい request が到着すると直ちに処理を開始します
-   - 最大 2 倍の throughput 向上
+   - GPU 使用率を最大化するためにリクエストを動的にバッチ処理
+   - 新規リクエストを到着後すぐに処理開始
+   - スループットを最大 2 倍改善
 
 3. **Distributed Inference**:
-   - tensor parallelization により大規模 model をサポートします
-   - 複数 GPU にまたがる model sharding
-   - 175B+ parameter model をサポートします
+   - tensor parallelization によって大規模モデルをサポート
+   - 複数 GPU 間でのモデルシャーディング
+   - 175B+ パラメータモデルをサポート
 
 4. **Quantization**:
-   - INT8、FP16 を含むさまざまな precision をサポートします
-   - memory usage を削減し、inference speed を向上させます
-   - 最小限の accuracy loss で最大 2 倍の memory efficiency 向上
+   - INT8、FP16 を含むさまざまな精度をサポート
+   - メモリ使用量を削減し、推論速度を向上
+   - 精度低下を最小限に抑えつつ、メモリ効率を最大 2 倍改善
 
-## Supported Models
+## 対応モデル
 
-vLLM は以下の model をサポートしています。
+vLLM は以下のモデルをサポートしています。
 
-| Model Family | Supported Models | Quantization Options |
+| モデルファミリー | 対応モデル | Quantization オプション |
 |-------------|-----------------|---------------------|
 | **LLaMA 3 / 3.1 / 3.2 / 3.3** | 1B, 3B, 8B, 70B, 405B | FP16, BF16, FP8, INT8, INT4, AWQ, GPTQ |
 | **DeepSeek V3 / R1** | 7B, 67B, 671B (MoE) | FP16, BF16, FP8, AWQ, GPTQ |
@@ -116,19 +71,19 @@ vLLM は以下の model をサポートしています。
 | **StarCoder 2** | 3B, 7B, 15B | FP16, BF16 |
 | **Vision Models (VLM)** | LLaVA, Pixtral, Qwen2-VL, InternVL | FP16, BF16 |
 
-1. **PagedAttention**: 長い sequence を処理する際の memory usage を最適化する、memory efficient な attention mechanism です。
-2. **Continuous Batching**: throughput を向上させるために request を動的に batch 化します。
-3. **Distributed Inference**: 大規模 model を扱うため、複数の GPU と node に model を分散します。
-4. **Quantization**: memory usage を削減し throughput を向上させるため、INT8/INT4 quantization をサポートします。
-5. **OpenAI Compatible API**: OpenAI API と互換性のある interface を提供します。
+1. **PagedAttention**: 長いシーケンスの処理時にメモリ使用量を最適化する、メモリ効率の高い attention メカニズム。
+2. **Continuous Batching**: スループットを向上させるためにリクエストを動的にバッチ処理します。
+3. **Distributed Inference**: 大規模モデルを処理するために、複数の GPU とノードにモデルを分散します。
+4. **Quantization**: メモリ使用量を削減し、スループットを向上させる INT8/INT4 quantization をサポートします。
+5. **OpenAI Compatible API**: OpenAI API と互換性のあるインターフェースを提供します。
 
-### Latest vLLM Features (v0.6+)
+### v0.6 系で追加された vLLM の機能
 
-vLLM は急速に進化しており、最近の release では重要な新機能が追加されています。
+vLLM は急速に進化しており、最近のリリースでは重要な新機能が追加されています。
 
 #### Speculative Decoding
 
-小さな draft model を使用して複数の candidate token を生成し、それを大きな model が 1 回の pass で検証することで、inference speed を 2〜3 倍向上させます。
+小さなドラフトモデルを使用して複数の候補トークンを生成し、大きなモデルがそれらを 1 回のパスで検証することで、推論速度を 2～3 倍向上させます。
 
 ```bash
 python -m vllm.entrypoints.openai.api_server \
@@ -139,7 +94,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 #### Prefix Caching
 
-同じ system prompt や context を共有する request 間で KV cache を自動的に再利用し、TTFT (Time to First Token) を大幅に短縮します。
+同じ system prompt またはコンテキストを共有するリクエスト間で KV cache を自動的に再利用し、TTFT（Time to First Token）を大幅に削減します。
 
 ```bash
 --enable-prefix-caching
@@ -147,15 +102,15 @@ python -m vllm.entrypoints.openai.api_server \
 
 #### Chunked Prefill
 
-長い prompt prefill を、decode step と interleave される小さな chunk に分割し、long-context request が他の request の latency に与える影響を低減します。
+長い prompt の prefill を decode ステップと交互に実行する小さなチャンクに分割し、長いコンテキストを持つリクエストが他のリクエストのレイテンシに与える影響を軽減します。
 
 ```bash
 --enable-chunked-prefill --max-num-batched-tokens 2048
 ```
 
-#### Dynamic LoRA Adapter Loading
+#### 動的 LoRA Adapter ロード
 
-runtime に複数の LoRA adapter を動的に load/unload し、単一の base model から多数の customized model を提供します。
+複数の LoRA adapter をランタイムで動的にロード/アンロードし、単一のベースモデルから多くのカスタマイズ済みモデルを提供します。
 
 ```bash
 --enable-lora --max-loras 4 --max-lora-rank 64
@@ -171,7 +126,7 @@ response = client.chat.completions.create(
 
 #### Structured Output
 
-JSON Schema、regex pattern、CFG (Context-Free Grammar) による制約付き output generation をサポートし、信頼性の高い structured data generation を実現します。
+JSON Schema、regex パターン、CFG（Context-Free Grammar）を介した制約付き出力生成をサポートし、信頼性の高い構造化データ生成を実現します。
 
 ```python
 from openai import OpenAI
@@ -200,7 +155,7 @@ response = client.chat.completions.create(
 
 #### Tool Calling
 
-agent workflow との統合のために、OpenAI 互換の Tool/Function Calling をサポートします。
+agent ワークフローとの統合に向けて、OpenAI 互換の Tool/Function Calling をサポートします。
 
 ```python
 response = client.chat.completions.create(
@@ -225,15 +180,15 @@ response = client.chat.completions.create(
 
 #### FP8 Quantization
 
-Hopper (H100) および Ada Lovelace (L4, L40S) GPU 上で FP8 quantization をサポートし、ほぼ同等の accuracy を維持しながら memory usage を半減します。
+Hopper（H100）および Ada Lovelace（L4、L40S）GPU で FP8 quantization をサポートし、ほぼ同一の精度を維持しながらメモリ使用量を半減します。
 
 ```bash
 --quantization fp8 --kv-cache-dtype fp8
 ```
 
-#### Vision-Language Model (VLM) Serving
+#### Vision-Language Model（VLM）Serving
 
-画像と text の両方を同時に処理する multimodal model をサポートします。
+画像とテキストを同時に処理するマルチモーダルモデルをサポートします。
 
 ```python
 response = client.chat.completions.create(
@@ -248,139 +203,43 @@ response = client.chat.completions.create(
 )
 ```
 
-## System Requirements
+## システム要件
 
-EKS 上で vLLM をデプロイするための system requirements は以下のとおりです。
+EKS 上に vLLM をデプロイするためのシステム要件は以下のとおりです。
 
-```mermaid
-flowchart TD
-    subgraph Requirements [System Requirements]
-        subgraph Hardware [Hardware]
-            GPU[NVIDIA GPU]
-            Memory[GPU Memory]
-            CPU[CPU Cores]
-        end
+![vLLM のハードウェアおよびソフトウェアの前提条件と、GPU メモリによってサポートされるモデルサイズの層を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg)
 
-        subgraph Software [Software]
-            CUDA[CUDA 12.1+]
-            Python[Python 3.9+]
-            PyTorch[PyTorch 2.4.0+]
-        end
+1. **ハードウェア**:
+   - NVIDIA GPU（Volta、Turing、Ampere、Hopper アーキテクチャ）
+   - 最小 GPU メモリ: モデルサイズによって異なる
+     - 7B モデル: 最低 16GB の GPU メモリ
+     - 13B モデル: 最低 24GB の GPU メモリ
+     - 70B モデル: 最低 80GB の GPU メモリ（または複数 GPU に分散）
 
-        subgraph ModelSize [Requirements by Model Size]
-            Model7B[7B Model: 16GB+ GPU Memory]
-            Model13B[13B Model: 24GB+ GPU Memory]
-            Model70B[70B Model: 80GB+ GPU Memory]
-        end
-    end
+2. **ソフトウェア**:
+   - CUDA 12.1 以降（FP8 には CUDA 12.4 を推奨）
+   - Python 3.9 以降
+   - PyTorch 2.4.0 以降
 
-    GPU --> Memory
-    Memory --> ModelSize
+3. **EKS ノードタイプ**:
+   - p5.48xlarge: NVIDIA H100 GPU 8 基、各 80GB（最高性能）
+   - p4d.24xlarge: NVIDIA A100 GPU 8 基、各 40GB または 80GB
+   - g6.12xlarge: NVIDIA L4 GPU 4 基、各 24GB（コスト効率が高い）
+   - g5.12xlarge: NVIDIA A10G GPU 4 基、各 24GB
+   - g6e.12xlarge: NVIDIA L40S GPU 4 基、各 48GB
+   - trn1.32xlarge: AWS Trainium 16 基、各 32GB（AWS シリコン）
 
-    classDef hardwareNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef softwareNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef modelNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+## EKS インフラストラクチャ設定
 
-    class GPU,Memory,CPU,Hardware hardwareNode;
-    class CUDA,Python,PyTorch,Software softwareNode;
-    class Model7B,Model13B,Model70B,ModelSize modelNode;
-    class Requirements default;
-```
+![vLLM を実行する Amazon EKS クラスターのアーキテクチャ図。control plane、GPU および CPU node group、ストレージとネットワーキングのリソース、補助的な AWS サービスを含みます。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg)
 
-1. **Hardware**:
-   - NVIDIA GPU (Volta, Turing, Ampere, Hopper architecture)
-   - 最小 GPU memory: model size によって異なります
-     - 7B model: 最小 16GB GPU memory
-     - 13B model: 最小 24GB GPU memory
-     - 70B model: 最小 80GB GPU memory (または複数 GPU に分散)
+## ストレージ設定
 
-2. **Software**:
-   - CUDA 12.1 or higher (CUDA 12.4 recommended for FP8)
-   - Python 3.9 or higher
-   - PyTorch 2.4.0 or higher
+vLLM は大規模なモデル weights をロードする必要があるため、高性能なストレージを必要とします。
 
-3. **EKS Node Types**:
-   - p5.48xlarge: 8x NVIDIA H100 GPU, 80GB each (highest performance)
-   - p4d.24xlarge: 8x NVIDIA A100 GPU, 40GB or 80GB each
-   - g6.12xlarge: 4x NVIDIA L4 GPU, 24GB each (cost-effective)
-   - g5.12xlarge: 4x NVIDIA A10G GPU, 24GB each
-   - g6e.12xlarge: 4x NVIDIA L40S GPU, 48GB each
-   - trn1.32xlarge: 16x AWS Trainium, 32GB each (AWS silicon)
+### FSx for Lustre のセットアップ
 
-## EKS Infrastructure Configuration
-
-```mermaid
-flowchart TD
-    subgraph AWS [AWS Cloud]
-        subgraph EKS [Amazon EKS]
-            subgraph ControlPlane [Control Plane]
-                APIServer[API Server]
-                Scheduler[Scheduler]
-                ControllerManager[Controller Manager]
-            end
-
-            subgraph NodeGroups [Node Groups]
-                subgraph GPUNodes [GPU Nodes]
-                    P4d[p4d.24xlarge]
-                    P3[p3.16xlarge]
-                    G5[g5.12xlarge]
-                end
-
-                subgraph CPUNodes [CPU Nodes]
-                    C5[c5.4xlarge]
-                    M5[m5.4xlarge]
-                end
-            end
-
-            subgraph Storage [Storage]
-                FSx[FSx for Lustre]
-                EBS[Amazon EBS]
-                S3[Amazon S3]
-            end
-
-            subgraph Networking [Networking]
-                VPC[VPC]
-                Subnet[Subnet]
-                SecurityGroup[Security Group]
-                EFA[Elastic Fabric Adapter]
-            end
-        end
-
-        subgraph Services [AWS Services]
-            ECR[Amazon ECR]
-            CloudWatch[CloudWatch]
-            IAM[IAM]
-        end
-    end
-
-    GPUNodes --> Storage
-    GPUNodes --> Networking
-    CPUNodes --> Storage
-    CPUNodes --> Networking
-
-    EKS --> Services
-
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef cpuNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ECR,CloudWatch,IAM,FSx,EBS,S3 awsService;
-    class APIServer,Scheduler,ControllerManager,ControlPlane,Networking,VPC,Subnet,SecurityGroup,EFA k8sComponent;
-    class P4d,P3,G5,GPUNodes gpuNode;
-    class C5,M5,CPUNodes cpuNode;
-    class AWS,EKS,NodeGroups,Storage default;
-```
-
-## Storage Configuration
-
-vLLM は大きな model weight を load する必要があるため、高性能な storage を必要とします。
-
-### FSx for Lustre Setup
-
-FSx for Lustre は、大きな model weight を迅速に load するのに適した高性能 parallel file system です。
+FSx for Lustre は、大規模なモデル weights を迅速にロードするのに適した高性能並列ファイルシステムです。
 
 ```yaml
 apiVersion: fsx.aws.k8s.io/v1beta1
@@ -418,9 +277,9 @@ spec:
       storage: 1200Gi
 ```
 
-### Downloading Models from S3
+### S3 からのモデルのダウンロード
 
-Hugging Face model を S3 に保存し、FSx for Lustre に download するための Job です。
+Hugging Face モデルを S3 に保存し、FSx for Lustre にダウンロードする Job:
 
 ```yaml
 apiVersion: batch/v1
@@ -461,116 +320,17 @@ spec:
           claimName: vllm-models-pvc
 ```
 
-## vLLM Deployment
+## vLLM のデプロイ
 
-### Deployment Architecture
+### デプロイアーキテクチャ
 
-次の図は、EKS 上に vLLM をデプロイするための 2 つの主要な architecture を示しています。
+次の図は、EKS 上で vLLM をデプロイするための 2 つの主要アーキテクチャを示しています。
 
-```mermaid
-flowchart TD
-    subgraph Deployment [vLLM Deployment Architecture]
-        subgraph SingleNode [Single Node Deployment]
-            Pod1[vLLM Pod]
+![load balancer から入力を受け、FSx/S3 をバックエンドにしたストレージを共有する、単一ノードの vLLM Pod デプロイとマルチノードの NCCL 同期デプロイを比較した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg)
 
-            subgraph Pod1Components [Pod Components]
-                Container1[vLLM Container]
-                Volume1[Model Volume]
-            end
+### 単一ノードデプロイ
 
-            subgraph GPUs1 [GPU]
-                GPU1[GPU 0]
-                GPU2[GPU 1]
-                GPU3["..."]
-                GPU4[GPU 7]
-            end
-        end
-
-        subgraph MultiNode [Multi-Node Deployment]
-            Pod2[vLLM Pod 0]
-            Pod3[vLLM Pod 1]
-
-            subgraph Pod2Components [Pod 0 Components]
-                Container2[vLLM Container]
-                Volume2[Model Volume]
-            end
-
-            subgraph Pod3Components [Pod 1 Components]
-                Container3[vLLM Container]
-                Volume3[Model Volume]
-            end
-
-            subgraph GPUs2 [Node 0 GPU]
-                GPU5[GPU 0]
-                GPU6[GPU 1]
-                GPU7["..."]
-                GPU8[GPU 7]
-            end
-
-            subgraph GPUs3 [Node 1 GPU]
-                GPU9[GPU 0]
-                GPU10[GPU 1]
-                GPU11["..."]
-                GPU12[GPU 7]
-            end
-
-            NCCL[NCCL Communication]
-        end
-
-        subgraph Storage [Shared Storage]
-            FSx[FSx for Lustre]
-            S3[Amazon S3]
-        end
-
-        subgraph Networking [Networking]
-            Service[Kubernetes Service]
-            LoadBalancer[Load Balancer]
-            Client[Client]
-        end
-    end
-
-    Pod1 --> Pod1Components
-    Pod1Components --> GPUs1
-    Container1 --> Volume1
-
-    Pod2 --> Pod2Components
-    Pod3 --> Pod3Components
-    Pod2Components --> GPUs2
-    Pod3Components --> GPUs3
-    Container2 --> Volume2
-    Container3 --> Volume3
-
-    Pod2 <--> NCCL
-    Pod3 <--> NCCL
-
-    Volume1 --> FSx
-    Volume2 --> FSx
-    Volume3 --> FSx
-    FSx --> S3
-
-    Client --> LoadBalancer
-    LoadBalancer --> Service
-    Service --> Pod1
-    Service --> Pod2
-
-    classDef podComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef containerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef storageComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef networkComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Pod1,Pod2,Pod3,Pod1Components,Pod2Components,Pod3Components podComponent;
-    class Container1,Container2,Container3,Volume1,Volume2,Volume3,NCCL containerComponent;
-    class GPU1,GPU2,GPU3,GPU4,GPU5,GPU6,GPU7,GPU8,GPU9,GPU10,GPU11,GPU12,GPUs1,GPUs2,GPUs3 gpuComponent;
-    class FSx,S3,Storage storageComponent;
-    class Service,LoadBalancer,Client,Networking networkComponent;
-    class Deployment,SingleNode,MultiNode default;
-```
-
-### Single Node Deployment
-
-単一 node 上の単一 GPU または複数 GPU で vLLM を実行する Deployment です。
+単一 GPU、または単一ノード上の複数 GPU で vLLM を実行する Deployment:
 
 ```yaml
 apiVersion: apps/v1
@@ -630,9 +390,9 @@ spec:
   type: LoadBalancer
 ```
 
-### Multi-Node Distributed Deployment
+### マルチノード分散デプロイ
 
-大規模 model を複数 node に分散する方法です。
+大規模モデルを複数ノードに分散する方法:
 
 ```yaml
 apiVersion: v1
@@ -756,104 +516,59 @@ spec:
   type: LoadBalancer
 ```
 
-## Performance Optimization
+## パフォーマンス最適化
 
-```mermaid
-flowchart TD
-    subgraph Optimization [Performance Optimization]
-        subgraph GPUMemory [GPU Memory Optimization]
-            MemoryUtil[GPU Memory Utilization Adjustment]
-            Quantization[Quantization Application]
-            SwapSpace[Swap Space Utilization]
-        end
+![GPU メモリ、スループット、ネットワークの最適化手法と各設定フラグが、全体的なパフォーマンス向上に集約されることを示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg)
 
-        subgraph Throughput [Throughput Optimization]
-            BatchSize[Batch Size Adjustment]
-            KVCache[KV Cache Optimization]
-            TensorParallel[Tensor Parallel Processing]
-        end
+### GPU メモリの最適化
 
-        subgraph NetworkOpt [Network Optimization]
-            EFA[EFA Utilization]
-            NCCLSettings[NCCL Settings Optimization]
-            NodePlacement[Node Placement Optimization]
-        end
-    end
+vLLM の GPU メモリ使用量を最適化する方法:
 
-    MemoryUtil -->|--gpu-memory-utilization=0.9| Performance([Performance Improvement])
-    Quantization -->|--quantization awq| Performance
-    SwapSpace -->|--swap-space=16| Performance
-
-    BatchSize -->|--max-num-batched-tokens=8192| Performance
-    KVCache -->|--block-size=16| Performance
-    TensorParallel -->|--tensor-parallel-size=8| Performance
-
-    EFA -->|vpc.amazonaws.com/efa: 1| Performance
-    NCCLSettings -->|NCCL_DEBUG=INFO| Performance
-    NodePlacement -->|topology.kubernetes.io/zone| Performance
-
-    classDef gpuMemNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef throughputNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef networkNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef performanceNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class MemoryUtil,Quantization,SwapSpace,GPUMemory gpuMemNode;
-    class BatchSize,KVCache,TensorParallel,Throughput throughputNode;
-    class EFA,NCCLSettings,NodePlacement,NetworkOpt networkNode;
-    class Performance performanceNode;
-    class Optimization default;
-```
-
-### GPU Memory Optimization
-
-vLLM の GPU memory usage を最適化する方法です。
-
-1. **GPU Memory Utilization Adjustment**:
+1. **GPU メモリ使用率の調整**:
 
 ```bash
 --gpu-memory-utilization=0.9
 ```
 
-2. **Quantization Application**:
+2. **Quantization の適用**:
 
 ```bash
 --quantization awq
 ```
 
-3. **Swap Space Utilization**:
+3. **Swap Space の活用**:
 
 ```bash
 --swap-space=16
 ```
 
-### Throughput Optimization
+### スループットの最適化
 
-vLLM の throughput を最適化する方法です。
+vLLM のスループットを最適化する方法:
 
-1. **Batch Size Adjustment**:
+1. **バッチサイズの調整**:
 
 ```bash
 --max-num-batched-tokens=8192
 ```
 
-2. **KV Cache Optimization**:
+2. **KV Cache の最適化**:
 
 ```bash
 --block-size=16
 ```
 
-3. **Tensor Parallel Processing Adjustment**:
+3. **Tensor Parallel 処理の調整**:
 
 ```bash
 --tensor-parallel-size=8
 ```
 
-### Network Optimization
+### ネットワークの最適化
 
-distributed deployment における network performance を最適化する方法です。
+分散デプロイにおけるネットワークパフォーマンスを最適化する方法:
 
-1. **EFA (Elastic Fabric Adapter) Utilization**:
+1. **EFA（Elastic Fabric Adapter）の活用**:
 
 ```yaml
 resources:
@@ -862,7 +577,7 @@ resources:
     vpc.amazonaws.com/efa: 1
 ```
 
-2. **NCCL Settings Optimization**:
+2. **NCCL 設定の最適化**:
 
 ```yaml
 env:
@@ -876,7 +591,7 @@ env:
   value: "1"
 ```
 
-3. **Node Placement Optimization**:
+3. **ノード配置の最適化**:
 
 ```yaml
 affinity:
@@ -890,78 +605,101 @@ affinity:
           - us-west-2a
 ```
 
-## Monitoring and Logging
+## 測定ベンチマーク: 単一 L4 GPU 上の Qwen2.5-7B
 
-```mermaid
-flowchart TD
-    subgraph Monitoring [Monitoring and Logging]
-        subgraph MetricsCollection [Metrics Collection]
-            vLLMMetrics[vLLM Metrics]
-            GPUMetrics[GPU Metrics]
-            KubeMetrics[Kubernetes Metrics]
-        end
+ここまでのこのページ上の数値はすべて、一般的な vLLM プロジェクトの主張または設定フラグの説明です。このセクションは異なります。実際の vLLM server に対する 1 回の測定であり、「continuous batching がスループットを向上させる」とは具体的にどのようなものかを、1 つのモデルと GPU で確認できます。
 
-        subgraph MonitoringStack [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            AlertManager[Alert Manager]
-            Grafana[Grafana]
-        end
+![client Job が ClusterIP Service 経由で vLLM server に到達し、単一の NVIDIA L4 GPU 上でリクエストをバッチ処理する様子と、測定されたスループット、レイテンシ、compute ではなくメモリ帯域幅が制約となった理由を示した図。](../.gitbook/assets/en-ai-ml-02-vllm-deployment-6.png)
 
-        subgraph LoggingStack [Logging Stack]
-            Fluentd[Fluentd]
-            CloudWatch[CloudWatch Logs]
-            ElasticSearch[(ElasticSearch)]
-            Kibana[Kibana]
-        end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html)
 
-        subgraph Dashboards [Dashboards]
-            GPUUtilization[GPU Utilization]
-            Throughput[Throughput]
-            Latency[Latency]
-            ErrorRate[Error Rate]
-        end
+### セットアップ
 
-        subgraph Alerts [Alerts]
-            HighLatency[High Latency]
-            LowThroughput[Low Throughput]
-            GPUError[GPU Error]
-            OOMError[Out of Memory Error]
-        end
-    end
+- **クラスター**: 専用 Karpenter NodePool（`bench-gpu`、オンデマンド `g6.2xlarge` — NVIDIA L4 1 基、GPU メモリ 24GB、8 vCPU、RAM 32 GiB）。`nvidia.com/gpu=true:NoSchedule` で taint され、既存の `nvidia-device-plugin` daemonset に参加するようラベル付けされ、実行直後に削除されました。
+- **Server**: `vllm/vllm-openai:v0.6.4.post1`（2024-11-15 リリース — vLLM プロジェクトはその後、prefix caching がデフォルトで有効な V1 engine をリリースしているため、これは現行の vLLM ではなく、そのリリース系列のスナップショットとして扱ってください）、モデル `Qwen/Qwen2.5-7B-Instruct`、`--dtype bfloat16 --max-model-len 4096 --gpu-memory-utilization 0.90`。quantization、speculative decoding、prefix caching を使用しない 1 つの精度（bf16、モデルのネイティブ dtype）であり、このページの他の箇所で説明している通常のデフォルトです。
+- **Client**: クラスター**内**（別の非 GPU ノード）で Job として実行される Python `ThreadPoolExecutor`。`vllm-server` ClusterIP Service 経由で `/v1/chat/completions` にアクセスします。non-streaming、`temperature=0`、`max_tokens=128`、短い prompt を 8 個ローテーション（Kubernetes の概念について 1～2 文の回答を求める質問）。実際には、すべての応答が 1～2 文で停止するのではなく、128 トークン上限に近い値で実行されました（3 つすべての同時実行バッチで一貫して平均約 102 トークン）。これは同時実行レベル間でスループットを公平に比較するのに有用ですが、レイテンシの数値を「短い質問に答えるまでの時間」として読む前に知っておくべき点です。
+- **コールドスタート**: vLLM engine の起動ログから `/health` endpoint が `200` を返すまで約 4.5 分。Hugging Face から Qwen2.5-7B-Instruct の約 15 GB の weights を Pod の ephemeral cache にダウンロードする時間が大部分を占めます。image pull 時間は含まれず、個別には測定していません。
 
-    vLLMMetrics --> Prometheus
-    GPUMetrics --> Prometheus
-    KubeMetrics --> Prometheus
+### 再現方法
 
-    Prometheus --> AlertManager
-    Prometheus --> Grafana
-
-    AlertManager --> Alerts
-    Grafana --> Dashboards
-
-    vLLMMetrics --> Fluentd
-    Fluentd --> CloudWatch
-    Fluentd --> ElasticSearch
-    ElasticSearch --> Kibana
-
-    classDef metricsNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef monitoringNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef loggingNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef dashboardNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef alertNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class vLLMMetrics,GPUMetrics,KubeMetrics,MetricsCollection metricsNode;
-    class Prometheus,AlertManager,Grafana,MonitoringStack monitoringNode;
-    class Fluentd,CloudWatch,ElasticSearch,Kibana,LoggingStack loggingNode;
-    class GPUUtilization,Throughput,Latency,ErrorRate,Dashboards dashboardNode;
-    class HighLatency,LowThroughput,GPUError,OOMError,Alerts alertNode;
-    class Monitoring default;
+```yaml
+# NodePool (Karpenter) - dedicated, deleted after the run — nodeClassRef points at the cluster's existing GPU EC2NodeClass (AMI/subnets/SG), not shown here
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata: { name: bench-gpu }
+spec:
+  limits: { cpu: "16", memory: 128Gi, nvidia.com/gpu: "1" }
+  template:
+    metadata:
+      labels: { node-type: bench-gpu, nvidia.com/device-plugin.config: default }
+    spec:
+      expireAfter: 6h
+      nodeClassRef: { group: karpenter.k8s.aws, kind: EC2NodeClass, name: gpu }
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [g6.2xlarge] }
+      taints: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+---
+# vLLM server (namespace bench-gpu) + the ClusterIP Service the client calls
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: vllm-server } }
+  template:
+    metadata: { labels: { app: vllm-server } }
+    spec:
+      nodeSelector: { node-type: bench-gpu }
+      tolerations: [{ key: nvidia.com/gpu, value: "true", effect: NoSchedule }]
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:v0.6.4.post1
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--max-model-len", "4096",
+                 "--gpu-memory-utilization", "0.90", "--dtype", "bfloat16"]
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: "1" }
+            requests: { nvidia.com/gpu: "1", cpu: "3", memory: 20Gi }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 60 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: vllm-server, namespace: bench-gpu }
+spec:
+  selector: { app: vllm-server }
+  ports: [{ port: 8000, targetPort: 8000 }]
 ```
 
-### Prometheus Metrics
+client は、`urllib` + `concurrent.futures.ThreadPoolExecutor` を使って `http://vllm-server:8000/v1/chat/completions` に N 個のリクエストを送信し、それぞれの所要時間を測定するシンプルな Python script です。同じ namespace 内で `batch/v1` Job として実行してください。重要な注意点として、上記の `nvidia.com/device-plugin.config: default` ノードラベルは必須です。これがないと、共有の `nvidia-device-plugin` DaemonSet は新しいノードにスケジュールされず、taint と toleration が正しく一致していても `nvidia.com/gpu` は割り当て可能リソースとして登録されません。
 
-vLLM server から Prometheus metrics を収集する方法です。
+### 結果
+
+| 同時実行数 | リクエスト数 | 経過時間 | Client レイテンシ p50 / p90 | Client 合計スループット | Server 報告のピーク生成スループット | GPU KV cache 使用率 |
+|---|---|---|---|---|---|---|
+| 1（直列） | 10 | ~53.2 s（リクエストレイテンシの合計） | 5.65 s / 7.43 s | リクエストあたり ~17-18 tokens/s | ~17 tokens/s | 0.1-0.2% |
+| 4 | 16 | 27.78 s | 6.99 s / 7.88 s | 58.67 tokens/s | 65-66 tokens/s | 0.4-0.7% |
+| 8 | 32 | 30.02 s | 7.18 s / 8.15 s | 109.04 tokens/s | 123-129 tokens/s | 0.8-1.4% |
+| 16 | 64 | 31.35 s | 7.52 s / 8.74 s | 208.08 tokens/s | 最大 243 tokens/s | 1.5-2.6% |
+
+「Client 合計スループット」は、Pod 外部から測定した、そのバッチ内のすべてのリクエストの completion tokens 合計を経過時間で割った値です。「Server 報告」は、`Running: <concurrency>` 時の vLLM 自身の定期的な `Avg generation throughput` ログ行です。HTTP/JSON のオーバーヘッドを除外し、測定間隔中の平均だけでなく真のピークを捉えるため、Client の数値よりやや高くなります。GPU メモリ使用量（実行後に `nvidia-smi` で測定）は、このインスタンスでドライバーが合計として報告する 23.0 GiB のうち 19.2 GiB でした。`gpu-memory-utilization=0.90` は、weights と KV cache blocks のためにその大部分を事前割り当てするよう vLLM に指示します。そのため、以下の KV cache の割合は、実際の空き VRAM ではなく、確保済みプールの使用率を表します。
+
+### 分析
+
+- **リクエストあたりのレイテンシはほとんど変化しません。** 同じ約 100～128 トークンの応答について、同時リクエスト数を 1 から 16 に増やしても、p50 レイテンシは 5.65 s から 7.52 s（+33%）にしか上がりません。これは continuous batching が意図どおりに機能していることを示しています。新しいリクエストは、その後ろでキューイングされるのではなく、実行中のバッチに参加します。
+- **合計スループットはほぼ線形にスケールします。** 同時リクエスト数を 4 → 8 → 16 と増やすと、合計スループットは毎回ほぼ 2 倍になります（58.67 → 109.04 → 208.08 tokens/s）。
+- **これは compute-bound ではなく bandwidth-bound の decode であり、まさにそのためバッチ処理が有効です。** バッチ 1 では、トークンごとに約 15.2 GB の bf16 weights を GDDR6 メモリからストリーミングする必要があります。この L4 の約 300 GB/s のメモリ帯域幅では、単一リクエストの decode はおよそ 20 tokens/s に制限され、測定された約 17～18 と一致します。compute はまったく異なる状況を示します。最も多忙だった測定点（合計 208 tokens/s）でも、GPU の処理量は約 3 TFLOP/s で、L4 の dense bf16 compute 約 121 TFLOPS に対して数パーセントにすぎません。KV cache 容量も制約にはなりませんでした（実行全体を通して 3% 未満）。continuous batching は、まさにこの種の bandwidth-bound decode に対する解決策です。あるリクエストのために weights がすでにメモリから読み込まれていれば、同じ weight read で 16 リクエストに応答するコストはほぼゼロです。これが、レイテンシがほとんど増えない一方でスループットがほぼ線形にスケールする理由です。
+
+### 注意事項
+
+これは、1 つのモデル、1 つの精度（bf16）、1 種類の GPU、1 つのコンテキスト長における単一実行（n=1）です。一般的な vLLM/L4 のパフォーマンス主張ではなく、校正された 1 つのデータポイントとして扱ってください。client はクラスター内（別の非 GPU ノード）で実行されたため、ネットワークレイテンシは外部 caller ではなくクラスター内の hop を反映しています。ここでのレイテンシは、time-to-first-token（TTFT）ではなく、完全な end-to-end HTTP 応答時間です。streaming はテストしていません。prefix caching、speculative decoding、FP8、およびマルチ GPU tensor parallelism（すべてこのページの前半で説明）は実施していません。上記の manifest を使用して再現してください。これらの数値を異なるモデルサイズ、GPU、または prompt 長に外挿しないでください。
+
+## モニタリングとログ記録
+
+![vLLM、GPU、Kubernetes のメトリクスが Prometheus/Grafana のモニタリングスタックに流れ、ダッシュボードとアラートを生成する様子と、独立した logging stack を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg)
+
+### Prometheus メトリクス
+
+vLLM server から Prometheus メトリクスを収集する方法:
 
 ```yaml
 apiVersion: v1
@@ -992,9 +730,9 @@ spec:
     interval: 15s
 ```
 
-### Log Collection
+### ログ収集
 
-vLLM server logs を CloudWatch に収集する方法です。
+vLLM server のログを CloudWatch に収集する方法:
 
 ```yaml
 apiVersion: v1
@@ -1031,56 +769,13 @@ data:
     </match>
 ```
 
-## Autoscaling
+## オートスケーリング
 
-```mermaid
-flowchart TD
-    subgraph Autoscaling [Autoscaling]
-        subgraph PodScaling [Pod Scaling]
-            HPA[HorizontalPodAutoscaler]
-            KEDA[KEDA]
-            CustomMetrics[Custom Metrics]
-        end
+![CPU、GPU、リクエストレート、キュー長のシグナルが Pod レベルのオートスケーリングを駆動し、それが GPU ノードのオートスケーリングと Spot capacity を駆動する様子を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg)
 
-        subgraph NodeScaling [Node Scaling]
-            Karpenter[Karpenter]
-            ClusterAutoscaler[Cluster Autoscaler]
-            SpotInstances[Spot Instances]
-        end
+### HPA（Horizontal Pod Autoscaler）
 
-        subgraph ScalingTriggers [Scaling Triggers]
-            CPUUtilization[CPU Utilization]
-            GPUUtilization[GPU Utilization]
-            RequestsPerSecond[Requests Per Second]
-            QueueLength[Queue Length]
-        end
-    end
-
-    CPUUtilization --> HPA
-    GPUUtilization --> CustomMetrics
-    RequestsPerSecond --> KEDA
-    QueueLength --> KEDA
-
-    HPA --> Karpenter
-    KEDA --> Karpenter
-    CustomMetrics --> ClusterAutoscaler
-
-    Karpenter --> SpotInstances
-
-    classDef podScalingNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeScalingNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef triggerNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class HPA,KEDA,CustomMetrics,PodScaling podScalingNode;
-    class Karpenter,ClusterAutoscaler,SpotInstances,NodeScaling nodeScalingNode;
-    class CPUUtilization,GPUUtilization,RequestsPerSecond,QueueLength,ScalingTriggers triggerNode;
-    class Autoscaling default;
-```
-
-### HPA (Horizontal Pod Autoscaler)
-
-request volume に基づいて vLLM server を自動的に scale する方法です。
+リクエスト量に基づいて vLLM server を自動的にスケールする方法:
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -1110,9 +805,9 @@ spec:
         averageValue: 100
 ```
 
-### Node Autoscaling with Karpenter
+### Karpenter を使用したノードのオートスケーリング
 
-GPU node を自動的に provision する方法です。
+GPU ノードを自動的にプロビジョニングする方法:
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1157,11 +852,11 @@ spec:
   ttlSecondsAfterEmpty: 30
 ```
 
-## Security Configuration
+## セキュリティ設定
 
 ### Network Policy
 
-vLLM server への network access を制限する方法です。
+vLLM server へのネットワークアクセスを制限する方法:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1206,7 +901,7 @@ spec:
 
 ### Security Context
 
-container security context を設定する方法です。
+コンテナの security context を設定する方法:
 
 ```yaml
 securityContext:
@@ -1219,69 +914,13 @@ securityContext:
     - ALL
 ```
 
-## Client Integration
+## Client 統合
 
-```mermaid
-flowchart TD
-    subgraph ClientIntegration [Client Integration]
-        subgraph Gateway [API Gateway]
-            Nginx[Nginx]
-            APIGateway[API Gateway]
-            Envoy[Envoy Proxy]
-        end
-
-        subgraph Clients [Clients]
-            PythonClient[Python Client]
-            JavaScriptClient[JavaScript Client]
-            CurlClient[Curl Client]
-        end
-
-        subgraph Security [Security]
-            Auth[Authentication]
-            RateLimit[Rate Limiting]
-            CORS[CORS]
-        end
-
-        subgraph Backend [Backend]
-            vLLMService[vLLM Service]
-            LoadBalancer[Load Balancer]
-        end
-    end
-
-    Clients --> Gateway
-    Gateway --> Security
-    Security --> Backend
-
-    PythonClient -->|HTTP Request| Nginx
-    JavaScriptClient -->|HTTP Request| APIGateway
-    CurlClient -->|HTTP Request| Envoy
-
-    Nginx --> Auth
-    APIGateway --> RateLimit
-    Envoy --> CORS
-
-    Auth --> LoadBalancer
-    RateLimit --> LoadBalancer
-    CORS --> LoadBalancer
-
-    LoadBalancer --> vLLMService
-
-    classDef gatewayNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef clientNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef backendNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Nginx,APIGateway,Envoy,Gateway gatewayNode;
-    class PythonClient,JavaScriptClient,CurlClient,Clients clientNode;
-    class Auth,RateLimit,CORS,Security securityNode;
-    class vLLMService,LoadBalancer,Backend backendNode;
-    class ClientIntegration default;
-```
+![client SDK が API gateway を経由し、認証と rate limiting のためのセキュリティ層を通って、load-balanced なバックエンド Service に到達する様子を示した図。](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg)
 
 ### API Gateway
 
-vLLM server の前段に API gateway をデプロイする方法です。
+vLLM server の前段に API gateway をデプロイする方法:
 
 ```yaml
 apiVersion: apps/v1
@@ -1340,9 +979,9 @@ spec:
   type: LoadBalancer
 ```
 
-### Client Example
+### Client の例
 
-Python client を使用して vLLM server に request を送信する方法です。
+Python client を使用して vLLM server にリクエストを送信する方法:
 
 ```python
 import requests
@@ -1366,59 +1005,59 @@ response = requests.post(url, headers=headers, data=json.dumps(payload))
 print(response.json())
 ```
 
-## Best Practices
+## ベストプラクティス
 
-### Resource Management
+### リソース管理
 
-1. **Consider Memory Overhead**:
-   - GPU memory に加えて、十分な CPU memory を割り当てます。
-   - model size の約 2 倍の CPU memory を割り当てることを推奨します。
+1. **メモリオーバーヘッドを考慮する**:
+   - GPU メモリに加えて、十分な CPU メモリを割り当てます。
+   - CPU メモリはモデルサイズのおよそ 2 倍を割り当てることを推奨します。
 
-2. **CPU Core Allocation**:
-   - GPU あたり少なくとも 4 CPU core を割り当てます。
-   - tensor parallelization を使用する場合は、より多くの CPU core が必要になることがあります。
+2. **CPU コアの割り当て**:
+   - GPU ごとに少なくとも 4 CPU コアを割り当てます。
+   - tensor parallelization を使用する場合は、より多くの CPU コアが必要になることがあります。
 
-3. **Node Selection**:
-   - model size に基づいて適切な node type を選択します。
-   - memory bandwidth が高い node を選択します。
+3. **ノードの選択**:
+   - モデルサイズに基づいて適切なノードタイプを選択します。
+   - メモリ帯域幅の高いノードを選択します。
 
-### High Availability
+### 高可用性
 
-1. **Multi-Availability Zone Deployment**:
-   - 複数の availability zone にわたって vLLM server をデプロイします。
-   - 各 availability zone で十分な capacity を確保します。
+1. **複数 Availability Zone へのデプロイ**:
+   - 複数の Availability Zone に vLLM server をデプロイします。
+   - 各 Availability Zone に十分な capacity を確保します。
 
-2. **Load Balancing**:
-   - 複数の vLLM server instance に request を分散します。
-   - 同じ user からの request が同じ server に route されるように session affinity を設定します。
+2. **負荷分散**:
+   - 複数の vLLM server インスタンスにリクエストを分散します。
+   - 同じユーザーからのリクエストが同じ server にルーティングされるよう、session affinity を設定します。
 
-3. **Failure Recovery**:
-   - failed server を検出するための health check を設定します。
-   - automatic recovery mechanism を実装します。
+3. **障害復旧**:
+   - 失敗した server を検出する health check を設定します。
+   - 自動復旧メカニズムを実装します。
 
-### Cost Optimization
+### コスト最適化
 
-1. **Utilize Spot Instances**:
-   - cost を削減するために Spot instance を使用します。
-   - interruption-tolerant workload に適しています。
+1. **Spot インスタンスを活用する**:
+   - コスト削減のために Spot インスタンスを使用します。
+   - 中断耐性のあるワークロードに適しています。
 
-2. **Model Quantization**:
-   - memory usage を削減するために INT8 または INT4 quantization を適用します。
-   - accuracy と performance の balance を検討します。
+2. **モデルの Quantization**:
+   - メモリ使用量を削減するために INT8 または INT4 quantization を適用します。
+   - 精度とパフォーマンスのバランスを検討します。
 
-3. **Autoscaling**:
-   - request volume に基づいて server を自動的に scale します。
-   - idle time には server を scale down して cost を削減します。
+3. **オートスケーリング**:
+   - リクエスト量に基づいて server を自動的にスケールします。
+   - アイドル時に server をスケールダウンしてコストを削減します。
 
-## Conclusion
+## まとめ
 
-vLLM は最も活発に開発されているオープンソースの LLM inference engine であり、Speculative Decoding、Prefix Caching、dynamic LoRA loading、Structured Output、Tool Calling など、本番環境に不可欠な機能を包括的にサポートしています。EKS 上で適切な GPU instance selection、高性能 storage、network optimization、auto-scaling と組み合わせることで、cost-effective で scalable な LLM serving platform を構築できます。SGLang や TGI など他の framework との比較については、[Inference Frameworks](./04-inference-frameworks.md) の章を参照してください。
+vLLM は最も活発に開発されているオープンソース LLM 推論エンジンであり、Speculative Decoding、Prefix Caching、動的 LoRA ロード、Structured Output、Tool Calling など、本番環境で不可欠な機能を包括的にサポートしています。適切な GPU インスタンスの選定、高性能ストレージ、ネットワーク最適化、EKS 上でのオートスケーリングを組み合わせることで、コスト効率が高くスケーラブルな LLM serving プラットフォームを構築できます。SGLang や TGI などの他フレームワークとの比較については、[推論フレームワーク](./04-inference-frameworks.md)の章を参照してください。
 
-## References
+## 参考資料
 
-- [vLLM Official Documentation](https://docs.vllm.ai/) - vLLM の公式ドキュメントと最新機能ガイド
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - EKS 上で AI/ML workload をデプロイするための AWS guide と example
+- [vLLM 公式ドキュメント](https://docs.vllm.ai/) - vLLM の公式ドキュメントおよび最新機能ガイド
+- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - EKS 上に AI/ML ワークロードをデプロイするための AWS ガイドと例
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[Topic Quiz](../quizzes/ai-ml/04-vllm-deployment-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[トピッククイズ](../quizzes/ai-ml/04-vllm-deployment-quiz.md)に挑戦してください。
