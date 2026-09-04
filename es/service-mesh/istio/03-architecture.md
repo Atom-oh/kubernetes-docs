@@ -4,21 +4,21 @@
 
 Este documento ofrece una visión detallada de la arquitectura interna y los mecanismos de red de Istio.
 
-**Para conocer los antecedentes y la historia**, consulta el documento de [Conceptos básicos](02-basic-concepts.md#background-and-history).
+**Para conocer los antecedentes y la historia**, consulta el documento [Conceptos básicos](02-basic-concepts.md#background-and-history).
 
 **Cambios importantes (Istio 1.5+)**:
 
 * Pilot, Citadel y Galley **ya no son componentes independientes**
-* Se consolidan en un **único binario** llamado Istiod (`pilot-discovery`)
+* Se consolidaron en un **único binario** llamado Istiod (`pilot-discovery`)
 * La terminología Pilot/Citadel/Galley se refiere a **nombres históricos que describen funcionalidades**
 
 ## Tabla de contenido
 
 1. [Descripción general de la arquitectura de Istio](03-architecture.md#istio-architecture-overview)
-2. [Control Plane: Istiod](03-architecture.md#control-plane-istiod)
-3. [Data Plane: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
+2. [Plano de control: Istiod](03-architecture.md#control-plane-istiod)
+3. [Plano de datos: Envoy Proxy](03-architecture.md#data-plane-envoy-proxy)
 4. [Mecanismo de inyección de Sidecar](03-architecture.md#sidecar-injection-mechanism)
-5. [iptables e intercepción de tráfico](03-architecture.md#iptables-and-traffic-interception)
+5. [iptables e interceptación de tráfico](03-architecture.md#iptables-and-traffic-interception)
 6. [Mecanismo de procesamiento de DNS](03-architecture.md#dns-processing-mechanism)
 7. [Comunicación de la API xDS](03-architecture.md#xds-api-communication)
 8. [Optimización con el recurso Sidecar](03-architecture.md#optimization-with-sidecar-resource)
@@ -27,84 +27,31 @@ Este documento ofrece una visión detallada de la arquitectura interna y los mec
 
 ### Estructura general
 
-### Control Plane frente a Data Plane
+![Descripción general de la arquitectura de Istio: Istiod supervisa el servidor de la API de Kubernetes y envía la configuración xDS al Ingress Gateway y a los sidecars, mientras los pods se comunican entre sí mediante mTLS.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
 
-| Categoría        | Control Plane (Istiod)                        | Data Plane (Envoy)        |
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-0.html)
+
+### Plano de control frente a plano de datos
+
+| Categoría        | Plano de control (Istiod)                        | Plano de datos (Envoy)        |
 | --------------- | --------------------------------------------- | ------------------------- |
-| **Función**        | Gestión de políticas, distribución de configuración | Procesamiento de tráfico real |
-| **Ubicación**    | Pods independientes (normalmente 1-3)                 | Todos los Pods de aplicación      |
+| **Función**        | Gestión de políticas, distribución de configuración | Procesamiento real del tráfico |
+| **Ubicación**    | Pods independientes (normalmente 1-3)                 | Todos los pods de aplicación      |
 | **Lenguaje**    | Go                                            | C++                       |
 | **Carga**        | Baja                                           | Alta (todo el tráfico)        |
-| **Escalabilidad** | Escalado horizontal (HA)                       | Automática (1 por Pod)     |
+| **Escalabilidad** | Escalado horizontal (HA)                       | Automático (1 por pod)     |
 
-## Control Plane: Istiod
+## Plano de control: Istiod
 
 ### Estructura interna de Istiod
 
 **Importante**: Desde Istio 1.5, Pilot, Citadel y Galley son **funciones internas de Istiod, no componentes independientes**.
 
-```mermaid
-flowchart TB
-    subgraph Istiod[Istiod Single Process]
-        subgraph PilotFunc[Pilot Functionality]
-            SD[Service Discovery<br/>Service Detection]
-            TR[Traffic Management<br/>Traffic Rules]
-            xDS[xDS Server<br/>Configuration Distribution]
-        end
-
-        subgraph CitadelFunc[Citadel Functionality]
-            CA[Certificate Authority<br/>CA Management]
-            ID[Identity Management<br/>SPIFFE ID]
-        end
-
-        subgraph GalleyFunc[Galley Functionality]
-            Val[Configuration Validation<br/>Config Validation]
-            Proc[Configuration Processing<br/>Config Processing]
-        end
-    end
-
-    subgraph K8S[Kubernetes API]
-        API[API Server]
-        CRD[Istio CRDs<br/>VirtualService, DestinationRule, etc.]
-    end
-
-    subgraph Envoys[Envoy Proxies]
-        E1[Envoy 1]
-        E2[Envoy 2]
-        E3[Envoy N]
-    end
-
-    API --> Val
-    CRD --> Val
-    Val --> SD
-    Val --> CA
-
-    SD --> xDS
-    TR --> xDS
-    CA --> xDS
-
-    xDS -->|xDS API<br/>Config Push| E1
-    xDS -->|xDS API<br/>Config Push| E2
-    xDS -->|xDS API<br/>Config Push| E3
-
-    CA -->|X.509 Certificates<br/>SDS API| E1
-    CA -->|X.509 Certificates<br/>SDS API| E2
-    CA -->|X.509 Certificates<br/>SDS API| E3
-
-    %% Style definitions
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef k8s fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class SD,TR,xDS,CA,ID,Val,Proc istiod;
-    class API,CRD k8s;
-    class E1,E2,E3 envoy;
-```
+![Diagrama de arquitectura que muestra el proceso único de Istiod consolidando las funciones de Pilot, Citadel y Galley, validando la configuración de la API de Kubernetes y enviando la configuración xDS y los certificados X.509 a los proxies sidecar de Envoy.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-0.svg)
 
 ### Funciones principales de Istiod
 
-**Nota**: Las siguientes funciones están integradas en Istiod en Istio 1.28. Los nombres históricos (Pilot, Citadel, Galley) se usan para describir funcionalidades.
+**Nota**: Las funciones siguientes están integradas en Istiod en Istio 1.28. Los nombres históricos (Pilot, Citadel, Galley) se utilizan para describir funcionalidades.
 
 #### 1. Descubrimiento de servicios (funcionalidad de Pilot)
 
@@ -123,9 +70,9 @@ spec:
 
 Istiod realiza el seguimiento de:
 
-* Services de Kubernetes
-* Endpoints (IP de los Pods)
-* Cambios en el estado de los Pods
+* Kubernetes Services
+* Endpoints (IP de los pods)
+* Cambios de estado de los Pods
 * Servicios externos (ServiceEntry)
 
 #### 2. Gestión del tráfico (funcionalidad de Pilot)
@@ -153,7 +100,7 @@ spec:
       weight: 10
 ```
 
-↓ Istiod convierte en configuración de Envoy ↓
+↓ Istiod convierte a configuración de Envoy ↓
 
 ```json
 {
@@ -170,26 +117,9 @@ spec:
 
 #### 3. Gestión de certificados (funcionalidad de Citadel)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy
-    participant Istiod
-    participant SPIFFE
+![Diagrama de secuencia que muestra a Envoy solicitando un certificado a Istiod, Istiod verificando la identidad de la carga de trabajo con SPIFFE, firmando y emitiendo un certificado X.509 para mTLS y, posteriormente, renovándolo antes de su vencimiento.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-1.svg)
 
-    Envoy->>Istiod: CSR Request<br/>(Certificate Signing Request)
-    Istiod->>SPIFFE: Identity Verification<br/>(ServiceAccount)
-    SPIFFE->>Istiod: Verification Complete
-    Istiod->>Istiod: Sign Certificate
-    Istiod->>Envoy: Issue X.509 Certificate<br/>(TTL: 24 hours)
-
-    Note over Envoy: Use Certificate<br/>mTLS Communication
-
-    Envoy->>Istiod: Certificate Renewal Request<br/>(Before Expiry)
-    Istiod->>Envoy: Issue New Certificate
-```
-
-**Formato de SPIFFE ID**:
+**Formato de ID de SPIFFE**:
 
 ```
 spiffe://cluster.local/ns/default/sa/reviews
@@ -220,7 +150,7 @@ Error from server: admission webhook "validation.istio.io" denied the request:
 configuration is invalid: host "non-existent-service" not found
 ```
 
-### Estructura de procesos de Istiod
+### Estructura del proceso de Istiod
 
 **Implementación real en Istio 1.28**:
 
@@ -245,7 +175,7 @@ istio-p+     1  /usr/local/bin/pilot-discovery discovery
 | --------- | -------- | ------------------------ | ------------------------- |
 | **15010** | gRPC     | xDS (heredado)             | Compatibilidad con versiones anteriores    |
 | **15012** | gRPC     | xDS sobre TLS             | Endpoint principal de la API xDS  |
-| **15014** | HTTP     | Monitorización del Control Plane | Métricas y comprobaciones de estado |
+| **15014** | HTTP     | Monitorización del plano de control | Métricas y comprobaciones de estado |
 | **15017** | HTTPS    | Webhook                  | Inyección de Sidecar         |
 | **8080**  | HTTP     | Depuración                    | Interfaz de depuración       |
 
@@ -282,41 +212,15 @@ spec:
 
 * CPU: 0.5 - 2 núcleos
 * Memoria: 2 - 4 GB
-* Puede gestionar miles de Services y Pods
+* Puede gestionar miles de servicios y pods
 
-## Data Plane: Envoy Proxy
+## Plano de datos: Envoy Proxy
 
 ### Arquitectura de Envoy
 
-```mermaid
-flowchart TB
-    subgraph EnvoyProxy[Envoy Proxy]
-        Listener[Listeners<br/>Port Reception]
-        Filter[Filters<br/>Request Processing]
-        Router[Routers<br/>Routing Decision]
-        Cluster[Clusters<br/>Upstream Services]
+![Diagrama de arquitectura que muestra una solicitud entrante pasando por el listener, la cadena de filtros y el router de Envoy hacia un cluster de servicios upstream antes de salir como una solicitud saliente.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-2.png)
 
-        Listener --> Filter
-        Filter --> Router
-        Router --> Cluster
-    end
-
-    subgraph External[External]
-        Incoming[Incoming Requests]
-        Outgoing[Outgoing Requests]
-    end
-
-    Incoming -->|Inbound| Listener
-    Cluster -->|Outbound| Outgoing
-
-    %% Style definitions
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Listener,Filter,Router,Cluster envoy;
-    class Incoming,Outgoing external;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-2.html)
 
 ### Componentes principales de Envoy
 
@@ -344,34 +248,11 @@ flowchart TB
 * `0.0.0.0:15021`: Comprobación de estado
 * `0.0.0.0:15090`: Métricas de Prometheus
 
-#### 2. Filters
+#### 2. Filtros
 
 **Plugins que procesan solicitudes/respuestas**:
 
-```mermaid
-flowchart LR
-    Request[HTTP Request]
-
-    subgraph Filters[Filter Chain]
-        F1[JWT Auth]
-        F2[Rate Limiting]
-        F3[RBAC Validation]
-        F4[Stats Collection]
-        F5[Router]
-    end
-
-    Response[HTTP Response]
-
-    Request --> F1 --> F2 --> F3 --> F4 --> F5 --> Response
-
-    %% Style definitions
-    classDef req fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef filter fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Request,Response req;
-    class F1,F2,F3,F4,F5 filter;
-```
+![Diagrama de flujo que muestra una solicitud HTTP pasando secuencialmente por los filtros de autenticación JWT, limitación de tasa, validación RBAC, recopilación de estadísticas y router de Envoy antes de convertirse en la respuesta HTTP.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-3.svg)
 
 #### 3. Clusters
 
@@ -391,7 +272,7 @@ flowchart LR
 
 #### 4. Endpoints
 
-**Lista real de IP de Pods**:
+**Lista de IP reales de los pods**:
 
 ```json
 {
@@ -412,7 +293,7 @@ flowchart LR
 **Benchmarks** (entorno típico):
 
 * Rendimiento: más de 10,000 RPS por núcleo
-* Latencia añadida: < 1ms (P99)
+* Latencia añadida: < 1 ms (P99)
 * Memoria: 50-100 MB (configuración predeterminada)
 * CPU: 0.1-0.5 núcleos (carga típica)
 
@@ -420,48 +301,7 @@ flowchart LR
 
 ### Proceso de inyección
 
-```mermaid
-flowchart TB
-    subgraph User[User]
-        Deploy[Create Deployment]
-    end
-
-    subgraph K8S[Kubernetes]
-        API[API Server]
-        Webhook[Mutating Webhook]
-    end
-
-    subgraph Istio[Istio]
-        Injector[Sidecar Injector]
-    end
-
-    subgraph Pod[Created Pod]
-        Init[istio-init<br/>init container]
-        App[Application<br/>container]
-        Proxy[istio-proxy<br/>sidecar container]
-    end
-
-    Deploy -->|1\. POST| API
-    API -->|2\. Call Webhook| Webhook
-    Webhook -->|3\. Injection Request| Injector
-    Injector -->|4\. Modified Pod Spec| Webhook
-    Webhook -->|5\. Return| API
-    API -->|6\. Create Pod| Init
-    Init -->|7\. Complete| App
-    Init -->|7\. Complete| Proxy
-
-    %% Style definitions
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8s fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef istio fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Deploy user;
-    class API,Webhook k8s;
-    class Injector istio;
-    class Init,App,Proxy container;
-```
+![Diagrama de flujo que muestra que la llamada de creación de un pod de un Deployment a la API de Kubernetes activa un webhook mutante, que solicita al inyector de sidecar de Istio modificar la especificación del pod, dando como resultado un pod con un contenedor istio-init y un sidecar istio-proxy junto al contenedor de aplicación.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-4.svg)
 
 ### Original frente a después de la inyección
 
@@ -508,7 +348,7 @@ spec:
     args: ['proxy', 'sidecar', ...]
 ```
 
-### Habilitar la inyección de Sidecar
+### Habilitación de la inyección de Sidecar
 
 #### Inyección automática (recomendada)
 
@@ -538,7 +378,7 @@ spec:
 
 #### Inyección manual
 
-Usa el comando `istioctl kube-inject` para inyectar el Sidecar directamente en archivos YAML.
+Usa el comando `istioctl kube-inject` para inyectar el sidecar directamente en archivos YAML.
 
 ```bash
 # Inject sidecar into YAML file and deploy
@@ -549,41 +389,19 @@ istioctl kube-inject -f deployment.yaml -o deployment-injected.yaml
 kubectl apply -f deployment-injected.yaml
 ```
 
-**Escenarios para la inyección manual**:
+**Escenarios de inyección manual**:
 
 * Entornos donde no se puede usar la inyección automática
 * Cuando se necesita control explícito en pipelines de CI/CD
-* Cuando se desea inspeccionar el YAML inyectado para depuración
+* Cuando deseas inspeccionar el YAML inyectado para depuración
 
-## iptables e intercepción de tráfico
+## iptables e interceptación de tráfico
 
 ### Contenedor istio-init
 
-**Función**: Configura reglas de iptables para redirigir el tráfico de red del Pod a Envoy Proxy
+**Función**: Configura reglas de iptables para redirigir el tráfico de red del pod a Envoy Proxy
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant K8S as Kubernetes
-    participant Init as istio-init
-    participant IPTables as iptables
-    participant App as Application
-    participant Envoy as Envoy Proxy
-
-    K8S->>Init: Start Init Container
-    Init->>IPTables: Set iptables rules
-    Note over IPTables: Redirect all traffic<br/>to Envoy
-
-    Init->>K8S: Complete (Exit 0)
-    K8S->>App: Start Application
-    K8S->>Envoy: Start Envoy
-
-    App->>IPTables: Outbound request<br/>(e.g., curl reviews:9080)
-    IPTables->>Envoy: Redirect (15001)
-    Envoy->>Envoy: Routing decision
-    Envoy->>IPTables: Send actual request
-    Note over IPTables: Envoy UID<br/>bypasses iptables
-```
+![Diagrama de secuencia que muestra el contenedor istio-init configurando iptables para redirigir el tráfico de un pod a Envoy antes de que se inicien la aplicación y el proxy Envoy, de modo que una solicitud saliente posterior sea interceptada y redirigida de forma transparente al listener de Envoy.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-5.svg)
 
 ### Detalle de las reglas de iptables
 
@@ -615,52 +433,11 @@ iptables -t nat -I OUTPUT -p udp --dport 53 -j RETURN
 
 ### Flujo de tráfico (después de aplicar iptables)
 
-```mermaid
-flowchart TB
-    subgraph Pod[Pod Network Namespace]
-        App[Application<br/>localhost:8080]
+![Diagrama de arquitectura que muestra una solicitud saliente de una aplicación redirigida por las reglas de la cadena OUTPUT de iptables al listener saliente de Envoy y reenviada a un servicio externo utilizando el UID del propio proxy para evitar una interceptación posterior, y una ruta entrante reflejada a través de la cadena PREROUTING al listener entrante de Envoy tras la verificación de mTLS de vuelta a la aplicación.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-6.svg)
 
-        subgraph IPTables[iptables NAT]
-            Output[OUTPUT Chain]
-            PreRouting[PREROUTING Chain]
-        end
+### Comprobación de reglas de iptables
 
-        subgraph Envoy[Envoy Proxy<br/>UID: 1337]
-            L15001[Listener<br/>15001<br/>Outbound]
-            L15006[Listener<br/>15006<br/>Inbound]
-        end
-    end
-
-    External[External Service<br/>reviews:9080]
-
-    %% Outbound flow
-    App -->|1\. curl reviews:9080| Output
-    Output -->|2\. REDIRECT| L15001
-    L15001 -->|3\. Routing| L15001
-    L15001 -->|4\. UID 1337<br/>bypass iptables| External
-
-    %% Inbound flow
-    External -->|5\. Incoming request| PreRouting
-    PreRouting -->|6\. REDIRECT| L15006
-    L15006 -->|7\. mTLS verification| L15006
-    L15006 -->|8\. localhost| App
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef iptables fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class App app;
-    class Output,PreRouting iptables;
-    class L15001,L15006 envoy;
-    class External external;
-```
-
-### Comprobar las reglas de iptables
-
-**Comprobar desde dentro del Pod**:
+**Comprobar desde dentro del pod**:
 
 ```bash
 # Enter pod
@@ -691,7 +468,7 @@ REDIRECT   tcp  --  0.0.0.0/0  0.0.0.0/0           redir ports 15006
 
 ### iptables frente a eBPF (plugin de CNI)
 
-Istio admite dos métodos de intercepción de tráfico:
+Istio admite dos métodos de interceptación de tráfico:
 
 | Método         | Ventajas           | Desventajas           | Escenario de uso                   |
 | -------------- | -------------------- | ----------------------- | ------------------------------ |
@@ -700,35 +477,11 @@ Istio admite dos métodos de intercepción de tráfico:
 
 ## Mecanismo de procesamiento de DNS
 
-### Funcionamiento básico de DNS de Kubernetes
+### Funcionamiento básico del DNS de Kubernetes
 
-```mermaid
-flowchart LR
-    App[Application]
+![Diagrama de flujo que muestra la ruta predeterminada de búsqueda DNS de una aplicación: una solicitud de resolución de nombres pasa por resolv.conf del pod a CoreDNS, que devuelve el ClusterIP del Service a la aplicación.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-7.svg)
 
-    subgraph Pod[Pod Network]
-        Resolve["/etc/resolv.conf<br/>nameserver 10.96.0.10"]
-    end
-
-    subgraph K8S[Kubernetes]
-        CoreDNS["CoreDNS<br/>Service: kube-dns<br/>ClusterIP: 10.96.0.10"]
-    end
-
-    App -->|"1\. Name resolution request<br/>(reviews)"| Resolve
-    Resolve -->|"2\. DNS query<br/>(UDP 53 → 10.96.0.10)"| CoreDNS
-    CoreDNS -->|"3\. Return ClusterIP<br/>(reviews = 10.100.1.5)"| Resolve
-    Resolve -->|"4\. Return IP<br/>(10.100.1.5)"| App
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dns fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App app;
-    class Resolve,CoreDNS dns;
-```
-
-**/etc/resolv.conf** (dentro del Pod):
+**/etc/resolv.conf** (dentro del pod):
 
 ```bash
 nameserver 10.96.0.10  # kube-dns ClusterIP
@@ -740,39 +493,7 @@ options ndots:5
 
 **En Istio, Envoy gestiona DNS**:
 
-```mermaid
-flowchart TB
-    App[Application<br/>curl reviews:9080]
-
-    subgraph Envoy[Envoy Proxy]
-        Listener[Listener<br/>15001]
-        DNS[DNS Filter]
-        Route[Route Match]
-        Cluster["Cluster<br/>outbound:9080::reviews"]
-        EDS[Endpoint Discovery]
-    end
-
-    subgraph Istiod[Istiod]
-        XDS[xDS Server]
-    end
-
-    App -->|1\. TCP connection| Listener
-    Listener -->|2\. Inspect Host header| DNS
-    DNS -->|3\. Name resolution| Route
-    Route -->|4\. Select Cluster| Cluster
-    Cluster -->|5\. Query Endpoints| EDS
-    EDS <-->|6\. EDS API| XDS
-
-    %% Style definitions
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class App app;
-    class Listener,DNS,Route,Cluster,EDS envoy;
-    class XDS istiod;
-```
+![Diagrama de flujo que muestra a Envoy interceptando una conexión TCP de una aplicación, inspeccionando el encabezado Host, resolviendo la ruta, seleccionando un cluster y consultando Endpoints a través del servidor xDS de Istiod en lugar de llamar a CoreDNS.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-8.svg)
 
 **Ventajas**:
 
@@ -782,7 +503,7 @@ flowchart TB
 
 ### DNS Proxy (opcional)
 
-**Funcionalidad DNS Proxy añadida en Istio 1.8+**:
+**Función DNS Proxy añadida en Istio 1.8+**:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -796,28 +517,7 @@ spec:
 
 **Funcionamiento**:
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application
-    participant IPT as iptables
-    participant Envoy as Envoy<br/>DNS Proxy
-    participant CoreDNS as CoreDNS
-    participant Istiod as Istiod
-
-    App->>IPT: DNS query<br/>reviews (UDP 53)
-    IPT->>Envoy: Redirect (15053)
-
-    alt Istio Service
-        Envoy->>Istiod: Query service info<br/>(xDS)
-        Istiod->>Envoy: Return ClusterIP
-        Envoy->>App: 10.96.0.10
-    else External DNS
-        Envoy->>CoreDNS: DNS query
-        CoreDNS->>Envoy: Return IP
-        Envoy->>App: Return IP
-    end
-```
+![Diagrama de secuencia que muestra el DNS proxy de Envoy interceptando una consulta DNS redirigida y bifurcándose: para un servicio de Istio dentro del mesh, solicita el ClusterIP al servidor xDS de Istiod; de lo contrario, recurre a consultar CoreDNS, antes de devolver una IP a la aplicación en cualquiera de los casos.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-9.svg)
 
 **Reglas de iptables de DNS Proxy**:
 
@@ -834,34 +534,7 @@ iptables -t nat -A OUTPUT -p udp --dport 53 \
 
 **xDS**: Significa Discovery Service, el protocolo de configuración dinámica de Envoy.
 
-```mermaid
-flowchart LR
-    subgraph Istiod[Istiod]
-        Pilot[Pilot<br/>xDS Server]
-    end
-
-    subgraph Envoy[Envoy Proxy]
-        LDS[Listener DS]
-        RDS[Route DS]
-        CDS[Cluster DS]
-        EDS[Endpoint DS]
-        SDS[Secret DS]
-    end
-
-    Pilot <-->|gRPC<br/>Stream| LDS
-    Pilot <-->|gRPC<br/>Stream| RDS
-    Pilot <-->|gRPC<br/>Stream| CDS
-    Pilot <-->|gRPC<br/>Stream| EDS
-    Pilot <-->|gRPC<br/>Stream| SDS
-
-    %% Style definitions
-    classDef istiod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef xds fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pilot istiod;
-    class LDS,RDS,CDS,EDS,SDS xds;
-```
+![Diagrama de arquitectura que muestra al componente Pilot de Istiod manteniendo cinco flujos gRPC bidireccionales con Envoy: Listener, Route, Cluster, Endpoint y Secret Discovery Services.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-10.svg)
 
 ### Tipos de API xDS
 
@@ -875,38 +548,7 @@ flowchart LR
 
 ### Flujo de comunicación xDS
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Envoy as Envoy Proxy
-    participant Istiod as Istiod<br/>(xDS Server)
-    participant K8S as Kubernetes API
-
-    Note over Envoy: Pod starts
-
-    Envoy->>Istiod: 1. Connect (gRPC :15012)
-    Istiod->>Envoy: 2. mTLS authentication
-
-    Envoy->>Istiod: 3. LDS request
-    Istiod->>Envoy: 4. Return Listeners
-
-    Envoy->>Istiod: 5. CDS request
-    Istiod->>Envoy: 6. Return Clusters
-
-    Envoy->>Istiod: 7. EDS request
-    Istiod->>Envoy: 8. Return Endpoints
-
-    Envoy->>Istiod: 9. RDS request
-    Istiod->>Envoy: 10. Return Routes
-
-    Envoy->>Istiod: 11. SDS request
-    Istiod->>Envoy: 12. Return Certificates
-
-    Note over Envoy: Configuration complete<br/>Ready to process traffic
-
-    K8S->>Istiod: 13. Service change detected
-    Istiod->>Envoy: 14. EDS push (new Endpoint)
-```
+![Diagrama de secuencia que muestra a un proxy Envoy recién iniciado conectándose a Istiod mediante mTLS, repitiendo ciclos de solicitud/respuesta xDS para cada tipo de recurso de descubrimiento hasta quedar completamente configurado y, posteriormente, recibiendo una actualización de Endpoints enviada tras detectar Istiod un cambio en un Service de Kubernetes.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-11.svg)
 
 ### Verificación de la comunicación xDS
 
@@ -951,34 +593,11 @@ istioctl proxy-config routes <pod-name> -n default
 
 ## Optimización con el recurso Sidecar
 
-### Problema: recibir información de todos los Services
+### Problema: recibir información de todos los servicios
 
-De forma predeterminada, cada Envoy recibe **información sobre todos los Services de toda la malla**:
+De forma predeterminada, cada Envoy recibe **información sobre todos los servicios de todo el mesh**:
 
-```mermaid
-flowchart TB
-    subgraph Mesh[Service Mesh - 1000 services]
-        S1[Service 1]
-        S2[Service 2]
-        S3[Service 3]
-        Sn[Service 1000]
-    end
-
-    subgraph Pod[Single Pod]
-        App[Application<br/>Uses: Service 1, 2 only]
-        Envoy[Envoy Proxy<br/>Receives: All 1000]
-    end
-
-    Mesh -.->|Push all info| Envoy
-
-    %% Style definitions
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef envoy fill:#FF6B6B,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class S1,S2,S3,Sn service;
-    class Envoy envoy;
-```
+![Diagrama de arquitectura que muestra que, de forma predeterminada, cada sidecar de Envoy en un mesh de 1000 servicios recibe la configuración de todos los servicios, aunque la aplicación de su pod solo se comunica con dos de ellos.](../../../assets/diagrams/rendered/en-service-mesh-istio-03-architecture-12.svg)
 
 **Problemas**:
 
@@ -989,7 +608,7 @@ flowchart TB
 
 ### Solución: recurso Sidecar
 
-Usa el **recurso Sidecar** para limitar la recepción únicamente a los Services necesarios:
+Usa el **recurso Sidecar** para restringir la recepción solo a los servicios necesarios:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1023,7 +642,7 @@ spec:
     - "shared/*"  # Shared services
 ```
 
-#### 2. Acceso solo a Services específicos
+#### 2. Acceso solo a servicios específicos
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1070,13 +689,13 @@ spec:
 
 **Antes (sin Sidecar)**:
 
-* 1000 Services → 1000 configuraciones de Cluster
+* 1000 servicios → 1000 configuraciones de Cluster
 * Memoria de Envoy: \~500 MB
 * Tiempo de envío de configuración: 5-10 segundos
 
-**Después (Sidecar aplicado)**:
+**Después (con Sidecar aplicado)**:
 
-* 10 Services → 10 configuraciones de Cluster
+* 10 servicios → 10 configuraciones de Cluster
 * Memoria de Envoy: \~80 MB
 * Tiempo de envío de configuración: < 1 segundo
 
@@ -1115,7 +734,7 @@ spec:
 ### Historia y antecedentes
 
 * [Historia del origen de Envoy - Matt Klein](https://blog.envoyproxy.io/the-universal-data-plane-api-d15cec7a)
-* [Anuncio de Istio - Google Cloud Blog](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
+* [Anuncio de Istio - Blog de Google Cloud](https://cloud.google.com/blog/products/gcp/istio-service-mesh-for-microservices)
 * [Historia de Service Mesh](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
 ### Aprendizaje avanzado

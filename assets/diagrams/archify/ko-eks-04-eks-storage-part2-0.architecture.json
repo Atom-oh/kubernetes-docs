@@ -1,0 +1,39 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "Amazon FSx for Lustre CSI 아키텍처", "output": "ko-eks-04-eks-storage-part2-0.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1360, 660] },
+  "components": [
+    { "id": "pods1", "type": "frontend", "label": "ML 훈련 · 데이터 처리 파드", "sublabel": "노드 1", "pos": [40, 130], "size": [250, 70] },
+    { "id": "csi1", "type": "backend", "label": "FSx CSI 드라이버", "sublabel": "노드 1 DaemonSet", "pos": [400, 130], "size": [220, 70] },
+    { "id": "pods2", "type": "frontend", "label": "ML 추론 · 분석 파드", "sublabel": "노드 2", "pos": [40, 440], "size": [250, 70] },
+    { "id": "csi2", "type": "backend", "label": "FSx CSI 드라이버", "sublabel": "노드 2 DaemonSet", "pos": [400, 440], "size": [220, 70] },
+    { "id": "fsx", "type": "database", "label": "FSx for Lustre", "sublabel": "고성능 병렬 파일 시스템", "pos": [780, 270], "size": [240, 76] },
+    { "id": "s3", "type": "database", "label": "Amazon S3", "sublabel": "데이터 리포지토리", "pos": [1120, 270], "size": [200, 76] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Amazon EKS 클러스터", "wraps": ["pods1", "csi1", "pods2", "csi2"], "pad": 34 }
+  ],
+  "connections": [
+    { "id": "p1-c1", "from": "pods1", "to": "csi1", "label": "볼륨 마운트" },
+    { "id": "p2-c2", "from": "pods2", "to": "csi2", "label": "볼륨 마운트" },
+    { "id": "c1-fsx", "from": "csi1", "to": "fsx", "label": "Lustre 클라이언트" },
+    { "id": "c2-fsx", "from": "csi2", "to": "fsx" },
+    { "id": "fsx-s3", "from": "fsx", "to": "s3", "label": "데이터 동기화" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "성능 특성", "items": [
+      "프로비저닝 용량 1 TiB당 최소 125 MB/s부터 1,000 MB/s까지 처리량을 선택한다",
+      "수천 개 클라이언트가 병렬로 읽는 워크로드에서 총 처리량이 선형에 가깝게 늘어난다",
+      "메타데이터 IOPS도 별도로 프로비저닝할 수 있다"
+    ]},
+    { "dot": "emerald", "title": "배포 유형", "items": [
+      "스크래치는 임시 고성능 처리용으로 복제가 없고 비용이 낮다",
+      "퍼시스턴트는 AZ 내 복제를 제공해 장기 보관과 재시도 가능한 워크로드에 쓴다",
+      "스크래치는 학습 1회성 작업, 퍼시스턴트는 반복 학습 파이프라인에 맞다"
+    ]},
+    { "dot": "amber", "title": "S3 통합과 사용 사례", "items": [
+      "데이터 리포지토리 연결로 S3 객체를 파일처럼 지연 로딩한다",
+      "결과를 S3로 내보내 학습 산출물을 영구 보관한다",
+      "HPC 시뮬레이션, 대규모 모델 학습, 게놈 분석 같은 처리량 위주 작업에 쓴다"
+    ]}
+  ]
+}

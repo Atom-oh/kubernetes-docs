@@ -97,7 +97,77 @@
 }
 
 .archmap-embed__caption {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
   margin: 6px 2px 0;
   font-size: 13px;
-  text-align: right;
+}
+
+/* The diagram description: the accessible name for the iframe and the only
+   prose account of the diagram in the page text. */
+.archmap-embed__alt {
+  flex: 1;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.archmap-embed__caption a {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .archmap-embed__caption {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .archmap-embed__caption a {
+    align-self: flex-end;
+  }
+}
+
+/* The static PNG kept alongside the embed (see archify_embed in config.ts) is
+   the narrow-screen fallback, so it stays hidden while the iframe is shown. */
+.vp-doc p.archmap-embed__fallback {
+  display: none;
+}
+
+/* Under 768px the embedded viewer is unusable: at ~342px its toolbar and the
+   diagram's own nodes are clipped on both sides, and the iframe body does not
+   scroll (scrollWidth === clientWidth), so the clipped parts are unreachable.
+   Swap in the static PNG — tappable to zoom via medium-zoom — and promote the
+   full-screen link to a real button for anyone who wants the interactive one. */
+@media (max-width: 767px) {
+  .archmap-embed iframe {
+    display: none;
+  }
+
+  .vp-doc p.archmap-embed__fallback {
+    display: block;
+  }
+
+  /* The iframe is gone, so the wrapper only holds the link; drop the gap that
+     separated it from the diagram above. */
+  .archmap-embed {
+    margin-top: 0;
+  }
+
+  .archmap-embed__caption {
+    margin: 8px 0 0;
+    text-align: center;
+  }
+
+  .archmap-embed__caption a {
+    display: block;
+    padding: 11px 16px;
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+  }
 }

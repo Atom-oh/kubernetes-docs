@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "하이브리드 노드 사전 요구 사항과 라우팅",
+    "output": "ko-eks-hybrid-nodes-prereq-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      680
+    ]
+  },
+  "components": [
+    {
+      "id": "clusterconf",
+      "type": "backend",
+      "label": "EKS 클러스터 구성",
+      "sublabel": "RemoteNodeNetwork 10.80.0.0/16 · RemotePodNetwork 10.85.0.0/16",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        300,
+        90
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "VPC 10.226.0.0/16",
+      "sublabel": "서브넷 · 라우팅 테이블",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        300,
+        84
+      ]
+    },
+    {
+      "id": "link",
+      "type": "messagebus",
+      "label": "프라이빗 연결",
+      "sublabel": "Direct Connect · VPN (게이트웨이 ↔ 온프레미스 게이트웨이)",
+      "pos": [
+        430,
+        350
+      ],
+      "size": [
+        290,
+        96
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "온프레미스 라우터",
+      "sublabel": "온프레미스 라우팅 테이블",
+      "pos": [
+        810,
+        350
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "backend",
+      "label": "하이브리드 노드 1 · 2",
+      "sublabel": "노드 10.80.0.0/16 · 파드 10.85.1.0/24, 10.85.2.0/24",
+      "pos": [
+        810,
+        90
+      ],
+      "size": [
+        270,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 리전",
+      "wraps": [
+        "clusterconf",
+        "vpc"
+      ],
+      "pad": 30
+    },
+    {
+      "kind": "region",
+      "label": "온프레미스 환경",
+      "wraps": [
+        "router",
+        "nodes"
+      ],
+      "pad": 30
+    }
+  ],
+  "connections": [
+    {
+      "id": "conf-vpc",
+      "from": "clusterconf",
+      "to": "vpc",
+      "label": "원격 대역 등록",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 90
+    },
+    {
+      "id": "vpc-link",
+      "from": "vpc",
+      "to": "link",
+      "label": "원격 대역"
+    },
+    {
+      "id": "link-router",
+      "from": "link",
+      "to": "router",
+      "label": "양방향 라우팅"
+    },
+    {
+      "id": "router-nodes",
+      "from": "router",
+      "to": "nodes",
+      "label": "노드별 파드 경로",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -90
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "VPC 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 → 게이트웨이 (원격 노드 대역)",
+        "10.85.0.0/16 → 게이트웨이 (원격 파드 대역)",
+        "10.226.0.0/16 → local (VPC 자체 대역)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "온프레미스 라우팅 테이블",
+      "items": [
+        "10.85.1.0/24 → 하이브리드 노드 1",
+        "10.85.2.0/24 → 하이브리드 노드 2",
+        "10.226.0.0/16 → 온프레미스 게이트웨이 (VPC 방향)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "요구 사항 요약",
+      "items": [
+        "RemoteNodeNetwork와 RemotePodNetwork는 클러스터 생성 시 지정하며 VPC CIDR과 겹치면 안 된다",
+        "노드는 베어메탈 또는 가상화 호스트 모두 가능하고 노드 대역에서 IP를 받는다",
+        "양쪽 라우팅 테이블이 모두 상대 대역을 알고 있어야 파드 통신이 성립한다"
+      ]
+    }
+  ]
+}

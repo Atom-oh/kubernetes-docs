@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS와 AWS 서비스 통합",
+    "output": "ko-eks-01-eks-introduction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      760
+    ]
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "IRSA · Pod Identity · RBAC",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "Amazon VPC",
+      "sublabel": "VPC CNI · ELB · Lattice",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "EBS · EFS · FSx · S3",
+      "sublabel": "CSI 드라이버로 연결",
+      "pos": [
+        40,
+        580
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "sublabel": "관리형 컨트롤 플레인",
+      "pos": [
+        520,
+        360
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "database",
+      "label": "Amazon CloudWatch",
+      "sublabel": "Logs · Metrics · Insights",
+      "pos": [
+        1000,
+        140
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "database",
+      "label": "Amazon ECR",
+      "sublabel": "컨테이너 이미지 저장소",
+      "pos": [
+        1000,
+        360
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "aiml",
+      "type": "backend",
+      "label": "SageMaker · Bedrock",
+      "sublabel": "학습 · 추론 연동",
+      "pos": [
+        1000,
+        580
+      ],
+      "size": [
+        250,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-iam",
+      "from": "eks",
+      "to": "iam",
+      "label": "인증 · 인가",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-vpc",
+      "from": "eks",
+      "to": "vpc",
+      "label": "파드 네트워킹"
+    },
+    {
+      "id": "eks-storage",
+      "from": "eks",
+      "to": "storage",
+      "label": "영구 볼륨",
+      "toSide": "bottom"
+    },
+    {
+      "id": "eks-cw",
+      "from": "eks",
+      "to": "cw",
+      "label": "지표 · 로그",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-ecr",
+      "from": "eks",
+      "to": "ecr",
+      "label": "이미지 풀"
+    },
+    {
+      "id": "eks-aiml",
+      "from": "eks",
+      "to": "aiml",
+      "label": "AI/ML 워크로드",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "보안과 네트워킹",
+      "items": [
+        "IRSA 또는 EKS Pod Identity로 파드에 IAM 역할을 직접 매핑한다",
+        "EKS 액세스 엔트리로 IAM 주체를 쿠버네티스 RBAC에 연결한다",
+        "VPC CNI가 파드에 VPC IP를 주고 AWS Load Balancer Controller가 ALB·NLB를 만든다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "스토리지와 이미지",
+      "items": [
+        "EBS·EFS·FSx CSI 드라이버를 EKS 애드온으로 설치해 관리한다",
+        "ECR에서 이미지를 받을 때는 노드 역할이나 IRSA 권한이 필요하다",
+        "S3는 Mountpoint CSI 또는 SDK로 접근한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "관측성과 AI/ML",
+      "items": [
+        "컨트롤 플레인 로그를 CloudWatch Logs로 내보내고 Container Insights로 지표를 본다",
+        "X-Ray 또는 ADOT 컬렉터로 분산 트레이싱을 붙인다",
+        "SageMaker·Bedrock과 연동해 학습과 추론 워크로드를 EKS에서 운영한다"
+      ]
+    }
+  ]
+}

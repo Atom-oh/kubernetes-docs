@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ARP 프록시로 파드 IP 응답",
+    "output": "ko-eks-hybrid-nodes-02-network-configuration-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      820
+    ]
+  },
+  "components": [
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.2",
+      "sublabel": "파드 CIDR 10.85.1.0/24 · CNI",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "하이브리드 노드 10.80.0.3",
+      "sublabel": "파드 CIDR 10.85.2.0/24 · CNI",
+      "pos": [
+        410,
+        110
+      ],
+      "size": [
+        290,
+        90
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "온프레미스 라우터",
+      "sublabel": "라우팅 테이블",
+      "pos": [
+        230,
+        420
+      ],
+      "size": [
+        250,
+        84
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "게이트웨이",
+      "sublabel": "온프레미스 ↔ AWS 링크 · VPC 10.0.0.0/16",
+      "pos": [
+        230,
+        660
+      ],
+      "size": [
+        280,
+        90
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Remote Node CIDR 10.80.0.0/16 · Remote Pod CIDR 10.85.0.0/16",
+      "wraps": [
+        "node1",
+        "node2"
+      ],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    {
+      "id": "n1-r",
+      "from": "node1",
+      "to": "router",
+      "label": "ARP REPLY (Node 1 MAC)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-r",
+      "from": "node2",
+      "to": "router",
+      "label": "ARP REPLY (Node 2 MAC)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "r-gw",
+      "from": "router",
+      "to": "gw",
+      "label": "10.0.0.0/16 static",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 75
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "ARP 프록시 동작",
+      "items": [
+        "라우터가 파드 IP(10.85.1.10)의 MAC을 묻는 ARP REQUEST를 보낸다",
+        "해당 파드를 가진 노드가 자기 MAC으로 ARP REPLY를 대신 응답한다",
+        "라우터는 파드 IP를 같은 링크에 붙은 호스트처럼 취급한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라우터 라우팅 테이블",
+      "items": [
+        "10.80.0.0/16 [local] via eth0 (CONNECTED)",
+        "10.85.1.10/32 · 10.85.1.11/32 · 10.85.2.10/32 [local] via eth0 (CONNECTED)",
+        "10.0.0.0/16 [static] via Gateway (STATIC)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "특징과 한계",
+      "items": [
+        "라우터에 경로 설정을 추가하지 않아도 되어 네트워크 팀 협의가 가장 적다",
+        "파드마다 /32 호스트 경로가 생기므로 파드 수가 많으면 ARP 테이블이 커진다",
+        "노드의 CNI가 ARP 프록시를 지원해야 하며 서브넷이 같은 브로드캐스트 도메인이어야 한다"
+      ]
+    }
+  ]
+}

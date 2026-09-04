@@ -1,0 +1,166 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Diagnosing and Fixing Pod Networking",
+    "output": "en-eks-03-eks-networking-part3-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "진단 · 조치"
+        },
+        "security": {
+          "label": "원인 분류"
+        },
+        "external": {
+          "label": "증상"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "diag",
+      "label": "진단 단계"
+    },
+    {
+      "id": "fix",
+      "label": "조치 단계"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "inspect",
+    "nettest",
+    "classify"
+  ],
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "diag",
+      "col": 0,
+      "type": "external",
+      "label": "Pod fault seen",
+      "sublabel": "ContainerCreating",
+      "width": 150
+    },
+    {
+      "id": "inspect",
+      "lane": "diag",
+      "col": 1,
+      "type": "backend",
+      "label": "Step 1 inspect",
+      "sublabel": "CNI logs",
+      "width": 150
+    },
+    {
+      "id": "nettest",
+      "lane": "diag",
+      "col": 2,
+      "type": "backend",
+      "label": "Step 2 test path",
+      "sublabel": "ping · nslookup",
+      "width": 150
+    },
+    {
+      "id": "classify",
+      "lane": "diag",
+      "col": 3,
+      "type": "security",
+      "label": "Cause class",
+      "sublabel": "IP · policy · DNS",
+      "width": 150
+    },
+    {
+      "id": "ipfix",
+      "lane": "fix",
+      "col": 4,
+      "type": "backend",
+      "label": "Resize IP pool",
+      "sublabel": "WARM_IP_TARGET",
+      "width": 150
+    },
+    {
+      "id": "restart",
+      "lane": "fix",
+      "col": 5,
+      "type": "backend",
+      "label": "Restart config",
+      "sublabel": "aws-node · CoreDNS",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "alert",
+      "to": "inspect",
+      "label": "collect"
+    },
+    {
+      "id": "e2",
+      "from": "inspect",
+      "to": "nettest",
+      "label": "starts ok"
+    },
+    {
+      "id": "e3",
+      "from": "nettest",
+      "to": "classify",
+      "label": "combine"
+    },
+    {
+      "id": "e4",
+      "from": "classify",
+      "to": "ipfix",
+      "label": "IP shortage",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "ipfix",
+      "to": "restart",
+      "label": "applied"
+    },
+    {
+      "id": "e6",
+      "from": "classify",
+      "to": "restart",
+      "label": "policy · DNS",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Step 1 — inspect state",
+      "items": [
+        "kubectl get pods -o wide shows which node each pod landed on and with what IP",
+        "kubectl describe pod and describe node reveal events and allocatable IPs",
+        "Read the CNI logs with kubectl logs -n kube-system -l k8s-app=aws-node"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Step 2 — test the path",
+      "items": [
+        "Run ping, curl, and telnet via kubectl exec to narrow down how far traffic gets",
+        "nslookup kubernetes.default isolates whether DNS resolution itself works",
+        "kubectl get networkpolicy and describe networkpolicy expose blocking rules"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Step 3 — remediate",
+      "items": [
+        "IP shortage: raise WARM_IP_TARGET and MINIMUM_IP_TARGET on aws-node",
+        "Restart with kubectl rollout restart daemonset aws-node and deployment coredns",
+        "Restarting a node is the last resort; drain first and uncordon afterwards"
+      ]
+    }
+  ]
+}

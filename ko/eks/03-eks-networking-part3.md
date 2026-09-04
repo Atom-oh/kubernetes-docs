@@ -8,7 +8,9 @@
 
 EKS 클러스터의 네트워크 성능을 최적화하기 위한 여러 전략이 있습니다.
 
-![EKS 네트워크 성능 최적화](../.gitbook/assets/network_performance_optimization.png)
+![인스턴스 유형 선택부터 네트워킹 모드, MTU, TCP 튜닝, 배치 지역성, 네트워크 정책 정리까지 이어지는 EKS 네트워크 성능 최적화 순서 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part3-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part3-0.html)
 
 ### 인스턴스 유형 선택
 
@@ -28,7 +30,9 @@ EKS 클러스터의 네트워크 성능을 최적화하기 위한 여러 전략�
 
 EKS는 여러 네트워킹 모드를 지원하며, 각 모드는 성능 특성이 다릅니다.
 
-![EKS 네트워킹 모드](../.gitbook/assets/eks_networking_modes.png)
+![AWS VPC CNI가 ENI를 통해 파드에 VPC IP를 직접 할당하고 보안 그룹이 ENI 단위로 적용되는 EKS 네트워킹 모드 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part3-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part3-1.html)
 
 1. **AWS VPC CNI(기본값)**:
    * 포드에 VPC IP 주소를 직접 할당합니다.
@@ -99,7 +103,9 @@ sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
 
 노드 배치 및 지역성을 최적화하여 네트워크 성능을 향상시킬 수 있습니다.
 
-![노드 배치 및 지역성 최적화](../.gitbook/assets/node_placement_locality.png)
+![두 가용 영역에 걸친 웹·캐시·DB 파드 배치에서 AZ 내부 고빈도 통신과 크로스 AZ DB 복제를 구분해 보여주는 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part3-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part3-2.html)
 
 1. **가용 영역 지역성**:
    * 통신이 빈번한 포드를 같은 가용 영역에 배치하여 지연 시간을 줄입니다.
@@ -205,11 +211,15 @@ spec:
 
 EKS 클러스터에서 발생할 수 있는 일반적인 네트워킹 문제와 해결 방법을 알아보겠습니다.
 
-![EKS 네트워킹 문제 해결](../.gitbook/assets/networking_troubleshooting.png)
+![파드 네트워킹, 서비스·로드 밸런싱, VPC·서브넷 순서로 좁혀 가며 진단 도구를 투입하는 EKS 네트워킹 문제 해결 분류 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part3-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part3-3.html)
 
 ### 포드 네트워킹 문제
 
-![포드 네트워킹 문제](../.gitbook/assets/pod_networking_issues.png)
+![상태 확인, 통신 테스트, 원인 분류를 거쳐 IP 풀 조정과 구성 재시작으로 이어지는 파드 네트워킹 문제 진단 흐름 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part3-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part3-4.html)
 
 1. **포드 IP 할당 실패**:
    * 증상: 포드가 `ContainerCreating` 상태에 멈춰 있음
@@ -249,7 +259,9 @@ kubectl exec -it <pod-name> -- dig kubernetes.default.svc.cluster.local
 
 ### 서비스 및 로드 밸런싱 문제
 
-![서비스 및 로드 밸런서 문제](../.gitbook/assets/service_loadbalancer_issues.png)
+![Service에서 EndpointSlice와 파드로 이어지는 경로와 AWS Load Balancer Controller가 만드는 ALB·대상 그룹을 함께 보여주는 문제 해결 다이어그램.](../.gitbook/assets/ko-eks-03-eks-networking-part3-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part3-5.html)
 
 1. **서비스 연결 문제**:
    * 증상: 서비스를 통해 포드에 연결할 수 없음

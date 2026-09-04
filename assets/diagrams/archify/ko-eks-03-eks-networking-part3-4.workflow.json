@@ -1,0 +1,165 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "파드 네트워킹 문제 진단 및 해결",
+    "output": "ko-eks-03-eks-networking-part3-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "진단 · 조치"
+        },
+        "security": {
+          "label": "원인 분류"
+        },
+        "external": {
+          "label": "증상"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "diag",
+      "label": "진단 단계"
+    },
+    {
+      "id": "fix",
+      "label": "조치 단계"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "inspect",
+    "nettest",
+    "classify"
+  ],
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "diag",
+      "col": 0,
+      "type": "external",
+      "label": "파드 이상 감지",
+      "sublabel": "ContainerCreating",
+      "width": 150
+    },
+    {
+      "id": "inspect",
+      "lane": "diag",
+      "col": 1,
+      "type": "backend",
+      "label": "1단계 상태 확인",
+      "sublabel": "CNI 로그 확인",
+      "width": 150
+    },
+    {
+      "id": "nettest",
+      "lane": "diag",
+      "col": 2,
+      "type": "backend",
+      "label": "2단계 통신 테스트",
+      "sublabel": "ping · nslookup",
+      "width": 150
+    },
+    {
+      "id": "classify",
+      "lane": "diag",
+      "col": 3,
+      "type": "security",
+      "label": "원인 분류",
+      "sublabel": "IP · 정책 · DNS",
+      "width": 150
+    },
+    {
+      "id": "ipfix",
+      "lane": "fix",
+      "col": 4,
+      "type": "backend",
+      "label": "IP 풀 조정",
+      "sublabel": "WARM_IP_TARGET",
+      "width": 150
+    },
+    {
+      "id": "restart",
+      "lane": "fix",
+      "col": 5,
+      "type": "backend",
+      "label": "구성 재시작",
+      "sublabel": "aws-node · CoreDNS",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "alert",
+      "to": "inspect",
+      "label": "수집"
+    },
+    {
+      "id": "e2",
+      "from": "inspect",
+      "to": "nettest",
+      "label": "기동 정상"
+    },
+    {
+      "id": "e3",
+      "from": "nettest",
+      "to": "classify",
+      "label": "종합"
+    },
+    {
+      "id": "e4",
+      "from": "classify",
+      "to": "ipfix",
+      "label": "IP 부족",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "ipfix",
+      "to": "restart",
+      "label": "적용 후"
+    },
+    {
+      "id": "e6",
+      "from": "classify",
+      "to": "restart",
+      "label": "정책 · DNS",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "1단계 — 상태 확인",
+      "items": [
+        "kubectl get pods -o wide로 파드가 어느 노드에 어떤 IP로 떴는지 본다",
+        "kubectl describe pod · describe node로 이벤트와 할당 가능 IP를 확인한다",
+        "kubectl logs -n kube-system -l k8s-app=aws-node로 CNI 로그를 읽는다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "2단계 — 통신 테스트",
+      "items": [
+        "kubectl exec으로 ping·curl·telnet을 실행해 어디까지 도달하는지 좁힌다",
+        "nslookup kubernetes.default로 DNS 해결 여부를 분리해 확인한다",
+        "kubectl get networkpolicy · describe networkpolicy로 차단 규칙을 확인한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "3단계 — 조치",
+      "items": [
+        "IP 부족: aws-node에 WARM_IP_TARGET·MINIMUM_IP_TARGET을 올린다",
+        "kubectl rollout restart daemonset aws-node · deployment coredns로 재시작한다",
+        "노드 재시작은 최후 수단이며 drain 후 uncordon 순서를 지킨다"
+      ]
+    }
+  ]
+}

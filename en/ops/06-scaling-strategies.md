@@ -18,7 +18,9 @@ Horizontal Pod Autoscaler (HPA) can scale based on custom metrics from Prometheu
 
 ### 1.1 Prometheus Adapter Architecture
 
-![Custom Metrics Pipeline](../.gitbook/assets/custom_metrics_pipeline.png)
+![Diagram of the custom metrics pipeline: application metrics to Prometheus, through the Prometheus Adapter to the Kubernetes metrics APIs, and on to the HPA.](../.gitbook/assets/en-ops-06-scaling-strategies-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-06-scaling-strategies-0.html)
 
 ### 1.2 Prometheus Adapter Installation
 

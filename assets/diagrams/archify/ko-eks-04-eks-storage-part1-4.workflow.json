@@ -1,0 +1,42 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "Kubernetes 스토리지 프로비저닝 워크플로", "output": "ko-eks-04-eks-storage-part1-4.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "frontend": {"label": "워크로드"}, "messagebus": {"label": "요청 객체"}, "backend": {"label": "제어 객체"}, "cloud": {"label": "AWS 스토리지"} } } },
+  "lanes": [
+    { "id": "req", "label": "스토리지 요청" },
+    { "id": "prov", "label": "동적 프로비저닝" }
+  ],
+  "mainPath": ["pod", "pvc", "sc", "csi", "pv", "bind"],
+  "nodes": [
+    { "id": "pod", "lane": "req", "col": 0, "type": "frontend", "label": "파드 생성", "sublabel": "PVC 참조", "width": 150 },
+    { "id": "pvc", "lane": "req", "col": 1, "type": "messagebus", "label": "PVC 생성", "sublabel": "크기 · 모드", "width": 150 },
+    { "id": "sc", "lane": "req", "col": 2, "type": "backend", "label": "StorageClass", "sublabel": "프로비저너", "width": 155 },
+    { "id": "csi", "lane": "prov", "col": 3, "type": "cloud", "label": "CSI 드라이버", "sublabel": "AWS API 호출", "width": 155 },
+    { "id": "pv", "lane": "prov", "col": 4, "type": "backend", "label": "PV 생성", "sublabel": "자동 생성", "width": 150 },
+    { "id": "bind", "lane": "prov", "col": 5, "type": "backend", "label": "PVC-PV 바인딩", "sublabel": "마운트 가능", "width": 160 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "pod", "to": "pvc", "label": "1 요청" },
+    { "id": "e2", "from": "pvc", "to": "sc", "label": "2 클래스 참조" },
+    { "id": "e3", "from": "sc", "to": "csi", "label": "3 위임" },
+    { "id": "e4", "from": "csi", "to": "pv", "label": "4 볼륨 생성" },
+    { "id": "e5", "from": "pv", "to": "bind", "label": "5 바인딩" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "요청 단계", "items": [
+      "파드 매니페스트가 PVC를 참조하고 volumeMounts로 컨테이너에 마운트한다",
+      "PVC에 필요한 용량과 액세스 모드, storageClassName을 지정한다",
+      "StorageClass의 프로비저너가 어떤 CSI 드라이버를 쓸지 결정한다"
+    ]},
+    { "dot": "emerald", "title": "볼륨 바인딩 모드", "items": [
+      "Immediate는 PVC 생성 즉시 PV를 프로비저닝하고 바인딩한다",
+      "WaitForFirstConsumer는 파드가 스케줄링될 때까지 프로비저닝을 지연한다",
+      "EBS처럼 AZ에 묶인 볼륨에는 WaitForFirstConsumer가 사실상 필수다"
+    ]},
+    { "dot": "amber", "title": "회수 정책", "items": [
+      "Delete는 PVC를 지우면 PV와 실제 AWS 볼륨까지 함께 삭제한다",
+      "Retain은 PV를 남겨 두어 데이터를 수동으로 회수할 수 있게 한다",
+      "운영 데이터에는 Retain을 쓰고 삭제는 별도 절차로 관리하는 편이 안전하다"
+    ]}
+  ]
+}

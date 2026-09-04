@@ -6,6 +6,15 @@
     "output": "ko-basics-04-kubernetes-introduction-2.html",
     "quality_profile": "showcase",
     "animation": "trace",
+    "viewBox": [1240, 800],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "클러스터 구성 요소" },
+        "database": { "label": "etcd" },
+        "external": { "label": "외부 클라이언트" }
+      }
+    },
     "views": [
       { "id": "control-plane", "label": "컨트롤 플레인", "focus": ["clients", "apiserver", "etcd", "scheduler", "controller-manager", "cloud-controller-manager"], "note": "모든 내부·외부 요청은 kube-apiserver를 거치고, 클러스터 데이터는 etcd에 저장됩니다." },
       { "id": "worker-nodes", "label": "워커 노드", "focus": ["kubelet1", "kube-proxy1", "runtime1", "pods1", "kubelet2", "kube-proxy2", "runtime2", "pods2"], "note": "각 노드에서 kubelet이 컨테이너 런타임으로 파드를 실행하고, kube-proxy가 서비스 트래픽을 전달합니다." },

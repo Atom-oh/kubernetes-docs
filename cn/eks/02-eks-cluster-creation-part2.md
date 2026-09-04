@@ -1,31 +1,33 @@
-# 第 2 部分：使用 eksctl 创建 Cluster
+# 第 2 部分：使用 eksctl 创建集群
 
-## 使用 eksctl 创建 Cluster
+## 使用 eksctl 创建集群
 
-eksctl 是创建和管理 EKS Cluster（集群）的最简单方式。eksctl 使用 CloudFormation 创建 EKS Cluster 及相关资源。
+eksctl 是创建和管理 EKS 集群最简单的方式。eksctl 使用 CloudFormation 创建 EKS 集群及相关资源。
 
-下图展示了使用 eksctl 创建 EKS Cluster 的过程：
+下图展示了使用 eksctl 创建 EKS 集群的过程：
 
-![eksctl Cluster 创建流程](../.gitbook/assets/eksctl_cluster_creation_process.png)
+![eksctl 集群创建过程图，CloudFormation 堆栈依次构建 VPC、IAM、控制平面和节点组。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-0.png)
 
-### 基本 Cluster 创建
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-0.html)
 
-要创建最基本形式的 EKS Cluster，请运行以下命令：
+### 基础集群创建
+
+要创建最基本形式的 EKS 集群，请运行以下命令：
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2
 ```
 
-此命令会使用以下默认设置创建一个 Cluster：
+此命令会使用以下默认设置创建集群：
 
-* 2 个 m5.large node（节点）
-* 新的 VPC 和 subnet（子网）
+* 2 个 m5.large 节点
+* 新的 VPC 和子网
 * 默认 Amazon Linux 2 AMI
 * 最新 Kubernetes 版本
 
-### 使用配置文件创建 Cluster
+### 使用配置文件创建集群
 
-对于更复杂的配置，你可以使用 YAML 文件定义 Cluster：
+对于更复杂的配置，可以使用 YAML 文件定义集群：
 
 ```yaml
 # cluster.yaml
@@ -98,19 +100,21 @@ cloudWatch:
     enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 ```
 
-要使用此配置文件创建 Cluster，请运行以下命令：
+要使用此配置文件创建集群，请运行以下命令：
 
 ```bash
 eksctl create cluster -f cluster.yaml
 ```
 
-### 创建 Managed Node Group
+### 创建托管节点组
 
-下图展示了 EKS Cluster 的 Managed Node Group 架构：
+下图展示了 EKS 集群的托管节点组架构：
 
-![EKS Managed Node Group 架构](../.gitbook/assets/eks_managed_node_group_detailed.png)
+![架构图：控制平面管理一个节点组，该节点组的 Auto Scaling 组启动运行 Pod 的 EC2 实例。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-1.png)
 
-要向现有 Cluster 添加 Managed Node Group，请运行以下命令：
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-1.html)
+
+要向现有集群添加托管节点组，请运行以下命令：
 
 ```bash
 eksctl create nodegroup \
@@ -125,7 +129,7 @@ eksctl create nodegroup \
   --ssh-public-key my-key
 ```
 
-或者你可以使用配置文件：
+或者，您可以使用配置文件：
 
 ```yaml
 # nodegroup.yaml
@@ -153,13 +157,15 @@ managedNodeGroups:
 eksctl create nodegroup -f nodegroup.yaml
 ```
 
-### 创建 Fargate Profile
+### 创建 Fargate 配置文件
 
-下图展示了 EKS Fargate Profile 架构：
+下图展示了 EKS Fargate 配置文件架构：
 
-![EKS Fargate Profile 架构](../.gitbook/assets/eks_fargate_profile_architecture.png)
+![架构图：与 Fargate 配置文件的命名空间和标签选择器匹配的 Pod 被放置在专用 microVM 上。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-2.png)
 
-要创建 Fargate Profile，请运行以下命令：
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-2.html)
+
+要创建 Fargate 配置文件，请运行以下命令：
 
 ```bash
 eksctl create fargateprofile \
@@ -170,7 +176,7 @@ eksctl create fargateprofile \
   --labels env=fargate
 ```
 
-或者你可以使用配置文件：
+或者，您可以使用配置文件：
 
 ```yaml
 # fargate.yaml
@@ -194,9 +200,9 @@ fargate:
 eksctl create fargateprofile -f fargate.yaml
 ```
 
-### 更新 Cluster
+### 更新集群
 
-你可以使用 eksctl 更新现有 Cluster：
+您可以使用 eksctl 更新现有集群：
 
 ```bash
 # Upgrade cluster version
@@ -206,20 +212,22 @@ eksctl upgrade cluster --name=my-cluster --version=1.27
 eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
 ```
 
-### 删除 Cluster
+### 删除集群
 
-你可以使用 eksctl 删除 Cluster：
+您可以使用 eksctl 删除集群：
 
 ```bash
 eksctl delete cluster --name=my-cluster --region=us-west-2
 ```
 
-## EKS Cluster 生命周期管理
+## EKS 集群生命周期管理
 
-下图展示了 EKS Cluster 的整体生命周期管理过程：
+下图展示了 EKS 集群的整体生命周期管理过程：
 
-![EKS Cluster 生命周期管理](../.gitbook/assets/eks_cluster_lifecycle_management.png)
+![EKS 集群生命周期图，从创建和配置，经版本更新，直至删除。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part2-3.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part2-3.html)
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试 [EKS Cluster 创建 - 第 2 部分测验](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md)。
+要测试您在本章所学的内容，请尝试 [EKS 集群创建 - 第 2 部分测验](../quizzes/eks/02-eks-cluster-creation-part2-quiz.md)。

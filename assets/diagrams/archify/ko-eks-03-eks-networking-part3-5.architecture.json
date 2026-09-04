@@ -1,0 +1,41 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "서비스 및 로드 밸런서 문제 해결", "output": "ko-eks-03-eks-networking-part3-5.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1280, 820] },
+  "components": [
+    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "외부 요청", "pos": [40, 130], "size": [170, 64] },
+    { "id": "svc", "type": "messagebus", "label": "Service", "sublabel": "ClusterIP · 셀렉터", "pos": [310, 130], "size": [190, 70] },
+    { "id": "ep", "type": "backend", "label": "EndpointSlice", "sublabel": "준비된 파드 목록", "pos": [600, 130], "size": [200, 70] },
+    { "id": "pods", "type": "frontend", "label": "파드 1 · 2", "sublabel": "readinessProbe 통과", "pos": [900, 130], "size": [200, 70] },
+    { "id": "lbc", "type": "security", "label": "AWS Load Balancer Controller", "sublabel": "Ingress · Service 감시", "pos": [40, 620], "size": [260, 70] },
+    { "id": "lb", "type": "cloud", "label": "ALB / NLB", "sublabel": "리스너 · 스킴", "pos": [400, 620], "size": [180, 70] },
+    { "id": "tg", "type": "cloud", "label": "대상 그룹", "sublabel": "헬스 체크", "pos": [680, 620], "size": [180, 70] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "EKS 클러스터", "wraps": ["svc", "ep", "pods", "lbc"], "pad": 40 }
+  ],
+  "connections": [
+    { "id": "client-svc", "from": "client", "to": "svc", "label": "요청", "labelDy": -20 },
+    { "id": "svc-ep", "from": "svc", "to": "ep", "label": "셀렉터 매칭" },
+    { "id": "ep-pods", "from": "ep", "to": "pods", "label": "준비 상태 파드" },
+    { "id": "lbc-lb", "from": "lbc", "to": "lb", "label": "LB 생성 · 관리" },
+    { "id": "lb-tg", "from": "lb", "to": "tg", "label": "리스너 규칙" },
+    { "id": "tg-pods", "from": "tg", "to": "pods", "label": "IP 타깃 등록" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "서비스 연결 실패", "items": [
+      "Service 셀렉터와 파드 레이블이 어긋나면 EndpointSlice가 비어 연결이 실패한다",
+      "kubectl get endpointslices로 대상 파드가 실제로 등록됐는지 확인한다",
+      "readinessProbe가 실패하면 파드가 엔드포인트에서 빠진다"
+    ]},
+    { "dot": "emerald", "title": "로드 밸런서 생성 실패", "items": [
+      "서브넷 태그 누락이 가장 흔한 원인이다 (role/elb, role/internal-elb)",
+      "컨트롤러의 IAM 권한과 서비스 어카운트(IRSA) 설정을 확인한다",
+      "kubectl describe ingress·service의 이벤트에 실패 이유가 남는다"
+    ]},
+    { "dot": "amber", "title": "헬스 체크 실패", "items": [
+      "대상 그룹 헬스 체크 경로·포트가 애플리케이션과 맞는지 확인한다",
+      "노드·파드 보안 그룹이 로드 밸런서에서 오는 헬스 체크 트래픽을 허용해야 한다",
+      "IP 타깃 모드에서는 파드 보안 그룹까지 확인해야 한다"
+    ]}
+  ]
+}

@@ -5,6 +5,7 @@
     "title": "Kubernetes 컨트롤 플레인 구성 요소",
     "output": "ko-basics-04-kubernetes-introduction-0.html",
     "quality_profile": "showcase",
+    "legend": { "mode": "auto", "entries": { "backend": { "label": "컨트롤 플레인 구성 요소" }, "database": { "label": "etcd" }, "external": { "label": "외부 클라이언트" } } },
     "animation": "trace",
     "views": [
       {

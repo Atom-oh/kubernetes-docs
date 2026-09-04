@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Architecture Overview",
+    "output": "en-service-mesh-istio-03-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      740
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "Kubernetes API server",
+      "sublabel": "Configuration source",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Pilot · Citadel · Galley",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Ingress Gateway",
+      "sublabel": "Envoy proxy",
+      "pos": [
+        370,
+        260
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application pod A",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        690,
+        120
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application pod B",
+      "sublabel": "Envoy sidecar",
+      "pos": [
+        690,
+        400
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "egw",
+      "type": "cloud",
+      "label": "Egress Gateway",
+      "sublabel": "Controls egress",
+      "pos": [
+        1020,
+        260
+      ],
+      "size": [
+        210,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data plane",
+      "wraps": [
+        "gw",
+        "app1",
+        "app2",
+        "egw"
+      ],
+      "pad": 32
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-istiod",
+      "from": "apiserver",
+      "to": "istiod",
+      "label": "watches resources",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 120
+    },
+    {
+      "id": "istiod-gw",
+      "from": "istiod",
+      "to": "gw",
+      "label": "xDS"
+    },
+    {
+      "id": "istiod-app2",
+      "from": "istiod",
+      "to": "app2",
+      "label": "pushes xDS config"
+    },
+    {
+      "id": "gw-app1",
+      "from": "gw",
+      "to": "app1",
+      "label": "inbound routing"
+    },
+    {
+      "id": "app1-app2",
+      "from": "app1",
+      "to": "app2",
+      "label": "mTLS service traffic",
+      "labelDy": 120,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-egw",
+      "from": "app2",
+      "to": "egw",
+      "label": "Outbound"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control plane (Istiod)",
+      "items": [
+        "It watches Services and Istio resources on the Kubernetes API server",
+        "Pilot translates routing configuration into xDS and pushes it to every Envoy",
+        "Citadel issues workload certificates and rotates them automatically"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data plane (Envoy)",
+      "items": [
+        "A sidecar per pod intercepts all inbound and outbound traffic",
+        "Service-to-service traffic is encrypted with mTLS by default",
+        "The Ingress Gateway is the entry point; the Egress Gateway is where outbound traffic is controlled"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Configuration flow",
+      "items": [
+        "VirtualService and DestinationRule changes propagate through Istiod as xDS",
+        "Configuration lands without restarting the proxy, which is the sidecar model's advantage",
+        "istioctl proxy-status shows each proxy's configuration sync state"
+      ]
+    }
+  ]
+}

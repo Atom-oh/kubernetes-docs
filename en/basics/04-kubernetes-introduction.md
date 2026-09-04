@@ -116,7 +116,7 @@ Kubernetes follows a master-node architecture. Master nodes (control plane) mana
 
 ### Control Plane (Master) Components
 
-![Kubernetes control plane components: requests from a kubectl client flow through kube-apiserver to etcd, while kube-scheduler, kube-controller-manager and cloud-controller-manager watch and reconcile through the API server](../.gitbook/assets/en-basics-04-kubernetes-introduction-0.png)
+![Kubernetes control plane: kubectl requests flow through kube-apiserver to etcd while kube-scheduler, kube-controller-manager, and cloud-controller-manager watch and reconcile through the API server.](../.gitbook/assets/en-basics-04-kubernetes-introduction-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-0.html)
 
@@ -136,7 +136,7 @@ Kubernetes follows a master-node architecture. Master nodes (control plane) mana
 
 ### Node Components
 
-![Architecture diagram of a Kubernetes worker node: kubelet takes instructions from the control plane and drives the container runtime (Docker, containerd, CRI-O), which runs the containers inside Pods, while kube-proxy maintains the network rules for them.](../.gitbook/assets/en-basics-04-kubernetes-introduction-1.png)
+![Kubernetes worker node: kubelet takes instructions from the control plane and drives the container runtime (Docker, containerd, CRI-O) that runs the Pod containers, while kube-proxy maintains their network rules.](../.gitbook/assets/en-basics-04-kubernetes-introduction-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-1.html)
 
@@ -146,7 +146,7 @@ Kubernetes follows a master-node architecture. Master nodes (control plane) mana
 
 ### Full Architecture
 
-![Architecture diagram of a full Kubernetes cluster: external clients (kubectl) reach the control plane's kube-apiserver, which coordinates etcd, kube-scheduler, kube-controller-manager, and cloud-controller-manager, and talks to the kubelet on two worker nodes, where the container runtime runs pods and kube-proxy forwards traffic.](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
+![Full Kubernetes cluster: kubectl clients reach kube-apiserver, which coordinates etcd, kube-scheduler, kube-controller-manager, and cloud-controller-manager and drives the kubelet, container runtime, and kube-proxy on two worker nodes.](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
 
@@ -672,7 +672,7 @@ A Service provides a single endpoint and load balancing for a set of pods. Since
 * **LoadBalancer**: Accessible externally using cloud provider's load balancer
 * **ExternalName**: Creates CNAME record for external service
 
-![Architecture diagram showing an external client reaching the cluster only through the NodePort and LoadBalancer services, a ClusterIP service that stays internal-only, and all three service types load-balancing port 80 requests to the same set of pods (Pod 1, 2, 3).](../.gitbook/assets/en-basics-04-kubernetes-introduction-3.png)
+![External clients enter the cluster only through NodePort and LoadBalancer services, a ClusterIP service stays internal, and all three service types load-balance port 80 requests to the same pods (Pod 1, 2, 3).](../.gitbook/assets/en-basics-04-kubernetes-introduction-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-3.html)
 
@@ -777,7 +777,7 @@ spec:
 
 NetworkPolicy provides a way to control communication between pods. By default, all pods can communicate with each other, but you can restrict this using network policies.&#x20;
 
-![Architecture diagram showing external requests flowing through frontend, API, and database pods in the default namespace, a db-network-policy NetworkPolicy applied to the role=db pods, and Prometheus in the monitoring namespace scraping all three tiers across the namespace boundary.](../.gitbook/assets/en-basics-04-kubernetes-introduction-4.png)
+![External requests flow through frontend, API, and database pods in the default namespace, a db-network-policy NetworkPolicy guards the role=db pods, and Prometheus in the monitoring namespace scrapes all three tiers.](../.gitbook/assets/en-basics-04-kubernetes-introduction-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-4.html)
 
@@ -896,7 +896,7 @@ spec:
 
 Kubernetes provides various storage options for containerized applications. It provides ways to persist data even when pods are restarted or rescheduled.
 
-![Kubernetes storage architecture: Pod 1 and Pod 2 bind to PersistentVolumes (pv-1, pv-3) through PersistentVolumeClaims (pvc-1, pvc-2), the StorageClass (standard) dynamically provisions the PVs, and each PV is backed by an AWS EBS volume (vol-1 to vol-3) outside the cluster.](../.gitbook/assets/en-basics-04-kubernetes-introduction-5.png)
+![Kubernetes storage: Pod 1 and Pod 2 bind to PersistentVolumes (pv-1, pv-3) through PersistentVolumeClaims (pvc-1, pvc-2), the standard StorageClass provisions the PVs dynamically, and each PV maps to an AWS EBS volume.](../.gitbook/assets/en-basics-04-kubernetes-introduction-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-5.html)
 

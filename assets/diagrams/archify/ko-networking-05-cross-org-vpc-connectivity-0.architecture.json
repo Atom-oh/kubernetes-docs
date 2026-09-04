@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cross-Org VPC 연결 5종 실측 토폴로지",
+    "output": "ko-networking-05-cross-org-vpc-connectivity-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1280,
+      900
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "EC2 c7g.large (클라이언트)",
+      "sublabel": "ORG A · VPC A 10.100.0.0/24",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        270,
+        84
+      ]
+    },
+    {
+      "id": "pcx",
+      "type": "cloud",
+      "label": "VPC Peering",
+      "sublabel": "② p50 0.048 ms",
+      "pos": [
+        470,
+        90
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "tgwshared",
+      "type": "cloud",
+      "label": "공유 TGW (RAM 공유)",
+      "sublabel": "① p50 0.619 ms",
+      "pos": [
+        470,
+        250
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "plink",
+      "type": "security",
+      "label": "PrivateLink → NLB",
+      "sublabel": "③ p50 0.961 ms · TCP passthrough",
+      "pos": [
+        470,
+        410
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "tgwpeer",
+      "type": "cloud",
+      "label": "TGW Peering (A ↔ B)",
+      "sublabel": "④ p50 0.599 ms",
+      "pos": [
+        470,
+        570
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "lattice",
+      "type": "messagebus",
+      "label": "VPC Lattice (L7 프록시)",
+      "sublabel": "⑤ p50 1.635 ms",
+      "pos": [
+        470,
+        730
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "responder",
+      "type": "backend",
+      "label": "EC2 응답자 (nginx 200)",
+      "sublabel": "ORG B · VPC B 10.200.0.0/24",
+      "pos": [
+        880,
+        400
+      ],
+      "size": [
+        270,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ORG A 계정",
+      "wraps": [
+        "client"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "region",
+      "label": "ORG B 계정 (GPU)",
+      "wraps": [
+        "responder"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-pcx",
+      "from": "client",
+      "to": "pcx",
+      "via": [
+        [
+          360,
+          442
+        ],
+        [
+          360,
+          130
+        ]
+      ]
+    },
+    {
+      "id": "c-tgw",
+      "from": "client",
+      "to": "tgwshared",
+      "via": [
+        [
+          385,
+          442
+        ],
+        [
+          385,
+          290
+        ]
+      ]
+    },
+    {
+      "id": "c-plink",
+      "from": "client",
+      "to": "plink"
+    },
+    {
+      "id": "c-tgwpeer",
+      "from": "client",
+      "to": "tgwpeer",
+      "via": [
+        [
+          410,
+          442
+        ],
+        [
+          410,
+          610
+        ]
+      ]
+    },
+    {
+      "id": "c-lattice",
+      "from": "client",
+      "to": "lattice",
+      "via": [
+        [
+          435,
+          442
+        ],
+        [
+          435,
+          770
+        ]
+      ]
+    },
+    {
+      "id": "pcx-r",
+      "from": "pcx",
+      "to": "responder",
+      "via": [
+        [
+          830,
+          130
+        ],
+        [
+          830,
+          442
+        ]
+      ]
+    },
+    {
+      "id": "tgw-r",
+      "from": "tgwshared",
+      "to": "responder",
+      "via": [
+        [
+          805,
+          290
+        ],
+        [
+          805,
+          442
+        ]
+      ]
+    },
+    {
+      "id": "plink-r",
+      "from": "plink",
+      "to": "responder"
+    },
+    {
+      "id": "tgwpeer-r",
+      "from": "tgwpeer",
+      "to": "responder",
+      "via": [
+        [
+          780,
+          610
+        ],
+        [
+          780,
+          442
+        ]
+      ]
+    },
+    {
+      "id": "lattice-r",
+      "from": "lattice",
+      "to": "responder",
+      "via": [
+        [
+          755,
+          770
+        ],
+        [
+          755,
+          442
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "측정 설계",
+      "items": [
+        "TCP_RR persistent p50, 경로당 1,500샘플, M1~M7 라운드로빈 인터리브 ×5라운드",
+        "양 계정 모두 apne2-az1 고정, c7g.large(버스터블 배제), 응답자는 nginx 고정 200 EC2 1대",
+        "응답자에 ENI 3개를 달아 경로별 서브넷과 리턴 라우트를 분리해 라우트 스왑을 없앰"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "경로별 p50 (2026-09-01, ap-northeast-2)",
+      "items": [
+        "① 공유 TGW (RAM): EC2 → TGW-A → 응답자 · 0.619 ms (ICMP 0.535)",
+        "② VPC Peering: EC2 → PCX → 응답자 · 0.048 ms — 기준선 M1=0.049와 동일",
+        "③ PrivateLink: EC2 → 엔드포인트 → NLB → 응답자 · 0.961 ms",
+        "④ TGW Peering: EC2 → TGW-A → TGW-B → 응답자 · 0.599 ms (ICMP 0.912)",
+        "⑤ VPC Lattice: EC2 → 서비스 네트워크 → 응답자 · 1.635 ms"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "판정",
+      "items": [
+        "TGW 홉당 0.4~0.6 ms, NLB 홉 +0.4~0.6 ms, PrivateLink ENI 순수 오버헤드는 +0.04로 사실상 0",
+        "서비스 프론트를 NLB로 통일해 비교하면 Peering+NLB 0.62 ≈ PrivateLink 0.66 < TGW+NLB 1.27~1.43 < Lattice 1.68 ms",
+        "조직 경계로 인한 차단은 없고, 경계는 전부 계정 ID 명시 + 수신 측 수락이라는 명시적 절차로 나타난다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 아키텍처 개요",
+    "output": "ko-service-mesh-istio-03-architecture-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      740
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "cloud",
+      "label": "Kubernetes API 서버",
+      "sublabel": "구성 소스",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Pilot · Citadel · Galley",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Ingress Gateway",
+      "sublabel": "Envoy 프록시",
+      "pos": [
+        370,
+        260
+      ],
+      "size": [
+        210,
+        76
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "애플리케이션 파드 A",
+      "sublabel": "Envoy 사이드카",
+      "pos": [
+        690,
+        120
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "애플리케이션 파드 B",
+      "sublabel": "Envoy 사이드카",
+      "pos": [
+        690,
+        400
+      ],
+      "size": [
+        240,
+        76
+      ]
+    },
+    {
+      "id": "egw",
+      "type": "cloud",
+      "label": "Egress Gateway",
+      "sublabel": "외부 트래픽 제어",
+      "pos": [
+        1020,
+        260
+      ],
+      "size": [
+        210,
+        76
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "gw",
+        "app1",
+        "app2",
+        "egw"
+      ],
+      "pad": 32
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-istiod",
+      "from": "apiserver",
+      "to": "istiod",
+      "label": "리소스 감시",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 120
+    },
+    {
+      "id": "istiod-gw",
+      "from": "istiod",
+      "to": "gw",
+      "label": "xDS"
+    },
+    {
+      "id": "istiod-app2",
+      "from": "istiod",
+      "to": "app2",
+      "label": "xDS 구성 배포"
+    },
+    {
+      "id": "gw-app1",
+      "from": "gw",
+      "to": "app1",
+      "label": "인바운드 라우팅"
+    },
+    {
+      "id": "app1-app2",
+      "from": "app1",
+      "to": "app2",
+      "label": "mTLS 서비스 간 통신",
+      "labelDy": 120,
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-egw",
+      "from": "app2",
+      "to": "egw",
+      "label": "아웃바운드"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인 (Istiod)",
+      "items": [
+        "Kubernetes API 서버에서 서비스와 Istio 리소스를 감시한다",
+        "Pilot이 라우팅 구성을 xDS로 변환해 모든 Envoy에 배포한다",
+        "Citadel이 워크로드 인증서를 발급하고 자동 회전시킨다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "데이터 플레인 (Envoy)",
+      "items": [
+        "파드마다 사이드카로 붙어 모든 인바운드·아웃바운드 트래픽을 가로챈다",
+        "서비스 간 통신은 기본적으로 mTLS로 암호화된다",
+        "Ingress Gateway는 외부 진입점, Egress Gateway는 외부로 나가는 트래픽 통제 지점이다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "구성 흐름",
+      "items": [
+        "VirtualService·DestinationRule 변경이 Istiod를 거쳐 xDS로 전파된다",
+        "프록시 재시작 없이 구성이 반영되는 것이 사이드카 모델의 장점이다",
+        "istioctl proxy-status로 각 프록시의 구성 동기화 상태를 확인한다"
+      ]
+    }
+  ]
+}

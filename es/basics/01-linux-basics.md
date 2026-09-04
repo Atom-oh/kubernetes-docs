@@ -1,22 +1,22 @@
-# Linux Basics
+# Conceptos básicos de Linux
 
-> **Supported Versions**: All major Linux distributions (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+) **Última actualización**: February 11, 2026
+> **Versiones compatibles**: Todas las principales distribuciones de Linux (Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+) **Última actualización**: February 11, 2026
 
-Comprender los fundamentos de Linux es esencial para entender Kubernetes y la tecnología de contenedores. Este documento cubre los conceptos principales de Linux que son especialmente importantes en entornos Kubernetes.
+Comprender los fundamentos de Linux es esencial para entender Kubernetes y la tecnología de contenedores. Este documento aborda los conceptos centrales de Linux que son especialmente importantes en los entornos de Kubernetes.
 
-## Lab Environment Setup
+## Configuración del entorno de laboratorio
 
 Para seguir los ejemplos de este documento, necesitarás el siguiente entorno:
 
-### Required Environment
+### Entorno necesario
 
 * Sistema operativo Linux (se recomienda Ubuntu 20.04+, CentOS/RHEL 8+, Debian 11+)
-* Acceso a la terminal
-* Privilegios sudo
+* Acceso a terminal
+* Privilegios de sudo
 
-### Cloud Environment Setup (Optional)
+### Configuración del entorno en la nube (opcional)
 
-Si usas una instancia AWS EC2:
+Si utilizas una instancia AWS EC2:
 
 ```bash
 # Start an Amazon Linux 2 instance
@@ -31,7 +31,7 @@ aws ec2 run-instances \
 ssh -i your-key.pem ec2-user@your-instance-public-ip
 ```
 
-### Local Environment Setup (Optional)
+### Configuración del entorno local (opcional)
 
 Para practicar localmente, puedes usar una de las siguientes opciones:
 
@@ -39,72 +39,80 @@ Para practicar localmente, puedes usar una de las siguientes opciones:
 * **WSL2**: Usa un entorno Linux en Windows
 * **Docker**: Practica en un entorno de contenedor
 
-## Table of Contents
+## Índice
 
-* [Linux Kernel and User Space](01-linux-basics.md#linux-kernel-and-user-space)
-* [Process Management](01-linux-basics.md#process-management)
+* [Kernel de Linux y espacio de usuario](01-linux-basics.md#linux-kernel-and-user-space)
+* [Gestión de procesos](01-linux-basics.md#process-management)
 * [Namespaces](01-linux-basics.md#namespaces)
 * [cgroups (Control Groups)](01-linux-basics.md#cgroups-control-groups)
-* [File System](01-linux-basics.md#file-system)
-* [Networking Basics](01-linux-basics.md#networking-basics)
-* [Security Context](01-linux-basics.md#security-context)
-* [systemd and Service Management](01-linux-basics.md#systemd-and-service-management)
-* [Kernel Parameters and Modules](01-linux-basics.md#kernel-parameters-and-modules)
-* [System Resource Limits](01-linux-basics.md#system-resource-limits)
-* [Log Management](01-linux-basics.md#log-management)
-* [DNS and Network Configuration](01-linux-basics.md#dns-and-network-configuration)
-* [Time Synchronization](01-linux-basics.md#time-synchronization)
-* [Package Management](01-linux-basics.md#package-management)
-* [Essential Linux Commands](01-linux-basics.md#essential-linux-commands)
-* [Container-Related Linux Features](01-linux-basics.md#container-related-linux-features)
+* [Sistema de archivos](01-linux-basics.md#file-system)
+* [Conceptos básicos de redes](01-linux-basics.md#networking-basics)
+* [Contexto de seguridad](01-linux-basics.md#security-context)
+* [systemd y gestión de servicios](01-linux-basics.md#systemd-and-service-management)
+* [Parámetros y módulos del kernel](01-linux-basics.md#kernel-parameters-and-modules)
+* [Límites de recursos del sistema](01-linux-basics.md#system-resource-limits)
+* [Gestión de logs](01-linux-basics.md#log-management)
+* [Configuración de DNS y red](01-linux-basics.md#dns-and-network-configuration)
+* [Sincronización de hora](01-linux-basics.md#time-synchronization)
+* [Gestión de paquetes](01-linux-basics.md#package-management)
+* [Comandos esenciales de Linux](01-linux-basics.md#essential-linux-commands)
+* [Características de Linux relacionadas con contenedores](01-linux-basics.md#container-related-linux-features)
 
-## Linux Kernel and User Space
+## Kernel de Linux y espacio de usuario
 
-### Role of the Kernel
+### Función del kernel
 
 > **Concepto clave**: El kernel de Linux es el núcleo del sistema operativo y actúa como intermediario entre el hardware y el software.
 
 El kernel de Linux es el núcleo del sistema operativo y actúa como intermediario entre el hardware y el software. Sus funciones principales incluyen:
 
 * **Gestión de procesos**: Creación, planificación y finalización de procesos
-* **Gestión de memoria**: Asignación de memoria virtual y memoria física
+* **Gestión de memoria**: Memoria virtual y asignación de memoria física
 * **Gestión de dispositivos**: Comunicación con dispositivos de hardware
 * **Interfaz de llamadas al sistema**: Proporciona una forma para que los programas del espacio de usuario accedan a los servicios del kernel
 
-### User Space
+### Espacio de usuario
 
 El espacio de usuario es la región de memoria donde se ejecutan las aplicaciones normales. Los programas del espacio de usuario acceden a los servicios del kernel mediante llamadas al sistema.
 
-### System Call Examples
+![Espacio de usuario de Linux, espacio del kernel y capas de hardware: las aplicaciones y la shell llegan a los subsistemas del kernel a través de las bibliotecas del sistema y la interfaz de llamadas al sistema, y los controladores de dispositivos llegan a la CPU, la memoria, el almacenamiento y la tarjeta de red.](../.gitbook/assets/en-basics-01-linux-basics-0.png)
 
-| System Call | Description           | Related Commands    |
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
+
+### Ejemplos de llamadas al sistema
+
+| Llamada al sistema | Descripción           | Comandos relacionados    |
 | ----------- | --------------------- | ------------------- |
-| `fork()`    | Create new process    | `ps`, `top`         |
-| `exec()`    | Execute program       | `bash`, `sh`        |
-| `open()`    | Open file             | `cat`, `less`       |
-| `read()`    | Read data from file   | `cat`, `grep`       |
-| `write()`   | Write data to file    | `echo`, `tee`       |
-| `socket()`  | Create network socket | `netstat`, `ss`     |
-| `clone()`   | Create namespace      | `unshare`, `docker` |
+| `fork()`    | Crear un proceso nuevo    | `ps`, `top`         |
+| `exec()`    | Ejecutar un programa       | `bash`, `sh`        |
+| `open()`    | Abrir un archivo             | `cat`, `less`       |
+| `read()`    | Leer datos de un archivo   | `cat`, `grep`       |
+| `write()`   | Escribir datos en un archivo    | `echo`, `tee`       |
+| `socket()`  | Crear un socket de red | `netstat`, `ss`     |
+| `clone()`   | Crear un namespace      | `unshare`, `docker` |
 
-### Linux Kernel Architecture
+### Arquitectura del kernel de Linux
 
-## Process Management
+![Arquitectura del kernel de Linux en capas: las aplicaciones y la shell entran al kernel mediante las bibliotecas del sistema y la interfaz de llamadas al sistema, y los subsistemas del kernel controlan el hardware mediante controladores de dispositivos.](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
-### Processes and Threads
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
+
+## Gestión de procesos
+
+### Procesos e hilos
 
 * **Proceso**: Una instancia de un programa en ejecución con su propio espacio de memoria independiente
-* **Thread**: Una unidad de trabajo que se ejecuta dentro de un proceso; los threads del mismo proceso comparten el espacio de memoria
+* **Hilo**: Una unidad de trabajo que se ejecuta dentro de un proceso; los hilos del mismo proceso comparten el espacio de memoria
 
-### Process States
+### Estados de proceso
 
 * **En ejecución**: Se está ejecutando actualmente en la CPU
-* **En espera**: Espera la finalización de E/S o la ocurrencia de un evento
-* **Listo**: Preparado para ejecutarse, pero esperando asignación de CPU
+* **En espera**: Esperando a que finalice una operación de I/O o que ocurra un evento
+* **Listo**: Listo para ejecutarse, pero esperando asignación de CPU
 * **Zombie**: Finalizado, pero el proceso padre no ha comprobado su estado
 * **Detenido**: Estado suspendido
 
-### Key Process Management Commands
+### Comandos clave de gestión de procesos
 
 ```bash
 # View process list
@@ -131,20 +139,20 @@ bg %<job-number>
 
 ## Namespaces
 
-Los namespaces son una característica del kernel de Linux que aísla grupos de procesos para que cada grupo pueda ver los recursos del sistema de forma independiente. Esto es un elemento central de la tecnología de contenedores.
+Los namespaces son una característica del kernel de Linux que aísla grupos de procesos para que cada grupo pueda ver los recursos del sistema de forma independiente. Son un elemento central de la tecnología de contenedores.
 
-### Main Namespace Types
+### Tipos principales de namespace
 
-* **PID Namespace**: Aislamiento de ID de procesos; permite que los contenedores tengan su propio PID 1 (init)
-* **Network Namespace**: Aislamiento de la pila de red (interfaces, direcciones IP, tablas de enrutamiento, firewalls, etc.); base para la red de contenedores
+* **PID Namespace**: Aislamiento de ID de proceso; permite que los contenedores tengan su propio PID 1 (init)
+* **Network Namespace**: Aislamiento de la pila de red (interfaces, direcciones IP, tablas de enrutamiento, firewalls, etc.); base de las redes de contenedores
 * **Mount Namespace**: Aislamiento de puntos de montaje del sistema de archivos; proporciona un sistema de archivos independiente por contenedor
-* **UTS Namespace**: Aislamiento de nombre de host y nombre de dominio; da a cada contenedor un identificador de host único
-* **IPC Namespace**: Aislamiento de recursos de comunicación entre procesos (memoria compartida, semáforos, colas de mensajes, etc.); importante para el aislamiento de servicios en una arquitectura de microservices
-* **User Namespace**: Aislamiento de ID de usuarios y grupos; admite la ejecución de contenedores rootless para mejorar la seguridad
+* **UTS Namespace**: Aislamiento de nombre de host y nombre de dominio; proporciona a cada contenedor un identificador de host único
+* **IPC Namespace**: Aislamiento de recursos de comunicación entre procesos (memoria compartida, semáforos, colas de mensajes, etc.); importante para el aislamiento de servicios en la arquitectura de microservicios
+* **User Namespace**: Aislamiento de ID de usuario y grupo; admite la ejecución de contenedores rootless para mejorar la seguridad
 * **cgroup Namespace**: Aislamiento del directorio raíz de cgroup; proporciona visibilidad de los límites de recursos dentro de los contenedores
-* **Time Namespace**: Aislamiento del reloj del sistema; permite configuraciones de tiempo independientes por contenedor (Linux 5.6+)
+* **Time Namespace**: Aislamiento del reloj del sistema; permite configuraciones de hora independientes por contenedor (Linux 5.6+)
 
-### Namespace-Related Commands
+### Comandos relacionados con namespaces
 
 ```bash
 # Check process namespaces
@@ -169,26 +177,26 @@ unshare --time bash
 
 ## cgroups (Control Groups)
 
-cgroups es una característica del kernel de Linux que limita y aísla el uso de recursos de los grupos de procesos. Se usa para implementar límites de recursos de contenedores. Es una tecnología central para la gestión de recursos en entornos cloud-native y Kubernetes.
+cgroups es una característica del kernel de Linux que limita y aísla el uso de recursos de los grupos de procesos. Se utiliza para implementar límites de recursos de contenedores. Es una tecnología central para la gestión de recursos en entornos cloud-native y Kubernetes.
 
-### Main cgroups Features
+### Características principales de cgroups
 
-* **Limitación de tiempo de CPU**: Limita el tiempo de CPU disponible para grupos de procesos y asigna núcleos de CPU
-* **Limitación de memoria**: Limita la memoria disponible para grupos de procesos y controla el comportamiento OOM (Out of Memory)
-* **Limitación de E/S de bloques**: Limitación del ancho de banda de E/S de disco y configuración de prioridades
-* **Limitación de ancho de banda de red**: Limitación del tráfico de red (combinada con tc)
+* **Limitación de tiempo de CPU**: Limita el tiempo de CPU disponible para los grupos de procesos y asigna núcleos de CPU
+* **Limitación de memoria**: Limita la memoria disponible para los grupos de procesos y controla el comportamiento de OOM (Out of Memory)
+* **Limitación de I/O de bloques**: Limitación de ancho de banda de I/O de disco y configuración de prioridad
+* **Limitación de ancho de banda de red**: Limitación de tráfico de red (combinada con tc)
 * **Control de acceso a dispositivos**: Control de acceso y gestión de permisos para dispositivos específicos
 * **Control de PIDs**: Limita el número de creación de procesos para evitar fork bombs
-* **Freezer**: Pausa y reanuda grupos de procesos (se usa para pausar contenedores)
+* **Freezer**: Pausa y reanuda grupos de procesos (utilizado para pausar contenedores)
 * **cpuset**: Vincula procesos a núcleos de CPU y nodos NUMA específicos
 
-### cgroups v1 and v2
+### cgroups v1 y v2
 
-* **cgroups v1**: Jerarquía separada para cada tipo de recurso; todavía se usa en sistemas heredados
+* **cgroups v1**: Jerarquía independiente para cada tipo de recurso; todavía se utiliza en sistemas heredados
 * **cgroups v2**: Jerarquía única unificada para una gestión más coherente; predeterminada en distribuciones modernas
-* **Modo híbrido**: Usa v1 y v2 juntos para mantener compatibilidad mientras se aprovechan nuevas características
+* **Modo híbrido**: Usa v1 y v2 conjuntamente para mantener la compatibilidad mientras aprovecha nuevas características
 
-### cgroups-Related Commands
+### Comandos relacionados con cgroups
 
 ```bash
 # Check cgroups
@@ -213,33 +221,33 @@ podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
-## File System
+## Sistema de archivos
 
-### File System Hierarchy
+### Jerarquía del sistema de archivos
 
-Linux tiene una estructura jerárquica de sistema de archivos que empieza desde un único directorio raíz (`/`).
+Linux tiene una estructura jerárquica de sistema de archivos que comienza desde un único directorio raíz (`/`).
 
 Directorios clave:
 
 * `/bin`: Comandos básicos
 * `/sbin`: Comandos de administración del sistema
 * `/etc`: Archivos de configuración del sistema
-* `/home`: Directorios de inicio de usuarios
+* `/home`: Directorios personales de usuarios
 * `/var`: Datos variables (logs, caché, etc.)
 * `/tmp`: Archivos temporales
 * `/usr`: Programas y datos de usuario
 * `/proc`: Información de procesos y del kernel (sistema de archivos virtual)
-* `/sys`: Información del sistema y del hardware (sistema de archivos virtual)
+* `/sys`: Información del sistema y hardware (sistema de archivos virtual)
 
-### File System Types
+### Tipos de sistemas de archivos
 
-* **ext4**: Sistema de archivos Linux predeterminado
+* **ext4**: Sistema de archivos predeterminado de Linux
 * **XFS**: Adecuado para sistemas de archivos grandes
-* **Btrfs**: Proporciona características avanzadas como snapshots y compresión
-* **OverlayFS**: Representa varios directorios como un único directorio (se usa comúnmente en contenedores)
+* **Btrfs**: Ofrece características avanzadas como snapshots y compresión
+* **OverlayFS**: Representa varios directorios como un único directorio (utilizado habitualmente en contenedores)
 * **tmpfs**: Sistema de archivos temporal basado en memoria
 
-### Mount and Volumes
+### Montaje y volúmenes
 
 ```bash
 # Mount file system
@@ -253,15 +261,15 @@ df -h
 umount <mount-point>
 ```
 
-## Networking Basics
+## Conceptos básicos de redes
 
-### Network Interfaces
+### Interfaces de red
 
 * **lo**: Interfaz loopback (127.0.0.1)
 * **eth0, ens3, etc.**: Interfaces de red físicas
-* **docker0, cni0, etc.**: Interfaces bridge virtuales (red de contenedores)
+* **docker0, cni0, etc.**: Interfaces de bridge virtuales (redes de contenedores)
 
-### Network Configuration Commands
+### Comandos de configuración de red
 
 ```bash
 # Check network interfaces
@@ -280,7 +288,7 @@ ss -tuln
 tcpdump -i <interface>
 ```
 
-### Network Namespaces and Virtual Interfaces
+### Namespaces de red e interfaces virtuales
 
 ```bash
 # Create network namespace
@@ -293,19 +301,23 @@ ip link add <veth1> type veth peer name <veth2>
 ip link set <veth2> netns <namespace-name>
 ```
 
-## Security Context
+## Contexto de seguridad
 
-### Users and Groups
+### Usuarios y grupos
 
 * **UID (User ID)**: Identificador de usuario
 * **GID (Group ID)**: Identificador de grupo
 * **root (UID 0)**: Usuario especial con privilegios administrativos
 
-### File Permissions
+### Permisos de archivos
 
-Los permisos de archivos de Linux consisten en permisos de lectura (r), escritura (w) y ejecución (x) para el propietario, el grupo y otros usuarios.
+Los permisos de archivos de Linux constan de permisos de lectura (r), escritura (w) y ejecución (x) para el propietario, el grupo y otros usuarios.
 
-### Permission-Related Commands
+![Cómo la cadena de permisos de 10 caracteres de ls -l se divide en un carácter de tipo de archivo más tríos r w x para el propietario, el grupo y otros, interpretando drwxr-xr-- como un directorio con acceso completo del propietario, lectura/ejecución para el grupo y acceso de solo lectura para otros.](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
+
+### Comandos relacionados con permisos
 
 ```bash
 # Change file permissions
@@ -321,10 +333,10 @@ chmod 2755 <filename>  # Set setgid
 chmod 1755 <filename>  # Set sticky bit
 ```
 
-### SELinux and AppArmor
+### SELinux y AppArmor
 
-* **SELinux (Security-Enhanced Linux)**: Sistema de control de acceso obligatorio desarrollado por la NSA
-* **AppArmor**: Sistema de control de acceso que usa perfiles de seguridad por programa
+* **SELinux (Security-Enhanced Linux)**: Sistema de control de acceso obligatorio desarrollado por NSA
+* **AppArmor**: Sistema de control de acceso que utiliza perfiles de seguridad por programa
 
 ```bash
 # Check SELinux status
@@ -342,28 +354,28 @@ aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
 
-## systemd and Service Management
+## systemd y gestión de servicios
 
-systemd es el sistema init y gestor de servicios para los sistemas Linux modernos. Se usa para gestionar servicios principales como kubelet y containerd en nodos Kubernetes.
+systemd es el sistema init y gestor de servicios de los sistemas Linux modernos. Se utiliza para gestionar servicios centrales como kubelet y containerd en los nodos de Kubernetes.
 
-### Main systemd Features
+### Características principales de systemd
 
-* **Gestión de servicios**: Iniciar, detener, reiniciar y habilitar/deshabilitar servicios del sistema
-* **Gestión de dependencias**: Gestión automática de dependencias de servicios e inicio paralelo
-* **Logging**: Gestión integrada de logs mediante journald
-* **Timers**: Unidades de temporizador que pueden reemplazar cron
+* **Gestión de servicios**: Inicia, detiene, reinicia, habilita o deshabilita servicios del sistema
+* **Gestión de dependencias**: Gestión automática de dependencias de servicios e inicio en paralelo
+* **Logging**: Gestión de logs integrada mediante journald
+* **Timers**: Unidades de temporizador que pueden sustituir a cron
 * **Gestión de recursos**: Límites de recursos por servicio mediante cgroups
 
-### systemd Unit Types
+### Tipos de unidades systemd
 
-* **service**: Servicios del sistema (por ejemplo, kubelet.service, containerd.service)
-* **socket**: Activación basada en sockets
-* **target**: Grupos de unidades (similar a runlevels)
+* **service**: Servicios del sistema (p. ej., kubelet.service, containerd.service)
+* **socket**: Activación basada en socket
+* **target**: Grupos de unidades (similares a runlevels)
 * **timer**: Tareas programadas
-* **mount**: Montajes del sistema de archivos
-* **device**: Unidades de dispositivo
+* **mount**: Montajes de sistemas de archivos
+* **device**: Unidades de dispositivos
 
-### systemd Commands
+### Comandos systemd
 
 ```bash
 # Check service status
@@ -396,9 +408,9 @@ systemctl --failed
 systemctl daemon-reload
 ```
 
-### Writing systemd Unit Files
+### Escritura de archivos de unidad systemd
 
-Archivo de unidad systemd de ejemplo para servicios relacionados con Kubernetes:
+Ejemplo de archivo de unidad systemd para servicios relacionados con Kubernetes:
 
 ```ini
 # /etc/systemd/system/kubelet.service
@@ -418,7 +430,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-### systemd Resource Limits
+### Límites de recursos de systemd
 
 ```bash
 # CPU limit (20%)
@@ -434,13 +446,13 @@ systemctl set-property kubelet IOWeight=500
 systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
 ```
 
-## Kernel Parameters and Modules
+## Parámetros y módulos del kernel
 
-### Kernel Parameter Settings via sysctl
+### Configuración de parámetros del kernel mediante sysctl
 
-sysctl es una herramienta para consultar y modificar parámetros del kernel en ejecución. Es esencial para ajustar parámetros de red y del sistema al configurar clusters Kubernetes.
+sysctl es una herramienta para consultar y modificar los parámetros del kernel en ejecución. Es esencial para ajustar parámetros de red y del sistema al configurar clústeres de Kubernetes.
 
-#### Key sysctl Settings Required for Kubernetes
+#### Configuraciones sysctl clave necesarias para Kubernetes
 
 ```bash
 # Enable IP forwarding (required for container networking)
@@ -479,7 +491,7 @@ EOF
 sysctl --system
 ```
 
-### Kernel Module Management
+### Gestión de módulos del kernel
 
 Muchos plugins CNI y controladores de almacenamiento requieren módulos específicos del kernel.
 
@@ -513,7 +525,7 @@ EOF
 modprobe -r <module-name>
 ```
 
-### Kernel Version and Feature Check
+### Comprobación de la versión y características del kernel
 
 ```bash
 # Check kernel version
@@ -528,11 +540,11 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
-## System Resource Limits
+## Límites de recursos del sistema
 
-### ulimit - Per-User Resource Limits
+### ulimit: límites de recursos por usuario
 
-ulimit limita los recursos del sistema que pueden usar los procesos. Es posible que se necesiten ajustes en nodos Kubernetes para garantizar recursos suficientes.
+ulimit limita los recursos del sistema que pueden utilizar los procesos. Puede ser necesario realizar ajustes en los nodos de Kubernetes para garantizar recursos suficientes.
 
 ```bash
 # Check current limits
@@ -564,7 +576,7 @@ root            hard    nofile          65536
 EOF
 ```
 
-### PAM Limit Settings
+### Configuración de límites PAM
 
 ```bash
 # Check PAM settings
@@ -575,7 +587,7 @@ cat /etc/pam.d/common-session-noninteractive
 echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 ```
 
-### Per-Process Resource Checking
+### Comprobación de recursos por proceso
 
 ```bash
 # Check current resource limits for a process
@@ -585,11 +597,11 @@ cat /proc/<PID>/limits
 ls -l /proc/<PID>/fd | wc -l
 ```
 
-## Log Management
+## Gestión de logs
 
-### journald - systemd Integrated Logging
+### journald: logging integrado de systemd
 
-journald es el sistema de logging de systemd que gestiona logs de servicios del sistema en nodos Kubernetes.
+journald es el sistema de logging de systemd que gestiona los logs de servicios del sistema en los nodos de Kubernetes.
 
 ```bash
 # Full system logs
@@ -632,7 +644,7 @@ journalctl --vacuum-time=7d   # Delete logs older than 7 days
 journalctl --vacuum-size=1G   # Delete logs over 1GB
 ```
 
-### journald Configuration
+### Configuración de journald
 
 ```bash
 # journald configuration file
@@ -648,9 +660,9 @@ sudo vi /etc/systemd/journald.conf
 sudo systemctl restart systemd-journald
 ```
 
-### Traditional syslog
+### syslog tradicional
 
-Algunos sistemas todavía usan syslog.
+Algunos sistemas todavía utilizan syslog.
 
 ```bash
 # syslog file locations
@@ -665,7 +677,7 @@ grep "kubelet" /var/log/syslog
 grep -i "error" /var/log/syslog
 ```
 
-### Log Rotation
+### Rotación de logs
 
 Configura la rotación de logs para evitar que los archivos de log crezcan indefinidamente.
 
@@ -688,11 +700,11 @@ sudo vi /etc/logrotate.d/kubernetes
 sudo logrotate -f /etc/logrotate.d/kubernetes
 ```
 
-## DNS and Network Configuration
+## Configuración de DNS y red
 
-### DNS Configuration
+### Configuración de DNS
 
-DNS es fundamental para el descubrimiento de servicios dentro de clusters Kubernetes.
+DNS es fundamental para el descubrimiento de servicios dentro de los clústeres de Kubernetes.
 
 ```bash
 # DNS configuration file
@@ -714,7 +726,7 @@ cat /etc/hosts
 
 ### systemd-resolved
 
-Las distribuciones Linux modernas usan systemd-resolved.
+Las distribuciones modernas de Linux utilizan systemd-resolved.
 
 ```bash
 # Check systemd-resolved status
@@ -730,7 +742,7 @@ resolvectl statistics
 resolvectl flush-caches
 ```
 
-### Network Configuration Files
+### Archivos de configuración de red
 
 ```bash
 # NetworkManager (RHEL/CentOS 8+, Ubuntu 18.04+)
@@ -753,11 +765,11 @@ network:
 sudo netplan apply
 ```
 
-## Time Synchronization
+## Sincronización de hora
 
-La sincronización de tiempo es muy importante en sistemas distribuidos. Todos los nodos de un cluster Kubernetes deben mantener una hora precisa.
+La sincronización de hora es muy importante en los sistemas distribuidos. Todos los nodos de un clúster de Kubernetes deben mantener una hora precisa.
 
-### chronyd (Recommended)
+### chronyd (recomendado)
 
 chronyd es un cliente NTP moderno que sincroniza la hora más rápido que ntpd.
 
@@ -784,7 +796,7 @@ chronyc sourcestats
 sudo chronyc makestep
 ```
 
-### chronyd Configuration
+### Configuración de chronyd
 
 ```bash
 # Configuration file
@@ -804,9 +816,9 @@ makestep 1.0 3
 sudo systemctl restart chronyd
 ```
 
-### timesyncd (Ubuntu Default)
+### timesyncd (predeterminado de Ubuntu)
 
-Ubuntu usa systemd-timesyncd de forma predeterminada.
+Ubuntu utiliza systemd-timesyncd de forma predeterminada.
 
 ```bash
 # Check status
@@ -827,7 +839,7 @@ FallbackNTP=time.google.com
 sudo systemctl restart systemd-timesyncd
 ```
 
-### Timezone Settings
+### Configuración de zona horaria
 
 ```bash
 # Check current time and timezone
@@ -846,9 +858,9 @@ sudo timedatectl set-time "2025-11-24 12:00:00"
 sudo timedatectl set-ntp true
 ```
 
-## Package Management
+## Gestión de paquetes
 
-Uso del gestor de paquetes para instalar y gestionar Kubernetes y herramientas relacionadas.
+Uso de gestores de paquetes para instalar y gestionar Kubernetes y herramientas relacionadas.
 
 ### apt (Debian/Ubuntu)
 
@@ -930,7 +942,7 @@ sudo yum clean all
 sudo dnf clean all
 ```
 
-### Package Version Locking
+### Bloqueo de versiones de paquetes
 
 Los componentes de Kubernetes tienen requisitos de compatibilidad de versiones, por lo que se deben evitar las actualizaciones automáticas.
 
@@ -949,9 +961,9 @@ sudo yum versionlock add kubelet kubeadm kubectl
 sudo yum versionlock delete kubelet kubeadm kubectl
 ```
 
-## Essential Linux Commands
+## Comandos esenciales de Linux
 
-### File and Directory Management
+### Gestión de archivos y directorios
 
 ```bash
 ls -la           # List files (including hidden)
@@ -964,7 +976,7 @@ mv <source> <destination>    # Move or rename files/directories
 find <path> -name "<pattern>" # Search files
 ```
 
-### Text Processing
+### Procesamiento de texto
 
 ```bash
 cat <file>        # Output file contents
@@ -974,7 +986,7 @@ sed 's/<pattern>/<replacement>/' <file> # Text substitution
 awk '{print $1}' <file> # Text processing
 ```
 
-### System Information
+### Información del sistema
 
 ```bash
 uname -a         # Kernel information
@@ -984,7 +996,7 @@ df -h            # Disk usage
 du -sh <path>    # Directory size
 ```
 
-### Process and Service Management
+### Gestión de procesos y servicios
 
 ```bash
 systemctl status <service> # Check service status
@@ -992,111 +1004,65 @@ systemctl start/stop/restart <service> # Service control
 journalctl -u <service> # View service logs
 ```
 
-## Container-Related Linux Features
+## Características de Linux relacionadas con contenedores
 
 ### OverlayFS
 
-OverlayFS es un sistema de archivos de montaje union que representa varios directorios como un único directorio. Lo usan runtimes de contenedores como Docker para implementar capas de imágenes.
+OverlayFS es un sistema de archivos de montaje union que representa varios directorios como uno solo. Lo utilizan runtimes de contenedores como Docker para implementar capas de imágenes.
 
-### Network Bridge and NAT
+### Bridge de red y NAT
 
-La red de contenedores se implementa principalmente mediante interfaces bridge y NAT (Network Address Translation).
+Las redes de contenedores se implementan principalmente mediante interfaces bridge y NAT (Network Address Translation).
 
-```mermaid
-flowchart TB
-    subgraph "Host"
-        subgraph "Container A"
-            CA["eth0
-172.17.0.2"]
-        end
+![Docker bridge networking on a single host](../../assets/diagrams/rendered/docker-bridge-networking.svg)
 
-        subgraph "Container B"
-            CB["eth0
-172.17.0.3"]
-        end
+### Filtrado de llamadas al sistema (seccomp)
 
-        BR["Bridge (docker0)
-172.17.0.1/16"]
+seccomp (Secure Computing Mode) es una característica del kernel de Linux que restringe las llamadas al sistema disponibles para los procesos. Se utiliza para mejorar la seguridad de los contenedores.
 
-        ETH["eth0
-192.168.1.10"]
-
-        IPTABLES["iptables
-NAT Rules"]
-
-        CA -- "veth pair" --> BR
-        CB -- "veth pair" --> BR
-        BR --> IPTABLES
-        IPTABLES --> ETH
-    end
-
-    INTERNET["External Network
-    Internet"]
-
-    ETH <--> INTERNET
-
-    %% Style definitions
-    classDef container fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef bridge fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef host fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef network fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef iptables fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class CA,CB container
-    class BR bridge
-    class ETH host
-    class INTERNET network
-    class IPTABLES iptables
-```
-
-### System Call Filtering (seccomp)
-
-seccomp (Secure Computing Mode) es una característica del kernel de Linux que restringe las llamadas al sistema disponibles para los procesos. Se usa para mejorar la seguridad de los contenedores.
-
-### Capabilities Restriction
+### Restricción de capabilities
 
 Las capabilities de Linux dividen los privilegios tradicionales de root en unidades de permisos más pequeñas. Los contenedores reciben solo las capabilities necesarias para mejorar la seguridad.
 
 Capabilities clave:
 
-* `CAP_NET_ADMIN`: Cambios en la configuración de red
+* `CAP_NET_ADMIN`: Cambios de configuración de red
 * `CAP_SYS_ADMIN`: Tareas de administración del sistema
 * `CAP_CHOWN`: Cambiar la propiedad de archivos
 * `CAP_DAC_OVERRIDE`: Omitir permisos de archivos
 
-## Conclusion
+## Conclusión
 
-Los fundamentos y características de Linux son esenciales para comprender Kubernetes y la tecnología de contenedores. Aquí tienes un resumen de los temas clave cubiertos en este documento:
+Los fundamentos y las características de Linux son esenciales para comprender Kubernetes y la tecnología de contenedores. Este es un resumen de los temas clave tratados en este documento:
 
-### Core Technologies
+### Tecnologías centrales
 
-* **Namespaces y cgroups**: Base para el aislamiento y la gestión de recursos de contenedores
-* **OverlayFS**: Núcleo de las capas de imágenes de contenedores
-* **systemd**: Gestión de servicios de nodos Kubernetes
+* **Namespaces y cgroups**: Base para el aislamiento de contenedores y la gestión de recursos
+* **OverlayFS**: Base de las capas de imágenes de contenedores
+* **systemd**: Gestión de servicios de nodos de Kubernetes
 
-### Essential Operations Knowledge
+### Conocimientos esenciales de operaciones
 
-* **Ajuste de parámetros del kernel**: Optimización de red y sistema mediante sysctl
-* **Gestión de módulos**: Soporte para plugins CNI y controladores de almacenamiento
-* **Gestión de logs**: Análisis de logs del sistema y de servicios mediante journald
-* **Sincronización de tiempo**: Mantener la coherencia en sistemas distribuidos
+* **Ajuste de parámetros del kernel**: Optimización de red y del sistema mediante sysctl
+* **Gestión de módulos**: Compatibilidad con plugins CNI y controladores de almacenamiento
+* **Gestión de logs**: Análisis de logs de sistema y servicios mediante journald
+* **Sincronización de hora**: Mantenimiento de la coherencia en sistemas distribuidos
 
-### Troubleshooting
+### Resolución de problemas
 
 * **Límites de recursos**: Gestión de recursos mediante ulimit y cgroups
 * **Redes**: Configuración de DNS, bridge e iptables
-* **Gestión de paquetes**: Gestión de versiones de componentes de Kubernetes
+* **Gestión de paquetes**: Gestión de versiones de los componentes de Kubernetes
 
-Con esta base de Linux, puedes solucionar eficazmente problemas en entornos Kubernetes, optimizar clusters y operarlos de forma fiable.
+Con esta base de Linux, puedes resolver eficazmente problemas en entornos de Kubernetes, optimizar clústeres y operarlos de forma fiable.
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que has aprendido en este capítulo, realiza el [Linux Basics Quiz](../quizzes/basics/01-linux-basics-quiz.md).
+Para poner a prueba lo que has aprendido en este capítulo, realiza el [Cuestionario de conceptos básicos de Linux](../quizzes/basics/01-linux-basics-quiz.md).
 
-## References
+## Referencias
 
 * [The Linux Documentation Project](https://tldp.org/)
-* [Linux Kernel Documentation](https://www.kernel.org/doc/)
-* [Linux Namespaces](https://man7.org/linux/man-pages/man7/namespaces.7.html)
+* [Documentación del kernel de Linux](https://www.kernel.org/doc/)
+* [Namespaces de Linux](https://man7.org/linux/man-pages/man7/namespaces.7.html)
 * [Control Groups v2](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)

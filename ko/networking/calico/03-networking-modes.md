@@ -8,7 +8,7 @@ Calico는 다양한 네트워킹 환경에 맞는 여러 모드를 제공합니�
 
 ## 네트워킹 모드 개요
 
-![IPIP, VXLAN, Direct/BGP 세 가지 Calico 네트워킹 모드를 나란히 비교하며, 각 모드에서 Node 1의 Pod 패킷이 tunl0 IPIP 터널(+20 bytes, MTU 1480), vxlan.calico VXLAN 터널(+50 bytes, MTU 1450), 또는 캡슐화 없이 BGP 피어링된 ToR/L3 라우터(MTU 1500, 최고 성능)를 거쳐 Node 2로 전달되는 경로와 패킷 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-7.png)
+![IPIP, VXLAN, Direct/BGP 세 가지 Calico 네트워킹 모드를 나란히 비교하며, 각 모드에서 Node 1의 Pod A 패킷이 tunl0 IPIP 터널(+20 bytes), vxlan.calico VXLAN 터널(+50 bytes), 또는 캡슐화 없이 BGP 피어링된 L3 라우터를 거쳐 Node 2의 Pod B에 도달하는 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-03-networking-modes-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-03-networking-modes-7.html)
 

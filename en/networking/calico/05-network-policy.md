@@ -421,7 +421,7 @@ spec:
 
 ## Tiered Policies
 
-![Calico Network Policy tier evaluation: a packet passes through the Security (100), Platform (200), Application (500), and Default tiers in order; an Allow or Deny match in any tier ends evaluation immediately, Pass hands off to the next tier, and with no match the endpoint profile's default action applies.](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
+![Calico policy tier evaluation: a packet passes the Security (100), Platform (200), Application (500), and Default tiers in order; Allow or Deny ends evaluation, Pass hands off to the next tier, and no match falls to the profile default.](../../.gitbook/assets/en-networking-calico-05-network-policy-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-05-network-policy-2.html)
 

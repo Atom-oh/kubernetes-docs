@@ -27,6 +27,10 @@ This document provides an in-depth look at Istio's internal architecture and net
 
 ### Overall Structure
 
+![Istio architecture overview: Istiod watches the Kubernetes API server and pushes xDS configuration to the Ingress Gateway and sidecars, while pods talk to each other over mTLS.](../../.gitbook/assets/en-service-mesh-istio-03-architecture-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-03-architecture-0.html)
+
 ### Control Plane vs Data Plane
 
 | Category        | Control Plane (Istiod)                        | Data Plane (Envoy)        |

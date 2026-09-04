@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import os from 'node:os'
+import path from 'node:path'
 import test from 'node:test'
 
 import {
@@ -57,24 +59,86 @@ test('parseSummary dedupes a part1 repeated as parent and first child', () => {
 })
 
 test('llms.txt index lists content pages and excludes quiz pages', () => {
-  const index = buildLlmsTxt({ en: parseSummary(SAMPLE) })
-  assert.ok(index.includes(`${SITE_BASE}/en/core/01-cluster-architecture`))
-  assert.ok(index.includes(`${SITE_BASE}/en/storage/`))
+  const pages = {
+    'README.md': '# Intro\n\nNavigation only.',
+    'core/01-cluster-architecture.md':
+      '# Cluster Architecture\n\nExplains the Kubernetes control plane and worker nodes.',
+    'storage/README.md':
+      '# Storage Overview\n\nIntroduces persistent storage options for Kubernetes.'
+  }
+  const index = buildLlmsTxt(
+    { en: parseSummary(SAMPLE) },
+    { en: (mdPath) => pages[mdPath] ?? null }
+  )
+
+  assert.ok(
+    index.includes(
+      `- [Kubernetes · Cluster Architecture](${SITE_BASE}/llms/en/core/01-cluster-architecture.md): Explains the Kubernetes control plane and worker nodes.`
+    )
+  )
+  assert.ok(index.includes(`${SITE_BASE}/llms/en/storage/README.md`))
+  assert.ok(!index.includes(`${SITE_BASE}/llms/en/README.md`))
   assert.ok(!index.includes('05-keda-quiz'))
   // quiz index stays reachable via the Optional section
   assert.ok(index.includes(`- [Quizzes (English)](${SITE_BASE}/en/quizzes/)`))
 })
 
-test('llms-full excludes quiz groups and skips missing pages without failing', () => {
+test('llms-full excludes root navigation, quiz groups, and missing pages', () => {
   const groups = parseSummary(SAMPLE)
   const pages = {
-    'README.md': '# Intro\nhello',
+    'README.md': '# Intro\nnavigation only',
     'core/01-cluster-architecture.md': '# Cluster\nbody'
   }
   const { text, missing } = buildLlmsFull('en', groups, (p) => pages[p] ?? null)
   assert.ok(text.includes(`Source: ${SITE_BASE}/en/core/01-cluster-architecture`))
+  assert.ok(!text.includes('navigation only'))
   assert.ok(!text.includes('quizzes/'))
   assert.ok(missing.includes('storage/README.md'))
+})
+
+test('generation writes each indexed page as raw Markdown', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'llms-pages-'))
+
+  try {
+    for (const locale of ['ko', 'en']) {
+      fs.mkdirSync(path.join(root, locale, 'core'), { recursive: true })
+      fs.writeFileSync(
+        path.join(root, locale, 'SUMMARY.md'),
+        [
+          '# Table of contents',
+          '',
+          '## Intro',
+          '',
+          '* [Intro](README.md)',
+          '',
+          '## Kubernetes',
+          '',
+          '* [Cluster Architecture](core/01-cluster-architecture.md)'
+        ].join('\n')
+      )
+      fs.writeFileSync(
+        path.join(root, locale, 'README.md'),
+        '# Intro\n\nNavigation only.'
+      )
+      fs.writeFileSync(
+        path.join(root, locale, 'core/01-cluster-architecture.md'),
+        '# Cluster Architecture\n\nActual LLM-readable body.'
+      )
+    }
+
+    generateLlmsFiles(root)
+
+    const rawPath = path.join(
+      root,
+      'public/llms/ko/core/01-cluster-architecture.md'
+    )
+    assert.equal(
+      fs.readFileSync(rawPath, 'utf8'),
+      '# Cluster Architecture\n\nActual LLM-readable body.'
+    )
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
 })
 
 test('generation from the real repo produces a non-empty index', () => {

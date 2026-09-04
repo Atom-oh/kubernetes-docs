@@ -20,6 +20,9 @@
         },
         "backend": {
           "label": "포드 요청"
+        },
+        "frontend": {
+          "label": "판정"
         }
       }
     },
@@ -80,8 +83,8 @@
     {"id": "baseline", "type": "cloud", "label": "Baseline", "sublabel": "알려진 권한 상승 경로 차단", "pos": [1050, 234], "size": [210, 52]},
     {"id": "restricted", "type": "cloud", "label": "Restricted", "sublabel": "강력하게 강화된 보안 정책", "pos": [1050, 306], "size": [210, 52]},
     {"id": "pod", "type": "backend", "label": "포드 생성 요청", "pos": [350, 530], "size": [200, 60]},
-    {"id": "allow", "type": "backend", "label": "허용", "pos": [650, 490], "size": [150, 52]},
-    {"id": "deny", "type": "backend", "label": "거부", "pos": [650, 580], "size": [150, 52]}
+    {"id": "allow", "type": "frontend", "label": "허용", "pos": [650, 490], "size": [150, 52]},
+    {"id": "deny", "type": "frontend", "label": "거부", "pos": [650, 580], "size": [150, 52]}
   ],
   "boundaries": [
     {"kind": "region", "label": "포드 보안 어드미션", "wraps": ["psa", "enforce", "audit", "warn"]},
@@ -98,7 +101,7 @@
     {"id": "pss-restricted", "from": "pss", "to": "restricted"},
     {"id": "psa-pod", "from": "psa", "to": "pod", "label": "검증", "variant": "emphasis", "labelAt": [450, 450]},
     {"id": "pod-allow", "from": "pod", "to": "allow", "label": "준수", "variant": "emphasis"},
-    {"id": "pod-deny", "from": "pod", "to": "deny", "label": "위반 (enforce)", "variant": "security"}
+    {"id": "pod-deny", "from": "pod", "to": "deny", "label": "위반 (enforce)", "variant": "security", "labelAt": [590, 624]}
   ],
   "cards": [
     {"dot": "rose", "title": "PSP에서 PSS/PSA로", "items": ["PodSecurityPolicy(PSP)는 Kubernetes 1.21부터 사용 중단(deprecated), 1.25에서 완전히 제거", "대신 Pod Security Standards와 Pod Security Admission이 도입"]},

@@ -4,44 +4,17 @@
 
 ## 概述
 
-Calico 支持多种网络模式，以满足不同的基础设施要求、性能需求和运维约束。本节将深入介绍每种网络模式，帮助您为环境选择和配置最佳模式。
+Calico 支持多种网络模式，以适应不同的基础设施要求、性能需求和运维限制。本节将深入介绍每种网络模式，帮助你为环境选择并配置最佳模式。
 
 ## 网络模式概览
 
-![Calico 网络模式对比](../../.gitbook/assets/calico_networking_modes.png)
+![Calico 的 IPIP、VXLAN 和 Direct/BGP 模式并排展示：来自 Node 1 上 Pod A 的数据包通过 tunl0 IPIP 隧道（+20 字节）、vxlan.calico VXLAN 隧道（+50 字节），或无封装的 BGP 对等 L3 路由器，到达 Node 2 上的 Pod B。](../../.gitbook/assets/en-networking-calico-03-networking-modes-7.png)
 
-```mermaid
-flowchart TD
-    subgraph Modes["Calico Networking Modes"]
-        IPIP[IPIP Mode]
-        VXLAN[VXLAN Mode]
-        Direct[Direct/Native Mode]
-    end
-
-    subgraph Characteristics["Key Characteristics"]
-        IPIP --> |MTU: 1480| IPIP_MTU[IP-in-IP Encapsulation]
-        VXLAN --> |MTU: 1450| VXLAN_MTU[UDP/VXLAN Encapsulation]
-        Direct --> |MTU: 1500| Direct_MTU[No Encapsulation]
-    end
-
-    subgraph UseCases["Best Use Cases"]
-        IPIP_MTU --> UC1[Cloud environments<br>Simple setup]
-        VXLAN_MTU --> UC2[Multicast restrictions<br>Standard overlay]
-        Direct_MTU --> UC3[On-premises BGP<br>Maximum performance]
-    end
-
-    classDef mode fill:#FA8320,stroke:#333,color:white
-    classDef char fill:#326CE5,stroke:#333,color:white
-    classDef use fill:#00C7B7,stroke:#333,color:white
-
-    class IPIP,VXLAN,Direct mode
-    class IPIP_MTU,VXLAN_MTU,Direct_MTU char
-    class UC1,UC2,UC3 use
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-7.html)
 
 ## IPIP 模式
 
-IP-in-IP (IPIP) 是 Calico 的默认封装模式。它将原始 IP 数据包封装在另一个 IP 数据包内，以实现跨子网通信。
+IP-in-IP (IPIP) 是 Calico 的默认封装模式。它将原始 IP 数据包封装在另一个 IP 数据包中，以进行跨子网通信。
 
 ### IPIP 数据包结构
 
@@ -70,35 +43,15 @@ IPIP Encapsulated Packet (1500 bytes outer MTU):
 
 | 模式            | 描述                               | 使用场景                                   |
 | --------------- | ----------------------------------------- | ------------------------------------------ |
-| **Always**      | 所有 Pod 到 Pod 的流量都会被封装    | 云环境，简单设置           |
-| **CrossSubnet** | 仅跨子网流量会被封装 | 混合环境，优化的性能 |
-| **Never**       | 禁用 IPIP（与 Direct 路由一起使用）   | 使用 BGP 的本地部署环境                       |
+| **Always**      | 所有 Pod 到 Pod 的流量都会被封装    | 云环境，设置简单           |
+| **CrossSubnet** | 仅跨子网流量会被封装 | 混合环境，性能优化 |
+| **Never**       | 禁用 IPIP（与 Direct 路由配合使用）   | 使用 BGP 的本地部署环境                       |
 
 ### IPIP CrossSubnet 模式
 
 CrossSubnet 是一种优化方式，仅对跨越 L3 边界的流量进行封装：
 
-```mermaid
-flowchart TD
-    subgraph Subnet1["Subnet 10.0.1.0/24"]
-        Node1[Node 1<br>10.0.1.10]
-        Node2[Node 2<br>10.0.1.11]
-    end
-
-    subgraph Subnet2["Subnet 10.0.2.0/24"]
-        Node3[Node 3<br>10.0.2.10]
-        Node4[Node 4<br>10.0.2.11]
-    end
-
-    Node1 <-->|Direct routing<br>No encapsulation| Node2
-    Node3 <-->|Direct routing<br>No encapsulation| Node4
-    Node1 <-.->|IPIP encapsulation<br>Cross-subnet| Node3
-    Node2 <-.->|IPIP encapsulation<br>Cross-subnet| Node4
-
-    classDef node fill:#FA8320,stroke:#333,color:white
-
-    class Node1,Node2,Node3,Node4 node
-```
+![同一子网中的两个 Node 直接相互路由，无需封装；而进入另一个子网的流量仅在该跨子网跳转时使用 IPIP 封装。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-1.svg)
 
 ### IPIP IPPool 配置
 
@@ -149,31 +102,11 @@ ip route | grep tunl0
 
 ### IPIP 数据包流图
 
-```mermaid
-sequenceDiagram
-    participant PodA as Pod A<br>192.168.1.10
-    participant Felix1 as Felix (Node 1)
-    participant Tunl1 as tunl0 (Node 1)
-    participant Network as Physical Network
-    participant Tunl2 as tunl0 (Node 2)
-    participant Felix2 as Felix (Node 2)
-    participant PodB as Pod B<br>192.168.2.10
-
-    PodA->>Felix1: IP packet to 192.168.2.10
-    Felix1->>Felix1: Route lookup: via tunl0
-    Felix1->>Tunl1: Forward to tunnel
-    Tunl1->>Tunl1: Encapsulate in IPIP
-    Note over Tunl1: Outer: 10.0.1.10 → 10.0.1.11<br>Inner: 192.168.1.10 → 192.168.2.10
-    Tunl1->>Network: Send encapsulated packet
-    Network->>Tunl2: Deliver to Node 2
-    Tunl2->>Tunl2: Decapsulate IPIP
-    Tunl2->>Felix2: Forward inner packet
-    Felix2->>PodB: Deliver to destination
-```
+![来自 Pod A 的数据包在 Node 1 上被路由至 tunl0 接口，经过 IPIP 封装后穿越物理网络到达 Node 2，解封装后交付给 Pod B。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-2.svg)
 
 ## VXLAN 模式
 
-VXLAN（Virtual Extensible LAN）是一种行业标准的覆盖网络协议，可将第 2 层帧封装在 UDP 数据包中。
+VXLAN（Virtual Extensible LAN）是一种行业标准的覆盖网络协议，可将 Layer 2 帧封装在 UDP 数据包中。
 
 ### VXLAN 数据包结构
 
@@ -194,10 +127,10 @@ VXLAN Encapsulated Packet:
 
 | 组件             | 描述                                      |
 | --------------------- | ------------------------------------------------ |
-| **VTEP**              | VXLAN 隧道端点 - 封装/解封装位置        |
-| **VNI**               | VXLAN 网络标识符（Calico 使用固定 VNI） |
-| **UDP 端口**          | 4789（由 IANA 分配）                             |
-| **组播/单播** | Calico 对已知对等 VTEP 使用单播        |
+| **VTEP**              | VXLAN Tunnel Endpoint - 封装/解封装点        |
+| **VNI**               | VXLAN Network Identifier（Calico 使用固定 VNI） |
+| **UDP Port**          | 4789（由 IANA 分配）                             |
+| **Multicast/Unicast** | Calico 使用具有已知对等 VTEP 的单播        |
 
 ### VXLAN IPPool 配置
 
@@ -255,84 +188,23 @@ ip route | grep vxlan
 
 ### VXLAN 数据包流
 
-```mermaid
-flowchart TD
-    subgraph Node1["Node 1 (10.0.1.10)"]
-        PodA[Pod A<br>10.244.0.10]
-        VTEP1[VTEP<br>vxlan.calico]
-    end
+![Pod A 的数据包由其所在 Node 的 VTEP 封装为 UDP/VXLAN 帧，穿越物理网络后由目标 VTEP 解封装，再到达 Pod B。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-3.svg)
 
-    subgraph VXLAN["VXLAN Encapsulation"]
-        Outer[Outer Headers<br>UDP:4789, VNI:4096]
-        Inner[Inner Frame<br>Original L2+L3]
-    end
+## Direct/无封装模式
 
-    subgraph Node2["Node 2 (10.0.1.11)"]
-        VTEP2[VTEP<br>vxlan.calico]
-        PodB[Pod B<br>10.244.1.10]
-    end
-
-    PodA -->|1. Original packet| VTEP1
-    VTEP1 -->|2. Lookup VTEP for dest| Outer
-    Outer -->|3. Encapsulate| Inner
-    Inner -->|4. UDP to remote VTEP| VTEP2
-    VTEP2 -->|5. Decapsulate| PodB
-
-    classDef pod fill:#326CE5,stroke:#333,color:white
-    classDef vtep fill:#FA8320,stroke:#333,color:white
-    classDef encap fill:#00C7B7,stroke:#333,color:white
-
-    class PodA,PodB pod
-    class VTEP1,VTEP2 vtep
-    class Outer,Inner encap
-```
-
-## Direct/未封装模式
-
-Direct 路由模式使用原生 IP 路由，无需任何封装，可提供尽可能最佳的性能。
+Direct 路由模式使用原生 IP 路由，无需任何封装，可提供尽可能高的性能。
 
 ### Direct 模式的要求
 
 | 要求           | 描述                                    |
 | --------------------- | ---------------------------------------------- |
-| **L2 邻接**      | Node 必须位于同一 L2 网络，或者       |
+| **L2 邻接**      | Node 必须位于同一 L2 网络中，或者       |
 | **BGP 路由**       | 外部路由器必须通过 BGP 学习 Pod 路由 |
 | **路由传播** | 物理网络必须能够路由 Pod CIDR          |
 
 ### Direct 模式拓扑
 
-```mermaid
-flowchart TD
-    subgraph Rack1["Rack 1"]
-        Node1[Node 1<br>10.0.1.10<br>Pods: 192.168.1.0/26]
-        Node2[Node 2<br>10.0.1.11<br>Pods: 192.168.1.64/26]
-        ToR1[ToR Switch 1]
-    end
-
-    subgraph Rack2["Rack 2"]
-        Node3[Node 3<br>10.0.2.10<br>Pods: 192.168.2.0/26]
-        Node4[Node 4<br>10.0.2.11<br>Pods: 192.168.2.64/26]
-        ToR2[ToR Switch 2]
-    end
-
-    subgraph Core["Core Network"]
-        Spine[Spine Switch]
-    end
-
-    Node1 <-->|BGP| ToR1
-    Node2 <-->|BGP| ToR1
-    Node3 <-->|BGP| ToR2
-    Node4 <-->|BGP| ToR2
-
-    ToR1 <-->|BGP| Spine
-    ToR2 <-->|BGP| Spine
-
-    classDef node fill:#FA8320,stroke:#333,color:white
-    classDef switch fill:#326CE5,stroke:#333,color:white
-
-    class Node1,Node2,Node3,Node4 node
-    class ToR1,ToR2,Spine switch
-```
+![每个机架中的 Node 通过 BGP 与其机架的 ToR 交换机对等，两个 ToR 交换机则与共享的 Spine 交换机对等，因此 Pod 路由无需任何覆盖网络即可原生传播。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-4.svg)
 
 ### Direct 模式 IPPool 配置
 
@@ -398,23 +270,23 @@ ip route
 # 192.168.2.64/26 via 10.0.1.1 dev eth0 proto bird   # Rack 2 via ToR
 ```
 
-## 模式对比
+## 模式比较
 
-### IPIP 与 VXLAN 与 Direct
+### IPIP 对比 VXLAN 对比 Direct
 
 | 特性               | IPIP                | VXLAN                | Direct       |
 | --------------------- | ------------------- | -------------------- | ------------ |
 | **协议**          | IP 协议 4       | UDP 端口 4789        | 原生 IP    |
 | **开销**          | 20 字节            | 50 字节             | 0 字节      |
 | **MTU**               | 1480                | 1450                 | 1500         |
-| **防火墙兼容性** | 可能需要 IP 协议 4 | UDP 直通     | 原生       |
-| **硬件卸载**  | 有限             | 支持更好       | 完全支持 |
+| **防火墙兼容性** | 可能需要 IP 协议 4 | UDP 可直通     | 原生       |
+| **硬件卸载**  | 有限             | 支持更好       | 完整支持 |
 | **L2 要求**    | 否                  | 否                   | 是（或 BGP） |
 | **组播**         | 不需要          | 不需要（单播） | 不需要   |
 | **性能**       | 良好                | 良好                 | 最佳         |
 | **复杂度**        | 低                 | 低                  | 中等       |
 
-### 性能基准对比
+### 性能基准测试比较
 
 ```
 Test Environment:
@@ -453,55 +325,19 @@ CPU Usage (% per Gbps):
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 数据包流对比
+### 数据包流比较
 
-```mermaid
-flowchart TD
-    subgraph Direct["Direct Mode"]
-        D1[Pod A] --> D2[eth0]
-        D2 --> D3[Physical Network]
-        D3 --> D4[eth0]
-        D4 --> D5[Pod B]
-    end
-
-    subgraph IPIP["IPIP Mode"]
-        I1[Pod A] --> I2[tunl0 encap]
-        I2 --> I3[eth0]
-        I3 --> I4[Physical Network]
-        I4 --> I5[eth0]
-        I5 --> I6[tunl0 decap]
-        I6 --> I7[Pod B]
-    end
-
-    subgraph VXLAN["VXLAN Mode"]
-        V1[Pod A] --> V2[VTEP encap]
-        V2 --> V3[UDP:4789]
-        V3 --> V4[eth0]
-        V4 --> V5[Physical Network]
-        V5 --> V6[eth0]
-        V6 --> V7[UDP:4789]
-        V7 --> V8[VTEP decap]
-        V8 --> V9[Pod B]
-    end
-
-    classDef direct fill:#00C7B7,stroke:#333,color:white
-    classDef ipip fill:#FA8320,stroke:#333,color:white
-    classDef vxlan fill:#326CE5,stroke:#333,color:white
-
-    class D1,D2,D3,D4,D5 direct
-    class I1,I2,I3,I4,I5,I6,I7 ipip
-    class V1,V2,V3,V4,V5,V6,V7,V8,V9 vxlan
-```
+![三条通道分别追踪 Direct、IPIP 和 VXLAN 模式下相同的 Pod A 到 Pod B 跳转，显示它们之间仅在物理网络边界的封装步骤不同。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-5.svg)
 
 ## 云服务提供商兼容性
 
-| 提供商        | IPIP | VXLAN | Direct           | 推荐               |
+| 提供商        | IPIP | VXLAN | Direct           | 推荐方案               |
 | --------------- | ---- | ----- | ---------------- | ------------------------- |
 | **AWS EC2**     | 是  | 是   | 使用 VPC 路由 | VXLAN 或 IPIP CrossSubnet |
 | **AWS EKS**     | 是  | 是   | 有限          | VXLAN（默认）           |
 | **Azure**       | 是  | 是   | 使用 UDR         | VXLAN                     |
 | **GCP**         | 是  | 是   | 使用 VPC 路由  | IPIP CrossSubnet          |
-| **本地部署环境** | 是  | 是   | 是（BGP）        | Direct（使用 BGP）         |
+| **本地部署** | 是  | 是   | 是（BGP）        | Direct（使用 BGP）         |
 | **裸金属**  | 是  | 是   | 是              | Direct（使用 BGP）         |
 | **OpenStack**   | 是  | 是   | 是              | 取决于 neutron 配置 |
 
@@ -577,7 +413,7 @@ kubectl rollout restart deployment -n <namespace>
 calicoctl delete ippool default-ipv4-ippool
 ```
 
-### 从覆盖网络迁移到 Direct
+### 从 Overlay 迁移到 Direct
 
 ```yaml
 # Step 1: Ensure BGP is configured
@@ -639,7 +475,7 @@ spec:
   wireguardMTU: 1440
 ```
 
-### 巨型帧配置
+### Jumbo Frames 配置
 
 ```yaml
 # For networks supporting jumbo frames (MTU 9000)
@@ -669,60 +505,27 @@ tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 
 ## 决策流程图
 
-```mermaid
-flowchart TD
-    Start[Select Networking Mode] --> Q1{Cloud or On-Prem?}
-
-    Q1 -->|Cloud| Q2{Which Provider?}
-    Q1 -->|On-Premises| Q3{BGP Available?}
-
-    Q2 -->|AWS| AWS[VXLAN or IPIP CrossSubnet]
-    Q2 -->|Azure| Azure[VXLAN]
-    Q2 -->|GCP| GCP[IPIP CrossSubnet]
-    Q2 -->|Other| Q4{VPC supports IP routing?}
-
-    Q3 -->|Yes| Direct[Direct Mode + BGP]
-    Q3 -->|No| Q5{L2 Adjacency?}
-
-    Q4 -->|Yes| IPIP[IPIP CrossSubnet]
-    Q4 -->|No| VXLAN[VXLAN Mode]
-
-    Q5 -->|Yes| Direct
-    Q5 -->|No| VXLAN
-
-    AWS --> Done[Configuration Complete]
-    Azure --> Done
-    GCP --> Done
-    Direct --> Done
-    IPIP --> Done
-    VXLAN --> Done
-
-    classDef decision fill:#FFD700,stroke:#333,color:black
-    classDef result fill:#00C7B7,stroke:#333,color:white
-
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class AWS,Azure,GCP,Direct,IPIP,VXLAN,Done result
-```
+![一棵决策树从云环境与本地部署环境的分支开始，经过服务提供商、VPC 路由以及 BGP/L2 邻接性问题，最终确定 VXLAN、IPIP CrossSubnet 或 Direct 模式；其中本地部署环境的 BGP 路径被突出显示为性能最高的路线。](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-6.svg)
 
 ## 总结
 
-选择合适的网络模式对实现最佳 Calico 性能至关重要：
+选择正确的网络模式对于实现最佳 Calico 性能至关重要：
 
 1. **IPIP 模式**：云环境的默认选择，配置简单
-2. **VXLAN 模式**：具有更好的防火墙兼容性，是标准覆盖网络协议
-3. **Direct 模式**：适用于具有 BGP 基础设施的本地部署环境，可实现最高性能
+2. **VXLAN 模式**：防火墙兼容性更好，是标准覆盖网络协议
+3. **Direct 模式**：使用 BGP 基础设施的本地部署环境可获得最高性能
 
-关键注意事项：
+关键考虑因素：
 
 * **云部署**：使用 VXLAN 或 IPIP CrossSubnet
 * **使用 BGP 的本地部署环境**：使用 Direct 模式以获得最佳性能
-* **混合环境**：IPIP 或 VXLAN CrossSubnet 可提供良好的平衡
-* **性能关键型场景**：使用具有适当 BGP 配置的 Direct 模式
+* **混合环境**：IPIP 或 VXLAN CrossSubnet 可提供良好平衡
+* **性能关键型场景**：使用正确 BGP 配置的 Direct 模式
 
-[上一节：第 2 部分 - Calico 架构深入剖析](02-architecture.md)
+[上一节：第 2 部分 - Calico 架构深入解析](02-architecture.md)
 
 [返回 Calico 概览](./README.md)
 
 ## 测验
 
-为测试您在本章所学的内容，请尝试[网络模式测验](../../quizzes/networking/calico/03-networking-modes-quiz.md)。
+要检验你在本章中学到的内容，请尝试 [网络模式测验](../../quizzes/networking/calico/03-networking-modes-quiz.md)。

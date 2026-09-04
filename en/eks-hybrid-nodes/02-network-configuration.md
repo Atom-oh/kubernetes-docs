@@ -10,7 +10,9 @@ This document covers the network configuration required for EKS Hybrid Nodes, in
 
 The following diagram illustrates the complete network topology for EKS Hybrid Nodes, including VPC configuration, Transit Gateway routing, remote CIDRs, and firewall rules.
 
-![EKS Hybrid Nodes Network Prerequisites](../.gitbook/assets/hybrid-prereq-diagram.png)
+![Hybrid nodes prerequisites diagram tying the cluster's RemoteNodeNetwork and RemotePodNetwork settings to route tables on both the VPC and on-prem sides.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
 ### VPC as Network Hub
 
@@ -819,13 +821,17 @@ status:
 
 Making on-premises pod CIDRs routable is essential for webhooks, east-west traffic, and AWS service integration (ALB, Prometheus, etc.).
 
-![Remote Pod CIDRs](../.gitbook/assets/hybrid-nodes-remote-pod-cidrs.png)
+![Diagram of two hybrid nodes with their own pod CIDRs reaching AWS through the on-prem router and gateway.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-0.html)
 
 ### Option 1: BGP (Recommended)
 
 CNI acts as a virtual router and propagates per-node pod CIDR routes to the local on-premises router. This is the most dynamic and maintainable approach.
 
-![BGP Routing](../.gitbook/assets/hybrid-nodes-bgp.png)
+![Diagram of each hybrid node advertising its own pod CIDR to the on-prem router with a BGP UPDATE.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-1.html)
 
 #### Cilium BGP Control Plane Configuration
 
@@ -1004,7 +1010,9 @@ Hybrid nodes should show Session State `established`.
 
 Manual router configuration with pod CIDRs. Simplest but error-prone and requires manual updates when nodes change.
 
-![Static Routes](../.gitbook/assets/hybrid-nodes-static-routes.png)
+![Diagram of static routes on the on-prem router pointing each pod CIDR at its node IP as the next hop.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-2.html)
 
 #### Understanding Cluster-Pool IPAM Allocation
 
@@ -1165,7 +1173,9 @@ ip route add 10.85.1.0/25 via 10.80.1.12
 
 Nodes respond to ARP requests for hosted pod IPs. Requires Layer 2 network proximity to the local router. Cilium has built-in proxy ARP support. No router BGP or static route configuration needed, but pod CIDR must not overlap with other networks.
 
-![ARP Proxying](../.gitbook/assets/hybrid-nodes-arp-proxy.png)
+![Diagram of a node answering ARP requests for pod IPs with its own MAC, so the router treats pods as hosts on the same link.](../.gitbook/assets/en-eks-hybrid-nodes-02-network-configuration-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-02-network-configuration-3.html)
 
 ***
 

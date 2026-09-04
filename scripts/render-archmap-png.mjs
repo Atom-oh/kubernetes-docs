@@ -1,99 +1,127 @@
 #!/usr/bin/env node
-// Render deterministic PNG stills of delivered archify archmaps.
+// Render the static PNG fallback for delivered archify viewers
+// (public/archmaps/<lang>-<stem>.html -> <lang>/.gitbook/assets/<lang>-<stem>.png).
 //
-// Replaces the retired `headless_shell --screenshot --virtual-time-budget` recipe,
-// which captured before the viewer's `document.fonts.ready` re-layout ran and
-// left legend count badges positioned from pre-font-swap text widths.
+// Why not `headless_shell --screenshot`: it captures before the viewer's
+// `document.fonts.ready` re-layout runs, so legend count badges are placed
+// from pre-font-swap text widths and overlap the last glyph of every label
+// (the delivered HTML itself is fine in a browser). This drives the same
+// Chromium through playwright-core, waits for fonts + one settled frame,
+// then screenshots at the reader's 1600x1080 desktop size.
 //
 // Usage:
-//   node scripts/render-archmap-png.mjs <stem> [<stem> ...]   # ko+en pair per stem suffix
-//   node scripts/render-archmap-png.mjs --all                 # every public/archmaps/*.html
+//   node scripts/render-archmap-png.mjs <stem> [<stem> ...]      # ko + en
+//   node scripts/render-archmap-png.mjs --all                    # every spec in assets/diagrams/archify
 //   node scripts/render-archmap-png.mjs --html <in.html> --out <out.png>
-//
-// Environment:
-//   PLAYWRIGHT_CORE_DIR  dir whose node_modules has playwright-core
-//                        (default: /home/atomoh/awsops/web)
-//   ARCHMAP_CHROME       Chromium binary (default: newest
-//                        ~/.cache/ms-playwright/chromium_headless_shell-*)
-//   FONTCONFIG_FILE      optional fontconfig override for deterministic CJK
+// Env:
+//   ARCHMAP_CHROME        Chromium/headless_shell binary (default: playwright's chromium_headless_shell)
+//   PLAYWRIGHT_CORE_DIR   a directory whose node_modules holds playwright-core
+//   FONTCONFIG_FILE       forwarded to Chromium (deterministic CJK font selection)
+import { createRequire } from 'node:module';
+import { existsSync, readdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 
-import { createRequire } from 'node:module'
-import { readdirSync, existsSync } from 'node:fs'
-import path from 'node:path'
-import os from 'node:os'
+const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const VIEWPORT = { width: 1600, height: 1080 };
 
-const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
-const pwDir = process.env.PLAYWRIGHT_CORE_DIR || '/home/atomoh/awsops/web'
-const require_ = createRequire(path.join(pwDir, 'noop.js'))
-const { chromium } = require_('playwright-core')
+function loadPlaywright() {
+  const candidates = [
+    process.env.PLAYWRIGHT_CORE_DIR,
+    ROOT,
+    join(homedir(), '.npm', '_npx'),
+  ].filter(Boolean);
+  for (const dir of candidates) {
+    const roots = dir.endsWith('_npx') && existsSync(dir)
+      ? readdirSync(dir).map((d) => join(dir, d))
+      : [dir];
+    for (const r of roots) {
+      const pkg = join(r, 'node_modules', 'playwright-core', 'package.json');
+      if (existsSync(pkg)) return createRequire(pkg)('playwright-core');
+    }
+  }
+  throw new Error('playwright-core not found: set PLAYWRIGHT_CORE_DIR to a project that has it installed');
+}
 
 function chromePath() {
-  if (process.env.ARCHMAP_CHROME) return process.env.ARCHMAP_CHROME
-  const base = path.join(os.homedir(), '.cache/ms-playwright')
-  const shells = readdirSync(base).filter((d) => d.startsWith('chromium_headless_shell-')).sort()
-  if (shells.length === 0) throw new Error(`no chromium_headless_shell under ${base}; set ARCHMAP_CHROME`)
-  return path.join(base, shells[shells.length - 1], 'chrome-linux', 'headless_shell')
+  if (process.env.ARCHMAP_CHROME) return process.env.ARCHMAP_CHROME;
+  const base = join(homedir(), '.cache', 'ms-playwright');
+  if (!existsSync(base)) throw new Error('no ~/.cache/ms-playwright; set ARCHMAP_CHROME');
+  const shells = readdirSync(base).filter((d) => d.startsWith('chromium_headless_shell-')).sort();
+  if (!shells.length) throw new Error('no chromium_headless_shell under ~/.cache/ms-playwright; set ARCHMAP_CHROME');
+  return join(base, shells[shells.length - 1], 'chrome-linux', 'headless_shell');
 }
 
-function jobs(argv) {
-  const list = []
-  if (argv[0] === '--html') {
-    const out = argv[argv.indexOf('--out') + 1]
-    if (!out) throw new Error('--html requires --out <png>')
-    return [{ html: path.resolve(argv[1]), png: path.resolve(out) }]
+function parseArgs(argv) {
+  const jobs = [];
+  const stems = [];
+  let all = false;
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (a === '--all') all = true;
+    else if (a === '--html') {
+      const html = argv[++i];
+      if (argv[i + 1] !== '--out') throw new Error('--html needs --out <png>');
+      jobs.push({ html: resolve(html), out: resolve(argv[i += 2]) });
+    } else stems.push(a);
   }
-  const stems = argv[0] === '--all'
-    ? readdirSync(path.join(repoRoot, 'public/archmaps'))
-        .filter((f) => f.endsWith('.html')).map((f) => f.replace(/\.html$/, ''))
-    : argv.flatMap((s) => (/^(ko|en)-/.test(s) ? [s] : [`ko-${s}`, `en-${s}`]))
+  if (all) {
+    const seen = new Set();
+    for (const f of readdirSync(join(ROOT, 'assets', 'diagrams', 'archify'))) {
+      const m = /^(ko|en)-(.+)\.[a-z]+\.json$/.exec(f);
+      if (m) seen.add(m[2]);
+    }
+    stems.push(...[...seen].sort());
+  }
   for (const stem of stems) {
-    const lang = stem.split('-')[0]
-    list.push({
-      html: path.join(repoRoot, 'public/archmaps', `${stem}.html`),
-      png: path.join(repoRoot, lang, '.gitbook/assets', `${stem}.png`)
-    })
+    for (const lang of ['ko', 'en']) {
+      const html = join(ROOT, 'public', 'archmaps', `${lang}-${stem}.html`);
+      if (!existsSync(html)) { console.error(`skip ${lang}-${stem}: no ${html}`); continue; }
+      jobs.push({ html, out: join(ROOT, lang, '.gitbook', 'assets', `${lang}-${stem}.png`) });
+    }
   }
-  return list
+  if (!jobs.length) throw new Error('nothing to render (usage in file header)');
+  return jobs;
 }
 
-const argv = process.argv.slice(2)
-if (argv.length === 0) {
-  console.error('usage: render-archmap-png.mjs <stem>... | --all | --html <in> --out <out>')
-  process.exit(2)
+async function settle(page) {
+  await page.evaluate(async () => {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    // two frames: fonts.ready -> viewer re-layout (legend badges, stage fit) -> paint
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  await page.waitForTimeout(250);
 }
 
+const jobs = parseArgs(process.argv.slice(2));
+const { chromium } = loadPlaywright();
 const browser = await chromium.launch({
   executablePath: chromePath(),
-  args: ['--no-sandbox', '--disable-gpu', '--force-prefers-reduced-motion', '--hide-scrollbars']
-})
-let failures = 0
+  args: ['--no-sandbox', '--disable-gpu', '--force-prefers-reduced-motion', '--hide-scrollbars'],
+  env: { ...process.env },
+});
+let failed = 0;
 try {
-  const page = await browser.newPage({ viewport: { width: 1600, height: 1080 }, deviceScaleFactor: 1 })
-  for (const job of jobs(argv)) {
-    if (!existsSync(job.html)) {
-      console.error(`MISSING ${job.html}`)
-      failures += 1
-      continue
+  const context = await browser.newContext({ viewport: VIEWPORT, reducedMotion: 'reduce', deviceScaleFactor: 1 });
+  for (const job of jobs) {
+    const page = await context.newPage();
+    try {
+      await page.goto('file://' + job.html, { waitUntil: 'load' });
+      await settle(page);
+      await page.screenshot({ path: job.out, clip: { x: 0, y: 0, ...VIEWPORT } });
+      console.log(`rendered ${job.out}`);
+    } catch (err) {
+      failed += 1;
+      console.error(`FAILED ${job.html}: ${err.message}`);
+    } finally {
+      await page.close();
     }
-    await page.goto(`file://${job.html}`, { waitUntil: 'load' })
-    // The viewer re-lays-out legend badges after webfonts finish loading; a
-    // screenshot before that captures pre-font-swap text widths.
-    await page.evaluate(() => document.fonts.ready)
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
-    // Stills are captured at the viewer's "read" detail level, whose CSS hides
-    // [data-detail="fine"] content (component tags). The viewer defines
-    // map/read/full; force full so the PNG carries everything the
-    // interactive view shows.
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll('[data-detail-level]')) el.setAttribute('data-detail-level', 'full')
-    })
-    await page.waitForTimeout(400)
-    const tall = await page.evaluate(() =>
-      Math.max(document.documentElement.scrollHeight, document.body.scrollHeight))
-    await page.screenshot({ path: job.png, fullPage: tall > 1080 })
-    console.log(`rendered ${path.relative(repoRoot, job.png)}${tall > 1080 ? ` (fullPage ${tall}px)` : ''}`)
   }
 } finally {
-  await browser.close()
+  await browser.close();
 }
-process.exit(failures === 0 ? 0 : 1)
+if (failed) {
+  console.error(`${failed} render(s) failed`);
+  process.exit(1);
+}

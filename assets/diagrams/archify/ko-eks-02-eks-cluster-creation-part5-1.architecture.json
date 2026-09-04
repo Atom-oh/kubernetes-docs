@@ -1,0 +1,35 @@
+{
+  "schema_version": 1, "diagram_type": "architecture",
+  "meta": { "title": "EKS IAM 액세스 방법 비교", "output": "ko-eks-02-eks-cluster-creation-part5-1.html", "quality_profile": "showcase", "animation": "trace", "viewBox": [1320, 700] },
+  "components": [
+    { "id": "iam", "type": "security", "label": "IAM 사용자 · 역할", "sublabel": "AWS 계정", "pos": [40, 300], "size": [220, 76] },
+    { "id": "entry", "type": "backend", "label": "EKS 액세스 엔트리", "sublabel": "권장 방법", "pos": [370, 110], "size": [220, 76] },
+    { "id": "authcm", "type": "backend", "label": "aws-auth ConfigMap", "sublabel": "기존 방법", "pos": [370, 490], "size": [230, 76] },
+    { "id": "api", "type": "cloud", "label": "Kubernetes API", "sublabel": "인증 · 인가", "pos": [730, 300], "size": [210, 76] },
+    { "id": "cluster", "type": "cloud", "label": "EKS 클러스터", "sublabel": "리소스 접근", "pos": [1050, 300], "size": [210, 76] }
+  ],
+  "connections": [
+    { "id": "iam-entry", "from": "iam", "to": "entry", "label": "새로운 방식" },
+    { "id": "iam-cm", "from": "iam", "to": "authcm", "label": "기존 방식" },
+    { "id": "entry-api", "from": "entry", "to": "api", "label": "주체 매핑" },
+    { "id": "cm-api", "from": "authcm", "to": "api" },
+    { "id": "api-cluster", "from": "api", "to": "cluster", "label": "요청 처리" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "EKS 액세스 엔트리", "items": [
+      "AWS 네이티브 API로 관리되어 CloudTrail 감사와 IaC 적용이 쉽다",
+      "액세스 정책으로 관리자·편집자·조회자 수준을 바로 부여할 수 있다",
+      "authenticationMode: API 또는 API_AND_CONFIG_MAP에서 동작한다"
+    ]},
+    { "dot": "rose", "title": "aws-auth ConfigMap의 한계", "items": [
+      "수동 편집이라 YAML 실수 한 번으로 전체 접근이 끊길 수 있다",
+      "ConfigMap 크기 제한이 있어 주체가 많아지면 관리가 어려워진다",
+      "AWS API 감사 대상이 아니라 변경 추적이 어렵다"
+    ]},
+    { "dot": "emerald", "title": "전환 방침", "items": [
+      "새 클러스터는 액세스 엔트리만 쓰는 API 모드로 시작한다",
+      "기존 클러스터는 API_AND_CONFIG_MAP으로 바꾼 뒤 엔트리로 순차 이전한다",
+      "이전이 끝나면 aws-auth 항목을 제거하고 API 모드로 고정한다"
+    ]}
+  ]
+}

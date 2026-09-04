@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes Volume Snapshot and Restore",
+    "output": "en-eks-04-eks-storage-part2-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "messagebus": {
+          "label": "클레임"
+        },
+        "backend": {
+          "label": "스냅샷 객체"
+        },
+        "cloud": {
+          "label": "AWS 스냅샷"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "snap",
+      "label": "스냅샷 생성"
+    },
+    {
+      "id": "restore",
+      "label": "복원"
+    }
+  ],
+  "mainPath": [
+    "pvc",
+    "vs",
+    "vsc",
+    "snapshot"
+  ],
+  "nodes": [
+    {
+      "id": "pvc",
+      "lane": "snap",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Source PVC",
+      "sublabel": "PV → EBS",
+      "width": 150
+    },
+    {
+      "id": "vs",
+      "lane": "snap",
+      "col": 1,
+      "type": "backend",
+      "label": "VolumeSnapshot",
+      "sublabel": "Class lookup",
+      "width": 160
+    },
+    {
+      "id": "vsc",
+      "lane": "snap",
+      "col": 2,
+      "type": "backend",
+      "label": "SnapshotContent",
+      "sublabel": "CSI delegate",
+      "width": 160
+    },
+    {
+      "id": "snapshot",
+      "lane": "snap",
+      "col": 3,
+      "type": "cloud",
+      "label": "EBS snapshot",
+      "sublabel": "Incremental",
+      "width": 150
+    },
+    {
+      "id": "newpvc",
+      "lane": "restore",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Restore PVC",
+      "sublabel": "dataSource",
+      "width": 150
+    },
+    {
+      "id": "newpv",
+      "lane": "restore",
+      "col": 5,
+      "type": "backend",
+      "label": "New PV bound",
+      "sublabel": "Restore done",
+      "width": 155
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "pvc",
+      "to": "vs",
+      "label": "1 request"
+    },
+    {
+      "id": "e2",
+      "from": "vs",
+      "to": "vsc",
+      "label": "2 bind"
+    },
+    {
+      "id": "e3",
+      "from": "vsc",
+      "to": "snapshot",
+      "label": "3 create"
+    },
+    {
+      "id": "e4",
+      "from": "snapshot",
+      "to": "newpvc",
+      "label": "4 dataSource",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "newpvc",
+      "to": "newpv",
+      "label": "5 provision"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Snapshot object model",
+      "items": [
+        "The VolumeSnapshotClass decides which CSI driver takes the snapshot",
+        "VolumeSnapshot is the user request; VolumeSnapshotContent points at the real snapshot",
+        "EBS snapshots are incremental, so later snapshots store only changed blocks"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Restore procedure",
+      "items": [
+        "Name the VolumeSnapshot and its kind in the new PVC's spec.dataSource",
+        "The restored volume must be the same size as the original or larger",
+        "A restored PV inherits the region and AZ constraints of the snapshot"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Operational automation",
+      "items": [
+        "Velero manages snapshot schedules and restore jobs declaratively",
+        "Include PVC snapshots in namespace-level backups",
+        "Rehearse restores regularly to confirm recovery actually works"
+      ]
+    }
+  ]
+}

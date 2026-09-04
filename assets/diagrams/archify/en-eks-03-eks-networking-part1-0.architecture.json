@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Networking Architecture Overview",
+    "output": "en-eks-03-eks-networking-part1-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      830
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet",
+      "sublabel": "Clients",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "igw",
+      "type": "cloud",
+      "label": "Internet Gateway",
+      "sublabel": "VPC entry point",
+      "pos": [
+        270,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "Public subnet",
+      "pos": [
+        520,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "natgw",
+      "type": "cloud",
+      "label": "NAT Gateway",
+      "sublabel": "Public subnet",
+      "pos": [
+        520,
+        650
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker Nodes",
+      "sublabel": "Private subnet · pods",
+      "pos": [
+        800,
+        380
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vpce",
+      "type": "security",
+      "label": "VPC Endpoints",
+      "sublabel": "PrivateLink",
+      "pos": [
+        1030,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "awssvc",
+      "type": "database",
+      "label": "S3 · ECR · STS",
+      "sublabel": "AWS services",
+      "pos": [
+        1030,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "eks-cp",
+      "type": "cloud",
+      "label": "EKS Control Plane",
+      "sublabel": "AWS-managed account",
+      "pos": [
+        1030,
+        650
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC (10.0.0.0/16)",
+      "wraps": [
+        "igw",
+        "alb",
+        "natgw",
+        "workers",
+        "vpce"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "internet-igw",
+      "from": "internet",
+      "to": "igw",
+      "label": "Inbound",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDy": -18
+    },
+    {
+      "id": "igw-alb",
+      "from": "igw",
+      "to": "alb",
+      "label": "HTTP(S)"
+    },
+    {
+      "id": "alb-workers",
+      "from": "alb",
+      "to": "workers",
+      "label": "Target group"
+    },
+    {
+      "id": "workers-natgw",
+      "from": "workers",
+      "to": "natgw",
+      "label": "Outbound SNAT"
+    },
+    {
+      "id": "natgw-igw",
+      "from": "natgw",
+      "to": "igw",
+      "label": "Egress to internet"
+    },
+    {
+      "id": "workers-cp",
+      "from": "workers",
+      "to": "eks-cp",
+      "label": "kubelet ↔ API (443)"
+    },
+    {
+      "id": "workers-vpce",
+      "from": "workers",
+      "to": "vpce",
+      "label": "AWS API calls",
+      "labelDx": -46
+    },
+    {
+      "id": "vpce-awssvc",
+      "from": "vpce",
+      "to": "awssvc",
+      "label": "Private connectivity",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Traffic paths",
+      "items": [
+        "Inbound: internet → IGW → ALB/NLB in the public subnet → worker nodes in the private subnet",
+        "Outbound: worker nodes → NAT Gateway → IGW → internet",
+        "Control plane: worker nodes talk directly to the EKS API server on port 443"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Private connectivity",
+      "items": [
+        "S3 uses a gateway endpoint; ECR, EKS, and STS use interface endpoints",
+        "VPC endpoints cut NAT Gateway data-processing charges",
+        "Placing worker nodes in private subnets is the baseline security design"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Security Group Configuration",
+    "output": "en-eks-03-eks-networking-part1-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      780
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "80 / 443 inbound",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "EKS API Server",
+      "sublabel": "Control plane security group",
+      "pos": [
+        450,
+        110
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Other Worker Nodes",
+      "sublabel": "Worker node security group",
+      "pos": [
+        860,
+        110
+      ],
+      "size": [
+        210,
+        70
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker Nodes",
+      "sublabel": "Worker node security group",
+      "pos": [
+        450,
+        550
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "internet",
+      "type": "external",
+      "label": "Internet · ECR · S3",
+      "sublabel": "Images · packages",
+      "pos": [
+        860,
+        550
+      ],
+      "size": [
+        220,
+        70
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lb-workers",
+      "from": "lb",
+      "to": "workers",
+      "label": "Forwards to NodePort"
+    },
+    {
+      "id": "workers-api",
+      "from": "workers",
+      "to": "api",
+      "label": "443/TCP",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-node2",
+      "from": "api",
+      "to": "node2",
+      "label": "1025-65535/TCP kubelet"
+    },
+    {
+      "id": "workers-node2",
+      "from": "workers",
+      "to": "node2",
+      "label": "ALL node-to-node"
+    },
+    {
+      "id": "workers-internet",
+      "from": "workers",
+      "to": "internet",
+      "label": "ALL → 0.0.0.0/0",
+      "labelDy": 26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control plane security group",
+      "items": [
+        "Inbound 443/TCP — allowed only from the worker node security group",
+        "Outbound 1025-65535/TCP — sent only to the worker node security group",
+        "kubectl exec, logs, and port-forward all use this outbound range"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Worker node security group",
+      "items": [
+        "Inbound 443/TCP and 1025-65535/TCP — allowed from the control plane security group",
+        "Inbound ALL — from the same worker node security group (node-to-node pod traffic)",
+        "Outbound ALL to 0.0.0.0/0 — image pulls and AWS API calls"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Best practices",
+      "items": [
+        "Avoid inbound 0.0.0.0/0; reference a security group ID as the source instead",
+        "Keep port ranges as narrow as possible and prune unused rules regularly",
+        "Separate load balancer, database, and administrative security groups by role"
+      ]
+    }
+  ]
+}

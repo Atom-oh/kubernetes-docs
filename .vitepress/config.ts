@@ -4,7 +4,17 @@ import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { summarySidebar } from './summary'
 import { vitepressBuildScope } from './site-scope.mjs'
-import { extractDescription, localeAlternates, normalizeReadmeHref } from './seo.mjs'
+import {
+  breadcrumbTrail,
+  canonicalUrl,
+  extractDescription,
+  extractLastUpdated,
+  localeAlternates,
+  normalizeReadmeHref,
+  siteName,
+  socialHeadTags,
+  structuredData
+} from './seo.mjs'
 
 const GA_ID = 'G-GWVLEW5JLL'
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
@@ -15,6 +25,49 @@ const FAVICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www
 //   VP_DISABLE_MERMAID=1    skip the withMermaid wrapper (mermaid bundling)
 const DISABLE_SEARCH = process.env.VP_DISABLE_SEARCH === '1'
 const DISABLE_MERMAID = process.env.VP_DISABLE_MERMAID === '1'
+
+// markdown-it gives us raw alt text; it lands in an HTML attribute and in
+// element content, so both need escaping.
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+// Sitemap lastmod source: the document header date, keyed by clean URL path.
+function buildLastUpdatedIndex() {
+  const index = new Map<string, string>()
+  const walk = (directory: string) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = path.join(directory, entry.name)
+      if (entry.isDirectory()) {
+        walk(entryPath)
+        continue
+      }
+      if (!entry.name.endsWith('.md')) continue
+      const lastUpdated = extractLastUpdated(fs.readFileSync(entryPath, 'utf8'))
+      if (!lastUpdated) continue
+      const relative = path.relative(process.cwd(), entryPath).split(path.sep).join('/')
+      const clean = relative
+        .replace(/\.md$/, '')
+        .replace(/(^|\/)README$/, '$1')
+        .replace(/(^|\/)index$/, '$1')
+      index.set(normalizeSitemapUrl(clean), lastUpdated)
+    }
+  }
+  for (const locale of ['ko', 'en']) {
+    if (fs.existsSync(locale)) walk(locale)
+  }
+  return index
+}
+
+function normalizeSitemapUrl(url: string) {
+  return url.replace(/^\/+/, '').replace(/\/+$/, '')
+}
+
+const lastUpdatedIndex = buildLastUpdatedIndex()
 
 const config = defineConfig({
   title: 'Cloud Native Operations',
@@ -65,52 +118,120 @@ const config = defineConfig({
           if (!match) continue
           const base = match[1]
           const caption = base.startsWith('ko-') ? '전체 화면으로 열기 ↗' : 'Open full screen ↗'
-          // The static PNG paragraph directly above (same diagram) is dropped
-          // below; carry its alt text onto the iframe so the accessible name
-          // is the diagram description, not the file slug.
-          const prevInline = tokens[i - 2]
-          const imageToken =
-            i >= 3 && tokens[i - 3].type === 'paragraph_open' &&
-            prevInline && prevInline.type === 'inline' && prevInline.children
-              ? prevInline.children.find(
-                  (t) => t.type === 'image' && (t.attrGet('src') || '').includes(`${base}.png`)
-                )
-              : undefined
-          const title = ((imageToken && imageToken.content) || base)
-            .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+          let start = i
+          // The static PNG paragraph directly above describes the same diagram.
+          // The iframe replaces the image, but its alt text is the only prose
+          // description of the diagram on the page — keep it as the accessible
+          // name and as indexable text instead of dropping it with the image.
+          let alt = ''
           const html = new state.Token('html_block', '', 0)
           html.content =
             `<div class="archmap-embed">` +
-            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${title}" loading="lazy" allowfullscreen></iframe>` +
+            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${base}" loading="lazy" allowfullscreen></iframe>` +
             `<p class="archmap-embed__caption"><a href="${href}" target="_blank" rel="noopener">${caption}</a></p>` +
             `</div>\n`
-          let start = i
-          if (imageToken) {
-            start = i - 3
+          // Tag the static PNG paragraph directly above (same diagram) instead
+          // of dropping it. On wide screens CSS hides it and only the iframe
+          // shows; under 768px the iframe is hidden and this PNG takes over,
+          // because the viewer's toolbar and nodes get clipped at that width
+          // with no way to scroll to them. Keeping the original tokens (rather
+          // than emitting a raw <img>) lets VitePress rewrite the asset path as
+          // usual, and medium-zoom still picks it up for tap-to-zoom.
+          const prevInline = tokens[i - 2]
+          if (
+            i >= 3 &&
+            tokens[i - 3].type === 'paragraph_open' &&
+            prevInline && prevInline.type === 'inline' && prevInline.children
+          ) {
+            const image = prevInline.children.find(
+              (t) => t.type === 'image' && (t.attrGet('src') || '').includes(`${base}.png`)
+            )
+            if (image) {
+              alt = image.attrGet('alt') || image.content || ''
+              start = i - 3
+            }
           }
+          const html = new state.Token('html_block', '', 0)
+          html.content =
+            `<figure class="archmap-embed">` +
+            `<iframe src="/kubernetes-docs/archmaps/${base}.html" title="${escapeHtml(alt || base)}" loading="lazy" allowfullscreen></iframe>` +
+            `<figcaption class="archmap-embed__caption">` +
+            (alt ? `<span class="archmap-embed__alt">${escapeHtml(alt)}</span>` : '') +
+            `<a href="${href}" target="_blank" rel="noopener">${caption}</a>` +
+            `</figcaption>` +
+            `</figure>\n`
           tokens.splice(start, i + 3 - start, html)
           i = start
+          ) {
+            const existing = tokens[i - 3].attrGet('class')
+            tokens[i - 3].attrSet(
+              'class',
+              existing ? `${existing} archmap-embed__fallback` : 'archmap-embed__fallback'
+            )
+          }
+          // Replace only the link paragraph; the PNG paragraph above stays.
+          tokens.splice(i, 3, html)
         }
       })
     }
   },
   transformPageData(pageData, { siteConfig }) {
-    if (pageData.frontmatter.description) return
     const source = fs.readFileSync(
       path.join(siteConfig.srcDir, pageData.filePath),
       'utf8'
     )
-    const description = extractDescription(source)
-    if (description) pageData.description = description
+    if (!pageData.frontmatter.description) {
+      const description = extractDescription(source)
+      if (description) pageData.description = description
+    }
+    // Carried on frontmatter so transformHead can date the structured data
+    // without re-reading the file.
+    const lastUpdated = extractLastUpdated(source)
+    if (lastUpdated) pageData.frontmatter.lastUpdatedISO = lastUpdated
   },
   transformHead({ pageData }) {
-    return localeAlternates(pageData.relativePath).map(({ hreflang, href }) => [
-      'link',
-      { rel: 'alternate', hreflang, href }
-    ])
+    // The 404 page is a rendering shell, not a document: it must not be
+    // indexed and has nothing to be canonical to.
+    if (pageData.relativePath === '404.md') {
+      return [['meta', { name: 'robots', content: 'noindex' }]]
+    }
+
+    const url = canonicalUrl(pageData.relativePath)
+    const locale = pageData.relativePath.split('/')[0]
+    const title = pageData.title || siteName
+    const description = pageData.description || pageData.frontmatter.description
+    const crumbs = breadcrumbTrail(pageData.relativePath, pageData.title)
+
+    return [
+      ['link', { rel: 'canonical', href: url }],
+      ...localeAlternates(pageData.relativePath).map(({ hreflang, href }) => [
+        'link',
+        { rel: 'alternate', hreflang, href }
+      ]),
+      ...socialHeadTags({ title, description, url, locale }),
+      [
+        'script',
+        { type: 'application/ld+json' },
+        structuredData({
+          title,
+          description,
+          url,
+          locale,
+          lastUpdated: pageData.frontmatter.lastUpdatedISO,
+          crumbs
+        })
+      ]
+    ]
   },
   sitemap: {
-    hostname: 'https://www.atomai.click/kubernetes-docs/'
+    hostname: 'https://www.atomai.click/kubernetes-docs/',
+    // Stamp each entry with the document's own "last updated" header so
+    // recrawls follow real edits instead of the whole tree looking equally old.
+    transformItems: (items) =>
+      items.map((item) => {
+        const lastmod = lastUpdatedIndex.get(normalizeSitemapUrl(item.url))
+        return lastmod ? { ...item, lastmod } : item
+      })
   },
   head: [
     ['link', { rel: 'icon', href: FAVICON }],

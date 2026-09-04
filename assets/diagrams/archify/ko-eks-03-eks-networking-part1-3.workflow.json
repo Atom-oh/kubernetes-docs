@@ -1,0 +1,167 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS VPC 요구 사항 점검 흐름",
+    "output": "ko-eks-03-eks-networking-part1-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "워크로드"
+        },
+        "cloud": {
+          "label": "AWS 서비스"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "check",
+      "label": "VPC 사전 요구 사항"
+    },
+    {
+      "id": "egress",
+      "label": "인터넷 액세스 경로"
+    }
+  ],
+  "mainPath": [
+    "subnets",
+    "ipspace",
+    "dns",
+    "egress",
+    "ready"
+  ],
+  "nodes": [
+    {
+      "id": "subnets",
+      "lane": "check",
+      "col": 0,
+      "type": "cloud",
+      "label": "서브넷 확보",
+      "sublabel": "2개 이상 AZ",
+      "width": 140
+    },
+    {
+      "id": "ipspace",
+      "lane": "check",
+      "col": 1,
+      "type": "cloud",
+      "label": "IP 주소 확보",
+      "sublabel": "노드 × 최대 파드 수",
+      "width": 150
+    },
+    {
+      "id": "dns",
+      "lane": "check",
+      "col": 2,
+      "type": "backend",
+      "label": "DNS 활성화",
+      "sublabel": "호스트네임 · 확인",
+      "width": 145
+    },
+    {
+      "id": "egress",
+      "lane": "check",
+      "col": 3,
+      "type": "cloud",
+      "label": "인터넷 액세스",
+      "sublabel": "노드 아웃바운드 필요",
+      "width": 150
+    },
+    {
+      "id": "ready",
+      "lane": "check",
+      "col": 5,
+      "type": "backend",
+      "label": "클러스터 생성 가능",
+      "sublabel": "요구 사항 충족",
+      "width": 155
+    },
+    {
+      "id": "natgw",
+      "lane": "egress",
+      "col": 4,
+      "type": "cloud",
+      "label": "NAT 게이트웨이",
+      "sublabel": "프라이빗 서브넷 권장",
+      "width": 155
+    },
+    {
+      "id": "igw",
+      "lane": "egress",
+      "col": 5,
+      "type": "cloud",
+      "label": "인터넷 게이트웨이",
+      "sublabel": "퍼블릭 서브넷",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "subnets",
+      "to": "ipspace"
+    },
+    {
+      "id": "e2",
+      "from": "ipspace",
+      "to": "dns"
+    },
+    {
+      "id": "e3",
+      "from": "dns",
+      "to": "egress"
+    },
+    {
+      "id": "e4",
+      "from": "egress",
+      "to": "natgw",
+      "label": "프라이빗 노드",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "natgw",
+      "to": "igw",
+      "label": "SNAT 후 송신"
+    },
+    {
+      "id": "e6",
+      "from": "egress",
+      "to": "ready",
+      "label": "충족",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "서브넷과 IP",
+      "items": [
+        "최소 2개의 가용 영역에 서브넷을 배치하고 AZ마다 퍼블릭·프라이빗을 함께 둔다",
+        "노드당 파드 수 × 노드 수만큼 IP가 필요하며 ENI 보조 IP까지 계산한다",
+        "규모별 권장: 소규모 /24, 중간 /20, 대규모 /16"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "DNS 설정",
+      "items": [
+        "enableDnsHostnames: true, enableDnsSupport: true 두 값이 모두 필요하다",
+        "노드 간 통신과 서비스 디스커버리, AWS 서비스 통합이 DNS에 의존한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "인터넷 액세스가 필요한 이유",
+      "items": [
+        "컨테이너 이미지 내려받기와 AWS API 호출에 아웃바운드 경로가 필요하다",
+        "프라이빗 서브넷 노드는 NAT 게이트웨이를, 완전 프라이빗 클러스터는 VPC 엔드포인트를 쓴다"
+      ]
+    }
+  ]
+}

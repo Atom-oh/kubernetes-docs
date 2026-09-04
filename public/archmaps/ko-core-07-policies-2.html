@@ -5044,8 +5044,8 @@
         <path data-edge-from="pss" data-edge-to="baseline" data-edge-label="수준" data-edge-key="6" data-edge-id="pss-baseline" data-composition-points="960,260;1050,260" d="M 960 260 L 1050 260" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="pss" data-edge-to="restricted" data-edge-key="7" data-edge-id="pss-restricted" data-composition-points="960,267;1005,267;1005,332;1050,332" d="M 960 267 L 997 267 Q 1005 267 1005 275 L 1005 324 Q 1005 332 1013 332 L 1050 332" class="a-default" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="psa" data-edge-to="pod" data-edge-label="검증" data-edge-key="8" data-edge-id="psa-pod" data-composition-points="450,290;450,530" d="M 450 290 L 450 530" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="pod" data-edge-to="allow" data-edge-label="준수" data-edge-key="9" data-edge-id="pod-allow" data-composition-points="550,553;600,553;600,516;650,516" d="M 550 553 L 592 553 Q 600 553 600 545 L 600 524 Q 600 516 608 516 L 650 516" class="a-emphasis" data-animate="edge" style="--step:9" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="pod" data-edge-to="deny" data-edge-label="위반 (enforce)" data-edge-key="10" data-edge-id="pod-deny" data-composition-points="550,567;600,567;600,606;650,606" d="M 550 567 L 592 567 Q 600 567 600 575 L 600 598 Q 600 606 608 606 L 650 606" class="a-security" data-animate="edge" style="--step:10" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
+        <path data-edge-from="pod" data-edge-to="allow" data-edge-label="준수" data-edge-key="9" data-edge-id="pod-allow" data-composition-points="550,560;600,560;600,516;650,516" d="M 550 560 L 592 560 Q 600 560 600 552 L 600 524 Q 600 516 608 516 L 650 516" class="a-emphasis" data-animate="edge" style="--step:9" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="pod" data-edge-to="deny" data-edge-label="위반 (enforce)" data-edge-key="10" data-edge-id="pod-deny" data-composition-points="550,560;600,560;600,606;650,606" d="M 550 560 L 592 560 Q 600 560 600 568 L 600 598 Q 600 606 608 606 L 650 606" class="a-security" data-animate="edge" style="--step:10" stroke-width="1.5" marker-end="url(#arrowhead-security)"/>
 
         <!-- Components -->
         <g id="node-ns" data-node-id="ns" data-node-label="네임스페이스" tabindex="0" role="button" aria-label="Focus 네임스페이스, pod-security.kubernetes.io/&lt;mode&gt;, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="pod-security.kubernetes.io/&lt;mode&gt;" data-node-context="Architecture component">
@@ -5162,22 +5162,28 @@
           <text data-node-label="" x="450" y="564" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">포드 생성 요청</text>
         </g>
 
-        <g id="node-allow" data-node-id="allow" data-node-label="허용" tabindex="0" role="button" aria-label="Focus 허용, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-context="Architecture component">
+        <g id="node-allow" data-node-id="allow" data-node-label="허용" tabindex="0" role="button" aria-label="Focus 허용, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-context="Architecture component">
           <title>허용 · Architecture component</title>
           <rect x="650" y="490" width="150" height="52" rx="6" class="c-mask"/>
-          <rect x="650" y="490" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:10" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(656 496) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          <rect x="650" y="490" width="150" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:10" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(656 496) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
           <text data-node-label="" x="725" y="520" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">허용</text>
         </g>
 
-        <g id="node-deny" data-node-id="deny" data-node-label="거부" tabindex="0" role="button" aria-label="Focus 거부, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-context="Architecture component">
+        <g id="node-deny" data-node-id="deny" data-node-label="거부" tabindex="0" role="button" aria-label="Focus 거부, Architecture component" aria-pressed="false" data-node-kind="frontend" data-node-context="Architecture component">
           <title>거부 · Architecture component</title>
           <rect x="650" y="580" width="150" height="52" rx="6" class="c-mask"/>
-          <rect x="650" y="580" width="150" height="52" rx="6" class="c-backend" data-animate="node" style="--step:11" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(656 586) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          <rect x="650" y="580" width="150" height="52" rx="6" class="c-frontend" data-animate="node" style="--step:11" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(656 586) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
           <text data-node-label="" x="725" y="610" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">거부</text>
         </g>
@@ -5208,12 +5214,12 @@
           <text x="450" y="450" class="t-backend" font-size="8" text-anchor="middle">검증</text>
         </g>
         <g data-detail="context" data-edge-from="pod" data-edge-to="allow" data-edge-label="준수" data-edge-key="9" data-edge-id="pod-allow">
-          <rect x="585" y="514.5" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="600" y="524.5" class="t-backend" font-size="8" text-anchor="middle">준수</text>
+          <rect x="585" y="518" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="600" y="528" class="t-backend" font-size="8" text-anchor="middle">준수</text>
         </g>
         <g data-detail="context" data-edge-from="pod" data-edge-to="deny" data-edge-label="위반 (enforce)" data-edge-key="10" data-edge-id="pod-deny">
-          <rect x="561.4" y="566.5" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="600" y="576.5" class="t-security" font-size="8" text-anchor="middle">위반 (enforce)</text>
+          <rect x="551.4" y="614" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="590" y="624" class="t-security" font-size="8" text-anchor="middle">위반 (enforce)</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
@@ -5230,21 +5236,25 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="40" y="684" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="포드 요청" data-legend-x="40" data-legend-baseline="704" data-legend-width="88">
-            <rect x="40" y="695" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="62" y="704" class="t-muted" font-size="10" font-weight="500">포드 요청</text>
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="판정" data-legend-x="40" data-legend-baseline="704" data-legend-width="63">
+            <rect x="40" y="695" width="16" height="10" rx="2.5" class="c-frontend" stroke-width="1"/>
+            <text x="62" y="704" class="t-muted" font-size="10" font-weight="500">판정</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="정책 수준" data-legend-x="150" data-legend-baseline="704" data-legend-width="88">
-            <rect x="150" y="695" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="172" y="704" class="t-muted" font-size="10" font-weight="500">정책 수준</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="포드 요청" data-legend-x="125" data-legend-baseline="704" data-legend-width="88">
+            <rect x="125" y="695" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
+            <text x="147" y="704" class="t-muted" font-size="10" font-weight="500">포드 요청</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="어드미션 모드" data-legend-x="260" data-legend-baseline="704" data-legend-width="108">
-            <rect x="260" y="695" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
-            <text x="282" y="704" class="t-muted" font-size="10" font-weight="500">어드미션 모드</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="정책 수준" data-legend-x="235" data-legend-baseline="704" data-legend-width="88">
+            <rect x="235" y="695" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
+            <text x="257" y="704" class="t-muted" font-size="10" font-weight="500">정책 수준</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="네임스페이스" data-legend-x="390" data-legend-baseline="704" data-legend-width="103">
-            <rect x="390" y="695" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="412" y="704" class="t-muted" font-size="10" font-weight="500">네임스페이스</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="어드미션 모드" data-legend-x="345" data-legend-baseline="704" data-legend-width="108">
+            <rect x="345" y="695" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
+            <text x="367" y="704" class="t-muted" font-size="10" font-weight="500">어드미션 모드</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="네임스페이스" data-legend-x="475" data-legend-baseline="704" data-legend-width="103">
+            <rect x="475" y="695" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
+            <text x="497" y="704" class="t-muted" font-size="10" font-weight="500">네임스페이스</text>
           </g>
         </g>
       </svg>

@@ -1,0 +1,42 @@
+{
+  "schema_version": 2, "diagram_type": "workflow",
+  "meta": { "title": "EKS 클러스터 액세스 구성", "output": "ko-eks-02-eks-cluster-creation-part5-0.html", "quality_profile": "showcase", "animation": "trace",
+    "legend": { "mode": "auto", "entries": { "backend": {"label": "구성 단계"}, "security": {"label": "권한"}, "cloud": {"label": "AWS 설정"} } } },
+  "lanes": [
+    { "id": "auth", "label": "인증 구성" },
+    { "id": "authz", "label": "인가와 검증" }
+  ],
+  "mainPath": ["kubeconfig", "iam", "entry", "rbac"],
+  "nodes": [
+    { "id": "kubeconfig", "lane": "auth", "col": 0, "type": "backend", "label": "kubeconfig 구성", "sublabel": "update-kubeconfig", "width": 165 },
+    { "id": "iam", "lane": "auth", "col": 1, "type": "security", "label": "IAM 주체 선택", "sublabel": "사용자 · 역할", "width": 160 },
+    { "id": "entry", "lane": "auth", "col": 2, "type": "cloud", "label": "액세스 엔트리", "sublabel": "정책 연결", "width": 155 },
+    { "id": "rbac", "lane": "authz", "col": 3, "type": "security", "label": "RBAC 구성", "sublabel": "Role 정의", "width": 150 },
+    { "id": "binding", "lane": "authz", "col": 4, "type": "security", "label": "RoleBinding", "sublabel": "주체 연결", "width": 155 },
+    { "id": "test", "lane": "authz", "col": 5, "type": "backend", "label": "액세스 테스트", "sublabel": "auth can-i", "width": 155 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "kubeconfig", "to": "iam", "label": "1 대상 지정" },
+    { "id": "e2", "from": "iam", "to": "entry", "label": "2 엔트리 생성" },
+    { "id": "e3", "from": "entry", "to": "rbac", "label": "3 세분화", "role": "branch" },
+    { "id": "e4", "from": "rbac", "to": "binding", "label": "4 바인딩" },
+    { "id": "e5", "from": "binding", "to": "test", "label": "5 확인" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "EKS 액세스 엔트리 (권장)", "items": [
+      "aws eks create-access-entry로 IAM 주체를 클러스터에 등록한다",
+      "aws eks associate-access-policy로 AmazonEKSClusterAdminPolicy 같은 정책을 붙인다",
+      "액세스 엔트리는 AWS API로 관리되어 감사 로그와 IaC에 자연스럽게 들어간다"
+    ]},
+    { "dot": "emerald", "title": "aws-auth ConfigMap (기존 방식)", "items": [
+      "kube-system 네임스페이스의 aws-auth ConfigMap에 mapRoles·mapUsers를 직접 편집한다",
+      "ConfigMap 크기 제한과 수동 편집 실수 위험이 있어 새 클러스터에는 권장되지 않는다",
+      "authenticationMode를 API_AND_CONFIG_MAP으로 두면 두 방식을 함께 쓸 수 있다"
+    ]},
+    { "dot": "amber", "title": "RBAC로 범위 좁히기", "items": [
+      "네임스페이스 단위 Role과 RoleBinding으로 팀별 권한을 나눈다",
+      "클러스터 전체 권한이 필요할 때만 ClusterRole·ClusterRoleBinding을 쓴다",
+      "kubectl auth can-i --as <주체>로 실제 권한을 확인한다"
+    ]}
+  ]
+}

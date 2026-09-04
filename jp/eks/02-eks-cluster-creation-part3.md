@@ -1,88 +1,92 @@
-# パート 3: AWS Management Console と CLI による Cluster の作成
+# パート3: AWS Management Console と CLI を使用したクラスターの作成
 
-## AWS Management Console を使用した Cluster の作成
+## AWS Management Console を使用したクラスターの作成
 
-AWS Management Console を使用して EKS Cluster を作成する手順は次のとおりです。
+AWS Management Console を使用して EKS クラスターを作成する手順は次のとおりです。
 
-![AWS Management Console 経由の EKS Cluster 作成ワークフロー](../.gitbook/assets/eks_console_cluster_creation_workflow.png)
+![サインインからクラスター設定、確認と作成、ノードグループの追加、接続までのコンソールベースの作成ワークフロー図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-0.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-0.html)
 
 1. [AWS Management Console](https://console.aws.amazon.com/) にログインします。
 2. 「EKS」を検索するか、サービス一覧から「Elastic Kubernetes Service」を選択します。
-3. 「Clusters」ページで「Create cluster」ボタンをクリックします。
+3. 「Clusters」ページで、「Create cluster」ボタンをクリックします。
 
-### Cluster 設定
+### クラスターの設定
 
 4. 「Configure cluster」ページで、次の情報を入力します。
-   * **Cluster name**: Cluster の一意の名前を入力します。
-   * **Kubernetes version**: 使用する Kubernetes version を選択します。
-   * **Cluster service role**: 新しい role を作成するか、既存の role を選択します。
-   * **Tags**: 必要に応じて tag を追加します。
+   * **Cluster name**: クラスターの一意の名前を入力します。
+   * **Kubernetes version**: 使用する Kubernetes バージョンを選択します。
+   * **Cluster service role**: 新しいロールを作成するか、既存のロールを選択します。
+   * **Tags**: 必要に応じてタグを追加します。
    * 「Next」ボタンをクリックします。
 
-### ネットワーキングの指定
+### ネットワークの指定
 
 5. 「Specify networking」ページで、次の情報を入力します。
    * **VPC**: 新しい VPC を作成するか、既存の VPC を選択します。
-   * **Subnets**: Cluster に使用する subnets を選択します。少なくとも 2 つの subnets は異なる availability zones に存在する必要があります。
-   * **Security groups**: Cluster に使用する security groups を選択します。
-   * **Cluster endpoint access**: Cluster API server endpoint へのアクセスを設定します。
-     * **Public**: API server にはインターネットからアクセスできます。
-     * **Private**: API server には VPC 内からのみアクセスできます。
-     * **Public and Private**: API server にはインターネットと VPC 内の両方からアクセスできます。
+   * **Subnets**: クラスターで使用するサブネットを選択します。少なくとも 2 つのサブネットが異なるアベイラビリティーゾーンに存在する必要があります。
+   * **Security groups**: クラスターで使用するセキュリティグループを選択します。
+   * **Cluster endpoint access**: クラスター API サーバーエンドポイントへのアクセスを設定します。
+     * **Public**: インターネットから API サーバーにアクセスできます。
+     * **Private**: VPC 内からのみ API サーバーにアクセスできます。
+     * **Public and Private**: インターネットと VPC 内の両方から API サーバーにアクセスできます。
    * 「Next」ボタンをクリックします。
 
-### ログ記録の設定
+### ロギングの設定
 
 6. 「Configure logging」ページで、次の情報を入力します。
-   * **Control plane logging**: 有効にする log types を選択します。
-     * API server logs
-     * Audit logs
-     * Authenticator logs
-     * Controller manager logs
-     * Scheduler logs
+   * **Control plane logging**: 有効にするログタイプを選択します。
+     * API サーバーログ
+     * 監査ログ
+     * Authenticator ログ
+     * Controller manager ログ
+     * Scheduler ログ
    * 「Next」ボタンをクリックします。
 
-### Add-ons の選択
+### アドオンの選択
 
 7. 「Select add-ons」ページで、次の情報を入力します。
-   * **Amazon VPC CNI**: pod networking 用の CNI plugin です。
-   * **CoreDNS**: Cluster 内の DNS service です。
-   * **kube-proxy**: network proxy と load balancing を提供します。
+   * **Amazon VPC CNI**: Pod ネットワーキング用の CNI プラグインです。
+   * **CoreDNS**: クラスター内の DNS サービスです。
+   * **kube-proxy**: ネットワークプロキシと負荷分散を提供します。
    * 「Next」ボタンをクリックします。
 
-### レビューして作成
+### 確認と作成
 
-8. 「Review and create」ページで、設定を確認し、「Create」ボタンをクリックします。
+8. 「Review and create」ページで設定を確認し、「Create」ボタンをクリックします。
 
-Cluster の作成が完了したら、「Add node group」ボタンをクリックして Node Group を追加できます。
+クラスターの作成が完了したら、「Add node group」ボタンをクリックしてノードグループを追加できます。
 
-### Node Group の追加
+### ノードグループの追加
 
 1. 「Node group configuration」ページで、次の情報を入力します。
-   * **Node group name**: Node Group の一意の名前を入力します。
-   * **Node IAM role**: 新しい role を作成するか、既存の role を選択します。
+   * **Node group name**: ノードグループの一意の名前を入力します。
+   * **Node IAM role**: 新しいロールを作成するか、既存のロールを選択します。
    * 「Next」ボタンをクリックします。
 2. 「Set compute and scaling configuration」ページで、次の情報を入力します。
-   * **AMI type**: nodes に使用する AMI type を選択します。
-   * **Instance type**: nodes に使用する EC2 instance type を選択します。
-   * **Disk size**: nodes の disk size を指定します。
-   * **Node count**: nodes の最小数、最大数、希望数を指定します。
+   * **AMI type**: ノードで使用する AMI タイプを選択します。
+   * **Instance type**: ノードで使用する EC2 インスタンスタイプを選択します。
+   * **Disk size**: ノードのディスクサイズを指定します。
+   * **Node count**: ノードの最小数、最大数、希望する数を指定します。
    * 「Next」ボタンをクリックします。
 3. 「Specify networking」ページで、次の情報を入力します。
-   * **Subnets**: Node Group に使用する subnets を選択します。
-   * **Remote access configuration**: SSH access を設定します。
+   * **Subnets**: ノードグループで使用するサブネットを選択します。
+   * **Remote access configuration**: SSH アクセスを設定します。
    * 「Next」ボタンをクリックします。
-4. 「Review and create」ページで、設定を確認し、「Create」ボタンをクリックします。
+4. 「Review and create」ページで設定を確認し、「Create」ボタンをクリックします。
 
-## AWS CLI を使用した Cluster の作成
+## AWS CLI を使用したクラスターの作成
 
-AWS CLI を使用して EKS Cluster を作成するプロセスは、複数の手順で構成されます。この方法は、より細かい制御が必要な場合に役立ちます。
+AWS CLI を使用した EKS クラスターの作成プロセスはいくつかの手順で構成されます。より細かな制御が必要な場合に、この方法は有用です。
 
-![AWS CLI 経由の EKS Cluster 作成ワークフロー](../.gitbook/assets/eks_cli_cluster_creation_workflow.png)
+![最初に IAM ロール、VPC、セキュリティグループを作成し、次にクラスターとノードグループを作成した後、kubeconfig を更新する AWS CLI ワークフロー図。](../.gitbook/assets/en-eks-02-eks-cluster-creation-part3-1.png)
 
-### 1. Cluster IAM Role の作成
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-02-eks-cluster-creation-part3-1.html)
 
-EKS Cluster には、Kubernetes control plane が AWS resources を管理できるようにする IAM role が必要です。
+### 1. クラスター IAM ロールの作成
+
+EKS クラスターには、Kubernetes コントロールプレーンが AWS リソースを管理できるようにする IAM ロールが必要です。
 
 ```bash
 # Create role
@@ -107,9 +111,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
 ```
 
-### 2. VPC と Subnets の作成
+### 2. VPC とサブネットの作成
 
-EKS Cluster には VPC と subnets が必要です。既存の VPC を使用することも、新しい VPC を作成することもできます。
+EKS クラスターには VPC とサブネットが必要です。既存の VPC を使用することも、新しい VPC を作成することもできます。
 
 ```bash
 # Create VPC
@@ -137,9 +141,9 @@ aws ec2 create-subnet \
   --output text
 ```
 
-### 3. Cluster Security Group の作成
+### 3. クラスターセキュリティグループの作成
 
-EKS Cluster には security group が必要です。
+EKS クラスターにはセキュリティグループが必要です。
 
 ```bash
 # Create security group
@@ -158,9 +162,9 @@ aws ec2 authorize-security-group-ingress \
   --cidr 0.0.0.0/0
 ```
 
-### 4. EKS Cluster の作成
+### 4. EKS クラスターの作成
 
-これで EKS Cluster を作成できます。
+これで EKS クラスターを作成できます。
 
 ```bash
 aws eks create-cluster \
@@ -170,7 +174,7 @@ aws eks create-cluster \
   --kubernetes-version 1.26
 ```
 
-Cluster の作成が完了するまで待ちます。Cluster の status を確認するには、次のコマンドを実行します。
+クラスターの作成が完了するまで待ちます。クラスターのステータスを確認するには、次のコマンドを実行します。
 
 ```bash
 aws eks describe-cluster \
@@ -178,9 +182,9 @@ aws eks describe-cluster \
   --query "cluster.status"
 ```
 
-### 5. Node IAM Role の作成
+### 5. ノード IAM ロールの作成
 
-EKS nodes には AWS resources にアクセスするための IAM role が必要です。
+EKS ノードには、AWS リソースにアクセスするための IAM ロールが必要です。
 
 ```bash
 # Create role
@@ -213,9 +217,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 ```
 
-### 6. Node Group の作成
+### 6. ノードグループの作成
 
-これで Node Group を作成できます。
+これでノードグループを作成できます。
 
 ```bash
 aws eks create-nodegroup \
@@ -228,7 +232,7 @@ aws eks create-nodegroup \
   --instance-types m5.large
 ```
 
-Node Group の作成が完了するまで待ちます。Node Group の status を確認するには、次のコマンドを実行します。
+ノードグループの作成が完了するまで待ちます。ノードグループのステータスを確認するには、次のコマンドを実行します。
 
 ```bash
 aws eks describe-nodegroup \
@@ -239,7 +243,7 @@ aws eks describe-nodegroup \
 
 ### 7. kubeconfig の設定
 
-Cluster にアクセスするには、kubeconfig file を設定する必要があります。
+クラスターにアクセスするには、kubeconfig ファイルを設定する必要があります。
 
 ```bash
 aws eks update-kubeconfig \
@@ -247,9 +251,9 @@ aws eks update-kubeconfig \
   --region us-west-2
 ```
 
-### 8. Cluster の確認
+### 8. クラスターの検証
 
-Cluster が正しく設定されていることを確認します。
+クラスターが正しく設定されていることを確認します。
 
 ```bash
 kubectl get nodes
@@ -257,4 +261,4 @@ kubectl get nodes
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[EKS Cluster 作成 - パート 3 クイズ](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md)に挑戦してみてください。
+この章で学んだ内容を確認するには、[EKS Cluster Creation - Part 3 クイズ](../quizzes/eks/02-eks-cluster-creation-part3-quiz.md)に挑戦してください。

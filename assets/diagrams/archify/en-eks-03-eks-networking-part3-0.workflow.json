@@ -1,0 +1,159 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "EKS Network Performance Tuning Order",
+    "output": "en-eks-03-eks-networking-part3-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "노드·커널 튜닝"
+        },
+        "cloud": {
+          "label": "AWS 리소스"
+        },
+        "security": {
+          "label": "정책"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "infra",
+      "label": "인프라 · 커널 최적화"
+    },
+    {
+      "id": "sched",
+      "label": "배치 · 정책 최적화"
+    }
+  ],
+  "mainPath": [
+    "instance",
+    "mode",
+    "mtu",
+    "tcp",
+    "placement",
+    "policy"
+  ],
+  "nodes": [
+    {
+      "id": "instance",
+      "lane": "infra",
+      "col": 0,
+      "type": "cloud",
+      "label": "Pick instance type",
+      "sublabel": "C5n · M5n · R5n",
+      "width": 165
+    },
+    {
+      "id": "mode",
+      "lane": "infra",
+      "col": 1,
+      "type": "cloud",
+      "label": "Choose CNI mode",
+      "sublabel": "VPC CNI · custom",
+      "width": 170
+    },
+    {
+      "id": "mtu",
+      "lane": "infra",
+      "col": 2,
+      "type": "backend",
+      "label": "Tune MTU",
+      "sublabel": "Jumbo frames 9001",
+      "width": 155
+    },
+    {
+      "id": "tcp",
+      "lane": "infra",
+      "col": 3,
+      "type": "backend",
+      "label": "Tune TCP",
+      "sublabel": "Scaling · BBR",
+      "width": 170
+    },
+    {
+      "id": "placement",
+      "lane": "sched",
+      "col": 4,
+      "type": "backend",
+      "label": "Placement locality",
+      "sublabel": "Affinity · topology",
+      "width": 150
+    },
+    {
+      "id": "policy",
+      "lane": "sched",
+      "col": 5,
+      "type": "security",
+      "label": "Trim net policies",
+      "sublabel": "Fewer, narrower",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "instance",
+      "to": "mode",
+      "label": "bandwidth set"
+    },
+    {
+      "id": "e2",
+      "from": "mode",
+      "to": "mtu",
+      "label": "CNI fixed"
+    },
+    {
+      "id": "e3",
+      "from": "mtu",
+      "to": "tcp"
+    },
+    {
+      "id": "e4",
+      "from": "tcp",
+      "to": "placement",
+      "label": "kernel tuned"
+    },
+    {
+      "id": "e5",
+      "from": "placement",
+      "to": "policy",
+      "label": "final pass"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Instances and CNI",
+      "items": [
+        "Pick types like C5n, M5n, or R5n that offer 25 Gbps or more plus enhanced networking (SR-IOV)",
+        "Use WARM_IP_TARGET and MINIMUM_IP_TARGET to cut IP allocation latency",
+        "If IPs run short, attach a secondary CIDR with custom networking"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "MTU and TCP",
+      "items": [
+        "Jumbo frames (9001 MTU) cut packet overhead, but the MTU must match along the whole path",
+        "Enable TCP window scaling and consider switching congestion control to BBR",
+        "Match TCP buffer sizes and keepalive values to the workload"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Placement and monitoring",
+      "items": [
+        "Keep chatty pods in one AZ with pod affinity and topology spread constraints",
+        "Topology-aware routing removes cross-AZ hops",
+        "Compare before and after with VPC Flow Logs and CloudWatch metrics, then verify with iperf3"
+      ]
+    }
+  ]
+}

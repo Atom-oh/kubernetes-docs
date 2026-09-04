@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "옵저버빌리티 실습 환경 아키텍처",
+    "output": "ko-labs-observability-overview-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      620
+    ]
+  },
+  "components": [
+    {
+      "id": "mgmt",
+      "type": "backend",
+      "label": "관리 클러스터 (VPC 1)",
+      "sublabel": "ArgoCD · Argo Rollouts",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        250,
+        76
+      ]
+    },
+    {
+      "id": "obs",
+      "type": "database",
+      "label": "관측 스택",
+      "sublabel": "Prometheus · Grafana · Loki · Tempo",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        280,
+        76
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "frontend",
+      "label": "서비스 클러스터 (VPC 2)",
+      "sublabel": "MSA 애플리케이션 · Karpenter · KEDA",
+      "pos": [
+        400,
+        120
+      ],
+      "size": [
+        290,
+        76
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "messagebus",
+      "label": "OTel Agent",
+      "sublabel": "DaemonSet 수집",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        230,
+        76
+      ]
+    },
+    {
+      "id": "awsapp",
+      "type": "cloud",
+      "label": "SQS · SNS · Aurora · MWAA",
+      "sublabel": "애플리케이션 의존 서비스",
+      "pos": [
+        780,
+        120
+      ],
+      "size": [
+        280,
+        76
+      ]
+    },
+    {
+      "id": "awsobs",
+      "type": "database",
+      "label": "AMP · AMG · CloudWatch",
+      "sublabel": "관리형 관측 백엔드",
+      "pos": [
+        700,
+        400
+      ],
+      "size": [
+        280,
+        76
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mgmt-svc",
+      "from": "mgmt",
+      "to": "svc",
+      "label": "GitOps 배포"
+    },
+    {
+      "id": "svc-awsapp",
+      "from": "svc",
+      "to": "awsapp",
+      "label": "메시지 · DB 호출"
+    },
+    {
+      "id": "svc-otel",
+      "from": "svc",
+      "to": "otel",
+      "label": "지표 · 로그 · 트레이스",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "otel-obs",
+      "from": "otel",
+      "to": "obs",
+      "label": "수집 전송"
+    },
+    {
+      "id": "obs-awsobs",
+      "from": "obs",
+      "to": "awsobs",
+      "label": "원격 쓰기"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "두 개의 클러스터",
+      "items": [
+        "VPC 1의 관리 클러스터에 ArgoCD, Argo Rollouts, 관측 스택을 둔다",
+        "VPC 2의 서비스 클러스터에서 MSA 애플리케이션과 부하 생성기를 돌린다",
+        "관측 대상과 관측 도구를 분리해 장애 시 관측 자체가 죽지 않도록 한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "텔레메트리 경로",
+      "items": [
+        "OTel Agent가 DaemonSet으로 각 노드의 지표·로그·트레이스를 모은다",
+        "OTel Collector가 Prometheus, Loki, Tempo로 신호별로 분기시킨다",
+        "Grafana 하나에서 세 신호를 함께 탐색한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "관리형 백엔드 연동",
+      "items": [
+        "Prometheus는 AMP로 원격 쓰기해 장기 보관과 고가용성을 얻는다",
+        "로그는 CloudWatch Logs 또는 OpenSearch로도 보낼 수 있다",
+        "Karpenter와 KEDA가 만드는 스케일 이벤트도 함께 관측 대상에 넣는다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Creating an EKS Cluster with the AWS CLI",
+    "output": "en-eks-02-eks-cluster-creation-part3-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "IAM"
+        },
+        "cloud": {
+          "label": "AWS 리소스"
+        },
+        "backend": {
+          "label": "접근 설정"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "사전 리소스"
+    },
+    {
+      "id": "cluster",
+      "label": "클러스터와 노드"
+    }
+  ],
+  "mainPath": [
+    "iamrole",
+    "vpc",
+    "sg",
+    "cluster"
+  ],
+  "nodes": [
+    {
+      "id": "iamrole",
+      "lane": "prep",
+      "col": 0,
+      "type": "security",
+      "label": "Cluster role",
+      "sublabel": "create-role",
+      "width": 155
+    },
+    {
+      "id": "vpc",
+      "lane": "prep",
+      "col": 1,
+      "type": "cloud",
+      "label": "VPC · subnets",
+      "sublabel": "create-subnet",
+      "width": 155
+    },
+    {
+      "id": "sg",
+      "lane": "prep",
+      "col": 2,
+      "type": "cloud",
+      "label": "Security group",
+      "sublabel": "ingress rules",
+      "width": 155
+    },
+    {
+      "id": "cluster",
+      "lane": "cluster",
+      "col": 3,
+      "type": "cloud",
+      "label": "Create cluster",
+      "sublabel": "create-cluster",
+      "width": 160
+    },
+    {
+      "id": "ng",
+      "lane": "cluster",
+      "col": 4,
+      "type": "cloud",
+      "label": "Node group",
+      "sublabel": "create-nodegroup",
+      "width": 165
+    },
+    {
+      "id": "kubeconfig",
+      "lane": "cluster",
+      "col": 5,
+      "type": "backend",
+      "label": "Access",
+      "sublabel": "update-kubeconfig",
+      "width": 165
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "iamrole",
+      "to": "vpc",
+      "label": "1 network"
+    },
+    {
+      "id": "e2",
+      "from": "vpc",
+      "to": "sg",
+      "label": "2 security"
+    },
+    {
+      "id": "e3",
+      "from": "sg",
+      "to": "cluster",
+      "label": "3 cluster"
+    },
+    {
+      "id": "e4",
+      "from": "cluster",
+      "to": "ng",
+      "label": "4 ACTIVE"
+    },
+    {
+      "id": "e5",
+      "from": "ng",
+      "to": "kubeconfig",
+      "label": "5 access"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Preparing IAM",
+      "items": [
+        "Attach AmazonEKSClusterPolicy to the cluster role",
+        "Attach AmazonEKSWorkerNodePolicy, AmazonEKS_CNI_Policy, and AmazonEC2ContainerRegistryReadOnly to the node role",
+        "Build it in two steps: aws iam create-role, then attach-role-policy"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Creating the cluster and nodes",
+      "items": [
+        "aws eks create-cluster --name my-cluster --role-arn <role> --resources-vpc-config subnetIds=...",
+        "Wait for ACTIVE with aws eks describe-cluster --name my-cluster --query cluster.status",
+        "After aws eks create-nodegroup, check progress with describe-nodegroup"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Confirming access",
+      "items": [
+        "Refresh the kubeconfig with aws eks update-kubeconfig --name my-cluster",
+        "kubectl get nodes confirms the nodes registered",
+        "Raw CLI creation has many steps, which suits learning; for production prefer eksctl or IaC"
+      ]
+    }
+  ]
+}

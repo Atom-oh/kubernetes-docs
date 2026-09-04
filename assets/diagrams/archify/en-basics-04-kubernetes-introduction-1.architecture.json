@@ -47,7 +47,7 @@
           "label": "Node components"
         },
         "frontend": {
-          "label": "Containers"
+          "label": "Container"
         },
         "external": {
           "label": "Control plane"

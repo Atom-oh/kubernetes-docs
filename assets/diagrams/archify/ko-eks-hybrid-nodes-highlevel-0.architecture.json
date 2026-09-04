@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 하이브리드 노드 네트워크 개요",
+    "output": "ko-eks-hybrid-nodes-highlevel-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "ekscp",
+      "type": "cloud",
+      "label": "EKS 컨트롤 플레인",
+      "sublabel": "AWS 관리 계정",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        210,
+        80
+      ]
+    },
+    {
+      "id": "cpeni",
+      "type": "cloud",
+      "label": "컨트롤 플레인 ENI",
+      "sublabel": "클러스터 VPC에 배치",
+      "pos": [
+        300,
+        150
+      ],
+      "size": [
+        200,
+        80
+      ]
+    },
+    {
+      "id": "vpcsub",
+      "type": "cloud",
+      "label": "클러스터 VPC 서브넷",
+      "sublabel": "172.16.0.0/16",
+      "pos": [
+        550,
+        150
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "cloudnodes",
+      "type": "backend",
+      "label": "클라우드 노드",
+      "sublabel": "VPC 내 EC2 워커",
+      "pos": [
+        300,
+        420
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "vpce",
+      "type": "security",
+      "label": "VPC 엔드포인트",
+      "sublabel": "기타 AWS 서비스 접근",
+      "pos": [
+        580,
+        420
+      ],
+      "size": [
+        230,
+        80
+      ]
+    },
+    {
+      "id": "link",
+      "type": "messagebus",
+      "label": "온프레미스 ↔ AWS 링크",
+      "sublabel": "Direct Connect · Site-to-Site VPN",
+      "pos": [
+        860,
+        150
+      ],
+      "size": [
+        280,
+        80
+      ]
+    },
+    {
+      "id": "onprem",
+      "type": "backend",
+      "label": "하이브리드 노드",
+      "sublabel": "온프레미스 워커 서브넷",
+      "pos": [
+        880,
+        420
+      ],
+      "size": [
+        260,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 리전",
+      "wraps": [
+        "ekscp",
+        "cpeni",
+        "vpcsub",
+        "cloudnodes",
+        "vpce"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "온프레미스 환경",
+      "wraps": [
+        "onprem"
+      ],
+      "pad": 30
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-eni",
+      "from": "ekscp",
+      "to": "cpeni",
+      "label": "ENI 생성"
+    },
+    {
+      "id": "eni-sub",
+      "from": "cpeni",
+      "to": "vpcsub",
+      "label": "kubelet"
+    },
+    {
+      "id": "cloud-sub",
+      "from": "cloudnodes",
+      "to": "vpcsub",
+      "label": "노드 IP"
+    },
+    {
+      "id": "vpce-sub",
+      "from": "vpce",
+      "to": "vpcsub",
+      "label": "프라이빗",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sub-link",
+      "from": "vpcsub",
+      "to": "link",
+      "label": "원격 대역"
+    },
+    {
+      "id": "link-onprem",
+      "from": "link",
+      "to": "onprem",
+      "label": "라우터 경유",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 95
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "연결 구조",
+      "items": [
+        "EKS 컨트롤 플레인은 클러스터 VPC에 ENI를 만들어 노드와 통신한다",
+        "하이브리드 노드는 온프레미스에서 이 ENI까지 프라이빗 경로로 도달해야 한다",
+        "클라우드 노드와 하이브리드 노드가 같은 클러스터에 함께 존재할 수 있다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "필요한 프라이빗 연결",
+      "items": [
+        "AWS Direct Connect 또는 Site-to-Site VPN 중 하나가 필수다",
+        "공용 인터넷 경유는 지원되지 않으며 양방향 라우팅이 성립해야 한다",
+        "VPC 라우팅 테이블에 원격 노드·파드 CIDR 경로를 게이트웨이로 추가한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "AWS 서비스 접근",
+      "items": [
+        "하이브리드 노드도 SSM·IAM Roles Anywhere로 자격 증명을 받아야 한다",
+        "ECR·S3 같은 서비스는 VPC 엔드포인트를 통해 프라이빗으로 접근할 수 있다",
+        "온프레미스에서 나가는 DNS 해결 경로도 함께 설계해야 한다"
+      ]
+    }
+  ]
+}

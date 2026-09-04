@@ -24,6 +24,10 @@ EKS 클러스터의 효율적인 스케일링은 성능, 비용, 안정성의 �
 
 기본 CPU/메모리 메트릭 외에 RPS, 큐 깊이, 비즈니스 메트릭 등을 기반으로 스케일링할 수 있습니다.
 
+![애플리케이션 메트릭이 Prometheus와 Prometheus Adapter를 거쳐 Kubernetes 메트릭 API로 노출되고 HPA가 이를 읽는 커스텀 메트릭 파이프라인 다이어그램.](../.gitbook/assets/ko-ops-06-scaling-strategies-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-06-scaling-strategies-0.html)
+
 ### 1.1 Prometheus Adapter 설치
 
 **Helm values.yaml:**

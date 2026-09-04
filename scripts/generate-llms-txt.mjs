@@ -8,6 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { supportedLocales } from '../.vitepress/site-scope.mjs'
+import { extractDescription } from '../.vitepress/seo.mjs'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
@@ -17,6 +18,7 @@ export const SITE_BASE = 'https://www.atomai.click/kubernetes-docs'
 const LOCALE_LABELS = { ko: '한국어', en: 'English' }
 const QUIZ_GROUP = /quiz/i
 const LAB_GROUP = /lab guides/i
+const ROOT_INDEX = 'README.md'
 
 // GitBook SUMMARY.md -> [{ group, items: [{ title, path }] }], link items only,
 // deduped by path within a group list (multi-part topics repeat part1 as the
@@ -50,7 +52,11 @@ export function pageUrl(locale, mdPath) {
   return `${SITE_BASE}/${locale}/${clean}`
 }
 
-export function buildLlmsTxt(summariesByLocale) {
+export function markdownPageUrl(locale, mdPath) {
+  return `${SITE_BASE}/llms/${locale}/${mdPath}`
+}
+
+export function buildLlmsTxt(summariesByLocale, readPagesByLocale = {}) {
   const lines = [
     '# Cloud Native Operations',
     '',
@@ -67,8 +73,20 @@ export function buildLlmsTxt(summariesByLocale) {
     for (const { group, items } of summariesByLocale[locale]) {
       if (QUIZ_GROUP.test(group) || LAB_GROUP.test(group)) continue
       for (const { title, path: mdPath } of items) {
+        if (mdPath === ROOT_INDEX) continue
+
+        const readPage = readPagesByLocale[locale]
+        const content = readPage?.(mdPath)
+        if (readPage && content === null) continue
+
         const label = group === title ? title : `${group} · ${title}`
-        lines.push(`- [${label}](${pageUrl(locale, mdPath)})`)
+        const description =
+          typeof content === 'string' ? extractDescription(content) : undefined
+        lines.push(
+          `- [${label}](${markdownPageUrl(locale, mdPath)})${
+            description ? `: ${description}` : ''
+          }`
+        )
       }
     }
     lines.push('')
@@ -93,6 +111,8 @@ export function buildLlmsFull(locale, groups, readPage) {
   for (const { group, items } of groups) {
     if (QUIZ_GROUP.test(group)) continue
     for (const { path: mdPath } of items) {
+      if (mdPath === ROOT_INDEX) continue
+
       const content = readPage(mdPath)
       if (content === null) {
         missing.push(mdPath)
@@ -106,28 +126,56 @@ export function buildLlmsFull(locale, groups, readPage) {
   return { text: chunks.join('\n'), missing }
 }
 
+function writeMarkdownPages(root, locale, groups, readPage) {
+  const rawRoot = path.join(root, 'public', 'llms', locale)
+  const seen = new Set()
+
+  for (const { group, items } of groups) {
+    if (QUIZ_GROUP.test(group) || LAB_GROUP.test(group)) continue
+
+    for (const { path: mdPath } of items) {
+      if (mdPath === ROOT_INDEX || seen.has(mdPath)) continue
+      seen.add(mdPath)
+
+      const content = readPage(mdPath)
+      if (content === null) continue
+
+      const outputPath = path.join(rawRoot, mdPath)
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true })
+      fs.writeFileSync(outputPath, content)
+    }
+  }
+}
+
 export function generateLlmsFiles(root = projectRoot) {
   const outDir = path.join(root, 'public')
   fs.mkdirSync(outDir, { recursive: true })
+  fs.rmSync(path.join(outDir, 'llms'), { recursive: true, force: true })
 
   const summaries = {}
+  const readPages = {}
   for (const locale of supportedLocales) {
     summaries[locale] = parseSummary(
       fs.readFileSync(path.join(root, locale, 'SUMMARY.md'), 'utf8')
     )
+    readPages[locale] = (mdPath) => {
+      const filePath = path.join(root, locale, mdPath)
+      return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
+    }
+    writeMarkdownPages(root, locale, summaries[locale], readPages[locale])
   }
 
   const written = []
   const indexPath = path.join(outDir, 'llms.txt')
-  fs.writeFileSync(indexPath, buildLlmsTxt(summaries))
+  fs.writeFileSync(indexPath, buildLlmsTxt(summaries, readPages))
   written.push(indexPath)
 
   for (const locale of supportedLocales) {
-    const readPage = (mdPath) => {
-      const filePath = path.join(root, locale, mdPath)
-      return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null
-    }
-    const { text, missing } = buildLlmsFull(locale, summaries[locale], readPage)
+    const { text, missing } = buildLlmsFull(
+      locale,
+      summaries[locale],
+      readPages[locale]
+    )
     for (const mdPath of missing) {
       console.warn(`llms-full-${locale}: skipping missing page ${locale}/${mdPath}`)
     }

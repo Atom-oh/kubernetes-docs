@@ -27,7 +27,9 @@ Istio의 내부 아키텍처와 네트워킹 메커니즘을 심층적으로 다
 
 ### 전체 구조
 
-![istio-overview](../../.gitbook/assets/istio-overview.png)
+![Istiod가 Kubernetes API 서버를 감시해 xDS 구성을 Ingress Gateway와 사이드카에 배포하고 파드 간 mTLS 통신이 이뤄지는 Istio 아키텍처 개요.](../../.gitbook/assets/ko-service-mesh-istio-03-architecture-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-03-architecture-0.html)
 
 ### Control Plane vs Data Plane
 
