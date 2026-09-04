@@ -14,13 +14,13 @@
       "mode": "auto",
       "entries": {
         "backend": {
-          "label": "Worker node"
+          "label": "Node"
         },
         "messagebus": {
           "label": "Tunnel"
         },
         "cloud": {
-          "label": "L3 router"
+          "label": "Router"
         }
       }
     },
@@ -62,7 +62,7 @@
       "id": "ipip-n1",
       "type": "backend",
       "label": "Node 1",
-      "sublabel": "Pod A 10.0.1.10 · eth0 192.168.1.10",
+      "sublabel": "Pod A 192.168.1.10 · eth0 10.0.1.10",
       "pos": [
         80,
         100
@@ -91,7 +91,7 @@
       "id": "ipip-n2",
       "type": "backend",
       "label": "Node 2",
-      "sublabel": "Pod C 10.0.2.10 · eth0 192.168.1.20",
+      "sublabel": "Pod B 192.168.2.10 · eth0 10.0.1.11",
       "pos": [
         1020,
         100
@@ -105,7 +105,7 @@
       "id": "vxlan-n1",
       "type": "backend",
       "label": "Node 1",
-      "sublabel": "Pod A 10.0.1.10 · eth0 192.168.1.10",
+      "sublabel": "Pod A 192.168.1.10 · eth0 10.0.1.10",
       "pos": [
         80,
         290
@@ -134,7 +134,7 @@
       "id": "vxlan-n2",
       "type": "backend",
       "label": "Node 2",
-      "sublabel": "Pod C 10.0.2.10 · eth0 192.168.1.20",
+      "sublabel": "Pod B 192.168.2.10 · eth0 10.0.1.11",
       "pos": [
         1020,
         290
@@ -148,7 +148,7 @@
       "id": "bgp-n1",
       "type": "backend",
       "label": "Node 1",
-      "sublabel": "Pod A 10.0.1.10 · eth0 192.168.1.10",
+      "sublabel": "Pod A 192.168.1.10 · eth0 10.0.1.10",
       "pos": [
         80,
         480
@@ -177,7 +177,7 @@
       "id": "bgp-n2",
       "type": "backend",
       "label": "Node 2",
-      "sublabel": "Pod C 10.0.2.10 · eth0 192.168.1.20",
+      "sublabel": "Pod B 192.168.2.10 · eth0 10.0.1.11",
       "pos": [
         1020,
         480
@@ -263,7 +263,7 @@
       "dot": "amber",
       "title": "IPIP — MTU 1480",
       "items": [
-        "Packet: outer IP header (192.168.1.10 → .20) + inner IP header (10.0.1.10 → 10.0.2.10) + original payload",
+        "Packet: outer IP header (10.0.1.10 → 10.0.1.11) + inner IP header (192.168.1.10 → 192.168.2.10) + original payload",
         "Overhead 20 bytes (one IP header)",
         "Use case: cross-subnet routing when BGP is not available"
       ]
@@ -281,7 +281,7 @@
       "dot": "emerald",
       "title": "Direct / BGP — MTU 1500",
       "items": [
-        "Packet: IP header (10.0.1.10 → 10.0.2.10) + original payload, no encapsulation",
+        "Packet: IP header (192.168.1.10 → 192.168.2.10) + original payload, no encapsulation",
         "Overhead 0 bytes",
         "Use case: best performance, requires a BGP-capable network"
       ]

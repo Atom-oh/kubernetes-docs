@@ -14,19 +14,19 @@
       "mode": "auto",
       "entries": {
         "frontend": {
-          "label": "Frontend "
+          "label": "Frontend"
         },
         "backend": {
-          "label": "App pod "
+          "label": "App pod"
         },
         "database": {
-          "label": "DB pod "
+          "label": "DB pod"
         },
         "security": {
-          "label": "NetPolicy "
+          "label": "NetPolicy"
         },
         "external": {
-          "label": "Internet "
+          "label": "Internet"
         }
       }
     },

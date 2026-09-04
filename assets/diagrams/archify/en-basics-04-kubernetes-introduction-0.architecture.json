@@ -37,7 +37,21 @@
         ],
         "note": "Both controller managers watch state through the API server and reconcile it toward the desired state."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Component"
+        },
+        "database": {
+          "label": "etcd"
+        },
+        "external": {
+          "label": "Client"
+        }
+      }
+    }
   },
   "components": [
     {

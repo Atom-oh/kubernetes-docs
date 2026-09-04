@@ -349,7 +349,7 @@ The cold first resolution (including glibc NSS initialisation; indicative only) 
 
 ### What `ndots:1` does — and its side effect
 
-- **External names**: 10 → **2 queries**, median 3.5–3.8 → **0.5–0.9 ms** (about 4–7× faster, one fifth of the queries).
+- **External names**: 10 → **2 queries**, median 3.5–3.8 → **0.5–0.9 ms** (about 4–8× faster, one fifth of the queries).
 - **Short cluster names get worse.** `kubernetes.default` (1 dot, which is ≥ ndots 1) is first tried as the absolute name `kubernetes.default.`; CoreDNS has no zone for it and **forwards it to the VPC resolver** (NXDomain after 1.6 ms), then walks `bench-net.svc.cluster.local` (NXDOMAIN) and finally gets `172.20.0.1` from `svc.cluster.local` — 6 queries, 4 NXDOMAIN, median 2.04 ms, slower than the 1.71 ms under ndots:5. Cluster-internal names also leak to the upstream resolver. If you use `ndots:1`, address in-cluster services by FQDN (`name.namespace.svc.cluster.local`).
 - **The trailing dot works regardless of ndots** — 2 queries, 0.4–0.8 ms in every case.
 

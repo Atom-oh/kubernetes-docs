@@ -10,7 +10,7 @@ This chapter covers Calico integration with Amazon EKS, including architecture p
 
 ## VPC CNI + Calico Architecture
 
-![Typha watches the kube-apiserver in the EKS control plane and pushes policy to calico-node (Felix) on two worker nodes, where aws-node (VPC CNI) manages ENIs and assigns pod IPs from the VPC CIDR while Calico enforces NetworkPolicy on the same pods and cross-node pod traffic is routed natively by the VPC.](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
+![In EKS, Typha watches kube-apiserver and pushes policy to calico-node (Felix) on each worker node, where aws-node (VPC CNI) manages ENIs and assigns pod IPs from the VPC CIDR while Calico enforces NetworkPolicy on the same pods.](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-4.html)
 
