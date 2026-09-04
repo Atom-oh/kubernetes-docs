@@ -154,6 +154,15 @@ This training content provides quizzes for each topic along with the learning ma
    - [Ingress Gateway](./service-mesh/cilium-service-mesh/05-ingress-gateway.md) | [Quiz](./quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
    - [Best Practices](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
+4. **VPC Lattice Deep Dive**
+   - [VPC Lattice Deep Dive Overview](./service-mesh/vpc-lattice/README.md)
+   - [App Mesh vs VPC Lattice Architecture](./service-mesh/vpc-lattice/01-appmesh-vs-lattice.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+   - [Latency Impact Analysis](./service-mesh/vpc-lattice/02-latency.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
+   - [IAM Authentication Flow](./service-mesh/vpc-lattice/03-auth-flow.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+   - [Foundations — Link-Local and SNI](./service-mesh/vpc-lattice/04-networking-basics.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+   - [Workload Identity Migration](./service-mesh/vpc-lattice/05-spiffe-to-iam.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+   - [Constraints and Decision Points](./service-mesh/vpc-lattice/06-constraints.md) | [Quiz](./quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+
 ### Storage
 1. [Storage Overview](./storage/README.md)
 2. [EBS gp2 vs gp3 Measured Benchmark](./storage/01-ebs-gp2-gp3-benchmark.md) | [Quiz](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)

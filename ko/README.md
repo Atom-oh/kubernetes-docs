@@ -154,6 +154,15 @@
    - [Ingress Gateway](./service-mesh/cilium-service-mesh/05-ingress-gateway.md) | [퀴즈](./quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
    - [모범 사례](./service-mesh/cilium-service-mesh/06-best-practices.md)
 
+4. **VPC Lattice 딥다이브**
+   - [VPC Lattice 딥다이브 개요](./service-mesh/vpc-lattice/README.md)
+   - [App Mesh와 VPC Lattice 아키텍처 대비](./service-mesh/vpc-lattice/01-appmesh-vs-lattice.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+   - [레이턴시 영향 분석](./service-mesh/vpc-lattice/02-latency.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
+   - [IAM 인증 절차 상세](./service-mesh/vpc-lattice/03-auth-flow.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+   - [기반 개념 — link-local과 SNI](./service-mesh/vpc-lattice/04-networking-basics.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+   - [워크로드 신원 모델 전환](./service-mesh/vpc-lattice/05-spiffe-to-iam.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+   - [제약사항과 의사결정 포인트](./service-mesh/vpc-lattice/06-constraints.md) | [퀴즈](./quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
+
 ### Storage
 1. [Storage 개요](./storage/README.md)
 2. [EBS gp2 vs gp3 실측 벤치마크](./storage/01-ebs-gp2-gp3-benchmark.md) | [퀴즈](./quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)

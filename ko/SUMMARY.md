@@ -191,6 +191,13 @@
   * [관찰성](service-mesh/cilium-service-mesh/04-observability.md)
   * [인그레스 & 게이트웨이](service-mesh/cilium-service-mesh/05-ingress-gateway.md)
   * [모범 사례](service-mesh/cilium-service-mesh/06-best-practices.md)
+* [VPC Lattice 딥다이브](service-mesh/vpc-lattice/README.md)
+  * [App Mesh와 VPC Lattice 아키텍처 대비](service-mesh/vpc-lattice/01-appmesh-vs-lattice.md)
+  * [레이턴시 영향 분석](service-mesh/vpc-lattice/02-latency.md)
+  * [IAM 인증 절차 상세](service-mesh/vpc-lattice/03-auth-flow.md)
+  * [기반 개념 — link-local과 SNI](service-mesh/vpc-lattice/04-networking-basics.md)
+  * [워크로드 신원 모델 전환](service-mesh/vpc-lattice/05-spiffe-to-iam.md)
+  * [제약사항과 의사결정 포인트](service-mesh/vpc-lattice/06-constraints.md)
 
 ## Storage
 
@@ -570,6 +577,13 @@
     * [보안 퀴즈](quizzes/service-mesh/cilium-service-mesh/security.md)
     * [관찰성 퀴즈](quizzes/service-mesh/cilium-service-mesh/observability.md)
     * [인그레스 & 게이트웨이 퀴즈](quizzes/service-mesh/cilium-service-mesh/ingress-gateway.md)
+  * VPC Lattice 딥다이브 퀴즈
+    * [아키텍처 대비 퀴즈](quizzes/service-mesh/vpc-lattice/01-appmesh-vs-lattice-quiz.md)
+    * [레이턴시 영향 분석 퀴즈](quizzes/service-mesh/vpc-lattice/02-latency-quiz.md)
+    * [IAM 인증 절차 퀴즈](quizzes/service-mesh/vpc-lattice/03-auth-flow-quiz.md)
+    * [link-local과 SNI 퀴즈](quizzes/service-mesh/vpc-lattice/04-networking-basics-quiz.md)
+    * [워크로드 신원 모델 전환 퀴즈](quizzes/service-mesh/vpc-lattice/05-spiffe-to-iam-quiz.md)
+    * [제약사항과 의사결정 퀴즈](quizzes/service-mesh/vpc-lattice/06-constraints-quiz.md)
 * Storage
   * [EBS gp2 vs gp3 실측 벤치마크 퀴즈](quizzes/storage/01-ebs-gp2-gp3-benchmark-quiz.md)
 * Database
