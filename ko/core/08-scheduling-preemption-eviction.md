@@ -1113,7 +1113,9 @@ spec:
 
 Amazon EKS에서는 Kubernetes 스케줄링 기능을 활용하여 워크로드를 최적화할 수 있습니다.
 
-![EKS에서 노드 그룹 전략, 가용 영역 분산, Karpenter 자동 스케일링, 리소스 최적화라는 네 가지 축이 각각의 자동화 도구로 연결되는 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-11.svg)
+![EKS 스케줄링 최적화의 네 가지 축인 노드 그룹·인스턴스 유형, 가용 영역 분산, Karpenter 자동 스케일링, 리소스 요청·제한 최적화가 각각 Cluster Autoscaler, 다중 AZ 배포, NodePool, Vertical Pod Autoscaler라는 구현 메커니즘과 자동화 도구로 연결되는 구조를 보여주는 다이어그램](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-11.html)
 
 ### 노드 그룹 및 인스턴스 유형
 

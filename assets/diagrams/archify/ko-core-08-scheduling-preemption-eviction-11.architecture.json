@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS에서의 스케줄링 최적화",
+    "output": "ko-core-08-scheduling-preemption-eviction-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "nodegroups",
+      "type": "cloud",
+      "label": "노드 그룹 · 인스턴스 유형",
+      "sublabel": "컴퓨팅/메모리 최적화 · 스팟 · GPU",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "azspread",
+      "type": "cloud",
+      "label": "가용 영역 분산",
+      "sublabel": "안티-어피니티 · 토폴로지 스프레드 제약",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter 자동 스케일링",
+      "sublabel": "워크로드에 맞는 노드 프로비저닝",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "resourceopt",
+      "type": "cloud",
+      "label": "리소스 요청 · 제한 최적화",
+      "sublabel": "requests / limits 조정",
+      "pos": [
+        910,
+        80
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "backend",
+      "label": "Cluster Autoscaler",
+      "sublabel": "노드 그룹 크기 조정",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "multiaz",
+      "type": "backend",
+      "label": "다중 AZ 배포",
+      "sublabel": "topology.kubernetes.io/zone 균등 분산",
+      "pos": [
+        330,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "nodepool",
+      "type": "backend",
+      "label": "NodePool",
+      "sublabel": "karpenter.sh/v1 · EC2NodeClass",
+      "pos": [
+        620,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "vpa",
+      "type": "backend",
+      "label": "Vertical Pod Autoscaler",
+      "sublabel": "Goldilocks 권장값 · ResourceQuota",
+      "pos": [
+        910,
+        280
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 스케줄링 최적화 축",
+      "wraps": [
+        "nodegroups",
+        "azspread",
+        "karpenter",
+        "resourceopt"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "구현 메커니즘 · 자동화 도구",
+      "wraps": [
+        "ca",
+        "multiaz",
+        "nodepool",
+        "vpa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ng-to-ca",
+      "from": "nodegroups",
+      "to": "ca",
+      "label": "도구",
+      "labelDy": 60
+    },
+    {
+      "id": "az-to-multiaz",
+      "from": "azspread",
+      "to": "multiaz",
+      "label": "결과",
+      "labelDy": 60
+    },
+    {
+      "id": "karpenter-to-nodepool",
+      "from": "karpenter",
+      "to": "nodepool",
+      "label": "사용",
+      "variant": "emphasis",
+      "labelDy": 60
+    },
+    {
+      "id": "res-to-vpa",
+      "from": "resourceopt",
+      "to": "vpa",
+      "label": "도구",
+      "labelDy": 60
+    }
+  ]
+}

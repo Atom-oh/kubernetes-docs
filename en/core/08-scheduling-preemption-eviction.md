@@ -1034,7 +1034,9 @@ spec:
 
 In Amazon EKS, you can optimize workloads using Kubernetes scheduling features.
 
-![Diagram showing four EKS scheduling levers -- node group instance-type choice, availability-zone spread, Karpenter autoscaling, and resource request tuning -- each mapping to the concrete Kubernetes mechanisms and automation tools that implement them.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-10.svg)
+![Diagram showing four EKS scheduling optimization levers -- node group and instance type choice, availability-zone distribution, Karpenter auto scaling, and resource request and limit tuning -- each connected to the mechanism or automation tool that implements it: Cluster Autoscaler, multi-AZ deployment, Karpenter NodePool, and Vertical Pod Autoscaler.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-11.html)
 
 ### Node Groups and Instance Types
 
