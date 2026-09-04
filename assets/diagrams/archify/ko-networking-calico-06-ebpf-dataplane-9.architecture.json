@@ -182,7 +182,7 @@
     {
       "id": "nic-tc",
       "type": "cloud",
-      "label": "NIC · TC Hook",
+      "label": "veth TC Hook",
       "sublabel": "BPF 프로그램 하나로 정책 + 라우팅",
       "pos": [
         700,

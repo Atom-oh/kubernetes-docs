@@ -183,7 +183,7 @@
     {
       "id": "nic-tc",
       "type": "cloud",
-      "label": "NIC · TC Hook",
+      "label": "veth TC Hook",
       "sublabel": "one BPF program: policy + routing",
       "pos": [
         700,
