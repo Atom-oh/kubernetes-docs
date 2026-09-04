@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "서비스 메시 구조",
+    "output": "ko-core-03-services-networking-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인 설정 배포",
+        "focus": [
+          "istio-cp",
+          "proxy-a",
+          "proxy-b",
+          "proxy-c"
+        ],
+        "note": "Istio Control Plane이 각 포드에 주입된 사이드카 프록시에 설정을 배포한다."
+      },
+      {
+        "id": "sidecar-pair",
+        "label": "서비스와 사이드카",
+        "focus": [
+          "svc-a",
+          "proxy-a",
+          "svc-b",
+          "proxy-b",
+          "svc-c",
+          "proxy-c"
+        ],
+        "note": "각 서비스의 트래픽은 같은 포드의 사이드카 프록시를 거친다."
+      },
+      {
+        "id": "mesh-traffic",
+        "label": "사이드카 간 통신",
+        "focus": [
+          "proxy-a",
+          "proxy-b",
+          "proxy-c"
+        ],
+        "note": "서비스 간 통신은 서비스가 직접 연결하지 않고 사이드카 프록시끼리 주고받는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istio-cp",
+      "type": "security",
+      "label": "Istio Control Plane",
+      "sublabel": "istiod",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "서비스 A",
+      "sublabel": "앱 컨테이너",
+      "pos": [
+        100,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-a",
+      "type": "cloud",
+      "label": "사이드카 프록시 A",
+      "sublabel": "Envoy",
+      "pos": [
+        100,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "서비스 B",
+      "sublabel": "앱 컨테이너",
+      "pos": [
+        480,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-b",
+      "type": "cloud",
+      "label": "사이드카 프록시 B",
+      "sublabel": "Envoy",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "서비스 C",
+      "sublabel": "앱 컨테이너",
+      "pos": [
+        900,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-c",
+      "type": "cloud",
+      "label": "사이드카 프록시 C",
+      "sublabel": "Envoy",
+      "pos": [
+        900,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "서비스 A 포드",
+      "wraps": [
+        "svc-a",
+        "proxy-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스 B 포드",
+      "wraps": [
+        "svc-b",
+        "proxy-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스 C 포드",
+      "wraps": [
+        "svc-c",
+        "proxy-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-to-proxy-a",
+      "from": "istio-cp",
+      "to": "proxy-a",
+      "label": "설정 배포",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-to-proxy-b",
+      "from": "istio-cp",
+      "to": "proxy-b",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-to-proxy-c",
+      "from": "istio-cp",
+      "to": "proxy-c",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-a-proxy-a",
+      "from": "svc-a",
+      "to": "proxy-a",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "svc-b-proxy-b",
+      "from": "svc-b",
+      "to": "proxy-b",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "svc-c-proxy-c",
+      "from": "svc-c",
+      "to": "proxy-c",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "proxy-a-proxy-b",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "label": "서비스 간 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy-b-proxy-c",
+      "from": "proxy-b",
+      "to": "proxy-c",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy-a-proxy-c",
+      "from": "proxy-a",
+      "to": "proxy-c",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          40,
+          280
+        ],
+        [
+          40,
+          520
+        ],
+        [
+          1110,
+          520
+        ],
+        [
+          1110,
+          280
+        ]
+      ]
+    }
+  ]
+}

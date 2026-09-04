@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "클러스터 네트워크 아키텍처",
+    "output": "ko-core-09-cluster-administration-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      480
+    ]
+  },
+  "components": [
+    {
+      "id": "networking",
+      "type": "cloud",
+      "label": "클러스터 네트워킹",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sublabel": "파드 간 통신 · 서비스 디스커버리 · 외부 접근"
+    },
+    {
+      "id": "pod-network",
+      "type": "backend",
+      "label": "파드 네트워크",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "파드 간 통신"
+    },
+    {
+      "id": "service-network",
+      "type": "backend",
+      "label": "서비스 네트워크",
+      "pos": [
+        300,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "서비스 디스커버리"
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "인그레스",
+      "pos": [
+        560,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "외부 접근"
+    },
+    {
+      "id": "network-policy",
+      "type": "backend",
+      "label": "네트워크 정책",
+      "pos": [
+        820,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "트래픽 제어"
+    },
+    {
+      "id": "cni",
+      "type": "external",
+      "label": "CNI 플러그인",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "Calico · Flannel · Cilium"
+    },
+    {
+      "id": "service-types",
+      "type": "backend",
+      "label": "서비스 타입",
+      "pos": [
+        300,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "ClusterIP · NodePort · LoadBalancer"
+    },
+    {
+      "id": "ingress-controller",
+      "type": "frontend",
+      "label": "인그레스 컨트롤러",
+      "pos": [
+        560,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "network-security",
+      "type": "security",
+      "label": "네트워크 보안",
+      "pos": [
+        820,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "NetworkPolicy"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "네트워킹 영역",
+      "wraps": [
+        "pod-network",
+        "service-network",
+        "ingress",
+        "network-policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "구현 요소",
+      "wraps": [
+        "cni",
+        "service-types",
+        "ingress-controller",
+        "network-security"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "net-pod",
+      "from": "networking",
+      "to": "pod-network",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-svc",
+      "from": "networking",
+      "to": "service-network",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-ingress",
+      "from": "networking",
+      "to": "ingress",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-policy",
+      "from": "networking",
+      "to": "network-policy",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-cni",
+      "from": "pod-network",
+      "to": "cni",
+      "label": "구현",
+      "labelDy": 24
+    },
+    {
+      "id": "svc-types",
+      "from": "service-network",
+      "to": "service-types",
+      "label": "노출 방식",
+      "labelDy": 24
+    },
+    {
+      "id": "ingress-ctrl",
+      "from": "ingress",
+      "to": "ingress-controller",
+      "label": "구현",
+      "labelDy": 24
+    },
+    {
+      "id": "policy-security",
+      "from": "network-policy",
+      "to": "network-security",
+      "label": "적용",
+      "variant": "security",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CNI 플러그인 비교",
+      "items": [
+        "Calico: BGP 기반, 네트워크 정책 지원",
+        "Flannel: VXLAN, 간단한 설정, 네트워크 정책 미지원",
+        "Cilium: eBPF, L3-L7 정책, 고성능",
+        "AWS VPC CNI: AWS EKS에 최적화"
+      ]
+    }
+  ]
+}

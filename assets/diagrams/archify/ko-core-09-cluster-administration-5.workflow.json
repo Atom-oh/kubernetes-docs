@@ -1,0 +1,290 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes 클러스터 업그레이드 프로세스",
+    "output": "public/archmaps/ko-core-09-cluster-administration-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      780
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "계획 단계"
+        },
+        "backend": {
+          "label": "업그레이드 단계"
+        },
+        "database": {
+          "label": "etcd 백업 · 복원"
+        },
+        "security": {
+          "label": "검증 · 롤백"
+        },
+        "external": {
+          "label": "완료"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "계획과 백업",
+        "focus": [
+          "start",
+          "plan",
+          "backup"
+        ],
+        "note": "버전 호환성과 업그레이드 경로를 확인한 뒤 etcd를 백업하고 시작합니다."
+      },
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인 업그레이드",
+        "focus": [
+          "backup",
+          "cp1",
+          "cptest",
+          "cp2"
+        ],
+        "note": "첫 번째 컨트롤 플레인 노드를 먼저 올리고 기능을 테스트한 뒤 나머지 노드를 업그레이드합니다."
+      },
+      {
+        "id": "workers-validate",
+        "label": "워커 노드와 검증",
+        "focus": [
+          "cp2",
+          "worker",
+          "validate",
+          "done"
+        ],
+        "note": "워커 노드를 drain → 업그레이드 → uncordon 순으로 처리하고 클러스터 상태를 검증합니다."
+      },
+      {
+        "id": "rollback",
+        "label": "롤백 경로",
+        "focus": [
+          "validate",
+          "rollback",
+          "restore",
+          "backup"
+        ],
+        "note": "검증에서 문제가 발생하면 롤백하고 앞서 만든 etcd 백업에서 복원합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "계획 · 백업"
+    },
+    {
+      "id": "cp",
+      "label": "컨트롤 플레인"
+    },
+    {
+      "id": "workers",
+      "label": "워커 노드 · 검증"
+    },
+    {
+      "id": "finish",
+      "label": "완료"
+    },
+    {
+      "id": "recovery",
+      "label": "롤백",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "plan",
+    "backup",
+    "cp1",
+    "cptest",
+    "cp2",
+    "worker",
+    "validate",
+    "done"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done",
+      "restore"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "done"
+      },
+      {
+        "from": "validate",
+        "to": "restore"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "prepare",
+      "col": 0,
+      "type": "frontend",
+      "label": "업그레이드 계획",
+      "sublabel": "kubeadm upgrade plan",
+      "width": 158
+    },
+    {
+      "id": "plan",
+      "lane": "prepare",
+      "col": 1,
+      "type": "frontend",
+      "label": "버전 호환성 확인",
+      "sublabel": "업그레이드 경로 점검",
+      "width": 158
+    },
+    {
+      "id": "backup",
+      "lane": "prepare",
+      "col": 2,
+      "type": "database",
+      "label": "etcd 백업",
+      "width": 132
+    },
+    {
+      "id": "cp1",
+      "lane": "cp",
+      "col": 2,
+      "type": "backend",
+      "label": "첫 컨트롤 플레인 노드",
+      "sublabel": "kubeadm upgrade apply",
+      "width": 176
+    },
+    {
+      "id": "cptest",
+      "lane": "cp",
+      "col": 3,
+      "type": "backend",
+      "label": "컨트롤 플레인 기능 테스트",
+      "width": 176
+    },
+    {
+      "id": "cp2",
+      "lane": "cp",
+      "col": 4,
+      "type": "backend",
+      "label": "추가 컨트롤 플레인 노드",
+      "sublabel": "kubeadm upgrade node",
+      "width": 176
+    },
+    {
+      "id": "worker",
+      "lane": "workers",
+      "col": 4,
+      "type": "backend",
+      "label": "워커 노드 업그레이드",
+      "sublabel": "drain → upgrade → uncordon",
+      "width": 176
+    },
+    {
+      "id": "validate",
+      "lane": "workers",
+      "col": 5,
+      "type": "security",
+      "label": "클러스터 검증",
+      "sublabel": "kubectl get nodes / pods",
+      "width": 160
+    },
+    {
+      "id": "done",
+      "lane": "finish",
+      "col": 5,
+      "type": "external",
+      "label": "업그레이드 완료",
+      "width": 158
+    },
+    {
+      "id": "rollback",
+      "lane": "recovery",
+      "col": 5,
+      "type": "security",
+      "label": "롤백",
+      "width": 132
+    },
+    {
+      "id": "restore",
+      "lane": "recovery",
+      "col": 4,
+      "type": "database",
+      "label": "백업에서 복원",
+      "sublabel": "etcd 백업 사용",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "plan",
+      "role": "main"
+    },
+    {
+      "from": "plan",
+      "to": "backup",
+      "role": "main"
+    },
+    {
+      "from": "backup",
+      "to": "cp1",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "cp1",
+      "to": "cptest",
+      "role": "main"
+    },
+    {
+      "from": "cptest",
+      "to": "cp2",
+      "role": "main"
+    },
+    {
+      "from": "cp2",
+      "to": "worker",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "worker",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "from": "validate",
+      "to": "done",
+      "role": "main",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "validate",
+      "to": "rollback",
+      "role": "error",
+      "variant": "security",
+      "label": "문제 발생"
+    },
+    {
+      "from": "rollback",
+      "to": "restore",
+      "role": "return",
+      "variant": "security"
+    }
+  ]
+}

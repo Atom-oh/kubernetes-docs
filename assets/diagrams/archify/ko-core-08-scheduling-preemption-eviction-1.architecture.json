@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스케줄러 작동 방식",
+    "output": "ko-core-08-scheduling-preemption-eviction-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "watch",
+        "label": "포드 감시와 선택",
+        "focus": [
+          "api",
+          "queue",
+          "scheduler"
+        ],
+        "note": "스케줄러는 API 서버를 감시해 스케줄링되지 않은 포드를 큐에서 꺼냅니다."
+      },
+      {
+        "id": "filter-score",
+        "label": "필터링과 스코어링",
+        "focus": [
+          "scheduler",
+          "filter",
+          "score",
+          "bestnode"
+        ],
+        "note": "필터 플러그인이 실행 불가 노드를 제외하고, 스코어 플러그인이 남은 노드에 점수를 매깁니다."
+      },
+      {
+        "id": "bind",
+        "label": "바인딩",
+        "focus": [
+          "bestnode",
+          "binding",
+          "node"
+        ],
+        "note": "가장 높은 점수의 노드를 선택해 API 서버에 바인딩을 요청하면 포드가 노드에 배치됩니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "포드 생성 이벤트 발생",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "스케줄링 큐",
+      "sublabel": "스케줄링 대기 포드",
+      "pos": [
+        320,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "스케줄링 사이클 실행",
+      "pos": [
+        600,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "필터 플러그인",
+      "sublabel": "실행 불가 노드 제외",
+      "pos": [
+        880,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "score",
+      "type": "backend",
+      "label": "스코어 플러그인",
+      "sublabel": "노드별 점수 부여",
+      "pos": [
+        880,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "bestnode",
+      "type": "backend",
+      "label": "최적 노드 선택",
+      "sublabel": "최고 점수 노드",
+      "pos": [
+        600,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "binding",
+      "type": "backend",
+      "label": "바인딩 요청",
+      "sublabel": "API 서버에 바인딩 업데이트",
+      "pos": [
+        320,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "노드",
+      "sublabel": "포드 실행",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-queue",
+      "from": "api",
+      "to": "queue",
+      "label": "포드 생성 이벤트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "queue-scheduler",
+      "from": "queue",
+      "to": "scheduler",
+      "label": "포드 선택",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-filter",
+      "from": "scheduler",
+      "to": "filter",
+      "label": "필터링",
+      "variant": "emphasis"
+    },
+    {
+      "id": "filter-score",
+      "from": "filter",
+      "to": "score",
+      "label": "필터링된 노드",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "score-bestnode",
+      "from": "score",
+      "to": "bestnode",
+      "label": "노드 점수",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bestnode-binding",
+      "from": "bestnode",
+      "to": "binding",
+      "label": "바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "binding-node",
+      "from": "binding",
+      "to": "node",
+      "label": "포드 바인딩",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "필터 플러그인",
+      "items": [
+        "NodeResourcesFit: 노드의 리소스 용량 확인",
+        "NodeName: 포드의 nodeName 필드 확인",
+        "NodeUnschedulable: 노드의 스케줄 가능 여부 확인",
+        "TaintToleration: 테인트와 톨러레이션 확인"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "스코어 플러그인",
+      "items": [
+        "NodeResourcesBalancedAllocation: 리소스 사용 균형 고려",
+        "ImageLocality: 이미지 지역성 고려",
+        "InterPodAffinity: 포드 간 어피니티 고려",
+        "NodeAffinity: 노드 어피니티 고려"
+      ]
+    }
+  ]
+}

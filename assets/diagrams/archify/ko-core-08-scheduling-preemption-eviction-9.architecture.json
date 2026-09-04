@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Deletion Cost 작동 방식",
+    "output": "ko-core-08-scheduling-preemption-eviction-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      640
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "HPA / 남는 포드"
+        },
+        "security": {
+          "label": "먼저 삭제되는 포드 (낮은 cost)"
+        },
+        "external": {
+          "label": "높은 cost로 보호하는 사용 사례"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "deletion-order",
+        "label": "삭제 순서",
+        "focus": [
+          "hpa",
+          "pod-b",
+          "pod-c"
+        ],
+        "note": "5개에서 3개로 줄일 때 cost가 가장 낮은 Pod B(-50), 그다음 Pod C(0)가 먼저 제거된다."
+      },
+      {
+        "id": "protected",
+        "label": "보호되는 포드",
+        "focus": [
+          "pod-a",
+          "pod-d",
+          "pod-e",
+          "cache",
+          "leader",
+          "long-task"
+        ],
+        "note": "cost가 높은 Pod A·D·E는 남는다. 캐시, 리더, 장시간 작업 포드에 높은 값을 부여해 보호한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA 스케일다운",
+      "sublabel": "5개 → 3개",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "security",
+      "label": "Pod B",
+      "sublabel": "cost: -50",
+      "pos": [
+        320,
+        120
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "pod-c",
+      "type": "security",
+      "label": "Pod C",
+      "sublabel": "cost: 0",
+      "pos": [
+        320,
+        300
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "cost: 100",
+      "pos": [
+        600,
+        210
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "pod-d",
+      "type": "backend",
+      "label": "Pod D",
+      "sublabel": "cost: 500",
+      "pos": [
+        750,
+        210
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "pod-e",
+      "type": "backend",
+      "label": "Pod E",
+      "sublabel": "cost: 200",
+      "pos": [
+        900,
+        210
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "external",
+      "label": "캐시 보호",
+      "sublabel": "웜 캐시 유지",
+      "pos": [
+        320,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "leader",
+      "type": "external",
+      "label": "리더 포드 보호",
+      "sublabel": "리더 선출 유지",
+      "pos": [
+        580,
+        470
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "long-task",
+      "type": "external",
+      "label": "장시간 작업 포드 보호",
+      "sublabel": "처리 중인 작업 유지",
+      "pos": [
+        840,
+        470
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "삭제 대상 (cost 낮은 순)",
+      "wraps": [
+        "pod-b",
+        "pod-c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "남은 포드",
+      "wraps": [
+        "pod-a",
+        "pod-d",
+        "pod-e"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용 사례",
+      "wraps": [
+        "cache",
+        "leader",
+        "long-task"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hpa-first-delete",
+      "from": "hpa",
+      "to": "pod-b",
+      "label": "1번째 삭제",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hpa-second-delete",
+      "from": "hpa",
+      "to": "pod-c",
+      "label": "2번째 삭제",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "어노테이션",
+      "items": [
+        "controller.kubernetes.io/pod-deletion-cost: \"100\"",
+        "값 범위: -2147483648 ~ 2147483647 (32비트 정수)",
+        "기본값 0, 낮은 값의 포드가 먼저 삭제됨"
+      ]
+    }
+  ]
+}

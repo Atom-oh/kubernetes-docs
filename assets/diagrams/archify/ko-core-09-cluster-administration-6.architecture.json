@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 클러스터 백업 및 복구 프로세스",
+    "output": "ko-core-09-cluster-administration-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "backup",
+        "label": "백업 프로세스",
+        "focus": [
+          "schedule",
+          "etcd-backup",
+          "resource-backup",
+          "store"
+        ],
+        "note": "예약된 작업이 etcd 스냅샷과 리소스 YAML을 만들어 백업 저장소에 모은다."
+      },
+      {
+        "id": "recovery",
+        "label": "복구 프로세스",
+        "focus": [
+          "disaster",
+          "restore-etcd",
+          "restart-services",
+          "validate-cluster",
+          "restore-resources"
+        ],
+        "note": "재해가 발생하면 etcd를 복구하고 서비스를 재시작해 클러스터를 검증한 뒤 리소스를 복구한다."
+      },
+      {
+        "id": "handoff",
+        "label": "저장소에서 복구로",
+        "focus": [
+          "store",
+          "restore-etcd",
+          "restore-resources"
+        ],
+        "note": "백업 저장소의 etcd 스냅샷은 etcd 복구에, 리소스 YAML은 리소스 복구에 쓰인다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "schedule",
+      "type": "backend",
+      "label": "백업 일정 설정",
+      "sublabel": "CronJob",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "etcd-backup",
+      "type": "backend",
+      "label": "etcd 스냅샷 생성",
+      "sublabel": "etcdctl snapshot save",
+      "pos": [
+        290,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "resource-backup",
+      "type": "backend",
+      "label": "리소스 YAML 백업",
+      "sublabel": "kubectl get -o yaml",
+      "pos": [
+        290,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "백업 저장소",
+      "sublabel": "/backup",
+      "pos": [
+        580,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "disaster",
+      "type": "external",
+      "label": "재해 발생",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "restore-etcd",
+      "type": "backend",
+      "label": "etcd 복구",
+      "sublabel": "etcdctl snapshot restore",
+      "pos": [
+        270,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "restart-services",
+      "type": "backend",
+      "label": "Kubernetes 서비스 재시작",
+      "sublabel": "systemctl start",
+      "pos": [
+        530,
+        440
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "validate-cluster",
+      "type": "backend",
+      "label": "클러스터 검증",
+      "sublabel": "kubectl get nodes / pods 확인",
+      "pos": [
+        790,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "restore-resources",
+      "type": "backend",
+      "label": "리소스 복구",
+      "pos": [
+        1030,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "백업 프로세스",
+      "wraps": [
+        "schedule",
+        "etcd-backup",
+        "resource-backup",
+        "store"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "복구 프로세스",
+      "wraps": [
+        "disaster",
+        "restore-etcd",
+        "restart-services",
+        "validate-cluster",
+        "restore-resources"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "schedule-to-etcd-backup",
+      "from": "schedule",
+      "to": "etcd-backup"
+    },
+    {
+      "id": "schedule-to-resource-backup",
+      "from": "schedule",
+      "to": "resource-backup"
+    },
+    {
+      "id": "etcd-backup-to-store",
+      "from": "etcd-backup",
+      "to": "store"
+    },
+    {
+      "id": "resource-backup-to-store",
+      "from": "resource-backup",
+      "to": "store"
+    },
+    {
+      "id": "disaster-to-restore-etcd",
+      "from": "disaster",
+      "to": "restore-etcd",
+      "variant": "emphasis"
+    },
+    {
+      "id": "restore-etcd-to-restart",
+      "from": "restore-etcd",
+      "to": "restart-services",
+      "variant": "emphasis"
+    },
+    {
+      "id": "restart-to-validate",
+      "from": "restart-services",
+      "to": "validate-cluster",
+      "variant": "emphasis"
+    },
+    {
+      "id": "validate-to-restore-resources",
+      "from": "validate-cluster",
+      "to": "restore-resources",
+      "variant": "emphasis"
+    },
+    {
+      "id": "store-to-restore-etcd",
+      "from": "store",
+      "to": "restore-etcd",
+      "label": "etcd 스냅샷",
+      "variant": "dashed",
+      "labelAt": [
+        515,
+        365
+      ]
+    },
+    {
+      "id": "store-to-restore-resources",
+      "from": "store",
+      "to": "restore-resources",
+      "label": "리소스 YAML",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "백업",
+      "items": [
+        "etcd는 클러스터의 모든 상태 정보를 저장하므로 정기 백업이 필수",
+        "etcdctl snapshot save로 스냅샷 생성, snapshot status로 상태 확인",
+        "모든 네임스페이스와 클러스터 범위 리소스를 YAML로 저장",
+        "CronJob으로 매일 자정 자동 실행"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "복구",
+      "items": [
+        "kubelet, kube-apiserver 등 서비스를 먼저 중지",
+        "기존 /var/lib/etcd를 백업한 뒤 snapshot restore 실행",
+        "etcd와 Kubernetes 서비스를 재시작하고 클러스터 상태 검증"
+      ]
+    }
+  ]
+}

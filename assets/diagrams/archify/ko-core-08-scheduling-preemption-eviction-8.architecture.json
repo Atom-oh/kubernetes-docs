@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "토폴로지 분배 제약 조건(TopologySpreadConstraints)",
+    "output": "ko-core-08-scheduling-preemption-eviction-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "제약 조건"
+        },
+        "backend": {
+          "label": "필수 필드"
+        },
+        "frontend": {
+          "label": "whenUnsatisfiable 옵션"
+        },
+        "external": {
+          "label": "새 포드"
+        },
+        "cloud": {
+          "label": "가용 영역"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "fields",
+        "label": "필수 필드",
+        "focus": [
+          "tsc",
+          "maxskew",
+          "topologykey",
+          "whenunsatisfiable",
+          "labelselector"
+        ],
+        "note": "TopologySpreadConstraints는 maxSkew, topologyKey, whenUnsatisfiable, labelSelector 네 필드로 분산 규칙을 정의한다."
+      },
+      {
+        "id": "options",
+        "label": "whenUnsatisfiable 옵션",
+        "focus": [
+          "whenunsatisfiable",
+          "donotschedule",
+          "scheduleanyway"
+        ],
+        "note": "제약을 충족할 수 없을 때 DoNotSchedule은 스케줄링을 거부하고, ScheduleAnyway는 최선 노력으로 배치한다."
+      },
+      {
+        "id": "example",
+        "label": "가용 영역 분산 예시",
+        "focus": [
+          "newpod",
+          "az1",
+          "az2",
+          "az3"
+        ],
+        "note": "maxSkew=1이면 포드가 가장 적은 ap-northeast-2b(2개)에 새 포드가 배치되어 3개가 된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "tsc",
+      "type": "security",
+      "label": "TopologySpreadConstraints",
+      "sublabel": "pod spec 분산 규칙",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "maxskew",
+      "type": "backend",
+      "label": "maxSkew",
+      "sublabel": "최대 불균형 허용치",
+      "pos": [
+        290,
+        50
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "topologykey",
+      "type": "backend",
+      "label": "topologyKey",
+      "sublabel": "토폴로지 도메인 키",
+      "pos": [
+        290,
+        150
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "whenunsatisfiable",
+      "type": "backend",
+      "label": "whenUnsatisfiable",
+      "sublabel": "제약 미충족 시 동작",
+      "pos": [
+        290,
+        250
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "labelselector",
+      "type": "backend",
+      "label": "labelSelector",
+      "sublabel": "대상 포드 선택",
+      "pos": [
+        290,
+        350
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "donotschedule",
+      "type": "frontend",
+      "label": "DoNotSchedule",
+      "sublabel": "스케줄링 거부",
+      "pos": [
+        580,
+        150
+      ],
+      "size": [
+        180,
+        50
+      ]
+    },
+    {
+      "id": "scheduleanyway",
+      "type": "frontend",
+      "label": "ScheduleAnyway",
+      "sublabel": "최선 노력 배치",
+      "pos": [
+        580,
+        300
+      ],
+      "size": [
+        180,
+        50
+      ]
+    },
+    {
+      "id": "newpod",
+      "type": "external",
+      "label": "새 포드",
+      "sublabel": "스케줄링 대기",
+      "pos": [
+        985,
+        60
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "az1",
+      "type": "cloud",
+      "label": "ap-northeast-2a",
+      "sublabel": "포드 3개",
+      "pos": [
+        820,
+        380
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "az2",
+      "type": "cloud",
+      "label": "ap-northeast-2b",
+      "sublabel": "포드 2개 → 3개",
+      "pos": [
+        985,
+        380
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "az3",
+      "type": "cloud",
+      "label": "ap-northeast-2c",
+      "sublabel": "포드 3개",
+      "pos": [
+        1150,
+        380
+      ],
+      "size": [
+        150,
+        50
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TopologySpreadConstraints 설정",
+      "wraps": [
+        "tsc",
+        "maxskew",
+        "topologykey",
+        "whenunsatisfiable",
+        "labelselector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "whenUnsatisfiable 옵션",
+      "wraps": [
+        "donotschedule",
+        "scheduleanyway"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 가용 영역 분산 예시",
+      "wraps": [
+        "newpod",
+        "az1",
+        "az2",
+        "az3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "tsc-maxskew",
+      "from": "tsc",
+      "to": "maxskew"
+    },
+    {
+      "id": "tsc-topologykey",
+      "from": "tsc",
+      "to": "topologykey"
+    },
+    {
+      "id": "tsc-whenunsatisfiable",
+      "from": "tsc",
+      "to": "whenunsatisfiable"
+    },
+    {
+      "id": "tsc-labelselector",
+      "from": "tsc",
+      "to": "labelselector"
+    },
+    {
+      "id": "wu-donotschedule",
+      "from": "whenunsatisfiable",
+      "to": "donotschedule"
+    },
+    {
+      "id": "wu-scheduleanyway",
+      "from": "whenunsatisfiable",
+      "to": "scheduleanyway"
+    },
+    {
+      "id": "newpod-az2",
+      "from": "newpod",
+      "to": "az2",
+      "label": "maxSkew=1",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "선택 필드",
+      "items": [
+        "minDomains: 최소 토폴로지 도메인 수",
+        "matchLabelKeys: 동일한 키의 레이블 값으로 그룹화",
+        "nodeAffinityPolicy / nodeTaintsPolicy: 노드 어피니티·테인트 고려 여부 (Honor / Ignore)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "whenUnsatisfiable",
+      "items": [
+        "DoNotSchedule: 하드 제약 - 충족 불가 시 포드를 스케줄링하지 않음",
+        "ScheduleAnyway: 소프트 제약 - 불균형(skew)을 최소화하는 노드를 우선하여 배치"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "가용 영역 분산 예시",
+      "items": [
+        "ap-northeast-2a 3개, 2b 2개, 2c 3개인 상태에서 새 포드 스케줄링",
+        "maxSkew=1이면 도메인 간 차이가 1을 넘지 않도록 2b에 배치 (2개 → 3개)"
+      ]
+    }
+  ]
+}

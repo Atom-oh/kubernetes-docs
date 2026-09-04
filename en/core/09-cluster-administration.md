@@ -65,7 +65,9 @@ A Kubernetes cluster consists of control plane components and node components. M
 
 ### Control Plane Component Management
 
-![Tree diagram showing the Kubernetes control plane fanning out to its five components, each paired with the operational concern it owns.](../../assets/diagrams/rendered/en-core-09-cluster-administration-0.svg)
+![Tree diagram showing the Kubernetes control plane fanning out to its five components (API server, etcd, scheduler, controller manager, cloud controller manager), each paired with the operational concern it owns: authentication and authorization, data backup, scheduling policies, controller state monitoring, and cloud resource management.](../.gitbook/assets/en-core-09-cluster-administration-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-0.html)
 
 #### API Server Management
 
@@ -136,7 +138,9 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-![Tree diagram showing a cluster administrator's five areas of responsibility, each mapped to the tools used to carry it out.](../../assets/diagrams/rendered/en-core-09-cluster-administration-1.svg)
+![Diagram showing a cluster administrator's five areas of responsibility, each mapped to the tools used to carry it out.](../.gitbook/assets/en-core-09-cluster-administration-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-1.html)
 
 ### Cluster Administration Tools
 
@@ -167,7 +171,9 @@ Control plane components manage the overall state of the cluster:
 
 The following diagram shows Kubernetes control plane components and their interactions:
 
-![Architecture diagram showing the kube-apiserver exchanging bidirectional calls with etcd, the scheduler, the controller managers, and a worker node's kubelet, which in turn drives kube-proxy and the container runtime.](../../assets/diagrams/rendered/en-core-09-cluster-administration-2.svg)
+![Architecture diagram showing etcd, kube-scheduler, kube-controller-manager, and cloud-controller-manager communicating bidirectionally with the kube-apiserver at the center, and a worker node's kubelet communicating bidirectionally with the API server while managing kube-proxy and the container runtime.](../.gitbook/assets/en-core-09-cluster-administration-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-2.html)
 
 #### Control Plane Component Monitoring
 
@@ -386,7 +392,9 @@ Basic requirements of the Kubernetes network model:
 
 The following diagram shows Kubernetes networking components and communication flows:
 
-![Architecture diagram showing client traffic entering through Ingress to a Service that load-balances across two pods on separate nodes, which communicate with each other and reach an external service.](../../assets/diagrams/rendered/en-core-09-cluster-administration-3.svg)
+![Architecture diagram showing client traffic entering through Ingress to a Service that load-balances across two pods on separate nodes, which communicate with each other and reach an external service.](../.gitbook/assets/en-core-09-cluster-administration-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-3.html)
 
 ### CNI (Container Network Interface) Plugins
 
@@ -513,7 +521,9 @@ Kubernetes authentication and authorization management are core elements of clus
 
 The following diagram shows the Kubernetes authentication and authorization flow:
 
-![Architecture diagram showing a request moving through authentication, authorization, and admission control before reaching the API server, with the concrete authentication methods and authorization modes each stage supports.](../../assets/diagrams/rendered/en-core-09-cluster-administration-4.svg)
+![Architecture diagram showing a request moving through authentication, authorization, and admission control before reaching the API server, with the concrete authentication methods and authorization modes each stage supports.](../.gitbook/assets/en-core-09-cluster-administration-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-4.html)
 
 ### Authentication
 
@@ -712,7 +722,9 @@ Kubernetes cluster upgrades are necessary to apply new features, performance imp
 
 The following diagram shows the Kubernetes cluster upgrade process:
 
-![Flowchart showing the sequential control-plane and worker-node upgrade steps ending in cluster validation, with a rollback-to-backup path if validation finds a problem.](../../assets/diagrams/rendered/en-core-09-cluster-administration-5.svg)
+![Workflow diagram of a Kubernetes cluster upgrade: planning and version compatibility check, etcd backup, first control plane node upgrade and function test, remaining control plane and worker node upgrades, then cluster validation ending in upgrade complete, with a rollback path that restores from the backup when validation finds a problem.](../.gitbook/assets/en-core-09-cluster-administration-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-5.html)
 
 ### Upgrade Planning
 
@@ -800,7 +812,9 @@ Kubernetes cluster backup and recovery is an important part of disaster recovery
 
 The following diagram shows the Kubernetes cluster backup and recovery process:
 
-![Architecture diagram showing scheduled etcd snapshots and resource-YAML backups both landing in backup storage, which later feeds an etcd restore and a resource restore during disaster recovery.](../../assets/diagrams/rendered/en-core-09-cluster-administration-6.svg)
+![Architecture diagram showing scheduled etcd snapshots and resource-YAML backups both landing in backup storage, which later feeds an etcd restore and a resource restore during disaster recovery.](../.gitbook/assets/en-core-09-cluster-administration-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-6.html)
 
 ### etcd Backup
 
@@ -919,7 +933,9 @@ Effective monitoring and logging is a core element of cluster administration.
 
 The following diagram shows the Kubernetes cluster monitoring and logging architecture:
 
-![Architecture diagram showing cluster metrics flowing through Prometheus, Alertmanager, and Grafana while pod logs flow through Fluentd into Elasticsearch/Kibana and Loki, with Loki also feeding Grafana.](../../assets/diagrams/rendered/en-core-09-cluster-administration-7.svg)
+![Architecture diagram showing API server and node metrics flowing through kube-state-metrics and Node Exporter into Prometheus, then to Alertmanager and Grafana, while pod logs flow through Fluentd/Fluent Bit into Elasticsearch with Kibana and into Loki, with Loki also feeding Grafana.](../.gitbook/assets/en-core-09-cluster-administration-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-7.html)
 
 ### Monitoring Tools
 
@@ -1128,7 +1144,9 @@ Amazon EKS is a managed Kubernetes service that automates many aspects of cluste
 
 The following diagram shows the Amazon EKS cluster architecture and management components:
 
-![Architecture diagram showing a user managing Amazon EKS through the AWS console, CLI, or API, with EKS running a control plane plus managed node groups and Fargate, backed by the VPC CNI, CoreDNS, and kube-proxy add-ons.](../../assets/diagrams/rendered/en-core-09-cluster-administration-8.svg)
+![Architecture diagram showing a user managing Amazon EKS through the AWS console, CLI, or API, with EKS running a control plane plus managed node groups and Fargate, the control plane using AWS IAM, VPC, and CloudWatch, and the VPC CNI, CoreDNS, and kube-proxy add-ons.](../.gitbook/assets/en-core-09-cluster-administration-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-8.html)
 
 ### EKS Cluster Configuration
 
@@ -1301,7 +1319,9 @@ Kubernetes cluster networking manages pod-to-pod communication, service discover
 
 ### Network Architecture
 
-![Tree diagram showing the four building blocks of Kubernetes cluster networking, each paired with the mechanism that implements it.](../../assets/diagrams/rendered/en-core-09-cluster-administration-9.svg)
+![Architecture diagram showing cluster networking split into pod network, service network, ingress, and network policies, each implemented by a CNI plugin, Service types (ClusterIP, NodePort, LoadBalancer), an ingress controller, and network security respectively.](../.gitbook/assets/en-core-09-cluster-administration-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-9.html)
 
 ### CNI Plugin Management
 
@@ -1476,7 +1496,9 @@ Kubernetes cluster upgrades are necessary to apply new features, security patche
 
 ### Upgrade Planning
 
-![Tree diagram showing the four planning tasks for a Kubernetes cluster upgrade, each paired with its concrete follow-up action.](../../assets/diagrams/rendered/en-core-09-cluster-administration-10.svg)
+![Tree diagram showing upgrade planning split into four tasks, checking version compatibility, creating a backup, choosing an upgrade strategy, and planning downtime, each leading to a concrete action: reviewing API changes, an etcd backup, in-place versus blue/green, and user communication.](../.gitbook/assets/en-core-09-cluster-administration-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-10.html)
 
 ### Upgrade Strategy Comparison
 
@@ -1632,7 +1654,9 @@ Effective cluster management requires a comprehensive monitoring and logging sys
 
 ### Monitoring Architecture
 
-![Architecture diagram showing Kubernetes monitoring split into metric collection, log collection, and alerting, all feeding a shared Grafana visualization layer.](../../assets/diagrams/rendered/en-core-09-cluster-administration-11.svg)
+![Architecture diagram showing Kubernetes monitoring split into metric collection, log collection, alerting, and visualization, handled by Prometheus with kube-state-metrics and node-exporter, Fluentd/Fluent Bit shipping logs to Elasticsearch and Kibana, Alertmanager, and Grafana respectively.](../.gitbook/assets/en-core-09-cluster-administration-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-11.html)
 
 ### Prometheus and Grafana Installation
 
@@ -1742,7 +1766,9 @@ Kubernetes cluster troubleshooting is an important skill for system administrato
 
 ### Troubleshooting Methodology
 
-![Flowchart showing the six-step troubleshooting sequence from problem identification through documentation, with the information-gathering step branching into log, event, and resource checks.](../../assets/diagrams/rendered/en-core-09-cluster-administration-12.svg)
+![Workflow diagram showing the six-step troubleshooting sequence from problem identification through documentation, with the information-gathering step branching into log, event, and resource status checks.](../.gitbook/assets/en-core-09-cluster-administration-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-12.html)
 
 ### Common Problems and Solutions
 
@@ -1817,7 +1843,9 @@ Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service on AWS w
 
 ### EKS Cluster Architecture
 
-![Architecture diagram showing an Amazon EKS cluster split into an AWS-managed control plane and user-managed data plane, networking, and security, each with its supporting AWS component.](../../assets/diagrams/rendered/en-core-09-cluster-administration-13.svg)
+![Architecture diagram showing an Amazon EKS cluster split into an AWS-managed control plane (API server, etcd, scheduler) and a customer-responsibility area covering the data plane (managed node groups with EC2 Auto Scaling groups, self-managed nodes, Fargate), networking (VPC CNI and AWS VPC), and security (IAM authentication with IAM roles and policies).](../.gitbook/assets/en-core-09-cluster-administration-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-13.html)
 
 ### EKS Cluster Creation
 

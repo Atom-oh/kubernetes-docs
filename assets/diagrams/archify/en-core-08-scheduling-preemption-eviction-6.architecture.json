@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Eviction Types and Causes",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Control plane / kubelet"
+        },
+        "external": {
+          "label": "User"
+        },
+        "cloud": {
+          "label": "Eviction causes"
+        },
+        "messagebus": {
+          "label": "kubelet eviction signals"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "controller",
+        "label": "Controller eviction",
+        "focus": [
+          "controller",
+          "notready",
+          "unreachable"
+        ],
+        "note": "kube-controller-manager evicts pods when a node stays NotReady past pod-eviction-timeout (default 5 minutes) or becomes Unreachable."
+      },
+      {
+        "id": "kubelet",
+        "label": "kubelet eviction",
+        "focus": [
+          "kubelet",
+          "resource",
+          "hardware",
+          "memory",
+          "nodefs",
+          "imagefs",
+          "pid"
+        ],
+        "note": "kubelet monitors memory, filesystem, and PID eviction signals and evicts pods on resource shortage or hardware issues."
+      },
+      {
+        "id": "user",
+        "label": "User eviction",
+        "focus": [
+          "user",
+          "maintenance"
+        ],
+        "note": "Users evict pods directly through node maintenance tasks such as kubectl drain."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Controller eviction",
+      "sublabel": "kube-controller-manager",
+      "pos": [
+        138,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User eviction",
+      "sublabel": "kubectl drain",
+      "pos": [
+        440,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet eviction",
+      "sublabel": "Node agent",
+      "pos": [
+        742,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "notready",
+      "type": "cloud",
+      "label": "Node NotReady",
+      "sublabel": "timeout default 5 min",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "unreachable",
+      "type": "cloud",
+      "label": "Node Unreachable",
+      "sublabel": "Node cannot be reached",
+      "pos": [
+        236,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "maintenance",
+      "type": "cloud",
+      "label": "Maintenance",
+      "sublabel": "Node maintenance tasks",
+      "pos": [
+        440,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "resource",
+      "type": "cloud",
+      "label": "Resource shortage",
+      "sublabel": "Memory, disk, etc.",
+      "pos": [
+        644,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hardware",
+      "type": "cloud",
+      "label": "Hardware issues",
+      "sublabel": "Node failure",
+      "pos": [
+        840,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "messagebus",
+      "label": "memory.available",
+      "sublabel": "Available memory",
+      "pos": [
+        1100,
+        70
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "nodefs",
+      "type": "messagebus",
+      "label": "nodefs.available",
+      "sublabel": "Node filesystem · inodesFree",
+      "pos": [
+        1100,
+        170
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "imagefs",
+      "type": "messagebus",
+      "label": "imagefs.available",
+      "sublabel": "Image filesystem · inodesFree",
+      "pos": [
+        1100,
+        270
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "pid",
+      "type": "messagebus",
+      "label": "pid.available",
+      "sublabel": "Available process IDs",
+      "pos": [
+        1100,
+        370
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Eviction types",
+      "wraps": [
+        "controller",
+        "user",
+        "kubelet"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Eviction causes",
+      "wraps": [
+        "notready",
+        "unreachable",
+        "maintenance",
+        "resource",
+        "hardware"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "kubelet eviction signals",
+      "wraps": [
+        "memory",
+        "nodefs",
+        "imagefs",
+        "pid"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-notready",
+      "from": "controller",
+      "to": "notready",
+      "label": "cause",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "controller-unreachable",
+      "from": "controller",
+      "to": "unreachable",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "user-maintenance",
+      "from": "user",
+      "to": "maintenance",
+      "label": "cause",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "kubelet-resource",
+      "from": "kubelet",
+      "to": "resource",
+      "label": "cause",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kubelet-hardware",
+      "from": "kubelet",
+      "to": "hardware",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kubelet-memory",
+      "from": "kubelet",
+      "to": "memory",
+      "label": "monitors",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "kubelet-nodefs",
+      "from": "kubelet",
+      "to": "nodefs",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "kubelet-imagefs",
+      "from": "kubelet",
+      "to": "imagefs",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "kubelet-pid",
+      "from": "kubelet",
+      "to": "pid",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Eviction signal thresholds",
+      "items": [
+        "Soft threshold: evict after the grace-period once exceeded",
+        "Hard threshold: evict immediately once exceeded"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "kubelet eviction order",
+      "items": [
+        "1. BestEffort QoS pods",
+        "2. Burstable QoS pods (usage above requests first)",
+        "3. Guaranteed QoS pods"
+      ]
+    }
+  ]
+}

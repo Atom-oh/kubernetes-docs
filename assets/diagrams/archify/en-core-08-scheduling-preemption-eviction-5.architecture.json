@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Priority and Preemption",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Priority policy"
+        },
+        "backend": {
+          "label": "Scheduler / Pods"
+        },
+        "external": {
+          "label": "Removed pods"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "priority",
+        "label": "Assigning priority",
+        "focus": [
+          "pc",
+          "pod"
+        ],
+        "note": "The higher a PriorityClass value, the more important the pod. Apply it to a pod with priorityClassName."
+      },
+      {
+        "id": "preemption",
+        "label": "Preemption process",
+        "focus": [
+          "preemption",
+          "lowpod",
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "note": "When no node fits a higher-priority pod, the scheduler preempts lower-priority pods to free resources."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pc",
+      "type": "security",
+      "label": "PriorityClass",
+      "sublabel": "Priority class",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "priorityClassName",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "preemption",
+      "type": "backend",
+      "label": "Preemption",
+      "sublabel": "scheduler action",
+      "pos": [
+        640,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lowpod",
+      "type": "external",
+      "label": "Lower-priority pods",
+      "sublabel": "removed",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "1. Scheduling failure",
+      "sublabel": "resource shortage",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "2. Select target pods",
+      "pos": [
+        340,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "3. Terminate target pods",
+      "sublabel": "termination signal sent",
+      "pos": [
+        640,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "4. Schedule the pod",
+      "sublabel": "higher-priority pod placed",
+      "pos": [
+        940,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Priority and Preemption Mechanism",
+      "wraps": [
+        "pc",
+        "pod",
+        "preemption",
+        "lowpod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Preemption process",
+      "wraps": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pc-pod",
+      "from": "pc",
+      "to": "pod",
+      "label": "assigns priority",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-preemption",
+      "from": "pod",
+      "to": "preemption",
+      "label": "resource shortage",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preemption-lowpod",
+      "from": "preemption",
+      "to": "lowpod",
+      "label": "removes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preemption-s1",
+      "from": "preemption",
+      "to": "s1",
+      "label": "starts preemption process",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          725,
+          220
+        ],
+        [
+          125,
+          220
+        ]
+      ]
+    },
+    {
+      "id": "s1-s2",
+      "from": "s1",
+      "to": "s2",
+      "label": "triggers"
+    },
+    {
+      "id": "s2-s3",
+      "from": "s2",
+      "to": "s3",
+      "label": "selects"
+    },
+    {
+      "id": "s3-s4",
+      "from": "s3",
+      "to": "s4",
+      "label": "completes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Priority Class Examples",
+      "items": [
+        "system-node-critical: 2000000000 (pods critical for node operation)",
+        "system-cluster-critical: 1000000000 (pods critical for cluster operation)",
+        "high-priority: custom, e.g. 1000000",
+        "default: 0 (no PriorityClass specified)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Preemption Considerations",
+      "items": [
+        "Preempted pods terminate gracefully within terminationGracePeriodSeconds",
+        "Preemption does not respect PodDisruptionBudget"
+      ]
+    }
+  ]
+}

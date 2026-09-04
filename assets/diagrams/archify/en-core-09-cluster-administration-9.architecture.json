@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cluster Network Architecture",
+    "output": "en-core-09-cluster-administration-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1060,
+      480
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "networking",
+      "type": "cloud",
+      "label": "Cluster Networking",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sublabel": "Pod traffic · Discovery · External access"
+    },
+    {
+      "id": "pod-network",
+      "type": "backend",
+      "label": "Pod Network",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "Pod-to-pod communication"
+    },
+    {
+      "id": "service-network",
+      "type": "backend",
+      "label": "Service Network",
+      "pos": [
+        300,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "Service discovery"
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "Ingress",
+      "pos": [
+        560,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "External access"
+    },
+    {
+      "id": "network-policy",
+      "type": "backend",
+      "label": "Network Policies",
+      "pos": [
+        820,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "Traffic control"
+    },
+    {
+      "id": "cni",
+      "type": "external",
+      "label": "CNI Plugin",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "Calico · Flannel · Cilium"
+    },
+    {
+      "id": "service-types",
+      "type": "backend",
+      "label": "Service Types",
+      "pos": [
+        300,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "ClusterIP · NodePort · LoadBalancer"
+    },
+    {
+      "id": "ingress-controller",
+      "type": "frontend",
+      "label": "Ingress Controller",
+      "pos": [
+        560,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "network-security",
+      "type": "security",
+      "label": "Network Security",
+      "pos": [
+        820,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "sublabel": "NetworkPolicy"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Networking areas",
+      "wraps": [
+        "pod-network",
+        "service-network",
+        "ingress",
+        "network-policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Implementing mechanisms",
+      "wraps": [
+        "cni",
+        "service-types",
+        "ingress-controller",
+        "network-security"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "net-pod",
+      "from": "networking",
+      "to": "pod-network",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-svc",
+      "from": "networking",
+      "to": "service-network",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-ingress",
+      "from": "networking",
+      "to": "ingress",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "net-policy",
+      "from": "networking",
+      "to": "network-policy",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-cni",
+      "from": "pod-network",
+      "to": "cni",
+      "label": "implemented by",
+      "labelDy": 24
+    },
+    {
+      "id": "svc-types",
+      "from": "service-network",
+      "to": "service-types",
+      "label": "exposed via",
+      "labelDy": 24
+    },
+    {
+      "id": "ingress-ctrl",
+      "from": "ingress",
+      "to": "ingress-controller",
+      "label": "implemented by",
+      "labelDy": 24
+    },
+    {
+      "id": "policy-security",
+      "from": "network-policy",
+      "to": "network-security",
+      "label": "enforced by",
+      "variant": "security",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CNI plugin comparison",
+      "items": [
+        "Calico: BGP-based, supports network policies",
+        "Flannel: VXLAN, simple setup, no network policies",
+        "Cilium: eBPF, L3-L7 policies, high performance",
+        "AWS VPC CNI: optimized for AWS EKS"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Windows Container Types Compared",
+    "locale": "en",
+    "output": "en-core-10-windows-in-kubernetes-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      760
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Windows app"
+        },
+        "backend": {
+          "label": "Runtime / kernel / hypervisor"
+        },
+        "cloud": {
+          "label": "Host OS"
+        },
+        "external": {
+          "label": "Physical hardware"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "server-containers",
+        "label": "Windows Server Containers",
+        "focus": [
+          "app1",
+          "app2",
+          "app3",
+          "runtime",
+          "hostos",
+          "hw"
+        ],
+        "note": "Several apps share one container runtime and the host OS kernel. Lightweight and fast to start, but the Windows version must match the host."
+      },
+      {
+        "id": "hyperv-isolation",
+        "label": "Hyper-V Isolation Containers",
+        "focus": [
+          "hvapp1",
+          "hvapp2",
+          "kernel1",
+          "kernel2",
+          "hyperv",
+          "hostos",
+          "hw"
+        ],
+        "note": "Each app runs in a lightweight VM with its own kernel under Hyper-V. Stronger isolation, mixed Windows versions, more resources."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Windows App 1",
+      "sublabel": "container",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Windows App 2",
+      "sublabel": "container",
+      "pos": [
+        220,
+        90
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "app3",
+      "type": "frontend",
+      "label": "Windows App 3",
+      "sublabel": "container",
+      "pos": [
+        380,
+        90
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Container Runtime",
+      "sublabel": "shares host kernel",
+      "pos": [
+        190,
+        250
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "hvapp1",
+      "type": "frontend",
+      "label": "Windows App 1",
+      "sublabel": "container runtime",
+      "pos": [
+        660,
+        90
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "hvapp2",
+      "type": "frontend",
+      "label": "Windows App 2",
+      "sublabel": "container runtime",
+      "pos": [
+        900,
+        90
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "kernel1",
+      "type": "backend",
+      "label": "Windows OS Kernel",
+      "sublabel": "per-VM kernel",
+      "pos": [
+        660,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kernel2",
+      "type": "backend",
+      "label": "Windows OS Kernel",
+      "sublabel": "per-VM kernel",
+      "pos": [
+        900,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "hyperv",
+      "type": "backend",
+      "label": "Hyper-V Hypervisor",
+      "sublabel": "runs lightweight VMs",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "hostos",
+      "type": "cloud",
+      "label": "Windows Server OS",
+      "sublabel": "host OS",
+      "pos": [
+        480,
+        500
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "hw",
+      "type": "external",
+      "label": "Physical Hardware",
+      "sublabel": "worker node",
+      "pos": [
+        480,
+        630
+      ],
+      "size": [
+        220,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Windows Server Containers",
+      "wraps": [
+        "app1",
+        "app2",
+        "app3",
+        "runtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Hyper-V Isolation Containers",
+      "wraps": [
+        "hvapp1",
+        "hvapp2",
+        "kernel1",
+        "kernel2",
+        "hyperv"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Lightweight VM 1",
+      "wraps": [
+        "hvapp1",
+        "kernel1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Lightweight VM 2",
+      "wraps": [
+        "hvapp2",
+        "kernel2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-runtime",
+      "from": "app1",
+      "to": "runtime",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-runtime",
+      "from": "app2",
+      "to": "runtime",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app3-runtime",
+      "from": "app3",
+      "to": "runtime",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "runtime-hostos",
+      "from": "runtime",
+      "to": "hostos",
+      "label": "shared kernel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hvapp1-kernel1",
+      "from": "hvapp1",
+      "to": "kernel1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hvapp2-kernel2",
+      "from": "hvapp2",
+      "to": "kernel2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kernel1-hyperv",
+      "from": "kernel1",
+      "to": "hyperv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kernel2-hyperv",
+      "from": "kernel2",
+      "to": "hyperv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hyperv-hostos",
+      "from": "hyperv",
+      "to": "hostos",
+      "label": "kernel per VM",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hostos-hw",
+      "from": "hostos",
+      "to": "hw"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Windows Server Containers",
+      "items": [
+        "Share the host OS kernel (like Linux containers)",
+        "Lightweight and quick to start",
+        "Require the same Windows version as the host"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Hyper-V Isolation Containers",
+      "items": [
+        "Each container runs in a lightweight VM",
+        "Higher level of isolation",
+        "Can run a different Windows version than the host, but use more resources"
+      ]
+    }
+  ]
+}

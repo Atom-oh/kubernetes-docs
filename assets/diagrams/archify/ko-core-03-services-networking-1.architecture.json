@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "인그레스 트래픽 흐름",
+    "output": "ko-core-03-services-networking-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      540
+    ],
+    "views": [
+      {
+        "id": "entry-path",
+        "label": "외부 진입 경로",
+        "focus": [
+          "client",
+          "lb",
+          "ic",
+          "ingress"
+        ],
+        "note": "클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 거쳐 인그레스 리소스의 규칙에 도달한다."
+      },
+      {
+        "id": "service-fanout",
+        "label": "서비스 분기",
+        "focus": [
+          "ingress",
+          "s1",
+          "s2",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "note": "host/path 규칙에 따라 서비스 A 또는 B로 분기되고, 각 서비스가 자신의 백엔드 파드로 부하를 분산한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "외부 클라이언트",
+      "sublabel": "HTTP / HTTPS 요청",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서",
+      "sublabel": "클라우드 제공업체 LB",
+      "pos": [
+        230,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ic",
+      "type": "backend",
+      "label": "인그레스 컨트롤러",
+      "sublabel": "NGINX · AWS ALB 등",
+      "pos": [
+        450,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "인그레스 리소스",
+      "sublabel": "host · path 규칙",
+      "pos": [
+        690,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "서비스 A",
+      "sublabel": "ClusterIP",
+      "pos": [
+        930,
+        130
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "서비스 B",
+      "sublabel": "ClusterIP",
+      "pos": [
+        930,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "frontend",
+      "label": "Pod A-1",
+      "sublabel": "백엔드 파드",
+      "pos": [
+        1150,
+        80
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "frontend",
+      "label": "Pod A-2",
+      "sublabel": "백엔드 파드",
+      "pos": [
+        1150,
+        180
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "frontend",
+      "label": "Pod B-1",
+      "sublabel": "백엔드 파드",
+      "pos": [
+        1150,
+        320
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "p4",
+      "type": "frontend",
+      "label": "Pod B-2",
+      "sublabel": "백엔드 파드",
+      "pos": [
+        1150,
+        420
+      ],
+      "size": [
+        130,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "ic",
+        "ingress",
+        "s1",
+        "s2",
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "HTTP / HTTPS",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "lb-ic",
+      "from": "lb",
+      "to": "ic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ic-ingress",
+      "from": "ic",
+      "to": "ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-s1",
+      "from": "ingress",
+      "to": "s1",
+      "label": "host / path 일치"
+    },
+    {
+      "id": "ingress-s2",
+      "from": "ingress",
+      "to": "s2",
+      "label": "host / path 일치"
+    },
+    {
+      "id": "s1-p1",
+      "from": "s1",
+      "to": "p1",
+      "label": "로드 밸런싱"
+    },
+    {
+      "id": "s1-p2",
+      "from": "s1",
+      "to": "p2"
+    },
+    {
+      "id": "s2-p3",
+      "from": "s2",
+      "to": "p3",
+      "label": "로드 밸런싱"
+    },
+    {
+      "id": "s2-p4",
+      "from": "s2",
+      "to": "p4"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "인그레스가 제공하는 기능",
+      "items": [
+        "클러스터 외부에서 내부 서비스로의 HTTP / HTTPS 경로 노출",
+        "로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "인그레스 컨트롤러",
+      "items": [
+        "인그레스 리소스를 사용하려면 클러스터에 컨트롤러가 실행 중이어야 한다",
+        "NGINX, AWS ALB, GCE, Traefik, HAProxy, Istio Ingress"
+      ]
+    }
+  ]
+}

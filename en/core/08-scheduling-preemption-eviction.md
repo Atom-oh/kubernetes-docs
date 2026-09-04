@@ -72,7 +72,9 @@ EOF
 
 ## Kubernetes Scheduling Architecture
 
-![Architecture diagram showing the kube-scheduler pulling pods from a queue and running them through filtering, scoring, and binding phases, gated by scheduling constraints and backstopped by priority preemption, pod disruption budgets, and the descheduler.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-0.svg)
+![Kubernetes scheduling architecture: kube-scheduler runs pods through queueing, filtering, scoring and binding, constrained by placement policies, with priority-based preemption and eviction feeding back into the pipeline.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-0.html)
 
 ## Scheduling Concept Comparison
 
@@ -154,7 +156,9 @@ The scheduling process is broadly divided into two phases:
 
 The Kubernetes scheduler operates through the following process:
 
-![Pipeline diagram showing a pod creation event moving through the scheduling queue, the kube-scheduler, filter plugins, score plugins, best-node selection, and binding until the pod lands on a node.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-1.svg)
+![Pipeline diagram showing a pod creation event moving through the scheduling queue, the kube-scheduler, filter plugins, score plugins, best-node selection, and a binding request to the API server until the pod lands on a node.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-1.html)
 
 1. **Pod Queue Watching**: The scheduler watches the API server for unscheduled pods.
 2. **Node Filtering**: Identifies a set of nodes that can run the pod.
@@ -200,7 +204,9 @@ In the example above, the `schedulerName` field specifies the scheduler to sched
 
 Kubernetes provides several mechanisms to place pods on specific nodes.
 
-![Diagram comparing three node-placement mechanisms: nodeSelector matching a node label, nodeName pinning to a specific node, and nodeAffinity evaluating an expression against candidate zones.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-2.svg)
+![Diagram comparing three node-placement mechanisms: nodeSelector matching a node label, nodeName pinning to a specific node, and nodeAffinity evaluating an expression against candidate zones.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-2.html)
 
 ### Node Selector
 
@@ -243,7 +249,9 @@ In the example above, the pod is directly placed on the node named `worker-node-
 
 Pod affinity and anti-affinity provide ways to place pods based on relationships between pods.
 
-![Diagram contrasting pod affinity, which co-locates a web pod with a cache pod on the same node, against pod anti-affinity, which separates two web pod replicas across different nodes, both configurable as hard or soft requirements.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-3.svg)
+![Diagram contrasting pod affinity, which co-locates a web pod with a cache pod on the same node, against pod anti-affinity, which separates two web pod replicas across different nodes, both configurable as hard or soft requirements.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-3.html)
 
 ### Pod Affinity
 
@@ -330,7 +338,9 @@ In the example above, the `weight` field indicates the weight of this preference
 
 Taints and tolerations are mechanisms that allow nodes to reject specific pods.
 
-![Diagram showing a node taint rejecting pods unless they carry a matching toleration, the three taint effects, common taint use cases, and a worked example where a GPU-tainted node rejects a regular pod but admits a pod with a matching toleration.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-4.svg)
+![Diagram showing a node taint rejecting pods unless they carry a matching toleration, the three taint effects NoSchedule, PreferNoSchedule and NoExecute, and a worked example where a GPU node tainted key=gpu:NoSchedule rejects a regular pod but admits a GPU pod with a matching toleration.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-4.html)
 
 ### Taints
 
@@ -447,7 +457,9 @@ Node affinity supports various operators:
 
 Kubernetes provides pod priority and preemption features to ensure important workloads can secure cluster resources.
 
-![Diagram showing a PriorityClass assigning priority to a pod, triggering preemption of lower-priority pods when resources are insufficient, alongside the four-step preemption process and example built-in priority classes.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-5.svg)
+![Diagram showing a PriorityClass assigning priority to a pod, triggering preemption of lower-priority pods when resources are insufficient, alongside the four-step preemption process from scheduling failure to scheduling the higher-priority pod and example built-in priority classes.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-5.html)
 
 ### PriorityClass
 
@@ -505,7 +517,9 @@ Things to consider when using preemption:
 
 Pod eviction is the process of safely moving pods when node issues occur. Eviction can happen for various reasons.
 
-![Diagram grouping pod eviction into three sources -- the controller manager evicting pods from unready or unreachable nodes, kubelet evicting pods under resource or hardware pressure while monitoring memory, filesystem, and PID signals, and users draining nodes for maintenance.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-6.svg)
+![Diagram grouping pod eviction into three sources -- the controller manager evicting pods from NotReady or Unreachable nodes, kubelet evicting pods on resource shortage or hardware issues while monitoring the memory, nodefs, imagefs, and pid eviction signals, and users draining nodes for maintenance.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-6.html)
 
 ### Eviction Types
 
@@ -565,7 +579,9 @@ kubelet evicts pods in the following order:
 
 Pod Disruption Budget (PDB) is a way to maintain application availability during voluntary disruptions. PDB limits the number of pods that can be simultaneously disrupted.
 
-![Diagram showing a PodDisruptionBudget's minAvailable, maxUnavailable, and selector settings gating a voluntary disruption such as node drain, allowing or denying eviction, with an example deployment where equivalent minAvailable and maxUnavailable settings produce the same effect.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-7.svg)
+![Diagram showing a PodDisruptionBudget's minAvailable, maxUnavailable, and selector settings gating a voluntary disruption such as node drain, allowing or denying eviction, with an example deployment where equivalent minAvailable and maxUnavailable settings produce the same effect.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-7.html)
 
 ### PDB Definition
 
@@ -658,7 +674,9 @@ In the example above:
 
 TopologySpreadConstraints provide fine-grained control over how pods are distributed across topology domains such as availability zones, nodes, or regions. This feature offers more flexibility than Pod anti-affinity for achieving high availability and efficient resource utilization.
 
-![Diagram showing TopologySpreadConstraints controlling pod distribution through required fields (maxSkew, topologyKey, whenUnsatisfiable, labelSelector) and 1.27+ optional fields, with an example where two zones holding 2 pods each stay within maxSkew 1 of a third zone holding only 1 pod.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-8.svg)
+![Diagram showing TopologySpreadConstraints controlling pod spread across availability zones through the four required fields maxSkew, topologyKey, whenUnsatisfiable and labelSelector, the DoNotSchedule and ScheduleAnyway options of whenUnsatisfiable, and an EKS example where a new pod with maxSkew=1 lands in ap-northeast-2b, the zone holding the fewest pods.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-8.html)
 
 ### Key Fields
 
@@ -874,7 +892,9 @@ spec:
 
 The Descheduler is a Kubernetes component that evicts pods from nodes to allow the scheduler to reschedule them to more appropriate nodes. Unlike the scheduler which only places new pods, the descheduler helps maintain optimal pod placement over time.
 
-![Diagram showing the descheduler applying one of seven rebalancing strategies while running a four-step loop: analyzing cluster state, identifying pods to evict, evicting them, and letting the scheduler reschedule them onto more suitable nodes.](../../assets/diagrams/rendered/en-core-08-scheduling-preemption-eviction-9.svg)
+![Diagram showing how the Descheduler restores balance when node additions or removals or pod changes break an evenly distributed cluster, by evicting running pods so the scheduler re-places them, alongside six representative Descheduler strategies such as RemoveDuplicates, LowNodeUtilization, and PodLifeTime.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-9.html)
 
 ### Why Descheduling Is Needed
 

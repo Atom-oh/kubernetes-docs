@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 컨트롤 플레인 구성요소와 상호작용",
+    "output": "ko-core-09-cluster-administration-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "apiserver",
+          "etcd",
+          "scheduler",
+          "controller-manager",
+          "cloud-controller-manager"
+        ],
+        "note": "etcd, kube-scheduler, 컨트롤러 매니저는 kube-apiserver와 양방향으로 통신한다. 화살표는 호출을 시작하는 쪽을 나타낸다."
+      },
+      {
+        "id": "node",
+        "label": "노드 구성요소",
+        "focus": [
+          "apiserver",
+          "kubelet",
+          "kube-proxy",
+          "runtime"
+        ],
+        "note": "kubelet은 kube-apiserver와 양방향으로 통신하며 kube-proxy와 컨테이너 런타임을 관리한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "Kubernetes API 노출",
+      "pos": [
+        480,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "키-값 저장소",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "파드를 노드에 스케줄링",
+      "pos": [
+        200,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "컨트롤러 실행",
+      "pos": [
+        760,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "cloud",
+      "label": "cloud-controller-manager",
+      "sublabel": "클라우드 제공업체 연동",
+      "pos": [
+        920,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        480,
+        420
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "네트워크 규칙 / 연결 포워딩",
+      "pos": [
+        240,
+        560
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "컨테이너 런타임",
+      "sublabel": "Docker / containerd / CRI-O",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "kubelet",
+        "kube-proxy",
+        "runtime"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-scheduler",
+      "from": "scheduler",
+      "to": "apiserver"
+    },
+    {
+      "id": "api-controller-manager",
+      "from": "controller-manager",
+      "to": "apiserver"
+    },
+    {
+      "id": "api-cloud-controller-manager",
+      "from": "cloud-controller-manager",
+      "to": "apiserver"
+    },
+    {
+      "id": "api-kubelet",
+      "from": "kubelet",
+      "to": "apiserver",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubelet-proxy",
+      "from": "kubelet",
+      "to": "kube-proxy"
+    },
+    {
+      "id": "kubelet-runtime",
+      "from": "kubelet",
+      "to": "runtime"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인 구성요소",
+      "items": [
+        "kube-apiserver: Kubernetes API를 노출",
+        "etcd: 클러스터 데이터를 저장하는 키-값 저장소",
+        "kube-scheduler: 파드를 노드에 스케줄링",
+        "kube-controller-manager: 컨트롤러 실행",
+        "cloud-controller-manager: 클라우드 제공업체와 상호작용"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "노드 구성요소",
+      "items": [
+        "kubelet: 각 노드에서 파드와 컨테이너가 실행되도록 하는 에이전트",
+        "kube-proxy: 네트워크 규칙 유지, 연결 포워딩 처리",
+        "컨테이너 런타임: 컨테이너를 실행 (Docker, containerd, CRI-O 등)"
+      ]
+    }
+  ]
+}

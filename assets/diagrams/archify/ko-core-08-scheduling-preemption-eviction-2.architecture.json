@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "노드 선택 메커니즘 비교",
+    "output": "ko-core-08-scheduling-preemption-eviction-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "선택 메커니즘"
+        },
+        "frontend": {
+          "label": "포드 스펙"
+        },
+        "cloud": {
+          "label": "후보 노드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "selector",
+        "label": "nodeSelector",
+        "focus": [
+          "ns",
+          "pod1",
+          "node1",
+          "node2"
+        ],
+        "note": "가장 간단한 방법. 포드는 gpu=true 레이블이 있는 노드에만 배치된다."
+      },
+      {
+        "id": "nodename",
+        "label": "nodeName",
+        "focus": [
+          "nn",
+          "direct"
+        ],
+        "note": "스케줄러를 우회해 특정 노드에 직접 배치한다. 일반적으로 권장되지 않는다."
+      },
+      {
+        "id": "affinity",
+        "label": "nodeAffinity",
+        "focus": [
+          "na",
+          "pod2",
+          "node3",
+          "node4",
+          "node5"
+        ],
+        "note": "표현식으로 여러 값을 한 번에 평가한다. zone이 us-east-1a 또는 us-east-1b인 노드만 후보가 된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ns",
+      "type": "backend",
+      "label": "노드 셀렉터",
+      "sublabel": "nodeSelector",
+      "pos": [
+        115,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "frontend",
+      "label": "포드",
+      "sublabel": "nodeSelector: gpu=\"true\"",
+      "pos": [
+        95,
+        190
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "노드 1",
+      "sublabel": "gpu=true",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "노드 2",
+      "sublabel": "gpu=false",
+      "pos": [
+        210,
+        350
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "nn",
+      "type": "backend",
+      "label": "노드 이름",
+      "sublabel": "nodeName",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "cloud",
+      "label": "특정 노드",
+      "sublabel": "worker-node-1",
+      "pos": [
+        430,
+        350
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "na",
+      "type": "backend",
+      "label": "노드 어피니티",
+      "sublabel": "nodeAffinity",
+      "pos": [
+        811,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "frontend",
+      "label": "포드",
+      "sublabel": "zone in (us-east-1a, us-east-1b)",
+      "pos": [
+        756,
+        190
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "node3",
+      "type": "cloud",
+      "label": "노드 3",
+      "sublabel": "zone=us-east-1a",
+      "pos": [
+        670,
+        350
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "node4",
+      "type": "cloud",
+      "label": "노드 4",
+      "sublabel": "zone=us-east-1b",
+      "pos": [
+        826,
+        350
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "node5",
+      "type": "cloud",
+      "label": "노드 5",
+      "sublabel": "zone=us-west-1a",
+      "pos": [
+        982,
+        350
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "노드 셀렉터 예시",
+      "wraps": [
+        "ns",
+        "pod1",
+        "node1",
+        "node2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "nodeName 예시",
+      "wraps": [
+        "nn",
+        "direct"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 어피니티 예시",
+      "wraps": [
+        "na",
+        "pod2",
+        "node3",
+        "node4",
+        "node5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ns-pod1",
+      "from": "ns",
+      "to": "pod1",
+      "label": "간단한 레이블 매칭",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "pod1-node1",
+      "from": "pod1",
+      "to": "node1",
+      "label": "일치",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod1-node2",
+      "from": "pod1",
+      "to": "node2",
+      "label": "불일치",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nn-direct",
+      "from": "nn",
+      "to": "direct",
+      "label": "직접 노드 지정",
+      "labelDy": 24
+    },
+    {
+      "id": "na-pod2",
+      "from": "na",
+      "to": "pod2",
+      "label": "복잡한 표현식",
+      "labelDy": 24
+    },
+    {
+      "id": "pod2-node3",
+      "from": "pod2",
+      "to": "node3",
+      "label": "일치",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod2-node4",
+      "from": "pod2",
+      "to": "node4",
+      "label": "일치",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 80
+    },
+    {
+      "id": "pod2-node5",
+      "from": "pod2",
+      "to": "node5",
+      "label": "불일치",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

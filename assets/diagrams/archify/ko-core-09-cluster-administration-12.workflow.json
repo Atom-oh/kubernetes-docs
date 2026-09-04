@@ -1,0 +1,228 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "클러스터 문제 해결 방법론",
+    "output": "public/archmaps/ko-core-09-cluster-administration-12.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "six-steps",
+        "label": "6단계 절차",
+        "focus": [
+          "identify",
+          "gather",
+          "analyze",
+          "apply",
+          "verify",
+          "document"
+        ],
+        "note": "문제 식별부터 문서화까지 한 방향으로 진행되는 체계적 문제 해결 순서입니다."
+      },
+      {
+        "id": "gathering",
+        "label": "정보 수집 활동",
+        "focus": [
+          "gather",
+          "logs",
+          "events",
+          "resources"
+        ],
+        "note": "정보 수집 단계는 로그·이벤트·리소스 상태 확인이라는 세 가지 구체적 활동으로 나뉩니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "문제 해결 단계"
+        },
+        "database": {
+          "label": "정보 수집 활동"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "steps",
+      "label": "문제 해결 단계"
+    },
+    {
+      "id": "collect",
+      "label": "정보 수집 활동"
+    }
+  ],
+  "mainPath": [
+    "identify",
+    "gather",
+    "analyze",
+    "apply",
+    "verify",
+    "document"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "identify"
+    ],
+    "allowedTerminals": [
+      "document",
+      "logs",
+      "events",
+      "resources"
+    ],
+    "requiredPaths": [
+      {
+        "from": "identify",
+        "to": "document"
+      },
+      {
+        "from": "gather",
+        "to": "logs"
+      },
+      {
+        "from": "gather",
+        "to": "events"
+      },
+      {
+        "from": "gather",
+        "to": "resources"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "identify",
+      "lane": "steps",
+      "col": 0,
+      "type": "backend",
+      "label": "문제 식별",
+      "sublabel": "증상 파악",
+      "width": 140
+    },
+    {
+      "id": "gather",
+      "lane": "steps",
+      "col": 1,
+      "type": "backend",
+      "label": "정보 수집",
+      "sublabel": "진단 명령 실행",
+      "width": 140
+    },
+    {
+      "id": "analyze",
+      "lane": "steps",
+      "col": 2,
+      "type": "backend",
+      "label": "원인 분석",
+      "width": 140
+    },
+    {
+      "id": "apply",
+      "lane": "steps",
+      "col": 3,
+      "type": "backend",
+      "label": "해결책 적용",
+      "width": 140
+    },
+    {
+      "id": "verify",
+      "lane": "steps",
+      "col": 4,
+      "type": "backend",
+      "label": "검증",
+      "sublabel": "정상 동작 확인",
+      "width": 140
+    },
+    {
+      "id": "document",
+      "lane": "steps",
+      "col": 5,
+      "type": "backend",
+      "label": "문서화",
+      "width": 140
+    },
+    {
+      "id": "logs",
+      "lane": "collect",
+      "col": 0,
+      "type": "database",
+      "label": "로그 확인",
+      "sublabel": "kubectl logs",
+      "width": 140
+    },
+    {
+      "id": "events",
+      "lane": "collect",
+      "col": 1,
+      "type": "database",
+      "label": "이벤트 확인",
+      "sublabel": "kubectl get events",
+      "width": 140
+    },
+    {
+      "id": "resources",
+      "lane": "collect",
+      "col": 2,
+      "type": "database",
+      "label": "리소스 상태 확인",
+      "sublabel": "kubectl describe / top",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "identify",
+      "to": "gather",
+      "role": "main"
+    },
+    {
+      "from": "gather",
+      "to": "analyze",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "apply",
+      "role": "main"
+    },
+    {
+      "from": "apply",
+      "to": "verify",
+      "role": "main"
+    },
+    {
+      "from": "verify",
+      "to": "document",
+      "role": "main"
+    },
+    {
+      "from": "gather",
+      "to": "logs",
+      "role": "branch",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "gather",
+      "to": "events",
+      "role": "branch",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "gather",
+      "to": "resources",
+      "role": "branch",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

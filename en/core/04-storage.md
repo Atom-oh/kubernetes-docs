@@ -79,7 +79,9 @@ Kubernetes Volumes are directories where containers within a Pod can store and s
 
 ### Kubernetes Storage Architecture
 
-![Pods claim storage through a PersistentVolumeClaim, which binds to a PersistentVolume provisioned by a StorageClass; the CSI Driver attaches that volume to the underlying cloud, local, or NFS backend storage.](../../assets/diagrams/rendered/en-core-04-storage-0.svg)
+![Pods claim storage through a PersistentVolumeClaim, which binds to a PersistentVolume provisioned by a StorageClass; the CSI Driver attaches that volume to the underlying cloud, local, or NFS backend storage.](../.gitbook/assets/en-core-04-storage-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-0.html)
 
 ### Why Volumes Are Needed
 
@@ -285,7 +287,9 @@ spec:
 
 A Persistent Volume (PV) is cluster storage provisioned by an administrator or dynamically provisioned using a Storage Class. PVs have a lifecycle independent of Pods, and PVs are retained even when Pods are deleted.
 
-![An administrator creates a Persistent Volume while a user's claim binds to it before a Pod uses that claim, with the volume ultimately connecting to physical storage.](../../assets/diagrams/rendered/en-core-04-storage-1.svg)
+![A cluster administrator creates a PersistentVolume connected to physical storage, a user's PersistentVolumeClaim binds to that volume, and a Pod uses the claim as its volume in the static provisioning flow.](../.gitbook/assets/en-core-04-storage-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-1.html)
 
 ### PV Creation
 
@@ -392,7 +396,9 @@ spec:
 
 Storage Classes describe the "classes" of storage provided by administrators. Storage Classes are used to dynamically provision PVs.
 
-![A user's PersistentVolumeClaim references a StorageClass, which dynamically provisions a PersistentVolume that the claim binds to and a Pod uses, ultimately connecting to physical storage.](../../assets/diagrams/rendered/en-core-04-storage-2.svg)
+![A user's PersistentVolumeClaim references a StorageClass, which dynamically provisions a PersistentVolume that the claim binds to and a Pod uses, ultimately connecting to physical storage.](../.gitbook/assets/en-core-04-storage-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-2.html)
 
 ### Storage Class Creation
 
@@ -507,7 +513,9 @@ spec:
 
 Kubernetes supports volume snapshots to create point-in-time copies of PVs. This is useful for backup and restore scenarios.
 
-![A Volume Snapshot references a Volume Snapshot Class and captures an existing PersistentVolumeClaim, and a new PVC using that snapshot as its data source binds to a new PV restored from it.](../../assets/diagrams/rendered/en-core-04-storage-3.svg)
+![A Volume Snapshot references a Volume Snapshot Class and captures an existing PersistentVolumeClaim, and a new PVC using that snapshot as its data source binds to a new PV restored from it.](../.gitbook/assets/en-core-04-storage-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-3.html)
 
 ### Volume Snapshot Class
 
@@ -557,7 +565,9 @@ spec:
 
 Kubernetes supports the ability to expand the size of PVCs. For this, `allowVolumeExpansion: true` must be set in the storage class.
 
-![A user's request to enlarge a PersistentVolumeClaim passes through the StorageClass, which checks that allowVolumeExpansion is enabled before the PersistentVolume grows the underlying disk and the Pod's filesystem.](../../assets/diagrams/rendered/en-core-04-storage-4.svg)
+![A user's request to enlarge a PersistentVolumeClaim passes through the StorageClass, which checks that allowVolumeExpansion is enabled before the PersistentVolume grows the underlying disk and the Pod's filesystem.](../.gitbook/assets/en-core-04-storage-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-4.html)
 
 ### PVC Expansion
 
@@ -1007,7 +1017,9 @@ This ensures:
 
 Various storage options are available in Amazon EKS. Each option has different use cases and performance characteristics, so it's important to choose the appropriate storage for your application's requirements.
 
-![Amazon EKS pods consume block storage from EBS, shared file storage from EFS, and high-performance parallel storage from FSx for Lustre, each provisioned through its own CSI driver, StorageClass, and PersistentVolume.](../../assets/diagrams/rendered/en-core-04-storage-5.svg)
+![Amazon EKS pods consume block storage from EBS, shared file storage from EFS, and high-performance parallel storage from FSx for Lustre, each provisioned through its own CSI driver, StorageClass, and PersistentVolume.](../.gitbook/assets/en-core-04-storage-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-5.html)
 
 ### Amazon EBS
 

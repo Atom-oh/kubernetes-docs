@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "네트워크 정책(Network Policy)",
+    "output": "ko-core-06-security-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "policy-structure",
+        "label": "정책 구성",
+        "focus": [
+          "np",
+          "podselector",
+          "policytypes",
+          "ingress",
+          "egress"
+        ],
+        "note": "NetworkPolicy는 podSelector로 대상 포드를 선택하고 policyTypes로 Ingress/Egress 규칙을 정의한다."
+      },
+      {
+        "id": "inbound",
+        "label": "인바운드 규칙",
+        "focus": [
+          "ingress",
+          "ingress-from",
+          "ingress-ports",
+          "frontend",
+          "api"
+        ],
+        "note": "from 선택자와 ports로 frontend 포드에서 8080/TCP로 들어오는 트래픽만 허용한다."
+      },
+      {
+        "id": "outbound",
+        "label": "아웃바운드 규칙",
+        "focus": [
+          "egress",
+          "egress-to",
+          "egress-ports",
+          "api",
+          "db"
+        ],
+        "note": "to 선택자와 ports로 database 포드의 5432/TCP로 나가는 트래픽만 허용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "podselector",
+      "type": "security",
+      "label": "podSelector",
+      "sublabel": "대상 포드 (app: api)",
+      "pos": [
+        300,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "policytypes",
+      "type": "security",
+      "label": "policyTypes",
+      "sublabel": "Ingress / Egress",
+      "pos": [
+        800,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "np",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "api-allow",
+      "pos": [
+        540,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "정책"
+    },
+    {
+      "id": "ingress",
+      "type": "security",
+      "label": "ingress",
+      "sublabel": "인바운드 규칙",
+      "pos": [
+        300,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "egress",
+      "sublabel": "아웃바운드 규칙",
+      "pos": [
+        780,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ingress-from",
+      "type": "backend",
+      "label": "from",
+      "sublabel": "podSelector · namespaceSelector · ipBlock",
+      "pos": [
+        140,
+        380
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "ingress-ports",
+      "type": "backend",
+      "label": "ports",
+      "sublabel": "허용 포트 (8080/TCP)",
+      "pos": [
+        420,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "egress-to",
+      "type": "backend",
+      "label": "to",
+      "sublabel": "podSelector · namespaceSelector · ipBlock",
+      "pos": [
+        680,
+        380
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "egress-ports",
+      "type": "backend",
+      "label": "ports",
+      "sublabel": "허용 포트 (5432/TCP)",
+      "pos": [
+        960,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "프론트엔드 포드",
+      "sublabel": "app: frontend",
+      "pos": [
+        140,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 포드",
+      "sublabel": "app: api",
+      "pos": [
+        540,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "데이터베이스 포드",
+      "sublabel": "app: database",
+      "pos": [
+        960,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "네트워크 정책 구성",
+      "wraps": [
+        "podselector",
+        "policytypes",
+        "np",
+        "ingress",
+        "egress"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "인바운드 규칙",
+      "wraps": [
+        "ingress-from",
+        "ingress-ports"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "아웃바운드 규칙",
+      "wraps": [
+        "egress-to",
+        "egress-ports"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "np-podselector",
+      "from": "np",
+      "to": "podselector",
+      "label": "선택"
+    },
+    {
+      "id": "np-policytypes",
+      "from": "np",
+      "to": "policytypes",
+      "label": "정의"
+    },
+    {
+      "id": "np-ingress",
+      "from": "np",
+      "to": "ingress",
+      "label": "규칙",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-egress",
+      "from": "np",
+      "to": "egress",
+      "label": "규칙",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ingress-from-edge",
+      "from": "ingress",
+      "to": "ingress-from",
+      "label": "소스",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ingress-ports-edge",
+      "from": "ingress",
+      "to": "ingress-ports",
+      "label": "포트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "egress-to-edge",
+      "from": "egress",
+      "to": "egress-to",
+      "label": "대상",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "egress-ports-edge",
+      "from": "egress",
+      "to": "egress-ports",
+      "label": "포트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "통신 (8080/TCP)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-db",
+      "from": "api",
+      "to": "db",
+      "label": "통신 (5432/TCP)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "np-api",
+      "from": "np",
+      "to": "api",
+      "label": "적용",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        640,
+        340
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "적용 대상",
+      "items": [
+        "podSelector가 app: api 레이블의 포드를 선택",
+        "policyTypes에 Ingress와 Egress를 모두 정의"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "인바운드 (ingress)",
+      "items": [
+        "from: app: frontend 레이블의 포드만 소스로 허용",
+        "ports: 8080/TCP만 허용"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "아웃바운드 (egress)",
+      "items": [
+        "to: app: database 레이블의 포드만 대상으로 허용",
+        "ports: 5432/TCP만 허용",
+        "CNI 플러그인(Calico, Cilium, Antrea 등)의 지원 필요"
+      ]
+    }
+  ]
+}

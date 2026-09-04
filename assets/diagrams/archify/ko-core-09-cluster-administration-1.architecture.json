@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "클러스터 관리 영역과 도구",
+    "output": "ko-core-09-cluster-administration-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "관리자"
+        },
+        "backend": {
+          "label": "관리 영역"
+        },
+        "cloud": {
+          "label": "도구"
+        }
+      }
+    },
+    "viewBox": [
+      1360,
+      480
+    ]
+  },
+  "components": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "클러스터 관리자",
+      "sublabel": "다섯 영역을 관리",
+      "pos": [
+        590,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "setup",
+      "type": "backend",
+      "label": "클러스터 설정 및 구성",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "operations",
+      "type": "backend",
+      "label": "운영 관리",
+      "pos": [
+        310,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "security",
+      "type": "backend",
+      "label": "보안 관리",
+      "pos": [
+        580,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "upgrade",
+      "type": "backend",
+      "label": "업그레이드 및 패치",
+      "pos": [
+        850,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "backend",
+      "label": "백업 및 복구",
+      "pos": [
+        1120,
+        190
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "setup-tools",
+      "type": "cloud",
+      "label": "kubeadm / kops",
+      "sublabel": "eksctl",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "ops-tools",
+      "type": "cloud",
+      "label": "kubectl",
+      "sublabel": "Prometheus / Grafana",
+      "pos": [
+        310,
+        340
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "sec-tools",
+      "type": "cloud",
+      "label": "RBAC / NetworkPolicy",
+      "sublabel": "PodSecurityPolicy",
+      "pos": [
+        580,
+        340
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "upgrade-tools",
+      "type": "cloud",
+      "label": "kubeadm upgrade",
+      "sublabel": "EKS 업데이트",
+      "pos": [
+        850,
+        340
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "backup-tools",
+      "type": "cloud",
+      "label": "etcd snapshot",
+      "sublabel": "Velero",
+      "pos": [
+        1120,
+        340
+      ],
+      "size": [
+        240,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-setup",
+      "from": "admin",
+      "to": "setup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "admin-operations",
+      "from": "admin",
+      "to": "operations",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "admin-security",
+      "from": "admin",
+      "to": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "admin-upgrade",
+      "from": "admin",
+      "to": "upgrade",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "admin-backup",
+      "from": "admin",
+      "to": "backup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "setup-tools-edge",
+      "from": "setup",
+      "to": "setup-tools",
+      "label": "도구",
+      "labelDy": 24
+    },
+    {
+      "id": "ops-tools-edge",
+      "from": "operations",
+      "to": "ops-tools",
+      "label": "도구",
+      "labelDy": 24
+    },
+    {
+      "id": "sec-tools-edge",
+      "from": "security",
+      "to": "sec-tools",
+      "label": "도구",
+      "labelDy": 24
+    },
+    {
+      "id": "upgrade-tools-edge",
+      "from": "upgrade",
+      "to": "upgrade-tools",
+      "label": "도구",
+      "labelDy": 24
+    },
+    {
+      "id": "backup-tools-edge",
+      "from": "backup",
+      "to": "backup-tools",
+      "label": "도구",
+      "labelDy": 24
+    }
+  ]
+}

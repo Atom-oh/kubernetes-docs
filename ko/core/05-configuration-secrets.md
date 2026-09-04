@@ -62,7 +62,9 @@ kubectl -n config-demo logs config-test-pod
 
 ## 한 눈에 보는 구성 관리
 
-![클러스터 관리자·GitOps·외부 시스템이 ConfigMap과 Secret을 생성하고, 이 값이 파드의 환경 변수·볼륨 마운트·이미지 풀 시크릿으로 소비되며, Secret은 사이드카 자동 리로드·KSOPS 암호화·Vault 동적 주입 같은 고급 패턴에도 연결됨을 보여준다.](../../assets/diagrams/rendered/ko-core-05-configuration-secrets-0.svg)
+![클러스터 관리자·GitOps 파이프라인·외부 시스템이 ConfigMap과 Secret을 생성하고, 이 값이 Pod의 환경 변수·볼륨 마운트·이미지 풀 시크릿으로 소비되며, ConfigMap은 사이드카 자동 리로드로, Secret은 KSOPS 암호화와 Vault Injector 동적 주입 같은 고급 기능으로 이어짐을 보여준다.](../.gitbook/assets/ko-core-05-configuration-secrets-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-05-configuration-secrets-0.html)
 
 ## 목차
 
@@ -158,7 +160,9 @@ spec:
         name: my-config
 ```
 
-![하나의 ConfigMap이 파드에서 환경 변수, 볼륨 마운트, 명령줄 인수라는 세 가지 방식으로 각각 소비될 수 있음을 보여준다.](../../assets/diagrams/rendered/ko-core-05-configuration-secrets-1.svg)
+![하나의 ConfigMap(key1, key2, config.properties)이 파드에서 환경 변수, 볼륨 마운트, 명령줄 인수라는 세 가지 방식으로 소비되며, 환경 변수 경로는 env.key1/env.key2로, 볼륨 마운트 경로는 /etc/config 아래 파일로 컨테이너 안에서 나타남을 보여준다.](../.gitbook/assets/ko-core-05-configuration-secrets-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-05-configuration-secrets-1.html)
 
 ### 컨피그맵 생성
 
@@ -305,7 +309,9 @@ kubectl apply -f updated-configmap.yaml
 
 시크릿은 암호, OAuth 토큰, SSH 키와 같은 민감한 정보를 저장하는 API 객체입니다. 시크릿은 컨피그맵과 유사하지만, 민감한 데이터를 저장하기 위한 추가적인 보안 기능을 제공합니다.
 
-![Secret이 파드에서 환경 변수·볼륨 마운트·이미지 풀 시크릿으로 소비되며, 여러 유형으로 구분되고 base64 인코딩과 선택적 etcd 암호화로 저장됨을 보여준다.](../../assets/diagrams/rendered/ko-core-05-configuration-secrets-2.svg)
+![Secret이 파드에서 환경 변수·볼륨 마운트·이미지 풀 시크릿으로 소비되며, Opaque·tls·dockerconfigjson·basic-auth 유형으로 구분되고 base64 인코딩과 선택적 etcd 암호화로 저장됨을 보여준다.](../.gitbook/assets/ko-core-05-configuration-secrets-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-05-configuration-secrets-2.html)
 
 ### 시크릿 유형
 
@@ -468,7 +474,9 @@ resources:
 
 환경 변수는 컨테이너에 구성 정보를 전달하는 간단한 방법입니다. Kubernetes는 여러 가지 방법으로 환경 변수를 설정할 수 있습니다.
 
-![직접 설정, ConfigMap, Secret, 다운워드 API라는 네 가지 소스가 각기 다른 참조 필드를 통해 하나의 컨테이너 환경 변수로 수렴함을 보여준다.](../../assets/diagrams/rendered/ko-core-05-configuration-secrets-3.svg)
+![직접 설정, ConfigMap, Secret, 다운워드 API라는 네 가지 소스가 각기 다른 참조 필드를 통해 컨테이너 환경 변수로 수렴함을 보여준다.](../.gitbook/assets/ko-core-05-configuration-secrets-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-05-configuration-secrets-3.html)
 
 ### 직접 설정
 
@@ -577,7 +585,9 @@ spec:
 
 볼륨을 통해 구성 파일을 컨테이너에 마운트하는 방법은 환경 변수보다 더 유연한 구성 관리 방법을 제공합니다.
 
-![파드가 정의한 볼륨을 컨테이너가 볼륨 마운트를 통해 참조하고, 그 볼륨이 ConfigMap 또는 Secret을 원본으로 삼아 전체·특정 키·읽기 전용·서브패스 등의 마운트 옵션을 지원함을 보여준다.](../../assets/diagrams/rendered/ko-core-05-configuration-secrets-4.svg)
+![파드가 정의한 볼륨을 컨테이너가 볼륨 마운트를 통해 참조하고, 그 볼륨이 ConfigMap 또는 Secret을 원본으로 삼아 전체 볼륨·특정 키(items)·읽기 전용(readOnly)·서브패스(subPath) 마운트 옵션을 지원함을 보여준다.](../.gitbook/assets/ko-core-05-configuration-secrets-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-05-configuration-secrets-4.html)
 
 ### 컨피그맵 볼륨
 
@@ -770,7 +780,9 @@ kubectl rollout restart deployment/my-deployment
 
 Amazon EKS에서는 Kubernetes의 기본 구성 관리 기능 외에도 AWS의 다양한 서비스를 활용하여 구성과 시크릿을 관리할 수 있습니다. 이 섹션에서는 EKS에서 구성을 관리하는 다양한 방법과 AWS 서비스와의 통합에 대해 알아보겠습니다.
 
-![Amazon EKS가 기본 Kubernetes 구성(ConfigMap·Secret)을 사용하는 동시에 Secrets Manager·Parameter Store·AppConfig·KMS·IAM 같은 AWS 서비스와 통합하고, External Secrets Operator·ASCP·IRSA·ACK 같은 통합 도구가 그 값을 Kubernetes Secret으로 생성·마운트하며 파드에 권한을 부여함을 보여준다.](../../assets/diagrams/rendered/ko-core-05-configuration-secrets-5.svg)
+![Amazon EKS 클러스터가 기본 Kubernetes 구성(ConfigMap·Secret)을 사용하는 동시에 AWS Secrets Manager·Parameter Store·AppConfig·KMS·IAM과 통합되고, External Secrets Operator·ASCP·IRSA·ACK 같은 통합 도구가 그 값을 Kubernetes Secret으로 생성·마운트하고 KMS로 암호화하며 파드에 IAM 권한을 부여함을 보여준다.](../.gitbook/assets/ko-core-05-configuration-secrets-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-05-configuration-secrets-5.html)
 
 ### AWS Secrets Manager 통합
 

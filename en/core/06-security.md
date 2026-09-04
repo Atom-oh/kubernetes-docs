@@ -75,7 +75,9 @@ EOF
 
 ## Kubernetes Security Architecture
 
-![Three defense-in-depth layers — infrastructure, cluster, and workload security — feed into the API server's authentication-authorization-admission-audit pipeline, which enforces RBAC, Pod Security Standards, security contexts, and network policy.](../../assets/diagrams/rendered/en-core-06-security-0.svg)
+![Three defense-in-depth layers — infrastructure security (host, container runtime, network) feeding API server security, the cluster security pipeline of authentication, authorization, admission control and audit logging plus data encryption, and the workload security controls derived from them: RBAC, Pod Security Standards, network policy and image security.](../.gitbook/assets/en-core-06-security-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-0.html)
 
 ## Table of Contents
 1. [Security Overview](#security-overview)
@@ -145,7 +147,9 @@ type: kubernetes.io/service-account-token
 
 To access the Kubernetes API server, you must go through an authentication process. Kubernetes supports various authentication methods:
 
-![A user or service sends an authentication request to the API server, which checks it against one of five supported methods, then routes the outcome to either authorization or request denial.](../../assets/diagrams/rendered/en-core-06-security-1.svg)
+![A user or service sends an authentication request to the API server, which checks it against one of five supported methods (X.509 certificates, service account tokens, OIDC, webhook token authentication, authentication proxy), then routes the outcome to either the authorization stage or request denial.](../.gitbook/assets/en-core-06-security-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-1.html)
 
 ### X.509 Certificates
 
@@ -205,7 +209,9 @@ A method where an authentication proxy is placed in front of the API server to h
 
 If authentication is the process of verifying "who you are," authorization is the process of determining "what you can do." Kubernetes supports various authorization modes:
 
-![An authenticated request is evaluated by one of four authorization modes — RBAC, ABAC, Node, or Webhook — and the decision either allows the request or denies it; RBAC itself is built from Roles bound to subjects via RoleBindings.](../../assets/diagrams/rendered/en-core-06-security-2.svg)
+![An authenticated user or service sends an authorization request to the API server, which evaluates it with one of four authorization modes — RBAC, ABAC, Node, or Webhook — and the decision either processes or denies the request; RBAC itself is built from Roles/ClusterRoles bound to subjects via RoleBindings/ClusterRoleBindings.](../.gitbook/assets/en-core-06-security-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-2.html)
 
 ### RBAC (Role-Based Access Control)
 
@@ -293,7 +299,9 @@ A method where authorization decisions are made through an external service. The
 
 Security context defines security settings at the Pod or container level. This allows fine-grained control over privileges, access control, capabilities, and more.
 
-![A Pod carries a pod-level security context and a container with its own container-level security context; the Pod as a whole must comply with one of three Pod Security Standards levels.](../../assets/diagrams/rendered/en-core-06-security-3.svg)
+![A Pod contains a pod-level security context (runAsUser, runAsGroup, fsGroup, supplementalGroups) and a container, the container carries its own container-level security context (privileged, allowPrivilegeEscalation, readOnlyRootFilesystem, capabilities, seLinuxOptions), and the Pod as a whole must comply with one of the three Pod Security Standards levels: Privileged, Baseline or Restricted.](../.gitbook/assets/en-core-06-security-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-3.html)
 
 ### Pod Security Context
 
@@ -350,7 +358,9 @@ metadata:
 
 Network policies provide a way to control communication between Pods. By default, all Pods in a Kubernetes cluster can communicate with each other, but this can be restricted using network policies.
 
-![A NetworkPolicy selects a target Pod and defines separate ingress and egress rules, and here it is applied to an API Pod to allow only inbound traffic from a Frontend Pod and only outbound traffic to a Database Pod.](../../assets/diagrams/rendered/en-core-06-security-4.svg)
+![A NetworkPolicy (api-allow) selects target Pods with podSelector, declares Ingress/Egress in policyTypes, and builds ingress from/ports and egress to/ports rules (podSelector, namespaceSelector, ipBlock); applied to the API Pod it allows only Frontend to API traffic on 8080/TCP and API to Database traffic on 5432/TCP.](../.gitbook/assets/en-core-06-security-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-4.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -508,7 +518,9 @@ Audit logs can be stored in various backends:
 
 Amazon EKS can enhance security by integrating with AWS security services in addition to Kubernetes' basic security features.
 
-![Six AWS security services — KMS, WAF, GuardDuty, IAM, Security Groups, and Secrets Manager — each integrate into a specific EKS mechanism and protect the API server, a worker node, or Pods inside the cluster.](../../assets/diagrams/rendered/en-core-06-security-5.svg)
+![Six AWS security services — KMS, WAF, GuardDuty, IAM, Security Groups, and Secrets Manager — each integrate into a specific EKS mechanism and protect the API server, a worker node, or Pods inside the cluster.](../.gitbook/assets/en-core-06-security-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-5.html)
 
 ### IAM Roles and Service Accounts (IRSA)
 

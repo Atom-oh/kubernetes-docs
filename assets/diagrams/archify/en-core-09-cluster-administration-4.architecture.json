@@ -1,0 +1,372 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Authentication and Authorization Flow",
+    "locale": "en",
+    "output": "en-core-09-cluster-administration-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      360
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "user",
+          "authn",
+          "authz",
+          "admit",
+          "api"
+        ],
+        "note": "A request passes authentication, authorization, and admission control in order before reaching the API server."
+      },
+      {
+        "id": "authn-methods",
+        "label": "Authentication methods",
+        "focus": [
+          "authn",
+          "cert",
+          "token",
+          "oidc",
+          "webhook-authn"
+        ],
+        "note": "The authentication stage supports X.509 certificates, service account tokens, OIDC, and webhook token authentication."
+      },
+      {
+        "id": "authz-modes",
+        "label": "Authorization modes",
+        "focus": [
+          "authz",
+          "rbac",
+          "abac",
+          "node",
+          "webhook-authz"
+        ],
+        "note": "The authorization stage supports the RBAC, ABAC, Node, and Webhook modes."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Requester",
+      "sublabel": "User / Service Account",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "authn",
+      "type": "security",
+      "label": "Authentication",
+      "sublabel": "AuthN",
+      "pos": [
+        227,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "Authorization",
+      "sublabel": "AuthZ",
+      "pos": [
+        823,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "admit",
+      "type": "backend",
+      "label": "Admission Control",
+      "sublabel": "Admission plugins",
+      "pos": [
+        1010,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        1200,
+        60
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "cert",
+      "type": "security",
+      "label": "X.509 Certificates",
+      "sublabel": "Client certs",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "token",
+      "type": "security",
+      "label": "SA Token",
+      "sublabel": "Service Account JWT",
+      "pos": [
+        174,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "OpenID Connect",
+      "sublabel": "External IdP",
+      "pos": [
+        308,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "webhook-authn",
+      "type": "security",
+      "label": "Webhook Token Auth",
+      "sublabel": "Remote token check",
+      "pos": [
+        442,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC",
+      "sublabel": "Role-based",
+      "pos": [
+        636,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "abac",
+      "type": "security",
+      "label": "ABAC",
+      "sublabel": "Attribute-based",
+      "pos": [
+        770,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "security",
+      "label": "Node",
+      "sublabel": "Node authorizer",
+      "pos": [
+        904,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    },
+    {
+      "id": "webhook-authz",
+      "type": "security",
+      "label": "Webhook",
+      "sublabel": "External service",
+      "pos": [
+        1038,
+        250
+      ],
+      "size": [
+        122,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Authentication Methods",
+      "wraps": [
+        "cert",
+        "token",
+        "oidc",
+        "webhook-authn"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Authorization Modes",
+      "wraps": [
+        "rbac",
+        "abac",
+        "node",
+        "webhook-authz"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-authn",
+      "from": "user",
+      "to": "authn",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authn-authz",
+      "from": "authn",
+      "to": "authz",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authz-admit",
+      "from": "authz",
+      "to": "admit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "admit-api",
+      "from": "admit",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authn-cert",
+      "from": "authn",
+      "to": "cert",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authn-token",
+      "from": "authn",
+      "to": "token",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authn-oidc",
+      "from": "authn",
+      "to": "oidc",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authn-webhook-authn",
+      "from": "authn",
+      "to": "webhook-authn",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authz-rbac",
+      "from": "authz",
+      "to": "rbac",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authz-abac",
+      "from": "authz",
+      "to": "abac",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authz-node",
+      "from": "authz",
+      "to": "node",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "authz-webhook-authz",
+      "from": "authz",
+      "to": "webhook-authz",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Authentication Methods",
+      "items": [
+        "X.509 Certificates: authentication using client certificates",
+        "Service Account Tokens: JWT tokens associated with service accounts",
+        "OpenID Connect (OIDC): authentication through external identity providers",
+        "Webhook Token Authentication: token verification through external services",
+        "Authentication Proxy: request processing through an authentication proxy"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Authorization Modes",
+      "items": [
+        "RBAC: role-based access control (most common)",
+        "ABAC: attribute-based access control",
+        "Node: node authorization",
+        "Webhook: authorization through external services"
+      ]
+    }
+  ]
+}

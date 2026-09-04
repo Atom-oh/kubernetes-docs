@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNI 아키텍처와 작동 방식",
+    "output": "ko-core-11-extending-kubernetes-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes / CNI 컴포넌트"
+        },
+        "cloud": {
+          "label": "네트워크"
+        },
+        "database": {
+          "label": "IP 주소 저장소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "포드 스펙 전달",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        60,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "컨테이너 런타임",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI 플러그인",
+      "sublabel": "네트워크 인터페이스 구성",
+      "pos": [
+        500,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ipam",
+      "type": "backend",
+      "label": "IPAM 플러그인",
+      "sublabel": "IP 주소 할당 · 관리",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "netconf",
+      "type": "cloud",
+      "label": "네트워크 구성",
+      "sublabel": "인터페이스 · 라우팅",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ippool",
+      "type": "database",
+      "label": "IP 풀",
+      "sublabel": "예: 10.244.0.0/24",
+      "pos": [
+        380,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "podnet",
+      "type": "cloud",
+      "label": "포드 네트워크",
+      "sublabel": "포드 간 통신",
+      "pos": [
+        640,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 컴포넌트",
+      "wraps": [
+        "apiserver",
+        "kubelet",
+        "runtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CNI 플러그인",
+      "wraps": [
+        "cni",
+        "ipam",
+        "netconf"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-kubelet",
+      "from": "apiserver",
+      "to": "kubelet",
+      "label": "포드 생성",
+      "labelDy": 24
+    },
+    {
+      "id": "kubelet-to-runtime",
+      "from": "kubelet",
+      "to": "runtime",
+      "label": "1. 컨테이너 생성",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "runtime-to-cni",
+      "from": "runtime",
+      "to": "cni",
+      "label": "2. 네트워크 설정 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cni-to-ipam",
+      "from": "cni",
+      "to": "ipam",
+      "label": "3. IP 할당 요청",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ipam-to-ippool",
+      "from": "ipam",
+      "to": "ippool",
+      "label": "4. IP 할당",
+      "labelDy": 24
+    },
+    {
+      "id": "cni-to-netconf",
+      "from": "cni",
+      "to": "netconf",
+      "label": "5. 네트워크 설정",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "netconf-to-podnet",
+      "from": "netconf",
+      "to": "podnet",
+      "label": "6. 네트워크 구성 적용",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ]
+}

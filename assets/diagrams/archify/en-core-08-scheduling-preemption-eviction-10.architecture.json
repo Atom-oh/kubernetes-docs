@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Descheduler Rebalancing Process and Strategies",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      520
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Cluster state"
+        },
+        "external": {
+          "label": "Change event"
+        },
+        "backend": {
+          "label": "Descheduler"
+        },
+        "cloud": {
+          "label": "Strategies"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "rebalance",
+        "label": "Rebalancing process",
+        "focus": [
+          "initial",
+          "events",
+          "imbalanced",
+          "descheduler",
+          "rebalanced"
+        ],
+        "note": "How the Descheduler restores even distribution broken by node or pod changes by evicting running pods"
+      },
+      {
+        "id": "strategies",
+        "label": "Descheduler strategies",
+        "focus": [
+          "descheduler",
+          "remove-duplicates",
+          "low-node-utilization",
+          "too-many-restarts",
+          "pod-lifetime",
+          "node-affinity",
+          "topology-spread"
+        ],
+        "note": "Representative strategies enabled in the DeschedulerPolicy pluginConfig"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "initial",
+      "type": "frontend",
+      "label": "Initial state",
+      "sublabel": "Evenly distributed",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "events",
+      "type": "external",
+      "label": "Change event",
+      "sublabel": "Node add/remove, pod change",
+      "pos": [
+        270,
+        70
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "imbalanced",
+      "type": "frontend",
+      "label": "Imbalanced state",
+      "sublabel": "Distribution skewed",
+      "pos": [
+        530,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "descheduler",
+      "type": "backend",
+      "label": "Descheduler",
+      "sublabel": "Evicts running pods",
+      "pos": [
+        760,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "rebalanced",
+      "type": "frontend",
+      "label": "Rebalanced state",
+      "sublabel": "Scheduler re-places pods",
+      "pos": [
+        990,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "remove-duplicates",
+      "type": "cloud",
+      "label": "RemoveDuplicates",
+      "sublabel": "Remove duplicate pods",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "low-node-utilization",
+      "type": "cloud",
+      "label": "LowNodeUtilization",
+      "sublabel": "Move to underutilized nodes",
+      "pos": [
+        410,
+        260
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "too-many-restarts",
+      "type": "cloud",
+      "label": "RemovePodsHavingTooManyRestarts",
+      "sublabel": "Remove pods with too many restarts",
+      "pos": [
+        780,
+        260
+      ],
+      "size": [
+        350,
+        64
+      ]
+    },
+    {
+      "id": "pod-lifetime",
+      "type": "cloud",
+      "label": "PodLifeTime",
+      "sublabel": "Remove pods past max lifetime",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "node-affinity",
+      "type": "cloud",
+      "label": "RemovePodsViolatingNodeAffinity",
+      "sublabel": "Remove node-affinity violators",
+      "pos": [
+        410,
+        360
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "topology-spread",
+      "type": "cloud",
+      "label": "RemovePodsViolatingTopologySpreadConstraint",
+      "sublabel": "Remove TSC violators",
+      "pos": [
+        780,
+        360
+      ],
+      "size": [
+        350,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Why the Descheduler is needed",
+      "wraps": [
+        "initial",
+        "events",
+        "imbalanced",
+        "descheduler",
+        "rebalanced"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Descheduler strategies",
+      "wraps": [
+        "remove-duplicates",
+        "low-node-utilization",
+        "too-many-restarts",
+        "pod-lifetime",
+        "node-affinity",
+        "topology-spread"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "initial-events",
+      "from": "initial",
+      "to": "events"
+    },
+    {
+      "id": "events-imbalanced",
+      "from": "events",
+      "to": "imbalanced",
+      "label": "causes"
+    },
+    {
+      "id": "imbalanced-descheduler",
+      "from": "imbalanced",
+      "to": "descheduler",
+      "label": "evict",
+      "variant": "emphasis"
+    },
+    {
+      "id": "descheduler-rebalanced",
+      "from": "descheduler",
+      "to": "rebalanced",
+      "label": "reschedule",
+      "variant": "emphasis"
+    }
+  ]
+}

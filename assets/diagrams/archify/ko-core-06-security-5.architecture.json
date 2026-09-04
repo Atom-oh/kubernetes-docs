@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS 보안 강화",
+    "output": "ko-core-06-security-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      620
+    ],
+    "views": [
+      {
+        "id": "pod-protection",
+        "label": "포드 보호",
+        "focus": [
+          "iam",
+          "sg",
+          "sm",
+          "pod"
+        ],
+        "note": "IRSA로 권한을 부여하고, 포드 보안 그룹으로 네트워크를 통제하며, External Secrets Operator가 시크릿을 제공한다."
+      },
+      {
+        "id": "api-protection",
+        "label": "API 서버 보호",
+        "focus": [
+          "kms",
+          "waf",
+          "api"
+        ],
+        "note": "KMS가 Kubernetes 시크릿을 암호화하고, WAF가 ALB 통합을 통해 트래픽을 보호한다."
+      },
+      {
+        "id": "node-protection",
+        "label": "워커 노드 보호",
+        "focus": [
+          "gd",
+          "node"
+        ],
+        "note": "GuardDuty EKS 위협 탐지가 워커 노드 런타임을 모니터링한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "IRSA (IAM Roles for Service Accounts)",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "AWS Security Groups",
+      "sublabel": "포드 보안 그룹",
+      "pos": [
+        60,
+        138
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "sm",
+      "type": "security",
+      "label": "AWS Secrets Manager",
+      "sublabel": "External Secrets Operator",
+      "pos": [
+        60,
+        226
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "security",
+      "label": "AWS KMS",
+      "sublabel": "Kubernetes 시크릿 암호화",
+      "pos": [
+        60,
+        314
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "waf",
+      "type": "security",
+      "label": "AWS WAF",
+      "sublabel": "Application Load Balancer(ALB) 통합",
+      "pos": [
+        60,
+        402
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "gd",
+      "type": "security",
+      "label": "AWS GuardDuty",
+      "sublabel": "EKS 위협 탐지",
+      "pos": [
+        60,
+        490
+      ],
+      "size": [
+        290,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "포드",
+      "sublabel": "워크로드",
+      "pos": [
+        760,
+        138
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        760,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "워커 노드",
+      "sublabel": "데이터 플레인",
+      "pos": [
+        760,
+        490
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 보안 서비스 → EKS 보안 통합",
+      "wraps": [
+        "iam",
+        "sg",
+        "sm",
+        "kms",
+        "waf",
+        "gd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "pod",
+        "api",
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "iam-pod",
+      "from": "iam",
+      "to": "pod",
+      "label": "권한 부여",
+      "variant": "security"
+    },
+    {
+      "id": "sg-pod",
+      "from": "sg",
+      "to": "pod",
+      "label": "네트워크 보안",
+      "variant": "security",
+      "labelDx": -60
+    },
+    {
+      "id": "sm-pod",
+      "from": "sm",
+      "to": "pod",
+      "label": "시크릿 제공",
+      "variant": "security"
+    },
+    {
+      "id": "kms-api",
+      "from": "kms",
+      "to": "api",
+      "label": "암호화",
+      "variant": "security"
+    },
+    {
+      "id": "waf-api",
+      "from": "waf",
+      "to": "api",
+      "label": "트래픽 보호",
+      "variant": "security"
+    },
+    {
+      "id": "gd-node",
+      "from": "gd",
+      "to": "node",
+      "label": "모니터링",
+      "variant": "security"
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh Architecture",
+    "locale": "en",
+    "output": "en-core-03-services-networking-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control plane configuration",
+        "focus": [
+          "istio-cp",
+          "proxy-a",
+          "proxy-b",
+          "proxy-c"
+        ],
+        "note": "The Istio control plane pushes configuration to the sidecar proxy injected into each Pod."
+      },
+      {
+        "id": "sidecar-pair",
+        "label": "Service and sidecar",
+        "focus": [
+          "svc-a",
+          "proxy-a",
+          "svc-b",
+          "proxy-b",
+          "svc-c",
+          "proxy-c"
+        ],
+        "note": "Each service's traffic passes through the sidecar proxy in the same Pod."
+      },
+      {
+        "id": "mesh-traffic",
+        "label": "Sidecar-to-sidecar traffic",
+        "focus": [
+          "proxy-a",
+          "proxy-b",
+          "proxy-c"
+        ],
+        "note": "Services never connect directly; service-to-service traffic flows between the sidecar proxies."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istio-cp",
+      "type": "security",
+      "label": "Istio Control Plane",
+      "sublabel": "istiod",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "app container",
+      "pos": [
+        100,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-a",
+      "type": "cloud",
+      "label": "Sidecar Proxy A",
+      "sublabel": "Envoy",
+      "pos": [
+        100,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "app container",
+      "pos": [
+        480,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-b",
+      "type": "cloud",
+      "label": "Sidecar Proxy B",
+      "sublabel": "Envoy",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "app container",
+      "pos": [
+        900,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-c",
+      "type": "cloud",
+      "label": "Sidecar Proxy C",
+      "sublabel": "Envoy",
+      "pos": [
+        900,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service A Pod",
+      "wraps": [
+        "svc-a",
+        "proxy-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Service B Pod",
+      "wraps": [
+        "svc-b",
+        "proxy-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Service C Pod",
+      "wraps": [
+        "svc-c",
+        "proxy-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-to-proxy-a",
+      "from": "istio-cp",
+      "to": "proxy-a",
+      "label": "push config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-to-proxy-b",
+      "from": "istio-cp",
+      "to": "proxy-b",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-to-proxy-c",
+      "from": "istio-cp",
+      "to": "proxy-c",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-a-proxy-a",
+      "from": "svc-a",
+      "to": "proxy-a",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "svc-b-proxy-b",
+      "from": "svc-b",
+      "to": "proxy-b",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "svc-c-proxy-c",
+      "from": "svc-c",
+      "to": "proxy-c",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "proxy-a-proxy-b",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "label": "service-to-service traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy-b-proxy-c",
+      "from": "proxy-b",
+      "to": "proxy-c",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy-a-proxy-c",
+      "from": "proxy-a",
+      "to": "proxy-c",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          40,
+          280
+        ],
+        [
+          40,
+          520
+        ],
+        [
+          1110,
+          520
+        ],
+        [
+          1110,
+          280
+        ]
+      ]
+    }
+  ]
+}

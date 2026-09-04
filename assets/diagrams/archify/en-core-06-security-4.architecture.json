@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Network Policy",
+    "locale": "en",
+    "output": "en-core-06-security-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "policy-structure",
+        "label": "Policy structure",
+        "focus": [
+          "np",
+          "podselector",
+          "policytypes",
+          "ingress",
+          "egress"
+        ],
+        "note": "A NetworkPolicy selects target Pods with podSelector and declares Ingress/Egress rules via policyTypes."
+      },
+      {
+        "id": "inbound",
+        "label": "Inbound Rules",
+        "focus": [
+          "ingress",
+          "ingress-from",
+          "ingress-ports",
+          "frontend",
+          "api"
+        ],
+        "note": "The from selector and ports allow only traffic arriving from frontend Pods on 8080/TCP."
+      },
+      {
+        "id": "outbound",
+        "label": "Outbound Rules",
+        "focus": [
+          "egress",
+          "egress-to",
+          "egress-ports",
+          "api",
+          "db"
+        ],
+        "note": "The to selector and ports allow only traffic leaving for database Pods on 5432/TCP."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "podselector",
+      "type": "security",
+      "label": "podSelector",
+      "sublabel": "Target Pods (app: api)",
+      "pos": [
+        300,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "policytypes",
+      "type": "security",
+      "label": "policyTypes",
+      "sublabel": "Ingress / Egress",
+      "pos": [
+        800,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "np",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "api-allow",
+      "pos": [
+        540,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "policy"
+    },
+    {
+      "id": "ingress",
+      "type": "security",
+      "label": "ingress",
+      "sublabel": "Inbound Rules",
+      "pos": [
+        300,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "egress",
+      "sublabel": "Outbound Rules",
+      "pos": [
+        780,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ingress-from",
+      "type": "backend",
+      "label": "from",
+      "sublabel": "podSelector · namespaceSelector · ipBlock",
+      "pos": [
+        140,
+        380
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "ingress-ports",
+      "type": "backend",
+      "label": "ports",
+      "sublabel": "Allowed ports (8080/TCP)",
+      "pos": [
+        420,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "egress-to",
+      "type": "backend",
+      "label": "to",
+      "sublabel": "podSelector · namespaceSelector · ipBlock",
+      "pos": [
+        680,
+        380
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "egress-ports",
+      "type": "backend",
+      "label": "ports",
+      "sublabel": "Allowed ports (5432/TCP)",
+      "pos": [
+        960,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend Pod",
+      "sublabel": "app: frontend",
+      "pos": [
+        140,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Pod",
+      "sublabel": "app: api",
+      "pos": [
+        540,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database Pod",
+      "sublabel": "app: database",
+      "pos": [
+        960,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Network Policy Configuration",
+      "wraps": [
+        "podselector",
+        "policytypes",
+        "np",
+        "ingress",
+        "egress"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Inbound Rules",
+      "wraps": [
+        "ingress-from",
+        "ingress-ports"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Outbound Rules",
+      "wraps": [
+        "egress-to",
+        "egress-ports"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "np-podselector",
+      "from": "np",
+      "to": "podselector",
+      "label": "selects"
+    },
+    {
+      "id": "np-policytypes",
+      "from": "np",
+      "to": "policytypes",
+      "label": "defines"
+    },
+    {
+      "id": "np-ingress",
+      "from": "np",
+      "to": "ingress",
+      "label": "rules",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-egress",
+      "from": "np",
+      "to": "egress",
+      "label": "rules",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ingress-from-edge",
+      "from": "ingress",
+      "to": "ingress-from",
+      "label": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ingress-ports-edge",
+      "from": "ingress",
+      "to": "ingress-ports",
+      "label": "ports",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "egress-to-edge",
+      "from": "egress",
+      "to": "egress-to",
+      "label": "destination",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "egress-ports-edge",
+      "from": "egress",
+      "to": "egress-ports",
+      "label": "ports",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "traffic (8080/TCP)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-db",
+      "from": "api",
+      "to": "db",
+      "label": "traffic (5432/TCP)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "np-api",
+      "from": "np",
+      "to": "api",
+      "label": "applies to",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        640,
+        340
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Target selection",
+      "items": [
+        "podSelector picks Pods labeled app: api",
+        "policyTypes declares both Ingress and Egress"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Inbound (ingress)",
+      "items": [
+        "from: only Pods labeled app: frontend are allowed as source",
+        "ports: only 8080/TCP is allowed"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Outbound (egress)",
+      "items": [
+        "to: only Pods labeled app: database are allowed as destination",
+        "ports: only 5432/TCP is allowed",
+        "Requires a CNI plugin that supports network policies (Calico, Cilium, Antrea, ...)"
+      ]
+    }
+  ]
+}

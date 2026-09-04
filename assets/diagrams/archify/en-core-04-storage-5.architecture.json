@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Options in EKS",
+    "locale": "en",
+    "output": "en-core-04-storage-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "AWS storage service"
+        },
+        "backend": {
+          "label": "CSI driver + StorageClass"
+        },
+        "database": {
+          "label": "PersistentVolume"
+        },
+        "frontend": {
+          "label": "Pod (access mode)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ebs-lane",
+        "label": "Block: Amazon EBS",
+        "focus": [
+          "ebs",
+          "ebs_csi",
+          "ebs_pv",
+          "ebs_pod"
+        ],
+        "note": "Block volumes for a single Pod (ReadWriteOnce); gp3, io2, st1, sc1 volume types via ebs.csi.aws.com."
+      },
+      {
+        "id": "efs-lane",
+        "label": "Shared files: Amazon EFS",
+        "focus": [
+          "efs",
+          "efs_csi",
+          "efs_pv",
+          "efs_pod"
+        ],
+        "note": "Scalable file storage shared by many Pods across nodes (ReadWriteMany) via efs.csi.aws.com."
+      },
+      {
+        "id": "fsx-lane",
+        "label": "Parallel: FSx for Lustre",
+        "focus": [
+          "fsx",
+          "fsx_csi",
+          "fsx_pv",
+          "fsx_pod"
+        ],
+        "note": "High-performance parallel file system for HPC, ML and analytics (ReadWriteMany) via fsx.csi.aws.com."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "Amazon EBS",
+      "sublabel": "block storage",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "cloud",
+      "label": "Amazon EFS",
+      "sublabel": "shared file storage",
+      "pos": [
+        460,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "cloud",
+      "label": "Amazon FSx for Lustre",
+      "sublabel": "high-performance parallel file system",
+      "pos": [
+        860,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "ebs_csi",
+      "type": "backend",
+      "label": "EBS CSI Driver",
+      "sublabel": "StorageClass ebs-sc · ebs.csi.aws.com",
+      "pos": [
+        60,
+        220
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "efs_csi",
+      "type": "backend",
+      "label": "EFS CSI Driver",
+      "sublabel": "StorageClass efs-sc · efs.csi.aws.com",
+      "pos": [
+        460,
+        220
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "fsx_csi",
+      "type": "backend",
+      "label": "FSx CSI Driver",
+      "sublabel": "StorageClass fsx-sc · fsx.csi.aws.com",
+      "pos": [
+        860,
+        220
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "ebs_pv",
+      "type": "database",
+      "label": "EBS PersistentVolume",
+      "sublabel": "one EBS volume per PV",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "efs_pv",
+      "type": "database",
+      "label": "EFS PersistentVolume",
+      "sublabel": "EFS file system / access point",
+      "pos": [
+        460,
+        360
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "fsx_pv",
+      "type": "database",
+      "label": "FSx PersistentVolume",
+      "sublabel": "FSx for Lustre file system",
+      "pos": [
+        860,
+        360
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "ebs_pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "ReadWriteOnce (RWO)",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "efs_pod",
+      "type": "frontend",
+      "label": "Pods",
+      "sublabel": "ReadWriteMany (RWX)",
+      "pos": [
+        460,
+        500
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "fsx_pod",
+      "type": "frontend",
+      "label": "Pods",
+      "sublabel": "ReadWriteMany (RWX) · high performance",
+      "pos": [
+        860,
+        500
+      ],
+      "size": [
+        260,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS storage services",
+      "wraps": [
+        "ebs",
+        "efs",
+        "fsx"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS cluster",
+      "wraps": [
+        "ebs_csi",
+        "efs_csi",
+        "fsx_csi",
+        "ebs_pv",
+        "efs_pv",
+        "fsx_pv",
+        "ebs_pod",
+        "efs_pod",
+        "fsx_pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-csi",
+      "from": "ebs",
+      "to": "ebs_csi",
+      "label": "CSI",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "efs-csi",
+      "from": "efs",
+      "to": "efs_csi",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fsx-csi",
+      "from": "fsx",
+      "to": "fsx_csi",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ebs-sc-pv",
+      "from": "ebs_csi",
+      "to": "ebs_pv",
+      "label": "provisions",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "efs-sc-pv",
+      "from": "efs_csi",
+      "to": "efs_pv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fsx-sc-pv",
+      "from": "fsx_csi",
+      "to": "fsx_pv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ebs-pv-pod",
+      "from": "ebs_pv",
+      "to": "ebs_pod",
+      "label": "mounts",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "efs-pv-pod",
+      "from": "efs_pv",
+      "to": "efs_pod",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fsx-pv-pod",
+      "from": "fsx_pv",
+      "to": "fsx_pod",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Amazon EBS",
+      "items": [
+        "Block storage for a single Pod (ReadWriteOnce)",
+        "Volume types: gp3, io2, st1, sc1",
+        "StorageClass with volumeBindingMode: WaitForFirstConsumer"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Amazon EFS",
+      "items": [
+        "File storage shared by multiple Pods (ReadWriteMany)",
+        "Access points map to PV/PVC pairs",
+        "High availability across multiple nodes"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Amazon FSx for Lustre",
+      "items": [
+        "Parallel file system for HPC, ML and analytics",
+        "ReadWriteMany with very high throughput",
+        "Used for vLLM model storage in this guide"
+      ]
+    }
+  ]
+}

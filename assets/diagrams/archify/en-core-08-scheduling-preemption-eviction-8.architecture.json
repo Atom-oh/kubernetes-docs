@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TopologySpreadConstraints",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Constraint"
+        },
+        "backend": {
+          "label": "Required fields"
+        },
+        "frontend": {
+          "label": "whenUnsatisfiable options"
+        },
+        "external": {
+          "label": "New pod"
+        },
+        "cloud": {
+          "label": "Availability zone"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "fields",
+        "label": "Required fields",
+        "focus": [
+          "tsc",
+          "maxskew",
+          "topologykey",
+          "whenunsatisfiable",
+          "labelselector"
+        ],
+        "note": "TopologySpreadConstraints defines the spread rule with four fields: maxSkew, topologyKey, whenUnsatisfiable, and labelSelector."
+      },
+      {
+        "id": "options",
+        "label": "whenUnsatisfiable options",
+        "focus": [
+          "whenunsatisfiable",
+          "donotschedule",
+          "scheduleanyway"
+        ],
+        "note": "When the constraint cannot be satisfied, DoNotSchedule refuses to schedule the pod while ScheduleAnyway places it on a best-effort basis."
+      },
+      {
+        "id": "example",
+        "label": "Availability zone spread example",
+        "focus": [
+          "newpod",
+          "az1",
+          "az2",
+          "az3"
+        ],
+        "note": "With maxSkew=1 the new pod lands in ap-northeast-2b, the zone with the fewest pods (2), bringing it to 3."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "tsc",
+      "type": "security",
+      "label": "TopologySpreadConstraints",
+      "sublabel": "spread rule in the pod spec",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "maxskew",
+      "type": "backend",
+      "label": "maxSkew",
+      "sublabel": "max allowed difference",
+      "pos": [
+        290,
+        50
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "topologykey",
+      "type": "backend",
+      "label": "topologyKey",
+      "sublabel": "topology domain key",
+      "pos": [
+        290,
+        150
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "whenunsatisfiable",
+      "type": "backend",
+      "label": "whenUnsatisfiable",
+      "sublabel": "action when unsatisfied",
+      "pos": [
+        290,
+        250
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "labelselector",
+      "type": "backend",
+      "label": "labelSelector",
+      "sublabel": "selects target pods",
+      "pos": [
+        290,
+        350
+      ],
+      "size": [
+        190,
+        50
+      ]
+    },
+    {
+      "id": "donotschedule",
+      "type": "frontend",
+      "label": "DoNotSchedule",
+      "sublabel": "refuse to schedule",
+      "pos": [
+        580,
+        150
+      ],
+      "size": [
+        180,
+        50
+      ]
+    },
+    {
+      "id": "scheduleanyway",
+      "type": "frontend",
+      "label": "ScheduleAnyway",
+      "sublabel": "best-effort placement",
+      "pos": [
+        580,
+        300
+      ],
+      "size": [
+        180,
+        50
+      ]
+    },
+    {
+      "id": "newpod",
+      "type": "external",
+      "label": "New pod",
+      "sublabel": "pending scheduling",
+      "pos": [
+        985,
+        60
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "az1",
+      "type": "cloud",
+      "label": "ap-northeast-2a",
+      "sublabel": "3 pods",
+      "pos": [
+        820,
+        380
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "az2",
+      "type": "cloud",
+      "label": "ap-northeast-2b",
+      "sublabel": "2 pods → 3 pods",
+      "pos": [
+        985,
+        380
+      ],
+      "size": [
+        150,
+        50
+      ]
+    },
+    {
+      "id": "az3",
+      "type": "cloud",
+      "label": "ap-northeast-2c",
+      "sublabel": "3 pods",
+      "pos": [
+        1150,
+        380
+      ],
+      "size": [
+        150,
+        50
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "TopologySpreadConstraints settings",
+      "wraps": [
+        "tsc",
+        "maxskew",
+        "topologykey",
+        "whenunsatisfiable",
+        "labelselector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "whenUnsatisfiable options",
+      "wraps": [
+        "donotschedule",
+        "scheduleanyway"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS availability zone spread example",
+      "wraps": [
+        "newpod",
+        "az1",
+        "az2",
+        "az3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "tsc-maxskew",
+      "from": "tsc",
+      "to": "maxskew"
+    },
+    {
+      "id": "tsc-topologykey",
+      "from": "tsc",
+      "to": "topologykey"
+    },
+    {
+      "id": "tsc-whenunsatisfiable",
+      "from": "tsc",
+      "to": "whenunsatisfiable"
+    },
+    {
+      "id": "tsc-labelselector",
+      "from": "tsc",
+      "to": "labelselector"
+    },
+    {
+      "id": "wu-donotschedule",
+      "from": "whenunsatisfiable",
+      "to": "donotschedule"
+    },
+    {
+      "id": "wu-scheduleanyway",
+      "from": "whenunsatisfiable",
+      "to": "scheduleanyway"
+    },
+    {
+      "id": "newpod-az2",
+      "from": "newpod",
+      "to": "az2",
+      "label": "maxSkew=1",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Optional fields",
+      "items": [
+        "minDomains: minimum number of topology domains",
+        "matchLabelKeys: pod label keys to match for spread calculation",
+        "nodeAffinityPolicy / nodeTaintsPolicy: whether node affinity and taints are considered (Honor / Ignore)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "whenUnsatisfiable",
+      "items": [
+        "DoNotSchedule: hard constraint - the pod is not scheduled if the constraint cannot be satisfied",
+        "ScheduleAnyway: soft constraint - the pod is still scheduled, preferring nodes that minimize skew"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Availability zone spread example",
+      "items": [
+        "A new pod is scheduled while ap-northeast-2a holds 3 pods, 2b holds 2, and 2c holds 3",
+        "With maxSkew=1 it is placed in 2b so no two domains differ by more than 1 (2 → 3 pods)"
+      ]
+    }
+  ]
+}

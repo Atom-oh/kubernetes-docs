@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "오퍼레이터 패턴의 작동 방식",
+    "output": "ko-core-11-extending-kubernetes-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "kubectl apply",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "커스텀 리소스",
+      "sublabel": "CRD 기반 객체",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd 스토리지",
+      "sublabel": "클러스터 상태 저장",
+      "pos": [
+        660,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "컨트롤러",
+      "sublabel": "조정 루프",
+      "pos": [
+        340,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "action",
+      "type": "backend",
+      "label": "액션",
+      "sublabel": "필요한 조치",
+      "pos": [
+        680,
+        350
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes 리소스",
+      "sublabel": "Deployment, Service 등",
+      "pos": [
+        900,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API 서버",
+      "wraps": [
+        "cr",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "오퍼레이터",
+      "wraps": [
+        "ctrl"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-create",
+      "from": "user",
+      "to": "cr",
+      "label": "1. 생성/수정",
+      "variant": "emphasis",
+      "labelDx": -30
+    },
+    {
+      "id": "cr-store",
+      "from": "cr",
+      "to": "etcd",
+      "label": "저장"
+    },
+    {
+      "id": "ctrl-watch",
+      "from": "ctrl",
+      "to": "cr",
+      "label": "2. 감시",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ctrl-check",
+      "from": "ctrl",
+      "to": "cr",
+      "label": "3. 상태 확인",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          280,
+          380
+        ],
+        [
+          280,
+          40
+        ],
+        [
+          455,
+          40
+        ]
+      ]
+    },
+    {
+      "id": "ctrl-status",
+      "from": "ctrl",
+      "to": "cr",
+      "label": "6. 상태 업데이트",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "ctrl-decide",
+      "from": "ctrl",
+      "to": "action",
+      "label": "4. 조치 결정",
+      "variant": "emphasis",
+      "labelDx": 20,
+      "labelDy": 22
+    },
+    {
+      "id": "action-exec",
+      "from": "action",
+      "to": "k8s",
+      "label": "5. 실행",
+      "variant": "emphasis"
+    }
+  ]
+}
