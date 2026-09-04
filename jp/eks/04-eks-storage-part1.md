@@ -1,97 +1,103 @@
-# EKS Storage
+# EKS ストレージ
 
 > **最終更新**: July 3, 2026
 
-Amazon EKS で applications を実行する際、data の保存と管理にはさまざまな storage options があります。このドキュメントでは、EKS storage の基本概念と、Amazon EBS (Elastic Block Store) および Amazon EFS (Elastic File System) の使用方法について説明します。
+Amazon EKS でアプリケーションを実行する場合、データを保存・管理するためのさまざまなストレージオプションがあります。このドキュメントでは、EKS ストレージの基本概念と、Amazon EBS (Elastic Block Store) および Amazon EFS (Elastic File System) の使用方法について説明します。
 
-## Table of Contents
+## 目次
 
-1. [Kubernetes Storage Basic Concepts](04-eks-storage-part1.md#kubernetes-storage-basic-concepts)
-2. [Amazon EKS Storage Options Overview](04-eks-storage-part1.md#amazon-eks-storage-options-overview)
-3. [Storage with Amazon EBS](04-eks-storage-part1.md#storage-with-amazon-ebs)
-4. [Storage with Amazon EFS](04-eks-storage-part1.md#storage-with-amazon-efs)
-5. [Storage Classes and Dynamic Provisioning](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
+1. [Kubernetes ストレージの基本概念](04-eks-storage-part1.md#kubernetes-storage-basic-concepts)
+2. [Amazon EKS ストレージオプションの概要](04-eks-storage-part1.md#amazon-eks-storage-options-overview)
+3. [Amazon EBS を使用したストレージ](04-eks-storage-part1.md#storage-with-amazon-ebs)
+4. [Amazon EFS を使用したストレージ](04-eks-storage-part1.md#storage-with-amazon-efs)
+5. [StorageClass と動的プロビジョニング](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
-## Kubernetes Storage Basic Concepts
+## Kubernetes ストレージの基本概念
 
-まず、Kubernetes で storage を管理するための主要な概念を理解しましょう。
+まず、Kubernetes でストレージを管理するための主要な概念を理解しましょう。
 
-![Kubernetes Storage Concepts](../.gitbook/assets/kubernetes_storage_concepts.png)
+![コンテナから PVC、StorageClass、PV を経て、EBS、EFS、FSx、S3 のバックエンドへ至る Kubernetes ストレージ概念図。](../.gitbook/assets/en-eks-04-eks-storage-part1-0.png)
+
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-0.html)
 
 ### Volume
 
-volume は、pod 内の containers に mount できる directory であり、container が再起動しても data は保持されます。volume の lifetime は pod の lifetime と同じで、pod が削除されると volume も削除されます。
+Volume は Pod 内のコンテナにマウントできるディレクトリで、コンテナが再起動してもデータは保持されます。Volume のライフタイムは Pod のライフタイムと同じであり、Pod が削除されると Volume も削除されます。
 
 ### Persistent Volume (PV)
 
-persistent volume は、administrator によって provision されるか、storage class を通じて動的に provision される cluster storage の一部です。PVs は pods とは独立した lifecycle を持ち、pods が削除されても PVs は保持されます。
+Persistent Volume は、管理者によってプロビジョニングされる、または StorageClass を通じて動的にプロビジョニングされるクラスターのストレージです。PV は Pod から独立したライフサイクルを持ち、Pod が削除されても保持されます。
 
 ### Persistent Volume Claim (PVC)
 
-persistent volume claim は、user による storage の要求です。PVC は特定の size と access mode を持つ storage を要求し、この request は適切な PV に bind されます。
+Persistent Volume Claim は、ユーザーからのストレージ要求です。PVC は特定のサイズとアクセスモードでストレージを要求し、この要求は適切な PV にバインドされます。
 
 ### StorageClass
 
-storage class は、administrator が提供する storage の「class」を記述します。storage classes を使用すると、PVCs が作成されたときに PVs を動的に provision できます。
+StorageClass は、管理者が提供するストレージの「クラス」を記述します。StorageClass を使用すると、PVC の作成時に PV を動的にプロビジョニングできます。
 
-### Access Modes
+### アクセスモード
 
-Kubernetes は次の access modes をサポートしています。
+Kubernetes は次のアクセスモードをサポートしています。
 
-* **ReadWriteOnce (RWO)**: 単一 node から read/write として mount できます
-* **ReadOnlyMany (ROX)**: 複数 nodes から read-only として mount できます
-* **ReadWriteMany (RWX)**: 複数 nodes から read/write として mount できます
-* **ReadWriteOncePod (RWOP)**: 単一 pod のみから read/write として mount できます (Kubernetes 1.22+)
+* **ReadWriteOnce (RWO)**: 単一のノードによって読み取り/書き込みとしてマウント可能
+* **ReadOnlyMany (ROX)**: 複数のノードによって読み取り専用としてマウント可能
+* **ReadWriteMany (RWX)**: 複数のノードによって読み取り/書き込みとしてマウント可能
+* **ReadWriteOncePod (RWOP)**: 単一の Pod のみが読み取り/書き込みとしてマウント可能 (Kubernetes 1.22+)
 
-## Amazon EKS Storage Options Overview
+## Amazon EKS ストレージオプションの概要
 
-Amazon EKS では、containerized applications に storage を提供するために、さまざまな AWS storage services を活用できます。
+Amazon EKS では、さまざまな AWS ストレージサービスを活用して、コンテナ化されたアプリケーションにストレージを提供できます。
 
-![EKS Storage Options](../.gitbook/assets/eks_storage_options.png)
+![EBS、EFS、FSx for Lustre と、それらの CSI Driver およびサポートされるアクセスモードを比較する EKS ストレージオプション図。](../.gitbook/assets/en-eks-04-eks-storage-part1-1.png)
 
-### Main Storage Options
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-1.html)
+
+### 主なストレージオプション
 
 1. **Amazon EBS (Elastic Block Store)**
-   * Block storage、単一 node に mount 可能 (RWO)
-   * 高性能で耐久性のある block storage
-   * databases、stateful applications に適しています
+   * ブロックストレージ。単一ノードにマウント可能 (RWO)
+   * 高性能で耐久性のあるブロックストレージ
+   * データベース、ステートフルアプリケーションに適している
 2. **Amazon EFS (Elastic File System)**
-   * fully managed NFS file system
-   * 複数 nodes から同時に mount 可能 (RWX)
-   * shared file systems を必要とする workloads に適しています
+   * フルマネージド NFS ファイルシステム
+   * 複数ノードから同時にマウント可能 (RWX)
+   * 共有ファイルシステムを必要とするワークロードに適している
 3. **Amazon FSx for Lustre**
-   * 高性能 file system
-   * machine learning、HPC、big data analytics に適しています
-   * 複数 nodes から同時に mount 可能 (RWX)
+   * 高性能ファイルシステム
+   * 機械学習、HPC、ビッグデータ分析に適している
+   * 複数ノードから同時にマウント可能 (RWX)
 4. **Amazon S3 (Simple Storage Service)**
-   * Object storage
-   * volume として直接 mount することはできませんが、S3 API 経由でアクセスできます
-   * large-scale data storage に適しています
-5. **EC2 Instance Store (Local NVMe)**
-   * EC2 instance に物理的に接続された ephemeral local NVMe storage で、非常に低い latency を提供します
-   * EC2 Instance Store CSI Driver は 2026 年 5 月に Amazon EKS add-on として general availability (GA) に到達したため、EKS Console/CLI から標準 add-on として install および管理できるようになりました（以前は community manifests を使用した手動 install が必要でした）。driver は volume lifecycle を自動的に管理し、operational overhead を削減します
-   * AI/ML ephemeral data processing、Spark/Hadoop local caching、high-throughput log processing、および database cache tiers に適しています
-   * Cost: driver 自体は無料です。instance store を含む基盤となる EC2 instance の料金のみを支払います ([source](https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/))
+   * オブジェクトストレージ
+   * Volume として直接マウントすることはできないが、S3 API を通じてアクセス可能
+   * 大規模データストレージに適している
+5. **EC2 Instance Store (ローカル NVMe)**
+   * EC2 インスタンスに物理的に接続された一時的なローカル NVMe ストレージで、非常に低いレイテンシーを提供
+   * EC2 Instance Store CSI Driver は 2026 年 5 月に Amazon EKS アドオンとして一般提供 (GA) になり、EKS Console/CLI から標準アドオンとしてインストールおよび管理できるようになりました（以前はコミュニティマニフェストによる手動インストールが必要でした）。この Driver は Volume のライフサイクルを自動管理し、運用上のオーバーヘッドを削減します
+   * AI/ML の一時データ処理、Spark/Hadoop のローカルキャッシュ、高スループットログ処理、データベースのキャッシュ層に適している
+   * コスト: Driver 自体は無料で、Instance Store を含む基盤 EC2 インスタンスに対してのみ課金されます（[出典](https://aws.amazon.com/about-aws/whats-new/2026/05/ec2-csi-eks/)）
 
-### Storage Options Comparison
+### ストレージオプションの比較
 
-| Storage Option     | Type               | Access Mode    | Performance                   | Use Cases                                                           |
+| ストレージオプション | タイプ             | アクセスモード | パフォーマンス                   | ユースケース                                                       |
 | ------------------ | ------------------ | -------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Amazon EBS         | Block              | RWO            | High                          | Databases, stateful applications                                    |
-| Amazon EFS         | File               | RWX            | Medium                        | Shared files, web servers, CMS                                      |
-| FSx for Lustre     | File               | RWX            | Very High                     | HPC, ML training, big data                                          |
-| Amazon S3          | Object             | API Access     | Medium                        | Backup, archive, static content                                     |
-| EC2 Instance Store | Block (local NVMe) | RWO, ephemeral | Very High (ultra-low latency) | AI/ML ephemeral data, local caching, high-throughput log processing |
+| Amazon EBS         | ブロック           | RWO            | 高                             | データベース、ステートフルアプリケーション                         |
+| Amazon EFS         | ファイル           | RWX            | 中                             | 共有ファイル、Web サーバー、CMS                                    |
+| FSx for Lustre     | ファイル           | RWX            | 非常に高い                     | HPC、ML トレーニング、ビッグデータ                                 |
+| Amazon S3          | オブジェクト       | API アクセス   | 中                             | バックアップ、アーカイブ、静的コンテンツ                           |
+| EC2 Instance Store | ブロック (ローカル NVMe) | RWO、一時的 | 非常に高い (超低レイテンシー) | AI/ML 一時データ、ローカルキャッシュ、高スループットログ処理 |
 
-## Storage with Amazon EBS
+## Amazon EBS を使用したストレージ
 
-Amazon EBS は、EC2 instances に attach できる block-level storage volumes を提供します。EKS では、EBS CSI (Container Storage Interface) driver を通じて、EBS volumes を Kubernetes pods に mount できます。
+Amazon EBS は、EC2 インスタンスにアタッチできるブロックレベルのストレージ Volume を提供します。EKS では、EBS CSI (Container Storage Interface) Driver を介して EBS Volume を Kubernetes Pod にマウントできます。
 
-![EBS CSI Driver Architecture](../.gitbook/assets/ebs_csi_architecture.png)
+![2 つのノード上の Pod が、各ノードローカルの CSI Driver を介して別々の EBS Volume をアタッチする EBS CSI アーキテクチャ図。](../.gitbook/assets/en-eks-04-eks-storage-part1-2.png)
 
-### Installing EBS CSI Driver
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-2.html)
 
-EKS で EBS volumes を使用するには、EBS CSI driver を install する必要があります。この driver は Amazon EKS add-on として提供されます。
+### EBS CSI Driver のインストール
+
+EKS で EBS Volume を使用するには、EBS CSI Driver をインストールする必要があります。この Driver は Amazon EKS アドオンとして提供されています。
 
 ```bash
 # Install EBS CSI driver
@@ -101,9 +107,9 @@ eksctl create addon --name aws-ebs-csi-driver --cluster my-cluster --version lat
 aws eks create-addon --cluster-name my-cluster --addon-name aws-ebs-csi-driver --addon-version latest
 ```
 
-### Creating EBS Storage Class
+### EBS StorageClass の作成
 
-EBS volumes の dynamic provisioning 用に storage class を作成します。ここでは gp3 volume type を使用します。
+EBS Volume を動的にプロビジョニングするための StorageClass を作成します。ここでは gp3 Volume タイプを使用します。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -118,9 +124,9 @@ parameters:
   fsType: ext4
 ```
 
-### Creating Persistent Volume Claim (PVC)
+### Persistent Volume Claim (PVC) の作成
 
-application で使用する PVC を作成します。
+アプリケーションで使用する PVC を作成します。
 
 ```yaml
 apiVersion: v1
@@ -136,9 +142,9 @@ spec:
       storage: 10Gi
 ```
 
-### Using PVC in a Pod
+### Pod での PVC の使用
 
-作成した PVC を pod に mount します。
+作成した PVC を Pod にマウントします。
 
 ```yaml
 apiVersion: v1
@@ -158,9 +164,9 @@ spec:
       claimName: ebs-claim
 ```
 
-### EBS Volume Snapshots
+### EBS Volume スナップショット
 
-EBS volumes の snapshots を作成して data を backup できます。
+EBS Volume のスナップショットを作成してデータをバックアップできます。
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -173,9 +179,9 @@ spec:
     persistentVolumeClaimName: ebs-claim
 ```
 
-### EBS Volume Expansion
+### EBS Volume の拡張
 
-必要に応じて EBS volumes の size を拡張できます。
+必要に応じて EBS Volume のサイズを拡張できます。
 
 ```yaml
 apiVersion: v1
@@ -191,28 +197,30 @@ spec:
       storage: 20Gi  # Expanded from 10Gi to 20Gi
 ```
 
-### EBS Volume Types and Performance
+### EBS Volume タイプとパフォーマンス
 
-Amazon EBS はさまざまな volume types を提供します。
+Amazon EBS はさまざまな Volume タイプを提供します。
 
-| Volume Type | Description              | Use Cases                                   |
+| Volume タイプ | 説明                     | ユースケース                                 |
 | ----------- | ------------------------ | ------------------------------------------- |
-| gp3         | General Purpose SSD      | Suitable for most workloads, cost-effective |
-| io2         | Provisioned IOPS SSD     | High-performance databases                  |
-| st1         | Throughput Optimized HDD | Big data, log processing                    |
-| sc1         | Cold HDD                 | Infrequently accessed data                  |
+| gp3         | 汎用 SSD                 | ほとんどのワークロードに適しており、費用対効果が高い |
+| io2         | プロビジョンド IOPS SSD  | 高性能データベース                          |
+| st1         | スループット最適化 HDD   | ビッグデータ、ログ処理                      |
+| sc1         | コールド HDD             | アクセス頻度の低いデータ                    |
 
-EKS では、gp3 volume type が推奨されます。gp3 は consistent performance を提供しながら cost-effective です。
+EKS では、gp3 Volume タイプが推奨されます。gp3 は一貫したパフォーマンスを提供しながら、費用対効果にも優れています。
 
-## Storage with Amazon EFS
+## Amazon EFS を使用したストレージ
 
-Amazon EFS は、複数の EC2 instances から同時にアクセスできる fully managed NFS file system です。EKS では、EFS CSI driver を通じて EFS file systems を複数の pods に同時に mount できます。
+Amazon EFS は、複数の EC2 インスタンスから同時にアクセスできるフルマネージド NFS ファイルシステムです。EKS では、EFS CSI Driver を介して EFS ファイルシステムを複数の Pod に同時にマウントできます。
 
-![EFS CSI Driver Architecture](../.gitbook/assets/efs_csi_architecture.png)
+![複数ノード上の Pod が、CSI Driver を介して NFS 4.1 で 1 つの EFS ファイルシステムを共有する EFS CSI アーキテクチャ図。](../.gitbook/assets/en-eks-04-eks-storage-part1-3.png)
 
-### Installing EFS CSI Driver
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-3.html)
 
-EKS で EFS を使用するには、EFS CSI driver を install する必要があります。
+### EFS CSI Driver のインストール
+
+EKS で EFS を使用するには、EFS CSI Driver をインストールする必要があります。
 
 ```bash
 # Install EFS CSI driver
@@ -222,9 +230,9 @@ eksctl create addon --name aws-efs-csi-driver --cluster my-cluster --version lat
 aws eks create-addon --cluster-name my-cluster --addon-name aws-efs-csi-driver --addon-version latest
 ```
 
-### Creating EFS File System
+### EFS ファイルシステムの作成
 
-AWS Management Console、AWS CLI、または AWS CloudFormation を使用して EFS file system を作成します。
+AWS Management Console、AWS CLI、または AWS CloudFormation を使用して EFS ファイルシステムを作成します。
 
 ```bash
 # Create EFS file system using AWS CLI
@@ -271,9 +279,9 @@ for SUBNET_ID in $SUBNET_IDS; do
 done
 ```
 
-### Creating EFS Storage Class
+### EFS StorageClass の作成
 
-EFS を使用するための storage class を作成します。
+EFS を使用するための StorageClass を作成します。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -287,7 +295,7 @@ parameters:
   directoryPerms: "700"
 ```
 
-### Creating Persistent Volume Claim (PVC)
+### Persistent Volume Claim (PVC) の作成
 
 EFS を使用するための PVC を作成します。
 
@@ -305,9 +313,9 @@ spec:
       storage: 5Gi
 ```
 
-### Using EFS PVC in a Pod
+### Pod での EFS PVC の使用
 
-作成した PVC を pod に mount します。
+作成した PVC を Pod にマウントします。
 
 ```yaml
 apiVersion: v1
@@ -327,9 +335,9 @@ spec:
       claimName: efs-claim
 ```
 
-### EFS Access Points
+### EFS アクセスポイント
 
-EFS access points を使用すると、特定の directories への access を制限し、user と group permissions を設定できます。
+EFS アクセスポイントを使用すると、特定のディレクトリへのアクセスを制限し、ユーザーおよびグループの権限を設定できます。
 
 ```yaml
 apiVersion: v1
@@ -350,39 +358,41 @@ spec:
     # volumeHandle format: {EFS file system ID}::{EFS access point ID}
 ```
 
-### EFS Performance Modes and Throughput Modes
+### EFS パフォーマンスモードとスループットモード
 
-Amazon EFS は 2 つの performance modes と 3 つの throughput modes を提供します。
+Amazon EFS は、2 つのパフォーマンスモードと 3 つのスループットモードを提供します。
 
-**Performance Modes**:
+**パフォーマンスモード**:
 
-* **General Purpose**: ほとんどの workloads に推奨されます
-* **Max I/O**: 高い parallel processing を必要とする workloads に適しています
+* **General Purpose**: ほとんどのワークロードに推奨
+* **Max I/O**: 高い並列処理を必要とするワークロードに適している
 
-**Throughput Modes**:
+**スループットモード**:
 
-* **Bursting**: default mode。file system size に基づいて burst credits を提供します
-* **Provisioned**: consistent throughput が必要な場合に使用します
-* **Elastic**: workload に基づいて throughput を自動的に調整します（推奨）
+* **Bursting**: デフォルトモード。ファイルシステムサイズに基づくバーストクレジットを提供
+* **Provisioned**: 一貫したスループットが必要な場合に使用
+* **Elastic**: ワークロードに基づいてスループットを自動調整（推奨）
 
-## Storage Classes and Dynamic Provisioning
+## StorageClass と動的プロビジョニング
 
-Kubernetes storage classes を使用すると、persistent volumes を動的に provision できます。EKS では、さまざまな AWS storage services 用に storage classes を設定できます。
+Kubernetes StorageClass を使用すると、Persistent Volume を動的にプロビジョニングできます。EKS では、さまざまな AWS ストレージサービス用に StorageClass を設定できます。
 
-![Kubernetes Storage Workflow](../.gitbook/assets/storage_workflow.png)
+![Pod の PVC リクエストから StorageClass と CSI Driver を経由し、PV の作成とバインドに至るストレージプロビジョニングワークフロー図。](../.gitbook/assets/en-eks-04-eks-storage-part1-4.png)
 
-### Volume Binding Modes
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part1-4.html)
 
-storage class の `volumeBindingMode` field は、PVCs が作成されたときに PVs がどのように bind されるかを決定します。
+### Volume バインディングモード
 
-* **Immediate**: PVC が作成されると、PV をすぐに provision して bind します。
-* **WaitForFirstConsumer**: pod が PVC を使用しようとするまで PV provisioning を遅延します。
+StorageClass の `volumeBindingMode` フィールドは、PVC の作成時に PV をどのようにバインドするかを決定します。
 
-EBS のような node-local storage では、`WaitForFirstConsumer` の使用が推奨されます。これにより、volume は pod が schedule される node と同じ availability zone に作成されます。
+* **Immediate**: PVC の作成時に直ちに PV をプロビジョニングしてバインドします。
+* **WaitForFirstConsumer**: Pod が PVC を使用しようとするまで PV のプロビジョニングを遅延します。
 
-### Setting Default Storage Class
+EBS のようなノードローカルストレージでは、`WaitForFirstConsumer` の使用が推奨されます。これにより、Pod がスケジュールされるノードと同じアベイラビリティーゾーンに Volume が作成されます。
 
-特定の storage class を default として設定すると、PVC で storage class が指定されていない場合でも、その storage class を使用できます。
+### デフォルト StorageClass の設定
+
+特定の StorageClass をデフォルトとして設定すると、PVC で StorageClass が指定されていない場合でもその StorageClass を使用できます。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -398,9 +408,9 @@ parameters:
   encrypted: "true"
 ```
 
-### Storage Class Examples
+### StorageClass の例
 
-**1. EBS gp3 Storage Class**
+**1. EBS gp3 StorageClass**
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -416,7 +426,7 @@ parameters:
   throughput: "125"
 ```
 
-**2. EFS Storage Class**
+**2. EFS StorageClass**
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -430,7 +440,7 @@ parameters:
   directoryPerms: "700"
 ```
 
-**3. FSx for Lustre Storage Class**
+**3. FSx for Lustre StorageClass**
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -448,15 +458,15 @@ parameters:
   dataCompressionType: "NONE"
 ```
 
-### Reclaim Policies
+### 再利用ポリシー
 
-persistent volume の reclaim policy は、PVC が削除されたときに PV とその data がどのように扱われるかを決定します。
+Persistent Volume の再利用ポリシーは、PVC が削除されたときに PV とそのデータをどのように扱うかを決定します。
 
-* **Delete**: PVC が削除されると、PV とその data も削除されます。
-* **Retain**: PVC が削除されても、PV と data は保持されます。administrator が手動で clean up する必要があります。
-* **Recycle**: deprecated policy です。代わりに dynamic provisioning と storage classes を使用してください。
+* **Delete**: PVC が削除されると、PV とそのデータも削除されます。
+* **Retain**: PVC が削除されると、PV とデータは保持されます。管理者が手動でクリーンアップする必要があります。
+* **Recycle**: 非推奨のポリシーです。代わりに動的プロビジョニングと StorageClass を使用してください。
 
-storage class の `persistentVolumeReclaimPolicy` field を使用して reclaim policy を設定できます。
+StorageClass の `persistentVolumeReclaimPolicy` フィールドを使用して再利用ポリシーを設定できます。
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -471,10 +481,10 @@ parameters:
   encrypted: "true"
 ```
 
-## Conclusion
+## まとめ
 
-Amazon EKS では、さまざまな storage options を使用して、application requirements を満たす storage solutions を構成できます。このドキュメントでは、EBS と EFS を中心に、基本概念と configuration methods について説明しました。次のドキュメントでは、FSx for Lustre と S3 を使用した advanced storage configurations について説明します。
+Amazon EKS では、さまざまなストレージオプションを使用して、アプリケーション要件を満たすストレージソリューションを構成できます。このドキュメントでは、EBS と EFS を中心に基本概念と設定方法を説明しました。次のドキュメントでは、FSx for Lustre と S3 を使用した高度なストレージ設定について説明します。
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[topic quiz](../quizzes/eks/04-eks-storage-part1-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[トピッククイズ](../quizzes/eks/04-eks-storage-part1-quiz.md)に挑戦してください。

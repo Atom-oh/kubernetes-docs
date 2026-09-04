@@ -1,44 +1,44 @@
 # 基础设施设置
 
-> **支持的版本**：Terraform >= 1.10，AWS Provider >= 5.40，EKS >= 1.29 **最后更新**：February 19, 2026
+> **支持的版本**：Terraform >= 1.10、AWS Provider >= 5.40、EKS >= 1.29 **最后更新**：February 19, 2026
 
-< [目录](./README.md) | [下一篇：NLB 加权路由和 Blue/Green 集群](02-infrastructure-advanced.md) >
+< [目录](./README.md) | [下一篇：NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md) >
 
 ***
 
 ## 概述
 
-本指南介绍用于部署启用 Auto Mode 的 Amazon EKS 集群的生产就绪 Terraform 架构。三层方法按照变更频率、所有权和影响范围分离基础设施职责，使团队能够独立工作，同时保持运维安全性。
+本指南介绍一种生产就绪的 Terraform 架构，用于部署启用了 Auto Mode 的 Amazon EKS 集群。三层方法按照变更频率、所有权和影响范围分离基础设施关注点，使团队能够在保持运维安全的同时独立工作。
 
-**核心设计原则：**
+**关键设计原则：**
 
 * **关注点分离**：每一层都有不同的所有权和变更模式
-* **影响范围最小化**：一层中的变更不会意外影响其他层
-* **状态隔离**：每层使用独立的 Terraform 状态文件
+* **影响范围最小化**：某一层的变更不会意外影响其他层
+* **状态隔离**：每层使用独立的 Terraform state 文件
 * **GitOps 就绪**：Terraform 管理 AWS 基础设施；Kubernetes 资源由 ArgoCD 管理
 
 ***
 
-## 1. 三层架构简介
+## 1. 三层架构介绍
 
 ### 为什么要分层？
 
-传统的单体 Terraform 配置会带来若干运维挑战：
+传统的单体 Terraform 配置会带来多项运维挑战：
 
-1. **Plan/Apply 时间长**：每次变更都需要评估所有资源
+1. **Plan/Apply 时间过长**：每次变更都需要评估所有资源
 2. **影响范围**：单个错误配置可能影响整个基础设施
-3. **团队冲突**：多个团队争用同一个状态文件
+3. **团队冲突**：多个团队争用同一个 state 文件
 4. **变更风险**：将网络变更与应用程序变更捆绑会增加部署风险
 
-三层架构通过根据稳定性和所有权将基础设施组织为不同层级，从而解决这些挑战。
+三层架构通过根据稳定性和所有权将基础设施组织为不同层级，解决了这些挑战。
 
 ### 各层特征
 
-| 层 | 名称     | 变更频率 | 主要负责人       | 影响范围 | 依赖项           |
+| 层 | 名称     | 变更频率 | 主要负责人       | 影响范围 | 依赖关系           |
 | ----- | -------- | ---------------- | ------------------- | ------------ | ---------------------- |
 | 01    | 网络  | 每季度        | 基础设施团队 | 高         | 无                   |
-| 02    | 集群  | 每月          | 平台团队       | 中       | 01-network             |
-| 03    | 平台 | 每周           | 平台/应用团队  | 低          | 01-network, 02-cluster |
+| 02    | 集群  | 每月          | 平台团队       | 中等       | 01-network             |
+| 03    | 平台 | 每周           | 平台/应用团队  | 低          | 01-network、02-cluster |
 
 ### 目录结构
 
@@ -72,7 +72,9 @@ eks-terraform/
 
 ### 变更流程可视化
 
-![Terraform 变更流程](../.gitbook/assets/terraform_change_flow.png)
+![展示按变更频率划分的三个 Terraform 层的图示——网络为每季度、集群为每月、平台为每周——每层在 S3 中均有自己的 state 文件。](../.gitbook/assets/en-ops-01-infrastructure-setup-0.png)
+
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-0.html)
 
 ***
 
@@ -82,9 +84,9 @@ eks-terraform/
 
 ### S3 后端配置
 
-首先，创建用于 Terraform 状态管理的 S3 bucket：
+首先，创建用于 Terraform state 管理的 S3 bucket：
 
-> **注意**：从 Terraform 1.10 开始，S3 后端通过 `use_lockfile = true` 支持原生状态锁定，利用 S3 条件写入。这消除了对用于状态锁定的 DynamoDB 表的需求。
+> **注意**：从 Terraform 1.10 开始，S3 后端通过 `use_lockfile = true` 支持原生 state 锁定，利用 S3 条件写入。这消除了为 state 锁定创建 DynamoDB 表的需要。
 
 ```hcl
 # 00-shared/bootstrap/main.tf
@@ -234,16 +236,16 @@ locals {
 
 ## 3. 01-network：VPC 配置
 
-网络层建立基础 VPC 基础设施。由于影响范围较大，该层变更频率低，且需要谨慎规划。
+网络层建立基础 VPC 基础设施。该层变更不频繁，且由于其影响范围较大，需要谨慎规划。
 
 ### 设计考量
 
-对于此架构，我们采用 **Blue/Green 区域设计**：
+对于此架构，我们使用**蓝绿区域设计**：
 
-* **Blue 区域**：ap-northeast-2a（主）
-* **Green 区域**：ap-northeast-2c（次）
+* **蓝色区域**：ap-northeast-2a（主区域）
+* **绿色区域**：ap-northeast-2c（次要区域）
 
-这种每集群单区域的方法提供：
+这种每个集群使用单个区域的方法提供了：
 
 * 有状态工作负载的数据本地性
 * 成本优化（减少跨 AZ 流量）
@@ -576,17 +578,17 @@ terraform {
 
 ## 4. 02-cluster：EKS Auto Mode
 
-集群层部署启用 Auto Mode 的 EKS。Auto Mode 通过自动化计算、网络和存储管理来简化集群运维。
+集群层部署启用了 Auto Mode 的 EKS。Auto Mode 通过自动化计算、网络和存储管理来简化集群运维。
 
 ### 了解 EKS Auto Mode
 
 EKS Auto Mode 提供：
 
 * **计算 Auto Mode**：自动节点配置和扩缩容
-* **网络 Auto Mode**：具有自动 IP 管理功能的托管 VPC CNI
-* **存储 Auto Mode**：动态 StorageClass 配置
+* **网络 Auto Mode**：具有自动 IP 管理的托管 VPC CNI
+* **存储 Auto Mode**：动态 Storage Class 配置
 
-有关 EKS Auto Mode 的更多详细信息，请参阅 [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)。
+有关 EKS Auto Mode 的更多详细信息，请参阅[开始使用 EKS Auto Mode](../eks-auto-mode/01-getting-started.md)。
 
 ### 数据源
 
@@ -914,9 +916,9 @@ terraform {
 
 ***
 
-## 5. 03-platform：Add-on 和 Pod Identity
+## 5. 03-platform：附加组件和 Pod Identity
 
-平台层为应用团队管理 EKS Add-on、Pod Identity 关联和访问条目。随着团队加入以及应用程序需求不断演变，此层会频繁变更。
+平台层为应用团队管理 EKS 附加组件、Pod Identity 关联和访问条目。随着团队加入以及应用程序需求演变，该层会频繁变更。
 
 ### 数据源
 
@@ -1392,7 +1394,7 @@ terraform {
 
 ## 6. 层间集成
 
-### 远程状态模式
+### 远程 State 模式
 
 `terraform_remote_state` 数据源使各层能够使用其他层的输出，而无需紧密耦合。
 
@@ -1416,17 +1418,19 @@ locals {
 
 ### 输出/数据流
 
-![层间集成流程](../.gitbook/assets/terraform_layer_integration.png)
+![展示 Terraform 层输出如何通过 terraform_remote_state 引用馈送到下一层输入的图示。](../.gitbook/assets/en-ops-01-infrastructure-setup-1.png)
 
-### 状态管理最佳实践
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-01-infrastructure-setup-1.html)
+
+### State 管理最佳实践
 
 1. **使用一致的 Bucket 命名**：`{project}-{env}-tfstate`
 2. **按层和颜色组织**：`network/`、`cluster/blue/`、`platform/green/`
-3. **启用版本控制**：从状态损坏中恢复
-4. **启用加密**：保护状态中的敏感值
-5. **使用 S3 原生锁定**（Terraform 1.10+）：在后端配置中启用 `use_lockfile = true`，以基于 S3 条件写入实现无需 DynamoDB 的状态锁定
+3. **启用版本控制**：从 state 损坏中恢复
+4. **启用加密**：保护 state 中的敏感值
+5. **使用 S3 原生锁定**（Terraform 1.10+）：在后端配置中启用 `use_lockfile = true`，以便基于 S3 条件写入实现无需 DynamoDB 的 state 锁定
 
-### 状态文件组织
+### State 文件组织
 
 ```
 s3://eks-platform-prod-tfstate/
@@ -1450,7 +1454,7 @@ s3://eks-platform-prod-tfstate/
 
 ### 部署顺序
 
-由于存在依赖关系，必须按顺序部署各层：
+由于依赖关系，必须按顺序部署各层：
 
 ```bash
 # Step 1: Bootstrap (run once)
@@ -1509,9 +1513,9 @@ aws eks describe-cluster --name eks-platform-prod-blue \
   --query "cluster.identity.oidc.issuer" --output text
 ```
 
-### 冒烟测试脚本
+### Smoke Test 脚本
 
-创建全面的冒烟测试：
+创建一个全面的 Smoke Test：
 
 ```bash
 #!/bin/bash
@@ -1596,7 +1600,7 @@ cd ../03-platform && terraform plan -out=plan.out
 
 ***
 
-## 核心设计原则
+## 关键设计原则
 
 ### Terraform 仅管理 AWS 基础设施
 
@@ -1606,18 +1610,18 @@ cd ../03-platform && terraform plan -out=plan.out
 | ---------- | ---------------------------------- | ------------------------------- |
 | 网络    | VPC、子网、NAT、端点       | -                               |
 | 集群    | EKS、KMS、CloudWatch               | -                               |
-| 平台   | Add-on、IAM Role、访问条目 | -                               |
+| 平台   | 附加组件、IAM Role、访问条目 | -                               |
 | Kubernetes | -                                  | NodePool、Deployment、Service |
 
-Kubernetes 资源（NodePool 定义、应用程序 Deployment）由 ArgoCD GitOps 管理。有关详细信息，请参阅 [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)。
+Kubernetes 资源（NodePool 定义、应用程序 Deployment）由 ArgoCD GitOps 管理。详情请参阅 [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)。
 
 ### 交叉引用
 
-* [EKS Auto Mode 入门](../eks-auto-mode/01-getting-started.md)
+* [开始使用 EKS Auto Mode](../eks-auto-mode/01-getting-started.md)
 * [EKS 安全最佳实践](../eks/05-eks-security.md)
-* [NLB 加权路由和 Blue/Green 集群](02-infrastructure-advanced.md)
+* [NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md)
 * [GitOps Pipeline 配置](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/ops/04-gitops-pipeline.md)
 
 ***
 
-< [目录](./README.md) | [下一篇：NLB 加权路由和 Blue/Green 集群](02-infrastructure-advanced.md) >
+< [目录](./README.md) | [下一篇：NLB 加权路由和蓝绿集群](02-infrastructure-advanced.md) >
