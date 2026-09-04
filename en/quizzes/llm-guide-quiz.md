@@ -2,16 +2,16 @@
 
 1. What does this guidebook's `llms.txt` file contain, and what is it for?
    - A) The full Korean content in markdown, for pasting whole into a context window
-   - B) An index of every content page (title + URL), for letting an LLM pick and fetch only the pages it needs
+   - B) An index of each content page's title, summary, and raw Markdown URL, for letting an LLM pick and fetch only the pages it needs
    - C) A collection of quiz answer keys, for automated grading
    - D) A bundle of diagram PNGs, for building slides
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) An index of every content page (title + URL), for letting an LLM pick and fetch only the pages it needs**
+**Answer: B) An index of each content page's title, summary, and raw Markdown URL, for letting an LLM pick and fetch only the pages it needs**
 
 **Explanation:**
-In the endpoints table, `llms.txt` is the "Index of every content page (title + URL)", used for "Letting an LLM pick and fetch only the pages it needs". The full markdown content lives in the separate `llms-full-ko.txt` / `llms-full-en.txt` files. The index follows the standard llms.txt layout — `# title` / `>` summary / `## Docs (한국어)` / `## Docs (English)` / `## Optional` — and each entry is labeled with its group and title, so the taxonomy survives even in a flat list. Quizzes and labs are not listed page by page; `## Optional` carries one quiz-index link and one lab-index link per language.
+In the endpoints table, `llms.txt` is an index of each content page's group, title, summary, and raw Markdown URL, used for letting an LLM pick and fetch only the pages it needs. Each content link uses `/llms/<locale>/<source path>.md`, so the model reads the document source without a rendered page's sidebar or scripts. The full markdown content lives in the separate `llms-full-ko.txt` / `llms-full-en.txt` files. Quizzes and labs are not listed page by page; `## Optional` carries one quiz-index link and one lab-index link per language.
 
 </details>
 
