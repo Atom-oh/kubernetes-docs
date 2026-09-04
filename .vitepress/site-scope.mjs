@@ -6,6 +6,7 @@ const baseSrcExclude = [
   'CLAUDE.md',
   '**/SUMMARY.md',
   'docs/**', // internal plans/specs — never publish
+  'public/llms/**', // generated raw Markdown — copied as static files
   'cn/**',
   'jp/**',
   'es/**'
