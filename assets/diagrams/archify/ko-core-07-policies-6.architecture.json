@@ -32,8 +32,8 @@
   ],
   "connections": [
     { "id": "org-cluster", "from": "org", "to": "cluster", "label": "제한" },
-    { "id": "config-cluster", "from": "config", "to": "cluster", "label": "감사", "labelDy": 100 },
-    { "id": "fw-cluster", "from": "fw", "to": "cluster", "label": "보호" },
+    { "id": "config-cluster", "from": "config", "to": "cluster", "label": "감사", "labelDy": 56 },
+    { "id": "fw-cluster", "from": "fw", "to": "cluster", "label": "보호", "fromSide": "bottom", "toSide": "top" },
     { "id": "iam-pod", "from": "iam", "to": "pod", "label": "권한 부여", "variant": "security", "fromSide": "bottom", "toSide": "top" },
     { "id": "sg-pod", "from": "sg", "to": "pod", "label": "네트워크 보안", "variant": "security", "fromSide": "bottom", "toSide": "top" },
     { "id": "cluster-ns", "from": "cluster", "to": "ns", "label": "포함" },

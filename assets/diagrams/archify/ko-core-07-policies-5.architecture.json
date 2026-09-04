@@ -13,13 +13,13 @@
     "legend": {
       "entries": {
         "backend": {
-          "label": "Kubernetes API 구성 요소"
+          "label": "Kubernetes API"
         },
         "security": {
           "label": "정책 엔진"
         },
         "database": {
-          "label": "정책 정의 리소스"
+          "label": "정책 정의"
         }
       }
     },

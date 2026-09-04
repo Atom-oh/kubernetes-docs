@@ -5044,7 +5044,7 @@
         <path data-edge-from="np" data-edge-to="api" data-edge-label="적용" data-edge-key="4" data-edge-id="np-api" data-composition-points="220,359;620,359" d="M 220 359 L 620 359" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="frontend" data-edge-to="api" data-edge-label="인바운드 허용 :8080" data-edge-key="5" data-edge-id="frontend-api" data-composition-points="810,142;800,142;800,352;790,352" d="M 810 142 L 805 142 Q 800 142 800 147 L 800 347 Q 800 352 795 352 L 790 352" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="api" data-edge-to="db" data-edge-label="아웃바운드 허용 :5432" data-edge-key="6" data-edge-id="api-db" data-composition-points="790,366;1000,366" d="M 790 366 L 1000 366" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="frontend" data-edge-to="db" data-edge-label="직접 통신 차단" data-edge-key="7" data-edge-id="frontend-db" data-composition-points="980,142;990,142;990,352;1000,352" d="M 980 142 L 985 142 Q 990 142 990 147 L 990 347 Q 990 352 995 352 L 1000 352" class="a-dashed" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="frontend" data-edge-to="db" data-edge-label="이 정책의 대상 아님" data-edge-key="7" data-edge-id="frontend-db" data-composition-points="980,142;990,142;990,352;1000,352" d="M 980 142 L 985 142 Q 990 142 990 147 L 990 347 Q 990 352 995 352 L 1000 352" class="a-dashed" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="selectors" data-edge-to="podsel" data-edge-key="8" data-edge-id="selectors-podsel" data-composition-points="790,561;845,561;845,498;900,498" d="M 790 561 L 837 561 Q 845 561 845 553 L 845 506 Q 845 498 853 498 L 900 498" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="selectors" data-edge-to="nssel" data-edge-key="9" data-edge-id="selectors-nssel" data-composition-points="790,574;900,574" d="M 790 574 L 900 574" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="selectors" data-edge-to="ipblock" data-edge-key="10" data-edge-id="selectors-ipblock" data-composition-points="790,587;845,587;845,650;900,650" d="M 790 587 L 837 587 Q 845 587 845 595 L 845 642 Q 845 650 853 650 L 900 650" class="a-default" data-animate="edge" style="--step:10" stroke-width="1.5" marker-end="url(#arrowhead)"/>
@@ -5212,9 +5212,9 @@
           <rect x="839.6" y="346" width="110.8" height="14" rx="3" class="c-mask"/>
           <text x="895" y="356" class="t-muted" font-size="8" text-anchor="middle">아웃바운드 허용 :5432</text>
         </g>
-        <g data-detail="context" data-edge-from="frontend" data-edge-to="db" data-edge-label="직접 통신 차단" data-edge-key="7" data-edge-id="frontend-db">
-          <rect x="951.4" y="227" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="990" y="237" class="t-messagebus" font-size="8" text-anchor="middle">직접 통신 차단</text>
+        <g data-detail="context" data-edge-from="frontend" data-edge-to="db" data-edge-label="이 정책의 대상 아님" data-edge-key="7" data-edge-id="frontend-db">
+          <rect x="939.4" y="227" width="101.2" height="14" rx="3" class="c-mask"/>
+          <text x="990" y="237" class="t-messagebus" font-size="8" text-anchor="middle">이 정책의 대상 아님</text>
         </g>
 
 
@@ -5251,9 +5251,9 @@
             <rect x="250" y="755" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
             <text x="272" y="764" class="t-muted" font-size="10" font-weight="500">데이터베이스</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="정책 리소스 / 규칙" data-legend-x="375" data-legend-baseline="764" data-legend-width="133">
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="정책 리소스 · 선택자" data-legend-x="375" data-legend-baseline="764" data-legend-width="143">
             <rect x="375" y="755" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
-            <text x="397" y="764" class="t-muted" font-size="10" font-weight="500">정책 리소스 / 규칙</text>
+            <text x="397" y="764" class="t-muted" font-size="10" font-weight="500">정책 리소스 · 선택자</text>
           </g>
         </g>
       </svg>

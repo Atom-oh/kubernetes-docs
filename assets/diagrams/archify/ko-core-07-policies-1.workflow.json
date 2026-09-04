@@ -10,11 +10,11 @@
         "id": "settings",
         "label": "요청·제한 설정",
         "focus": ["requests", "limits", "pod"],
-        "note": "requests는 컨테이너가 보장받을 최소 리소스 양, limits는 사용할 수 있는 최대 리소스 양이다."
+        "note": "requests는 컨테이너가 보장받을 최소 리소스 양, limits는 사용할 수 있는 최대 리소스 양이다. 두 값은 포드 스펙의 resources 필드에 설정한다."
       },
       {
         "id": "qos",
-        "label": "QoS 클래스 결정",
+        "label": "QoS 클래스 할당",
         "focus": ["pod", "qos", "besteffort", "burstable", "guaranteed"],
         "note": "Kubernetes는 포드의 requests·limits 설정에 따라 QoS 클래스를 자동으로 할당한다."
       },
@@ -28,7 +28,7 @@
     "legend": {
       "entries": {
         "frontend": { "label": "리소스 설정" },
-        "backend": { "label": "Kubernetes 판정" },
+        "backend": { "label": "QoS 결정" },
         "cloud": { "label": "QoS 클래스" },
         "security": { "label": "축출" }
       }
@@ -36,30 +36,30 @@
   },
   "lanes": [
     { "id": "mechanism", "label": "리소스 할당 메커니즘" },
-    { "id": "k8s", "label": "Kubernetes 자동 판정" },
+    { "id": "k8s", "label": "Kubernetes 자동 할당" },
     { "id": "classes", "label": "QoS 클래스 유형" },
     { "id": "shortage", "label": "리소스 부족 시 축출 순서" }
   ],
   "mainPath": ["requests", "pod", "qos"],
   "nodes": [
-    { "id": "requests", "lane": "mechanism", "col": 0, "type": "frontend", "label": "리소스 요청", "sublabel": "requests · 최소 보장량" },
-    { "id": "limits", "lane": "mechanism", "col": 1, "type": "frontend", "label": "리소스 제한", "sublabel": "limits · 최대 사용량" },
-    { "id": "pod", "lane": "k8s", "col": 2, "type": "backend", "label": "포드/컨테이너", "sublabel": "resources 필드" },
-    { "id": "qos", "lane": "k8s", "col": 3, "type": "backend", "label": "QoS 클래스", "sublabel": "자동 할당" },
-    { "id": "besteffort", "lane": "classes", "width": 150, "col": 3, "type": "cloud", "label": "BestEffort", "sublabel": "requests/limits 없음" },
-    { "id": "burstable", "lane": "classes", "width": 150, "col": 4, "type": "cloud", "label": "Burstable", "sublabel": "requests 있음 · Guaranteed 아님" },
-    { "id": "guaranteed", "lane": "classes", "width": 150, "col": 5, "type": "cloud", "label": "Guaranteed", "sublabel": "모든 컨테이너 requests = limits" },
-    { "id": "eviction", "lane": "shortage", "col": 5, "type": "security", "label": "축출", "sublabel": "1순위부터 순서대로" }
+    { "id": "requests", "lane": "mechanism", "col": 0, "width": 160, "type": "frontend", "label": "리소스 요청", "sublabel": "requests · 최소 보장량" },
+    { "id": "limits", "lane": "mechanism", "col": 1, "width": 160, "type": "frontend", "label": "리소스 제한", "sublabel": "limits · 최대 사용량" },
+    { "id": "pod", "lane": "mechanism", "col": 2, "width": 160, "type": "frontend", "label": "포드/컨테이너", "sublabel": "resources 필드" },
+    { "id": "qos", "lane": "k8s", "col": 3, "width": 160, "type": "backend", "label": "QoS 클래스", "sublabel": "requests·limits 조합으로 결정" },
+    { "id": "besteffort", "lane": "classes", "col": 3, "width": 160, "type": "cloud", "label": "BestEffort", "sublabel": "requests/limits 없음" },
+    { "id": "burstable", "lane": "classes", "col": 4, "width": 160, "type": "cloud", "label": "Burstable", "sublabel": "requests 있음 · Guaranteed 아님" },
+    { "id": "guaranteed", "lane": "classes", "col": 5, "width": 160, "type": "cloud", "label": "Guaranteed", "sublabel": "모든 컨테이너 requests = limits" },
+    { "id": "eviction", "lane": "shortage", "col": 4, "width": 160, "type": "security", "label": "축출", "sublabel": "1순위부터 순서대로" }
   ],
   "edges": [
-    { "id": "requests-pod", "from": "requests", "to": "pod", "label": "설정" },
+    { "id": "requests-pod", "from": "requests", "to": "pod", "label": "설정", "fromSide": "bottom", "toSide": "bottom", "channelY": 166, "labelAt": [311, 166] },
     { "id": "limits-pod", "from": "limits", "to": "pod", "label": "설정" },
-    { "id": "pod-qos", "from": "pod", "to": "qos", "label": "결정" },
+    { "id": "pod-qos", "from": "pod", "to": "qos", "label": "결정", "fromSide": "right", "labelAt": [614, 138] },
     { "id": "qos-besteffort", "from": "qos", "to": "besteffort", "role": "branch" },
     { "id": "qos-burstable", "from": "qos", "to": "burstable", "role": "branch" },
     { "id": "qos-guaranteed", "from": "qos", "to": "guaranteed", "role": "branch" },
-    { "id": "besteffort-eviction", "from": "besteffort", "to": "eviction", "label": "1순위", "variant": "emphasis" },
-    { "id": "burstable-eviction", "from": "burstable", "to": "eviction", "label": "2순위", "toSide": "left" },
-    { "id": "guaranteed-eviction", "from": "guaranteed", "to": "eviction", "label": "3순위", "variant": "dashed" }
+    { "id": "besteffort-eviction", "from": "besteffort", "to": "eviction", "label": "1순위", "variant": "emphasis", "toSide": "left" },
+    { "id": "burstable-eviction", "from": "burstable", "to": "eviction", "label": "2순위", "route": "straight", "labelAt": [782, 439] },
+    { "id": "guaranteed-eviction", "from": "guaranteed", "to": "eviction", "label": "3순위", "variant": "dashed", "toSide": "right" }
   ]
 }
