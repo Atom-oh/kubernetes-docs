@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-03-agentic-ai-platform-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "vLLM Core Technologies"
+        },
+        "external": {
+          "label": "Performance Benefits"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "paged-attention",
+      "type": "backend",
+      "label": "PagedAttention",
+      "sublabel": "Block-level KV cache management",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "continuous-batching",
+      "type": "backend",
+      "label": "Continuous Batching",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "prefix-caching",
+      "type": "backend",
+      "label": "Prefix Caching",
+      "sublabel": "--enable-prefix-caching",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "chunked-prefill",
+      "type": "backend",
+      "label": "Chunked Prefill",
+      "sublabel": "--enable-chunked-prefill",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "external",
+      "label": "Memory Efficiency 95%+",
+      "sublabel": "GPU memory allocated to KV cache",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "external",
+      "label": "Throughput 24x Improvement",
+      "pos": [
+        620,
+        160
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "latency",
+      "type": "external",
+      "label": "Latency Minimization",
+      "sublabel": "TTFT reduced 50-80%",
+      "pos": [
+        620,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "context",
+      "type": "external",
+      "label": "Long Context Support",
+      "sublabel": "stable latency for mixed prompts",
+      "pos": [
+        620,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "vLLM Core Technologies",
+      "wraps": [
+        "paged-attention",
+        "continuous-batching",
+        "prefix-caching",
+        "chunked-prefill"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Performance Benefits",
+      "wraps": [
+        "memory",
+        "throughput",
+        "latency",
+        "context"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "paged-to-memory",
+      "from": "paged-attention",
+      "to": "memory",
+      "label": "--gpu-memory-utilization 0.95",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batching-to-throughput",
+      "from": "continuous-batching",
+      "to": "throughput"
+    },
+    {
+      "id": "prefix-to-latency",
+      "from": "prefix-caching",
+      "to": "latency",
+      "label": "caches repeated system prompts"
+    },
+    {
+      "id": "chunked-to-context",
+      "from": "chunked-prefill",
+      "to": "context",
+      "label": "--max-num-batched-tokens 32768"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "vLLM tuning points",
+      "items": [
+        "KV cache management: allocate 95% of GPU memory to the KV cache, --block-size 16",
+        "Prefix caching: reduces TTFT by 50-80% for requests using identical system prompts",
+        "Chunked prefill: stabilizes response latency for workloads with mixed long and short prompts"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Deployment flags",
+      "items": [
+        "--gpu-memory-utilization 0.95",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--max-num-batched-tokens 32768"
+      ]
+    }
+  ]
+}

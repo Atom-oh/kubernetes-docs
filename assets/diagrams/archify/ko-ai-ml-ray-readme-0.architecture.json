@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray on EKS 컴포넌트 맵",
+    "output": "ko-ai-ml-ray-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "operator-path",
+        "label": "오퍼레이터 경로",
+        "focus": [
+          "architecture",
+          "operator"
+        ],
+        "note": "KubeRay Operator가 Ray 클러스터의 head/worker 구조를 RayCluster/RayJob/RayService 리소스로 변환한다."
+      },
+      {
+        "id": "workloads",
+        "label": "학습과 서빙",
+        "focus": [
+          "operator",
+          "train",
+          "serve"
+        ],
+        "note": "같은 오퍼레이터 위에서 분산 학습·튜닝(Ray Train & Tune)과 모델·LLM 서빙(Ray Serve)이 실행된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "architecture",
+      "type": "backend",
+      "label": "Ray Architecture",
+      "sublabel": "Task / Actor / 오브젝트 스토어",
+      "tag": "Part 1",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "cloud",
+      "label": "KubeRay Operator",
+      "sublabel": "RayCluster / RayJob / RayService",
+      "tag": "Part 2",
+      "pos": [
+        460,
+        250
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "train",
+      "type": "backend",
+      "label": "Ray Train & Tune",
+      "sublabel": "분산 학습, 하이퍼파라미터 튜닝",
+      "tag": "Part 3",
+      "pos": [
+        840,
+        120
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "serve",
+      "type": "frontend",
+      "label": "Ray Serve",
+      "sublabel": "모델 서빙, LLM 서빙",
+      "tag": "Part 4",
+      "pos": [
+        840,
+        380
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS 클러스터",
+      "wraps": [
+        "operator",
+        "train",
+        "serve"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "arch-to-operator",
+      "from": "architecture",
+      "to": "operator",
+      "label": "K8s 리소스로 변환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "operator-to-train",
+      "from": "operator",
+      "to": "train",
+      "label": "분산 학습·튜닝 실행"
+    },
+    {
+      "id": "operator-to-serve",
+      "from": "operator",
+      "to": "serve",
+      "label": "RayService로 서빙 배포"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "핵심 프리미티브",
+      "items": [
+        "task, actor, 공유 오브젝트 스토어 위에 모든 라이브러리가 올라간다",
+        "Ray 클러스터는 head 노드와 worker 노드로 구성된다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "KubeRay Operator",
+      "items": [
+        "Ray 클러스터를 RayCluster/RayJob/RayService 리소스로 선언적으로 운영한다",
+        "Karpenter와 결합한 2단계 오토스케일링 패턴"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "학습과 서빙",
+      "items": [
+        "Ray Train & Tune: 분산 모델 학습과 하이퍼파라미터 탐색",
+        "Ray Serve: 모델 서빙, LLM 서빙 전용 빌딩 블록 포함"
+      ]
+    }
+  ]
+}

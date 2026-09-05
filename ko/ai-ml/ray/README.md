@@ -16,7 +16,9 @@ Ray는 임시 병렬 작업(task)부터 분산 학습, 하이퍼파라미터 튜
 | **Ray Train &amp; Tune** | 분산 모델 학습과 하이퍼파라미터 탐색 | [Part 3](03-ray-train-tune.md) |
 | **Ray Serve** | 모델 서빙, LLM 서빙 전용 빌딩 블록 포함 | [Part 4](04-ray-serve.md) |
 
-![KubeRay Operator가 RayCluster/RayJob/RayService 리소스를 받아 분산 학습·튜닝을 담당하는 Ray Train & Tune과 모델·LLM 서빙을 담당하는 Ray Serve로 작업을 나누어 실행시키는 구조를 보여준다.](../../.gitbook/assets/ko-ai-ml-ray-README-0.png)
+![KubeRay Operator가 RayCluster/RayJob/RayService 리소스를 받아 분산 학습·튜닝을 담당하는 Ray Train & Tune과 모델·LLM 서빙을 담당하는 Ray Serve로 작업을 나누어 실행시키는 구조를 보여준다.](../../.gitbook/assets/ko-ai-ml-ray-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-ray-readme-0.html)
 
 ## 왜 EKS에서 운영하는가
 

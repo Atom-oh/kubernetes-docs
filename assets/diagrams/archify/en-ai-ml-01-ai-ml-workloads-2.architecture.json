@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML Workload Deployment",
+    "locale": "en",
+    "output": "en-ai-ml-01-ai-ml-workloads-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "GPU node stack"
+        },
+        "backend": {
+          "label": "ML platform components"
+        },
+        "frontend": {
+          "label": "Model serving"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gpu-stack",
+        "label": "NVIDIA GPU Operator",
+        "focus": [
+          "gpu-operator",
+          "driver",
+          "toolkit",
+          "device-plugin",
+          "dcgm"
+        ],
+        "note": "The GPU Operator deploys the driver, Container Toolkit, Device Plugin, and DCGM Exporter to every GPU node."
+      },
+      {
+        "id": "kubeflow-stack",
+        "label": "Kubeflow",
+        "focus": [
+          "kubeflow",
+          "notebooks",
+          "training",
+          "pipelines-katib"
+        ],
+        "note": "Kubeflow provides notebooks, TF/PyTorch training jobs, Pipelines, Katib, and KFServing."
+      },
+      {
+        "id": "serving-training",
+        "label": "Serving and distributed training",
+        "focus": [
+          "kserve",
+          "serving-runtimes",
+          "mpi-operator"
+        ],
+        "note": "KServe, TorchServe and Triton Inference Server are the model serving options; the MPI Operator runs distributed training through MPIJob."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu-operator",
+      "type": "cloud",
+      "label": "NVIDIA GPU Operator",
+      "sublabel": "Installed via Helm chart",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "NVIDIA Driver",
+      "sublabel": "Automatic GPU driver installation",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "cloud",
+      "label": "NVIDIA Container Toolkit",
+      "sublabel": "GPU access inside containers",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "device-plugin",
+      "type": "cloud",
+      "label": "NVIDIA Device Plugin",
+      "sublabel": "Exposes GPU resources",
+      "pos": [
+        740,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "dcgm",
+      "type": "cloud",
+      "label": "NVIDIA DCGM Exporter",
+      "sublabel": "GPU monitoring metrics",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kubeflow",
+      "type": "backend",
+      "label": "Kubeflow",
+      "sublabel": "ML workflow platform · KFServing",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "backend",
+      "label": "Jupyter Notebooks",
+      "sublabel": "Interactive development environment",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "training",
+      "type": "backend",
+      "label": "TF/PyTorch Training Jobs",
+      "sublabel": "Runs distributed training jobs",
+      "pos": [
+        520,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pipelines-katib",
+      "type": "backend",
+      "label": "Pipelines · Katib",
+      "sublabel": "ML workflows · hyperparameter tuning",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "frontend",
+      "label": "KServe",
+      "sublabel": "Model serving platform",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "serving-runtimes",
+      "type": "frontend",
+      "label": "TorchServe · Triton",
+      "sublabel": "Inference servers",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "mpi-operator",
+      "type": "backend",
+      "label": "MPI Operator",
+      "sublabel": "Distributed training via MPIJob",
+      "pos": [
+        740,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "gpu-operator",
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm",
+        "kubeflow",
+        "notebooks",
+        "training",
+        "pipelines-katib",
+        "kserve",
+        "serving-runtimes",
+        "mpi-operator"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Components deployed by the GPU Operator",
+      "wraps": [
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kubeflow Components",
+      "wraps": [
+        "notebooks",
+        "training",
+        "pipelines-katib"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Model Serving Options",
+      "wraps": [
+        "serving-runtimes"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Distributed Training",
+      "wraps": [
+        "mpi-operator"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-deploys",
+      "from": "gpu-operator",
+      "to": "driver",
+      "label": "deploys",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubeflow-provides",
+      "from": "kubeflow",
+      "to": "notebooks",
+      "label": "provides"
+    },
+    {
+      "id": "kserve-runtimes",
+      "from": "kserve",
+      "to": "serving-runtimes",
+      "label": "serving options",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "NVIDIA GPU Operator",
+      "items": [
+        "NVIDIA Driver: automatic GPU driver installation",
+        "NVIDIA Container Toolkit: enables GPU usage in containers",
+        "NVIDIA Device Plugin: exposes GPU resources to Kubernetes",
+        "NVIDIA DCGM Exporter: provides GPU monitoring metrics"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubeflow",
+      "items": [
+        "Jupyter Notebooks: interactive development environment",
+        "TensorFlow/PyTorch Training Jobs: running distributed training jobs",
+        "KFServing: model serving",
+        "Pipelines: end-to-end ML workflows",
+        "Katib: hyperparameter tuning"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Serving and distributed training",
+      "items": [
+        "KServe: model serving options such as TorchServe and Triton Inference Server",
+        "MPI Operator: orchestrates distributed training with the MPIJob resource"
+      ]
+    }
+  ]
+}

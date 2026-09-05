@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Key LLM Inference Performance Metrics",
+    "locale": "en",
+    "output": "en-ai-ml-07-ai-ml-best-practices-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "LLM Inference Metrics"
+        },
+        "frontend": {
+          "label": "User Experience Impact"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "responsiveness",
+        "label": "Perceived Responsiveness",
+        "focus": [
+          "ttft",
+          "e2e",
+          "responsiveness"
+        ],
+        "note": "TTFT and E2E latency decide how responsive the service feels. Interactive apps should target TTFT < 500ms."
+      },
+      {
+        "id": "streaming",
+        "label": "Streaming Quality",
+        "focus": [
+          "itl",
+          "tps",
+          "streaming"
+        ],
+        "note": "With ITL < 50ms and TPS > 20, tokens stream smoothly without stutter."
+      },
+      {
+        "id": "capacity",
+        "label": "System Capacity",
+        "focus": [
+          "throughput",
+          "capacity"
+        ],
+        "note": "Maximize throughput (requests per second) while staying within latency SLOs."
+      }
+    ],
+    "viewBox": [
+      1040,
+      612
+    ]
+  },
+  "components": [
+    {
+      "id": "ttft",
+      "type": "backend",
+      "label": "TTFT",
+      "sublabel": "Request to first token",
+      "tag": "< 500ms",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "e2e",
+      "type": "backend",
+      "label": "E2E Latency",
+      "sublabel": "Total time from request to completion",
+      "tag": "Depends on output length",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "itl",
+      "type": "backend",
+      "label": "ITL",
+      "sublabel": "Average time between consecutive tokens",
+      "tag": "< 50ms",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "tps",
+      "type": "backend",
+      "label": "TPS",
+      "sublabel": "Tokens generated per second per request",
+      "tag": "> 20 TPS",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "backend",
+      "label": "Throughput",
+      "sublabel": "Requests processed per second",
+      "tag": "Maximize within SLOs",
+      "pos": [
+        60,
+        460
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "responsiveness",
+      "type": "frontend",
+      "label": "Perceived Responsiveness",
+      "sublabel": "First reaction and total wait",
+      "pos": [
+        720,
+        110
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "streaming",
+      "type": "frontend",
+      "label": "Streaming Quality",
+      "sublabel": "Smoothness of token output",
+      "pos": [
+        720,
+        310
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "capacity",
+      "type": "frontend",
+      "label": "System Capacity",
+      "sublabel": "Concurrent requests served",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "LLM Inference Metrics",
+      "wraps": [
+        "ttft",
+        "e2e",
+        "itl",
+        "tps",
+        "throughput"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "User Experience Impact",
+      "wraps": [
+        "responsiveness",
+        "streaming",
+        "capacity"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ttft-responsiveness",
+      "from": "ttft",
+      "to": "responsiveness",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e2e-responsiveness",
+      "from": "e2e",
+      "to": "responsiveness"
+    },
+    {
+      "id": "itl-streaming",
+      "from": "itl",
+      "to": "streaming"
+    },
+    {
+      "id": "tps-streaming",
+      "from": "tps",
+      "to": "streaming"
+    },
+    {
+      "id": "throughput-capacity",
+      "from": "throughput",
+      "to": "capacity"
+    }
+  ]
+}

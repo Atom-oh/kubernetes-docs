@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Experiment의 전체 실행 흐름",
+    "output": "ko-ai-ml-kubeflow-04-katib-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      740
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Experiment 입력"
+        },
+        "backend": {
+          "label": "Katib 컴포넌트"
+        },
+        "cloud": {
+          "label": "Trial 학습 잡"
+        },
+        "messagebus": {
+          "label": "메트릭 보고"
+        },
+        "database": {
+          "label": "Experiment status"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "submit",
+        "label": "Experiment 제출과 Suggestion 시작",
+        "focus": [
+          "experiment",
+          "controller",
+          "suggestion"
+        ],
+        "note": "컨트롤러가 Experiment를 리컨사일하고 요청된 알고리즘용 Suggestion 서비스를 시작한다."
+      },
+      {
+        "id": "loop",
+        "label": "탐색 루프",
+        "focus": [
+          "suggestion",
+          "propose",
+          "trial1",
+          "trial2",
+          "trialn",
+          "sidecar"
+        ],
+        "note": "제안된 조합마다 Trial 학습 잡이 만들어지고, 사이드카가 보고한 메트릭이 다음 라운드 제안에 반영된다."
+      },
+      {
+        "id": "finish",
+        "label": "종료와 결과 기록",
+        "focus": [
+          "suggestion",
+          "succeeded",
+          "record"
+        ],
+        "note": "maxTrialCount에 도달하거나 목표값이 충족되면 최고 Trial의 하이퍼파라미터와 메트릭이 status에 기록된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "experiment",
+      "type": "frontend",
+      "label": "Experiment CRD 생성",
+      "sublabel": "objective · parameters · trialTemplate",
+      "pos": [
+        40,
+        30
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Katib 컨트롤러",
+      "sublabel": "Experiment 리컨사일",
+      "pos": [
+        300,
+        30
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "suggestion",
+      "type": "backend",
+      "label": "Suggestion 서비스 생성",
+      "sublabel": "선택된 알고리즘용",
+      "pos": [
+        500,
+        150
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "propose",
+      "type": "backend",
+      "label": "하이퍼파라미터 조합 제안",
+      "sublabel": "parallelTrialCount로 제한",
+      "pos": [
+        500,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "trial1",
+      "type": "cloud",
+      "label": "Trial 1",
+      "sublabel": "학습 잡",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trial2",
+      "type": "cloud",
+      "label": "Trial 2",
+      "sublabel": "학습 잡",
+      "pos": [
+        530,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trialn",
+      "type": "cloud",
+      "label": "Trial N",
+      "sublabel": "학습 잡",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "messagebus",
+      "label": "목표 메트릭 보고",
+      "sublabel": "메트릭 수집 사이드카",
+      "pos": [
+        500,
+        580
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "succeeded",
+      "type": "database",
+      "label": "Experiment Succeeded",
+      "sublabel": "종료 조건 충족",
+      "pos": [
+        960,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "record",
+      "type": "database",
+      "label": "최적 Trial 결과 기록",
+      "sublabel": "하이퍼파라미터 · 메트릭 → status",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "exp-ctrl",
+      "from": "experiment",
+      "to": "controller",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-sugg",
+      "from": "controller",
+      "to": "suggestion",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sugg-propose",
+      "from": "suggestion",
+      "to": "propose",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-t1",
+      "from": "propose",
+      "to": "trial1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-t2",
+      "from": "propose",
+      "to": "trial2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-tn",
+      "from": "propose",
+      "to": "trialn",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t1-sidecar",
+      "from": "trial1",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2-sidecar",
+      "from": "trial2",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tn-sidecar",
+      "from": "trialn",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sidecar-sugg",
+      "from": "sidecar",
+      "to": "suggestion",
+      "label": "결과 피드백",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          230,
+          612
+        ],
+        [
+          230,
+          182
+        ]
+      ]
+    },
+    {
+      "id": "sugg-succeeded",
+      "from": "suggestion",
+      "to": "succeeded",
+      "label": "maxTrialCount 도달 또는 목표값 달성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "succeeded-record",
+      "from": "succeeded",
+      "to": "record",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -61,7 +61,9 @@ Raw Deployment 모드에서는 KServe가 일반적인 Kubernetes **Deployment**,
 
 실무적인 판단 기준은 다음과 같습니다. 요청 사이 유휴 상태에서 GPU 비용이 실제 예산 문제가 되고, 가끔의 콜드 스타트 지연을 감내할 수 있는 워크로드라면 Serverless 모드의 scale-to-zero가 Knative 의존성 추가를 감수할 만한 가치가 있습니다. 반대로 매 요청마다 일관되게 낮은 지연이 필요하거나, 이미 트래픽이 꾸준해서 Pod가 유휴 상태로 남을 일이 거의 없다면 Raw Deployment 모드의 단순함과 웜 Pod 보장이 더 나은 선택인 경우가 많습니다.
 
-![클라이언트 요청이 KServe InferenceService로 들어와 Predictor 스펙(선택적 Transformer/Explainer 적용)을 구성한 뒤, Serverless(Knative 기반 scale-to-zero) 또는 Raw Deployment(HPA 기반 상시 실행) 배포 모드 중 하나로 라우팅되어 모델 서버가 아티팩트를 로드하고 추론을 수행한 후 클라이언트에 응답하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-kubeflow-06-kserve-0.svg)
+![클라이언트 요청이 KServe InferenceService로 들어와 Predictor 스펙(선택적 Transformer/Explainer 적용)을 구성한 뒤, Serverless(Knative 기반 scale-to-zero) 또는 Raw Deployment(HPA 기반 상시 실행) 배포 모드 중 하나로 라우팅되어 모델 서버가 아티팩트를 로드하고 추론을 수행한 후 클라이언트에 응답하는 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-06-kserve-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-06-kserve-0.html)
 
 ## 오토스케일링: Knative Concurrency/RPS vs. HPA
 

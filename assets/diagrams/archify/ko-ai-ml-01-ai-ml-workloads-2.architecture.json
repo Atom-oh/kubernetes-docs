@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML 워크로드 배포",
+    "output": "ko-ai-ml-01-ai-ml-workloads-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "GPU 노드 스택"
+        },
+        "backend": {
+          "label": "ML 플랫폼 구성 요소"
+        },
+        "frontend": {
+          "label": "모델 서빙"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gpu-stack",
+        "label": "NVIDIA GPU 운영자",
+        "focus": [
+          "gpu-operator",
+          "driver",
+          "toolkit",
+          "device-plugin",
+          "dcgm"
+        ],
+        "note": "GPU 운영자가 모든 GPU 노드에 드라이버·Container Toolkit·Device Plugin·DCGM Exporter를 배포한다."
+      },
+      {
+        "id": "kubeflow-stack",
+        "label": "Kubeflow",
+        "focus": [
+          "kubeflow",
+          "notebooks",
+          "training",
+          "pipelines-katib"
+        ],
+        "note": "Kubeflow는 노트북, TF/PyTorch 훈련 작업, Pipelines, Katib, KFServing을 제공한다."
+      },
+      {
+        "id": "serving-training",
+        "label": "서빙과 분산 훈련",
+        "focus": [
+          "kserve",
+          "serving-runtimes",
+          "mpi-operator"
+        ],
+        "note": "KServe·TorchServe·Triton 등 모델 서빙 옵션을 제공하고, MPI Operator는 MPIJob으로 분산 훈련을 실행한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu-operator",
+      "type": "cloud",
+      "label": "NVIDIA GPU 운영자",
+      "sublabel": "Helm 차트로 설치",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "cloud",
+      "label": "NVIDIA 드라이버",
+      "sublabel": "GPU 드라이버 자동 설치",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "toolkit",
+      "type": "cloud",
+      "label": "NVIDIA Container Toolkit",
+      "sublabel": "컨테이너에서 GPU 사용",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "device-plugin",
+      "type": "cloud",
+      "label": "NVIDIA Device Plugin",
+      "sublabel": "GPU 리소스 노출",
+      "pos": [
+        740,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "dcgm",
+      "type": "cloud",
+      "label": "NVIDIA DCGM Exporter",
+      "sublabel": "GPU 모니터링 메트릭",
+      "pos": [
+        960,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kubeflow",
+      "type": "backend",
+      "label": "Kubeflow",
+      "sublabel": "ML 워크플로우 플랫폼 · KFServing",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "backend",
+      "label": "Jupyter Notebooks",
+      "sublabel": "대화형 개발 환경",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "training",
+      "type": "backend",
+      "label": "TF/PyTorch 훈련 작업",
+      "sublabel": "분산 훈련 작업 실행",
+      "pos": [
+        520,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pipelines-katib",
+      "type": "backend",
+      "label": "Pipelines · Katib",
+      "sublabel": "ML 워크플로우 · 하이퍼파라미터 튜닝",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "frontend",
+      "label": "KServe",
+      "sublabel": "모델 서빙 플랫폼",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "serving-runtimes",
+      "type": "frontend",
+      "label": "TorchServe · Triton",
+      "sublabel": "추론 서버",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "mpi-operator",
+      "type": "backend",
+      "label": "MPI Operator",
+      "sublabel": "MPIJob으로 분산 훈련 실행",
+      "pos": [
+        740,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "gpu-operator",
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm",
+        "kubeflow",
+        "notebooks",
+        "training",
+        "pipelines-katib",
+        "kserve",
+        "serving-runtimes",
+        "mpi-operator"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "GPU 운영자가 배포하는 구성 요소",
+      "wraps": [
+        "driver",
+        "toolkit",
+        "device-plugin",
+        "dcgm"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Kubeflow 구성 요소",
+      "wraps": [
+        "notebooks",
+        "training",
+        "pipelines-katib"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "모델 서빙 옵션",
+      "wraps": [
+        "serving-runtimes"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "분산 훈련",
+      "wraps": [
+        "mpi-operator"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-deploys",
+      "from": "gpu-operator",
+      "to": "driver",
+      "label": "배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubeflow-provides",
+      "from": "kubeflow",
+      "to": "notebooks",
+      "label": "제공"
+    },
+    {
+      "id": "kserve-runtimes",
+      "from": "kserve",
+      "to": "serving-runtimes",
+      "label": "서빙 옵션",
+      "labelDy": 56
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "NVIDIA GPU 운영자",
+      "items": [
+        "NVIDIA 드라이버: GPU 드라이버 자동 설치",
+        "NVIDIA Container Toolkit: 컨테이너에서 GPU 사용 가능하게 함",
+        "NVIDIA Device Plugin: Kubernetes에 GPU 리소스 노출",
+        "NVIDIA DCGM Exporter: GPU 모니터링 메트릭 제공"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubeflow",
+      "items": [
+        "Jupyter Notebooks: 대화형 개발 환경",
+        "TensorFlow/PyTorch 훈련 작업: 분산 훈련 작업 실행",
+        "KFServing: 모델 서빙",
+        "Pipelines: 엔드-투-엔드 ML 워크플로우",
+        "Katib: 하이퍼파라미터 튜닝"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "서빙과 분산 훈련",
+      "items": [
+        "KServe: TorchServe, Triton Inference Server 등 모델 서빙 옵션",
+        "MPI Operator: MPIJob 리소스로 분산 훈련 오케스트레이션"
+      ]
+    }
+  ]
+}

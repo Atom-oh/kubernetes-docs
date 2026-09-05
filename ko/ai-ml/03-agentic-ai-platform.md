@@ -11,7 +11,9 @@ Agentic AI는 단순한 질의응답을 넘어 자율적으로 계획을 세우�
 
 Agentic AI는 다음과 같은 특성을 가진 자율적 AI 시스템입니다:
 
-![자율적 계획 수립, 도구 기반 실행, 반복적 개선, 상태 및 메모리 관리라는 네 가지 Agentic AI 특성이 목표 설정부터 계획, 실행, 평가를 거쳐 완료 또는 재계획으로 이어지는 워크플로우 루프를 뒷받침하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-03-agentic-ai-platform-0.svg)
+![자율적 계획 수립, 도구 기반 실행, 반복적 개선, 상태 및 메모리 관리라는 네 가지 Agentic AI 특성이 목표 설정부터 계획, 실행, 평가를 거쳐 완료 또는 재계획으로 이어지는 워크플로우 루프를 뒷받침하는 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-0.html)
 
 1. **자율적 계획 수립**: 복잡한 작업을 하위 작업으로 분해하고 실행 순서를 결정합니다.
 2. **도구 기반 실행**: 외부 API, 데이터베이스, 코드 실행기 등 다양한 도구를 활용합니다.
@@ -35,7 +37,9 @@ Agentic AI 플랫폼에서 Kubernetes는 다음과 같은 핵심 기능을 제�
 
 Agentic AI 플랫폼 구축 시 해결해야 할 핵심 과제:
 
-![GPU 리소스 관리, 멀티 LLM 통합, 워크플로우 오케스트레이션, 실시간 비용 최적화라는 네 가지 핵심 기술 과제가 각각 Karpenter, LiteLLM, LangGraph(Kagent), Langfuse 같은 구체적인 해결 도구로 이어지는 매핑을 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-03-agentic-ai-platform-1.svg)
+![GPU 리소스 관리, 멀티 LLM 통합, 워크플로우 오케스트레이션, 실시간 비용 최적화라는 네 가지 핵심 기술 과제가 각각 Karpenter, LiteLLM, LangGraph(Kagent), Langfuse 같은 구체적인 해결 도구로 이어지는 매핑을 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-1.html)
 
 ---
 
@@ -291,7 +295,9 @@ spec:
 
 vLLM은 다음과 같은 핵심 기술로 고성능 LLM 추론을 제공합니다:
 
-![PagedAttention, 연속 배치 처리, Prefix 캐싱, Chunked Prefill이라는 vLLM의 네 가지 핵심 기술이 각각 메모리 효율, 처리량 향상, 지연시간 최소화, 긴 컨텍스트 지원이라는 성능 이점으로 이어지는 관계를 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-03-agentic-ai-platform-2.svg)
+![PagedAttention, 연속 배치 처리, Prefix 캐싱, Chunked Prefill이라는 vLLM의 네 가지 핵심 기술이 각각 메모리 효율, 처리량 향상, 지연시간 최소화, 긴 컨텍스트 지원이라는 성능 이점으로 이어지는 관계를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-2.html)
 
 ### vLLM Deployment 구성
 
@@ -540,7 +546,9 @@ Kubernetes Gateway API를 확장하여 AI 추론 워크로드를 효율적으로
 
 ### Kgateway + InferencePool 아키텍처
 
-![클라이언트 요청이 Gateway와 HTTPRoute를 거쳐 InferencePool에 도달하고, Endpoint Picker가 least-loaded와 prefix-aware 기준으로 InferencePool 내 vLLM Pod 중 하나를 선택해 라우팅하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-03-agentic-ai-platform-3.svg)
+![클라이언트 요청이 Gateway와 HTTPRoute를 거쳐 InferencePool로 전달되고, Endpoint Picker가 least-loaded 또는 prefix-aware 기준으로 풀 안의 vLLM Pod 중 하나를 선택해 라우팅하는 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-3.html)
 
 #### InferencePool CRD
 
@@ -1100,7 +1108,9 @@ print(result["result"])
 
 Kagent는 Kubernetes 네이티브 AI 에이전트 라이프사이클 관리 도구입니다.
 
-![Kagent Controller가 Agent CRD를 거쳐 Agent Runtime을 기동시키고, LLM 백엔드·도구 세트·메모리 스토어·상태 관리라는 AI 에이전트의 네 가지 구성요소가 각각 추론, 실행, 저장/조회, 관리 역할로 Runtime에 연결되는 구조를 보여준다.](../../assets/diagrams/rendered/ko-ai-ml-03-agentic-ai-platform-4.svg)
+![Kagent Controller가 Agent CRD를 거쳐 Agent Runtime을 기동시키고, LLM 백엔드·도구 세트·메모리 스토어·상태 관리라는 AI 에이전트의 네 가지 구성요소가 각각 추론, 실행, 저장/조회, 관리 역할로 Runtime에 연결되는 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-03-agentic-ai-platform-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-03-agentic-ai-platform-4.html)
 
 ### Agent CRD 정의
 

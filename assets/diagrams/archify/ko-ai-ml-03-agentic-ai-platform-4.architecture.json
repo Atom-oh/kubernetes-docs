@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kagent 아키텍처",
+    "output": "ko-ai-ml-03-agentic-ai-platform-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      560
+    ],
+    "views": [
+      {
+        "id": "control",
+        "label": "Kagent 제어 경로",
+        "focus": [
+          "controller",
+          "crd",
+          "runtime"
+        ],
+        "note": "Kagent Controller가 Agent CRD를 조정(reconcile)해 Agent Runtime을 기동한다."
+      },
+      {
+        "id": "agent",
+        "label": "AI 에이전트 구성요소",
+        "focus": [
+          "llm",
+          "tools",
+          "memory",
+          "state",
+          "runtime"
+        ],
+        "note": "LLM 백엔드·도구 세트·메모리 스토어·상태 관리가 각각 추론, 실행, 저장/조회, 관리 역할로 Runtime에 연결된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Kagent Controller",
+      "sublabel": "Kubernetes 컨트롤러",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "security",
+      "label": "Agent CRD",
+      "sublabel": "kagent.dev/v1alpha1 Agent",
+      "pos": [
+        620,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Agent Runtime",
+      "sublabel": "에이전트 실행 환경",
+      "pos": [
+        620,
+        340
+      ],
+      "size": [
+        200,
+        110
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "LLM 백엔드",
+      "sublabel": "LiteLLM 게이트웨이 경유",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "cloud",
+      "label": "도구 세트",
+      "sublabel": "HTTP / Milvus / Python 도구",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "database",
+      "label": "메모리 스토어",
+      "sublabel": "Redis",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "state",
+      "type": "database",
+      "label": "상태 관리",
+      "sublabel": "에이전트 상태",
+      "pos": [
+        60,
+        440
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kagent 아키텍처",
+      "wraps": [
+        "controller",
+        "crd",
+        "runtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AI 에이전트",
+      "wraps": [
+        "llm",
+        "tools",
+        "memory",
+        "state"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-crd",
+      "from": "controller",
+      "to": "crd",
+      "label": "감시 / 조정",
+      "variant": "emphasis",
+      "labelAt": [
+        720,
+        134
+      ]
+    },
+    {
+      "id": "crd-runtime",
+      "from": "crd",
+      "to": "runtime",
+      "label": "기동",
+      "variant": "emphasis",
+      "labelAt": [
+        720,
+        264
+      ]
+    },
+    {
+      "id": "llm-runtime",
+      "from": "llm",
+      "to": "runtime",
+      "label": "추론",
+      "labelAt": [
+        330,
+        110
+      ]
+    },
+    {
+      "id": "tools-runtime",
+      "from": "tools",
+      "to": "runtime",
+      "label": "실행",
+      "labelAt": [
+        330,
+        230
+      ]
+    },
+    {
+      "id": "memory-runtime",
+      "from": "memory",
+      "to": "runtime",
+      "label": "저장 / 조회",
+      "labelAt": [
+        330,
+        350
+      ]
+    },
+    {
+      "id": "state-runtime",
+      "from": "state",
+      "to": "runtime",
+      "label": "관리",
+      "labelAt": [
+        330,
+        470
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Agent CRD 스펙 (예시)",
+      "items": [
+        "llm: provider litellm, model llama3-70b",
+        "tools: web_search(http), document_search(milvus), calculator(python)",
+        "memory: redis, ttl 3600"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "라이프사이클 관리",
+      "items": [
+        "Kagent는 Kubernetes 네이티브 AI 에이전트 라이프사이클 관리 도구",
+        "replicas 2, autoscaling 2~10 (CPU 70%)"
+      ]
+    }
+  ]
+}

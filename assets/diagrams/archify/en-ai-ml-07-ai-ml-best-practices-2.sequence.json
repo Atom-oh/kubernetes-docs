@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AI/ML Pod Cold Start Timeline",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      650
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "schedule",
+        "label": "Scheduling",
+        "focus": [
+          "scheduler",
+          "kubelet"
+        ],
+        "note": "Node selection takes ~100ms, negligible in the overall cold start."
+      },
+      {
+        "id": "pull",
+        "label": "Image pull",
+        "focus": [
+          "kubelet",
+          "registry"
+        ],
+        "note": "Pulling a 10-50GB image takes 2-10 minutes and is the biggest bottleneck."
+      },
+      {
+        "id": "load",
+        "label": "Model loading",
+        "focus": [
+          "runtime",
+          "app"
+        ],
+        "note": "Container creation takes ~5s, but loading weights into GPU memory takes 1-5 minutes."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "K8s Scheduler",
+      "sublabel": "kube-scheduler"
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "Kubelet",
+      "sublabel": "worker node"
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Container Registry",
+      "sublabel": "e.g. Amazon ECR"
+    },
+    {
+      "id": "runtime",
+      "type": "cloud",
+      "label": "Container Runtime",
+      "sublabel": "containerd"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "AI/ML Application",
+      "sublabel": "model serving process"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 220,
+      "label": "Node selection: ~100ms"
+    },
+    {
+      "from": 235,
+      "to": 345,
+      "label": "Image pull: 2-10 minutes (10-50GB images)"
+    },
+    {
+      "from": 360,
+      "to": 420,
+      "label": "Container creation: ~5s"
+    },
+    {
+      "from": 435,
+      "to": 565,
+      "label": "Model loading: 1-5 minutes (load weights into GPU memory) → Health check pass: ~30s"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scheduled",
+      "from": "scheduler",
+      "to": "kubelet",
+      "y": 190,
+      "label": "Pod scheduled"
+    },
+    {
+      "id": "pull-request",
+      "from": "kubelet",
+      "to": "registry",
+      "y": 267,
+      "label": "Pull image request",
+      "variant": "emphasis",
+      "note": "10-50GB image, takes 2-10 minutes"
+    },
+    {
+      "id": "image-layers",
+      "from": "registry",
+      "to": "kubelet",
+      "y": 327,
+      "label": "Image layers",
+      "variant": "return"
+    },
+    {
+      "id": "create",
+      "from": "kubelet",
+      "to": "runtime",
+      "y": 393,
+      "label": "Create container"
+    },
+    {
+      "id": "start",
+      "from": "runtime",
+      "to": "app",
+      "y": 475,
+      "label": "Start process",
+      "variant": "emphasis",
+      "note": "Loads model weights into GPU memory, takes 1-5 minutes"
+    },
+    {
+      "id": "ready",
+      "from": "app",
+      "to": "runtime",
+      "y": 550,
+      "label": "Ready",
+      "variant": "return",
+      "note": "Health check pass: ~30s"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kubelet",
+      "from": 185,
+      "to": 400,
+      "type": "backend"
+    },
+    {
+      "participant": "registry",
+      "from": 262,
+      "to": 333,
+      "type": "database"
+    },
+    {
+      "participant": "runtime",
+      "from": 388,
+      "to": 556,
+      "type": "cloud"
+    },
+    {
+      "participant": "app",
+      "from": 470,
+      "to": 556,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Total cold start time: 5-15 minutes",
+      "items": [
+        "Total for large AI/ML images",
+        "Image pull (2-10 min) and model loading (1-5 min) account for most of it",
+        "Node selection, container creation and health check add up to under a minute"
+      ]
+    }
+  ]
+}

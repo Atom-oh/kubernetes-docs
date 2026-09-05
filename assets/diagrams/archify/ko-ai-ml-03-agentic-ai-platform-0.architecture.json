@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Agentic AI 특성과 워크플로우",
+    "output": "ko-ai-ml-03-agentic-ai-platform-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Agentic AI 특성"
+        },
+        "backend": {
+          "label": "워크플로우 단계"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "loop",
+        "label": "워크플로우 루프",
+        "focus": [
+          "goal",
+          "plan",
+          "execute",
+          "evaluate",
+          "result"
+        ],
+        "note": "목표 설정에서 계획, 실행, 평가를 거쳐 완료되거나 계획 수립으로 되돌아간다."
+      },
+      {
+        "id": "traits",
+        "label": "특성 매핑",
+        "focus": [
+          "planning",
+          "execution",
+          "memory",
+          "iteration",
+          "plan",
+          "execute",
+          "evaluate"
+        ],
+        "note": "네 가지 Agentic AI 특성이 각각 어느 워크플로우 단계를 뒷받침하는지 보여준다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "planning",
+      "type": "external",
+      "label": "자율적 계획 수립",
+      "sublabel": "작업 분해 · 실행 순서 결정",
+      "pos": [
+        235,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "execution",
+      "type": "external",
+      "label": "도구 기반 실행",
+      "sublabel": "외부 API · DB · 코드 실행기",
+      "pos": [
+        440,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "external",
+      "label": "상태 및 메모리 관리",
+      "sublabel": "장기 실행 작업 상태 유지",
+      "pos": [
+        610,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "iteration",
+      "type": "external",
+      "label": "반복적 개선",
+      "sublabel": "결과 평가 · 계획 수정",
+      "pos": [
+        830,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "goal",
+      "type": "backend",
+      "label": "목표 설정",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "plan",
+      "type": "backend",
+      "label": "계획 수립",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "execute",
+      "type": "backend",
+      "label": "실행",
+      "pos": [
+        440,
+        300
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "evaluate",
+      "type": "backend",
+      "label": "평가",
+      "pos": [
+        830,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "result",
+      "type": "backend",
+      "label": "결과 반환",
+      "pos": [
+        1040,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Agentic AI 특성",
+      "wraps": [
+        "planning",
+        "execution",
+        "memory",
+        "iteration"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워크플로우",
+      "wraps": [
+        "goal",
+        "plan",
+        "execute",
+        "evaluate",
+        "result"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "goal-plan",
+      "from": "goal",
+      "to": "plan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan-execute",
+      "from": "plan",
+      "to": "execute",
+      "variant": "emphasis"
+    },
+    {
+      "id": "execute-evaluate",
+      "from": "execute",
+      "to": "evaluate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evaluate-result",
+      "from": "evaluate",
+      "to": "result",
+      "label": "완료",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evaluate-plan",
+      "from": "evaluate",
+      "to": "plan",
+      "label": "개선 필요",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "planning-plan",
+      "from": "planning",
+      "to": "plan",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "execution-execute",
+      "from": "execution",
+      "to": "execute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "memory-execute",
+      "from": "memory",
+      "to": "execute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "iteration-evaluate",
+      "from": "iteration",
+      "to": "evaluate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Agentic AI 특성",
+      "items": [
+        "자율적 계획 수립: 복잡한 작업을 하위 작업으로 분해하고 실행 순서를 결정한다",
+        "도구 기반 실행: 외부 API, 데이터베이스, 코드 실행기 등 다양한 도구를 활용한다",
+        "반복적 개선: 실행 결과를 평가하고 필요시 계획을 수정한다",
+        "상태 관리: 장기 실행 작업에서 상태와 메모리를 유지한다"
+      ]
+    }
+  ]
+}

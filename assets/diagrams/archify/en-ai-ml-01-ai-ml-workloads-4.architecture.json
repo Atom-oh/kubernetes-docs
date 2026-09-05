@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Model Serving Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-01-ai-ml-workloads-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "networking",
+          "inference"
+        ],
+        "note": "Client inference requests reach the inference services through a networking option (Ingress, AWS ALB, or API Gateway)."
+      },
+      {
+        "id": "model-load",
+        "label": "Model load",
+        "focus": [
+          "inference",
+          "storage"
+        ],
+        "note": "Inference services read the models and images kept in Amazon S3, ECR, and EFS."
+      },
+      {
+        "id": "autoscale",
+        "label": "Autoscaling",
+        "focus": [
+          "scaling",
+          "inference"
+        ],
+        "note": "HorizontalPodAutoscaler, KEDA, and VerticalPodAutoscaler scale the inference service pods."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "inference request",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "networking",
+      "type": "cloud",
+      "label": "Networking Options",
+      "sublabel": "Ingress · AWS ALB · API Gateway",
+      "pos": [
+        260,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "backend",
+      "label": "Inference Services",
+      "sublabel": "KServe · TorchServe · Triton Inference Server",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Model Storage",
+      "sublabel": "Amazon S3 · Amazon ECR · Amazon EFS",
+      "pos": [
+        930,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "scaling",
+      "type": "backend",
+      "label": "Scaling Options",
+      "sublabel": "HorizontalPodAutoscaler · KEDA · VerticalPodAutoscaler",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        300,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Model Serving Architecture",
+      "wraps": [
+        "networking",
+        "inference",
+        "storage",
+        "scaling"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-networking",
+      "from": "client",
+      "to": "networking",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "networking-to-inference",
+      "from": "networking",
+      "to": "inference",
+      "label": "route",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inference-to-storage",
+      "from": "inference",
+      "to": "storage",
+      "label": "Model load"
+    },
+    {
+      "id": "scaling-to-inference",
+      "from": "scaling",
+      "to": "inference",
+      "label": "Autoscaling",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Inference service deployment examples",
+      "items": [
+        "KServe: InferenceService pointing at the model via storageUri s3://",
+        "TorchServe: Deployment + PVC model-store, LoadBalancer Service (8080/8081)",
+        "Triton Inference Server: Deployment + PVC model-repository, LoadBalancer Service (8000/8001/8002)"
+      ]
+    }
+  ]
+}

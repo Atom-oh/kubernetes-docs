@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How a Pipeline Run Flows Through the System",
+    "locale": "en",
+    "output": "en-ai-ml-kubeflow-02-pipelines-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "KFP SDK (local)"
+        },
+        "backend": {
+          "label": "KFP backend"
+        },
+        "cloud": {
+          "label": "Component execution"
+        },
+        "database": {
+          "label": "Storage"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sdk",
+        "label": "SDK compile",
+        "focus": [
+          "pipeline",
+          "compiler"
+        ],
+        "note": "The SDK's job ends at producing IR YAML — a backend-agnostic PipelineSpec."
+      },
+      {
+        "id": "backend",
+        "label": "Backend execution",
+        "focus": [
+          "apiserver",
+          "translate",
+          "argo",
+          "pods"
+        ],
+        "note": "From the API server onward the backend owns the run: IR YAML becomes an Argo Workflow and Argo schedules each step as a Pod."
+      },
+      {
+        "id": "storage",
+        "label": "Artifacts and metadata",
+        "focus": [
+          "pods",
+          "objectstore",
+          "mlmd"
+        ],
+        "note": "Component Pods write artifacts to the object store and record execution and artifact metadata in MLMD."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pipeline",
+      "type": "frontend",
+      "label": "Python pipeline",
+      "sublabel": "@dsl.pipeline / @dsl.component",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "compiler",
+      "type": "frontend",
+      "label": "KFP SDK Compiler",
+      "sublabel": "produces IR YAML",
+      "pos": [
+        320,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "KFP API Server",
+      "sublabel": "stores pipeline, accepts Run",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "translate",
+      "type": "backend",
+      "label": "IR YAML → Argo Workflow",
+      "sublabel": "backend translation",
+      "pos": [
+        950,
+        80
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "backend",
+      "label": "Argo Workflow Controller",
+      "sublabel": "schedules steps",
+      "pos": [
+        950,
+        280
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "cloud",
+      "label": "Component Pods execute",
+      "sublabel": "one Pod per step",
+      "pos": [
+        660,
+        280
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "objectstore",
+      "type": "database",
+      "label": "Object store",
+      "sublabel": "S3 / MinIO · artifacts",
+      "pos": [
+        660,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "mlmd",
+      "type": "database",
+      "label": "ML Metadata (MLMD)",
+      "sublabel": "execution + artifact metadata",
+      "pos": [
+        950,
+        480
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Local · KFP SDK",
+      "wraps": [
+        "pipeline",
+        "compiler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "KFP backend (built on Argo Workflows)",
+      "wraps": [
+        "apiserver",
+        "translate",
+        "argo",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pipeline-compiler",
+      "from": "pipeline",
+      "to": "compiler",
+      "label": "compile"
+    },
+    {
+      "id": "compiler-apiserver",
+      "from": "compiler",
+      "to": "apiserver",
+      "label": "submit IR YAML",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apiserver-translate",
+      "from": "apiserver",
+      "to": "translate"
+    },
+    {
+      "id": "translate-argo",
+      "from": "translate",
+      "to": "argo",
+      "label": "Workflow resource",
+      "labelDy": 60
+    },
+    {
+      "id": "argo-pods",
+      "from": "argo",
+      "to": "pods"
+    },
+    {
+      "id": "pods-objectstore",
+      "from": "pods",
+      "to": "objectstore",
+      "label": "write artifacts",
+      "labelDy": 60
+    },
+    {
+      "id": "pods-mlmd",
+      "from": "pods",
+      "to": "mlmd",
+      "label": "record metadata"
+    },
+    {
+      "id": "objectstore-mlmd",
+      "from": "objectstore",
+      "to": "mlmd",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "KFP v2: IR YAML",
+      "items": [
+        "A Python pipeline compiles into a backend-agnostic PipelineSpec (IR YAML)",
+        "The API server stores the IR YAML and re-submits it on every Run — not a one-shot Argo manifest"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "EKS-Specific Artifact Storage",
+      "items": [
+        "Default is in-cluster MinIO",
+        "Pointing at S3 requires an IRSA role or EKS Pod Identity on the pipeline-runner ServiceAccount"
+      ]
+    }
+  ]
+}

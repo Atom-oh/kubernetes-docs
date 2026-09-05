@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "분산 훈련 전략",
+    "output": "ko-ai-ml-05-model-training-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "입력 데이터"
+        },
+        "backend": {
+          "label": "연산 단계"
+        },
+        "messagebus": {
+          "label": "통신 / 집계 단계"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "dp",
+        "label": "데이터 병렬화",
+        "focus": [
+          "dp-shards",
+          "dp-replicas",
+          "dp-sync"
+        ],
+        "note": "데이터 샤드마다 전체 모델 복제본이 학습하고, AllReduce로 그래디언트를 동기화한다."
+      },
+      {
+        "id": "tp",
+        "label": "텐서 병렬화",
+        "focus": [
+          "tp-layer",
+          "tp-gpus",
+          "tp-combine"
+        ],
+        "note": "단일 레이어의 가중치를 열 단위로 GPU에 나눠 계산한 뒤 결과를 결합한다."
+      },
+      {
+        "id": "pp",
+        "label": "파이프라인 병렬화",
+        "focus": [
+          "pp-micro",
+          "pp-stage1",
+          "pp-stage23"
+        ],
+        "note": "레이어를 스테이지로 나눠 GPU에 배치하고, 마이크로 배치를 스테이지 순서로 흘려보낸다."
+      },
+      {
+        "id": "ep",
+        "label": "전문가 병렬화 (MoE)",
+        "focus": [
+          "ep-router",
+          "ep-experts",
+          "ep-output"
+        ],
+        "note": "라우터/게이팅이 토큰을 일부 전문가에게 보내고, 전문가 출력을 결합한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dp-shards",
+      "type": "database",
+      "label": "데이터 샤드 1-3",
+      "sublabel": "샤드별 입력",
+      "pos": [
+        50,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "dp-replicas",
+      "type": "backend",
+      "label": "모델 복제본 1-3",
+      "sublabel": "GPU당 전체 모델",
+      "pos": [
+        250,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "dp-sync",
+      "type": "messagebus",
+      "label": "그래디언트 동기화",
+      "sublabel": "AllReduce",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "tp-layer",
+      "type": "backend",
+      "label": "단일 레이어",
+      "sublabel": "어텐션 / FFN",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "tp-gpus",
+      "type": "backend",
+      "label": "GPU 1 / GPU 2",
+      "sublabel": "열 0-N/2 · N/2-N",
+      "pos": [
+        920,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "tp-combine",
+      "type": "messagebus",
+      "label": "결과 결합",
+      "sublabel": "레이어 내부 통신",
+      "pos": [
+        1120,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "pp-micro",
+      "type": "database",
+      "label": "마이크로 배치",
+      "sublabel": "순차 투입",
+      "pos": [
+        50,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "pp-stage1",
+      "type": "backend",
+      "label": "스테이지 1",
+      "sublabel": "레이어 1-4 · GPU 1",
+      "pos": [
+        250,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "pp-stage23",
+      "type": "backend",
+      "label": "스테이지 2 → 3",
+      "sublabel": "레이어 5-12 · GPU 2-3",
+      "pos": [
+        450,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "ep-router",
+      "type": "backend",
+      "label": "라우터 / 게이팅",
+      "sublabel": "토큰별 전문가 선택",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "ep-experts",
+      "type": "backend",
+      "label": "전문가 1-4",
+      "sublabel": "GPU 1-4",
+      "pos": [
+        920,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "ep-output",
+      "type": "messagebus",
+      "label": "결합된 출력",
+      "sublabel": "전문가 출력 병합",
+      "pos": [
+        1120,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "데이터 병렬화",
+      "wraps": [
+        "dp-shards",
+        "dp-replicas",
+        "dp-sync"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "텐서 병렬화",
+      "wraps": [
+        "tp-layer",
+        "tp-gpus",
+        "tp-combine"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파이프라인 병렬화",
+      "wraps": [
+        "pp-micro",
+        "pp-stage1",
+        "pp-stage23"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "전문가 병렬화 (MoE)",
+      "wraps": [
+        "ep-router",
+        "ep-experts",
+        "ep-output"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dp-feed",
+      "from": "dp-shards",
+      "to": "dp-replicas"
+    },
+    {
+      "id": "dp-grad",
+      "from": "dp-replicas",
+      "to": "dp-sync",
+      "label": "그래디언트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tp-split",
+      "from": "tp-layer",
+      "to": "tp-gpus",
+      "label": "열 분할"
+    },
+    {
+      "id": "tp-merge",
+      "from": "tp-gpus",
+      "to": "tp-combine",
+      "label": "부분 결과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pp-in",
+      "from": "pp-micro",
+      "to": "pp-stage1"
+    },
+    {
+      "id": "pp-next",
+      "from": "pp-stage1",
+      "to": "pp-stage23",
+      "label": "활성값 전달"
+    },
+    {
+      "id": "ep-route",
+      "from": "ep-router",
+      "to": "ep-experts",
+      "label": "토큰 라우팅"
+    },
+    {
+      "id": "ep-merge",
+      "from": "ep-experts",
+      "to": "ep-output",
+      "label": "전문가 출력",
+      "variant": "emphasis"
+    }
+  ]
+}

@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LLM 추론 프레임워크 생태계",
+    "output": "ko-ai-ml-04-inference-frameworks-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "LLM 게이트웨이"
+        },
+        "backend": {
+          "label": "서빙 프레임워크 / 오퍼레이터"
+        },
+        "cloud": {
+          "label": "노드 프로비저닝 / AWS 실리콘"
+        },
+        "external": {
+          "label": "로컬 개발 도구"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gateway",
+        "label": "게이트웨이 라우팅",
+        "focus": [
+          "litellm",
+          "nim",
+          "vllm",
+          "sglang"
+        ],
+        "note": "LiteLLM 게이트웨이가 100+ 모델 공급자 통합과 비용 추적을 맡고, 요청을 NIM·vLLM·SGLang 백엔드로 라우팅한다."
+      },
+      {
+        "id": "dynamo",
+        "label": "Dynamo 오케스트레이션",
+        "focus": [
+          "dynamo",
+          "nim",
+          "trt",
+          "vllm",
+          "sglang"
+        ],
+        "note": "NVIDIA Dynamo는 분리형 서빙과 지능형 라우팅으로 vLLM·SGLang·TensorRT-LLM 엔진을 오케스트레이션하고, NIM은 TensorRT-LLM 엔진을 사용한다."
+      },
+      {
+        "id": "distributed",
+        "label": "분산 추론",
+        "focus": [
+          "kuberay",
+          "rayserve",
+          "aibrix",
+          "vllm",
+          "sglang"
+        ],
+        "note": "KubeRay Operator가 관리하는 Ray Serve와 AIBrix가 vLLM·SGLang 위에서 대규모 분산 추론과 LoRA 멀티테넌트를 구성한다."
+      },
+      {
+        "id": "provision",
+        "label": "노드 프로비저닝",
+        "focus": [
+          "karpenter",
+          "dynamo",
+          "rayserve",
+          "neuron"
+        ],
+        "note": "Karpenter가 NVIDIA 스택, 오픈소스 프레임워크, AWS Neuron·Inferentia2 워크로드에 필요한 노드를 프로비저닝한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "litellm",
+      "type": "frontend",
+      "label": "LiteLLM",
+      "sublabel": "멀티 공급자 게이트웨이",
+      "pos": [
+        60,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ollama",
+      "type": "external",
+      "label": "Ollama",
+      "sublabel": "llama.cpp 기반 로컬 실행",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sglang",
+      "type": "backend",
+      "label": "SGLang",
+      "sublabel": "RadixAttention · 구조화된 출력",
+      "pos": [
+        480,
+        160
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aibrix",
+      "type": "backend",
+      "label": "AIBrix",
+      "sublabel": "LoRA 관리 · 이기종 GPU",
+      "pos": [
+        480,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vllm",
+      "type": "backend",
+      "label": "vLLM",
+      "sublabel": "오픈소스 서빙 엔진",
+      "pos": [
+        480,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rayserve",
+      "type": "backend",
+      "label": "Ray Serve",
+      "sublabel": "대규모 분산 추론",
+      "pos": [
+        480,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nim",
+      "type": "backend",
+      "label": "NVIDIA NIM",
+      "sublabel": "추론 마이크로서비스",
+      "pos": [
+        920,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "trt",
+      "type": "backend",
+      "label": "TensorRT-LLM",
+      "sublabel": "추론 엔진",
+      "pos": [
+        920,
+        160
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dynamo",
+      "type": "backend",
+      "label": "NVIDIA Dynamo",
+      "sublabel": "분리형 서빙 · 지능형 라우팅",
+      "pos": [
+        920,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kuberay",
+      "type": "backend",
+      "label": "KubeRay Operator",
+      "sublabel": "Ray 클러스터 관리",
+      "pos": [
+        480,
+        640
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "GPU 노드 오토스케일링",
+      "pos": [
+        780,
+        640
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "neuron",
+      "type": "cloud",
+      "label": "Neuron SDK · Inferentia2",
+      "sublabel": "AWS 실리콘 추론",
+      "pos": [
+        1000,
+        640
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "개발 / 게이트웨이 도구",
+      "wraps": [
+        "litellm",
+        "ollama"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NVIDIA 스택",
+      "wraps": [
+        "nim",
+        "trt",
+        "dynamo"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "오픈소스 프레임워크",
+      "wraps": [
+        "vllm",
+        "aibrix",
+        "sglang",
+        "rayserve"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "오케스트레이션 레이어",
+      "wraps": [
+        "kuberay",
+        "karpenter"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 네이티브",
+      "wraps": [
+        "neuron"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "litellm-vllm",
+      "from": "litellm",
+      "to": "vllm",
+      "label": "요청 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "litellm-sglang",
+      "from": "litellm",
+      "to": "sglang"
+    },
+    {
+      "id": "litellm-nim",
+      "from": "litellm",
+      "to": "nim"
+    },
+    {
+      "id": "nim-trt",
+      "from": "nim",
+      "to": "trt"
+    },
+    {
+      "id": "dynamo-trt",
+      "from": "dynamo",
+      "to": "trt"
+    },
+    {
+      "id": "dynamo-vllm",
+      "from": "dynamo",
+      "to": "vllm",
+      "label": "오케스트레이션"
+    },
+    {
+      "id": "dynamo-sglang",
+      "from": "dynamo",
+      "to": "sglang"
+    },
+    {
+      "id": "aibrix-vllm",
+      "from": "aibrix",
+      "to": "vllm"
+    },
+    {
+      "id": "aibrix-sglang",
+      "from": "aibrix",
+      "to": "sglang"
+    },
+    {
+      "id": "rayserve-vllm",
+      "from": "rayserve",
+      "to": "vllm"
+    },
+    {
+      "id": "kuberay-rayserve",
+      "from": "kuberay",
+      "to": "rayserve"
+    },
+    {
+      "id": "karpenter-rayserve",
+      "from": "karpenter",
+      "to": "rayserve",
+      "variant": "dashed"
+    },
+    {
+      "id": "karpenter-dynamo",
+      "from": "karpenter",
+      "to": "dynamo",
+      "variant": "dashed",
+      "label": "GPU 노드 프로비저닝",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "karpenter-neuron",
+      "from": "karpenter",
+      "to": "neuron",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "프레임워크 선택 가이드",
+      "items": [
+        "NVIDIA GPU 엔터프라이즈 프로덕션 → NVIDIA NIM (최적화된 컨테이너, 지원, 모니터링)",
+        "KV 캐시 최적화가 필요한 고처리량 → NVIDIA Dynamo (분리형 서빙, 지능형 라우팅)",
+        "대규모 분산 추론 → Ray Serve + vLLM / LoRA 멀티테넌트 → AIBrix",
+        "AWS 실리콘 비용 최적화 → AWS Neuron + Inferentia2 (GPU 대비 40-70% 절감)"
+      ]
+    }
+  ]
+}

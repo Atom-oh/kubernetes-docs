@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 오토스케일링 구조",
+    "output": "ko-ai-ml-02-vllm-deployment-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pod-scaling",
+        "label": "파드 스케일링",
+        "focus": [
+          "cpu",
+          "rps",
+          "queue",
+          "gpu",
+          "hpa",
+          "keda",
+          "custom"
+        ],
+        "note": "CPU 사용률은 HPA, 요청 수·큐 길이는 KEDA, GPU 사용률은 커스텀 메트릭이 받아 vLLM 파드 수를 조절한다."
+      },
+      {
+        "id": "node-scaling",
+        "label": "노드 스케일링",
+        "focus": [
+          "hpa",
+          "keda",
+          "custom",
+          "karpenter",
+          "ca",
+          "spot"
+        ],
+        "note": "파드가 늘어나 GPU 노드가 부족해지면 Karpenter 또는 Cluster Autoscaler가 노드를 추가하고, Karpenter는 Spot 인스턴스로 비용을 절감한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "cpu",
+      "type": "external",
+      "label": "CPU 사용률",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "rps",
+      "type": "external",
+      "label": "초당 요청 수",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "external",
+      "label": "큐 길이",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "external",
+      "label": "GPU 사용률",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HorizontalPodAutoscaler",
+      "sublabel": "autoscaling/v2",
+      "pos": [
+        360,
+        60
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "KEDA",
+      "sublabel": "이벤트 기반 스케일러",
+      "pos": [
+        360,
+        195
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "backend",
+      "label": "커스텀 메트릭",
+      "sublabel": "GPU 지표 기반",
+      "pos": [
+        360,
+        360
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "NodePool · EC2NodeClass",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "spot",
+      "type": "cloud",
+      "label": "Spot 인스턴스",
+      "sublabel": "비용 절감",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "cloud",
+      "label": "Cluster Autoscaler",
+      "pos": [
+        720,
+        360
+      ],
+      "size": [
+        200,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스케일링 트리거",
+      "wraps": [
+        "cpu",
+        "rps",
+        "queue",
+        "gpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드 스케일링",
+      "wraps": [
+        "hpa",
+        "keda",
+        "custom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 스케일링",
+      "wraps": [
+        "karpenter",
+        "spot",
+        "ca"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cpu-hpa",
+      "from": "cpu",
+      "to": "hpa"
+    },
+    {
+      "id": "rps-keda",
+      "from": "rps",
+      "to": "keda"
+    },
+    {
+      "id": "queue-keda",
+      "from": "queue",
+      "to": "keda"
+    },
+    {
+      "id": "gpu-custom",
+      "from": "gpu",
+      "to": "custom",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hpa-karpenter",
+      "from": "hpa",
+      "to": "karpenter",
+      "label": "GPU 노드 부족"
+    },
+    {
+      "id": "keda-karpenter",
+      "from": "keda",
+      "to": "karpenter"
+    },
+    {
+      "id": "custom-ca",
+      "from": "custom",
+      "to": "ca"
+    },
+    {
+      "id": "karpenter-spot",
+      "from": "karpenter",
+      "to": "spot",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DRA vs Traditional GPU Scheduling",
+    "output": "en-ai-ml-06-ai-infrastructure-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      774
+    ],
+    "views": [
+      {
+        "id": "traditional",
+        "label": "Traditional device plugin",
+        "focus": [
+          "t1",
+          "t2",
+          "t3"
+        ],
+        "note": "A nvidia.com/gpu: 1 request allocates a whole GPU, so there is no sharing and no fine-grained control."
+      },
+      {
+        "id": "dra-flow",
+        "label": "DRA allocation flow",
+        "focus": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5"
+        ],
+        "note": "ResourceClaim → DRA driver → ResourceSlice topology → fine-grained allocation → topology-aware scheduling."
+      },
+      {
+        "id": "benefits",
+        "label": "DRA Benefits",
+        "focus": [
+          "d4",
+          "d5",
+          "b1",
+          "b2",
+          "b3",
+          "b4"
+        ],
+        "note": "Fine-grained allocation enables memory partitioning and multi-tenant sharing; topology awareness enables NVLink and P6e-GB200 support."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "external",
+      "label": "Pod requests",
+      "sublabel": "nvidia.com/gpu: 1",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "external",
+      "label": "Device Plugin",
+      "sublabel": "allocates whole GPU",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "external",
+      "label": "Exclusive GPU access",
+      "sublabel": "no sharing · no fine-grained control",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "cloud",
+      "label": "GPU Memory Partitioning",
+      "pos": [
+        430,
+        300
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "cloud",
+      "label": "Multi-tenant GPU Sharing",
+      "pos": [
+        430,
+        410
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "cloud",
+      "label": "NVLink Topology Awareness",
+      "pos": [
+        430,
+        520
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "cloud",
+      "label": "P6e-GB200 UltraServer Support",
+      "pos": [
+        430,
+        630
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "backend",
+      "label": "Pod creates ResourceClaim",
+      "sublabel": "claim requested by the Pod",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d2",
+      "type": "backend",
+      "label": "DRA Driver",
+      "sublabel": "evaluates claim",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d3",
+      "type": "database",
+      "label": "ResourceSlice",
+      "sublabel": "tracks GPU topology",
+      "pos": [
+        820,
+        280
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d4",
+      "type": "backend",
+      "label": "Fine-grained allocation",
+      "sublabel": "MIG · MPS · Time-slice",
+      "pos": [
+        820,
+        390
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d5",
+      "type": "backend",
+      "label": "Topology-aware scheduling",
+      "sublabel": "NVLink · IMEX",
+      "pos": [
+        820,
+        500
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Traditional Device Plugin Approach",
+      "wraps": [
+        "t1",
+        "t2",
+        "t3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DRA Benefits",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3",
+        "b4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DRA Approach (Kubernetes 1.31+)",
+      "wraps": [
+        "d1",
+        "d2",
+        "d3",
+        "d4",
+        "d5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "t1-t2",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "t2-t3",
+      "from": "t2",
+      "to": "t3"
+    },
+    {
+      "id": "t3-b2",
+      "from": "t3",
+      "to": "b2",
+      "label": "Limited",
+      "variant": "dashed"
+    },
+    {
+      "id": "d1-d2",
+      "from": "d1",
+      "to": "d2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d2-d3",
+      "from": "d2",
+      "to": "d3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d3-d4",
+      "from": "d3",
+      "to": "d4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d4-d5",
+      "from": "d4",
+      "to": "d5",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d4-b1",
+      "from": "d4",
+      "to": "b1",
+      "label": "Enables"
+    },
+    {
+      "id": "d4-b2",
+      "from": "d4",
+      "to": "b2"
+    },
+    {
+      "id": "d5-b3",
+      "from": "d5",
+      "to": "b3",
+      "label": "Enables"
+    },
+    {
+      "id": "d5-b4",
+      "from": "d5",
+      "to": "b4"
+    }
+  ]
+}

@@ -1,0 +1,405 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML 인프라 레이어 아키텍처",
+    "output": "ko-ai-ml-06-ai-infrastructure-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "ML 워크로드"
+        },
+        "backend": {
+          "label": "플랫폼 서비스"
+        },
+        "cloud": {
+          "label": "컴퓨팅 · 기반 인프라"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "workloads",
+        "label": "워크로드 레이어",
+        "focus": [
+          "training",
+          "inference",
+          "notebooks",
+          "pipelines",
+          "agents"
+        ],
+        "note": "사용자 대면 ML 애플리케이션: 훈련, 추론, 노트북, 파이프라인, 에이전트."
+      },
+      {
+        "id": "platform",
+        "label": "플랫폼 레이어",
+        "focus": [
+          "ray",
+          "kserve",
+          "kubeflow",
+          "mlflow",
+          "vectordb"
+        ],
+        "note": "ML 전용 오케스트레이션과 도구: Ray, KServe, Kubeflow, MLflow, 벡터 DB."
+      },
+      {
+        "id": "compute",
+        "label": "컴퓨팅 레이어",
+        "focus": [
+          "gpu",
+          "neuron",
+          "cpu",
+          "spot"
+        ],
+        "note": "하드웨어 가속과 비용 최적화: GPU/Neuron/CPU NodePools와 스팟 인스턴스."
+      },
+      {
+        "id": "base",
+        "label": "기반 레이어",
+        "focus": [
+          "karpenter",
+          "eks",
+          "storage",
+          "network"
+        ],
+        "note": "기반 인프라: EKS 컨트롤 플레인, Karpenter, 스토리지, 네트워킹."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "training",
+      "type": "frontend",
+      "label": "모델 훈련",
+      "sublabel": "PyTorch, TensorFlow",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "frontend",
+      "label": "모델 추론",
+      "sublabel": "vLLM, TensorRT",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "frontend",
+      "label": "대화형 개발",
+      "sublabel": "JupyterHub",
+      "pos": [
+        460,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pipelines",
+      "type": "frontend",
+      "label": "ML 파이프라인",
+      "sublabel": "Argo Workflows",
+      "pos": [
+        670,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "agents",
+      "type": "frontend",
+      "label": "AI 에이전트",
+      "sublabel": "LangChain, CrewAI",
+      "pos": [
+        880,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ray",
+      "type": "backend",
+      "label": "Ray 클러스터",
+      "sublabel": "분산 컴퓨팅",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "backend",
+      "label": "KServe",
+      "sublabel": "모델 서빙",
+      "pos": [
+        250,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kubeflow",
+      "type": "backend",
+      "label": "Kubeflow",
+      "sublabel": "ML 플랫폼",
+      "pos": [
+        460,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mlflow",
+      "type": "backend",
+      "label": "MLflow",
+      "sublabel": "실험 추적",
+      "pos": [
+        670,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vectordb",
+      "type": "database",
+      "label": "벡터 DB",
+      "sublabel": "Milvus, Pinecone",
+      "pos": [
+        880,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "cloud",
+      "label": "GPU NodePools",
+      "sublabel": "p4d, p5, g5",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "neuron",
+      "type": "cloud",
+      "label": "Neuron NodePools",
+      "sublabel": "inf2, trn1",
+      "pos": [
+        250,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cpu",
+      "type": "cloud",
+      "label": "CPU NodePools",
+      "sublabel": "m6i, c6i, r6i",
+      "pos": [
+        460,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "spot",
+      "type": "cloud",
+      "label": "스팟 인스턴스",
+      "sublabel": "비용 최적화",
+      "pos": [
+        670,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "노드 프로비저닝",
+      "pos": [
+        40,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS 클러스터",
+      "sublabel": "컨트롤 플레인",
+      "pos": [
+        250,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "스토리지",
+      "sublabel": "EFS, FSx, S3",
+      "pos": [
+        460,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "네트워킹",
+      "sublabel": "VPC, EFA",
+      "pos": [
+        670,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ML 워크로드 레이어",
+      "wraps": [
+        "training",
+        "inference",
+        "notebooks",
+        "pipelines",
+        "agents"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "플랫폼 서비스 레이어",
+      "wraps": [
+        "ray",
+        "kserve",
+        "kubeflow",
+        "mlflow",
+        "vectordb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "컴퓨팅 레이어",
+      "wraps": [
+        "gpu",
+        "neuron",
+        "cpu",
+        "spot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 기반 레이어",
+      "wraps": [
+        "karpenter",
+        "eks",
+        "storage",
+        "network"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "training-to-ray",
+      "from": "training",
+      "to": "ray",
+      "label": "플랫폼 위에서 실행",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ray-to-gpu",
+      "from": "ray",
+      "to": "gpu",
+      "label": "컴퓨팅에 스케줄링",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "gpu-to-karpenter",
+      "from": "gpu",
+      "to": "karpenter",
+      "label": "Karpenter가 프로비저닝",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kgateway + InferencePool Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-03-agentic-ai-platform-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "inference request",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "ai-gateway",
+      "pos": [
+        220,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "httproute",
+      "type": "cloud",
+      "label": "HTTPRoute",
+      "sublabel": "llama3-route",
+      "pos": [
+        420,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "epp",
+      "type": "backend",
+      "label": "Endpoint Picker",
+      "sublabel": "prefix-aware-picker",
+      "pos": [
+        660,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "vLLM Pod 1",
+      "sublabel": "app=vllm :8000",
+      "pos": [
+        920,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "vLLM Pod 2",
+      "sublabel": "app=vllm :8000",
+      "pos": [
+        920,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "vLLM Pod 3",
+      "sublabel": "app=vllm :8000",
+      "pos": [
+        920,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "InferencePool llama3-pool",
+      "wraps": [
+        "epp",
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-httproute",
+      "from": "gateway",
+      "to": "httproute",
+      "label": "parentRef",
+      "variant": "emphasis"
+    },
+    {
+      "id": "httproute-epp",
+      "from": "httproute",
+      "to": "epp",
+      "label": "backendRef",
+      "variant": "emphasis"
+    },
+    {
+      "id": "epp-pod1",
+      "from": "epp",
+      "to": "pod1",
+      "label": "least-loaded",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "epp-pod2",
+      "from": "epp",
+      "to": "pod2",
+      "label": "prefix-aware",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Routing rule (HTTPRoute)",
+      "items": [
+        "Matches PathPrefix /v1/chat/completions + header x-model: llama3-70b",
+        "backendRefs point at the InferencePool llama3-pool instead of a Service"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Endpoint Picker strategy",
+      "items": [
+        "type: PrefixAware — picks the Pod that maximizes prefix cache hits",
+        "fallbackStrategy: LeastLoaded, loadMetric: pending_requests"
+      ]
+    }
+  ]
+}

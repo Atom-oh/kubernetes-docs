@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Monitoring and Logging Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-01-ai-ml-workloads-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "Metrics path",
+        "focus": [
+          "dcgm",
+          "node-exporter",
+          "ksm",
+          "prometheus",
+          "grafana",
+          "dashboards"
+        ],
+        "note": "Prometheus scrapes the metrics exposed by the exporters and Grafana visualizes them as dashboards."
+      },
+      {
+        "id": "alert-path",
+        "label": "Alert path",
+        "focus": [
+          "prometheus",
+          "alertmanager",
+          "alerts"
+        ],
+        "note": "Prometheus alerting rules flow through Alert Manager into GPU, performance, and cost alerts."
+      },
+      {
+        "id": "log-path",
+        "label": "Log path",
+        "focus": [
+          "fluentd",
+          "cloudwatch",
+          "elasticsearch",
+          "kibana"
+        ],
+        "note": "Fluentd collects container logs and ships them to CloudWatch Logs and ElasticSearch; Kibana queries the index."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dcgm",
+      "type": "backend",
+      "label": "NVIDIA DCGM Exporter",
+      "sublabel": "GPU metrics",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "node-exporter",
+      "type": "backend",
+      "label": "Node Exporter",
+      "sublabel": "Node metrics",
+      "pos": [
+        40,
+        160
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ksm",
+      "type": "backend",
+      "label": "Kube State Metrics",
+      "sublabel": "Cluster object state",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metric store · rule evaluation",
+      "pos": [
+        340,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alert Manager",
+      "sublabel": "Alert routing",
+      "pos": [
+        630,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Visualization",
+      "pos": [
+        630,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "alerts",
+      "type": "external",
+      "label": "Alerts",
+      "sublabel": "GPU · Performance · Cost",
+      "pos": [
+        920,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dashboards",
+      "type": "frontend",
+      "label": "Dashboards",
+      "sublabel": "GPU · Training · Inference · Cost",
+      "pos": [
+        920,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "fluentd",
+      "type": "backend",
+      "label": "Fluentd",
+      "sublabel": "Container log collection",
+      "pos": [
+        40,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "/eks/ml-cluster/pods",
+      "pos": [
+        340,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "elasticsearch",
+      "type": "database",
+      "label": "ElasticSearch",
+      "sublabel": "Log index",
+      "pos": [
+        340,
+        530
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kibana",
+      "type": "frontend",
+      "label": "Kibana",
+      "sublabel": "Log search",
+      "pos": [
+        630,
+        530
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Metrics Collection",
+      "wraps": [
+        "dcgm",
+        "node-exporter",
+        "ksm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring Stack",
+      "wraps": [
+        "prometheus",
+        "alertmanager",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Logging Stack",
+      "wraps": [
+        "fluentd",
+        "cloudwatch",
+        "elasticsearch",
+        "kibana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dcgm-prom",
+      "from": "dcgm",
+      "to": "prometheus",
+      "label": "scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-prom",
+      "from": "node-exporter",
+      "to": "prometheus",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ksm-prom",
+      "from": "ksm",
+      "to": "prometheus",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-alertmanager",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "label": "alerting rules"
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "query",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alertmanager-alerts",
+      "from": "alertmanager",
+      "to": "alerts"
+    },
+    {
+      "id": "grafana-dashboards",
+      "from": "grafana",
+      "to": "dashboards",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentd-cloudwatch",
+      "from": "fluentd",
+      "to": "cloudwatch"
+    },
+    {
+      "id": "fluentd-es",
+      "from": "fluentd",
+      "to": "elasticsearch"
+    },
+    {
+      "id": "es-kibana",
+      "from": "elasticsearch",
+      "to": "kibana"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metrics",
+      "items": [
+        "A ServiceMonitor scrapes dcgm-exporter every 15 seconds",
+        "The Grafana GPU dashboard plots metrics such as DCGM_FI_DEV_GPU_UTIL"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Logs",
+      "items": [
+        "Fluentd tails /var/log/containers/*.log and enriches records with Kubernetes metadata",
+        "The cloudwatch_logs plugin ships them to the /eks/ml-cluster/pods log group"
+      ]
+    }
+  ]
+}

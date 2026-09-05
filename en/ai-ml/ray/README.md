@@ -16,7 +16,9 @@ Ray is an open-source distributed computing framework for scaling Python workloa
 | **Ray Train & Tune** | Distributed model training and hyperparameter search | [Part 3](03-ray-train-tune.md) |
 | **Ray Serve** | Model serving, including dedicated LLM-serving building blocks | [Part 4](04-ray-serve.md) |
 
-![The KubeRay Operator sits between Ray's core architecture and two downstream capabilities it unlocks on Kubernetes: distributed training and tuning with Ray Train and Tune, and model or LLM serving with Ray Serve.](../../.gitbook/assets/en-ai-ml-ray-README-0.png)
+![The KubeRay Operator sits between Ray's core architecture and two downstream capabilities it unlocks on Kubernetes: distributed training and tuning with Ray Train and Tune, and model or LLM serving with Ray Serve.](../../.gitbook/assets/en-ai-ml-ray-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-readme-0.html)
 
 ## Why Run This on EKS
 

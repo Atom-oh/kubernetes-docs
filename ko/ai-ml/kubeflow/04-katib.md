@@ -61,7 +61,9 @@ Experiment의 스펙에서 튜닝 실행의 동작 방식을 좌우하는 핵심
 
 ## Experiment의 전체 실행 흐름
 
-![Experiment CRD가 생성되면 Katib 컨트롤러가 Suggestion 서비스를 만들고, 이 서비스가 반복적으로 하이퍼파라미터 조합을 제안해 여러 Trial 학습 잡을 실행시키며, 각 Trial의 메트릭 사이드카가 결과를 다시 Suggestion 서비스로 보고하는 루프를 돌다가 종료 조건이 충족되면 Experiment가 Succeeded 상태가 되고 최적 결과가 status에 기록되는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-kubeflow-04-katib-0.svg)
+![Experiment CRD가 생성되면 Katib 컨트롤러가 Suggestion 서비스를 만들고, 이 서비스가 제안한 하이퍼파라미터 조합으로 여러 Trial 학습 잡이 실행되며, 메트릭 수집 사이드카가 보고한 결과가 다시 Suggestion으로 피드백되는 루프를 돌다가 maxTrialCount 도달 또는 목표값 달성 시 Experiment가 Succeeded 상태가 되고 최적 Trial 결과가 status에 기록되는 흐름을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-04-katib-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-04-katib-0.html)
 
 전체 루프는 다음과 같습니다. Katib 컨트롤러가 Experiment를 리컨사일하고 요청된 알고리즘용 Suggestion 서비스를 시작합니다. Suggestion 서비스는 (`parallelTrialCount`로 제한된 개수만큼) 하나 이상의 하이퍼파라미터 조합을 제안합니다. 컨트롤러는 각각에 대해 Trial CRD(및 그 하위의 학습 잡)를 생성합니다. Trial들이 결과를 보고하면 그 결과는 다시 Suggestion 서비스로 피드백되어 다음 라운드의 제안에 반영됩니다. 이 루프는 `maxTrialCount`에 도달하거나 목표(objective)의 목표값이 충족될 때까지 계속됩니다. 이 과정 전체에서 Experiment의 상태는 지금까지 관찰된 최고 성과 Trial로 계속 갱신되고, Experiment가 완료되면 그 최고 Trial의 하이퍼파라미터와 메트릭 값이 최종 결과로 기록됩니다.
 

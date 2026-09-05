@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KubeRay 오퍼레이터와 2단계 오토스케일링",
+    "output": "ko-ai-ml-ray-02-kuberay-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "커스텀 리소스"
+        },
+        "backend": {
+          "label": "컨트롤러 / Pod"
+        },
+        "cloud": {
+          "label": "노드 프로비저너"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "reconcile",
+        "label": "재조정",
+        "focus": [
+          "rc",
+          "op",
+          "hp",
+          "wg1",
+          "wg2"
+        ],
+        "note": "KubeRay 오퍼레이터가 RayCluster 스펙에 맞춰 Head Pod와 워커 그룹 Pod를 생성·수정·삭제한다."
+      },
+      {
+        "id": "ray-autoscaler",
+        "label": "Ray 오토스케일러 루프",
+        "focus": [
+          "wg1",
+          "wg2",
+          "ra",
+          "rc"
+        ],
+        "note": "Ray 오토스케일러는 대기 중인 태스크·액터를 보고 워커 그룹의 replica 수를 조정한다 (Pod 개수)."
+      },
+      {
+        "id": "karpenter",
+        "label": "Karpenter 루프",
+        "focus": [
+          "ra",
+          "kp",
+          "wg1",
+          "wg2"
+        ],
+        "note": "Karpenter는 Pending 상태의 Pod에만 반응해 그에 맞는 EC2 노드를 프로비저닝한다 (노드 개수)."
+      }
+    ],
+    "viewBox": [
+      1300,
+      620
+    ]
+  },
+  "components": [
+    {
+      "id": "rc",
+      "type": "database",
+      "label": "RayCluster CR",
+      "sublabel": "head + 워커 그룹 스펙",
+      "pos": [
+        230,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "op",
+      "type": "backend",
+      "label": "KubeRay 오퍼레이터",
+      "sublabel": "재조정 (reconcile)",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "hp",
+      "type": "backend",
+      "label": "Head Pod",
+      "sublabel": "Ray head",
+      "pos": [
+        20,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "wg1",
+      "type": "backend",
+      "label": "CPU 워커 그룹 Pod",
+      "sublabel": "replicas",
+      "pos": [
+        520,
+        140
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "wg2",
+      "type": "backend",
+      "label": "GPU 워커 그룹 Pod",
+      "sublabel": "nvidia.com/gpu limit",
+      "pos": [
+        520,
+        500
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ra",
+      "type": "backend",
+      "label": "Ray 오토스케일러",
+      "sublabel": "Pod 개수 결정",
+      "pos": [
+        990,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "kp",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "EC2 노드 개수 결정",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rc-op",
+      "from": "rc",
+      "to": "op",
+      "label": "스펙 감시",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "op-hp",
+      "from": "op",
+      "to": "hp",
+      "label": "생성",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "op-wg1",
+      "from": "op",
+      "to": "wg1",
+      "label": "생성",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          470,
+          332
+        ],
+        [
+          470,
+          172
+        ]
+      ]
+    },
+    {
+      "id": "op-wg2",
+      "from": "op",
+      "to": "wg2",
+      "label": "생성",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          325,
+          532
+        ]
+      ]
+    },
+    {
+      "id": "wg1-ra",
+      "from": "wg1",
+      "to": "ra",
+      "label": "모니터링",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          1085,
+          172
+        ]
+      ]
+    },
+    {
+      "id": "wg2-ra",
+      "from": "wg2",
+      "to": "ra",
+      "label": "모니터링",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1085,
+          532
+        ]
+      ]
+    },
+    {
+      "id": "ra-rc",
+      "from": "ra",
+      "to": "rc",
+      "label": "replica 증설 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1230,
+          332
+        ],
+        [
+          1230,
+          92
+        ]
+      ],
+      "labelSegment": 2
+    },
+    {
+      "id": "ra-kp",
+      "from": "ra",
+      "to": "kp",
+      "label": "Pending Pod",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "kp-wg1",
+      "from": "kp",
+      "to": "wg1",
+      "label": "EC2 노드 프로비저닝",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          815,
+          250
+        ],
+        [
+          610,
+          250
+        ]
+      ]
+    },
+    {
+      "id": "kp-wg2",
+      "from": "kp",
+      "to": "wg2",
+      "label": "EC2 노드 프로비저닝",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          815,
+          430
+        ],
+        [
+          610,
+          430
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML Infrastructure Layer Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-06-ai-infrastructure-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "ML workloads"
+        },
+        "backend": {
+          "label": "Platform services"
+        },
+        "cloud": {
+          "label": "Compute / base infrastructure"
+        },
+        "database": {
+          "label": "Data stores"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "workloads",
+        "label": "Workloads layer",
+        "focus": [
+          "training",
+          "inference",
+          "notebooks",
+          "pipelines",
+          "agents"
+        ],
+        "note": "User-facing ML applications: training, inference, notebooks, pipelines, agents."
+      },
+      {
+        "id": "platform",
+        "label": "Platform layer",
+        "focus": [
+          "ray",
+          "kserve",
+          "kubeflow",
+          "mlflow",
+          "vectordb"
+        ],
+        "note": "ML-specific orchestration and tooling: Ray, KServe, Kubeflow, MLflow, vector DBs."
+      },
+      {
+        "id": "compute",
+        "label": "Compute layer",
+        "focus": [
+          "gpu",
+          "neuron",
+          "cpu",
+          "spot"
+        ],
+        "note": "Hardware acceleration and cost optimization: GPU/Neuron/CPU NodePools and Spot instances."
+      },
+      {
+        "id": "base",
+        "label": "Base layer",
+        "focus": [
+          "karpenter",
+          "eks",
+          "storage",
+          "network"
+        ],
+        "note": "Foundation infrastructure: EKS control plane, Karpenter, storage, networking."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "training",
+      "type": "frontend",
+      "label": "Model Training",
+      "sublabel": "PyTorch, TensorFlow",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "frontend",
+      "label": "Model Inference",
+      "sublabel": "vLLM, TensorRT",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "frontend",
+      "label": "Interactive Dev",
+      "sublabel": "JupyterHub",
+      "pos": [
+        460,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pipelines",
+      "type": "frontend",
+      "label": "ML Pipelines",
+      "sublabel": "Argo Workflows",
+      "pos": [
+        670,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "agents",
+      "type": "frontend",
+      "label": "AI Agents",
+      "sublabel": "LangChain, CrewAI",
+      "pos": [
+        880,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ray",
+      "type": "backend",
+      "label": "Ray Cluster",
+      "sublabel": "Distributed compute",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "backend",
+      "label": "KServe",
+      "sublabel": "Model serving",
+      "pos": [
+        250,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kubeflow",
+      "type": "backend",
+      "label": "Kubeflow",
+      "sublabel": "ML platform",
+      "pos": [
+        460,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mlflow",
+      "type": "backend",
+      "label": "MLflow",
+      "sublabel": "Experiment tracking",
+      "pos": [
+        670,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vectordb",
+      "type": "database",
+      "label": "Vector DB",
+      "sublabel": "Milvus, Pinecone",
+      "pos": [
+        880,
+        210
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "cloud",
+      "label": "GPU NodePools",
+      "sublabel": "p4d, p5, g5",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "neuron",
+      "type": "cloud",
+      "label": "Neuron NodePools",
+      "sublabel": "inf2, trn1",
+      "pos": [
+        250,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cpu",
+      "type": "cloud",
+      "label": "CPU NodePools",
+      "sublabel": "m6i, c6i, r6i",
+      "pos": [
+        460,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "spot",
+      "type": "cloud",
+      "label": "Spot Instances",
+      "sublabel": "Cost optimization",
+      "pos": [
+        670,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Node provisioning",
+      "pos": [
+        40,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "Control plane",
+      "pos": [
+        250,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Storage",
+      "sublabel": "EFS, FSx, S3",
+      "pos": [
+        460,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "Networking",
+      "sublabel": "VPC, EFA",
+      "pos": [
+        670,
+        490
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ML Workloads Layer",
+      "wraps": [
+        "training",
+        "inference",
+        "notebooks",
+        "pipelines",
+        "agents"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Platform Services Layer",
+      "wraps": [
+        "ray",
+        "kserve",
+        "kubeflow",
+        "mlflow",
+        "vectordb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Compute Layer",
+      "wraps": [
+        "gpu",
+        "neuron",
+        "cpu",
+        "spot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Base Layer",
+      "wraps": [
+        "karpenter",
+        "eks",
+        "storage",
+        "network"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "training-to-ray",
+      "from": "training",
+      "to": "ray",
+      "label": "runs on platform",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ray-to-gpu",
+      "from": "ray",
+      "to": "gpu",
+      "label": "schedules onto compute",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "gpu-to-karpenter",
+      "from": "gpu",
+      "to": "karpenter",
+      "label": "provisioned by Karpenter",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}
