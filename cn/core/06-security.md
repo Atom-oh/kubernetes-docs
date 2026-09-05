@@ -3,15 +3,15 @@
 > **支持的版本**: Kubernetes 1.32, 1.33, 1.34
 > **最后更新**: February 23, 2026
 
-在 Kubernetes 中，安全是保护 cluster 和 applications 的关键要素。在本章中，我们将探讨 Kubernetes 安全概念、身份认证和授权机制、network policies、security contexts，以及如何在 Amazon EKS 中增强安全性。
+在 Kubernetes 中，安全性是保护集群和应用程序的关键要素。本章将探讨 Kubernetes 安全概念、身份验证和授权机制、网络策略、安全上下文，以及如何增强 Amazon EKS 中的安全性。
 
 ## 实验环境设置
 
-要跟随本文档中的示例进行操作，你需要以下工具和环境：
+要跟随本文档中的示例操作，您需要以下工具和环境：
 
 ### 必需工具
 - kubectl v1.34 或更高版本
-- 可用的 Kubernetes cluster（EKS、minikube、kind 等）
+- 可用的 Kubernetes 集群（EKS、minikube、kind 等）
 - OpenSSL（用于创建证书）
 
 ### 安全示例设置
@@ -75,107 +75,55 @@ EOF
 
 ## Kubernetes 安全架构
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Security Architecture"
-        subgraph "Infrastructure Security"
-            Host["Host Security"]
-            Network["Network Security"]
-            Container["Container Runtime Security"]
-        end
+![三层纵深防御：基础设施安全（主机、容器运行时、网络）支撑 API server 安全；集群安全流水线包括身份验证、授权、准入控制和审计日志，以及数据加密；由此衍生的工作负载安全控制包括 RBAC、Pod Security Standards、网络策略和镜像安全。](../.gitbook/assets/en-core-06-security-0.png)
 
-        subgraph "Cluster Security"
-            API["API Server Security"]
-            Auth["Authentication"]
-            Authz["Authorization"]
-            Admission["Admission Control"]
-            Audit["Audit Logging"]
-            Encrypt["Data Encryption"]
-        end
-
-        subgraph "Workload Security"
-            SecCtx["Security Context"]
-            NetPol["Network Policy"]
-            PodSec["Pod Security Standards"]
-            Secret["Secret Management"]
-            ImgSec["Image Security"]
-            RBAC["RBAC"]
-        end
-    end
-
-    Host --> API
-    Network --> API
-    Container --> API
-
-    API --> Auth
-    Auth --> Authz
-    Authz --> Admission
-    Admission --> Audit
-    API --> Encrypt
-
-    Authz --> RBAC
-    Admission --> PodSec
-    Admission --> SecCtx
-    Network --> NetPol
-    API --> Secret
-    Container --> ImgSec
-
-    %% Style definitions
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Host,Network,Container infra;
-    class API,Auth,Authz,Admission,Audit,Encrypt cluster;
-    class SecCtx,NetPol,PodSec,Secret,ImgSec,RBAC workload;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-0.html)
 
 ## 目录
-1. [安全概览](#security-overview)
-2. [身份认证](#authentication)
+1. [安全概述](#security-overview)
+2. [身份验证](#authentication)
 3. [授权](#authorization)
-4. [Security Context](#security-context)
-5. [Network Policy](#network-policy)
+4. [安全上下文](#security-context)
+5. [网络策略](#network-policy)
 6. [Secret 管理](#secret-management)
-7. [Image 安全](#image-security)
+7. [镜像安全](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
-9. [Audit Logging](#audit-logging)
+9. [审计日志](#audit-logging)
 10. [EKS 安全最佳实践](#eks-security-best-practices)
 
-## 安全概览
+## 安全概述
 
-> **核心概念**: Kubernetes 安全遵循纵深防御方法，在基础设施、cluster 和 workload 层级提供多种安全机制。
+> **核心概念**: Kubernetes 安全遵循纵深防御方法，在基础设施、集群和工作负载层面提供多重安全机制。
 
-Kubernetes 安全由以下主要领域组成：
+Kubernetes 安全包含以下主要领域：
 
-### 安全领域对比
+### 安全领域比较
 
-| 安全领域 | 主要组件 | 责任方 | 安全机制 |
+| 安全领域 | 主要组件 | 负责方 | 安全机制 |
 |--------------|-----------------|-------------------|---------------------|
-| **Infrastructure Security** | Host OS、Container Runtime、Network | Cluster Administrator | Firewall、OS hardening、Container runtime security |
-| **Cluster Security** | API Server、etcd、kubelet | Cluster Administrator | Authentication、Authorization、Admission Control、Encryption |
-| **Workload Security** | Pods、Containers、Services | Application Developer | Security Context、Network Policy、RBAC |
+| **基础设施安全** | 主机 OS、Container Runtime、网络 | 集群管理员 | 防火墙、OS 加固、Container runtime 安全 |
+| **集群安全** | API Server、etcd、kubelet | 集群管理员 | 身份验证、授权、准入控制、加密 |
+| **工作负载安全** | Pods、Containers、Services | 应用程序开发者 | 安全上下文、网络策略、RBAC |
 
 ### 安全原则
 
-1. **最小权限原则**: 仅授予所需的最低权限
-2. **纵深防御**: 通过多个安全层进行防御
+1. **最小权限原则**: 仅授予必要的最小权限
+2. **纵深防御**: 通过多层安全防护实现防御
 3. **默认拒绝**: 拒绝所有未明确允许的内容
-4. **安全加固**: 应用比默认值更强的安全设置
+4. **安全加固**: 应用比默认值更严格的安全设置
 5. **持续监控**: 检测并响应安全事件
 
-## 身份认证
+## 身份验证
 
-身份认证是验证用户或 service account 身份的过程。Kubernetes 支持多种身份认证方法：
+身份验证是验证用户或 Service Account 身份的过程。Kubernetes 支持多种身份验证方法：
 
-### 身份认证方法
+### 身份验证方法
 
-1. **X.509 Certificates**: 使用 TLS client certificates 进行身份认证
-2. **Service Account Tokens**: 使用 JWT tokens 进行 service account 身份认证
-3. **OpenID Connect (OIDC)**: 通过外部 identity providers 进行身份认证
-4. **Webhook Token Authentication**: 通过外部 authentication services 进行身份认证
-5. **Authentication Proxy**: 通过 proxy 进行身份认证
+1. **X.509 Certificates**: 使用 TLS 客户端证书进行身份验证
+2. **Service Account Tokens**: 使用 JWT token 进行 Service Account 身份验证
+3. **OpenID Connect (OIDC)**: 通过外部身份提供商进行身份验证
+4. **Webhook Token Authentication**: 通过外部身份验证服务进行身份验证
+5. **Authentication Proxy**: 通过代理进行身份验证
 
 ### Service Account 示例
 
@@ -195,53 +143,17 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-## 身份认证
+## 身份验证
 
-要访问 Kubernetes API server，必须经过身份认证过程。Kubernetes 支持多种身份认证方法：
+要访问 Kubernetes API server，必须经过身份验证过程。Kubernetes 支持多种身份验证方法：
 
-```mermaid
-graph TD
-    User["User/Service"] -->|Authentication Request| API["API Server"]
+![用户或服务向 API server 发送身份验证请求，后者根据五种支持的方法之一（X.509 certificates、Service Account tokens、OIDC、Webhook token authentication、Authentication Proxy）进行检查，然后将结果路由到授权阶段或拒绝请求。](../.gitbook/assets/en-core-06-security-1.png)
 
-    subgraph "Authentication Methods"
-        Cert["X.509 Certificates"]
-        Token["Service Account Tokens"]
-        OIDC["OpenID Connect"]
-        Webhook["Webhook Token Authentication"]
-        Proxy["Authentication Proxy"]
-    end
-
-    API --> Cert
-    API --> Token
-    API --> OIDC
-    API --> Webhook
-    API --> Proxy
-
-    Cert -->|Success/Failure| Result["Authentication Result"]
-    Token -->|Success/Failure| Result
-    OIDC -->|Success/Failure| Result
-    Webhook -->|Success/Failure| Result
-    Proxy -->|Success/Failure| Result
-
-    Result -->|Authentication Success| Authz["Move to Authorization Stage"]
-    Result -->|Authentication Failure| Reject["Request Denied"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authMethod fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class Cert,Token,OIDC,Webhook,Proxy authMethod;
-    class Result,Authz,Reject resultComponent;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-1.html)
 
 ### X.509 Certificates
 
-Kubernetes 使用 TLS certificates 对 clients 进行身份认证。这主要用于 cluster 内部通信和 administrator 身份认证。
+Kubernetes 使用 TLS 证书对客户端进行身份验证。这主要用于集群内部通信和管理员身份验证。
 
 ```bash
 # Example kubeconfig setup for certificate-based authentication
@@ -250,7 +162,7 @@ kubectl config set-credentials admin --client-certificate=admin.crt --client-key
 
 ### Service Account Tokens
 
-Service accounts 是 Pods 中运行的 processes 用来与 API server 通信的 accounts。每个 service account 都有一个自动生成的 token，并且会自动挂载到 Pods。
+Service Account 是供运行在 Pods 中的进程与 API server 通信时使用的账户。每个 Service Account 都有一个自动生成的 token，并会自动挂载到 Pods。
 
 ```yaml
 apiVersion: v1
@@ -274,7 +186,7 @@ spec:
 
 ### OpenID Connect (OIDC)
 
-支持通过外部 identity providers（例如 AWS IAM、Google、Azure AD）进行身份认证。这有助于在企业环境中实现 Single Sign-On (SSO)。
+支持通过外部身份提供商（例如 AWS IAM、Google、Azure AD）进行身份验证。这有助于在企业环境中实现单点登录（SSO）。
 
 ```bash
 # Example kubeconfig setup using OIDC
@@ -287,70 +199,27 @@ kubectl config set-credentials oidc-user \
 
 ### Webhook Token Authentication
 
-这是一种通过外部 authentication service 验证 tokens 的方法。API server 将 tokens 转发给外部 service，该 service 验证 token 并返回用户信息。
+一种通过外部身份验证服务验证 token 的方法。API server 将 token 转发给外部服务，后者验证 token 并返回用户信息。
 
 ### Authentication Proxy
 
-这是一种在 API server 前放置 authentication proxy 来处理用户身份认证的方法。proxy 会在 HTTP headers 中包含已认证的用户信息，并将它们转发给 API server。
+一种在 API server 前放置 Authentication Proxy 以处理用户身份验证的方法。该代理会在 HTTP headers 中包含经过身份验证的用户信息，并将其转发给 API server。
 
 ## 授权
 
-如果说身份认证是验证“你是谁”的过程，那么授权就是确定“你能做什么”的过程。Kubernetes 支持多种授权模式：
+如果身份验证是验证“您是谁”的过程，那么授权就是确定“您可以做什么”的过程。Kubernetes 支持多种授权模式：
 
-```mermaid
-graph TD
-    User["Authenticated User/Service"] -->|Authorization Request| API["API Server"]
+![经过身份验证的用户或服务向 API server 发送授权请求，后者通过四种授权模式之一（RBAC、ABAC、Node 或 Webhook）进行评估，随后决定处理或拒绝请求；RBAC 本身由通过 RoleBindings/ClusterRoleBindings 绑定到主体的 Roles/ClusterRoles 构成。](../.gitbook/assets/en-core-06-security-2.png)
 
-    subgraph "Authorization Modes"
-        RBAC["RBAC<br>(Role-Based Access Control)"]
-        ABAC["ABAC<br>(Attribute-Based Access Control)"]
-        Node["Node Authorization"]
-        WebhookAuthz["Webhook Authorization"]
-    end
-
-    API --> RBAC
-    API --> ABAC
-    API --> Node
-    API --> WebhookAuthz
-
-    RBAC -->|Evaluate| Decision["Authorization Decision"]
-    ABAC -->|Evaluate| Decision
-    Node -->|Evaluate| Decision
-    WebhookAuthz -->|Evaluate| Decision
-
-    Decision -->|Allow| Allow["Process Request"]
-    Decision -->|Deny| Deny["Deny Request"]
-
-    subgraph "RBAC Components"
-        Role["Role/ClusterRole<br>(Permission Definition)"]
-        Binding["RoleBinding/ClusterRoleBinding<br>(Permission Assignment)"]
-    end
-
-    RBAC --- Role
-    RBAC --- Binding
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authzMode fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef rbacComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class RBAC,ABAC,Node,WebhookAuthz authzMode;
-    class Decision,Allow,Deny resultComponent;
-    class Role,Binding rbacComponent;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-2.html)
 
 ### RBAC (Role-Based Access Control)
 
-RBAC 是 Kubernetes 中使用最广泛的授权机制。通过 Roles 和 RoleBindings，你可以为用户或 service accounts 授予对特定 resources 的特定权限。
+RBAC 是 Kubernetes 中使用最广泛的授权机制。通过 Roles 和 RoleBindings，您可以为用户或 Service Accounts 授予特定资源的特定权限。
 
 #### Role 和 ClusterRole
 
-Roles 定义 namespace 内的权限，ClusterRoles 定义适用于整个 cluster 的权限。
+Role 定义命名空间内的权限，而 ClusterRole 定义适用于整个集群的权限。
 
 ```yaml
 # Namespace Role example
@@ -379,7 +248,7 @@ rules:
 
 #### RoleBinding 和 ClusterRoleBinding
 
-RoleBinding 将 Role 或 ClusterRole 绑定到特定 namespace 中的 users、groups 或 service accounts。ClusterRoleBinding 将 ClusterRole 绑定到整个 cluster 范围内的 users、groups 或 service accounts。
+RoleBinding 将 Role 或 ClusterRole 绑定到特定命名空间中的用户、组或 Service Accounts。ClusterRoleBinding 将 ClusterRole 绑定到整个集群中的用户、组或 Service Accounts。
 
 ```yaml
 # RoleBinding example
@@ -416,66 +285,25 @@ roleRef:
 
 ### ABAC (Attribute-Based Access Control)
 
-ABAC 是一种基于用户属性、resource 属性、环境属性等授予权限的方法。在 Kubernetes 中，policies 通过 JSON files 定义。尽管它更灵活，但由于管理复杂度较高，因此不如 RBAC 常用。
+ABAC 是一种基于用户属性、资源属性、环境属性等授予权限的方法。在 Kubernetes 中，策略通过 JSON 文件定义。尽管更加灵活，但由于管理复杂性，其使用频率低于 RBAC。
 
-### Node Authorization
+### Node 授权
 
-Node authorization 是 kubelets 访问 API server 时使用的一种特殊授权模式。Kubelets 只能访问与其运行所在 nodes 相关的 resources（Pods、node status 等）。
+Node 授权是一种供 kubelets 访问 API server 时使用的特殊授权模式。kubelets 只能访问与其运行所在节点相关的资源（Pods、节点状态等）。
 
-### Webhook Authorization
+### Webhook 授权
 
-这是一种通过外部 service 做出授权决策的方法。API server 将授权请求转发给外部 service，该 service 决定是允许还是拒绝该请求。
+一种通过外部服务作出授权决策的方法。API server 将授权请求转发到外部服务，由该服务决定允许还是拒绝请求。
 
-## Security Context
+## 安全上下文
 
-Security context 定义 Pod 或 container 级别的安全设置。这样可以对权限、访问控制、capabilities 等进行细粒度控制。
+安全上下文定义 Pod 或 container 层面的安全设置。这可以对权限、访问控制、capabilities 等进行细粒度控制。
 
-```mermaid
-graph TD
-    subgraph "Pod Security Context"
-        PSC["Pod Security Context"]
-        PSC -->|Setting| RunAsUser["runAsUser<br>(User ID)"]
-        PSC -->|Setting| RunAsGroup["runAsGroup<br>(Group ID)"]
-        PSC -->|Setting| FSGroup["fsGroup<br>(Filesystem Group)"]
-        PSC -->|Setting| SupGroups["supplementalGroups<br>(Additional Groups)"]
-    end
+![一个 Pod 包含 Pod 级别的安全上下文（runAsUser、runAsGroup、fsGroup、supplementalGroups）和一个 container；该 container 携带自身的 container 级别安全上下文（privileged、allowPrivilegeEscalation、readOnlyRootFilesystem、capabilities、seLinuxOptions）；整个 Pod 必须符合三个 Pod Security Standards 级别之一：Privileged、Baseline 或 Restricted。](../.gitbook/assets/en-core-06-security-3.png)
 
-    subgraph "Container Security Context"
-        CSC["Container Security Context"]
-        CSC -->|Setting| Privilege["privileged<br>(Privileged Mode)"]
-        CSC -->|Setting| AllowPrivEsc["allowPrivilegeEscalation<br>(Allow Privilege Escalation)"]
-        CSC -->|Setting| ReadOnlyFS["readOnlyRootFilesystem<br>(Read-only Filesystem)"]
-        CSC -->|Setting| Capabilities["capabilities<br>(Linux Kernel Capabilities)"]
-        CSC -->|Setting| SELinux["seLinuxOptions<br>(SELinux Options)"]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-3.html)
 
-    Pod["Pod"] -->|Contains| PSC
-    Pod -->|Contains| Container["Container"]
-    Container -->|Contains| CSC
-
-    subgraph "Pod Security Standards"
-        PSS["Pod Security Standards"]
-        PSS -->|Level| Privileged["Privileged<br>(No Restrictions)"]
-        PSS -->|Level| Baseline["Baseline<br>(Basic Security)"]
-        PSS -->|Level| Restricted["Restricted<br>(Enhanced Security)"]
-    end
-
-    Pod -->|Complies| PSS
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef securitySetting fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Pod,Container k8sComponent;
-    class PSC,CSC,PSS securityComponent;
-    class RunAsUser,RunAsGroup,FSGroup,SupGroups,Privilege,AllowPrivEsc,ReadOnlyFS,Capabilities,SELinux securitySetting;
-    class Privileged,Baseline,Restricted securitySetting;
-```
-
-### Pod Security Context
+### Pod 安全上下文
 
 ```yaml
 apiVersion: v1
@@ -499,20 +327,20 @@ spec:
 ```
 
 在上面的示例中：
-- `runAsUser`: container process 运行时使用的 User ID
-- `runAsGroup`: container process 运行时使用的 Group ID
-- `fsGroup`: 访问 volumes 时使用的 Group ID
-- `allowPrivilegeEscalation`: process 是否可以获得比其 parent process 更多的权限
+- `runAsUser`: container 进程运行时使用的用户 ID
+- `runAsGroup`: container 进程运行时使用的组 ID
+- `fsGroup`: 访问 volumes 时使用的组 ID
+- `allowPrivilegeEscalation`: 进程是否可以获得高于其父进程的权限
 - `capabilities`: 添加或移除 Linux kernel capabilities
 - `readOnlyRootFilesystem`: 将 root filesystem 挂载为只读
 
 ### Pod Security Standards
 
-从 Kubernetes 1.25 开始，Pod Security Policy 被 Pod Security Standards 取代。Pod Security Standards 定义了三个 policy levels：
+从 Kubernetes 1.25 开始，Pod Security Policy 被 Pod Security Standards 取代。Pod Security Standards 定义了三个策略级别：
 
 1. **Privileged**: 无限制，允许所有权限
-2. **Baseline**: 阻止已知的 privilege escalation 路径
-3. **Restricted**: 强化程度较高的 security policy
+2. **Baseline**: 阻止已知的权限提升路径
+3. **Restricted**: 强化程度高的安全策略
 
 ```yaml
 # Example applying Pod Security Standards to namespace
@@ -526,56 +354,13 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-## Network Policy
+## 网络策略
 
-Network policies 提供了一种控制 Pods 之间通信的方式。默认情况下，Kubernetes cluster 中的所有 Pods 都可以相互通信，但可以使用 network policies 对其进行限制。
+网络策略提供了一种控制 Pods 之间通信的方式。默认情况下，Kubernetes 集群中的所有 Pods 都可以彼此通信，但可以使用网络策略加以限制。
 
-```mermaid
-graph TD
-    subgraph "Network Policy Configuration"
-        NP["NetworkPolicy"]
-        NP -->|Selects| PodSelector["podSelector<br>(Target Pods)"]
-        NP -->|Defines| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
-        NP -->|Rules| Ingress["ingress<br>(Inbound Rules)"]
-        NP -->|Rules| Egress["egress<br>(Outbound Rules)"]
-    end
+![一个 NetworkPolicy（api-allow）通过 podSelector 选择目标 Pods，在 policyTypes 中声明 Ingress/Egress，并构建 ingress from/ports 和 egress to/ports 规则（podSelector、namespaceSelector、ipBlock）；应用于 API Pod 时，它仅允许 Frontend 到 API 的 8080/TCP 流量，以及 API 到 Database 的 5432/TCP 流量。](../.gitbook/assets/en-core-06-security-4.png)
 
-    subgraph "Inbound Rules"
-        Ingress -->|Source| IngressFrom["from<br>(Source Selector)"]
-        Ingress -->|Port| IngressPorts["ports<br>(Allowed Ports)"]
-
-        IngressFrom -->|Selects| IPodSelector["podSelector<br>(Source Pods)"]
-        IngressFrom -->|Selects| INSSelector["namespaceSelector<br>(Source Namespaces)"]
-        IngressFrom -->|Selects| IIPBlock["ipBlock<br>(Source IP Range)"]
-    end
-
-    subgraph "Outbound Rules"
-        Egress -->|Target| EgressTo["to<br>(Destination Selector)"]
-        Egress -->|Port| EgressPorts["ports<br>(Allowed Ports)"]
-
-        EgressTo -->|Selects| EPodSelector["podSelector<br>(Destination Pods)"]
-        EgressTo -->|Selects| ENSSelector["namespaceSelector<br>(Destination Namespaces)"]
-        EgressTo -->|Selects| EIPBlock["ipBlock<br>(Destination IP Range)"]
-    end
-
-    Frontend["Frontend Pod"] -->|Communication| API["API Pod"]
-    API -->|Communication| DB["Database Pod"]
-
-    NP -->|Applies| API
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NP,PodSelector,PolicyTypes,Ingress,Egress networkPolicy;
-    class IngressFrom,IngressPorts,IPodSelector,INSSelector,IIPBlock,EgressTo,EgressPorts,EPodSelector,ENSSelector,EIPBlock policyConfig;
-    class Frontend,API userApp;
-    class DB dataStore;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-4.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -609,19 +394,19 @@ spec:
 ```
 
 在上面的示例中：
-- 为带有 `api` label 的 Pods 定义 network policy
-- 仅允许来自带有 `frontend` label 的 Pods 到端口 8080 的 inbound traffic
-- 仅允许到带有 `database` label 的 Pods 上端口 5432 的 outbound traffic
+- 为带有 `api` 标签的 Pods 定义网络策略
+- 仅允许来自带有 `frontend` 标签的 Pods 的、指向端口 8080 的入站流量
+- 仅允许到带有 `database` 标签的 Pods 的、指向端口 5432 的出站流量
 
-要使用 network policies，cluster 的 network plugin 必须支持 network policies。Calico、Cilium 和 Antrea 等 CNI plugins 支持 network policies。
+要使用网络策略，集群的网络插件必须支持网络策略。Calico、Cilium 和 Antrea 等 CNI 插件支持网络策略。
 
 ## Secret 管理
 
-Kubernetes Secrets 用于存储和管理敏感信息，例如密码、API keys 和 certificates。不过，默认情况下，secrets 只是经过 base64 编码，并未加密。因此，需要额外的安全措施。
+Kubernetes Secrets 用于存储和管理密码、API keys 和证书等敏感信息。但是，默认情况下，secrets 仅采用 base64 编码，并未加密。因此，需要额外的安全措施。
 
 ### Secret 加密
 
-要加密存储在 etcd 中的 secrets，需要配置 API server 的 encryption configuration：
+要加密存储在 etcd 中的 secrets，需要配置 API server 的加密配置：
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -639,7 +424,7 @@ resources:
 
 ### 外部 Secret 管理
 
-为了实现更安全的 secret 管理，可以使用外部 secret management systems：
+为了更安全地管理 secrets，您可以使用外部 Secret 管理系统：
 
 - HashiCorp Vault
 - AWS Secrets Manager
@@ -647,13 +432,13 @@ resources:
 - Google Secret Manager
 - External Secrets Operator
 
-## Image 安全
+## 镜像安全
 
-Container image 安全是 Kubernetes 安全的重要组成部分。
+Container 镜像安全是 Kubernetes 安全的重要组成部分。
 
-### Image 漏洞扫描
+### 镜像漏洞扫描
 
-扫描 container images 中的漏洞，以识别并解决已知安全问题：
+扫描 Container 镜像中的漏洞，以识别并解决已知安全问题：
 
 - Trivy
 - Clair
@@ -661,9 +446,9 @@ Container image 安全是 Kubernetes 安全的重要组成部分。
 - AWS ECR Scan
 - Docker Hub Scan
 
-### Image 签名和验证
+### 镜像签名和验证
 
-通过 image signing 验证 images 的来源和完整性：
+通过镜像签名验证镜像的来源和完整性：
 
 - Notary
 - Cosign
@@ -671,9 +456,9 @@ Container image 安全是 Kubernetes 安全的重要组成部分。
 - AWS Signer
 - Connaisseur
 
-### Image Policies
+### 镜像策略
 
-通过 image policies 限制只能从受信任的 registries 拉取 images：
+通过镜像策略限制只能从受信任的 registries 拉取镜像：
 
 ```yaml
 apiVersion: admission.k8s.io/v1
@@ -689,13 +474,13 @@ plugins:
       defaultAllow: false
 ```
 
-## Audit
+## 审计
 
-Kubernetes auditing 提供了一种记录和分析 cluster 中发生事件的机制。
+Kubernetes 审计提供了一种记录和分析集群中发生事件的机制。
 
-### Audit Policy
+### 审计策略
 
-Audit policies 定义要记录哪些事件：
+审计策略定义要记录哪些事件：
 
 ```yaml
 apiVersion: audit.k8s.io/v1
@@ -716,78 +501,30 @@ rules:
     resources: ["endpoints", "services"]
 ```
 
-Audit levels：
+审计级别：
 - `None`: 不记录事件
-- `Metadata`: 仅记录 request metadata（用户、时间、resource 等）
-- `Request`: 记录 request metadata 和 request body
-- `RequestResponse`: 记录 request metadata、request body 和 response body
+- `Metadata`: 仅记录请求元数据（用户、时间、资源等）
+- `Request`: 记录请求元数据和请求正文
+- `RequestResponse`: 记录请求元数据、请求正文和响应正文
 
-### Audit Log Backends
+### 审计日志后端
 
-Audit logs 可以存储在多种 backends 中：
-- File
+审计日志可以存储在多种后端中：
+- 文件
 - Webhook
-- Dynamic backends（例如 Elasticsearch、Loki）
+- 动态后端（例如 Elasticsearch、Loki）
 
 ## Amazon EKS 安全增强
 
-除了 Kubernetes 的基础安全功能之外，Amazon EKS 还可以通过与 AWS security services 集成来增强安全性。
+除 Kubernetes 的基本安全功能外，Amazon EKS 还可通过与 AWS 安全服务集成来增强安全性。
 
-```mermaid
-graph TD
-    subgraph "AWS Security Services"
-        IAM["AWS IAM<br>(Identity and Access Management)"]
-        KMS["AWS KMS<br>(Key Management Service)"]
-        SG["AWS Security Groups"]
-        WAF["AWS WAF<br>(Web Application Firewall)"]
-        GD["AWS GuardDuty<br>(Threat Detection)"]
-        SM["AWS Secrets Manager"]
-    end
+![六项 AWS 安全服务（KMS、WAF、GuardDuty、IAM、Security Groups 和 Secrets Manager）分别集成到特定 EKS 机制中，并保护 API server、worker node 或集群内的 Pods。](../.gitbook/assets/en-core-06-security-5.png)
 
-    subgraph "EKS Security Integration"
-        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
-        SecEnc["Kubernetes Secret Encryption"]
-        PodSG["Pod Security Groups"]
-        ALB["Application Load Balancer<br>(ALB) Integration"]
-        EKSDetect["EKS Threat Detection"]
-        ExtSecrets["External Secrets Operator"]
-    end
-
-    IAM -->|Integrates| IRSA
-    KMS -->|Integrates| SecEnc
-    SG -->|Integrates| PodSG
-    WAF -->|Integrates| ALB
-    GD -->|Integrates| EKSDetect
-    SM -->|Integrates| ExtSecrets
-
-    subgraph "EKS Cluster"
-        API["API Server"]
-        Node["Worker Node"]
-        Pod["Pod"]
-    end
-
-    IRSA -->|Grants Permissions| Pod
-    SecEnc -->|Encrypts| API
-    PodSG -->|Network Security| Pod
-    ALB -->|Protects Traffic| API
-    EKSDetect -->|Monitors| Node
-    ExtSecrets -->|Provides Secrets| Pod
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef securityIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API,Node,Pod k8sComponent;
-    class IAM,KMS,SG,WAF,GD,SM awsService;
-    class IRSA,SecEnc,PodSG,ALB,EKSDetect,ExtSecrets securityIntegration;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-5.html)
 
 ### IAM Roles and Service Accounts (IRSA)
 
-使用 IRSA (IAM Roles for Service Accounts)，你可以将 IAM roles 与 Kubernetes service accounts 关联，以安全地访问 AWS services。
+通过使用 IRSA（IAM Roles for Service Accounts），您可以将 IAM roles 与 Kubernetes Service Accounts 关联，以安全地访问 AWS services。
 
 ```bash
 # Create OIDC provider
@@ -802,9 +539,9 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### 使用 AWS KMS 进行 Secret 加密
+### 使用 AWS KMS 加密 Secret
 
-你可以使用 AWS KMS 加密 EKS cluster 中的 Kubernetes secrets。
+您可以使用 AWS KMS 加密 EKS 集群中的 Kubernetes secrets。
 
 ```bash
 # Create KMS key
@@ -816,7 +553,7 @@ eksctl create cluster --name my-cluster --encryption-provider-key-arn arn:aws:km
 
 ### AWS Security Groups
 
-将 AWS security groups 应用于 EKS cluster nodes 和 Pods，以控制 network traffic。
+将 AWS Security Groups 应用于 EKS 集群 nodes 和 Pods，以控制网络流量。
 
 ```bash
 # Create security group
@@ -832,7 +569,7 @@ aws ec2 authorize-security-group-ingress \
 
 ### AWS WAF
 
-将 AWS WAF (Web Application Firewall) 放置在 EKS clusters 前面，以保护 web applications。
+将 AWS WAF（Web Application Firewall）置于 EKS 集群前方以保护 Web 应用程序。
 
 ```bash
 # Create WAF Web ACL
@@ -845,7 +582,7 @@ aws wafv2 create-web-acl \
 
 ### AWS GuardDuty
 
-使用 AWS GuardDuty 检测并响应 EKS clusters 中的安全威胁。
+使用 AWS GuardDuty 检测并响应 EKS 集群中的安全威胁。
 
 ```bash
 # Enable GuardDuty
@@ -859,64 +596,64 @@ aws guardduty update-detector \
 
 ## 安全最佳实践
 
-以下是增强 Kubernetes clusters 和 workloads 安全性的最佳实践。
+以下是增强 Kubernetes 集群和工作负载安全性的最佳实践。
 
-### Cluster 安全
+### 集群安全
 
-1. **保持版本最新**: 保持 Kubernetes 和所有 components 为最新版本，以修补已知漏洞。
-2. **限制 API Server 访问**: 限制对 API server 的访问，仅在必要时允许 public access。
-3. **etcd 加密**: 加密存储在 etcd 中的数据，以保护敏感信息。
-4. **启用 Audit Logging**: 启用 audit logging 来监控和分析 cluster 活动。
-5. **实施 Network Policies**: 实施 network policies 以限制 Pod 到 Pod 的通信。
+1. **保持版本最新**: 保持 Kubernetes 和所有组件为最新版本，以修补已知漏洞。
+2. **限制 API Server 访问**: 限制对 API server 的访问，仅在必要时允许公开访问。
+3. **etcd 加密**: 加密存储在 etcd 中的数据以保护敏感信息。
+4. **启用审计日志**: 启用审计日志以监控和分析集群活动。
+5. **实施网络策略**: 实施网络策略以限制 Pod 到 Pod 的通信。
 
-### Workload 安全
+### 工作负载安全
 
-1. **最小权限原则**: 仅向 Pods 和 containers 授予所需的最低权限。
+1. **最小权限原则**: 仅向 Pods 和 containers 授予必要的最小权限。
 2. **非 root 用户**: 以非 root 用户运行 containers。
-3. **只读 Filesystem**: 尽可能将 container root filesystems 挂载为只读。
-4. **Resource Limits**: 设置 CPU 和 memory resource limits，以防止 DoS attacks。
-5. **配置 Security Context**: 正确配置 Pod 和 container security contexts。
+3. **只读文件系统**: 尽可能将 container root filesystems 挂载为只读。
+4. **资源限制**: 设置 CPU 和内存资源限制以防止 DoS 攻击。
+5. **配置安全上下文**: 正确配置 Pod 和 container 的安全上下文。
 
-### Image 安全
+### 镜像安全
 
-1. **最小 Base Images**: 使用包含最少 packages 的 base images。
-2. **Image 漏洞扫描**: 定期扫描 container images 中的漏洞。
-3. **Image 签名和验证**: 通过 image signing 验证 images 的来源和完整性。
-4. **受信任的 Registries**: 仅从受信任的 registries 拉取 images。
-5. **使用最新 Images**: 定期更新 images，以修补已知漏洞。
+1. **最小基础镜像**: 使用包含最少 packages 的基础镜像。
+2. **镜像漏洞扫描**: 定期扫描 Container 镜像中的漏洞。
+3. **镜像签名和验证**: 通过镜像签名验证镜像的来源和完整性。
+4. **受信任的 Registries**: 仅从受信任的 registries 拉取镜像。
+5. **使用最新镜像**: 定期更新镜像以修补已知漏洞。
 
 ### Secret 管理
 
-1. **外部 Secret 管理**: 使用外部 secret management systems 安全地管理 secrets。
+1. **外部 Secret 管理**: 使用外部 Secret 管理系统安全地管理 secrets。
 2. **Secret 加密**: 加密存储在 etcd 中的 secrets。
-3. **Secret Rotation**: 定期轮换 secrets 以增强安全性。
-4. **最小权限访问**: 将 secrets 的访问限制为仅必要的 Pods。
-5. **使用 Volumes 而不是 Environment Variables**: 通过 volumes 挂载 secrets，而不是使用 environment variables。
+3. **Secret 轮换**: 定期轮换 secrets 以增强安全性。
+4. **最小权限访问**: 限制仅必要的 Pods 访问 secrets。
+5. **使用 Volumes 而非环境变量**: 通过 volumes 挂载 secrets，而非使用环境变量。
 
 ## 结论
 
-Kubernetes 安全必须在多个层面实施，在 cluster infrastructure、Kubernetes components 和 application workloads 等所有领域都考虑安全性。除了 Kubernetes 的基础安全功能（如身份认证、授权、network policies 和 security contexts）之外，还可以通过 image security、secret management 和 audit logging 等额外安全措施来增强 cluster 和 workload 安全性。
+Kubernetes 安全必须在多个层面实施，涵盖集群基础设施、Kubernetes 组件和应用程序工作负载等所有领域。除 Kubernetes 的身份验证、授权、网络策略和安全上下文等基本安全功能外，还可以通过镜像安全、Secret 管理和审计日志等额外安全措施增强集群和工作负载安全性。
 
-使用 Amazon EKS 时，可以通过与各种 AWS security services 集成进一步增强安全性。IAM Roles and Service Accounts (IRSA)、使用 AWS KMS 的 secret encryption、AWS Security Groups、AWS WAF 和 AWS GuardDuty 等 services 可用于提升 EKS cluster 安全性。
+使用 Amazon EKS 时，可以通过集成各种 AWS 安全服务进一步增强安全性。IAM Roles and Service Accounts (IRSA)、使用 AWS KMS 加密 Secret、AWS Security Groups、AWS WAF 和 AWS GuardDuty 等服务都可用于提升 EKS 集群安全性。
 
-安全是一个持续过程，因此通过定期安全评估和更新来维护 clusters 和 workloads 的安全态势非常重要。
+安全是一个持续的过程，因此通过定期安全评估和更新来维护集群与工作负载的安全态势非常重要。
 
 ## 测验
 
-要测试你在本章中学到的内容，请尝试完成 [安全测验](../quizzes/core/06-security-quiz.md)。
+要测试您在本章中学到的知识，请尝试[安全测验](../quizzes/core/06-security-quiz.md)。
 
 ## 参考资料
 
-- [Kubernetes 官方文档 - Security](https://kubernetes.io/docs/concepts/security/)
-- [Kubernetes 官方文档 - Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
-- [Kubernetes 官方文档 - Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+- [Kubernetes 官方文档 - 安全](https://kubernetes.io/docs/concepts/security/)
+- [Kubernetes 官方文档 - 身份验证](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+- [Kubernetes 官方文档 - 授权](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
 - [Kubernetes 官方文档 - RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- [Kubernetes 官方文档 - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Kubernetes 官方文档 - Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+- [Kubernetes 官方文档 - 网络策略](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes 官方文档 - 安全上下文](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - [Kubernetes 官方文档 - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Kubernetes 官方文档 - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Kubernetes 官方文档 - Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
-- [Amazon EKS 官方文档 - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
+- [Kubernetes 官方文档 - 审计](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
+- [Amazon EKS 官方文档 - 安全](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
 - [Amazon EKS 官方文档 - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [Amazon EKS 官方文档 - Secret Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS Security Blog - EKS Security Best Practices](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)
+- [Amazon EKS 官方文档 - Secret 加密](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
+- [AWS Security Blog - EKS 安全最佳实践](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)

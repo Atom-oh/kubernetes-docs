@@ -1,20 +1,20 @@
 # Kubernetes Security
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **対応バージョン**: Kubernetes 1.32, 1.33, 1.34
 > **最終更新**: February 23, 2026
 
-Kubernetes において、security（セキュリティ）は cluster と application を保護するための重要な要素です。この章では、Kubernetes security の概念、authentication と authorization の仕組み、network policies、security contexts、そして Amazon EKS で security を強化する方法について見ていきます。
+Kubernetes では、Security は Cluster と Application を保護するための重要な要素です。この章では、Kubernetes Security の概念、Authentication と Authorization の仕組み、Network Policy、Security Context、および Amazon EKS で Security を強化する方法について学びます。
 
-## Lab Environment Setup
+## Lab 環境のセットアップ
 
-このドキュメントの例を試すには、次のツールと環境が必要です。
+このドキュメントの例を実行するには、次の Tools と環境が必要です。
 
-### Required Tools
-- kubectl v1.34 以上
-- 稼働中の Kubernetes cluster（EKS、minikube、kind など）
-- OpenSSL（certificate 作成用）
+### 必要な Tools
+- kubectl v1.34 以降
+- 動作する Kubernetes Cluster（EKS、minikube、kind など）
+- OpenSSL（Certificate の作成用）
 
-### Security Example Setup
+### Security 例のセットアップ
 
 ```bash
 # Create namespace
@@ -73,66 +73,14 @@ spec:
 EOF
 ```
 
-## Kubernetes Security Architecture
+## Kubernetes Security アーキテクチャ
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Security Architecture"
-        subgraph "Infrastructure Security"
-            Host["Host Security"]
-            Network["Network Security"]
-            Container["Container Runtime Security"]
-        end
+![インフラストラクチャ Security（Host、Container Runtime、Network）、API server Security、Authentication、Authorization、Admission Control、Audit Logging、Data Encryption から成る Cluster Security パイプライン、およびそれらに基づく RBAC、Pod Security Standards、Network Policy、Image Security という Workload Security Controls の、深層防御の 3 層。](../.gitbook/assets/en-core-06-security-0.png)
 
-        subgraph "Cluster Security"
-            API["API Server Security"]
-            Auth["Authentication"]
-            Authz["Authorization"]
-            Admission["Admission Control"]
-            Audit["Audit Logging"]
-            Encrypt["Data Encryption"]
-        end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-0.html)
 
-        subgraph "Workload Security"
-            SecCtx["Security Context"]
-            NetPol["Network Policy"]
-            PodSec["Pod Security Standards"]
-            Secret["Secret Management"]
-            ImgSec["Image Security"]
-            RBAC["RBAC"]
-        end
-    end
-
-    Host --> API
-    Network --> API
-    Container --> API
-
-    API --> Auth
-    Auth --> Authz
-    Authz --> Admission
-    Admission --> Audit
-    API --> Encrypt
-
-    Authz --> RBAC
-    Admission --> PodSec
-    Admission --> SecCtx
-    Network --> NetPol
-    API --> Secret
-    Container --> ImgSec
-
-    %% Style definitions
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Host,Network,Container infra;
-    class API,Auth,Authz,Admission,Audit,Encrypt cluster;
-    class SecCtx,NetPol,PodSec,Secret,ImgSec,RBAC workload;
-```
-
-## Table of Contents
-1. [Security Overview](#security-overview)
+## 目次
+1. [Security の概要](#security-overview)
 2. [Authentication](#authentication)
 3. [Authorization](#authorization)
 4. [Security Context](#security-context)
@@ -141,43 +89,43 @@ graph TD
 7. [Image Security](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
 9. [Audit Logging](#audit-logging)
-10. [EKS Security Best Practices](#eks-security-best-practices)
+10. [EKS Security のベストプラクティス](#eks-security-best-practices)
 
-## Security Overview
+## Security の概要
 
-> **Key Concept**: Kubernetes security は Defense in Depth（多層防御）アプローチに従い、infrastructure、cluster、workload の各レベルで複数の security mechanisms を提供します。
+> **重要な概念**: Kubernetes Security は、インフラストラクチャ、Cluster、Workload の各レベルで複数の Security の仕組みを提供する、Defense in Depth アプローチに従います。
 
-Kubernetes security は、次の主要領域で構成されます。
+Kubernetes Security は、次の主な領域で構成されます。
 
-### Security Area Comparison
+### Security 領域の比較
 
-| Security Area | Main Components | Responsible Party | Security Mechanisms |
+| Security 領域 | 主な Components | 担当者 | Security の仕組み |
 |--------------|-----------------|-------------------|---------------------|
-| **Infrastructure Security** | Host OS, Container Runtime, Network | Cluster Administrator | Firewall, OS hardening, Container runtime security |
-| **Cluster Security** | API Server, etcd, kubelet | Cluster Administrator | Authentication, Authorization, Admission Control, Encryption |
-| **Workload Security** | Pods, Containers, Services | Application Developer | Security Context, Network Policy, RBAC |
+| **Infrastructure Security** | Host OS、Container Runtime、Network | Cluster Administrator | Firewall、OS Hardening、Container Runtime Security |
+| **Cluster Security** | API Server、etcd、kubelet | Cluster Administrator | Authentication、Authorization、Admission Control、Encryption |
+| **Workload Security** | Pods、Containers、Services | Application Developer | Security Context、Network Policy、RBAC |
 
-### Security Principles
+### Security の原則
 
-1. **Principle of Least Privilege**: 必要最小限の permissions のみを付与します
-2. **Defense in Depth**: 複数の security layers によって防御します
-3. **Default Deny**: 明示的に許可されていないものはすべて拒否します
-4. **Security Hardening**: defaults より強力な security settings を適用します
-5. **Continuous Monitoring**: security events を検出し、対応します
+1. **最小権限の原則**: 必要最小限の権限のみを付与する
+2. **Defense in Depth**: 複数の Security 層によって防御する
+3. **Default Deny**: 明示的に許可されていないものはすべて拒否する
+4. **Security Hardening**: Default よりも強固な Security 設定を適用する
+5. **継続的な Monitoring**: Security Event を検知して対応する
 
 ## Authentication
 
-Authentication は、user または service account が誰であるかを検証する process です。Kubernetes はさまざまな authentication methods をサポートしています。
+Authentication は、User または Service Account が誰であるかを検証するプロセスです。Kubernetes はさまざまな Authentication 方法をサポートしています。
 
-### Authentication Methods
+### Authentication 方法
 
-1. **X.509 Certificates**: TLS client certificates を使用した authentication
-2. **Service Account Tokens**: JWT tokens を使用した service account authentication
-3. **OpenID Connect (OIDC)**: external identity providers を通じた authentication
-4. **Webhook Token Authentication**: external authentication services を通じた authentication
-5. **Authentication Proxy**: proxy を通じた authentication
+1. **X.509 Certificates**: TLS Client Certificate を使用した Authentication
+2. **Service Account Tokens**: JWT Token を使用した Service Account Authentication
+3. **OpenID Connect (OIDC)**: 外部 Identity Provider を介した Authentication
+4. **Webhook Token Authentication**: 外部 Authentication Service を介した Authentication
+5. **Authentication Proxy**: Proxy を介した Authentication
 
-### Service Account Example
+### Service Account の例
 
 ```yaml
 apiVersion: v1
@@ -197,51 +145,15 @@ type: kubernetes.io/service-account-token
 
 ## Authentication
 
-Kubernetes API server にアクセスするには、authentication process を通過する必要があります。Kubernetes はさまざまな authentication methods をサポートしています。
+Kubernetes API server にアクセスするには、Authentication プロセスを通過する必要があります。Kubernetes はさまざまな Authentication 方法をサポートしています。
 
-```mermaid
-graph TD
-    User["User/Service"] -->|Authentication Request| API["API Server"]
+![User または Service が API server に Authentication Request を送信し、API server は 5 つのサポートされる方法（X.509 Certificates、Service Account Tokens、OIDC、Webhook Token Authentication、Authentication Proxy）のいずれかで確認した後、結果を Authorization 段階または Request Denial に送ります。](../.gitbook/assets/en-core-06-security-1.png)
 
-    subgraph "Authentication Methods"
-        Cert["X.509 Certificates"]
-        Token["Service Account Tokens"]
-        OIDC["OpenID Connect"]
-        Webhook["Webhook Token Authentication"]
-        Proxy["Authentication Proxy"]
-    end
-
-    API --> Cert
-    API --> Token
-    API --> OIDC
-    API --> Webhook
-    API --> Proxy
-
-    Cert -->|Success/Failure| Result["Authentication Result"]
-    Token -->|Success/Failure| Result
-    OIDC -->|Success/Failure| Result
-    Webhook -->|Success/Failure| Result
-    Proxy -->|Success/Failure| Result
-
-    Result -->|Authentication Success| Authz["Move to Authorization Stage"]
-    Result -->|Authentication Failure| Reject["Request Denied"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authMethod fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class Cert,Token,OIDC,Webhook,Proxy authMethod;
-    class Result,Authz,Reject resultComponent;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-1.html)
 
 ### X.509 Certificates
 
-Kubernetes は TLS certificates を使用して clients を authenticate します。これは主に internal cluster communication と administrator authentication に使用されます。
+Kubernetes は TLS Certificates を使用して Client を Authentication します。これは主に、Cluster 内部通信および Administrator Authentication に使用されます。
 
 ```bash
 # Example kubeconfig setup for certificate-based authentication
@@ -250,7 +162,7 @@ kubectl config set-credentials admin --client-certificate=admin.crt --client-key
 
 ### Service Account Tokens
 
-Service accounts は、Pods 内で実行される processes が API server と通信するために使用する accounts です。各 service account には自動生成された token があり、Pods に自動的に mount されます。
+Service Account は、Pod 内で実行される Process が API server と通信するために使用する Account です。各 Service Account には自動生成された Token があり、Pod に自動的に Mount されます。
 
 ```yaml
 apiVersion: v1
@@ -274,7 +186,7 @@ spec:
 
 ### OpenID Connect (OIDC)
 
-external identity providers（例: AWS IAM、Google、Azure AD）を通じた authentication をサポートします。これは enterprise environments で Single Sign-On (SSO) を実装する場合に役立ちます。
+外部 Identity Provider（例: AWS IAM、Google、Azure AD）を介した Authentication をサポートします。これは Enterprise 環境で Single Sign-On (SSO) を実装する場合に役立ちます。
 
 ```bash
 # Example kubeconfig setup using OIDC
@@ -287,70 +199,27 @@ kubectl config set-credentials oidc-user \
 
 ### Webhook Token Authentication
 
-external authentication service を通じて tokens を検証する方法です。API server は tokens を external service に転送し、その service が token を検証して user information を返します。
+外部 Authentication Service を介して Token を検証する方法です。API server は Token を外部 Service に転送し、その Service が Token を検証して User 情報を返します。
 
 ### Authentication Proxy
 
-authentication proxy を API server の前段に配置し、user authentication を処理する方法です。proxy は authenticated user information を HTTP headers に含め、API server に転送します。
+API server の前に Authentication Proxy を配置して User Authentication を処理する方法です。Proxy は Authentication 済みの User 情報を HTTP Header に含め、API server に転送します。
 
 ## Authorization
 
-Authentication が「あなたが誰か」を検証する process であるなら、authorization は「あなたが何をできるか」を判断する process です。Kubernetes はさまざまな authorization modes をサポートしています。
+Authentication が「あなたが誰であるか」を検証するプロセスであるのに対し、Authorization は「あなたが何を実行できるか」を判断するプロセスです。Kubernetes はさまざまな Authorization Mode をサポートしています。
 
-```mermaid
-graph TD
-    User["Authenticated User/Service"] -->|Authorization Request| API["API Server"]
+![Authentication 済みの User または Service が API server に Authorization Request を送信し、API server は RBAC、ABAC、Node、Webhook の 4 つの Authorization Mode のいずれかで評価します。判断により Request は処理または拒否されます。RBAC 自体は、RoleBindings/ClusterRoleBindings により Subject に Binding された Roles/ClusterRoles から構成されます。](../.gitbook/assets/en-core-06-security-2.png)
 
-    subgraph "Authorization Modes"
-        RBAC["RBAC<br>(Role-Based Access Control)"]
-        ABAC["ABAC<br>(Attribute-Based Access Control)"]
-        Node["Node Authorization"]
-        WebhookAuthz["Webhook Authorization"]
-    end
-
-    API --> RBAC
-    API --> ABAC
-    API --> Node
-    API --> WebhookAuthz
-
-    RBAC -->|Evaluate| Decision["Authorization Decision"]
-    ABAC -->|Evaluate| Decision
-    Node -->|Evaluate| Decision
-    WebhookAuthz -->|Evaluate| Decision
-
-    Decision -->|Allow| Allow["Process Request"]
-    Decision -->|Deny| Deny["Deny Request"]
-
-    subgraph "RBAC Components"
-        Role["Role/ClusterRole<br>(Permission Definition)"]
-        Binding["RoleBinding/ClusterRoleBinding<br>(Permission Assignment)"]
-    end
-
-    RBAC --- Role
-    RBAC --- Binding
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authzMode fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef rbacComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class RBAC,ABAC,Node,WebhookAuthz authzMode;
-    class Decision,Allow,Deny resultComponent;
-    class Role,Binding rbacComponent;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-2.html)
 
 ### RBAC (Role-Based Access Control)
 
-RBAC は Kubernetes で最も広く使用されている authorization mechanism です。Roles と RoleBindings を通じて、users または service accounts に特定の resources に対する specific permissions を付与します。
+RBAC は Kubernetes で最も広く使用されている Authorization の仕組みです。Roles と RoleBindings を通じて、特定の Resource に対する特定の権限を User または Service Account に付与します。
 
-#### Role and ClusterRole
+#### Role と ClusterRole
 
-Roles は namespace 内の permissions を定義し、ClusterRoles は cluster 全体に適用される permissions を定義します。
+Roles は Namespace 内の権限を定義し、ClusterRoles は Cluster 全体に適用される権限を定義します。
 
 ```yaml
 # Namespace Role example
@@ -377,9 +246,9 @@ rules:
   verbs: ["get", "watch", "list"]
 ```
 
-#### RoleBinding and ClusterRoleBinding
+#### RoleBinding と ClusterRoleBinding
 
-RoleBinding は、特定の namespace 内で Role または ClusterRole を users、groups、または service accounts に bind します。ClusterRoleBinding は、cluster 全体で ClusterRole を users、groups、または service accounts に bind します。
+RoleBinding は、特定の Namespace 内の User、Group、または Service Account に Role または ClusterRole を Binding します。ClusterRoleBinding は、Cluster 全体の User、Group、または Service Account に ClusterRole を Binding します。
 
 ```yaml
 # RoleBinding example
@@ -416,64 +285,23 @@ roleRef:
 
 ### ABAC (Attribute-Based Access Control)
 
-ABAC は、user attributes、resource attributes、environment attributes などに基づいて permissions を付与する方法です。Kubernetes では、policies は JSON files を通じて定義されます。より柔軟である一方、management complexity のため RBAC ほど一般的には使用されません。
+ABAC は、User Attribute、Resource Attribute、Environment Attribute などに基づいて権限を付与する方法です。Kubernetes では、Policy を JSON File で定義します。RBAC より柔軟ですが、管理が複雑なため、あまり使用されません。
 
 ### Node Authorization
 
-Node authorization は、kubelets が API server にアクセスするときに使用される特別な authorization mode です。Kubelets は、自身が実行されている nodes に関連する resources（Pods、node status など）にのみアクセスできます。
+Node Authorization は、kubelet が API server にアクセスするときに使用される特別な Authorization Mode です。kubelet は、それが実行されている Node に関連する Resource（Pods、Node Status など）にのみアクセスできます。
 
 ### Webhook Authorization
 
-external service を通じて authorization decisions を行う方法です。API server は authorization requests を external service に転送し、その service が request を許可するか拒否するかを判断します。
+外部 Service を介して Authorization の判断を行う方法です。API server は Authorization Request を外部 Service に転送し、Service が Request を許可するか拒否するかを判断します。
 
 ## Security Context
 
-Security context は、Pod または container level で security settings を定義します。これにより、privileges、access control、capabilities などをきめ細かく制御できます。
+Security Context は、Pod または Container レベルの Security 設定を定義します。これにより、Privilege、Access Control、Capabilities などを詳細に制御できます。
 
-```mermaid
-graph TD
-    subgraph "Pod Security Context"
-        PSC["Pod Security Context"]
-        PSC -->|Setting| RunAsUser["runAsUser<br>(User ID)"]
-        PSC -->|Setting| RunAsGroup["runAsGroup<br>(Group ID)"]
-        PSC -->|Setting| FSGroup["fsGroup<br>(Filesystem Group)"]
-        PSC -->|Setting| SupGroups["supplementalGroups<br>(Additional Groups)"]
-    end
+![Pod には Pod レベルの Security Context（runAsUser、runAsGroup、fsGroup、supplementalGroups）と Container が含まれ、Container には独自の Container レベルの Security Context（privileged、allowPrivilegeEscalation、readOnlyRootFilesystem、capabilities、seLinuxOptions）があります。Pod 全体は、Privileged、Baseline、Restricted の 3 つの Pod Security Standards Level のいずれかに準拠する必要があります。](../.gitbook/assets/en-core-06-security-3.png)
 
-    subgraph "Container Security Context"
-        CSC["Container Security Context"]
-        CSC -->|Setting| Privilege["privileged<br>(Privileged Mode)"]
-        CSC -->|Setting| AllowPrivEsc["allowPrivilegeEscalation<br>(Allow Privilege Escalation)"]
-        CSC -->|Setting| ReadOnlyFS["readOnlyRootFilesystem<br>(Read-only Filesystem)"]
-        CSC -->|Setting| Capabilities["capabilities<br>(Linux Kernel Capabilities)"]
-        CSC -->|Setting| SELinux["seLinuxOptions<br>(SELinux Options)"]
-    end
-
-    Pod["Pod"] -->|Contains| PSC
-    Pod -->|Contains| Container["Container"]
-    Container -->|Contains| CSC
-
-    subgraph "Pod Security Standards"
-        PSS["Pod Security Standards"]
-        PSS -->|Level| Privileged["Privileged<br>(No Restrictions)"]
-        PSS -->|Level| Baseline["Baseline<br>(Basic Security)"]
-        PSS -->|Level| Restricted["Restricted<br>(Enhanced Security)"]
-    end
-
-    Pod -->|Complies| PSS
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef securitySetting fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Pod,Container k8sComponent;
-    class PSC,CSC,PSS securityComponent;
-    class RunAsUser,RunAsGroup,FSGroup,SupGroups,Privilege,AllowPrivEsc,ReadOnlyFS,Capabilities,SELinux securitySetting;
-    class Privileged,Baseline,Restricted securitySetting;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-3.html)
 
 ### Pod Security Context
 
@@ -498,21 +326,21 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-上の例では次のようになります。
-- `runAsUser`: container process が実行される User ID
-- `runAsGroup`: container process が実行される Group ID
-- `fsGroup`: volumes にアクセスするときに使用される Group ID
-- `allowPrivilegeEscalation`: process が parent process より多くの privileges を取得できるかどうか
-- `capabilities`: Linux kernel capabilities を追加または削除します
-- `readOnlyRootFilesystem`: root filesystem を read-only として mount します
+上記の例では:
+- `runAsUser`: Container Process が実行される User ID
+- `runAsGroup`: Container Process が実行される Group ID
+- `fsGroup`: Volume へのアクセス時に使用する Group ID
+- `allowPrivilegeEscalation`: Process が親 Process より多くの Privilege を取得できるかどうか
+- `capabilities`: Linux Kernel Capabilities を追加または削除する
+- `readOnlyRootFilesystem`: Root Filesystem を Read-only として Mount する
 
 ### Pod Security Standards
 
-Kubernetes 1.25 以降、Pod Security Policy は Pod Security Standards に置き換えられました。Pod Security Standards は 3 つの policy levels を定義します。
+Kubernetes 1.25 以降、Pod Security Policy は Pod Security Standards に置き換えられました。Pod Security Standards は 3 つの Policy Level を定義します。
 
-1. **Privileged**: 制限なし、すべての privileges が許可されます
-2. **Baseline**: 既知の privilege escalation paths をブロックします
-3. **Restricted**: 強力に harden された security policy
+1. **Privileged**: 制限なし、すべての Privilege を許可
+2. **Baseline**: 既知の Privilege Escalation 経路を Block
+3. **Restricted**: 強く Hardening された Security Policy
 
 ```yaml
 # Example applying Pod Security Standards to namespace
@@ -528,54 +356,11 @@ metadata:
 
 ## Network Policy
 
-Network policies は、Pods 間の communication を制御する方法を提供します。デフォルトでは、Kubernetes cluster 内のすべての Pods は相互に通信できますが、network policies を使用してこれを制限できます。
+Network Policy は、Pod 間の通信を制御する方法を提供します。Default では Kubernetes Cluster 内のすべての Pod が相互に通信できますが、Network Policy を使用してこれを制限できます。
 
-```mermaid
-graph TD
-    subgraph "Network Policy Configuration"
-        NP["NetworkPolicy"]
-        NP -->|Selects| PodSelector["podSelector<br>(Target Pods)"]
-        NP -->|Defines| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
-        NP -->|Rules| Ingress["ingress<br>(Inbound Rules)"]
-        NP -->|Rules| Egress["egress<br>(Outbound Rules)"]
-    end
+![NetworkPolicy（api-allow）は podSelector で対象 Pod を選択し、policyTypes で Ingress/Egress を宣言し、ingress の from/ports と egress の to/ports の Rule（podSelector、namespaceSelector、ipBlock）を構築します。API Pod に適用すると、Frontend から API への 8080/TCP Traffic と、API から Database への 5432/TCP Traffic のみを許可します。](../.gitbook/assets/en-core-06-security-4.png)
 
-    subgraph "Inbound Rules"
-        Ingress -->|Source| IngressFrom["from<br>(Source Selector)"]
-        Ingress -->|Port| IngressPorts["ports<br>(Allowed Ports)"]
-
-        IngressFrom -->|Selects| IPodSelector["podSelector<br>(Source Pods)"]
-        IngressFrom -->|Selects| INSSelector["namespaceSelector<br>(Source Namespaces)"]
-        IngressFrom -->|Selects| IIPBlock["ipBlock<br>(Source IP Range)"]
-    end
-
-    subgraph "Outbound Rules"
-        Egress -->|Target| EgressTo["to<br>(Destination Selector)"]
-        Egress -->|Port| EgressPorts["ports<br>(Allowed Ports)"]
-
-        EgressTo -->|Selects| EPodSelector["podSelector<br>(Destination Pods)"]
-        EgressTo -->|Selects| ENSSelector["namespaceSelector<br>(Destination Namespaces)"]
-        EgressTo -->|Selects| EIPBlock["ipBlock<br>(Destination IP Range)"]
-    end
-
-    Frontend["Frontend Pod"] -->|Communication| API["API Pod"]
-    API -->|Communication| DB["Database Pod"]
-
-    NP -->|Applies| API
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NP,PodSelector,PolicyTypes,Ingress,Egress networkPolicy;
-    class IngressFrom,IngressPorts,IPodSelector,INSSelector,IIPBlock,EgressTo,EgressPorts,EPodSelector,ENSSelector,EIPBlock policyConfig;
-    class Frontend,API userApp;
-    class DB dataStore;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-4.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -608,20 +393,20 @@ spec:
       port: 5432
 ```
 
-上の例では次のようになります。
-- `api` label を持つ Pods の network policy を定義します
-- `frontend` label を持つ Pods から port 8080 への inbound traffic のみを許可します
-- `database` label を持つ Pods の port 5432 への outbound traffic のみを許可します
+上記の例では:
+- `api` Label を持つ Pod の Network Policy を定義します
+- `frontend` Label を持つ Pod からの Port 8080 への Inbound Traffic のみを許可します
+- `database` Label を持つ Pod への Port 5432 の Outbound Traffic のみを許可します
 
-network policies を使用するには、cluster の network plugin が network policies をサポートしている必要があります。Calico、Cilium、Antrea などの CNI plugins は network policies をサポートしています。
+Network Policy を使用するには、Cluster の Network Plugin が Network Policy をサポートしている必要があります。Calico、Cilium、Antrea などの CNI Plugin は Network Policy をサポートしています。
 
 ## Secret Management
 
-Kubernetes Secrets は、passwords、API keys、certificates などの sensitive information を保存および管理するために使用されます。ただし、デフォルトでは secrets は base64 encoded されるだけで、encrypted されません。そのため、追加の security measures が必要です。
+Kubernetes Secrets は、Password、API Key、Certificate などの機密情報を保存および管理するために使用されます。ただし、Default では Secret は暗号化されず、base64 Encode されるだけです。したがって、追加の Security 対策が必要です。
 
 ### Secret Encryption
 
-etcd に保存される secrets を encrypt するには、API server の encryption configuration を設定する必要があります。
+etcd に保存される Secret を暗号化するには、API server の Encryption Configuration を設定する必要があります。
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -639,7 +424,7 @@ resources:
 
 ### External Secret Management
 
-より安全な secret management のために、external secret management systems を使用できます。
+より安全な Secret Management のために、外部 Secret Management System を使用できます。
 
 - HashiCorp Vault
 - AWS Secrets Manager
@@ -649,11 +434,11 @@ resources:
 
 ## Image Security
 
-Container image security は Kubernetes security の重要な部分です。
+Container Image Security は Kubernetes Security の重要な要素です。
 
 ### Image Vulnerability Scanning
 
-container images の vulnerabilities を scan し、既知の security issues を特定して解決します。
+Container Image を Vulnerability Scan して、既知の Security Issue を特定および解決します。
 
 - Trivy
 - Clair
@@ -663,7 +448,7 @@ container images の vulnerabilities を scan し、既知の security issues �
 
 ### Image Signing and Verification
 
-image signing を通じて images の origin と integrity を検証します。
+Image Signing により Image の Origin と Integrity を検証します。
 
 - Notary
 - Cosign
@@ -673,7 +458,7 @@ image signing を通じて images の origin と integrity を検証します。
 
 ### Image Policies
 
-image policies を通じて、trusted registries からのみ images を pull するよう制限します。
+Image Policy により、信頼できる Registry からのみ Image を Pull するように制限します。
 
 ```yaml
 apiVersion: admission.k8s.io/v1
@@ -691,11 +476,11 @@ plugins:
 
 ## Audit
 
-Kubernetes auditing は、cluster 内で発生する events を記録および分析する mechanism を提供します。
+Kubernetes Auditing は、Cluster 内で発生する Event を記録および分析する仕組みを提供します。
 
 ### Audit Policy
 
-Audit policies は、どの events を記録するかを定義します。
+Audit Policy は、記録する Event を定義します。
 
 ```yaml
 apiVersion: audit.k8s.io/v1
@@ -716,78 +501,30 @@ rules:
     resources: ["endpoints", "services"]
 ```
 
-Audit levels:
-- `None`: events を記録しません
-- `Metadata`: request metadata（user、time、resource など）のみを記録します
-- `Request`: request metadata と request body を記録します
-- `RequestResponse`: request metadata、request body、response body を記録します
+Audit Level:
+- `None`: Event を記録しない
+- `Metadata`: Request Metadata（User、Time、Resource など）のみを記録する
+- `Request`: Request Metadata と Request Body を記録する
+- `RequestResponse`: Request Metadata、Request Body、Response Body を記録する
 
 ### Audit Log Backends
 
-Audit logs はさまざまな backends に保存できます。
+Audit Log はさまざまな Backend に保存できます。
 - File
 - Webhook
-- Dynamic backends（例: Elasticsearch、Loki）
+- Dynamic Backends（例: Elasticsearch、Loki）
 
-## Amazon EKS Security Enhancement
+## Amazon EKS Security の強化
 
-Amazon EKS は、Kubernetes の基本的な security features に加えて、AWS security services と統合することで security を強化できます。
+Amazon EKS では、Kubernetes の基本的な Security 機能に加え、AWS Security Service と統合することで Security を強化できます。
 
-```mermaid
-graph TD
-    subgraph "AWS Security Services"
-        IAM["AWS IAM<br>(Identity and Access Management)"]
-        KMS["AWS KMS<br>(Key Management Service)"]
-        SG["AWS Security Groups"]
-        WAF["AWS WAF<br>(Web Application Firewall)"]
-        GD["AWS GuardDuty<br>(Threat Detection)"]
-        SM["AWS Secrets Manager"]
-    end
+![KMS、WAF、GuardDuty、IAM、Security Groups、Secrets Manager の 6 つの AWS Security Service はそれぞれ特定の EKS の仕組みに統合され、API server、Worker Node、または Cluster 内の Pod を保護します。](../.gitbook/assets/en-core-06-security-5.png)
 
-    subgraph "EKS Security Integration"
-        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
-        SecEnc["Kubernetes Secret Encryption"]
-        PodSG["Pod Security Groups"]
-        ALB["Application Load Balancer<br>(ALB) Integration"]
-        EKSDetect["EKS Threat Detection"]
-        ExtSecrets["External Secrets Operator"]
-    end
-
-    IAM -->|Integrates| IRSA
-    KMS -->|Integrates| SecEnc
-    SG -->|Integrates| PodSG
-    WAF -->|Integrates| ALB
-    GD -->|Integrates| EKSDetect
-    SM -->|Integrates| ExtSecrets
-
-    subgraph "EKS Cluster"
-        API["API Server"]
-        Node["Worker Node"]
-        Pod["Pod"]
-    end
-
-    IRSA -->|Grants Permissions| Pod
-    SecEnc -->|Encrypts| API
-    PodSG -->|Network Security| Pod
-    ALB -->|Protects Traffic| API
-    EKSDetect -->|Monitors| Node
-    ExtSecrets -->|Provides Secrets| Pod
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef securityIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API,Node,Pod k8sComponent;
-    class IAM,KMS,SG,WAF,GD,SM awsService;
-    class IRSA,SecEnc,PodSG,ALB,EKSDetect,ExtSecrets securityIntegration;
-```
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-5.html)
 
 ### IAM Roles and Service Accounts (IRSA)
 
-IRSA (IAM Roles for Service Accounts) を使用すると、IAM roles を Kubernetes service accounts に関連付けて、AWS services に安全にアクセスできます。
+IRSA（IAM Roles for Service Accounts）を使用すると、IAM Role を Kubernetes Service Account に関連付け、AWS Service に安全にアクセスできます。
 
 ```bash
 # Create OIDC provider
@@ -802,9 +539,9 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### Secret Encryption with AWS KMS
+### AWS KMS による Secret Encryption
 
-AWS KMS を使用して、EKS cluster 内の Kubernetes secrets を encrypt できます。
+AWS KMS を使用して、EKS Cluster 内の Kubernetes Secret を暗号化できます。
 
 ```bash
 # Create KMS key
@@ -816,7 +553,7 @@ eksctl create cluster --name my-cluster --encryption-provider-key-arn arn:aws:km
 
 ### AWS Security Groups
 
-AWS security groups を EKS cluster nodes と Pods に適用し、network traffic を制御します。
+AWS Security Group を EKS Cluster Node と Pod に適用して、Network Traffic を制御します。
 
 ```bash
 # Create security group
@@ -832,7 +569,7 @@ aws ec2 authorize-security-group-ingress \
 
 ### AWS WAF
 
-AWS WAF (Web Application Firewall) を EKS clusters の前段に配置し、web applications を保護します。
+AWS WAF（Web Application Firewall）を EKS Cluster の前に配置して、Web Application を保護します。
 
 ```bash
 # Create WAF Web ACL
@@ -845,7 +582,7 @@ aws wafv2 create-web-acl \
 
 ### AWS GuardDuty
 
-AWS GuardDuty を使用して、EKS clusters の security threats を検出し、対応します。
+AWS GuardDuty を使用して、EKS Cluster 内の Security Threat を検知して対応します。
 
 ```bash
 # Enable GuardDuty
@@ -857,66 +594,66 @@ aws guardduty update-detector \
   --features '[{"Name": "EKS_RUNTIME_MONITORING", "Status": "ENABLED"}]'
 ```
 
-## Security Best Practices
+## Security のベストプラクティス
 
-Kubernetes clusters と workloads の security を強化するための best practices は次のとおりです。
+Kubernetes Cluster と Workload の Security を強化するためのベストプラクティスを紹介します。
 
 ### Cluster Security
 
-1. **Keep Versions Up to Date**: Kubernetes とすべての components を最新の状態に保ち、既知の vulnerabilities に patch を適用します。
-2. **Restrict API Server Access**: API server への access を制限し、必要な場合にのみ public access を許可します。
-3. **etcd Encryption**: etcd に保存される data を encrypt し、sensitive information を保護します。
-4. **Enable Audit Logging**: audit logging を有効にし、cluster activity を monitor および analyze します。
-5. **Implement Network Policies**: network policies を実装し、Pod-to-Pod communication を制限します。
+1. **Version を最新に保つ**: Kubernetes とすべての Component を最新に保ち、既知の Vulnerability を Patch します。
+2. **API Server Access を制限する**: API server への Access を制限し、必要な場合にのみ Public Access を許可します。
+3. **etcd Encryption**: etcd に保存される Data を暗号化して、機密情報を保護します。
+4. **Audit Logging を有効にする**: Audit Logging を有効にして、Cluster Activity を Monitoring および分析します。
+5. **Network Policy を実装する**: Network Policy を実装して、Pod 間の通信を制限します。
 
 ### Workload Security
 
-1. **Principle of Least Privilege**: Pods と containers に必要最小限の permissions のみを付与します。
-2. **Non-root User**: containers を non-root users として実行します。
-3. **Read-only Filesystem**: 可能な場合、container root filesystems を read-only として mount します。
-4. **Resource Limits**: CPU と memory resource limits を設定し、DoS attacks を防止します。
-5. **Configure Security Context**: Pod と container security contexts を適切に設定します。
+1. **最小権限の原則**: Pod と Container には必要最小限の権限のみを付与します。
+2. **Non-root User**: Container を Non-root User として実行します。
+3. **Read-only Filesystem**: 可能な場合は、Container Root Filesystem を Read-only として Mount します。
+4. **Resource Limits**: DoS Attack を防ぐために CPU と Memory の Resource Limit を設定します。
+5. **Security Context を設定する**: Pod と Container の Security Context を適切に設定します。
 
 ### Image Security
 
-1. **Minimal Base Images**: 最小限の packages のみを含む base images を使用します。
-2. **Image Vulnerability Scanning**: container images の vulnerabilities を定期的に scan します。
-3. **Image Signing and Verification**: image signing を通じて images の origin と integrity を検証します。
-4. **Trusted Registries**: trusted registries からのみ images を pull します。
-5. **Use Latest Images**: 既知の vulnerabilities に patch を適用するため、images を定期的に update します。
+1. **Minimal Base Images**: Package を最小限にした Base Image を使用します。
+2. **Image Vulnerability Scanning**: Container Image を定期的に Vulnerability Scan します。
+3. **Image Signing and Verification**: Image Signing により Image の Origin と Integrity を検証します。
+4. **Trusted Registries**: 信頼できる Registry からのみ Image を Pull します。
+5. **Latest Images を使用する**: 既知の Vulnerability を Patch するため、Image を定期的に更新します。
 
 ### Secret Management
 
-1. **External Secret Management**: external secret management systems を使用して secrets を安全に管理します。
-2. **Secret Encryption**: etcd に保存される secrets を encrypt します。
-3. **Secret Rotation**: security を強化するため、secrets を定期的に rotate します。
-4. **Minimum Privilege Access**: secrets への access を必要な Pods のみに制限します。
-5. **Use Volumes Instead of Environment Variables**: environment variables の代わりに volumes を通じて secrets を mount します。
+1. **External Secret Management**: 外部 Secret Management System を使用して Secret を安全に管理します。
+2. **Secret Encryption**: etcd に保存される Secret を暗号化します。
+3. **Secret Rotation**: Security を強化するため、Secret を定期的に Rotate します。
+4. **最小権限 Access**: Secret への Access を必要な Pod のみに制限します。
+5. **Environment Variable ではなく Volume を使用する**: Environment Variable ではなく Volume を通じて Secret を Mount します。
 
-## Conclusion
+## まとめ
 
-Kubernetes security は、cluster infrastructure、Kubernetes components、application workloads などすべての領域で security を考慮し、複数の layers で実装する必要があります。authentication、authorization、network policies、security contexts などの Kubernetes の基本的な security features に加え、image security、secret management、audit logging などの追加の security measures によって、cluster と workload の security を強化できます。
+Kubernetes Security は、Cluster Infrastructure、Kubernetes Component、Application Workload を含むすべての領域で Security を考慮し、複数の Layer で実装する必要があります。Authentication、Authorization、Network Policy、Security Context などの Kubernetes の基本 Security 機能に加え、Image Security、Secret Management、Audit Logging などの追加の Security 対策を通じて、Cluster と Workload の Security を強化できます。
 
-Amazon EKS を使用する場合、さまざまな AWS security services と統合することで、security をさらに強化できます。IAM Roles and Service Accounts (IRSA)、AWS KMS による secret encryption、AWS Security Groups、AWS WAF、AWS GuardDuty などの services を使用して、EKS cluster security を改善できます。
+Amazon EKS を使用する場合は、さまざまな AWS Security Service と統合することで、さらに Security を強化できます。IAM Roles and Service Accounts (IRSA)、AWS KMS による Secret Encryption、AWS Security Groups、AWS WAF、AWS GuardDuty などの Service を使用して、EKS Cluster Security を向上できます。
 
-Security は継続的な process であるため、定期的な security assessments と updates を通じて、clusters と workloads の security posture を維持することが重要です。
+Security は継続的なプロセスであるため、定期的な Security Assessment と Update を通じて、Cluster と Workload の Security Posture を維持することが重要です。
 
 ## Quiz
 
-この章で学んだ内容を確認するには、[Security Quiz](../quizzes/core/06-security-quiz.md) に挑戦してください。
+この章で学んだ内容を確認するには、[Security Quiz](../quizzes/core/06-security-quiz.md)に挑戦してください。
 
-## References
+## 参考資料
 
-- [Kubernetes Official Documentation - Security](https://kubernetes.io/docs/concepts/security/)
-- [Kubernetes Official Documentation - Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
-- [Kubernetes Official Documentation - Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
-- [Kubernetes Official Documentation - RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- [Kubernetes Official Documentation - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Kubernetes Official Documentation - Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-- [Kubernetes Official Documentation - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
-- [Kubernetes Official Documentation - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Kubernetes Official Documentation - Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
-- [Amazon EKS Official Documentation - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
-- [Amazon EKS Official Documentation - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [Amazon EKS Official Documentation - Secret Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS Security Blog - EKS Security Best Practices](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)
+- [Kubernetes 公式ドキュメント - Security](https://kubernetes.io/docs/concepts/security/)
+- [Kubernetes 公式ドキュメント - Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+- [Kubernetes 公式ドキュメント - Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+- [Kubernetes 公式ドキュメント - RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [Kubernetes 公式ドキュメント - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes 公式ドキュメント - Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+- [Kubernetes 公式ドキュメント - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Kubernetes 公式ドキュメント - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [Kubernetes 公式ドキュメント - Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
+- [Amazon EKS 公式ドキュメント - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
+- [Amazon EKS 公式ドキュメント - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [Amazon EKS 公式ドキュメント - Secret Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
+- [AWS Security Blog - EKS Security のベストプラクティス](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)

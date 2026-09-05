@@ -1,20 +1,20 @@
-# Kubernetes Security
+# Seguridad de Kubernetes
 
 > **Versiones compatibles**: Kubernetes 1.32, 1.33, 1.34
 > **Última actualización**: February 23, 2026
 
-En Kubernetes, la seguridad es un elemento clave para proteger clusters y aplicaciones. En este capítulo, exploraremos los conceptos de seguridad de Kubernetes, los mecanismos de autenticación y autorización, las network policies, los security contexts y cómo mejorar la seguridad en Amazon EKS.
+En Kubernetes, la seguridad es un elemento clave para proteger los clústeres y las aplicaciones. En este capítulo, exploraremos conceptos de seguridad de Kubernetes, mecanismos de autenticación y autorización, políticas de red, contextos de seguridad y cómo mejorar la seguridad en Amazon EKS.
 
-## Lab Environment Setup
+## Configuración del entorno de laboratorio
 
-Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y entorno:
+Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y el siguiente entorno:
 
-### Required Tools
+### Herramientas necesarias
 - kubectl v1.34 o superior
-- Un cluster Kubernetes funcional (EKS, minikube, kind, etc.)
+- Un clúster de Kubernetes funcional (EKS, minikube, kind, etc.)
 - OpenSSL (para crear certificados)
 
-### Security Example Setup
+### Configuración del ejemplo de seguridad
 
 ```bash
 # Create namespace
@@ -73,111 +73,59 @@ spec:
 EOF
 ```
 
-## Kubernetes Security Architecture
+## Arquitectura de seguridad de Kubernetes
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Security Architecture"
-        subgraph "Infrastructure Security"
-            Host["Host Security"]
-            Network["Network Security"]
-            Container["Container Runtime Security"]
-        end
+![Tres capas de defensa en profundidad: la seguridad de infraestructura (host, runtime de contenedores, red) alimenta la seguridad del servidor API; la canalización de seguridad del clúster incluye autenticación, autorización, control de admisión y registro de auditoría, además de cifrado de datos; y los controles de seguridad de cargas de trabajo derivados de ellos son RBAC, Pod Security Standards, política de red y seguridad de imágenes.](../.gitbook/assets/en-core-06-security-0.png)
 
-        subgraph "Cluster Security"
-            API["API Server Security"]
-            Auth["Authentication"]
-            Authz["Authorization"]
-            Admission["Admission Control"]
-            Audit["Audit Logging"]
-            Encrypt["Data Encryption"]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-0.html)
 
-        subgraph "Workload Security"
-            SecCtx["Security Context"]
-            NetPol["Network Policy"]
-            PodSec["Pod Security Standards"]
-            Secret["Secret Management"]
-            ImgSec["Image Security"]
-            RBAC["RBAC"]
-        end
-    end
-
-    Host --> API
-    Network --> API
-    Container --> API
-
-    API --> Auth
-    Auth --> Authz
-    Authz --> Admission
-    Admission --> Audit
-    API --> Encrypt
-
-    Authz --> RBAC
-    Admission --> PodSec
-    Admission --> SecCtx
-    Network --> NetPol
-    API --> Secret
-    Container --> ImgSec
-
-    %% Style definitions
-    classDef infra fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef cluster fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef workload fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Host,Network,Container infra;
-    class API,Auth,Authz,Admission,Audit,Encrypt cluster;
-    class SecCtx,NetPol,PodSec,Secret,ImgSec,RBAC workload;
-```
-
-## Table of Contents
-1. [Security Overview](#security-overview)
-2. [Authentication](#authentication)
-3. [Authorization](#authorization)
-4. [Security Context](#security-context)
-5. [Network Policy](#network-policy)
-6. [Secret Management](#secret-management)
-7. [Image Security](#image-security)
+## Tabla de contenido
+1. [Descripción general de seguridad](#security-overview)
+2. [Autenticación](#authentication)
+3. [Autorización](#authorization)
+4. [Contexto de seguridad](#security-context)
+5. [Política de red](#network-policy)
+6. [Gestión de secretos](#secret-management)
+7. [Seguridad de imágenes](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
-9. [Audit Logging](#audit-logging)
-10. [EKS Security Best Practices](#eks-security-best-practices)
+9. [Registro de auditoría](#audit-logging)
+10. [Prácticas recomendadas de seguridad de EKS](#eks-security-best-practices)
 
-## Security Overview
+## Descripción general de seguridad
 
-> **Concepto clave**: La seguridad de Kubernetes sigue un enfoque de Defense in Depth, proporcionando múltiples mecanismos de seguridad en los niveles de infraestructura, cluster y workload.
+> **Concepto clave**: La seguridad de Kubernetes sigue un enfoque de Defense in Depth (defensa en profundidad), que proporciona múltiples mecanismos de seguridad en los niveles de infraestructura, clúster y carga de trabajo.
 
 La seguridad de Kubernetes consta de las siguientes áreas principales:
 
-### Security Area Comparison
+### Comparación de áreas de seguridad
 
-| Security Area | Main Components | Responsible Party | Security Mechanisms |
+| Área de seguridad | Componentes principales | Parte responsable | Mecanismos de seguridad |
 |--------------|-----------------|-------------------|---------------------|
-| **Infrastructure Security** | Host OS, Container Runtime, Network | Cluster Administrator | Firewall, OS hardening, Container runtime security |
-| **Cluster Security** | API Server, etcd, kubelet | Cluster Administrator | Authentication, Authorization, Admission Control, Encryption |
-| **Workload Security** | Pods, Containers, Services | Application Developer | Security Context, Network Policy, RBAC |
+| **Seguridad de infraestructura** | Host OS, Container Runtime, red | Administrador del clúster | Firewall, endurecimiento del OS, seguridad del runtime de contenedores |
+| **Seguridad del clúster** | Servidor API, etcd, kubelet | Administrador del clúster | Autenticación, autorización, control de admisión, cifrado |
+| **Seguridad de cargas de trabajo** | Pods, Containers, Services | Desarrollador de aplicaciones | Contexto de seguridad, política de red, RBAC |
 
-### Security Principles
+### Principios de seguridad
 
-1. **Principio de mínimo privilegio**: Concede solo los permisos mínimos necesarios
-2. **Defense in Depth**: Defensa mediante múltiples capas de seguridad
-3. **Denegación por defecto**: Deniega todo lo que no esté permitido explícitamente
-4. **Endurecimiento de seguridad**: Aplica configuraciones de seguridad más estrictas que las predeterminadas
-5. **Monitoreo continuo**: Detecta y responde a eventos de seguridad
+1. **Principio de mínimo privilegio**: Conceder únicamente los permisos mínimos necesarios
+2. **Defensa en profundidad**: Defensa mediante múltiples capas de seguridad
+3. **Denegar de forma predeterminada**: Denegar todo lo que no esté permitido explícitamente
+4. **Endurecimiento de seguridad**: Aplicar configuraciones de seguridad más estrictas que las predeterminadas
+5. **Monitorización continua**: Detectar y responder a eventos de seguridad
 
-## Authentication
+## Autenticación
 
-La autenticación es el proceso de verificar quién es un usuario o una Service Account (cuenta de servicio). Kubernetes admite varios métodos de autenticación:
+La autenticación es el proceso de verificar quién es un usuario o una cuenta de servicio. Kubernetes admite varios métodos de autenticación:
 
-### Authentication Methods
+### Métodos de autenticación
 
 1. **Certificados X.509**: Autenticación mediante certificados de cliente TLS
-2. **Service Account Tokens**: Autenticación de Service Account mediante tokens JWT
+2. **Tokens de Service Account**: Autenticación de cuentas de servicio mediante tokens JWT
 3. **OpenID Connect (OIDC)**: Autenticación a través de proveedores de identidad externos
-4. **Webhook Token Authentication**: Autenticación a través de servicios de autenticación externos
-5. **Authentication Proxy**: Autenticación a través de un proxy
+4. **Autenticación de tokens mediante Webhook**: Autenticación a través de servicios de autenticación externos
+5. **Proxy de autenticación**: Autenticación a través de un proxy
 
-### Service Account Example
+### Ejemplo de Service Account
 
 ```yaml
 apiVersion: v1
@@ -195,62 +143,26 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-## Authentication
+## Autenticación
 
-Para acceder al Kubernetes API server, debes pasar por un proceso de autenticación. Kubernetes admite varios métodos de autenticación:
+Para acceder al servidor API de Kubernetes, debes pasar por un proceso de autenticación. Kubernetes admite varios métodos de autenticación:
 
-```mermaid
-graph TD
-    User["User/Service"] -->|Authentication Request| API["API Server"]
+![Un usuario o servicio envía una solicitud de autenticación al servidor API, que la verifica mediante uno de cinco métodos compatibles (certificados X.509, tokens de Service Account, OIDC, autenticación de tokens mediante webhook, proxy de autenticación) y luego dirige el resultado a la fase de autorización o a la denegación de la solicitud.](../.gitbook/assets/en-core-06-security-1.png)
 
-    subgraph "Authentication Methods"
-        Cert["X.509 Certificates"]
-        Token["Service Account Tokens"]
-        OIDC["OpenID Connect"]
-        Webhook["Webhook Token Authentication"]
-        Proxy["Authentication Proxy"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-1.html)
 
-    API --> Cert
-    API --> Token
-    API --> OIDC
-    API --> Webhook
-    API --> Proxy
+### Certificados X.509
 
-    Cert -->|Success/Failure| Result["Authentication Result"]
-    Token -->|Success/Failure| Result
-    OIDC -->|Success/Failure| Result
-    Webhook -->|Success/Failure| Result
-    Proxy -->|Success/Failure| Result
-
-    Result -->|Authentication Success| Authz["Move to Authorization Stage"]
-    Result -->|Authentication Failure| Reject["Request Denied"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authMethod fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class Cert,Token,OIDC,Webhook,Proxy authMethod;
-    class Result,Authz,Reject resultComponent;
-```
-
-### X.509 Certificates
-
-Kubernetes usa certificados TLS para autenticar clientes. Esto se utiliza principalmente para la comunicación interna del cluster y la autenticación de administradores.
+Kubernetes utiliza certificados TLS para autenticar clientes. Esto se usa principalmente para la comunicación interna del clúster y la autenticación de administradores.
 
 ```bash
 # Example kubeconfig setup for certificate-based authentication
 kubectl config set-credentials admin --client-certificate=admin.crt --client-key=admin.key
 ```
 
-### Service Account Tokens
+### Tokens de Service Account
 
-Las Service Accounts son cuentas utilizadas por procesos que se ejecutan en Pods para comunicarse con el API server. Cada Service Account tiene un token generado automáticamente que se monta automáticamente en los Pods.
+Las cuentas de servicio son cuentas utilizadas por procesos que se ejecutan en Pods para comunicarse con el servidor API. Cada cuenta de servicio tiene un token generado automáticamente que se monta automáticamente en los Pods.
 
 ```yaml
 apiVersion: v1
@@ -285,72 +197,29 @@ kubectl config set-credentials oidc-user \
   --auth-provider-arg=client-secret=<CLIENT_SECRET>
 ```
 
-### Webhook Token Authentication
+### Autenticación de tokens mediante Webhook
 
-Un método que valida tokens a través de un servicio de autenticación externo. El API server reenvía tokens a un servicio externo, que valida el token y devuelve información del usuario.
+Un método que valida tokens a través de un servicio de autenticación externo. El servidor API reenvía tokens a un servicio externo, que valida el token y devuelve información del usuario.
 
-### Authentication Proxy
+### Proxy de autenticación
 
-Un método en el que se coloca un proxy de autenticación delante del API server para gestionar la autenticación de usuarios. El proxy incluye la información del usuario autenticado en encabezados HTTP y la reenvía al API server.
+Un método en el que se coloca un proxy de autenticación delante del servidor API para gestionar la autenticación de usuarios. El proxy incluye información del usuario autenticado en encabezados HTTP y la reenvía al servidor API.
 
-## Authorization
+## Autorización
 
-Si la autenticación es el proceso de verificar "quién eres", la autorización es el proceso de determinar "qué puedes hacer". Kubernetes admite varios modos de autorización:
+Si la autenticación es el proceso de verificar «quién eres», la autorización es el proceso de determinar «qué puedes hacer». Kubernetes admite varios modos de autorización:
 
-```mermaid
-graph TD
-    User["Authenticated User/Service"] -->|Authorization Request| API["API Server"]
+![Un usuario o servicio autenticado envía una solicitud de autorización al servidor API, que la evalúa mediante uno de cuatro modos de autorización — RBAC, ABAC, Node o Webhook — y la decisión procesa o deniega la solicitud; RBAC se compone de Roles/ClusterRoles vinculados a sujetos mediante RoleBindings/ClusterRoleBindings.](../.gitbook/assets/en-core-06-security-2.png)
 
-    subgraph "Authorization Modes"
-        RBAC["RBAC<br>(Role-Based Access Control)"]
-        ABAC["ABAC<br>(Attribute-Based Access Control)"]
-        Node["Node Authorization"]
-        WebhookAuthz["Webhook Authorization"]
-    end
-
-    API --> RBAC
-    API --> ABAC
-    API --> Node
-    API --> WebhookAuthz
-
-    RBAC -->|Evaluate| Decision["Authorization Decision"]
-    ABAC -->|Evaluate| Decision
-    Node -->|Evaluate| Decision
-    WebhookAuthz -->|Evaluate| Decision
-
-    Decision -->|Allow| Allow["Process Request"]
-    Decision -->|Deny| Deny["Deny Request"]
-
-    subgraph "RBAC Components"
-        Role["Role/ClusterRole<br>(Permission Definition)"]
-        Binding["RoleBinding/ClusterRoleBinding<br>(Permission Assignment)"]
-    end
-
-    RBAC --- Role
-    RBAC --- Binding
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef authzMode fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef rbacComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API k8sComponent;
-    class User userComponent;
-    class RBAC,ABAC,Node,WebhookAuthz authzMode;
-    class Decision,Allow,Deny resultComponent;
-    class Role,Binding rbacComponent;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-2.html)
 
 ### RBAC (Role-Based Access Control)
 
-RBAC es el mecanismo de autorización más utilizado en Kubernetes. Mediante Roles y RoleBindings, concedes permisos específicos a usuarios o Service Accounts para determinados recursos.
+RBAC es el mecanismo de autorización más utilizado en Kubernetes. Mediante Roles y RoleBindings, se conceden permisos específicos a usuarios o cuentas de servicio para determinados recursos.
 
-#### Role and ClusterRole
+#### Role y ClusterRole
 
-Los Roles definen permisos dentro de un namespace, y los ClusterRoles definen permisos que se aplican a todo el cluster.
+Los Roles definen permisos dentro de un namespace, y los ClusterRoles definen permisos que se aplican a todo el clúster.
 
 ```yaml
 # Namespace Role example
@@ -377,9 +246,9 @@ rules:
   verbs: ["get", "watch", "list"]
 ```
 
-#### RoleBinding and ClusterRoleBinding
+#### RoleBinding y ClusterRoleBinding
 
-RoleBinding vincula un Role o ClusterRole a usuarios, grupos o Service Accounts en un namespace específico. ClusterRoleBinding vincula un ClusterRole a usuarios, grupos o Service Accounts en todo el cluster.
+RoleBinding vincula un Role o ClusterRole a usuarios, grupos o cuentas de servicio en un namespace específico. ClusterRoleBinding vincula un ClusterRole a usuarios, grupos o cuentas de servicio en todo el clúster.
 
 ```yaml
 # RoleBinding example
@@ -416,66 +285,25 @@ roleRef:
 
 ### ABAC (Attribute-Based Access Control)
 
-ABAC es un método para conceder permisos basados en atributos de usuario, atributos de recursos, atributos del entorno, etc. En Kubernetes, las políticas se definen mediante archivos JSON. Se usa menos que RBAC debido a la complejidad de gestión, aunque es más flexible.
+ABAC es un método para conceder permisos basándose en atributos de usuario, atributos de recursos, atributos del entorno, etc. En Kubernetes, las políticas se definen mediante archivos JSON. Se utiliza con menos frecuencia que RBAC debido a su complejidad de gestión, a pesar de ser más flexible.
 
-### Node Authorization
+### Autorización de Node
 
-Node authorization es un modo de autorización especial que se usa cuando los kubelets acceden al API server. Los kubelets solo pueden acceder a recursos relacionados con los nodes en los que se ejecutan (Pods, estado del node, etc.).
+La autorización de Node es un modo de autorización especial utilizado cuando los kubelets acceden al servidor API. Los kubelets solo pueden acceder a recursos relacionados con los nodos en los que se ejecutan (Pods, estado del nodo, etc.).
 
-### Webhook Authorization
+### Autorización mediante Webhook
 
-Un método en el que las decisiones de autorización se toman mediante un servicio externo. El API server reenvía solicitudes de autorización a un servicio externo, que decide si permitir o denegar la solicitud.
+Un método en el que las decisiones de autorización se toman a través de un servicio externo. El servidor API reenvía solicitudes de autorización a un servicio externo, que decide si permite o deniega la solicitud.
 
-## Security Context
+## Contexto de seguridad
 
-Security context define configuraciones de seguridad a nivel de Pod o container. Esto permite un control detallado sobre privilegios, control de acceso, capabilities y más.
+El contexto de seguridad define configuraciones de seguridad en el nivel de Pod o contenedor. Esto permite un control detallado de privilegios, control de acceso, capacidades y más.
 
-```mermaid
-graph TD
-    subgraph "Pod Security Context"
-        PSC["Pod Security Context"]
-        PSC -->|Setting| RunAsUser["runAsUser<br>(User ID)"]
-        PSC -->|Setting| RunAsGroup["runAsGroup<br>(Group ID)"]
-        PSC -->|Setting| FSGroup["fsGroup<br>(Filesystem Group)"]
-        PSC -->|Setting| SupGroups["supplementalGroups<br>(Additional Groups)"]
-    end
+![Un Pod contiene un contexto de seguridad a nivel de Pod (runAsUser, runAsGroup, fsGroup, supplementalGroups) y un contenedor; el contenedor tiene su propio contexto de seguridad a nivel de contenedor (privileged, allowPrivilegeEscalation, readOnlyRootFilesystem, capabilities, seLinuxOptions), y el Pod en su conjunto debe cumplir uno de los tres niveles de Pod Security Standards: Privileged, Baseline o Restricted.](../.gitbook/assets/en-core-06-security-3.png)
 
-    subgraph "Container Security Context"
-        CSC["Container Security Context"]
-        CSC -->|Setting| Privilege["privileged<br>(Privileged Mode)"]
-        CSC -->|Setting| AllowPrivEsc["allowPrivilegeEscalation<br>(Allow Privilege Escalation)"]
-        CSC -->|Setting| ReadOnlyFS["readOnlyRootFilesystem<br>(Read-only Filesystem)"]
-        CSC -->|Setting| Capabilities["capabilities<br>(Linux Kernel Capabilities)"]
-        CSC -->|Setting| SELinux["seLinuxOptions<br>(SELinux Options)"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-3.html)
 
-    Pod["Pod"] -->|Contains| PSC
-    Pod -->|Contains| Container["Container"]
-    Container -->|Contains| CSC
-
-    subgraph "Pod Security Standards"
-        PSS["Pod Security Standards"]
-        PSS -->|Level| Privileged["Privileged<br>(No Restrictions)"]
-        PSS -->|Level| Baseline["Baseline<br>(Basic Security)"]
-        PSS -->|Level| Restricted["Restricted<br>(Enhanced Security)"]
-    end
-
-    Pod -->|Complies| PSS
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef securityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef securitySetting fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Pod,Container k8sComponent;
-    class PSC,CSC,PSS securityComponent;
-    class RunAsUser,RunAsGroup,FSGroup,SupGroups,Privilege,AllowPrivEsc,ReadOnlyFS,Capabilities,SELinux securitySetting;
-    class Privileged,Baseline,Restricted securitySetting;
-```
-
-### Pod Security Context
+### Contexto de seguridad de Pod
 
 ```yaml
 apiVersion: v1
@@ -499,19 +327,19 @@ spec:
 ```
 
 En el ejemplo anterior:
-- `runAsUser`: User ID bajo el cual se ejecuta el proceso del container
-- `runAsGroup`: Group ID bajo el cual se ejecuta el proceso del container
-- `fsGroup`: Group ID usado al acceder a volumes
+- `runAsUser`: ID de usuario con el que se ejecuta el proceso del contenedor
+- `runAsGroup`: ID de grupo con el que se ejecuta el proceso del contenedor
+- `fsGroup`: ID de grupo utilizado al acceder a volúmenes
 - `allowPrivilegeEscalation`: Indica si un proceso puede obtener más privilegios que su proceso padre
-- `capabilities`: Agrega o elimina Linux kernel capabilities
-- `readOnlyRootFilesystem`: Monta el root filesystem como solo lectura
+- `capabilities`: Añade o elimina capacidades del kernel de Linux
+- `readOnlyRootFilesystem`: Monta el sistema de archivos raíz como de solo lectura
 
 ### Pod Security Standards
 
-A partir de Kubernetes 1.25, Pod Security Policy fue reemplazado por Pod Security Standards. Pod Security Standards define tres niveles de política:
+A partir de Kubernetes 1.25, Pod Security Policy fue reemplazada por Pod Security Standards. Pod Security Standards definen tres niveles de política:
 
-1. **Privileged**: Sin restricciones, todos los privilegios permitidos
-2. **Baseline**: Bloquea rutas conocidas de escalación de privilegios
+1. **Privileged**: Sin restricciones, se permiten todos los privilegios
+2. **Baseline**: Bloquea rutas conocidas de escalamiento de privilegios
 3. **Restricted**: Política de seguridad fuertemente endurecida
 
 ```yaml
@@ -526,56 +354,13 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-## Network Policy
+## Política de red
 
-Las network policies proporcionan una forma de controlar la comunicación entre Pods. De forma predeterminada, todos los Pods de un cluster Kubernetes pueden comunicarse entre sí, pero esto puede restringirse mediante network policies.
+Las políticas de red proporcionan una forma de controlar la comunicación entre Pods. De forma predeterminada, todos los Pods de un clúster de Kubernetes pueden comunicarse entre sí, pero esto puede restringirse mediante políticas de red.
 
-```mermaid
-graph TD
-    subgraph "Network Policy Configuration"
-        NP["NetworkPolicy"]
-        NP -->|Selects| PodSelector["podSelector<br>(Target Pods)"]
-        NP -->|Defines| PolicyTypes["policyTypes<br>(Ingress/Egress)"]
-        NP -->|Rules| Ingress["ingress<br>(Inbound Rules)"]
-        NP -->|Rules| Egress["egress<br>(Outbound Rules)"]
-    end
+![Una NetworkPolicy (api-allow) selecciona Pods de destino con podSelector, declara Ingress/Egress en policyTypes y crea reglas de ingress desde/puertos y de egress hacia/puertos (podSelector, namespaceSelector, ipBlock); aplicada al Pod API, permite únicamente tráfico de Frontend a API en 8080/TCP y de API a Database en 5432/TCP.](../.gitbook/assets/en-core-06-security-4.png)
 
-    subgraph "Inbound Rules"
-        Ingress -->|Source| IngressFrom["from<br>(Source Selector)"]
-        Ingress -->|Port| IngressPorts["ports<br>(Allowed Ports)"]
-
-        IngressFrom -->|Selects| IPodSelector["podSelector<br>(Source Pods)"]
-        IngressFrom -->|Selects| INSSelector["namespaceSelector<br>(Source Namespaces)"]
-        IngressFrom -->|Selects| IIPBlock["ipBlock<br>(Source IP Range)"]
-    end
-
-    subgraph "Outbound Rules"
-        Egress -->|Target| EgressTo["to<br>(Destination Selector)"]
-        Egress -->|Port| EgressPorts["ports<br>(Allowed Ports)"]
-
-        EgressTo -->|Selects| EPodSelector["podSelector<br>(Destination Pods)"]
-        EgressTo -->|Selects| ENSSelector["namespaceSelector<br>(Destination Namespaces)"]
-        EgressTo -->|Selects| EIPBlock["ipBlock<br>(Destination IP Range)"]
-    end
-
-    Frontend["Frontend Pod"] -->|Communication| API["API Pod"]
-    API -->|Communication| DB["Database Pod"]
-
-    NP -->|Applies| API
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef networkPolicy fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef policyConfig fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NP,PodSelector,PolicyTypes,Ingress,Egress networkPolicy;
-    class IngressFrom,IngressPorts,IPodSelector,INSSelector,IIPBlock,EgressTo,EgressPorts,EPodSelector,ENSSelector,EIPBlock policyConfig;
-    class Frontend,API userApp;
-    class DB dataStore;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-4.html)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -609,19 +394,19 @@ spec:
 ```
 
 En el ejemplo anterior:
-- Define una network policy para Pods con la etiqueta `api`
-- Permite solo tráfico entrante en el puerto 8080 desde Pods con la etiqueta `frontend`
-- Permite solo tráfico saliente al puerto 5432 hacia Pods con la etiqueta `database`
+- Define una política de red para Pods con la etiqueta `api`
+- Permite únicamente tráfico entrante en el puerto 8080 desde Pods con la etiqueta `frontend`
+- Permite únicamente tráfico saliente hacia el puerto 5432 en Pods con la etiqueta `database`
 
-Para usar network policies, el plugin de red del cluster debe admitir network policies. CNI plugins como Calico, Cilium y Antrea admiten network policies.
+Para utilizar políticas de red, el complemento de red del clúster debe admitirlas. Los complementos CNI como Calico, Cilium y Antrea admiten políticas de red.
 
-## Secret Management
+## Gestión de secretos
 
-Kubernetes Secrets se usan para almacenar y gestionar información sensible, como contraseñas, API keys y certificados. Sin embargo, de forma predeterminada, los secrets solo están codificados en base64, no cifrados. Por lo tanto, se necesitan medidas de seguridad adicionales.
+Los Secrets de Kubernetes se utilizan para almacenar y gestionar información confidencial, como contraseñas, claves de API y certificados. Sin embargo, de forma predeterminada, los secretos solo están codificados en base64, no cifrados. Por lo tanto, se necesitan medidas de seguridad adicionales.
 
-### Secret Encryption
+### Cifrado de Secrets
 
-Para cifrar secrets almacenados en etcd, debes configurar la configuración de cifrado del API server:
+Para cifrar secretos almacenados en etcd, debes configurar la configuración de cifrado del servidor API:
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -637,9 +422,9 @@ resources:
       - identity: {}
 ```
 
-### External Secret Management
+### Gestión externa de secretos
 
-Para una gestión de secrets más segura, puedes usar sistemas externos de gestión de secrets:
+Para una gestión de secretos más segura, puedes utilizar sistemas externos de gestión de secretos:
 
 - HashiCorp Vault
 - AWS Secrets Manager
@@ -647,13 +432,13 @@ Para una gestión de secrets más segura, puedes usar sistemas externos de gesti
 - Google Secret Manager
 - External Secrets Operator
 
-## Image Security
+## Seguridad de imágenes
 
-La seguridad de container images es una parte importante de la seguridad de Kubernetes.
+La seguridad de las imágenes de contenedor es una parte importante de la seguridad de Kubernetes.
 
-### Image Vulnerability Scanning
+### Escaneo de vulnerabilidades de imágenes
 
-Escanea container images en busca de vulnerabilidades para identificar y resolver problemas de seguridad conocidos:
+Escanea las imágenes de contenedor en busca de vulnerabilidades para identificar y resolver problemas de seguridad conocidos:
 
 - Trivy
 - Clair
@@ -661,9 +446,9 @@ Escanea container images en busca de vulnerabilidades para identificar y resolve
 - AWS ECR Scan
 - Docker Hub Scan
 
-### Image Signing and Verification
+### Firma y verificación de imágenes
 
-Verifica el origen y la integridad de las images mediante image signing:
+Verifica el origen y la integridad de las imágenes mediante la firma de imágenes:
 
 - Notary
 - Cosign
@@ -671,9 +456,9 @@ Verifica el origen y la integridad de las images mediante image signing:
 - AWS Signer
 - Connaisseur
 
-### Image Policies
+### Políticas de imágenes
 
-Restringe la descarga de images solo desde registries confiables mediante image policies:
+Restringe la obtención de imágenes únicamente desde registros de confianza mediante políticas de imágenes:
 
 ```yaml
 apiVersion: admission.k8s.io/v1
@@ -689,13 +474,13 @@ plugins:
       defaultAllow: false
 ```
 
-## Audit
+## Auditoría
 
-La auditoría de Kubernetes proporciona un mecanismo para registrar y analizar eventos que ocurren en el cluster.
+La auditoría de Kubernetes proporciona un mecanismo para registrar y analizar los eventos que ocurren en el clúster.
 
-### Audit Policy
+### Política de auditoría
 
-Las audit policies definen qué eventos registrar:
+Las políticas de auditoría definen qué eventos registrar:
 
 ```yaml
 apiVersion: audit.k8s.io/v1
@@ -716,78 +501,30 @@ rules:
     resources: ["endpoints", "services"]
 ```
 
-Audit levels:
-- `None`: No registra eventos
-- `Metadata`: Registra solo los metadatos de la solicitud (usuario, hora, recurso, etc.)
-- `Request`: Registra los metadatos de la solicitud y el cuerpo de la solicitud
-- `RequestResponse`: Registra los metadatos de la solicitud, el cuerpo de la solicitud y el cuerpo de la respuesta
+Niveles de auditoría:
+- `None`: No registrar eventos
+- `Metadata`: Registrar únicamente metadatos de la solicitud (usuario, hora, recurso, etc.)
+- `Request`: Registrar metadatos de la solicitud y el cuerpo de la solicitud
+- `RequestResponse`: Registrar metadatos de la solicitud, cuerpo de la solicitud y cuerpo de la respuesta
 
-### Audit Log Backends
+### Backends de registros de auditoría
 
-Los audit logs pueden almacenarse en distintos backends:
+Los registros de auditoría pueden almacenarse en varios backends:
 - Archivo
 - Webhook
 - Backends dinámicos (por ejemplo, Elasticsearch, Loki)
 
-## Amazon EKS Security Enhancement
+## Mejora de la seguridad de Amazon EKS
 
-Amazon EKS puede mejorar la seguridad integrándose con servicios de seguridad de AWS además de las funcionalidades básicas de seguridad de Kubernetes.
+Amazon EKS puede mejorar la seguridad integrándose con los servicios de seguridad de AWS, además de las características básicas de seguridad de Kubernetes.
 
-```mermaid
-graph TD
-    subgraph "AWS Security Services"
-        IAM["AWS IAM<br>(Identity and Access Management)"]
-        KMS["AWS KMS<br>(Key Management Service)"]
-        SG["AWS Security Groups"]
-        WAF["AWS WAF<br>(Web Application Firewall)"]
-        GD["AWS GuardDuty<br>(Threat Detection)"]
-        SM["AWS Secrets Manager"]
-    end
+![Seis servicios de seguridad de AWS — KMS, WAF, GuardDuty, IAM, Security Groups y Secrets Manager — se integran cada uno en un mecanismo específico de EKS y protegen el servidor API, un nodo de trabajo o Pods dentro del clúster.](../.gitbook/assets/en-core-06-security-5.png)
 
-    subgraph "EKS Security Integration"
-        IRSA["IAM Roles for Service Accounts<br>(IRSA)"]
-        SecEnc["Kubernetes Secret Encryption"]
-        PodSG["Pod Security Groups"]
-        ALB["Application Load Balancer<br>(ALB) Integration"]
-        EKSDetect["EKS Threat Detection"]
-        ExtSecrets["External Secrets Operator"]
-    end
-
-    IAM -->|Integrates| IRSA
-    KMS -->|Integrates| SecEnc
-    SG -->|Integrates| PodSG
-    WAF -->|Integrates| ALB
-    GD -->|Integrates| EKSDetect
-    SM -->|Integrates| ExtSecrets
-
-    subgraph "EKS Cluster"
-        API["API Server"]
-        Node["Worker Node"]
-        Pod["Pod"]
-    end
-
-    IRSA -->|Grants Permissions| Pod
-    SecEnc -->|Encrypts| API
-    PodSG -->|Network Security| Pod
-    ALB -->|Protects Traffic| API
-    EKSDetect -->|Monitors| Node
-    ExtSecrets -->|Provides Secrets| Pod
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef securityIntegration fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class API,Node,Pod k8sComponent;
-    class IAM,KMS,SG,WAF,GD,SM awsService;
-    class IRSA,SecEnc,PodSG,ALB,EKSDetect,ExtSecrets securityIntegration;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-06-security-5.html)
 
 ### IAM Roles and Service Accounts (IRSA)
 
-Usando IRSA (IAM Roles for Service Accounts), puedes asociar IAM roles con Kubernetes Service Accounts para acceder de forma segura a servicios de AWS.
+Con IRSA (IAM Roles for Service Accounts), puedes asociar roles de IAM con cuentas de servicio de Kubernetes para acceder de forma segura a los servicios de AWS.
 
 ```bash
 # Create OIDC provider
@@ -802,9 +539,9 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### Secret Encryption with AWS KMS
+### Cifrado de secretos con AWS KMS
 
-Puedes usar AWS KMS para cifrar Kubernetes secrets en tu cluster EKS.
+Puedes utilizar AWS KMS para cifrar secretos de Kubernetes en tu clúster de EKS.
 
 ```bash
 # Create KMS key
@@ -816,7 +553,7 @@ eksctl create cluster --name my-cluster --encryption-provider-key-arn arn:aws:km
 
 ### AWS Security Groups
 
-Aplica AWS security groups a los nodes y Pods del cluster EKS para controlar el tráfico de red.
+Aplica AWS security groups a los nodos y Pods del clúster de EKS para controlar el tráfico de red.
 
 ```bash
 # Create security group
@@ -832,7 +569,7 @@ aws ec2 authorize-security-group-ingress \
 
 ### AWS WAF
 
-Coloca AWS WAF (Web Application Firewall) delante de los clusters EKS para proteger aplicaciones web.
+Coloca AWS WAF (Web Application Firewall) delante de los clústeres de EKS para proteger las aplicaciones web.
 
 ```bash
 # Create WAF Web ACL
@@ -845,7 +582,7 @@ aws wafv2 create-web-acl \
 
 ### AWS GuardDuty
 
-Usa AWS GuardDuty para detectar y responder a amenazas de seguridad en clusters EKS.
+Utiliza AWS GuardDuty para detectar y responder a amenazas de seguridad en los clústeres de EKS.
 
 ```bash
 # Enable GuardDuty
@@ -857,66 +594,66 @@ aws guardduty update-detector \
   --features '[{"Name": "EKS_RUNTIME_MONITORING", "Status": "ENABLED"}]'
 ```
 
-## Security Best Practices
+## Prácticas recomendadas de seguridad
 
-Estas son prácticas recomendadas para mejorar la seguridad de clusters y workloads de Kubernetes.
+Estas son prácticas recomendadas para mejorar la seguridad de los clústeres y las cargas de trabajo de Kubernetes.
 
-### Cluster Security
+### Seguridad del clúster
 
-1. **Mantén las versiones actualizadas**: Mantén Kubernetes y todos los componentes actualizados para corregir vulnerabilidades conocidas.
-2. **Restringe el acceso al API server**: Restringe el acceso al API server y permite el acceso público solo cuando sea necesario.
-3. **Cifrado de etcd**: Cifra los datos almacenados en etcd para proteger información sensible.
-4. **Habilita audit logging**: Habilita audit logging para monitorear y analizar la actividad del cluster.
-5. **Implementa network policies**: Implementa network policies para restringir la comunicación Pod-to-Pod.
+1. **Mantener las versiones actualizadas**: Mantén Kubernetes y todos los componentes actualizados para corregir vulnerabilidades conocidas.
+2. **Restringir el acceso al servidor API**: Restringe el acceso al servidor API y permite el acceso público solo cuando sea necesario.
+3. **Cifrado de etcd**: Cifra los datos almacenados en etcd para proteger la información confidencial.
+4. **Habilitar el registro de auditoría**: Habilita el registro de auditoría para monitorizar y analizar la actividad del clúster.
+5. **Implementar políticas de red**: Implementa políticas de red para restringir la comunicación de Pod a Pod.
 
-### Workload Security
+### Seguridad de cargas de trabajo
 
-1. **Principio de mínimo privilegio**: Concede solo los permisos mínimos necesarios a Pods y containers.
-2. **Usuario no root**: Ejecuta containers como usuarios no root.
-3. **Filesystem de solo lectura**: Monta los root filesystems de containers como solo lectura cuando sea posible.
+1. **Principio de mínimo privilegio**: Concede únicamente los permisos mínimos necesarios a Pods y contenedores.
+2. **Usuario no root**: Ejecuta los contenedores como usuarios no root.
+3. **Sistema de archivos de solo lectura**: Monta los sistemas de archivos raíz de los contenedores como de solo lectura cuando sea posible.
 4. **Límites de recursos**: Establece límites de recursos de CPU y memoria para prevenir ataques DoS.
-5. **Configura Security Context**: Configura correctamente los security contexts de Pod y container.
+5. **Configurar el contexto de seguridad**: Configura correctamente los contextos de seguridad de Pod y contenedor.
 
-### Image Security
+### Seguridad de imágenes
 
-1. **Imágenes base mínimas**: Usa base images con paquetes mínimos.
-2. **Image Vulnerability Scanning**: Escanea regularmente container images en busca de vulnerabilidades.
-3. **Image Signing and Verification**: Verifica el origen y la integridad de las images mediante image signing.
-4. **Registries confiables**: Descarga images solo desde registries confiables.
-5. **Usa las images más recientes**: Actualiza regularmente las images para corregir vulnerabilidades conocidas.
+1. **Imágenes base mínimas**: Utiliza imágenes base con paquetes mínimos.
+2. **Escaneo de vulnerabilidades de imágenes**: Escanea regularmente las imágenes de contenedor en busca de vulnerabilidades.
+3. **Firma y verificación de imágenes**: Verifica el origen y la integridad de las imágenes mediante la firma de imágenes.
+4. **Registros de confianza**: Obtén imágenes únicamente desde registros de confianza.
+5. **Usar las imágenes más recientes**: Actualiza regularmente las imágenes para corregir vulnerabilidades conocidas.
 
-### Secret Management
+### Gestión de secretos
 
-1. **External Secret Management**: Usa sistemas externos de gestión de secrets para gestionar secrets de forma segura.
-2. **Secret Encryption**: Cifra secrets almacenados en etcd.
-3. **Secret Rotation**: Rota secrets regularmente para mejorar la seguridad.
-4. **Acceso con privilegios mínimos**: Restringe el acceso a secrets solo a los Pods necesarios.
-5. **Usa Volumes en lugar de variables de entorno**: Monta secrets mediante volumes en lugar de variables de entorno.
+1. **Gestión externa de secretos**: Utiliza sistemas externos de gestión de secretos para administrarlos de forma segura.
+2. **Cifrado de secretos**: Cifra los secretos almacenados en etcd.
+3. **Rotación de secretos**: Rota regularmente los secretos para mejorar la seguridad.
+4. **Acceso con privilegios mínimos**: Restringe el acceso a los secretos únicamente a los Pods necesarios.
+5. **Usar volúmenes en lugar de variables de entorno**: Monta los secretos mediante volúmenes en lugar de variables de entorno.
 
-## Conclusion
+## Conclusión
 
-La seguridad de Kubernetes debe implementarse en varias capas, considerando la seguridad en todas las áreas, incluida la infraestructura del cluster, los componentes de Kubernetes y los workloads de aplicaciones. Junto con las funcionalidades básicas de seguridad de Kubernetes, como autenticación, autorización, network policies y security contexts, puedes mejorar la seguridad del cluster y de los workloads mediante medidas de seguridad adicionales como image security, secret management y audit logging.
+La seguridad de Kubernetes debe implementarse en múltiples capas, considerando la seguridad en todas las áreas, incluida la infraestructura del clúster, los componentes de Kubernetes y las cargas de trabajo de las aplicaciones. Junto con las características básicas de seguridad de Kubernetes, como la autenticación, la autorización, las políticas de red y los contextos de seguridad, puedes mejorar la seguridad del clúster y de las cargas de trabajo mediante medidas adicionales como la seguridad de imágenes, la gestión de secretos y el registro de auditoría.
 
-Al usar Amazon EKS, puedes mejorar aún más la seguridad integrándote con diversos servicios de seguridad de AWS. Servicios como IAM Roles and Service Accounts (IRSA), secret encryption with AWS KMS, AWS Security Groups, AWS WAF y AWS GuardDuty pueden usarse para mejorar la seguridad del cluster EKS.
+Al utilizar Amazon EKS, puedes mejorar aún más la seguridad integrándote con diversos servicios de seguridad de AWS. Servicios como IAM Roles and Service Accounts (IRSA), el cifrado de secretos con AWS KMS, AWS Security Groups, AWS WAF y AWS GuardDuty pueden utilizarse para mejorar la seguridad del clúster de EKS.
 
-La seguridad es un proceso continuo, por lo que es importante mantener la postura de seguridad de clusters y workloads mediante evaluaciones y actualizaciones de seguridad periódicas.
+La seguridad es un proceso continuo, por lo que es importante mantener la postura de seguridad de los clústeres y las cargas de trabajo mediante evaluaciones y actualizaciones de seguridad periódicas.
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta el [Security Quiz](../quizzes/core/06-security-quiz.md).
+Para comprobar lo que aprendiste en este capítulo, prueba el [Cuestionario de seguridad](../quizzes/core/06-security-quiz.md).
 
-## References
+## Referencias
 
-- [Documentación oficial de Kubernetes - Security](https://kubernetes.io/docs/concepts/security/)
-- [Documentación oficial de Kubernetes - Authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
-- [Documentación oficial de Kubernetes - Authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+- [Documentación oficial de Kubernetes - Seguridad](https://kubernetes.io/docs/concepts/security/)
+- [Documentación oficial de Kubernetes - Autenticación](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+- [Documentación oficial de Kubernetes - Autorización](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
 - [Documentación oficial de Kubernetes - RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- [Documentación oficial de Kubernetes - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Documentación oficial de Kubernetes - Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+- [Documentación oficial de Kubernetes - Políticas de red](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Documentación oficial de Kubernetes - Contexto de seguridad](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - [Documentación oficial de Kubernetes - Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Documentación oficial de Kubernetes - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Documentación oficial de Kubernetes - Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
-- [Documentación oficial de Amazon EKS - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
+- [Documentación oficial de Kubernetes - Auditoría](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
+- [Documentación oficial de Amazon EKS - Seguridad](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
 - [Documentación oficial de Amazon EKS - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [Documentación oficial de Amazon EKS - Secret Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS Security Blog - EKS Security Best Practices](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)
+- [Documentación oficial de Amazon EKS - Cifrado de secretos](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
+- [Blog de seguridad de AWS - Prácticas recomendadas de seguridad de EKS](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)

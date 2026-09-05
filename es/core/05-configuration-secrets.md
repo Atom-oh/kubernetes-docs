@@ -1,19 +1,19 @@
-# Configuration and Secrets
+# Configuración y Secrets
 
 > **Versiones compatibles**: Kubernetes 1.32, 1.33, 1.34
 > **Última actualización**: February 22, 2026
 
-En Kubernetes, la gestión de configuración es una parte importante de administrar los ajustes de una aplicación por separado del código. En este capítulo, exploraremos en detalle los métodos de gestión de configuración de Kubernetes, incluidos ConfigMaps, Secrets, environment variables y el montaje de configuración mediante volumes.
+En Kubernetes, la gestión de la configuración es una parte importante de administrar los ajustes de la aplicación por separado del código. En este capítulo, exploraremos en detalle los métodos de gestión de configuración de Kubernetes, incluidos ConfigMaps, Secrets, variables de entorno y el montaje de configuración mediante volúmenes.
 
-## Lab Environment Setup
+## Configuración del entorno de laboratorio
 
 Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y entorno:
 
-### Required Tools
+### Herramientas necesarias
 - kubectl v1.34 o superior
-- Un cluster Kubernetes funcional (EKS, minikube, kind, etc.)
+- Un clúster de Kubernetes funcional (EKS, minikube, kind, etc.)
 
-### Configuration Example Setup
+### Configuración de ejemplo
 
 ```bash
 # Create namespace
@@ -60,86 +60,42 @@ EOF
 kubectl -n config-demo logs config-test-pod
 ```
 
-## Configuration Management at a Glance
+## Gestión de configuración de un vistazo
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Configuration Management"
-        subgraph "Configuration Sources"
-            Admin[Cluster Administrator]
-            GitOps[GitOps Pipeline]
-            ExtSys[External System]
+![Los administradores de clústeres, los pipelines de GitOps y los sistemas externos crean ConfigMaps y Secrets, que los Pods consumen como variables de entorno, montajes de volúmenes y secrets de extracción de imágenes, mientras que ConfigMap alimenta la recarga automática del sidecar y Secret alimenta el cifrado de KSOPS y la inyección dinámica de Vault Injector como funciones avanzadas.](../.gitbook/assets/en-core-05-configuration-secrets-0.png)
 
-            Admin -->|Creates| CM[ConfigMap]
-            Admin -->|Creates| Secret[Secret]
-            GitOps -->|Automates| CM
-            GitOps -->|Automates| Secret
-            ExtSys -->|Integrates| CM
-            ExtSys -->|Integrates| Secret
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-0.html)
 
-        subgraph "Configuration Consumption"
-            CM -->|Environment Variables| EnvPod[Pod]
-            Secret -->|Environment Variables| EnvPod
-
-            CM -->|Volume Mount| VolPod[Pod]
-            Secret -->|Volume Mount| VolPod
-
-            Secret -->|Image Pull Secret| ImgPod[Pod]
-
-            subgraph "Advanced Features"
-                CM -->|Auto Reload| Sidecar[Sidecar]
-                Secret -->|Encryption| KSOPS[KSOPS]
-                Secret -->|Dynamic Injection| Vault[Vault Injector]
-            end
-        end
-    end
-
-    %% Style definitions
-    classDef admin fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef config fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef advanced fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef integration fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Admin,GitOps,ExtSys admin;
-    class CM,Secret config;
-    class EnvPod,VolPod,ImgPod pod;
-    class Sidecar,KSOPS,Vault advanced;
-    class GitOps,ExtSys integration;
-```
-
-## Table of Contents
+## Tabla de contenidos
 
 1. [ConfigMap](#configmap)
 2. [Secret](#secret)
-3. [Environment Variables](#environment-variables)
-4. [Mounting Configuration Through Volumes](#mounting-configuration-through-volumes)
-5. [Configuration Best Practices](#configuration-best-practices)
-6. [External Configuration Management Tools](#external-configuration-management-tools)
+3. [Variables de entorno](#environment-variables)
+4. [Montaje de configuración mediante volúmenes](#mounting-configuration-through-volumes)
+5. [Prácticas recomendadas de configuración](#configuration-best-practices)
+6. [Herramientas externas de gestión de configuración](#external-configuration-management-tools)
 
 ## ConfigMap
 
 > **Concepto clave**: Los ConfigMaps almacenan datos de configuración en pares clave-valor, separando el código de la aplicación de la configuración.
 
-Los ConfigMaps son objetos de API que almacenan datos de configuración en pares clave-valor. Usar ConfigMaps te permite separar los datos de configuración de las container images, lo que hace que las aplicaciones sean más portables.
+Los ConfigMaps son objetos de API que almacenan datos de configuración en pares clave-valor. El uso de ConfigMaps permite separar los datos de configuración de las imágenes de contenedor, lo que hace que las aplicaciones sean más portátiles.
 
-### ConfigMap vs Secret Comparison
+### Comparación entre ConfigMap y Secret
 
-| Feature | ConfigMap | Secret |
+| Característica | ConfigMap | Secret |
 |---------|-----------|--------|
-| **Purpose** | General configuration data | Sensitive configuration data |
-| **Storage Format** | Plain text | Base64 encoded (default) |
-| **Size Limit** | 1MB | 1MB |
-| **Encryption** | None by default | etcd encryption support |
-| **Volume Type** | configMap | secret |
-| **Use Cases** | Environment variables, config files | Passwords, tokens, certificates |
-| **Auto Update** | Possible delay when volume mounted | Possible delay when volume mounted |
+| **Propósito** | Datos de configuración generales | Datos de configuración confidenciales |
+| **Formato de almacenamiento** | Texto sin formato | Codificado en Base64 (predeterminado) |
+| **Límite de tamaño** | 1MB | 1MB |
+| **Cifrado** | Ninguno de forma predeterminada | Compatibilidad con cifrado de etcd |
+| **Tipo de volumen** | configMap | secret |
+| **Casos de uso** | Variables de entorno, archivos de configuración | Contraseñas, tokens, certificados |
+| **Actualización automática** | Posible retraso cuando se monta como volumen | Posible retraso cuando se monta como volumen |
 
-### ConfigMap Creation Methods
+### Métodos de creación de ConfigMap
 
-Los ConfigMaps se pueden crear de varias maneras:
+Los ConfigMaps se pueden crear de varias formas:
 
 1. **Creación imperativa**:
 
@@ -176,11 +132,11 @@ data:
       enabled: true
 ```
 
-### ConfigMap Usage Methods
+### Métodos de uso de ConfigMap
 
-Los ConfigMaps se pueden usar de las siguientes maneras:
+Los ConfigMaps se pueden usar de las siguientes formas:
 
-1. **Usar como environment variables**:
+1. **Usar como variables de entorno**:
 
 ```yaml
 apiVersion: v1
@@ -204,54 +160,15 @@ spec:
         name: my-config
 ```
 
-```mermaid
-flowchart TD
-    CM[ConfigMap] -->|Environment Variables| Pod1[Pod]
-    CM -->|Volume Mount| Pod2[Pod]
-    CM -->|Command Line Arguments| Pod3[Pod]
+![Los datos de clave-valor de un ConfigMap (key1, key2, config.properties) son consumidos por los Pods de tres formas: como variables de entorno, como un volumen montado o como argumentos de línea de comandos; la ruta de variables de entorno se resuelve en env.key1/env.key2 y la ruta de volumen en archivos bajo /etc/config dentro del contenedor.](../.gitbook/assets/en-core-05-configuration-secrets-1.png)
 
-    subgraph "ConfigMap Data"
-        CMData1["key1: value1"]
-        CMData2["key2: value2"]
-        CMData3["config.properties: file contents"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-1.html)
 
-    subgraph "Environment Variable Usage"
-        Env1["env.key1 = value1"]
-        Env2["env.key2 = value2"]
-    end
+### Creación de ConfigMap
 
-    subgraph "Volume Mount Usage"
-        Vol1["/etc/config/key1"]
-        Vol2["/etc/config/key2"]
-        Vol3["/etc/config/config.properties"]
-    end
+Los ConfigMaps se pueden crear de varias formas:
 
-    CM --- CMData1
-    CM --- CMData2
-    CM --- CMData3
-
-    Pod1 --- Env1
-    Pod1 --- Env2
-
-    Pod2 --- Vol1
-    Pod2 --- Vol2
-    Pod2 --- Vol3
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class CM k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-```
-
-### ConfigMap Creation
-
-Los ConfigMaps se pueden crear de varias maneras:
-
-#### Imperative
+#### Imperativa
 
 ```bash
 # Create from literal values
@@ -264,7 +181,7 @@ kubectl create configmap my-config --from-file=config.properties
 kubectl create configmap my-config --from-file=config-dir/
 ```
 
-#### Declarative
+#### Declarativa
 
 ```yaml
 apiVersion: v1
@@ -287,11 +204,11 @@ data:
     }
 ```
 
-### ConfigMap Usage
+### Uso de ConfigMap
 
-Los ConfigMaps se pueden usar en Pods de las siguientes maneras:
+Los ConfigMaps se pueden usar en Pods de las siguientes formas:
 
-#### Use as Environment Variables
+#### Usar como variables de entorno
 
 ```yaml
 apiVersion: v1
@@ -317,7 +234,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Mount as Volume
+#### Montar como volumen
 
 ```yaml
 apiVersion: v1
@@ -339,7 +256,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Mount Only Specific Keys
+#### Montar solo claves específicas
 
 ```yaml
 apiVersion: v1
@@ -364,9 +281,9 @@ spec:
   restartPolicy: Never
 ```
 
-### ConfigMap Updates
+### Actualizaciones de ConfigMap
 
-Cuando se actualiza un ConfigMap, el contenido del ConfigMap montado como volume se actualiza automáticamente. Sin embargo, los ConfigMaps usados como environment variables requieren reiniciar el Pod para actualizarse.
+Cuando se actualiza un ConfigMap, el contenido del ConfigMap montado como volumen se actualiza automáticamente. Sin embargo, los ConfigMaps usados como variables de entorno requieren reiniciar el Pod para actualizarse.
 
 ```bash
 kubectl edit configmap my-config
@@ -390,63 +307,30 @@ kubectl apply -f updated-configmap.yaml
 
 ## Secret
 
-Los Secrets son objetos de API que almacenan información sensible, como passwords, OAuth tokens y SSH keys. Los Secrets son similares a los ConfigMaps, pero proporcionan características de seguridad adicionales para almacenar datos sensibles.
+Los Secrets son objetos de API que almacenan información confidencial, como contraseñas, tokens de OAuth y claves SSH. Los Secrets son similares a los ConfigMaps, pero proporcionan funciones de seguridad adicionales para almacenar datos confidenciales.
 
-```mermaid
-graph LR
-    Secret[Secret] -->|Environment Variables| Pod1[Pod]
-    Secret -->|Volume Mount| Pod2[Pod]
-    Secret -->|Image Pull Secret| Pod3[Pod]
+![Los tipos compatibles de un Secret de Kubernetes (Opaque, TLS, dockerconfigjson, basic-auth) y su codificación en base64 más el almacenamiento opcional con cifrado de etcd, junto con las tres formas en que un Pod lo consume: como variables de entorno, un volumen montado o un secret de extracción de imágenes.](../.gitbook/assets/en-core-05-configuration-secrets-2.png)
 
-    subgraph "Secret Types"
-        ST1["Opaque (Default)"]
-        ST2["kubernetes.io/tls"]
-        ST3["kubernetes.io/dockerconfigjson"]
-        ST4["kubernetes.io/basic-auth"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-2.html)
 
-    subgraph "Storage Method"
-        Store1["base64 encoding"]
-        Store2["etcd encryption (optional)"]
-    end
-
-    Secret --- ST1
-    Secret --- ST2
-    Secret --- ST3
-    Secret --- ST4
-
-    Secret --- Store1
-    Secret --- Store2
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Secret k8sComponent;
-    class Pod1,Pod2,Pod3 userApp;
-    class Store1,Store2 dataStore;
-```
-
-### Secret Types
+### Tipos de Secret
 
 Kubernetes proporciona varios tipos de secrets:
 
-- **Opaque**: Tipo predeterminado, almacena datos arbitrarios definidos por el usuario.
-- **kubernetes.io/service-account-token**: Almacena service account tokens.
+- **Opaque**: Tipo predeterminado; almacena datos arbitrarios definidos por el usuario.
+- **kubernetes.io/service-account-token**: Almacena tokens de cuentas de servicio.
 - **kubernetes.io/dockercfg**: Almacena la forma serializada del archivo `.dockercfg`.
 - **kubernetes.io/dockerconfigjson**: Almacena la forma serializada del archivo `.docker/config.json`.
-- **kubernetes.io/basic-auth**: Almacena credenciales para basic authentication.
-- **kubernetes.io/ssh-auth**: Almacena credenciales para SSH authentication.
-- **kubernetes.io/tls**: Almacena certificados y keys TLS.
-- **bootstrap.kubernetes.io/token**: Almacena datos de bootstrap token.
+- **kubernetes.io/basic-auth**: Almacena credenciales para autenticación básica.
+- **kubernetes.io/ssh-auth**: Almacena credenciales para autenticación SSH.
+- **kubernetes.io/tls**: Almacena certificados y claves TLS.
+- **bootstrap.kubernetes.io/token**: Almacena datos de tokens de bootstrap.
 
-### Secret Creation
+### Creación de Secret
 
-Los Secrets se pueden crear de varias maneras:
+Los Secrets se pueden crear de varias formas:
 
-#### Imperative
+#### Imperativa
 
 ```bash
 # Create from literal values
@@ -466,7 +350,7 @@ kubectl create secret docker-registry my-registry-secret \
   --docker-email=DOCKER_EMAIL
 ```
 
-#### Declarative
+#### Declarativa
 
 ```yaml
 apiVersion: v1
@@ -494,11 +378,11 @@ stringData:
   password: secret
 ```
 
-### Secret Usage
+### Uso de Secret
 
-Los Secrets se pueden usar en Pods de las siguientes maneras:
+Los Secrets se pueden usar en Pods de las siguientes formas:
 
-#### Use as Environment Variables
+#### Usar como variables de entorno
 
 ```yaml
 apiVersion: v1
@@ -524,7 +408,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Mount as Volume
+#### Montar como volumen
 
 ```yaml
 apiVersion: v1
@@ -546,7 +430,7 @@ spec:
   restartPolicy: Never
 ```
 
-#### Image Pull Secrets
+#### Secrets de extracción de imágenes
 
 ```yaml
 apiVersion: v1
@@ -561,16 +445,16 @@ spec:
   - name: my-registry-secret
 ```
 
-### Secret Security Considerations
+### Consideraciones de seguridad para Secret
 
-Los Secrets se codifican en base64 de forma predeterminada, pero esto no es encryption. Para mejorar la seguridad de los secrets, considera los siguientes métodos:
+Los Secrets se codifican en base64 de forma predeterminada, pero esto no es cifrado. Para mejorar la seguridad de los secrets, considera los siguientes métodos:
 
-1. **etcd Encryption**: Cifra los secrets almacenados en etcd.
+1. **Cifrado de etcd**: Cifra los secrets almacenados en etcd.
 2. **RBAC**: Restringe el acceso a los secrets.
 3. **Network Policies**: Limita los Pods que pueden acceder a los secrets.
-4. **External Secret Management Tools**: Usa herramientas externas de gestión de secrets como AWS Secrets Manager, HashiCorp Vault, etc.
+4. **Herramientas externas de gestión de secrets**: Usa herramientas externas de gestión de secrets, como AWS Secrets Manager, HashiCorp Vault, etc.
 
-#### etcd Encryption Configuration
+#### Configuración de cifrado de etcd
 
 ```yaml
 apiVersion: apiserver.config.k8s.io/v1
@@ -586,40 +470,15 @@ resources:
     - identity: {}
 ```
 
-## Environment Variables
+## Variables de entorno
 
-Las environment variables son una forma sencilla de pasar información de configuración a los contenedores. Kubernetes proporciona varias formas de establecer environment variables.
+Las variables de entorno son una forma sencilla de pasar información de configuración a los contenedores. Kubernetes proporciona varias formas de establecer variables de entorno.
 
-```mermaid
-graph TD
-    Pod[Pod] -->|Contains| Container[Container]
+![Las cuatro fuentes desde las que Kubernetes puede rellenar las variables de entorno de un Container: un valor estático directo, una clave de ConfigMap o una referencia completa de envFrom, una clave de Secret o una referencia completa de envFrom, y las referencias de campos o recursos de la Downward API.](../.gitbook/assets/en-core-05-configuration-secrets-3.png)
 
-    subgraph "Environment Variable Sources"
-        Direct["Direct Setting"]
-        CM["ConfigMap"]
-        Secret["Secret"]
-        DownAPI["Downward API"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-3.html)
 
-    Direct -->|env| Container
-    CM -->|valueFrom.configMapKeyRef| Container
-    CM -->|envFrom.configMapRef| Container
-    Secret -->|valueFrom.secretKeyRef| Container
-    Secret -->|envFrom.secretRef| Container
-    DownAPI -->|valueFrom.fieldRef| Container
-    DownAPI -->|valueFrom.resourceFieldRef| Container
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod,Container userApp;
-    class CM,Secret,DownAPI k8sComponent;
-    class Direct k8sComponent;
-```
-
-### Direct Setting
+### Configuración directa
 
 ```yaml
 apiVersion: v1
@@ -639,7 +498,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Setting from ConfigMap
+### Configuración desde ConfigMap
 
 ```yaml
 apiVersion: v1
@@ -660,7 +519,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Setting from Secret
+### Configuración desde Secret
 
 ```yaml
 apiVersion: v1
@@ -681,9 +540,9 @@ spec:
   restartPolicy: Never
 ```
 
-### Setting through Downward API
+### Configuración mediante Downward API
 
-La Downward API te permite exponer información de Pods y contenedores como environment variables.
+La Downward API permite exponer información del Pod y del contenedor como variables de entorno.
 
 ```yaml
 apiVersion: v1
@@ -722,47 +581,15 @@ spec:
   restartPolicy: Never
 ```
 
-## Mounting Configuration Through Volumes
+## Montaje de configuración mediante volúmenes
 
-Montar archivos de configuración en contenedores mediante volumes proporciona un método de gestión de configuración más flexible que las environment variables.
+El montaje de archivos de configuración en contenedores mediante volúmenes proporciona un método de gestión de configuración más flexible que las variables de entorno.
 
-```mermaid
-graph TD
-    Pod[Pod] -->|Contains| Container[Container]
-    Pod -->|Defines| Volumes[Volumes]
-    Container -->|Mounts| VolumeMounts[Volume Mounts]
-    VolumeMounts -->|References| Volumes
+![Un Pod define Volumes respaldados por un ConfigMap o Secret; su Container los monta mediante Volume Mounts que hacen referencia a esos Volumes; y hay cuatro opciones de montaje disponibles: montaje de volumen completo, solo claves específicas (items), de solo lectura (readOnly) y montaje con subPath.](../.gitbook/assets/en-core-05-configuration-secrets-4.png)
 
-    subgraph "Volume Sources"
-        CM["ConfigMap"]
-        Secret["Secret"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-4.html)
 
-    Volumes -->|configMap| CM
-    Volumes -->|secret| Secret
-
-    subgraph "Mount Options"
-        MO1["Full Volume Mount"]
-        MO2["Mount Specific Keys Only"]
-        MO3["Read-only Mount"]
-        MO4["SubPath Mount"]
-    end
-
-    VolumeMounts --- MO1
-    VolumeMounts --- MO2
-    VolumeMounts --- MO3
-    VolumeMounts --- MO4
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Pod,Container userApp;
-    class Volumes,VolumeMounts,CM,Secret k8sComponent;
-```
-
-### ConfigMap Volume
+### Volumen de ConfigMap
 
 ```yaml
 apiVersion: v1
@@ -784,7 +611,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Secret Volume
+### Volumen de Secret
 
 ```yaml
 apiVersion: v1
@@ -806,7 +633,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Specific File Mount
+### Montaje de archivo específico
 
 ```yaml
 apiVersion: v1
@@ -831,7 +658,7 @@ spec:
   restartPolicy: Never
 ```
 
-### Read-only Mount
+### Montaje de solo lectura
 
 ```yaml
 apiVersion: v1
@@ -854,7 +681,7 @@ spec:
   restartPolicy: Never
 ```
 
-### SubPath Mount
+### Montaje con SubPath
 
 ```yaml
 apiVersion: v1
@@ -877,17 +704,17 @@ spec:
   restartPolicy: Never
 ```
 
-## Configuration Best Practices
+## Prácticas recomendadas de configuración
 
-Considera las siguientes best practices al gestionar configuración en Kubernetes:
+Considera las siguientes prácticas recomendadas al administrar la configuración en Kubernetes:
 
-### 1. Separate Configuration from Code
+### 1. Separar la configuración del código
 
-Gestiona el código de la aplicación y la configuración por separado. Esto elimina la necesidad de reconstruir la aplicación cuando cambia la configuración.
+Administra el código de la aplicación y la configuración por separado. Esto elimina la necesidad de reconstruir la aplicación al cambiar la configuración.
 
-### 2. Environment-Specific Configuration Management
+### 2. Gestión de configuración específica por entorno
 
-Gestiona la configuración por separado para distintos entornos, como development, testing y production. Puedes usar namespaces para separar entornos y usar diferentes ConfigMaps y Secrets para cada entorno.
+Administra la configuración por separado para distintos entornos, como desarrollo, pruebas y producción. Puedes usar namespaces para separar entornos y usar diferentes ConfigMaps y Secrets para cada entorno.
 
 ```yaml
 apiVersion: v1
@@ -909,13 +736,13 @@ data:
   log_level: INFO
 ```
 
-### 3. Use Secrets for Sensitive Information
+### 3. Usar Secrets para información confidencial
 
-Usa siempre Secrets para almacenar información sensible, como passwords, API keys y certificados. Usa ConfigMaps solo para datos de configuración no sensibles.
+Usa siempre Secrets para almacenar información confidencial, como contraseñas, claves de API y certificados. Usa ConfigMaps solo para datos de configuración no confidenciales.
 
-### 4. Maintain Immutability
+### 4. Mantener la inmutabilidad
 
-Al cambiar la configuración, crea una nueva versión en lugar de modificar la existente. Esto facilita los rollbacks y permite rastrear el historial de cambios de configuración.
+Al cambiar la configuración, crea una nueva versión en lugar de modificar la existente. Esto facilita las reversiones y permite realizar un seguimiento del historial de cambios de configuración.
 
 ```yaml
 apiVersion: v1
@@ -933,90 +760,35 @@ data:
   # Updated configuration data
 ```
 
-### 5. Restart Pods on Configuration Changes
+### 5. Reiniciar Pods ante cambios de configuración
 
-La configuración usada como environment variables requiere reiniciar el Pod para actualizarse. Usa Deployments para realizar rolling updates.
+La configuración usada como variables de entorno requiere reiniciar el Pod para actualizarse. Usa Deployments para realizar actualizaciones graduales.
 
 ```bash
 kubectl rollout restart deployment/my-deployment
 ```
 
-### 6. Validate Configuration
+### 6. Validar la configuración
 
 Valida la configuración antes de aplicarla. Una configuración no válida puede provocar fallos en la aplicación.
 
-### 7. Document Configuration
+### 7. Documentar la configuración
 
-Documenta las opciones de configuración y sus efectos. Esto ayuda a los miembros del equipo a entender y gestionar la configuración.
+Documenta las opciones de configuración y sus efectos. Esto ayuda a los miembros del equipo a comprender y administrar la configuración.
 
-## Configuration Management in Amazon EKS
+## Gestión de configuración en Amazon EKS
 
-En Amazon EKS, puedes usar varios servicios de AWS además de las características básicas de gestión de configuración de Kubernetes para gestionar configuración y secrets. Esta sección cubre varias formas de gestionar configuración en EKS y la integración con servicios de AWS.
+En Amazon EKS, puedes usar los diversos servicios de AWS además de las funciones básicas de gestión de configuración de Kubernetes para administrar la configuración y los secrets. Esta sección cubre varias formas de administrar la configuración en EKS y la integración con servicios de AWS.
 
-```mermaid
-graph TD
-    EKS[Amazon EKS] -->|Uses| K8s[Kubernetes Configuration]
-    EKS -->|Integrates| AWS[AWS Services]
+![Un clúster de Amazon EKS usa ConfigMaps y Secrets nativos de Kubernetes mientras se integra con AWS Secrets Manager, Parameter Store, AppConfig, KMS e IAM; las herramientas de integración, como External Secrets Operator, ASCP, IRSA y ACK, crean o montan Secrets, los cifran con KMS y otorgan a los Pods permisos de IAM con alcance limitado.](../.gitbook/assets/en-core-05-configuration-secrets-5.png)
 
-    subgraph "Kubernetes Configuration"
-        CM["ConfigMap"]
-        Secret["Secret"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-05-configuration-secrets-5.html)
 
-    subgraph "AWS Services"
-        SM["AWS Secrets Manager"]
-        PS["AWS Parameter Store"]
-        AC["AWS AppConfig"]
-        KMS["AWS KMS"]
-        IAM["AWS IAM"]
-    end
+### Integración con AWS Secrets Manager
 
-    subgraph "Integration Tools"
-        ESO["External Secrets Operator"]
-        ASCP["AWS Secrets and Configuration Provider"]
-        IRSA["IAM Roles for Service Accounts"]
-        ACK["AWS Controllers for Kubernetes"]
-    end
+AWS Secrets Manager es un servicio que permite almacenar y administrar de forma segura credenciales de bases de datos, claves de API y otra información confidencial. En EKS, puedes usar External Secrets Operator o AWS Secrets and Configuration Provider (ASCP) para sincronizar secrets de AWS Secrets Manager con secrets de Kubernetes.
 
-    K8s --- CM
-    K8s --- Secret
-
-    AWS --- SM
-    AWS --- PS
-    AWS --- AC
-    AWS --- KMS
-    AWS --- IAM
-
-    SM -->|Integrates| ESO
-    PS -->|Integrates| ASCP
-    IAM -->|Integrates| IRSA
-    AWS -->|Integrates| ACK
-
-    ESO -->|Creates| Secret
-    ASCP -->|Mounts| Secret
-    IRSA -->|Grants Permissions| Pod[Pod]
-    ACK -->|Manages| AWS
-
-    KMS -->|Encrypts| Secret
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef integrationTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class EKS,K8s,CM,Secret k8sComponent;
-    class Pod userApp;
-    class AWS,SM,PS,AC,KMS,IAM awsService;
-    class ESO,ASCP,IRSA,ACK integrationTool;
-```
-
-### AWS Secrets Manager Integration
-
-AWS Secrets Manager es un servicio que te permite almacenar y gestionar de forma segura credenciales de bases de datos, API keys y otra información secreta. En EKS, puedes usar External Secrets Operator o AWS Secrets and Configuration Provider (ASCP) para sincronizar secrets desde AWS Secrets Manager hacia Kubernetes secrets.
-
-#### External Secrets Operator Installation
+#### Instalación de External Secrets Operator
 
 ```bash
 # Install External Secrets Operator using Helm
@@ -1026,7 +798,7 @@ helm install external-secrets external-secrets/external-secrets \
   --create-namespace
 ```
 
-#### Create SecretStore
+#### Crear SecretStore
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -1045,7 +817,7 @@ spec:
             name: my-serviceaccount
 ```
 
-#### Create ExternalSecret
+#### Crear ExternalSecret
 
 ```yaml
 apiVersion: external-secrets.io/v1beta1
@@ -1071,9 +843,9 @@ spec:
       property: password
 ```
 
-#### IRSA (IAM Roles for Service Accounts) Setup
+#### Configuración de IRSA (IAM Roles for Service Accounts)
 
-External Secrets Operator necesita permisos de IAM adecuados para acceder a AWS Secrets Manager. Puedes usar IRSA para asociar IAM roles con Kubernetes service accounts.
+External Secrets Operator necesita permisos de IAM adecuados para acceder a AWS Secrets Manager. Puedes usar IRSA para asociar roles de IAM con cuentas de servicio de Kubernetes.
 
 ```bash
 # Create OIDC provider
@@ -1090,11 +862,11 @@ eksctl create iamserviceaccount \
   --approve
 ```
 
-### Using AWS Parameter Store
+### Uso de AWS Parameter Store
 
-AWS Systems Manager Parameter Store es un servicio que te permite almacenar y gestionar jerárquicamente datos de configuración y valores secretos. Parameter Store es menos costoso que Secrets Manager y es adecuado para almacenar valores de configuración simples.
+AWS Systems Manager Parameter Store es un servicio que permite almacenar y administrar jerárquicamente datos de configuración y valores confidenciales. Parameter Store es menos costoso que Secrets Manager y es adecuado para almacenar valores de configuración simples.
 
-#### ASCP (AWS Secrets and Configuration Provider) Installation
+#### Instalación de ASCP (AWS Secrets and Configuration Provider)
 
 ```bash
 # Install ASCP
@@ -1106,7 +878,7 @@ helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver
 kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
 ```
 
-#### Create SecretProviderClass
+#### Crear SecretProviderClass
 
 ```yaml
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -1124,7 +896,7 @@ spec:
         objectType: ssmparameter
 ```
 
-#### Using Parameter Store Values in Pods
+#### Uso de valores de Parameter Store en Pods
 
 ```yaml
 apiVersion: v1
@@ -1149,11 +921,11 @@ spec:
         secretProviderClass: aws-parameters
 ```
 
-### Dynamic Configuration with AWS AppConfig
+### Configuración dinámica con AWS AppConfig
 
-AWS AppConfig es un servicio que gestiona y despliega configuración de aplicaciones. Usar AppConfig te permite actualizar configuración dinámicamente sin redesplegar aplicaciones.
+AWS AppConfig es un servicio que administra e implementa la configuración de aplicaciones. El uso de AppConfig permite actualizar dinámicamente la configuración sin volver a implementar las aplicaciones.
 
-#### AppConfig Agent Sidecar Pattern
+#### Patrón de sidecar de AppConfig Agent
 
 ```yaml
 apiVersion: apps/v1
@@ -1199,9 +971,9 @@ spec:
         emptyDir: {}
 ```
 
-### Configuration with EKS Fargate Profiles
+### Configuración con perfiles de EKS Fargate
 
-Usar EKS Fargate te permite ejecutar Kubernetes Pods sin gestionar nodes. Puedes configurar el entorno de ejecución del Pod mediante Fargate profiles.
+El uso de EKS Fargate permite ejecutar Pods de Kubernetes sin administrar nodos. Puedes configurar el entorno de ejecución del Pod mediante perfiles de Fargate.
 
 ```yaml
 apiVersion: eks.amazonaws.com/v1beta1
@@ -1221,11 +993,11 @@ spec:
   - subnet-0abcdef1234567890
 ```
 
-### Secret Encryption with AWS KMS
+### Cifrado de Secret con AWS KMS
 
-Los Kubernetes secrets se codifican en base64 de forma predeterminada, lo cual no es encryption. Puedes usar AWS KMS (Key Management Service) para cifrar secrets en tu EKS cluster.
+Los secrets de Kubernetes se codifican en base64 de forma predeterminada, lo que no es cifrado. Puedes usar AWS KMS (Key Management Service) para cifrar secrets en tu clúster de EKS.
 
-#### Create KMS Key
+#### Crear clave de KMS
 
 ```bash
 # Create KMS key
@@ -1238,7 +1010,7 @@ KEY_ID=$(aws kms create-key --query KeyMetadata.KeyId --output text)
 aws kms create-alias --alias-name alias/eks-secrets --target-key-id $KEY_ID
 ```
 
-#### Apply Encryption Configuration to EKS Cluster
+#### Aplicar configuración de cifrado al clúster de EKS
 
 ```bash
 # Apply encryption configuration
@@ -1247,11 +1019,11 @@ aws eks update-cluster-config \
   --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:us-west-2:123456789012:key/'$KEY_ID'"}}]'
 ```
 
-### Secret Access Control with AWS IAM
+### Control de acceso a Secret con AWS IAM
 
-Usar IRSA (IAM Roles for Service Accounts) para asociar IAM roles con Kubernetes service accounts permite que los Pods accedan de forma segura a servicios de AWS.
+El uso de IRSA (IAM Roles for Service Accounts) para asociar roles de IAM con cuentas de servicio de Kubernetes permite que los Pods accedan de forma segura a los servicios de AWS.
 
-#### Create Service Account
+#### Crear cuenta de servicio
 
 ```yaml
 apiVersion: v1
@@ -1263,7 +1035,7 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-iam-role
 ```
 
-#### Using Service Account in Pods
+#### Uso de cuenta de servicio en Pods
 
 ```yaml
 apiVersion: v1
@@ -1278,31 +1050,31 @@ spec:
     image: my-app:latest
 ```
 
-### EKS Configuration Best Practices
+### Prácticas recomendadas de configuración de EKS
 
-Considera las siguientes best practices al gestionar configuración en EKS:
+Considera las siguientes prácticas recomendadas al administrar la configuración en EKS:
 
-1. **Use IRSA**: Usa siempre IRSA para otorgar permisos mínimos a Pods al acceder a servicios de AWS.
+1. **Usar IRSA**: Usa siempre IRSA para otorgar permisos mínimos a los Pods al acceder a servicios de AWS.
 
-2. **Encrypt Secrets**: Usa KMS para cifrar secrets en tu EKS cluster.
+2. **Cifrar Secrets**: Usa KMS para cifrar secrets en tu clúster de EKS.
 
-3. **External Secret Management**: Usa servicios externos de gestión de secrets como AWS Secrets Manager o Parameter Store para gestionar información sensible.
+3. **Gestión externa de secrets**: Usa servicios externos de gestión de secrets, como AWS Secrets Manager o Parameter Store, para administrar información confidencial.
 
-4. **Configuration Version Management**: Usa AWS AppConfig o Parameter Store para gestionar versiones de configuración.
+4. **Gestión de versiones de configuración**: Usa AWS AppConfig o Parameter Store para administrar versiones de configuración.
 
-5. **Environment-Specific Configuration Separation**: Gestiona la configuración por separado para entornos de development, testing y production. Usa Kubernetes namespaces y AWS resource tags.
+5. **Separación de configuración específica por entorno**: Administra la configuración por separado para los entornos de desarrollo, pruebas y producción. Usa namespaces de Kubernetes y etiquetas de recursos de AWS.
 
-6. **Minimize IAM Policies**: Sigue el principio de mínimo privilegio al acceder a servicios de AWS.
+6. **Minimizar las políticas de IAM**: Sigue el principio de privilegio mínimo al acceder a servicios de AWS.
 
-7. **Configuration Automation**: Usa herramientas como AWS CloudFormation, AWS CDK o Terraform para automatizar la gestión de configuración.
+7. **Automatización de la configuración**: Usa herramientas como AWS CloudFormation, AWS CDK o Terraform para automatizar la gestión de configuración.
 
-### EKS Configuration Management Tools
+### Herramientas de gestión de configuración de EKS
 
-Veamos herramientas que ayudan a gestionar configuración en EKS:
+Veamos las herramientas que ayudan a administrar la configuración en EKS:
 
 #### AWS Controllers for Kubernetes (ACK)
 
-ACK es una herramienta que te permite gestionar recursos de AWS desde Kubernetes. Usando ACK, puedes crear y gestionar recursos de AWS mediante Kubernetes manifests.
+ACK es una herramienta que permite administrar recursos de AWS desde Kubernetes. Con ACK, puedes crear y administrar recursos de AWS mediante manifiestos de Kubernetes.
 
 ```yaml
 apiVersion: secretsmanager.services.k8s.aws/v1alpha1
@@ -1322,7 +1094,7 @@ spec:
 
 #### eksctl
 
-eksctl es una herramienta de línea de comandos para crear y gestionar EKS clusters. Puedes usar eksctl para gestionar la configuración del cluster.
+eksctl es una herramienta de línea de comandos para crear y administrar clústeres de EKS. Puedes usar eksctl para administrar la configuración del clúster.
 
 ```yaml
 # cluster.yaml
@@ -1341,7 +1113,7 @@ eksctl create cluster -f cluster.yaml
 
 #### AWS CDK
 
-AWS CDK (Cloud Development Kit) es una herramienta para definir recursos de AWS usando lenguajes de programación. Puedes usar CDK para definir EKS clusters y recursos relacionados.
+AWS CDK (Cloud Development Kit) es una herramienta para definir recursos de AWS mediante lenguajes de programación. Puedes usar CDK para definir clústeres de EKS y recursos relacionados.
 
 ```typescript
 import * as cdk from 'aws-cdk-lib';
@@ -1369,33 +1141,33 @@ serviceAccount.role.addManagedPolicy(
 );
 ```
 
-## Conclusion
+## Conclusión
 
-En este capítulo, aprendimos sobre los métodos de gestión de configuración de Kubernetes. Los ConfigMaps y Secrets proporcionan formas básicas de gestionar la configuración de aplicaciones, y puedes pasar esta configuración a los contenedores mediante environment variables y volumes. También cubrimos best practices de gestión de configuración y herramientas externas de gestión de configuración.
+En este capítulo, aprendimos sobre los métodos de gestión de configuración de Kubernetes. Los ConfigMaps y Secrets proporcionan formas básicas de administrar la configuración de la aplicación, y puedes pasar esta configuración a los contenedores mediante variables de entorno y volúmenes. También cubrimos prácticas recomendadas de gestión de configuración y herramientas externas de gestión de configuración.
 
-En entornos Amazon EKS, puedes lograr una gestión de configuración más potente y segura usando servicios de AWS junto con las características básicas de gestión de configuración de Kubernetes. Puedes gestionar secrets de forma segura integrando servicios como AWS Secrets Manager, Parameter Store, KMS e IAM, y otorgar permisos mínimos a Pods mediante IRSA. Además, puedes actualizar configuración dinámicamente sin redesplegar aplicaciones usando AWS AppConfig.
+En entornos de Amazon EKS, puedes lograr una gestión de configuración más potente y segura mediante el uso de servicios de AWS junto con las funciones básicas de gestión de configuración de Kubernetes. Puedes administrar secrets de forma segura integrando servicios como AWS Secrets Manager, Parameter Store, KMS e IAM, y otorgar permisos mínimos a los Pods mediante IRSA. Además, puedes actualizar dinámicamente la configuración sin volver a implementar aplicaciones con AWS AppConfig.
 
-La gestión eficaz de configuración es importante para mejorar la mantenibilidad, escalabilidad y seguridad de las aplicaciones Kubernetes. Es importante elegir la estrategia de gestión de configuración adecuada para los requisitos de tu aplicación y seguir best practices. En entornos EKS, puedes crear soluciones de gestión de configuración más potentes mediante la integración con servicios de AWS.
+La gestión eficaz de la configuración es importante para mejorar la mantenibilidad, la escalabilidad y la seguridad de las aplicaciones de Kubernetes. Es importante elegir la estrategia de gestión de configuración adecuada para los requisitos de tu aplicación y seguir las prácticas recomendadas. En entornos de EKS, puedes crear soluciones de gestión de configuración más potentes mediante la integración con servicios de AWS.
 
 En el próximo capítulo, aprenderemos sobre la seguridad de Kubernetes.
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta el [Configuration and Secrets Quiz](../quizzes/core/05-configuration-secrets-quiz.md).
+Para poner a prueba lo aprendido en este capítulo, prueba el [Cuestionario de configuración y Secrets](../quizzes/core/05-configuration-secrets-quiz.md).
 
-## References
+## Referencias
 
-- [Kubernetes Official Documentation - ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)
-- [Kubernetes Official Documentation - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Kubernetes Official Documentation - Environment Variables](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/)
-- [Kubernetes Official Documentation - Configure a Pod to Use a ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
-- [Kubernetes Official Documentation - Distribute Credentials Securely Using Secrets](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
-- [Helm Official Documentation](https://helm.sh/docs/)
-- [Kustomize Official Documentation](https://kustomize.io/)
-- [External Secrets Operator Official Documentation](https://external-secrets.io/latest/)
-- [AWS Secrets Manager Official Documentation](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
-- [AWS Systems Manager Parameter Store Official Documentation](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
-- [AWS AppConfig Official Documentation](https://docs.aws.amazon.com/appconfig/latest/userguide/what-is-appconfig.html)
-- [EKS Official Documentation - IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-- [EKS Official Documentation - Secrets Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS Controllers for Kubernetes (ACK) Official Documentation](https://aws-controllers-k8s.github.io/community/)
+- [Documentación oficial de Kubernetes - ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)
+- [Documentación oficial de Kubernetes - Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [Documentación oficial de Kubernetes - Variables de entorno](https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/)
+- [Documentación oficial de Kubernetes - Configurar un Pod para usar un ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
+- [Documentación oficial de Kubernetes - Distribuir credenciales de forma segura mediante Secrets](https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/)
+- [Documentación oficial de Helm](https://helm.sh/docs/)
+- [Documentación oficial de Kustomize](https://kustomize.io/)
+- [Documentación oficial de External Secrets Operator](https://external-secrets.io/latest/)
+- [Documentación oficial de AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+- [Documentación oficial de AWS Systems Manager Parameter Store](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)
+- [Documentación oficial de AWS AppConfig](https://docs.aws.amazon.com/appconfig/latest/userguide/what-is-appconfig.html)
+- [Documentación oficial de EKS - IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [Documentación oficial de EKS - Cifrado de Secrets](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
+- [Documentación oficial de AWS Controllers for Kubernetes (ACK)](https://aws-controllers-k8s.github.io/community/)

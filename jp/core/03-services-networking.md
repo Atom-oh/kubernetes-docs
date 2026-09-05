@@ -1,19 +1,19 @@
-# Services and Networking
+# Services とネットワーキング
 
-> **Supported Versions**: Kubernetes 1.32, 1.33, 1.34
+> **対応バージョン**: Kubernetes 1.32, 1.33, 1.34
 > **最終更新**: February 23, 2026
 
-Kubernetes では、Service は一連の Pod に対して単一のアクセスポイントを提供する抽象化レイヤーです。この章では、さまざまな service type、Ingress、network policies などを含む Kubernetes networking の概念を詳しく見ていきます。
+Kubernetes では、Service は Pod のセットに単一のアクセスポイントを提供する抽象化レイヤーです。この章では、さまざまな Service タイプ、Ingress、NetworkPolicy などを含む Kubernetes ネットワーキングの概念を詳しく学びます。
 
-## Lab Environment Setup
+## ラボ環境のセットアップ
 
-このドキュメントの例を試すには、次のツールと環境が必要です。
+このドキュメントの例を実行するには、以下のツールと環境が必要です。
 
-### Required Tools
-- kubectl v1.34 以上
-- 稼働中の Kubernetes cluster（EKS、minikube、kind など）
+### 必要なツール
+- kubectl v1.34 以降
+- 稼働中の Kubernetes クラスター（EKS、minikube、kind など）
 
-### Deploy Example Application
+### サンプルアプリケーションのデプロイ
 
 ```bash
 # Create namespace
@@ -60,98 +60,49 @@ EOF
 kubectl -n networking-demo get svc,pods
 ```
 
-## Table of Contents
+## 目次
 
-1. [Service Types](#service-types)
+1. [Service タイプ](#service-types)
 2. [Ingress](#ingress)
 3. [Endpoints](#endpoints)
 4. [Service Discovery](#service-discovery)
 5. [CoreDNS](#coredns)
-6. [Network Policies](#network-policies)
+6. [NetworkPolicy](#network-policies)
 7. [Service Mesh](#service-mesh)
 8. [CNI (Container Network Interface)](#cnicontainer-network-interface)
 9. [Cilium](#cilium)
-   - [Introduction to Cilium](#introduction-to-cilium)
-   - [eBPF Technology](#ebpf-technology)
-   - [Cilium Networking Model](#cilium-networking-model)
-   - [Cilium Network Policies](#cilium-network-policies)
-   - [Network Visibility with Hubble](#network-visibility-with-hubble)
-   - [Configuring Cilium on Amazon EKS](#configuring-cilium-on-amazon-eks)
+   - [Cilium の概要](#introduction-to-cilium)
+   - [eBPF テクノロジー](#ebpf-technology)
+   - [Cilium ネットワーキングモデル](#cilium-networking-model)
+   - [Cilium NetworkPolicy](#cilium-network-policies)
+   - [Hubble によるネットワークの可視化](#network-visibility-with-hubble)
+   - [Amazon EKS での Cilium の設定](#configuring-cilium-on-amazon-eks)
 
-## Service Types
+## Service タイプ
 
-> **Key Concept**: Kubernetes Services は、一連の Pod に安定した network endpoint を提供し、さまざまな type を通じて内部および外部からのアクセスを制御します。
+> **重要な概念**: Kubernetes Service は Pod のセットに安定したネットワークエンドポイントを提供し、さまざまなタイプを通じて内部および外部アクセスを制御します。
 
-Kubernetes は、application を公開する複数の方法をサポートするために、さまざまな type の service を提供します。
+Kubernetes は、アプリケーションを公開する複数の方法をサポートするために、さまざまなタイプの Service を提供します。
 
-### Service Architecture
+### Service アーキテクチャ
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Cluster"
-        subgraph "Service Types"
-            LB[LoadBalancer]
-            NP[NodePort]
-            CIP[ClusterIP]
-            EXT[ExternalName]
+![外部クライアントは LoadBalancer または NodePort を介して ClusterIP に到達し、クラスター内部のクライアントは CoreDNS を介して名前を解決して ClusterIP にアクセスします。ClusterIP は Endpoints を介してバックエンド Pod にルーティングされ、ExternalName は DNS CNAME を介して外部 Service のエイリアスとなります。](../.gitbook/assets/en-core-03-services-networking-0.png)
 
-            LB --> NP
-            NP --> CIP
-        end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-0.html)
 
-        subgraph "Service Discovery"
-            DNS[CoreDNS]
-            EP[Endpoints]
+### Service タイプの比較
 
-            CIP --> DNS
-            CIP --> EP
-        end
-
-        subgraph "Backend Pods"
-            Pod1[Pod 1]
-            Pod2[Pod 2]
-            Pod3[Pod 3]
-
-            EP --> Pod1
-            EP --> Pod2
-            EP --> Pod3
-        end
-    end
-
-    ExtClient[External Client] --> LB
-    ExtClient --> NP
-    IntClient[Cluster Internal Client] --> CIP
-    IntClient --> DNS
-    EXT --> ExtService[External Service]
-
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef service fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef discovery fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef pod fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef external fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ExtClient,IntClient client;
-    class LB,NP,CIP,EXT service;
-    class DNS,EP discovery;
-    class Pod1,Pod2,Pod3 pod;
-    class ExtService external;
-```
-
-### Service Type Comparison
-
-| Service Type | Access Scope | External IP | Use Case | Features |
+| Service タイプ | アクセス範囲 | 外部 IP | ユースケース | 特徴 |
 |-------------|-------------|-------------|----------|----------|
-| **ClusterIP** | Cluster 内部 | なし | 内部 microservice 通信 | Default service type、cluster 内からのみアクセス可能 |
-| **NodePort** | Cluster 外部 | なし | 開発環境とテスト環境 | すべての node 上の特定 port（30000-32767）を通じてアクセス |
-| **LoadBalancer** | Cluster 外部 | あり | 本番用外部 service | Cloud provider の load balancer をプロビジョニング |
-| **ExternalName** | Cluster 内部 | なし | 外部 service 用の内部 alias | DNS CNAME record によるリダイレクト |
-| **Headless** | Cluster 内部 | なし | 直接 Pod IP access が必要な場合 | ClusterIP を持たない特別な service |
+| **ClusterIP** | クラスター内部 | いいえ | 内部マイクロサービス通信 | デフォルトの Service タイプ。クラスター内からのみアクセス可能 |
+| **NodePort** | クラスター外部 | いいえ | 開発およびテスト環境 | すべてのノードの特定ポート（30000-32767）を介してアクセス |
+| **LoadBalancer** | クラスター外部 | はい | 本番の外部 Service | クラウドプロバイダーのロードバランサーをプロビジョニング |
+| **ExternalName** | クラスター内部 | いいえ | 外部 Service の内部エイリアス | DNS CNAME レコードによるリダイレクト |
+| **Headless** | クラスター内部 | いいえ | Pod IP への直接アクセスが必要な場合 | ClusterIP を持たない特別な Service |
 
 ### ClusterIP
 
-ClusterIP は最も基本的な service type であり、cluster 内からのみアクセス可能な固定 IP address を提供します。
+ClusterIP は最も基本的な Service タイプであり、クラスター内からのみアクセスできる固定 IP アドレスを提供します。
 
 ```yaml
 apiVersion: v1
@@ -170,7 +121,7 @@ spec:
 
 ### NodePort
 
-NodePort services は、すべての node 上の特定 port を通じて service へのアクセスを許可します。
+NodePort Service では、すべてのノードの特定ポートを通じて Service にアクセスできます。
 
 ```yaml
 apiVersion: v1
@@ -188,7 +139,7 @@ spec:
   type: NodePort
 ```
 
-ClusterIP は default の service type であり、cluster 内からのみアクセス可能な IP address を提供します。
+ClusterIP はデフォルトの Service タイプであり、クラスター内からのみアクセスできる IP アドレスを提供します。
 
 ```yaml
 apiVersion: v1
@@ -204,11 +155,11 @@ spec:
   type: ClusterIP
 ```
 
-この service は cluster 内で `my-service:80` としてアクセスできます。
+この Service にはクラスター内で `my-service:80` としてアクセスできます。
 
 ### NodePort
 
-NodePort services は、すべての node 上の特定 port を通じて service へのアクセスを許可します。
+NodePort Service では、すべてのノードの特定ポートを通じて Service にアクセスできます。
 
 ```yaml
 apiVersion: v1
@@ -225,11 +176,11 @@ spec:
   type: NodePort
 ```
 
-この service は cluster 内のすべての node で `<Node IP>:30007` としてアクセスできます。
+この Service にはクラスター内のすべてのノードで `<Node IP>:30007` としてアクセスできます。
 
 ### LoadBalancer
 
-LoadBalancer services は、cloud provider から load balancer をプロビジョニングして service を外部に公開します。
+LoadBalancer Service は、クラウドプロバイダーのロードバランサーをプロビジョニングして Service を外部に公開します。
 
 ```yaml
 apiVersion: v1
@@ -247,11 +198,11 @@ spec:
   type: LoadBalancer
 ```
 
-この service は cloud provider の load balancer を通じて外部からアクセスできます。
+この Service にはクラウドプロバイダーのロードバランサーを通じて外部からアクセスできます。
 
 ### ExternalName
 
-ExternalName services は、外部 service の alias を提供します。
+ExternalName Service は、外部 Service のエイリアスを提供します。
 
 ```yaml
 apiVersion: v1
@@ -263,11 +214,11 @@ spec:
   externalName: my.database.example.com
 ```
 
-この service は DNS name `my-service` を `my.database.example.com` にマッピングします。
+この Service は DNS 名 `my-service` を `my.database.example.com` にマッピングします。
 
 ### Headless Service
 
-Headless service は cluster IP を持たない service であり、各 Pod の DNS record を作成します。
+Headless Service は cluster IP を持たず、各 Pod の DNS レコードを作成する Service です。
 
 ```yaml
 apiVersion: v1
@@ -283,11 +234,11 @@ spec:
     targetPort: 9376
 ```
 
-この service は cluster IP を割り当てず、各 Pod の DNS record を作成します。
+この Service は cluster IP を割り当てず、各 Pod の DNS レコードを作成します。
 
 ### External IP
 
-Services は、外部 resource を Kubernetes service として公開するために external IPs を指定できます。
+Service では external IP を指定して、外部リソースを Kubernetes Service として公開できます。
 
 ```yaml
 apiVersion: v1
@@ -306,37 +257,15 @@ spec:
 
 ## Ingress
 
-Ingress は、cluster 外部から cluster 内の services への HTTP および HTTPS routes を公開する API object です。Ingress は load balancing、SSL termination、name-based virtual hosting を提供します。
+Ingress は、クラスター外部からクラスター内の Service に HTTP および HTTPS ルートを公開する API オブジェクトです。Ingress はロードバランシング、SSL 終端、名前ベースの仮想ホスティングを提供します。
 
-```mermaid
-graph LR
-    Client[External Client] --> LB[Load Balancer]
-    LB --> IC[Ingress Controller]
-    IC --> Ingress[Ingress Resource]
-    Ingress --> S1[Service A]
-    Ingress --> S2[Service B]
-    S1 --> P1[Pod A-1]
-    S1 --> P2[Pod A-2]
-    S2 --> P3[Pod B-1]
-    S2 --> P4[Pod B-2]
+![外部クライアントからのリクエストはロードバランサーと Ingress Controller を通過して単一の Ingress リソースに到達します。そこから host/path ルールにより Service A と Service B に分岐し、それぞれが独自のバックエンド Pod（A-1、A-2 / B-1、B-2）間でロードバランシングを行います。](../.gitbook/assets/en-core-03-services-networking-1.png)
 
-    %% Style definitions
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Client client;
-    class LB awsService;
-    class IC,Ingress,S1,S2 k8sComponent;
-    class P1,P2,P3,P4 userApp;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-1.html)
 
 ### Ingress Controller
 
-Ingress resources を使用するには、Ingress controller が cluster 内で実行されている必要があります。さまざまな Ingress controllers があります。
+Ingress リソースを使用するには、Ingress Controller がクラスター内で実行されている必要があります。さまざまな Ingress Controller があります。
 
 - NGINX Ingress Controller
 - AWS ALB Ingress Controller
@@ -345,7 +274,7 @@ Ingress resources を使用するには、Ingress controller が cluster 内で�
 - HAProxy
 - Istio Ingress
 
-### Basic Ingress
+### 基本的な Ingress
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -367,9 +296,9 @@ spec:
               number: 80
 ```
 
-この Ingress は、`example.com` host へのすべての request を `example-service:80` に route します。
+この Ingress は、`example.com` ホストへのすべてのリクエストを `example-service:80` にルーティングします。
 
-### Path-Based Routing
+### パスベースルーティング
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -398,9 +327,9 @@ spec:
               number: 80
 ```
 
-この Ingress は、`example.com/api` で始まる request を `api-service` に、`example.com/web` で始まる request を `web-service` に route します。
+この Ingress は、`example.com/api` で始まるリクエストを `api-service` に、`example.com/web` で始まるリクエストを `web-service` にルーティングします。
 
-### Name-Based Virtual Hosting
+### 名前ベースの仮想ホスティング
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -432,9 +361,9 @@ spec:
               number: 80
 ```
 
-この Ingress は、`foo.example.com` への request を `foo-service` に、`bar.example.com` への request を `bar-service` に route します。
+この Ingress は、`foo.example.com` へのリクエストを `foo-service` に、`bar.example.com` へのリクエストを `bar-service` にルーティングします。
 
-### TLS Configuration
+### TLS 設定
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -460,9 +389,9 @@ spec:
               number: 80
 ```
 
-この Ingress は、`example-tls` secret に保存されている TLS certificate を使用して、`example.com` への HTTPS connections を終了します。
+この Ingress は、`example-tls` Secret に保存された TLS 証明書を使用して、`example.com` への HTTPS 接続を終端します。
 
-TLS secret の作成:
+TLS Secret の作成:
 
 ```bash
 kubectl create secret tls example-tls --cert=path/to/cert.crt --key=path/to/key.key
@@ -470,7 +399,7 @@ kubectl create secret tls example-tls --cert=path/to/cert.crt --key=path/to/key.
 
 ### AWS ALB Ingress Controller
 
-AWS EKS では、AWS ALB Ingress Controller を使用して Application Load Balancers をプロビジョニングできます。
+AWS EKS では、AWS ALB Ingress Controller を使用して Application Load Balancer をプロビジョニングできます。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -497,11 +426,11 @@ spec:
               number: 80
 ```
 
-この Ingress は AWS ALB を使用して `example.com` への request を処理します。
+この Ingress は AWS ALB を使用して `example.com` へのリクエストを処理します。
 
 ## Endpoints
 
-Endpoints は、service が指す Pod の IP addresses と ports を保存する resource です。Service の selector に一致する Pod がある場合、Kubernetes は Endpoints object を自動的に作成して管理します。
+Endpoints は、Service が指す Pod の IP アドレスとポートを保存するリソースです。Service の selector に一致する Pod が存在する場合、Kubernetes は Endpoints オブジェクトを自動的に作成および管理します。
 
 ```yaml
 apiVersion: v1
@@ -515,11 +444,11 @@ subsets:
   - port: 9376
 ```
 
-この Endpoints は、`my-service` が `192.168.1.1:9376` を指すようにします。
+この Endpoints は `my-service` が `192.168.1.1:9376` を指すようにします。
 
 ### EndpointSlice
 
-EndpointSlice は、大規模 cluster でより優れた performance を提供する、Endpoints に対する scalable な代替です。
+EndpointSlice は、大規模クラスターでより優れたパフォーマンスを提供する、Endpoints のスケーラブルな代替手段です。
 
 ```yaml
 apiVersion: discovery.k8s.io/v1
@@ -546,14 +475,14 @@ endpoints:
 
 ## Service Discovery
 
-Kubernetes は、主に 2 つの service discovery 方法を提供します。
+Kubernetes は、主に 2 つの Service Discovery 方法を提供します。
 
-1. **Environment Variables**: Kubernetes は、Pod が作成されるときに、active な services の environment variables を Pod に注入します。
-2. **DNS**: Kubernetes は、cluster DNS server を通じて services の DNS records を提供します。
+1. **環境変数**: Kubernetes は、Pod の作成時にアクティブな Service の環境変数を Pod に注入します。
+2. **DNS**: Kubernetes は、クラスター DNS サーバーを通じて Service の DNS レコードを提供します。
 
-### Environment Variables
+### 環境変数
 
-Pod が作成されると、Kubernetes はその時点で存在するすべての services の environment variables を Pod に注入します。たとえば、`my-service` という service がある場合、次の environment variables が作成されます。
+Pod が作成されると、Kubernetes はその時点で存在するすべての Service の環境変数を Pod に注入します。たとえば、`my-service` という Service がある場合、以下の環境変数が作成されます。
 
 ```
 MY_SERVICE_SERVICE_HOST=10.0.0.11
@@ -562,16 +491,16 @@ MY_SERVICE_SERVICE_PORT=80
 
 ### DNS
 
-Kubernetes DNS は、services の DNS records を作成します。Pods は service name を使用して services にアクセスできます。
+Kubernetes DNS は Service の DNS レコードを作成します。Pod は Service 名を使用して Service にアクセスできます。
 
-- Regular service: `my-service.my-namespace.svc.cluster.local`
-- Pod of headless service: `pod-name.my-service.my-namespace.svc.cluster.local`
+- 通常の Service: `my-service.my-namespace.svc.cluster.local`
+- Headless Service の Pod: `pod-name.my-service.my-namespace.svc.cluster.local`
 
 ## CoreDNS
 
-CoreDNS は、Kubernetes clusters の DNS server として使用される、柔軟で拡張可能な DNS server です。
+CoreDNS は、Kubernetes クラスターの DNS サーバーとして使用される、柔軟で拡張可能な DNS サーバーです。
 
-### CoreDNS Configuration
+### CoreDNS 設定
 
 CoreDNS は ConfigMap を通じて設定されます。
 
@@ -603,27 +532,27 @@ data:
     }
 ```
 
-この configuration は次の features を提供します。
+この設定は以下の機能を提供します。
 
-- `errors`: Error logging
-- `health`: Health check endpoint
-- `ready`: Readiness check endpoint
-- `kubernetes`: Kubernetes services と Pods の DNS records
-- `prometheus`: Prometheus metrics exposure
-- `forward`: 外部 DNS queries の転送
-- `cache`: DNS response caching
-- `loop`: Loop detection
-- `reload`: configuration file 変更時の自動 reload
-- `loadbalance`: Load balancing
+- `errors`: エラーロギング
+- `health`: ヘルスチェックエンドポイント
+- `ready`: Readiness チェックエンドポイント
+- `kubernetes`: Kubernetes Service と Pod の DNS レコード
+- `prometheus`: Prometheus メトリクスの公開
+- `forward`: 外部 DNS クエリを転送
+- `cache`: DNS レスポンスのキャッシュ
+- `loop`: ループ検出
+- `reload`: 設定ファイルの変更時に自動リロード
+- `loadbalance`: ロードバランシング
 
 ### DNS Policy
 
-Pod の DNS policy は `dnsPolicy` field を通じて設定できます。
+Pod の DNS Policy は `dnsPolicy` フィールドで設定できます。
 
-- `ClusterFirst`: Default。まず Kubernetes DNS server を使用し、一致するものが見つからない場合は upstream nameservers に転送します。
-- `Default`: Pod が実行されている node の DNS settings を継承します。
-- `ClusterFirstWithHostNet`: `hostNetwork: true` の Pod に推奨される policy です。
-- `None`: すべての DNS settings を `dnsConfig` field を通じて指定する必要があります。
+- `ClusterFirst`: デフォルト。最初に Kubernetes DNS サーバーを使用し、一致する名前が見つからない場合は上流のネームサーバーに転送します。
+- `Default`: Pod が実行されているノードの DNS 設定を継承します。
+- `ClusterFirstWithHostNet`: `hostNetwork: true` を持つ Pod に推奨される Policy です。
+- `None`: すべての DNS 設定を `dnsConfig` フィールドで指定する必要があります。
 
 ```yaml
 apiVersion: v1
@@ -648,48 +577,15 @@ spec:
     - name: edns0
 ```
 
-## Network Policies
+## NetworkPolicy
 
-Network policies は、Pods 間の通信を制御する方法を提供します。Network policies を使用するには、network plugin がそれらをサポートしている必要があります（例: Calico、Cilium、Weave Net）。
+NetworkPolicy は Pod 間の通信を制御する方法を提供します。NetworkPolicy を使用するには、ネットワークプラグインが対応している必要があります（例: Calico、Cilium、Weave Net）。
 
-```mermaid
-graph TD
-    subgraph "Namespace A"
-        FE[Frontend Pod]
-        API[API Pod]
-        DB[Database Pod]
+![NetworkPolicy は Frontend Pod から API Pod への通信、API Pod から Database Pod への通信、および別の namespace にある Monitoring Pod から API Pod への通信を許可します。一方で、Frontend Pod と Monitoring Pod から Database Pod への直接通信はブロックします。](../.gitbook/assets/en-core-03-services-networking-2.png)
 
-        NP1[Network Policy 1]
-        NP2[Network Policy 2]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-2.html)
 
-        FE -- Allowed --> API
-        API -- Allowed --> DB
-        FE -. Blocked .-> DB
-    end
-
-    subgraph "Namespace B"
-        MON[Monitoring Pod]
-
-        NP3[Network Policy 3]
-
-        MON -- Allowed --> API
-        MON -. Blocked .-> DB
-    end
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef policy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class FE,API userApp;
-    class DB dataStore;
-    class MON k8sComponent;
-    class NP1,NP2,NP3 policy;
-```
-
-### Basic Network Policy
+### 基本的な NetworkPolicy
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -702,9 +598,9 @@ spec:
   - Ingress
 ```
 
-この network policy は、すべての Pods への ingress traffic をブロックします。
+この NetworkPolicy はすべての Pod への ingress トラフィックをブロックします。
 
-### Allow Ingress to Specific Pods
+### 特定の Pod への Ingress を許可
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -727,9 +623,9 @@ spec:
       port: 80
 ```
 
-この network policy は、`access: allowed` label を持つ Pods から `app: nginx` label を持つ Pods への TCP port 80 の ingress traffic を許可します。
+この NetworkPolicy は、`access: allowed` ラベルを持つ Pod から `app: nginx` ラベルを持つ Pod への TCP ポート 80 の ingress トラフィックを許可します。
 
-### Namespace-Based Policy
+### Namespace ベースの Policy
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -749,7 +645,7 @@ spec:
           purpose: production
 ```
 
-この network policy は、`purpose: production` label を持つ namespaces 内のすべての Pods から、`app: db` label を持つ Pods への ingress traffic を許可します。
+この NetworkPolicy は、`purpose: production` ラベルを持つ namespace 内のすべての Pod から `app: db` ラベルを持つ Pod への ingress トラフィックを許可します。
 
 ### Egress Policy
 
@@ -778,9 +674,9 @@ spec:
           purpose: monitoring
 ```
 
-この network policy は、`app: frontend` label を持つ Pods から `app: api` label を持つ Pods の TCP port 8080 への egress traffic、および `purpose: monitoring` label を持つ namespaces 内のすべての Pods への egress traffic を許可します。
+この NetworkPolicy は、`app: frontend` ラベルを持つ Pod から、`app: api` ラベルを持つ Pod の TCP ポート 8080 および `purpose: monitoring` ラベルを持つ namespace 内のすべての Pod への egress トラフィックを許可します。
 
-### CIDR-Based Policy
+### CIDR ベースの Policy
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -801,59 +697,19 @@ spec:
         - 192.168.1.1/32
 ```
 
-この network policy は、`192.168.1.0/24` CIDR block（192.168.1.1 を除く）から `app: web` label を持つ Pods への ingress traffic を許可します。
+この NetworkPolicy は、`192.168.1.0/24` CIDR ブロック（192.168.1.1 を除く）から `app: web` ラベルを持つ Pod への ingress トラフィックを許可します。
 
 ## Service Mesh
 
-Service mesh は、microservices 間の通信を管理する infrastructure layer です。Service meshes は、service discovery、load balancing、encryption、authentication、authorization、observability などの機能を提供します。
+Service Mesh は、マイクロサービス間の通信を管理するインフラストラクチャレイヤーです。Service Mesh は、Service Discovery、ロードバランシング、暗号化、認証、認可、可観測性などの機能を提供します。
 
-```mermaid
-graph TD
-    subgraph "Control Plane"
-        IC[Istio Control Plane]
-    end
+![Istio control plane は、3 つの Pod に注入された sidecar proxy に破線の control channel を介して設定をプッシュします。各 Service は自身の sidecar とのみ通信し、Service が直接接続する代わりに sidecar 同士が Service 間トラフィックを交換します。](../.gitbook/assets/en-core-03-services-networking-3.png)
 
-    subgraph "Service A"
-        A[Service A]
-        SA[Sidecar Proxy A]
-        A <--> SA
-    end
-
-    subgraph "Service B"
-        B[Service B]
-        SB[Sidecar Proxy B]
-        B <--> SB
-    end
-
-    subgraph "Service C"
-        C[Service C]
-        SC[Sidecar Proxy C]
-        C <--> SC
-    end
-
-    IC <-.-> SA
-    IC <-.-> SB
-    IC <-.-> SC
-
-    SA <--> SB
-    SB <--> SC
-    SA <--> SC
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class IC k8sComponent;
-    class A,B,C userApp;
-    class SA,SB,SC proxy;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-3.html)
 
 ### Istio
 
-Istio は、一般的な service mesh implementations の 1 つです。Istio は sidecar pattern を使用して、各 Pod に Envoy proxies を注入します。
+Istio は代表的な Service Mesh 実装の 1 つです。Istio は sidecar パターンを使用して、各 Pod に Envoy proxy を注入します。
 
 #### Istio Virtual Service
 
@@ -880,7 +736,7 @@ spec:
         subset: v1
 ```
 
-この VirtualService は、`end-user: jason` header を持つ request を `reviews` service の `v2` subset に route し、それ以外のすべての request を `v1` subset に route します。
+この VirtualService は、`end-user: jason` ヘッダーを持つリクエストを `reviews` Service の `v2` subset にルーティングし、その他すべてのリクエストを `v1` subset にルーティングします。
 
 #### Istio Destination Rule
 
@@ -906,11 +762,11 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-この DestinationRule は、`reviews` service に 2 つの subsets（`v1` と `v2`）を定義し、各 subset の load balancing policies を設定します。
+この DestinationRule は、`reviews` Service に対して 2 つの subset（`v1` と `v2`）を定義し、各 subset のロードバランシング Policy を設定します。
 
 ### Linkerd
 
-Linkerd は、簡単な installation と使用を特徴とする lightweight な service mesh です。
+Linkerd は、シンプルなインストールと使用方法を特徴とする軽量な Service Mesh です。
 
 #### Linkerd Service Profile
 
@@ -938,168 +794,151 @@ spec:
     ttl: 10s
 ```
 
-この ServiceProfile は、`nginx` service の routes と retry policies を定義します。
+この ServiceProfile は、`nginx` Service のルートとリトライ Policy を定義します。
 
 ## Cilium
 
-```mermaid
-graph TD
-    K8S[Kubernetes] --> CNI[Container Network Interface]
-    CNI --> Cilium[Cilium]
-    Cilium --> EBPF[eBPF]
-    EBPF --> Kernel[Linux Kernel]
-    Cilium --> Hubble[Hubble]
+![Kubernetes は Container Network Interface を通じてネットワーキングを Cilium に委譲します。Cilium は Linux kernel に eBPF プログラムをロードしてデータパスを実装し、ネットワークフローの可観測性のために Hubble にも情報を送ります。](../.gitbook/assets/en-core-03-services-networking-4.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef cni fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef plugin fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef kernel fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-4.html)
 
-    %% Apply classes
-    class K8S k8sComponent;
-    class CNI cni;
-    class Cilium,Hubble plugin;
-    class EBPF,Kernel kernel;
-```
+[Cilium の詳細](../networking/cilium/README.md)
 
-[Cilium Details](../networking/cilium/README.md)
+### Cilium の概要
 
-### Introduction to Cilium
+Cilium は、Linux kernel の強力な eBPF テクノロジーを活用し、コンテナ化されたアプリケーションにネットワーク接続、セキュリティ、可観測性を提供するオープンソースソフトウェアです。Kubernetes、Docker、Mesos などのコンテナオーケストレーションプラットフォームにネットワーキング、セキュリティ、可観測性を提供するよう設計されています。
 
-Cilium は、Linux kernel の強力な eBPF technology を活用して、containerized applications に network connectivity、security、observability を提供する open-source software です。Kubernetes、Docker、Mesos のような container orchestration platforms 向けに networking、security、observability を提供するように設計されています。
+#### 主な機能
 
-#### Key Features
+- **eBPF ベース**: kernel 内のプログラム可能なデータパスにより高性能なネットワーキングおよびセキュリティ機能を提供
+- **API 対応ネットワーキング**: L3-L7 レイヤーで API 対応のネットワークセキュリティ Policy をサポート
+- **Kubernetes 統合**: Kubernetes CNI（Container Network Interface）実装を提供
+- **分散ロードバランシング**: 効率的な Service 間通信のための分散ロードバランシング
+- **ネットワークの可視化**: Hubble によるネットワークフローの監視とトラブルシューティング
+- **マルチクラスターサポート**: クラスター間のネットワーキングおよびセキュリティ Policy をサポート
 
-- **eBPF-based**: Kernel 内の programmable data path を通じて、高性能な networking と security features を提供します
-- **API-aware Networking**: L3-L7 layers で API-aware network security policies をサポートします
-- **Kubernetes Integration**: Kubernetes CNI (Container Network Interface) implementation を提供します
-- **Distributed Load Balancing**: 効率的な service-to-service communication のための distributed load balancing
-- **Network Visibility**: Hubble を通じた network flow monitoring と troubleshooting
-- **Multi-cluster Support**: Cross-cluster networking と security policies のサポート
+#### Cilium の差別化ポイント
 
-#### Cilium's Differentiating Points
+Cilium は、他の CNI ソリューションと比較していくつかの独自の利点を提供します。
 
-Cilium は、他の CNI solutions と比較して、いくつかの独自の利点を提供します。
+**技術的な差別化**:
+- **eBPF の活用**: kernel 内のプログラム可能なデータパスによる高性能と柔軟性
+- **API 対応ネットワーキング**: L7 レイヤーまでの NetworkPolicy サポート
+- **XDP (eXpress Data Path)**: パケット処理パフォーマンスの最適化
+- **Kube-proxy の置き換え**: より効率的な Service ロードバランシング
+- **Hubble 統合**: 強力なネットワーク可観測性ツール
 
-**Technical Differentiation**:
-- **eBPF Utilization**: Kernel 内の programmable data path による高い performance と flexibility
-- **API-aware Networking**: L7 layer までの network policy support
-- **XDP (eXpress Data Path)**: Packet processing performance optimization
-- **Kube-proxy Replacement**: より効率的な service load balancing
-- **Hubble Integration**: 強力な network observability tool
+**ユースケース別の利点**:
+- **マイクロサービスアーキテクチャ**: きめ細かな NetworkPolicy と可観測性
+- **マルチクラスターのデプロイ**: クラスター間のシームレスなネットワーキング
+- **セキュリティ重視の環境**: 堅牢なネットワークセキュリティ Policy
+- **高パフォーマンス要件**: 最適化されたデータパス
+- **Service Mesh 統合**: Istio などの Service Mesh との統合
 
-**Benefits by Use Case**:
-- **Microservice Architecture**: きめ細かな network policies と observability
-- **Multi-cluster Deployment**: Clusters 間の seamless networking
-- **Security-focused Environment**: 堅牢な network security policies
-- **High-performance Requirements**: 最適化された data path
-- **Service Mesh Integration**: Istio などの service meshes との integration
+### eBPF テクノロジー
 
-### eBPF Technology
+eBPF（extended Berkeley Packet Filter）は、Linux kernel 内でプログラムを安全に実行できるようにするテクノロジーです。Cilium は eBPF を使用してネットワーキング、セキュリティ、可観測性の機能を実装します。
 
-eBPF (extended Berkeley Packet Filter) は、Linux kernel 内で programs を安全に実行できる technology です。Cilium は eBPF を使用して networking、security、observability features を実装します。
+#### eBPF の主な機能
 
-#### Key Features of eBPF
+1. **kernel 内実行**: eBPF プログラムは kernel 内で直接実行され、高いパフォーマンスを提供します。
+2. **安全性**: eBPF verifier はプログラムが kernel を損傷しないことを保証します。
+3. **動的ロード**: eBPF プログラムは kernel を再起動せずにロードおよびアンロードできます。
+4. **Maps**: eBPF map はデータを保存し、user space と kernel space の間でデータを共有するために使用されます。
 
-1. **In-kernel Execution**: eBPF programs は kernel 内で直接実行され、高い performance を提供します。
-2. **Safety**: eBPF verifier は、programs が kernel を損傷しないことを保証します。
-3. **Dynamic Loading**: eBPF programs は、kernel を reboot せずに load および unload できます。
-4. **Maps**: eBPF maps は、data の保存と、user space と kernel space 間での data 共有に使用されます。
+#### Cilium での eBPF の使用
 
-#### eBPF Usage in Cilium
+Cilium は以下の方法で eBPF を使用します。
 
-Cilium は eBPF を次のように使用します。
+1. **ネットワークデータパス**: eBPF プログラムがネットワークパケットを処理およびルーティングします。
+2. **Policy の適用**: eBPF プログラムが NetworkPolicy を適用します。
+3. **ロードバランシング**: eBPF プログラムが Service のロードバランシングを実行します。
+4. **可観測性**: eBPF プログラムがネットワークフローのメトリクスを収集します。
 
-1. **Network Data Path**: eBPF programs は network packets を処理して route します。
-2. **Policy Enforcement**: eBPF programs は network policies を enforce します。
-3. **Load Balancing**: eBPF programs は services の load balancing を実行します。
-4. **Observability**: eBPF programs は network flows の metrics を収集します。
+#### eBPF と従来のネットワーキングアプローチの比較
 
-#### eBPF vs Traditional Networking Approaches
-
-| Feature | eBPF | Traditional Approach (iptables) |
+| 機能 | eBPF | 従来のアプローチ（iptables） |
 |---------|------|--------------------------------|
-| Performance | 非常に高い | 中程度 |
-| Scalability | 非常に高い | 限定的 |
-| Programmability | 高い | 限定的 |
-| Observability | 高い | 限定的 |
-| Implementation Complexity | 高い | 中程度 |
+| パフォーマンス | 非常に高い | 中程度 |
+| スケーラビリティ | 非常に高い | 限定的 |
+| プログラム可能性 | 高い | 限定的 |
+| 可観測性 | 高い | 限定的 |
+| 実装の複雑さ | 高い | 中程度 |
 
-### Cilium Networking Model
+### Cilium ネットワーキングモデル
 
-Cilium は、さまざまな環境と要件に合わせて設定できる複数の networking models をサポートします。
+Cilium は、異なる環境や要件に合わせて設定可能なさまざまなネットワーキングモデルをサポートします。
 
-#### Overlay Networking
+#### Overlay ネットワーキング
 
-Cilium は default で VXLAN を使用して overlay networking を実装しますが、Geneve などの他の encapsulation protocols もサポートします。
+Cilium はデフォルトで VXLAN を使用して overlay ネットワーキングを実装しますが、Geneve などの他のカプセル化プロトコルもサポートしています。
 
-**How it works**:
-1. Packets は source node で作成されます。
-2. Cilium は、元の packet を encapsulation headers で包むことで packet を encapsulate します。
-3. Encapsulated packet は、physical network を通じて destination node に送信されます。
-4. Destination node で、Cilium は packet を decapsulate して元の packet を抽出します。
-5. 抽出された packet は destination container に配信されます。
+**仕組み**:
+1. パケットは送信元ノードで作成されます。
+2. Cilium は、元のパケットをカプセル化ヘッダーで包むことでパケットをカプセル化します。
+3. カプセル化されたパケットは、物理ネットワークを通じて宛先ノードに送信されます。
+4. 宛先ノードで、Cilium はパケットをデカプセル化して元のパケットを抽出します。
+5. 抽出されたパケットは宛先コンテナに配信されます。
 
-**Advantages**:
-- 既存の network infrastructure との互換性
-- Network topology independence
-- Multi-cluster environments における IP conflict prevention
+**利点**:
+- 既存のネットワークインフラストラクチャとの互換性
+- ネットワークトポロジーからの独立性
+- マルチクラスター環境での IP 競合の防止
 
-**Disadvantages**:
-- Encapsulation overhead による performance impact
-- MTU size の低下
-- 追加の CPU usage
+**欠点**:
+- カプセル化オーバーヘッドによるパフォーマンスへの影響
+- MTU サイズの縮小
+- 追加の CPU 使用量
 
 #### Native Routing
 
-Native routing は、encapsulation を使わずに direct routing を使用します。この mode では、underlying network infrastructure が Pod IP addresses を route できる必要があります。
+Native Routing はカプセル化なしの直接ルーティングを使用します。このモードでは、基盤となるネットワークインフラストラクチャが Pod IP アドレスをルーティングできる必要があります。
 
-**How it works**:
-1. 各 node は、その node 上で実行されている Pods の CIDR block を advertise します。
-2. Routing tables は、各 Pod CIDR block を対応する node に route するよう設定されます。
-3. Packets は encapsulation なしで destination node に直接 route されます。
+**仕組み**:
+1. 各ノードは、そのノードで実行中の Pod の CIDR ブロックをアドバタイズします。
+2. 各 Pod CIDR ブロックを対応するノードにルーティングするようルーティングテーブルが設定されます。
+3. パケットはカプセル化なしで宛先ノードに直接ルーティングされます。
 
-**Advantages**:
-- Encapsulation overhead がない
-- Network performance の向上
-- CPU usage の低減
+**利点**:
+- カプセル化オーバーヘッドなし
+- ネットワークパフォーマンスの向上
+- CPU 使用量の削減
 
-**Disadvantages**:
-- Underlying network infrastructure への依存
-- Network topology constraints
-- IP address management complexity
+**欠点**:
+- 基盤となるネットワークインフラストラクチャへの依存
+- ネットワークトポロジーの制約
+- IP アドレス管理の複雑さ
 
-#### Hybrid Mode
+#### Hybrid モード
 
-Cilium は、overlay networking と native routing を組み合わせた hybrid mode もサポートしています。
+Cilium は、overlay ネットワーキングと Native Routing を組み合わせる Hybrid モードもサポートします。
 
-**How it works**:
-1. 可能な場合は native routing を使用します。
-2. Native routing が不可能な場合は overlay networking に fallback します。
+**仕組み**:
+1. 可能な場合は Native Routing を使用します。
+2. Native Routing が不可能な場合は overlay ネットワーキングにフォールバックします。
 
-**Advantages**:
-- Flexibility と performance のバランス
-- さまざまな network topologies のサポート
-- 段階的な migration が可能
+**利点**:
+- 柔軟性とパフォーマンスのバランス
+- さまざまなネットワークトポロジーをサポート
+- 段階的な移行が可能
 
-#### AWS ENI Mode
+#### AWS ENI モード
 
-AWS EKS では、Cilium は AWS Elastic Network Interfaces (ENIs) を活用して Pod に native VPC IP addresses を割り当てることができます。
+AWS EKS では、Cilium は AWS Elastic Network Interface（ENI）を活用して、Pod にネイティブ VPC IP アドレスを割り当てることができます。
 
-**Key Features**:
-- Pod に VPC native IP addresses を割り当てます
-- Overlay network を使わない VPC native networking
-- AWS security groups と network policy integration
-- Network performance の向上
+**主な機能**:
+- Pod への VPC ネイティブ IP アドレスの割り当て
+- overlay ネットワークなしの VPC ネイティブネットワーキング
+- AWS security group および NetworkPolicy との統合
+- ネットワークパフォーマンスの向上
 
-### Cilium Network Policies
+### Cilium NetworkPolicy
 
-Cilium は Kubernetes network policies を拡張し、L3-L7 layers で fine-grained な network security policies を提供します。
+Cilium は Kubernetes NetworkPolicy を拡張し、L3-L7 レイヤーでのきめ細かなネットワークセキュリティ Policy を提供します。
 
-#### L3/L4 Policies
+#### L3/L4 Policy
 
-Cilium は、IP addresses、ports、protocols に基づいて policies を定義する standard Kubernetes network policies をサポートします。
+Cilium は標準の Kubernetes NetworkPolicy をサポートし、IP アドレス、ポート、プロトコルに基づく Policy を定義できます。
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1120,11 +959,11 @@ spec:
         protocol: TCP
 ```
 
-この policy は、`app: frontend` label を持つ Pods から `app: myapp` label を持つ Pods への TCP port 80 の ingress traffic を許可します。
+この Policy は、`app: frontend` ラベルを持つ Pod から `app: myapp` ラベルを持つ Pod への TCP ポート 80 の ingress トラフィックを許可します。
 
-#### L7 Policies
+#### L7 Policy
 
-Cilium は、HTTP、gRPC、Kafka などの protocols に対する fine-grained な policies を定義する L7（application layer）policies をサポートします。
+Cilium は L7（アプリケーションレイヤー）Policy をサポートし、HTTP、gRPC、Kafka などのプロトコルに対してきめ細かな Policy を定義できます。
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1149,11 +988,11 @@ spec:
           path: "/api/v1/products"
 ```
 
-この policy は、`app: frontend` label を持つ Pods から `app: myapp` label を持つ Pods への、`/api/v1/products` path に対する HTTP GET requests のみを許可します。
+この Policy は、`app: frontend` ラベルを持つ Pod から `app: myapp` ラベルを持つ Pod への `/api/v1/products` パスに対する HTTP GET リクエストのみを許可します。
 
-#### Cluster-wide Policies
+#### クラスター全体の Policy
 
-Cilium は、すべての Pods に適用される policies を定義する cluster-wide network policies をサポートします。
+Cilium は、すべての Pod に適用される Policy を定義するためのクラスター全体の NetworkPolicy をサポートします。
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1169,30 +1008,30 @@ spec:
         io.kubernetes.pod.namespace: kube-system
 ```
 
-この policy は、`kube-system` namespace 内の Pods からすべての Pods への ingress traffic を許可します。
+この Policy は、`kube-system` namespace 内の Pod からすべての Pod への ingress トラフィックを許可します。
 
-### Network Visibility with Hubble
+### Hubble によるネットワークの可視化
 
-Hubble は Cilium の observability layer であり、eBPF を使用して network flows を monitor し、issues を troubleshoot します。
+Hubble は、eBPF を使用してネットワークフローを監視し、問題をトラブルシューティングする Cilium の可観測性レイヤーです。
 
-#### Key Features of Hubble
+#### Hubble の主な機能
 
-1. **Network Flow Monitoring**: Pod-to-Pod communication を real-time で monitor します。
-2. **Service Dependency Mapping**: Service-to-service dependencies を visualize します。
-3. **Security Observation**: Network policy violations を検出します。
-4. **Performance Analysis**: Network latency と throughput を分析します。
-5. **Troubleshooting**: Network connectivity issues を診断します。
+1. **ネットワークフローの監視**: Pod 間通信をリアルタイムで監視します。
+2. **Service 依存関係のマッピング**: Service 間の依存関係を可視化します。
+3. **セキュリティの観測**: NetworkPolicy 違反を検出します。
+4. **パフォーマンス分析**: ネットワークレイテンシーとスループットを分析します。
+5. **トラブルシューティング**: ネットワーク接続の問題を診断します。
 
-#### Hubble Architecture
+#### Hubble アーキテクチャ
 
-Hubble は次の components で構成されます。
+Hubble は以下のコンポーネントで構成されます。
 
-1. **Hubble Server**: Network flow data を収集する Cilium agent に組み込まれた server。
-2. **Hubble Relay**: 複数の Hubble Servers から data を集約します。
-3. **Hubble UI**: Network flows を可視化する web interface。
-4. **Hubble CLI**: Network flows を query する command-line tool。
+1. **Hubble Server**: ネットワークフローデータを収集する Cilium agent に組み込まれたサーバーです。
+2. **Hubble Relay**: 複数の Hubble Server からデータを集約します。
+3. **Hubble UI**: ネットワークフローを可視化する Web インターフェースです。
+4. **Hubble CLI**: ネットワークフローをクエリするコマンドラインツールです。
 
-#### Hubble Usage Examples
+#### Hubble の使用例
 
 ```bash
 # Install Hubble CLI
@@ -1216,11 +1055,11 @@ hubble observe --pod app=myapp
 hubble observe --verdict DROPPED
 ```
 
-### Configuring Cilium on Amazon EKS
+### Amazon EKS での Cilium の設定
 
-Amazon EKS で Cilium を設定する方法はいくつかあります。ここでは、一般的な configuration methods をいくつか見ていきます。
+Amazon EKS で Cilium を設定する方法はいくつかあります。ここでは一般的な設定方法を見ていきます。
 
-#### Basic Installation
+#### 基本インストール
 
 ```bash
 # Install Cilium CLI
@@ -1238,7 +1077,7 @@ cilium status
 cilium connectivity test
 ```
 
-#### AWS ENI Mode Configuration
+#### AWS ENI モードの設定
 
 ```bash
 # Install Cilium with AWS ENI mode
@@ -1253,7 +1092,7 @@ helm install cilium cilium/cilium \
   --set tunnel=disabled
 ```
 
-#### Enable Hubble
+#### Hubble を有効化
 
 ```bash
 # Enable Hubble
@@ -1263,7 +1102,7 @@ cilium hubble enable --ui
 kubectl port-forward -n kube-system svc/hubble-ui 12000:80
 ```
 
-#### Cilium Network Policy Example
+#### Cilium NetworkPolicy の例
 
 ```yaml
 apiVersion: "cilium.io/v2"
@@ -1296,43 +1135,43 @@ spec:
         protocol: TCP
 ```
 
-この policy は、`app: frontend` label を持つ Pods から `app: api` label を持つ Pods への `/api/v1/` path に対する HTTP GET requests のみを許可し、`app: api` label を持つ Pods から `app: database` label を持つ Pods への TCP port 3306 の egress traffic を許可します。
+この Policy は、`app: frontend` ラベルを持つ Pod から `app: api` ラベルを持つ Pod への `/api/v1/` パスに対する HTTP GET リクエストのみを許可し、`app: api` ラベルを持つ Pod から `app: database` ラベルを持つ Pod への TCP ポート 3306 の egress トラフィックを許可します。
 
-#### Cilium Optimization on EKS
+#### EKS での Cilium 最適化
 
-1. **Node Group Configuration**:
-   - 十分な ENIs と IP addresses を提供する instance types を選択します
-   - 適切な maximum Pod count を設定します
+1. **Node Group の設定**:
+   - 十分な ENI と IP アドレスを提供する instance type を選択
+   - 適切な最大 Pod 数を設定
 
-2. **Performance Optimization**:
-   - Direct routing mode を使用します
-   - XDP acceleration を有効にします
-   - BBR congestion control algorithm を有効にします
+2. **パフォーマンス最適化**:
+   - 直接ルーティングモードを使用
+   - XDP アクセラレーションを有効化
+   - BBR 輻輳制御アルゴリズムを有効化
 
-3. **Monitoring and Logging**:
-   - Hubble を有効にします
-   - Prometheus metrics collection
-   - CloudWatch との integration
+3. **監視とロギング**:
+   - Hubble を有効化
+   - Prometheus メトリクスを収集
+   - CloudWatch との統合
 
-## Conclusion
+## まとめ
 
-この章では、Kubernetes services と networking について学びました。Services は一連の Pod に安定した endpoints を提供し、Ingress は外部 traffic を cluster 内の services に route します。Network policies は Pods 間の通信を制御し、service meshes は microservice architectures における service-to-service communication を管理します。また、CNI と Cilium を通じて高度な networking features を実装する方法も確認しました。
+この章では、Kubernetes Service とネットワーキングについて学びました。Service は Pod のセットに安定したエンドポイントを提供し、Ingress は外部トラフィックをクラスター内の Service にルーティングします。NetworkPolicy は Pod 間の通信を制御し、Service Mesh はマイクロサービスアーキテクチャにおける Service 間通信を管理します。また、CNI と Cilium を通じて高度なネットワーキング機能を実装する方法も学びました。
 
-Kubernetes networking features を理解して活用することで、安全で scalable な applications を構築できます。
+Kubernetes のネットワーキング機能を理解して活用することで、安全でスケーラブルなアプリケーションを構築できます。
 
-次の章では、Kubernetes storage options について学びます。
+次の章では、Kubernetes のストレージオプションについて学びます。
 
-## References
+## 参考資料
 
-- [Kubernetes Official Documentation - Services](https://kubernetes.io/docs/concepts/services-networking/service/)
-- [Kubernetes Official Documentation - Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
-- [Kubernetes Official Documentation - Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Kubernetes Official Documentation - DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
-- [Istio Official Documentation](https://istio.io/latest/docs/)
-- [Linkerd Official Documentation](https://linkerd.io/2.11/overview/)
-- [Cilium Official Documentation](https://docs.cilium.io/)
-- [CNI Official Documentation](https://github.com/containernetworking/cni)
+- [Kubernetes 公式ドキュメント - Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Kubernetes 公式ドキュメント - Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+- [Kubernetes 公式ドキュメント - NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes 公式ドキュメント - Services と Pod の DNS](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [Istio 公式ドキュメント](https://istio.io/latest/docs/)
+- [Linkerd 公式ドキュメント](https://linkerd.io/2.11/overview/)
+- [Cilium 公式ドキュメント](https://docs.cilium.io/)
+- [CNI 公式ドキュメント](https://github.com/containernetworking/cni)
 
-## Quiz
+## クイズ
 
 この章で学んだ内容を確認するには、[Services and Networking Quiz](../quizzes/core/03-services-networking-quiz.md) に挑戦してください。
