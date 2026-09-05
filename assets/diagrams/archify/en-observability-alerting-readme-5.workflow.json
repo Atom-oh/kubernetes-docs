@@ -233,13 +233,16 @@
     {
       "from": "team",
       "to": "sre",
-      "label": "INFRA",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
     },
     {
       "from": "team",
       "to": "dev",
-      "label": "APP"
+      "label": "APP",
+      "toSide": "top"
     },
     {
       "from": "team",

@@ -29,7 +29,9 @@ OpenTelemetry는 OpenTracing과 OpenCensus 프로젝트가 합쳐져 탄생했�
 | **Metrics** | 수치 측정값 | 리소스 사용량, SLI/SLO |
 | **Logs** | 이벤트 기록 | 디버깅, 감사 |
 
-![OpenTelemetry가 Traces, Metrics, Logs 세 가지 신호를 생성하며, 각 신호가 포함하는 구성요소(Span/SpanContext/Links, Counter/Gauge/Histogram, LogRecord/Severity/Body)와, Traces-Logs가 TraceID로, Metrics-Traces가 Exemplar로 서로 연결됨을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-tracing-03-opentelemetry-1.svg)
+![OpenTelemetry가 Traces(Span·SpanContext·Links), Metrics(Counter·Gauge·Histogram), Logs(LogRecord·Severity·Body) 세 가지 신호를 생성하고, Traces와 Logs는 TraceID로, Metrics와 Traces는 Exemplar로 서로 연결됨을 보여준다.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-03-opentelemetry-1.html)
 
 ### 핵심 컴포넌트
 

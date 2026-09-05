@@ -679,7 +679,9 @@ aws xray get-sampling-statistic-summaries
 
 ### X-Ray 콘솔에서 서비스 맵 활용
 
-![클라이언트 요청이 API Gateway를 거쳐 Auth Service와 Order Service로 분기되고, Order Service가 Payment Service·DynamoDB·ElastiCache를 호출하는 각 경로의 응답 시간과 Payment Service의 오류율을 보여주는 X-Ray 서비스 맵.](../../../assets/diagrams/rendered/ko-observability-tracing-02-xray-1.svg)
+![클라이언트 요청이 API Gateway를 거쳐 Auth Service와 Order Service로 분기되고, Order Service가 Payment Service·ElastiCache·DynamoDB를 호출하는 각 경로의 응답 시간과 Payment Service의 오류율 2%를 함께 표시한 X-Ray 서비스 맵을 보여준다.](../../.gitbook/assets/ko-observability-tracing-02-xray-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-02-xray-1.html)
 
 ### 프로그래밍 방식으로 서비스 맵 조회
 

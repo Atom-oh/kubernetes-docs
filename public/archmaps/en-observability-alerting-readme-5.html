@@ -5058,9 +5058,9 @@
         <path data-edge-from="slack" data-edge-to="team" data-edge-key="6" data-composition-points="614,272;614,358;540,358" d="M 614 272 L 614 358 L 540 358" class="a-default" data-animate="edge" style="--step:11" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="slack_pd" data-edge-to="team" data-edge-key="7" data-composition-points="494,272;494,338" d="M 494 272 L 494 338" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="team" data-edge-to="dba" data-edge-label="DATABASE" data-edge-key="8" data-composition-points="540,372;556,372;556,420;614,420;614,472" d="M 540 372 L 556 372 L 556 420 L 614 420 L 614 472" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="team" data-edge-to="dev" data-edge-label="APP" data-edge-key="9" data-composition-points="448,372;20,372;20,498;320,498" d="M 448 372 L 20 372 L 20 498 L 320 498" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="team" data-edge-to="dev" data-edge-label="APP" data-edge-key="9" data-composition-points="448,379;432,379;432,420;366,420;366,472" d="M 448 379 L 432 379 L 432 420 L 366 420 L 366 472" class="a-default" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead)"/>
         <path data-edge-from="team" data-edge-to="security" data-edge-label="SECURITY" data-edge-key="10" data-composition-points="540,386;734,386;734,472" d="M 540 386 L 734 386 L 734 472" class="a-security" data-animate="edge" style="--step:12" stroke-width="1.4" marker-end="url(#arrowhead-security)"/>
-        <path data-edge-from="team" data-edge-to="sre" data-edge-label="INFRA" data-edge-key="11" data-composition-points="448,372;432,372;432,552;494,552;494,524" d="M 448 372 L 432 372 L 432 552 L 494 552 L 494 524" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="team" data-edge-to="sre" data-edge-key="11" data-composition-points="494,406;494,472" d="M 494 406 L 494 472" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Nodes -->
         <g id="node-alert" data-node-id="alert" data-node-label="Alert Fired" tabindex="0" role="button" aria-label="Focus Alert Fired, severity + team labels, Alertmanager: severity match" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="severity + team labels" data-node-context="Alertmanager: severity match">
@@ -5231,17 +5231,14 @@
           <text x="585" y="410" class="t-muted" font-size="8" text-anchor="middle">DATABASE</text>
         </g>
         <g data-detail="context" data-edge-from="team" data-edge-to="dev" data-edge-label="APP" data-edge-key="9">
-          <rect x="219" y="352" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="234" y="362" class="t-muted" font-size="8" text-anchor="middle">APP</text>
+          <rect x="384" y="400" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="399" y="410" class="t-muted" font-size="8" text-anchor="middle">APP</text>
         </g>
         <g data-detail="context" data-edge-from="team" data-edge-to="security" data-edge-label="SECURITY" data-edge-key="10">
           <rect x="612.8" y="366" width="48.4" height="14" rx="3" class="c-mask"/>
           <text x="637" y="376" class="t-security" font-size="8" text-anchor="middle">SECURITY</text>
         </g>
-        <g data-detail="context" data-edge-from="team" data-edge-to="sre" data-edge-label="INFRA" data-edge-key="11">
-          <rect x="446" y="532" width="34" height="14" rx="3" class="c-mask"/>
-          <text x="463" y="542" class="t-backend" font-size="8" text-anchor="middle">INFRA</text>
-        </g>
+
 
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
