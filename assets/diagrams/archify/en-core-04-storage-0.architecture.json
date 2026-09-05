@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Storage Architecture",
+    "locale": "en",
+    "output": "en-core-04-storage-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      600
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Application"
+        },
+        "backend": {
+          "label": "Storage API objects"
+        },
+        "database": {
+          "label": "PersistentVolume"
+        },
+        "messagebus": {
+          "label": "CSI Driver"
+        },
+        "cloud": {
+          "label": "Physical storage"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "claim",
+        "label": "Claim path",
+        "focus": [
+          "pod",
+          "pvc",
+          "pv"
+        ],
+        "note": "A Pod references a PersistentVolumeClaim, and the PVC binds to a PersistentVolume."
+      },
+      {
+        "id": "provision",
+        "label": "Provisioning",
+        "focus": [
+          "sc",
+          "pv",
+          "csi"
+        ],
+        "note": "A StorageClass provisions the PV, and the PV reaches real storage through the CSI Driver."
+      },
+      {
+        "id": "backends",
+        "label": "Physical storage",
+        "focus": [
+          "csi",
+          "cloud",
+          "local",
+          "nfs"
+        ],
+        "note": "The CSI Driver attaches cloud storage, local storage, or an NFS server."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "Application ×3",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "PVC ×3",
+      "pos": [
+        290,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "Provisioner definition",
+      "pos": [
+        570,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "PV ×3",
+      "pos": [
+        570,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "messagebus",
+      "label": "CSI Driver",
+      "sublabel": "Container Storage Interface",
+      "pos": [
+        850,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "Cloud Storage",
+      "sublabel": "EBS, EFS, Azure Disk, etc.",
+      "pos": [
+        1110,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "local",
+      "type": "cloud",
+      "label": "Local Storage",
+      "sublabel": "Node disk",
+      "pos": [
+        1110,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "nfs",
+      "type": "cloud",
+      "label": "NFS Server",
+      "sublabel": "Network file system",
+      "pos": [
+        1110,
+        410
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application Layer",
+      "wraps": [
+        "pod",
+        "pvc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage Abstraction Layer",
+      "wraps": [
+        "sc",
+        "pv"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Physical Storage Layer",
+      "wraps": [
+        "csi",
+        "cloud",
+        "local",
+        "nfs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "claimName reference",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "binds",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sc-pv",
+      "from": "sc",
+      "to": "pv",
+      "label": "Provisioning",
+      "labelDy": 24
+    },
+    {
+      "id": "pv-csi",
+      "from": "pv",
+      "to": "csi",
+      "label": "attach volume",
+      "variant": "emphasis"
+    },
+    {
+      "id": "csi-cloud",
+      "from": "csi",
+      "to": "cloud"
+    },
+    {
+      "id": "csi-local",
+      "from": "csi",
+      "to": "local"
+    },
+    {
+      "id": "csi-nfs",
+      "from": "csi",
+      "to": "nfs"
+    }
+  ]
+}

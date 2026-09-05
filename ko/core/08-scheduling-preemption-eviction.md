@@ -72,7 +72,9 @@ EOF
 
 ## Kubernetes 스케줄링 아키텍처
 
-![kube-scheduler를 중심으로 큐·필터링·스코어링·바인딩으로 이어지는 스케줄링 파이프라인과, 이를 제약하는 정책 및 선점·축출 메커니즘의 관계를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-0.svg)
+![API 서버에서 감시된 스케줄링되지 않은 포드가 스케줄링 큐를 거쳐 kube-scheduler의 필터링·스코어링·바인딩 단계로 처리되고, 노드 셀렉터·어피니티·테인트·토폴로지 분배 제약이 필터링과 스코어링에 개입하며, PriorityClass 선점은 스케줄러에, PodDisruptionBudget은 Descheduler의 축출에 개입하고 축출된 포드는 다시 API 서버로 돌아오는 Kubernetes 스케줄링 아키텍처를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-0.html)
 
 ## 스케줄링 개념 비교
 
@@ -154,7 +156,9 @@ Kubernetes 스케줄러는 포드를 적절한 노드에 배치하는 컨트롤 
 
 Kubernetes 스케줄러는 다음과 같은 과정으로 작동합니다:
 
-![kube-scheduler가 API 서버로부터 포드 생성 이벤트를 감시해 필터 플러그인과 스코어 플러그인을 거쳐 최적 노드에 바인딩하기까지의 처리 순서를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-1.svg)
+![kube-scheduler가 API 서버의 포드 생성 이벤트를 스케줄링 큐에서 받아 필터 플러그인과 스코어 플러그인을 거쳐 최적 노드를 선택하고 API 서버에 바인딩을 요청해 포드가 노드에 배치되기까지의 처리 순서를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-1.html)
 
 1. **포드 큐 감시**: 스케줄러는 API 서버를 감시하여 스케줄링되지 않은 포드를 찾습니다.
 2. **노드 필터링**: 포드를 실행할 수 있는 노드 집합을 식별합니다.
@@ -200,7 +204,9 @@ spec:
 
 Kubernetes는 포드를 특정 노드에 배치하기 위한 여러 메커니즘을 제공합니다.
 
-![nodeSelector, nodeName, nodeAffinity 세 가지 노드 선택 방식이 각각 레이블 매칭, 직접 지정, 표현식 매칭을 통해 포드를 노드에 배치하는 방식을 비교하는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-2.svg)
+![nodeSelector, nodeName, nodeAffinity 세 가지 노드 선택 방식이 각각 레이블 매칭, 직접 지정, 표현식 매칭을 통해 포드를 노드에 배치하는 방식을 비교해 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-2.html)
 
 ### 노드 셀렉터(Node Selector)
 
@@ -243,7 +249,9 @@ spec:
 
 포드 어피니티와 안티-어피니티는 포드 간의 관계를 기반으로 포드를 배치하는 방법을 제공합니다.
 
-![podAffinity는 관련 포드를 같은 노드에 모으고 podAntiAffinity는 같은 레이블의 포드를 서로 다른 노드로 분리 배치한다는 대조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-3.svg)
+![podAffinity는 웹 포드를 app=cache 포드와 같은 노드에 함께 배치하고 podAntiAffinity는 같은 app=web 레이블의 웹 포드 1과 2를 서로 다른 노드로 분리 배치하며, 두 규칙 모두 required(하드)와 preferred(소프트) 유형으로 선언할 수 있음을 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-3.html)
 
 ### 포드 어피니티(Pod Affinity)
 
@@ -330,7 +338,9 @@ affinity:
 
 테인트(Taint)와 톨러레이션(Toleration)은 노드가 특정 포드를 거부할 수 있게 하는 메커니즘입니다.
 
-![노드에 적용된 테인트는 일치하는 톨러레이션이 없는 포드를 거부하며, GPU 노드 예시로 일반 포드는 거부되고 톨러레이션을 가진 포드만 배치되는 과정을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-4.svg)
+![노드에 적용된 테인트가 일치하는 톨러레이션이 없는 포드를 거부하는 메커니즘, NoSchedule·PreferNoSchedule·NoExecute 세 가지 테인트 효과, 그리고 key=gpu:NoSchedule 테인트가 붙은 GPU 노드가 일반 포드는 거부하고 톨러레이션을 가진 GPU 포드만 허용하는 예시를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-4.html)
 
 ### 테인트(Taint)
 
@@ -446,7 +456,9 @@ spec:
 
 Kubernetes는 포드 우선순위와 선점(Preemption) 기능을 통해 중요한 워크로드가 클러스터 리소스를 확보할 수 있도록 합니다.
 
-![PriorityClass로 우선순위가 부여된 포드가 리소스 부족 시 선점을 통해 우선순위가 낮은 포드를 제거하고, 그 선점 과정이 4단계로 진행되는 흐름을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-5.svg)
+![PriorityClass로 우선순위가 부여된 포드가 리소스 부족 시 선점을 통해 우선순위가 낮은 포드를 제거하고, 그 선점 과정이 스케줄링 실패부터 우선순위 높은 포드 스케줄링까지 4단계로 진행되는 흐름을 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-5.html)
 
 ### 우선순위 클래스(PriorityClass)
 
@@ -504,7 +516,9 @@ spec:
 
 포드 축출(Pod Eviction)은 노드 문제 발생 시 포드를 안전하게 이동시키는 과정입니다. 축출은 다양한 이유로 발생할 수 있습니다.
 
-![컨트롤러·kubelet·사용자에 의한 세 가지 포드 축출 경로가 각각 노드 불가용, 리소스 압박, 유지 관리라는 서로 다른 원인에서 시작됨을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-6.svg)
+![컨트롤러(kube-controller-manager)·kubelet·사용자라는 세 축출 주체가 각각 노드 NotReady/Unreachable, 리소스 부족·하드웨어 문제, 유지 관리(kubectl drain)라는 원인으로 이어지고, kubelet이 memory·nodefs·imagefs·pid 축출 신호를 모니터링하는 구조를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-6.html)
 
 ### 축출 유형
 
@@ -564,7 +578,9 @@ kubelet은 다음 순서로 포드를 축출합니다:
 
 포드 중단 예산(Pod Disruption Budget, PDB)은 자발적 중단 중에도 애플리케이션의 가용성을 유지하기 위한 방법입니다. PDB는 동시에 중단될 수 있는 포드의 수를 제한합니다.
 
-![PodDisruptionBudget이 minAvailable·maxUnavailable 조건으로 자발적 중단 시 포드 축출을 허용할지 거부할지 결정하는 흐름을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-7.svg)
+![PodDisruptionBudget의 minAvailable·maxUnavailable·selector 구성 요소, 노드 드레인 같은 자발적 중단 시 PDB 조건 충족 여부에 따라 포드 축출을 허용하거나 거부하는 흐름, 그리고 replicas 5인 Deployment에서 minAvailable 3과 maxUnavailable 2가 동일한 효과를 내는 예시를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-7.html)
 
 ### PDB 정의
 
@@ -657,7 +673,9 @@ evictionPressureTransitionPeriod: "30s"
 
 토폴로지 분배 제약 조건은 포드를 클러스터의 여러 토폴로지 도메인(노드, 영역, 리전 등)에 균등하게 분산시키는 기능입니다. 이는 고가용성을 보장하고 장애 도메인의 영향을 최소화하는 데 유용합니다.
 
-![TopologySpreadConstraints가 maxSkew로 가용 영역 간 포드 분산을 제어하고, whenUnsatisfiable 옵션으로 제약을 충족하지 못했을 때의 동작을 선택하는 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-8.svg)
+![TopologySpreadConstraints가 maxSkew, topologyKey, whenUnsatisfiable, labelSelector 네 필수 필드로 가용 영역 간 포드 분산을 제어하고, whenUnsatisfiable의 DoNotSchedule과 ScheduleAnyway 옵션을 선택하며, maxSkew=1일 때 새 포드가 포드가 가장 적은 ap-northeast-2b에 배치되는 EKS 예시를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-8.html)
 
 ### 주요 필드 설명
 
@@ -813,7 +831,9 @@ topologySpreadConstraints:
 
 Pod Deletion Cost는 HPA(Horizontal Pod Autoscaler)가 스케일다운 시 어떤 포드를 먼저 제거할지 결정하는 데 사용되는 어노테이션입니다. 낮은 비용의 포드가 먼저 제거됩니다.
 
-![HPA 스케일다운 시 pod-deletion-cost 어노테이션 값이 낮은 포드부터 먼저 제거되고, 값이 높은 포드는 캐시나 리더처럼 보호할 목적으로 남겨진다는 원리를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-9.svg)
+![HPA 스케일다운 시 pod-deletion-cost 어노테이션 값이 낮은 포드부터 먼저 제거되고, 값이 높은 포드는 캐시나 리더처럼 보호할 목적으로 남겨진다는 원리를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-9.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-9.html)
 
 ### 어노테이션 형식
 
@@ -939,7 +959,9 @@ spec:
 
 Descheduler는 실행 중인 클러스터에서 포드를 재분산시키는 도구입니다. 스케줄러는 새 포드를 배치할 때만 동작하지만, Descheduler는 이미 실행 중인 포드를 축출하여 더 나은 분산을 달성할 수 있습니다.
 
-![노드 추가·제거나 포드 변경으로 균등 분산이 깨졌을 때 Descheduler가 실행 중인 포드를 재배치해 균형 상태로 되돌리는 과정과 대표 전략을 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-10.svg)
+![노드 추가·제거나 포드 변경으로 균등 분산이 깨졌을 때 Descheduler가 실행 중인 포드를 축출해 재균형 상태로 되돌리는 과정과, RemoveDuplicates·LowNodeUtilization 등 대표 전략 6가지를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-10.html)
 
 ### Helm을 사용한 설치
 
@@ -1091,7 +1113,9 @@ spec:
 
 Amazon EKS에서는 Kubernetes 스케줄링 기능을 활용하여 워크로드를 최적화할 수 있습니다.
 
-![EKS에서 노드 그룹 전략, 가용 영역 분산, Karpenter 자동 스케일링, 리소스 최적화라는 네 가지 축이 각각의 자동화 도구로 연결되는 구조를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-core-08-scheduling-preemption-eviction-11.svg)
+![EKS 스케줄링 최적화의 네 가지 축인 노드 그룹·인스턴스 유형, 가용 영역 분산, Karpenter 자동 스케일링, 리소스 요청·제한 최적화가 각각 Cluster Autoscaler, 다중 AZ 배포, NodePool, Vertical Pod Autoscaler라는 구현 메커니즘과 자동화 도구로 연결되는 구조를 보여준다.](../.gitbook/assets/ko-core-08-scheduling-preemption-eviction-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-08-scheduling-preemption-eviction-11.html)
 
 ### 노드 그룹 및 인스턴스 유형
 

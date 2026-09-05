@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 클래스와 동적 프로비저닝",
+    "output": "ko-core-04-storage-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "admin-setup",
+        "label": "관리자의 StorageClass 준비",
+        "focus": [
+          "admin",
+          "sc"
+        ],
+        "note": "클러스터 관리자가 프로비저너와 파라미터를 담은 StorageClass를 먼저 생성한다."
+      },
+      {
+        "id": "dynamic-provisioning",
+        "label": "PVC 요청과 동적 프로비저닝",
+        "focus": [
+          "user",
+          "pvc",
+          "sc",
+          "pv"
+        ],
+        "note": "사용자의 PVC가 StorageClass를 참조하면 PV가 자동 생성되고 PVC에 바인딩된다."
+      },
+      {
+        "id": "pod-usage",
+        "label": "파드의 볼륨 사용",
+        "focus": [
+          "pod",
+          "pvc",
+          "pv",
+          "storage"
+        ],
+        "note": "파드는 PVC를 볼륨으로 마운트하고, 바인딩된 PV가 물리적 스토리지에 연결된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "스토리지 요청자",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "클러스터 관리자",
+      "sublabel": "스토리지 제공자",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "PVC · 사용자의 스토리지 요청",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "프로비저너 · 파라미터",
+      "pos": [
+        600,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "파드",
+      "sublabel": "PVC를 볼륨으로 마운트",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PersistentVolume",
+      "sublabel": "PV · 동적으로 생성됨",
+      "pos": [
+        600,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "물리적 스토리지",
+      "sublabel": "EBS, NFS 등 백엔드",
+      "pos": [
+        880,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "pvc",
+        "sc",
+        "pod",
+        "pv"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-creates-sc",
+      "from": "admin",
+      "to": "sc",
+      "label": "생성",
+      "labelDy": 24
+    },
+    {
+      "id": "user-creates-pvc",
+      "from": "user",
+      "to": "pvc",
+      "label": "생성",
+      "labelDy": 24
+    },
+    {
+      "id": "pvc-refs-sc",
+      "from": "pvc",
+      "to": "sc",
+      "label": "참조",
+      "variant": "dashed"
+    },
+    {
+      "id": "sc-provisions-pv",
+      "from": "sc",
+      "to": "pv",
+      "label": "동적 프로비저닝",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "pvc-binds-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-uses-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "사용"
+    },
+    {
+      "id": "pv-connects-storage",
+      "from": "pv",
+      "to": "storage",
+      "label": "연결"
+    }
+  ]
+}

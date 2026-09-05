@@ -1,0 +1,178 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PV와 PVC의 바인딩 흐름",
+    "output": "public/archmaps/ko-core-04-storage-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "admin-provisions",
+        "label": "관리자가 PV 제공",
+        "focus": [
+          "admin",
+          "pv",
+          "storage"
+        ],
+        "note": "클러스터 관리자가 물리적 스토리지에 연결되는 PersistentVolume을 미리 프로비저닝합니다."
+      },
+      {
+        "id": "user-claims",
+        "label": "사용자가 PVC로 요청",
+        "focus": [
+          "user",
+          "pvc",
+          "pv"
+        ],
+        "note": "PVC는 사용자가 스토리지를 요청하는 방법이고, 요구 사항을 충족하는 PV를 찾아 바인딩됩니다."
+      },
+      {
+        "id": "pod-uses",
+        "label": "파드가 PVC 사용",
+        "focus": [
+          "pod",
+          "pvc",
+          "pv",
+          "storage"
+        ],
+        "note": "파드는 PVC를 볼륨으로 마운트하며, PV는 파드와 독립적인 수명 주기를 가집니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "관리자 / 사용자"
+        },
+        "backend": {
+          "label": "워크로드"
+        },
+        "cloud": {
+          "label": "Kubernetes 리소스"
+        },
+        "database": {
+          "label": "물리적 스토리지"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "adminLane",
+      "label": "클러스터 관리자"
+    },
+    {
+      "id": "clusterLane",
+      "label": "Kubernetes 클러스터"
+    },
+    {
+      "id": "userLane",
+      "label": "사용자 / 워크로드"
+    },
+    {
+      "id": "infraLane",
+      "label": "스토리지 인프라"
+    }
+  ],
+  "mainPath": [
+    "pod",
+    "pvc",
+    "pv",
+    "storage"
+  ],
+  "nodes": [
+    {
+      "id": "admin",
+      "lane": "adminLane",
+      "col": 3,
+      "type": "external",
+      "label": "클러스터 관리자",
+      "sublabel": "스토리지 제공",
+      "width": 196
+    },
+    {
+      "id": "pvc",
+      "lane": "clusterLane",
+      "col": 2,
+      "type": "cloud",
+      "label": "퍼시스턴트 볼륨 클레임",
+      "sublabel": "PersistentVolumeClaim",
+      "width": 210
+    },
+    {
+      "id": "pv",
+      "lane": "clusterLane",
+      "col": 3,
+      "type": "cloud",
+      "label": "퍼시스턴트 볼륨",
+      "sublabel": "PersistentVolume",
+      "width": 180
+    },
+    {
+      "id": "user",
+      "lane": "userLane",
+      "col": 1,
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "스토리지 요청",
+      "width": 130
+    },
+    {
+      "id": "pod",
+      "lane": "userLane",
+      "col": 2,
+      "type": "backend",
+      "label": "파드",
+      "sublabel": "PVC 볼륨 마운트",
+      "width": 140
+    },
+    {
+      "id": "storage",
+      "lane": "infraLane",
+      "col": 3,
+      "type": "database",
+      "label": "물리적 스토리지",
+      "sublabel": "NFS 등 외부 스토리지",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "admin",
+      "to": "pv",
+      "label": "생성",
+      "role": "branch"
+    },
+    {
+      "from": "user",
+      "to": "pvc",
+      "label": "생성",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "from": "pod",
+      "to": "pvc",
+      "label": "사용",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pvc",
+      "to": "pv",
+      "label": "바인딩",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pv",
+      "to": "storage",
+      "label": "연결",
+      "variant": "emphasis",
+      "role": "main",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

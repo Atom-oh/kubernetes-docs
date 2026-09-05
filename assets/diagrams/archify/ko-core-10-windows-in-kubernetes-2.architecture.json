@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Windows·Linux 혼합 클러스터 네트워킹 아키텍처",
+    "output": "ko-core-10-windows-in-kubernetes-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      440
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "외부 요청 경로",
+        "focus": [
+          "client",
+          "lb",
+          "svc",
+          "lp1",
+          "wp1"
+        ],
+        "note": "클라이언트 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 OS와 무관하게 Linux·Windows 포드로 분산된다."
+      },
+      {
+        "id": "pod-to-pod",
+        "label": "포드 간 통신",
+        "focus": [
+          "lp1",
+          "lp2",
+          "wp1",
+          "wp2"
+        ],
+        "note": "서로 다른 OS의 노드에 있는 포드도 클러스터 네트워크로 직접 통신한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "외부 사용자",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "로드 밸런서",
+      "sublabel": "외부 진입점",
+      "pos": [
+        240,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Kubernetes 서비스",
+      "sublabel": "Linux·Windows 포드에 분산",
+      "pos": [
+        500,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "lp1",
+      "type": "backend",
+      "label": "Linux 포드",
+      "sublabel": "kubernetes.io/os: linux",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lp2",
+      "type": "backend",
+      "label": "Linux 포드",
+      "sublabel": "kubernetes.io/os: linux",
+      "pos": [
+        1010,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "wp1",
+      "type": "backend",
+      "label": "Windows 포드",
+      "sublabel": "kubernetes.io/os: windows",
+      "pos": [
+        780,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "wp2",
+      "type": "backend",
+      "label": "Windows 포드",
+      "sublabel": "kubernetes.io/os: windows",
+      "pos": [
+        1010,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "외부 네트워크",
+      "wraps": [
+        "client",
+        "lb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "svc",
+        "lp1",
+        "lp2",
+        "wp1",
+        "wp2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linux 노드",
+      "wraps": [
+        "lp1",
+        "lp2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Windows 노드",
+      "wraps": [
+        "wp1",
+        "wp2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-svc",
+      "from": "lb",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-lp1",
+      "from": "svc",
+      "to": "lp1",
+      "label": "로드 밸런싱",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "svc-wp1",
+      "from": "svc",
+      "to": "wp1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "svc-lp2",
+      "from": "svc",
+      "to": "lp2",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-wp2",
+      "from": "svc",
+      "to": "wp2",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "lp1-lp2",
+      "from": "lp1",
+      "to": "lp2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "wp1-wp2",
+      "from": "wp1",
+      "to": "wp2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "lp1-wp1",
+      "from": "lp1",
+      "to": "wp1",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lp2-wp2",
+      "from": "lp2",
+      "to": "wp2",
+      "label": "Pod-to-Pod 통신 (양방향)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 110
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Windows 노드 지원 네트워크 플러그인",
+      "items": [
+        "Flannel: VXLAN 또는 host-gw 모드",
+        "Calico: VXLAN 모드",
+        "Antrea: OVS 기반 네트워킹",
+        "Azure CNI / AWS VPC CNI: 각 클라우드 환경"
+      ]
+    }
+  ]
+}

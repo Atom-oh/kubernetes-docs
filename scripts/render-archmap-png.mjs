@@ -90,6 +90,13 @@ async function settle(page) {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     // two frames: fonts.ready -> viewer re-layout (legend badges, stage fit) -> paint
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    // The viewer's fonts.ready legend re-layout measures label widths before the
+    // stage reaches its final scale (worst on a cold font cache, i.e. the first
+    // page of every run), so count badges can land 2-3px inside the last glyph.
+    // The viewer re-runs the same layout on window resize, so ask for it once
+    // more now that fonts and scale are final.
+    window.dispatchEvent(new Event('resize'));
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   });
   await page.waitForTimeout(250);
 }

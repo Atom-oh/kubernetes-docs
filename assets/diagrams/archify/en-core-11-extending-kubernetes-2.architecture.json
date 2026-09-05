@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How the Operator Pattern Works",
+    "locale": "en",
+    "output": "en-core-11-extending-kubernetes-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "kubectl apply",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "Custom Resource",
+      "sublabel": "CRD-defined object",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd Storage",
+      "sublabel": "cluster state store",
+      "pos": [
+        660,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Controller",
+      "sublabel": "reconciliation loop",
+      "pos": [
+        340,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "action",
+      "type": "backend",
+      "label": "Action",
+      "sublabel": "required change",
+      "pos": [
+        680,
+        350
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes Resources",
+      "sublabel": "Deployment, Service, etc.",
+      "pos": [
+        900,
+        350
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API Server",
+      "wraps": [
+        "cr",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Operator",
+      "wraps": [
+        "ctrl"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-create",
+      "from": "user",
+      "to": "cr",
+      "label": "1. Create/Update",
+      "variant": "emphasis",
+      "labelDx": -30
+    },
+    {
+      "id": "cr-store",
+      "from": "cr",
+      "to": "etcd",
+      "label": "stores"
+    },
+    {
+      "id": "ctrl-watch",
+      "from": "ctrl",
+      "to": "cr",
+      "label": "2. Watch",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ctrl-check",
+      "from": "ctrl",
+      "to": "cr",
+      "label": "3. Check status",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          280,
+          380
+        ],
+        [
+          280,
+          40
+        ],
+        [
+          455,
+          40
+        ]
+      ]
+    },
+    {
+      "id": "ctrl-status",
+      "from": "ctrl",
+      "to": "cr",
+      "label": "6. Update status",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "ctrl-decide",
+      "from": "ctrl",
+      "to": "action",
+      "label": "4. Determine action",
+      "variant": "emphasis",
+      "labelDx": 20,
+      "labelDy": 22
+    },
+    {
+      "id": "action-exec",
+      "from": "action",
+      "to": "k8s",
+      "label": "5. Execute",
+      "variant": "emphasis"
+    }
+  ]
+}

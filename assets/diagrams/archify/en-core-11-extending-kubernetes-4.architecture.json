@@ -1,0 +1,353 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CSI Architecture and Operation",
+    "output": "en-core-11-extending-kubernetes-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1290,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "User"
+        },
+        "backend": {
+          "label": "Kubernetes object"
+        },
+        "cloud": {
+          "label": "CSI driver component"
+        },
+        "database": {
+          "label": "Storage System"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "provisioning",
+        "label": "Provisioning path",
+        "focus": [
+          "user",
+          "pvc",
+          "sc",
+          "prov",
+          "csi",
+          "ctrl",
+          "stor",
+          "pv"
+        ],
+        "note": "The PVC reaches the CSI driver via the StorageClass and external provisioner; the controller service creates the volume, bound as a PV."
+      },
+      {
+        "id": "mount",
+        "label": "Mount path",
+        "focus": [
+          "pod",
+          "pvc",
+          "csi",
+          "node",
+          "stor"
+        ],
+        "note": "When a Pod requests the PVC, the CSI driver's node service mounts the storage system volume onto the node."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "writes the PVC",
+      "pos": [
+        20,
+        170
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "storage request",
+      "pos": [
+        200,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "names the provisioner",
+      "pos": [
+        450,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "prov",
+      "type": "backend",
+      "label": "CSI External Provisioner",
+      "sublabel": "external-provisioner",
+      "pos": [
+        670,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PersistentVolume",
+      "sublabel": "created volume",
+      "pos": [
+        200,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "uses the volume",
+      "pos": [
+        450,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "cloud",
+      "label": "CSI Driver",
+      "sublabel": "gRPC interface",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "cloud",
+      "label": "Controller Service",
+      "sublabel": "create · delete · snapshot",
+      "pos": [
+        900,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "Node Service",
+      "sublabel": "mount · unmount",
+      "pos": [
+        1080,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "stor",
+      "type": "database",
+      "label": "Storage System",
+      "sublabel": "external storage",
+      "pos": [
+        980,
+        560
+      ],
+      "size": [
+        180,
+        62
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Components",
+      "wraps": [
+        "pvc",
+        "sc",
+        "prov",
+        "pv",
+        "pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CSI Driver",
+      "wraps": [
+        "csi",
+        "ctrl",
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-create-pvc",
+      "from": "user",
+      "to": "pvc",
+      "label": "1. Create",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-ref-sc",
+      "from": "pvc",
+      "to": "sc",
+      "label": "References",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sc-prov",
+      "from": "sc",
+      "to": "prov",
+      "label": "Specifies",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prov-csi",
+      "from": "prov",
+      "to": "csi",
+      "label": "2. Volume create request",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          1015,
+          200
+        ]
+      ]
+    },
+    {
+      "id": "csi-pv",
+      "from": "csi",
+      "to": "pv",
+      "label": "3. Create volume",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "pv-bind-pvc",
+      "from": "pv",
+      "to": "pvc",
+      "label": "Binds",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod-mount-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "Mount request",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          290,
+          70
+        ]
+      ]
+    },
+    {
+      "id": "csi-mount-pod",
+      "from": "csi",
+      "to": "pod",
+      "label": "4. Mount volume",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1150,
+          330
+        ],
+        [
+          1150,
+          70
+        ]
+      ]
+    },
+    {
+      "id": "csi-ctrl",
+      "from": "csi",
+      "to": "ctrl",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "csi-node",
+      "from": "csi",
+      "to": "node",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-stor",
+      "from": "ctrl",
+      "to": "stor",
+      "label": "5. Volume management",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "node-stor",
+      "from": "node",
+      "to": "stor",
+      "label": "6. Volume mount",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CSI components",
+      "items": [
+        "CSI Controller Plugin: handles volume creation, deletion, snapshots, etc.",
+        "CSI Node Plugin: handles volume mount, unmount, etc.",
+        "CSI Driver: implementation that integrates with a specific storage system"
+      ]
+    }
+  ]
+}

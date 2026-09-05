@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Authorization Flow",
+    "locale": "en",
+    "output": "en-core-06-security-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "user",
+          "api",
+          "decision",
+          "allow",
+          "deny"
+        ],
+        "note": "Main path from an authenticated request through the API server to the authorization decision"
+      },
+      {
+        "id": "modes",
+        "label": "Authorization modes",
+        "focus": [
+          "api",
+          "rbac",
+          "abac",
+          "node",
+          "webhook",
+          "decision"
+        ],
+        "note": "The API server evaluates the request with the configured mode: RBAC, ABAC, Node, or Webhook"
+      },
+      {
+        "id": "rbac-components",
+        "label": "RBAC components",
+        "focus": [
+          "rbac",
+          "role",
+          "binding"
+        ],
+        "note": "Role/ClusterRole defines permissions; RoleBinding/ClusterRoleBinding assigns them to subjects"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Authenticated User / Service",
+      "sublabel": "authorization requester",
+      "pos": [
+        10,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        250,
+        350
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC",
+      "sublabel": "Role-Based Access Control",
+      "pos": [
+        470,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "abac",
+      "type": "security",
+      "label": "ABAC",
+      "sublabel": "Attribute-Based Access Control",
+      "pos": [
+        470,
+        310
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "security",
+      "label": "Node Authorization",
+      "sublabel": "kubelet requests only",
+      "pos": [
+        470,
+        420
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Webhook Authorization",
+      "sublabel": "external service query",
+      "pos": [
+        470,
+        530
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "decision",
+      "type": "backend",
+      "label": "Authorization Decision",
+      "sublabel": "allow / deny",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "allow",
+      "type": "backend",
+      "label": "Process Request",
+      "sublabel": "allowed",
+      "pos": [
+        1010,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "deny",
+      "type": "backend",
+      "label": "Deny Request",
+      "sublabel": "denied",
+      "pos": [
+        1010,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "role",
+      "type": "backend",
+      "label": "Role / ClusterRole",
+      "sublabel": "permission definition",
+      "pos": [
+        440,
+        50
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "binding",
+      "type": "backend",
+      "label": "RoleBinding / ClusterRoleBinding",
+      "sublabel": "permission assignment",
+      "pos": [
+        650,
+        50
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Authorization Modes",
+      "wraps": [
+        "rbac",
+        "abac",
+        "node",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "RBAC Components",
+      "wraps": [
+        "role",
+        "binding"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-api",
+      "from": "user",
+      "to": "api",
+      "label": "authorization request",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "api-rbac",
+      "from": "api",
+      "to": "rbac"
+    },
+    {
+      "id": "rbac-decision",
+      "from": "rbac",
+      "to": "decision"
+    },
+    {
+      "id": "api-abac",
+      "from": "api",
+      "to": "abac"
+    },
+    {
+      "id": "abac-decision",
+      "from": "abac",
+      "to": "decision",
+      "label": "evaluate",
+      "labelDx": -30,
+      "labelDy": -14
+    },
+    {
+      "id": "api-node",
+      "from": "api",
+      "to": "node"
+    },
+    {
+      "id": "node-decision",
+      "from": "node",
+      "to": "decision"
+    },
+    {
+      "id": "api-webhook",
+      "from": "api",
+      "to": "webhook"
+    },
+    {
+      "id": "webhook-decision",
+      "from": "webhook",
+      "to": "decision"
+    },
+    {
+      "id": "decision-allow",
+      "from": "decision",
+      "to": "allow",
+      "label": "allow",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decision-deny",
+      "from": "decision",
+      "to": "deny",
+      "label": "deny",
+      "variant": "security"
+    },
+    {
+      "id": "rbac-role",
+      "from": "rbac",
+      "to": "role",
+      "label": "defines permissions",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "rbac-binding",
+      "from": "rbac",
+      "to": "binding",
+      "label": "assigns permissions",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

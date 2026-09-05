@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS 클러스터 아키텍처와 관리 구성요소",
+    "output": "ko-core-09-cluster-administration-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "pos": [
+        30,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "sublabel": "클러스터 관리자"
+    },
+    {
+      "id": "console",
+      "type": "cloud",
+      "label": "AWS 콘솔 / CLI / API",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "sublabel": "관리 인터페이스"
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "관리형 Kubernetes"
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "EKS 컨트롤 플레인",
+      "pos": [
+        720,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "AWS 관리"
+    },
+    {
+      "id": "ng",
+      "type": "backend",
+      "label": "EKS 노드 그룹",
+      "pos": [
+        720,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "EC2 인스턴스"
+    },
+    {
+      "id": "fargate",
+      "type": "backend",
+      "label": "EKS Fargate",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "Fargate 프로필"
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "pos": [
+        990,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "인증 / 권한"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "pos": [
+        990,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "네트워크"
+    },
+    {
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "pos": [
+        990,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "컨트롤 플레인 로그"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "Amazon VPC CNI",
+      "pos": [
+        60,
+        620
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "파드 네트워킹"
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS",
+      "pos": [
+        280,
+        620
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "클러스터 DNS"
+    },
+    {
+      "id": "kubeproxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "pos": [
+        500,
+        620
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "서비스 프록시"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "cp",
+        "ng",
+        "fargate",
+        "iam",
+        "vpc",
+        "cw"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "추가 기능 (Add-ons)",
+      "wraps": [
+        "cni",
+        "coredns",
+        "kubeproxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-console",
+      "from": "user",
+      "to": "console",
+      "label": "관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "console-eks",
+      "from": "console",
+      "to": "eks",
+      "label": "관리",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-cp",
+      "from": "eks",
+      "to": "cp"
+    },
+    {
+      "id": "eks-ng",
+      "from": "eks",
+      "to": "ng"
+    },
+    {
+      "id": "eks-fargate",
+      "from": "eks",
+      "to": "fargate"
+    },
+    {
+      "id": "cp-iam",
+      "from": "cp",
+      "to": "iam",
+      "label": "사용"
+    },
+    {
+      "id": "cp-vpc",
+      "from": "cp",
+      "to": "vpc",
+      "label": "사용"
+    },
+    {
+      "id": "cp-cw",
+      "from": "cp",
+      "to": "cw",
+      "label": "로깅"
+    },
+    {
+      "id": "eks-cni",
+      "from": "eks",
+      "to": "cni",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-coredns",
+      "from": "eks",
+      "to": "coredns",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-kubeproxy",
+      "from": "eks",
+      "to": "kubeproxy",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -36,7 +36,9 @@ Kubernetes provides various extension points to extend and customize its base fu
 
 The following diagram shows the main extension points in Kubernetes:
 
-![Architecture diagram showing the API server as the hub for custom resources, admission controllers, API server extensions, operators, the cloud controller manager, and scheduler extensions, with node-level extension points (CSI, CNI, device plugins) attached to each cluster node.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-0.svg)
+![Architecture diagram showing the API server as the hub for custom resources, admission controllers, API server extensions, operators, the cloud controller manager, and scheduler extensions, with the node extended by CSI drivers, CNI plugins, and device plugins.](../.gitbook/assets/en-core-11-extending-kubernetes-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-0.html)
 
 ### Choosing an Extension Method
 
@@ -54,7 +56,9 @@ Custom resources are a way to extend the Kubernetes API to define new object typ
 
 The following diagram shows how custom resources work:
 
-![Architecture diagram showing a user creating a CustomResourceDefinition and a custom resource instance, where the CRD defines and registers the schema, and the API server validates and stores the resulting instance in etcd.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-1.svg)
+![Architecture diagram showing a user creating a CustomResourceDefinition and a custom resource instance, where the CRD defines and registers the schema, and the API server validates and stores the resulting instance in etcd.](../.gitbook/assets/en-core-11-extending-kubernetes-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-1.html)
 
 ### Custom Resource Definitions (CRD)
 
@@ -204,7 +208,9 @@ The operator pattern is a way to automate operational knowledge of complex appli
 
 The following diagram shows how the operator pattern works:
 
-![Architecture diagram showing a controller that watches a custom resource stored in etcd, checks and updates its status, determines an action, and executes that action against Kubernetes resources.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-2.svg)
+![Architecture diagram of the operator pattern: a user creates a custom resource stored in etcd via the Kubernetes API server, the operator's controller watches it and checks its status, determines an action, executes it against Kubernetes resources, and updates the custom resource status.](../.gitbook/assets/en-core-11-extending-kubernetes-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-2.html)
 
 ### Operator Concepts
 
@@ -334,7 +340,9 @@ Admission controllers are plugins that intercept requests to the Kubernetes API 
 
 The following diagram shows how admission controllers work:
 
-![Sequence diagram showing an API request passing through authentication and authorization, a mutating webhook, and a validating webhook before the API server persists the validated request to etcd.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-3.svg)
+![Sequence diagram showing an API request passing through authentication and authorization, a mutating webhook, and a validating webhook before the API server persists the validated request to etcd.](../.gitbook/assets/en-core-11-extending-kubernetes-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-3.html)
 
 ### Admission Controller Types
 
@@ -858,7 +866,9 @@ CSI provides a standard interface between Kubernetes and storage systems.
 
 The following diagram shows the architecture and operation of CSI:
 
-![Architecture diagram showing a PersistentVolumeClaim referencing a StorageClass and external provisioner that requests a volume from the CSI driver, while the CSI driver's controller and node services manage and mount storage from the underlying storage system, and pods mount the resulting volume.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-4.svg)
+![Architecture diagram showing a user-created PersistentVolumeClaim referencing a StorageClass and CSI external provisioner that requests a volume from the CSI driver, whose controller and node services create and mount the volume on the storage system, bound as a PersistentVolume and mounted into the Pod.](../.gitbook/assets/en-core-11-extending-kubernetes-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-4.html)
 
 ### CSI Architecture
 
@@ -1072,7 +1082,9 @@ CNI provides a standard interface between Kubernetes and networking solutions.
 
 The following diagram shows the architecture and operation of CNI:
 
-![Architecture diagram showing kubelet asking the container runtime to create a container, which requests network setup from the CNI plugin, which in turn allocates an IP from the IPAM plugin's pool and applies network configuration to the pod network.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-5.svg)
+![Architecture diagram showing kubelet asking the container runtime to create a container, which requests network setup from the CNI plugin, which in turn allocates an IP from the IPAM plugin's pool and applies network configuration to the pod network.](../.gitbook/assets/en-core-11-extending-kubernetes-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-5.html)
 
 ### CNI Architecture
 
@@ -1255,7 +1267,9 @@ Amazon EKS supports various extension features to extend Kubernetes cluster func
 
 The following diagram shows the extension feature architecture in Amazon EKS:
 
-![Architecture diagram showing the Amazon EKS cluster managing its control plane and node groups, the control plane running managed add-ons (VPC CNI, CoreDNS, kube-proxy, EBS CSI driver, and the AWS Load Balancer Controller) that integrate with AWS VPC, EBS, and Elastic Load Balancing, plus IAM roles for service accounts and AWS Controllers for Kubernetes as additional AWS integration points.](../../assets/diagrams/rendered/en-core-11-extending-kubernetes-6.svg)
+![Architecture diagram showing the Amazon EKS cluster managing its control plane and node groups, the control plane running managed add-ons (VPC CNI, CoreDNS, kube-proxy, EBS CSI driver, and the AWS Load Balancer Controller) that integrate with Amazon VPC, EBS, and Elastic Load Balancing, plus AWS IAM granting node groups access through IRSA and AWS Controllers for Kubernetes managing AWS resources.](../.gitbook/assets/en-core-11-extending-kubernetes-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-11-extending-kubernetes-6.html)
 
 ### EKS Add-ons
 

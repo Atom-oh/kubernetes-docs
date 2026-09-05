@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Windows Support Architecture",
+    "locale": "en",
+    "output": "en-core-10-windows-in-kubernetes-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "kube-controller-manager",
+      "sublabel": "Runs on Linux only",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "Cluster API",
+      "pos": [
+        330,
+        160
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "Node selection",
+      "pos": [
+        560,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "Cluster state store",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "linux-node",
+      "type": "backend",
+      "label": "Linux Node",
+      "sublabel": "Linux worker",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "system-pods",
+      "type": "backend",
+      "label": "System Pods",
+      "sublabel": "CoreDNS · metrics-server · others",
+      "pos": [
+        270,
+        400
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "windows-node-1",
+      "type": "backend",
+      "label": "Windows Node 1",
+      "sublabel": "kubelet · kube-proxy",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "windows-containers-1",
+      "type": "frontend",
+      "label": "Windows Containers",
+      "sublabel": "Windows application workloads",
+      "pos": [
+        600,
+        540
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "windows-node-2",
+      "type": "backend",
+      "label": "Windows Node 2",
+      "sublabel": "kubelet · kube-proxy",
+      "pos": [
+        860,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "windows-containers-2",
+      "type": "frontend",
+      "label": "Windows Containers",
+      "sublabel": "Windows application workloads",
+      "pos": [
+        860,
+        540
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Linux Control Plane",
+      "wraps": [
+        "controller-manager",
+        "apiserver",
+        "scheduler",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linux Worker Node",
+      "wraps": [
+        "linux-node",
+        "system-pods"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Windows Worker Nodes",
+      "wraps": [
+        "windows-node-1",
+        "windows-containers-1",
+        "windows-node-2",
+        "windows-containers-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-controller-manager",
+      "from": "apiserver",
+      "to": "controller-manager"
+    },
+    {
+      "id": "api-scheduler",
+      "from": "apiserver",
+      "to": "scheduler"
+    },
+    {
+      "id": "api-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "read / write",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-linux-node",
+      "from": "apiserver",
+      "to": "linux-node",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-windows-node-1",
+      "from": "apiserver",
+      "to": "windows-node-1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-windows-node-2",
+      "from": "apiserver",
+      "to": "windows-node-2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "linux-node-system-pods",
+      "from": "linux-node",
+      "to": "system-pods",
+      "label": "runs"
+    },
+    {
+      "id": "windows-node-1-containers",
+      "from": "windows-node-1",
+      "to": "windows-containers-1",
+      "label": "runs",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "windows-node-2-containers",
+      "from": "windows-node-2",
+      "to": "windows-containers-2",
+      "label": "runs",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Linux Control Plane",
+      "items": [
+        "kube-apiserver, kube-controller-manager, kube-scheduler, and etcd always run on Linux"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Linux Worker Node",
+      "items": [
+        "Runs system components such as CoreDNS and metrics-server"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Windows Worker Nodes",
+      "items": [
+        "Runs Windows application workloads",
+        "kubelet, kube-proxy, and CNI/CSI plugins run on each node"
+      ]
+    }
+  ]
+}

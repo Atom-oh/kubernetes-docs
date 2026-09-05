@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "어드미션 컨트롤러 작동 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1600,
+      640
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "authn-authz",
+        "label": "인증 · 권한 부여",
+        "focus": [
+          "user",
+          "auth",
+          "mac"
+        ],
+        "note": "사용자의 API 요청은 인증과 권한 부여를 먼저 통과한 뒤 어드미션 단계로 넘어간다."
+      },
+      {
+        "id": "mutating",
+        "label": "변형 어드미션",
+        "focus": [
+          "mac",
+          "mwh",
+          "vac"
+        ],
+        "note": "변형 어드미션 컨트롤러가 변형 웹훅을 호출해 리소스를 변경한 뒤 검증 단계로 전달한다."
+      },
+      {
+        "id": "validating",
+        "label": "검증 어드미션 · 저장",
+        "focus": [
+          "vac",
+          "vwh",
+          "api",
+          "stor"
+        ],
+        "note": "검증 어드미션 컨트롤러는 웹훅으로 리소스를 검증만 하고, 검증된 요청이 API 처리 후 etcd에 저장된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "웹훅 호출"
+        },
+        "return": {
+          "label": "웹훅 응답"
+        },
+        "emphasis": {
+          "label": "요청 경로"
+        },
+        "security": {
+          "label": "인증·권한 부여 통과"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자"
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "인증 · 권한 부여"
+    },
+    {
+      "id": "mac",
+      "type": "backend",
+      "label": "변형 어드미션 컨트롤러"
+    },
+    {
+      "id": "mwh",
+      "type": "external",
+      "label": "변형 웹훅"
+    },
+    {
+      "id": "vac",
+      "type": "backend",
+      "label": "검증 어드미션 컨트롤러"
+    },
+    {
+      "id": "vwh",
+      "type": "external",
+      "label": "검증 웹훅"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 처리"
+    },
+    {
+      "id": "stor",
+      "type": "database",
+      "label": "etcd 스토리지"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 250,
+      "label": "인증 · 권한 부여"
+    },
+    {
+      "from": 270,
+      "to": 370,
+      "label": "변형(Mutating) 단계"
+    },
+    {
+      "from": 390,
+      "to": 490,
+      "label": "검증(Validating) 단계"
+    },
+    {
+      "from": 510,
+      "to": 560,
+      "label": "저장"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "user",
+      "to": "auth",
+      "y": 200,
+      "label": "1. API 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m2",
+      "from": "auth",
+      "to": "mac",
+      "y": 240,
+      "label": "2. 요청 통과",
+      "variant": "security"
+    },
+    {
+      "id": "m3",
+      "from": "mac",
+      "to": "mwh",
+      "y": 290,
+      "label": "웹훅 호출",
+      "variant": "dashed"
+    },
+    {
+      "id": "m4",
+      "from": "mwh",
+      "to": "mac",
+      "y": 322,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "mac",
+      "to": "vac",
+      "y": 360,
+      "label": "3. 변형된 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m6",
+      "from": "vac",
+      "to": "vwh",
+      "y": 410,
+      "label": "웹훅 호출",
+      "variant": "dashed"
+    },
+    {
+      "id": "m7",
+      "from": "vwh",
+      "to": "vac",
+      "y": 442,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "m8",
+      "from": "vac",
+      "to": "api",
+      "y": 480,
+      "label": "4. 검증된 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m9",
+      "from": "api",
+      "to": "stor",
+      "y": 530,
+      "label": "5. 저장",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "auth",
+      "from": 195,
+      "to": 245,
+      "type": "security"
+    },
+    {
+      "participant": "mac",
+      "from": 235,
+      "to": 365,
+      "type": "backend"
+    },
+    {
+      "participant": "mwh",
+      "from": 285,
+      "to": 327,
+      "type": "external"
+    },
+    {
+      "participant": "vac",
+      "from": 355,
+      "to": 485,
+      "type": "backend"
+    },
+    {
+      "participant": "vwh",
+      "from": 405,
+      "to": 447,
+      "type": "external"
+    },
+    {
+      "participant": "api",
+      "from": 475,
+      "to": 535,
+      "type": "backend"
+    },
+    {
+      "participant": "stor",
+      "from": 525,
+      "to": 545,
+      "type": "database"
+    }
+  ]
+}

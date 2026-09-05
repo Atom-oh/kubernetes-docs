@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Cluster Troubleshooting Methodology",
+    "output": "public/archmaps/en-core-09-cluster-administration-12.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "six-steps",
+        "label": "Six-step sequence",
+        "focus": [
+          "identify",
+          "gather",
+          "analyze",
+          "apply",
+          "verify",
+          "document"
+        ],
+        "note": "A systematic troubleshooting sequence that runs one way from problem identification to documentation."
+      },
+      {
+        "id": "gathering",
+        "label": "Information gathering",
+        "focus": [
+          "gather",
+          "logs",
+          "events",
+          "resources"
+        ],
+        "note": "The information-gathering step breaks down into three concrete checks: logs, events, and resource status."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Troubleshooting steps"
+        },
+        "database": {
+          "label": "Information gathering"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "steps",
+      "label": "Troubleshooting steps"
+    },
+    {
+      "id": "collect",
+      "label": "Information gathering"
+    }
+  ],
+  "mainPath": [
+    "identify",
+    "gather",
+    "analyze",
+    "apply",
+    "verify",
+    "document"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "identify"
+    ],
+    "allowedTerminals": [
+      "document",
+      "logs",
+      "events",
+      "resources"
+    ],
+    "requiredPaths": [
+      {
+        "from": "identify",
+        "to": "document"
+      },
+      {
+        "from": "gather",
+        "to": "logs"
+      },
+      {
+        "from": "gather",
+        "to": "events"
+      },
+      {
+        "from": "gather",
+        "to": "resources"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "identify",
+      "lane": "steps",
+      "col": 0,
+      "type": "backend",
+      "label": "Identify Issue",
+      "sublabel": "observe symptoms",
+      "width": 140
+    },
+    {
+      "id": "gather",
+      "lane": "steps",
+      "col": 1,
+      "type": "backend",
+      "label": "Gather Info",
+      "sublabel": "run diagnostics",
+      "width": 140
+    },
+    {
+      "id": "analyze",
+      "lane": "steps",
+      "col": 2,
+      "type": "backend",
+      "label": "Analyze Cause",
+      "width": 140
+    },
+    {
+      "id": "apply",
+      "lane": "steps",
+      "col": 3,
+      "type": "backend",
+      "label": "Apply Solution",
+      "width": 140
+    },
+    {
+      "id": "verify",
+      "lane": "steps",
+      "col": 4,
+      "type": "backend",
+      "label": "Verify",
+      "sublabel": "confirm recovery",
+      "width": 140
+    },
+    {
+      "id": "document",
+      "lane": "steps",
+      "col": 5,
+      "type": "backend",
+      "label": "Document",
+      "width": 140
+    },
+    {
+      "id": "logs",
+      "lane": "collect",
+      "col": 0,
+      "type": "database",
+      "label": "Check Logs",
+      "sublabel": "kubectl logs",
+      "width": 140
+    },
+    {
+      "id": "events",
+      "lane": "collect",
+      "col": 1,
+      "type": "database",
+      "label": "Check Events",
+      "sublabel": "kubectl get events",
+      "width": 140
+    },
+    {
+      "id": "resources",
+      "lane": "collect",
+      "col": 2,
+      "type": "database",
+      "label": "Resource Check",
+      "sublabel": "kubectl describe / top",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "identify",
+      "to": "gather",
+      "role": "main"
+    },
+    {
+      "from": "gather",
+      "to": "analyze",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "apply",
+      "role": "main"
+    },
+    {
+      "from": "apply",
+      "to": "verify",
+      "role": "main"
+    },
+    {
+      "from": "verify",
+      "to": "document",
+      "role": "main"
+    },
+    {
+      "from": "gather",
+      "to": "logs",
+      "role": "branch",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "gather",
+      "to": "events",
+      "role": "branch",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "gather",
+      "to": "resources",
+      "role": "branch",
+      "variant": "dashed",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

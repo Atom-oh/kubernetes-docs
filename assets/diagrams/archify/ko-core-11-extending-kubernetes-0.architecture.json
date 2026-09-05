@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 주요 확장 지점",
+    "output": "ko-core-11-extending-kubernetes-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "클라이언트"
+        },
+        "backend": {
+          "label": "Kubernetes 컴포넌트"
+        },
+        "cloud": {
+          "label": "클라우드 통합"
+        },
+        "external": {
+          "label": "노드 플러그인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "api-extension",
+        "label": "API 확장",
+        "focus": [
+          "user",
+          "api",
+          "cr",
+          "ac",
+          "ae"
+        ],
+        "note": "API 서버가 요청을 받아 커스텀 리소스, 어드미션 컨트롤러, API 서버 확장으로 기능을 넓힌다."
+      },
+      {
+        "id": "controller-scheduling",
+        "label": "컨트롤러·스케줄링 확장",
+        "focus": [
+          "api",
+          "cr",
+          "op",
+          "ccm",
+          "sch"
+        ],
+        "note": "오퍼레이터는 커스텀 리소스를 감시하고, 클라우드 컨트롤러 매니저와 스케줄러 확장은 API 서버와 연동된다."
+      },
+      {
+        "id": "node-extension",
+        "label": "노드 확장",
+        "focus": [
+          "api",
+          "node",
+          "csi",
+          "cni",
+          "dp"
+        ],
+        "note": "노드는 CSI 드라이버, CNI 플러그인, 디바이스 플러그인으로 스토리지·네트워크·하드웨어를 통합한다."
+      }
+    ],
+    "viewBox": [
+      1380,
+      760
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "frontend",
+      "label": "사용자 / 클라이언트",
+      "sublabel": "kubectl, 컨트롤러",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        980,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cr",
+      "type": "backend",
+      "label": "커스텀 리소스",
+      "sublabel": "CRD",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ac",
+      "type": "backend",
+      "label": "어드미션 컨트롤러",
+      "sublabel": "웹훅 검증·변경",
+      "pos": [
+        630,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ae",
+      "type": "backend",
+      "label": "API 서버 확장",
+      "sublabel": "Aggregation Layer",
+      "pos": [
+        810,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "op",
+      "type": "backend",
+      "label": "오퍼레이터",
+      "sublabel": "커스텀 컨트롤러",
+      "pos": [
+        255,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ccm",
+      "type": "cloud",
+      "label": "클라우드 컨트롤러 매니저",
+      "sublabel": "클라우드 제공업체 통합",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sch",
+      "type": "backend",
+      "label": "스케줄러 확장",
+      "sublabel": "스케줄링 로직 사용자 정의",
+      "pos": [
+        1160,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "노드",
+      "sublabel": "kubelet",
+      "pos": [
+        980,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "external",
+      "label": "CSI 드라이버",
+      "sublabel": "스토리지 통합",
+      "pos": [
+        770,
+        570
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "external",
+      "label": "CNI 플러그인",
+      "sublabel": "네트워킹 통합",
+      "pos": [
+        985,
+        570
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "external",
+      "label": "디바이스 플러그인",
+      "sublabel": "특수 하드웨어 통합",
+      "pos": [
+        1200,
+        570
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "API 확장",
+      "wraps": [
+        "cr",
+        "ac",
+        "ae"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "컨트롤러 확장",
+      "wraps": [
+        "op",
+        "ccm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스케줄링 확장",
+      "wraps": [
+        "sch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 확장",
+      "wraps": [
+        "node",
+        "csi",
+        "cni",
+        "dp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "api",
+      "label": "API 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-cr",
+      "from": "api",
+      "to": "cr",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-ac",
+      "from": "api",
+      "to": "ac",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-ae",
+      "from": "api",
+      "to": "ae",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr-to-op",
+      "from": "cr",
+      "to": "op",
+      "label": "감시·조정"
+    },
+    {
+      "id": "api-to-ccm",
+      "from": "api",
+      "to": "ccm",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-sch",
+      "from": "api",
+      "to": "sch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-node",
+      "from": "api",
+      "to": "node"
+    },
+    {
+      "id": "node-to-csi",
+      "from": "node",
+      "to": "csi"
+    },
+    {
+      "id": "node-to-cni",
+      "from": "node",
+      "to": "cni"
+    },
+    {
+      "id": "node-to-dp",
+      "from": "node",
+      "to": "dp"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "API 확장",
+      "items": [
+        "커스텀 리소스: 새로운 API 객체 유형 정의",
+        "어드미션 컨트롤러: API 요청을 가로채고 수정하거나 검증",
+        "API 서버 확장: API 서버에 새로운 엔드포인트 추가"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "컨트롤러·스케줄링 확장",
+      "items": [
+        "오퍼레이터: 커스텀 리소스와 컨트롤러를 결합해 복잡한 애플리케이션 관리",
+        "클라우드 컨트롤러 매니저: 클라우드 제공업체별 기능 통합",
+        "스케줄러 확장: 포드 스케줄링 로직 사용자 정의"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "노드 확장",
+      "items": [
+        "CSI: 스토리지 시스템 통합",
+        "CNI: 네트워킹 솔루션 통합",
+        "디바이스 플러그인: 특수 하드웨어 통합"
+      ]
+    }
+  ]
+}

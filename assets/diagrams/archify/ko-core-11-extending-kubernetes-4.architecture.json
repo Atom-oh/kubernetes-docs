@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CSI 아키텍처와 작동 방식",
+    "output": "ko-core-11-extending-kubernetes-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1290,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "사용자"
+        },
+        "backend": {
+          "label": "Kubernetes 오브젝트"
+        },
+        "cloud": {
+          "label": "CSI 드라이버 구성 요소"
+        },
+        "database": {
+          "label": "스토리지 시스템"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "provisioning",
+        "label": "프로비저닝 경로",
+        "focus": [
+          "user",
+          "pvc",
+          "sc",
+          "prov",
+          "csi",
+          "ctrl",
+          "stor",
+          "pv"
+        ],
+        "note": "PVC가 StorageClass와 외부 프로비저너를 거쳐 CSI 드라이버에 볼륨 생성을 요청하고, 컨트롤러 서비스가 스토리지 시스템에서 볼륨을 만들어 PV로 바인딩한다."
+      },
+      {
+        "id": "mount",
+        "label": "마운트 경로",
+        "focus": [
+          "pod",
+          "pvc",
+          "csi",
+          "node",
+          "stor"
+        ],
+        "note": "Pod가 PVC를 마운트 요청하면 CSI 드라이버의 노드 서비스가 스토리지 시스템의 볼륨을 노드에 마운트한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "PVC 작성",
+      "pos": [
+        20,
+        170
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "스토리지 요청",
+      "pos": [
+        200,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "provisioner 지정",
+      "pos": [
+        450,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "prov",
+      "type": "backend",
+      "label": "CSI 외부 프로비저너",
+      "sublabel": "external-provisioner",
+      "pos": [
+        670,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "backend",
+      "label": "PersistentVolume",
+      "sublabel": "생성된 볼륨",
+      "pos": [
+        200,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "볼륨 사용",
+      "pos": [
+        450,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "cloud",
+      "label": "CSI 드라이버",
+      "sublabel": "gRPC 인터페이스",
+      "pos": [
+        930,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "cloud",
+      "label": "컨트롤러 서비스",
+      "sublabel": "생성 · 삭제 · 스냅샷",
+      "pos": [
+        900,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "노드 서비스",
+      "sublabel": "마운트 · 언마운트",
+      "pos": [
+        1080,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "stor",
+      "type": "database",
+      "label": "스토리지 시스템",
+      "sublabel": "외부 스토리지",
+      "pos": [
+        980,
+        560
+      ],
+      "size": [
+        180,
+        62
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 컴포넌트",
+      "wraps": [
+        "pvc",
+        "sc",
+        "prov",
+        "pv",
+        "pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CSI 드라이버",
+      "wraps": [
+        "csi",
+        "ctrl",
+        "node"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-create-pvc",
+      "from": "user",
+      "to": "pvc",
+      "label": "1. 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-ref-sc",
+      "from": "pvc",
+      "to": "sc",
+      "label": "참조",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sc-prov",
+      "from": "sc",
+      "to": "prov",
+      "label": "지정",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prov-csi",
+      "from": "prov",
+      "to": "csi",
+      "label": "2. 볼륨 생성 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          1015,
+          200
+        ]
+      ]
+    },
+    {
+      "id": "csi-pv",
+      "from": "csi",
+      "to": "pv",
+      "label": "3. 볼륨 생성",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "pv-bind-pvc",
+      "from": "pv",
+      "to": "pvc",
+      "label": "바인딩",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod-mount-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "마운트 요청",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top",
+      "via": [
+        [
+          290,
+          70
+        ]
+      ]
+    },
+    {
+      "id": "csi-mount-pod",
+      "from": "csi",
+      "to": "pod",
+      "label": "4. 볼륨 마운트",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1150,
+          330
+        ],
+        [
+          1150,
+          70
+        ]
+      ]
+    },
+    {
+      "id": "csi-ctrl",
+      "from": "csi",
+      "to": "ctrl",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "csi-node",
+      "from": "csi",
+      "to": "node",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-stor",
+      "from": "ctrl",
+      "to": "stor",
+      "label": "5. 볼륨 관리",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "node-stor",
+      "from": "node",
+      "to": "stor",
+      "label": "6. 볼륨 마운트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CSI 구성 요소",
+      "items": [
+        "CSI 컨트롤러 플러그인: 볼륨 생성, 삭제, 스냅샷 등의 작업 처리",
+        "CSI 노드 플러그인: 볼륨 마운트, 언마운트 등의 작업 처리",
+        "CSI 드라이버: 특정 스토리지 시스템과 통합하는 구현체"
+      ]
+    }
+  ]
+}

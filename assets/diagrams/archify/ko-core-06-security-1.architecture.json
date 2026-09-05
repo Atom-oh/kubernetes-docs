@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "인증(Authentication) 흐름",
+    "output": "ko-core-06-security-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "인증 요청",
+        "focus": [
+          "user",
+          "apiserver"
+        ],
+        "note": "사용자나 서비스가 kube-apiserver에 요청을 보내면 먼저 인증 단계를 거칩니다."
+      },
+      {
+        "id": "methods",
+        "label": "인증 방법 5종",
+        "focus": [
+          "apiserver",
+          "cert",
+          "token",
+          "oidc",
+          "webhook",
+          "proxy"
+        ],
+        "note": "API 서버는 구성된 인증 방법으로 요청자의 신원을 확인합니다."
+      },
+      {
+        "id": "outcome",
+        "label": "인증 결과",
+        "focus": [
+          "result",
+          "authz",
+          "reject"
+        ],
+        "note": "성공하면 권한 부여(Authorization) 단계로 넘어가고, 실패하면 요청이 거부됩니다."
+      }
+    ],
+    "viewBox": [
+      1250,
+      740
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / 서비스",
+      "sublabel": "kubectl, 파드 등",
+      "pos": [
+        30,
+        310
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        240,
+        310
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cert",
+      "type": "security",
+      "label": "X.509 인증서",
+      "sublabel": "TLS 클라이언트 인증서",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "token",
+      "type": "security",
+      "label": "서비스 계정 토큰",
+      "sublabel": "JWT",
+      "pos": [
+        480,
+        190
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "OpenID Connect",
+      "sublabel": "외부 ID 제공자",
+      "pos": [
+        480,
+        310
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "웹훅 토큰 인증",
+      "sublabel": "외부 인증 서비스",
+      "pos": [
+        480,
+        430
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "인증 프록시",
+      "sublabel": "HTTP 헤더로 사용자 정보 전달",
+      "pos": [
+        480,
+        550
+      ],
+      "size": [
+        210,
+        56
+      ]
+    },
+    {
+      "id": "result",
+      "type": "backend",
+      "label": "인증 결과",
+      "sublabel": "성공 / 실패",
+      "pos": [
+        760,
+        310
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "권한 부여 단계로 이동",
+      "sublabel": "Authorization",
+      "pos": [
+        1000,
+        200
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "reject",
+      "type": "external",
+      "label": "요청 거부",
+      "sublabel": "인증 실패 시",
+      "pos": [
+        1000,
+        420
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "인증 방법",
+      "wraps": [
+        "cert",
+        "token",
+        "oidc",
+        "webhook",
+        "proxy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "인증 요청",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "api-to-cert",
+      "from": "apiserver",
+      "to": "cert"
+    },
+    {
+      "id": "api-to-token",
+      "from": "apiserver",
+      "to": "token"
+    },
+    {
+      "id": "api-to-oidc",
+      "from": "apiserver",
+      "to": "oidc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-webhook",
+      "from": "apiserver",
+      "to": "webhook"
+    },
+    {
+      "id": "api-to-proxy",
+      "from": "apiserver",
+      "to": "proxy"
+    },
+    {
+      "id": "cert-to-result",
+      "from": "cert",
+      "to": "result"
+    },
+    {
+      "id": "token-to-result",
+      "from": "token",
+      "to": "result"
+    },
+    {
+      "id": "oidc-to-result",
+      "from": "oidc",
+      "to": "result",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-to-result",
+      "from": "webhook",
+      "to": "result"
+    },
+    {
+      "id": "proxy-to-result",
+      "from": "proxy",
+      "to": "result"
+    },
+    {
+      "id": "result-to-authz",
+      "from": "result",
+      "to": "authz",
+      "label": "인증 성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "result-to-reject",
+      "from": "result",
+      "to": "reject",
+      "label": "인증 실패",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "인증 방법",
+      "items": [
+        "X.509 인증서: TLS 클라이언트 인증서를 사용한 인증",
+        "서비스 계정 토큰: JWT 토큰을 사용한 서비스 계정 인증",
+        "OpenID Connect (OIDC): 외부 ID 제공자를 통한 인증",
+        "웹훅 토큰 인증: 외부 인증 서비스를 통한 인증",
+        "인증 프록시: 프록시를 통한 인증"
+      ]
+    }
+  ]
+}

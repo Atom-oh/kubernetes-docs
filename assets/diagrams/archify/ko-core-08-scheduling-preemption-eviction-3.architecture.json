@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "포드 어피니티와 안티-어피니티",
+    "output": "ko-core-08-scheduling-preemption-eviction-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "어피니티 규칙"
+        },
+        "security": {
+          "label": "어피니티 유형"
+        },
+        "frontend": {
+          "label": "웹 포드"
+        },
+        "database": {
+          "label": "캐시 포드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "affinity",
+        "label": "포드 어피니티",
+        "focus": [
+          "pa",
+          "web-pod",
+          "cache-pod"
+        ],
+        "note": "podAffinity는 app=cache 포드와 같은 노드(토폴로지)에 웹 포드를 함께 배치한다."
+      },
+      {
+        "id": "anti-affinity",
+        "label": "포드 안티-어피니티",
+        "focus": [
+          "paa",
+          "web-pod-1",
+          "web-pod-2"
+        ],
+        "note": "podAntiAffinity는 같은 app=web 레이블의 포드를 서로 다른 노드로 분리 배치한다."
+      },
+      {
+        "id": "types",
+        "label": "어피니티 유형",
+        "focus": [
+          "pa",
+          "paa",
+          "required",
+          "preferred"
+        ],
+        "note": "두 규칙 모두 required(하드)와 preferred(소프트) 두 유형으로 선언할 수 있다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pa",
+      "type": "backend",
+      "label": "podAffinity",
+      "sublabel": "포드 어피니티",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "paa",
+      "type": "backend",
+      "label": "podAntiAffinity",
+      "sublabel": "포드 안티-어피니티",
+      "pos": [
+        700,
+        130
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "required",
+      "type": "security",
+      "label": "requiredDuringSchedulingIgnoredDuringExecution",
+      "sublabel": "하드 요구 사항",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "preferred",
+      "type": "security",
+      "label": "preferredDuringSchedulingIgnoredDuringExecution",
+      "sublabel": "소프트 요구 사항",
+      "pos": [
+        340,
+        190
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "web-pod",
+      "type": "frontend",
+      "label": "웹 포드",
+      "sublabel": "app=web",
+      "pos": [
+        65,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cache-pod",
+      "type": "database",
+      "label": "캐시 포드",
+      "sublabel": "app=cache",
+      "pos": [
+        265,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "web-pod-1",
+      "type": "frontend",
+      "label": "웹 포드 1",
+      "sublabel": "app=web",
+      "pos": [
+        735,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "web-pod-2",
+      "type": "frontend",
+      "label": "웹 포드 2",
+      "sublabel": "app=web",
+      "pos": [
+        970,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "어피니티 유형",
+      "wraps": [
+        "required",
+        "preferred"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 1",
+      "wraps": [
+        "web-pod",
+        "cache-pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 2",
+      "wraps": [
+        "web-pod-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 3",
+      "wraps": [
+        "web-pod-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pa-required",
+      "from": "pa",
+      "to": "required",
+      "variant": "dashed"
+    },
+    {
+      "id": "pa-preferred",
+      "from": "pa",
+      "to": "preferred",
+      "variant": "dashed"
+    },
+    {
+      "id": "paa-required",
+      "from": "paa",
+      "to": "required",
+      "variant": "dashed"
+    },
+    {
+      "id": "paa-preferred",
+      "from": "paa",
+      "to": "preferred",
+      "variant": "dashed"
+    },
+    {
+      "id": "pa-together",
+      "from": "pa",
+      "to": "web-pod",
+      "label": "같은 노드/토폴로지에 함께 배치",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "web-cache",
+      "from": "web-pod",
+      "to": "cache-pod",
+      "label": "함께 배치"
+    },
+    {
+      "id": "paa-apart",
+      "from": "paa",
+      "to": "web-pod-1",
+      "label": "다른 노드/토폴로지에 분리 배치",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "web1-web2",
+      "from": "web-pod-1",
+      "to": "web-pod-2",
+      "label": "분리 배치"
+    }
+  ]
+}

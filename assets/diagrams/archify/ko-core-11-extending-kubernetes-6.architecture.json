@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS 확장 기능 아키텍처",
+    "output": "ko-core-11-extending-kubernetes-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "addons",
+        "label": "EKS 추가 기능",
+        "focus": [
+          "cp",
+          "vcni",
+          "cdns",
+          "ebscsi",
+          "albc",
+          "vpc",
+          "ebs",
+          "elb"
+        ],
+        "note": "컨트롤 플레인이 관리하는 추가 기능이 VPC·EBS·Elastic Load Balancing과 각각 연동된다."
+      },
+      {
+        "id": "irsa",
+        "label": "IRSA",
+        "focus": [
+          "iam",
+          "ng"
+        ],
+        "note": "IAM Roles for Service Accounts로 서비스 계정에 IAM 역할을 연결해 포드가 AWS 서비스에 안전하게 접근한다."
+      },
+      {
+        "id": "ack",
+        "label": "ACK",
+        "focus": [
+          "ack"
+        ],
+        "note": "AWS Controllers for Kubernetes는 Kubernetes 리소스로 AWS 리소스를 관리하는 오퍼레이터 모음이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS 클러스터",
+      "sublabel": "Amazon EKS",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "AWS 관리형",
+      "pos": [
+        260,
+        160
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ng",
+      "type": "backend",
+      "label": "노드 그룹",
+      "sublabel": "워커 노드",
+      "pos": [
+        920,
+        160
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "vcni",
+      "type": "backend",
+      "label": "Amazon VPC CNI",
+      "sublabel": "네트워킹",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "cdns",
+      "type": "backend",
+      "label": "CoreDNS / kube-proxy",
+      "sublabel": "DNS · 네트워크 프록시",
+      "pos": [
+        260,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ebscsi",
+      "type": "backend",
+      "label": "Amazon EBS CSI 드라이버",
+      "sublabel": "EBS 볼륨 관리",
+      "pos": [
+        480,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "albc",
+      "type": "backend",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "로드 밸런서 관리",
+      "pos": [
+        700,
+        290
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "Amazon VPC",
+      "sublabel": "네트워크",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ack",
+      "type": "backend",
+      "label": "AWS Controllers for Kubernetes",
+      "sublabel": "ACK · AWS 리소스 관리",
+      "pos": [
+        260,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "Amazon EBS",
+      "sublabel": "블록 스토리지",
+      "pos": [
+        480,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "elb",
+      "type": "cloud",
+      "label": "Elastic Load Balancing",
+      "sublabel": "ALB / NLB",
+      "pos": [
+        700,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "IAM 역할",
+      "pos": [
+        920,
+        500
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "eks",
+        "cp",
+        "ng",
+        "vcni",
+        "cdns",
+        "ebscsi",
+        "albc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 추가 기능",
+      "wraps": [
+        "vcni",
+        "cdns",
+        "ebscsi",
+        "albc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "vpc",
+        "ack",
+        "ebs",
+        "elb",
+        "iam"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-cp",
+      "from": "eks",
+      "to": "cp",
+      "label": "관리",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-ng",
+      "from": "eks",
+      "to": "ng",
+      "label": "관리",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-vcni",
+      "from": "cp",
+      "to": "vcni",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-cdns",
+      "from": "cp",
+      "to": "cdns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-ebscsi",
+      "from": "cp",
+      "to": "ebscsi",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-albc",
+      "from": "cp",
+      "to": "albc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "vcni-vpc",
+      "from": "vcni",
+      "to": "vpc",
+      "label": "VPC 통합",
+      "labelDy": 84
+    },
+    {
+      "id": "ebscsi-ebs",
+      "from": "ebscsi",
+      "to": "ebs",
+      "label": "볼륨",
+      "labelDy": 84
+    },
+    {
+      "id": "albc-elb",
+      "from": "albc",
+      "to": "elb",
+      "label": "ALB / NLB 생성",
+      "labelDy": 84
+    },
+    {
+      "id": "iam-ng",
+      "from": "iam",
+      "to": "ng",
+      "label": "IRSA",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

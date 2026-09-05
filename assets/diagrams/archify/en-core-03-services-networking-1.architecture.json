@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ingress Traffic Flow",
+    "locale": "en",
+    "output": "en-core-03-services-networking-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      540
+    ],
+    "views": [
+      {
+        "id": "entry-path",
+        "label": "Entry path",
+        "focus": [
+          "client",
+          "lb",
+          "ic",
+          "ingress"
+        ],
+        "note": "The client request passes the load balancer and Ingress controller before hitting the Ingress resource's rules."
+      },
+      {
+        "id": "service-fanout",
+        "label": "Service fan-out",
+        "focus": [
+          "ingress",
+          "s1",
+          "s2",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "note": "Host/path rules fan out to Service A or B; each Service load-balances across its own backend Pods."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "External Client",
+      "sublabel": "HTTP / HTTPS request",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "Cloud provider LB",
+      "pos": [
+        230,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ic",
+      "type": "backend",
+      "label": "Ingress Controller",
+      "sublabel": "NGINX · AWS ALB, etc.",
+      "pos": [
+        450,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "Ingress Resource",
+      "sublabel": "host · path rules",
+      "pos": [
+        690,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "ClusterIP",
+      "pos": [
+        930,
+        130
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "ClusterIP",
+      "pos": [
+        930,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "frontend",
+      "label": "Pod A-1",
+      "sublabel": "backend Pod",
+      "pos": [
+        1150,
+        80
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "frontend",
+      "label": "Pod A-2",
+      "sublabel": "backend Pod",
+      "pos": [
+        1150,
+        180
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "p3",
+      "type": "frontend",
+      "label": "Pod B-1",
+      "sublabel": "backend Pod",
+      "pos": [
+        1150,
+        320
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "p4",
+      "type": "frontend",
+      "label": "Pod B-2",
+      "sublabel": "backend Pod",
+      "pos": [
+        1150,
+        420
+      ],
+      "size": [
+        130,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "ic",
+        "ingress",
+        "s1",
+        "s2",
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "HTTP / HTTPS",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "lb-ic",
+      "from": "lb",
+      "to": "ic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ic-ingress",
+      "from": "ic",
+      "to": "ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-s1",
+      "from": "ingress",
+      "to": "s1",
+      "label": "host / path match"
+    },
+    {
+      "id": "ingress-s2",
+      "from": "ingress",
+      "to": "s2",
+      "label": "host / path match"
+    },
+    {
+      "id": "s1-p1",
+      "from": "s1",
+      "to": "p1",
+      "label": "load-balance"
+    },
+    {
+      "id": "s1-p2",
+      "from": "s1",
+      "to": "p2"
+    },
+    {
+      "id": "s2-p3",
+      "from": "s2",
+      "to": "p3",
+      "label": "load-balance"
+    },
+    {
+      "id": "s2-p4",
+      "from": "s2",
+      "to": "p4"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What Ingress provides",
+      "items": [
+        "Exposes HTTP / HTTPS routes from outside the cluster to internal Services",
+        "Load balancing, SSL termination, name-based virtual hosting"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ingress controller",
+      "items": [
+        "An Ingress controller must be running in the cluster for Ingress resources to work",
+        "NGINX, AWS ALB, GCE, Traefik, HAProxy, Istio Ingress"
+      ]
+    }
+  ]
+}

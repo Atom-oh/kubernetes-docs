@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Descheduler 재균형 과정과 전략",
+    "output": "ko-core-08-scheduling-preemption-eviction-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      520
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "클러스터 상태"
+        },
+        "external": {
+          "label": "변경 이벤트"
+        },
+        "backend": {
+          "label": "Descheduler"
+        },
+        "cloud": {
+          "label": "Descheduler 전략"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "rebalance",
+        "label": "재균형 과정",
+        "focus": [
+          "initial",
+          "events",
+          "imbalanced",
+          "descheduler",
+          "rebalanced"
+        ],
+        "note": "노드·포드 변경으로 깨진 균등 분산을 Descheduler가 실행 중인 포드를 축출해 되돌리는 흐름"
+      },
+      {
+        "id": "strategies",
+        "label": "Descheduler 전략",
+        "focus": [
+          "descheduler",
+          "remove-duplicates",
+          "low-node-utilization",
+          "too-many-restarts",
+          "pod-lifetime",
+          "node-affinity",
+          "topology-spread"
+        ],
+        "note": "DeschedulerPolicy의 pluginConfig에서 활성화하는 대표 전략"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "initial",
+      "type": "frontend",
+      "label": "초기 상태",
+      "sublabel": "균등 분산",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "events",
+      "type": "external",
+      "label": "변경 이벤트",
+      "sublabel": "노드 추가·제거/장애, 포드 변경",
+      "pos": [
+        270,
+        70
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "imbalanced",
+      "type": "frontend",
+      "label": "불균형 상태",
+      "sublabel": "분산 깨짐",
+      "pos": [
+        530,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "descheduler",
+      "type": "backend",
+      "label": "Descheduler",
+      "sublabel": "실행 중인 포드 축출",
+      "pos": [
+        760,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "rebalanced",
+      "type": "frontend",
+      "label": "재균형 상태",
+      "sublabel": "스케줄러가 재배치",
+      "pos": [
+        990,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "remove-duplicates",
+      "type": "cloud",
+      "label": "RemoveDuplicates",
+      "sublabel": "중복 포드 제거",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "low-node-utilization",
+      "type": "cloud",
+      "label": "LowNodeUtilization",
+      "sublabel": "저활용 노드로 이동",
+      "pos": [
+        410,
+        260
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "too-many-restarts",
+      "type": "cloud",
+      "label": "RemovePodsHavingTooManyRestarts",
+      "sublabel": "재시작 과다 포드 제거",
+      "pos": [
+        780,
+        260
+      ],
+      "size": [
+        350,
+        64
+      ]
+    },
+    {
+      "id": "pod-lifetime",
+      "type": "cloud",
+      "label": "PodLifeTime",
+      "sublabel": "수명 초과 포드 제거",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "node-affinity",
+      "type": "cloud",
+      "label": "RemovePodsViolatingNodeAffinity",
+      "sublabel": "노드 어피니티 위반 제거",
+      "pos": [
+        410,
+        360
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "topology-spread",
+      "type": "cloud",
+      "label": "RemovePodsViolatingTopologySpreadConstraint",
+      "sublabel": "TSC 위반 제거",
+      "pos": [
+        780,
+        360
+      ],
+      "size": [
+        350,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Descheduler 필요성",
+      "wraps": [
+        "initial",
+        "events",
+        "imbalanced",
+        "descheduler",
+        "rebalanced"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Descheduler 전략",
+      "wraps": [
+        "remove-duplicates",
+        "low-node-utilization",
+        "too-many-restarts",
+        "pod-lifetime",
+        "node-affinity",
+        "topology-spread"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "initial-events",
+      "from": "initial",
+      "to": "events"
+    },
+    {
+      "id": "events-imbalanced",
+      "from": "events",
+      "to": "imbalanced",
+      "label": "발생"
+    },
+    {
+      "id": "imbalanced-descheduler",
+      "from": "imbalanced",
+      "to": "descheduler",
+      "label": "축출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "descheduler-rebalanced",
+      "from": "descheduler",
+      "to": "rebalanced",
+      "label": "재배치",
+      "variant": "emphasis"
+    }
+  ]
+}

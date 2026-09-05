@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "파드(Pod) 구조",
+    "output": "ko-core-02-pods-and-workloads-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      680
+    ],
+    "views": [
+      {
+        "id": "network",
+        "label": "네트워크",
+        "focus": [
+          "pod",
+          "podip",
+          "netns"
+        ],
+        "note": "파드 내 모든 컨테이너가 하나의 Pod IP 주소와 네트워크 네임스페이스를 공유한다."
+      },
+      {
+        "id": "containers",
+        "label": "컨테이너",
+        "focus": [
+          "pod",
+          "app",
+          "sidecar",
+          "init"
+        ],
+        "note": "애플리케이션·사이드카 컨테이너가 함께 실행되고, 초기화 컨테이너는 그 전에 먼저 실행된다."
+      },
+      {
+        "id": "storage",
+        "label": "스토리지",
+        "focus": [
+          "pod",
+          "emptydir",
+          "configmap",
+          "secret",
+          "pvc"
+        ],
+        "note": "파드 내 컨테이너가 공유하는 볼륨은 emptyDir·configMap·secret·persistentVolumeClaim 등으로 정의한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "cloud",
+      "label": "Pod",
+      "sublabel": "최소 배포 단위",
+      "tag": "1 IP · 1 netns",
+      "pos": [
+        470,
+        280
+      ],
+      "size": [
+        160,
+        70
+      ]
+    },
+    {
+      "id": "podip",
+      "type": "frontend",
+      "label": "Pod IP 주소",
+      "sublabel": "클러스터 내 고유",
+      "pos": [
+        340,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "netns",
+      "type": "frontend",
+      "label": "네트워크 네임스페이스",
+      "sublabel": "모든 컨테이너가 공유",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션 컨테이너",
+      "sublabel": "포트 8080",
+      "pos": [
+        880,
+        150
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "사이드카 컨테이너",
+      "sublabel": "포트 9090",
+      "pos": [
+        880,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "init",
+      "type": "backend",
+      "label": "초기화 컨테이너",
+      "sublabel": "앱 컨테이너 실행 전 실행",
+      "pos": [
+        880,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "emptydir",
+      "type": "database",
+      "label": "emptyDir 볼륨",
+      "sublabel": "임시 공유 스토리지",
+      "pos": [
+        100,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "configmap",
+      "type": "database",
+      "label": "configMap 볼륨",
+      "sublabel": "설정 파일",
+      "pos": [
+        320,
+        560
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "database",
+      "label": "secret 볼륨",
+      "sublabel": "민감 정보",
+      "pos": [
+        560,
+        560
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "database",
+      "label": "persistentVolumeClaim",
+      "sublabel": "영구 스토리지",
+      "pos": [
+        780,
+        560
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "네트워크",
+      "wraps": [
+        "podip",
+        "netns"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "컨테이너",
+      "wraps": [
+        "app",
+        "sidecar",
+        "init"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지",
+      "wraps": [
+        "emptydir",
+        "configmap",
+        "secret",
+        "pvc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-podip",
+      "from": "pod",
+      "to": "podip",
+      "label": "IP 할당",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod-netns",
+      "from": "pod",
+      "to": "netns",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod-app",
+      "from": "pod",
+      "to": "app",
+      "label": "실행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-sidecar",
+      "from": "pod",
+      "to": "sidecar"
+    },
+    {
+      "id": "pod-init",
+      "from": "pod",
+      "to": "init",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod-emptydir",
+      "from": "pod",
+      "to": "emptydir",
+      "label": "마운트",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-configmap",
+      "from": "pod",
+      "to": "configmap",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-secret",
+      "from": "pod",
+      "to": "secret",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "공유 컨텍스트",
+      "items": [
+        "파드 내 모든 컨테이너는 같은 네트워크·IPC·UTS 네임스페이스를 공유한다",
+        "각 파드는 클러스터 내에서 고유한 IP 주소를 가진다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "배포 단위",
+      "items": [
+        "파드의 모든 컨테이너는 항상 같은 노드에서 실행된다",
+        "파드는 배포·스케줄링·복제의 원자적 단위다"
+      ]
+    }
+  ]
+}

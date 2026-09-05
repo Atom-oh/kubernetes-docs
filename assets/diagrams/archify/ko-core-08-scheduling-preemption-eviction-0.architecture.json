@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 스케줄링 아키텍처",
+    "output": "ko-core-08-scheduling-preemption-eviction-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      540
+    ],
+    "views": [
+      {
+        "id": "pipeline",
+        "label": "스케줄링 파이프라인",
+        "focus": [
+          "api",
+          "queue",
+          "scheduler",
+          "cache",
+          "filter",
+          "score",
+          "bind"
+        ],
+        "note": "API 서버에서 감시된 스케줄링되지 않은 포드가 큐를 거쳐 필터링·스코어링·바인딩으로 처리되는 주 경로"
+      },
+      {
+        "id": "constraints",
+        "label": "제약 조건",
+        "focus": [
+          "constraints",
+          "filter",
+          "score"
+        ],
+        "note": "노드 셀렉터·어피니티·테인트/톨러레이션은 필터링을, 토폴로지 분배는 필터링과 스코어링을 함께 제약"
+      },
+      {
+        "id": "disruption",
+        "label": "선점 및 축출",
+        "focus": [
+          "priority",
+          "scheduler",
+          "pdb",
+          "descheduler",
+          "api"
+        ],
+        "note": "우선순위 선점은 스케줄러에, PDB는 Descheduler의 축출에 개입하며 축출된 포드는 다시 API 서버로 돌아온다"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "external",
+      "label": "API 서버",
+      "sublabel": "미스케줄 포드",
+      "pos": [
+        30,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "스케줄링 큐",
+      "sublabel": "QueueSort",
+      "pos": [
+        220,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "kube-scheduler",
+      "sublabel": "플러그인 프레임워크",
+      "pos": [
+        410,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "노드 & 포드 캐시",
+      "sublabel": "노드·포드 상태",
+      "pos": [
+        410,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "필터링",
+      "sublabel": "PreFilter · Filter",
+      "pos": [
+        610,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "score",
+      "type": "backend",
+      "label": "스코어링",
+      "sublabel": "PreScore · Score",
+      "pos": [
+        800,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "bind",
+      "type": "backend",
+      "label": "바인딩",
+      "sublabel": "Reserve · Permit · Bind",
+      "pos": [
+        990,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "descheduler",
+      "type": "security",
+      "label": "Descheduler",
+      "sublabel": "실행 중 포드 재분산",
+      "pos": [
+        30,
+        420
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pdb",
+      "type": "security",
+      "label": "포드 중단 예산",
+      "sublabel": "PodDisruptionBudget",
+      "pos": [
+        220,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "priority",
+      "type": "security",
+      "label": "우선순위 & 선점",
+      "sublabel": "PriorityClass",
+      "pos": [
+        410,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "constraints",
+      "type": "security",
+      "label": "스케줄링 제약 조건",
+      "sublabel": "셀렉터 · 어피니티 · 테인트 · 분배",
+      "pos": [
+        585,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스케줄링 컴포넌트 및 단계",
+      "wraps": [
+        "queue",
+        "scheduler",
+        "cache",
+        "filter",
+        "score",
+        "bind"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "제약 조건 및 선점·축출",
+      "wraps": [
+        "descheduler",
+        "pdb",
+        "priority",
+        "constraints"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-queue",
+      "from": "api",
+      "to": "queue",
+      "label": "포드 감시",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "queue-scheduler",
+      "from": "queue",
+      "to": "scheduler",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-cache",
+      "from": "scheduler",
+      "to": "cache",
+      "label": "노드·포드 상태 조회",
+      "variant": "dashed"
+    },
+    {
+      "id": "scheduler-filter",
+      "from": "scheduler",
+      "to": "filter",
+      "label": "플러그인 실행",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "filter-score",
+      "from": "filter",
+      "to": "score",
+      "variant": "emphasis"
+    },
+    {
+      "id": "score-bind",
+      "from": "score",
+      "to": "bind",
+      "variant": "emphasis"
+    },
+    {
+      "id": "priority-scheduler",
+      "from": "priority",
+      "to": "scheduler",
+      "label": "선점",
+      "variant": "security"
+    },
+    {
+      "id": "constraints-filter",
+      "from": "constraints",
+      "to": "filter",
+      "label": "필터 조건",
+      "variant": "security"
+    },
+    {
+      "id": "constraints-score",
+      "from": "constraints",
+      "to": "score",
+      "label": "분배 선호",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          875,
+          450
+        ]
+      ]
+    },
+    {
+      "id": "pdb-descheduler",
+      "from": "pdb",
+      "to": "descheduler",
+      "label": "PDB 존중",
+      "variant": "security",
+      "labelDy": 54
+    },
+    {
+      "id": "descheduler-api",
+      "from": "descheduler",
+      "to": "api",
+      "label": "축출 → 재스케줄링",
+      "variant": "dashed",
+      "labelDy": -30
+    }
+  ]
+}

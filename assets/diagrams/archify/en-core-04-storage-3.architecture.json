@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Volume Snapshot and Restore",
+    "locale": "en",
+    "output": "en-core-04-storage-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "snapshot-create",
+        "label": "Create Volume Snapshot",
+        "focus": [
+          "admin",
+          "vsc",
+          "user",
+          "vs",
+          "pvc1"
+        ],
+        "note": "The administrator creates a VolumeSnapshotClass; the user creates a VolumeSnapshot, a point-in-time copy of an existing PVC."
+      },
+      {
+        "id": "snapshot-restore",
+        "label": "Restore from Snapshot",
+        "focus": [
+          "user",
+          "pvc2",
+          "vs",
+          "pv2",
+          "storage"
+        ],
+        "note": "A new PVC names the VolumeSnapshot as its dataSource; a new PV binds to it and the storage is restored from the snapshot."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Administrator / User"
+        },
+        "cloud": {
+          "label": "Volume Snapshot Class"
+        },
+        "backend": {
+          "label": "Snapshot / PVC / PV"
+        },
+        "database": {
+          "label": "Physical Storage"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "Cluster Administrator",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vsc",
+      "type": "cloud",
+      "label": "Volume Snapshot Class",
+      "sublabel": "csi-hostpath-snapclass",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "Volume Snapshot",
+      "sublabel": "new-snapshot",
+      "pos": [
+        380,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pvc1",
+      "type": "backend",
+      "label": "Existing PVC",
+      "sublabel": "myclaim",
+      "pos": [
+        380,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pvc2",
+      "type": "backend",
+      "label": "New PVC",
+      "sublabel": "restore-pvc",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pv2",
+      "type": "backend",
+      "label": "New PV",
+      "sublabel": "dynamically provisioned",
+      "pos": [
+        780,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "Physical Storage",
+      "pos": [
+        780,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Create Volume Snapshot",
+      "wraps": [
+        "admin",
+        "user",
+        "vsc",
+        "vs",
+        "pvc1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Restore from Snapshot",
+      "wraps": [
+        "pvc2",
+        "pv2",
+        "storage"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-vsc",
+      "from": "admin",
+      "to": "vsc",
+      "label": "Creates",
+      "labelDy": 40
+    },
+    {
+      "id": "user-vs",
+      "from": "user",
+      "to": "vs",
+      "label": "Creates",
+      "labelDy": 40
+    },
+    {
+      "id": "vs-vsc",
+      "from": "vs",
+      "to": "vsc",
+      "label": "References"
+    },
+    {
+      "id": "vs-pvc1",
+      "from": "vs",
+      "to": "pvc1",
+      "label": "Snapshots",
+      "labelDy": 40
+    },
+    {
+      "id": "user-pvc2",
+      "from": "user",
+      "to": "pvc2",
+      "label": "Creates"
+    },
+    {
+      "id": "pvc2-vs",
+      "from": "pvc2",
+      "to": "vs",
+      "label": "Uses as data source",
+      "variant": "dashed"
+    },
+    {
+      "id": "pvc2-pv2",
+      "from": "pvc2",
+      "to": "pv2",
+      "label": "Binds",
+      "variant": "emphasis",
+      "labelDy": 40
+    },
+    {
+      "id": "pv2-storage",
+      "from": "pv2",
+      "to": "storage",
+      "label": "Restore from Snapshot",
+      "variant": "emphasis",
+      "labelDy": 40
+    }
+  ]
+}

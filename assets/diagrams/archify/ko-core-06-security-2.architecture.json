@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "권한 부여(Authorization) 흐름",
+    "output": "ko-core-06-security-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "user",
+          "api",
+          "decision",
+          "allow",
+          "deny"
+        ],
+        "note": "인증된 요청이 API 서버를 거쳐 권한 부여 결정으로 이어지는 주 경로"
+      },
+      {
+        "id": "modes",
+        "label": "권한 부여 모드",
+        "focus": [
+          "api",
+          "rbac",
+          "abac",
+          "node",
+          "webhook",
+          "decision"
+        ],
+        "note": "API 서버는 RBAC, ABAC, Node, 웹훅 중 설정된 모드로 요청을 평가한다"
+      },
+      {
+        "id": "rbac-components",
+        "label": "RBAC 구성 요소",
+        "focus": [
+          "rbac",
+          "role",
+          "binding"
+        ],
+        "note": "Role/ClusterRole이 권한을 정의하고 RoleBinding/ClusterRoleBinding이 대상에 할당한다"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "인증된 사용자 / 서비스",
+      "sublabel": "권한 부여 요청자",
+      "pos": [
+        10,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        250,
+        350
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC",
+      "sublabel": "Role-Based Access Control",
+      "pos": [
+        470,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "abac",
+      "type": "security",
+      "label": "ABAC",
+      "sublabel": "Attribute-Based Access Control",
+      "pos": [
+        470,
+        310
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "node",
+      "type": "security",
+      "label": "Node 권한 부여",
+      "sublabel": "kubelet 요청 전용",
+      "pos": [
+        470,
+        420
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "웹훅 권한 부여",
+      "sublabel": "외부 서비스 질의",
+      "pos": [
+        470,
+        530
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "decision",
+      "type": "backend",
+      "label": "권한 부여 결정",
+      "sublabel": "허용 / 거부",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "allow",
+      "type": "backend",
+      "label": "요청 처리",
+      "sublabel": "허용됨",
+      "pos": [
+        1010,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "deny",
+      "type": "backend",
+      "label": "요청 거부",
+      "sublabel": "거부됨",
+      "pos": [
+        1010,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "role",
+      "type": "backend",
+      "label": "Role / ClusterRole",
+      "sublabel": "권한 정의",
+      "pos": [
+        440,
+        50
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "binding",
+      "type": "backend",
+      "label": "RoleBinding / ClusterRoleBinding",
+      "sublabel": "권한 할당",
+      "pos": [
+        650,
+        50
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "권한 부여 모드",
+      "wraps": [
+        "rbac",
+        "abac",
+        "node",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "RBAC 구성 요소",
+      "wraps": [
+        "role",
+        "binding"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-api",
+      "from": "user",
+      "to": "api",
+      "label": "권한 부여 요청",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "api-rbac",
+      "from": "api",
+      "to": "rbac"
+    },
+    {
+      "id": "rbac-decision",
+      "from": "rbac",
+      "to": "decision"
+    },
+    {
+      "id": "api-abac",
+      "from": "api",
+      "to": "abac"
+    },
+    {
+      "id": "abac-decision",
+      "from": "abac",
+      "to": "decision",
+      "label": "평가",
+      "labelDx": -30,
+      "labelDy": -14
+    },
+    {
+      "id": "api-node",
+      "from": "api",
+      "to": "node"
+    },
+    {
+      "id": "node-decision",
+      "from": "node",
+      "to": "decision"
+    },
+    {
+      "id": "api-webhook",
+      "from": "api",
+      "to": "webhook"
+    },
+    {
+      "id": "webhook-decision",
+      "from": "webhook",
+      "to": "decision"
+    },
+    {
+      "id": "decision-allow",
+      "from": "decision",
+      "to": "allow",
+      "label": "허용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decision-deny",
+      "from": "decision",
+      "to": "deny",
+      "label": "거부",
+      "variant": "security"
+    },
+    {
+      "id": "rbac-role",
+      "from": "rbac",
+      "to": "role",
+      "label": "권한 정의",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "rbac-binding",
+      "from": "rbac",
+      "to": "binding",
+      "label": "권한 할당",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ]
+}

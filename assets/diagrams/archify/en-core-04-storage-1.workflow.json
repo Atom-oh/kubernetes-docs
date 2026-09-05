@@ -1,0 +1,179 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PV and PVC Binding Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-core-04-storage-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "admin-provisions",
+        "label": "Admin provides PV",
+        "focus": [
+          "admin",
+          "pv",
+          "storage"
+        ],
+        "note": "The cluster administrator provisions a PersistentVolume backed by physical storage ahead of time."
+      },
+      {
+        "id": "user-claims",
+        "label": "User requests via PVC",
+        "focus": [
+          "user",
+          "pvc",
+          "pv"
+        ],
+        "note": "A PVC is how a user requests storage; Kubernetes finds a PV that meets its requirements and binds them."
+      },
+      {
+        "id": "pod-uses",
+        "label": "Pod uses PVC",
+        "focus": [
+          "pod",
+          "pvc",
+          "pv",
+          "storage"
+        ],
+        "note": "The Pod mounts the PVC as a volume, while the PV keeps a lifecycle independent of the Pod."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Admin / User"
+        },
+        "backend": {
+          "label": "Workload"
+        },
+        "cloud": {
+          "label": "Kubernetes resource"
+        },
+        "database": {
+          "label": "Physical Storage"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "adminLane",
+      "label": "Cluster Administrator"
+    },
+    {
+      "id": "clusterLane",
+      "label": "Kubernetes Cluster"
+    },
+    {
+      "id": "userLane",
+      "label": "User / Workload"
+    },
+    {
+      "id": "infraLane",
+      "label": "Storage Infrastructure"
+    }
+  ],
+  "mainPath": [
+    "pod",
+    "pvc",
+    "pv",
+    "storage"
+  ],
+  "nodes": [
+    {
+      "id": "admin",
+      "lane": "adminLane",
+      "col": 3,
+      "type": "external",
+      "label": "Cluster Administrator",
+      "sublabel": "provides storage",
+      "width": 196
+    },
+    {
+      "id": "pvc",
+      "lane": "clusterLane",
+      "col": 2,
+      "type": "cloud",
+      "label": "Persistent Volume Claim",
+      "sublabel": "PersistentVolumeClaim",
+      "width": 210
+    },
+    {
+      "id": "pv",
+      "lane": "clusterLane",
+      "col": 3,
+      "type": "cloud",
+      "label": "Persistent Volume",
+      "sublabel": "PersistentVolume",
+      "width": 180
+    },
+    {
+      "id": "user",
+      "lane": "userLane",
+      "col": 1,
+      "type": "external",
+      "label": "User",
+      "sublabel": "requests storage",
+      "width": 130
+    },
+    {
+      "id": "pod",
+      "lane": "userLane",
+      "col": 2,
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "mounts PVC volume",
+      "width": 140
+    },
+    {
+      "id": "storage",
+      "lane": "infraLane",
+      "col": 3,
+      "type": "database",
+      "label": "Physical Storage",
+      "sublabel": "NFS or other backend",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "admin",
+      "to": "pv",
+      "label": "Creates",
+      "role": "branch"
+    },
+    {
+      "from": "user",
+      "to": "pvc",
+      "label": "Creates",
+      "role": "branch",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "from": "pod",
+      "to": "pvc",
+      "label": "Uses",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pvc",
+      "to": "pv",
+      "label": "Binds",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pv",
+      "to": "storage",
+      "label": "Connects",
+      "variant": "emphasis",
+      "role": "main",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

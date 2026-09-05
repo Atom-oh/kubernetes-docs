@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 모니터링 아키텍처",
+    "output": "ko-core-09-cluster-administration-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1140,
+      600
+    ],
+    "views": [
+      {
+        "id": "metrics",
+        "label": "메트릭 수집",
+        "focus": [
+          "monitoring",
+          "prometheus",
+          "ksm",
+          "node-exporter"
+        ],
+        "note": "Prometheus가 kube-state-metrics와 node-exporter에서 클러스터·노드 메트릭을 스크레이프한다."
+      },
+      {
+        "id": "logs",
+        "label": "로그 수집",
+        "focus": [
+          "monitoring",
+          "fluentd",
+          "elasticsearch",
+          "kibana"
+        ],
+        "note": "Fluentd/Fluent Bit가 모은 로그를 Elasticsearch에 쌓고 Kibana로 검색·시각화하는 EFK 스택."
+      },
+      {
+        "id": "alert-viz",
+        "label": "알림과 시각화",
+        "focus": [
+          "monitoring",
+          "alertmanager",
+          "grafana"
+        ],
+        "note": "Alertmanager가 알림을 보내고 Grafana가 대시보드로 시각화한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "monitoring",
+      "type": "cloud",
+      "label": "Kubernetes 모니터링",
+      "sublabel": "모니터링 및 로깅",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "메트릭 저장·조회",
+      "pos": [
+        130,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ksm",
+      "type": "backend",
+      "label": "kube-state-metrics",
+      "sublabel": "클러스터 메트릭",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "node-exporter",
+      "type": "backend",
+      "label": "node-exporter",
+      "sublabel": "노드 메트릭",
+      "pos": [
+        240,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "fluentd",
+      "type": "backend",
+      "label": "Fluentd / Fluent Bit",
+      "sublabel": "로그 수집기",
+      "pos": [
+        460,
+        190
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "elasticsearch",
+      "type": "database",
+      "label": "Elasticsearch",
+      "sublabel": "로그 저장소",
+      "pos": [
+        460,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kibana",
+      "type": "frontend",
+      "label": "Kibana",
+      "sublabel": "로그 검색·시각화",
+      "pos": [
+        460,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "알림 라우팅",
+      "pos": [
+        710,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "대시보드",
+      "pos": [
+        940,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "메트릭 수집",
+      "wraps": [
+        "prometheus",
+        "ksm",
+        "node-exporter"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로그 수집",
+      "wraps": [
+        "fluentd",
+        "elasticsearch",
+        "kibana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "알림",
+      "wraps": [
+        "alertmanager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "시각화",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mon-prom",
+      "from": "monitoring",
+      "to": "prometheus",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mon-fluentd",
+      "from": "monitoring",
+      "to": "fluentd",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mon-alert",
+      "from": "monitoring",
+      "to": "alertmanager"
+    },
+    {
+      "id": "mon-grafana",
+      "from": "monitoring",
+      "to": "grafana"
+    },
+    {
+      "id": "prom-ksm",
+      "from": "prometheus",
+      "to": "ksm",
+      "label": "스크레이프",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-node",
+      "from": "prometheus",
+      "to": "node-exporter",
+      "label": "스크레이프",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fluentd-es",
+      "from": "fluentd",
+      "to": "elasticsearch",
+      "label": "로그 전송",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "es-kibana",
+      "from": "elasticsearch",
+      "to": "kibana",
+      "label": "검색·시각화",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}

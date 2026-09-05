@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "네트워크 정책",
+    "output": "ko-core-03-services-networking-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "allowed",
+        "label": "허용 경로",
+        "focus": [
+          "fe",
+          "api",
+          "db",
+          "mon"
+        ],
+        "note": "Frontend → API → Database, 그리고 다른 네임스페이스의 Monitoring → API 트래픽은 정책이 허용한다."
+      },
+      {
+        "id": "blocked",
+        "label": "차단 경로",
+        "focus": [
+          "fe",
+          "mon",
+          "db"
+        ],
+        "note": "Frontend와 Monitoring이 Database 포드로 직접 접근하는 경로는 정책이 차단한다."
+      },
+      {
+        "id": "policies",
+        "label": "NetworkPolicy 리소스",
+        "focus": [
+          "np1",
+          "np2",
+          "np3"
+        ],
+        "note": "각 네임스페이스에 배치된 NetworkPolicy 리소스가 포드 간 통신 규칙을 정의한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "fe",
+      "type": "frontend",
+      "label": "Frontend Pod",
+      "sublabel": "app: frontend",
+      "pos": [
+        200,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Pod",
+      "sublabel": "app: api",
+      "pos": [
+        200,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Database Pod",
+      "sublabel": "app: db",
+      "pos": [
+        200,
+        520
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "np1",
+      "type": "security",
+      "label": "Network Policy 1",
+      "sublabel": "NetworkPolicy",
+      "pos": [
+        450,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "np2",
+      "type": "security",
+      "label": "Network Policy 2",
+      "sublabel": "NetworkPolicy",
+      "pos": [
+        450,
+        170
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "mon",
+      "type": "backend",
+      "label": "Monitoring Pod",
+      "pos": [
+        800,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "np3",
+      "type": "security",
+      "label": "Network Policy 3",
+      "sublabel": "NetworkPolicy",
+      "pos": [
+        800,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "네임스페이스 A",
+      "wraps": [
+        "fe",
+        "api",
+        "db",
+        "np1",
+        "np2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "네임스페이스 B",
+      "wraps": [
+        "mon",
+        "np3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fe-api",
+      "from": "fe",
+      "to": "api",
+      "label": "허용",
+      "variant": "emphasis",
+      "labelAt": [
+        322,
+        222
+      ]
+    },
+    {
+      "id": "api-db",
+      "from": "api",
+      "to": "db",
+      "label": "허용",
+      "variant": "emphasis",
+      "labelAt": [
+        322,
+        442
+      ]
+    },
+    {
+      "id": "fe-db",
+      "from": "fe",
+      "to": "db",
+      "label": "차단",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "mon-api",
+      "from": "mon",
+      "to": "api",
+      "label": "허용",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "mon-db",
+      "from": "mon",
+      "to": "db",
+      "label": "차단",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "네트워크 정책",
+      "items": [
+        "포드 간 통신을 제어하는 규칙",
+        "네트워크 플러그인이 지원해야 사용 가능 (Calico, Cilium, Weave Net)",
+        "실선은 허용, 붉은 선은 정책으로 차단된 트래픽"
+      ]
+    }
+  ]
+}

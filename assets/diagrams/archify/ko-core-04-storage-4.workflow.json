@@ -1,0 +1,187 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "볼륨 확장 절차",
+    "output": "public/archmaps/ko-core-04-storage-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request",
+        "label": "확장 요청",
+        "focus": [
+          "user",
+          "pvc",
+          "sc"
+        ],
+        "note": "사용자가 PVC의 storage 요청값을 늘리면 StorageClass의 allowVolumeExpansion: true 설정을 확인합니다."
+      },
+      {
+        "id": "expand",
+        "label": "실제 확장",
+        "focus": [
+          "pv",
+          "storage",
+          "pod"
+        ],
+        "note": "PersistentVolume이 실제 볼륨 크기를 늘리고, 파드에 마운트된 파일 시스템까지 확장합니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "사용자"
+        },
+        "cloud": {
+          "label": "Kubernetes 스토리지 오브젝트"
+        },
+        "security": {
+          "label": "StorageClass 확장 허용 확인"
+        },
+        "backend": {
+          "label": "파드"
+        },
+        "database": {
+          "label": "물리적 스토리지"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "userLane",
+      "label": "사용자"
+    },
+    {
+      "id": "k8s",
+      "label": "Kubernetes 스토리지 오브젝트"
+    },
+    {
+      "id": "infra",
+      "label": "실제 볼륨 · 파드"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "pvc",
+    "sc",
+    "pv",
+    "storage"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "user"
+    ],
+    "allowedTerminals": [
+      "storage",
+      "pod"
+    ],
+    "requiredPaths": [
+      {
+        "from": "user",
+        "to": "storage"
+      },
+      {
+        "from": "user",
+        "to": "pod"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "userLane",
+      "col": 0,
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "PVC 크기 증가 요청",
+      "width": 132
+    },
+    {
+      "id": "pvc",
+      "lane": "k8s",
+      "col": 1,
+      "type": "cloud",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "storage: 8Gi → 16Gi",
+      "tag": "PVC",
+      "width": 176
+    },
+    {
+      "id": "sc",
+      "lane": "k8s",
+      "col": 2,
+      "type": "security",
+      "label": "StorageClass",
+      "sublabel": "allowVolumeExpansion: true",
+      "tag": "SC",
+      "width": 176
+    },
+    {
+      "id": "pv",
+      "lane": "k8s",
+      "col": 3,
+      "type": "cloud",
+      "label": "PersistentVolume",
+      "sublabel": "바인딩된 PV 확장",
+      "tag": "PV",
+      "width": 156
+    },
+    {
+      "id": "storage",
+      "lane": "infra",
+      "col": 4,
+      "type": "database",
+      "label": "물리적 스토리지",
+      "sublabel": "볼륨 크기 확장",
+      "width": 144
+    },
+    {
+      "id": "pod",
+      "lane": "infra",
+      "col": 5,
+      "type": "backend",
+      "label": "파드",
+      "sublabel": "파일 시스템 확장",
+      "tag": "Pod",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "from": "user",
+      "to": "pvc",
+      "label": "PVC 크기 증가 요청",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pvc",
+      "to": "sc",
+      "label": "확장 요청",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "sc",
+      "to": "pv",
+      "label": "allowVolumeExpansion: true 확인",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "pv",
+      "to": "storage",
+      "label": "볼륨 크기 확장",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "pv",
+      "to": "pod",
+      "label": "파일 시스템 확장",
+      "role": "branch"
+    }
+  ]
+}

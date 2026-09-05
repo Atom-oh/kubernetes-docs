@@ -33,7 +33,9 @@ Windows 컨테이너에는 두 가지 유형이 있습니다:
 
 다음 다이어그램은 두 가지 Windows 컨테이너 유형의 아키텍처 차이를 보여줍니다:
 
-![Windows Server 컨테이너는 커널을 공유하는 컨테이너 런타임을 통해 물리 호스트에 연결되고, Hyper-V 격리 컨테이너는 각 앱이 경량 VM으로 분리되어 하이퍼바이저를 거쳐 같은 물리 호스트에 연결되는 구조를 비교한다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-0.svg)
+![Windows Server 컨테이너는 여러 Windows 앱이 하나의 컨테이너 런타임과 호스트 OS 커널을 공유하고, Hyper-V 격리 컨테이너는 앱마다 경량 VM과 전용 Windows OS 커널을 가진 채 Hyper-V 하이퍼바이저를 거쳐 같은 Windows Server OS와 물리적 하드웨어에 연결되는 구조를 비교한다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-0.html)
 
 ### Windows 컨테이너 이미지
 
@@ -66,7 +68,9 @@ Kubernetes의 Windows 지원 아키텍처는 다음과 같습니다:
 2. **Linux 워커 노드**: 시스템 구성 요소(CoreDNS, metrics-server 등)를 실행합니다.
 3. **Windows 워커 노드**: Windows 애플리케이션 워크로드를 실행합니다.
 
-![Linux에서만 실행되는 컨트롤 플레인의 kube-apiserver가 Linux 워커 노드의 시스템 포드와 Windows 워커 노드의 kubelet·kube-proxy를 통해 Windows 컨테이너를 함께 관리하는 혼합 클러스터 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-1.svg)
+![Linux에서만 실행되는 컨트롤 플레인(kube-apiserver, kube-controller-manager, kube-scheduler, etcd)이 CoreDNS·metrics-server 등 시스템 포드를 실행하는 Linux 워커 노드와, kubelet·kube-proxy로 Windows 컨테이너를 실행하는 두 개의 Windows 워커 노드를 함께 관리하는 혼합 클러스터 구조를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-1.html)
 
 ### Windows 노드 구성 요소
 
@@ -300,7 +304,9 @@ Windows 노드의 네트워킹은 Linux 노드와 다른 특성을 가집니다.
 
 다음 다이어그램은 Windows 노드와 Linux 노드가 혼합된 Kubernetes 클러스터의 네트워킹 아키텍처를 보여줍니다:
 
-![외부 클라이언트의 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 Linux 포드와 Windows 포드로 분산되고, 두 포드가 서로 다른 OS의 노드에 있어도 클러스터 네트워크로 직접 통신할 수 있음을 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-2.svg)
+![외부 클라이언트의 요청이 로드 밸런서와 Kubernetes 서비스를 거쳐 Linux 포드와 Windows 포드로 분산되고, 두 포드가 서로 다른 OS의 노드에 있어도 클러스터 네트워크로 직접 통신할 수 있음을 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-2.html)
 
 ### 지원되는 네트워크 플러그인
 
@@ -430,7 +436,9 @@ Windows 노드에서 사용할 수 있는 스토리지 옵션을 알아보겠습
 
 다음 다이어그램은 Windows 노드에서 사용 가능한 다양한 스토리지 옵션을 보여줍니다:
 
-![Windows 컨테이너가 임시성 로컬 볼륨, API로 전달되는 ConfigMap·Secret 볼륨, 그리고 PersistentVolume과 CSI 드라이버를 거쳐 Azure Disk나 AWS EBS 같은 외부 스토리지에 연결되는 세 가지 스토리지 경로를 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-3.svg)
+![Windows 포드의 컨테이너가 Windows 노드의 emptyDir·hostPath 볼륨(hostPath는 노드 디스크로 연결), Kubernetes API에서 전달되는 ConfigMap·Secret 볼륨, 그리고 CSI 드라이버를 거쳐 Azure Disk/File, AWS EBS, SMB 공유에 연결되는 PersistentVolume을 마운트하는 세 가지 스토리지 경로를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-3.html)
 
 ### 지원되는 볼륨 유형
 
@@ -815,7 +823,9 @@ Amazon EKS에서 Windows 워크로드를 실행하는 방법을 알아보겠습�
 
 다음 다이어그램은 Amazon EKS에서의 Windows 지원 아키텍처를 보여줍니다:
 
-![EKS 컨트롤 플레인이 Linux 노드 그룹과 Windows 노드 그룹을 함께 관리하며 AWS IAM·VPC·CloudWatch와 연동하고, Windows 애플리케이션 포드가 Elastic Load Balancer를 통해 사용자에게 서비스를 제공하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-core-10-windows-in-kubernetes-4.svg)
+![EKS 컨트롤 플레인이 Linux 노드 그룹(CoreDNS·VPC CNI·kube-proxy 시스템 포드)과 Windows 노드 그룹(Windows 애플리케이션 포드)을 함께 관리하며 AWS IAM·Amazon VPC·CloudWatch와 연동하고, Windows 애플리케이션 포드가 Elastic Load Balancer를 통해 사용자에게 서비스를 제공하는 구조를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-4.html)
 
 ### EKS에서 Windows 지원 활성화
 

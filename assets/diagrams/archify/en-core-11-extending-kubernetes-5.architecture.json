@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNI Architecture and Operation",
+    "locale": "en",
+    "output": "en-core-11-extending-kubernetes-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes / CNI component"
+        },
+        "cloud": {
+          "label": "Network"
+        },
+        "database": {
+          "label": "IP address store"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "delivers Pod spec",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "node agent",
+      "pos": [
+        60,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Container Runtime",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI Plugin",
+      "sublabel": "configures network interfaces",
+      "pos": [
+        500,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "ipam",
+      "type": "backend",
+      "label": "IPAM Plugin",
+      "sublabel": "IP allocation & management",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "netconf",
+      "type": "cloud",
+      "label": "Network Configuration",
+      "sublabel": "interfaces & routes",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ippool",
+      "type": "database",
+      "label": "IP Pool",
+      "sublabel": "e.g. 10.244.0.0/24",
+      "pos": [
+        380,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "podnet",
+      "type": "cloud",
+      "label": "Pod Network",
+      "sublabel": "pod-to-pod connectivity",
+      "pos": [
+        640,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Components",
+      "wraps": [
+        "apiserver",
+        "kubelet",
+        "runtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CNI Plugin",
+      "wraps": [
+        "cni",
+        "ipam",
+        "netconf"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-kubelet",
+      "from": "apiserver",
+      "to": "kubelet",
+      "label": "Pod creation",
+      "labelDy": 24
+    },
+    {
+      "id": "kubelet-to-runtime",
+      "from": "kubelet",
+      "to": "runtime",
+      "label": "1. Create container",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "runtime-to-cni",
+      "from": "runtime",
+      "to": "cni",
+      "label": "2. Network setup request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cni-to-ipam",
+      "from": "cni",
+      "to": "ipam",
+      "label": "3. IP allocation request",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ipam-to-ippool",
+      "from": "ipam",
+      "to": "ippool",
+      "label": "4. Allocate IP",
+      "labelDy": 24
+    },
+    {
+      "id": "cni-to-netconf",
+      "from": "cni",
+      "to": "netconf",
+      "label": "5. Network setup",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "netconf-to-podnet",
+      "from": "netconf",
+      "to": "podnet",
+      "label": "6. Apply network config",
+      "variant": "emphasis",
+      "labelDy": 24
+    }
+  ]
+}

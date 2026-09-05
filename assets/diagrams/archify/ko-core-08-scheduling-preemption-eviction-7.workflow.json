@@ -1,0 +1,251 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "포드 중단 예산(PDB) 구성과 작동 방식",
+    "output": "public/archmaps/ko-core-08-scheduling-preemption-eviction-7.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "PDB 리소스"
+        },
+        "backend": {
+          "label": "PDB 설정 필드"
+        },
+        "cloud": {
+          "label": "워크로드 · 중단 이벤트"
+        },
+        "messagebus": {
+          "label": "PDB 조건 판정"
+        },
+        "external": {
+          "label": "축출 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "components",
+        "label": "PDB 구성 요소",
+        "focus": [
+          "pdb",
+          "minAvailable",
+          "maxUnavailable",
+          "selector"
+        ],
+        "note": "minAvailable 또는 maxUnavailable로 중단 한도를 정하고 selector로 대상 포드를 고릅니다."
+      },
+      {
+        "id": "operation",
+        "label": "PDB 작동 방식",
+        "focus": [
+          "disruption",
+          "check",
+          "allow",
+          "deny"
+        ],
+        "note": "노드 드레인 같은 자발적 중단이 오면 PDB 조건을 확인해 축출을 허용하거나 거부합니다."
+      },
+      {
+        "id": "example",
+        "label": "PDB 예시",
+        "focus": [
+          "deployment",
+          "pdbMin",
+          "pdbMax"
+        ],
+        "note": "replicas 5인 Deployment에서 minAvailable 3과 maxUnavailable 2는 같은 효과를 냅니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "components",
+      "label": "PDB 구성 요소"
+    },
+    {
+      "id": "operation",
+      "label": "PDB 작동 방식"
+    },
+    {
+      "id": "example",
+      "label": "PDB 예시"
+    }
+  ],
+  "mainPath": [
+    "disruption",
+    "check",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "pdb",
+      "lane": "components",
+      "col": 0,
+      "type": "security",
+      "label": "PodDisruptionBudget",
+      "sublabel": "policy/v1",
+      "width": 180
+    },
+    {
+      "id": "minAvailable",
+      "lane": "components",
+      "col": 1,
+      "type": "backend",
+      "label": "minAvailable",
+      "sublabel": "최소 가용 포드 수",
+      "width": 125
+    },
+    {
+      "id": "maxUnavailable",
+      "lane": "components",
+      "col": 2,
+      "type": "backend",
+      "label": "maxUnavailable",
+      "sublabel": "최대 불가용 포드 수",
+      "width": 135
+    },
+    {
+      "id": "selector",
+      "lane": "components",
+      "col": 3,
+      "type": "backend",
+      "label": "selector",
+      "sublabel": "대상 포드 선택",
+      "width": 135
+    },
+    {
+      "id": "disruption",
+      "lane": "operation",
+      "col": 0,
+      "type": "cloud",
+      "label": "자발적 중단",
+      "sublabel": "노드 드레인 등",
+      "width": 175
+    },
+    {
+      "id": "check",
+      "lane": "operation",
+      "col": 1,
+      "type": "messagebus",
+      "label": "PDB 조건 충족?",
+      "sublabel": "Kubernetes가 PDB 확인",
+      "tag": "판정",
+      "width": 165
+    },
+    {
+      "id": "allow",
+      "lane": "operation",
+      "col": 2,
+      "type": "external",
+      "label": "포드 축출 허용",
+      "sublabel": "축출 진행",
+      "width": 175
+    },
+    {
+      "id": "deny",
+      "lane": "operation",
+      "col": 3,
+      "type": "external",
+      "label": "포드 축출 거부",
+      "sublabel": "중단 보류",
+      "width": 175
+    },
+    {
+      "id": "deployment",
+      "lane": "example",
+      "col": 0,
+      "type": "cloud",
+      "label": "Deployment",
+      "sublabel": "replicas: 5",
+      "width": 130
+    },
+    {
+      "id": "pdbMin",
+      "lane": "example",
+      "col": 1,
+      "type": "security",
+      "label": "PDB",
+      "sublabel": "minAvailable: 3"
+    },
+    {
+      "id": "pdbMax",
+      "lane": "example",
+      "col": 2,
+      "type": "security",
+      "label": "PDB",
+      "sublabel": "maxUnavailable: 2"
+    }
+  ],
+  "edges": [
+    {
+      "from": "pdb",
+      "to": "minAvailable",
+      "label": "설정",
+      "role": "branch"
+    },
+    {
+      "from": "pdb",
+      "to": "maxUnavailable",
+      "label": "설정",
+      "role": "branch"
+    },
+    {
+      "from": "pdb",
+      "to": "selector",
+      "label": "선택",
+      "role": "branch"
+    },
+    {
+      "from": "pdb",
+      "to": "check",
+      "label": "조건 참조",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "disruption",
+      "to": "check",
+      "label": "확인",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "allow",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "check",
+      "to": "deny",
+      "label": "아니오",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "deployment",
+      "to": "pdbMin",
+      "label": "적용",
+      "role": "branch",
+      "route": "straight"
+    },
+    {
+      "from": "deployment",
+      "to": "pdbMax",
+      "label": "적용",
+      "role": "branch"
+    },
+    {
+      "from": "pdbMin",
+      "to": "pdbMax",
+      "label": "동일 효과",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "straight"
+    }
+  ]
+}

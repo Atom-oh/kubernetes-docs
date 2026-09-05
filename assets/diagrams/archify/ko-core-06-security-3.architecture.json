@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "보안 컨텍스트(Security Context)",
+    "output": "ko-core-06-security-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      580
+    ],
+    "views": [
+      {
+        "id": "pod-level",
+        "label": "포드 보안 컨텍스트",
+        "focus": [
+          "pod",
+          "psc"
+        ],
+        "note": "spec.securityContext는 runAsUser·runAsGroup·fsGroup·supplementalGroups로 포드 전체 프로세스의 신원을 정한다."
+      },
+      {
+        "id": "container-level",
+        "label": "컨테이너 보안 컨텍스트",
+        "focus": [
+          "pod",
+          "container",
+          "csc"
+        ],
+        "note": "각 컨테이너의 securityContext는 privileged, allowPrivilegeEscalation, readOnlyRootFilesystem, capabilities, seLinuxOptions를 제어한다."
+      },
+      {
+        "id": "standards",
+        "label": "포드 보안 표준",
+        "focus": [
+          "pod",
+          "pss",
+          "privileged",
+          "baseline",
+          "restricted"
+        ],
+        "note": "포드는 네임스페이스에 적용된 Privileged·Baseline·Restricted 세 수준 중 하나를 준수해야 한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "포드",
+      "sublabel": "Pod spec",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "psc",
+      "type": "security",
+      "label": "포드 보안 컨텍스트",
+      "sublabel": "runAsUser · runAsGroup · fsGroup · supplementalGroups",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        380,
+        64
+      ]
+    },
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "컨테이너",
+      "sublabel": "예: nginx:1.19",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "csc",
+      "type": "security",
+      "label": "컨테이너 보안 컨텍스트",
+      "sublabel": "privileged · allowPrivilegeEscalation · capabilities 등",
+      "pos": [
+        300,
+        460
+      ],
+      "size": [
+        380,
+        64
+      ]
+    },
+    {
+      "id": "pss",
+      "type": "security",
+      "label": "포드 보안 표준",
+      "sublabel": "세 가지 정책 수준",
+      "pos": [
+        780,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "privileged",
+      "type": "security",
+      "label": "Privileged",
+      "sublabel": "제한 없음",
+      "pos": [
+        1050,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "security",
+      "label": "Baseline",
+      "sublabel": "기본 보안",
+      "pos": [
+        1050,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "restricted",
+      "type": "security",
+      "label": "Restricted",
+      "sublabel": "강화된 보안",
+      "pos": [
+        1050,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "포드 · 컨테이너 수준 설정",
+      "wraps": [
+        "pod",
+        "psc",
+        "container",
+        "csc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "포드 보안 표준",
+      "wraps": [
+        "pss",
+        "privileged",
+        "baseline",
+        "restricted"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-psc",
+      "from": "pod",
+      "to": "psc",
+      "label": "포함"
+    },
+    {
+      "id": "pod-container",
+      "from": "pod",
+      "to": "container",
+      "label": "포함"
+    },
+    {
+      "id": "container-csc",
+      "from": "container",
+      "to": "csc",
+      "label": "포함",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-pss",
+      "from": "pod",
+      "to": "pss",
+      "label": "준수",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pss-privileged",
+      "from": "pss",
+      "to": "privileged"
+    },
+    {
+      "id": "pss-baseline",
+      "from": "pss",
+      "to": "baseline"
+    },
+    {
+      "id": "pss-restricted",
+      "from": "pss",
+      "to": "restricted"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "포드 보안 컨텍스트",
+      "items": [
+        "runAsUser — 컨테이너 프로세스가 실행될 사용자 ID",
+        "runAsGroup — 컨테이너 프로세스가 실행될 그룹 ID",
+        "fsGroup — 볼륨에 접근할 때 사용할 그룹 ID",
+        "supplementalGroups — 프로세스에 추가로 부여되는 그룹"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "컨테이너 보안 컨텍스트",
+      "items": [
+        "privileged — 특권 모드",
+        "allowPrivilegeEscalation — 부모 프로세스보다 많은 권한을 얻을 수 있는지 여부",
+        "readOnlyRootFilesystem — 루트 파일 시스템을 읽기 전용으로 마운트",
+        "capabilities — Linux 커널 기능 추가/제거",
+        "seLinuxOptions — SELinux 옵션"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "포드 보안 표준",
+      "items": [
+        "Privileged — 제한 없음, 모든 권한 허용",
+        "Baseline — 알려진 권한 상승 경로 차단",
+        "Restricted — 강력하게 강화된 보안 정책",
+        "네임스페이스 레이블 pod-security.kubernetes.io/enforce·audit·warn으로 적용"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubernetes Cluster Upgrade Process",
+    "locale": "en",
+    "output": "public/archmaps/en-core-09-cluster-administration-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      780
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Planning step"
+        },
+        "backend": {
+          "label": "Upgrade step"
+        },
+        "database": {
+          "label": "etcd backup · restore"
+        },
+        "security": {
+          "label": "Validation · rollback"
+        },
+        "external": {
+          "label": "Complete"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Plan and back up",
+        "focus": [
+          "start",
+          "plan",
+          "backup"
+        ],
+        "note": "Check version compatibility and the supported upgrade path, then back up etcd before touching any node."
+      },
+      {
+        "id": "control-plane",
+        "label": "Control plane upgrade",
+        "focus": [
+          "backup",
+          "cp1",
+          "cptest",
+          "cp2"
+        ],
+        "note": "Upgrade the first control plane node, test control plane functions, then upgrade the remaining control plane nodes."
+      },
+      {
+        "id": "workers-validate",
+        "label": "Workers and validation",
+        "focus": [
+          "cp2",
+          "worker",
+          "validate",
+          "done"
+        ],
+        "note": "Process each worker node as drain → upgrade → uncordon, then validate cluster state."
+      },
+      {
+        "id": "rollback",
+        "label": "Rollback path",
+        "focus": [
+          "validate",
+          "rollback",
+          "restore",
+          "backup"
+        ],
+        "note": "If validation finds a problem, roll back and restore from the etcd backup taken earlier."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "Plan · Backup"
+    },
+    {
+      "id": "cp",
+      "label": "Control Plane"
+    },
+    {
+      "id": "workers",
+      "label": "Worker Nodes · Validation"
+    },
+    {
+      "id": "finish",
+      "label": "Complete"
+    },
+    {
+      "id": "recovery",
+      "label": "Rollback",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "plan",
+    "backup",
+    "cp1",
+    "cptest",
+    "cp2",
+    "worker",
+    "validate",
+    "done"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done",
+      "restore"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "done"
+      },
+      {
+        "from": "validate",
+        "to": "restore"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "prepare",
+      "col": 0,
+      "type": "frontend",
+      "label": "Upgrade Planning",
+      "sublabel": "kubeadm upgrade plan",
+      "width": 158
+    },
+    {
+      "id": "plan",
+      "lane": "prepare",
+      "col": 1,
+      "type": "frontend",
+      "label": "Version Check",
+      "sublabel": "compatibility · upgrade path",
+      "width": 158
+    },
+    {
+      "id": "backup",
+      "lane": "prepare",
+      "col": 2,
+      "type": "database",
+      "label": "etcd Backup",
+      "width": 132
+    },
+    {
+      "id": "cp1",
+      "lane": "cp",
+      "col": 2,
+      "type": "backend",
+      "label": "First CP Node",
+      "sublabel": "kubeadm upgrade apply",
+      "width": 176
+    },
+    {
+      "id": "cptest",
+      "lane": "cp",
+      "col": 3,
+      "type": "backend",
+      "label": "Test Control Plane",
+      "width": 176
+    },
+    {
+      "id": "cp2",
+      "lane": "cp",
+      "col": 4,
+      "type": "backend",
+      "label": "Other CP Nodes",
+      "sublabel": "kubeadm upgrade node",
+      "width": 176
+    },
+    {
+      "id": "worker",
+      "lane": "workers",
+      "col": 4,
+      "type": "backend",
+      "label": "Upgrade Workers",
+      "sublabel": "drain → upgrade → uncordon",
+      "width": 176
+    },
+    {
+      "id": "validate",
+      "lane": "workers",
+      "col": 5,
+      "type": "security",
+      "label": "Validate Cluster",
+      "sublabel": "kubectl get nodes / pods",
+      "width": 160
+    },
+    {
+      "id": "done",
+      "lane": "finish",
+      "col": 5,
+      "type": "external",
+      "label": "Upgrade Complete",
+      "width": 158
+    },
+    {
+      "id": "rollback",
+      "lane": "recovery",
+      "col": 5,
+      "type": "security",
+      "label": "Rollback",
+      "width": 132
+    },
+    {
+      "id": "restore",
+      "lane": "recovery",
+      "col": 4,
+      "type": "database",
+      "label": "Restore from Backup",
+      "sublabel": "from etcd backup",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "plan",
+      "role": "main"
+    },
+    {
+      "from": "plan",
+      "to": "backup",
+      "role": "main"
+    },
+    {
+      "from": "backup",
+      "to": "cp1",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "cp1",
+      "to": "cptest",
+      "role": "main"
+    },
+    {
+      "from": "cptest",
+      "to": "cp2",
+      "role": "main"
+    },
+    {
+      "from": "cp2",
+      "to": "worker",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "worker",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "from": "validate",
+      "to": "done",
+      "role": "main",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "validate",
+      "to": "rollback",
+      "role": "error",
+      "variant": "security",
+      "label": "problem"
+    },
+    {
+      "from": "rollback",
+      "to": "restore",
+      "role": "return",
+      "variant": "security"
+    }
+  ]
+}

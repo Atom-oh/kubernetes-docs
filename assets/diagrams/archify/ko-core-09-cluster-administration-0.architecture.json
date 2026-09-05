@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컨트롤 플레인 구성요소 관리",
+    "output": "ko-core-09-cluster-administration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      500
+    ],
+    "views": [
+      {
+        "id": "components",
+        "label": "컨트롤 플레인 구성요소",
+        "focus": [
+          "cp",
+          "apiserver",
+          "etcd",
+          "scheduler",
+          "controller-manager",
+          "cloud-controller-manager"
+        ],
+        "note": "컨트롤 플레인을 이루는 다섯 가지 핵심 구성요소"
+      },
+      {
+        "id": "operations",
+        "label": "구성요소별 운영 작업",
+        "focus": [
+          "apiserver",
+          "auth",
+          "etcd",
+          "backup",
+          "scheduler",
+          "sched-policy",
+          "controller-manager",
+          "ctrl-monitoring",
+          "cloud-controller-manager",
+          "cloud-resources"
+        ],
+        "note": "각 구성요소가 담당하는 클러스터 운영 작업"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "클러스터 상태 관리",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "분산 키-값 저장소",
+      "pos": [
+        270,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        500,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "controller-manager",
+      "type": "backend",
+      "label": "컨트롤러 관리자",
+      "sublabel": "kube-controller-manager",
+      "pos": [
+        730,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cloud-controller-manager",
+      "type": "cloud",
+      "label": "클라우드 컨트롤러 관리자",
+      "sublabel": "cloud-controller-manager",
+      "pos": [
+        960,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "인증 및 권한 부여",
+      "sublabel": "운영 작업",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "backup",
+      "type": "database",
+      "label": "데이터 백업",
+      "sublabel": "운영 작업",
+      "pos": [
+        270,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "sched-policy",
+      "type": "backend",
+      "label": "스케줄링 정책",
+      "sublabel": "운영 작업",
+      "pos": [
+        500,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ctrl-monitoring",
+      "type": "backend",
+      "label": "컨트롤러 상태 모니터링",
+      "sublabel": "운영 작업",
+      "pos": [
+        730,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cloud-resources",
+      "type": "cloud",
+      "label": "클라우드 리소스 관리",
+      "sublabel": "운영 작업",
+      "pos": [
+        960,
+        370
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인 구성요소",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "scheduler",
+        "controller-manager",
+        "cloud-controller-manager"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-apiserver",
+      "from": "cp",
+      "to": "apiserver",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-etcd",
+      "from": "cp",
+      "to": "etcd",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-scheduler",
+      "from": "cp",
+      "to": "scheduler",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-controller-manager",
+      "from": "cp",
+      "to": "controller-manager",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-cloud-controller-manager",
+      "from": "cp",
+      "to": "cloud-controller-manager",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apiserver-auth",
+      "from": "apiserver",
+      "to": "auth",
+      "variant": "dashed"
+    },
+    {
+      "id": "etcd-backup",
+      "from": "etcd",
+      "to": "backup",
+      "variant": "dashed"
+    },
+    {
+      "id": "scheduler-policy",
+      "from": "scheduler",
+      "to": "sched-policy",
+      "variant": "dashed"
+    },
+    {
+      "id": "controller-monitoring",
+      "from": "controller-manager",
+      "to": "ctrl-monitoring",
+      "variant": "dashed"
+    },
+    {
+      "id": "cloud-resources-mgmt",
+      "from": "cloud-controller-manager",
+      "to": "cloud-resources",
+      "variant": "dashed"
+    }
+  ]
+}

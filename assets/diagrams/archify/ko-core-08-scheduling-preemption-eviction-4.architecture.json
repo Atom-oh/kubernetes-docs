@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "테인트와 톨러레이션",
+    "output": "ko-core-08-scheduling-preemption-eviction-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": { "label": "테인트 / 톨러레이션" },
+        "backend": { "label": "포드" },
+        "external": { "label": "테인트 효과" },
+        "cloud": { "label": "노드" }
+      }
+    },
+    "views": [
+      { "id": "mechanism", "label": "거부와 허용 메커니즘", "focus": ["taint", "pod", "toleration"], "note": "노드의 테인트는 일치하는 톨러레이션이 없는 포드를 거부하고, 톨러레이션이 있는 포드만 허용한다." },
+      { "id": "effects", "label": "세 가지 테인트 효과", "focus": ["taint", "noschedule", "prefernoschedule", "noexecute"], "note": "NoSchedule은 스케줄링을 막고, PreferNoSchedule은 가능하면 피하며, NoExecute는 실행 중인 포드까지 축출한다." },
+      { "id": "gpu-example", "label": "GPU 노드 예시", "focus": ["gpunode", "regularpod", "gpupod"], "note": "key=gpu:NoSchedule 테인트가 붙은 GPU 노드는 일반 포드를 거부하고 톨러레이션을 가진 GPU 포드만 받는다." }
+    ]
+  },
+  "components": [
+    { "id": "taint", "type": "security", "label": "테인트 (Taint)", "sublabel": "노드에 적용", "pos": [100, 60], "size": [180, 64] },
+    { "id": "pod", "type": "backend", "label": "포드", "sublabel": "스케줄링 대상", "pos": [100, 220], "size": [180, 64] },
+    { "id": "toleration", "type": "security", "label": "톨러레이션 (Toleration)", "sublabel": "포드에 적용", "pos": [100, 380], "size": [180, 64] },
+    { "id": "noschedule", "type": "external", "label": "NoSchedule", "sublabel": "스케줄링 방지", "pos": [420, 60], "size": [200, 64] },
+    { "id": "prefernoschedule", "type": "external", "label": "PreferNoSchedule", "sublabel": "가능하면 스케줄링 방지", "pos": [420, 220], "size": [200, 64] },
+    { "id": "noexecute", "type": "external", "label": "NoExecute", "sublabel": "실행 중인 포드 축출", "pos": [420, 380], "size": [200, 64] },
+    { "id": "regularpod", "type": "backend", "label": "일반 포드", "sublabel": "톨러레이션 없음", "pos": [760, 60], "size": [200, 64] },
+    { "id": "gpunode", "type": "cloud", "label": "GPU 노드", "sublabel": "key=gpu:NoSchedule", "pos": [760, 220], "size": [200, 64] },
+    { "id": "gpupod", "type": "backend", "label": "GPU 포드", "sublabel": "key=gpu, effect=NoSchedule 톨러레이션", "pos": [760, 380], "size": [200, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "테인트와 톨러레이션 메커니즘", "wraps": ["taint", "pod", "toleration"] },
+    { "kind": "region", "label": "테인트 효과", "wraps": ["noschedule", "prefernoschedule", "noexecute"] },
+    { "kind": "region", "label": "예시: GPU 전용 노드", "wraps": ["regularpod", "gpunode", "gpupod"] }
+  ],
+  "connections": [
+    { "id": "taint-rejects-pod", "from": "taint", "to": "pod", "label": "톨러레이션 없으면 거부", "variant": "emphasis", "labelDy": 24 },
+    { "id": "pod-allowed-with-toleration", "from": "pod", "to": "toleration", "label": "있으면 허용", "labelDy": 24 },
+    { "id": "toleration-matches-taint", "from": "toleration", "to": "taint", "label": "일치", "variant": "dashed", "fromSide": "left", "toSide": "left" },
+    { "id": "taint-effect-noschedule", "from": "taint", "to": "noschedule", "label": "효과 유형" },
+    { "id": "taint-effect-prefernoschedule", "from": "taint", "to": "prefernoschedule" },
+    { "id": "taint-effect-noexecute", "from": "taint", "to": "noexecute" },
+    { "id": "gpunode-rejects-regularpod", "from": "gpunode", "to": "regularpod", "label": "거부", "variant": "dashed" },
+    { "id": "gpunode-allows-gpupod", "from": "gpunode", "to": "gpupod", "label": "허용", "variant": "emphasis", "labelDy": 24 }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "테인트 효과", "items": ["NoSchedule: 톨러레이션이 없는 포드는 노드에 스케줄링되지 않음", "PreferNoSchedule: 가능하면 톨러레이션이 없는 포드를 스케줄링하지 않음", "NoExecute: 톨러레이션이 없는 포드는 노드에서 축출됨"] },
+    { "dot": "cyan", "title": "사용 사례", "items": ["전용 노드: 특정 워크로드만 실행할 노드 지정", "특수 하드웨어: GPU 등 특수 하드웨어 노드 관리", "노드 유지 관리: 유지 관리 중인 노드에 새 포드 스케줄링 방지", "노드 문제: 문제가 있는 노드에서 포드 축출"] }
+  ]
+}

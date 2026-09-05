@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Affinity and Anti-Affinity",
+    "locale": "en",
+    "output": "en-core-08-scheduling-preemption-eviction-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Affinity rule"
+        },
+        "security": {
+          "label": "Affinity type"
+        },
+        "frontend": {
+          "label": "Web pod"
+        },
+        "database": {
+          "label": "Cache pod"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "affinity",
+        "label": "Pod affinity",
+        "focus": [
+          "pa",
+          "web-pod",
+          "cache-pod"
+        ],
+        "note": "podAffinity co-locates the web pod on the same node (topology) as the app=cache pod."
+      },
+      {
+        "id": "anti-affinity",
+        "label": "Pod anti-affinity",
+        "focus": [
+          "paa",
+          "web-pod-1",
+          "web-pod-2"
+        ],
+        "note": "podAntiAffinity separates pods with the same app=web label onto different nodes."
+      },
+      {
+        "id": "types",
+        "label": "Affinity type",
+        "focus": [
+          "pa",
+          "paa",
+          "required",
+          "preferred"
+        ],
+        "note": "Both rules can be declared as required (hard) or preferred (soft)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pa",
+      "type": "backend",
+      "label": "podAffinity",
+      "sublabel": "Pod affinity",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "paa",
+      "type": "backend",
+      "label": "podAntiAffinity",
+      "sublabel": "Pod anti-affinity",
+      "pos": [
+        700,
+        130
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "required",
+      "type": "security",
+      "label": "requiredDuringSchedulingIgnoredDuringExecution",
+      "sublabel": "Hard requirement",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "preferred",
+      "type": "security",
+      "label": "preferredDuringSchedulingIgnoredDuringExecution",
+      "sublabel": "Soft requirement",
+      "pos": [
+        340,
+        190
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "web-pod",
+      "type": "frontend",
+      "label": "Web pod",
+      "sublabel": "app=web",
+      "pos": [
+        65,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cache-pod",
+      "type": "database",
+      "label": "Cache pod",
+      "sublabel": "app=cache",
+      "pos": [
+        265,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "web-pod-1",
+      "type": "frontend",
+      "label": "Web pod 1",
+      "sublabel": "app=web",
+      "pos": [
+        735,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "web-pod-2",
+      "type": "frontend",
+      "label": "Web pod 2",
+      "sublabel": "app=web",
+      "pos": [
+        970,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Affinity type",
+      "wraps": [
+        "required",
+        "preferred"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 1",
+      "wraps": [
+        "web-pod",
+        "cache-pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2",
+      "wraps": [
+        "web-pod-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 3",
+      "wraps": [
+        "web-pod-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pa-required",
+      "from": "pa",
+      "to": "required",
+      "variant": "dashed"
+    },
+    {
+      "id": "pa-preferred",
+      "from": "pa",
+      "to": "preferred",
+      "variant": "dashed"
+    },
+    {
+      "id": "paa-required",
+      "from": "paa",
+      "to": "required",
+      "variant": "dashed"
+    },
+    {
+      "id": "paa-preferred",
+      "from": "paa",
+      "to": "preferred",
+      "variant": "dashed"
+    },
+    {
+      "id": "pa-together",
+      "from": "pa",
+      "to": "web-pod",
+      "label": "co-locate on same node/topology",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "web-cache",
+      "from": "web-pod",
+      "to": "cache-pod",
+      "label": "co-locate"
+    },
+    {
+      "id": "paa-apart",
+      "from": "paa",
+      "to": "web-pod-1",
+      "label": "separate onto different node/topology",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "web1-web2",
+      "from": "web-pod-1",
+      "to": "web-pod-2",
+      "label": "separate"
+    }
+  ]
+}

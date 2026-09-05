@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 클러스터 아키텍처",
+    "output": "ko-core-09-cluster-administration-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "aws-managed",
+        "label": "AWS 관리 영역",
+        "focus": [
+          "eks",
+          "cp"
+        ],
+        "note": "컨트롤 플레인(API 서버, etcd, 스케줄러)은 AWS가 관리합니다."
+      },
+      {
+        "id": "data-plane",
+        "label": "데이터 플레인",
+        "focus": [
+          "dp",
+          "mng",
+          "selfnodes",
+          "fargate",
+          "asg"
+        ],
+        "note": "관리형 노드 그룹, 자체 관리형 노드, Fargate 중에서 워크로드 실행 방식을 선택합니다."
+      },
+      {
+        "id": "net-sec",
+        "label": "네트워킹과 보안",
+        "focus": [
+          "net",
+          "vpccni",
+          "vpc",
+          "sec",
+          "iam"
+        ],
+        "note": "VPC CNI가 파드를 AWS VPC에 연결하고, IAM 역할과 정책으로 클러스터 접근을 인증합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "Amazon EKS 클러스터",
+      "sublabel": "AWS 관리형 Kubernetes",
+      "tag": "EKS",
+      "pos": [
+        510,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "컨트롤 플레인",
+      "sublabel": "API 서버 · etcd · 스케줄러",
+      "tag": "AWS 관리 구성요소",
+      "pos": [
+        30,
+        190
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "dp",
+      "type": "backend",
+      "label": "데이터 플레인",
+      "sublabel": "워커 노드 실행",
+      "pos": [
+        485,
+        190
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "net",
+      "type": "backend",
+      "label": "네트워킹",
+      "sublabel": "파드 네트워크",
+      "pos": [
+        870,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sec",
+      "type": "security",
+      "label": "보안",
+      "sublabel": "인증 · 권한",
+      "pos": [
+        1060,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "mng",
+      "type": "backend",
+      "label": "관리형 노드 그룹",
+      "sublabel": "EKS가 노드 수명주기 관리",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "selfnodes",
+      "type": "backend",
+      "label": "자체 관리형 노드",
+      "sublabel": "사용자가 직접 운영하는 EC2",
+      "pos": [
+        490,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "fargate",
+      "type": "cloud",
+      "label": "Fargate",
+      "sublabel": "서버리스 파드 실행",
+      "pos": [
+        680,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpccni",
+      "type": "backend",
+      "label": "VPC CNI",
+      "sublabel": "파드에 VPC IP 할당",
+      "pos": [
+        870,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM 인증",
+      "sublabel": "IAM 역할 및 정책",
+      "pos": [
+        1060,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "asg",
+      "type": "cloud",
+      "label": "EC2 Auto Scaling 그룹",
+      "sublabel": "노드 수 확장·축소",
+      "pos": [
+        300,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "sublabel": "서브넷 · 보안 그룹",
+      "pos": [
+        870,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 관리 영역",
+      "wraps": [
+        "cp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용자 책임 영역",
+      "wraps": [
+        "dp",
+        "net",
+        "sec",
+        "mng",
+        "selfnodes",
+        "fargate",
+        "vpccni",
+        "iam",
+        "asg",
+        "vpc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-cp",
+      "from": "eks",
+      "to": "cp",
+      "fromSide": "left",
+      "toSide": "top",
+      "label": "AWS가 운영",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eks-dp",
+      "from": "eks",
+      "to": "dp",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eks-net",
+      "from": "eks",
+      "to": "net"
+    },
+    {
+      "id": "eks-sec",
+      "from": "eks",
+      "to": "sec"
+    },
+    {
+      "id": "dp-mng",
+      "from": "dp",
+      "to": "mng"
+    },
+    {
+      "id": "dp-self",
+      "from": "dp",
+      "to": "selfnodes"
+    },
+    {
+      "id": "dp-fargate",
+      "from": "dp",
+      "to": "fargate"
+    },
+    {
+      "id": "mng-asg",
+      "from": "mng",
+      "to": "asg",
+      "label": "노드 프로비저닝",
+      "labelDy": 24
+    },
+    {
+      "id": "net-cni",
+      "from": "net",
+      "to": "vpccni"
+    },
+    {
+      "id": "cni-vpc",
+      "from": "vpccni",
+      "to": "vpc",
+      "label": "ENI · IP",
+      "labelDy": 24
+    },
+    {
+      "id": "sec-iam",
+      "from": "sec",
+      "to": "iam"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS가 담당",
+      "items": [
+        "컨트롤 플레인 운영: API 서버, etcd, 스케줄러",
+        "컨트롤 플레인 업그레이드는 aws eks update-cluster-version으로 요청"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "사용자 책임",
+      "items": [
+        "노드: 관리형 노드 그룹 · 자체 관리형 노드 · Fargate",
+        "네트워킹: VPC CNI 기반 AWS VPC 연동",
+        "보안: IAM 인증과 aws-auth ConfigMap을 통한 RBAC 매핑"
+      ]
+    }
+  ]
+}

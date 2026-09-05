@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "서비스 아키텍처",
+    "output": "ko-core-03-services-networking-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "ext-client", "type": "external", "label": "외부 클라이언트", "sublabel": "클러스터 외부", "pos": [40, 40], "size": [160, 60] },
+    { "id": "ext-service", "type": "external", "label": "외부 서비스", "sublabel": "클러스터 외부", "pos": [820, 40], "size": [160, 60] },
+    { "id": "lb", "type": "cloud", "label": "LoadBalancer", "sublabel": "외부 IP 제공", "pos": [300, 160], "size": [170, 60] },
+    { "id": "extname", "type": "backend", "label": "ExternalName", "sublabel": "외부 서비스 내부 별칭", "pos": [560, 160], "size": [170, 60] },
+    { "id": "np", "type": "backend", "label": "NodePort", "sublabel": "노드 포트 30000-32767", "pos": [300, 280], "size": [170, 60] },
+    { "id": "int-client", "type": "frontend", "label": "클러스터 내부 클라이언트", "sublabel": "다른 파드", "pos": [40, 400], "size": [160, 60] },
+    { "id": "cip", "type": "backend", "label": "ClusterIP", "sublabel": "클러스터 내부 고정 IP", "pos": [300, 400], "size": [170, 60] },
+    { "id": "coredns", "type": "backend", "label": "CoreDNS", "sublabel": "svc.cluster.local", "pos": [300, 540], "size": [170, 60] },
+    { "id": "endpoints", "type": "database", "label": "Endpoints", "sublabel": "파드 IP:포트 목록", "pos": [560, 540], "size": [170, 60] },
+    { "id": "pods", "type": "backend", "label": "백엔드 포드", "sublabel": "Pod 1 · Pod 2 · Pod 3", "pos": [820, 540], "size": [190, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes 클러스터", "wraps": ["int-client", "lb", "np", "cip", "extname", "coredns", "endpoints", "pods"] },
+    { "kind": "security-group", "label": "서비스 유형", "wraps": ["lb", "np", "cip", "extname"] },
+    { "kind": "security-group", "label": "서비스 디스커버리", "wraps": ["coredns", "endpoints"] }
+  ],
+  "connections": [
+    { "id": "ext-to-lb", "from": "ext-client", "to": "lb", "label": "외부 IP", "variant": "emphasis", "fromSide": "right", "toSide": "top", "via": [[385, 70]] },
+    { "id": "ext-to-np", "from": "ext-client", "to": "np", "label": "노드 IP:NodePort", "variant": "dashed", "fromSide": "bottom", "toSide": "left", "via": [[120, 310]], "labelSegment": 1 },
+    { "id": "lb-to-np", "from": "lb", "to": "np", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "np-to-cip", "from": "np", "to": "cip", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "int-to-cip", "from": "int-client", "to": "cip", "label": "ClusterIP 접근", "fromSide": "right", "toSide": "left" },
+    { "id": "int-to-dns", "from": "int-client", "to": "coredns", "label": "DNS 조회", "fromSide": "bottom", "toSide": "left", "via": [[120, 570]], "labelSegment": 1 },
+    { "id": "cip-to-dns", "from": "cip", "to": "coredns", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "cip-to-ep", "from": "cip", "to": "endpoints", "label": "selector 매칭", "variant": "emphasis", "fromSide": "right", "toSide": "top", "via": [[645, 430]] },
+    { "id": "ep-to-pods", "from": "endpoints", "to": "pods", "label": "트래픽 전달", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "id": "extname-to-ext", "from": "extname", "to": "ext-service", "label": "DNS CNAME", "variant": "dashed", "fromSide": "top", "toSide": "left", "via": [[645, 70]], "labelSegment": 1 }
+  ]
+}

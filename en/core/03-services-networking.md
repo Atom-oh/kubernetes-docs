@@ -86,7 +86,9 @@ Kubernetes provides various types of services to support multiple ways of exposi
 
 ### Service Architecture
 
-![External and internal clients reach backend Pods through LoadBalancer, NodePort, or ClusterIP services, with ClusterIP resolved via CoreDNS and routed through Endpoints, while ExternalName instead aliases to an outside service via DNS CNAME.](../../assets/diagrams/rendered/en-core-03-services-networking-0.svg)
+![External clients reach ClusterIP through LoadBalancer or NodePort, cluster-internal clients resolve names via CoreDNS and access ClusterIP, which is routed through Endpoints to the backend Pods, while ExternalName aliases an outside service via DNS CNAME.](../.gitbook/assets/en-core-03-services-networking-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-0.html)
 
 ### Service Type Comparison
 
@@ -257,7 +259,9 @@ spec:
 
 Ingress is an API object that exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Ingress provides load balancing, SSL termination, and name-based virtual hosting.
 
-![An external client's request passes through a load balancer and Ingress controller to a single Ingress resource, which fans out by host or path to Service A and Service B, each load-balancing across its own backend Pods.](../../assets/diagrams/rendered/en-core-03-services-networking-1.svg)
+![An external client's request passes through a load balancer and Ingress controller to a single Ingress resource, whose host/path rules fan out to Service A and Service B, each load-balancing across its own backend Pods (A-1, A-2 / B-1, B-2).](../.gitbook/assets/en-core-03-services-networking-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-1.html)
 
 ### Ingress Controller
 
@@ -577,7 +581,9 @@ spec:
 
 Network policies provide a way to control communication between Pods. To use network policies, the network plugin must support them (e.g., Calico, Cilium, Weave Net).
 
-![Network policies allow the Frontend Pod to reach the API Pod and the API Pod to reach the Database Pod, and allow a Monitoring Pod in another namespace to reach the API Pod, while directly blocking the Frontend Pod and the Monitoring Pod from reaching the Database Pod.](../../assets/diagrams/rendered/en-core-03-services-networking-2.svg)
+![Network policies allow the Frontend Pod to reach the API Pod and the API Pod to reach the Database Pod, and allow a Monitoring Pod in another namespace to reach the API Pod, while directly blocking the Frontend Pod and the Monitoring Pod from reaching the Database Pod.](../.gitbook/assets/en-core-03-services-networking-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-2.html)
 
 ### Basic Network Policy
 
@@ -697,7 +703,9 @@ This network policy allows ingress traffic from the `192.168.1.0/24` CIDR block 
 
 A service mesh is an infrastructure layer that manages communication between microservices. Service meshes provide features such as service discovery, load balancing, encryption, authentication, authorization, and observability.
 
-![A control plane configures three sidecar proxies over a dashed control channel; each sidecar exchanges traffic with its own service and with the other two sidecars, so all service-to-service traffic passes through the proxy mesh rather than direct connections.](../../assets/diagrams/rendered/en-core-03-services-networking-3.svg)
+![The Istio control plane pushes configuration over dashed control channels to the sidecar proxies injected into three Pods; each service talks only to its own sidecar, and the sidecars exchange service-to-service traffic with one another instead of the services connecting directly.](../.gitbook/assets/en-core-03-services-networking-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-3.html)
 
 ### Istio
 
@@ -790,7 +798,9 @@ This ServiceProfile defines routes and retry policies for the `nginx` service.
 
 ## Cilium
 
-![Kubernetes delegates networking through the Container Network Interface to Cilium, which programs eBPF code running in the Linux kernel and also feeds Hubble for network observability.](../../assets/diagrams/rendered/en-core-03-services-networking-4.svg)
+![Kubernetes delegates networking through the Container Network Interface to Cilium, which loads eBPF programs into the Linux kernel to implement the data path and also feeds Hubble for network flow observability.](../.gitbook/assets/en-core-03-services-networking-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-03-services-networking-4.html)
 
 [Cilium Details](../networking/cilium/README.md)
 

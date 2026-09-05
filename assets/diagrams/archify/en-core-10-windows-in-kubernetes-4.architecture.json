@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Windows Support Architecture in Amazon EKS",
+    "output": "en-core-10-windows-in-kubernetes-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-groups",
+        "label": "Mixed node groups",
+        "focus": [
+          "cp",
+          "lng",
+          "lsys",
+          "wng",
+          "wapp"
+        ],
+        "note": "A single EKS control plane manages both a Linux node group and a Windows node group."
+      },
+      {
+        "id": "aws-integration",
+        "label": "AWS service integration",
+        "focus": [
+          "cp",
+          "iam",
+          "vpc",
+          "cw"
+        ],
+        "note": "The control plane integrates with IAM authentication, VPC networking, and CloudWatch logging."
+      },
+      {
+        "id": "app-traffic",
+        "label": "Windows app traffic path",
+        "focus": [
+          "wng",
+          "wapp",
+          "elb",
+          "user"
+        ],
+        "note": "Windows application pods are exposed to users through an Elastic Load Balancer."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "EKS Control Plane",
+      "sublabel": "AWS managed",
+      "pos": [
+        180,
+        70
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "lng",
+      "type": "backend",
+      "label": "Linux Node Group",
+      "sublabel": "Linux node 1 · 2",
+      "pos": [
+        110,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lsys",
+      "type": "backend",
+      "label": "System Pods",
+      "sublabel": "CoreDNS · VPC CNI · kube-proxy",
+      "pos": [
+        100,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "wng",
+      "type": "backend",
+      "label": "Windows Node Group",
+      "sublabel": "Windows node 1 · 2",
+      "pos": [
+        370,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wapp",
+      "type": "frontend",
+      "label": "Windows Application Pods",
+      "sublabel": "nodeSelector: kubernetes.io/os=windows",
+      "pos": [
+        340,
+        390
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "auth · permissions",
+      "pos": [
+        760,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "Amazon VPC",
+      "sublabel": "networking",
+      "pos": [
+        760,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "logs · metrics",
+      "pos": [
+        760,
+        310
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "elb",
+      "type": "cloud",
+      "label": "Elastic Load Balancer",
+      "sublabel": "service exposure",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "end users",
+      "pos": [
+        1010,
+        430
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Cloud",
+      "wraps": [
+        "cp",
+        "lng",
+        "lsys",
+        "wng",
+        "wapp",
+        "iam",
+        "vpc",
+        "cw",
+        "elb"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Amazon EKS",
+      "wraps": [
+        "cp",
+        "lng",
+        "lsys",
+        "wng",
+        "wapp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cp-lng",
+      "from": "cp",
+      "to": "lng",
+      "label": "manage",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-wng",
+      "from": "cp",
+      "to": "wng",
+      "label": "manage",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "lng-lsys",
+      "from": "lng",
+      "to": "lsys",
+      "label": "run",
+      "labelDy": 24
+    },
+    {
+      "id": "wng-wapp",
+      "from": "wng",
+      "to": "wapp",
+      "label": "run",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "cp-iam",
+      "from": "cp",
+      "to": "iam",
+      "variant": "security"
+    },
+    {
+      "id": "cp-vpc",
+      "from": "cp",
+      "to": "vpc"
+    },
+    {
+      "id": "cp-cw",
+      "from": "cp",
+      "to": "cw",
+      "variant": "dashed"
+    },
+    {
+      "id": "wapp-elb",
+      "from": "wapp",
+      "to": "elb",
+      "label": "HTTP :80",
+      "variant": "emphasis"
+    },
+    {
+      "id": "elb-user",
+      "from": "elb",
+      "to": "user",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Enabling Windows support",
+      "items": [
+        "Update the VPC CNI plugin (vpc-resource-controller)",
+        "Install the Windows VPC admission webhook"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Windows Node Group",
+      "items": [
+        "eksctl create nodegroup --managed --node-ami-family WindowsServer2019FullContainer",
+        "In the console, pick \"Windows\" as the AMI type"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Deploying Windows applications",
+      "items": [
+        "Schedule onto Windows nodes with nodeSelector kubernetes.io/os: windows",
+        "IIS container (servercore/iis) example, containerPort 80"
+      ]
+    }
+  ]
+}

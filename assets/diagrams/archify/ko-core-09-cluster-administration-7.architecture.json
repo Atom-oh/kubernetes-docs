@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "모니터링 및 로깅 아키텍처",
+    "output": "ko-core-09-cluster-administration-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "hidden"
+    },
+    "viewBox": [
+      1170,
+      620
+    ],
+    "views": [
+      {
+        "id": "metrics-path",
+        "label": "메트릭 경로",
+        "focus": [
+          "api",
+          "node",
+          "ksm",
+          "ne",
+          "prom",
+          "alert",
+          "grafana"
+        ],
+        "note": "API 서버와 노드의 메트릭이 kube-state-metrics·Node Exporter를 거쳐 Prometheus로 수집되고 Alertmanager와 Grafana로 전달된다."
+      },
+      {
+        "id": "logs-path",
+        "label": "로그 경로",
+        "focus": [
+          "pod",
+          "fluentd",
+          "es",
+          "kibana",
+          "loki",
+          "grafana"
+        ],
+        "note": "포드 로그는 Fluentd/Fluent Bit이 수집해 Elasticsearch(Kibana)와 Loki로 전달하며, Loki 로그는 Grafana에서 조회한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "객체 상태",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "backend",
+      "label": "노드",
+      "sublabel": "CPU · 메모리 · 디스크",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "포드",
+      "sublabel": "컨테이너 로그",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ksm",
+      "type": "backend",
+      "label": "kube-state-metrics",
+      "sublabel": "Kubernetes 객체 메트릭",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ne",
+      "type": "backend",
+      "label": "Node Exporter",
+      "sublabel": "노드 메트릭",
+      "pos": [
+        300,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭 수집 및 저장",
+      "pos": [
+        580,
+        110
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "alert",
+      "type": "backend",
+      "label": "Alertmanager",
+      "sublabel": "알림 관리 · 알림 채널 전송",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "메트릭 · 로그 시각화",
+      "pos": [
+        880,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "fluentd",
+      "type": "backend",
+      "label": "Fluentd / Fluent Bit",
+      "sublabel": "로그 수집 및 전달",
+      "pos": [
+        300,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "es",
+      "type": "database",
+      "label": "Elasticsearch",
+      "sublabel": "로그 저장 및 검색",
+      "pos": [
+        580,
+        520
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kibana",
+      "type": "frontend",
+      "label": "Kibana",
+      "sublabel": "로그 시각화",
+      "pos": [
+        880,
+        520
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "로그 집계",
+      "pos": [
+        580,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "api",
+        "node",
+        "pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모니터링 스택",
+      "wraps": [
+        "ksm",
+        "ne",
+        "prom",
+        "alert",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로깅 스택",
+      "wraps": [
+        "fluentd",
+        "es",
+        "kibana",
+        "loki"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-ksm",
+      "from": "api",
+      "to": "ksm"
+    },
+    {
+      "id": "node-ne",
+      "from": "node",
+      "to": "ne"
+    },
+    {
+      "id": "pod-fluentd",
+      "from": "pod",
+      "to": "fluentd",
+      "label": "로그",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ksm-prom",
+      "from": "ksm",
+      "to": "prom",
+      "label": "scrape"
+    },
+    {
+      "id": "ne-prom",
+      "from": "ne",
+      "to": "prom",
+      "label": "scrape"
+    },
+    {
+      "id": "prom-alert",
+      "from": "prom",
+      "to": "alert",
+      "label": "알림 규칙"
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prom",
+      "to": "grafana",
+      "label": "메트릭 조회",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentd-es",
+      "from": "fluentd",
+      "to": "es"
+    },
+    {
+      "id": "es-kibana",
+      "from": "es",
+      "to": "kibana"
+    },
+    {
+      "id": "fluentd-loki",
+      "from": "fluentd",
+      "to": "loki"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "label": "로그 조회",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "모니터링 도구",
+      "items": [
+        "Prometheus: 메트릭 수집 및 저장",
+        "Grafana: 메트릭 시각화",
+        "Alertmanager: 알림 관리",
+        "kube-state-metrics: Kubernetes 객체 메트릭 생성"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "로깅 도구",
+      "items": [
+        "Fluentd/Fluent Bit: 로그 수집 및 전달",
+        "Elasticsearch: 로그 저장 및 검색",
+        "Kibana: 로그 시각화",
+        "Loki: 로그 집계 시스템, Grafana로 시각화"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 스토리지 아키텍처",
+    "output": "ko-core-04-storage-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      600
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "애플리케이션"
+        },
+        "backend": {
+          "label": "스토리지 API 객체"
+        },
+        "database": {
+          "label": "PersistentVolume"
+        },
+        "messagebus": {
+          "label": "CSI 드라이버"
+        },
+        "cloud": {
+          "label": "물리 스토리지"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "claim",
+        "label": "클레임 경로",
+        "focus": [
+          "pod",
+          "pvc",
+          "pv"
+        ],
+        "note": "Pod는 PersistentVolumeClaim을 참조하고, PVC가 PersistentVolume에 바인딩된다."
+      },
+      {
+        "id": "provision",
+        "label": "프로비저닝",
+        "focus": [
+          "sc",
+          "pv",
+          "csi"
+        ],
+        "note": "StorageClass가 PV를 프로비저닝하고, PV는 CSI 드라이버를 통해 실제 스토리지에 연결된다."
+      },
+      {
+        "id": "backends",
+        "label": "물리 스토리지",
+        "focus": [
+          "csi",
+          "cloud",
+          "local",
+          "nfs"
+        ],
+        "note": "CSI 드라이버가 클라우드 스토리지, 로컬 스토리지, NFS 서버를 연결한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "frontend",
+      "label": "Pod",
+      "sublabel": "애플리케이션 ×3",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "backend",
+      "label": "PersistentVolumeClaim",
+      "sublabel": "PVC ×3",
+      "pos": [
+        290,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "StorageClass",
+      "sublabel": "프로비저너 정의",
+      "pos": [
+        570,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pv",
+      "type": "database",
+      "label": "PersistentVolume",
+      "sublabel": "PV ×3",
+      "pos": [
+        570,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "messagebus",
+      "label": "CSI 드라이버",
+      "sublabel": "Container Storage Interface",
+      "pos": [
+        850,
+        250
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "클라우드 스토리지",
+      "sublabel": "EBS, EFS, Azure Disk 등",
+      "pos": [
+        1110,
+        90
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "local",
+      "type": "cloud",
+      "label": "로컬 스토리지",
+      "sublabel": "노드 디스크",
+      "pos": [
+        1110,
+        250
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "nfs",
+      "type": "cloud",
+      "label": "NFS 서버",
+      "sublabel": "네트워크 파일 시스템",
+      "pos": [
+        1110,
+        410
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "애플리케이션 계층",
+      "wraps": [
+        "pod",
+        "pvc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지 추상화 계층",
+      "wraps": [
+        "sc",
+        "pv"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "물리적 스토리지 계층",
+      "wraps": [
+        "csi",
+        "cloud",
+        "local",
+        "nfs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-pvc",
+      "from": "pod",
+      "to": "pvc",
+      "label": "claimName 참조",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-pv",
+      "from": "pvc",
+      "to": "pv",
+      "label": "바인딩",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sc-pv",
+      "from": "sc",
+      "to": "pv",
+      "label": "프로비저닝",
+      "labelDy": 24
+    },
+    {
+      "id": "pv-csi",
+      "from": "pv",
+      "to": "csi",
+      "label": "볼륨 연결",
+      "variant": "emphasis"
+    },
+    {
+      "id": "csi-cloud",
+      "from": "csi",
+      "to": "cloud"
+    },
+    {
+      "id": "csi-local",
+      "from": "csi",
+      "to": "local"
+    },
+    {
+      "id": "csi-nfs",
+      "from": "csi",
+      "to": "nfs"
+    }
+  ]
+}
