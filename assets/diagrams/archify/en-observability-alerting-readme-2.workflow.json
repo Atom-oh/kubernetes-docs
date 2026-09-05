@@ -1,0 +1,173 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Time-based Alert Escalation",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "chain",
+        "label": "Escalation chain",
+        "focus": [
+          "alert",
+          "primary",
+          "secondary",
+          "lead",
+          "team"
+        ],
+        "note": "Each responder has 15 minutes before the alert escalates to the next one, ending with the entire team."
+      },
+      {
+        "id": "acted",
+        "label": "Any responder acts",
+        "focus": [
+          "primary",
+          "secondary",
+          "lead",
+          "action"
+        ],
+        "note": "A response at any level stops the escalation and action proceeds."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "Alert"
+        },
+        "security": {
+          "label": "Responder check"
+        },
+        "external": {
+          "label": "Full-team page"
+        },
+        "backend": {
+          "label": "Resolution"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "source",
+      "label": "Alert"
+    },
+    {
+      "id": "oncall",
+      "label": "On-call responders"
+    },
+    {
+      "id": "team",
+      "label": "Whole team",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "primary",
+    "secondary",
+    "lead",
+    "team"
+  ],
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "source",
+      "col": 0,
+      "type": "messagebus",
+      "label": "Alert Fired",
+      "sublabel": "notification sent",
+      "width": 140
+    },
+    {
+      "id": "primary",
+      "lane": "oncall",
+      "col": 1,
+      "type": "security",
+      "label": "Primary",
+      "sublabel": "responds in 15 min?",
+      "width": 140
+    },
+    {
+      "id": "secondary",
+      "lane": "oncall",
+      "col": 2,
+      "type": "security",
+      "label": "Secondary",
+      "sublabel": "responds in 15 min?",
+      "width": 140
+    },
+    {
+      "id": "lead",
+      "lane": "oncall",
+      "col": 3,
+      "type": "security",
+      "label": "Team lead",
+      "sublabel": "responds in 15 min?",
+      "width": 140
+    },
+    {
+      "id": "team",
+      "lane": "team",
+      "col": 4,
+      "type": "external",
+      "label": "Entire Team",
+      "sublabel": "full-team page",
+      "width": 140
+    },
+    {
+      "id": "action",
+      "lane": "source",
+      "col": 4,
+      "type": "backend",
+      "label": "Action",
+      "sublabel": "responder proceeds",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "primary",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "primary",
+      "to": "secondary",
+      "label": "no"
+    },
+    {
+      "from": "secondary",
+      "to": "lead",
+      "label": "no"
+    },
+    {
+      "from": "lead",
+      "to": "team",
+      "label": "no",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "primary",
+      "to": "action",
+      "label": "yes",
+      "role": "branch",
+      "variant": "emphasis"
+    },
+    {
+      "from": "secondary",
+      "to": "action",
+      "role": "branch",
+      "variant": "emphasis"
+    },
+    {
+      "from": "lead",
+      "to": "action",
+      "role": "branch",
+      "variant": "emphasis"
+    }
+  ]
+}

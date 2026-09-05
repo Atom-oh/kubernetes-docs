@@ -35,7 +35,9 @@ Prometheus Alertmanager는 Prometheus 서버에서 전송된 알림을 처리하
 
 ### Prometheus 알림 흐름
 
-![Prometheus가 알림 규칙을 평가해 Pending 상태로 전환하고 for 기간이 지나면 Firing으로 전송하며, Alertmanager가 중복 제거·그룹화·라우팅·억제·Silence 확인의 내부 파이프라인을 거쳐 수신자에게 알림을 보내고 전송 결과를 돌려받는 과정을 보여주는 시퀀스 다이어그램입니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-0.svg)
+![Prometheus가 알림 규칙을 평가해 Pending을 거쳐 Firing 상태가 된 알림을 Alertmanager로 보내고, Alertmanager가 중복 제거·그룹화·라우팅·Inhibition·Silence 확인 파이프라인을 거쳐 수신자에게 알림을 전송한 뒤 전송 결과를 돌려받는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-0.html)
 
 ---
 
@@ -43,7 +45,9 @@ Prometheus Alertmanager는 Prometheus 서버에서 전송된 알림을 처리하
 
 ### Alertmanager 내부 구조
 
-![Prometheus에서 들어온 알림이 Alertmanager 내부의 API, 라우팅·억제·무음 필터, 그룹화, 알림 전송 단계를 거쳐 수신자에게 전달되고, 전송 기록과 무음 규칙은 저장소에 남으며 클러스터 노드 간 Gossip으로 동기화되는 구조를 보여줍니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-1.svg)
+![Prometheus 알림이 Alertmanager API로 들어와 Dispatcher, Inhibitor, Silencer, Aggregation Group, Notification Pipeline을 거쳐 수신자에게 전송되고, Silences와 nflog 저장소가 Gossip Protocol로 클러스터 노드 간 동기화되는 내부 구조를 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-1.html)
 
 ### 컴포넌트 설명
 
@@ -230,7 +234,9 @@ rules:
 
 ### 알림 상태
 
-![알림이 Inactive 상태에서 expr 조건이 충족되면 Pending으로, for 기간이 지나면 Firing으로 전환되고, 조건이 사라지면 다시 Inactive로 돌아가는 상태 다이어그램입니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-2.svg)
+![알림 규칙이 Inactive에서 expr 조건이 충족되면 Pending으로, for 기간이 지나면 Firing으로 전환되어 Alertmanager로 전송되고, 조건이 사라지면 Pending과 Firing 어느 쪽에서든 다시 Inactive로 돌아가는 상태 전이를 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-2.html)
 
 ---
 
@@ -275,7 +281,9 @@ route:
 
 ### 라우팅 흐름
 
-![알림이 수신되면 severity가 critical인지, service가 foo/bar인지, owner가 team-a인지를 차례로 판별해 critical-receiver, default-receiver, team-a, service-team 중 하나로 라우팅되는 결정 흐름을 보여줍니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-3.svg)
+![알림이 수신되면 severity=critical, service=foo|bar, owner=team-a 매처를 차례로 판별해 critical-receiver, default-receiver, team-a, service-team 중 하나의 수신자로 라우팅되는 Alertmanager 라우팅 트리의 결정 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-3.html)
 
 ### 매처 (Matchers)
 
@@ -501,7 +509,9 @@ receivers:
 
 Inhibition은 특정 알림이 발생했을 때 관련된 다른 알림을 억제하는 기능입니다.
 
-![억제 규칙이 없으면 NodeDown, PodNotReady, ServiceUnavailable 알림이 모두 수신자에게 전송되지만, 억제를 적용하면 NodeDown만 전송되고 관련된 PodNotReady, ServiceUnavailable 알림은 억제되어 차단되는 것을 좌우 비교로 보여줍니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-4.svg)
+![억제 규칙이 없으면 NodeDown, PodNotReady, ServiceUnavailable 알림이 모두 수신자에게 전송되지만, 억제를 적용하면 NodeDown만 전송되고 관련 알림 2건은 차단되는 것을 좌우 비교로 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-4.html)
 
 ### Inhibition 규칙 구성
 
@@ -611,7 +621,9 @@ curl -X POST http://alertmanager:9093/api/v2/silences \
 
 ### Silence 관리 모범 사례
 
-![Silence가 필요할 때 유지보수, 배포, 조사, 알려진 이슈 등 유형에 따라 명확한 코멘트를 남기고, 정기적으로 검토해 만료 여부에 따라 자동 제거되거나 수동 검토로 이어지는 흐름을 보여줍니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-5.svg)
+![Silence가 필요할 때 유지보수·배포·조사 중·알려진 이슈 유형에 따라 기간(계획된 시간, 배포 완료까지, 최대 4시간, 수정 완료까지)을 정하고 명확한 코멘트를 남긴 뒤, 정기 검토를 거쳐 만료된 Silence는 자동 제거되고 아직 만료되지 않은 Silence는 수동 검토로 이어지는 흐름을 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-5.html)
 
 **권장 사항:**
 
@@ -718,7 +730,9 @@ data:
 
 ### 클러스터링 아키텍처
 
-![Prometheus가 3개의 Alertmanager 복제본에 동시에 알림을 보내고, 복제본들은 Gossip 프로토콜로 서로 상태를 동기화하며, 그중 한 대가 최종적으로 수신자에게 알림을 전달하는 고가용성 구성을 보여줍니다.](../../../assets/diagrams/rendered/ko-observability-alerting-01-alertmanager-6.svg)
+![Prometheus가 같은 알림을 3개의 Alertmanager 복제본에 모두 보내고, 복제본들이 Gossip(9094 포트)으로 전송 기록을 동기화해 중복을 제거한 뒤 한 복제본이 수신자에게 최종 알림을 전달하는 고가용성 구성을 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-6.html)
 
 ### StatefulSet 구성
 

@@ -1,0 +1,149 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SRE On-Call Rotation",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1000,
+      660
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Current shift"
+        },
+        "backend": {
+          "label": "Scheduled shift"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "eng_a",
+      "label": "Engineer A"
+    },
+    {
+      "id": "eng_b",
+      "label": "Engineer B"
+    },
+    {
+      "id": "eng_c",
+      "label": "Engineer C"
+    },
+    {
+      "id": "eng_d",
+      "label": "Engineer D"
+    }
+  ],
+  "phases": [
+    {
+      "id": "w1",
+      "label": "Feb 17",
+      "fromCol": 0,
+      "toCol": 0,
+      "variant": "emphasis"
+    },
+    {
+      "id": "w2",
+      "label": "Feb 24",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "w3",
+      "label": "Mar 03",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "w4",
+      "label": "Mar 10",
+      "fromCol": 3,
+      "toCol": 3
+    }
+  ],
+  "mainPath": [
+    "shift_a",
+    "shift_b",
+    "shift_c",
+    "shift_d"
+  ],
+  "nodes": [
+    {
+      "id": "shift_a",
+      "lane": "eng_a",
+      "col": 0,
+      "type": "frontend",
+      "label": "On call",
+      "sublabel": "7 days",
+      "tag": "current"
+    },
+    {
+      "id": "shift_b",
+      "lane": "eng_b",
+      "col": 1,
+      "type": "backend",
+      "label": "On call",
+      "sublabel": "7 days"
+    },
+    {
+      "id": "shift_c",
+      "lane": "eng_c",
+      "col": 2,
+      "type": "backend",
+      "label": "On call",
+      "sublabel": "7 days"
+    },
+    {
+      "id": "shift_d",
+      "lane": "eng_d",
+      "col": 3,
+      "type": "backend",
+      "label": "On call",
+      "sublabel": "7 days"
+    }
+  ],
+  "edges": [
+    {
+      "from": "shift_a",
+      "to": "shift_b",
+      "label": "handoff"
+    },
+    {
+      "from": "shift_b",
+      "to": "shift_c",
+      "label": "handoff"
+    },
+    {
+      "from": "shift_c",
+      "to": "shift_d",
+      "label": "handoff"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Rotation",
+      "items": [
+        "Four SRE engineers share one on-call rotation",
+        "Each shift lasts seven days before handing off",
+        "Shifts run sequentially across four weeks"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Recommended Hybrid Stack",
+      "items": [
+        "Prometheus + Alertmanager: metric collection and primary alert processing",
+        "CloudWatch: AWS service metric collection",
+        "Grafana OnCall or PagerDuty: on-call management and escalation",
+        "Slack: real-time alerts and collaboration"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Preventing Alert Fatigue",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "vicious",
+        "label": "Vicious cycle",
+        "focus": [
+          "excessive",
+          "ignored",
+          "missed",
+          "incident",
+          "more_alerts"
+        ],
+        "note": "Too many alerts get ignored, important ones are missed, and each incident adds even more alerts."
+      },
+      {
+        "id": "prevention",
+        "label": "Improvement cycle",
+        "focus": [
+          "refine",
+          "thresholds",
+          "grouping",
+          "review"
+        ],
+        "note": "Refining alerts into sane thresholds and grouping, sustained by regular review, breaks the loop."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Fatigue step"
+        },
+        "backend": {
+          "label": "Improvement step"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "fatigue",
+      "label": "Alert fatigue — vicious cycle",
+      "variant": "exception"
+    },
+    {
+      "id": "prevent",
+      "label": "Prevention — improvement cycle"
+    }
+  ],
+  "mainPath": [
+    "refine",
+    "thresholds",
+    "grouping",
+    "review"
+  ],
+  "nodes": [
+    {
+      "id": "excessive",
+      "lane": "fatigue",
+      "col": 0,
+      "width": 160,
+      "type": "security",
+      "label": "Excessive Alerts",
+      "sublabel": "too many, too noisy"
+    },
+    {
+      "id": "ignored",
+      "lane": "fatigue",
+      "col": 1,
+      "width": 150,
+      "type": "security",
+      "label": "Alerts Ignored",
+      "sublabel": "responders tune out"
+    },
+    {
+      "id": "missed",
+      "lane": "fatigue",
+      "col": 2,
+      "width": 150,
+      "type": "security",
+      "label": "Alerts Missed",
+      "sublabel": "important signal lost"
+    },
+    {
+      "id": "incident",
+      "lane": "fatigue",
+      "col": 3,
+      "width": 150,
+      "type": "security",
+      "label": "Incident Occurs",
+      "sublabel": "late detection"
+    },
+    {
+      "id": "more_alerts",
+      "lane": "fatigue",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "More Alerts Added",
+      "sublabel": "reactive rules"
+    },
+    {
+      "id": "refine",
+      "lane": "prevent",
+      "col": 0,
+      "width": 160,
+      "type": "backend",
+      "label": "Alert Refinement",
+      "sublabel": "actionable alerts",
+      "tag": "start here"
+    },
+    {
+      "id": "thresholds",
+      "lane": "prevent",
+      "col": 1,
+      "width": 150,
+      "type": "backend",
+      "label": "Right Thresholds",
+      "sublabel": "not too sensitive"
+    },
+    {
+      "id": "grouping",
+      "lane": "prevent",
+      "col": 2,
+      "width": 150,
+      "type": "backend",
+      "label": "Alert Grouping",
+      "sublabel": "related alerts as one"
+    },
+    {
+      "id": "review",
+      "lane": "prevent",
+      "col": 3,
+      "width": 150,
+      "type": "backend",
+      "label": "Regular Review",
+      "sublabel": "remove unneeded alerts"
+    }
+  ],
+  "edges": [
+    {
+      "from": "excessive",
+      "to": "ignored",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "ignored",
+      "to": "missed",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "missed",
+      "to": "incident",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "incident",
+      "to": "more_alerts",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "more_alerts",
+      "to": "excessive",
+      "label": "cycle repeats",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "from": "refine",
+      "to": "thresholds",
+      "route": "straight"
+    },
+    {
+      "from": "thresholds",
+      "to": "grouping",
+      "route": "straight"
+    },
+    {
+      "from": "grouping",
+      "to": "review",
+      "route": "straight"
+    },
+    {
+      "from": "review",
+      "to": "refine",
+      "label": "cycle repeats",
+      "role": "return",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "How Fatigue Sets In",
+      "items": [
+        "Too many alerts cause important alerts to be missed",
+        "Each missed incident tends to add reactive alerts",
+        "The extra noise feeds the next round of ignored alerts"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Prevention Strategies",
+      "items": [
+        "Threshold adjustment: do not set overly sensitive thresholds",
+        "Alert grouping and inhibition: bundle related alerts, suppress child alerts",
+        "Regular review and gradual introduction: remove unneeded alerts, start new ones at low severity"
+      ]
+    }
+  ]
+}
