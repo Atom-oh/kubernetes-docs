@@ -1,6 +1,6 @@
 # Ambient Mode
 
-Ambient Mode is an innovative data plane architecture introduced in Istio 1.28. It reduces the complexity and resource overhead of the traditional Sidecar approach while still providing core Service Mesh functionality.
+Ambient Mode is a data plane architecture that appeared experimentally in Istio 1.15, reached Beta in 1.22 and GA in 1.24. It reduces the complexity and resource overhead of the traditional Sidecar approach while still providing core Service Mesh functionality.
 
 ## Table of Contents
 
@@ -653,7 +653,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### Comparison Resources
 
-![Timeline showing Istio's progression from sidecar-only mode in 2018 (1.0), through an ambient mode beta in 2022 (1.15), to ambient mode reaching general availability in 2024 (1.28).](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-11.png)
+![Timeline of the Istio data plane from Sidecar mode (1.0, 2018) through Ambient experimental (1.15, 2022), Alpha (1.18, 2023) and Beta (1.22, 2024) to Ambient GA (1.24, 2024).](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-11.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-11.html)
 
@@ -663,7 +663,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 - E-commerce: Hybrid operation with L4 ztunnel + selective Waypoint
 
 **Key Feature Roadmap**:
-- 1.28 (2024 Q1): Ambient Mode GA (General Availability)
+- 1.24 (2024 Q4): Ambient Mode GA (General Availability)
 - 1.29 (2024 Q2): Multi-cluster Ambient support
 - 1.30+ (2024 Q3+): Complete Gateway API integration, performance optimization
 

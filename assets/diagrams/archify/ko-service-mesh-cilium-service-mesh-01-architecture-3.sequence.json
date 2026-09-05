@@ -14,45 +14,165 @@
       {
         "id": "ingress",
         "label": "TC 훅 진입",
-        "focus": ["src", "tc", "ct"],
+        "focus": [
+          "src",
+          "tc",
+          "ct"
+        ],
         "note": "Source Pod의 패킷이 TC eBPF 훅에 걸리고, CT 맵에서 기존 연결인지 먼저 조회한다."
       },
       {
         "id": "new-conn",
         "label": "새 연결",
-        "focus": ["ct", "policy"],
+        "focus": [
+          "ct",
+          "policy"
+        ],
         "note": "CT 맵에 없는 첫 패킷만 정책 맵(Policy Engine) 평가를 거쳐 허용 여부를 결정한다."
       },
       {
         "id": "cached",
         "label": "기존 연결과 전달",
-        "focus": ["ct", "tc", "dst"],
+        "focus": [
+          "ct",
+          "tc",
+          "dst"
+        ],
         "note": "이미 추적 중인 연결은 캐시된 결정을 바로 반환하고, TC eBPF가 목적지 파드로 패킷을 전달한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
-    { "id": "src", "type": "frontend", "label": "Source Pod", "sublabel": "송신 파드" },
-    { "id": "tc", "type": "backend", "label": "TC eBPF", "sublabel": "커널 TC 훅" },
-    { "id": "ct", "type": "database", "label": "CT + LB Map", "sublabel": "연결 추적 · 서비스 맵" },
-    { "id": "policy", "type": "security", "label": "Policy Engine", "sublabel": "정책 맵" },
-    { "id": "dst", "type": "frontend", "label": "Dest Pod", "sublabel": "수신 파드" }
+    {
+      "id": "src",
+      "type": "frontend",
+      "label": "Source Pod",
+      "sublabel": "송신 파드"
+    },
+    {
+      "id": "tc",
+      "type": "backend",
+      "label": "TC eBPF",
+      "sublabel": "커널 TC 훅"
+    },
+    {
+      "id": "ct",
+      "type": "database",
+      "label": "CT + LB Map",
+      "sublabel": "연결 추적 · 서비스 맵"
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Policy Engine",
+      "sublabel": "정책 맵"
+    },
+    {
+      "id": "dst",
+      "type": "frontend",
+      "label": "Dest Pod",
+      "sublabel": "수신 파드"
+    }
   ],
   "segments": [
-    { "from": 275, "to": 375, "label": "새 연결 — 정책 평가" },
-    { "from": 395, "to": 455, "label": "기존 연결 — 캐시된 결정" }
+    {
+      "from": 275,
+      "to": 375,
+      "label": "새 연결 — 정책 평가"
+    },
+    {
+      "from": 395,
+      "to": 455,
+      "label": "기존 연결 — 캐시된 결정"
+    }
   ],
   "messages": [
-    { "id": "send", "from": "src", "to": "tc", "y": 190, "label": "패킷 전송", "variant": "default" },
-    { "id": "lookup", "from": "tc", "to": "ct", "y": 235, "label": "연결 상태 조회", "variant": "default" },
-    { "id": "evaluate", "from": "ct", "to": "policy", "y": 305, "label": "정책 평가", "variant": "security", "note": "CT 맵에 없는 첫 패킷만 해당" },
-    { "id": "allow", "from": "policy", "to": "ct", "y": 350, "label": "허용", "variant": "return" },
-    { "id": "cached", "from": "ct", "to": "tc", "y": 425, "label": "캐시된 결정 반환", "variant": "return", "note": "정책 재평가 없음" },
-    { "id": "deliver", "from": "tc", "to": "dst", "y": 500, "label": "패킷 전달", "variant": "emphasis" }
+    {
+      "id": "send",
+      "from": "src",
+      "to": "tc",
+      "y": 190,
+      "label": "패킷 전송",
+      "variant": "default"
+    },
+    {
+      "id": "lookup",
+      "from": "tc",
+      "to": "ct",
+      "y": 235,
+      "label": "연결 상태 조회",
+      "variant": "default"
+    },
+    {
+      "id": "evaluate",
+      "from": "ct",
+      "to": "policy",
+      "y": 305,
+      "label": "정책 평가",
+      "variant": "security",
+      "note": "CT 맵에 없는 첫 패킷만 해당"
+    },
+    {
+      "id": "allow",
+      "from": "policy",
+      "to": "ct",
+      "y": 350,
+      "label": "허용",
+      "variant": "return"
+    },
+    {
+      "id": "cached",
+      "from": "ct",
+      "to": "tc",
+      "y": 425,
+      "label": "캐시된 결정 반환",
+      "variant": "return",
+      "note": "정책 재평가 없음"
+    },
+    {
+      "id": "deliver",
+      "from": "tc",
+      "to": "dst",
+      "y": 500,
+      "label": "패킷 전달",
+      "variant": "emphasis"
+    }
   ],
   "activations": [
-    { "participant": "tc", "from": 185, "to": 508, "type": "backend" },
-    { "participant": "ct", "from": 230, "to": 432, "type": "database" },
-    { "participant": "policy", "from": 300, "to": 356, "type": "security" }
+    {
+      "participant": "tc",
+      "from": 185,
+      "to": 508,
+      "type": "backend"
+    },
+    {
+      "participant": "ct",
+      "from": 230,
+      "to": 432,
+      "type": "database"
+    },
+    {
+      "participant": "policy",
+      "from": 300,
+      "to": 356,
+      "type": "security"
+    }
   ]
 }

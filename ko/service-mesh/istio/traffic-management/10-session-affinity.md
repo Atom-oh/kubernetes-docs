@@ -12,7 +12,7 @@ Session Affinity(또는 Sticky Session)는 동일한 사용자의 요청을 같�
 
 ## Session Affinity 개요
 
-![사용자 A의 요청(user_id=123)이 Load Balancer의 Consistent Hash를 거쳐 항상 동일한 Pod 1로 라우팅되고, 같은 파드 풀의 Pod 2와 Pod 3는 이 사용자의 요청을 받지 않는 Session Affinity 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-10-session-affinity-0.png)
+![사용자 A의 요청(user_id=123)이 Load Balancer의 Consistent Hash를 거쳐 항상 동일한 파드 1로 라우팅되고, 같은 파드 풀의 파드 2와 파드 3는 이 사용자의 요청을 받지 않는 Session Affinity 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-10-session-affinity-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-10-session-affinity-0.html)
 

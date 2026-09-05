@@ -9,7 +9,7 @@ Linkerd는 강력한 관찰성 기능을 기본으로 제공합니다. 별도의
 
 ## 관찰성 아키텍처
 
-![Linkerd 관찰성 아키텍처: Data Plane의 Linkerd Proxy가 :4191 포트로 노출한 메트릭이 Viz 확장의 Prometheus에 저장되어 Grafana에 표시되고 Metrics API를 거쳐 Web Dashboard에 집계되며, Tap API가 실시간 스트림을 대시보드에 공급하고, 선택적으로 External Prometheus/Grafana로 메트릭을 넘기거나 Jaeger로 분산 추적 스팬을 보낼 수 있다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-0.png)
+![Linkerd 관찰성 아키텍처: Data Plane의 Linkerd Proxy가 :4191 포트로 노출한 메트릭이 Viz 확장의 Prometheus에 저장되어 Grafana에 표시되고 Metrics API를 거쳐 Web Dashboard에 집계되며, Tap API가 실시간 스트림을 대시보드에 공급하고, 선택적으로 External Prometheus/Grafana로 메트릭을 넘기거나 Jaeger로 분산 추적 스팬을 보낼 수 있음을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-05-observability-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-05-observability-0.html)
 

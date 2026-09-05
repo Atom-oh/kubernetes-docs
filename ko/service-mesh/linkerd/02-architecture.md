@@ -89,7 +89,7 @@ data:
 
 Proxy Injector는 Kubernetes Admission Webhook으로 동작하여 Pod에 사이드카를 자동 주입합니다.
 
-![kubectl의 Pod 생성 요청이 API 서버의 Admission Review를 거쳐 Proxy Injector가 linkerd.io/inject 주입 조건을 확인하고, 활성화 시 linkerd-proxy·linkerd-init 컨테이너와 볼륨/환경변수를 추가해 Mutated Pod Spec을, 비활성화 시 원본 Pod Spec을 그대로 반환한 뒤 API 서버가 Pod를 생성하는 시퀀스 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-3.png)
+![kubectl의 Pod 생성 요청이 API 서버의 Admission Review를 거쳐 Proxy Injector가 linkerd.io/inject 주입 조건을 확인하고, 활성화 시 linkerd-proxy·linkerd-init 컨테이너와 볼륨/환경변수를 추가해 Mutated Pod Spec을, 비활성화 시 원본 Pod Spec을 그대로 반환한 뒤 API 서버가 Pod를 생성하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-02-architecture-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-02-architecture-3.html)
 

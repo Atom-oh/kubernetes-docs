@@ -307,7 +307,7 @@ spec:
 
 ### 벤치마크 결과
 
-![클라이언트 포드에서 서버 포드로 향하는 동일 요청이 Native, Cilium 서비스 메시, Istio 사이드카 데이터 플레인을 거칠 때의 P99 지연 시간(0.1ms, 0.3ms, 2.5ms)을 비교해, eBPF 기반 Cilium이 Native에 근접하고 Istio는 훨씬 높은 지연을 더함을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-0.png)
+![클라이언트 Pod에서 서버 Pod로 향하는 동일 요청이 Native, Cilium 서비스 메시, Istio 사이드카 데이터 플레인을 거칠 때의 P99 지연 시간(0.1ms, 0.3ms, 2.5ms)을 비교해, eBPF 기반 Cilium이 Native에 근접하고 Istio는 훨씬 높은 지연을 더함을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-06-best-practices-0.html)
 

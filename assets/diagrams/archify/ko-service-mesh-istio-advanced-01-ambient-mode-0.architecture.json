@@ -7,29 +7,183 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "sidecar", "label": "Sidecar Mode (기존)", "focus": ["app1", "sidecar1"], "note": "파드마다 Envoy 프록시가 애플리케이션 컨테이너 옆에 주입된다." },
-      { "id": "ambient-l4", "label": "Ambient L4 경로", "focus": ["app2", "ztunnel"], "note": "애플리케이션 컨테이너만 있는 파드의 트래픽을 노드 단위 ztunnel이 투명하게 처리한다." },
-      { "id": "ambient-l7", "label": "Ambient L7 확장", "focus": ["ztunnel", "waypoint"], "note": "L7 기능이 필요할 때만 ztunnel이 Waypoint Proxy를 경유시킨다." }
-    ]
+      {
+        "id": "sidecar",
+        "label": "Sidecar Mode (기존)",
+        "focus": [
+          "app1",
+          "sidecar1"
+        ],
+        "note": "파드마다 Envoy 프록시가 애플리케이션 컨테이너 옆에 주입된다."
+      },
+      {
+        "id": "ambient-l4",
+        "label": "Ambient L4 경로",
+        "focus": [
+          "app2",
+          "ztunnel"
+        ],
+        "note": "애플리케이션 컨테이너만 있는 파드의 트래픽을 노드 단위 ztunnel이 투명하게 처리한다."
+      },
+      {
+        "id": "ambient-l7",
+        "label": "Ambient L7 확장",
+        "focus": [
+          "ztunnel",
+          "waypoint"
+        ],
+        "note": "L7 기능이 필요할 때만 ztunnel이 Waypoint Proxy를 경유시킨다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "app1", "type": "backend", "label": "Application Container", "sublabel": "애플리케이션 코드", "pos": [40, 220], "size": [170, 60] },
-    { "id": "sidecar1", "type": "security", "label": "Envoy Sidecar", "sublabel": "파드마다 하나", "pos": [290, 220], "size": [170, 60] },
-    { "id": "app2", "type": "backend", "label": "Application Container Only", "sublabel": "Sidecar 없음", "pos": [600, 80], "size": [190, 60] },
-    { "id": "ztunnel", "type": "security", "label": "Node-level ztunnel", "sublabel": "L4 Proxy", "pos": [600, 300], "size": [190, 60] },
-    { "id": "waypoint", "type": "security", "label": "Waypoint Proxy", "sublabel": "L7 Features", "pos": [880, 300], "size": [170, 60] }
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "애플리케이션 코드",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "sidecar1",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "파드마다 하나",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Application Container Only",
+      "sublabel": "Sidecar 없음",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "Node-level ztunnel",
+      "sublabel": "L4 Proxy",
+      "pos": [
+        600,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "waypoint",
+      "type": "security",
+      "label": "Waypoint Proxy",
+      "sublabel": "L7 Features",
+      "pos": [
+        880,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Sidecar Mode (기존)", "wraps": ["app1", "sidecar1"] },
-    { "kind": "region", "label": "Ambient Mode (신규)", "wraps": ["app2", "ztunnel", "waypoint"] }
+    {
+      "kind": "region",
+      "label": "Sidecar Mode (기존)",
+      "wraps": [
+        "app1",
+        "sidecar1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Ambient Mode (신규)",
+      "wraps": [
+        "app2",
+        "ztunnel",
+        "waypoint"
+      ]
+    }
   ],
   "connections": [
-    { "id": "app1-sidecar1", "from": "app1", "to": "sidecar1", "label": "양방향" },
-    { "id": "app2-ztunnel", "from": "app2", "to": "ztunnel", "label": "투명하게", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [695, 220] },
-    { "id": "ztunnel-waypoint", "from": "ztunnel", "to": "waypoint", "label": "L7 필요 시", "variant": "dashed" }
+    {
+      "id": "app1-sidecar1",
+      "from": "app1",
+      "to": "sidecar1",
+      "label": "양방향"
+    },
+    {
+      "id": "app2-ztunnel",
+      "from": "app2",
+      "to": "ztunnel",
+      "label": "투명하게",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        700,
+        220
+      ]
+    },
+    {
+      "id": "ztunnel-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "L7 필요 시",
+      "variant": "dashed"
+    }
   ],
   "cards": [
-    { "dot": "slate", "title": "Sidecar Mode (기존)", "items": ["각 파드마다 Envoy 프록시 필요 (50-100MB 메모리)", "Sidecar 초기화로 파드 시작 시간 증가", "Sidecar 주입에 파드 재시작 필요"] },
-    { "dot": "emerald", "title": "Ambient Mode (신규)", "items": ["노드당 하나의 ztunnel이 L4(mTLS, 기본 텔레메트리) 처리", "L7 기능은 필요한 경우만 Waypoint 사용", "파드 재시작 없이 애플리케이션 변경 없이 적용"] }
+    {
+      "dot": "slate",
+      "title": "Sidecar Mode (기존)",
+      "items": [
+        "각 파드마다 Envoy 프록시 필요 (50-100MB 메모리)",
+        "Sidecar 초기화로 파드 시작 시간 증가",
+        "Sidecar 주입에 파드 재시작 필요"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ambient Mode (신규)",
+      "items": [
+        "노드당 하나의 ztunnel이 L4(mTLS, 기본 텔레메트리) 처리",
+        "L7 기능은 필요한 경우만 Waypoint 사용",
+        "파드 재시작 없이 애플리케이션 변경 없이 적용"
+      ]
+    }
   ]
 }

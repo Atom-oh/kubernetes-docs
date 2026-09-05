@@ -291,7 +291,7 @@ spec:
 
 ## 크로스 클러스터 트래픽 흐름
 
-![East 클러스터의 클라이언트 파드가 자신의 프록시를 거쳐 인터넷/VPN을 통해 West 클러스터의 Gateway로 mTLS 연결을 맺고, Gateway가 West의 서버 프록시로 전달해 서버 파드에 도달하며, 응답이 같은 경로를 역순으로 돌아오는 크로스 클러스터 트래픽 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-06-multi-cluster-2.png)
+![East 클러스터의 클라이언트 Pod가 자신의 프록시를 거쳐 인터넷/VPN을 통해 West 클러스터의 Gateway로 mTLS 연결을 맺고, Gateway가 West의 서버 프록시로 전달해 서버 Pod에 도달하며, 응답이 같은 경로를 역순으로 돌아오는 크로스 클러스터 트래픽 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-06-multi-cluster-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-06-multi-cluster-2.html)
 

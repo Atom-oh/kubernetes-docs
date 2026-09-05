@@ -29,7 +29,18 @@
         ],
         "note": "네임스페이스, 서비스 어카운트, Pod 레이블이 결합되어 하나의 Cilium Identity를 만든다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

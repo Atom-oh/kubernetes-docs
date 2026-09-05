@@ -28,7 +28,18 @@
         ],
         "note": "노드당 하나의 ztunnel이 L4 mTLS를 처리하고 L7이 필요할 때만 Waypoint를 거친다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

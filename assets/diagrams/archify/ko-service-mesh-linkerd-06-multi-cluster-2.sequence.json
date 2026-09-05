@@ -5,39 +5,193 @@
     "title": "크로스 클러스터 트래픽 흐름",
     "quality_profile": "showcase",
     "column_fit": "spread",
-    "viewBox": [960, 640],
+    "viewBox": [
+      960,
+      640
+    ],
     "animation": "trace",
     "views": [
-      { "id": "east-side", "label": "East: 요청 출발", "focus": ["client", "client_proxy"], "note": "클라이언트 파드의 요청을 East의 Linkerd 프록시가 가로채고, 대상 web-west.production을 원격 클러스터로 판별한다." },
-      { "id": "cross-cluster", "label": "클러스터 간 mTLS", "focus": ["client_proxy", "gw_west"], "note": "East 프록시가 인터넷/VPN을 거쳐 West Gateway와 mTLS 연결을 맺는다. 클러스터 경계를 넘는 유일한 구간이다." },
-      { "id": "west-side", "label": "West: 로컬 전달과 응답", "focus": ["gw_west", "server_proxy", "server"], "note": "Gateway가 로컬 서비스로 전달하고 서버 파드가 처리한 뒤, 응답은 같은 홉을 역순으로 돌아온다." }
-    ]
+      {
+        "id": "east-side",
+        "label": "East: 요청 출발",
+        "focus": [
+          "client",
+          "client_proxy"
+        ],
+        "note": "클라이언트 파드의 요청을 East의 Linkerd 프록시가 가로채고, 대상 web-west.production을 원격 클러스터로 판별한다."
+      },
+      {
+        "id": "cross-cluster",
+        "label": "클러스터 간 mTLS",
+        "focus": [
+          "client_proxy",
+          "gw_west"
+        ],
+        "note": "East 프록시가 인터넷/VPN을 거쳐 West Gateway와 mTLS 연결을 맺는다. 클러스터 경계를 넘는 유일한 구간이다."
+      },
+      {
+        "id": "west-side",
+        "label": "West: 로컬 전달과 응답",
+        "focus": [
+          "gw_west",
+          "server_proxy",
+          "server"
+        ],
+        "note": "Gateway가 로컬 서비스로 전달하고 서버 파드가 처리한 뒤, 응답은 같은 홉을 역순으로 돌아온다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
-    { "id": "client", "type": "frontend", "label": "Client Pod", "sublabel": "East 클러스터" },
-    { "id": "client_proxy", "type": "security", "label": "Client Proxy", "sublabel": "East · linkerd-proxy" },
-    { "id": "gw_west", "type": "cloud", "label": "Gateway", "sublabel": "West 클러스터" },
-    { "id": "server_proxy", "type": "security", "label": "Server Proxy", "sublabel": "West · linkerd-proxy" },
-    { "id": "server", "type": "backend", "label": "Server Pod", "sublabel": "West 클러스터" }
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "East 클러스터"
+    },
+    {
+      "id": "client_proxy",
+      "type": "security",
+      "label": "Client Proxy",
+      "sublabel": "East · linkerd-proxy"
+    },
+    {
+      "id": "gw_west",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "West 클러스터"
+    },
+    {
+      "id": "server_proxy",
+      "type": "security",
+      "label": "Server Proxy",
+      "sublabel": "West · linkerd-proxy"
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server Pod",
+      "sublabel": "West 클러스터"
+    }
   ],
   "segments": [
-    { "from": 165, "to": 345, "label": "요청 — East에서 West로" },
-    { "from": 365, "to": 545, "label": "응답 — 같은 경로를 역순으로" }
+    {
+      "from": 165,
+      "to": 345,
+      "label": "요청 — East에서 West로"
+    },
+    {
+      "from": 365,
+      "to": 545,
+      "label": "응답 — 같은 경로를 역순으로"
+    }
   ],
   "messages": [
-    { "id": "req-client", "from": "client", "to": "client_proxy", "y": 195, "label": "HTTP 요청", "note": "대상: web-west.production" },
-    { "id": "req-mtls", "from": "client_proxy", "to": "gw_west", "y": 245, "label": "mTLS (인터넷/VPN 경유)", "variant": "security", "note": "클러스터 간 mTLS" },
-    { "id": "req-forward", "from": "gw_west", "to": "server_proxy", "y": 290, "label": "로컬 서비스로 전달", "variant": "emphasis" },
-    { "id": "req-server", "from": "server_proxy", "to": "server", "y": 330, "label": "HTTP 요청" },
-    { "id": "res-server", "from": "server", "to": "server_proxy", "y": 395, "label": "HTTP 응답", "variant": "return" },
-    { "id": "res-gw", "from": "server_proxy", "to": "gw_west", "y": 440, "label": "응답", "variant": "return" },
-    { "id": "res-mtls", "from": "gw_west", "to": "client_proxy", "y": 485, "label": "mTLS 응답", "variant": "return" },
-    { "id": "res-client", "from": "client_proxy", "to": "client", "y": 530, "label": "HTTP 응답", "variant": "return" }
+    {
+      "id": "req-client",
+      "from": "client",
+      "to": "client_proxy",
+      "y": 195,
+      "label": "HTTP 요청",
+      "note": "대상: web-west.production"
+    },
+    {
+      "id": "req-mtls",
+      "from": "client_proxy",
+      "to": "gw_west",
+      "y": 245,
+      "label": "mTLS (인터넷/VPN 경유)",
+      "variant": "security",
+      "note": "클러스터 간 mTLS"
+    },
+    {
+      "id": "req-forward",
+      "from": "gw_west",
+      "to": "server_proxy",
+      "y": 290,
+      "label": "로컬 서비스로 전달",
+      "variant": "emphasis"
+    },
+    {
+      "id": "req-server",
+      "from": "server_proxy",
+      "to": "server",
+      "y": 330,
+      "label": "HTTP 요청"
+    },
+    {
+      "id": "res-server",
+      "from": "server",
+      "to": "server_proxy",
+      "y": 395,
+      "label": "HTTP 응답",
+      "variant": "return"
+    },
+    {
+      "id": "res-gw",
+      "from": "server_proxy",
+      "to": "gw_west",
+      "y": 440,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "res-mtls",
+      "from": "gw_west",
+      "to": "client_proxy",
+      "y": 485,
+      "label": "mTLS 응답",
+      "variant": "return"
+    },
+    {
+      "id": "res-client",
+      "from": "client_proxy",
+      "to": "client",
+      "y": 530,
+      "label": "HTTP 응답",
+      "variant": "return"
+    }
   ],
   "activations": [
-    { "participant": "client_proxy", "from": 190, "to": 536, "type": "security" },
-    { "participant": "gw_west", "from": 240, "to": 491, "type": "cloud" },
-    { "participant": "server_proxy", "from": 285, "to": 446, "type": "security" },
-    { "participant": "server", "from": 325, "to": 400, "type": "backend" }
+    {
+      "participant": "client_proxy",
+      "from": 190,
+      "to": 536,
+      "type": "security"
+    },
+    {
+      "participant": "gw_west",
+      "from": 240,
+      "to": 491,
+      "type": "cloud"
+    },
+    {
+      "participant": "server_proxy",
+      "from": 285,
+      "to": 446,
+      "type": "security"
+    },
+    {
+      "participant": "server",
+      "from": 325,
+      "to": 400,
+      "type": "backend"
+    }
   ]
 }

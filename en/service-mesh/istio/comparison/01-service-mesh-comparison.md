@@ -115,7 +115,7 @@ Kong Mesh is a Universal Service Mesh based on Kuma that integrates multiple clu
 
 **Service Connection and Traffic Flow**
 
-![Sequence diagram of a Kong Mesh cross-zone request: the Global CP syncs policy to both Zone CPs, which configure their Kuma DP proxies over xDS; the application's request reaches its local DP, which discovers the Zone 2 endpoint via service discovery and forwards it over mTLS to the remote DP and target service, with the response returning the same way and metrics reported to the Zone CPs and aggregated at the Global CP.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
+![Kong Mesh cross-zone request: the Global CP syncs policy to both Zone CPs, which configure their Kuma DP proxies over xDS, and the local DP discovers the Zone 2 endpoint and forwards the call over mTLS while metrics roll up to the Global CP.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-6.html)
 

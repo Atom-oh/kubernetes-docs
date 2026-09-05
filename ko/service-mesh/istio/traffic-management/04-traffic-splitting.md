@@ -50,7 +50,7 @@ Canary 배포는 새 버전을 소수의 사용자에게만 먼저 배포하여 
 
 ### Argo Rollouts + Istio 아키텍처
 
-![Argo Rollouts가 VirtualService, DestinationRule과 파드 버전을 관리하고, AnalysisTemplate이 Prometheus 메트릭을 조회해 Canary 배포를 승인하거나 거부하는 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
+![Argo Rollouts가 VirtualService, DestinationRule과 Pod 버전을 관리하고, AnalysisTemplate이 Prometheus 메트릭을 조회해 Canary 배포를 승인하거나 거부하는 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.html)
 
@@ -978,7 +978,7 @@ Blue/Green 배포는 두 개의 동일한 프로덕션 환경을 유지하고, �
 
 ### Argo Rollouts Blue/Green 아키텍처
 
-![Argo Rollouts가 Active/Preview Service를 관리하며 프로덕션 트래픽은 Blue 파드로, 테스트 전용 트래픽은 Green 파드로 보내고 PrePromotion/PostPromotion Analysis로 검증하는 Blue/Green 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
+![Argo Rollouts가 Active/Preview Service를 관리하며 프로덕션 트래픽은 Blue Pod로, 테스트 전용 트래픽은 Green Pod로 보내고 PrePromotion/PostPromotion Analysis로 검증하는 Blue/Green 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.html)
 

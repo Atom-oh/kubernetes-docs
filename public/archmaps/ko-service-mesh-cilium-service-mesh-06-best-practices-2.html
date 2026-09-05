@@ -5032,15 +5032,15 @@
         <!-- Boundaries (behind everything) -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Phase 1" x="30" y="60" width="240" height="250" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Phase 2" x="350" y="60" width="240" height="250" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Phase 2" x="350" y="60" width="250" height="250" rx="12" class="c-region" stroke-width="1"/>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Phase 3" x="670" y="60" width="240" height="250" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="p1-l34" data-edge-to="p2-l34" data-edge-label="Cilium 유지" data-edge-key="0" data-edge-id="l34-keep-1" data-composition-points="240,120;380,120" d="M 240 120 L 380 120" class="a-dashed" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="p2-l34" data-edge-to="p3-l34" data-edge-label="Cilium 유지" data-edge-key="1" data-edge-id="l34-keep-2" data-composition-points="560,120;700,120" d="M 560 120 L 700 120" class="a-dashed" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="p2-l34" data-edge-to="p3-l34" data-edge-label="Cilium 유지" data-edge-key="1" data-edge-id="l34-keep-2" data-composition-points="570,120;700,120" d="M 570 120 L 700 120" class="a-dashed" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="p1-l7" data-edge-to="p2-l7" data-edge-label="L7 이관" data-edge-key="2" data-edge-id="l7-handoff-1" data-composition-points="240,260;380,260" d="M 240 260 L 380 260" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="p2-l7" data-edge-to="p3-l7" data-edge-label="L7 이관" data-edge-key="3" data-edge-id="l7-handoff-2" data-composition-points="560,260;700,260" d="M 560 260 L 700 260" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="p2-l7" data-edge-to="p3-l7" data-edge-label="L7 이관" data-edge-key="3" data-edge-id="l7-handoff-2" data-composition-points="570,260;700,260" d="M 570 260 L 700 260" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
         <g id="node-p1-l34" data-node-id="p1-l34" data-node-label="L3/L4: Cilium" tabindex="0" role="button" aria-label="Focus L3/L4: Cilium, 네트워크 정책, Phase 1" aria-pressed="false" data-node-kind="security" data-node-sublabel="네트워크 정책" data-node-context="Phase 1">
@@ -5068,25 +5068,25 @@
 
         <g id="node-p2-l34" data-node-id="p2-l34" data-node-label="L3/L4: Cilium" tabindex="0" role="button" aria-label="Focus L3/L4: Cilium, 네트워크 정책, Phase 2" aria-pressed="false" data-node-kind="security" data-node-sublabel="네트워크 정책" data-node-context="Phase 2">
           <title>L3/L4: Cilium · 네트워크 정책 · Phase 2</title>
-          <rect x="380" y="90" width="180" height="60" rx="6" class="c-mask"/>
-          <rect x="380" y="90" width="180" height="60" rx="6" class="c-security" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <rect x="380" y="90" width="190" height="60" rx="6" class="c-mask"/>
+          <rect x="380" y="90" width="190" height="60" rx="6" class="c-security" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(386 96) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="470" y="118" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">L3/L4: Cilium</text>
-        <text data-detail="context" x="470" y="134" class="t-muted" font-size="9" text-anchor="middle">네트워크 정책</text>
+          <text data-node-label="" data-detail-anchor="" x="475" y="118" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">L3/L4: Cilium</text>
+        <text data-detail="context" x="475" y="134" class="t-muted" font-size="9" text-anchor="middle">네트워크 정책</text>
         </g>
 
         <g id="node-p2-l7" data-node-id="p2-l7" data-node-label="L7: Cilium + Istio 혼합" tabindex="0" role="button" aria-label="Focus L7: Cilium + Istio 혼합, 네임스페이스별 전환, Phase 2" aria-pressed="false" data-node-kind="backend" data-node-sublabel="네임스페이스별 전환" data-node-context="Phase 2">
           <title>L7: Cilium + Istio 혼합 · 네임스페이스별 전환 · Phase 2</title>
-          <rect x="380" y="230" width="180" height="60" rx="6" class="c-mask"/>
-          <rect x="380" y="230" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <rect x="380" y="230" width="190" height="60" rx="6" class="c-mask"/>
+          <rect x="380" y="230" width="190" height="60" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(386 236) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="470" y="258" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">L7: Cilium + Istio 혼합</text>
-        <text data-detail="context" x="470" y="274" class="t-muted" font-size="9" text-anchor="middle">네임스페이스별 전환</text>
+          <text data-node-label="" data-detail-anchor="" x="475" y="258" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">L7: Cilium + Istio 혼합</text>
+        <text data-detail="context" x="475" y="274" class="t-muted" font-size="9" text-anchor="middle">네임스페이스별 전환</text>
         </g>
 
         <g id="node-p3-l34" data-node-id="p3-l34" data-node-label="L3/L4: Cilium" tabindex="0" role="button" aria-label="Focus L3/L4: Cilium, 네트워크 정책, Phase 3" aria-pressed="false" data-node-kind="security" data-node-sublabel="네트워크 정책" data-node-context="Phase 3">
@@ -5119,16 +5119,16 @@
           <text x="310" y="110" class="t-messagebus" font-size="8" text-anchor="middle">Cilium 유지</text>
         </g>
         <g data-detail="context" data-edge-from="p2-l34" data-edge-to="p3-l34" data-edge-label="Cilium 유지" data-edge-key="1" data-edge-id="l34-keep-2">
-          <rect x="598.6" y="100" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="630" y="110" class="t-messagebus" font-size="8" text-anchor="middle">Cilium 유지</text>
+          <rect x="603.6" y="100" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="635" y="110" class="t-messagebus" font-size="8" text-anchor="middle">Cilium 유지</text>
         </g>
         <g data-detail="context" data-edge-from="p1-l7" data-edge-to="p2-l7" data-edge-label="L7 이관" data-edge-key="2" data-edge-id="l7-handoff-1">
           <rect x="288.2" y="240" width="43.6" height="14" rx="3" class="c-mask"/>
           <text x="310" y="250" class="t-backend" font-size="8" text-anchor="middle">L7 이관</text>
         </g>
         <g data-detail="context" data-edge-from="p2-l7" data-edge-to="p3-l7" data-edge-label="L7 이관" data-edge-key="3" data-edge-id="l7-handoff-2">
-          <rect x="608.2" y="240" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="630" y="250" class="t-backend" font-size="8" text-anchor="middle">L7 이관</text>
+          <rect x="613.2" y="240" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="635" y="250" class="t-backend" font-size="8" text-anchor="middle">L7 이관</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

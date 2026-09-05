@@ -34,7 +34,24 @@
         ],
         "note": "HBONE 터널로 Waypoint를 추가로 거쳐 L7 라우팅을 적용하는 시나리오."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

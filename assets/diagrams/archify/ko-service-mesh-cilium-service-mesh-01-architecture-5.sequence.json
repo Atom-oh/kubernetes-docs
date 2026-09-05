@@ -41,7 +41,21 @@
         ],
         "note": "응답도 L7 정책이 필요할 때만 Envoy를 거친 뒤 Client Pod로 전달된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

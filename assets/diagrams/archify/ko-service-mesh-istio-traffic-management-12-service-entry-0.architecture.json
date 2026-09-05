@@ -7,26 +7,149 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "without", "label": "ServiceEntry 없이", "focus": ["svc-without", "ext-without"], "note": "메시가 외부 API 트래픽을 알지 못해 모니터링·정책·Circuit Breaker가 모두 빠진 블랙홀이 된다." },
-      { "id": "with", "label": "ServiceEntry 사용", "focus": ["svc-with", "ext-with"], "note": "외부 API를 ServiceEntry로 등록하면 같은 트래픽에 모니터링·정책·Circuit Breaker가 적용된다." }
-    ]
+      {
+        "id": "without",
+        "label": "ServiceEntry 없이",
+        "focus": [
+          "svc-without",
+          "ext-without"
+        ],
+        "note": "메시가 외부 API 트래픽을 알지 못해 모니터링·정책·Circuit Breaker가 모두 빠진 블랙홀이 된다."
+      },
+      {
+        "id": "with",
+        "label": "ServiceEntry 사용",
+        "focus": [
+          "svc-with",
+          "ext-with"
+        ],
+        "note": "외부 API를 ServiceEntry로 등록하면 같은 트래픽에 모니터링·정책·Circuit Breaker가 적용된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "svc-without", "type": "backend", "label": "메시 내부 서비스", "sublabel": "사이드카 프록시", "pos": [70, 90], "size": [180, 64] },
-    { "id": "ext-without", "type": "external", "label": "외부 API", "sublabel": "모니터링·정책·Circuit Breaker 없음", "tag": "블랙홀", "pos": [520, 90], "size": [270, 64] },
-    { "id": "svc-with", "type": "backend", "label": "메시 내부 서비스", "sublabel": "사이드카 프록시", "pos": [70, 290], "size": [180, 64] },
-    { "id": "ext-with", "type": "external", "label": "외부 API", "sublabel": "모니터링·정책·Circuit Breaker 적용", "tag": "ServiceEntry", "pos": [520, 290], "size": [270, 64] }
+    {
+      "id": "svc-without",
+      "type": "backend",
+      "label": "메시 내부 서비스",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        70,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ext-without",
+      "type": "external",
+      "label": "외부 API",
+      "sublabel": "모니터링·정책·Circuit Breaker 없음",
+      "tag": "블랙홀",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "svc-with",
+      "type": "backend",
+      "label": "메시 내부 서비스",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        70,
+        290
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ext-with",
+      "type": "external",
+      "label": "외부 API",
+      "sublabel": "모니터링·정책·Circuit Breaker 적용",
+      "tag": "ServiceEntry",
+      "pos": [
+        520,
+        290
+      ],
+      "size": [
+        270,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "ServiceEntry 없이", "wraps": ["svc-without", "ext-without"] },
-    { "kind": "region", "label": "ServiceEntry 사용", "wraps": ["svc-with", "ext-with"] }
+    {
+      "kind": "region",
+      "label": "ServiceEntry 없이",
+      "wraps": [
+        "svc-without",
+        "ext-without"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ServiceEntry 사용",
+      "wraps": [
+        "svc-with",
+        "ext-with"
+      ]
+    }
   ],
   "connections": [
-    { "id": "unknown-traffic", "from": "svc-without", "to": "ext-without", "label": "알 수 없는 트래픽", "variant": "dashed" },
-    { "id": "registered-traffic", "from": "svc-with", "to": "ext-with", "label": "등록된 트래픽", "variant": "emphasis" }
+    {
+      "id": "unknown-traffic",
+      "from": "svc-without",
+      "to": "ext-without",
+      "label": "알 수 없는 트래픽",
+      "variant": "dashed"
+    },
+    {
+      "id": "registered-traffic",
+      "from": "svc-with",
+      "to": "ext-with",
+      "label": "등록된 트래픽",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "slate", "title": "ServiceEntry 없이", "items": ["모니터링 없음 (블랙홀)", "정책 적용 불가", "Circuit Breaker 없음"] },
-    { "dot": "orange", "title": "ServiceEntry 사용", "items": ["모니터링 가능 (전체 메트릭 수집)", "정책 적용 (Timeout, Retry)", "Circuit Breaker"] }
+    {
+      "dot": "slate",
+      "title": "ServiceEntry 없이",
+      "items": [
+        "모니터링 없음 (블랙홀)",
+        "정책 적용 불가",
+        "Circuit Breaker 없음"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "ServiceEntry 사용",
+      "items": [
+        "모니터링 가능 (전체 메트릭 수집)",
+        "정책 적용 (Timeout, Retry)",
+        "Circuit Breaker"
+      ]
+    }
   ]
 }

@@ -165,7 +165,7 @@
       "type": "cloud",
       "label": "Security Group 확인",
       "sublabel": "VPC Association 확인",
-      "width": 140,
+      "width": 150,
       "tag": "YES"
     },
     {

@@ -36,7 +36,24 @@
         ],
         "note": "애플리케이션이 보낸 패킷은 소켓 계층과 네트워크 스택을 거쳐 TC Egress 훅을 지나 NIC로 나간다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

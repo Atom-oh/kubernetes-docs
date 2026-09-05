@@ -37,7 +37,21 @@
         ],
         "note": "같은 쿠키는 항상 같은 해시 값을 만들므로 User A의 두 번째 요청도 Pod 1로 가서 세션이 유지된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

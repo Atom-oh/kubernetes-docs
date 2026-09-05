@@ -5,23 +5,135 @@
     "title": "로드 밸런싱 개요",
     "output": "ko-service-mesh-istio-traffic-management-06-load-balancing-1.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "client", "type": "external", "label": "클라이언트 요청", "sublabel": "서비스 호출", "pos": [40, 300], "size": [150, 60] },
-    { "id": "algorithm", "type": "backend", "label": "로드 밸런싱 알고리즘", "sublabel": "Envoy", "pos": [300, 300], "size": [190, 60] },
-    { "id": "pod1", "type": "backend", "label": "Pod 1", "sublabel": "부하: 30%", "pos": [700, 110], "size": [150, 60] },
-    { "id": "pod2", "type": "backend", "label": "Pod 2", "sublabel": "부하: 50%", "pos": [700, 300], "size": [150, 60] },
-    { "id": "pod3", "type": "backend", "label": "Pod 3", "sublabel": "부하: 20%", "pos": [700, 490], "size": [150, 60] }
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "서비스 호출",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "algorithm",
+      "type": "backend",
+      "label": "로드 밸런싱 알고리즘",
+      "sublabel": "Envoy",
+      "pos": [
+        300,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "부하: 30%",
+      "pos": [
+        700,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "부하: 50%",
+      "pos": [
+        700,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "부하: 20%",
+      "pos": [
+        700,
+        490
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Load Balancer", "wraps": ["algorithm"] },
-    { "kind": "region", "label": "파드", "wraps": ["pod1", "pod2", "pod3"] }
+    {
+      "kind": "region",
+      "label": "Load Balancer",
+      "wraps": [
+        "algorithm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
   ],
   "connections": [
-    { "id": "client-to-algorithm", "from": "client", "to": "algorithm", "label": "요청", "variant": "emphasis" },
-    { "id": "algorithm-to-pod1", "from": "algorithm", "to": "pod1", "label": "ROUND_ROBIN" },
-    { "id": "algorithm-to-pod2", "from": "algorithm", "to": "pod2", "label": "RANDOM", "labelDx": 55 },
-    { "id": "algorithm-to-pod3", "from": "algorithm", "to": "pod3", "label": "LEAST_REQUEST" }
+    {
+      "id": "client-to-algorithm",
+      "from": "client",
+      "to": "algorithm",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "algorithm-to-pod1",
+      "from": "algorithm",
+      "to": "pod1",
+      "label": "ROUND_ROBIN"
+    },
+    {
+      "id": "algorithm-to-pod2",
+      "from": "algorithm",
+      "to": "pod2",
+      "label": "RANDOM",
+      "labelDx": 55
+    },
+    {
+      "id": "algorithm-to-pod3",
+      "from": "algorithm",
+      "to": "pod3",
+      "label": "LEAST_REQUEST"
+    }
   ]
 }

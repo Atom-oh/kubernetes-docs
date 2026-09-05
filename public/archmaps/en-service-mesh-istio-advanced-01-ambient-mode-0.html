@@ -5036,8 +5036,8 @@
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="app1" data-edge-to="sidecar1" data-edge-label="bidirectional" data-edge-key="0" data-edge-id="app1-sidecar1" data-composition-points="210,250;290,250" d="M 210 250 L 290 250" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="app2" data-edge-to="ztunnel" data-edge-label="Transparent" data-edge-key="1" data-edge-id="app2-ztunnel" data-composition-points="695,140;695,300" d="M 695 140 L 695 300" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="ztunnel" data-edge-to="waypoint" data-edge-label="When L7 needed" data-edge-key="2" data-edge-id="ztunnel-waypoint" data-composition-points="790,330;880,330" d="M 790 330 L 880 330" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="app2" data-edge-to="ztunnel" data-edge-label="Transparent" data-edge-key="1" data-edge-id="app2-ztunnel" data-composition-points="700,140;700,300" d="M 700 140 L 700 300" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="ztunnel" data-edge-to="waypoint" data-edge-label="When L7 needed" data-edge-key="2" data-edge-id="ztunnel-waypoint" data-composition-points="800,330;880,330" d="M 800 330 L 880 330" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-app1" data-node-id="app1" data-node-label="Application Container" tabindex="0" role="button" aria-label="Focus Application Container, application code, Sidecar Mode (Traditional)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="application code" data-node-context="Sidecar Mode (Traditional)">
@@ -5065,25 +5065,25 @@
 
         <g id="node-app2" data-node-id="app2" data-node-label="Application Container Only" tabindex="0" role="button" aria-label="Focus Application Container Only, no sidecar, Ambient Mode (New)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="no sidecar" data-node-context="Ambient Mode (New)">
           <title>Application Container Only · no sidecar · Ambient Mode (New)</title>
-          <rect x="600" y="80" width="190" height="60" rx="6" class="c-mask"/>
-          <rect x="600" y="80" width="190" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <rect x="600" y="80" width="200" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="80" width="200" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(606 86) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="695" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Application Container Only</text>
-        <text data-detail="context" x="695" y="124" class="t-muted" font-size="9" text-anchor="middle">no sidecar</text>
+          <text data-node-label="" data-detail-anchor="" x="700" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Application Container Only</text>
+        <text data-detail="context" x="700" y="124" class="t-muted" font-size="9" text-anchor="middle">no sidecar</text>
         </g>
 
         <g id="node-ztunnel" data-node-id="ztunnel" data-node-label="Node-level ztunnel" tabindex="0" role="button" aria-label="Focus Node-level ztunnel, L4 Proxy, Ambient Mode (New)" aria-pressed="false" data-node-kind="security" data-node-sublabel="L4 Proxy" data-node-context="Ambient Mode (New)">
           <title>Node-level ztunnel · L4 Proxy · Ambient Mode (New)</title>
-          <rect x="600" y="300" width="190" height="60" rx="6" class="c-mask"/>
-          <rect x="600" y="300" width="190" height="60" rx="6" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="600" y="300" width="200" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="300" width="200" height="60" rx="6" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(606 306) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="695" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node-level ztunnel</text>
-        <text data-detail="context" x="695" y="344" class="t-muted" font-size="9" text-anchor="middle">L4 Proxy</text>
+          <text data-node-label="" data-detail-anchor="" x="700" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node-level ztunnel</text>
+        <text data-detail="context" x="700" y="344" class="t-muted" font-size="9" text-anchor="middle">L4 Proxy</text>
         </g>
 
         <g id="node-waypoint" data-node-id="waypoint" data-node-label="Waypoint Proxy" tabindex="0" role="button" aria-label="Focus Waypoint Proxy, L7 Features, Ambient Mode (New)" aria-pressed="false" data-node-kind="security" data-node-sublabel="L7 Features" data-node-context="Ambient Mode (New)">
@@ -5104,12 +5104,12 @@
           <text x="250" y="240" class="t-muted" font-size="8" text-anchor="middle">bidirectional</text>
         </g>
         <g data-detail="context" data-edge-from="app2" data-edge-to="ztunnel" data-edge-label="Transparent" data-edge-key="1" data-edge-id="app2-ztunnel">
-          <rect x="663.6" y="210" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="695" y="220" class="t-backend" font-size="8" text-anchor="middle">Transparent</text>
+          <rect x="668.6" y="210" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="700" y="220" class="t-backend" font-size="8" text-anchor="middle">Transparent</text>
         </g>
         <g data-detail="context" data-edge-from="ztunnel" data-edge-to="waypoint" data-edge-label="When L7 needed" data-edge-key="2" data-edge-id="ztunnel-waypoint">
-          <rect x="796.4" y="310" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="835" y="320" class="t-messagebus" font-size="8" text-anchor="middle">When L7 needed</text>
+          <rect x="801.4" y="310" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="840" y="320" class="t-messagebus" font-size="8" text-anchor="middle">When L7 needed</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

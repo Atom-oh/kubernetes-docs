@@ -5032,13 +5032,13 @@
         <!-- Boundaries (behind everything) -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Without Argo Rollouts" x="30" y="60" width="440" height="284" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="With Argo Rollouts + Istio" x="630" y="30" width="260" height="414" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="With Argo Rollouts + Istio" x="630" y="30" width="270" height="414" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="deploy-v1" data-edge-to="manual" data-edge-key="0" data-edge-id="v1-manual" data-composition-points="145,150;145,205;243,205;243,260" d="M 145 150 L 145 197 Q 145 205 153 205 L 235 205 Q 243 205 243 213 L 243 260" class="a-dashed" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="deploy-v2" data-edge-to="manual" data-edge-key="1" data-edge-id="v2-manual" data-composition-points="355,150;355,205;257,205;257,260" d="M 355 150 L 355 197 Q 355 205 347 205 L 265 205 Q 257 205 257 213 L 257 260" class="a-dashed" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="rollout" data-edge-to="auto" data-edge-label="adjust VirtualService weight" data-edge-key="2" data-edge-id="rollout-auto" data-composition-points="760,120;760,210" d="M 760 120 L 760 210" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="auto" data-edge-to="analysis" data-edge-label="Prometheus metrics" data-edge-key="3" data-edge-id="auto-analysis" data-composition-points="760,274;760,360" d="M 760 274 L 760 360" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="rollout" data-edge-to="auto" data-edge-label="adjust VirtualService weight" data-edge-key="2" data-edge-id="rollout-auto" data-composition-points="765,120;765,210" d="M 765 120 L 765 210" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="auto" data-edge-to="analysis" data-edge-label="Prometheus metrics" data-edge-key="3" data-edge-id="auto-analysis" data-composition-points="765,274;765,360" d="M 765 274 L 765 360" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
         <g id="node-deploy-v1" data-node-id="deploy-v1" data-node-label="Deployment v1" tabindex="0" role="button" aria-label="Focus Deployment v1, weight: 100%, Without Argo Rollouts" aria-pressed="false" data-node-kind="backend" data-node-sublabel="weight: 100%" data-node-context="Without Argo Rollouts">
@@ -5077,48 +5077,48 @@
 
         <g id="node-rollout" data-node-id="rollout" data-node-label="Rollout" tabindex="0" role="button" aria-label="Focus Rollout, Automatic version management, With Argo Rollouts + Istio" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Automatic version management" data-node-context="With Argo Rollouts + Istio">
           <title>Rollout · Automatic version management · With Argo Rollouts + Istio</title>
-          <rect x="660" y="60" width="200" height="60" rx="6" class="c-mask"/>
-          <rect x="660" y="60" width="200" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="660" y="60" width="210" height="60" rx="6" class="c-mask"/>
+          <rect x="660" y="60" width="210" height="60" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(666 66) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="760" y="88" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Rollout</text>
-        <text data-detail="context" x="760" y="104" class="t-muted" font-size="9" text-anchor="middle">Automatic version management</text>
+          <text data-node-label="" data-detail-anchor="" x="765" y="88" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Rollout</text>
+        <text data-detail="context" x="765" y="104" class="t-muted" font-size="9" text-anchor="middle">Automatic version management</text>
         </g>
 
         <g id="node-auto" data-node-id="auto" data-node-label="Automatic traffic adjustment" tabindex="0" role="button" aria-label="Focus Automatic traffic adjustment, Metric-based progression, With Argo Rollouts + Istio" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Metric-based progression" data-node-context="With Argo Rollouts + Istio">
           <title>Automatic traffic adjustment · Metric-based progression · With Argo Rollouts + Istio</title>
-          <rect x="660" y="210" width="200" height="64" rx="6" class="c-mask"/>
-          <rect x="660" y="210" width="200" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <rect x="660" y="210" width="210" height="64" rx="6" class="c-mask"/>
+          <rect x="660" y="210" width="210" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(666 216) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="760" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Automatic traffic adjustment</text>
-        <text data-detail="context" x="760" y="256" class="t-muted" font-size="9" text-anchor="middle">Metric-based progression</text>
+          <text data-node-label="" data-detail-anchor="" x="765" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Automatic traffic adjustment</text>
+        <text data-detail="context" x="765" y="256" class="t-muted" font-size="9" text-anchor="middle">Metric-based progression</text>
         </g>
 
         <g id="node-analysis" data-node-id="analysis" data-node-label="Analysis" tabindex="0" role="button" aria-label="Focus Analysis, Success rate / latency verification, With Argo Rollouts + Istio" aria-pressed="false" data-node-kind="security" data-node-sublabel="Success rate / latency verification" data-node-context="With Argo Rollouts + Istio">
           <title>Analysis · Success rate / latency verification · With Argo Rollouts + Istio</title>
-          <rect x="660" y="360" width="200" height="64" rx="6" class="c-mask"/>
-          <rect x="660" y="360" width="200" height="64" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <rect x="660" y="360" width="210" height="64" rx="6" class="c-mask"/>
+          <rect x="660" y="360" width="210" height="64" rx="6" class="c-security" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(666 366) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="760" y="390" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Analysis</text>
-        <text data-detail="context" x="760" y="406" class="t-muted" font-size="9" text-anchor="middle">Success rate / latency verification</text>
+          <text data-node-label="" data-detail-anchor="" x="765" y="390" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Analysis</text>
+        <text data-detail="context" x="765" y="406" class="t-muted" font-size="9" text-anchor="middle">Success rate / latency verification</text>
         </g>
 
         <!-- Connection labels -->
 
 
         <g data-detail="context" data-edge-from="rollout" data-edge-to="auto" data-edge-label="adjust VirtualService weight" data-edge-key="2" data-edge-id="rollout-auto">
-          <rect x="687.8" y="124" width="144.4" height="14" rx="3" class="c-mask"/>
-          <text x="760" y="134" class="t-backend" font-size="8" text-anchor="middle">adjust VirtualService weight</text>
+          <rect x="692.8" y="124" width="144.4" height="14" rx="3" class="c-mask"/>
+          <text x="765" y="134" class="t-backend" font-size="8" text-anchor="middle">adjust VirtualService weight</text>
         </g>
         <g data-detail="context" data-edge-from="auto" data-edge-to="analysis" data-edge-label="Prometheus metrics" data-edge-key="3" data-edge-id="auto-analysis">
-          <rect x="711.8" y="278" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
-          <text x="760" y="288" class="t-backend" font-size="8" text-anchor="middle">Prometheus metrics</text>
+          <rect x="716.8" y="278" width="96.39999999999999" height="14" rx="3" class="c-mask"/>
+          <text x="765" y="288" class="t-backend" font-size="8" text-anchor="middle">Prometheus metrics</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

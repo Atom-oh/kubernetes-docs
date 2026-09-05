@@ -39,7 +39,24 @@
         ],
         "note": "가상 IP로 들어온 HTTP 요청을 실제 호스트에 매핑해 실제 IP로 전달하고 응답을 돌려준다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

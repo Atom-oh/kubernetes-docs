@@ -7,35 +7,238 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
-      { "id": "without-istio", "label": "Without Istio", "focus": ["app-plain"], "note": "Istio가 없으면 파드에는 애플리케이션 컨테이너 하나만 있다." },
-      { "id": "with-sidecar", "label": "With Istio Sidecar", "focus": ["app-mesh", "envoy"], "note": "파드마다 Envoy 사이드카가 주입되어 모든 트래픽을 가로챈다." },
-      { "id": "impact", "label": "Impact", "focus": ["envoy", "resource", "startup", "hop", "troubleshoot"], "note": "사이드카 하나가 리소스, 시작 시간, 지연, 운영 복잡도에 동시에 영향을 준다." }
-    ]
+      {
+        "id": "without-istio",
+        "label": "Without Istio",
+        "focus": [
+          "app-plain"
+        ],
+        "note": "Istio가 없으면 파드에는 애플리케이션 컨테이너 하나만 있다."
+      },
+      {
+        "id": "with-sidecar",
+        "label": "With Istio Sidecar",
+        "focus": [
+          "app-mesh",
+          "envoy"
+        ],
+        "note": "파드마다 Envoy 사이드카가 주입되어 모든 트래픽을 가로챈다."
+      },
+      {
+        "id": "impact",
+        "label": "Impact",
+        "focus": [
+          "envoy",
+          "resource",
+          "startup",
+          "hop",
+          "troubleshoot"
+        ],
+        "note": "사이드카 하나가 리소스, 시작 시간, 지연, 운영 복잡도에 동시에 영향을 준다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "app-plain", "type": "backend", "label": "Application Container", "sublabel": "CPU: 100m · Memory: 256MB", "pos": [40, 260], "size": [230, 64] },
-    { "id": "app-mesh", "type": "backend", "label": "Application Container", "sublabel": "CPU: 100m · Memory: 256MB", "pos": [380, 130], "size": [230, 64] },
-    { "id": "envoy", "type": "security", "label": "Envoy Sidecar", "sublabel": "CPU: 100-500m · Memory: 50-150MB", "pos": [380, 330], "size": [230, 64], "tag": "자동 주입" },
-    { "id": "resource", "type": "external", "label": "리소스 2배 증가", "sublabel": "CPU · Memory", "pos": [780, 60], "size": [210, 60] },
-    { "id": "startup", "type": "external", "label": "파드 시작 시간 증가", "sublabel": "+5-10초", "pos": [780, 190], "size": [210, 60] },
-    { "id": "hop", "type": "external", "label": "네트워크 Hop 추가", "sublabel": "Latency 증가", "pos": [780, 320], "size": [210, 60] },
-    { "id": "troubleshoot", "type": "external", "label": "복잡한 트러블슈팅", "sublabel": "컨테이너 2개 조사", "pos": [780, 450], "size": [210, 60] }
+    {
+      "id": "app-plain",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "CPU: 100m · Memory: 256MB",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "app-mesh",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "CPU: 100m · Memory: 256MB",
+      "pos": [
+        380,
+        130
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "CPU: 100-500m · Memory: 50-150MB",
+      "pos": [
+        380,
+        330
+      ],
+      "size": [
+        230,
+        64
+      ],
+      "tag": "자동 주입"
+    },
+    {
+      "id": "resource",
+      "type": "external",
+      "label": "리소스 2배 증가",
+      "sublabel": "CPU · Memory",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "startup",
+      "type": "external",
+      "label": "파드 시작 시간 증가",
+      "sublabel": "+5-10초",
+      "pos": [
+        780,
+        190
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "hop",
+      "type": "external",
+      "label": "네트워크 Hop 추가",
+      "sublabel": "Latency 증가",
+      "pos": [
+        780,
+        320
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "troubleshoot",
+      "type": "external",
+      "label": "복잡한 트러블슈팅",
+      "sublabel": "컨테이너 2개 조사",
+      "pos": [
+        780,
+        450
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Without Istio", "wraps": ["app-plain"] },
-    { "kind": "region", "label": "With Istio Sidecar", "wraps": ["app-mesh", "envoy"] },
-    { "kind": "region", "label": "Impact", "wraps": ["resource", "startup", "hop", "troubleshoot"] }
+    {
+      "kind": "region",
+      "label": "Without Istio",
+      "wraps": [
+        "app-plain"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With Istio Sidecar",
+      "wraps": [
+        "app-mesh",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Impact",
+      "wraps": [
+        "resource",
+        "startup",
+        "hop",
+        "troubleshoot"
+      ]
+    }
   ],
   "connections": [
-    { "id": "app-to-envoy", "from": "app-mesh", "to": "envoy", "label": "모든 트래픽", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 60 },
-    { "id": "envoy-resource", "from": "envoy", "to": "resource", "variant": "dashed" },
-    { "id": "envoy-startup", "from": "envoy", "to": "startup", "variant": "dashed" },
-    { "id": "envoy-hop", "from": "envoy", "to": "hop", "variant": "dashed" },
-    { "id": "envoy-troubleshoot", "from": "envoy", "to": "troubleshoot", "variant": "dashed" }
+    {
+      "id": "app-to-envoy",
+      "from": "app-mesh",
+      "to": "envoy",
+      "label": "모든 트래픽",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "envoy-resource",
+      "from": "envoy",
+      "to": "resource",
+      "variant": "dashed"
+    },
+    {
+      "id": "envoy-startup",
+      "from": "envoy",
+      "to": "startup",
+      "variant": "dashed"
+    },
+    {
+      "id": "envoy-hop",
+      "from": "envoy",
+      "to": "hop",
+      "variant": "dashed"
+    },
+    {
+      "id": "envoy-troubleshoot",
+      "from": "envoy",
+      "to": "troubleshoot",
+      "variant": "dashed"
+    }
   ],
   "cards": [
-    { "dot": "amber", "title": "리소스 오버헤드", "items": ["파드마다 Envoy 사이드카 컨테이너가 추가된다", "100 파드 기준 CPU 10 → 20 vCPU, 파드 수 100 → 200"] },
-    { "dot": "rose", "title": "지연과 시작 시간", "items": ["모든 트래픽이 사이드카를 거쳐 네트워크 홉이 추가된다", "파드 시작 시간이 +5-10초 늘어난다"] },
-    { "dot": "slate", "title": "운영 복잡도", "items": ["문제 발생 시 애플리케이션과 Envoy를 함께 조사해야 한다"] }
+    {
+      "dot": "amber",
+      "title": "리소스 오버헤드",
+      "items": [
+        "파드마다 Envoy 사이드카 컨테이너가 추가된다",
+        "100 파드 기준 CPU 10 → 20 vCPU, 파드 수 100 → 200"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "지연과 시작 시간",
+      "items": [
+        "모든 트래픽이 사이드카를 거쳐 네트워크 홉이 추가된다",
+        "파드 시작 시간이 +5-10초 늘어난다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "운영 복잡도",
+      "items": [
+        "문제 발생 시 애플리케이션과 Envoy를 함께 조사해야 한다"
+      ]
+    }
   ]
 }

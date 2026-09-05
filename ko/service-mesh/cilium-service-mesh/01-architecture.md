@@ -42,7 +42,7 @@ Cilium은 여러 eBPF 훅 포인트를 활용합니다:
 
 eBPF에서 L3/L4 처리는 다음과 같이 이루어집니다:
 
-![eBPF TC 훅이 새 연결은 정책 엔진 평가를 거치고 기존 연결은 캐시된 결정을 반환한 뒤 목적지 파드로 패킷을 전달하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-3.png)
+![eBPF TC 훅이 새 연결은 정책 엔진 평가를 거치고 기존 연결은 캐시된 결정을 반환한 뒤 목적지 Pod로 패킷을 전달하는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-3.html)
 
@@ -106,7 +106,7 @@ loadBalancer:
 
 ### 사이드카 vs 노드 프록시
 
-![사이드카 모델은 파드마다 별도의 Envoy 프록시를 두지만, 노드 프록시 모델은 노드당 하나의 공유 Envoy가 여러 파드의 트래픽을 함께 처리함을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-4.png)
+![사이드카 모델은 Pod마다 별도의 Envoy 프록시를 두지만, 노드 프록시 모델은 노드당 하나의 공유 Envoy가 여러 Pod의 트래픽을 함께 처리함을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-4.html)
 
@@ -160,7 +160,7 @@ envoy:
 
 ### Cilium CRD 구조
 
-![네트워크 정책, Envoy 설정, 서비스 메시 관련 Cilium CRD를 그룹으로 묶고, 정책과 Envoy 설정 CRD가 모두 파드별 CiliumEndpoint로 귀결되어 CiliumIdentity와 함께 파드의 신원과 정책 상태를 나타냄을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-6.png)
+![네트워크 정책, Envoy 설정, 서비스 메시 관련 Cilium CRD를 그룹으로 묶고, 정책과 Envoy 설정 CRD가 모두 Pod별 CiliumEndpoint로 귀결되어 CiliumIdentity와 함께 Pod의 신원과 정책 상태를 나타냄을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-6.html)
 
@@ -293,7 +293,7 @@ spec:
 
 ### Cilium Agent 역할
 
-![Cilium Agent는 K8s API로부터 받은 정보를 네트워크 관리, 정책 관리, 프록시 관리로 나누어 처리하고, 네트워크 관리의 메트릭과 정책 관리의 Flow 로그를 관찰성 데이터로 축적한다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-7.png)
+![Cilium Agent는 K8s API로부터 받은 정보를 네트워크 관리, 정책 관리, 프록시 관리로 나누어 처리하고, 네트워크 관리의 메트릭과 정책 관리의 Flow 로그를 관찰성 데이터로 축적하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-7.html)
 
@@ -335,7 +335,7 @@ data:
 
 Cilium은 각 워크로드에 고유한 ID를 할당합니다:
 
-![네임스페이스, 서비스 어카운트, 파드 레이블 등 파드의 속성이 결합되어 고유한 Cilium Identity 숫자 ID로 변환되고 이것이 Security Context의 정책 평가 기준이 되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-8.png)
+![네임스페이스, 서비스 어카운트, Pod 레이블 등 Pod의 속성이 결합되어 고유한 Cilium Identity 숫자 ID로 변환되고 이것이 Security Context의 정책 평가 기준이 되는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-8.html)
 
@@ -401,13 +401,13 @@ spiffe://cluster.local/ns/<namespace>/sa/<service-account>
 
 ### Pod-to-Pod 통신 (동일 노드)
 
-![같은 노드에 있는 두 파드 사이의 패킷이 Pod A veth의 eBPF Ingress TC 훅에서 CT·Policy Map으로 연결과 정책을 확인한 뒤, 커널 안에서 네트워크 스택을 거치지 않고 Pod B veth의 eBPF Egress TC 훅으로 직접 전달되는 흐름을 보여주는 시퀀스 다이어그램.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-10.png)
+![같은 노드에 있는 두 Pod 사이의 패킷이 Pod A veth의 eBPF Ingress TC 훅에서 CT·Policy Map으로 연결과 정책을 확인한 뒤, 커널 안에서 네트워크 스택을 거치지 않고 Pod B veth의 eBPF Egress TC 훅으로 직접 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-10.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-10.html)
 
 ### Pod-to-Pod 통신 (다른 노드)
 
-![서로 다른 노드에 있는 두 파드 사이의 패킷이 각 노드의 eBPF에서 정책을 평가하고 VXLAN/Geneve 터널로 캡슐화·디캡슐화되어 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-11.png)
+![서로 다른 노드에 있는 두 Pod 사이의 패킷이 각 노드의 eBPF에서 정책을 평가하고 VXLAN/Geneve 터널로 캡슐화·디캡슐화되어 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-11.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-11.html)
 
@@ -444,7 +444,7 @@ spiffe://cluster.local/ns/<namespace>/sa/<service-account>
 
 100개 Pod 클러스터 기준:
 
-![동일한 100개 파드 클러스터에서 파드마다 사이드카를 두는 Istio는 메모리 약 5GB와 높은 CPU 오버헤드를, 노드당 Envoy 하나만 두는 Cilium은 약 500MB와 낮은 CPU 오버헤드를 쓰는 차이를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-14.png)
+![동일한 100개 Pod 클러스터에서 Pod마다 사이드카를 두는 Istio는 메모리 약 5GB와 높은 CPU 오버헤드를, 노드당 Envoy 하나만 두는 Cilium은 약 500MB와 낮은 CPU 오버헤드를 쓰는 차이를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-01-architecture-14.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-01-architecture-14.html)
 

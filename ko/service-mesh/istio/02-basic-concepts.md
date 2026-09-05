@@ -45,7 +45,7 @@
 - 업데이트 시 모든 서비스 재배포
 - 버전 관리 복잡
 
-![Java, Go, Python 서비스가 각각 Hystrix, 자체 라이브러리, Requests+Retry처럼 서로 다른 장애 처리 라이브러리를 애플리케이션 코드에 결합해 사용해 파편화가 발생한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-1.png)
+![Java, Go, Python 서비스가 각각 Hystrix, 자체 라이브러리, Requests+Retry처럼 서로 다른 장애 처리 라이브러리를 애플리케이션 코드에 결합해 사용해 파편화가 발생하는 모습을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-1.html)
 
@@ -643,7 +643,7 @@ spec:
 
 Istio는 서비스 간 통신을 자동으로 암호화합니다.
 
-![Pod A와 Pod B의 앱이 각자의 Envoy 사이드카와 평문으로 통신하고, 두 Envoy 사이의 트래픽은 istiod Citadel이 발급한 인증서로 mTLS 암호화되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-9.png)
+![파드 A와 파드 B의 앱이 각자의 Envoy 사이드카와 평문으로 통신하고, 두 Envoy 사이의 트래픽은 istiod Citadel이 발급한 인증서로 mTLS 암호화되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-9.html)
 
@@ -786,7 +786,7 @@ Istio는 Kubernetes 파드뿐만 아니라 **Virtual Machine (VM) 워크로드**
 
 ### VM 등록 아키텍처
 
-![VM과 Kubernetes 파드 각각에서 애플리케이션이 자신의 Envoy Sidecar와 로컬로 통신하고, 두 Envoy는 istiod가 배포한 xDS 구성과 인증서를 이용해 서로 mTLS로 통신한다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-12.png)
+![VM과 Kubernetes 파드 각각에서 애플리케이션이 자신의 Envoy Sidecar와 로컬로 통신하고, 두 Envoy는 istiod가 배포한 xDS 구성과 인증서를 이용해 서로 mTLS로 통신하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-12.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-12.html)
 

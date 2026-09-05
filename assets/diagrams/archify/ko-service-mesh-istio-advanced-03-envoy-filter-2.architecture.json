@@ -31,7 +31,24 @@
         ],
         "note": "Istio Gateway가 xff_num_trusted_hops: 2로 마지막 2개 hop을 신뢰해 실제 클라이언트 IP를 추출한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

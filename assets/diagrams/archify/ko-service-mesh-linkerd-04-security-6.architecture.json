@@ -6,32 +6,201 @@
     "output": "ko-service-mesh-linkerd-04-security-6.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [860, 460],
+    "viewBox": [
+      860,
+      460
+    ],
     "views": [
-      { "id": "network-level", "label": "네트워크 레벨 (Linkerd)", "focus": ["mtls", "authz", "identity"], "note": "Linkerd 프록시가 담당하는 방어선이다. mTLS와 워크로드 ID는 자동 적용되고, 서비스 인가는 ServerAuthorization으로 명시적으로 설정한다." },
-      { "id": "application-level", "label": "애플리케이션 레벨", "focus": ["jwt", "rbac", "input"], "note": "애플리케이션이 직접 구현해야 하는 방어선이다." },
-      { "id": "defense-in-depth", "label": "심층 방어", "focus": ["mtls", "authz", "identity", "jwt", "rbac", "input"], "note": "네트워크 레벨 제어와 애플리케이션 레벨 제어가 짝을 이루어 심층 방어를 구성한다." }
-    ]
+      {
+        "id": "network-level",
+        "label": "네트워크 레벨 (Linkerd)",
+        "focus": [
+          "mtls",
+          "authz",
+          "identity"
+        ],
+        "note": "Linkerd 프록시가 담당하는 방어선이다. mTLS와 워크로드 ID는 자동 적용되고, 서비스 인가는 ServerAuthorization으로 명시적으로 설정한다."
+      },
+      {
+        "id": "application-level",
+        "label": "애플리케이션 레벨",
+        "focus": [
+          "jwt",
+          "rbac",
+          "input"
+        ],
+        "note": "애플리케이션이 직접 구현해야 하는 방어선이다."
+      },
+      {
+        "id": "defense-in-depth",
+        "label": "심층 방어",
+        "focus": [
+          "mtls",
+          "authz",
+          "identity",
+          "jwt",
+          "rbac",
+          "input"
+        ],
+        "note": "네트워크 레벨 제어와 애플리케이션 레벨 제어가 짝을 이루어 심층 방어를 구성한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "mtls", "type": "security", "label": "mTLS 암호화", "sublabel": "전송 구간 자동 암호화", "pos": [60, 80], "size": [200, 60] },
-    { "id": "authz", "type": "security", "label": "서비스 인가", "sublabel": "ServerAuthorization", "pos": [330, 80], "size": [200, 60] },
-    { "id": "identity", "type": "security", "label": "워크로드 ID", "sublabel": "SPIFFE ID", "pos": [600, 80], "size": [200, 60] },
-    { "id": "jwt", "type": "backend", "label": "JWT / OAuth", "sublabel": "사용자 인증", "pos": [60, 310], "size": [200, 60] },
-    { "id": "rbac", "type": "backend", "label": "애플리케이션 RBAC", "sublabel": "역할 기반 권한 확인", "pos": [330, 310], "size": [200, 60] },
-    { "id": "input", "type": "backend", "label": "입력 검증", "sublabel": "살균 · 유효성 검사", "pos": [600, 310], "size": [200, 60] }
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS 암호화",
+      "sublabel": "전송 구간 자동 암호화",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "서비스 인가",
+      "sublabel": "ServerAuthorization",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "워크로드 ID",
+      "sublabel": "SPIFFE ID",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "jwt",
+      "type": "backend",
+      "label": "JWT / OAuth",
+      "sublabel": "사용자 인증",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "backend",
+      "label": "애플리케이션 RBAC",
+      "sublabel": "역할 기반 권한 확인",
+      "pos": [
+        330,
+        310
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "input",
+      "type": "backend",
+      "label": "입력 검증",
+      "sublabel": "살균 · 유효성 검사",
+      "pos": [
+        600,
+        310
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "security-group", "label": "네트워크 레벨 (Linkerd)", "wraps": ["mtls", "authz", "identity"] },
-    { "kind": "region", "label": "애플리케이션 레벨", "wraps": ["jwt", "rbac", "input"] }
+    {
+      "kind": "security-group",
+      "label": "네트워크 레벨 (Linkerd)",
+      "wraps": [
+        "mtls",
+        "authz",
+        "identity"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "애플리케이션 레벨",
+      "wraps": [
+        "jwt",
+        "rbac",
+        "input"
+      ]
+    }
   ],
   "connections": [
-    { "id": "mtls-to-jwt", "from": "mtls", "to": "jwt", "variant": "security" },
-    { "id": "authz-to-rbac", "from": "authz", "to": "rbac", "variant": "security" },
-    { "id": "identity-to-input", "from": "identity", "to": "input", "variant": "security" }
+    {
+      "id": "mtls-to-jwt",
+      "from": "mtls",
+      "to": "jwt",
+      "variant": "security"
+    },
+    {
+      "id": "authz-to-rbac",
+      "from": "authz",
+      "to": "rbac",
+      "variant": "security"
+    },
+    {
+      "id": "identity-to-input",
+      "from": "identity",
+      "to": "input",
+      "variant": "security"
+    }
   ],
   "cards": [
-    { "dot": "orange", "title": "Linkerd 역할", "items": ["전송 암호화: mTLS (자동)", "서비스 인증: SPIFFE ID", "서비스 인가: ServerAuthorization"] },
-    { "dot": "slate", "title": "애플리케이션 역할", "items": ["서비스 인증: API 키, JWT", "서비스 인가: RBAC, 권한 확인", "데이터 검증: 입력 검증, 살균"] }
+    {
+      "dot": "orange",
+      "title": "Linkerd 역할",
+      "items": [
+        "전송 암호화: mTLS (자동)",
+        "서비스 인증: SPIFFE ID",
+        "서비스 인가: ServerAuthorization"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "애플리케이션 역할",
+      "items": [
+        "서비스 인증: API 키, JWT",
+        "서비스 인가: RBAC, 권한 확인",
+        "데이터 검증: 입력 검증, 살균"
+      ]
+    }
   ]
 }

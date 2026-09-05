@@ -40,7 +40,21 @@
         ],
         "note": "Target이 Healthy로 전환되고 UnhealthyTargetCount가 0으로 돌아온다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

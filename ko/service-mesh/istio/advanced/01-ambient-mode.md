@@ -1,6 +1,6 @@
 # Ambient Mode
 
-Ambient Mode는 Istio 1.28에서 도입된 혁신적인 데이터 플레인 아키텍처입니다. 기존 Sidecar 방식의 복잡성과 리소스 오버헤드를 줄이면서도 Service Mesh의 핵심 기능을 제공합니다.
+Ambient Mode는 Istio 1.15에서 실험적으로 공개되어 1.22에서 Beta, 1.24에서 GA에 도달한 데이터 플레인 아키텍처입니다. 기존 Sidecar 방식의 복잡성과 리소스 오버헤드를 줄이면서도 Service Mesh의 핵심 기능을 제공합니다.
 
 ## 목차
 
@@ -656,7 +656,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### 비교 자료
 
-![Istio 1.0의 Sidecar Mode에서 시작해 1.15의 Ambient Beta를 거쳐 1.28의 Ambient Stable로 이어지는 데이터 플레인 아키텍처의 진화 과정을 보여주는 타임라인.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-11.png)
+![Istio 데이터 플레인 진화를 Sidecar 모드(1.0, 2018)에서 Ambient 실험적 공개(1.15, 2022), Alpha(1.18, 2023), Beta(1.22, 2024)를 거쳐 GA(1.24, 2024)에 이르는 다섯 단계 타임라인으로 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-01-ambient-mode-11.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-01-ambient-mode-11.html)
 
@@ -666,7 +666,7 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 - 🛒 **이커머스**: L4 ztunnel + 선택적 Waypoint로 하이브리드 운영
 
 **주요 기능 로드맵**:
-- ✅ **1.25 (2025 Q1)**: Ambient Mode GA (General Availability)
+- ✅ **1.24 (2024 Q4)**: Ambient Mode GA (General Availability)
 - 🔄 **1.26 (2025 Q2)**: Multi-cluster Ambient 지원
 - 📅 **1.27+ (2025 Q3+)**: Gateway API 완전 통합, 성능 최적화
 

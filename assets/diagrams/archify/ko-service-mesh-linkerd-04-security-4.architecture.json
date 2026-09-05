@@ -27,7 +27,18 @@
         ],
         "note": "정책은 default-deny(명시적 허용만, 권장) 또는 default-allow(명시적 거부만) 모드로 귀결된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

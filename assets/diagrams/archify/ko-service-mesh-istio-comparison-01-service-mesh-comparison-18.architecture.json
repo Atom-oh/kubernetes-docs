@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "frontend": {
           "label": "시작"
@@ -69,11 +69,11 @@
       "label": "Service Mesh 선택",
       "sublabel": "의사 결정 시작",
       "pos": [
-        492,
+        482,
         30
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -83,11 +83,11 @@
       "label": "팀 경험?",
       "sublabel": "Service Mesh 운영 경험",
       "pos": [
-        492,
+        482,
         150
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -97,11 +97,11 @@
       "label": "리소스 제약?",
       "sublabel": "CPU / 메모리 효율",
       "pos": [
-        180,
+        170,
         290
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -125,11 +125,11 @@
       "label": "기능 요구?",
       "sublabel": "필요한 기능 범위",
       "pos": [
-        650,
+        640,
         430
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -172,7 +172,7 @@
         430
       ],
       "size": [
-        130,
+        140,
         60
       ]
     },

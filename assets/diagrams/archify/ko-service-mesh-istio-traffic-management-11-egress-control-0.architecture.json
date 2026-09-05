@@ -6,24 +6,132 @@
     "output": "ko-service-mesh-istio-traffic-management-11-egress-control-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1160, 320]
+    "viewBox": [
+      1160,
+      320
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "pod", "type": "backend", "label": "파드", "sublabel": "애플리케이션 워크로드", "pos": [30, 120], "size": [150, 64] },
-    { "id": "sidecar", "type": "backend", "label": "Envoy Sidecar", "sublabel": "아웃바운드 트래픽 가로채기", "pos": [310, 120], "size": [170, 64] },
-    { "id": "egress-gw", "type": "security", "label": "Egress Gateway", "sublabel": "istio-egressgateway", "pos": [640, 120], "size": [180, 64] },
-    { "id": "external", "type": "external", "label": "외부 서비스", "sublabel": "api.external.com", "pos": [960, 120], "size": [180, 64] }
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "파드",
+      "sublabel": "애플리케이션 워크로드",
+      "pos": [
+        30,
+        120
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Envoy Sidecar",
+      "sublabel": "아웃바운드 트래픽 가로채기",
+      "pos": [
+        310,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "egress-gw",
+      "type": "security",
+      "label": "Egress Gateway",
+      "sublabel": "istio-egressgateway",
+      "pos": [
+        640,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "외부 서비스",
+      "sublabel": "api.external.com",
+      "pos": [
+        960,
+        120
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Service Mesh", "wraps": ["sidecar", "egress-gw"] }
+    {
+      "kind": "region",
+      "label": "Service Mesh",
+      "wraps": [
+        "sidecar",
+        "egress-gw"
+      ]
+    }
   ],
   "connections": [
-    { "id": "pod-to-sidecar", "from": "pod", "to": "sidecar", "label": "아웃바운드 요청", "variant": "emphasis" },
-    { "id": "sidecar-to-egress", "from": "sidecar", "to": "egress-gw", "label": "VirtualService 라우팅", "variant": "emphasis" },
-    { "id": "egress-to-external", "from": "egress-gw", "to": "external", "label": "HTTPS 443", "variant": "emphasis" }
+    {
+      "id": "pod-to-sidecar",
+      "from": "pod",
+      "to": "sidecar",
+      "label": "아웃바운드 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sidecar-to-egress",
+      "from": "sidecar",
+      "to": "egress-gw",
+      "label": "VirtualService 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "egress-to-external",
+      "from": "egress-gw",
+      "to": "external",
+      "label": "HTTPS 443",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "ServiceEntry", "items": ["api.external.com을 MESH_EXTERNAL 호스트로 등록", "resolution: DNS, 포트 443 HTTPS"] },
-    { "dot": "orange", "title": "Egress Gateway", "items": ["Gateway가 api.external.com:443을 TLS PASSTHROUGH로 수신", "VirtualService가 mesh → istio-egressgateway → 외부 서비스 순으로 라우팅"] }
+    {
+      "dot": "cyan",
+      "title": "ServiceEntry",
+      "items": [
+        "api.external.com을 MESH_EXTERNAL 호스트로 등록",
+        "resolution: DNS, 포트 443 HTTPS"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Egress Gateway",
+      "items": [
+        "Gateway가 api.external.com:443을 TLS PASSTHROUGH로 수신",
+        "VirtualService가 mesh → istio-egressgateway → 외부 서비스 순으로 라우팅"
+      ]
+    }
   ]
 }

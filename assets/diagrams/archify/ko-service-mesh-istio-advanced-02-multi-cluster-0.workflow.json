@@ -117,7 +117,7 @@
       "type": "frontend",
       "label": "Multi-cluster 고려",
       "sublabel": "도입 전 검토",
-      "width": 168
+      "width": 160
     },
     {
       "id": "q1",
@@ -125,7 +125,7 @@
       "col": 1,
       "type": "security",
       "label": "여러 클러스터 이미 운영?",
-      "width": 176
+      "width": 170
     },
     {
       "id": "q2",
@@ -133,7 +133,7 @@
       "col": 2,
       "type": "security",
       "label": "지역적 분리 필요?",
-      "width": 150
+      "width": 160
     },
     {
       "id": "q3",

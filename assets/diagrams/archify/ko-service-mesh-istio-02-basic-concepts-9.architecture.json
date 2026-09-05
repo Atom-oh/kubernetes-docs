@@ -6,24 +6,148 @@
     "output": "ko-service-mesh-istio-02-basic-concepts-9.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1060, 470]
+    "viewBox": [
+      1060,
+      470
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "app1", "type": "frontend", "label": "앱", "sublabel": "Pod A 애플리케이션", "pos": [60, 310], "size": [140, 60] },
-    { "id": "envoy1", "type": "backend", "label": "Envoy", "sublabel": "사이드카 프록시", "pos": [280, 310], "size": [140, 60] },
-    { "id": "envoy2", "type": "backend", "label": "Envoy", "sublabel": "사이드카 프록시", "pos": [640, 310], "size": [140, 60] },
-    { "id": "app2", "type": "frontend", "label": "앱", "sublabel": "Pod B 애플리케이션", "pos": [860, 310], "size": [140, 60] },
-    { "id": "citadel", "type": "security", "label": "istiod", "sublabel": "Citadel (인증서 발급)", "pos": [450, 90], "size": [160, 64] }
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "앱",
+      "sublabel": "Pod A 애플리케이션",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        280,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        640,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "앱",
+      "sublabel": "Pod B 애플리케이션",
+      "pos": [
+        860,
+        310
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "citadel",
+      "type": "security",
+      "label": "istiod",
+      "sublabel": "Citadel (인증서 발급)",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Pod A", "wraps": ["app1", "envoy1"] },
-    { "kind": "region", "label": "Pod B", "wraps": ["envoy2", "app2"] }
+    {
+      "kind": "region",
+      "label": "Pod A",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod B",
+      "wraps": [
+        "envoy2",
+        "app2"
+      ]
+    }
   ],
   "connections": [
-    { "id": "app1-envoy1", "from": "app1", "to": "envoy1", "label": "평문" },
-    { "id": "envoy1-envoy2", "from": "envoy1", "to": "envoy2", "label": "mTLS 암호화 (양방향)", "variant": "emphasis" },
-    { "id": "envoy2-app2", "from": "envoy2", "to": "app2", "label": "평문" },
-    { "id": "citadel-envoy1", "from": "citadel", "to": "envoy1", "label": "인증서 발급", "variant": "security" },
-    { "id": "citadel-envoy2", "from": "citadel", "to": "envoy2", "label": "인증서 발급", "variant": "security" }
+    {
+      "id": "app1-envoy1",
+      "from": "app1",
+      "to": "envoy1",
+      "label": "평문"
+    },
+    {
+      "id": "envoy1-envoy2",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS 암호화 (양방향)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy2-app2",
+      "from": "envoy2",
+      "to": "app2",
+      "label": "평문"
+    },
+    {
+      "id": "citadel-envoy1",
+      "from": "citadel",
+      "to": "envoy1",
+      "label": "인증서 발급",
+      "variant": "security"
+    },
+    {
+      "id": "citadel-envoy2",
+      "from": "citadel",
+      "to": "envoy2",
+      "label": "인증서 발급",
+      "variant": "security"
+    }
   ]
 }

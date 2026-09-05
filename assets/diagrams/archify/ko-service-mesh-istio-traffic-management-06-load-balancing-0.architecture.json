@@ -30,7 +30,21 @@
         ],
         "note": "로드 밸런서가 같은 요청을 33%·33%·34%로 나눠 세 서비스가 비슷한 부하를 진다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

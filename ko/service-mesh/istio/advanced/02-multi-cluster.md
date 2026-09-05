@@ -614,7 +614,7 @@ spec:
 
 ### 트래픽 흐름
 
-![Istio + VPC Lattice 트래픽 흐름 시퀀스 다이어그램: Cluster 1의 Service A가 Envoy 사이드카를 거쳐 VPC Lattice DNS로 라우팅되고, Lattice가 AWS 관리형 서비스 디스커버리로 Cluster 2의 Service B에 요청을 전달한 뒤 같은 경로로 응답이 돌아오며, 각 클러스터에서 Istio가 독립적으로 메트릭을 수집.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-9.png)
+![Istio + VPC Lattice 트래픽 흐름 시퀀스 다이어그램: Cluster 1의 Service A가 Envoy 사이드카를 거쳐 VPC Lattice DNS로 라우팅되고, Lattice가 AWS 관리형 서비스 디스커버리로 Cluster 2의 Service B에 요청을 전달한 뒤 같은 경로로 응답이 돌아오며, 각 클러스터에서 Istio가 독립적으로 메트릭을 수집하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-9.html)
 

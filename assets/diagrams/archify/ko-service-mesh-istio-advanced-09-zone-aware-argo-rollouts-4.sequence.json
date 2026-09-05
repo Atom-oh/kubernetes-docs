@@ -38,7 +38,21 @@
         ],
         "note": "요청의 10%는 canary-a subset(v2)으로 전달된다. Argo Rollouts가 weight를 10 → 20 → 50 → 80 → 100으로 올린다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

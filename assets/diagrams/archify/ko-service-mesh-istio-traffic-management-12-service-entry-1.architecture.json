@@ -5,21 +5,120 @@
     "title": "ServiceEntry로 외부 서비스 등록",
     "output": "ko-service-mesh-istio-traffic-management-12-service-entry-1.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "app", "type": "backend", "label": "애플리케이션", "sublabel": "메시 내부 서비스", "pos": [40, 200], "size": [160, 64] },
-    { "id": "service-entry", "type": "security", "label": "ServiceEntry 등록", "sublabel": "서비스 레지스트리에 추가", "pos": [290, 200], "size": [190, 64] },
-    { "id": "external-api", "type": "external", "label": "외부 API", "sublabel": "api.example.com", "pos": [640, 90], "size": [190, 64] },
-    { "id": "external-db", "type": "database", "label": "외부 DB", "sublabel": "db.example.com", "pos": [640, 310], "size": [190, 64] }
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "메시 내부 서비스",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "service-entry",
+      "type": "security",
+      "label": "ServiceEntry 등록",
+      "sublabel": "서비스 레지스트리에 추가",
+      "pos": [
+        290,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "external-api",
+      "type": "external",
+      "label": "외부 API",
+      "sublabel": "api.example.com",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "external-db",
+      "type": "database",
+      "label": "외부 DB",
+      "sublabel": "db.example.com",
+      "pos": [
+        640,
+        310
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Service Mesh", "wraps": ["app", "service-entry"] },
-    { "kind": "region", "label": "External Services", "wraps": ["external-api", "external-db"] }
+    {
+      "kind": "region",
+      "label": "Service Mesh",
+      "wraps": [
+        "app",
+        "service-entry"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External Services",
+      "wraps": [
+        "external-api",
+        "external-db"
+      ]
+    }
   ],
   "connections": [
-    { "id": "app-request", "from": "app", "to": "service-entry", "label": "1. 요청", "variant": "emphasis" },
-    { "id": "se-to-api", "from": "service-entry", "to": "external-api", "label": "2. 트래픽 제어 · 모니터링 · 보안" },
-    { "id": "se-to-db", "from": "service-entry", "to": "external-db", "label": "2. 트래픽 제어 · 모니터링 · 보안" }
+    {
+      "id": "app-request",
+      "from": "app",
+      "to": "service-entry",
+      "label": "1. 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "se-to-api",
+      "from": "service-entry",
+      "to": "external-api",
+      "label": "2. 트래픽 제어 · 모니터링 · 보안"
+    },
+    {
+      "id": "se-to-db",
+      "from": "service-entry",
+      "to": "external-db",
+      "label": "2. 트래픽 제어 · 모니터링 · 보안"
+    }
   ]
 }

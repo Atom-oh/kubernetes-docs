@@ -70,7 +70,7 @@
         90
       ],
       "size": [
-        190,
+        170,
         64
       ]
     },
@@ -80,11 +80,11 @@
       "label": "Application-level traffic control",
       "sublabel": "VirtualService · DestinationRule",
       "pos": [
-        300,
+        270,
         90
       ],
       "size": [
-        230,
+        250,
         64
       ]
     },
@@ -94,7 +94,7 @@
       "label": "Rich L7 features",
       "sublabel": "Retry · Timeout",
       "pos": [
-        580,
+        560,
         90
       ],
       "size": [
@@ -112,7 +112,7 @@
         340
       ],
       "size": [
-        190,
+        170,
         64
       ]
     },
@@ -122,11 +122,11 @@
       "label": "Network-level policy enforcement",
       "sublabel": "L3/L4 NetworkPolicy",
       "pos": [
-        300,
+        270,
         340
       ],
       "size": [
-        230,
+        250,
         64
       ]
     },
@@ -136,7 +136,7 @@
       "label": "High performance",
       "sublabel": "Low overhead",
       "pos": [
-        580,
+        560,
         340
       ],
       "size": [
@@ -150,11 +150,11 @@
       "label": "Service Mesh",
       "sublabel": "complex L7 logic",
       "pos": [
-        960,
+        990,
         90
       ],
       "size": [
-        200,
+        170,
         64
       ]
     },
@@ -164,11 +164,11 @@
       "label": "Use both",
       "sublabel": "large enterprise",
       "pos": [
-        960,
+        990,
         215
       ],
       "size": [
-        200,
+        170,
         64
       ]
     },
@@ -178,11 +178,11 @@
       "label": "Cilium",
       "sublabel": "policy · performance",
       "pos": [
-        960,
+        990,
         340
       ],
       "size": [
-        200,
+        170,
         64
       ]
     }

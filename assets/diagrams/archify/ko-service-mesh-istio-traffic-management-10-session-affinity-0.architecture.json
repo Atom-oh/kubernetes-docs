@@ -5,21 +5,123 @@
     "title": "Consistent Hash 기반 Session Affinity",
     "output": "ko-service-mesh-istio-traffic-management-10-session-affinity-0.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "user", "type": "external", "label": "사용자 A", "sublabel": "user_id=123", "pos": [40, 250], "size": [150, 60] },
-    { "id": "hash", "type": "cloud", "label": "Consistent Hash", "sublabel": "User ID 기반", "pos": [330, 250], "size": [170, 60] },
-    { "id": "pod1", "type": "backend", "label": "Pod 1", "sublabel": "세션 A", "pos": [680, 110], "size": [150, 60] },
-    { "id": "pod2", "type": "backend", "label": "Pod 2", "pos": [680, 250], "size": [150, 60] },
-    { "id": "pod3", "type": "backend", "label": "Pod 3", "pos": [680, 390], "size": [150, 60] }
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 A",
+      "sublabel": "user_id=123",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hash",
+      "type": "cloud",
+      "label": "Consistent Hash",
+      "sublabel": "User ID 기반",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "세션 A",
+      "pos": [
+        680,
+        110
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "pos": [
+        680,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "pos": [
+        680,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Load Balancer", "wraps": ["hash"] },
-    { "kind": "region", "label": "파드", "wraps": ["pod1", "pod2", "pod3"] }
+    {
+      "kind": "region",
+      "label": "Load Balancer",
+      "wraps": [
+        "hash"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
   ],
   "connections": [
-    { "id": "user-to-hash", "from": "user", "to": "hash", "label": "user_id=123 요청" },
-    { "id": "hash-to-pod1", "from": "hash", "to": "pod1", "label": "항상 동일한 Pod", "variant": "emphasis" }
+    {
+      "id": "user-to-hash",
+      "from": "user",
+      "to": "hash",
+      "label": "user_id=123 요청"
+    },
+    {
+      "id": "hash-to-pod1",
+      "from": "hash",
+      "to": "pod1",
+      "label": "항상 동일한 Pod",
+      "variant": "emphasis"
+    }
   ]
 }

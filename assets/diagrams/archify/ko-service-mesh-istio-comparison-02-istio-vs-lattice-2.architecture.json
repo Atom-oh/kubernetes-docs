@@ -6,33 +6,252 @@
     "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-2.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1160, 440],
+    "viewBox": [
+      1160,
+      440
+    ],
     "views": [
-      { "id": "istio", "label": "Istio Security", "focus": ["i-mtls", "i-authz", "i-jwt", "i-ca", "i-ratelimit"], "note": "mTLS, JWT, Custom 인증과 L7 Authorization으로 더 세밀한 제어를 제공한다." },
-      { "id": "lattice", "label": "VPC Lattice Security", "focus": ["l-tls", "l-iam", "l-sigv4", "l-privatelink", "l-waf"], "note": "IAM, SigV4, PrivateLink, WAF 등 AWS 네이티브 통합에서 강점을 가진다." },
-      { "id": "authn", "label": "인증 메커니즘", "focus": ["i-mtls", "i-jwt", "l-iam", "l-sigv4"], "note": "Istio는 mTLS/JWT/Custom, VPC Lattice는 IAM/SigV4 기반 인증을 사용한다." }
-    ]
+      {
+        "id": "istio",
+        "label": "Istio Security",
+        "focus": [
+          "i-mtls",
+          "i-authz",
+          "i-jwt",
+          "i-ca",
+          "i-ratelimit"
+        ],
+        "note": "mTLS, JWT, Custom 인증과 L7 Authorization으로 더 세밀한 제어를 제공한다."
+      },
+      {
+        "id": "lattice",
+        "label": "VPC Lattice Security",
+        "focus": [
+          "l-tls",
+          "l-iam",
+          "l-sigv4",
+          "l-privatelink",
+          "l-waf"
+        ],
+        "note": "IAM, SigV4, PrivateLink, WAF 등 AWS 네이티브 통합에서 강점을 가진다."
+      },
+      {
+        "id": "authn",
+        "label": "인증 메커니즘",
+        "focus": [
+          "i-mtls",
+          "i-jwt",
+          "l-iam",
+          "l-sigv4"
+        ],
+        "note": "Istio는 mTLS/JWT/Custom, VPC Lattice는 IAM/SigV4 기반 인증을 사용한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "i-mtls", "type": "security", "label": "mTLS", "sublabel": "자동 인증서", "pos": [40, 70], "size": [190, 60] },
-    { "id": "i-authz", "type": "security", "label": "L7 Authorization", "sublabel": "매우 세밀함", "pos": [260, 70], "size": [190, 60] },
-    { "id": "i-jwt", "type": "security", "label": "JWT 인증", "sublabel": "통합 지원", "pos": [480, 70], "size": [190, 60] },
-    { "id": "i-ca", "type": "security", "label": "External CA", "sublabel": "통합 가능", "pos": [700, 70], "size": [190, 60] },
-    { "id": "i-ratelimit", "type": "security", "label": "Rate Limiting", "sublabel": "EnvoyFilter", "pos": [920, 70], "size": [190, 60] },
-    { "id": "l-tls", "type": "cloud", "label": "TLS", "sublabel": "ACM 통합", "pos": [40, 270], "size": [190, 60] },
-    { "id": "l-iam", "type": "cloud", "label": "IAM 기반", "sublabel": "Service 레벨", "pos": [260, 270], "size": [190, 60] },
-    { "id": "l-sigv4", "type": "cloud", "label": "SigV4", "sublabel": "AWS 네이티브", "pos": [480, 270], "size": [190, 60] },
-    { "id": "l-privatelink", "type": "cloud", "label": "AWS PrivateLink", "sublabel": "네트워크 격리", "pos": [700, 270], "size": [190, 60] },
-    { "id": "l-waf", "type": "cloud", "label": "WAF 통합", "sublabel": "가능", "pos": [920, 270], "size": [190, 60] }
+    {
+      "id": "i-mtls",
+      "type": "security",
+      "label": "mTLS",
+      "sublabel": "자동 인증서",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "i-authz",
+      "type": "security",
+      "label": "L7 Authorization",
+      "sublabel": "매우 세밀함",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "i-jwt",
+      "type": "security",
+      "label": "JWT 인증",
+      "sublabel": "통합 지원",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "i-ca",
+      "type": "security",
+      "label": "External CA",
+      "sublabel": "통합 가능",
+      "pos": [
+        700,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "i-ratelimit",
+      "type": "security",
+      "label": "Rate Limiting",
+      "sublabel": "EnvoyFilter",
+      "pos": [
+        920,
+        70
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "l-tls",
+      "type": "cloud",
+      "label": "TLS",
+      "sublabel": "ACM 통합",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "l-iam",
+      "type": "cloud",
+      "label": "IAM 기반",
+      "sublabel": "Service 레벨",
+      "pos": [
+        260,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "l-sigv4",
+      "type": "cloud",
+      "label": "SigV4",
+      "sublabel": "AWS 네이티브",
+      "pos": [
+        480,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "l-privatelink",
+      "type": "cloud",
+      "label": "AWS PrivateLink",
+      "sublabel": "네트워크 격리",
+      "pos": [
+        700,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "l-waf",
+      "type": "cloud",
+      "label": "WAF 통합",
+      "sublabel": "가능",
+      "pos": [
+        920,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Istio Security", "wraps": ["i-mtls", "i-authz", "i-jwt", "i-ca", "i-ratelimit"] },
-    { "kind": "region", "label": "VPC Lattice Security", "wraps": ["l-tls", "l-iam", "l-sigv4", "l-privatelink", "l-waf"] }
+    {
+      "kind": "region",
+      "label": "Istio Security",
+      "wraps": [
+        "i-mtls",
+        "i-authz",
+        "i-jwt",
+        "i-ca",
+        "i-ratelimit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC Lattice Security",
+      "wraps": [
+        "l-tls",
+        "l-iam",
+        "l-sigv4",
+        "l-privatelink",
+        "l-waf"
+      ]
+    }
   ],
   "connections": [],
   "cards": [
-    { "dot": "violet", "title": "Istio Security", "items": ["mTLS 자동 인증서 발급, JWT 인증 통합 지원", "L7 Authorization (Method, Path, Header) 수준의 매우 세밀한 제어", "External CA 통합 가능, EnvoyFilter로 Rate Limiting"] },
-    { "dot": "orange", "title": "VPC Lattice Security", "items": ["ACM 통합 TLS, IAM 기반 Service 레벨 Authorization", "SigV4 AWS 네이티브 인증", "AWS PrivateLink 네트워크 격리, WAF 통합 가능"] },
-    { "dot": "slate", "title": "결론", "items": ["보안 측면에서 Istio가 더 세밀한 제어 제공", "VPC Lattice는 AWS IAM 통합에서 강점"] }
+    {
+      "dot": "violet",
+      "title": "Istio Security",
+      "items": [
+        "mTLS 자동 인증서 발급, JWT 인증 통합 지원",
+        "L7 Authorization (Method, Path, Header) 수준의 매우 세밀한 제어",
+        "External CA 통합 가능, EnvoyFilter로 Rate Limiting"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "VPC Lattice Security",
+      "items": [
+        "ACM 통합 TLS, IAM 기반 Service 레벨 Authorization",
+        "SigV4 AWS 네이티브 인증",
+        "AWS PrivateLink 네트워크 격리, WAF 통합 가능"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "결론",
+      "items": [
+        "보안 측면에서 Istio가 더 세밀한 제어 제공",
+        "VPC Lattice는 AWS IAM 통합에서 강점"
+      ]
+    }
   ]
 }

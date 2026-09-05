@@ -49,7 +49,21 @@
         ],
         "note": "Kiali는 istiod의 Istio 구성을 읽어 VirtualService, DestinationRule 등의 오류를 검증한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
     {

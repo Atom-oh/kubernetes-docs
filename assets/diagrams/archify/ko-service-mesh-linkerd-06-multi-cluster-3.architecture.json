@@ -5,7 +5,18 @@
     "title": "공유 Trust Anchor",
     "output": "ko-service-mesh-linkerd-06-multi-cluster-3.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

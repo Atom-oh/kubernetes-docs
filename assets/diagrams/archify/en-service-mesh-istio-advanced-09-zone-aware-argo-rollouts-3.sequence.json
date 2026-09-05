@@ -25,9 +25,6 @@
         },
         "return": {
           "label": "Response"
-        },
-        "security": {
-          "visible": false
         }
       }
     },

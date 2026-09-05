@@ -30,7 +30,18 @@
         ],
         "note": "Pod 2와 Pod 3은 각각 15%, 5%만 받아 거의 놀고 있다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

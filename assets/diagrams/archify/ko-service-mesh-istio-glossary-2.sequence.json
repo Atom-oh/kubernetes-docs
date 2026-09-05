@@ -5,26 +5,106 @@
     "title": "SigV4 작동 방식 — Envoy가 대신 서명하는 AWS 요청",
     "quality_profile": "showcase",
     "column_fit": "spread",
-    "viewBox": [900, 600],
-    "animation": "trace"
+    "viewBox": [
+      900,
+      600
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
-    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "호출 측 애플리케이션" },
-    { "id": "envoy", "type": "security", "label": "Envoy Proxy", "sublabel": "istio-proxy · aws_request_signing" },
-    { "id": "aws", "type": "cloud", "label": "AWS 서비스", "sublabel": "예: S3, DynamoDB" }
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "호출 측 애플리케이션"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "istio-proxy · aws_request_signing"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS 서비스",
+      "sublabel": "예: S3, DynamoDB"
+    }
   ],
   "segments": [
-    { "from": 160, "to": 300, "label": "Envoy 내부: AWS Credentials 로드 → SigV4 서명 생성 (HMAC-SHA256)" },
-    { "from": 320, "to": 480, "label": "AWS 내부: 서명 검증 → 응답" }
+    {
+      "from": 160,
+      "to": 300,
+      "label": "Envoy 내부: AWS Credentials 로드 → SigV4 서명 생성 (HMAC-SHA256)"
+    },
+    {
+      "from": 320,
+      "to": 480,
+      "label": "AWS 내부: 서명 검증 → 응답"
+    }
   ],
   "messages": [
-    { "id": "http-request", "from": "client", "to": "envoy", "y": 190, "label": "HTTP 요청", "variant": "default" },
-    { "id": "signed-request", "from": "envoy", "to": "aws", "y": 265, "label": "Authorization 헤더 추가 · AWS4-HMAC-SHA256", "variant": "security", "note": "Credentials 로드 → Signing Key → Signature 계산 후 헤더에 첨부" },
-    { "id": "aws-response", "from": "aws", "to": "envoy", "y": 380, "label": "응답", "variant": "return", "note": "AWS가 서명을 검증한 뒤 응답" },
-    { "id": "client-response", "from": "envoy", "to": "client", "y": 455, "label": "응답", "variant": "return" }
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "envoy",
+      "y": 190,
+      "label": "HTTP 요청",
+      "variant": "default"
+    },
+    {
+      "id": "signed-request",
+      "from": "envoy",
+      "to": "aws",
+      "y": 265,
+      "label": "Authorization 헤더 추가 · AWS4-HMAC-SHA256",
+      "variant": "security",
+      "note": "Credentials 로드 → Signing Key → Signature 계산 후 헤더에 첨부"
+    },
+    {
+      "id": "aws-response",
+      "from": "aws",
+      "to": "envoy",
+      "y": 380,
+      "label": "응답",
+      "variant": "return",
+      "note": "AWS가 서명을 검증한 뒤 응답"
+    },
+    {
+      "id": "client-response",
+      "from": "envoy",
+      "to": "client",
+      "y": 455,
+      "label": "응답",
+      "variant": "return"
+    }
   ],
   "activations": [
-    { "participant": "envoy", "from": 185, "to": 462, "type": "security" },
-    { "participant": "aws", "from": 260, "to": 388, "type": "cloud" }
+    {
+      "participant": "envoy",
+      "from": 185,
+      "to": 462,
+      "type": "security"
+    },
+    {
+      "participant": "aws",
+      "from": 260,
+      "to": 388,
+      "type": "cloud"
+    }
   ]
 }

@@ -5030,7 +5030,7 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Waypoint 기능" x="220" y="100" width="860" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Waypoint 기능" x="220" y="100" width="870" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="ztunnel" data-edge-to="l7-routing" data-edge-label="L7 필요 시" data-edge-key="0" data-edge-id="ztunnel-to-l7" data-composition-points="150,160;250,160" d="M 150 160 L 250 160" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5038,7 +5038,7 @@
         <path data-edge-from="retry" data-edge-to="circuit-breaker" data-edge-key="2" data-edge-id="retry-to-cb" data-composition-points="555,160;580,160" d="M 555 160 L 580 160" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="circuit-breaker" data-edge-to="fault-injection" data-edge-key="3" data-edge-id="cb-to-fault" data-composition-points="720,160;745,160" d="M 720 160 L 745 160" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="fault-injection" data-edge-to="header-manip" data-edge-key="4" data-edge-id="fault-to-header" data-composition-points="885,160;910,160" d="M 885 160 L 910 160" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="header-manip" data-edge-to="target" data-edge-key="5" data-edge-id="header-to-target" data-composition-points="1050,160;1100,160" d="M 1050 160 L 1100 160" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="header-manip" data-edge-to="target" data-edge-key="5" data-edge-id="header-to-target" data-composition-points="1060,160;1100,160" d="M 1060 160 L 1100 160" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
         <g id="node-ztunnel" data-node-id="ztunnel" data-node-label="ztunnel" tabindex="0" role="button" aria-label="Focus ztunnel, L4 노드 프록시, Architecture component" aria-pressed="false" data-node-kind="security" data-node-sublabel="L4 노드 프록시" data-node-context="Architecture component">
@@ -5099,13 +5099,13 @@
 
         <g id="node-header-manip" data-node-id="header-manip" data-node-label="Header 조작" tabindex="0" role="button" aria-label="Focus Header 조작, 요청 · 응답 헤더, Waypoint 기능" aria-pressed="false" data-node-kind="backend" data-node-sublabel="요청 · 응답 헤더" data-node-context="Waypoint 기능">
           <title>Header 조작 · 요청 · 응답 헤더 · Waypoint 기능</title>
-          <rect x="910" y="130" width="140" height="60" rx="6" class="c-mask"/>
-          <rect x="910" y="130" width="140" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <rect x="910" y="130" width="150" height="60" rx="6" class="c-mask"/>
+          <rect x="910" y="130" width="150" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(916 136) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="980" y="158" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Header 조작</text>
-        <text data-detail="context" x="980" y="174" class="t-muted" font-size="9" text-anchor="middle">요청 · 응답 헤더</text>
+          <text data-node-label="" data-detail-anchor="" x="985" y="158" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Header 조작</text>
+        <text data-detail="context" x="985" y="174" class="t-muted" font-size="9" text-anchor="middle">요청 · 응답 헤더</text>
         </g>
 
         <g id="node-target" data-node-id="target" data-node-label="Target Service" tabindex="0" role="button" aria-label="Focus Target Service, 대상 서비스, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="대상 서비스" data-node-context="Architecture component">

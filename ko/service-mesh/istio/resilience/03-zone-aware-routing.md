@@ -61,7 +61,7 @@ us-west-2/us-west-2a/*
 
 #### 동작 방식
 
-![Pod 자체에는 Zone 레이블이 없어도, Istiod의 Service Discovery가 Pod가 실행 중인 Node의 topology 레이블을 조회해 Locality를 파악하고 이를 EDS로 만들어 Envoy Proxy에 xDS로 전달하는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
+![파드 자체에는 Zone 레이블이 없어도, Istiod의 Service Discovery가 Pod가 실행 중인 Node의 topology 레이블을 조회해 Locality를 파악하고 이를 EDS로 만들어 Envoy Proxy에 xDS로 전달하는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-03-zone-aware-routing-2.html)
 

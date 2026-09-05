@@ -39,7 +39,24 @@
         ],
         "note": "찾아낸 WorkloadEntry 주소 192.168.1.100:8080으로 mTLS 연결을 맺고 응답을 파드에 돌려준다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

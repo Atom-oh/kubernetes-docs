@@ -44,7 +44,21 @@
         ],
         "note": "Viz가 두 프록시의 메트릭을 수집하고, Jaeger·Multicluster는 선택적으로 설치한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

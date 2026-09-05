@@ -6,25 +6,171 @@
     "output": "ko-service-mesh-istio-advanced-03-envoy-filter-3.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1380, 320]
+    "viewBox": [
+      1380,
+      320
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "203.0.113.5", "pos": [40, 130], "size": [150, 64] },
-    { "id": "cloudfront", "type": "cloud", "label": "CloudFront", "sublabel": "172.64.0.1", "pos": [270, 130], "size": [150, 64] },
-    { "id": "nlb", "type": "cloud", "label": "AWS NLB", "sublabel": "10.0.1.50", "pos": [500, 130], "size": [150, 64], "tag": "L4 · XFF 미수정" },
-    { "id": "alb", "type": "cloud", "label": "AWS ALB", "sublabel": "10.0.1.100", "pos": [730, 130], "size": [150, 64] },
-    { "id": "gateway", "type": "security", "label": "Istio Gateway", "sublabel": "10.0.2.50", "pos": [960, 130], "size": [150, 64], "tag": "xff_num_trusted_hops: 2" },
-    { "id": "app", "type": "backend", "label": "애플리케이션", "sublabel": "메시 내부 워크로드", "pos": [1190, 130], "size": [150, 64] }
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "203.0.113.5",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cloudfront",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "172.64.0.1",
+      "pos": [
+        270,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "AWS NLB",
+      "sublabel": "10.0.1.50",
+      "pos": [
+        500,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "L4 · XFF 미수정"
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "10.0.1.100",
+      "pos": [
+        730,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "10.0.2.50",
+      "pos": [
+        960,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "xff_num_trusted_hops: 2"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "메시 내부 워크로드",
+      "pos": [
+        1190,
+        130
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
   ],
   "connections": [
-    { "id": "client-to-cloudfront", "from": "client", "to": "cloudfront", "label": "XFF: (없음)" },
-    { "id": "cloudfront-to-nlb", "from": "cloudfront", "to": "nlb", "label": "XFF: 203.0.113.5", "labelDy": -26 },
-    { "id": "nlb-to-alb", "from": "nlb", "to": "alb", "label": "XFF: 203.0.113.5 (L4, 수정 안 함)", "variant": "dashed", "labelDy": 56 },
-    { "id": "alb-to-gateway", "from": "alb", "to": "gateway", "label": "XFF: 203.0.113.5, 172.64.0.1", "labelDy": -26 },
-    { "id": "gateway-to-app", "from": "gateway", "to": "app", "label": "XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100", "variant": "emphasis", "labelDy": 56 }
+    {
+      "id": "client-to-cloudfront",
+      "from": "client",
+      "to": "cloudfront",
+      "label": "XFF: (없음)"
+    },
+    {
+      "id": "cloudfront-to-nlb",
+      "from": "cloudfront",
+      "to": "nlb",
+      "label": "XFF: 203.0.113.5",
+      "labelDy": -26
+    },
+    {
+      "id": "nlb-to-alb",
+      "from": "nlb",
+      "to": "alb",
+      "label": "XFF: 203.0.113.5 (L4, 수정 안 함)",
+      "variant": "dashed",
+      "labelDy": 56
+    },
+    {
+      "id": "alb-to-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "XFF: 203.0.113.5, 172.64.0.1",
+      "labelDy": -26
+    },
+    {
+      "id": "gateway-to-app",
+      "from": "gateway",
+      "to": "app",
+      "label": "XFF: 203.0.113.5, 172.64.0.1, 10.0.1.100",
+      "variant": "emphasis",
+      "labelDy": 56
+    }
   ],
   "cards": [
-    { "dot": "amber", "title": "EnvoyFilter 설정", "items": ["use_remote_address: true — Gateway가 edge proxy 역할", "xff_num_trusted_hops: 2 — CloudFront + ALB 신뢰 (NLB는 L4이므로 카운트 안 됨)", "결과: 실제 클라이언트 IP 203.0.113.5가 올바르게 추출됨"] },
-    { "dot": "slate", "title": "NLB는 XFF 체인에 영향 없음", "items": ["NLB는 L4 로드 밸런서이므로 XFF 헤더를 읽거나 수정하지 않음", "XFF 체인에는 CloudFront IP와 ALB IP만 누적됨"] }
+    {
+      "dot": "amber",
+      "title": "EnvoyFilter 설정",
+      "items": [
+        "use_remote_address: true — Gateway가 edge proxy 역할",
+        "xff_num_trusted_hops: 2 — CloudFront + ALB 신뢰 (NLB는 L4이므로 카운트 안 됨)",
+        "결과: 실제 클라이언트 IP 203.0.113.5가 올바르게 추출됨"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "NLB는 XFF 체인에 영향 없음",
+      "items": [
+        "NLB는 L4 로드 밸런서이므로 XFF 헤더를 읽거나 수정하지 않음",
+        "XFF 체인에는 CloudFront IP와 ALB IP만 누적됨"
+      ]
+    }
   ]
 }

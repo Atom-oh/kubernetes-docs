@@ -34,7 +34,7 @@ HTTP 503 Service Unavailable
 
 ### 발생 원인
 
-![파드 종료 시 Kubernetes가 애플리케이션과 Envoy 사이드카에 동시에 SIGTERM을 보내면 Envoy가 먼저 종료되어, 아직 실행 중인 애플리케이션으로 향한 클라이언트 요청이 Connection refused로 실패하고 30초 뒤 SIGKILL로 강제 종료되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-0.png)
+![Pod 종료 시 Kubernetes가 애플리케이션과 Envoy 사이드카에 동시에 SIGTERM을 보내면 Envoy가 먼저 종료되어, 아직 실행 중인 애플리케이션으로 향한 클라이언트 요청이 Connection refused로 실패하고 30초 뒤 SIGKILL로 강제 종료되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-0.html)
 
@@ -71,7 +71,7 @@ spec:
 ```
 
 **동작 방식**:
-![Envoy에 terminationDrainDuration을 설정하면 SIGTERM 이후 새 연결만 거부하고 기존 연결은 유지하는 Drain 모드로 진입해, 파드 종료 중 들어온 요청이 정상 응답을 받은 뒤 Envoy와 애플리케이션이 함께 정상 종료됨을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-1.png)
+![Envoy에 terminationDrainDuration을 설정하면 SIGTERM 이후 새 연결만 거부하고 기존 연결은 유지하는 Drain 모드로 진입해, Pod 종료 중 들어온 요청이 정상 응답을 받은 뒤 Envoy와 애플리케이션이 함께 정상 종료됨을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-troubleshooting-common-errors-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-troubleshooting-common-errors-1.html)
 

@@ -16,7 +16,7 @@ Outlier Detection은 비정상적으로 동작하는 서비스 인스턴스를 �
 
 Outlier Detection은 다음과 같은 상황에서 자동으로 인스턴스를 제외합니다:
 
-![클라이언트 요청이 Envoy Proxy의 Outlier Detection을 거쳐 정상 파드(Pod 1, Pod 2)로만 전달되고, 지연시간과 에러율이 높은 비정상 파드(Pod 3)는 트래픽에서 제외되었다가 30초 후 복구를 시도하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-0.png)
+![클라이언트 요청이 Envoy Proxy의 Outlier Detection을 거쳐 정상 Pod(Pod 1, Pod 2)로만 전달되고, 지연시간과 에러율이 높은 비정상 Pod(Pod 3)는 트래픽에서 제외되었다가 30초 후 복구를 시도하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-0.html)
 
@@ -243,7 +243,7 @@ spec:
 
 ### 외부 API 보호 아키텍처
 
-![클러스터 안의 애플리케이션 파드가 Envoy Proxy를 통해 여러 외부 API 인스턴스로 트래픽을 보내는데, 에러가 발생한 인스턴스는 Outlier Detection에 의해 트래픽에서 제외되고 정상 인스턴스만 계속 트래픽을 받는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-2.png)
+![클러스터 안의 애플리케이션 Pod가 Envoy Proxy를 통해 여러 외부 API 인스턴스로 트래픽을 보내는데, 에러가 발생한 인스턴스는 Outlier Detection에 의해 트래픽에서 제외되고 정상 인스턴스만 계속 트래픽을 받는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-2.html)
 

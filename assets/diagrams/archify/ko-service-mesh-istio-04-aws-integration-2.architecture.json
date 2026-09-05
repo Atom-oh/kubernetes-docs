@@ -31,7 +31,18 @@
         ],
         "note": "사이드카 없이 애플리케이션이 HTTP로 관리형 Service Network에 보내면 Service Network가 대상 애플리케이션으로 라우팅한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

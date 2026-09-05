@@ -34,7 +34,18 @@
         ],
         "note": "어느 단계에서든 문제가 발견되면 진행을 멈추고 수정 및 개선으로 돌아갑니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

@@ -30,7 +30,21 @@
         ],
         "note": "기본 24시간 유효 인증서를 만료 전 갱신 CSR로 자동 재발급합니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

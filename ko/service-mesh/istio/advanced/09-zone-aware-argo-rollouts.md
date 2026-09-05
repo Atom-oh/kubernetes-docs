@@ -125,7 +125,7 @@ spec:
 
 ### 전체 구조
 
-![클라이언트가 단일 VirtualService(test.default)를 호출하면 DestinationRule의 locality 설정에 따라 각 Zone의 파드로 stable/canary 가중치가 나뉘고, Zone별 Argo Rollout이 자기 Zone의 route 가중치만 독립적으로 관리하는 전체 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
+![클라이언트가 단일 VirtualService(test.default)를 호출하면 DestinationRule의 locality 설정에 따라 각 Zone의 Pod로 stable/canary 가중치가 나뉘고, Zone별 Argo Rollout이 자기 Zone의 route 가중치만 독립적으로 관리하는 전체 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.html)
 
@@ -661,7 +661,7 @@ spec:
 
 ### Failover 시나리오
 
-![Zone A의 Pod A가 3회 연속 timeout/5xx 오류를 반환해 consecutiveErrors: 3에 도달하면 Envoy Sidecar의 Outlier Detection이 Pod A를 30초(baseEjectionTime) 동안 제외하고, DestinationRule failover 규칙(us-east-1a → us-east-1b)에 따라 요청을 Zone B의 Pod B로 전환하여 응답을 받는 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
+![Zone A의 Pod A가 3회 연속 timeout/5xx 오류를 반환해 consecutiveErrors: 3에 도달하면 Envoy Sidecar의 Outlier Detection이 Pod A를 30초(baseEjectionTime) 동안 제외하고, DestinationRule failover 규칙(us-east-1a → us-east-1b)에 따라 요청을 Zone B의 Pod B로 전환하여 응답을 받는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.html)
 

@@ -24,9 +24,6 @@
         },
         "return": {
           "label": "응답"
-        },
-        "security": {
-          "visible": false
         }
       }
     },

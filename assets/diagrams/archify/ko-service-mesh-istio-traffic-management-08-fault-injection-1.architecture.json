@@ -25,7 +25,18 @@
         ],
         "note": "장애 응답이 누적된 뒤 Circuit Breaker가 실제로 작동했는지 모니터링으로 확인한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        }
+      }
+    }
   },
   "components": [
     {

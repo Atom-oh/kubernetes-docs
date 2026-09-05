@@ -43,7 +43,18 @@
         ],
         "note": "애플리케이션 트래픽은 각 파드의 Rust 프록시를 거쳐 프록시끼리 mTLS로 암호화된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

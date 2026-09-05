@@ -186,7 +186,7 @@ retries:
 ```
 
 **작동 방식**:
-![Envoy 프록시가 실패한 Pod 1에서 503을 받은 뒤 재시도 조건을 확인하고 다른 Pod 2로 요청을 재전송해 최종적으로 성공 응답을 클라이언트에 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-2.png)
+![Envoy 프록시가 실패한 파드 1에서 503을 받은 뒤 재시도 조건을 확인하고 다른 파드 2로 요청을 재전송해 최종적으로 성공 응답을 클라이언트에 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-readme-2.html)
 
@@ -403,7 +403,7 @@ spec:
 
 ## 복원력 아키텍처
 
-![클라이언트 요청이 Rate Limiting이 적용된 Ingress Gateway를 지나 Outlier Detection에서 비정상 Pod A3를 제외한 정상 파드로만 전달되고, Service A에서 Service B로는 Zone Aware Routing으로 같은 Zone의 파드를 우선하는 복원력 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-3.png)
+![클라이언트 요청이 Rate Limiting이 적용된 Ingress Gateway를 지나 Outlier Detection에서 비정상 파드 A3를 제외한 정상 파드로만 전달되고, Service A에서 Service B로는 Zone Aware Routing으로 같은 Zone의 파드를 우선하는 복원력 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-readme-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-readme-3.html)
 

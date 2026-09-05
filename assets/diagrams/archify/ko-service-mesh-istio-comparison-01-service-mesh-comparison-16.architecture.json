@@ -6,29 +6,194 @@
     "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-16.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1240, 440],
+    "viewBox": [
+      1240,
+      440
+    ],
     "views": [
-      { "id": "wan-gossip", "label": "WAN Gossip", "focus": ["consul1", "consul2"], "note": "각 데이터센터의 Consul 서버 클러스터가 WAN Gossip으로 서로를 인지한다." },
-      { "id": "mesh-gateway", "label": "Mesh Gateway", "focus": ["gateway1", "gateway2"], "note": "데이터센터 간 서비스 트래픽은 양쪽 Mesh Gateway를 거쳐 오간다." },
-      { "id": "discovery", "label": "Service Discovery", "focus": ["app1", "consul1", "app2", "consul2"], "note": "서비스는 자신이 속한 데이터센터의 Consul 서버에서 서비스 디스커버리를 수행한다." }
-    ]
+      {
+        "id": "wan-gossip",
+        "label": "WAN Gossip",
+        "focus": [
+          "consul1",
+          "consul2"
+        ],
+        "note": "각 데이터센터의 Consul 서버 클러스터가 WAN Gossip으로 서로를 인지한다."
+      },
+      {
+        "id": "mesh-gateway",
+        "label": "Mesh Gateway",
+        "focus": [
+          "gateway1",
+          "gateway2"
+        ],
+        "note": "데이터센터 간 서비스 트래픽은 양쪽 Mesh Gateway를 거쳐 오간다."
+      },
+      {
+        "id": "discovery",
+        "label": "Service Discovery",
+        "focus": [
+          "app1",
+          "consul1",
+          "app2",
+          "consul2"
+        ],
+        "note": "서비스는 자신이 속한 데이터센터의 Consul 서버에서 서비스 디스커버리를 수행한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "consul1", "type": "backend", "label": "Consul Servers", "sublabel": "서버 클러스터", "pos": [80, 80], "size": [170, 60] },
-    { "id": "app1", "type": "frontend", "label": "Services", "sublabel": "로컬 서비스", "pos": [80, 260], "size": [170, 60] },
-    { "id": "gateway1", "type": "security", "label": "Mesh Gateway", "sublabel": "데이터센터 간 트래픽", "pos": [320, 260], "size": [190, 60] },
-    { "id": "consul2", "type": "backend", "label": "Consul Servers", "sublabel": "서버 클러스터", "pos": [990, 80], "size": [170, 60] },
-    { "id": "gateway2", "type": "security", "label": "Mesh Gateway", "sublabel": "데이터센터 간 트래픽", "pos": [730, 260], "size": [190, 60] },
-    { "id": "app2", "type": "frontend", "label": "Services", "sublabel": "로컬 서비스", "pos": [990, 260], "size": [170, 60] }
+    {
+      "id": "consul1",
+      "type": "backend",
+      "label": "Consul Servers",
+      "sublabel": "서버 클러스터",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "로컬 서비스",
+      "pos": [
+        80,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "gateway1",
+      "type": "security",
+      "label": "Mesh Gateway",
+      "sublabel": "데이터센터 간 트래픽",
+      "pos": [
+        320,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "consul2",
+      "type": "backend",
+      "label": "Consul Servers",
+      "sublabel": "서버 클러스터",
+      "pos": [
+        990,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "gateway2",
+      "type": "security",
+      "label": "Mesh Gateway",
+      "sublabel": "데이터센터 간 트래픽",
+      "pos": [
+        730,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Services",
+      "sublabel": "로컬 서비스",
+      "pos": [
+        990,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Datacenter 1", "wraps": ["consul1", "app1", "gateway1"] },
-    { "kind": "region", "label": "Datacenter 2", "wraps": ["consul2", "gateway2", "app2"] }
+    {
+      "kind": "region",
+      "label": "Datacenter 1",
+      "wraps": [
+        "consul1",
+        "app1",
+        "gateway1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Datacenter 2",
+      "wraps": [
+        "consul2",
+        "gateway2",
+        "app2"
+      ]
+    }
   ],
   "connections": [
-    { "id": "wan-gossip", "from": "consul1", "to": "consul2", "label": "WAN Gossip", "variant": "dashed" },
-    { "id": "gateway-link", "from": "gateway1", "to": "gateway2", "label": "Mesh Gateway 간 트래픽", "variant": "emphasis" },
-    { "id": "discovery1", "from": "app1", "to": "consul1", "label": "Service Discovery", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
-    { "id": "discovery2", "from": "app2", "to": "consul2", "label": "Service Discovery", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+    {
+      "id": "wan-gossip",
+      "from": "consul1",
+      "to": "consul2",
+      "label": "WAN Gossip",
+      "variant": "dashed"
+    },
+    {
+      "id": "gateway-link",
+      "from": "gateway1",
+      "to": "gateway2",
+      "label": "Mesh Gateway 간 트래픽",
+      "variant": "emphasis"
+    },
+    {
+      "id": "discovery1",
+      "from": "app1",
+      "to": "consul1",
+      "label": "Service Discovery",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "discovery2",
+      "from": "app2",
+      "to": "consul2",
+      "label": "Service Discovery",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
   ]
 }

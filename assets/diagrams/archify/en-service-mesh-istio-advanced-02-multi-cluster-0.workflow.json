@@ -118,7 +118,7 @@
       "type": "frontend",
       "label": "Multi-cluster review",
       "sublabel": "Review before adoption",
-      "width": 168
+      "width": 160
     },
     {
       "id": "q1",
@@ -126,7 +126,7 @@
       "col": 1,
       "type": "security",
       "label": "Already multi-cluster?",
-      "width": 176
+      "width": 170
     },
     {
       "id": "q2",
@@ -134,7 +134,7 @@
       "col": 2,
       "type": "security",
       "label": "Multi-region needed?",
-      "width": 150
+      "width": 160
     },
     {
       "id": "q3",

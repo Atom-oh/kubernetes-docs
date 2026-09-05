@@ -27,7 +27,18 @@
         ],
         "note": "Identity Issuer가 프록시마다 고유한 24시간짜리 워크로드 인증서를 발급한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

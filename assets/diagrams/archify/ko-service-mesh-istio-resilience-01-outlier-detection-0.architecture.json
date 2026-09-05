@@ -27,7 +27,18 @@
         ],
         "note": "임계값을 넘은 Pod 3은 트래픽에서 제외되고, 30초 후 복구를 시도한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

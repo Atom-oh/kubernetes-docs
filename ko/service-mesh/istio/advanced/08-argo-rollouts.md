@@ -54,7 +54,7 @@ Argo Rollouts는 Kubernetes를 위한 Progressive Delivery 컨트롤러로, 고�
 
 ### 전체 아키텍처
 
-![ArgoCD가 배포한 Argo Rollouts 컨트롤러가 VirtualService weight와 stable/canary 포드를 관리하고, Istiod가 데이터 플레인 설정을 동기화하며, 포드 메트릭을 Prometheus가 수집해 AnalysisRun이 검증한 성공/실패를 Rollouts에 되돌려주는 전체 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-1.png)
+![ArgoCD가 배포한 Argo Rollouts 컨트롤러가 VirtualService weight와 stable/canary 파드를 관리하고, Istiod가 데이터 플레인 설정을 동기화하며, 파드 메트릭을 Prometheus가 수집해 AnalysisRun이 검증한 성공/실패를 Rollouts에 되돌려주는 전체 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-08-argo-rollouts-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-1.html)
 

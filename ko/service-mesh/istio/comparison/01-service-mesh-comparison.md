@@ -115,7 +115,7 @@ Kong Mesh는 Kuma를 기반으로 하는 Universal Service Mesh로, 멀티 존 �
 
 **서비스 연결 및 트래픽 흐름**
 
-![Global CP가 두 Zone CP에 정책을 동기화하고 각 Zone CP가 xDS로 Kuma DP를 설정한 뒤, 애플리케이션의 요청을 로컬 Kuma DP가 서비스 디스커버리로 Zone 2 엔드포인트를 확인하고 mTLS로 암호화해 상대 Zone의 DP를 거쳐 대상 서비스에 전달하며, 응답은 같은 경로로 돌아오고 메트릭은 Zone CP를 거쳐 Global CP에서 집계된다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
+![Global CP가 두 Zone CP에 정책을 동기화하고 각 Zone CP가 xDS로 Kuma DP를 설정한 뒤, 애플리케이션의 요청을 로컬 Kuma DP가 서비스 디스커버리로 Zone 2 엔드포인트를 확인하고 mTLS로 암호화해 상대 Zone의 DP를 거쳐 대상 서비스에 전달하며, 응답은 같은 경로로 돌아오고 메트릭은 Zone CP를 거쳐 Global CP에서 집계되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-comparison-01-service-mesh-comparison-6.html)
 

@@ -41,7 +41,18 @@
         ],
         "note": "SPIFFE 신원부터 접근 제어까지 5단계 보안 계층이 순서대로 적용된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

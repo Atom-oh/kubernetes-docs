@@ -81,7 +81,7 @@ Istio의 관찰성 기능은 **Zero Instrumentation** 원칙을 따릅니다:
 
 ### 전체 아키텍처
 
-![Envoy 사이드카가 있는 포드의 메트릭·트레이스·액세스 로그가 Prometheus, Jaeger, Fluentd/Loki 백엔드로 흘러가 Grafana와 Kiali에서 시각화되고, istiod가 사이드카에 텔레메트리 설정을 전파하는 Istio 관찰성 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-readme-1.png)
+![Envoy 사이드카가 있는 Pod의 메트릭·트레이스·액세스 로그가 Prometheus, Jaeger, Fluentd/Loki 백엔드로 흘러가 Grafana와 Kiali에서 시각화되고, istiod가 사이드카에 텔레메트리 설정을 전파하는 Istio 관찰성 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-readme-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-observability-readme-1.html)
 

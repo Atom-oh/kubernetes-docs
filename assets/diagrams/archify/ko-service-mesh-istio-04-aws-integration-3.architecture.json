@@ -28,7 +28,24 @@
         ],
         "note": "Istio 클러스터에서 나가는 트래픽은 VPC Lattice Service Network가 다른 계정의 서비스와 Lambda로 라우팅한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

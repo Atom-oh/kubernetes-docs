@@ -89,7 +89,7 @@ data:
 
 The Proxy Injector operates as a Kubernetes Admission Webhook to automatically inject sidecars into Pods.
 
-![Sequence diagram showing the Kubernetes API server calling the Proxy Injector admission webhook on Pod creation; the injector checks the linkerd.io/inject condition and, when enabled, adds the linkerd-proxy and linkerd-init containers plus volumes/env vars and returns a mutated Pod spec, or returns the original Pod spec unchanged when injection is disabled, after which the API server creates the Pod.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
+![On Pod creation the Kubernetes API server calls the Proxy Injector webhook, which adds the linkerd-proxy and linkerd-init containers when linkerd.io/inject is enabled or returns the spec unchanged when disabled, and the API server then creates the Pod.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
 

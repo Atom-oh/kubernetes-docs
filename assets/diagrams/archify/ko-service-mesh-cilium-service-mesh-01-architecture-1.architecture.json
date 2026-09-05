@@ -32,7 +32,24 @@
         ],
         "note": "커널에 연결된 eBPF 프로그램이 패킷을 먼저 처리하고, 필요 시 네트워크 스택을 우회한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

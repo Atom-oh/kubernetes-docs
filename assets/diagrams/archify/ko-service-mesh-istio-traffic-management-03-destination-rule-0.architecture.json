@@ -30,7 +30,21 @@
         ],
         "note": "DestinationRule이 subset 정의와 로드 밸런싱·연결 풀 등 트래픽 정책을 적용한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -5030,7 +5030,7 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="ztunnel Features" x="370" y="80" width="700" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="ztunnel Features" x="370" y="80" width="710" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="app" data-edge-to="ztunnel" data-edge-label="TCP connection" data-edge-key="0" data-edge-id="app-to-ztunnel" data-composition-points="170,140;210,140" d="M 170 140 L 210 140" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5038,7 +5038,7 @@
         <path data-edge-from="mtls" data-edge-to="telemetry" data-edge-key="2" data-edge-id="mtls-to-telemetry" data-composition-points="530,140;570,140" d="M 530 140 L 570 140" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="telemetry" data-edge-to="identity" data-edge-key="3" data-edge-id="telemetry-to-identity" data-composition-points="700,140;740,140" d="M 700 140 L 740 140" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
         <path data-edge-from="identity" data-edge-to="l4lb" data-edge-key="4" data-edge-id="identity-to-l4lb" data-composition-points="870,140;910,140" d="M 870 140 L 910 140" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="l4lb" data-edge-to="target" data-edge-label="Transmit" data-edge-key="5" data-edge-id="l4lb-to-target" data-composition-points="1040,140;1090,140" d="M 1040 140 L 1090 140" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="l4lb" data-edge-to="target" data-edge-label="Transmit" data-edge-key="5" data-edge-id="l4lb-to-target" data-composition-points="1050,140;1090,140" d="M 1050 140 L 1090 140" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
         <g id="node-app" data-node-id="app" data-node-label="Application Pod" tabindex="0" role="button" aria-label="Focus Application Pod, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-context="Architecture component">
@@ -5100,12 +5100,12 @@
 
         <g id="node-l4lb" data-node-id="l4lb" data-node-label="L4 Load Balancing" tabindex="0" role="button" aria-label="Focus L4 Load Balancing, ztunnel Features" aria-pressed="false" data-node-kind="backend" data-node-context="ztunnel Features">
           <title>L4 Load Balancing · ztunnel Features</title>
-          <rect x="910" y="110" width="130" height="60" rx="6" class="c-mask"/>
-          <rect x="910" y="110" width="130" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <rect x="910" y="110" width="140" height="60" rx="6" class="c-mask"/>
+          <rect x="910" y="110" width="140" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(916 116) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" x="975" y="144" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">L4 Load Balancing</text>
+          <text data-node-label="" x="980" y="144" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">L4 Load Balancing</text>
         </g>
 
         <g id="node-target" data-node-id="target" data-node-label="Target Service" tabindex="0" role="button" aria-label="Focus Target Service, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-context="Architecture component">
@@ -5128,8 +5128,8 @@
 
 
         <g data-detail="context" data-edge-from="l4lb" data-edge-to="target" data-edge-label="Transmit" data-edge-key="5" data-edge-id="l4lb-to-target">
-          <rect x="1080.8" y="96" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="1105" y="106" class="t-backend" font-size="8" text-anchor="middle">Transmit</text>
+          <rect x="1085.8" y="96" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="1110" y="106" class="t-backend" font-size="8" text-anchor="middle">Transmit</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->

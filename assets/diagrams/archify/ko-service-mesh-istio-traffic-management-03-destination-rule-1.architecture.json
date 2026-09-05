@@ -38,7 +38,18 @@
         ],
         "note": "정책이 적용된 트래픽이 subset에 속한 reviews 파드들로 분산된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -80,7 +80,7 @@
         60
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -90,11 +90,11 @@
       "label": "Duplicate code",
       "sublabel": "Repeated in each service",
       "pos": [
-        560,
+        580,
         60
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -104,11 +104,11 @@
       "label": "Inconsistent implementation",
       "sublabel": "Varies per service",
       "pos": [
-        780,
+        820,
         60
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -118,11 +118,11 @@
       "label": "Difficult maintenance",
       "sublabel": "Rising cost of change",
       "pos": [
-        1000,
+        1060,
         60
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -136,7 +136,7 @@
         420
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -146,11 +146,11 @@
       "label": "Declarative config",
       "sublabel": "Centrally managed YAML",
       "pos": [
-        560,
+        580,
         420
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -160,11 +160,11 @@
       "label": "Consistent policy",
       "sublabel": "Same for every service",
       "pos": [
-        780,
+        820,
         420
       ],
       "size": [
-        180,
+        210,
         64
       ]
     },
@@ -174,11 +174,11 @@
       "label": "No code changes needed",
       "sublabel": "Canary · mTLS · tracing",
       "pos": [
-        1000,
+        1060,
         420
       ],
       "size": [
-        180,
+        210,
         64
       ]
     }

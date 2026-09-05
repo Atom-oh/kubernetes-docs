@@ -47,7 +47,18 @@
         ],
         "note": "모든 기능이 Kubernetes 마이크로서비스로 이전되어 마이그레이션이 완료된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

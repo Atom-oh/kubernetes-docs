@@ -5036,8 +5036,8 @@
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="app1" data-edge-to="sidecar1" data-edge-label="양방향" data-edge-key="0" data-edge-id="app1-sidecar1" data-composition-points="210,250;290,250" d="M 210 250 L 290 250" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="app2" data-edge-to="ztunnel" data-edge-label="투명하게" data-edge-key="1" data-edge-id="app2-ztunnel" data-composition-points="695,140;695,300" d="M 695 140 L 695 300" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="ztunnel" data-edge-to="waypoint" data-edge-label="L7 필요 시" data-edge-key="2" data-edge-id="ztunnel-waypoint" data-composition-points="790,330;880,330" d="M 790 330 L 880 330" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="app2" data-edge-to="ztunnel" data-edge-label="투명하게" data-edge-key="1" data-edge-id="app2-ztunnel" data-composition-points="700,140;700,300" d="M 700 140 L 700 300" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="ztunnel" data-edge-to="waypoint" data-edge-label="L7 필요 시" data-edge-key="2" data-edge-id="ztunnel-waypoint" data-composition-points="800,330;880,330" d="M 800 330 L 880 330" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-app1" data-node-id="app1" data-node-label="Application Container" tabindex="0" role="button" aria-label="Focus Application Container, 애플리케이션 코드, Sidecar Mode (기존)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="애플리케이션 코드" data-node-context="Sidecar Mode (기존)">
@@ -5065,25 +5065,25 @@
 
         <g id="node-app2" data-node-id="app2" data-node-label="Application Container Only" tabindex="0" role="button" aria-label="Focus Application Container Only, Sidecar 없음, Ambient Mode (신규)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Sidecar 없음" data-node-context="Ambient Mode (신규)">
           <title>Application Container Only · Sidecar 없음 · Ambient Mode (신규)</title>
-          <rect x="600" y="80" width="190" height="60" rx="6" class="c-mask"/>
-          <rect x="600" y="80" width="190" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <rect x="600" y="80" width="200" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="80" width="200" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(606 86) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="695" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Application Container Only</text>
-        <text data-detail="context" x="695" y="124" class="t-muted" font-size="9" text-anchor="middle">Sidecar 없음</text>
+          <text data-node-label="" data-detail-anchor="" x="700" y="108" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Application Container Only</text>
+        <text data-detail="context" x="700" y="124" class="t-muted" font-size="9" text-anchor="middle">Sidecar 없음</text>
         </g>
 
         <g id="node-ztunnel" data-node-id="ztunnel" data-node-label="Node-level ztunnel" tabindex="0" role="button" aria-label="Focus Node-level ztunnel, L4 Proxy, Ambient Mode (신규)" aria-pressed="false" data-node-kind="security" data-node-sublabel="L4 Proxy" data-node-context="Ambient Mode (신규)">
           <title>Node-level ztunnel · L4 Proxy · Ambient Mode (신규)</title>
-          <rect x="600" y="300" width="190" height="60" rx="6" class="c-mask"/>
-          <rect x="600" y="300" width="190" height="60" rx="6" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="600" y="300" width="200" height="60" rx="6" class="c-mask"/>
+          <rect x="600" y="300" width="200" height="60" rx="6" class="c-security" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(606 306) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="695" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node-level ztunnel</text>
-        <text data-detail="context" x="695" y="344" class="t-muted" font-size="9" text-anchor="middle">L4 Proxy</text>
+          <text data-node-label="" data-detail-anchor="" x="700" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Node-level ztunnel</text>
+        <text data-detail="context" x="700" y="344" class="t-muted" font-size="9" text-anchor="middle">L4 Proxy</text>
         </g>
 
         <g id="node-waypoint" data-node-id="waypoint" data-node-label="Waypoint Proxy" tabindex="0" role="button" aria-label="Focus Waypoint Proxy, L7 Features, Ambient Mode (신규)" aria-pressed="false" data-node-kind="security" data-node-sublabel="L7 Features" data-node-context="Ambient Mode (신규)">
@@ -5104,12 +5104,12 @@
           <text x="250" y="240" class="t-muted" font-size="8" text-anchor="middle">양방향</text>
         </g>
         <g data-detail="context" data-edge-from="app2" data-edge-to="ztunnel" data-edge-label="투명하게" data-edge-key="1" data-edge-id="app2-ztunnel">
-          <rect x="670.8" y="210" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="695" y="220" class="t-backend" font-size="8" text-anchor="middle">투명하게</text>
+          <rect x="675.8" y="210" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="700" y="220" class="t-backend" font-size="8" text-anchor="middle">투명하게</text>
         </g>
         <g data-detail="context" data-edge-from="ztunnel" data-edge-to="waypoint" data-edge-label="L7 필요 시" data-edge-key="2" data-edge-id="ztunnel-waypoint">
-          <rect x="806" y="310" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="835" y="320" class="t-messagebus" font-size="8" text-anchor="middle">L7 필요 시</text>
+          <rect x="811" y="310" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="840" y="320" class="t-messagebus" font-size="8" text-anchor="middle">L7 필요 시</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
@@ -5126,13 +5126,13 @@
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="40" y="412" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Backend" data-legend-x="40" data-legend-baseline="432" data-legend-width="78">
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="백엔드 서비스" data-legend-x="40" data-legend-baseline="432" data-legend-width="108">
             <rect x="40" y="423" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="62" y="432" class="t-muted" font-size="10" font-weight="500">Backend</text>
+            <text x="62" y="432" class="t-muted" font-size="10" font-weight="500">백엔드 서비스</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="Security" data-legend-x="140" data-legend-baseline="432" data-legend-width="83">
-            <rect x="140" y="423" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
-            <text x="162" y="432" class="t-muted" font-size="10" font-weight="500">Security</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="보안 구성 요소" data-legend-x="170" data-legend-baseline="432" data-legend-width="113">
+            <rect x="170" y="423" width="16" height="10" rx="2.5" class="c-security" stroke-width="1"/>
+            <text x="192" y="432" class="t-muted" font-size="10" font-weight="500">보안 구성 요소</text>
           </g>
         </g>
       </svg>

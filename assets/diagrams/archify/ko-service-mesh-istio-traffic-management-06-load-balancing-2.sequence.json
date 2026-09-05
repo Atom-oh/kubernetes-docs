@@ -33,7 +33,21 @@
         ],
         "note": "마지막 엔드포인트까지 돌면 처음으로 돌아가 순환합니다. 파드별 부하 차이는 고려하지 않습니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
   },
   "participants": [
     {

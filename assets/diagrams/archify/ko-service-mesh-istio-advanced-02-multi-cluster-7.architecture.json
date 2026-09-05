@@ -27,7 +27,18 @@
         ],
         "note": "클러스터 경계를 넘어도 서비스 간 통신은 mTLS로 보호된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

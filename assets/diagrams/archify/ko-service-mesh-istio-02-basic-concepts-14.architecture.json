@@ -5,29 +5,194 @@
     "title": "워크로드 등록 비교 요약",
     "output": "ko-service-mesh-istio-02-basic-concepts-14.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
-    { "id": "k8s-pod", "type": "backend", "label": "Kubernetes 파드", "sublabel": "클러스터 내부", "pos": [40, 100], "size": [170, 60] },
-    { "id": "multi-cluster", "type": "cloud", "label": "Multi-Cluster", "sublabel": "다른 클러스터", "pos": [40, 250], "size": [170, 60] },
-    { "id": "vm", "type": "external", "label": "Virtual Machine", "sublabel": "클러스터 외부", "pos": [40, 400], "size": [170, 60] },
-    { "id": "istio", "type": "security", "label": "Istio 서비스 메시", "sublabel": "Envoy 프록시 · 워크로드 등록", "pos": [400, 248], "size": [200, 64] },
-    { "id": "mtls", "type": "security", "label": "mTLS 암호화", "pos": [780, 60], "size": [170, 56] },
-    { "id": "traffic", "type": "backend", "label": "트래픽 관리", "pos": [780, 180], "size": [170, 56] },
-    { "id": "policy", "type": "security", "label": "보안 정책", "pos": [780, 300], "size": [170, 56] },
-    { "id": "metrics", "type": "backend", "label": "메트릭 & 추적", "pos": [780, 420], "size": [170, 56] }
+    {
+      "id": "k8s-pod",
+      "type": "backend",
+      "label": "Kubernetes 파드",
+      "sublabel": "클러스터 내부",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "multi-cluster",
+      "type": "cloud",
+      "label": "Multi-Cluster",
+      "sublabel": "다른 클러스터",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "external",
+      "label": "Virtual Machine",
+      "sublabel": "클러스터 외부",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "istio",
+      "type": "security",
+      "label": "Istio 서비스 메시",
+      "sublabel": "Envoy 프록시 · 워크로드 등록",
+      "pos": [
+        400,
+        248
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS 암호화",
+      "pos": [
+        780,
+        60
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "traffic",
+      "type": "backend",
+      "label": "트래픽 관리",
+      "pos": [
+        780,
+        180
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "보안 정책",
+      "pos": [
+        780,
+        300
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "메트릭 & 추적",
+      "pos": [
+        780,
+        420
+      ],
+      "size": [
+        170,
+        56
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "워크로드 유형", "wraps": ["k8s-pod", "multi-cluster", "vm"] },
-    { "kind": "region", "label": "공통 기능", "wraps": ["mtls", "traffic", "policy", "metrics"] }
+    {
+      "kind": "region",
+      "label": "워크로드 유형",
+      "wraps": [
+        "k8s-pod",
+        "multi-cluster",
+        "vm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "공통 기능",
+      "wraps": [
+        "mtls",
+        "traffic",
+        "policy",
+        "metrics"
+      ]
+    }
   ],
   "connections": [
-    { "id": "k8s-istio", "from": "k8s-pod", "to": "istio", "label": "사이드카 자동 주입", "variant": "emphasis" },
-    { "id": "mc-istio", "from": "multi-cluster", "to": "istio" },
-    { "id": "vm-istio", "from": "vm", "to": "istio", "label": "WorkloadEntry 등록" },
-    { "id": "istio-mtls", "from": "istio", "to": "mtls" },
-    { "id": "istio-traffic", "from": "istio", "to": "traffic" },
-    { "id": "istio-policy", "from": "istio", "to": "policy" },
-    { "id": "istio-metrics", "from": "istio", "to": "metrics" }
+    {
+      "id": "k8s-istio",
+      "from": "k8s-pod",
+      "to": "istio",
+      "label": "사이드카 자동 주입",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mc-istio",
+      "from": "multi-cluster",
+      "to": "istio"
+    },
+    {
+      "id": "vm-istio",
+      "from": "vm",
+      "to": "istio",
+      "label": "WorkloadEntry 등록"
+    },
+    {
+      "id": "istio-mtls",
+      "from": "istio",
+      "to": "mtls"
+    },
+    {
+      "id": "istio-traffic",
+      "from": "istio",
+      "to": "traffic"
+    },
+    {
+      "id": "istio-policy",
+      "from": "istio",
+      "to": "policy"
+    },
+    {
+      "id": "istio-metrics",
+      "from": "istio",
+      "to": "metrics"
+    }
   ]
 }

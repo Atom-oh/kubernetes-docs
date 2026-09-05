@@ -27,7 +27,18 @@
         ],
         "note": "Pilot·Citadel·Galley가 istiod 하나로 합쳐져 xDS 프로토콜로 Envoy 프록시를 설정한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

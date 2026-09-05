@@ -31,7 +31,21 @@
         ],
         "note": "Order → Payment는 단순한 호출이라 East-West Gateway 대신 VPC Lattice Service Network로 라우팅한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
     {

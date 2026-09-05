@@ -8,7 +8,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "frontend": {
           "label": "Start"
@@ -70,11 +70,11 @@
       "label": "Service Mesh Selection",
       "sublabel": "start of the decision",
       "pos": [
-        492,
+        482,
         30
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -84,11 +84,11 @@
       "label": "Team experience?",
       "sublabel": "prior mesh experience",
       "pos": [
-        492,
+        482,
         150
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -98,11 +98,11 @@
       "label": "Resource constraints?",
       "sublabel": "CPU / memory efficiency",
       "pos": [
-        180,
+        170,
         290
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -126,11 +126,11 @@
       "label": "Feature requirements?",
       "sublabel": "required feature scope",
       "pos": [
-        650,
+        640,
         430
       ],
       "size": [
-        150,
+        170,
         60
       ]
     },
@@ -173,7 +173,7 @@
         430
       ],
       "size": [
-        130,
+        140,
         60
       ]
     },

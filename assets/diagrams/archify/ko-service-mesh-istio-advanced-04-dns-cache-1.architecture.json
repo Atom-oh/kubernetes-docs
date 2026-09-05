@@ -31,7 +31,21 @@
         ],
         "note": "그 외 외부 도메인은 캐시 미스 시 CoreDNS에 조회하고, 결과를 캐시해 재사용한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
     {

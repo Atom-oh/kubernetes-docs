@@ -39,7 +39,24 @@
         ],
         "note": "notRemoteIpBlocks 203.0.113.0/24 DENY 정책이 원본 IP 1.2.3.4를 거부해 403 Forbidden을 반환한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

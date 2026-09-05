@@ -33,7 +33,24 @@
         ],
         "note": "Istio Gateway부터 서비스 A·B·C까지는 Envoy 사이드카가 자동 mTLS(Envoy-to-Envoy)로 연결한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -41,7 +41,18 @@
         ],
         "note": "Service Mesh가 자동 mTLS·중앙 집중식 정책·통합 관찰성으로 네 서비스를 제어한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

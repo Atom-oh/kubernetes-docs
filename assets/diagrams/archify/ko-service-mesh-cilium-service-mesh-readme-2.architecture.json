@@ -11,7 +11,7 @@
       600
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "external": {
           "label": "워크로드"

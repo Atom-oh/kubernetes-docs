@@ -27,7 +27,21 @@
         ],
         "note": "애플리케이션의 외부 호출도 같은 사이드카를 거쳐 네트워크로 대상 서비스에 전달된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {
