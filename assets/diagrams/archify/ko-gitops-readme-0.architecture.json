@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CNCF OpenGitOps 원칙",
+    "output": "ko-gitops-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "핵심 개념"
+        },
+        "backend": {
+          "label": "GitOps 원칙"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "gitops",
+      "type": "cloud",
+      "label": "GitOps 원칙",
+      "sublabel": "CNCF OpenGitOps 4대 원칙",
+      "tag": "Single Source of Truth",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        240,
+        66
+      ]
+    },
+    {
+      "id": "declarative",
+      "type": "backend",
+      "label": "선언적 (Declarative)",
+      "sublabel": "원하는 상태를 코드로 정의",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "versioned",
+      "type": "backend",
+      "label": "버전 관리 (Versioned)",
+      "sublabel": "Git 이력 · 리뷰 · 롤백",
+      "pos": [
+        320,
+        240
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "automated",
+      "type": "backend",
+      "label": "자동 적용 (Automated)",
+      "sublabel": "승인된 변경 자동 배포",
+      "pos": [
+        600,
+        240
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "reconciled",
+      "type": "backend",
+      "label": "지속적 조정 (Reconciled)",
+      "sublabel": "드리프트 감지 · 자체 치유",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "to-declarative",
+      "from": "gitops",
+      "to": "declarative",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "to-versioned",
+      "from": "gitops",
+      "to": "versioned",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "to-automated",
+      "from": "gitops",
+      "to": "automated",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "to-reconciled",
+      "from": "gitops",
+      "to": "reconciled",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "선언적 · 버전 관리",
+      "items": [
+        "시스템의 원하는 상태(Desired State)를 \"어떻게\"가 아닌 \"무엇\"으로 정의한다",
+        "모든 구성은 Git에서 버전 관리되어 변경 이력 추적, Pull Request 리뷰, 롤백, 감사 추적이 가능하다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "자동 적용",
+      "items": [
+        "승인된 변경 사항은 자동으로 시스템에 적용된다",
+        "커밋 → CI 빌드·테스트 → Git 반영 → GitOps 도구가 감지해 Kubernetes에 배포"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "지속적 조정",
+      "items": [
+        "GitOps 에이전트가 실제 상태와 원하는 상태를 지속적으로 비교한다",
+        "드리프트 감지, 자체 치유(원하는 상태로 자동 복구), 불일치 시 알림"
+      ]
+    }
+  ]
+}

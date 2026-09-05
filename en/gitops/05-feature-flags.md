@@ -319,11 +319,15 @@ flagd can run in two modes on Kubernetes. The choice depends on your latency req
 
 **Sidecar Mode** (injected by the OpenFeature Operator):
 
-![Architecture diagram showing an application container calling a flagd sidecar over localhost inside the same pod, while the sidecar watches a FeatureFlag custom resource for updates.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-4.svg)
+![Architecture diagram of flagd sidecar mode: an application container calls the flagd sidecar over localhost port 8013 inside the same pod, the sidecar watches a FeatureFlag custom resource, and the OpenFeature Operator injects the sidecar.](../.gitbook/assets/en-gitops-05-feature-flags-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-4.html)
 
 **Standalone Mode** (centralized deployment):
 
-![Architecture diagram showing three application pods calling a shared flagd Service over gRPC, backed by a multi-replica flagd Deployment in its own namespace that watches a FeatureFlag custom resource.](../../assets/diagrams/rendered/en-gitops-05-feature-flags-5.svg)
+![Architecture diagram showing three application pods calling a shared flagd Service over gRPC, backed by a multi-replica flagd Deployment in its own namespace that watches a FeatureFlag custom resource.](../.gitbook/assets/en-gitops-05-feature-flags-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-05-feature-flags-5.html)
 
 | Aspect | Sidecar | Standalone |
 |--------|---------|------------|

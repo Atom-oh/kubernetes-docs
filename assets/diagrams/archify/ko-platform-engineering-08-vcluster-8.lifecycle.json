@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "vCluster 라이프사이클 관리",
+    "output": "ko-platform-engineering-08-vcluster-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "views": [
+      {
+        "id": "provision",
+        "label": "요청 → Running",
+        "focus": [
+          "requested",
+          "approved",
+          "provisioning",
+          "running"
+        ],
+        "note": "개발자 요청이 PR 머지와 GitOps 동기화를 거쳐 Running 상태에 도달한다."
+      },
+      {
+        "id": "sleep-wake",
+        "label": "Sleep / Pause",
+        "focus": [
+          "running",
+          "sleeping",
+          "paused"
+        ],
+        "note": "비활성 시 자동 Sleep, 접근 감지 시 Wake. Pause/Resume은 운영자가 수동으로 수행한다."
+      },
+      {
+        "id": "ttl",
+        "label": "TTL 삭제",
+        "focus": [
+          "running",
+          "sleeping",
+          "deleting",
+          "deleted"
+        ],
+        "note": "TTL 만료 또는 수동 삭제로 Deleting에 진입하고 정리가 끝나면 종료된다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "프로비저닝 경로"
+    },
+    {
+      "id": "idle",
+      "label": "일시중지 · 절전"
+    },
+    {
+      "id": "terminal",
+      "label": "삭제"
+    }
+  ],
+  "states": [
+    {
+      "id": "requested",
+      "type": "start",
+      "label": "Requested",
+      "sublabel": "개발자 요청",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "approved",
+      "type": "active",
+      "label": "Approved",
+      "sublabel": "PR 머지",
+      "lane": "main",
+      "col": 1
+    },
+    {
+      "id": "provisioning",
+      "type": "active",
+      "label": "Provisioning",
+      "sublabel": "GitOps 동기화",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "running",
+      "type": "success",
+      "label": "Running",
+      "sublabel": "사용 가능",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "sleeping",
+      "type": "waiting",
+      "label": "Sleeping",
+      "sublabel": "자동 절전",
+      "lane": "idle",
+      "col": 0
+    },
+    {
+      "id": "paused",
+      "type": "waiting",
+      "label": "Paused",
+      "sublabel": "수동 일시중지",
+      "lane": "idle",
+      "col": 2
+    },
+    {
+      "id": "deleting",
+      "type": "failure",
+      "label": "Deleting",
+      "sublabel": "TTL 만료 · 수동 삭제",
+      "lane": "terminal",
+      "col": 1
+    },
+    {
+      "id": "deleted",
+      "type": "neutral",
+      "label": "Deleted",
+      "sublabel": "정리 완료",
+      "lane": "terminal",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "requested",
+      "to": "approved",
+      "label": "PR 머지",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "approved",
+      "to": "provisioning",
+      "label": "동기화",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "provisioning",
+      "to": "running",
+      "label": "준비 완료",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "running",
+      "to": "sleeping",
+      "label": "비활성 30분",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1,
+      "labelDy": -12
+    },
+    {
+      "from": "sleeping",
+      "to": "running",
+      "label": "접근 감지 (WAKE)",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "labelSegment": 0,
+      "labelDx": 8,
+      "labelDy": 14
+    },
+    {
+      "from": "running",
+      "to": "paused",
+      "label": "수동 일시중지",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": -14,
+      "labelSegment": 1
+    },
+    {
+      "from": "paused",
+      "to": "running",
+      "label": "수동 재개",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "labelSegment": 0,
+      "labelDy": 0,
+      "labelDx": 42
+    },
+    {
+      "from": "running",
+      "to": "deleting",
+      "label": "TTL/수동 삭제",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "right-channel",
+      "channelX": 840
+    },
+    {
+      "from": "sleeping",
+      "to": "deleting",
+      "label": "TTL 만료",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1,
+      "labelDy": -12
+    },
+    {
+      "from": "deleting",
+      "to": "deleted",
+      "label": "완료",
+      "route": "straight",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Sleep 정책 (환경별)",
+      "items": [
+        "개발 환경 — 비활성 30분 후",
+        "스테이징 · 교육 — 비활성 1시간 후",
+        "프리뷰 — 비활성 15분 후, SaaS 테넌트 — 없음"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "TTL (자동 삭제)",
+      "items": [
+        "개발 90일 · 스테이징 180일",
+        "CI/CD 2시간 · 프리뷰 PR Close 시",
+        "교육 종료 시 · SaaS 계약 만료 시"
+      ]
+    }
+  ]
+}

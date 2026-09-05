@@ -685,7 +685,9 @@ curl -H "Authorization: Bearer $ARGOCD_TOKEN" \
 
 ### 패턴 1: 팀별 프로젝트
 
-![ArgoCD 안의 Frontend, Backend, Data 세 프로젝트가 모두 동일하게 Dev, Staging, Prod 클러스터 전체로 배포되는 구조를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-gitops-argocd-06-projects-rbac-1.svg)
+![ArgoCD 안의 Frontend, Backend, Data 세 팀별 프로젝트가 destinations.server '*' 규칙을 통해 Dev, Staging, Prod 클러스터 전체로 동일하게 배포되는 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-06-projects-rbac-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-06-projects-rbac-1.html)
 
 ```yaml
 # Frontend 프로젝트

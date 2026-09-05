@@ -1830,7 +1830,9 @@ export const KedaScalingCard = () => {
 
 Backstage includes a built-in permission framework that controls access to catalog entities, templates, and plugin features. The permission system is policy-based and integrates with the catalog's ownership model.
 
-![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-2.svg)
+![Flowchart showing a user request evaluated against a permission policy — informed by catalog ownership and group membership — that allows the action, denies it with a 403, or conditionally filters the results.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-10.html)
 
 ### Enabling the Permission Framework
 

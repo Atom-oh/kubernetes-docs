@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "자동화된 배포 — 코드 커밋에서 Kubernetes 배포까지",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      600
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ci",
+        "label": "CI 단계",
+        "focus": [
+          "dev",
+          "git",
+          "ci"
+        ],
+        "note": "코드 커밋이 webhook으로 CI를 깨우고, 빌드·테스트 결과가 매니페스트 업데이트로 Git에 다시 반영된다."
+      },
+      {
+        "id": "cd",
+        "label": "GitOps 배포 단계",
+        "focus": [
+          "git",
+          "gitops",
+          "k8s"
+        ],
+        "note": "GitOps 도구가 Git의 변경을 감지해 Kubernetes에 자동 배포하고, 상태를 Git에 보고한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git 저장소",
+      "sublabel": "Single Source of Truth"
+    },
+    {
+      "id": "ci",
+      "type": "backend",
+      "label": "CI 시스템",
+      "sublabel": "빌드 · 테스트"
+    },
+    {
+      "id": "gitops",
+      "type": "backend",
+      "label": "GitOps 도구",
+      "sublabel": "예: ArgoCD, FluxCD"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 320,
+      "label": "CI — 빌드와 매니페스트 갱신"
+    },
+    {
+      "from": 345,
+      "to": 500,
+      "label": "GitOps — 감지와 자동 배포"
+    }
+  ],
+  "messages": [
+    {
+      "id": "commit",
+      "from": "dev",
+      "to": "git",
+      "y": 190,
+      "label": "코드 커밋"
+    },
+    {
+      "id": "webhook",
+      "from": "git",
+      "to": "ci",
+      "y": 235,
+      "label": "webhook 트리거"
+    },
+    {
+      "id": "manifest",
+      "from": "ci",
+      "to": "git",
+      "y": 295,
+      "label": "매니페스트 업데이트",
+      "variant": "return",
+      "note": "빌드 & 테스트 통과 후 매니페스트 갱신"
+    },
+    {
+      "id": "detect",
+      "from": "git",
+      "to": "gitops",
+      "y": 380,
+      "label": "변경 감지"
+    },
+    {
+      "id": "deploy",
+      "from": "gitops",
+      "to": "k8s",
+      "y": 425,
+      "label": "자동 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "status",
+      "from": "gitops",
+      "to": "git",
+      "y": 475,
+      "label": "상태 업데이트",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ci",
+      "from": 230,
+      "to": 302,
+      "type": "backend"
+    },
+    {
+      "participant": "gitops",
+      "from": 375,
+      "to": 482,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 420,
+      "to": 445,
+      "type": "cloud"
+    }
+  ]
+}

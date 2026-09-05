@@ -306,7 +306,9 @@ kubescape list controls
 
 ### Scanning Pipeline Flow
 
-![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../../assets/diagrams/rendered/en-security-11-kubescape-1.svg)
+![Sequential workflow diagram showing a Kubescape scan traveling from the CLI through framework selection, resource collection, control checks, and severity assessment to risk scoring and report generation.](../.gitbook/assets/en-security-11-kubescape-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-1.html)
 
 ### Cluster Scanning
 

@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FinOps 라이프사이클",
+    "output": "ko-ops-13-finops-cost-platform-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Inform · 가시성 확보"
+        },
+        "backend": {
+          "label": "Optimize · 비용 최적화"
+        },
+        "security": {
+          "label": "Operate · 운영 체계화"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cycle",
+        "label": "세 단계 순환",
+        "focus": [
+          "inform",
+          "optimize",
+          "operate"
+        ],
+        "note": "Inform → Optimize → Operate가 한 번으로 끝나지 않고 반복되는 지속적 개선 루프다."
+      },
+      {
+        "id": "activities",
+        "label": "단계별 핵심 활동",
+        "focus": [
+          "inform",
+          "inform-acts",
+          "optimize",
+          "optimize-acts",
+          "operate",
+          "operate-acts"
+        ],
+        "note": "각 단계가 수행하는 네 가지 핵심 활동을 단계 아래에 묶어 보여준다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "inform",
+      "type": "frontend",
+      "label": "Inform",
+      "sublabel": "가시성 확보",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        280,
+        64
+      ],
+      "tag": "1단계"
+    },
+    {
+      "id": "optimize",
+      "type": "backend",
+      "label": "Optimize",
+      "sublabel": "비용 최적화",
+      "pos": [
+        440,
+        160
+      ],
+      "size": [
+        280,
+        64
+      ],
+      "tag": "2단계"
+    },
+    {
+      "id": "operate",
+      "type": "security",
+      "label": "Operate",
+      "sublabel": "운영 체계화",
+      "pos": [
+        820,
+        160
+      ],
+      "size": [
+        280,
+        64
+      ],
+      "tag": "3단계"
+    },
+    {
+      "id": "inform-acts",
+      "type": "frontend",
+      "label": "Inform 활동",
+      "sublabel": "비용 할당 · 태깅 전략 · 대시보드 · 리포팅",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "optimize-acts",
+      "type": "backend",
+      "label": "Optimize 활동",
+      "sublabel": "라이트사이징 · Spot 활용 · 유휴 리소스 제거 · 예약 인스턴스",
+      "pos": [
+        440,
+        360
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "operate-acts",
+      "type": "security",
+      "label": "Operate 활동",
+      "sublabel": "예산 관리 · 정책 자동화 · 비용 리뷰 · 거버넌스",
+      "pos": [
+        820,
+        360
+      ],
+      "size": [
+        280,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "FinOps 라이프사이클",
+      "wraps": [
+        "inform",
+        "optimize",
+        "operate"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "inform-to-optimize",
+      "from": "inform",
+      "to": "optimize",
+      "variant": "emphasis"
+    },
+    {
+      "id": "optimize-to-operate",
+      "from": "optimize",
+      "to": "operate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "operate-to-inform",
+      "from": "operate",
+      "to": "inform",
+      "label": "지속적 개선 루프",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          960,
+          80
+        ],
+        [
+          200,
+          80
+        ]
+      ]
+    },
+    {
+      "id": "inform-acts-edge",
+      "from": "inform",
+      "to": "inform-acts",
+      "variant": "dashed"
+    },
+    {
+      "id": "optimize-acts-edge",
+      "from": "optimize",
+      "to": "optimize-acts",
+      "variant": "dashed"
+    },
+    {
+      "id": "operate-acts-edge",
+      "from": "operate",
+      "to": "operate-acts",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Inform (가시성 확보)",
+      "items": [
+        "Namespace, Label 기반 비용 할당 모델 설계",
+        "공유 비용(컨트롤 플레인, 네트워킹 등) 분배 규칙 정의",
+        "팀별/서비스별 비용 대시보드 구축",
+        "정기 비용 리포트 자동화"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Optimize (비용 최적화)",
+      "items": [
+        "VPA 추천 기반 리소스 라이트사이징",
+        "Spot Instance / Savings Plans / Reserved Instance 활용",
+        "미사용 PVC, 비활성 Deployment 등 유휴 리소스 자동 탐지 및 정리",
+        "스토리지 계층 최적화 (EBS 타입, S3 Lifecycle Policy)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Operate (운영 체계화)",
+      "items": [
+        "비용 예산 설정 및 초과 알림",
+        "Kyverno/OPA로 비용 관련 정책 자동 적용",
+        "주간/월간 비용 리뷰 프로세스 운영",
+        "FinOps 성숙도 측정 및 개선"
+      ]
+    }
+  ]
+}

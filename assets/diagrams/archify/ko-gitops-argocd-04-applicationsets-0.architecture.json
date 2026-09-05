@@ -6,19 +6,20 @@
     "output": "ko-gitops-argocd-04-applicationsets-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
+    "viewBox": [1200, 560],
     "views": [
       { "id": "inputs", "label": "입력", "focus": ["generator", "template", "process"], "note": "Generator가 만든 파라미터와 Template의 Application 스펙이 컨트롤러로 들어간다." },
       { "id": "fanout", "label": "팬아웃", "focus": ["process", "app1", "app2", "app3", "appn"], "note": "템플릿 처리 한 번으로 여러 Application 리소스가 동시에 생성된다." }
     ]
   },
   "components": [
-    { "id": "generator", "type": "external", "label": "Generator", "sublabel": "list · cluster · git 등", "pos": [60, 150], "size": [170, 64] },
-    { "id": "template", "type": "external", "label": "Template", "sublabel": "Application 스펙", "pos": [60, 380], "size": [170, 64] },
-    { "id": "process", "type": "backend", "label": "템플릿 처리", "sublabel": "파라미터 치환", "pos": [370, 265], "size": [170, 64] },
-    { "id": "app1", "type": "cloud", "label": "Application 1", "pos": [680, 80], "size": [170, 60] },
-    { "id": "app2", "type": "cloud", "label": "Application 2", "pos": [680, 210], "size": [170, 60] },
-    { "id": "app3", "type": "cloud", "label": "Application 3", "pos": [680, 340], "size": [170, 60] },
-    { "id": "appn", "type": "cloud", "label": "Application N", "pos": [680, 470], "size": [170, 60] }
+    { "id": "generator", "type": "external", "label": "Generator", "sublabel": "list · cluster · git 등", "pos": [60, 100], "size": [170, 64] },
+    { "id": "template", "type": "external", "label": "Template", "sublabel": "Application 스펙", "pos": [60, 340], "size": [170, 64] },
+    { "id": "process", "type": "backend", "label": "템플릿 처리", "sublabel": "파라미터 치환", "pos": [470, 220], "size": [170, 64] },
+    { "id": "app1", "type": "cloud", "label": "Application 1", "pos": [880, 40], "size": [170, 60] },
+    { "id": "app2", "type": "cloud", "label": "Application 2", "pos": [880, 160], "size": [170, 60] },
+    { "id": "app3", "type": "cloud", "label": "Application 3", "pos": [880, 280], "size": [170, 60] },
+    { "id": "appn", "type": "cloud", "label": "Application N", "pos": [880, 400], "size": [170, 60] }
   ],
   "boundaries": [
     { "kind": "region", "label": "입력", "wraps": ["generator", "template"] },

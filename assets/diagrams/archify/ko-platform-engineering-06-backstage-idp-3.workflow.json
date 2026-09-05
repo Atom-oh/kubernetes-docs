@@ -1,0 +1,185 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Backstage Permission Framework 흐름",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "decision-path",
+        "label": "요청에서 판정까지",
+        "focus": [
+          "request",
+          "framework",
+          "policy",
+          "allow",
+          "deny",
+          "conditional"
+        ],
+        "note": "사용자 요청이 Permission Framework와 Permission Policy를 거쳐 허용·거부·조건부 허용 중 하나로 판정된다."
+      },
+      {
+        "id": "policy-examples",
+        "label": "정책 예시 참조",
+        "focus": [
+          "policy",
+          "examples"
+        ],
+        "note": "Permission Policy는 platform-team, backend-team, viewer 같은 팀 기반 정책 예시를 참조해 판정한다."
+      }
+    ],
+    "viewBox": [
+      930,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자"
+    },
+    {
+      "id": "framework",
+      "label": "Permission Framework"
+    },
+    {
+      "id": "outcome",
+      "label": "판정 결과"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "framework",
+    "policy",
+    "allow"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "user",
+      "col": 0,
+      "type": "frontend",
+      "label": "사용자 요청",
+      "sublabel": "플러그인 기능 접근 시도",
+      "width": 140
+    },
+    {
+      "id": "framework",
+      "lane": "framework",
+      "col": 1,
+      "type": "security",
+      "label": "Permission\nFramework",
+      "sublabel": "플러그인 접근 제어",
+      "tag": "focal",
+      "width": 140
+    },
+    {
+      "id": "policy",
+      "lane": "framework",
+      "col": 2,
+      "type": "security",
+      "label": "Permission\nPolicy",
+      "sublabel": "정책으로 판정",
+      "width": 140
+    },
+    {
+      "id": "examples",
+      "lane": "framework",
+      "col": 4,
+      "type": "external",
+      "label": "정책 예시",
+      "sublabel": "팀 기반 정책 참조",
+      "width": 140
+    },
+    {
+      "id": "allow",
+      "lane": "outcome",
+      "col": 2,
+      "type": "backend",
+      "label": "허용",
+      "sublabel": "ALLOW",
+      "width": 120
+    },
+    {
+      "id": "deny",
+      "lane": "outcome",
+      "col": 1,
+      "type": "backend",
+      "label": "거부",
+      "sublabel": "DENY",
+      "width": 120
+    },
+    {
+      "id": "conditional",
+      "lane": "outcome",
+      "col": 3,
+      "type": "backend",
+      "label": "조건부 허용",
+      "sublabel": "CONDITIONAL",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "framework"
+    },
+    {
+      "from": "framework",
+      "to": "policy"
+    },
+    {
+      "from": "policy",
+      "to": "examples",
+      "label": "참조",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "from": "policy",
+      "to": "allow",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "policy",
+      "to": "deny",
+      "variant": "security",
+      "role": "error",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "policy",
+      "to": "conditional",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "정책 예시",
+      "items": [
+        "platform-team: 모든 권한",
+        "backend-team: 소유 서비스만 수정",
+        "viewer: 읽기 전용"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "판정 결과",
+      "items": [
+        "허용: 요청한 작업을 그대로 수행",
+        "거부: 인증되지 않은 사용자 등 요청 차단",
+        "조건부 허용: IS_ENTITY_OWNER 같은 조건을 만족할 때만 허용"
+      ]
+    }
+  ]
+}

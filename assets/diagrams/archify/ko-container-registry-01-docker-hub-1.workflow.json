@@ -1,0 +1,233 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Docker Hub Rate Limit 대응 전략",
+    "output": "public/archmaps/ko-container-registry-01-docker-hub-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "detect",
+        "label": "발생 여부 확인",
+        "focus": [
+          "rateLimit",
+          "envCheck",
+          "authPull"
+        ],
+        "note": "Rate Limit이 이미 발생했으면 환경을 확인하고, 아직이면 인증된 Pull로 사전에 예방합니다."
+      },
+      {
+        "id": "cache",
+        "label": "환경별 캐시 전략",
+        "focus": [
+          "envCheck",
+          "ecr",
+          "harbor",
+          "containerd"
+        ],
+        "note": "AWS/EKS는 ECR Pull-through Cache, 자체 호스팅은 Harbor Pull Replication, 그 외는 containerd 미러를 적용합니다."
+      },
+      {
+        "id": "resolve",
+        "label": "해소 경로",
+        "focus": [
+          "ecr",
+          "harbor",
+          "containerd",
+          "authPull",
+          "resolved"
+        ],
+        "note": "네 가지 조치 모두 캐시·미러 또는 인증된 pull로 Docker Hub Rate Limit에 걸리지 않는 안정적인 pull 경로로 수렴합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "detect",
+      "label": "발생 여부 확인 · 사전 예방"
+    },
+    {
+      "id": "cache",
+      "label": "환경별 캐시 · 미러 전략"
+    }
+  ],
+  "mainPath": [
+    "rateLimit",
+    "envCheck",
+    "ecr",
+    "resolved"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "rateLimit"
+    ],
+    "allowedTerminals": [
+      "resolved"
+    ],
+    "requiredPaths": [
+      {
+        "from": "rateLimit",
+        "to": "resolved"
+      },
+      {
+        "from": "authPull",
+        "to": "resolved"
+      },
+      {
+        "from": "harbor",
+        "to": "resolved"
+      },
+      {
+        "from": "containerd",
+        "to": "resolved"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "rateLimit",
+      "lane": "detect",
+      "col": 0,
+      "type": "security",
+      "label": "Rate Limit 발생?",
+      "sublabel": "Pull 제한 초과",
+      "tag": "결정",
+      "width": 128
+    },
+    {
+      "id": "envCheck",
+      "lane": "cache",
+      "col": 1,
+      "type": "security",
+      "label": "환경 확인",
+      "sublabel": "AWS · 자체 호스팅 · 기타",
+      "tag": "결정",
+      "width": 124
+    },
+    {
+      "id": "ecr",
+      "lane": "cache",
+      "col": 2,
+      "type": "cloud",
+      "label": "ECR",
+      "sublabel": "Pull-through Cache",
+      "tag": "전략 2",
+      "width": 118
+    },
+    {
+      "id": "harbor",
+      "lane": "cache",
+      "col": 3,
+      "type": "database",
+      "label": "Harbor",
+      "sublabel": "Pull Replication",
+      "tag": "전략 3",
+      "width": 118
+    },
+    {
+      "id": "containerd",
+      "lane": "cache",
+      "col": 4,
+      "type": "backend",
+      "label": "containerd",
+      "sublabel": "registry.mirrors 설정",
+      "tag": "전략 1",
+      "width": 132
+    },
+    {
+      "id": "authPull",
+      "lane": "detect",
+      "col": 1,
+      "type": "security",
+      "label": "인증된 Pull 사용",
+      "sublabel": "imagePullSecrets",
+      "tag": "전략 4",
+      "width": 132
+    },
+    {
+      "id": "resolved",
+      "lane": "detect",
+      "col": 5,
+      "type": "external",
+      "label": "Rate Limit 해소",
+      "sublabel": "안정적인 pull 경로",
+      "tag": "결과",
+      "width": 124
+    }
+  ],
+  "edges": [
+    {
+      "from": "rateLimit",
+      "to": "envCheck",
+      "label": "YES",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rateLimit",
+      "to": "authPull",
+      "label": "NO",
+      "role": "branch"
+    },
+    {
+      "from": "envCheck",
+      "to": "ecr",
+      "label": "AWS/EKS",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "envCheck",
+      "to": "harbor",
+      "label": "SELF-HOST",
+      "role": "branch"
+    },
+    {
+      "from": "envCheck",
+      "to": "containerd",
+      "label": "OTHER",
+      "role": "branch"
+    },
+    {
+      "from": "ecr",
+      "to": "resolved",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "harbor",
+      "to": "resolved",
+      "role": "branch"
+    },
+    {
+      "from": "containerd",
+      "to": "resolved",
+      "role": "branch"
+    },
+    {
+      "from": "authPull",
+      "to": "resolved",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "캐시 · 미러 전략",
+      "items": [
+        "containerd registry.mirrors로 docker.io를 mirror.gcr.io 등으로 우회",
+        "ECR pull-through cache 규칙 + Secrets Manager 자격 증명으로 Docker Hub 프록시",
+        "Harbor replication rule로 필요한 이미지를 주기적으로 복제"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "사전 예방",
+      "items": [
+        "ServiceAccount 기본 imagePullSecrets로 모든 노드에서 인증된 pull",
+        "비밀번호 대신 Read-only Access Token 사용 권장"
+      ]
+    }
+  ]
+}

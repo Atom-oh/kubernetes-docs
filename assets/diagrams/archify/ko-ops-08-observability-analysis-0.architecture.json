@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "관찰 가능성 상관 분석 아키텍처",
+    "output": "ko-ops-08-observability-analysis-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "telemetry-path",
+        "label": "텔레메트리 수집 경로",
+        "focus": [
+          "app",
+          "receivers",
+          "processors",
+          "exporters"
+        ],
+        "note": "애플리케이션이 OTLP로 보낸 트레이스·로그·메트릭이 Collector 파이프라인을 통과한다."
+      },
+      {
+        "id": "stores",
+        "label": "저장소 팬아웃",
+        "focus": [
+          "exporters",
+          "prometheus",
+          "loki",
+          "tempo"
+        ],
+        "note": "Exporters가 신호 종류별로 Prometheus/AMP, Loki, Tempo에 분배한다."
+      },
+      {
+        "id": "correlation",
+        "label": "상관관계 조회",
+        "focus": [
+          "grafana",
+          "prometheus",
+          "loki",
+          "tempo"
+        ],
+        "note": "Grafana가 세 저장소를 조회하고, exemplar와 trace_id로 메트릭·로그가 Tempo의 트레이스와 연결된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Application Services",
+      "sublabel": "Service A · B · C",
+      "tag": "OTel SDK",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "receivers",
+      "type": "backend",
+      "label": "Receivers",
+      "sublabel": "OTLP 수신",
+      "pos": [
+        80,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "processors",
+      "type": "backend",
+      "label": "Processors",
+      "sublabel": "batch · filter",
+      "pos": [
+        490,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "exporters",
+      "type": "backend",
+      "label": "Exporters",
+      "sublabel": "신호별 팬아웃",
+      "pos": [
+        900,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus / AMP",
+      "sublabel": "메트릭 저장소",
+      "pos": [
+        80,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "로그 저장소",
+      "pos": [
+        900,
+        440
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo",
+      "sublabel": "트레이스 저장소 · 상관관계 허브",
+      "tag": "correlation hub",
+      "pos": [
+        490,
+        440
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "대시보드 · Explore",
+      "pos": [
+        490,
+        660
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OpenTelemetry Collector",
+      "wraps": [
+        "receivers",
+        "processors",
+        "exporters"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-otlp",
+      "from": "app",
+      "to": "receivers",
+      "label": "OTLP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rcv-prc",
+      "from": "receivers",
+      "to": "processors"
+    },
+    {
+      "id": "prc-exp",
+      "from": "processors",
+      "to": "exporters"
+    },
+    {
+      "id": "exp-metrics",
+      "from": "exporters",
+      "to": "prometheus",
+      "label": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "exp-logs",
+      "from": "exporters",
+      "to": "loki",
+      "label": "logs",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1016,
+        412
+      ]
+    },
+    {
+      "id": "exp-traces",
+      "from": "exporters",
+      "to": "tempo",
+      "label": "traces",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "grafana-prom",
+      "from": "grafana",
+      "to": "prometheus",
+      "label": "PromQL"
+    },
+    {
+      "id": "grafana-loki",
+      "from": "grafana",
+      "to": "loki",
+      "label": "LogQL"
+    },
+    {
+      "id": "grafana-tempo",
+      "from": "grafana",
+      "to": "tempo",
+      "label": "TraceQL",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "prom-exemplar",
+      "from": "prometheus",
+      "to": "tempo",
+      "label": "exemplar (trace_id)",
+      "variant": "dashed"
+    },
+    {
+      "id": "loki-traceid",
+      "from": "loki",
+      "to": "tempo",
+      "label": "trace_id",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "수집 파이프라인",
+      "items": [
+        "애플리케이션은 OTel SDK로 트레이스·로그·메트릭을 OTLP로 내보낸다",
+        "Collector는 Receivers → Processors(batch, filter) → Exporters 순으로 처리한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "저장소",
+      "items": [
+        "메트릭은 Prometheus / AMP, 로그는 Loki, 트레이스는 Tempo에 저장된다",
+        "Grafana가 PromQL · LogQL · TraceQL로 세 저장소를 조회한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "상관관계",
+      "items": [
+        "Exemplar가 메트릭 샘플에 trace_id를 붙여 Tempo 트레이스로 연결한다",
+        "구조화된 로그에 주입된 trace_id로 로그와 트레이스를 연결한다"
+      ]
+    }
+  ]
+}

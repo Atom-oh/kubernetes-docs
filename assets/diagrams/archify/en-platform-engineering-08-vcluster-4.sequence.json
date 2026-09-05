@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Self-Service Dev Environments in IDP",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "views": [
+      {
+        "id": "request",
+        "label": "Request via portal",
+        "focus": [
+          "developer",
+          "backstage",
+          "gitops"
+        ],
+        "note": "The developer never touches the host cluster: Backstage turns the form into a GitOps pull request."
+      },
+      {
+        "id": "provision",
+        "label": "GitOps provisioning",
+        "focus": [
+          "gitops",
+          "host",
+          "vcluster"
+        ],
+        "note": "ArgoCD syncs the merged PR, creates the namespace and waits for the vCluster API to become healthy."
+      },
+      {
+        "id": "handoff",
+        "label": "Kubeconfig hand-off",
+        "focus": [
+          "backstage",
+          "developer",
+          "vcluster",
+          "host"
+        ],
+        "note": "Status flows back to the portal; the developer receives a kubeconfig and uses the vCluster like a normal cluster."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "call"
+        },
+        "emphasis": {
+          "label": "headline step"
+        },
+        "return": {
+          "label": "return"
+        },
+        "dashed": {
+          "label": "syncer sync"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "developer",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "team member"
+    },
+    {
+      "id": "backstage",
+      "type": "frontend",
+      "label": "Backstage",
+      "sublabel": "IDP portal template"
+    },
+    {
+      "id": "gitops",
+      "type": "backend",
+      "label": "GitOps",
+      "sublabel": "GitHub + ArgoCD"
+    },
+    {
+      "id": "host",
+      "type": "cloud",
+      "label": "Host Cluster",
+      "sublabel": "EKS namespace"
+    },
+    {
+      "id": "vcluster",
+      "type": "backend",
+      "label": "vCluster",
+      "sublabel": "virtual control plane"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "Request"
+    },
+    {
+      "from": 290,
+      "to": 500,
+      "label": "Provision"
+    },
+    {
+      "from": 515,
+      "to": 604,
+      "label": "Use"
+    }
+  ],
+  "messages": [
+    {
+      "id": "request",
+      "from": "developer",
+      "to": "backstage",
+      "y": 183,
+      "label": "request vCluster (size, namespace)"
+    },
+    {
+      "id": "open-pr",
+      "from": "backstage",
+      "to": "gitops",
+      "y": 216,
+      "label": "open PR in platform-config"
+    },
+    {
+      "id": "pr-link",
+      "from": "gitops",
+      "to": "developer",
+      "y": 250,
+      "label": "PR link",
+      "variant": "return"
+    },
+    {
+      "id": "merge-sync",
+      "from": "gitops",
+      "to": "host",
+      "y": 332,
+      "label": "merge PR, ArgoCD sync: create namespace + Helm release",
+      "variant": "emphasis",
+      "note": "auto-approve or manual review"
+    },
+    {
+      "id": "pod-start",
+      "from": "host",
+      "to": "vcluster",
+      "y": 366,
+      "label": "start control-plane pod"
+    },
+    {
+      "id": "api-ready",
+      "from": "vcluster",
+      "to": "host",
+      "y": 398,
+      "label": "API ready",
+      "variant": "return"
+    },
+    {
+      "id": "healthy",
+      "from": "host",
+      "to": "gitops",
+      "y": 428,
+      "label": "Healthy",
+      "variant": "return"
+    },
+    {
+      "id": "status",
+      "from": "gitops",
+      "to": "backstage",
+      "y": 457,
+      "label": "sync status",
+      "variant": "return"
+    },
+    {
+      "id": "kubeconfig",
+      "from": "backstage",
+      "to": "developer",
+      "y": 486,
+      "label": "kubeconfig",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apply",
+      "from": "developer",
+      "to": "vcluster",
+      "y": 554,
+      "label": "kubectl apply",
+      "note": "developer now uses the vCluster as a normal Kubernetes cluster"
+    },
+    {
+      "id": "sync",
+      "from": "vcluster",
+      "to": "host",
+      "y": 586,
+      "label": "syncer: pods, services to host",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gitops",
+      "from": 212,
+      "to": 463,
+      "type": "backend"
+    },
+    {
+      "participant": "host",
+      "from": 328,
+      "to": 434,
+      "type": "cloud"
+    },
+    {
+      "participant": "vcluster",
+      "from": 362,
+      "to": 403,
+      "type": "backend"
+    }
+  ]
+}

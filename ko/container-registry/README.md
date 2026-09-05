@@ -8,7 +8,9 @@
 
 ### 컨테이너 레지스트리의 역할
 
-![에어갭 여부, 주 클라우드, EKS 사용 여부, 멀티 클라우드 여부에 따라 Harbor, Amazon ECR, Docker Hub 등 적합한 컨테이너 레지스트리를 선택하는 의사결정 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-README-0.png)
+![CI/CD 파이프라인이 빌드·테스트한 컨테이너 이미지를 컨테이너 레지스트리에 push하고, 레지스트리가 이미지를 저장·버전 관리·스캔한 뒤 Kubernetes 클러스터가 이를 pull해 실행·확장하는 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-readme-0.html)
 
 **핵심 기능:**
 - **이미지 저장**: 컨테이너 이미지 레이어를 효율적으로 저장
@@ -144,7 +146,9 @@ Docker Hub Free → Docker Hub Team → ECR Basic → ECR Enhanced → Harbor + 
 
 ## 의사결정 플로우차트
 
-![CI/CD 파이프라인이 빌드한 컨테이너 이미지를 컨테이너 레지스트리에 저장·버전관리·스캔한 뒤, 쿠버네티스 클러스터가 이를 가져와 실행·확장하는 파이프라인 흐름을 보여준다.](../.gitbook/assets/ko-container-registry-README-1.png)
+![컨테이너 레지스트리 선택 의사결정 플로우차트. 에어갭/폐쇄망 지원이 필요하면 자체 호스팅 Harbor, 인터넷이 연결된 AWS/EKS 워크로드면 Amazon ECR, 그 외 환경에서 규제 준수가 필요한 프로덕션이면 Harbor 또는 Docker Hub Business, 나머지는 Docker Hub Free/Pro를 권장한다.](../.gitbook/assets/ko-container-registry-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-readme-1.html)
 
 ---
 

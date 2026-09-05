@@ -89,7 +89,9 @@ Graduated 프로젝트는 프로덕션 환경에서의 광범위한 채택, 건�
 
 Crossplane의 아키텍처를 이해하려면 다섯 가지 핵심 개념을 먼저 파악해야 합니다.
 
-![개발자 Namespace의 Claim이 Crossplane 컨트롤 플레인에서 Composite Resource, XRD, Composition을 거쳐 Managed Resource로 변환되고, Provider가 이를 AWS·GCP·Azure API로 각각 프로비저닝하는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-0.svg)
+![개발자 Namespace의 Claim이 Crossplane 컨트롤 플레인에서 Composite Resource(XR)로 생성되어 XRD를 참조하고 Composition에 따라 Managed Resource로 변환된 뒤, Crossplane Core가 관리하는 Provider가 변경을 감지해 AWS·GCP·Azure API를 호출하여 프로비저닝하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-07-crossplane-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-0.html)
 
 ### 개념별 상세 설명
 
@@ -125,7 +127,9 @@ Claim은 Composite Resource의 **네임스페이스 스코프** 버전입니다.
 
 ### 컨트롤 플레인 아키텍처
 
-![쿠버네티스 클러스터 안에서 API 서버·etcd 컨트롤 플레인이 Claim부터 Managed Resource까지의 리소스 체인을 관리하고, Provider Runtime의 Provider-AWS 컨트롤러가 실제 AWS API를 호출하는 구조를 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-1.svg)
+![Kubernetes 클러스터 안에서 API 서버·etcd 컨트롤 플레인이 Claim부터 Managed Resource까지의 리소스 체인을 관리하고, Provider Runtime의 Provider-AWS 컨트롤러가 실제 AWS API를 호출하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-07-crossplane-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-1.html)
 
 ### 리소스 생명주기
 

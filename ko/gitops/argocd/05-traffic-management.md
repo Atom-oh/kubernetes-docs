@@ -372,7 +372,9 @@ spec:
 
 ### 카나리 단계 상세
 
-![트래픽 비중을 5%에서 20%, 50%, 80%까지 단계적으로 늘리며 각 단계 사이 분석 결과가 성공이면 다음 단계로, 실패면 롤백으로 이어지고 최종 분석에 성공하면 100% 완료되는 단계적 롤아웃 흐름을 보여주는 다이어그램입니다.](../../../assets/diagrams/rendered/ko-gitops-argocd-05-traffic-management-3.svg)
+![트래픽 비중을 5%에서 20%, 50%, 80%까지 단계적으로 늘리며 각 단계 사이 Analysis가 성공이면 다음 단계로, 실패면 롤백으로 이어지고 최종 Analysis에 성공하면 100% 완료되는 카나리 롤아웃 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-05-traffic-management-3.html)
 
 ## Analysis와 자동 롤백
 

@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Per-Team vCluster Isolation",
+    "locale": "en",
+    "output": "en-platform-engineering-08-vcluster-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "team-vclusters",
+        "label": "Team vClusters",
+        "focus": [
+          "frontend",
+          "backend",
+          "data",
+          "ml"
+        ],
+        "note": "Each team owns an isolated vCluster control plane with cluster-admin inside it."
+      },
+      {
+        "id": "shared-host",
+        "label": "Shared host layer",
+        "focus": [
+          "frontend",
+          "backend",
+          "data",
+          "ml",
+          "shared"
+        ],
+        "note": "All four vClusters schedule onto the same nodes, CNI, CSI, and monitoring stack."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "frontend",
+      "type": "backend",
+      "label": "Frontend",
+      "sublabel": "React + Node.js team",
+      "tag": "vCluster",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend",
+      "sublabel": "Java + Go team",
+      "tag": "vCluster",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "data",
+      "type": "backend",
+      "label": "Data",
+      "sublabel": "Spark + Flink team",
+      "tag": "vCluster",
+      "pos": [
+        560,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ml",
+      "type": "backend",
+      "label": "ML",
+      "sublabel": "PyTorch + TensorFlow team",
+      "tag": "vCluster",
+      "pos": [
+        820,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "shared",
+      "type": "cloud",
+      "label": "Shared Infrastructure",
+      "sublabel": "Nodes · CNI · CSI · Monitoring",
+      "tag": "host",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        980,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Host Cluster",
+      "wraps": [
+        "frontend",
+        "backend",
+        "data",
+        "ml",
+        "shared"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend-to-shared",
+      "from": "frontend",
+      "to": "shared",
+      "label": "Syncer → host",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "backend-to-shared",
+      "from": "backend",
+      "to": "shared",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "data-to-shared",
+      "from": "data",
+      "to": "shared",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ml-to-shared",
+      "from": "ml",
+      "to": "shared",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Per-team vCluster",
+      "items": [
+        "One vCluster per team in its own team-<name> namespace",
+        "Teams get cluster-admin inside their vCluster",
+        "Any CRDs or tools can be installed without affecting other teams"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Shared host layer",
+      "items": [
+        "Pods, Services, Ingresses, and PVCs are synced to the host",
+        "Nodes, CNI, CSI, and monitoring are shared by every vCluster"
+      ]
+    }
+  ]
+}

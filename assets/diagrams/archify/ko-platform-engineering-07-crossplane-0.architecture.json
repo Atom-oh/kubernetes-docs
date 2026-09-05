@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane 아키텍처: 핵심 개념",
+    "output": "ko-platform-engineering-07-crossplane-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "self-service",
+        "label": "셀프서비스 요청",
+        "focus": [
+          "claim",
+          "xr",
+          "xrd",
+          "comp"
+        ],
+        "note": "개발자 Namespace의 Claim이 클러스터 스코프 XR로 이어지고, XRD가 스키마를, Composition이 리소스 매핑을 결정한다."
+      },
+      {
+        "id": "provisioning",
+        "label": "프로비저닝 경로",
+        "focus": [
+          "comp",
+          "mr",
+          "providers",
+          "aws",
+          "gcp",
+          "azure"
+        ],
+        "note": "Composition이 Managed Resource를 생성하면 Provider 컨트롤러가 변경을 감지해 클라우드 API를 호출한다."
+      },
+      {
+        "id": "extension",
+        "label": "Provider 확장",
+        "focus": [
+          "core",
+          "providers"
+        ],
+        "note": "Provider는 Crossplane Core에 설치되는 확장 패키지로, 하나의 Provider가 해당 클라우드의 모든 서비스를 포함한다."
+      }
+    ],
+    "viewBox": [
+      1380,
+      740
+    ]
+  },
+  "components": [
+    {
+      "id": "claim",
+      "type": "external",
+      "label": "Claim (XC)",
+      "sublabel": "네임스페이스 스코프 요청",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource (XR)",
+      "sublabel": "클러스터 스코프",
+      "pos": [
+        280,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "xrd",
+      "type": "backend",
+      "label": "CompositeResourceDefinition",
+      "sublabel": "XRD · 스키마 정의",
+      "pos": [
+        265,
+        100
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "레시피 (MR 매핑)",
+      "pos": [
+        610,
+        300
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed Resources",
+      "sublabel": "S3 · RDS · VPC/Subnet · SG",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Crossplane Core",
+      "sublabel": "crossplane-system",
+      "pos": [
+        610,
+        510
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "providers",
+      "type": "backend",
+      "label": "Providers",
+      "sublabel": "AWS · GCP · Azure · Helm · K8s",
+      "pos": [
+        920,
+        510
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "provider-aws",
+      "pos": [
+        1220,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gcp",
+      "type": "cloud",
+      "label": "GCP",
+      "sublabel": "provider-gcp",
+      "pos": [
+        1220,
+        510
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "azure",
+      "type": "cloud",
+      "label": "Azure",
+      "sublabel": "provider-azure",
+      "pos": [
+        1220,
+        620
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "개발자 Namespace",
+      "wraps": [
+        "claim"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Crossplane 컨트롤 플레인",
+      "wraps": [
+        "xr",
+        "xrd",
+        "comp",
+        "mr",
+        "core",
+        "providers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라우드 인프라",
+      "wraps": [
+        "aws",
+        "gcp",
+        "azure"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "claim-to-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "생성 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xr-to-xrd",
+      "from": "xr",
+      "to": "xrd",
+      "label": "정의 참조",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "xr-to-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "Composition 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "comp-to-mr",
+      "from": "comp",
+      "to": "mr",
+      "label": "Managed Resource 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mr-to-providers",
+      "from": "mr",
+      "to": "providers",
+      "label": "변경 감지",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "core-to-providers",
+      "from": "core",
+      "to": "providers",
+      "variant": "dashed"
+    },
+    {
+      "id": "providers-to-aws",
+      "from": "providers",
+      "to": "aws",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "providers-to-gcp",
+      "from": "providers",
+      "to": "gcp",
+      "label": "API 호출"
+    },
+    {
+      "id": "providers-to-azure",
+      "from": "providers",
+      "to": "azure",
+      "fromSide": "bottom",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "추상화 계층",
+      "items": [
+        "XRD가 Composite Resource의 스키마를 정의한다",
+        "Composition은 XR 생성 시 함께 프로비저닝될 Managed Resource를 정의하는 레시피다",
+        "하나의 XRD에 여러 Composition을 연결해 dev/staging/prod 환경을 같은 API로 제공한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "스코프",
+      "items": [
+        "Claim은 네임스페이스 스코프로 RBAC과 자연스럽게 통합된다",
+        "Composite Resource와 Managed Resource는 클러스터 스코프다",
+        "Managed Resource는 클라우드 리소스와 1:1로 매핑된다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Provider",
+      "items": [
+        "provider-aws 900+, provider-gcp 500+, provider-azure 700+ 리소스 지원",
+        "provider-helm은 Helm Release, provider-kubernetes는 K8s 오브젝트를 관리한다",
+        "Provider 컨트롤러가 MR 변경을 감지해 클라우드 API를 호출하고 .status를 동기화한다"
+      ]
+    }
+  ]
+}

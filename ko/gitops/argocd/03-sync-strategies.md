@@ -148,7 +148,9 @@ syncPolicy:
 
 **동작 예시:**
 
-![사용자가 kubectl로 레플리카 수를 직접 바꾸면 ArgoCD가 Git과의 차이를 드리프트로 감지하고 selfHeal 옵션에 따라 클러스터 상태를 Git에 선언된 값으로 되돌리는 과정을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-2.svg)
+![사용자가 kubectl로 레플리카 수를 직접 바꾸면 ArgoCD가 Git과의 차이를 드리프트로 감지하고 selfHeal 옵션에 따라 클러스터 상태를 Git에 선언된 값으로 되돌리는 과정을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-03-sync-strategies-2.html)
 
 ### allowEmpty
 
@@ -317,7 +319,9 @@ spec:
 
 동기화 웨이브(Sync Wave)는 리소스의 적용 순서를 제어합니다:
 
-![sync-wave 어노테이션 값이 작은 그룹부터 순서대로 리소스가 적용되어, Namespace와 ServiceAccount가 가장 먼저, Ingress와 HPA가 가장 나중에 생성되는 순서를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-3.svg)
+![sync-wave 어노테이션 값이 작은 그룹부터 순서대로 리소스가 적용되어, Namespace와 ServiceAccount가 가장 먼저, Ingress와 HPA가 가장 나중에 생성되는 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-03-sync-strategies-3.html)
 
 ### 웨이브 어노테이션
 
@@ -750,7 +754,9 @@ syncPolicy:
 
 ### 재시도 동작
 
-![ArgoCD가 동기화에 4번 실패할 때마다 5초, 10초, 20초, 40초로 대기 시간을 두 배씩 늘려가며 재시도하다가 다섯 번째 시도에서 성공하고, limit=5에 도달하면 재시도를 중단하는 지수 백오프 동작을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-5.svg)
+![ArgoCD가 동기화에 4번 실패할 때마다 5초, 10초, 20초, 40초로 대기 시간을 두 배씩 늘려가며 재시도하다가 다섯 번째 시도에서 성공하고, limit=5에 도달하면 재시도를 중단하는 지수 백오프 동작을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-03-sync-strategies-5.html)
 
 ## 선택적 동기화
 

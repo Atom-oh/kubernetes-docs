@@ -7,7 +7,6 @@
     "output": "public/archmaps/en-gitops-argocd-03-sync-strategies-2.html",
     "animation": "trace",
     "quality_profile": "showcase",
-    "viewBox": [1000, 340],
     "legend": { "mode": "hidden" },
     "views": [
       { "id": "prereqs", "label": "Negative waves first", "focus": ["wave_m2", "wave_m1"], "note": "CRDs, then Namespaces and ServiceAccounts, are applied before anything in the default wave." },

@@ -36,7 +36,20 @@
         ],
         "note": "Prod Application은 automated 없이 운영자가 직접 Sync해야 배포된다."
       }
-    ]
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Git 브랜치"
+        },
+        "cloud": {
+          "label": "자동 배포 환경"
+        },
+        "security": {
+          "label": "수동 승인 게이트"
+        }
+      }
+    }
   },
   "lanes": [
     {
@@ -52,20 +65,20 @@
     {
       "id": "dev_phase",
       "label": "Dev",
-      "fromCol": 0,
-      "toCol": 0
-    },
-    {
-      "id": "staging_phase",
-      "label": "Staging",
       "fromCol": 1,
       "toCol": 1
     },
     {
+      "id": "staging_phase",
+      "label": "Staging",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
       "id": "prod_phase",
       "label": "Prod",
-      "fromCol": 2,
-      "toCol": 2,
+      "fromCol": 5,
+      "toCol": 5,
       "variant": "security"
     }
   ],
@@ -79,53 +92,59 @@
     {
       "id": "develop",
       "lane": "git",
-      "col": 0,
+      "col": 1,
       "type": "frontend",
       "label": "develop 브랜치",
-      "sublabel": "git branch"
+      "sublabel": "git branch",
+      "width": 124
     },
     {
       "id": "staging",
       "lane": "git",
-      "col": 1,
+      "col": 3,
       "type": "frontend",
       "label": "staging 브랜치",
-      "sublabel": "git branch"
+      "sublabel": "git branch",
+      "width": 124
     },
     {
       "id": "main",
       "lane": "git",
-      "col": 2,
+      "col": 5,
       "type": "frontend",
       "label": "main 브랜치",
-      "sublabel": "git branch"
+      "sublabel": "git branch",
+      "width": 124
     },
     {
       "id": "dev_env",
       "lane": "env",
-      "col": 0,
+      "col": 1,
       "type": "cloud",
       "label": "Dev 환경",
       "sublabel": "env: dev",
-      "tag": "automated"
+      "tag": "automated",
+      "width": 124
     },
     {
       "id": "staging_env",
       "lane": "env",
-      "col": 1,
+      "col": 3,
       "type": "cloud",
       "label": "Staging 환경",
       "sublabel": "env: staging",
-      "tag": "automated"
+      "tag": "automated",
+      "width": 124
     },
     {
       "id": "prod_env",
       "lane": "env",
-      "col": 2,
+      "col": 5,
       "type": "security",
       "label": "Prod 환경",
       "sublabel": "env: prod",
-      "tag": "수동 승인 게이트"
+      "tag": "수동 승인 게이트",
+      "width": 124
     }
   ],
   "edges": [
@@ -145,7 +164,8 @@
       "label": "자동 배포",
       "route": "drop",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelDy": 44
     },
     {
       "from": "staging",
@@ -153,7 +173,8 @@
       "label": "자동 배포",
       "route": "drop",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelDy": 44
     },
     {
       "from": "main",
@@ -162,7 +183,8 @@
       "variant": "security",
       "route": "drop",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelDy": 44
     }
   ],
   "cards": [

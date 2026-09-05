@@ -142,7 +142,9 @@ patches:
 
 ### Git 브랜치 기반 승격
 
-![develop, staging, main 브랜치가 PR 승인으로 순차 승격되며 Dev와 Staging 환경은 자동 배포되지만 Prod 환경만 수동 동기화 게이트가 걸려 있음을 보여주는 흐름도](../../../assets/diagrams/rendered/ko-gitops-argocd-09-best-practices-1.svg)
+![develop, staging, main 브랜치가 PR 승인으로 순차 승격되고 Dev와 Staging 환경은 Argo CD가 자동 배포하지만 Prod 환경만 수동 동기화 게이트를 거치는 Git 브랜치 기반 환경 승격 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-09-best-practices-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-09-best-practices-1.html)
 
 **Application 설정:**
 

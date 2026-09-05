@@ -194,7 +194,8 @@
       "from": "dest-any",
       "to": "staging",
       "label": "모든 클러스터에 동일하게 배포",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "labelDy": 24
     },
     {
       "id": "dest-prod",

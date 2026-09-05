@@ -6,69 +6,322 @@
     "output": "public/archmaps/ko-gitops-argocd-05-traffic-management-3.html",
     "animation": "trace",
     "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "롤아웃 시작 · 완료"
+        },
+        "cloud": {
+          "label": "setWeight 트래픽 단계"
+        },
+        "backend": {
+          "label": "pause 대기"
+        },
+        "security": {
+          "label": "Analysis 판정 · 롤백"
+        },
+        "external": {
+          "label": "수동 승격 게이트"
+        }
+      }
+    },
     "views": [
       {
         "id": "first-canary",
         "label": "1단계 · 5% 검증",
-        "focus": ["start", "w5", "p30", "a1"],
+        "focus": [
+          "start",
+          "w5",
+          "p30",
+          "a1"
+        ],
         "note": "5% 트래픽으로 30초 대기 후 success-rate Analysis가 첫 승격 여부를 결정합니다."
       },
       {
         "id": "expand",
         "label": "2단계 · 20% → 80%",
-        "focus": ["w20", "manual", "w50", "p1m", "w80", "a2"],
+        "focus": [
+          "w20",
+          "manual",
+          "w50",
+          "p1m",
+          "w80",
+          "a2"
+        ],
         "note": "20%에서 수동 승격을 기다리고, 50%·80%로 늘린 뒤 최종 Analysis를 실행합니다."
       },
       {
         "id": "outcome",
         "label": "완료 또는 롤백",
-        "focus": ["a1", "a2", "done", "rollback"],
+        "focus": [
+          "a1",
+          "a2",
+          "done",
+          "rollback"
+        ],
         "note": "두 Analysis 중 하나라도 실패하면 롤백, 최종 Analysis 성공 시 100%로 자동 완료됩니다."
       }
+    ],
+    "viewBox": [
+      1100,
+      660
     ]
   },
   "lanes": [
-    { "id": "phase1", "label": "1단계 · 5% 카나리 검증" },
-    { "id": "phase2", "label": "2단계 · 20% → 50% → 80% 확장" },
-    { "id": "complete", "label": "완료" },
-    { "id": "abort", "label": "Analysis 실패 · 롤백", "variant": "exception" }
+    {
+      "id": "steps",
+      "label": "트래픽 비중 · setWeight"
+    },
+    {
+      "id": "wait",
+      "label": "대기 · pause"
+    },
+    {
+      "id": "analysis",
+      "label": "판단 · Analysis (success-rate)"
+    },
+    {
+      "id": "abort",
+      "label": "Analysis 실패 · 롤백",
+      "variant": "exception"
+    }
   ],
-  "mainPath": ["start", "w5", "p30", "a1", "w20", "manual", "w50", "p1m", "w80", "a2", "done"],
+  "mainPath": [
+    "start",
+    "w5",
+    "p30",
+    "a1",
+    "w20",
+    "manual",
+    "w50",
+    "p1m",
+    "w80",
+    "a2",
+    "done"
+  ],
   "semanticChecks": {
-    "allowedRoots": ["start"],
-    "allowedTerminals": ["done", "rollback"],
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done",
+      "rollback"
+    ],
     "requiredPaths": [
-      { "from": "start", "to": "done" },
-      { "from": "a1", "to": "rollback" },
-      { "from": "a2", "to": "rollback" }
+      {
+        "from": "start",
+        "to": "done"
+      },
+      {
+        "from": "a1",
+        "to": "rollback"
+      },
+      {
+        "from": "a2",
+        "to": "rollback"
+      }
     ]
   },
   "nodes": [
-    { "id": "start", "lane": "phase1", "col": 2, "type": "frontend", "label": "롤아웃 시작", "sublabel": "Rollout 배포" },
-    { "id": "w5", "lane": "phase1", "col": 3, "type": "cloud", "label": "setWeight: 5", "sublabel": "카나리 5%" },
-    { "id": "p30", "lane": "phase1", "col": 4, "type": "backend", "label": "pause: 30s", "sublabel": "30초 대기" },
-    { "id": "a1", "lane": "phase1", "col": 5, "type": "security", "label": "Analysis", "sublabel": "success-rate", "tag": "판단" },
-    { "id": "w20", "lane": "phase2", "col": 0, "type": "cloud", "label": "setWeight: 20", "sublabel": "카나리 20%" },
-    { "id": "manual", "lane": "phase2", "col": 1, "type": "external", "label": "수동 승격 대기", "sublabel": "pause: {}", "tag": "사람 게이트" },
-    { "id": "w50", "lane": "phase2", "col": 2, "type": "cloud", "label": "setWeight: 50", "sublabel": "카나리 50%" },
-    { "id": "p1m", "lane": "phase2", "col": 3, "type": "backend", "label": "pause: 1m", "sublabel": "1분 대기" },
-    { "id": "w80", "lane": "phase2", "col": 4, "type": "cloud", "label": "setWeight: 80", "sublabel": "카나리 80%" },
-    { "id": "a2", "lane": "phase2", "col": 5, "type": "security", "label": "최종 Analysis", "sublabel": "success-rate", "tag": "판단" },
-    { "id": "done", "lane": "complete", "col": 5, "type": "frontend", "label": "100% · 완료", "sublabel": "자동 완료" },
-    { "id": "rollback", "lane": "abort", "col": 5, "type": "security", "label": "롤백", "sublabel": "abortScaleDownDelaySeconds: 30" }
+    {
+      "id": "start",
+      "lane": "steps",
+      "col": 0,
+      "type": "frontend",
+      "label": "롤아웃 시작",
+      "sublabel": "Rollout 배포",
+      "width": 150
+    },
+    {
+      "id": "w5",
+      "lane": "steps",
+      "col": 1,
+      "type": "cloud",
+      "label": "setWeight: 5",
+      "sublabel": "카나리 5%",
+      "width": 150
+    },
+    {
+      "id": "p30",
+      "lane": "wait",
+      "col": 1,
+      "type": "backend",
+      "label": "pause: 30s",
+      "sublabel": "30초 대기",
+      "width": 150
+    },
+    {
+      "id": "a1",
+      "lane": "analysis",
+      "col": 1,
+      "type": "security",
+      "label": "Analysis",
+      "sublabel": "success-rate",
+      "tag": "판단",
+      "width": 150
+    },
+    {
+      "id": "w20",
+      "lane": "steps",
+      "col": 2,
+      "type": "cloud",
+      "label": "setWeight: 20",
+      "sublabel": "카나리 20%",
+      "width": 150
+    },
+    {
+      "id": "manual",
+      "lane": "wait",
+      "col": 2,
+      "type": "external",
+      "label": "수동 승격 대기",
+      "sublabel": "pause: {}",
+      "tag": "사람 게이트",
+      "width": 150
+    },
+    {
+      "id": "w50",
+      "lane": "steps",
+      "col": 3,
+      "type": "cloud",
+      "label": "setWeight: 50",
+      "sublabel": "카나리 50%",
+      "width": 150
+    },
+    {
+      "id": "p1m",
+      "lane": "wait",
+      "col": 4,
+      "type": "backend",
+      "label": "pause: 1m",
+      "sublabel": "1분 대기",
+      "width": 150
+    },
+    {
+      "id": "w80",
+      "lane": "steps",
+      "col": 4,
+      "type": "cloud",
+      "label": "setWeight: 80",
+      "sublabel": "카나리 80%",
+      "width": 150
+    },
+    {
+      "id": "a2",
+      "lane": "analysis",
+      "col": 5,
+      "type": "security",
+      "label": "최종 Analysis",
+      "sublabel": "success-rate",
+      "tag": "판단",
+      "width": 150
+    },
+    {
+      "id": "done",
+      "lane": "steps",
+      "col": 5,
+      "type": "frontend",
+      "label": "완료",
+      "sublabel": "100% 자동 완료",
+      "width": 150
+    },
+    {
+      "id": "rollback",
+      "lane": "abort",
+      "col": 4,
+      "type": "security",
+      "label": "롤백",
+      "sublabel": "abort 후 30s 뒤 카나리 축소",
+      "width": 150
+    }
   ],
   "edges": [
-    { "from": "start", "to": "w5", "variant": "emphasis", "role": "main" },
-    { "from": "w5", "to": "p30", "variant": "emphasis", "role": "main" },
-    { "from": "p30", "to": "a1", "variant": "emphasis", "role": "main" },
-    { "from": "a1", "to": "w20", "label": "성공", "variant": "emphasis", "role": "main" },
-    { "from": "w20", "to": "manual", "variant": "emphasis", "role": "main" },
-    { "from": "manual", "to": "w50", "label": "승격", "variant": "emphasis", "role": "main" },
-    { "from": "w50", "to": "p1m", "variant": "emphasis", "role": "main" },
-    { "from": "p1m", "to": "w80", "variant": "emphasis", "role": "main" },
-    { "from": "w80", "to": "a2", "variant": "emphasis", "role": "main" },
-    { "from": "a2", "to": "done", "label": "성공", "variant": "emphasis", "role": "main" },
-    { "from": "a1", "to": "rollback", "label": "실패", "variant": "security", "role": "error" },
-    { "from": "a2", "to": "rollback", "label": "실패", "variant": "security", "role": "error" }
+    {
+      "from": "start",
+      "to": "w5",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "w5",
+      "to": "p30",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p30",
+      "to": "a1",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "a1",
+      "to": "w20",
+      "label": "성공",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "w20",
+      "to": "manual",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "manual",
+      "to": "w50",
+      "label": "승격",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "w50",
+      "to": "p1m",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "p1m",
+      "to": "w80",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "from": "w80",
+      "to": "a2",
+      "variant": "emphasis",
+      "role": "main",
+      "toSide": "top"
+    },
+    {
+      "from": "a2",
+      "to": "done",
+      "label": "성공",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "a1",
+      "to": "rollback",
+      "label": "실패",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "a2",
+      "to": "rollback",
+      "label": "실패",
+      "variant": "security",
+      "role": "error"
+    }
   ]
 }

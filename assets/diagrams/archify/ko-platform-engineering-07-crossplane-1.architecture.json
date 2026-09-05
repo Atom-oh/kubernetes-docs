@@ -1,0 +1,356 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane 컨트롤 플레인 아키텍처",
+    "output": "ko-platform-engineering-07-crossplane-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resource-chain",
+        "label": "리소스 체인",
+        "focus": [
+          "claim",
+          "xr",
+          "comp",
+          "mr"
+        ],
+        "note": "개발자 Namespace의 Claim이 클러스터 스코프의 XR, Composition, Managed Resource로 이어지는 흐름."
+      },
+      {
+        "id": "provider-path",
+        "label": "Provider 경로",
+        "focus": [
+          "mr",
+          "pctrl",
+          "pcrd",
+          "aws"
+        ],
+        "note": "Managed Resource를 Provider-AWS 컨트롤러가 감지해 실제 AWS API를 호출한다."
+      },
+      {
+        "id": "core-plane",
+        "label": "Crossplane 코어",
+        "focus": [
+          "core",
+          "pkg",
+          "api",
+          "etcd",
+          "pctrl"
+        ],
+        "note": "crossplane-system의 코어 컨트롤러와 Package Manager가 API 서버·etcd 위에서 Provider를 설치한다."
+      }
+    ],
+    "viewBox": [
+      1380,
+      700
+    ]
+  },
+  "components": [
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Crossplane Core",
+      "sublabel": "Controller",
+      "pos": [
+        490,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pkg",
+      "type": "backend",
+      "label": "Package Manager",
+      "sublabel": "Provider 패키지 설치",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "모든 리소스의 진입점",
+      "pos": [
+        710,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "상태 저장소",
+      "pos": [
+        950,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "claim",
+      "type": "external",
+      "label": "Claim",
+      "sublabel": "네임스페이스 스코프",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource",
+      "sublabel": "XR",
+      "pos": [
+        270,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "MR 조합 레시피",
+      "pos": [
+        490,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed Resources",
+      "sublabel": "클라우드 리소스와 1:1",
+      "pos": [
+        710,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pctrl",
+      "type": "backend",
+      "label": "Provider-AWS Controller",
+      "sublabel": "MR 변경 감지",
+      "pos": [
+        950,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pcrd",
+      "type": "database",
+      "label": "AWS CRDs",
+      "sublabel": "900+",
+      "pos": [
+        950,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS API",
+      "sublabel": "실제 클라우드 리소스",
+      "pos": [
+        1200,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "core",
+        "pkg",
+        "api",
+        "etcd",
+        "claim",
+        "xr",
+        "comp",
+        "mr",
+        "pctrl",
+        "pcrd"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "crossplane-system Namespace",
+      "wraps": [
+        "core",
+        "pkg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "개발자 Namespace",
+      "wraps": [
+        "claim"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster Scope",
+      "wraps": [
+        "xr",
+        "comp",
+        "mr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Provider Runtime",
+      "wraps": [
+        "pctrl",
+        "pcrd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "core-api",
+      "from": "core",
+      "to": "api"
+    },
+    {
+      "id": "api-etcd",
+      "from": "api",
+      "to": "etcd"
+    },
+    {
+      "id": "pkg-pctrl",
+      "from": "pkg",
+      "to": "pctrl",
+      "label": "Provider 설치",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pctrl-pcrd",
+      "from": "pctrl",
+      "to": "pcrd",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "claim-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "XR 생성",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "xr-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "Composition 참조",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "comp-mr",
+      "from": "comp",
+      "to": "mr",
+      "label": "MR 생성",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "mr-pctrl",
+      "from": "mr",
+      "to": "pctrl",
+      "label": "Provider가 관리",
+      "variant": "emphasis",
+      "labelAt": [
+        920,
+        414
+      ]
+    },
+    {
+      "id": "pctrl-aws",
+      "from": "pctrl",
+      "to": "aws",
+      "label": "AWS API 호출",
+      "variant": "emphasis",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "crossplane-system",
+      "items": [
+        "Crossplane Core Controller가 Claim → XR → MR 조정 루프를 실행한다",
+        "Package Manager가 Provider 패키지를 설치하고 RBAC Manager가 권한을 관리한다",
+        "모든 상태는 Kubernetes API Server를 거쳐 etcd에 저장된다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "리소스 체인",
+      "items": [
+        "Claim은 개발자 Namespace에 만드는 네임스페이스 스코프 요청이다",
+        "XR은 XRD가 스키마를 정의하는 클러스터 스코프 리소스다",
+        "Composition은 XR당 어떤 Managed Resource를 만들지 정하는 레시피다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Provider Runtime",
+      "items": [
+        "Provider-AWS는 900+ AWS CRD를 제공한다",
+        "Managed Resource 변경을 감지해 AWS API를 호출하고 .status를 동기화한다"
+      ]
+    }
+  ]
+}

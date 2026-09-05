@@ -43,7 +43,7 @@
       }
     ],
     "viewBox": [
-      1100,
+      1010,
       660
     ]
   },
@@ -109,7 +109,8 @@
       "lane": "traffic",
       "col": 1,
       "type": "cloud",
-      "label": "Load Balancer"
+      "label": "Load Balancer",
+      "width": 124
     },
     {
       "id": "match",
@@ -118,7 +119,8 @@
       "type": "security",
       "label": "라우팅 조건",
       "sublabel": "analysis.match",
-      "tag": "헤더 · 쿠키"
+      "tag": "헤더 · 쿠키",
+      "width": 124
     },
     {
       "id": "canary",
@@ -126,7 +128,8 @@
       "col": 3,
       "type": "backend",
       "label": "Canary · v2",
-      "sublabel": "x-canary: true"
+      "sublabel": "x-canary: true",
+      "width": 124
     },
     {
       "id": "primary",
@@ -134,7 +137,8 @@
       "col": 3,
       "type": "backend",
       "label": "Primary · v1",
-      "sublabel": "조건 미충족 트래픽"
+      "sublabel": "조건 미충족 트래픽",
+      "width": 124
     },
     {
       "id": "metrics",
@@ -142,7 +146,8 @@
       "col": 4,
       "type": "database",
       "label": "메트릭 수집",
-      "sublabel": "성공률 · 지연시간"
+      "sublabel": "성공률 · 지연시간",
+      "width": 124
     },
     {
       "id": "verdict",
@@ -150,7 +155,8 @@
       "col": 5,
       "type": "security",
       "label": "분석 결과",
-      "sublabel": "threshold 판정"
+      "sublabel": "threshold 판정",
+      "width": 124
     },
     {
       "id": "promote",
@@ -158,7 +164,8 @@
       "col": 5,
       "type": "backend",
       "label": "전체 승격",
-      "sublabel": "v2 → Primary"
+      "sublabel": "v2 → Primary",
+      "width": 124
     },
     {
       "id": "rollback",
@@ -166,7 +173,8 @@
       "col": 5,
       "type": "messagebus",
       "label": "롤백",
-      "sublabel": "v1 유지"
+      "sublabel": "v1 유지",
+      "width": 124
     }
   ],
   "edges": [
@@ -213,7 +221,10 @@
       "to": "rollback",
       "label": "실패",
       "variant": "security",
-      "role": "error"
+      "role": "error",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "straight"
     }
   ]
 }

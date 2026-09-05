@@ -802,7 +802,9 @@ deploy:
 
 ### Build-Push-Scan-Deploy 파이프라인
 
-![코드 커밋 후 이미지를 빌드해 ECR에 푸시하고 Trivy로 스캔한 뒤, 통과하면 쿠버네티스에 배포하고 HIGH/CRITICAL 취약점이 있으면 배포를 차단하고 알림을 보내는 CI/CD 파이프라인.](../../assets/diagrams/rendered/ko-container-registry-04-best-practices-1.svg)
+![코드 커밋 후 이미지를 빌드해 ECR에 푸시하고 Trivy로 스캔한 뒤, 통과하면 Kubernetes에 배포하고 HIGH/CRITICAL 취약점이 있으면 배포를 차단하고 알림을 보내는 CI/CD 파이프라인을 보여준다.](../.gitbook/assets/ko-container-registry-04-best-practices-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-04-best-practices-1.html)
 
 ### ArgoCD 이미지 업데이트 자동화
 

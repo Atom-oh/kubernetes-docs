@@ -30,7 +30,9 @@ FinOps는 클라우드 비용을 엔지니어링 조직이 주도적으로 관�
 
 FinOps Foundation에서 정의한 FinOps 프레임워크는 세 가지 반복적 단계로 구성됩니다. 이 사이클은 한 번으로 끝나는 것이 아니라, 조직의 성숙도가 높아짐에 따라 점점 정교해지는 **지속적 개선 루프**입니다.
 
-![Inform, Optimize, Operate 세 단계가 순환하며 각 단계의 핵심 활동을 보여주는 FinOps 라이프사이클 흐름도로, 비용 최적화 단계를 중심으로 강조한다.](../../assets/diagrams/rendered/ko-ops-13-finops-cost-platform-0.svg)
+![Inform, Optimize, Operate 세 단계가 지속적 개선 루프로 순환하는 FinOps 라이프사이클과 각 단계의 핵심 활동(비용 할당·태깅·대시보드·리포팅, 라이트사이징·Spot·유휴 리소스 제거·예약 인스턴스, 예산 관리·정책 자동화·비용 리뷰·거버넌스)을 보여준다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-13-finops-cost-platform-0.html)
 
 ### 1.1 각 단계의 핵심 활동
 

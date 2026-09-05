@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vCluster Syncer 리소스 동기화",
+    "output": "ko-platform-engineering-08-vcluster-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "virtual-side", "label": "가상 클러스터 리소스", "focus": ["v-pod", "v-svc", "v-cm", "v-ing", "syncer"], "note": "가상 클러스터의 default 네임스페이스에 만든 4가지 리소스가 syncToHost 규칙으로 Syncer에 전달된다." },
+      { "id": "host-side", "label": "호스트에 생성된 리소스", "focus": ["syncer", "h-pod", "h-svc", "h-cm", "h-ing"], "note": "Syncer가 <name>-x-<namespace>-x-<vcluster-name> 패턴으로 이름을 바꿔 호스트의 vcluster-team-a 네임스페이스에 생성한다." }
+    ]
+  },
+  "components": [
+    { "id": "v-pod", "type": "backend", "label": "Pod: nginx", "sublabel": "ns: default", "pos": [40, 60], "size": [200, 60] },
+    { "id": "v-svc", "type": "backend", "label": "Service: nginx-svc", "sublabel": "ns: default", "pos": [40, 180], "size": [200, 60] },
+    { "id": "v-cm", "type": "backend", "label": "ConfigMap: app-config", "sublabel": "ns: default", "pos": [40, 300], "size": [200, 60] },
+    { "id": "v-ing", "type": "backend", "label": "Ingress: web", "sublabel": "ns: default", "pos": [40, 420], "size": [200, 60] },
+    { "id": "syncer", "type": "security", "label": "Syncer", "sublabel": "이름 변환 · ns 매핑 · 라벨 관리", "tag": "vCluster", "pos": [420, 240], "size": [220, 60] },
+    { "id": "h-pod", "type": "backend", "label": "Pod: nginx-x-default-x-vc", "sublabel": "ns: vcluster-team-a", "pos": [820, 60], "size": [260, 60] },
+    { "id": "h-svc", "type": "backend", "label": "Service: nginx-svc-x-default-x-vc", "sublabel": "ns: vcluster-team-a", "pos": [820, 180], "size": [260, 60] },
+    { "id": "h-cm", "type": "backend", "label": "ConfigMap: app-config-x-default-x-vc", "sublabel": "ns: vcluster-team-a", "pos": [820, 300], "size": [260, 60] },
+    { "id": "h-ing", "type": "backend", "label": "Ingress: web-x-default-x-vc", "sublabel": "ns: vcluster-team-a", "pos": [820, 420], "size": [260, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "가상 클러스터", "wraps": ["v-pod", "v-svc", "v-cm", "v-ing"] },
+    { "kind": "region", "label": "호스트 클러스터", "wraps": ["h-pod", "h-svc", "h-cm", "h-ing"] }
+  ],
+  "connections": [
+    { "id": "v-pod-sync", "from": "v-pod", "to": "syncer", "label": "syncToHost" },
+    { "id": "v-svc-sync", "from": "v-svc", "to": "syncer" },
+    { "id": "v-cm-sync", "from": "v-cm", "to": "syncer" },
+    { "id": "v-ing-sync", "from": "v-ing", "to": "syncer" },
+    { "id": "sync-h-pod", "from": "syncer", "to": "h-pod", "label": "이름 변환 후 생성", "variant": "emphasis" },
+    { "id": "sync-h-svc", "from": "syncer", "to": "h-svc", "variant": "emphasis" },
+    { "id": "sync-h-cm", "from": "syncer", "to": "h-cm", "variant": "emphasis" },
+    { "id": "sync-h-ing", "from": "syncer", "to": "h-ing", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Syncer의 핵심 동작",
+      "items": [
+        "이름 변환: <name>-x-<namespace>-x-<vcluster-name> 패턴으로 호스트에서 고유한 이름을 만든다",
+        "네임스페이스 매핑: 가상 클러스터의 모든 네임스페이스가 기본적으로 호스트의 단일 네임스페이스로 매핑된다",
+        "라벨/어노테이션 관리: vCluster 메타데이터를 자동으로 추가해 추적성을 확보한다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "syncToHost 기본 리소스",
+      "items": [
+        "Pod, Service, ConfigMap, Secret, Ingress, PVC, Endpoint가 가상 → 호스트로 동기화된다",
+        "Deployment, ReplicaSet, CRD, Namespace 등은 가상 클러스터 내부에만 존재한다"
+      ]
+    }
+  ]
+}

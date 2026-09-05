@@ -26,7 +26,9 @@ GitOps 개념은 2017년 Weaveworks에서 처음 소개되었습니다. Kubernet
 
 CNCF OpenGitOps 프로젝트에서 정의한 GitOps 원칙:
 
-![GitOps의 네 가지 핵심 원칙(선언적, 버전 관리, 자동 적용, 지속적 조정)이 하나의 개념에서 갈라지는 트리 구조를 보여준다.](../.gitbook/assets/ko-gitops-README-0.png)
+![GitOps의 네 가지 핵심 원칙(선언적, 버전 관리, 자동 적용, 지속적 조정)이 하나의 개념에서 갈라지는 트리 구조를 보여준다.](../.gitbook/assets/ko-gitops-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-readme-0.html)
 
 ## GitOps의 핵심 원칙
 
@@ -75,7 +77,9 @@ spec:
 
 승인된 변경 사항은 자동으로 시스템에 적용됩니다:
 
-![개발자의 코드 커밋이 CI 시스템의 빌드·테스트를 거쳐 Git에 반영되고, GitOps 도구가 이를 감지해 Kubernetes에 자동 배포하는 순서를 보여준다.](../.gitbook/assets/ko-gitops-README-1.png)
+![개발자의 코드 커밋이 CI 시스템의 빌드·테스트를 거쳐 Git에 반영되고, GitOps 도구가 이를 감지해 Kubernetes에 자동 배포하는 순서를 보여준다.](../.gitbook/assets/ko-gitops-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-readme-1.html)
 
 ### 4. 지속적 조정 (Continuous Reconciliation)
 
@@ -91,7 +95,9 @@ GitOps 구현에는 두 가지 주요 배포 모델이 있습니다:
 
 ### Push 모델
 
-![외부 CI/CD 파이프라인이 Kubernetes API Server에 직접 kubectl apply를 실행해 애플리케이션을 배포하는 push 기반 GitOps 구조를 보여준다.](../.gitbook/assets/ko-gitops-README-2.png)
+![외부 CI/CD 파이프라인이 Kubernetes API Server에 직접 kubectl apply를 실행해 애플리케이션을 배포하는 push 기반 GitOps 구조를 보여준다.](../.gitbook/assets/ko-gitops-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-readme-2.html)
 
 **특징:**
 - CI/CD 시스템이 클러스터에 직접 배포
@@ -109,7 +115,9 @@ GitOps 구현에는 두 가지 주요 배포 모델이 있습니다:
 
 ### Pull 모델 (GitOps 권장)
 
-![클러스터 내부의 GitOps Agent가 외부 Git 저장소를 스스로 감시하다가 변경을 발견하면 API Server에 적용해 애플리케이션을 배포하는 pull 기반 GitOps 구조를 보여준다.](../.gitbook/assets/ko-gitops-README-3.png)
+![클러스터 내부의 GitOps Agent가 외부 Git 저장소를 스스로 감시하다가 변경을 발견하면 API Server에 적용해 애플리케이션을 배포하는 pull 기반 GitOps 구조를 보여준다.](../.gitbook/assets/ko-gitops-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-readme-3.html)
 
 **특징:**
 - 클러스터 내부의 에이전트가 Git을 모니터링
@@ -178,7 +186,9 @@ CNCF Graduated 프로젝트로, Kubernetes를 위한 GitOps 도구 세트입니�
 
 ### 선택 가이드
 
-![웹 UI, 멀티 클러스터 관리, 모듈형 아키텍처, 프로그레시브 딜리버리, CI/CD 통합 필요 여부에 따라 ArgoCD, FluxCD, Jenkins X 중 하나를 추천하는 GitOps 도구 선택 의사결정 흐름도이다.](../.gitbook/assets/ko-gitops-README-4.png)
+![웹 UI, 멀티 클러스터 관리, 프로그레시브 딜리버리, 모듈형 아키텍처, CI/CD 통합 필요 여부에 따라 ArgoCD, FluxCD, Jenkins X 중 하나를 추천하는 GitOps 도구 선택 의사결정 흐름을 보여준다.](../.gitbook/assets/ko-gitops-readme-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-readme-4.html)
 
 ### ArgoCD 선택 시나리오
 
@@ -202,7 +212,9 @@ CNCF Graduated 프로젝트로, Kubernetes를 위한 GitOps 도구 세트입니�
 
 Amazon EKS에서 GitOps를 구현할 때 고려해야 할 사항:
 
-![외부 Git 저장소가 Amazon EKS 안의 GitOps Controller에 변경을 전달하고, IAM 역할(IRSA), Amazon ECR, Secrets Manager, Application Load Balancer가 각각 인증, 컨테이너 이미지, 시크릿, 트래픽 유입을 애플리케이션에 공급하는 AWS 기반 GitOps 아키텍처를 보여준다.](../.gitbook/assets/ko-gitops-README-5.png)
+![외부 Git 저장소가 Amazon EKS 안의 GitOps Controller에 변경을 전달하고, IAM 역할(IRSA), Amazon ECR, Secrets Manager, Application Load Balancer가 각각 인증, 컨테이너 이미지, 시크릿, 트래픽 유입을 애플리케이션에 공급하는 AWS 기반 GitOps 아키텍처를 보여준다.](../.gitbook/assets/ko-gitops-readme-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-readme-5.html)
 
 ### IRSA (IAM Roles for Service Accounts)
 

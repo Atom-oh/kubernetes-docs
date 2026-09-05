@@ -105,7 +105,7 @@
       "type": "frontend",
       "label": "Need GitOps Tool",
       "tag": "START",
-      "width": 128
+      "width": 160
     },
     {
       "id": "webUi",
@@ -114,7 +114,7 @@
       "type": "security",
       "label": "Need web UI?",
       "tag": "DECISION",
-      "width": 118
+      "width": 140
     },
     {
       "id": "multiCluster",
@@ -123,7 +123,7 @@
       "type": "security",
       "label": "Multi-cluster?",
       "tag": "DECISION",
-      "width": 118
+      "width": 150
     },
     {
       "id": "rbac",
@@ -132,7 +132,7 @@
       "type": "security",
       "label": "Enterprise RBAC?",
       "tag": "DECISION",
-      "width": 128
+      "width": 160
     },
     {
       "id": "argocd",
@@ -151,7 +151,7 @@
       "type": "security",
       "label": "Image automation?",
       "tag": "DECISION",
-      "width": 140
+      "width": 170
     },
     {
       "id": "lightweight",
@@ -222,7 +222,8 @@
       "to": "argocd",
       "label": "yes",
       "variant": "emphasis",
-      "role": "main"
+      "role": "main",
+      "route": "straight"
     },
     {
       "from": "rbac",

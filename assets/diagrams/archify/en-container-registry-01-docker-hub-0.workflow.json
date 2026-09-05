@@ -1,0 +1,251 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Rate Limit Mitigation Strategies",
+    "locale": "en",
+    "output": "public/archmaps/en-container-registry-01-docker-hub-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "already-limited",
+        "label": "Rate limit already hit",
+        "focus": [
+          "hit",
+          "env",
+          "ecr",
+          "harbor",
+          "mirror",
+          "resolved"
+        ],
+        "note": "Pick the cache that matches where the cluster runs; each one resolves the limit."
+      },
+      {
+        "id": "not-yet-hit",
+        "label": "Not yet hit",
+        "focus": [
+          "hit",
+          "auth",
+          "resolved"
+        ],
+        "note": "Authenticated pulls raise the quota before a limit is ever reached."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "AWS managed cache"
+        },
+        "database": {
+          "label": "Self-managed cache"
+        },
+        "frontend": {
+          "label": "Prevention"
+        },
+        "backend": {
+          "label": "Outcome"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "decision",
+      "label": "Decision"
+    },
+    {
+      "id": "mitigate",
+      "label": "Mitigation by environment"
+    },
+    {
+      "id": "outcome",
+      "label": "Prevention and outcome"
+    }
+  ],
+  "mainPath": [
+    "hit",
+    "env",
+    "ecr",
+    "resolved"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "hit"
+    ],
+    "allowedTerminals": [
+      "resolved"
+    ],
+    "requiredPaths": [
+      {
+        "from": "hit",
+        "to": "resolved"
+      },
+      {
+        "from": "env",
+        "to": "harbor"
+      },
+      {
+        "from": "env",
+        "to": "mirror"
+      },
+      {
+        "from": "hit",
+        "to": "auth"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "hit",
+      "lane": "decision",
+      "col": 0,
+      "type": "security",
+      "label": "Rate Limit Hit?",
+      "tag": "DECISION",
+      "width": 150
+    },
+    {
+      "id": "env",
+      "lane": "decision",
+      "col": 1,
+      "type": "security",
+      "label": "Your Environment",
+      "tag": "DECISION",
+      "width": 168
+    },
+    {
+      "id": "ecr",
+      "lane": "mitigate",
+      "col": 1,
+      "type": "cloud",
+      "label": "ECR Pull-through Cache",
+      "sublabel": "AWS / EKS · pull-through cache rule",
+      "tag": "STRATEGY 3",
+      "width": 196
+    },
+    {
+      "id": "harbor",
+      "lane": "mitigate",
+      "col": 2,
+      "type": "database",
+      "label": "Harbor Proxy Cache",
+      "sublabel": "proxy cache project",
+      "tag": "STRATEGY 1",
+      "width": 196
+    },
+    {
+      "id": "mirror",
+      "lane": "mitigate",
+      "col": 3,
+      "type": "database",
+      "label": "containerd Mirror / Distribution",
+      "sublabel": "REGISTRY_PROXY_REMOTEURL",
+      "tag": "STRATEGY 2",
+      "width": 262
+    },
+    {
+      "id": "auth",
+      "lane": "outcome",
+      "col": 0,
+      "type": "frontend",
+      "label": "Authenticated Pulls",
+      "sublabel": "imagePullSecrets",
+      "tag": "PREVENT",
+      "width": 196
+    },
+    {
+      "id": "resolved",
+      "lane": "outcome",
+      "col": 2,
+      "type": "backend",
+      "label": "Rate Limit Resolved",
+      "tag": "RESULT",
+      "width": 184
+    }
+  ],
+  "edges": [
+    {
+      "from": "hit",
+      "to": "env",
+      "label": "yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "hit",
+      "to": "auth",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "env",
+      "to": "ecr",
+      "variant": "emphasis",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "env",
+      "to": "harbor",
+      "label": "self-hosted",
+      "role": "branch"
+    },
+    {
+      "from": "env",
+      "to": "mirror",
+      "label": "other",
+      "role": "branch"
+    },
+    {
+      "from": "ecr",
+      "to": "resolved",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "harbor",
+      "to": "resolved",
+      "role": "branch"
+    },
+    {
+      "from": "mirror",
+      "to": "resolved",
+      "role": "branch"
+    },
+    {
+      "from": "auth",
+      "to": "resolved",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Strategies on this page",
+      "items": [
+        "Strategy 1: Harbor proxy cache project pointing at registry-1.docker.io, wired in as a containerd mirror",
+        "Strategy 2: CNCF Distribution registry mirror with REGISTRY_PROXY_REMOTEURL and cached layers on a PVC",
+        "Strategy 3: Amazon ECR pull-through cache rule, pulling docker.io images via the ECR endpoint",
+        "Strategy 4: pre-pull images to nodes with a DaemonSet for predictable workloads"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Prevent instead of repair",
+      "items": [
+        "Authenticated pulls get a higher quota than anonymous pulls",
+        "Store the Docker Hub token as a kubernetes.io/dockerconfigjson Secret",
+        "Attach it via imagePullSecrets on the Pod or the ServiceAccount"
+      ]
+    }
+  ]
+}

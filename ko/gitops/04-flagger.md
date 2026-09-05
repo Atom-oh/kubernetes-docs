@@ -563,7 +563,9 @@ A/B Testing은 특정 조건(HTTP 헤더, 쿠키, 쿼리 파라미터 등)에 �
 
 ### A/B Testing 동작 원리
 
-![사용자 요청이 로드밸런서를 지나 라우팅 조건을 확인해 x-canary 헤더가 있으면 Canary v2로, 조건을 만족하지 않으면 Primary v1로 보내진 뒤 두 버전 모두 메트릭을 수집하고, 분석 결과가 성공이면 전체 승격, 실패면 롤백되는 과정을 보여준다.](../../assets/diagrams/rendered/ko-gitops-04-flagger-5.svg)
+![사용자 요청이 로드밸런서를 지나 라우팅 조건을 확인해 x-canary 헤더가 있으면 Canary v2로, 조건을 만족하지 않으면 Primary v1로 보내진 뒤 두 버전 모두 메트릭을 수집하고, 분석 결과가 성공이면 전체 승격, 실패면 롤백되는 과정을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-04-flagger-5.html)
 
 ### Header/Cookie 기반 라우팅
 
@@ -1152,7 +1154,9 @@ spec:
 
 Flux Image Automation과 Flagger를 결합하면, 컨테이너 이미지가 업데이트될 때 자동으로 Git 리포지토리를 업데이트하고 Canary 배포를 트리거하는 완전 자동화 파이프라인을 구축할 수 있습니다:
 
-![CI/CD가 새 이미지를 ECR에 푸시하면 Flux 이미지 자동화가 이를 스캔해 Git 저장소에 태그 갱신 커밋을 만들고, 이 변경을 감지한 쿠버네티스가 Deployment를 갱신하면 Flagger가 카나리 점진적 배포를 시작해 완료 또는 롤백으로 마무리하는 과정을 보여준다.](../../assets/diagrams/rendered/ko-gitops-04-flagger-7.svg)
+![CI/CD가 새 이미지를 Amazon ECR에 푸시하면 Flux 이미지 자동화가 태그를 스캔해 Git 저장소에 갱신 커밋을 만들고, Git 변경을 감지한 Flux가 Deployment를 갱신하면 Flagger가 Pod 변경을 감지해 카나리 점진적 배포를 시작하고 완료 또는 롤백으로 마무리하는 과정을 보여준다.](../.gitbook/assets/ko-gitops-04-flagger-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-04-flagger-7.html)
 
 ```yaml
 # Image automation 설정

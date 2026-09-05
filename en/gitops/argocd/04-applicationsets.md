@@ -358,7 +358,9 @@ spec:
 
 #### Matrix Visualization
 
-![Diagram showing an ArgoCD ApplicationSet's matrix generator combining a cluster list and an app list so every cluster-app pair produces one generated Application, three clusters by three apps yielding nine Applications.](../../../assets/diagrams/rendered/en-gitops-argocd-04-applicationsets-0.svg)
+![Diagram showing an ArgoCD ApplicationSet's matrix generator combining a cluster list and an app list so every cluster-app pair produces one generated Application, three clusters by three apps yielding nine Applications.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-0.html)
 
 ### 6. Merge Generator
 

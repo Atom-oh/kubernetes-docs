@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Backstage Permission Framework Decision Flow",
+    "locale": "en",
+    "output": "public/archmaps/en-platform-engineering-06-backstage-idp-10.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "policy-inputs",
+        "label": "Policy inputs",
+        "focus": [
+          "catalog",
+          "groups",
+          "policy"
+        ],
+        "note": "The policy is informed by catalog ownership and the user's group membership."
+      },
+      {
+        "id": "decisions",
+        "label": "Three decisions",
+        "focus": [
+          "decision",
+          "action",
+          "reject",
+          "filter"
+        ],
+        "note": "A request is allowed, denied with 403 Forbidden, or conditionally filtered."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Policy inputs"
+    },
+    {
+      "id": "framework",
+      "label": "Permission framework"
+    },
+    {
+      "id": "outcomes",
+      "label": "Deny / conditional outcomes",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "policy",
+    "decision",
+    "action"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "request",
+      "catalog",
+      "groups"
+    ],
+    "allowedTerminals": [
+      "action",
+      "reject",
+      "filter"
+    ],
+    "requiredPaths": [
+      {
+        "from": "request",
+        "to": "action"
+      },
+      {
+        "from": "request",
+        "to": "reject"
+      },
+      {
+        "from": "request",
+        "to": "filter"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "catalog",
+      "lane": "inputs",
+      "col": 0,
+      "type": "database",
+      "label": "Catalog Ownership",
+      "sublabel": "entity owner refs",
+      "width": 156
+    },
+    {
+      "id": "groups",
+      "lane": "inputs",
+      "col": 1,
+      "type": "external",
+      "label": "Group Membership",
+      "sublabel": "ownershipEntityRefs",
+      "width": 156
+    },
+    {
+      "id": "request",
+      "lane": "framework",
+      "col": 0,
+      "type": "frontend",
+      "label": "User Request",
+      "sublabel": "catalog, template, plugin",
+      "width": 136
+    },
+    {
+      "id": "policy",
+      "lane": "framework",
+      "col": 1,
+      "type": "security",
+      "label": "Permission Policy",
+      "sublabel": "evaluated per request",
+      "width": 156
+    },
+    {
+      "id": "decision",
+      "lane": "framework",
+      "col": 2,
+      "type": "security",
+      "label": "Policy Decision",
+      "sublabel": "allow / deny / conditional",
+      "width": 156
+    },
+    {
+      "id": "action",
+      "lane": "framework",
+      "col": 3,
+      "type": "backend",
+      "label": "Execute Action",
+      "sublabel": "allowed",
+      "width": 136
+    },
+    {
+      "id": "reject",
+      "lane": "outcomes",
+      "col": 3,
+      "type": "security",
+      "label": "403 Forbidden",
+      "sublabel": "denied",
+      "width": 136
+    },
+    {
+      "id": "filter",
+      "lane": "outcomes",
+      "col": 4,
+      "type": "backend",
+      "label": "Filter Results",
+      "sublabel": "conditional access",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "policy"
+    },
+    {
+      "from": "policy",
+      "to": "decision"
+    },
+    {
+      "from": "decision",
+      "to": "action",
+      "label": "allow",
+      "variant": "emphasis"
+    },
+    {
+      "from": "decision",
+      "to": "reject",
+      "label": "deny",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "decision",
+      "to": "filter",
+      "label": "conditional",
+      "role": "branch",
+      "variant": "dashed"
+    },
+    {
+      "from": "catalog",
+      "to": "policy",
+      "role": "branch"
+    },
+    {
+      "from": "groups",
+      "to": "policy",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "What the policy sees",
+      "items": [
+        "Which entity is targeted and who owns it in the catalog",
+        "The requesting user's group membership (ownershipEntityRefs)",
+        "Permissions cover catalog entities, templates, and plugin features"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Team-based policy example",
+      "items": [
+        "group:default/platform-team gets full access",
+        "Catalog entity delete is conditional: only entity owners",
+        "Entity create and read operations are allowed for everyone"
+      ]
+    }
+  ]
+}

@@ -316,7 +316,9 @@ kubescape scan framework --use-from custom-framework.yaml
 
 ### 스캔 파이프라인 흐름
 
-![CLI 입력이 선택된 프레임워크를 기준으로 리소스 파싱·컨트롤 실행·규칙 검사, 리스크 계산·심각도 분류·우선순위 지정을 거쳐 Pretty Print·JSON·SARIF·HTML/PDF 등 다양한 형식으로 출력되는 단일 스캔 실행 파이프라인.](../../assets/diagrams/rendered/ko-security-11-kubescape-1.svg)
+![kubescape CLI 입력이 선택한 프레임워크를 기준으로 리소스 파싱·컨트롤 실행·규칙 검사와 리스크 계산·심각도 분류·우선순위 지정을 거쳐 Pretty Print·JSON·SARIF·HTML/PDF 형식으로 출력되는 단일 스캔 파이프라인을 보여준다.](../.gitbook/assets/ko-security-11-kubescape-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-1.html)
 
 ### 클러스터 스캔
 
@@ -1336,7 +1338,9 @@ fi
 
 ### 수정 워크플로우
 
-![정기 스캔이나 알림으로 발견된 문제를 분류·분석한 뒤 수정이 필요하면 코드를 고쳐 배포하고 재스캔으로 검증하며 실패 시 다시 수정하고, 위험이 허용 가능하면 예외로 등록해 이슈를 종료하는 반복적 수정(Remediation) 워크플로.](../../assets/diagrams/rendered/ko-security-11-kubescape-4.svg)
+![정기 스캔이나 알림으로 발견된 문제를 심각도 분류와 컨트롤 검토로 분석한 뒤 수정이 필요하면 코드를 고쳐 배포하고 재스캔으로 검증하며, 실패 시 재수정 루프로 돌아가고 허용된 리스크는 예외로 등록해 이슈를 종료하는 Kubescape 수정 워크플로우를 보여준다.](../.gitbook/assets/ko-security-11-kubescape-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-4.html)
 
 ### 보안 강화 체크리스트
 

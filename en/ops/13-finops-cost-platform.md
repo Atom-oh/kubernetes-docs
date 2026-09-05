@@ -34,7 +34,9 @@ This guide builds a complete FinOps cost visibility platform on Kubernetes using
 
 ### 1.1 Inform, Optimize, Operate Cycle
 
-![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../../assets/diagrams/rendered/en-ops-13-finops-cost-platform-0.svg)
+![Cyclic diagram of the FinOps operating loop: Inform builds cost visibility and allocation, which feeds Optimize's rightsizing and savings work, which feeds Operate's budget governance and automation, which then feeds back into Inform.](../.gitbook/assets/en-ops-13-finops-cost-platform-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-13-finops-cost-platform-0.html)
 
 **Inform Phase**: Establish visibility by deploying cost monitoring tools, implementing a label strategy, and building showback dashboards. This is the foundation all optimization efforts build on.
 

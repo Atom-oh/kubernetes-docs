@@ -1200,7 +1200,9 @@ webhooks:
 
 The most powerful pattern is combining Flux HelmRelease for application deployment with Flagger Canary for progressive delivery. Flux manages the desired state from Git, and Flagger manages how changes are rolled out.
 
-![A developer's image push flows through Flux's controllers into a HelmRelease change that Flagger picks up, runs a canary analysis against, and then either promotes to primary or rolls back, notifying the developer either way.](../../assets/diagrams/rendered/en-gitops-04-flagger-5.svg)
+![A developer's image push flows through Flux's controllers into a HelmRelease change that Flagger picks up, runs a canary analysis against, and then either promotes to primary or rolls back, notifying the developer either way.](../.gitbook/assets/en-gitops-04-flagger-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-5.html)
 
 **Repository structure for Flux + Flagger:**
 

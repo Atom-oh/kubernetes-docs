@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GitOps 워크플로우 (ArgoCD + vCluster)",
+    "output": "ko-platform-engineering-08-vcluster-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "self-service",
+        "label": "셀프서비스 요청",
+        "focus": [
+          "backstage",
+          "git"
+        ],
+        "note": "Backstage 템플릿이 platform-gitops 저장소에 vCluster 설정 PR을 생성한다."
+      },
+      {
+        "id": "appset-fanout",
+        "label": "ApplicationSet 생성",
+        "focus": [
+          "git",
+          "appset",
+          "app_fe",
+          "app_be"
+        ],
+        "note": "Git generator가 vclusters/**/config.yaml마다 Application을 하나씩 생성한다."
+      },
+      {
+        "id": "deploy",
+        "label": "vCluster 배포",
+        "focus": [
+          "app_fe",
+          "app_be",
+          "vc_fe",
+          "vc_be"
+        ],
+        "note": "각 Application이 loft.sh Helm 차트를 EKS 호스트의 팀별 네임스페이스에 동기화한다."
+      }
+    ],
+    "viewBox": [
+      1060,
+      570
+    ]
+  },
+  "components": [
+    {
+      "id": "backstage",
+      "type": "frontend",
+      "label": "Backstage IDP",
+      "sublabel": "셀프서비스 템플릿",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git 저장소",
+      "sublabel": "platform-gitops/vclusters",
+      "pos": [
+        280,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "appset",
+      "type": "backend",
+      "label": "ApplicationSet",
+      "sublabel": "Git generator",
+      "pos": [
+        680,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "app_fe",
+      "type": "backend",
+      "label": "App: frontend-dev",
+      "sublabel": "vcluster-frontend-dev",
+      "pos": [
+        560,
+        210
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "app_be",
+      "type": "backend",
+      "label": "App: backend-staging",
+      "sublabel": "vcluster-backend-staging",
+      "pos": [
+        800,
+        210
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vc_fe",
+      "type": "cloud",
+      "label": "vCluster",
+      "sublabel": "frontend-dev",
+      "pos": [
+        560,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "vc_be",
+      "type": "cloud",
+      "label": "vCluster",
+      "sublabel": "backend-staging",
+      "pos": [
+        800,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ArgoCD",
+      "wraps": [
+        "appset",
+        "app_fe",
+        "app_be"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 호스트 클러스터",
+      "wraps": [
+        "vc_fe",
+        "vc_be"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "backstage-git",
+      "from": "backstage",
+      "to": "git",
+      "label": "템플릿 실행"
+    },
+    {
+      "id": "git-appset",
+      "from": "git",
+      "to": "appset",
+      "label": "PR 생성 / 감지",
+      "variant": "emphasis"
+    },
+    {
+      "id": "appset-app-fe",
+      "from": "appset",
+      "to": "app_fe",
+      "label": "생성",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "appset-app-be",
+      "from": "appset",
+      "to": "app_be",
+      "label": "생성",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app-fe-vc",
+      "from": "app_fe",
+      "to": "vc_fe",
+      "label": "배포",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "app-be-vc",
+      "from": "app_be",
+      "to": "vc_be",
+      "label": "배포",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Git generator",
+      "items": [
+        "platform-gitops 저장소의 vclusters/**/config.yaml 파일마다 Application 생성",
+        "이름 규칙: vcluster-{{team}}-{{environment}}"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "동기화 정책",
+      "items": [
+        "charts.loft.sh의 vcluster Helm 차트를 팀별 values.yaml로 배포",
+        "automated prune + selfHeal, CreateNamespace=true"
+      ]
+    }
+  ]
+}

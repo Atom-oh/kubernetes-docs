@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArgoCD Architecture Overview",
+    "locale": "en",
+    "output": "en-gitops-argocd-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "gitops-path", "label": "GitOps sync path", "focus": ["sources", "reposerver", "appcontroller", "clusters"], "note": "Manifests are fetched from Git, Helm, or OCI, rendered by the Repo Server, and reconciled into managed clusters." },
+      { "id": "user-access", "label": "User access", "focus": ["users", "dex", "apiserver"], "note": "Web UI, CLI, and gRPC clients reach the API Server; Dex provides optional SSO." },
+      { "id": "cache", "label": "Caching layer", "focus": ["apiserver", "appcontroller", "redis"], "note": "Redis caches results for the API Server, Repo Server, and Application Controller." }
+    ]
+  },
+  "components": [
+    { "id": "users", "type": "frontend", "label": "User Interfaces", "sublabel": "Web UI / CLI / gRPC", "pos": [500, 20], "size": [170, 60] },
+    { "id": "dex", "type": "security", "label": "Dex", "sublabel": "OIDC SSO (optional)", "pos": [280, 190], "size": [150, 60] },
+    { "id": "apiserver", "type": "backend", "label": "API Server", "sublabel": "API / auth / RBAC", "pos": [500, 190], "size": [170, 60] },
+    { "id": "redis", "type": "database", "label": "Redis", "sublabel": "cache", "pos": [750, 190], "size": [150, 60] },
+    { "id": "sources", "type": "external", "label": "Configuration Sources", "sublabel": "Git / Helm / OCI", "pos": [30, 340], "size": [170, 60] },
+    { "id": "reposerver", "type": "backend", "label": "Repository Server", "sublabel": "clones repos, renders manifests", "pos": [280, 340], "size": [170, 60] },
+    { "id": "appcontroller", "type": "backend", "label": "Application Controller", "sublabel": "reconciles desired vs actual", "pos": [530, 340], "size": [190, 60], "tag": "sharded" },
+    { "id": "clusters", "type": "cloud", "label": "Managed Clusters", "sublabel": "Kubernetes x N", "pos": [990, 340], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "ArgoCD Control Plane", "wraps": ["dex", "apiserver", "redis", "reposerver", "appcontroller"] }
+  ],
+  "connections": [
+    { "id": "users-api", "from": "users", "to": "apiserver", "label": "request", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "dex-api", "from": "dex", "to": "apiserver", "label": "SSO", "variant": "security" },
+    { "id": "api-redis", "from": "apiserver", "to": "redis", "label": "cache" },
+    { "id": "sources-repo", "from": "sources", "to": "reposerver", "label": "fetch", "variant": "emphasis" },
+    { "id": "repo-appctl", "from": "reposerver", "to": "appcontroller", "label": "render", "variant": "emphasis" },
+    { "id": "appctl-redis", "from": "appcontroller", "to": "redis", "label": "cache", "fromSide": "top", "toSide": "bottom" },
+    { "id": "appctl-clusters", "from": "appcontroller", "to": "clusters", "label": "sync", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Core components (HA replicas)", "items": ["API Server 2+: API requests, authentication, RBAC", "Repository Server 2+: clones repos, generates manifests, caches results", "Application Controller 2+ (sharded): monitors applications, reconciles state"] },
+    { "dot": "amber", "title": "Supporting services", "items": ["Redis 3 (HA): caching layer for repo server and controller", "Dex 2+: OIDC provider for SSO integration", "Notification Controller and ApplicationSet Controller (1+ each) not shown"] }
+  ]
+}

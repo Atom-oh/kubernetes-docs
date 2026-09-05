@@ -1,0 +1,273 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ArgoCD 하위 가이드 학습 경로",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "초급 문서 (시작)"
+        },
+        "backend": {
+          "label": "중급 필수 문서"
+        },
+        "cloud": {
+          "label": "고급 / 선택 문서"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "core-path",
+        "label": "필수 학습 경로",
+        "focus": [
+          "install",
+          "applications",
+          "sync",
+          "rbac",
+          "security",
+          "notifications",
+          "best_practices"
+        ],
+        "note": "01 설치에서 시작해 중급 다섯 문서를 순서대로 읽고 09 모범 사례로 마무리한다."
+      },
+      {
+        "id": "advanced-branch",
+        "label": "고급 분기",
+        "focus": [
+          "applications",
+          "sync",
+          "applicationsets",
+          "traffic",
+          "rollouts_experiment"
+        ],
+        "note": "Application·동기화를 익힌 뒤 ApplicationSets, Argo Rollouts 트래픽 관리, Experiment로 분기한다."
+      },
+      {
+        "id": "wrap-up",
+        "label": "종합 문서",
+        "focus": [
+          "notifications",
+          "traffic",
+          "best_practices"
+        ],
+        "note": "중급 경로와 고급 분기가 모두 09 모범 사례(프로덕션 구성·성능·문제 해결)로 모인다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "beginner",
+      "label": "초급"
+    },
+    {
+      "id": "intermediate",
+      "label": "중급"
+    },
+    {
+      "id": "advanced",
+      "label": "고급"
+    }
+  ],
+  "mainPath": [
+    "install",
+    "applications",
+    "sync",
+    "rbac",
+    "security",
+    "notifications",
+    "best_practices"
+  ],
+  "nodes": [
+    {
+      "id": "install",
+      "lane": "beginner",
+      "col": 0,
+      "type": "frontend",
+      "label": "01. 설치 및 구성",
+      "sublabel": "설치, CLI, 초기 구성",
+      "tag": "시작",
+      "width": 160
+    },
+    {
+      "id": "applications",
+      "lane": "intermediate",
+      "col": 0,
+      "type": "backend",
+      "label": "02. Application",
+      "sublabel": "CRD, 소스 유형, 훅",
+      "width": 160
+    },
+    {
+      "id": "sync",
+      "lane": "intermediate",
+      "col": 1,
+      "type": "backend",
+      "label": "03. 동기화 전략",
+      "sublabel": "자동/수동, 웨이브, 윈도우",
+      "width": 160
+    },
+    {
+      "id": "rbac",
+      "lane": "intermediate",
+      "col": 2,
+      "type": "backend",
+      "label": "06. 프로젝트와 RBAC",
+      "sublabel": "AppProject, 멀티테넌시",
+      "width": 160
+    },
+    {
+      "id": "security",
+      "lane": "intermediate",
+      "col": 3,
+      "type": "backend",
+      "label": "07. 보안",
+      "sublabel": "SSO, 시크릿, TLS",
+      "width": 160
+    },
+    {
+      "id": "notifications",
+      "lane": "intermediate",
+      "col": 4,
+      "type": "backend",
+      "label": "08. 알림",
+      "sublabel": "Slack, Teams, Webhook",
+      "width": 160
+    },
+    {
+      "id": "applicationsets",
+      "lane": "advanced",
+      "col": 0,
+      "type": "cloud",
+      "label": "04. ApplicationSets",
+      "sublabel": "9가지 생성기, 대규모 배포",
+      "width": 160
+    },
+    {
+      "id": "traffic",
+      "lane": "advanced",
+      "col": 1,
+      "type": "cloud",
+      "label": "05. 트래픽 관리",
+      "sublabel": "Rollouts, 블루/그린, 카나리",
+      "width": 160
+    },
+    {
+      "id": "rollouts_experiment",
+      "lane": "advanced",
+      "col": 2,
+      "type": "cloud",
+      "label": "10. Rollouts Experiment",
+      "sublabel": "Experiment CRD, AnalysisRun",
+      "width": 190
+    },
+    {
+      "id": "best_practices",
+      "lane": "advanced",
+      "col": 4,
+      "type": "cloud",
+      "label": "09. 모범 사례",
+      "sublabel": "프로덕션 구성, 성능, 문제 해결",
+      "tag": "종합",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "from": "install",
+      "to": "applications",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "applications",
+      "to": "sync"
+    },
+    {
+      "from": "sync",
+      "to": "rbac"
+    },
+    {
+      "from": "rbac",
+      "to": "security"
+    },
+    {
+      "from": "security",
+      "to": "notifications"
+    },
+    {
+      "from": "notifications",
+      "to": "best_practices",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "applications",
+      "to": "applicationsets",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "sync",
+      "to": "traffic",
+      "variant": "dashed",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "applicationsets",
+      "to": "traffic",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "traffic",
+      "to": "rollouts_experiment",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "rollouts_experiment",
+      "to": "best_practices",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "초급 → 중급 (필수)",
+      "items": [
+        "01 설치 및 구성으로 ArgoCD 설치·CLI·초기 구성을 마친다",
+        "02 Application → 03 동기화 전략 → 06 RBAC → 07 보안 → 08 알림 순으로 읽는다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "고급 분기 (선택)",
+      "items": [
+        "04 ApplicationSets: 9가지 생성기와 템플릿으로 대규모 배포",
+        "05 트래픽 관리: Argo Rollouts 블루/그린·카나리, 10 Rollouts Experiment로 심화"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "09 모범 사례 (종합)",
+      "items": [
+        "프로덕션 구성, 성능 최적화, 문제 해결",
+        "중급 경로와 고급 분기를 모두 마친 뒤 읽는 마무리 문서"
+      ]
+    }
+  ]
+}

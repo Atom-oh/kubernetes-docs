@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Backstage 전체 아키텍처",
+    "output": "ko-platform-engineering-06-backstage-idp-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "user-path",
+        "label": "사용자 요청 경로",
+        "focus": [
+          "dev",
+          "pm",
+          "ui",
+          "api"
+        ],
+        "note": "개발자와 플랫폼 엔지니어는 React SPA인 Backstage UI를 통해 Node.js 백엔드 API를 호출한다."
+      },
+      {
+        "id": "plugins",
+        "label": "플러그인 구조",
+        "focus": [
+          "plugin-ui",
+          "plugin-be"
+        ],
+        "note": "프론트엔드 플러그인(React)과 백엔드 플러그인(Node.js)이 짝을 이루어 기능을 확장한다."
+      },
+      {
+        "id": "integrations",
+        "label": "저장소 · 외부 연동",
+        "focus": [
+          "plugin-be",
+          "pg",
+          "s3",
+          "gh",
+          "eks",
+          "argo",
+          "oidc"
+        ],
+        "note": "각 백엔드 플러그인이 데이터 저장소와 외부 시스템에 연결된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "셀프서비스 사용자",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pm",
+      "type": "external",
+      "label": "플랫폼 엔지니어",
+      "sublabel": "플랫폼 운영",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Backstage UI",
+      "sublabel": "React SPA",
+      "pos": [
+        250,
+        200
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "plugin-ui",
+      "type": "frontend",
+      "label": "플러그인 UI",
+      "sublabel": "Catalog · TechDocs · Scaffolder · Kubernetes",
+      "pos": [
+        250,
+        330
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Backstage Backend API",
+      "sublabel": "Node.js",
+      "pos": [
+        600,
+        200
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "plugin-be",
+      "type": "backend",
+      "label": "플러그인 백엔드",
+      "sublabel": "Catalog · TechDocs · Scaffolder · Auth · Kubernetes",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Amazon RDS · Catalog 데이터",
+      "pos": [
+        950,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "TechDocs 산출물",
+      "pos": [
+        950,
+        130
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "gh",
+      "type": "external",
+      "label": "GitHub / GitLab",
+      "sublabel": "Catalog · Scaffolder 연동",
+      "pos": [
+        950,
+        250
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "Kubernetes 플러그인",
+      "pos": [
+        950,
+        340
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "external",
+      "label": "ArgoCD",
+      "sublabel": "Kubernetes 플러그인 · GitOps",
+      "pos": [
+        950,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "Cognito / Okta",
+      "sublabel": "Auth 플러그인 · OIDC",
+      "pos": [
+        950,
+        520
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사용자",
+      "wraps": [
+        "dev",
+        "pm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Frontend - React SPA",
+      "wraps": [
+        "ui",
+        "plugin-ui"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backend - Node.js",
+      "wraps": [
+        "api",
+        "plugin-be"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 저장소",
+      "wraps": [
+        "pg",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부 시스템",
+      "wraps": [
+        "gh",
+        "eks",
+        "argo",
+        "oidc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dev-ui",
+      "from": "dev",
+      "to": "ui",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pm-ui",
+      "from": "pm",
+      "to": "ui"
+    },
+    {
+      "id": "ui-api",
+      "from": "ui",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pui-pbe",
+      "from": "plugin-ui",
+      "to": "plugin-be"
+    },
+    {
+      "id": "pbe-pg",
+      "from": "plugin-be",
+      "to": "pg"
+    },
+    {
+      "id": "pbe-s3",
+      "from": "plugin-be",
+      "to": "s3"
+    },
+    {
+      "id": "pbe-gh",
+      "from": "plugin-be",
+      "to": "gh"
+    },
+    {
+      "id": "pbe-eks",
+      "from": "plugin-be",
+      "to": "eks"
+    },
+    {
+      "id": "pbe-argo",
+      "from": "plugin-be",
+      "to": "argo"
+    },
+    {
+      "id": "pbe-oidc",
+      "from": "plugin-be",
+      "to": "oidc",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Frontend - React SPA",
+      "items": [
+        "Backstage UI가 Catalog · TechDocs · Scaffolder · Kubernetes 플러그인 UI를 호스팅한다",
+        "프론트엔드 플러그인은 React 컴포넌트로 UI를 확장한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Backend - Node.js",
+      "items": [
+        "Backend API가 Catalog · TechDocs · Scaffolder · Auth · Kubernetes 백엔드 플러그인을 묶는다",
+        "백엔드 플러그인은 Node.js 모듈로 API를 확장한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "저장소 · 외부 시스템",
+      "items": [
+        "Catalog 데이터는 PostgreSQL(RDS), TechDocs 산출물은 S3에 저장된다",
+        "GitHub/GitLab, EKS, ArgoCD, Cognito/Okta와 플러그인 백엔드가 연동된다"
+      ]
+    }
+  ]
+}

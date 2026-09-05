@@ -71,7 +71,9 @@ spec:
 
 ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 이루어져 있습니다:
 
-![외부 Git·Helm·OCI 저장소와 인증 시스템이 ArgoCD의 리포 서버·애플리케이션 컨트롤러·API 서버를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-0.png)
+![외부 Git·Helm·OCI 저장소와 Identity Provider가 ArgoCD의 Repo Server·Application Controller·API Server·Dex·Redis·ApplicationSet/Notifications 컨트롤러를 거쳐 여러 Kubernetes 클러스터로 동기화되는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-0.html)
 
 ### 핵심 컴포넌트
 
@@ -87,7 +89,9 @@ ArgoCD는 Kubernetes 컨트롤러 패턴을 따르며, 여러 구성 요소로 �
 
 ### 데이터 흐름
 
-![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-1.png)
+![사용자의 Application 생성/수정 요청이 API 서버와 애플리케이션 컨트롤러를 거쳐 리포 서버에서 Git 소스를 렌더링하고, Kubernetes의 현재 상태와 비교한 뒤 동기화를 적용하고 결과가 사용자에게 돌아오는 과정을 시간 순으로 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-1.html)
 
 ## 핵심 개념
 
@@ -232,7 +236,9 @@ spec:
 
 ### Kubernetes 호환성
 
-![ArgoCD 2.11, 2.12, 2.13 세 버전의 Kubernetes 지원 기간이 2024년 하반기에 세 버전 모두 겹치는 구간을 두고 순차적으로 이어지는 것을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-2.png)
+![ArgoCD 2.11, 2.12, 2.13 세 버전의 Kubernetes 지원 기간이 순차적으로 이어지다가 2024년 3분기에 세 버전 모두 겹치는 구간을 거친 뒤 2.11과 2.12가 차례로 종료되고 2.13만 지원이 지속되는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-2.html)
 
 ## 하위 가이드
 
@@ -253,7 +259,9 @@ spec:
 
 ### 학습 경로
 
-![초급 설치 문서에서 시작해 중급 단계인 Applications·동기화 전략·RBAC·보안·알림을 거쳐, 고급 단계인 ApplicationSets·트래픽 관리·모범 사례로 이어지는 ArgoCD 문서 학습 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-README-3.png)
+![초급 01 설치 및 구성에서 시작해 중급 02 Application·03 동기화 전략·06 RBAC·07 보안·08 알림을 순서대로 거치고, 고급 04 ApplicationSets·05 트래픽 관리·10 Rollouts Experiment 분기를 지나 09 모범 사례로 모이는 ArgoCD 하위 가이드 학습 경로를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-readme-3.html)
 
 ## 빠른 시작
 

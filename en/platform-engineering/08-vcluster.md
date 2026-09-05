@@ -89,7 +89,9 @@ Each vCluster runs a lightweight Kubernetes control plane inside a single pod (o
 
 The Syncer is the core innovation behind vCluster. It acts as a bidirectional bridge between the virtual cluster and the host cluster, translating and synchronizing Kubernetes resources across the boundary. When a user creates a Pod inside a vCluster, the Syncer creates a corresponding Pod in the host namespace -- but with rewritten names, labels, and metadata to prevent collisions between virtual clusters.
 
-![Sequence diagram showing a developer's kubectl apply landing in the vCluster API server, the syncer rewriting object metadata and creating the real Pod on the host cluster, then continuously syncing status back down.](../../assets/diagrams/rendered/en-platform-engineering-08-vcluster-1.svg)
+![Sequence diagram showing a developer's kubectl apply landing in the vCluster API server, the syncer rewriting object metadata and creating the real Pod on the host cluster, then continuously syncing status back down.](../.gitbook/assets/en-platform-engineering-08-vcluster-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-1.html)
 
 **Resource synchronization behavior:**
 
@@ -796,7 +798,9 @@ spec:
 
 Assign each development team a dedicated vCluster for their daily work. Teams get cluster-admin access within their vCluster and can install any CRDs or tools they need without affecting others.
 
-![Diagram showing four independent teams — frontend, backend, data, and ML — each running its own isolated vCluster inside one EKS host cluster, all drawing on the same shared nodes, CNI, CSI, and monitoring stack.](../../assets/diagrams/rendered/en-platform-engineering-08-vcluster-2.svg)
+![Diagram showing four independent teams — frontend, backend, data, and ML — each running its own isolated vCluster inside one EKS host cluster, all drawing on the same shared nodes, CNI, CSI, and monitoring stack.](../.gitbook/assets/en-platform-engineering-08-vcluster-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-2.html)
 
 ```yaml
 # vcluster-team-frontend.yaml
@@ -1700,7 +1704,9 @@ This ApplicationSet automatically creates an ArgoCD Application for every direct
 
 The complete developer workflow for self-service virtual clusters:
 
-![Sequence diagram showing a developer requesting a vCluster from a Backstage portal, the request flowing through a GitOps pull request and sync into the host cluster, and the developer receiving a kubeconfig once the new vCluster is healthy.](../../assets/diagrams/rendered/en-platform-engineering-08-vcluster-4.svg)
+![Sequence diagram showing a developer requesting a vCluster from a Backstage portal, the request flowing through a GitOps pull request and sync into the host cluster, and the developer receiving a kubeconfig once the new vCluster is healthy.](../.gitbook/assets/en-platform-engineering-08-vcluster-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-4.html)
 
 ---
 

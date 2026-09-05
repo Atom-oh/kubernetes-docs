@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ArgoCD Data Flow — Application Creation and Reconciliation Loop",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      700
+    ],
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "status write-back"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "UI / CLI / gRPC"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "auth, RBAC"
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repo Server",
+      "sublabel": "clone + render"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "App Controller",
+      "sublabel": "Application Controller"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "target cluster"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 312,
+      "label": "Application creation"
+    },
+    {
+      "from": 332,
+      "to": 575,
+      "label": "Reconciliation loop — repeats (default every 3 min)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create-app",
+      "from": "user",
+      "to": "api",
+      "y": 182,
+      "label": "create Application",
+      "variant": "emphasis"
+    },
+    {
+      "id": "request-manifests",
+      "from": "api",
+      "to": "repo",
+      "y": 214,
+      "label": "request manifests",
+      "note": "Repo Server fetches the source from Git and renders manifests"
+    },
+    {
+      "id": "rendered-manifests",
+      "from": "repo",
+      "to": "api",
+      "y": 256,
+      "label": "rendered manifests",
+      "variant": "return"
+    },
+    {
+      "id": "app-created",
+      "from": "api",
+      "to": "user",
+      "y": 292,
+      "label": "Application created",
+      "variant": "return"
+    },
+    {
+      "id": "get-desired",
+      "from": "ctrl",
+      "to": "repo",
+      "y": 352,
+      "label": "get desired state"
+    },
+    {
+      "id": "desired-manifests",
+      "from": "repo",
+      "to": "ctrl",
+      "y": 384,
+      "label": "manifests",
+      "variant": "return"
+    },
+    {
+      "id": "get-actual",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 420,
+      "label": "get actual state"
+    },
+    {
+      "id": "resources",
+      "from": "k8s",
+      "to": "ctrl",
+      "y": 452,
+      "label": "resources",
+      "variant": "return"
+    },
+    {
+      "id": "apply",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 488,
+      "label": "apply (if drift)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "applied",
+      "from": "k8s",
+      "to": "ctrl",
+      "y": 520,
+      "label": "applied",
+      "variant": "return"
+    },
+    {
+      "id": "update-status",
+      "from": "ctrl",
+      "to": "api",
+      "y": 556,
+      "label": "update status",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 177,
+      "to": 297,
+      "type": "backend"
+    },
+    {
+      "participant": "repo",
+      "from": 209,
+      "to": 261,
+      "type": "backend"
+    },
+    {
+      "participant": "ctrl",
+      "from": 347,
+      "to": 562,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Application creation",
+      "items": [
+        "API Server handles the request, authentication, and RBAC",
+        "Repo Server clones the source repo and generates manifests",
+        "Rendered manifests are cached for later comparisons"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Reconciliation loop",
+      "items": [
+        "Application Controller fetches desired state from the Repo Server",
+        "It reads the actual state from the target Kubernetes cluster",
+        "On drift it applies the desired manifests and updates the Application status"
+      ]
+    }
+  ]
+}

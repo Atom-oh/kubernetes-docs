@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Amazon EKS에서의 GitOps 아키텍처",
+    "output": "ko-gitops-readme-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "deploy-path",
+        "label": "배포 경로",
+        "focus": [
+          "git",
+          "controller",
+          "app"
+        ],
+        "note": "Git 저장소의 변경을 클러스터 안의 GitOps Controller가 감지해 애플리케이션에 반영한다."
+      },
+      {
+        "id": "aws-integration",
+        "label": "AWS 통합 포인트",
+        "focus": [
+          "iam",
+          "ecr",
+          "secrets",
+          "alb",
+          "app",
+          "controller"
+        ],
+        "note": "IRSA, ECR, Secrets Manager, ALB가 인증·이미지·시크릿·트래픽을 공급한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "source of truth",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "GitOps Controller",
+      "sublabel": "in-cluster reconciler",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "ArgoCD / FluxCD"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "Kubernetes 워크로드",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM Roles",
+      "sublabel": "IRSA",
+      "pos": [
+        300,
+        110
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Amazon ECR",
+      "sublabel": "container images",
+      "pos": [
+        600,
+        110
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "secrets",
+      "type": "security",
+      "label": "Secrets Manager",
+      "sublabel": "app secrets",
+      "pos": [
+        600,
+        550
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application LB",
+      "sublabel": "ingress",
+      "pos": [
+        900,
+        330
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "외부",
+      "wraps": [
+        "git"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS 환경",
+      "wraps": [
+        "controller",
+        "app",
+        "iam",
+        "ecr",
+        "secrets",
+        "alb"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Amazon EKS",
+      "wraps": [
+        "controller",
+        "app"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-to-controller",
+      "from": "git",
+      "to": "controller",
+      "label": "Git 변경 감지",
+      "variant": "emphasis"
+    },
+    {
+      "id": "controller-to-app",
+      "from": "controller",
+      "to": "app",
+      "label": "동기화 / 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iam-to-controller",
+      "from": "iam",
+      "to": "controller",
+      "label": "IRSA 인증",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "ecr-to-app",
+      "from": "ecr",
+      "to": "app",
+      "label": "컨테이너 이미지",
+      "labelDy": 24
+    },
+    {
+      "id": "secrets-to-app",
+      "from": "secrets",
+      "to": "app",
+      "label": "시크릿 (External Secrets)",
+      "variant": "security"
+    },
+    {
+      "id": "alb-to-app",
+      "from": "alb",
+      "to": "app",
+      "label": "Ingress 트래픽",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "IRSA",
+      "items": [
+        "GitOps 도구가 AWS 서비스에 접근할 때 IRSA로 보안을 강화한다",
+        "ServiceAccount에 eks.amazonaws.com/role-arn 어노테이션으로 IAM 역할을 연결한다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "AWS 통합 포인트",
+      "items": [
+        "Amazon ECR: 컨테이너 이미지 저장소",
+        "AWS Secrets Manager: 시크릿 관리 (External Secrets)",
+        "Application Load Balancer: Ingress Controller",
+        "AWS CodeCommit(Git 저장소), CloudWatch(로깅·모니터링), IAM Identity Center(SSO)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "EKS Blueprints",
+      "items": [
+        "GitOps 패턴을 포함한 EKS 클러스터 프로비저닝 프레임워크",
+        "Terraform eks-blueprints-addons 모듈에서 enable_argocd = true로 ArgoCD를 함께 배포한다"
+      ]
+    }
+  ]
+}

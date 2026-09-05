@@ -46,11 +46,7 @@
   "lanes": [
     {
       "id": "input",
-      "label": "입력"
-    },
-    {
-      "id": "framework",
-      "label": "프레임워크 선택"
+      "label": "입력 · 프레임워크 선택"
     },
     {
       "id": "evaluation",
@@ -88,8 +84,8 @@
     },
     {
       "id": "fw",
-      "lane": "framework",
-      "col": 0,
+      "lane": "input",
+      "col": 1,
       "type": "security",
       "label": "프레임워크",
       "sublabel": "NSA · CIS · MITRE · All",
@@ -136,7 +132,8 @@
       "lane": "scoring",
       "col": 5,
       "type": "backend",
-      "label": "우선순위 지정"
+      "label": "우선순위 지정",
+      "width": 124
     },
     {
       "id": "pretty",
@@ -144,7 +141,8 @@
       "col": 2,
       "type": "external",
       "label": "Pretty Print",
-      "sublabel": "터미널 출력"
+      "sublabel": "터미널 출력",
+      "width": 124
     },
     {
       "id": "json",
@@ -168,7 +166,8 @@
       "col": 5,
       "type": "external",
       "label": "HTML / PDF",
-      "sublabel": "-o html · -o pdf"
+      "sublabel": "-o html · -o pdf",
+      "width": 124
     }
   ],
   "edges": [

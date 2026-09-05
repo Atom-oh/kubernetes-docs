@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "멀티 테넌트 SaaS 플랫폼",
+    "output": "ko-platform-engineering-08-vcluster-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "provisioning",
+        "label": "테넌트 생성/삭제 제어",
+        "focus": [
+          "api",
+          "db",
+          "controller",
+          "tenant-a",
+          "tenant-b",
+          "tenant-c"
+        ],
+        "note": "테넌트 관리 API가 vCluster Controller에 지시해 테넌트별 vCluster를 생성·삭제한다."
+      },
+      {
+        "id": "customer-access",
+        "label": "고객 kubectl 접근",
+        "focus": [
+          "cust-a",
+          "cust-b",
+          "cust-c",
+          "tenant-a",
+          "tenant-b",
+          "tenant-c"
+        ],
+        "note": "각 고객은 자신의 vCluster에만 kubectl로 접근한다."
+      },
+      {
+        "id": "tiers",
+        "label": "등급별 자원",
+        "focus": [
+          "tenant-a",
+          "tenant-b",
+          "tenant-c"
+        ],
+        "note": "Enterprise / Standard / Free 등급에 따라 CPU·메모리 할당이 다르다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cust-a",
+      "type": "external",
+      "label": "고객 A",
+      "sublabel": "kubectl",
+      "pos": [
+        940,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cust-b",
+      "type": "external",
+      "label": "고객 B",
+      "sublabel": "kubectl",
+      "pos": [
+        940,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cust-c",
+      "type": "external",
+      "label": "고객 C",
+      "sublabel": "kubectl",
+      "pos": [
+        940,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "테넌트 관리 API",
+      "pos": [
+        280,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "테넌트 DB",
+      "sublabel": "관리 영역",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "vCluster Controller",
+      "sublabel": "vcluster create / delete",
+      "pos": [
+        280,
+        230
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "tenant-a",
+      "type": "cloud",
+      "label": "테넌트 A (Enterprise)",
+      "sublabel": "K8s v1.31 · CPU 16 · Mem 64Gi",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "tenant-b",
+      "type": "cloud",
+      "label": "테넌트 B (Standard)",
+      "sublabel": "K8s v1.31 · CPU 4 · Mem 16Gi",
+      "pos": [
+        580,
+        230
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "tenant-c",
+      "type": "cloud",
+      "label": "테넌트 C (Free)",
+      "sublabel": "K8s v1.31 · CPU 1 · Mem 4Gi",
+      "pos": [
+        580,
+        400
+      ],
+      "size": [
+        260,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "SaaS 플랫폼 (EKS 호스트 클러스터)",
+      "wraps": [
+        "api",
+        "db",
+        "controller",
+        "tenant-a",
+        "tenant-b",
+        "tenant-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cust-a-access",
+      "from": "cust-a",
+      "to": "tenant-a",
+      "label": "kubectl",
+      "variant": "dashed"
+    },
+    {
+      "id": "cust-b-access",
+      "from": "cust-b",
+      "to": "tenant-b",
+      "variant": "dashed"
+    },
+    {
+      "id": "cust-c-access",
+      "from": "cust-c",
+      "to": "tenant-c",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-controller",
+      "from": "api",
+      "to": "controller",
+      "label": "API → CTRL",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-tenant-a",
+      "from": "controller",
+      "to": "tenant-a",
+      "label": "생성/삭제",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-tenant-b",
+      "from": "controller",
+      "to": "tenant-b",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-tenant-c",
+      "from": "controller",
+      "to": "tenant-c",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "제어 경로",
+      "items": [
+        "테넌트 관리 API가 vCluster Controller에 테넌트 생성/삭제를 지시한다",
+        "vCluster Controller가 vcluster create / delete로 테넌트별 vCluster를 프로비저닝한다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Enterprise 테넌트 설정 (예시)",
+      "items": [
+        "k3s distro, 컨트롤 플레인 requests 500m/1Gi · limits 2/4Gi",
+        "gp3 20Gi PVC로 컨트롤 플레인 상태 영속화",
+        "internal NLB Service, tier: enterprise 노드만 동기화"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "격리",
+      "items": [
+        "각 고객은 자신의 vCluster kubeconfig로만 kubectl 접근",
+        "networkPolicies · ingresses · PVC를 호스트로 toHost 동기화"
+      ]
+    }
+  ]
+}

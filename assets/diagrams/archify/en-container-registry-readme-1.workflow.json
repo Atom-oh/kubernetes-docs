@@ -1,0 +1,212 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Container Registry Selection Decision Tree",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1226,
+      404
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Decision criterion"
+        },
+        "cloud": {
+          "label": "Default fit for AWS/EKS workloads"
+        },
+        "external": {
+          "label": "Recommended registry"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "airgap",
+        "label": "Air-gap check",
+        "focus": [
+          "q_airgap",
+          "harbor"
+        ],
+        "note": "An air-gapped or disconnected environment goes straight to self-hosted Harbor, regardless of the other criteria."
+      },
+      {
+        "id": "aws",
+        "label": "AWS/EKS check",
+        "focus": [
+          "q_airgap",
+          "q_aws",
+          "ecr"
+        ],
+        "note": "Connected AWS/EKS workloads default to the managed, IAM-integrated Amazon ECR."
+      },
+      {
+        "id": "others",
+        "label": "Everything else",
+        "focus": [
+          "q_aws",
+          "q_compliance",
+          "harbor_business",
+          "dockerhub"
+        ],
+        "note": "Outside AWS, production with compliance needs uses Harbor or Docker Hub Business; otherwise start with Docker Hub Free/Pro."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "Decision criteria"
+    },
+    {
+      "id": "result",
+      "label": "Recommended registry"
+    }
+  ],
+  "mainPath": [
+    "q_airgap",
+    "q_aws",
+    "ecr"
+  ],
+  "nodes": [
+    {
+      "id": "q_airgap",
+      "lane": "decide",
+      "col": 0,
+      "type": "backend",
+      "label": "Air-gap support needed?",
+      "sublabel": "disconnected, no internet access",
+      "width": 190
+    },
+    {
+      "id": "q_aws",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "Running on AWS / EKS?",
+      "sublabel": "single-cloud on AWS",
+      "width": 200
+    },
+    {
+      "id": "q_compliance",
+      "lane": "decide",
+      "col": 2,
+      "type": "backend",
+      "label": "Compliance-heavy production?",
+      "sublabel": "audit + access-control requirements",
+      "width": 260
+    },
+    {
+      "id": "harbor",
+      "lane": "result",
+      "col": 0,
+      "type": "external",
+      "label": "Harbor",
+      "sublabel": "self-hosted, full air-gap support",
+      "width": 190
+    },
+    {
+      "id": "ecr",
+      "lane": "result",
+      "col": 1,
+      "type": "cloud",
+      "label": "Amazon ECR",
+      "sublabel": "managed, IAM-integrated",
+      "width": 200
+    },
+    {
+      "id": "harbor_business",
+      "lane": "result",
+      "col": 2,
+      "type": "external",
+      "label": "Harbor or Docker Hub Business",
+      "sublabel": "RBAC, scanning, audit",
+      "width": 260
+    },
+    {
+      "id": "dockerhub",
+      "lane": "result",
+      "col": 3,
+      "type": "external",
+      "label": "Docker Hub Free/Pro",
+      "sublabel": "individuals, small teams, open source",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "id": "airgap-yes",
+      "from": "q_airgap",
+      "to": "harbor",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "id": "airgap-no",
+      "from": "q_airgap",
+      "to": "q_aws",
+      "label": "no"
+    },
+    {
+      "id": "aws-yes",
+      "from": "q_aws",
+      "to": "ecr",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "aws-no",
+      "from": "q_aws",
+      "to": "q_compliance",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "compliance-yes",
+      "from": "q_compliance",
+      "to": "harbor_business",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "id": "compliance-no",
+      "from": "q_compliance",
+      "to": "dockerhub",
+      "label": "no",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "By team size",
+      "items": [
+        "1-5 people: Docker Hub Pro — simple, low cost",
+        "5-50 people: Amazon ECR — managed, scalable",
+        "50+ people: ECR or Harbor — governance, multi-team support"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "By security level",
+      "items": [
+        "Basic: Docker Hub Team — RBAC, scanning",
+        "Intermediate: ECR Enhanced — Inspector integration, IAM",
+        "Advanced: Harbor — signing, audit, air-gap"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "By cloud strategy",
+      "items": [
+        "Single cloud on AWS: Amazon ECR",
+        "Multi-cloud: Harbor (central) + per-cloud cache",
+        "Hybrid: Harbor (on-premises) + ECR (AWS)",
+        "Air-gapped: Harbor"
+      ]
+    }
+  ]
+}

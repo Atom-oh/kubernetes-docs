@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane Control Plane Architecture",
+    "locale": "en",
+    "output": "en-platform-engineering-07-crossplane-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "core", "label": "Crossplane core", "focus": ["cp", "rbac", "pkg"], "note": "The core controller manages the RBAC Manager and the Package Manager inside crossplane-system." },
+      { "id": "provider", "label": "Provider runtime", "focus": ["pkg", "paws", "crd"], "note": "The Package Manager installs provider-aws, whose controller pod watches Managed Resources, XRDs and Compositions stored as CRDs in etcd." },
+      { "id": "reconcile", "label": "Reconcile to AWS", "focus": ["paws", "api"], "note": "provider-aws reconciles Managed Resources against the AWS APIs, continuously correcting drift." }
+    ]
+  },
+  "components": [
+    { "id": "cp", "type": "backend", "label": "Crossplane", "sublabel": "Core Controller", "pos": [60, 260], "size": [170, 64] },
+    { "id": "rbac", "type": "security", "label": "RBAC Manager", "sublabel": "ClusterRoles for XRDs", "pos": [320, 120], "size": [180, 64] },
+    { "id": "pkg", "type": "backend", "label": "Package Manager", "sublabel": "Providers / Configurations", "pos": [320, 400], "size": [180, 64] },
+    { "id": "paws", "type": "backend", "label": "provider-aws", "sublabel": "Controller Pod", "pos": [620, 400], "size": [170, 64] },
+    { "id": "crd", "type": "database", "label": "etcd", "sublabel": "CRDs: MRs, XRDs, Compositions", "pos": [620, 620], "size": [200, 64] },
+    { "id": "api", "type": "cloud", "label": "AWS APIs", "sublabel": "S3, RDS, VPC ...", "pos": [960, 400], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes Cluster", "wraps": ["cp", "rbac", "pkg", "paws", "crd"] },
+    { "kind": "security-group", "label": "crossplane-system namespace", "wraps": ["cp", "rbac", "pkg"] },
+    { "kind": "region", "label": "AWS", "wraps": ["api"] }
+  ],
+  "connections": [
+    { "id": "cp-rbac", "from": "cp", "to": "rbac", "label": "manages" },
+    { "id": "cp-pkg", "from": "cp", "to": "pkg", "label": "manages", "variant": "emphasis" },
+    { "id": "pkg-paws", "from": "pkg", "to": "paws", "label": "installs", "variant": "emphasis" },
+    { "id": "paws-crd", "from": "paws", "to": "crd", "label": "watches", "fromSide": "bottom", "toSide": "top" },
+    { "id": "paws-api", "from": "paws", "to": "api", "label": "reconciles", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Crossplane core", "items": ["Core Controller manages Compositions, XRDs and the XR to Managed Resource mapping", "RBAC Manager generates ClusterRoles for XRDs so Claims work in namespaces", "Package Manager installs and upgrades Providers and Configurations"] },
+    { "dot": "violet", "title": "Provider controllers", "items": ["Each installed Provider runs its own controller pod(s)", "Pods watch Managed Resources and reconcile them against the cloud API"] }
+  ]
+}

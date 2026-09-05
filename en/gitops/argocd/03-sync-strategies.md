@@ -247,7 +247,9 @@ Resources are grouped by wave number and synced in order:
 2. Within a wave, hooks run first, then resources
 3. Next wave starts only after previous completes
 
-![Layer-stack diagram showing Argo CD sync waves applying resources in order from wave -2 through wave 1: CRDs first, then namespaces and service accounts, then the default wave of config maps, secrets, and deployments, then services and ingress last.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-2.svg)
+![Workflow diagram of Argo CD sync waves applied in ascending order: wave -2 CRDs, wave -1 Namespaces and ServiceAccounts, default wave 0 ConfigMaps, Secrets and Deployments, then wave 1 Services and Ingress, each wave waiting for the previous to be healthy.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-2.html)
 
 ### Setting Sync Wave
 

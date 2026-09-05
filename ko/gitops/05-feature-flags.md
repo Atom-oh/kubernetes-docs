@@ -54,7 +54,9 @@ Feature Flag(Feature Toggle)는 코드 변경 없이 런타임에 소프트웨�
 
 Progressive Delivery는 기능을 점진적으로 사용자에게 노출하는 배포 전략입니다. Feature Flag는 이 전략의 핵심 구현 수단입니다.
 
-![코드 배포부터 카나리, 링 기반 단계적 롤아웃을 거쳐 Flag 제거까지 이어지는 점진적 배포 파이프라인을 보여주는 6단계 흐름도.](../../assets/diagrams/rendered/progressive-delivery.svg)
+![코드 배포부터 카나리, 링 기반 단계적 롤아웃을 거쳐 Flag 제거까지 이어지는 점진적 배포 파이프라인 6단계를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-10.html)
 
 ### Feature Flag 도구 비교
 
@@ -156,7 +158,9 @@ value, _ := client.StringValue(ctx, "banner-color", "blue", evalCtx)
 
 Hooks는 Flag 평가 라이프사이클의 각 단계에서 실행되는 콜백입니다. 로깅, 메트릭 수집, 검증 등 횡단 관심사를 처리합니다.
 
-![애플리케이션의 Flag 평가 요청이 Before, After, Error, Finally Hook을 차례로 거쳐 Provider와 상호작용한 뒤 최종 결과를 반환하는 과정을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/hooks-sequence.svg)
+![애플리케이션의 Flag 평가 요청이 OpenFeature Client를 통해 Before Hook, Provider 평가, After Hook, 오류 시 Error Hook, Finally Hook을 차례로 거친 뒤 최종 결과를 반환하는 과정을 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-11.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-11.html)
 
 **커스텀 Hook 구현 예시 (Go):**
 
@@ -652,7 +656,9 @@ spec:
 
 OpenFeature Operator는 FeatureFlag CRD를 ConfigMap으로 변환하여 flagd가 읽을 수 있도록 합니다. CRD가 변경되면 ConfigMap이 자동 업데이트되고, flagd는 파일 시스템 감시를 통해 실시간으로 변경을 감지합니다.
 
-![사용자나 GitOps가 생성한 FeatureFlag CR 변경이 Kubernetes API와 OpenFeature Operator를 거쳐 ConfigMap에 반영되고, flagd가 이를 감지해 무중단으로 재로드하는 과정을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/featureflag-crd-sync.svg)
+![사용자나 GitOps가 생성한 FeatureFlag CR 변경이 Kubernetes API와 OpenFeature Operator를 거쳐 ConfigMap에 반영되고, flagd가 파일 변경을 감지해 무중단으로 구성을 재로드하는 시퀀스를 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-12.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-12.html)
 
 ---
 
@@ -1142,7 +1148,9 @@ func handleCheckout(w http.ResponseWriter, r *http.Request) {
 
 다크 런칭은 사용자에게 노출하지 않으면서 프로덕션 트래픽으로 새로운 기능을 검증하는 패턴입니다.
 
-![사용자 요청을 기존 로직과 새 로직에 동시에 보내되 사용자에게는 기존 결과만 반환하고 새 로직의 결과는 메트릭 비교용으로만 수집하는 다크 런칭 패턴을 보여주는 다이어그램.](../../assets/diagrams/rendered/dark-launch-pattern.svg)
+![사용자 요청이 dark-launch-new-search Flag 평가를 거쳐 기존 로직의 결과만 사용자에게 반환되고, Flag가 켜지면 새 로직이 비동기로 병렬 실행되어 결과 비교와 메트릭 수집에만 쓰이는 다크 런칭 패턴의 흐름을 보여준다.](../.gitbook/assets/ko-gitops-05-feature-flags-13.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-05-feature-flags-13.html)
 
 ```go
 // 다크 런칭 구현 예시

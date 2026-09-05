@@ -20,7 +20,9 @@
 
 Application은 ArgoCD의 핵심 Custom Resource입니다. Git 저장소의 매니페스트를 특정 Kubernetes 클러스터와 네임스페이스에 배포하는 방법을 정의합니다.
 
-![ArgoCD Application CRD가 Git·Helm·OCI 저장소를 소스로 받아 Kubernetes 클러스터와 네임스페이스에 배포하는 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-0.svg)
+![ArgoCD Application CRD가 Git·Helm·OCI 저장소를 소스로 받아 Kubernetes 클러스터와 네임스페이스에 배포하는 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-0.html)
 
 ### 기본 구조
 
@@ -585,7 +587,9 @@ argocd app rollback my-app
 
 ### 롤백 동작
 
-![사용자의 롤백 요청을 ArgoCD가 처리해 Kubernetes에 이전 버전을 적용하지만 Git 저장소는 변경하지 않는 시퀀스를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-1.svg)
+![사용자의 롤백 요청을 ArgoCD가 처리해 Kubernetes에 이전 버전을 적용하지만 Git 저장소는 변경하지 않는 시퀀스를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-1.html)
 
 ## 헬스 체크
 
@@ -704,7 +708,9 @@ resource.customizations.health.cert-manager.io_Certificate: |
 
 리소스 훅은 동기화 과정의 특정 시점에 실행되는 작업입니다:
 
-![ArgoCD가 PreSync, Sync, PostSync 훅을 순서대로 실행하고 실패 시 SyncFail 훅으로 전환되는 흐름을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-2.svg)
+![ArgoCD가 PreSync, Sync, PostSync 훅을 순서대로 실행하고 Sync 또는 PostSync 실패 시 SyncFail 훅으로 전환되는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-2.html)
 
 ### 훅 유형
 
@@ -964,7 +970,9 @@ data:
 
 App of Apps 패턴은 여러 Application을 관리하는 상위 Application을 생성하는 패턴입니다:
 
-![루트 Application이 네 개의 자식 Application을 관리하고 각 자식이 Kubernetes 리소스를 생성하는 앱 오브 앱스 계층 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-02-applications-3.svg)
+![루트 Application이 네 개의 자식 Application을 관리하고 각 자식이 Kubernetes 리소스를 생성하는 앱 오브 앱스 계층 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-02-applications-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-02-applications-3.html)
 
 ### 구현 예시
 

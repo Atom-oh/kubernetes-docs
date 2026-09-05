@@ -101,7 +101,9 @@ Crossplane introduces five fundamental concepts that work together to provide in
 
 Crossplane runs as a set of controllers inside your Kubernetes cluster:
 
-![Architecture diagram of the Crossplane runtime, showing the core controller managing RBAC and the package manager, which installs a provider-aws pod that watches CRDs in etcd and reconciles them against the AWS APIs.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-1.svg)
+![Architecture diagram of the Crossplane runtime, showing the core controller managing RBAC and the package manager, which installs a provider-aws pod that watches CRDs in etcd and reconciles them against the AWS APIs.](../.gitbook/assets/en-platform-engineering-07-crossplane-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-07-crossplane-1.html)
 
 - **Crossplane Core Controller**: Manages the lifecycle of Compositions, XRDs, and the mapping between XRs and Managed Resources
 - **RBAC Manager**: Automatically generates Kubernetes RBAC ClusterRoles for XRDs so that Claims can be used in namespaces

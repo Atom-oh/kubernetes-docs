@@ -92,7 +92,9 @@ When `latest` is acceptable:
 
 Implement a promotion workflow rather than rebuilding images:
 
-![A single image is built once, then promoted unchanged from dev to stage to production registries by retagging the same digest, so the artifact that ships to production is bit-for-bit the one that was tested earlier.](../../assets/diagrams/rendered/en-container-registry-04-best-practices-0.svg)
+![A single image is built once, then promoted unchanged from dev to stage to production registries by retagging the same digest, so the artifact that ships to production is bit-for-bit the one that was tested earlier.](../.gitbook/assets/en-container-registry-04-best-practices-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-04-best-practices-10.html)
 
 Promotion script:
 

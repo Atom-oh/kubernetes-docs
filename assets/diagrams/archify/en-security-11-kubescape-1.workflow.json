@@ -1,0 +1,228 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubescape Scanning Pipeline Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1240, 776],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Scan trigger (CLI)"
+        },
+        "security": {
+          "label": "Framework · control evaluation"
+        },
+        "backend": {
+          "label": "Risk scoring"
+        },
+        "external": {
+          "label": "Report output"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "select",
+        "label": "Trigger and framework",
+        "focus": [
+          "cli",
+          "framework"
+        ],
+        "note": "kubescape scan framework <nsa|cis|mitre|custom> picks the control set the scan will evaluate."
+      },
+      {
+        "id": "evaluate",
+        "label": "Control evaluation",
+        "focus": [
+          "framework",
+          "collect",
+          "checks",
+          "severity"
+        ],
+        "note": "Cluster resources are collected, each framework control is checked, and findings are classified by severity."
+      },
+      {
+        "id": "report",
+        "label": "Score and report",
+        "focus": [
+          "severity",
+          "score",
+          "prioritize",
+          "report"
+        ],
+        "note": "Findings are scored and prioritized, then emitted to the console or as JSON, SARIF, or HTML."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "input",
+      "label": "Input"
+    },
+    {
+      "id": "fw",
+      "label": "Framework Selection"
+    },
+    {
+      "id": "eval",
+      "label": "Control Evaluation"
+    },
+    {
+      "id": "scoring",
+      "label": "Risk Scoring"
+    },
+    {
+      "id": "out",
+      "label": "Report Generation"
+    }
+  ],
+  "mainPath": [
+    "cli",
+    "framework",
+    "collect",
+    "checks",
+    "severity",
+    "score",
+    "prioritize",
+    "report"
+  ],
+  "nodes": [
+    {
+      "id": "cli",
+      "lane": "input",
+      "col": 0,
+      "type": "frontend",
+      "label": "Kubescape CLI",
+      "sublabel": "kubescape scan",
+      "width": 150
+    },
+    {
+      "id": "framework",
+      "lane": "fw",
+      "col": 1,
+      "type": "security",
+      "label": "Framework Selection",
+      "sublabel": "NSA-CISA · CIS · MITRE · Custom",
+      "width": 176
+    },
+    {
+      "id": "collect",
+      "lane": "eval",
+      "col": 2,
+      "type": "security",
+      "label": "Resource Collection",
+      "sublabel": "cluster or manifests",
+      "width": 160
+    },
+    {
+      "id": "checks",
+      "lane": "eval",
+      "col": 3,
+      "type": "security",
+      "label": "Control Checks",
+      "sublabel": "per control ID",
+      "width": 150
+    },
+    {
+      "id": "severity",
+      "lane": "eval",
+      "col": 4,
+      "type": "security",
+      "label": "Severity Assessment",
+      "sublabel": "classify findings",
+      "width": 160
+    },
+    {
+      "id": "score",
+      "lane": "scoring",
+      "col": 4,
+      "type": "backend",
+      "label": "Calculate Score",
+      "sublabel": "risk score",
+      "width": 150
+    },
+    {
+      "id": "prioritize",
+      "lane": "scoring",
+      "col": 5,
+      "type": "backend",
+      "label": "Prioritize Findings",
+      "sublabel": "by severity",
+      "width": 160
+    },
+    {
+      "id": "report",
+      "lane": "out",
+      "col": 5,
+      "type": "external",
+      "label": "Report Generation",
+      "sublabel": "console · JSON/SARIF · HTML",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "from": "cli",
+      "to": "framework",
+      "label": "scan framework"
+    },
+    {
+      "from": "framework",
+      "to": "collect"
+    },
+    {
+      "from": "collect",
+      "to": "checks"
+    },
+    {
+      "from": "checks",
+      "to": "severity"
+    },
+    {
+      "from": "severity",
+      "to": "score"
+    },
+    {
+      "from": "score",
+      "to": "prioritize"
+    },
+    {
+      "from": "prioritize",
+      "to": "report",
+      "label": "--format"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Frameworks",
+      "items": [
+        "NSA-CISA: government hardening, 30+ controls",
+        "CIS Benchmark: configuration baseline, 100+ controls",
+        "MITRE ATT&CK: threat mapping, 40+ controls",
+        "Custom: organization-specific control list (YAML)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Scan Scope",
+      "items": [
+        "Full cluster, or --include/--exclude-namespaces",
+        "YAML files, directories, or Helm charts (shift-left)",
+        "--severity-threshold high to gate on severity"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Output Formats",
+      "items": [
+        "Console output (default)",
+        "--format json / sarif (SARIF for GitHub integration)",
+        "--format html for a shareable report"
+      ]
+    }
+  ]
+}
