@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Correlation Between the Three Pillars",
+    "locale": "en",
+    "output": "en-observability-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "User request"
+        },
+        "backend": {
+          "label": "Microservices"
+        },
+        "database": {
+          "label": "Telemetry correlation"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request flow",
+        "focus": [
+          "request",
+          "gateway",
+          "user-svc",
+          "order-svc",
+          "payment-svc"
+        ],
+        "note": "The HTTP request passes through the API Gateway and fans out to the User, Order, and Payment services."
+      },
+      {
+        "id": "telemetry",
+        "label": "Telemetry collection",
+        "focus": [
+          "gateway",
+          "user-svc",
+          "order-svc",
+          "payment-svc",
+          "trace-id"
+        ],
+        "note": "Logs, metrics, and traces emitted by every service are tied together by one shared TraceID (abc123)."
+      },
+      {
+        "id": "correlation",
+        "label": "Correlation links",
+        "focus": [
+          "trace-id",
+          "exemplar",
+          "log-corr"
+        ],
+        "note": "TraceID is the hub: Metric Exemplar and Log Correlation each link to it in both directions so you can pivot between the pillars."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "HTTP Request",
+      "sublabel": "user request",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "user-svc",
+      "type": "backend",
+      "label": "User Service",
+      "sublabel": "S2",
+      "pos": [
+        100,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "S1",
+      "pos": [
+        400,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "order-svc",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "S3",
+      "pos": [
+        700,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "payment-svc",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "S4",
+      "pos": [
+        960,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "trace-id",
+      "type": "database",
+      "label": "TraceID",
+      "sublabel": "abc123",
+      "pos": [
+        400,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exemplar",
+      "type": "database",
+      "label": "Metric Exemplar",
+      "sublabel": "metric → trace",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "log-corr",
+      "type": "database",
+      "label": "Log Correlation",
+      "sublabel": "trace → log",
+      "pos": [
+        100,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Microservices",
+      "wraps": [
+        "user-svc",
+        "gateway",
+        "order-svc",
+        "payment-svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Correlation",
+      "wraps": [
+        "trace-id",
+        "exemplar",
+        "log-corr"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-to-gateway",
+      "from": "request",
+      "to": "gateway",
+      "label": "request",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gateway-to-user",
+      "from": "gateway",
+      "to": "user-svc"
+    },
+    {
+      "id": "gateway-to-order",
+      "from": "gateway",
+      "to": "order-svc"
+    },
+    {
+      "id": "order-to-payment",
+      "from": "order-svc",
+      "to": "payment-svc"
+    },
+    {
+      "id": "user-telemetry",
+      "from": "user-svc",
+      "to": "trace-id",
+      "variant": "dashed"
+    },
+    {
+      "id": "gateway-telemetry",
+      "from": "gateway",
+      "to": "trace-id",
+      "label": "logs / metrics / traces",
+      "variant": "dashed",
+      "labelDy": 60
+    },
+    {
+      "id": "order-telemetry",
+      "from": "order-svc",
+      "to": "trace-id",
+      "variant": "dashed"
+    },
+    {
+      "id": "payment-telemetry",
+      "from": "payment-svc",
+      "to": "trace-id",
+      "variant": "dashed"
+    },
+    {
+      "id": "exemplar-to-trace",
+      "from": "exemplar",
+      "to": "trace-id",
+      "label": "Exemplar",
+      "labelDx": 44
+    },
+    {
+      "id": "trace-to-exemplar",
+      "from": "trace-id",
+      "to": "exemplar"
+    },
+    {
+      "id": "trace-to-log",
+      "from": "trace-id",
+      "to": "log-corr",
+      "label": "traceId",
+      "labelDx": -44
+    },
+    {
+      "id": "log-to-trace",
+      "from": "log-corr",
+      "to": "trace-id"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Trace-to-Log Correlation",
+      "items": [
+        "Include traceId (abc123def456) and spanId in logs to find every log line of one request",
+        "e.g. the payment-service \"Payment processing failed\" ERROR log"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Metric-to-Trace Correlation (Exemplars)",
+      "items": [
+        "A Prometheus Exemplar attaches traceID=\"abc123\" to a metric sample",
+        "Jump straight to the request's trace when an anomaly appears"
+      ]
+    }
+  ]
+}

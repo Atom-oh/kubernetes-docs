@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "관측성 성숙도 모델",
+    "output": "ko-observability-readme-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      300
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "진행 단계"
+        },
+        "cloud": {
+          "label": "목표 성숙도 단계"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "level1",
+      "type": "backend",
+      "label": "Level 1",
+      "sublabel": "기본 로그/메트릭 수집",
+      "tag": "kubectl logs · CloudWatch",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "level2",
+      "type": "backend",
+      "label": "Level 2",
+      "sublabel": "중앙 집중화된 관측성",
+      "tag": "Loki · Prometheus · Grafana",
+      "pos": [
+        330,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "level3",
+      "type": "backend",
+      "label": "Level 3",
+      "sublabel": "3축 상관분석",
+      "tag": "Tempo · Exemplars · TraceID",
+      "pos": [
+        620,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    },
+    {
+      "id": "level4",
+      "type": "cloud",
+      "label": "Level 4",
+      "sublabel": "AIOps · 자동 이상 탐지",
+      "tag": "Datadog Watchdog · Dynatrace Davis",
+      "pos": [
+        910,
+        90
+      ],
+      "size": [
+        220,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l1-l2",
+      "from": "level1",
+      "to": "level2",
+      "label": "수집"
+    },
+    {
+      "id": "l2-l3",
+      "from": "level2",
+      "to": "level3",
+      "label": "연결"
+    },
+    {
+      "id": "l3-l4",
+      "from": "level3",
+      "to": "level4",
+      "label": "AI 분석",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "레벨별 특징",
+      "items": [
+        "Level 1: kubectl logs, CloudWatch로 기본 로그/메트릭을 수집한다",
+        "Level 2: Loki, Prometheus, Grafana로 관측성 데이터를 중앙 집중화한다",
+        "Level 3: Tempo, Exemplars, TraceID로 로그·메트릭·추적 3축을 상관분석한다",
+        "Level 4: Datadog Watchdog, Dynatrace Davis 같은 AIOps로 이상을 자동 탐지한다"
+      ]
+    }
+  ]
+}

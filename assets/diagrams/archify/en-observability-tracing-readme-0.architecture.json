@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Limitations of Traditional Monitoring",
+    "output": "en-observability-tracing-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      720
+    ],
+    "views": [
+      {
+        "id": "entry",
+        "label": "Request entry",
+        "focus": [
+          "user",
+          "gateway"
+        ],
+        "note": "A user request enters through the API Gateway, the single entry point, and fans out to several services."
+      },
+      {
+        "id": "fanout",
+        "label": "Service fan-out",
+        "focus": [
+          "gateway",
+          "auth",
+          "product",
+          "order"
+        ],
+        "note": "Logs and metrics alone cannot tell which services the request passed through or how long each one took."
+      },
+      {
+        "id": "downstream",
+        "label": "Downstream dependencies",
+        "focus": [
+          "order",
+          "payment",
+          "notification",
+          "fraud",
+          "product",
+          "inventory"
+        ],
+        "note": "Services call further services, so pinpointing where an error occurred and mapping dependencies gets even harder."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "request",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "single entry point",
+      "pos": [
+        455,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth Service",
+      "sublabel": "authentication",
+      "pos": [
+        110,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "product",
+      "type": "backend",
+      "label": "Product Service",
+      "sublabel": "catalog",
+      "pos": [
+        465,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "orders",
+      "pos": [
+        820,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory · Pricing Service",
+      "sublabel": "stock · pricing",
+      "pos": [
+        455,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "payments",
+      "pos": [
+        700,
+        470
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "messagebus",
+      "label": "Notification",
+      "sublabel": "alerts",
+      "pos": [
+        920,
+        470
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "fraud",
+      "type": "security",
+      "label": "Fraud Detection",
+      "sublabel": "fraud checks",
+      "pos": [
+        700,
+        610
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Microservices",
+      "wraps": [
+        "auth",
+        "product",
+        "order",
+        "inventory",
+        "payment",
+        "notification",
+        "fraud"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-gateway",
+      "from": "user",
+      "to": "gateway",
+      "label": "HTTP request",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gateway-auth",
+      "from": "gateway",
+      "to": "auth"
+    },
+    {
+      "id": "gateway-product",
+      "from": "gateway",
+      "to": "product"
+    },
+    {
+      "id": "gateway-order",
+      "from": "gateway",
+      "to": "order"
+    },
+    {
+      "id": "product-inventory",
+      "from": "product",
+      "to": "inventory"
+    },
+    {
+      "id": "order-payment",
+      "from": "order",
+      "to": "payment",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-notification",
+      "from": "order",
+      "to": "notification",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "payment-fraud",
+      "from": "payment",
+      "to": "fraud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Questions logs and metrics alone cannot answer",
+      "items": [
+        "Which services did the request pass through?",
+        "How long did each service take?",
+        "Where did errors occur?",
+        "What are the dependencies between services?"
+      ]
+    }
+  ]
+}

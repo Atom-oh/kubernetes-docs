@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "3가지 축의 상호 연관성",
+    "output": "ko-observability-readme-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "사용자 요청"
+        },
+        "backend": {
+          "label": "마이크로서비스"
+        },
+        "database": {
+          "label": "관측 데이터 상관분석"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 흐름",
+        "focus": [
+          "request",
+          "gateway",
+          "user-svc",
+          "order-svc",
+          "payment-svc"
+        ],
+        "note": "HTTP 요청이 API Gateway를 거쳐 User·Order·Payment 서비스로 전파되는 경로다."
+      },
+      {
+        "id": "telemetry",
+        "label": "관측 데이터 수집",
+        "focus": [
+          "gateway",
+          "user-svc",
+          "order-svc",
+          "payment-svc",
+          "trace-id"
+        ],
+        "note": "각 서비스가 남긴 로그·메트릭·트레이스는 공통 TraceID(abc123)로 묶인다."
+      },
+      {
+        "id": "correlation",
+        "label": "상관분석 상호 연결",
+        "focus": [
+          "trace-id",
+          "exemplar",
+          "log-corr"
+        ],
+        "note": "TraceID를 허브로 Metric Exemplar와 Log Correlation이 양방향으로 연결되어 세 축을 오갈 수 있다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "request",
+      "type": "external",
+      "label": "HTTP Request",
+      "sublabel": "사용자 요청",
+      "pos": [
+        400,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "user-svc",
+      "type": "backend",
+      "label": "User Service",
+      "sublabel": "S2",
+      "pos": [
+        100,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "S1",
+      "pos": [
+        400,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "order-svc",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "S3",
+      "pos": [
+        700,
+        200
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "payment-svc",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "S4",
+      "pos": [
+        960,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "trace-id",
+      "type": "database",
+      "label": "TraceID",
+      "sublabel": "abc123",
+      "pos": [
+        400,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "exemplar",
+      "type": "database",
+      "label": "Metric Exemplar",
+      "sublabel": "메트릭 → 트레이스",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "log-corr",
+      "type": "database",
+      "label": "Log Correlation",
+      "sublabel": "트레이스 → 로그",
+      "pos": [
+        100,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "마이크로서비스",
+      "wraps": [
+        "user-svc",
+        "gateway",
+        "order-svc",
+        "payment-svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "상관분석",
+      "wraps": [
+        "trace-id",
+        "exemplar",
+        "log-corr"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-to-gateway",
+      "from": "request",
+      "to": "gateway",
+      "label": "요청",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gateway-to-user",
+      "from": "gateway",
+      "to": "user-svc"
+    },
+    {
+      "id": "gateway-to-order",
+      "from": "gateway",
+      "to": "order-svc"
+    },
+    {
+      "id": "order-to-payment",
+      "from": "order-svc",
+      "to": "payment-svc"
+    },
+    {
+      "id": "user-telemetry",
+      "from": "user-svc",
+      "to": "trace-id",
+      "variant": "dashed"
+    },
+    {
+      "id": "gateway-telemetry",
+      "from": "gateway",
+      "to": "trace-id",
+      "label": "로그 / 메트릭 / 트레이스",
+      "variant": "dashed",
+      "labelDy": 60
+    },
+    {
+      "id": "order-telemetry",
+      "from": "order-svc",
+      "to": "trace-id",
+      "variant": "dashed"
+    },
+    {
+      "id": "payment-telemetry",
+      "from": "payment-svc",
+      "to": "trace-id",
+      "variant": "dashed"
+    },
+    {
+      "id": "exemplar-to-trace",
+      "from": "exemplar",
+      "to": "trace-id",
+      "label": "Exemplar",
+      "labelDx": 44
+    },
+    {
+      "id": "trace-to-exemplar",
+      "from": "trace-id",
+      "to": "exemplar"
+    },
+    {
+      "id": "trace-to-log",
+      "from": "trace-id",
+      "to": "log-corr",
+      "label": "traceId",
+      "labelDx": -44
+    },
+    {
+      "id": "log-to-trace",
+      "from": "log-corr",
+      "to": "trace-id"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Trace-to-Log 상관분석",
+      "items": [
+        "로그에 traceId(abc123def456)와 spanId를 포함시켜 특정 요청의 모든 로그를 추적",
+        "예: payment-service의 \"Payment processing failed\" ERROR 로그"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Metric-to-Trace 상관분석 (Exemplars)",
+      "items": [
+        "Prometheus Exemplar로 메트릭 샘플에 traceID=\"abc123\"을 연결",
+        "이상 징후 발생 시 해당 요청의 트레이스로 바로 이동"
+      ]
+    }
+  ]
+}
