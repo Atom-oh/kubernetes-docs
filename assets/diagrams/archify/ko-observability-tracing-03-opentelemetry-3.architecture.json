@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OTel Collector 아키텍처",
+    "output": "ko-observability-tracing-03-opentelemetry-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      440
+    ],
+    "views": [
+      {
+        "id": "receive",
+        "label": "수신",
+        "focus": [
+          "receivers",
+          "memory-limiter"
+        ],
+        "note": "OTLP(4317/4318), Jaeger, Zipkin, Prometheus 수신기가 받은 데이터는 먼저 memory_limiter를 거친다."
+      },
+      {
+        "id": "enrich-filter",
+        "label": "보강과 필터링",
+        "focus": [
+          "resource",
+          "attributes",
+          "filter"
+        ],
+        "note": "리소스 감지와 속성 upsert로 데이터를 보강하고, /health·/ready·/metrics 같은 헬스체크 span은 걸러낸다."
+      },
+      {
+        "id": "sample-export",
+        "label": "샘플링 결정과 전송",
+        "focus": [
+          "tail-sampling",
+          "batch",
+          "exporters"
+        ],
+        "note": "tail_sampling이 트레이스 전체를 보고 수집 여부를 결정한 뒤 batch로 묶어 Tempo와 X-Ray로 보낸다. metrics는 Prometheus, logs는 Loki 파이프라인으로 나간다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "receivers",
+      "type": "external",
+      "label": "Receivers",
+      "sublabel": "OTLP · Jaeger · Zipkin · Prometheus",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "memory-limiter",
+      "type": "backend",
+      "label": "Memory Limiter",
+      "sublabel": "memory_limiter",
+      "pos": [
+        290,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "resource",
+      "type": "backend",
+      "label": "Resource",
+      "sublabel": "resourcedetection · resource",
+      "pos": [
+        490,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "attributes",
+      "type": "backend",
+      "label": "Attributes",
+      "sublabel": "attributes",
+      "pos": [
+        690,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "backend",
+      "label": "Filter",
+      "sublabel": "filter",
+      "pos": [
+        690,
+        270
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "tail-sampling",
+      "type": "backend",
+      "label": "Tail Sampling",
+      "sublabel": "tail_sampling",
+      "tag": "수집 여부 결정",
+      "pos": [
+        490,
+        270
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "batch",
+      "type": "backend",
+      "label": "Batch",
+      "sublabel": "batch",
+      "pos": [
+        290,
+        270
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "exporters",
+      "type": "external",
+      "label": "Exporters",
+      "sublabel": "Tempo · X-Ray · Prometheus · Loki",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Processors (traces 파이프라인 순서)",
+      "wraps": [
+        "memory-limiter",
+        "resource",
+        "attributes",
+        "filter",
+        "tail-sampling",
+        "batch"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "recv-to-limiter",
+      "from": "receivers",
+      "to": "memory-limiter"
+    },
+    {
+      "id": "limiter-to-resource",
+      "from": "memory-limiter",
+      "to": "resource"
+    },
+    {
+      "id": "resource-to-attr",
+      "from": "resource",
+      "to": "attributes"
+    },
+    {
+      "id": "attr-to-filter",
+      "from": "attributes",
+      "to": "filter"
+    },
+    {
+      "id": "filter-to-tail",
+      "from": "filter",
+      "to": "tail-sampling",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tail-to-batch",
+      "from": "tail-sampling",
+      "to": "batch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batch-to-exporters",
+      "from": "batch",
+      "to": "exporters"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Receivers",
+      "items": [
+        "OTLP gRPC 4317 / HTTP 4318",
+        "Jaeger(14268/14250), Zipkin(9411) 호환 수신",
+        "Prometheus 스크래핑, k8s_cluster 메트릭"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Processors",
+      "items": [
+        "memory_limiter: limit 1500MiB, spike 500MiB",
+        "filter: /health, /ready, /metrics span 제외",
+        "tail_sampling: 에러 요청 100% 수집, decision_wait 10s",
+        "batch: 5s 또는 1000건 단위로 묶어 전송"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Exporters",
+      "items": [
+        "traces → otlp/tempo, awsxray",
+        "metrics → prometheusremotewrite",
+        "logs → loki"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Log Collector Role",
+    "locale": "en",
+    "output": "en-observability-logging-05-collectors-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1180,
+      640
+    ],
+    "views": [
+      {
+        "id": "sources",
+        "label": "Log Sources",
+        "focus": [
+          "stdout",
+          "file",
+          "journal",
+          "input"
+        ],
+        "note": "Container stdout, log files, and the systemd journal all feed the collector's Input stage."
+      },
+      {
+        "id": "pipeline",
+        "label": "Collector Pipeline",
+        "focus": [
+          "input",
+          "process",
+          "output"
+        ],
+        "note": "Inside the collector, logs move through Input, Processing, and Output in order."
+      },
+      {
+        "id": "destinations",
+        "label": "Destinations",
+        "focus": [
+          "output",
+          "loki",
+          "opensearch",
+          "cloudwatch",
+          "s3"
+        ],
+        "note": "The Output stage fans logs out to Loki, OpenSearch, CloudWatch, S3, and other destinations."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "stdout",
+      "type": "external",
+      "label": "Container stdout",
+      "sublabel": "container standard output",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "file",
+      "type": "external",
+      "label": "Log Files",
+      "sublabel": "log files on disk",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "journal",
+      "type": "external",
+      "label": "Systemd Journal",
+      "sublabel": "systemd journal",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "input",
+      "type": "backend",
+      "label": "Input / Source",
+      "sublabel": "collect logs",
+      "pos": [
+        310,
+        270
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "process",
+      "type": "backend",
+      "label": "Processing / Transform",
+      "sublabel": "parse · filter · transform",
+      "pos": [
+        540,
+        270
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "output",
+      "type": "backend",
+      "label": "Output / Sink",
+      "sublabel": "send to destinations",
+      "pos": [
+        790,
+        270
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "log store",
+      "pos": [
+        1010,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "database",
+      "label": "OpenSearch",
+      "sublabel": "search · analytics",
+      "pos": [
+        1010,
+        200
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "AWS logs",
+      "pos": [
+        1010,
+        340
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "long-term archive",
+      "pos": [
+        1010,
+        480
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Log Sources",
+      "wraps": [
+        "stdout",
+        "file",
+        "journal"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Log Collector",
+      "wraps": [
+        "input",
+        "process",
+        "output"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Destinations",
+      "wraps": [
+        "loki",
+        "opensearch",
+        "cloudwatch",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "stdout-input",
+      "from": "stdout",
+      "to": "input"
+    },
+    {
+      "id": "file-input",
+      "from": "file",
+      "to": "input",
+      "variant": "emphasis"
+    },
+    {
+      "id": "journal-input",
+      "from": "journal",
+      "to": "input"
+    },
+    {
+      "id": "input-process",
+      "from": "input",
+      "to": "process",
+      "variant": "emphasis"
+    },
+    {
+      "id": "process-output",
+      "from": "process",
+      "to": "output",
+      "variant": "emphasis"
+    },
+    {
+      "id": "output-loki",
+      "from": "output",
+      "to": "loki",
+      "variant": "emphasis"
+    },
+    {
+      "id": "output-opensearch",
+      "from": "output",
+      "to": "opensearch"
+    },
+    {
+      "id": "output-cloudwatch",
+      "from": "output",
+      "to": "cloudwatch"
+    },
+    {
+      "id": "output-s3",
+      "from": "output",
+      "to": "s3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Core Functions",
+      "items": [
+        "Input: read logs from various sources",
+        "Parsing · Filtering · Transform: structure logs, drop unnecessary logs, add/modify/delete fields",
+        "Buffering: temporary storage for reliability",
+        "Output: send logs to destinations"
+      ]
+    }
+  ]
+}

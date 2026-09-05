@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Container Insights Architecture",
+    "locale": "en",
+    "output": "en-observability-metrics-04-cloudwatch-metrics-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Applications",
+      "sublabel": "Pod workloads",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cwagent",
+      "type": "backend",
+      "label": "CloudWatch Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        270,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "DaemonSet",
+      "pos": [
+        270,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ci",
+      "type": "cloud",
+      "label": "Container Insights",
+      "sublabel": "Metrics",
+      "pos": [
+        580,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cwlogs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Container logs",
+      "pos": [
+        580,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pm",
+      "type": "cloud",
+      "label": "Performance Monitoring",
+      "sublabel": "Unified view",
+      "pos": [
+        840,
+        170
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Cluster · Worker Nodes",
+      "wraps": [
+        "app",
+        "cwagent",
+        "fluentbit"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "CloudWatch",
+      "wraps": [
+        "ci",
+        "cwlogs",
+        "pm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-expose",
+      "from": "app",
+      "to": "cwagent",
+      "label": "expose",
+      "variant": "dashed"
+    },
+    {
+      "id": "app-stdout",
+      "from": "app",
+      "to": "fluentbit",
+      "label": "stdout/stderr",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-metrics",
+      "from": "cwagent",
+      "to": "ci",
+      "label": "Metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentbit-logs",
+      "from": "fluentbit",
+      "to": "cwlogs",
+      "label": "Logs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ci-pm",
+      "from": "ci",
+      "to": "pm"
+    },
+    {
+      "id": "logs-pm",
+      "from": "cwlogs",
+      "to": "pm"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Collection Path",
+      "items": [
+        "The CloudWatch Agent DaemonSet collects node, pod, and container metrics",
+        "The Fluent Bit DaemonSet ships container stdout/stderr logs to CloudWatch Logs"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Collected Metrics",
+      "items": [
+        "Cluster level: cluster_node_count, cluster_cpu_utilization",
+        "Node level: node_cpu_utilization, node_memory_utilization",
+        "Pod/container level: pod_cpu_utilization, container_memory_utilization"
+      ]
+    }
+  ]
+}

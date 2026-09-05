@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Logs Key Concepts",
+    "locale": "en",
+    "output": "en-observability-logging-03-cloudwatch-logs-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      680
+    ],
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Ingest and store",
+        "focus": [
+          "src",
+          "lg",
+          "ls"
+        ],
+        "note": "Logs from EKS, applications, and Lambda land in one Log Group and are stored in per-source Log Streams."
+      },
+      {
+        "id": "query-alarm",
+        "label": "Query and alarm",
+        "focus": [
+          "lg",
+          "insights",
+          "metric",
+          "alarm"
+        ],
+        "note": "Analyze with Logs Insights queries, and build CloudWatch Alarms on metrics extracted by Metric Filters."
+      },
+      {
+        "id": "stream",
+        "label": "Real-time delivery",
+        "focus": [
+          "sub",
+          "s3",
+          "kdf",
+          "os",
+          "lambda2"
+        ],
+        "note": "Subscription Filters deliver logs in real time to S3, Kinesis Data Firehose (→ OpenSearch), and Lambda."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "Log Sources",
+      "sublabel": "EKS cluster · Application · Lambda",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "lg",
+      "type": "cloud",
+      "label": "Log Group",
+      "sublabel": "/aws/eks/cluster/logs",
+      "pos": [
+        300,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ls",
+      "type": "database",
+      "label": "Log Streams",
+      "sublabel": "Log Stream 1 · 2 · 3",
+      "pos": [
+        300,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "insights",
+      "type": "cloud",
+      "label": "Logs Insights",
+      "sublabel": "Query analysis",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "metric",
+      "type": "cloud",
+      "label": "Metric Filters",
+      "sublabel": "Logs → metrics",
+      "pos": [
+        580,
+        190
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "alarm",
+      "type": "cloud",
+      "label": "CloudWatch Alarms",
+      "sublabel": "Threshold alerts",
+      "pos": [
+        580,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "sub",
+      "type": "messagebus",
+      "label": "Subscription Filters",
+      "sublabel": "Real-time streaming",
+      "pos": [
+        580,
+        450
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3",
+      "sublabel": "Long-term retention",
+      "pos": [
+        860,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kdf",
+      "type": "messagebus",
+      "label": "Kinesis Data Firehose",
+      "sublabel": "Delivery stream",
+      "pos": [
+        860,
+        450
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "lambda2",
+      "type": "backend",
+      "label": "Lambda",
+      "sublabel": "Real-time processing",
+      "pos": [
+        860,
+        560
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "os",
+      "type": "database",
+      "label": "OpenSearch",
+      "sublabel": "Search · analytics",
+      "pos": [
+        1120,
+        450
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "CloudWatch Logs",
+      "wraps": [
+        "lg",
+        "ls"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Features",
+      "wraps": [
+        "insights",
+        "metric",
+        "alarm",
+        "sub"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Destinations",
+      "wraps": [
+        "s3",
+        "kdf",
+        "lambda2",
+        "os"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-lg",
+      "from": "src",
+      "to": "lg",
+      "label": "Ship logs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lg-ls",
+      "from": "lg",
+      "to": "ls"
+    },
+    {
+      "id": "lg-insights",
+      "from": "lg",
+      "to": "insights",
+      "label": "Query"
+    },
+    {
+      "id": "lg-metric",
+      "from": "lg",
+      "to": "metric"
+    },
+    {
+      "id": "lg-sub",
+      "from": "lg",
+      "to": "sub",
+      "label": "Real-time delivery",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metric-alarm",
+      "from": "metric",
+      "to": "alarm"
+    },
+    {
+      "id": "sub-s3",
+      "from": "sub",
+      "to": "s3"
+    },
+    {
+      "id": "sub-kdf",
+      "from": "sub",
+      "to": "kdf",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sub-lambda2",
+      "from": "sub",
+      "to": "lambda2"
+    },
+    {
+      "id": "kdf-os",
+      "from": "kdf",
+      "to": "os",
+      "label": "Load"
+    }
+  ]
+}

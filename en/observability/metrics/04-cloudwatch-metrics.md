@@ -33,7 +33,9 @@ Amazon CloudWatch is AWS's native monitoring and observability service. Using Cl
 
 ### CloudWatch vs Open Source Solutions
 
-![Comparison of Amazon CloudWatch against a self-managed Prometheus/VictoriaMetrics stack across four properties: management model, cloud integration, cost model, and metric retention.](../../../assets/diagrams/rendered/en-observability-metrics-04-cloudwatch-metrics-0.svg)
+![Comparison of Amazon CloudWatch against a self-managed Prometheus/VictoriaMetrics stack across four properties: management model, cloud integration, cost model, and metric retention.](../../.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-04-cloudwatch-metrics-0.html)
 
 | Item | CloudWatch | Prometheus/VM |
 |------|------------|---------------|
@@ -50,7 +52,9 @@ Container Insights is a CloudWatch feature for monitoring containerized workload
 
 ### Architecture
 
-![Architecture diagram showing applications on EKS worker nodes exposing metrics and stdout to a CloudWatch Agent and Fluent Bit DaemonSet, which feed Container Insights metrics and CloudWatch Logs, both converging on performance monitoring.](../../../assets/diagrams/rendered/en-observability-metrics-04-cloudwatch-metrics-1.svg)
+![Architecture diagram showing applications on EKS worker nodes exposing metrics and stdout to a CloudWatch Agent and Fluent Bit DaemonSet, which feed Container Insights metrics and CloudWatch Logs, both converging on Performance Monitoring.](../../.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-04-cloudwatch-metrics-1.html)
 
 ### Collected Metrics
 
@@ -920,7 +924,9 @@ resource "aws_cloudwatch_metric_alarm" "node_not_ready" {
 
 ### Cost Optimization Strategies
 
-![Tree diagram showing CloudWatch cost optimization branching into metric, log, and dashboard optimization, each listing its specific tactics.](../../../assets/diagrams/rendered/en-observability-metrics-04-cloudwatch-metrics-2.svg)
+![Tree diagram showing CloudWatch cost optimization branching into metric, log, and dashboard optimization, each leading to specific tactics such as log retention settings and dashboard consolidation.](../../.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-04-cloudwatch-metrics-2.html)
 
 ### 1. Metric Collection Optimization
 

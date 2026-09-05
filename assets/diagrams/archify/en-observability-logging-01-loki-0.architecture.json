@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Loki Component Overview",
+    "locale": "en",
+    "output": "en-observability-logging-01-loki-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "views": [
+      {
+        "id": "write-path",
+        "label": "Write Path",
+        "focus": [
+          "agents",
+          "distributor",
+          "ingester",
+          "s3"
+        ],
+        "note": "Log agent streams are validated and routed by the Distributor; the Ingester builds chunks and flushes them to S3."
+      },
+      {
+        "id": "read-path",
+        "label": "Read Path",
+        "focus": [
+          "grafana",
+          "query-frontend",
+          "query-scheduler",
+          "querier",
+          "ingester",
+          "s3",
+          "cache"
+        ],
+        "note": "Grafana's LogQL queries pass through the Query Frontend and Scheduler; the Querier merges results from the Ingester, S3, and cache."
+      },
+      {
+        "id": "backend",
+        "label": "Backend Maintenance",
+        "focus": [
+          "compactor",
+          "s3"
+        ],
+        "note": "The Compactor merges small chunks in S3, optimizes indexes, and applies retention policies."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "agents",
+      "type": "external",
+      "label": "Log Collection Agents",
+      "sublabel": "Promtail · FluentBit · Grafana Alloy",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "distributor",
+      "type": "backend",
+      "label": "Distributor",
+      "sublabel": "validate · normalize · rate limit",
+      "pos": [
+        60,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "ingester",
+      "type": "backend",
+      "label": "Ingester",
+      "sublabel": "chunk buffer · WAL",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "visualization",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "query-frontend",
+      "type": "backend",
+      "label": "Query Frontend",
+      "sublabel": "query splitting · result caching",
+      "pos": [
+        880,
+        180
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "query-scheduler",
+      "type": "backend",
+      "label": "Query Scheduler",
+      "sublabel": "query queue",
+      "pos": [
+        880,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "querier",
+      "type": "backend",
+      "label": "Querier",
+      "sublabel": "LogQL execution · result merging",
+      "pos": [
+        880,
+        460
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "compactor",
+      "type": "backend",
+      "label": "Compactor",
+      "sublabel": "chunk merging · retention",
+      "pos": [
+        200,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 Storage",
+      "sublabel": "object storage",
+      "pos": [
+        430,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Redis / Memcached",
+      "sublabel": "results · chunk cache",
+      "pos": [
+        660,
+        580
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Write Path",
+      "wraps": [
+        "distributor",
+        "ingester"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Read Path",
+      "wraps": [
+        "query-frontend",
+        "query-scheduler",
+        "querier"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backend",
+      "wraps": [
+        "compactor",
+        "s3",
+        "cache"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "agents-to-distributor",
+      "from": "agents",
+      "to": "distributor",
+      "label": "push log streams",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "distributor-to-ingester",
+      "from": "distributor",
+      "to": "ingester",
+      "label": "consistent-hash routing",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "ingester-to-s3",
+      "from": "ingester",
+      "to": "s3",
+      "label": "flush chunks",
+      "variant": "emphasis"
+    },
+    {
+      "id": "grafana-to-frontend",
+      "from": "grafana",
+      "to": "query-frontend",
+      "label": "LogQL query",
+      "labelDy": 24
+    },
+    {
+      "id": "frontend-to-scheduler",
+      "from": "query-frontend",
+      "to": "query-scheduler"
+    },
+    {
+      "id": "scheduler-to-querier",
+      "from": "query-scheduler",
+      "to": "querier"
+    },
+    {
+      "id": "querier-to-ingester",
+      "from": "querier",
+      "to": "ingester",
+      "label": "live data",
+      "variant": "dashed"
+    },
+    {
+      "id": "querier-to-s3",
+      "from": "querier",
+      "to": "s3",
+      "label": "historical data",
+      "variant": "dashed"
+    },
+    {
+      "id": "querier-to-cache",
+      "from": "querier",
+      "to": "cache",
+      "label": "cache lookup",
+      "variant": "dashed"
+    },
+    {
+      "id": "compactor-to-s3",
+      "from": "compactor",
+      "to": "s3"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Write Path",
+      "items": [
+        "The Distributor validates log streams, normalizes labels, and applies rate limits",
+        "The Ingester buffers logs in memory into chunks, manages the WAL, and flushes to storage"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Read Path",
+      "items": [
+        "The Query Frontend splits large queries and caches results",
+        "The Querier fetches live data from Ingesters and historical data from storage, then merges and deduplicates"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Backend",
+      "items": [
+        "The Compactor merges small chunks into larger ones, optimizes indexes, and applies retention policies"
+      ]
+    }
+  ]
+}

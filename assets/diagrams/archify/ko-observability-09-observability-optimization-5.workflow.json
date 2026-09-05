@@ -1,0 +1,202 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "로그/메트릭 저장 비용 절감 전략",
+    "output": "public/archmaps/ko-observability-09-observability-optimization-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1040,
+      660
+    ],
+    "views": [
+      {
+        "id": "high-tier",
+        "label": "높음 · 전체 저장",
+        "focus": [
+          "classify",
+          "full",
+          "glacier"
+        ],
+        "note": "중요도가 높은 데이터는 전체를 저장하고 S3 Glacier Deep Archive로 계층화해 장기 보관합니다."
+      },
+      {
+        "id": "medium-tier",
+        "label": "중간 · 샘플링",
+        "focus": [
+          "classify",
+          "sample",
+          "standardIa"
+        ],
+        "note": "고빈도 이벤트는 샘플링해 S3 Standard-IA에 중기 보관합니다. 표 기준 예상 절감 30-50%."
+      },
+      {
+        "id": "low-tier",
+        "label": "낮음 · 집계만",
+        "focus": [
+          "classify",
+          "aggregate",
+          "local"
+        ],
+        "note": "중요도가 낮은 데이터는 집계값만 메모리/로컬에 단기 보관해 보존 기간을 최소화합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "intake",
+      "label": "수집 · 분류"
+    },
+    {
+      "id": "high",
+      "label": "중요도 높음"
+    },
+    {
+      "id": "medium",
+      "label": "중요도 중간"
+    },
+    {
+      "id": "low",
+      "label": "중요도 낮음"
+    }
+  ],
+  "mainPath": [
+    "collect",
+    "classify"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "collect"
+    ],
+    "allowedTerminals": [
+      "glacier",
+      "standardIa",
+      "local"
+    ],
+    "requiredPaths": [
+      {
+        "from": "collect",
+        "to": "glacier"
+      },
+      {
+        "from": "collect",
+        "to": "standardIa"
+      },
+      {
+        "from": "collect",
+        "to": "local"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "collect",
+      "lane": "intake",
+      "col": 0,
+      "type": "frontend",
+      "label": "데이터 수집",
+      "sublabel": "로그 · 메트릭",
+      "width": 150
+    },
+    {
+      "id": "classify",
+      "lane": "intake",
+      "col": 1,
+      "type": "security",
+      "label": "중요도 분류",
+      "tag": "DECISION",
+      "width": 224
+    },
+    {
+      "id": "full",
+      "lane": "high",
+      "col": 3,
+      "type": "backend",
+      "label": "전체 저장",
+      "sublabel": "장기 보관",
+      "width": 164
+    },
+    {
+      "id": "glacier",
+      "lane": "high",
+      "col": 5,
+      "type": "cloud",
+      "label": "S3 Glacier",
+      "sublabel": "Deep Archive",
+      "width": 164
+    },
+    {
+      "id": "sample",
+      "lane": "medium",
+      "col": 3,
+      "type": "backend",
+      "label": "샘플링",
+      "sublabel": "중기 보관",
+      "width": 164
+    },
+    {
+      "id": "standardIa",
+      "lane": "medium",
+      "col": 5,
+      "type": "cloud",
+      "label": "S3 Standard-IA",
+      "width": 164
+    },
+    {
+      "id": "aggregate",
+      "lane": "low",
+      "col": 3,
+      "type": "backend",
+      "label": "집계만",
+      "sublabel": "단기 보관",
+      "width": 164
+    },
+    {
+      "id": "local",
+      "lane": "low",
+      "col": 5,
+      "type": "database",
+      "label": "메모리/로컬",
+      "width": 164
+    }
+  ],
+  "edges": [
+    {
+      "from": "collect",
+      "to": "classify",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "classify",
+      "to": "full",
+      "label": "높음",
+      "role": "branch"
+    },
+    {
+      "from": "classify",
+      "to": "sample",
+      "label": "중간",
+      "role": "branch"
+    },
+    {
+      "from": "classify",
+      "to": "aggregate",
+      "label": "낮음",
+      "role": "branch"
+    },
+    {
+      "from": "full",
+      "to": "glacier"
+    },
+    {
+      "from": "sample",
+      "to": "standardIa"
+    },
+    {
+      "from": "aggregate",
+      "to": "local"
+    }
+  ]
+}

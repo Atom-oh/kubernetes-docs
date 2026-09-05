@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Integration Architecture",
+    "locale": "en",
+    "output": "en-observability-metrics-05-datadog-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1230,
+      600
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "Collection",
+        "focus": [
+          "app",
+          "agent",
+          "cca",
+          "metrics",
+          "logs",
+          "apm",
+          "prof"
+        ],
+        "note": "The per-node Agent (DaemonSet) collects metrics, logs, traces and profiles; the Cluster Agent adds cluster metrics and events."
+      },
+      {
+        "id": "visualize",
+        "label": "Dashboards",
+        "focus": [
+          "metrics",
+          "logs",
+          "apm",
+          "dash"
+        ],
+        "note": "Metrics, logs and APM traces converge on a single set of dashboards."
+      },
+      {
+        "id": "alert",
+        "label": "Alerting",
+        "focus": [
+          "watchdog",
+          "monitors"
+        ],
+        "note": "Watchdog AI detects anomalies automatically and feeds monitor alerts."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cca",
+      "type": "backend",
+      "label": "Cluster Agent",
+      "sublabel": "cluster-level collection",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Datadog Agent",
+      "sublabel": "DaemonSet · per-node collection",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Applications",
+      "sublabel": "pod workloads",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics",
+      "pos": [
+        430,
+        80
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "database",
+      "label": "Logs",
+      "pos": [
+        430,
+        200
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "apm",
+      "type": "database",
+      "label": "APM Traces",
+      "pos": [
+        430,
+        320
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "prof",
+      "type": "database",
+      "label": "Profiling",
+      "pos": [
+        430,
+        440
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "dash",
+      "type": "frontend",
+      "label": "Dashboards",
+      "sublabel": "unified visualization",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "watchdog",
+      "type": "cloud",
+      "label": "Watchdog AI",
+      "sublabel": "automatic anomaly detection",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "monitors",
+      "type": "frontend",
+      "label": "Monitors",
+      "sublabel": "alerts",
+      "pos": [
+        1030,
+        430
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS Cluster · Worker Nodes",
+      "wraps": [
+        "cca",
+        "agent",
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Datadog Platform",
+      "wraps": [
+        "metrics",
+        "logs",
+        "apm",
+        "prof",
+        "dash",
+        "watchdog",
+        "monitors"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-agent",
+      "from": "app",
+      "to": "agent",
+      "label": "instrumentation",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-metrics",
+      "from": "agent",
+      "to": "metrics",
+      "label": "metrics",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-logs",
+      "from": "agent",
+      "to": "logs",
+      "label": "logs",
+      "labelSegment": 2
+    },
+    {
+      "id": "agent-apm",
+      "from": "agent",
+      "to": "apm",
+      "label": "traces",
+      "labelSegment": 2
+    },
+    {
+      "id": "agent-prof",
+      "from": "agent",
+      "to": "prof",
+      "label": "profiles"
+    },
+    {
+      "id": "cca-metrics",
+      "from": "cca",
+      "to": "metrics",
+      "label": "cluster metrics · events"
+    },
+    {
+      "id": "metrics-dash",
+      "from": "metrics",
+      "to": "dash"
+    },
+    {
+      "id": "logs-dash",
+      "from": "logs",
+      "to": "dash"
+    },
+    {
+      "id": "apm-dash",
+      "from": "apm",
+      "to": "dash"
+    },
+    {
+      "id": "watchdog-monitors",
+      "from": "watchdog",
+      "to": "monitors",
+      "label": "anomaly detection"
+    }
+  ]
+}

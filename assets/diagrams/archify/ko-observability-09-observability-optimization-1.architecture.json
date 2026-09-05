@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 관측성 아키텍처 전체 그림",
+    "output": "ko-observability-09-observability-optimization-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1140,
+      600
+    ],
+    "views": [
+      {
+        "id": "logs",
+        "label": "로그 경로",
+        "focus": [
+          "app",
+          "fluentbit",
+          "logstore",
+          "grafana"
+        ],
+        "note": "Fluent Bit DaemonSet이 Pod 로그를 수집해 CloudWatch Logs · Loki · OpenSearch로 보낸다."
+      },
+      {
+        "id": "metrics",
+        "label": "메트릭 경로",
+        "focus": [
+          "app",
+          "otel",
+          "prom",
+          "metricstore",
+          "grafana"
+        ],
+        "note": "OTel Collector와 Prometheus가 메트릭을 AMP · VictoriaMetrics에 저장한다."
+      },
+      {
+        "id": "traces",
+        "label": "트레이스 경로",
+        "focus": [
+          "app",
+          "otel",
+          "tracestore",
+          "grafana"
+        ],
+        "note": "OTel Collector가 트레이스를 X-Ray · Tempo · Jaeger로 내보낸다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션 Pod",
+      "sublabel": "로그 · 메트릭 · 트레이스 생성",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "Fluent Bit",
+      "sublabel": "DaemonSet",
+      "pos": [
+        320,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "backend",
+      "label": "OTel Collector",
+      "sublabel": "DaemonSet",
+      "pos": [
+        320,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "메트릭 스크레이프",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "logstore",
+      "type": "database",
+      "label": "로그 저장소",
+      "sublabel": "CloudWatch Logs · Loki · OpenSearch",
+      "pos": [
+        600,
+        90
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "metricstore",
+      "type": "database",
+      "label": "메트릭 저장소",
+      "sublabel": "Amazon Managed Prometheus · VictoriaMetrics",
+      "pos": [
+        600,
+        250
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "tracestore",
+      "type": "database",
+      "label": "트레이스 저장소",
+      "sublabel": "X-Ray · Grafana Tempo · Jaeger",
+      "pos": [
+        600,
+        410
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "통합 시각화",
+      "pos": [
+        940,
+        250
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "워크로드",
+      "wraps": [
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "수집 계층",
+      "wraps": [
+        "fluentbit",
+        "otel",
+        "prom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "저장 계층",
+      "wraps": [
+        "logstore",
+        "metricstore",
+        "tracestore"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "시각화 계층",
+      "wraps": [
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-fluentbit",
+      "from": "app",
+      "to": "fluentbit",
+      "label": "로그",
+      "labelSegment": 1
+    },
+    {
+      "id": "app-otel",
+      "from": "app",
+      "to": "otel",
+      "label": "메트릭 · 트레이스",
+      "variant": "emphasis",
+      "labelSegment": 1
+    },
+    {
+      "id": "fluentbit-logstore",
+      "from": "fluentbit",
+      "to": "logstore"
+    },
+    {
+      "id": "otel-metricstore",
+      "from": "otel",
+      "to": "metricstore",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "otel-tracestore",
+      "from": "otel",
+      "to": "tracestore"
+    },
+    {
+      "id": "prom-metricstore",
+      "from": "prom",
+      "to": "metricstore"
+    },
+    {
+      "id": "logstore-grafana",
+      "from": "logstore",
+      "to": "grafana"
+    },
+    {
+      "id": "metricstore-grafana",
+      "from": "metricstore",
+      "to": "grafana",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tracestore-grafana",
+      "from": "tracestore",
+      "to": "grafana"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "eBPF 계층",
+      "items": [
+        "코드 수정 없이 커널 레벨 훅에서 데이터를 수집한다 (5장 참고)",
+        "Cilium Hubble · Pixie · Coroot"
+      ]
+    }
+  ]
+}

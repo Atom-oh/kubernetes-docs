@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenSearch Cluster Architecture",
+    "output": "en-observability-logging-02-opensearch-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Log ingestion path",
+        "focus": [
+          "app",
+          "fluentbit",
+          "firehose",
+          "data-a",
+          "data-b"
+        ],
+        "note": "Application logs reach the data nodes through FluentBit or Kinesis Data Firehose and are indexed there."
+      },
+      {
+        "id": "cluster",
+        "label": "Cluster management and replication",
+        "focus": [
+          "master",
+          "data-a",
+          "data-b"
+        ],
+        "note": "A master node quorum spread across three AZs manages the cluster while data nodes replicate data across AZs."
+      },
+      {
+        "id": "tiering",
+        "label": "Storage tiering",
+        "focus": [
+          "data-a",
+          "data-b",
+          "ebs",
+          "ultrawarm",
+          "s3"
+        ],
+        "note": "Hot data lives on EBS; aging indices move to UltraWarm and on to S3-backed cold storage."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Compute node"
+        },
+        "database": {
+          "label": "Storage"
+        },
+        "messagebus": {
+          "label": "Message bus"
+        },
+        "external": {
+          "label": "External system"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "Application",
+      "sublabel": "log source",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "FluentBit",
+      "sublabel": "log collection agent",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "firehose",
+      "type": "messagebus",
+      "label": "Kinesis Data Firehose",
+      "sublabel": "streaming delivery",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "master",
+      "type": "backend",
+      "label": "Master Node",
+      "sublabel": "3 AZs · cluster management",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "m6g.large ×3"
+    },
+    {
+      "id": "data-a",
+      "type": "backend",
+      "label": "Data Node",
+      "sublabel": "AZ-a · indexing / search",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "r6g.xlarge"
+    },
+    {
+      "id": "data-b",
+      "type": "backend",
+      "label": "Data Node",
+      "sublabel": "AZ-b · indexing / search",
+      "pos": [
+        420,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "r6g.xlarge"
+    },
+    {
+      "id": "ultrawarm",
+      "type": "backend",
+      "label": "UltraWarm Node",
+      "sublabel": "read-only tier",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "ultrawarm1.medium"
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS",
+      "sublabel": "hot storage",
+      "pos": [
+        1060,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3",
+      "sublabel": "cold storage archive",
+      "pos": [
+        1060,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Clients",
+      "wraps": [
+        "app",
+        "fluentbit",
+        "firehose"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC · Multi-AZ",
+      "wraps": [
+        "master",
+        "data-a",
+        "data-b",
+        "ultrawarm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "ebs",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-data",
+      "from": "app",
+      "to": "data-a",
+      "label": "send logs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentbit-to-data",
+      "from": "fluentbit",
+      "to": "data-a",
+      "label": "Bulk API"
+    },
+    {
+      "id": "firehose-to-data",
+      "from": "firehose",
+      "to": "data-b",
+      "label": "stream delivery"
+    },
+    {
+      "id": "master-manages",
+      "from": "master",
+      "to": "data-a",
+      "label": "manages cluster",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        510,
+        170
+      ]
+    },
+    {
+      "id": "data-replica",
+      "from": "data-a",
+      "to": "data-b",
+      "label": "cross-AZ replica",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        510,
+        370
+      ]
+    },
+    {
+      "id": "data-a-to-ebs",
+      "from": "data-a",
+      "to": "ebs",
+      "label": "hot index"
+    },
+    {
+      "id": "data-b-to-warm",
+      "from": "data-b",
+      "to": "ultrawarm",
+      "label": "move to UltraWarm",
+      "variant": "dashed"
+    },
+    {
+      "id": "warm-to-s3",
+      "from": "ultrawarm",
+      "to": "s3",
+      "label": "cold storage"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Node types",
+      "items": [
+        "Master: cluster management, index metadata · m6g.large.search x3",
+        "Data: data storage, search / indexing · r6g.xlarge.search",
+        "UltraWarm: read-only, cost-effective storage · ultrawarm1.medium",
+        "Cold: S3-based archive"
+      ]
+    }
+  ]
+}

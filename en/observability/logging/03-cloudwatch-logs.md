@@ -30,7 +30,9 @@ Amazon CloudWatch Logs is a fully managed log monitoring service from AWS. It na
 
 ### Key Concepts
 
-![Diagram showing EKS, application, and Lambda log sources writing into a central CloudWatch Log Group that organizes log streams and feeds three features—Logs Insights, Metric Filters, and Subscription Filters—where Metric Filters trigger CloudWatch Alarms and Subscription Filters fan out to S3, Kinesis Data Firehose, and Lambda, with Firehose loading into OpenSearch.](../../../assets/diagrams/rendered/en-observability-logging-03-cloudwatch-logs-0.svg)
+![EKS, application, and Lambda logs flow into one CloudWatch Log Group that stores Log Streams, serves Logs Insights queries, raises alarms via Metric Filters, and streams via Subscription Filters to S3, Kinesis Data Firehose (OpenSearch), and Lambda.](../../.gitbook/assets/en-observability-logging-03-cloudwatch-logs-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-03-cloudwatch-logs-0.html)
 
 ### Terminology
 

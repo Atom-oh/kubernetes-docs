@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Promtail 아키텍처",
+    "output": "ko-observability-logging-05-collectors-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "discover-scrape", "label": "디스커버리와 스크랩", "focus": ["k8s-sd", "file-sd", "static", "pod-logs", "journal", "syslog"], "note": "서비스 디스커버리로 대상을 찾고 파드 로그·Journal·Syslog를 스크랩한다." },
+      { "id": "pipeline", "label": "파이프라인 스테이지", "focus": ["pod-logs", "parse", "enrich", "output"], "note": "파싱 → 레이블·타임스탬프 → output 순서로 스테이지가 적용된다." },
+      { "id": "push", "label": "Loki 전송", "focus": ["output", "loki"], "note": "처리된 로그는 Loki push API 하나로만 전송된다." }
+    ]
+  },
+  "components": [
+    { "id": "k8s-sd", "type": "cloud", "label": "kubernetes_sd", "sublabel": "role: pod", "pos": [40, 80], "size": [170, 60] },
+    { "id": "file-sd", "type": "cloud", "label": "file_sd", "sublabel": "파일 기반 대상", "pos": [40, 200], "size": [170, 60] },
+    { "id": "static", "type": "cloud", "label": "static", "sublabel": "고정 대상", "pos": [40, 320], "size": [170, 60] },
+    { "id": "pod-logs", "type": "external", "label": "Pod Logs", "sublabel": "/var/log/pods", "pos": [330, 80], "size": [170, 60] },
+    { "id": "journal", "type": "external", "label": "Journal", "sublabel": "systemd journal", "pos": [330, 200], "size": [170, 60] },
+    { "id": "syslog", "type": "external", "label": "Syslog", "sublabel": "syslog 수신", "pos": [330, 320], "size": [170, 60] },
+    { "id": "parse", "type": "backend", "label": "파싱 스테이지", "sublabel": "docker · cri · json · regex · multiline", "pos": [620, 80], "size": [200, 60] },
+    { "id": "enrich", "type": "backend", "label": "labels · timestamp", "sublabel": "레이블 · 타임스탬프 추출", "pos": [620, 200], "size": [200, 60] },
+    { "id": "output", "type": "backend", "label": "output", "sublabel": "최종 로그 라인 선택", "pos": [620, 320], "size": [200, 60] },
+    { "id": "loki", "type": "database", "label": "Loki API", "sublabel": "/loki/api/v1/push", "pos": [940, 320], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Service Discovery", "wraps": ["k8s-sd", "file-sd", "static"] },
+    { "kind": "region", "label": "Scrape Targets", "wraps": ["pod-logs", "journal", "syslog"] },
+    { "kind": "region", "label": "Pipeline Stages", "wraps": ["parse", "enrich", "output"] },
+    { "kind": "region", "label": "Push to Loki", "wraps": ["loki"] }
+  ],
+  "connections": [
+    { "id": "k8s-sd-to-pods", "from": "k8s-sd", "to": "pod-logs", "label": "대상 발견", "variant": "emphasis" },
+    { "id": "file-sd-to-pods", "from": "file-sd", "to": "pod-logs", "variant": "dashed" },
+    { "id": "static-to-pods", "from": "static", "to": "pod-logs", "variant": "dashed" },
+    { "id": "pods-to-parse", "from": "pod-logs", "to": "parse", "label": "스크랩", "variant": "emphasis" },
+    { "id": "journal-to-parse", "from": "journal", "to": "parse" },
+    { "id": "syslog-to-parse", "from": "syslog", "to": "parse" },
+    { "id": "parse-to-enrich", "from": "parse", "to": "enrich", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "enrich-to-output", "from": "enrich", "to": "output", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "output-to-loki", "from": "output", "to": "loki", "label": "배치 push", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Promtail 개요", "items": ["Go로 작성, 메모리 약 50MB", "목적지는 Loki 전용, K8s 네이티브 통합", "라이선스 AGPL-3.0 (Grafana Labs)"] },
+    { "dot": "cyan", "title": "Loki 클라이언트 설정", "items": ["batchwait 1s, batchsize 1MiB", "backoff 500ms~5m, 최대 10회 재시도", "external_labels로 cluster·environment 부착"] }
+  ]
+}

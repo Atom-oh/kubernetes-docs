@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana OnCall Route Settings",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-alerting-03-grafana-oncall-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      500
+    ],
+    "views": [
+      {
+        "id": "alertmanager-route",
+        "label": "Alertmanager label routing",
+        "focus": [
+          "received",
+          "integration",
+          "labels",
+          "critical",
+          "infra",
+          "default"
+        ],
+        "note": "Match the severity and team labels with routing_regex to split alerts across the Critical, Infra, and Default chains."
+      },
+      {
+        "id": "grafana-route",
+        "label": "Grafana folder routing",
+        "focus": [
+          "integration",
+          "folder",
+          "critical",
+          "lowpri"
+        ],
+        "note": "Alerts from the Production folder go to the Critical chain; Staging folder alerts go to the Low Priority chain."
+      },
+      {
+        "id": "cloudwatch-route",
+        "label": "CloudWatch namespace routing",
+        "focus": [
+          "integration",
+          "namespace",
+          "infra",
+          "dba"
+        ],
+        "note": "The AWS/EKS namespace goes to the Infra chain; the AWS/RDS namespace goes to the DBA chain."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "received",
+      "type": "external",
+      "label": "Alert Received",
+      "sublabel": "via an Integration",
+      "pos": [
+        450,
+        20
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "integration",
+      "type": "backend",
+      "label": "Integration Type?",
+      "sublabel": "which source sent it",
+      "pos": [
+        440,
+        150
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "folder",
+      "type": "backend",
+      "label": "Folder?",
+      "sublabel": "Grafana alert folder",
+      "pos": [
+        135,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "backend",
+      "label": "Labels?",
+      "sublabel": "Alertmanager labels",
+      "pos": [
+        450,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "routing_regex"
+    },
+    {
+      "id": "namespace",
+      "type": "backend",
+      "label": "Namespace?",
+      "sublabel": "CloudWatch namespace",
+      "pos": [
+        765,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lowpri",
+      "type": "messagebus",
+      "label": "Low Priority Chain",
+      "sublabel": "low-priority alerts",
+      "pos": [
+        30,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "critical",
+      "type": "security",
+      "label": "Critical Chain",
+      "sublabel": "critical-chain",
+      "pos": [
+        240,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "position 0"
+    },
+    {
+      "id": "default",
+      "type": "messagebus",
+      "label": "Default Chain",
+      "sublabel": "fallback chain",
+      "pos": [
+        450,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "infra",
+      "type": "messagebus",
+      "label": "Infra Chain",
+      "sublabel": "infra-chain",
+      "pos": [
+        660,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "position 1"
+    },
+    {
+      "id": "dba",
+      "type": "messagebus",
+      "label": "DBA Chain",
+      "sublabel": "database team",
+      "pos": [
+        870,
+        410
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "received-integration",
+      "from": "received",
+      "to": "integration",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "integration-labels",
+      "from": "integration",
+      "to": "labels",
+      "label": "Alertmanager",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "integration-folder",
+      "from": "integration",
+      "to": "folder",
+      "label": "Grafana",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "integration-namespace",
+      "from": "integration",
+      "to": "namespace",
+      "label": "CloudWatch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "labels-critical",
+      "from": "labels",
+      "to": "critical",
+      "label": "severity=critical",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "labels-default",
+      "from": "labels",
+      "to": "default",
+      "label": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "labels-infra",
+      "from": "labels",
+      "to": "infra",
+      "label": "team=infra",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "folder-lowpri",
+      "from": "folder",
+      "to": "lowpri",
+      "label": "Staging",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "folder-critical",
+      "from": "folder",
+      "to": "critical",
+      "label": "Production",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          205,
+          440
+        ]
+      ],
+      "labelAt": [
+        205,
+        378
+      ]
+    },
+    {
+      "id": "namespace-infra",
+      "from": "namespace",
+      "to": "infra",
+      "label": "AWS/EKS",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          835,
+          440
+        ]
+      ],
+      "labelAt": [
+        835,
+        378
+      ]
+    },
+    {
+      "id": "namespace-dba",
+      "from": "namespace",
+      "to": "dba",
+      "label": "AWS/RDS",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Route creation rules",
+      "items": [
+        "routing_regex \"severity\": \"critical\" → critical-chain (position 0)",
+        "routing_regex \"team\": \"infra\" → infra-chain (position 1)",
+        "Each route sets both escalation_chain_id and slack_channel_id"
+      ]
+    }
+  ]
+}

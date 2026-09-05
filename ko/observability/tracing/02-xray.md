@@ -19,7 +19,9 @@ AWS X-Ray는 분산 애플리케이션의 요청을 추적하고 분석하는 AW
 
 ## 아키텍처
 
-![EKS 클러스터의 애플리케이션 Pod가 X-Ray Daemon과 ADOT Collector를 통해 세그먼트를 전송하고, Lambda 등 다른 AWS 서비스의 자동 계측 데이터와 함께 AWS X-Ray로 모여 CloudWatch, ServiceLens, X-Ray Insights로 전달되는 트레이싱 아키텍처를 보여준다.](../../../assets/diagrams/rendered/ko-observability-tracing-02-xray-0.svg)
+![EKS 클러스터의 애플리케이션 Pod가 X-Ray Daemon과 ADOT Collector를 통해 세그먼트를 전송하고, Lambda 등 다른 AWS 서비스의 자동 계측 데이터와 함께 AWS X-Ray로 모여 CloudWatch, ServiceLens, X-Ray Insights로 전달되는 트레이싱 아키텍처를 보여준다.](../../.gitbook/assets/ko-observability-tracing-02-xray-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-02-xray-0.html)
 
 ## X-Ray Daemon 배포
 

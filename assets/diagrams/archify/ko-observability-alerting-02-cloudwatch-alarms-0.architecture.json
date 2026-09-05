@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudWatch Alarms 동작 흐름",
+    "output": "ko-observability-alerting-02-cloudwatch-alarms-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1330,
+      500
+    ],
+    "views": [
+      {
+        "id": "collect",
+        "label": "메트릭 수집",
+        "focus": [
+          "aws-sources",
+          "custom",
+          "metrics"
+        ],
+        "note": "EC2, EKS, RDS, Lambda 같은 AWS 서비스 메트릭과 커스텀 메트릭이 CloudWatch Metrics로 모인다."
+      },
+      {
+        "id": "evaluate",
+        "label": "알림 판정",
+        "focus": [
+          "metrics",
+          "math",
+          "anomaly",
+          "alarms"
+        ],
+        "note": "Alarms는 메트릭을 직접 평가하거나 Metrics Math 수식 결과, Anomaly Detection 밴드를 기준으로 판정한다."
+      },
+      {
+        "id": "act",
+        "label": "알림 액션과 채널",
+        "focus": [
+          "alarms",
+          "sns",
+          "autoscaling",
+          "ec2-actions",
+          "ssm",
+          "email-sms",
+          "lambda-http"
+        ],
+        "note": "ALARM 전이 시 SNS, Auto Scaling, EC2 Actions, Systems Manager 액션이 실행되고 SNS가 알림 채널로 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "aws-sources",
+      "type": "cloud",
+      "label": "AWS 서비스 메트릭",
+      "sublabel": "EC2 · EKS · RDS · Lambda",
+      "pos": [
+        30,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "external",
+      "label": "Custom Metrics",
+      "sublabel": "애플리케이션 메트릭",
+      "pos": [
+        30,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics",
+      "sublabel": "메트릭 저장·조회",
+      "pos": [
+        260,
+        225
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "math",
+      "type": "backend",
+      "label": "Metrics Math",
+      "sublabel": "수식 기반 파생 메트릭",
+      "pos": [
+        460,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "anomaly",
+      "type": "backend",
+      "label": "Anomaly Detection",
+      "sublabel": "ML 기반 예상 밴드",
+      "pos": [
+        460,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alarms",
+      "type": "security",
+      "label": "Alarms",
+      "sublabel": "임계값·밴드 평가",
+      "pos": [
+        680,
+        225
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sns",
+      "type": "messagebus",
+      "label": "SNS Topic",
+      "sublabel": "알림 발행",
+      "pos": [
+        880,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "autoscaling",
+      "type": "cloud",
+      "label": "Auto Scaling",
+      "sublabel": "스케일링 정책 실행",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ec2-actions",
+      "type": "cloud",
+      "label": "EC2 Actions",
+      "sublabel": "재부팅 · 복구 · 중지",
+      "pos": [
+        880,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ssm",
+      "type": "cloud",
+      "label": "Systems Manager",
+      "sublabel": "SSM Automation 실행",
+      "pos": [
+        880,
+        390
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "email-sms",
+      "type": "external",
+      "label": "Email · SMS",
+      "sublabel": "담당자 알림",
+      "pos": [
+        1130,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "lambda-http",
+      "type": "external",
+      "label": "Lambda · HTTP/HTTPS",
+      "sublabel": "자동화 · 웹훅",
+      "pos": [
+        1130,
+        170
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "메트릭 소스",
+      "wraps": [
+        "aws-sources",
+        "custom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon CloudWatch",
+      "wraps": [
+        "metrics",
+        "math",
+        "anomaly",
+        "alarms"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "알림 액션",
+      "wraps": [
+        "sns",
+        "autoscaling",
+        "ec2-actions",
+        "ssm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "알림 채널",
+      "wraps": [
+        "email-sms",
+        "lambda-http"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "aws-to-metrics",
+      "from": "aws-sources",
+      "to": "metrics"
+    },
+    {
+      "id": "custom-to-metrics",
+      "from": "custom",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-to-alarms",
+      "from": "metrics",
+      "to": "alarms",
+      "label": "임계값 평가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-to-math",
+      "from": "metrics",
+      "to": "math"
+    },
+    {
+      "id": "math-to-alarms",
+      "from": "math",
+      "to": "alarms",
+      "label": "수식 결과"
+    },
+    {
+      "id": "metrics-to-anomaly",
+      "from": "metrics",
+      "to": "anomaly"
+    },
+    {
+      "id": "anomaly-to-alarms",
+      "from": "anomaly",
+      "to": "alarms",
+      "label": "밴드 이탈"
+    },
+    {
+      "id": "alarms-to-sns",
+      "from": "alarms",
+      "to": "sns",
+      "label": "알림 발행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alarms-to-autoscaling",
+      "from": "alarms",
+      "to": "autoscaling"
+    },
+    {
+      "id": "alarms-to-ec2",
+      "from": "alarms",
+      "to": "ec2-actions"
+    },
+    {
+      "id": "alarms-to-ssm",
+      "from": "alarms",
+      "to": "ssm"
+    },
+    {
+      "id": "sns-to-email",
+      "from": "sns",
+      "to": "email-sms"
+    },
+    {
+      "id": "sns-to-lambda",
+      "from": "sns",
+      "to": "lambda-http",
+      "variant": "dashed"
+    }
+  ]
+}
