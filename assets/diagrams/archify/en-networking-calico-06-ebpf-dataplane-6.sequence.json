@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How DSR Works — Normal Mode vs DSR Mode",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "Direct reply (skips LB)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "non-dsr",
+        "label": "Normal mode (Non-DSR)",
+        "focus": [
+          "client",
+          "lb",
+          "pod"
+        ],
+        "note": "The response returns to the LB node, is SNAT'd, then reaches the client — the LB node handles traffic in both directions."
+      },
+      {
+        "id": "dsr",
+        "label": "DSR mode",
+        "focus": [
+          "client",
+          "lb",
+          "pod"
+        ],
+        "note": "The backend Pod replies straight to the client with the VIP as source IP — the LB node handles requests only."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "external client"
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Node 1",
+      "sublabel": "LB node (VIP:80)"
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "Backend Pod (:8080)"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 355,
+      "label": "Normal mode (Non-DSR) — response returns via the LB node"
+    },
+    {
+      "from": 380,
+      "to": 560,
+      "label": "DSR mode — response goes directly to the client"
+    }
+  ],
+  "messages": [
+    {
+      "id": "n-req",
+      "from": "client",
+      "to": "lb",
+      "y": 190,
+      "label": "1. Request → VIP:80"
+    },
+    {
+      "id": "n-dnat",
+      "from": "lb",
+      "to": "pod",
+      "y": 232,
+      "label": "2. DNAT → Pod:8080"
+    },
+    {
+      "id": "n-resp",
+      "from": "pod",
+      "to": "lb",
+      "y": 278,
+      "label": "3. Response (via LB node)",
+      "variant": "return"
+    },
+    {
+      "id": "n-snat",
+      "from": "lb",
+      "to": "client",
+      "y": 322,
+      "label": "4. SNAT and return (src=VIP:80)",
+      "variant": "return"
+    },
+    {
+      "id": "d-req",
+      "from": "client",
+      "to": "lb",
+      "y": 412,
+      "label": "1. Request → VIP:80"
+    },
+    {
+      "id": "d-encap",
+      "from": "lb",
+      "to": "pod",
+      "y": 456,
+      "label": "2. Tunnel/encap to Pod"
+    },
+    {
+      "id": "d-direct",
+      "from": "pod",
+      "to": "client",
+      "y": 512,
+      "label": "3. Direct response (src=VIP:80) — bypasses LB node",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "lb",
+      "from": 185,
+      "to": 328,
+      "type": "cloud"
+    },
+    {
+      "participant": "pod",
+      "from": 227,
+      "to": 283,
+      "type": "backend"
+    },
+    {
+      "participant": "lb",
+      "from": 407,
+      "to": 462,
+      "type": "cloud"
+    },
+    {
+      "participant": "pod",
+      "from": 451,
+      "to": 518,
+      "type": "backend"
+    }
+  ]
+}

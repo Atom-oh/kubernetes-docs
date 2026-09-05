@@ -40,7 +40,9 @@ The OSI model is a conceptual model that classifies network communication into 7
 
 ### OSI Model Layer Diagram
 
-![A layer-stack diagram of the OSI model from Application down to Physical, showing each layer's data unit and addressing scheme, with L7 (HTTP/gRPC/Kafka), L4 (port/protocol), and L3 (IP/CIDR) tagged as the layers Cilium enforces policy at, and L7 highlighted as this guide's focus.](../../../assets/diagrams/rendered/en-networking-cilium-05-l2-l7-networking-0.svg)
+![An architecture diagram stacking the seven OSI layers from Application down to Physical with each layer's data unit and addressing scheme, and mapping Cilium's features to their layers with dashed links: L7 policy (HTTP/gRPC/Kafka), L4 policy (port/protocol), L3 policy (IP/CIDR), and L2 handling (ARP handling/MAC filtering).](../../.gitbook/assets/en-networking-cilium-05-l2-l7-networking-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-05-l2-l7-networking-0.html)
 
 ### OSI Model Layers:
 

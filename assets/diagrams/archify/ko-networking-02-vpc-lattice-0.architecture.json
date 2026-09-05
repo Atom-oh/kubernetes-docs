@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPC Lattice 구성 요소",
+    "output": "ko-networking-02-vpc-lattice-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "서비스 DNS 이름으로 호출",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "service-network",
+      "type": "cloud",
+      "label": "VPC Lattice 서비스 네트워크",
+      "sublabel": "논리적 경계 · 리스너 규칙",
+      "pos": [
+        440,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "service-1",
+      "type": "cloud",
+      "label": "서비스 1",
+      "sublabel": "VPC Lattice Service",
+      "pos": [
+        90,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "service-2",
+      "type": "cloud",
+      "label": "서비스 2",
+      "sublabel": "VPC Lattice Service",
+      "pos": [
+        480,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "service-3",
+      "type": "cloud",
+      "label": "서비스 3",
+      "sublabel": "VPC Lattice Service",
+      "pos": [
+        870,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pod-1-1",
+      "type": "backend",
+      "label": "파드 1.1",
+      "sublabel": "대상",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "pod-1-2",
+      "type": "backend",
+      "label": "파드 1.2",
+      "sublabel": "대상",
+      "pos": [
+        180,
+        500
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "pod-2-1",
+      "type": "backend",
+      "label": "파드 2.1",
+      "sublabel": "대상",
+      "pos": [
+        500,
+        500
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "pod-3-1",
+      "type": "backend",
+      "label": "파드 3.1",
+      "sublabel": "대상",
+      "pos": [
+        820,
+        500
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "pod-3-2",
+      "type": "backend",
+      "label": "파드 3.2",
+      "sublabel": "대상",
+      "pos": [
+        960,
+        500
+      ],
+      "size": [
+        120,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "VPC 1",
+      "wraps": [
+        "pod-1-1",
+        "pod-1-2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 2",
+      "wraps": [
+        "pod-2-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC 3",
+      "wraps": [
+        "pod-3-1",
+        "pod-3-2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-request",
+      "from": "client",
+      "to": "service-network",
+      "label": "요청",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "route-1",
+      "from": "service-network",
+      "to": "service-1",
+      "label": "라우팅 규칙"
+    },
+    {
+      "id": "route-2",
+      "from": "service-network",
+      "to": "service-2",
+      "label": "라우팅 규칙",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "route-3",
+      "from": "service-network",
+      "to": "service-3",
+      "label": "라우팅 규칙"
+    },
+    {
+      "id": "tg-1-1",
+      "from": "service-1",
+      "to": "pod-1-1",
+      "label": "대상 그룹",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tg-1-2",
+      "from": "service-1",
+      "to": "pod-1-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tg-2-1",
+      "from": "service-2",
+      "to": "pod-2-1",
+      "label": "대상 그룹",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tg-3-1",
+      "from": "service-3",
+      "to": "pod-3-1",
+      "label": "대상 그룹",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tg-3-2",
+      "from": "service-3",
+      "to": "pod-3-2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

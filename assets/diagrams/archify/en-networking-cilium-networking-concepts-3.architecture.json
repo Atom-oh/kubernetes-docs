@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Overlay Networking",
+    "output": "en-networking-cilium-networking-concepts-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Container"
+        },
+        "cloud": {
+          "label": "Overlay network"
+        },
+        "external": {
+          "label": "Physical interface"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "host-a-path",
+        "label": "Host A send path",
+        "focus": [
+          "containerA",
+          "overlayA",
+          "ethA"
+        ],
+        "note": "Packets from Container A traverse the overlay network and are encapsulated at the host eth0."
+      },
+      {
+        "id": "vxlan-tunnel",
+        "label": "VXLAN tunnel",
+        "focus": [
+          "ethA",
+          "ethB"
+        ],
+        "note": "The encapsulated packet crosses the physical network (eth0 192.168.1.10 → 192.168.1.11) to the peer host over a VXLAN tunnel."
+      },
+      {
+        "id": "host-b-path",
+        "label": "Host B receive path",
+        "focus": [
+          "ethB",
+          "overlayB",
+          "containerB"
+        ],
+        "note": "Host B eth0 decapsulates the original packet, which reaches Container B through the overlay network."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "containerA",
+      "type": "backend",
+      "label": "Container A",
+      "sublabel": "IP: 10.0.0.2",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "overlayA",
+      "type": "cloud",
+      "label": "Overlay Network",
+      "sublabel": "10.0.0.0/24",
+      "pos": [
+        310,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ethA",
+      "type": "external",
+      "label": "eth0",
+      "sublabel": "192.168.1.10",
+      "pos": [
+        570,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "containerB",
+      "type": "backend",
+      "label": "Container B",
+      "sublabel": "IP: 10.0.0.3",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "overlayB",
+      "type": "cloud",
+      "label": "Overlay Network",
+      "sublabel": "10.0.0.0/24",
+      "pos": [
+        310,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ethB",
+      "type": "external",
+      "label": "eth0",
+      "sublabel": "192.168.1.11",
+      "pos": [
+        570,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Host A",
+      "wraps": [
+        "containerA",
+        "overlayA",
+        "ethA"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Host B",
+      "wraps": [
+        "containerB",
+        "overlayB",
+        "ethB"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-overlay",
+      "from": "containerA",
+      "to": "overlayA"
+    },
+    {
+      "id": "overlay-to-ethA",
+      "from": "overlayA",
+      "to": "ethA",
+      "label": "encapsulate"
+    },
+    {
+      "id": "vxlan",
+      "from": "ethA",
+      "to": "ethB",
+      "label": "VXLAN tunnel (UDP 4789)",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        745,
+        232
+      ]
+    },
+    {
+      "id": "ethB-to-overlay",
+      "from": "ethB",
+      "to": "overlayB",
+      "label": "decapsulate"
+    },
+    {
+      "id": "overlay-to-b",
+      "from": "overlayB",
+      "to": "containerB"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Overlay networking traits",
+      "items": [
+        "Connects containers running across multiple hosts",
+        "Uses encapsulation protocols such as VXLAN and GENEVE",
+        "Suits large clusters; supported by Cilium, Calico, Flannel and others"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "How it works",
+      "items": [
+        "Encapsulation: the original packet is wrapped in new headers",
+        "Tunneling: sent across the physical network to the destination host",
+        "After decapsulation the original packet is delivered to the target container"
+      ]
+    }
+  ]
+}

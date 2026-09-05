@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico 프로젝트 거버넌스",
+    "output": "ko-networking-calico-01-introduction-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "oss-core",
+        "label": "오픈소스 코어",
+        "focus": [
+          "cncf",
+          "community",
+          "oss"
+        ],
+        "note": "Project Calico는 CNCF 에코시스템에 속한 오픈소스 프로젝트이며 커뮤니티가 함께 기여한다."
+      },
+      {
+        "id": "tigera-products",
+        "label": "Tigera 상용 제품",
+        "focus": [
+          "tigera",
+          "enterprise",
+          "cloud"
+        ],
+        "note": "Tigera Inc.는 온프레미스용 Calico Enterprise와 SaaS형 Calico Cloud를 제공한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "재단 / 커뮤니티"
+        },
+        "backend": {
+          "label": "회사 / 상용 제품"
+        },
+        "frontend": {
+          "label": "오픈소스 코어"
+        },
+        "cloud": {
+          "label": "SaaS"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "cncf",
+      "type": "external",
+      "label": "CNCF 에코시스템",
+      "sublabel": "랜드스케이프",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "community",
+      "type": "external",
+      "label": "커뮤니티",
+      "sublabel": "컨트리뷰터",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tigera",
+      "type": "backend",
+      "label": "Tigera Inc.",
+      "sublabel": "주 메인테이너",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "oss",
+      "type": "frontend",
+      "label": "Project Calico",
+      "sublabel": "오픈소스",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "enterprise",
+      "type": "backend",
+      "label": "Calico Enterprise",
+      "sublabel": "온프레미스",
+      "pos": [
+        560,
+        270
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "Calico Cloud",
+      "sublabel": "SaaS",
+      "pos": [
+        560,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "관리 주체",
+      "wraps": [
+        "cncf",
+        "community",
+        "tigera"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Calico 에코시스템",
+      "wraps": [
+        "oss",
+        "enterprise",
+        "cloud"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cncf-to-oss",
+      "from": "cncf",
+      "to": "oss",
+      "label": "에코시스템 참여",
+      "variant": "emphasis"
+    },
+    {
+      "id": "community-to-oss",
+      "from": "community",
+      "to": "oss",
+      "label": "기여",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tigera-to-enterprise",
+      "from": "tigera",
+      "to": "enterprise",
+      "label": "상용 제품"
+    },
+    {
+      "id": "tigera-to-cloud",
+      "from": "tigera",
+      "to": "cloud",
+      "label": "SaaS 운영",
+      "labelDy": 18
+    }
+  ]
+}

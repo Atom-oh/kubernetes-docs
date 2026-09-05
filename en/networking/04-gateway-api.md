@@ -19,13 +19,17 @@ Gateway API is the next-generation ingress API for Kubernetes, designed to overc
 
 ### Benefits of Gateway API
 
-![Four Gateway API design benefits build on one another in sequence: multi-protocol expressiveness enables role-based permission separation, which enables portability through standardized resources, which enables CRD-based extensibility.](../../assets/diagrams/rendered/en-networking-04-gateway-api-0.svg)
+![Four Gateway API design benefits build on one another in sequence: multi-protocol expressiveness enables role-based permission separation, which enables portability through standardized resources, which enables CRD-based extensibility.](../.gitbook/assets/en-networking-04-gateway-api-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-0.html)
 
 ## Resource Model
 
 Gateway API uses a layered resource model.
 
-![A GatewayClass provisioned by an infrastructure provider backs a Gateway load-balancer instance owned by a cluster operator, which application developers attach HTTPRoute, GRPCRoute, and TCP/TLS/UDP routes to, all forwarding traffic to backend services.](../../assets/diagrams/rendered/en-networking-04-gateway-api-1.svg)
+![A GatewayClass provisioned by an infrastructure provider backs a Gateway load-balancer instance owned by a cluster operator, which application developers attach HTTPRoute, GRPCRoute, and TCP/TLS/UDP routes to, all forwarding traffic to backend services.](../.gitbook/assets/en-networking-04-gateway-api-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-04-gateway-api-1.html)
 
 ### Role Separation
 

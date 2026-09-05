@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Native Routing (Direct Routing)",
+    "locale": "en",
+    "output": "en-networking-cilium-networking-concepts-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Pods"
+        },
+        "database": {
+          "label": "Node routing table"
+        },
+        "cloud": {
+          "label": "Node network interface"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "podA",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.0.0.2",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "routeA",
+      "type": "database",
+      "label": "Routing Table",
+      "sublabel": "10.0.0.0/24 → local · 10.0.1.0/24 → Node B",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "ethA",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "192.168.1.10",
+      "pos": [
+        690,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "podB",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.0.1.2",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "routeB",
+      "type": "database",
+      "label": "Routing Table",
+      "sublabel": "10.0.1.0/24 → local · 10.0.0.0/24 → Node A",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "ethB",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "192.168.1.11",
+      "pos": [
+        690,
+        330
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node A",
+      "wraps": [
+        "podA",
+        "routeA",
+        "ethA"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node B",
+      "wraps": [
+        "podB",
+        "routeB",
+        "ethB"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "podA-routeA",
+      "from": "podA",
+      "to": "routeA",
+      "label": "pod packet"
+    },
+    {
+      "id": "routeA-ethA",
+      "from": "routeA",
+      "to": "ethA",
+      "label": "route lookup"
+    },
+    {
+      "id": "ethA-ethB",
+      "from": "ethA",
+      "to": "ethB",
+      "label": "Physical network (no encapsulation)",
+      "variant": "emphasis",
+      "labelAt": [
+        765,
+        235
+      ]
+    },
+    {
+      "id": "podB-routeB",
+      "from": "podB",
+      "to": "routeB",
+      "label": "pod packet"
+    },
+    {
+      "id": "routeB-ethB",
+      "from": "routeB",
+      "to": "ethB",
+      "label": "route lookup"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Native routing mode",
+      "items": [
+        "Each node advertises routing information for its own pod CIDR",
+        "Pod IPs are routed directly with no overlay encapsulation, so there is no encapsulation overhead",
+        "Requires a routable network between nodes (e.g. a single-subnet cluster)"
+      ]
+    }
+  ]
+}

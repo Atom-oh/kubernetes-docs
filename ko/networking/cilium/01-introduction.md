@@ -47,7 +47,7 @@ Cilium은 Linux 커널의 강력한 eBPF 기술을 활용하여 컨테이너화�
 
 ### Cilium 아키텍처
 
-![Kubernetes에서 CNI, Cilium, eBPF, Linux 커널로 내려가는 계층 구조와 Cilium이 Hubble로 플로우 이벤트를 보내는 관계를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-01-introduction-0.png)
+![Kubernetes에서 CNI, Cilium, eBPF, Linux 커널로 내려가는 계층 구조와 Cilium이 Hubble로 플로우 이벤트를 보내는 관계를 보여준다.](../../.gitbook/assets/ko-networking-cilium-01-introduction-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-01-introduction-0.html)
 

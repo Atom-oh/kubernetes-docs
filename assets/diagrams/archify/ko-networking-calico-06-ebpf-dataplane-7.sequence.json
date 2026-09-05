@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Connect-Time Load Balancing 동작 원리",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      720
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "Pod 내 프로세스"
+    },
+    {
+      "id": "kp",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "iptables DNAT"
+    },
+    {
+      "id": "poda",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "백엔드"
+    },
+    {
+      "id": "sock",
+      "type": "backend",
+      "label": "Socket Layer",
+      "sublabel": "커널 소켓 계층"
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF Program",
+      "sublabel": "cgroup connect hook"
+    },
+    {
+      "id": "podb",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "백엔드"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "Per-Packet LB (kube-proxy) — 패킷마다 DNAT"
+    },
+    {
+      "from": 350,
+      "to": 600,
+      "label": "Connect-Time LB (eBPF) — 연결 시점에 한 번만 선택"
+    }
+  ],
+  "messages": [
+    {
+      "id": "syn1",
+      "from": "app",
+      "to": "kp",
+      "y": 190,
+      "label": "SYN → VIP:80"
+    },
+    {
+      "id": "dnat1",
+      "from": "kp",
+      "to": "poda",
+      "y": 222,
+      "label": "DNAT → Pod A"
+    },
+    {
+      "id": "data1",
+      "from": "app",
+      "to": "kp",
+      "y": 262,
+      "label": "DATA · FIN → VIP:80"
+    },
+    {
+      "id": "dnat2",
+      "from": "kp",
+      "to": "poda",
+      "y": 296,
+      "label": "패킷마다 DNAT + conntrack 조회"
+    },
+    {
+      "id": "conn",
+      "from": "app",
+      "to": "sock",
+      "y": 385,
+      "label": "connect(VIP:80)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hook",
+      "from": "sock",
+      "to": "ebpf",
+      "y": 425,
+      "label": "cgroup/connect4 훅",
+      "variant": "security"
+    },
+    {
+      "id": "rewrite",
+      "from": "ebpf",
+      "to": "sock",
+      "y": 470,
+      "label": "목적지 재작성 → Pod B:8080",
+      "variant": "return",
+      "note": "NAT Frontend/Backend Map 조회 → 백엔드 Pod B 선택"
+    },
+    {
+      "id": "syn2",
+      "from": "sock",
+      "to": "podb",
+      "y": 520,
+      "label": "SYN → Pod B 직접",
+      "variant": "emphasis"
+    },
+    {
+      "id": "data2",
+      "from": "sock",
+      "to": "podb",
+      "y": 565,
+      "label": "DATA · FIN — 패킷 레벨 NAT 없음",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "kp",
+      "from": 185,
+      "to": 302,
+      "type": "backend"
+    },
+    {
+      "participant": "ebpf",
+      "from": 420,
+      "to": 476,
+      "type": "security"
+    },
+    {
+      "participant": "podb",
+      "from": 515,
+      "to": 572,
+      "type": "backend"
+    }
+  ]
+}

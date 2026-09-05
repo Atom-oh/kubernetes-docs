@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "kube-proxy 대체 모드 — 서비스 처리 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "lookup",
+        "label": "NAT Map 조회",
+        "focus": [
+          "client",
+          "ebpf",
+          "natmap"
+        ],
+        "note": "ClusterIP 패킷이 eBPF 프로그램에 잡히고 BPF NAT Map에서 백엔드 목록을 얻는다."
+      },
+      {
+        "id": "dnat",
+        "label": "백엔드 선택과 DNAT",
+        "focus": [
+          "ebpf",
+          "backend"
+        ],
+        "note": "해시로 백엔드를 고르고 목적지 IP를 바꿔 Backend Pod로 전달한다."
+      },
+      {
+        "id": "reverse",
+        "label": "역방향 NAT과 응답",
+        "focus": [
+          "backend",
+          "ebpf",
+          "client"
+        ],
+        "note": "응답은 원래 ClusterIP로 되돌려져 클라이언트에게 그대로 전달된다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "Client Pod",
+      "sublabel": "ClusterIP로 요청"
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF Program",
+      "sublabel": "TC 훅 · kube-proxy 대체"
+    },
+    {
+      "id": "natmap",
+      "type": "database",
+      "label": "NAT Map",
+      "sublabel": "BPF NAT Frontend/Backend"
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend Pod",
+      "sublabel": "선택된 엔드포인트"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "요청 — 서비스 조회"
+    },
+    {
+      "from": 320,
+      "to": 410,
+      "label": "백엔드 선택(해시) · DNAT · 전달"
+    },
+    {
+      "from": 430,
+      "to": 530,
+      "label": "응답 — 역방향 NAT"
+    }
+  ],
+  "messages": [
+    {
+      "id": "pkt",
+      "from": "client",
+      "to": "ebpf",
+      "y": 190,
+      "label": "ClusterIP로 패킷 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lookup",
+      "from": "ebpf",
+      "to": "natmap",
+      "y": 235,
+      "label": "서비스 조회 (ClusterIP:Port)"
+    },
+    {
+      "id": "backends",
+      "from": "natmap",
+      "to": "ebpf",
+      "y": 278,
+      "label": "백엔드 목록 반환",
+      "variant": "return"
+    },
+    {
+      "id": "fwd",
+      "from": "ebpf",
+      "to": "backend",
+      "y": 365,
+      "label": "해시로 백엔드 선택 → DNAT → 패킷 전달",
+      "variant": "emphasis",
+      "note": "kube-proxy 없이 eBPF 프로그램이 목적지 IP를 백엔드 Pod IP로 바꾼다"
+    },
+    {
+      "id": "resp",
+      "from": "backend",
+      "to": "ebpf",
+      "y": 455,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "ret",
+      "from": "ebpf",
+      "to": "client",
+      "y": 500,
+      "label": "역방향 NAT 후 클라이언트로 반환",
+      "variant": "return",
+      "note": "출발지를 다시 ClusterIP로 되돌려 클라이언트는 NAT을 알지 못한다"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "ebpf",
+      "from": 190,
+      "to": 505,
+      "type": "backend"
+    },
+    {
+      "participant": "natmap",
+      "from": 230,
+      "to": 284,
+      "type": "database"
+    },
+    {
+      "participant": "backend",
+      "from": 360,
+      "to": 460,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "kube-proxy 없는 서비스 처리",
+      "items": [
+        "ClusterIP 서비스는 BPF NAT Map으로 처리 — iptables/IPVS 규칙 없음",
+        "백엔드 선택은 BPF Hash LB(IPVS 모드 기능 대체)",
+        "bpfKubeProxyIptablesCleanupEnabled: true로 기존 kube-proxy 규칙 정리"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Map 크기 튠",
+      "items": [
+        "bpfMapSizeNATFrontend: 65536",
+        "bpfMapSizeNATBackend: 262144",
+        "bpfMapSizeConntrack: 512000"
+      ]
+    }
+  ]
+}

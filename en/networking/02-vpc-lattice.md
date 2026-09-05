@@ -83,13 +83,17 @@ VPC Lattice consists of the following main components:
 5. **Rule**: Defines how a listener routes traffic
 6. **VPC Association**: Connects a VPC to a service network
 
-![A client request enters a VPC Lattice service network, which applies routing rules to reach one of three services, each forwarding traffic to target-group pods running in separate VPCs.](../../assets/diagrams/rendered/en-networking-02-vpc-lattice-0.svg)
+![A client request enters a VPC Lattice service network, which applies routing rules to reach one of three services, each forwarding traffic to target-group pods running in separate VPCs.](../.gitbook/assets/en-networking-02-vpc-lattice-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-0.html)
 
 ### Service Network Architecture
 
 The service network is a core component of VPC Lattice that connects services across multiple VPCs and accounts.
 
-![VPCs from two separate AWS accounts associate into one shared service network, which registers three services that each route to a different compute target — an EC2 instance, an EKS pod, and a Lambda function.](../../assets/diagrams/rendered/en-networking-02-vpc-lattice-1.svg)
+![Three VPCs from two AWS accounts associate into one shared service network, which registers three services that each route through their own target group to a different compute target — an EC2 instance, an EKS pod, and a Lambda function.](../.gitbook/assets/en-networking-02-vpc-lattice-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-1.html)
 
 ### Traffic Flow
 
@@ -101,7 +105,9 @@ How traffic flows in VPC Lattice:
 4. Target group forwards the request to registered targets (EC2, EKS pods, Lambda, etc.)
 5. Target processes the response and returns it to the client
 
-![Sequence showing a client request passing through VPC Lattice, a service's listener rules, and a target group before reaching an EKS pod, then the response tracing the same path back to the client.](../../assets/diagrams/rendered/en-networking-02-vpc-lattice-2.svg)
+![Sequence showing a client request passing through VPC Lattice, a service's listener rules, and a target group before reaching an EKS pod, then the response tracing the same path back to the client.](../.gitbook/assets/en-networking-02-vpc-lattice-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-2.html)
 
 ### Service Discovery
 
@@ -134,7 +140,9 @@ The integration of Amazon EKS and VPC Lattice consists of the following componen
 4. **VPC Lattice Service**: VPC Lattice services mapped to Kubernetes services
 5. **VPC Lattice Target Group**: Target groups mapped to Kubernetes pods
 
-![The Gateway API Controller in an EKS cluster transforms Gateway API resources into a VPC Lattice service that a client application in another VPC can reach directly, while the same service's target group registers the backing Kubernetes pod.](../../assets/diagrams/rendered/en-networking-02-vpc-lattice-3.svg)
+![The Gateway API Controller in an EKS cluster transforms Gateway API resources into a VPC Lattice service and target group that registers the backing Kubernetes pod, while a client application in another VPC reaches that pod by sending requests to the service through the service network.](../.gitbook/assets/en-networking-02-vpc-lattice-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-02-vpc-lattice-3.html)
 
 ### Benefits of Integration
 

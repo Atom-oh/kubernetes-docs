@@ -92,7 +92,7 @@ Calico is an open-source networking and network security solution designed for c
 |------|-----------|--------------|
 | 2014 | Project Calico founded | Started as networking for OpenStack |
 | 2016 | Kubernetes CNI support | Expanded to container orchestration |
-| 2017 | Tigera founded | Commercial backing and enterprise features |
+| 2016 | Tigera founded | Commercial backing and enterprise features |
 | 2018 | Calico 3.0 | Kubernetes-native datastore support |
 | 2019 | Windows support | Enterprise adoption accelerated |
 | 2020 | Calico Enterprise GA | Full enterprise feature set |
@@ -100,6 +100,12 @@ Calico is an open-source networking and network security solution designed for c
 | 2022 | eBPF data plane GA | Modern data plane option |
 | 2024 | nftables backend | Next-gen Linux firewall support |
 | 2025 | Calico 3.29 | Full eBPF feature parity |
+
+### Governance and Commercial Model
+
+![Diagram of Calico project governance showing CNCF and the community backing the open-source Project Calico while Tigera Inc. delivers Calico Enterprise for on-premises and Calico Cloud as SaaS.](../../.gitbook/assets/en-networking-calico-01-introduction-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-01-introduction-4.html)
 
 ## Core Features
 
@@ -109,7 +115,9 @@ Calico provides five core capabilities that make it a leading choice for Kuberne
 
 Calico offers multiple networking modes optimized for different environments:
 
-![Architecture diagram mapping Calico's four networking modes to their performance characteristics, from encapsulated IPIP and VXLAN overlays through native-speed direct routing to the eBPF data plane, which reaches kernel-bypass performance.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-1.svg)
+![Architecture diagram mapping Calico's four networking modes to their performance characteristics, from encapsulated IPIP and VXLAN overlays through native-speed direct routing to the eBPF data plane, which reaches kernel-bypass performance.](../../.gitbook/assets/en-networking-calico-01-introduction-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-01-introduction-1.html)
 
 **Key Performance Features:**
 - Native Linux networking stack integration
@@ -325,7 +333,9 @@ spec:
 
 Calico Federation enables policy and routing across multiple clusters:
 
-![Architecture diagram showing three Kubernetes clusters, on-premises, AWS, and GCP, each running Calico alongside its workloads, linked pairwise by Calico Federation for policy and routing, with a direct BGP/VPN path connecting the on-premises and GCP clusters.](../../../assets/diagrams/rendered/en-networking-calico-01-introduction-3.svg)
+![Architecture diagram showing three Kubernetes clusters, on-premises, AWS, and GCP, each running Calico alongside its workloads, linked pairwise by Calico Federation for policy and routing, with a direct BGP/VPN path connecting the on-premises and GCP clusters.](../../.gitbook/assets/en-networking-calico-01-introduction-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-01-introduction-3.html)
 
 **Benefits:**
 - Unified policy management across clusters
@@ -346,7 +356,7 @@ Calico Enterprise provides advanced features for regulated industries:
 
 ### Open Source Governance
 
-Calico is an open-source project hosted under the Cloud Native Computing Foundation (CNCF) ecosystem:
+Calico is an open-source project listed in the CNCF Landscape and maintained primarily by Tigera:
 
 - **License**: Apache 2.0
 - **Governance**: Open community with Tigera as primary maintainer

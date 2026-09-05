@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "호스트 네트워킹",
+    "output": "ko-networking-cilium-networking-concepts-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "container-a", "type": "backend", "label": "컨테이너 A", "sublabel": "호스트 네트워크 네임스페이스 직접 사용", "pos": [80, 90], "size": [240, 64] },
+    { "id": "container-b", "type": "backend", "label": "컨테이너 B", "sublabel": "호스트 네트워크 네임스페이스 직접 사용", "pos": [80, 250], "size": [240, 64] },
+    { "id": "host-network", "type": "cloud", "label": "호스트 네트워크 스택", "sublabel": "eth0 · 192.168.1.10", "pos": [520, 170], "size": [220, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "호스트", "wraps": ["container-a", "container-b", "host-network"] }
+  ],
+  "connections": [
+    { "id": "a-to-host", "from": "container-a", "to": "host-network", "label": "격리 없음", "variant": "emphasis" },
+    { "id": "b-to-host", "from": "container-b", "to": "host-network", "label": "격리 없음", "variant": "emphasis" }
+  ]
+}

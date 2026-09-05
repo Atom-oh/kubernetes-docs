@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "L7(애플리케이션 계층) 로드 밸런싱",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "inspect",
+        "label": "HTTP 요청 검사",
+        "focus": [
+          "client",
+          "lb"
+        ],
+        "note": "L7 로드 밸런서는 TCP/UDP 헤더가 아니라 HTTP 요청 내용(URL 경로, 헤더)을 검사해 라우팅을 결정합니다."
+      },
+      {
+        "id": "route",
+        "label": "콘텐츠 기반 라우팅",
+        "focus": [
+          "lb",
+          "api_server",
+          "web_server"
+        ],
+        "note": "/api/* 요청은 API 서버로, /web/* 요청은 웹 서버로 분배됩니다. GET /api/users는 API 서버로 향합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "클라이언트"
+        },
+        "backend": {
+          "label": "백엔드 서버"
+        },
+        "cloud": {
+          "label": "로드 밸런서"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "client_lane",
+      "label": "클라이언트"
+    },
+    {
+      "id": "lb_lane",
+      "label": "L7 로드 밸런서"
+    },
+    {
+      "id": "backend_lane",
+      "label": "백엔드 서비스"
+    }
+  ],
+  "mainPath": [
+    "client",
+    "lb",
+    "api_server"
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "lane": "client_lane",
+      "col": 0,
+      "type": "frontend",
+      "label": "클라이언트",
+      "sublabel": "GET /api/users"
+    },
+    {
+      "id": "lb",
+      "lane": "lb_lane",
+      "col": 1,
+      "type": "cloud",
+      "label": "L7 로드 밸런서",
+      "sublabel": "URL 경로 · 헤더 검사",
+      "tag": "HTTP 검사",
+      "width": 148
+    },
+    {
+      "id": "api_server",
+      "lane": "backend_lane",
+      "col": 2,
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "/api/*",
+      "width": 112
+    },
+    {
+      "id": "web_server",
+      "lane": "backend_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "웹 서버",
+      "sublabel": "/web/*",
+      "width": 112
+    }
+  ],
+  "edges": [
+    {
+      "from": "client",
+      "to": "lb",
+      "label": "HTTP 요청"
+    },
+    {
+      "from": "lb",
+      "to": "api_server",
+      "label": "/api/* 경로"
+    },
+    {
+      "from": "lb",
+      "to": "web_server",
+      "label": "/web/* 경로",
+      "role": "branch"
+    }
+  ]
+}

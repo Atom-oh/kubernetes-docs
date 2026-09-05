@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "포트 주소 변환(PAT)",
+    "output": "ko-networking-cilium-networking-concepts-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      520
+    ],
+    "views": [
+      {
+        "id": "host-a-path",
+        "label": "호스트 A 경로",
+        "focus": [
+          "hostA",
+          "pat",
+          "server"
+        ],
+        "note": "10.0.0.2:1234가 공용 IP 198.51.100.1의 포트 5000으로 변환되어 서버에 도달한다."
+      },
+      {
+        "id": "host-b-path",
+        "label": "호스트 B 경로",
+        "focus": [
+          "hostB",
+          "pat",
+          "server"
+        ],
+        "note": "10.0.0.3:1234는 같은 공용 IP의 다른 포트 5001로 변환되어 호스트 A와 구분된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "hostA",
+      "type": "frontend",
+      "label": "호스트 A",
+      "sublabel": "10.0.0.2:1234",
+      "pos": [
+        60,
+        120
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "hostB",
+      "type": "frontend",
+      "label": "호스트 B",
+      "sublabel": "10.0.0.3:1234",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pat",
+      "type": "security",
+      "label": "198.51.100.1",
+      "sublabel": "IP:포트 변환",
+      "pos": [
+        430,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "서버",
+      "sublabel": "203.0.113.5:80",
+      "pos": [
+        880,
+        220
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "내부 네트워크",
+      "wraps": [
+        "hostA",
+        "hostB"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NAT 라우터(PAT)",
+      "wraps": [
+        "pat"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "인터넷",
+      "wraps": [
+        "server"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hostA-to-pat",
+      "from": "hostA",
+      "to": "pat",
+      "label": "10.0.0.2:1234",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hostB-to-pat",
+      "from": "hostB",
+      "to": "pat",
+      "label": "10.0.0.3:1234"
+    },
+    {
+      "id": "pat-to-server-a",
+      "from": "pat",
+      "to": "server",
+      "label": "198.51.100.1:5000",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pat-to-server-b",
+      "from": "pat",
+      "to": "server",
+      "label": "198.51.100.1:5001",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          525,
+          330
+        ],
+        [
+          970,
+          330
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "PAT 동작",
+      "items": [
+        "내부 호스트의 IP:포트 조합을 단일 공용 IP의 서로 다른 포트로 변환",
+        "여러 내부 호스트가 포트 번호로 구분되어 하나의 공용 IP를 공유",
+        "사용 가능한 포트 수(약 65,000개)에 의해 제한됨"
+      ]
+    }
+  ]
+}

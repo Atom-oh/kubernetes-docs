@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OSI 모델 계층과 Cilium 기능 매핑",
+    "output": "ko-networking-cilium-05-l2-l7-networking-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      660
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Cilium 계층"
+        },
+        "external": {
+          "label": "기타 계층"
+        },
+        "security": {
+          "label": "Cilium 기능"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "osi-stack",
+        "label": "OSI 7계층",
+        "focus": [
+          "l7",
+          "l6",
+          "l5",
+          "l4",
+          "l3",
+          "l2",
+          "l1"
+        ],
+        "note": "응용 계층에서 물리 계층까지, 각 계층의 데이터 단위와 주소 체계를 확인합니다."
+      },
+      {
+        "id": "cilium-layers",
+        "label": "Cilium 적용 계층",
+        "focus": [
+          "l7",
+          "l4",
+          "l3",
+          "l2",
+          "cl7",
+          "cl4",
+          "cl3",
+          "cl2"
+        ],
+        "note": "Cilium은 L2, L3, L4, L7에서 네트워킹 및 보안 기능을 제공하며, 이 문서는 L7 정책에 집중합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "l7",
+      "type": "backend",
+      "label": "7. 응용 계층 (Application)",
+      "sublabel": "데이터 · URL, URI",
+      "pos": [
+        120,
+        40
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "l6",
+      "type": "external",
+      "label": "6. 표현 계층 (Presentation)",
+      "sublabel": "데이터",
+      "pos": [
+        120,
+        120
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "l5",
+      "type": "external",
+      "label": "5. 세션 계층 (Session)",
+      "sublabel": "데이터",
+      "pos": [
+        120,
+        200
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "l4",
+      "type": "backend",
+      "label": "4. 전송 계층 (Transport)",
+      "sublabel": "세그먼트 · 포트",
+      "pos": [
+        120,
+        280
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "backend",
+      "label": "3. 네트워크 계층 (Network)",
+      "sublabel": "패킷 · IP 주소",
+      "pos": [
+        120,
+        360
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "backend",
+      "label": "2. 데이터 링크 계층 (Data Link)",
+      "sublabel": "프레임 · MAC 주소",
+      "pos": [
+        120,
+        440
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "external",
+      "label": "1. 물리 계층 (Physical)",
+      "sublabel": "비트",
+      "pos": [
+        120,
+        520
+      ],
+      "size": [
+        300,
+        56
+      ]
+    },
+    {
+      "id": "cl7",
+      "type": "security",
+      "label": "L7 정책",
+      "sublabel": "HTTP, gRPC, Kafka",
+      "pos": [
+        760,
+        40
+      ],
+      "size": [
+        280,
+        56
+      ],
+      "tag": "이 문서의 초점"
+    },
+    {
+      "id": "cl4",
+      "type": "security",
+      "label": "L4 정책",
+      "sublabel": "포트, 프로토콜",
+      "pos": [
+        760,
+        280
+      ],
+      "size": [
+        280,
+        56
+      ]
+    },
+    {
+      "id": "cl3",
+      "type": "security",
+      "label": "L3 정책",
+      "sublabel": "IP, CIDR",
+      "pos": [
+        760,
+        360
+      ],
+      "size": [
+        280,
+        56
+      ]
+    },
+    {
+      "id": "cl2",
+      "type": "security",
+      "label": "L2 처리",
+      "sublabel": "ARP 처리, MAC 필터링",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        280,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OSI 모델 계층",
+      "wraps": [
+        "l7",
+        "l6",
+        "l5",
+        "l4",
+        "l3",
+        "l2",
+        "l1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Cilium 기능",
+      "wraps": [
+        "cl7",
+        "cl4",
+        "cl3",
+        "cl2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l7-l6",
+      "from": "l7",
+      "to": "l6",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l6-l5",
+      "from": "l6",
+      "to": "l5",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l5-l4",
+      "from": "l5",
+      "to": "l4",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l4-l3",
+      "from": "l4",
+      "to": "l3",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l3-l2",
+      "from": "l3",
+      "to": "l2",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l2-l1",
+      "from": "l2",
+      "to": "l1",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cl7-cl4",
+      "from": "cl7",
+      "to": "cl4",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cl4-cl3",
+      "from": "cl4",
+      "to": "cl3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cl3-cl2",
+      "from": "cl3",
+      "to": "cl2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "l7-cl7",
+      "from": "l7",
+      "to": "cl7",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "정책 적용"
+    },
+    {
+      "id": "l4-cl4",
+      "from": "l4",
+      "to": "cl4",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "l3-cl3",
+      "from": "l3",
+      "to": "cl3",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "l2-cl2",
+      "from": "l2",
+      "to": "cl2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "계층별 Cilium 기능",
+      "items": [
+        "L2: ARP 처리, MAC 필터링",
+        "L3: IP 라우팅, CIDR 기반 정책",
+        "L4: 포트 기반 필터링, 연결 추적",
+        "L7: API 인식 필터링, 헤더 기반 라우팅 (HTTP, gRPC, Kafka)"
+      ]
+    }
+  ]
+}

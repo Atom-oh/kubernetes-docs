@@ -207,7 +207,9 @@ eBPF is not just a simple technology but a complete technology stack consisting 
 
 ### Detailed eBPF Architecture Diagram
 
-![Diagram showing how a user-space application and compiler toolchain load a program through loader libraries, past the kernel's eBPF verifier and JIT compiler, into a virtual machine that attaches to kernel hook points and exchanges data with eBPF maps.](../../../assets/diagrams/rendered/en-networking-cilium-02-ebpf-0.svg)
+![Diagram showing how a user-space application and compiler toolchain load a program through loader libraries, past the kernel's eBPF verifier and JIT compiler, into a virtual machine that attaches to kernel hook points and exchanges data with eBPF maps.](../../.gitbook/assets/en-networking-cilium-02-ebpf-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-02-ebpf-0.html)
 
 ### Detailed Description of eBPF Architecture Components
 
@@ -699,7 +701,9 @@ Cilium is an open-source project that utilizes eBPF to implement container netwo
 
 Cilium consists of the following components, with eBPF playing an important role in each:
 
-![Diagram showing the Cilium Agent as the control-plane hub coordinating with the Kubernetes API server, the Cilium Operator, the Cilium CLI, and Hubble, while a per-node agent on each worker node loads eBPF programs and manages eBPF maps that handle packet processing for pods.](../../../assets/diagrams/rendered/en-networking-cilium-02-ebpf-1.svg)
+![Cilium architecture showing the cluster-level components (Kubernetes API Server, Cilium Operator, Cilium CLI, Hubble) and the per-node Cilium Agent that syncs state with the API server, loads eBPF programs, manages eBPF maps, and processes pod packets in the kernel.](../../.gitbook/assets/en-networking-cilium-02-ebpf-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-02-ebpf-1.html)
 
 #### Key Components:
 

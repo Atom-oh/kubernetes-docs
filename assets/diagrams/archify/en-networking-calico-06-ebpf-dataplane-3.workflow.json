@@ -1,0 +1,189 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "XDP Program Verdicts",
+    "locale": "en",
+    "output": "public/archmaps/en-networking-calico-06-ebpf-dataplane-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "pass-path",
+        "label": "XDP_PASS to TC",
+        "focus": [
+          "nic",
+          "xdp",
+          "tc"
+        ],
+        "note": "The normal path: XDP hands the packet on to Calico's TC programs for policy, conntrack, and NAT."
+      },
+      {
+        "id": "wire-verdicts",
+        "label": "Return to the wire",
+        "focus": [
+          "xdp",
+          "tx",
+          "redirect"
+        ],
+        "note": "XDP_TX sends the packet straight back out the same NIC; XDP_REDIRECT steers it to another interface."
+      },
+      {
+        "id": "drop-verdict",
+        "label": "Early drop",
+        "focus": [
+          "xdp",
+          "drop"
+        ],
+        "note": "XDP_DROP discards the packet at the earliest hook, before the kernel stack does any work."
+      }
+    ],
+    "viewBox": [
+      940,
+      540
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kernel eBPF program"
+        },
+        "security": {
+          "label": "XDP verdict point / drop"
+        },
+        "cloud": {
+          "label": "Egress to interface"
+        },
+        "external": {
+          "label": "Hardware"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "ingress",
+      "label": "Packet ingress"
+    },
+    {
+      "id": "forward",
+      "label": "Forwarded on"
+    },
+    {
+      "id": "dropped",
+      "label": "Discarded",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "nic",
+    "xdp",
+    "tc"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "nic"
+    ],
+    "allowedTerminals": [
+      "tc",
+      "tx",
+      "redirect",
+      "drop"
+    ],
+    "requiredEdges": [
+      {
+        "from": "nic",
+        "to": "xdp"
+      },
+      {
+        "from": "xdp",
+        "to": "tc"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "nic",
+      "lane": "ingress",
+      "col": 0,
+      "type": "external",
+      "label": "Network Card",
+      "sublabel": "packet arrives"
+    },
+    {
+      "id": "xdp",
+      "lane": "ingress",
+      "col": 1,
+      "type": "security",
+      "label": "XDP Program",
+      "sublabel": "earliest hook",
+      "tag": "verdict"
+    },
+    {
+      "id": "tc",
+      "lane": "forward",
+      "col": 2,
+      "type": "backend",
+      "label": "TC Programs",
+      "sublabel": "normal processing"
+    },
+    {
+      "id": "tx",
+      "lane": "forward",
+      "col": 3,
+      "type": "cloud",
+      "label": "TX",
+      "sublabel": "direct return"
+    },
+    {
+      "id": "redirect",
+      "lane": "forward",
+      "col": 4,
+      "type": "cloud",
+      "label": "Redirect",
+      "sublabel": "other interface"
+    },
+    {
+      "id": "drop",
+      "lane": "dropped",
+      "col": 2,
+      "type": "security",
+      "label": "Drop",
+      "sublabel": "DDoS protection"
+    }
+  ],
+  "edges": [
+    {
+      "from": "nic",
+      "to": "xdp",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "xdp",
+      "to": "tc",
+      "label": "XDP_PASS",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "xdp",
+      "to": "tx",
+      "label": "XDP_TX",
+      "role": "branch"
+    },
+    {
+      "from": "xdp",
+      "to": "redirect",
+      "label": "XDP_REDIRECT",
+      "role": "branch",
+      "variant": "dashed"
+    },
+    {
+      "from": "xdp",
+      "to": "drop",
+      "label": "XDP_DROP",
+      "role": "error",
+      "variant": "security"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Policy 계층",
+    "output": "ko-networking-calico-01-introduction-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [760, 560],
+    "views": [
+      { "id": "cluster-wide", "label": "클러스터 전체", "focus": ["gnp"], "note": "GlobalNetworkPolicy는 네임스페이스에 묶이지 않고 클러스터 전체에 적용되는 Calico 확장 정책이다." },
+      { "id": "namespace-scope", "label": "네임스페이스 범위", "focus": ["gnp", "np"], "note": "NetworkPolicy는 Kubernetes 표준 정책으로 네임스페이스 범위에서 Ingress/Egress를 제어한다." },
+      { "id": "node-scope", "label": "노드 보안", "focus": ["np", "hp"], "note": "HostEndpoint Policy는 Pod가 아닌 노드(호스트) 인터페이스 자체를 보호한다." }
+    ]
+  },
+  "components": [
+    { "id": "gnp", "type": "security", "label": "GlobalNetworkPolicy", "sublabel": "클러스터 전체", "tag": "Calico 확장", "pos": [240, 80], "size": [280, 64] },
+    { "id": "np", "type": "security", "label": "NetworkPolicy", "sublabel": "네임스페이스 범위", "tag": "Kubernetes 표준", "pos": [240, 240], "size": [280, 64] },
+    { "id": "hp", "type": "security", "label": "HostEndpoint Policy", "sublabel": "노드 보안", "tag": "호스트 인터페이스", "pos": [240, 400], "size": [280, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Calico Policy 계층", "wraps": ["gnp", "np", "hp"] }
+  ],
+  "connections": [
+    { "id": "gnp-to-np", "from": "gnp", "to": "np", "label": "범위 좁아짐", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "np-to-hp", "from": "np", "to": "hp", "label": "범위 좁아짐", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "정책 계층", "items": ["GlobalNetworkPolicy: 클러스터 전체에 적용", "NetworkPolicy: 네임스페이스 범위", "HostEndpoint Policy: 노드(호스트) 보안"] },
+    { "dot": "cyan", "title": "지원 기능", "items": ["Ingress/Egress 규칙", "CIDR, 포트, 프로토콜 기반 필터링", "Label selector 기반 타겟팅"] },
+    { "dot": "amber", "title": "Enterprise 전용", "items": ["FQDN 기반 egress 제어", "HTTP 메서드/경로 기반 L7 정책"] }
+  ]
+}

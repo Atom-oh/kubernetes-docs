@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Route Reflector 토폴로지",
+    "output": "ko-networking-calico-04-bgp-deep-dive-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "mesh",
+        "label": "RR mesh",
+        "focus": [
+          "rr1",
+          "rr2"
+        ],
+        "note": "두 Route Reflector는 동일한 Cluster ID를 공유하며 서로 피어링해 경로를 교환한다."
+      },
+      {
+        "id": "client-peering",
+        "label": "클라이언트 → RR 피어링",
+        "focus": [
+          "n1",
+          "n2",
+          "n3",
+          "n4",
+          "n5",
+          "n6",
+          "rr1",
+          "rr2"
+        ],
+        "note": "각 클라이언트 노드는 두 RR과만 피어링한다. 노드 간 full-mesh 없이도 RR이 경로를 반사해 모든 노드에 전파한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rr1",
+      "type": "cloud",
+      "label": "Route Reflector 1",
+      "sublabel": "Cluster ID 244.0.0.1",
+      "pos": [
+        450,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rr2",
+      "type": "cloud",
+      "label": "Route Reflector 2",
+      "sublabel": "Cluster ID 244.0.0.1",
+      "pos": [
+        450,
+        560
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Node 1",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Node 2",
+      "pos": [
+        130,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Node 3",
+      "pos": [
+        220,
+        360
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n4",
+      "type": "backend",
+      "label": "Node 4",
+      "pos": [
+        740,
+        360
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n5",
+      "type": "backend",
+      "label": "Node 5",
+      "pos": [
+        830,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "n6",
+      "type": "backend",
+      "label": "Node 6",
+      "pos": [
+        920,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Route Reflector 클러스터",
+      "wraps": [
+        "rr1",
+        "rr2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라이언트 노드 (1–3)",
+      "wraps": [
+        "n1",
+        "n2",
+        "n3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "클라이언트 노드 (4–6)",
+      "wraps": [
+        "n4",
+        "n5",
+        "n6"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rr-mesh",
+      "from": "rr1",
+      "to": "rr2",
+      "label": "RR mesh",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        550,
+        332
+      ]
+    },
+    {
+      "id": "n1-rr1",
+      "from": "n1",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "label": "iBGP 피어링"
+    },
+    {
+      "id": "n1-rr2",
+      "from": "n1",
+      "to": "rr2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n2-rr1",
+      "from": "n2",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n2-rr2",
+      "from": "n2",
+      "to": "rr2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n3-rr1",
+      "from": "n3",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n3-rr2",
+      "from": "n3",
+      "to": "rr2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n4-rr1",
+      "from": "n4",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n4-rr2",
+      "from": "n4",
+      "to": "rr2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n5-rr1",
+      "from": "n5",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n5-rr2",
+      "from": "n5",
+      "to": "rr2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n6-rr1",
+      "from": "n6",
+      "to": "rr1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "n6-rr2",
+      "from": "n6",
+      "to": "rr2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Route Reflector 동작 원리",
+      "items": [
+        "클라이언트로부터 경로 수신: RR이 클라이언트 노드의 경로를 수집",
+        "경로 반사(Reflection): 수집된 경로를 다른 클라이언트들에게 전파",
+        "루프 방지: Cluster ID와 Originator ID로 라우팅 루프 방지"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "세션 수",
+      "items": [
+        "Full-mesh: N × (N-1) / 2",
+        "Route Reflector 2대: 2 × N + 1",
+        "nodeToNodeMeshEnabled: false 필수"
+      ]
+    }
+  ]
+}

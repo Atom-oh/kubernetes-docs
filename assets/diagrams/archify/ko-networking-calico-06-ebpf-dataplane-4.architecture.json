@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF 모드 아키텍처",
+    "output": "ko-networking-calico-06-ebpf-dataplane-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "packet-path",
+        "label": "단일 처리 경로",
+        "focus": [
+          "app",
+          "veth",
+          "tc",
+          "eth0"
+        ],
+        "note": "Pod 패킷이 veth를 지나 TC eBPF 프로그램 하나를 거쳐 eth0로 나가는 주 경로."
+      },
+      {
+        "id": "map-lookup",
+        "label": "BPF Map 조회",
+        "focus": [
+          "tc",
+          "policy-map",
+          "nat-map",
+          "ct-map"
+        ],
+        "note": "정책, NAT, 연결 추적 상태를 BPF Map에서 O(1) 해시 조회로 읽는다."
+      }
+    ],
+    "viewBox": [
+      1180,
+      400
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 내 프로세스",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "veth",
+      "type": "backend",
+      "label": "veth pair",
+      "sublabel": "Pod ↔ 호스트",
+      "pos": [
+        270,
+        70
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tc",
+      "type": "security",
+      "label": "TC eBPF Program",
+      "sublabel": "정책 + NAT + 라우팅",
+      "tag": "단일 경로",
+      "pos": [
+        520,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "policy-map",
+      "type": "database",
+      "label": "Policy Map",
+      "sublabel": "정책 규칙",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "nat-map",
+      "type": "database",
+      "label": "NAT Map",
+      "sublabel": "서비스 VIP → 백엔드",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ct-map",
+      "type": "database",
+      "label": "CT Map",
+      "sublabel": "Connection Tracking",
+      "pos": [
+        810,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "eth0",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "호스트 NIC",
+      "pos": [
+        1000,
+        70
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod",
+      "wraps": [
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Host Network Stack",
+      "wraps": [
+        "veth",
+        "tc",
+        "policy-map",
+        "nat-map",
+        "ct-map",
+        "eth0"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "eBPF Processing",
+      "wraps": [
+        "tc",
+        "policy-map",
+        "nat-map",
+        "ct-map"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-veth",
+      "from": "app",
+      "to": "veth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "veth-to-tc",
+      "from": "veth",
+      "to": "tc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tc-to-eth0",
+      "from": "tc",
+      "to": "eth0",
+      "label": "한 번에 처리 후 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tc-policy",
+      "from": "tc",
+      "to": "policy-map",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tc-nat",
+      "from": "tc",
+      "to": "nat-map",
+      "label": "O(1) 해시 조회",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 50
+    },
+    {
+      "id": "tc-ct",
+      "from": "tc",
+      "to": "ct-map",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "eBPF 모드의 장점",
+      "items": [
+        "O(1) 검색: BPF Map을 통한 해시 기반 검색",
+        "단일 처리 경로: 정책, NAT, 라우팅을 한 번에 처리",
+        "낮은 지연: 커널 내 최적화된 실행",
+        "kube-proxy 대체: 내장 서비스 처리"
+      ]
+    }
+  ]
+}

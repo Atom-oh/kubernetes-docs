@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How VXLAN Works",
+    "locale": "en",
+    "output": "en-networking-calico-03-networking-modes-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Pod (workload)"
+        },
+        "backend": {
+          "label": "VTEP (encap/decap)"
+        },
+        "cloud": {
+          "label": "eth0 (physical NIC)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "10.244.1.5",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "vtep-1",
+      "type": "backend",
+      "label": "vxlan.calico",
+      "sublabel": "VTEP",
+      "pos": [
+        240,
+        40
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "eth-1",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "10.0.1.10",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "eth-2",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "10.0.1.11",
+      "pos": [
+        440,
+        240
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "vtep-2",
+      "type": "backend",
+      "label": "vxlan.calico",
+      "sublabel": "VTEP",
+      "pos": [
+        640,
+        240
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "10.244.2.8",
+      "pos": [
+        840,
+        240
+      ],
+      "size": [
+        120,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1 (10.0.1.10)",
+      "wraps": [
+        "pod-a",
+        "vtep-1",
+        "eth-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2 (10.0.1.11)",
+      "wraps": [
+        "eth-2",
+        "vtep-2",
+        "pod-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-a-to-vtep-1",
+      "from": "pod-a",
+      "to": "vtep-1",
+      "label": "Original packet"
+    },
+    {
+      "id": "vtep-1-to-eth-1",
+      "from": "vtep-1",
+      "to": "eth-1",
+      "label": "UDP encap"
+    },
+    {
+      "id": "eth-1-to-eth-2",
+      "from": "eth-1",
+      "to": "eth-2",
+      "label": "UDP 4789 · VNI 4096",
+      "variant": "emphasis",
+      "labelAt": [
+        500,
+        172
+      ]
+    },
+    {
+      "id": "eth-2-to-vtep-2",
+      "from": "eth-2",
+      "to": "vtep-2",
+      "label": "UDP decap"
+    },
+    {
+      "id": "vtep-2-to-pod-b",
+      "from": "vtep-2",
+      "to": "pod-b",
+      "label": "Original packet"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "VXLAN encapsulation",
+      "items": [
+        "Wraps the Layer 2 frame in a UDP packet (default port UDP 4789)",
+        "VNI 4096 (Calico default)",
+        "50 bytes of overhead → recommended pod MTU 1450 bytes"
+      ]
+    }
+  ]
+}

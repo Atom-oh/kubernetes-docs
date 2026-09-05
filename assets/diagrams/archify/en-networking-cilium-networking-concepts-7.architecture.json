@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Destination NAT (DNAT)",
+    "output": "en-networking-cilium-networking-concepts-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      300
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "203.0.113.5",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "dnat",
+      "type": "cloud",
+      "label": "DNAT",
+      "sublabel": "Public IP → private IP",
+      "pos": [
+        430,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server",
+      "sublabel": "10.0.0.3",
+      "pos": [
+        830,
+        90
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Internet",
+      "wraps": [
+        "client"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NAT Router",
+      "wraps": [
+        "dnat"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Internal Network",
+      "wraps": [
+        "server"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-dnat",
+      "from": "client",
+      "to": "dnat",
+      "label": "dst 198.51.100.1:80",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dnat-to-server",
+      "from": "dnat",
+      "to": "server",
+      "label": "dst 10.0.0.3:8080",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Destination NAT (DNAT)",
+      "items": [
+        "How it works: translates public IP addresses to private IP addresses of internal hosts",
+        "Use cases: port forwarding, load balancing, inbound connections",
+        "Configuration: defines mappings for specific ports or port ranges"
+      ]
+    }
+  ]
+}

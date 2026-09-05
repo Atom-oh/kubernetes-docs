@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium 오버레이 네트워크 아키텍처",
+    "output": "ko-networking-cilium-03-networking-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      470
+    ],
+    "views": [
+      {
+        "id": "egress",
+        "label": "송신 호스트 처리",
+        "focus": [
+          "container-a",
+          "ebpf-a",
+          "vtep-a"
+        ],
+        "note": "컨테이너 A의 패킷을 eBPF가 인터셉트해 정책을 적용하고, VTEP이 VXLAN 헤더로 캡슐화합니다."
+      },
+      {
+        "id": "transit",
+        "label": "물리적 네트워크 전송",
+        "focus": [
+          "vtep-a",
+          "network",
+          "vtep-b"
+        ],
+        "note": "캡슐화된 패킷이 VTEP 언더레이 IP(192.168.1.x) 사이를 물리적 네트워크로 오갑니다."
+      },
+      {
+        "id": "ingress",
+        "label": "수신 호스트 처리",
+        "focus": [
+          "vtep-b",
+          "ebpf-b",
+          "container-b"
+        ],
+        "note": "호스트 B의 VTEP이 VXLAN 헤더를 제거하고, eBPF가 패킷을 처리한 뒤 컨테이너 B로 전달합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "container-a",
+      "type": "backend",
+      "label": "컨테이너 A",
+      "sublabel": "10.0.0.1",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ebpf-a",
+      "type": "security",
+      "label": "eBPF",
+      "sublabel": "패킷 인터셉트 · 정책 적용",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vtep-a",
+      "type": "cloud",
+      "label": "VTEP",
+      "sublabel": "192.168.1.1",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "network",
+      "type": "external",
+      "label": "물리적 네트워크",
+      "sublabel": "VXLAN 터널 (양방향)",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vtep-b",
+      "type": "cloud",
+      "label": "VTEP",
+      "sublabel": "192.168.1.2",
+      "pos": [
+        770,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ebpf-b",
+      "type": "security",
+      "label": "eBPF",
+      "sublabel": "수신 패킷 처리",
+      "pos": [
+        770,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "container-b",
+      "type": "backend",
+      "label": "컨테이너 B",
+      "sublabel": "10.0.0.2",
+      "pos": [
+        770,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "호스트 A",
+      "wraps": [
+        "container-a",
+        "ebpf-a",
+        "vtep-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "호스트 B",
+      "wraps": [
+        "container-b",
+        "ebpf-b",
+        "vtep-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-ebpf",
+      "from": "container-a",
+      "to": "ebpf-a",
+      "label": "패킷 생성",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        162
+      ]
+    },
+    {
+      "id": "ebpf-to-vtep-a",
+      "from": "ebpf-a",
+      "to": "vtep-a",
+      "label": "정책 적용",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        302
+      ]
+    },
+    {
+      "id": "vtep-a-to-network",
+      "from": "vtep-a",
+      "to": "network",
+      "label": "VXLAN 캡슐화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "network-to-vtep-b",
+      "from": "network",
+      "to": "vtep-b",
+      "label": "전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vtep-b-to-ebpf",
+      "from": "vtep-b",
+      "to": "ebpf-b",
+      "label": "캡슐 해제",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ebpf-to-b",
+      "from": "ebpf-b",
+      "to": "container-b",
+      "label": "전달",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "송신 호스트 A",
+      "items": [
+        "컨테이너 A가 컨테이너 B로 패킷 전송",
+        "eBPF 프로그램이 패킷을 인터셉트하고 정책 적용",
+        "대상 컨테이너의 VTEP 식별 후 VXLAN 헤더로 캡슐화"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "물리적 네트워크",
+      "items": [
+        "캡슐화된 패킷을 언더레이 IP로 대상 호스트에 전송",
+        "Cilium은 기본 VXLAN 외에 Geneve 캡슐화도 지원"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "수신 호스트 B",
+      "items": [
+        "대상 호스트에서 VXLAN 헤더 제거",
+        "대상 호스트의 eBPF 프로그램이 패킷 처리",
+        "패킷을 대상 컨테이너 B로 전달"
+      ]
+    }
+  ]
+}

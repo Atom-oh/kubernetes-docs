@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "IPIP 동작 원리",
+    "output": "ko-networking-calico-03-networking-modes-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1350,
+      300
+    ],
+    "views": [
+      {
+        "id": "encap",
+        "label": "Node 1 캡슐화",
+        "focus": [
+          "pod-a",
+          "tunl0-1",
+          "eth0-1"
+        ],
+        "note": "Pod A의 원본 패킷이 tunl0에서 외부 IP 헤더(20 bytes)로 캡슐화되어 eth0로 나간다."
+      },
+      {
+        "id": "wire",
+        "label": "노드 간 전송",
+        "focus": [
+          "eth0-1",
+          "eth0-2"
+        ],
+        "note": "외부 헤더 Src 10.0.1.10 / Dst 10.0.1.11, IP Protocol 4(IP-in-IP)로 노드 네트워크를 건넌다."
+      },
+      {
+        "id": "decap",
+        "label": "Node 2 디캡슐화",
+        "focus": [
+          "eth0-2",
+          "tunl0-2",
+          "pod-b"
+        ],
+        "note": "eth0가 받은 패킷을 tunl0에서 디캡슐화해 원본 패킷을 Pod B로 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.244.1.5",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "tunl0-1",
+      "type": "security",
+      "label": "tunl0",
+      "sublabel": "IPIP 인터페이스",
+      "pos": [
+        260,
+        90
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "tag": "캡슐화"
+    },
+    {
+      "id": "eth0-1",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "10.0.1.10",
+      "pos": [
+        480,
+        90
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "eth0-2",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "10.0.1.11",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "tunl0-2",
+      "type": "security",
+      "label": "tunl0",
+      "sublabel": "IPIP 인터페이스",
+      "pos": [
+        940,
+        90
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "tag": "디캡슐화"
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.244.2.8",
+      "pos": [
+        1160,
+        90
+      ],
+      "size": [
+        120,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1 (10.0.1.10)",
+      "wraps": [
+        "pod-a",
+        "tunl0-1",
+        "eth0-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2 (10.0.1.11)",
+      "wraps": [
+        "eth0-2",
+        "tunl0-2",
+        "pod-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "original-out",
+      "from": "pod-a",
+      "to": "tunl0-1",
+      "label": "Original Packet"
+    },
+    {
+      "id": "encapsulated",
+      "from": "tunl0-1",
+      "to": "eth0-1",
+      "label": "Encapsulated"
+    },
+    {
+      "id": "ipip-wire",
+      "from": "eth0-1",
+      "to": "eth0-2",
+      "label": "IPIP Protocol 4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "decapsulate",
+      "from": "eth0-2",
+      "to": "tunl0-2",
+      "label": "Decapsulate"
+    },
+    {
+      "id": "original-in",
+      "from": "tunl0-2",
+      "to": "pod-b",
+      "label": "Original Packet"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "IPIP 패킷 구조",
+      "items": [
+        "Outer IP Header(20 bytes): Src 10.0.1.10(Node 1) / Dst 10.0.1.11(Node 2), Protocol 4(IP-in-IP)",
+        "Inner IP Header(20 bytes): Src 10.244.1.5(Pod A) / Dst 10.244.2.8(Pod B), Protocol TCP/UDP",
+        "기본 MTU 1500 bytes에서 IPIP 오버헤드 20 bytes를 뺀 권장 Pod MTU는 1480 bytes"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "IPIP 모드 옵션 (ipipMode)",
+      "items": [
+        "Always: 모든 Pod 간 트래픽을 캡슐화 (Node → IPIP → Node)",
+        "CrossSubnet: 다른 서브넷만 캡슐화, 같은 서브넷은 Direct",
+        "Never: IPIP 비활성화, Direct 또는 VXLAN 사용"
+      ]
+    }
+  ]
+}

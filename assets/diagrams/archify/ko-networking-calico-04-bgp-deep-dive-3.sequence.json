@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Full-Mesh BGP (5개 노드)",
+    "output": "ko-networking-calico-04-bgp-deep-dive-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      700
+    ],
+    "column_fit": "spread",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "iBGP 세션 (노드 쌍 간 직접 피어링)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "n1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n3",
+      "type": "backend",
+      "label": "Node 3",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n4",
+      "type": "backend",
+      "label": "Node 4",
+      "sublabel": "AS 64512"
+    },
+    {
+      "id": "n5",
+      "type": "backend",
+      "label": "Node 5",
+      "sublabel": "AS 64512"
+    }
+  ],
+  "segments": [
+    {
+      "from": 170,
+      "to": 322,
+      "label": "Node 1 → 나머지 4개 노드 (세션 4개)"
+    },
+    {
+      "from": 340,
+      "to": 454,
+      "label": "Node 2 → 아직 안 맺은 3개 노드 (세션 3개)"
+    },
+    {
+      "from": 472,
+      "to": 548,
+      "label": "Node 3 → 2개 노드 (세션 2개)"
+    },
+    {
+      "from": 566,
+      "to": 606,
+      "label": "Node 4 → Node 5 (세션 1개) · 합계 4+3+2+1 = 10"
+    }
+  ],
+  "messages": [
+    {
+      "id": "n1-n2",
+      "from": "n1",
+      "to": "n2",
+      "y": 190,
+      "label": "iBGP 세션 1/10"
+    },
+    {
+      "id": "n1-n3",
+      "from": "n1",
+      "to": "n3",
+      "y": 228,
+      "label": "iBGP 세션 2/10"
+    },
+    {
+      "id": "n1-n4",
+      "from": "n1",
+      "to": "n4",
+      "y": 266,
+      "label": "iBGP 세션 3/10"
+    },
+    {
+      "id": "n1-n5",
+      "from": "n1",
+      "to": "n5",
+      "y": 304,
+      "label": "iBGP 세션 4/10"
+    },
+    {
+      "id": "n2-n3",
+      "from": "n2",
+      "to": "n3",
+      "y": 360,
+      "label": "iBGP 세션 5/10"
+    },
+    {
+      "id": "n2-n4",
+      "from": "n2",
+      "to": "n4",
+      "y": 398,
+      "label": "iBGP 세션 6/10"
+    },
+    {
+      "id": "n2-n5",
+      "from": "n2",
+      "to": "n5",
+      "y": 436,
+      "label": "iBGP 세션 7/10"
+    },
+    {
+      "id": "n3-n4",
+      "from": "n3",
+      "to": "n4",
+      "y": 492,
+      "label": "iBGP 세션 8/10"
+    },
+    {
+      "id": "n3-n5",
+      "from": "n3",
+      "to": "n5",
+      "y": 530,
+      "label": "iBGP 세션 9/10"
+    },
+    {
+      "id": "n4-n5",
+      "from": "n4",
+      "to": "n5",
+      "y": 586,
+      "label": "iBGP 세션 10/10"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Full-Mesh BGP 세션 수 = N × (N-1) / 2",
+      "items": [
+        "5 노드 → 10 세션, 10 노드 → 45 세션 (적합)",
+        "50 노드 → 1,225 세션, 100 노드 → 4,950 세션",
+        "50개 이상 노드에서는 Route Reflector 사용을 권장",
+        "위→아래 순서는 세션을 빠짐없이 세기 위한 나열이며 수립 순서를 뜻하지 않음"
+      ]
+    }
+  ]
+}

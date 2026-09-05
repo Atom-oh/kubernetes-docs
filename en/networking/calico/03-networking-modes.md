@@ -102,7 +102,9 @@ ip route | grep tunl0
 
 ### IPIP Packet Flow Diagram
 
-![A packet from Pod A is routed into the tunl0 interface on Node 1, IPIP-encapsulated, carried across the physical network to Node 2, decapsulated, and delivered to Pod B.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-2.svg)
+![A packet from Pod A is routed into the tunl0 interface on Node 1, IPIP-encapsulated, carried across the physical network to Node 2, decapsulated, and delivered to Pod B.](../../.gitbook/assets/en-networking-calico-03-networking-modes-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-2.html)
 
 ## VXLAN Mode
 
@@ -188,7 +190,9 @@ ip route | grep vxlan
 
 ### VXLAN Packet Flow
 
-![Pod A's packet is encapsulated by its node's VTEP into a UDP/VXLAN frame, crosses the physical network, and is decapsulated by the destination VTEP before reaching Pod B.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-3.svg)
+![Pod A's packet is encapsulated by its node's VTEP into a UDP/VXLAN frame, crosses the physical network, and is decapsulated by the destination VTEP before reaching Pod B.](../../.gitbook/assets/en-networking-calico-03-networking-modes-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-3.html)
 
 ## Direct/Unencapsulated Mode
 
@@ -204,7 +208,9 @@ Direct routing mode uses native IP routing without any encapsulation, providing 
 
 ### Direct Mode Topology
 
-![Nodes in each rack peer over BGP with their rack's top-of-rack switch, and both top-of-rack switches peer with a shared spine switch, so pod routes propagate natively without any overlay.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-4.svg)
+![Pod A's packet leaves Node 1 as native IP through its routing table and eth0, reaches the BGP-peered router or ToR switch, and follows the BGP-advertised pod route through Node 2's eth0 and routing table to Pod B with no encapsulation.](../../.gitbook/assets/en-networking-calico-03-networking-modes-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-4.html)
 
 ### Direct Mode IPPool Configuration
 
@@ -505,7 +511,9 @@ tcpdump -i eth0 'icmp[icmptype] == 3 and icmp[icmpcode] == 4'
 
 ## Decision Flowchart
 
-![A decision tree starting from cloud-vs-on-premises branches through provider, VPC routing, and BGP/L2 adjacency questions to arrive at VXLAN, IPIP CrossSubnet, or Direct mode, with the on-premises BGP path highlighted as the top-performance route.](../../../assets/diagrams/rendered/en-networking-calico-03-networking-modes-6.svg)
+![A decision tree starting from cloud-vs-on-premises branches through provider, VPC IP routing, and BGP/L2 adjacency questions to arrive at VXLAN, IPIP CrossSubnet, or Direct mode with BGP, with the on-premises BGP path highlighted as the best-performance route.](../../.gitbook/assets/en-networking-calico-03-networking-modes-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-03-networking-modes-6.html)
 
 ## Summary
 

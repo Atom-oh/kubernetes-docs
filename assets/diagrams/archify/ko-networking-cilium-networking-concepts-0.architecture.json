@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OSI 모델과 TCP/IP 모델 비교",
+    "output": "ko-networking-cilium-networking-concepts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      640
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "응용 계층군"
+        },
+        "backend": {
+          "label": "전송 계층"
+        },
+        "cloud": {
+          "label": "네트워크 계층"
+        },
+        "messagebus": {
+          "label": "데이터 링크 계층"
+        },
+        "external": {
+          "label": "물리 계층"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "app-group",
+        "label": "응용 계층군 매핑",
+        "focus": [
+          "osi7",
+          "osi6",
+          "osi5",
+          "tcp4"
+        ],
+        "note": "OSI 응용·표현·세션 3개 계층은 TCP/IP 응용 계층 하나로 묶인다."
+      },
+      {
+        "id": "one-to-one",
+        "label": "전송·네트워크 1:1 매핑",
+        "focus": [
+          "osi4",
+          "tcp3",
+          "osi3",
+          "tcp2"
+        ],
+        "note": "전송 계층(TCP, UDP)은 그대로 대응하고, 네트워크 계층(IP, ICMP)은 인터넷 계층에 해당한다."
+      },
+      {
+        "id": "link-group",
+        "label": "링크·물리 계층 매핑",
+        "focus": [
+          "osi2",
+          "osi1",
+          "tcp1"
+        ],
+        "note": "TCP/IP 네트워크 인터페이스 계층은 OSI 물리 계층과 데이터 링크 계층에 해당한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "osi7",
+      "type": "frontend",
+      "label": "7. 응용 계층",
+      "sublabel": "HTTP, FTP, SMTP, DNS",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi6",
+      "type": "frontend",
+      "label": "6. 표현 계층",
+      "sublabel": "SSL/TLS, JPEG, ASCII",
+      "pos": [
+        60,
+        116
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi5",
+      "type": "frontend",
+      "label": "5. 세션 계층",
+      "sublabel": "NetBIOS, RPC",
+      "pos": [
+        60,
+        192
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi4",
+      "type": "backend",
+      "label": "4. 전송 계층",
+      "sublabel": "TCP, UDP",
+      "pos": [
+        60,
+        268
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi3",
+      "type": "cloud",
+      "label": "3. 네트워크 계층",
+      "sublabel": "IP, ICMP, IGMP",
+      "pos": [
+        60,
+        344
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi2",
+      "type": "messagebus",
+      "label": "2. 데이터 링크 계층",
+      "sublabel": "Ethernet, PPP, ARP",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "osi1",
+      "type": "external",
+      "label": "1. 물리 계층",
+      "sublabel": "RS-232, Ethernet",
+      "pos": [
+        60,
+        496
+      ],
+      "size": [
+        280,
+        60
+      ]
+    },
+    {
+      "id": "tcp4",
+      "type": "frontend",
+      "label": "4. 응용 계층",
+      "sublabel": "OSI 7·6·5계층에 해당",
+      "pos": [
+        900,
+        116
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "tcp3",
+      "type": "backend",
+      "label": "3. 전송 계층",
+      "sublabel": "OSI 4계층에 해당",
+      "pos": [
+        900,
+        268
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "tcp2",
+      "type": "cloud",
+      "label": "2. 인터넷 계층",
+      "sublabel": "OSI 3계층에 해당",
+      "pos": [
+        900,
+        344
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "tcp1",
+      "type": "external",
+      "label": "1. 네트워크 인터페이스 계층",
+      "sublabel": "OSI 2·1계층에 해당",
+      "pos": [
+        900,
+        458
+      ],
+      "size": [
+        300,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OSI 7계층 모델",
+      "wraps": [
+        "osi7",
+        "osi6",
+        "osi5",
+        "osi4",
+        "osi3",
+        "osi2",
+        "osi1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "TCP/IP 4계층 모델",
+      "wraps": [
+        "tcp4",
+        "tcp3",
+        "tcp2",
+        "tcp1"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "osi7-tcp4",
+      "from": "osi7",
+      "to": "tcp4"
+    },
+    {
+      "id": "osi6-tcp4",
+      "from": "osi6",
+      "to": "tcp4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "osi5-tcp4",
+      "from": "osi5",
+      "to": "tcp4"
+    },
+    {
+      "id": "osi4-tcp3",
+      "from": "osi4",
+      "to": "tcp3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "osi3-tcp2",
+      "from": "osi3",
+      "to": "tcp2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "osi2-tcp1",
+      "from": "osi2",
+      "to": "tcp1"
+    },
+    {
+      "id": "osi1-tcp1",
+      "from": "osi1",
+      "to": "tcp1"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Networking Modes and Performance",
+    "locale": "en",
+    "output": "en-networking-calico-01-introduction-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": { "label": "Networking mode" },
+        "backend": { "label": "Performance characteristic" }
+      }
+    },
+    "views": [
+      { "id": "overlay", "label": "Encapsulated overlays", "focus": ["ipip", "vxlan", "perf-ipip", "perf-vxlan"], "note": "IPIP and VXLAN wrap pod traffic in an outer header; good performance with encapsulation overhead." },
+      { "id": "native", "label": "Direct routing", "focus": ["direct", "perf-direct"], "note": "BGP-routed pod traffic with no encapsulation reaches native speed." },
+      { "id": "ebpf", "label": "eBPF data plane", "focus": ["ebpf", "perf-ebpf"], "note": "Optional eBPF data plane reduces overhead further by bypassing parts of the kernel networking stack." }
+    ]
+  },
+  "components": [
+    { "id": "ipip", "type": "cloud", "label": "IPIP Mode", "sublabel": "IP-in-IP tunnel", "pos": [60, 70], "size": [190, 64] },
+    { "id": "vxlan", "type": "cloud", "label": "VXLAN Mode", "sublabel": "UDP overlay", "pos": [60, 190], "size": [190, 64] },
+    { "id": "direct", "type": "cloud", "label": "Direct Routing", "sublabel": "BGP, no encapsulation", "pos": [60, 310], "size": [190, 64] },
+    { "id": "ebpf", "type": "cloud", "label": "eBPF Data Plane", "sublabel": "optional, reduced overhead", "pos": [60, 430], "size": [190, 64], "tag": "fastest" },
+    { "id": "perf-ipip", "type": "backend", "label": "Good", "sublabel": "encapsulated", "pos": [560, 70], "size": [190, 64] },
+    { "id": "perf-vxlan", "type": "backend", "label": "Good", "sublabel": "standard overlay", "pos": [560, 190], "size": [190, 64] },
+    { "id": "perf-direct", "type": "backend", "label": "Best", "sublabel": "native speed", "pos": [560, 310], "size": [190, 64] },
+    { "id": "perf-ebpf", "type": "backend", "label": "Best", "sublabel": "kernel bypass", "pos": [560, 430], "size": [190, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Networking Options", "wraps": ["ipip", "vxlan", "direct", "ebpf"] },
+    { "kind": "region", "label": "Performance Characteristics", "wraps": ["perf-ipip", "perf-vxlan", "perf-direct", "perf-ebpf"] }
+  ],
+  "connections": [
+    { "id": "ipip-perf", "from": "ipip", "to": "perf-ipip" },
+    { "id": "vxlan-perf", "from": "vxlan", "to": "perf-vxlan" },
+    { "id": "direct-perf", "from": "direct", "to": "perf-direct" },
+    { "id": "ebpf-perf", "from": "ebpf", "to": "perf-ebpf", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Key performance features", "items": ["Native Linux networking stack integration", "Optional eBPF data plane for reduced overhead", "BGP-based routing for optimal path selection", "Minimal encapsulation overhead in direct routing mode"] }
+  ]
+}
