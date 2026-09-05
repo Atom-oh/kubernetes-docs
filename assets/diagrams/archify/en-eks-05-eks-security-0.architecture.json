@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Security Architecture",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      650
+    ]
+  },
+  "components": [
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "AWS IAM",
+      "sublabel": "Identity and access",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp",
+      "type": "backend",
+      "label": "EKS Control Plane",
+      "sublabel": "AWS managed",
+      "pos": [
+        380,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "Cluster state store",
+      "pos": [
+        680,
+        50
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "kms",
+      "type": "security",
+      "label": "AWS KMS",
+      "sublabel": "Secrets encryption",
+      "pos": [
+        680,
+        190
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "wn",
+      "type": "cloud",
+      "label": "Worker Nodes",
+      "sublabel": "EC2 / node groups",
+      "pos": [
+        380,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Pods / Containers",
+      "sublabel": "Workloads",
+      "pos": [
+        680,
+        370
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "Security Groups",
+      "sublabel": "Node network control",
+      "pos": [
+        380,
+        530
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "Service Accounts",
+      "sublabel": "RBAC / IRSA",
+      "pos": [
+        600,
+        530
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "np",
+      "type": "security",
+      "label": "Network Policies",
+      "sublabel": "Pod-to-pod traffic control",
+      "pos": [
+        810,
+        530
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "secrets",
+      "type": "database",
+      "label": "Kubernetes Secrets",
+      "sublabel": "Sensitive data",
+      "pos": [
+        1010,
+        530
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Responsibility",
+      "wraps": [
+        "iam",
+        "cp",
+        "etcd",
+        "kms"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Customer Responsibility",
+      "wraps": [
+        "wn",
+        "pods",
+        "sg",
+        "sa",
+        "np",
+        "secrets"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "iam-cp",
+      "from": "iam",
+      "to": "cp",
+      "label": "Authentication / Authorization",
+      "variant": "security"
+    },
+    {
+      "id": "cp-etcd",
+      "from": "cp",
+      "to": "etcd",
+      "label": "Encrypted communication"
+    },
+    {
+      "id": "cp-kms",
+      "from": "cp",
+      "to": "kms",
+      "label": "Managed"
+    },
+    {
+      "id": "cp-wn",
+      "from": "cp",
+      "to": "wn",
+      "label": "Encrypted communication",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "wn-pods",
+      "from": "wn",
+      "to": "pods",
+      "label": "Run",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wn-sg",
+      "from": "wn",
+      "to": "sg",
+      "label": "Apply",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-sa",
+      "from": "pods",
+      "to": "sa",
+      "label": "Use",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-np",
+      "from": "pods",
+      "to": "np",
+      "label": "Apply",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "pods-secrets",
+      "from": "pods",
+      "to": "secrets",
+      "label": "Use",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS Responsibility",
+      "items": [
+        "AWS manages the security of the EKS control plane and etcd",
+        "AWS KMS encrypts Secrets stored in etcd",
+        "AWS IAM credentials authenticate to the Kubernetes API server"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Customer Responsibility",
+      "items": [
+        "Security of worker nodes, containers, and applications",
+        "Security groups and network policies control traffic",
+        "Service accounts (RBAC, IRSA) and Secrets management"
+      ]
+    }
+  ]
+}

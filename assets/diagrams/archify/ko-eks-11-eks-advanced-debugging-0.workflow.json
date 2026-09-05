@@ -1,0 +1,276 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "신속한 문제 식별을 위한 의사결정 트리",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "시작점"
+        },
+        "backend": {
+          "label": "결정 지점"
+        },
+        "frontend": {
+          "label": "진단 결과"
+        },
+        "security": {
+          "label": "인프라 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "unreachable_path",
+        "label": "접근 불가 경로",
+        "focus": [
+          "start",
+          "q_access",
+          "q_kubectl",
+          "q_node",
+          "q_pod"
+        ],
+        "note": "서비스에 접근할 수 없으면 kubectl → 노드 Ready → 파드 Running 순으로 계층을 내려가며 원인을 좁힙니다."
+      },
+      {
+        "id": "infra_results",
+        "label": "인프라 진단 결과",
+        "focus": [
+          "q_kubectl",
+          "r_control_plane",
+          "q_node",
+          "r_node"
+        ],
+        "note": "kubectl이 안 되면 컨트롤 플레인, 노드가 NotReady면 노드 문제로 판단하고 AWS 콘솔·EC2 상태를 확인합니다."
+      },
+      {
+        "id": "reachable_path",
+        "label": "접근 가능 경로",
+        "focus": [
+          "q_access",
+          "q_latency",
+          "q_specific_pods",
+          "q_intermittent"
+        ],
+        "note": "접근은 되지만 지연·간헐 오류가 있으면 워크로드, 클러스터 전반, 네트워크/DNS 문제로 갈라집니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "reachable",
+      "label": "서비스 접근 가능"
+    },
+    {
+      "id": "triage",
+      "label": "장애 감지 · 1차 분기"
+    },
+    {
+      "id": "unreachable",
+      "label": "서비스 접근 불가"
+    },
+    {
+      "id": "infra",
+      "label": "인프라 계층 문제",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_access",
+    "q_kubectl",
+    "q_node",
+    "q_pod"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "triage",
+      "col": 0,
+      "type": "external",
+      "label": "장애 감지",
+      "sublabel": "첫 5분 트리아지",
+      "width": 180
+    },
+    {
+      "id": "q_access",
+      "lane": "triage",
+      "col": 1,
+      "type": "backend",
+      "label": "서비스 접근 가능?",
+      "sublabel": "사용자 관점 확인",
+      "width": 180
+    },
+    {
+      "id": "q_kubectl",
+      "lane": "unreachable",
+      "col": 2,
+      "type": "backend",
+      "label": "kubectl 작동?",
+      "sublabel": "API 서버 응답",
+      "width": 180
+    },
+    {
+      "id": "q_node",
+      "lane": "unreachable",
+      "col": 3,
+      "type": "backend",
+      "label": "노드 Ready?",
+      "sublabel": "kubectl get nodes",
+      "width": 180
+    },
+    {
+      "id": "q_pod",
+      "lane": "unreachable",
+      "col": 4,
+      "type": "frontend",
+      "label": "파드 Running?",
+      "sublabel": "아니오 → 스케줄링 · 예 → 앱/설정",
+      "width": 180
+    },
+    {
+      "id": "r_control_plane",
+      "lane": "infra",
+      "col": 2,
+      "type": "security",
+      "label": "컨트롤 플레인 문제",
+      "sublabel": "AWS 콘솔 확인",
+      "width": 180
+    },
+    {
+      "id": "r_node",
+      "lane": "infra",
+      "col": 3,
+      "type": "security",
+      "label": "노드 문제",
+      "sublabel": "EC2 상태 확인",
+      "width": 180
+    },
+    {
+      "id": "q_latency",
+      "lane": "reachable",
+      "col": 2,
+      "type": "backend",
+      "label": "응답 지연?",
+      "sublabel": "성능 저하 여부",
+      "width": 180
+    },
+    {
+      "id": "q_specific_pods",
+      "lane": "reachable",
+      "col": 3,
+      "type": "frontend",
+      "label": "특정 파드만?",
+      "sublabel": "예 → 워크로드 · 아니오 → 클러스터 전반",
+      "width": 180
+    },
+    {
+      "id": "q_intermittent",
+      "lane": "reachable",
+      "col": 4,
+      "type": "frontend",
+      "label": "간헐적 오류?",
+      "sublabel": "예 → 네트워크/DNS · 아니오 → 정상",
+      "width": 180
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q_access",
+      "role": "main"
+    },
+    {
+      "from": "q_access",
+      "to": "q_kubectl",
+      "label": "아니오",
+      "role": "main",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "q_kubectl",
+      "to": "q_node",
+      "label": "예",
+      "role": "main"
+    },
+    {
+      "from": "q_node",
+      "to": "q_pod",
+      "label": "예",
+      "role": "main",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "q_kubectl",
+      "to": "r_control_plane",
+      "label": "아니오",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "q_node",
+      "to": "r_node",
+      "label": "아니오",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "q_access",
+      "to": "q_latency",
+      "label": "예",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "from": "q_latency",
+      "to": "q_specific_pods",
+      "label": "예",
+      "role": "branch",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "q_latency",
+      "to": "q_intermittent",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "인프라 계층 결과",
+      "items": [
+        "kubectl 작동 안 함 → 컨트롤 플레인 문제: AWS 콘솔 확인",
+        "노드 NotReady → 노드 문제: EC2 상태 확인"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "워크로드 계층 결과",
+      "items": [
+        "파드 Running 아님 → 스케줄링 문제: 이벤트 확인",
+        "파드 Running → 앱/설정 문제: describe 확인"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "접근 가능 경로 결과",
+      "items": [
+        "지연이 특정 파드만 → 워크로드 문제: 파드 로그 확인",
+        "지연이 전체 → 클러스터 전반 문제: 리소스 확인",
+        "간헐적 오류 → 네트워크/DNS 문제: 연결성 확인",
+        "간헐적 오류 없음 → 정상 상태: 모니터링 유지"
+      ]
+    }
+  ]
+}

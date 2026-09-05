@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 비용 최적화",
+    "output": "ko-eks-07-eks-cost-optimization-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ebs",
+        "label": "EBS 볼륨 최적화",
+        "focus": [
+          "root",
+          "ebs",
+          "ebs-type",
+          "ebs-size",
+          "ebs-lifecycle"
+        ],
+        "note": "영구 스토리지(PV)로 쓰이는 EBS는 gp3 전환, 크기 조정, 미사용 볼륨 정리로 비용을 줄인다."
+      },
+      {
+        "id": "efs",
+        "label": "EFS 비용 최적화",
+        "focus": [
+          "root",
+          "efs",
+          "efs-throughput",
+          "efs-lifecycle",
+          "efs-access"
+        ],
+        "note": "여러 노드가 공유하는 EFS는 처리량 모드와 IA 전환, 액세스 패턴이 비용을 좌우한다."
+      },
+      {
+        "id": "s3",
+        "label": "S3 비용 최적화",
+        "focus": [
+          "root",
+          "s3",
+          "s3-class",
+          "s3-request"
+        ],
+        "note": "로그·백업·정적 콘텐츠를 담는 S3는 스토리지 클래스 전환과 요청 비용 절감이 핵심이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "스토리지 비용 최적화",
+      "sublabel": "EKS 클러스터 스토리지 비용",
+      "pos": [
+        572,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS 볼륨 최적화",
+      "sublabel": "영구 스토리지 (PV)",
+      "pos": [
+        30,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebs-type",
+      "type": "backend",
+      "label": "볼륨 유형 선택",
+      "sublabel": "gp2 → gp3 마이그레이션",
+      "pos": [
+        225,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ebs-size",
+      "type": "backend",
+      "label": "볼륨 크기 최적화",
+      "sublabel": "필요한 크기만 프로비저닝",
+      "pos": [
+        225,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ebs-lifecycle",
+      "type": "backend",
+      "label": "볼륨 수명 주기 관리",
+      "sublabel": "미사용 PVC / PV 정리",
+      "pos": [
+        225,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "database",
+      "label": "EFS 비용 최적화",
+      "sublabel": "노드 간 공유 스토리지",
+      "pos": [
+        475,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "efs-throughput",
+      "type": "backend",
+      "label": "처리량 모드 선택",
+      "sublabel": "버스팅 · 프로비저닝 · 탄력적",
+      "pos": [
+        670,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "efs-lifecycle",
+      "type": "backend",
+      "label": "수명 주기 관리",
+      "sublabel": "IA 클래스로 자동 이동",
+      "pos": [
+        670,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "efs-access",
+      "type": "backend",
+      "label": "액세스 패턴 최적화",
+      "sublabel": "큰 파일 · 순차 액세스",
+      "pos": [
+        670,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3 비용 최적화",
+      "sublabel": "로그 · 백업 · 정적 콘텐츠",
+      "pos": [
+        920,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s3-class",
+      "type": "backend",
+      "label": "스토리지 클래스 최적화",
+      "sublabel": "수명 주기 정책으로 전환",
+      "pos": [
+        1115,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3-request",
+      "type": "backend",
+      "label": "S3 요청 최적화",
+      "sublabel": "객체 결합 · LIST 최소화",
+      "pos": [
+        1115,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EBS",
+      "wraps": [
+        "ebs",
+        "ebs-type",
+        "ebs-size",
+        "ebs-lifecycle"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EFS",
+      "wraps": [
+        "efs",
+        "efs-throughput",
+        "efs-lifecycle",
+        "efs-access"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Amazon S3",
+      "wraps": [
+        "s3",
+        "s3-class",
+        "s3-request"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-ebs",
+      "from": "root",
+      "to": "ebs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-efs",
+      "from": "root",
+      "to": "efs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-s3",
+      "from": "root",
+      "to": "s3",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ebs-to-type",
+      "from": "ebs",
+      "to": "ebs-type",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ebs-to-size",
+      "from": "ebs",
+      "to": "ebs-size",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ebs-to-lifecycle",
+      "from": "ebs",
+      "to": "ebs-lifecycle",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efs-to-throughput",
+      "from": "efs",
+      "to": "efs-throughput",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efs-to-lifecycle",
+      "from": "efs",
+      "to": "efs-lifecycle",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efs-to-access",
+      "from": "efs",
+      "to": "efs-access",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "s3-to-class",
+      "from": "s3",
+      "to": "s3-class",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "s3-to-request",
+      "from": "s3",
+      "to": "s3-request",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EBS 볼륨 유형",
+      "items": [
+        "gp3: 대부분의 워크로드에 권장되는 범용 SSD",
+        "gp2: 이전 세대 범용 SSD, gp3로 마이그레이션 권장",
+        "io1/io2: 프로비저닝된 IOPS SSD",
+        "st1: 처리량 최적화 HDD",
+        "sc1: 콜드 HDD"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "EFS 처리량 모드",
+      "items": [
+        "버스팅 처리량: 간헐적인 액세스 패턴",
+        "프로비저닝된 처리량: 예측 가능한 성능",
+        "탄력적 처리량: 변동이 심한 워크로드"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "S3 스토리지 클래스",
+      "items": [
+        "S3 Standard: 자주 액세스하는 데이터",
+        "S3 Intelligent-Tiering: 액세스 패턴이 변하는 데이터",
+        "S3 Standard-IA: 자주 액세스하지 않는 데이터",
+        "S3 One Zone-IA: 자주 액세스하지 않고 중요하지 않은 데이터",
+        "S3 Glacier: 아카이브 데이터"
+      ]
+    }
+  ]
+}

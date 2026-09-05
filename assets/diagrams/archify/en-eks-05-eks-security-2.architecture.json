@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Authentication Mechanisms",
+    "locale": "en",
+    "output": "en-eks-05-eks-security-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      540
+    ],
+    "views": [
+      {
+        "id": "iam-path",
+        "label": "IAM Authenticator",
+        "focus": [
+          "devops",
+          "developers",
+          "iam-auth",
+          "api-server"
+        ],
+        "note": "The DevOps team and developers authenticate to the Kubernetes API server with AWS IAM credentials."
+      },
+      {
+        "id": "oidc-path",
+        "label": "OIDC Provider",
+        "focus": [
+          "developers",
+          "cicd",
+          "oidc",
+          "api-server"
+        ],
+        "note": "Developers and the CI/CD pipeline authenticate through an external OIDC provider such as Active Directory, Okta, or Auth0."
+      },
+      {
+        "id": "irsa-path",
+        "label": "IRSA",
+        "focus": [
+          "pods",
+          "irsa",
+          "service-accounts",
+          "rbac",
+          "api-server",
+          "aws-resources"
+        ],
+        "note": "Pods run as a service account tied to an IAM role: RBAC governs their API server access, the IAM role their AWS service access."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "devops",
+      "type": "external",
+      "label": "DevOps Team",
+      "sublabel": "cluster operations",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "developers",
+      "type": "external",
+      "label": "Developers",
+      "sublabel": "kubectl users",
+      "pos": [
+        270,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI/CD Pipeline",
+      "sublabel": "deployment automation",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "external",
+      "label": "Kubernetes Pods",
+      "sublabel": "workloads",
+      "pos": [
+        700,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "iam-auth",
+      "type": "security",
+      "label": "AWS IAM Authenticator",
+      "sublabel": "IAM credentials",
+      "pos": [
+        190,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "OIDC Provider Integration",
+      "sublabel": "Okta / Auth0 / AD",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "irsa",
+      "type": "security",
+      "label": "IAM Roles for Service Accounts",
+      "sublabel": "IRSA",
+      "pos": [
+        675,
+        230
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "api-server",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "Kubernetes API",
+      "pos": [
+        190,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC Permissions",
+      "sublabel": "Role / RoleBinding",
+      "pos": [
+        460,
+        430
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "service-accounts",
+      "type": "backend",
+      "label": "Service Accounts",
+      "sublabel": "ServiceAccount",
+      "pos": [
+        700,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "aws-resources",
+      "type": "cloud",
+      "label": "AWS Resources",
+      "sublabel": "S3 / DynamoDB / SQS / SNS",
+      "pos": [
+        1080,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Users and Services",
+      "wraps": [
+        "devops",
+        "developers",
+        "cicd",
+        "pods"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Authentication Mechanisms",
+      "wraps": [
+        "iam-auth",
+        "oidc",
+        "irsa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Resources",
+      "wraps": [
+        "api-server",
+        "rbac",
+        "service-accounts"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Resources",
+      "wraps": [
+        "aws-resources"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "devops-iam",
+      "from": "devops",
+      "to": "iam-auth",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "developers-iam",
+      "from": "developers",
+      "to": "iam-auth",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "developers-oidc",
+      "from": "developers",
+      "to": "oidc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cicd-oidc",
+      "from": "cicd",
+      "to": "oidc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pods-irsa",
+      "from": "pods",
+      "to": "irsa",
+      "variant": "emphasis"
+    },
+    {
+      "id": "iam-api",
+      "from": "iam-auth",
+      "to": "api-server",
+      "label": "authenticate with IAM credentials",
+      "labelDy": 24
+    },
+    {
+      "id": "oidc-api",
+      "from": "oidc",
+      "to": "api-server",
+      "label": "authenticate with OIDC token"
+    },
+    {
+      "id": "irsa-sa",
+      "from": "irsa",
+      "to": "service-accounts",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sa-rbac",
+      "from": "service-accounts",
+      "to": "rbac"
+    },
+    {
+      "id": "rbac-api",
+      "from": "rbac",
+      "to": "api-server",
+      "label": "RBAC check",
+      "labelDy": -22,
+      "labelDx": 10
+    },
+    {
+      "id": "irsa-aws",
+      "from": "irsa",
+      "to": "aws-resources",
+      "label": "call AWS APIs",
+      "variant": "security"
+    }
+  ]
+}

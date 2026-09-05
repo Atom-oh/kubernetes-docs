@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Control Plane Upgrade",
+    "locale": "en",
+    "output": "en-eks-08-eks-upgrades-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "prep",
+        "label": "Preparation",
+        "focus": [
+          "root",
+          "check-version",
+          "available-versions",
+          "upgrade-plan"
+        ],
+        "note": "Check the current and available versions, then plan the timing, monitoring, and rollback."
+      },
+      {
+        "id": "exec",
+        "label": "Execution",
+        "focus": [
+          "root",
+          "console",
+          "cli",
+          "eksctl"
+        ],
+        "note": "Update the version with one of three tools: AWS Management Console, AWS CLI, or eksctl."
+      },
+      {
+        "id": "monitor",
+        "label": "Monitoring",
+        "focus": [
+          "root",
+          "check-status",
+          "cluster-state",
+          "cloudwatch"
+        ],
+        "note": "Watch the upgrade status, cluster state, and CloudWatch metrics together."
+      },
+      {
+        "id": "troubleshoot",
+        "label": "Troubleshooting",
+        "focus": [
+          "root",
+          "common-issues",
+          "troubleshooting-steps"
+        ],
+        "note": "Recognize the common issues and follow the defined troubleshooting steps."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "EKS Control Plane Upgrade",
+      "sublabel": "Update Kubernetes version",
+      "pos": [
+        455,
+        40
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "check-version",
+      "type": "cloud",
+      "label": "Check Current Version",
+      "sublabel": "aws eks describe-cluster",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "available-versions",
+      "type": "cloud",
+      "label": "Check Available Versions",
+      "sublabel": "aws eks describe-addon-versions",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "upgrade-plan",
+      "type": "backend",
+      "label": "Create Upgrade Plan",
+      "sublabel": "timing · monitoring · rollback plan",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "console",
+      "type": "cloud",
+      "label": "AWS Management Console",
+      "sublabel": "Update Kubernetes version",
+      "pos": [
+        320,
+        210
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "cloud",
+      "label": "AWS CLI",
+      "sublabel": "aws eks update-cluster-version",
+      "pos": [
+        320,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "eksctl",
+      "type": "backend",
+      "label": "eksctl",
+      "sublabel": "eksctl upgrade cluster",
+      "pos": [
+        320,
+        430
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-status",
+      "type": "cloud",
+      "label": "Check Upgrade Status",
+      "sublabel": "aws eks describe-update",
+      "pos": [
+        600,
+        210
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cluster-state",
+      "type": "backend",
+      "label": "Monitor Cluster State",
+      "sublabel": "kubectl get nodes / pods / events",
+      "pos": [
+        600,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "Monitor CloudWatch Metrics",
+      "sublabel": "API server · etcd latency",
+      "pos": [
+        600,
+        430
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "common-issues",
+      "type": "backend",
+      "label": "Common Issues",
+      "sublabel": "failure · availability · compatibility",
+      "pos": [
+        880,
+        210
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "troubleshooting-steps",
+      "type": "backend",
+      "label": "Troubleshooting Steps",
+      "sublabel": "status → logs → AWS Support",
+      "pos": [
+        880,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. Control Plane Upgrade Preparation",
+      "wraps": [
+        "check-version",
+        "available-versions",
+        "upgrade-plan"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. Control Plane Upgrade Execution",
+      "wraps": [
+        "console",
+        "cli",
+        "eksctl"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. Control Plane Upgrade Monitoring",
+      "wraps": [
+        "check-status",
+        "cluster-state",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "4. Control Plane Upgrade Troubleshooting",
+      "wraps": [
+        "common-issues",
+        "troubleshooting-steps"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-prep",
+      "from": "root",
+      "to": "check-version",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-exec",
+      "from": "root",
+      "to": "console",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-monitor",
+      "from": "root",
+      "to": "check-status",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-troubleshoot",
+      "from": "root",
+      "to": "common-issues",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "version-to-available",
+      "from": "check-version",
+      "to": "available-versions",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "available-to-plan",
+      "from": "available-versions",
+      "to": "upgrade-plan",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "console-or-cli",
+      "from": "console",
+      "to": "cli",
+      "label": "or",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cli-or-eksctl",
+      "from": "cli",
+      "to": "eksctl",
+      "label": "or",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "status-and-state",
+      "from": "check-status",
+      "to": "cluster-state",
+      "label": "alongside",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "state-and-cloudwatch",
+      "from": "cluster-state",
+      "to": "cloudwatch",
+      "label": "alongside",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "issues-to-steps",
+      "from": "common-issues",
+      "to": "troubleshooting-steps",
+      "label": "when hit",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Common Issues",
+      "items": [
+        "Upgrade failure: the process fails or stalls",
+        "API server availability: availability issues during the upgrade",
+        "Compatibility issues: workloads vs. the new version"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Troubleshooting Steps",
+      "items": [
+        "Check Upgrade Status",
+        "Review CloudTrail logs",
+        "Review EKS control plane logs",
+        "Contact AWS Support"
+      ]
+    }
+  ]
+}

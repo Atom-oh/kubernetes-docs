@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod Identity Agent 동작 원리",
+    "output": "ko-eks-05-eks-security-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "자격 증명 요청과 전달",
+        "focus": [
+          "pod",
+          "pia"
+        ],
+        "note": "파드의 자격 증명 요청을 노드의 Pod Identity Agent가 가로채고, 발급된 자격 증명을 다시 파드에 전달한다."
+      },
+      {
+        "id": "mapping",
+        "label": "역할 매핑 확인",
+        "focus": [
+          "pia",
+          "sa",
+          "assoc",
+          "iam"
+        ],
+        "note": "Pod Identity Association이 서비스 계정과 IAM 역할을 연결한다. Agent는 이 연결을 확인한다."
+      },
+      {
+        "id": "sts",
+        "label": "임시 자격 증명 발급",
+        "focus": [
+          "pia",
+          "sts",
+          "iam"
+        ],
+        "note": "Agent가 AssumeRoleForPodIdentity를 호출해 연결된 IAM 역할의 임시 자격 증명을 받는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "애플리케이션 파드",
+      "sublabel": "AWS SDK",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pia",
+      "type": "security",
+      "label": "Pod Identity Agent",
+      "sublabel": "DaemonSet",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sa",
+      "type": "backend",
+      "label": "서비스 계정",
+      "sublabel": "ServiceAccount",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "assoc",
+      "type": "cloud",
+      "label": "Pod Identity Association",
+      "sublabel": "서비스 계정 ↔ IAM 역할",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sts",
+      "type": "cloud",
+      "label": "AWS STS",
+      "sublabel": "임시 자격 증명 발급",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM 역할",
+      "sublabel": "파드에 부여할 권한",
+      "pos": [
+        740,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "pod",
+        "pia",
+        "sa",
+        "assoc"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "region",
+      "label": "노드",
+      "wraps": [
+        "pod",
+        "pia"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-to-pia",
+      "from": "pod",
+      "to": "pia",
+      "label": "1. 자격 증명 요청",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "pia-to-assoc",
+      "from": "pia",
+      "to": "assoc",
+      "label": "2. 연결 확인",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24,
+      "labelDx": -50
+    },
+    {
+      "id": "assoc-to-iam",
+      "from": "assoc",
+      "to": "iam",
+      "label": "3. 역할 매핑",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "pia-to-sts",
+      "from": "pia",
+      "to": "sts",
+      "label": "4. AssumeRoleForPodIdentity",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "sts-to-pia",
+      "from": "sts",
+      "to": "pia",
+      "label": "5. 임시 자격 증명",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pia-to-pod",
+      "from": "pia",
+      "to": "pod",
+      "label": "6. 자격 증명 전달",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "sa-to-pod",
+      "from": "sa",
+      "to": "pod",
+      "label": "연결",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sa-to-assoc",
+      "from": "sa",
+      "to": "assoc",
+      "label": "참조",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Pod Identity Agent의 역할",
+      "items": [
+        "각 노드에서 DaemonSet으로 실행된다",
+        "파드의 자격 증명 요청을 가로챈다",
+        "Pod Identity Association을 확인한다",
+        "연결된 IAM 역할의 임시 자격 증명을 획득해 파드에 전달한다"
+      ]
+    }
+  ]
+}

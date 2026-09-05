@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Network Policy Best Practices",
+    "output": "en-eks-03-eks-networking-part2-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      380
+    ],
+    "views": [
+      {
+        "id": "default-deny",
+        "label": "Apply default deny policy",
+        "focus": [
+          "root",
+          "deny"
+        ],
+        "note": "Deny all traffic by default and explicitly allow only the traffic that is needed."
+      },
+      {
+        "id": "ns-isolation",
+        "label": "Namespace isolation",
+        "focus": [
+          "root",
+          "ns"
+        ],
+        "note": "Restrict communication between namespaces to strengthen security."
+      },
+      {
+        "id": "least-priv",
+        "label": "Apply least privilege",
+        "focus": [
+          "root",
+          "least"
+        ],
+        "note": "Allow only the minimum communication that is required."
+      },
+      {
+        "id": "egress",
+        "label": "Restrict egress traffic",
+        "focus": [
+          "root",
+          "egress"
+        ],
+        "note": "Also restrict traffic leaving pods to strengthen security."
+      },
+      {
+        "id": "testing",
+        "label": "Test policies",
+        "focus": [
+          "root",
+          "test"
+        ],
+        "note": "Test network policies before applying them to prevent unintended blocking of communication."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Principle"
+        },
+        "security": {
+          "label": "Practice"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "Network Policy Best Practices",
+      "sublabel": "5 NetworkPolicy practices",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "deny",
+      "type": "security",
+      "label": "Apply default deny policy",
+      "sublabel": "deny first, allow explicitly",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ns",
+      "type": "security",
+      "label": "Namespace isolation",
+      "sublabel": "limit cross-namespace traffic",
+      "pos": [
+        250,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "least",
+      "type": "security",
+      "label": "Least privilege",
+      "sublabel": "allow only required traffic",
+      "pos": [
+        460,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "Restrict egress traffic",
+      "sublabel": "limit outbound traffic too",
+      "pos": [
+        670,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "test",
+      "type": "security",
+      "label": "Test policies",
+      "sublabel": "verify before rollout",
+      "pos": [
+        880,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-deny",
+      "from": "root",
+      "to": "deny",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-ns",
+      "from": "root",
+      "to": "ns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-least",
+      "from": "root",
+      "to": "least",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-egress",
+      "from": "root",
+      "to": "egress",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-test",
+      "from": "root",
+      "to": "test",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

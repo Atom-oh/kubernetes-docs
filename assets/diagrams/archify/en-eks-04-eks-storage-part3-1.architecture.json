@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Troubleshooting",
+    "locale": "en",
+    "output": "en-eks-04-eks-storage-part3-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Symptom (issue)"
+        },
+        "backend": {
+          "label": "Diagnostic check → fix action"
+        },
+        "security": {
+          "label": "Check shared by two issues"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "provisioning",
+        "label": "Volume Provisioning Issues",
+        "focus": [
+          "pvc-pending",
+          "prov-fail",
+          "check-csi",
+          "check-iam",
+          "check-sc"
+        ],
+        "note": "A pending PVC and a provisioning failure are checked at the same three points: the CSI driver, IAM permissions, and the storage class."
+      },
+      {
+        "id": "mount",
+        "label": "Volume Mount Issues",
+        "focus": [
+          "mount-issue",
+          "check-pod",
+          "check-node",
+          "check-sg"
+        ],
+        "note": "For a pod stuck in ContainerCreating, check pod events, then node kubelet logs, then the EFS/FSx security groups."
+      },
+      {
+        "id": "performance",
+        "label": "Performance Issues",
+        "focus": [
+          "perf-issue",
+          "check-metrics",
+          "check-fs",
+          "check-node"
+        ],
+        "note": "Narrow slow I/O down with CloudWatch volume metrics and a dd file system test, then change the volume/instance type or tune the file system."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pvc-pending",
+      "type": "external",
+      "label": "PVC Pending",
+      "sublabel": "Check PVC status (describe pvc)",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "prov-fail",
+      "type": "external",
+      "label": "Volume Provisioning Failure",
+      "sublabel": "Check provisioner (CSI) logs",
+      "pos": [
+        620,
+        150
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "check-csi",
+      "type": "security",
+      "label": "Check CSI Driver Logs",
+      "sublabel": "→ Reinstall CSI driver",
+      "pos": [
+        320,
+        50
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-iam",
+      "type": "security",
+      "label": "Check IAM Permissions",
+      "sublabel": "→ Add IAM permissions",
+      "pos": [
+        320,
+        145
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-sc",
+      "type": "security",
+      "label": "Check Storage Class",
+      "sublabel": "→ Fix storage class",
+      "pos": [
+        320,
+        240
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "mount-issue",
+      "type": "external",
+      "label": "Volume Mount Issues",
+      "sublabel": "Stuck in ContainerCreating",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "perf-issue",
+      "type": "external",
+      "label": "Performance Issues",
+      "sublabel": "Slow I/O",
+      "pos": [
+        620,
+        530
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "check-pod",
+      "type": "backend",
+      "label": "Check Pod Status",
+      "sublabel": "→ Restart pod",
+      "pos": [
+        320,
+        400
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-node",
+      "type": "security",
+      "label": "Check Node Status",
+      "sublabel": "kubelet logs (journalctl)",
+      "pos": [
+        320,
+        495
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-sg",
+      "type": "backend",
+      "label": "Check Security Groups / Network",
+      "sublabel": "→ Add security group rules",
+      "pos": [
+        320,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-metrics",
+      "type": "backend",
+      "label": "Check Performance Metrics",
+      "sublabel": "→ Change volume / instance type",
+      "pos": [
+        900,
+        470
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "check-fs",
+      "type": "backend",
+      "label": "Test File System",
+      "sublabel": "→ Optimize file system",
+      "pos": [
+        900,
+        590
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Volume Provisioning Issues",
+      "wraps": [
+        "pvc-pending",
+        "prov-fail",
+        "check-csi",
+        "check-iam",
+        "check-sc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Volume Mount · Performance Issues",
+      "wraps": [
+        "mount-issue",
+        "perf-issue",
+        "check-pod",
+        "check-node",
+        "check-sg",
+        "check-metrics",
+        "check-fs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pvc-to-sc",
+      "from": "pvc-pending",
+      "to": "check-sc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pvc-to-csi",
+      "from": "pvc-pending",
+      "to": "check-csi"
+    },
+    {
+      "id": "pvc-to-iam",
+      "from": "pvc-pending",
+      "to": "check-iam"
+    },
+    {
+      "id": "prov-to-csi",
+      "from": "prov-fail",
+      "to": "check-csi"
+    },
+    {
+      "id": "prov-to-iam",
+      "from": "prov-fail",
+      "to": "check-iam"
+    },
+    {
+      "id": "prov-to-sc",
+      "from": "prov-fail",
+      "to": "check-sc"
+    },
+    {
+      "id": "mount-to-pod",
+      "from": "mount-issue",
+      "to": "check-pod"
+    },
+    {
+      "id": "mount-to-node",
+      "from": "mount-issue",
+      "to": "check-node"
+    },
+    {
+      "id": "mount-to-sg",
+      "from": "mount-issue",
+      "to": "check-sg"
+    },
+    {
+      "id": "perf-to-metrics",
+      "from": "perf-issue",
+      "to": "check-metrics"
+    },
+    {
+      "id": "perf-to-fs",
+      "from": "perf-issue",
+      "to": "check-fs"
+    },
+    {
+      "id": "perf-to-node",
+      "from": "perf-issue",
+      "to": "check-node"
+    }
+  ]
+}

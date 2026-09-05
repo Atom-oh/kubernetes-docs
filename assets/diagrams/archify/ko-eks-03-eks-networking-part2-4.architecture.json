@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "네트워크 정책 시행 구조",
+    "output": "ko-eks-03-eks-networking-part2-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "namespace-isolation",
+        "label": "네임스페이스 격리",
+        "focus": [
+          "np-namespace",
+          "backend",
+          "database"
+        ],
+        "note": "podSelector: {} 로 네임스페이스 안의 모든 포드에 적용되어 네임스페이스 간 트래픽을 차단한다."
+      },
+      {
+        "id": "pod-communication",
+        "label": "포드 간 통신 허용",
+        "focus": [
+          "np-pod",
+          "frontend",
+          "backend"
+        ],
+        "note": "app: frontend 포드에서 app: backend 포드로 향하는 TCP 80 트래픽만 허용한다."
+      },
+      {
+        "id": "external-egress",
+        "label": "외부 트래픽·이그레스 제한",
+        "focus": [
+          "np-external",
+          "np-egress",
+          "external",
+          "frontend",
+          "backend",
+          "database"
+        ],
+        "note": "허용된 IP 범위에서만 들어오고, 나가는 트래픽은 DB(5432)와 외부 HTTPS(443)로만 제한한다."
+      }
+    ],
+    "viewBox": [
+      1140,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "np-external",
+      "type": "security",
+      "label": "외부 트래픽 제한 정책",
+      "sublabel": "ipBlock 허용",
+      "pos": [
+        210,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "np-pod",
+      "type": "security",
+      "label": "포드 간 통신 허용 정책",
+      "sublabel": "allow-frontend-to-backend",
+      "pos": [
+        410,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "np-egress",
+      "type": "security",
+      "label": "이그레스 트래픽 제한 정책",
+      "sublabel": "Egress 제한",
+      "pos": [
+        610,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "np-namespace",
+      "type": "security",
+      "label": "네임스페이스 격리 정책",
+      "sublabel": "namespace-isolation",
+      "pos": [
+        810,
+        100
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "외부 서비스",
+      "sublabel": "클러스터 밖",
+      "pos": [
+        20,
+        400
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "프론트엔드 포드",
+      "sublabel": "app: frontend",
+      "pos": [
+        220,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "백엔드 포드",
+      "sublabel": "app: backend",
+      "pos": [
+        620,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "database",
+      "type": "database",
+      "label": "데이터베이스 포드",
+      "sublabel": "app: db",
+      "pos": [
+        930,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "네트워크 정책",
+      "wraps": [
+        "np-external",
+        "np-pod",
+        "np-egress",
+        "np-namespace"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "네임스페이스 1 (my-namespace)",
+      "wraps": [
+        "frontend",
+        "backend"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "네임스페이스 2",
+      "wraps": [
+        "database"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "np-namespace-ns1",
+      "from": "np-namespace",
+      "to": "backend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-namespace-ns2",
+      "from": "np-namespace",
+      "to": "database",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-pod-frontend",
+      "from": "np-pod",
+      "to": "frontend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-pod-backend",
+      "from": "np-pod",
+      "to": "backend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-external-frontend",
+      "from": "np-external",
+      "to": "frontend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "np-egress-backend",
+      "from": "np-egress",
+      "to": "backend",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "external-to-frontend",
+      "from": "external",
+      "to": "frontend",
+      "label": "허용된 IP만",
+      "variant": "emphasis",
+      "labelDy": 78
+    },
+    {
+      "id": "frontend-to-backend",
+      "from": "frontend",
+      "to": "backend",
+      "label": "TCP 80",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backend-to-database",
+      "from": "backend",
+      "to": "database",
+      "label": "TCP 5432",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backend-to-external",
+      "from": "backend",
+      "to": "external",
+      "label": "HTTPS 443 이그레스",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          700,
+          530
+        ],
+        [
+          95,
+          530
+        ]
+      ],
+      "labelAt": [
+        400,
+        546
+      ]
+    }
+  ]
+}

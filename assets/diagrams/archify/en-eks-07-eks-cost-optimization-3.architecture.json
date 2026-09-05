@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Cost Optimization",
+    "locale": "en",
+    "output": "en-eks-07-eks-cost-optimization-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ebs",
+        "label": "EBS Volume Optimization",
+        "focus": [
+          "root",
+          "ebs",
+          "ebs-type",
+          "ebs-size",
+          "ebs-lifecycle"
+        ],
+        "note": "EBS backs persistent volumes (PVs); save by moving to gp3, right-sizing, and cleaning up unused volumes."
+      },
+      {
+        "id": "efs",
+        "label": "EFS Cost Optimization",
+        "focus": [
+          "root",
+          "efs",
+          "efs-throughput",
+          "efs-lifecycle",
+          "efs-access"
+        ],
+        "note": "For EFS shared across nodes, throughput mode, IA transitions, and access patterns drive cost."
+      },
+      {
+        "id": "s3",
+        "label": "S3 Cost Optimization",
+        "focus": [
+          "root",
+          "s3",
+          "s3-class",
+          "s3-request"
+        ],
+        "note": "For S3 holding logs, backups, and static content, storage class transitions and request savings matter most."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Storage Cost Optimization",
+      "sublabel": "EKS cluster storage costs",
+      "pos": [
+        572,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS Volume Optimization",
+      "sublabel": "Persistent storage (PV)",
+      "pos": [
+        30,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebs-type",
+      "type": "backend",
+      "label": "Select Volume Type",
+      "sublabel": "Migrate gp2 → gp3",
+      "pos": [
+        225,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ebs-size",
+      "type": "backend",
+      "label": "Volume Size Optimization",
+      "sublabel": "Provision only what is needed",
+      "pos": [
+        225,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "ebs-lifecycle",
+      "type": "backend",
+      "label": "Volume Lifecycle Management",
+      "sublabel": "Clean up unused PVCs / PVs",
+      "pos": [
+        225,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "database",
+      "label": "EFS Cost Optimization",
+      "sublabel": "Shared across nodes",
+      "pos": [
+        475,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "efs-throughput",
+      "type": "backend",
+      "label": "Select Throughput Mode",
+      "sublabel": "Bursting · Provisioned · Elastic",
+      "pos": [
+        670,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "efs-lifecycle",
+      "type": "backend",
+      "label": "Lifecycle Management",
+      "sublabel": "Auto-move to the IA class",
+      "pos": [
+        670,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "efs-access",
+      "type": "backend",
+      "label": "Access Pattern Optimization",
+      "sublabel": "Large files · sequential access",
+      "pos": [
+        670,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3 Cost Optimization",
+      "sublabel": "Logs · backups · static",
+      "pos": [
+        920,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s3-class",
+      "type": "backend",
+      "label": "Storage Class Optimization",
+      "sublabel": "Transition via lifecycle policy",
+      "pos": [
+        1115,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3-request",
+      "type": "backend",
+      "label": "S3 Request Optimization",
+      "sublabel": "Combine objects · fewer LISTs",
+      "pos": [
+        1115,
+        290
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EBS",
+      "wraps": [
+        "ebs",
+        "ebs-type",
+        "ebs-size",
+        "ebs-lifecycle"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EFS",
+      "wraps": [
+        "efs",
+        "efs-throughput",
+        "efs-lifecycle",
+        "efs-access"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Amazon S3",
+      "wraps": [
+        "s3",
+        "s3-class",
+        "s3-request"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-ebs",
+      "from": "root",
+      "to": "ebs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-efs",
+      "from": "root",
+      "to": "efs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-s3",
+      "from": "root",
+      "to": "s3",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ebs-to-type",
+      "from": "ebs",
+      "to": "ebs-type",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ebs-to-size",
+      "from": "ebs",
+      "to": "ebs-size",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ebs-to-lifecycle",
+      "from": "ebs",
+      "to": "ebs-lifecycle",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efs-to-throughput",
+      "from": "efs",
+      "to": "efs-throughput",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efs-to-lifecycle",
+      "from": "efs",
+      "to": "efs-lifecycle",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "efs-to-access",
+      "from": "efs",
+      "to": "efs-access",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "s3-to-class",
+      "from": "s3",
+      "to": "s3-class",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "s3-to-request",
+      "from": "s3",
+      "to": "s3-request",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "EBS Volume Types",
+      "items": [
+        "gp3: General purpose SSD recommended for most workloads",
+        "gp2: Previous generation general purpose SSD, migrate to gp3",
+        "io1/io2: Provisioned IOPS SSD",
+        "st1: Throughput optimized HDD",
+        "sc1: Cold HDD"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "EFS Throughput Modes",
+      "items": [
+        "Bursting Throughput: intermittent access patterns",
+        "Provisioned Throughput: predictable performance",
+        "Elastic Throughput: highly variable workloads"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "S3 Storage Classes",
+      "items": [
+        "S3 Standard: frequently accessed data",
+        "S3 Intelligent-Tiering: data with changing access patterns",
+        "S3 Standard-IA: infrequently accessed data",
+        "S3 One Zone-IA: infrequently accessed, non-critical data",
+        "S3 Glacier: archive data"
+      ]
+    }
+  ]
+}

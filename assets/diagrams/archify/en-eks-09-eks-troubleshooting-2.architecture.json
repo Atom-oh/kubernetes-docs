@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Networking Issue Map",
+    "locale": "en",
+    "output": "en-eks-09-eks-troubleshooting-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "AWS layer (VPC / ELB)"
+        },
+        "backend": {
+          "label": "Kubernetes layer"
+        },
+        "security": {
+          "label": "Common Causes"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-branch",
+        "label": "Pod-to-Pod",
+        "focus": [
+          "root",
+          "pod",
+          "pod-causes"
+        ],
+        "note": "Check the five causes: network policies, security groups, CNI plugin, pod CIDR, and MTU."
+      },
+      {
+        "id": "service-branch",
+        "label": "Service Access",
+        "focus": [
+          "root",
+          "service",
+          "service-causes"
+        ],
+        "note": "Check selector and port mismatches, endpoints, pod status, then kube-proxy."
+      },
+      {
+        "id": "lb-branch",
+        "label": "Load Balancer",
+        "focus": [
+          "root",
+          "lb",
+          "lb-causes"
+        ],
+        "note": "Check subnet tags, security group rules, health checks, service annotations, and quotas."
+      },
+      {
+        "id": "dns-cni",
+        "label": "DNS · VPC CNI",
+        "focus": [
+          "root",
+          "dns",
+          "cni"
+        ],
+        "note": "CoreDNS and VPC CNI issues (IP exhaustion, ENI limits) are covered in their own sections."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Networking Issues",
+      "sublabel": "EKS cluster",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod-to-Pod Communication Issues",
+      "sublabel": "causes · steps · solutions",
+      "pos": [
+        30,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service Access Issues",
+      "sublabel": "causes · steps · solutions",
+      "pos": [
+        260,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer Issues",
+      "sublabel": "causes · steps · solutions",
+      "pos": [
+        490,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "dns",
+      "type": "backend",
+      "label": "DNS Issues",
+      "sublabel": "CoreDNS / kube-dns",
+      "pos": [
+        720,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "cni",
+      "type": "cloud",
+      "label": "VPC CNI Issues",
+      "sublabel": "IP exhaustion / ENI limits",
+      "pos": [
+        950,
+        180
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "pod-causes",
+      "type": "security",
+      "label": "Common Causes",
+      "sublabel": "policy · SG · CNI · CIDR · MTU",
+      "pos": [
+        30,
+        330
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "service-causes",
+      "type": "security",
+      "label": "Common Causes",
+      "sublabel": "selector · endpoints · kube-proxy",
+      "pos": [
+        260,
+        330
+      ],
+      "size": [
+        210,
+        62
+      ]
+    },
+    {
+      "id": "lb-causes",
+      "type": "security",
+      "label": "Common Causes",
+      "sublabel": "subnet tags · SG · health check",
+      "pos": [
+        490,
+        330
+      ],
+      "size": [
+        210,
+        62
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-pod",
+      "from": "root",
+      "to": "pod",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-service",
+      "from": "root",
+      "to": "service",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-lb",
+      "from": "root",
+      "to": "lb",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-dns",
+      "from": "root",
+      "to": "dns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-cni",
+      "from": "root",
+      "to": "cni",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod-to-causes",
+      "from": "pod",
+      "to": "pod-causes"
+    },
+    {
+      "id": "service-to-causes",
+      "from": "service",
+      "to": "service-causes"
+    },
+    {
+      "id": "lb-to-causes",
+      "from": "lb",
+      "to": "lb-causes"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pod-to-Pod · Common Causes",
+      "items": [
+        "Restrictive network policies block pod-to-pod traffic",
+        "Restrictive security group rules block pod-to-pod traffic",
+        "CNI plugin configuration or version issues",
+        "Pod CIDR range conflicts",
+        "MTU mismatch between network interfaces"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Service Access · Common Causes",
+      "items": [
+        "Service selector does not match pod labels",
+        "Service endpoints are not created",
+        "Pods are not ready",
+        "Service port does not match the pod port",
+        "kube-proxy issues"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Load Balancer · Common Causes",
+      "items": [
+        "Missing load balancer subnet tags",
+        "Restrictive security group rules",
+        "Load balancer health check failures",
+        "Incorrect service annotations",
+        "Quota exceeded"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "리소스 관리 및 거버넌스",
+    "output": "ko-eks-07-eks-cost-optimization-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "거버넌스 영역"
+        },
+        "backend": {
+          "label": "K8s 설정"
+        },
+        "cloud": {
+          "label": "AWS 리소스"
+        },
+        "external": {
+          "label": "서드파티 도구"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "requests-limits",
+        "label": "리소스 요청 및 제한",
+        "focus": [
+          "gov",
+          "reqlim",
+          "requests",
+          "limits"
+        ],
+        "note": "실제 사용량에 맞는 요청과 제한을 설정하고 QoS 클래스를 이해합니다."
+      },
+      {
+        "id": "namespace-quota",
+        "label": "네임스페이스 및 쿼터",
+        "focus": [
+          "gov",
+          "nsquota",
+          "nssep",
+          "quota",
+          "limitrange"
+        ],
+        "note": "네임스페이스로 분리하고 ResourceQuota와 LimitRange로 사용량을 제한합니다."
+      },
+      {
+        "id": "cost-allocation",
+        "label": "비용 할당 및 태깅",
+        "focus": [
+          "gov",
+          "costalloc",
+          "tagging",
+          "labels",
+          "kubecost"
+        ],
+        "note": "태그와 레이블로 비용을 귀속시키고 Kubecost로 가시성을 확보합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gov",
+      "type": "security",
+      "label": "리소스 관리 및 거버넌스",
+      "sublabel": "EKS 비용 제어",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "reqlim",
+      "type": "security",
+      "label": "리소스 요청 및 제한 최적화",
+      "pos": [
+        80,
+        170
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "requests",
+      "type": "backend",
+      "label": "적절한 리소스 요청 설정",
+      "sublabel": "requests · VPA 활용",
+      "pos": [
+        80,
+        290
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "limits",
+      "type": "backend",
+      "label": "리소스 제한 설정",
+      "sublabel": "CPU · 메모리 limits",
+      "pos": [
+        80,
+        380
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "nsquota",
+      "type": "security",
+      "label": "네임스페이스 및 리소스 쿼터",
+      "pos": [
+        480,
+        170
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "nssep",
+      "type": "backend",
+      "label": "네임스페이스 기반 분리",
+      "sublabel": "팀 · 환경 · 앱별",
+      "pos": [
+        480,
+        290
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "quota",
+      "type": "backend",
+      "label": "리소스 쿼터 설정",
+      "sublabel": "ResourceQuota",
+      "pos": [
+        480,
+        380
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "limitrange",
+      "type": "backend",
+      "label": "LimitRange 설정",
+      "sublabel": "컨테이너 기본 제한",
+      "pos": [
+        480,
+        470
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "costalloc",
+      "type": "security",
+      "label": "비용 할당 및 태깅",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        320,
+        60
+      ]
+    },
+    {
+      "id": "tagging",
+      "type": "cloud",
+      "label": "리소스 태깅",
+      "sublabel": "AWS 비용 할당 태그",
+      "pos": [
+        880,
+        290
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "labels",
+      "type": "backend",
+      "label": "Kubernetes 레이블 및 주석",
+      "sublabel": "labels · annotations",
+      "pos": [
+        880,
+        380
+      ],
+      "size": [
+        260,
+        56
+      ]
+    },
+    {
+      "id": "kubecost",
+      "type": "external",
+      "label": "Kubecost 사용",
+      "sublabel": "비용 가시성",
+      "pos": [
+        880,
+        470
+      ],
+      "size": [
+        260,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "리소스 요청 및 제한",
+      "wraps": [
+        "reqlim",
+        "requests",
+        "limits"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "region",
+      "label": "네임스페이스 및 쿼터",
+      "wraps": [
+        "nsquota",
+        "nssep",
+        "quota",
+        "limitrange"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "region",
+      "label": "비용 할당",
+      "wraps": [
+        "costalloc",
+        "tagging",
+        "labels",
+        "kubecost"
+      ],
+      "pad": 40
+    }
+  ],
+  "connections": [
+    {
+      "id": "gov-reqlim",
+      "from": "gov",
+      "to": "reqlim",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gov-nsquota",
+      "from": "gov",
+      "to": "nsquota",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gov-costalloc",
+      "from": "gov",
+      "to": "costalloc",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "reqlim-requests",
+      "from": "reqlim",
+      "to": "requests",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "reqlim-limits",
+      "from": "reqlim",
+      "to": "limits",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "nsquota-nssep",
+      "from": "nsquota",
+      "to": "nssep",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "nsquota-quota",
+      "from": "nsquota",
+      "to": "quota",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "nsquota-limitrange",
+      "from": "nsquota",
+      "to": "limitrange",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "costalloc-tagging",
+      "from": "costalloc",
+      "to": "tagging",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "costalloc-labels",
+      "from": "costalloc",
+      "to": "labels",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "costalloc-kubecost",
+      "from": "costalloc",
+      "to": "kubecost",
+      "fromSide": "left",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "QoS 클래스 이해",
+      "items": [
+        "Guaranteed: 요청 = 제한 (가장 높은 우선순위)",
+        "Burstable: 요청 < 제한",
+        "BestEffort: 요청 및 제한 없음 (가장 낮은 우선순위)",
+        "리소스 부족 시 BestEffort → Burstable 순으로 먼저 제거"
+      ]
+    }
+  ]
+}

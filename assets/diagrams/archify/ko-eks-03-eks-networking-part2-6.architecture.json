@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gateway API 리소스 계층",
+    "output": "ko-eks-03-eks-networking-part2-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      600
+    ],
+    "views": [
+      {
+        "id": "define",
+        "label": "클래스와 Gateway",
+        "focus": [
+          "gc",
+          "gw"
+        ],
+        "note": "GatewayClass가 로드 밸런서 유형을 정의하고, Gateway가 실제 로드 밸런서 인스턴스를 나타낸다."
+      },
+      {
+        "id": "l7",
+        "label": "L7 라우팅 (ALB)",
+        "focus": [
+          "gw",
+          "hr",
+          "svc1",
+          "svc2"
+        ],
+        "note": "HTTPRoute가 ALB를 통해 HTTP/HTTPS 트래픽을 서비스로 가중치 기반 분배한다."
+      },
+      {
+        "id": "l4",
+        "label": "L4 라우팅 (NLB)",
+        "focus": [
+          "gw",
+          "tr",
+          "svc3"
+        ],
+        "note": "TCPRoute가 NLB를 통해 TCP 트래픽을 L4 레벨에서 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gc",
+      "type": "backend",
+      "label": "GatewayClass",
+      "sublabel": "로드 밸런서 유형 정의",
+      "pos": [
+        410,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "Gateway",
+      "sublabel": "로드 밸런서 인스턴스",
+      "pos": [
+        410,
+        170
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hr",
+      "type": "cloud",
+      "label": "HTTPRoute",
+      "sublabel": "L7 → ALB",
+      "pos": [
+        180,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tr",
+      "type": "cloud",
+      "label": "TCPRoute",
+      "sublabel": "L4 → NLB",
+      "pos": [
+        640,
+        330
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svc1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "weight: 90",
+      "pos": [
+        80,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc2",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "weight: 10",
+      "pos": [
+        280,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc3",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "port: 5432",
+      "pos": [
+        650,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "L7 라우팅 · ALB",
+      "wraps": [
+        "hr",
+        "svc1",
+        "svc2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "L4 라우팅 · NLB",
+      "wraps": [
+        "tr",
+        "svc3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gc-gw",
+      "from": "gc",
+      "to": "gw",
+      "label": "gatewayClassName",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gw-hr",
+      "from": "gw",
+      "to": "hr",
+      "label": "parentRefs"
+    },
+    {
+      "id": "gw-tr",
+      "from": "gw",
+      "to": "tr",
+      "label": "parentRefs"
+    },
+    {
+      "id": "hr-svc1",
+      "from": "hr",
+      "to": "svc1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hr-svc2",
+      "from": "hr",
+      "to": "svc2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tr-svc3",
+      "from": "tr",
+      "to": "svc3"
+    }
+  ]
+}

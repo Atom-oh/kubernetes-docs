@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Core Principles of the FinOps Framework",
+    "locale": "en",
+    "output": "en-eks-07-eks-cost-optimization-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "FinOps principles"
+        },
+        "backend": {
+          "label": "EKS implementation"
+        },
+        "cloud": {
+          "label": "Monitoring tools"
+        },
+        "security": {
+          "label": "Governance"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "visibility",
+        "label": "Visibility and accountability",
+        "focus": [
+          "visibility",
+          "accountability",
+          "tagging",
+          "allocation"
+        ],
+        "note": "Tagging and cost allocation make per-team and per-app spend visible and share accountability."
+      },
+      {
+        "id": "monitoring-hub",
+        "label": "Monitoring hub",
+        "focus": [
+          "forecasting",
+          "realtime",
+          "monitoring"
+        ],
+        "note": "Cost monitoring tools back both forecasting/planning and real-time decision making."
+      },
+      {
+        "id": "optimize-govern",
+        "label": "Optimization and culture",
+        "focus": [
+          "optimization",
+          "culture",
+          "automation",
+          "governance"
+        ],
+        "note": "Continuous optimization is implemented through automation; a cost-aware culture through governance policies."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "visibility",
+      "type": "external",
+      "label": "Visibility and Transparency",
+      "pos": [
+        80,
+        50
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "accountability",
+      "type": "external",
+      "label": "Shared Accountability",
+      "pos": [
+        80,
+        122
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "optimization",
+      "type": "external",
+      "label": "Continuous Optimization",
+      "pos": [
+        80,
+        194
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "forecasting",
+      "type": "external",
+      "label": "Forecasting and Planning",
+      "pos": [
+        80,
+        266
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "realtime",
+      "type": "external",
+      "label": "Real-time Decision Making",
+      "pos": [
+        80,
+        338
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "culture",
+      "type": "external",
+      "label": "Cost-aware Culture",
+      "pos": [
+        80,
+        410
+      ],
+      "size": [
+        240,
+        52
+      ]
+    },
+    {
+      "id": "tagging",
+      "type": "backend",
+      "label": "Resource Tagging Strategy",
+      "sublabel": "Namespaces · labels · tags",
+      "pos": [
+        740,
+        50
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "allocation",
+      "type": "backend",
+      "label": "Cost Allocation",
+      "sublabel": "By team · application · environment",
+      "pos": [
+        740,
+        122
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "automation",
+      "type": "backend",
+      "label": "Automated Optimization",
+      "sublabel": "Autoscaling · Spot · idle resource removal",
+      "pos": [
+        740,
+        194
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "monitoring",
+      "type": "cloud",
+      "label": "Cost Monitoring Tools",
+      "sublabel": "AWS Cost Explorer · Kubecost",
+      "pos": [
+        740,
+        302.0
+      ],
+      "size": [
+        300,
+        52
+      ]
+    },
+    {
+      "id": "governance",
+      "type": "security",
+      "label": "Governance Policies",
+      "pos": [
+        740,
+        410
+      ],
+      "size": [
+        300,
+        52
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "FinOps Core Principles",
+      "wraps": [
+        "visibility",
+        "accountability",
+        "optimization",
+        "forecasting",
+        "realtime",
+        "culture"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Implementation Methods",
+      "wraps": [
+        "tagging",
+        "allocation",
+        "automation",
+        "monitoring",
+        "governance"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "visibility-tagging",
+      "from": "visibility",
+      "to": "tagging",
+      "variant": "emphasis"
+    },
+    {
+      "id": "accountability-allocation",
+      "from": "accountability",
+      "to": "allocation"
+    },
+    {
+      "id": "optimization-automation",
+      "from": "optimization",
+      "to": "automation"
+    },
+    {
+      "id": "forecasting-monitoring",
+      "from": "forecasting",
+      "to": "monitoring"
+    },
+    {
+      "id": "realtime-monitoring",
+      "from": "realtime",
+      "to": "monitoring"
+    },
+    {
+      "id": "culture-governance",
+      "from": "culture",
+      "to": "governance"
+    }
+  ]
+}

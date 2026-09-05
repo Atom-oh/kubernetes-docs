@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AWS 로드 밸런서 통합",
+    "output": "ko-eks-03-eks-networking-part2-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "lb-service-path",
+        "label": "LoadBalancer 서비스 경로",
+        "focus": [
+          "users",
+          "clb",
+          "nlb",
+          "svc-lb",
+          "pod1",
+          "pod2"
+        ],
+        "note": "CLB와 NLB는 type: LoadBalancer 서비스에 직접 연결되어 포드로 트래픽을 전달한다."
+      },
+      {
+        "id": "ingress-path",
+        "label": "ALB · Ingress 경로",
+        "focus": [
+          "users",
+          "alb",
+          "ingress",
+          "svc-nodeport",
+          "pod3"
+        ],
+        "note": "ALB는 Ingress 리소스를 거쳐 NodePort 서비스로 라우팅한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "인터넷",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "clb",
+      "type": "cloud",
+      "label": "Classic Load Balancer",
+      "sublabel": "기본값 · 더 이상 권장되지 않음",
+      "pos": [
+        140,
+        190
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Network Load Balancer",
+      "sublabel": "aws-load-balancer-type: nlb",
+      "pos": [
+        470,
+        190
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "AWS Load Balancer Controller",
+      "pos": [
+        860,
+        190
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "svc-lb",
+      "type": "backend",
+      "label": "LoadBalancer 서비스",
+      "sublabel": "type: LoadBalancer",
+      "pos": [
+        300,
+        380
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "svc-nodeport",
+      "type": "backend",
+      "label": "NodePort 서비스",
+      "sublabel": "type: NodePort",
+      "pos": [
+        620,
+        380
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "backend",
+      "label": "Ingress 리소스",
+      "sublabel": "경로 기반 라우팅",
+      "pos": [
+        875,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "포드 1",
+      "pos": [
+        245,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "포드 2",
+      "pos": [
+        445,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "포드 3",
+      "pos": [
+        640,
+        560
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 로드 밸런서",
+      "wraps": [
+        "clb",
+        "nlb",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 서비스",
+      "wraps": [
+        "svc-lb",
+        "svc-nodeport",
+        "ingress"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "포드",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-clb",
+      "from": "users",
+      "to": "clb"
+    },
+    {
+      "id": "users-nlb",
+      "from": "users",
+      "to": "nlb"
+    },
+    {
+      "id": "users-alb",
+      "from": "users",
+      "to": "alb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "clb-svc",
+      "from": "clb",
+      "to": "svc-lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nlb-svc",
+      "from": "nlb",
+      "to": "svc-lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "alb-ingress",
+      "from": "alb",
+      "to": "ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-nodeport",
+      "from": "ingress",
+      "to": "svc-nodeport",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-pod1",
+      "from": "svc-lb",
+      "to": "pod1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-pod2",
+      "from": "svc-lb",
+      "to": "pod2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "nodeport-pod3",
+      "from": "svc-nodeport",
+      "to": "pod3",
+      "variant": "emphasis"
+    }
+  ]
+}

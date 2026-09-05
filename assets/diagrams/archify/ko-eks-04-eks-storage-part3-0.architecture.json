@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 스토리지 모니터링 솔루션",
+    "output": "ko-eks-04-eks-storage-part3-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1390,
+      550
+    ],
+    "views": [
+      {
+        "id": "cloudwatch",
+        "label": "CloudWatch 경보 경로",
+        "focus": [
+          "ebs",
+          "efs",
+          "fsx",
+          "metrics",
+          "alarms",
+          "cw-dashboard"
+        ],
+        "note": "EBS·EFS·FSx 지표가 주요 모니터링 지표로 모여 CloudWatch 경보를 거쳐 대시보드에 표시된다."
+      },
+      {
+        "id": "k8s",
+        "label": "Prometheus / Grafana",
+        "focus": [
+          "prometheus",
+          "monitors",
+          "rules",
+          "grafana"
+        ],
+        "note": "ServiceMonitor·PodMonitor로 CSI 지표를 수집하고 PrometheusRule로 알림, Grafana로 시각화한다."
+      },
+      {
+        "id": "custom",
+        "label": "사용자 정의 솔루션",
+        "focus": [
+          "exporter",
+          "custom"
+        ],
+        "note": "볼륨 사용량 익스포터 DaemonSet이 PVC 사용량 지표와 사용자 정의 알림을 제공한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ebs",
+      "type": "cloud",
+      "label": "EBS 볼륨 지표",
+      "sublabel": "VolumeQueueLength 등",
+      "pos": [
+        50,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "efs",
+      "type": "cloud",
+      "label": "EFS 파일 시스템 지표",
+      "sublabel": "BurstCreditBalance 등",
+      "pos": [
+        215,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "cloud",
+      "label": "FSx for Lustre 지표",
+      "sublabel": "DataReadBytes 등",
+      "pos": [
+        420,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "주요 모니터링 지표",
+      "sublabel": "볼륨 사용량 · IOPS · 처리량 · 지연 시간 · 대기열 길이 · 버스트 크레딧",
+      "pos": [
+        50,
+        200
+      ],
+      "size": [
+        560,
+        70
+      ]
+    },
+    {
+      "id": "alarms",
+      "type": "security",
+      "label": "CloudWatch 경보",
+      "sublabel": "임계치 감시",
+      "pos": [
+        205,
+        330
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "cw-dashboard",
+      "type": "frontend",
+      "label": "CloudWatch 대시보드",
+      "sublabel": "EBSVolumeMonitoring",
+      "pos": [
+        205,
+        450
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "kube-prometheus-stack",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "monitors",
+      "type": "backend",
+      "label": "ServiceMonitor / PodMonitor",
+      "sublabel": "CSI 드라이버 지표 수집",
+      "pos": [
+        690,
+        200
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "security",
+      "label": "알림 규칙",
+      "sublabel": "PrometheusRule",
+      "pos": [
+        930,
+        200
+      ],
+      "size": [
+        170,
+        70
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana 대시보드",
+      "sublabel": "PVC 사용량 · CSI 지연 시간",
+      "pos": [
+        690,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "exporter",
+      "type": "backend",
+      "label": "볼륨 사용량 익스포터",
+      "sublabel": "DaemonSet",
+      "pos": [
+        1170,
+        70
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "security",
+      "label": "사용자 정의 지표 · 알림",
+      "sublabel": "VolumeUsageHigh 등",
+      "pos": [
+        1170,
+        200
+      ],
+      "size": [
+        190,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS CloudWatch",
+      "wraps": [
+        "ebs",
+        "efs",
+        "fsx",
+        "metrics",
+        "alarms",
+        "cw-dashboard"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 모니터링",
+      "wraps": [
+        "prometheus",
+        "monitors",
+        "rules",
+        "grafana"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용자 정의 솔루션",
+      "wraps": [
+        "exporter",
+        "custom"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ebs-metrics",
+      "from": "ebs",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "efs-metrics",
+      "from": "efs",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "fsx-metrics",
+      "from": "fsx",
+      "to": "metrics",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metrics-alarms",
+      "from": "metrics",
+      "to": "alarms",
+      "label": "임계치 초과",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "alarms-dashboard",
+      "from": "alarms",
+      "to": "cw-dashboard",
+      "label": "시각화",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "prom-monitors",
+      "from": "prometheus",
+      "to": "monitors",
+      "label": "수집 대상 탐색",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "prom-rules",
+      "from": "prometheus",
+      "to": "rules",
+      "label": "평가",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "monitors-grafana",
+      "from": "monitors",
+      "to": "grafana",
+      "label": "지표",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "exporter-custom",
+      "from": "exporter",
+      "to": "custom",
+      "label": "PVC 사용량",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}

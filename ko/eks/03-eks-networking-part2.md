@@ -8,7 +8,9 @@
 
 Kubernetes에서는 다음과 같은 서비스 유형을 제공합니다:
 
-![ClusterIP, NodePort, LoadBalancer, ExternalName 네 가지 Kubernetes 서비스 유형이 각각 클러스터 내부, 노드 IP:포트, 외부 로드 밸런서, DNS CNAME이라는 접근 방법에 1대1로 대응됨을 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-0.svg)
+![ClusterIP, NodePort, LoadBalancer, ExternalName 네 가지 Kubernetes 서비스 유형이 각각 클러스터 내부, 노드 IP:포트, 외부 로드 밸런서, DNS CNAME이라는 접근 방법에 1대1로 대응됨을 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-0.html)
 
 1. **ClusterIP**: 클러스터 내부에서만 액세스 가능한 서비스
 2. **NodePort**: 모든 노드의 특정 포트를 통해 액세스 가능한 서비스
@@ -88,7 +90,9 @@ spec:
 
 EKS는 Kubernetes 서비스를 AWS 로드 밸런서와 통합하여 외부에서 애플리케이션에 액세스할 수 있게 합니다.
 
-![인터넷 사용자가 CLB, NLB, ALB 세 종류의 AWS 로드 밸런서를 통해 EKS 클러스터에 접근하며, CLB와 NLB는 LoadBalancer 서비스로, ALB는 Ingress를 거쳐 NodePort 서비스로 연결되고 최종적으로 포드에 도달하는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-1.svg)
+![인터넷 사용자가 CLB, NLB, ALB 세 종류의 AWS 로드 밸런서를 통해 EKS 클러스터에 접근하며, CLB와 NLB는 LoadBalancer 서비스로, ALB는 Ingress 리소스를 거쳐 NodePort 서비스로 연결되고 각 서비스가 최종적으로 포드로 트래픽을 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-1.html)
 
 ### Classic Load Balancer(CLB)
 
@@ -150,7 +154,9 @@ metadata:
 
 ALB를 사용하려면 AWS Load Balancer Controller를 설치하고 Ingress 리소스를 사용해야 합니다:
 
-![인터넷 트래픽이 퍼블릭 서브넷의 Application Load Balancer를 거쳐 프라이빗 서브넷 EKS 클러스터의 Ingress 리소스로 들어가고, AWS Load Balancer Controller가 ALB 구성을 갱신하며, Ingress가 두 서비스를 통해 각각의 포드로 라우팅되는 경로를 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-2.svg)
+![인터넷 트래픽이 퍼블릭 서브넷의 Application Load Balancer를 거쳐 프라이빗 서브넷 EKS 클러스터의 Ingress 리소스로 들어가고, AWS Load Balancer Controller가 ALB를 생성·구성하며, Ingress가 서비스 1과 서비스 2를 통해 각각의 포드로 라우팅되는 경로를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-2.html)
 
 1. AWS Load Balancer Controller 설치:
 
@@ -230,7 +236,9 @@ metadata:
 
 ### 서비스 및 로드 밸런서 모범 사례
 
-![서비스 및 로드 밸런서 선택의 핵심 원칙 하나에서 ClusterIP 사용, LoadBalancer/Ingress 사용, ALB 사용 조건, NLB 사용 조건, 내부 로드 밸런서 사용, 교차 영역 로드 밸런싱, 대상 유형 선택이라는 일곱 가지 실천 항목이 뻗어나가는 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-3.svg)
+![서비스 및 로드 밸런서 모범 사례 하나에서 ClusterIP 사용, LoadBalancer/Ingress 사용, ALB 사용 조건, NLB 사용 조건, 내부 로드 밸런서 사용, 교차 영역 로드 밸런싱 활성화, 적절한 대상 유형 선택이라는 일곱 가지 실천 항목이 뻗어나가는 구조를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-3.html)
 
 1. **내부 서비스에는 ClusterIP 사용**: 클러스터 내부에서만 액세스하는 서비스에는 ClusterIP 유형을 사용합니다.
 2. **외부 서비스에는 LoadBalancer 또는 Ingress 사용**: 외부에서 액세스해야 하는 서비스에는 LoadBalancer 유형 또는 Ingress 리소스를 사용합니다.
@@ -244,7 +252,9 @@ metadata:
 
 네트워크 정책은 포드 간 통신을 제어하는 데 사용됩니다. EKS에서 네트워크 정책을 사용하려면 네트워크 정책을 지원하는 CNI 플러그인(예: Calico, Cilium)을 설치해야 합니다.
 
-![네임스페이스 격리, 특정 포드 간 통신 허용, 외부 트래픽 제한, 이그레스 제한이라는 네 가지 네트워크 정책이 프론트엔드·백엔드·데이터베이스 포드 사이의 통신과 외부 서비스로의 접근을 각각 어떻게 제어하는지 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-4.svg)
+![외부 트래픽 제한, 포드 간 통신 허용, 이그레스 제한, 네임스페이스 격리라는 네 가지 네트워크 정책이 외부 서비스에서 프론트엔드 포드로, 프론트엔드에서 백엔드 포드로(TCP 80), 백엔드에서 데이터베이스 포드로(TCP 5432), 백엔드에서 외부 HTTPS(443)로 향하는 트래픽을 각각 어떻게 제어하는지 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-4.html)
 
 ### Calico 설치
 
@@ -372,7 +382,9 @@ spec:
 
 ### 네트워크 정책 모범 사례
 
-![네트워크 정책 모범 사례라는 원칙 하나에서 기본 거부 정책 적용, 네임스페이스 격리, 최소 권한 원칙, 이그레스 트래픽 제한, 정책 테스트라는 다섯 가지 실천 항목이 뻗어나가는 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-5.svg)
+![네트워크 정책 모범 사례라는 원칙 하나에서 기본 거부 정책 적용, 네임스페이스 격리, 최소 권한 원칙 적용, 이그레스 트래픽 제한, 정책 테스트라는 다섯 가지 실천 항목이 뻗어나가는 구조를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-5.html)
 
 1. **기본 거부 정책 적용**: 모든 트래픽을 기본적으로 거부하고 필요한 트래픽만 명시적으로 허용합니다.
 2. **네임스페이스 격리**: 네임스페이스 간 통신을 제한하여 보안을 강화합니다.
@@ -391,7 +403,9 @@ spec:
 
 Gateway API는 Kubernetes의 차세대 서비스 네트워킹 API로, 기존 Ingress 리소스의 한계를 극복하고 더 풍부한 라우팅 기능을 제공합니다. AWS Load Balancer Controller는 Gateway API를 지원하여 L4(NLB) 및 L7(ALB) 라우팅을 Gateway 리소스를 통해 구성할 수 있습니다.
 
-![GatewayClass가 Gateway를 정의하고, Gateway가 L7 트래픽을 처리하는 HTTPRoute와 L4 트래픽을 처리하는 TCPRoute로 나뉘어 각각 ALB와 NLB를 통해 세 서비스로 라우팅되는 계층 구조를 보여준다.](../../assets/diagrams/rendered/ko-eks-03-eks-networking-part2-6.svg)
+![GatewayClass가 Gateway를 정의하고, Gateway가 L7 트래픽을 처리하는 HTTPRoute와 L4 트래픽을 처리하는 TCPRoute로 나뉘어 각각 ALB와 NLB를 통해 세 서비스로 라우팅되는 계층 구조를 보여준다.](../.gitbook/assets/ko-eks-03-eks-networking-part2-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-03-eks-networking-part2-6.html)
 
 ### 사전 요구 사항
 
