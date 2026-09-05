@@ -242,6 +242,7 @@ VXLAN is one of the most widely used overlay protocols in container networking.
 - **MAC-in-UDP Encapsulation**: Encapsulates original L2 frames into UDP packets
 
 VXLAN Packet Structure:
+
 ![Diagram of a VXLAN-encapsulated packet, showing the outer Ethernet, IP, and UDP headers wrapping a VXLAN header, which itself wraps the original Ethernet frame, IP header, TCP/UDP header, and payload.](../../.gitbook/assets/en-networking-cilium-networking-concepts-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-5.html)

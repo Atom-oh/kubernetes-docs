@@ -38,7 +38,7 @@ Cilium은 eBPF를 활용하여 컨테이너화된 환경을 위한 강력한 보
 
 ### Cilium 보안 아키텍처
 
-![Cilium 보안 아키텍처: 트래픽이 네트워크 보안(L3/L4 정책, 암호화, 마이크로세그멘테이션)과 애플리케이션 보안(L7 정책, API 인식 필터링, ID 기반 정책)을 차례로 거치고, L3/L4·L7·API 정책 지점의 플로우 로그가 위협 탐지의 Hubble 관찰성으로 모여 침입 탐지와 이상 탐지로 이어지며, ID 기반 정책은 런타임 보안(프로세스 모니터링, 시스템 콜 필터링, 컨테이너 보안)으로 연결됨을 보여준다.](../../.gitbook/assets/ko-networking-cilium-06-security-visibility-0.png)
+![Cilium 보안 아키텍처로, 트래픽에 네트워크 보안과 애플리케이션 보안 기능 그룹이 함께 적용되고 플로우 로그가 Hubble로 모여 침입·이상 탐지를 이끌며 ID 기반 정책이 런타임 보안으로 이어지는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-06-security-visibility-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-06-security-visibility-0.html)
 

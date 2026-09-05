@@ -51,7 +51,7 @@ eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows
 
 ### Architecture Comparison
 
-![Diagram contrasting a packet traversing seven sequential iptables chains with the same packet traversing a single eBPF program that consults BPF maps between TC ingress and egress hooks.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-11.png)
+![Diagram contrasting a packet walking sequential iptables chains, PREROUTING, conntrack, FORWARD and POSTROUTING, with the same packet handled by a single eBPF program consulting BPF maps between TC ingress and egress hooks.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-11.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-11.html)
 
@@ -224,7 +224,7 @@ spec:
 
 ### Traditional vs Connect-Time LB
 
-![Sequence diagram contrasting kube-proxy per-packet load balancing, where every SYN, DATA, and FIN packet goes through an iptables DNAT and conntrack lookup on its way to Pod A, with eBPF connect-time load balancing, where a single connect() to the VIP is intercepted by the cgroup/connect4 hook, the eBPF program looks up the NAT Map and rewrites the destination to Pod B once, and every subsequent packet reaches Pod B directly with no packet-level NAT.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png)
+![Sequence contrasting kube-proxy per-packet iptables DNAT and conntrack lookups with eBPF connect-time load balancing, where the cgroup connect4 hook rewrites the VIP once so later packets reach the Pod with no per-packet NAT.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-7.html)
 

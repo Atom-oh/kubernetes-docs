@@ -12,7 +12,7 @@
         "id": "oss-core",
         "label": "Open-source core",
         "focus": ["cncf", "community", "oss"],
-        "note": "Project Calico is a CNCF Incubating project that the community contributes to."
+        "note": "Project Calico is an open-source project in the CNCF ecosystem (landscape) that the community contributes to."
       },
       {
         "id": "tigera-products",
@@ -31,7 +31,7 @@
     }
   },
   "components": [
-    { "id": "cncf", "type": "external", "label": "CNCF", "sublabel": "Incubating", "pos": [40, 60], "size": [190, 64] },
+    { "id": "cncf", "type": "external", "label": "CNCF ecosystem", "sublabel": "Landscape", "pos": [40, 60], "size": [190, 64] },
     { "id": "community", "type": "external", "label": "Community", "sublabel": "Contributors", "pos": [40, 170], "size": [190, 64] },
     { "id": "tigera", "type": "backend", "label": "Tigera Inc.", "sublabel": "Primary maintainer", "pos": [40, 330], "size": [190, 64] },
     { "id": "oss", "type": "frontend", "label": "Project Calico", "sublabel": "Open source", "pos": [560, 60], "size": [190, 64] },
@@ -43,7 +43,7 @@
     { "kind": "region", "label": "Calico ecosystem", "wraps": ["oss", "enterprise", "cloud"] }
   ],
   "connections": [
-    { "id": "cncf-to-oss", "from": "cncf", "to": "oss", "label": "Incubating project", "variant": "emphasis" },
+    { "id": "cncf-to-oss", "from": "cncf", "to": "oss", "label": "landscape / ecosystem", "variant": "emphasis" },
     { "id": "community-to-oss", "from": "community", "to": "oss", "label": "Contributes", "variant": "emphasis" },
     { "id": "tigera-to-enterprise", "from": "tigera", "to": "enterprise", "label": "Commercial product" },
     { "id": "tigera-to-cloud", "from": "tigera", "to": "cloud", "label": "Operates SaaS", "labelDy": 18 }

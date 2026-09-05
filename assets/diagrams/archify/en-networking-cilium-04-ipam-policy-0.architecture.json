@@ -66,7 +66,7 @@
           "crd-ipam",
           "custom-alloc"
         ],
-        "note": "IP pools are defined with the CiliumIPPool custom resource and managed per namespace or pod."
+        "note": "IP pools are defined with the CiliumPodIPPool custom resource and managed per namespace or pod."
       }
     ]
   },
@@ -159,7 +159,7 @@
       "id": "crd-ipam",
       "type": "external",
       "label": "CRD-based IPAM",
-      "sublabel": "CiliumIPPool resource",
+      "sublabel": "CiliumPodIPPool resource",
       "pos": [
         1176,
         70
@@ -308,7 +308,7 @@
       "label": "Azure VNET IP allocation",
       "fromSide": "bottom",
       "toSide": "top",
-      "labelDy": 20
+      "labelDy": 68
     },
     {
       "id": "gke-to-cloud",
@@ -352,7 +352,7 @@
       "dot": "violet",
       "title": "CRD-based IPAM",
       "items": [
-        "IP pool definition through the CiliumIPPool custom resource",
+        "IP pool definition through the CiliumPodIPPool custom resource",
         "Allocate IP pools to specific namespaces or pods",
         "Dynamic IP pool management"
       ]

@@ -740,9 +740,9 @@ spec:
 
 ### HNS (Host Networking Service) Integration
 
-![On a Windows node, traffic from the Windows containers converges on the Host Networking Service (HNS), which the Calico Node Windows Service programs with networking and policy, then passes through the Virtual Filtering Platform (VFP) for packet filtering before leaving via the physical NIC.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-5.png)
+![On a Windows node, traffic from the Windows containers converges on the Host Networking Service (HNS), which the Calico Node Windows Service programs with networking and policy, then passes through the Virtual Filtering Platform (VFP) for packet filtering before leaving via the physical NIC.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-7.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-5.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-7.html)
 
 ### Windows Network Policy
 

@@ -23,7 +23,7 @@ AWS Load Balancer Controller is a controller that manages AWS Elastic Load Balan
 
 ### How the Controller Works
 
-![Sequence of how the AWS Load Balancer Controller works: a user creates an Ingress/Service with kubectl, the Kubernetes API emits a Watch event, and the LB Controller asks the AWS API (ELBv2) to create a Load Balancer, which provisions an ALB/NLB and returns its ARN; the controller then creates the Target Group and configures Listener rules, updates the resource Status, and the Load Balancer DNS is returned to the user. A final 'ongoing reconciliation' step shows that targets are auto-registered and deregistered as Pods change.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
+![Sequence in which the AWS Load Balancer Controller reacts to a new Ingress or Service by creating the ALB or NLB, target group and listener rules through the ELBv2 API, updates the resource status, and keeps registering targets as Pods change.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-1.html)
 

@@ -23,7 +23,7 @@ AWS Load Balancer Controller는 Kubernetes 클러스터에서 AWS Elastic Load B
 
 ### 컨트롤러 동작 방식
 
-![AWS Load Balancer Controller 동작 시퀀스: 사용자가 kubectl로 Ingress/Service를 생성하면 Kubernetes API의 Watch 이벤트를 받은 LB Controller가 AWS API(ELBv2)에 Load Balancer 생성을 요청해 ALB/NLB를 프로비저닝하고, ARN을 받은 뒤 Target Group 생성과 Listener 규칙 설정을 이어서 수행한다. 이후 Status를 업데이트하고 사용자에게 Load Balancer DNS를 제공하며, 마지막 단계 '지속 조정'에서 Pod 변경 시 Target이 자동으로 등록/해제된다는 점을 함께 표시한다.](../.gitbook/assets/ko-networking-03-aws-lb-controller-1.png)
+![사용자가 Ingress/Service를 생성하면 AWS Load Balancer Controller가 ELBv2 API로 ALB/NLB, Target Group, Listener 규칙을 만들고 Status를 갱신한 뒤 Pod 변화에 따라 Target을 계속 등록·해제하는 시퀀스를 보여준다.](../.gitbook/assets/ko-networking-03-aws-lb-controller-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-03-aws-lb-controller-1.html)
 

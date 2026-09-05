@@ -15,7 +15,7 @@
           "community",
           "oss"
         ],
-        "note": "Project Calico 오픈소스는 CNCF Incubating 프로젝트로 커뮤니티가 함께 기여한다."
+        "note": "Project Calico는 CNCF 에코시스템에 속한 오픈소스 프로젝트이며 커뮤니티가 함께 기여한다."
       },
       {
         "id": "tigera-products",
@@ -49,8 +49,8 @@
     {
       "id": "cncf",
       "type": "external",
-      "label": "CNCF",
-      "sublabel": "Incubating",
+      "label": "CNCF 에코시스템",
+      "sublabel": "랜드스케이프",
       "pos": [
         40,
         60
@@ -156,7 +156,7 @@
       "id": "cncf-to-oss",
       "from": "cncf",
       "to": "oss",
-      "label": "Incubating 프로젝트",
+      "label": "에코시스템 참여",
       "variant": "emphasis"
     },
     {

@@ -23,7 +23,7 @@
     "views": [
       {
         "id": "policy-path",
-        "label": "Policy enforcement path",
+        "label": "Policy coverage",
         "focus": [
           "traffic",
           "l3l4",
@@ -33,7 +33,7 @@
           "api",
           "identity"
         ],
-        "note": "Traffic is inspected in stages, from network security (L3/L4) through application security (L7)."
+        "note": "Traffic is covered side by side by network security (L3/L4, encryption, microsegmentation) and application security (L7, API, identity)."
       },
       {
         "id": "hubble-visibility",
@@ -291,34 +291,26 @@
       "variant": "emphasis"
     },
     {
-      "id": "l3l4-to-encrypt",
-      "from": "l3l4",
-      "to": "encrypt",
-      "variant": "emphasis"
-    },
-    {
-      "id": "encrypt-to-segment",
-      "from": "encrypt",
-      "to": "segment",
-      "variant": "emphasis"
-    },
-    {
-      "id": "segment-to-l7",
-      "from": "segment",
+      "id": "traffic-to-l7",
+      "from": "traffic",
       "to": "l7",
-      "variant": "emphasis"
-    },
-    {
-      "id": "l7-to-api",
-      "from": "l7",
-      "to": "api",
-      "variant": "emphasis"
-    },
-    {
-      "id": "api-to-identity",
-      "from": "api",
-      "to": "identity",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          95,
+          385
+        ],
+        [
+          440,
+          385
+        ],
+        [
+          440,
+          127
+        ]
+      ]
     },
     {
       "id": "l3l4-to-hubble",

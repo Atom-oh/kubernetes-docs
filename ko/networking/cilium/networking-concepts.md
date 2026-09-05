@@ -31,7 +31,7 @@ OSI(Open Systems Interconnection) 모델은 네트워크 통신을 7개의 추�
 
 ### OSI 모델과 TCP/IP 모델 비교
 
-![OSI 7계층 모델의 각 계층이 TCP/IP 4계층 모델로 어떻게 그룹핑되어 매핑되는지, 그리고 각 OSI 계층에서 사용하는 대표 프로토콜을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-0.png)
+![OSI 7계층 모델의 각 계층이 TCP/IP 4계층 모델로 어떻게 그룹핑되어 매핑되는지, 그리고 각 OSI 계층에서 사용하는 대표 프로토콜을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-0.html)
 
@@ -166,7 +166,7 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 - 동일한 호스트의 컨테이너 간 통신이 효율적
 - Docker의 기본 네트워킹 모드
 
-![veth 페어로 연결된 두 컨테이너가 docker0 가상 브리지를 통해 호스트의 물리 네트워크로 나가는 기본 브리지 네트워킹 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-1.png)
+![veth 페어로 연결된 두 컨테이너가 docker0 가상 브리지를 통해 호스트의 물리 네트워크로 나가는 기본 브리지 네트워킹 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-1.html)
 
@@ -177,7 +177,7 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 - 최상의 네트워크 성능 제공
 - 포트 충돌 가능성 있음
 
-![두 컨테이너가 별도의 네트워크 네임스페이스 없이 호스트의 네트워크 스택(eth0, 192.168.1.10)을 그대로 공유하는 호스트 네트워킹 모드 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-2.png)
+![두 컨테이너가 별도의 네트워크 네임스페이스 없이 호스트의 네트워크 스택(eth0, 192.168.1.10)을 그대로 공유하는 호스트 네트워킹 모드 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-2.html)
 
@@ -188,7 +188,7 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 - 대규모 클러스터에 적합
 - Cilium, Calico, Flannel 등이 이 모델 지원
 
-![서로 다른 호스트에 있는 두 컨테이너가 오버레이 네트워크(10.0.0.0/24)를 거쳐 각 호스트의 eth0에서 VXLAN 캡슐화·디캡슐화되어 물리 네트워크 위에서 통신하는 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-3.png)
+![서로 다른 호스트에 있는 두 컨테이너가 오버레이 네트워크(10.0.0.0/24)를 거쳐 각 호스트의 eth0에서 VXLAN 캡슐화·디캡슐화되어 물리 네트워크 위에서 통신하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-3.html)
 
@@ -199,7 +199,7 @@ CNI(Container Network Interface)는 컨테이너 런타임과 네트워크 플�
 - 네트워크 인프라에 대한 제어가 필요
 - BGP와 같은 라우팅 프로토콜과 통합 가능
 
-![캡슐화 없이 각 호스트의 라우팅 테이블 항목을 이용해 컨테이너 IP 대역을 직접 상대 호스트로 전달하는 라우팅 기반 네트워킹 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-4.png)
+![캡슐화 없이 각 호스트의 라우팅 테이블 항목을 이용해 컨테이너 IP 대역을 직접 상대 호스트로 전달하는 라우팅 기반 네트워킹 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-4.html)
 
@@ -253,7 +253,8 @@ VXLAN은 컨테이너 네트워킹에서 가장 널리 사용되는 오버레이
 - **MAC-in-UDP 캡슐화**: 원본 L2 프레임을 UDP 패킷으로 캡슐화
 
 VXLAN 패킷 구조:
-![원본 이더넷/IP/TCP 패킷이 VXLAN 헤더와 외부 UDP·IP·이더넷 헤더로 감싸여 캡슐화되는 VXLAN 패킷 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-5.png)
+
+![원본 이더넷/IP/TCP 패킷이 VXLAN 헤더와 외부 UDP·IP·이더넷 헤더로 감싸여 캡슐화되는 VXLAN 패킷 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-5.html)
 
@@ -329,7 +330,7 @@ data:
 - **사용 사례**: 인터넷 액세스, 아웃바운드 연결
 - **추적**: NAT 테이블에 연결 상태 저장
 
-![내부 네트워크의 클라이언트(10.0.0.2:1234)가 NAT 라우터를 거치면서 출발지 주소가 공용 IP 198.51.100.1:5678로 변환되어 인터넷의 서버(203.0.113.5)와 통신하는 SNAT 동작을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-6.png)
+![내부 네트워크의 클라이언트(10.0.0.2:1234)가 NAT 라우터를 거치면서 출발지 주소가 공용 IP 198.51.100.1:5678로 변환되어 인터넷의 서버(203.0.113.5)와 통신하는 SNAT 동작을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-6.html)
 
@@ -341,7 +342,7 @@ data:
 - **사용 사례**: 포트 포워딩, 로드 밸런싱, 인바운드 연결
 - **구성**: 특정 포트 또는 포트 범위에 대한 매핑 정의
 
-![인터넷의 클라이언트가 NAT 라우터를 거치면서 목적지 주소가 공용 IP에서 사설 IP로 변환되어 내부 네트워크의 서버로 전달되는 DNAT 동작을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-7.png)
+![인터넷의 클라이언트가 NAT 라우터를 거치면서 목적지 주소가 공용 IP에서 사설 IP로 변환되어 내부 네트워크의 서버로 전달되는 DNAT 동작을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-7.html)
 
@@ -353,7 +354,7 @@ PAT는 IP 주소와 포트 번호를 모두 수정합니다. 이를 통해 여�
 - **사용 사례**: IP 주소 보존, 다수의 내부 호스트 지원
 - **제한 사항**: 사용 가능한 포트 수에 의해 제한됨(약 65,000개)
 
-![서로 다른 내부 호스트가 포트 번호로 구분되어 하나의 공용 IP(198.51.100.1)를 공유해 인터넷의 서버와 통신하는 PAT 동작을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-8.png)
+![서로 다른 내부 호스트가 포트 번호로 구분되어 하나의 공용 IP(198.51.100.1)를 공유해 인터넷의 서버와 통신하는 PAT 동작을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-8.html)
 
@@ -506,7 +507,7 @@ Cilium은 eBPF를 활용하여 효율적인 라우팅을 구현하며, 다양한
 - **요구 사항**: 노드 간 라우팅 가능한 네트워크
 - **사용 사례**: 성능이 중요한 워크로드, 단일 서브넷 클러스터
 
-![서로 다른 노드에 있는 두 포드가 각 노드의 라우팅 테이블 항목을 이용해 캡슐화 없이 물리 네트워크로 직접 통신하는 Cilium 직접 라우팅(Native Routing) 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-9.png)
+![서로 다른 노드에 있는 두 포드가 각 노드의 라우팅 테이블 항목을 이용해 캡슐화 없이 물리 네트워크로 직접 통신하는 Cilium 직접 라우팅(Native Routing) 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-9.html)
 
@@ -606,7 +607,7 @@ DNS는 사람이 읽을 수 있는 도메인 이름을 IP 주소로 변환하는
 
 #### DNS 해석 과정
 
-![클라이언트가 루트, .com, example.com DNS 서버를 순서대로 거쳐 참조받으며 최종적으로 www.example.com의 IP 주소를 응답받는 반복(iterative) DNS 해석 과정을 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-10.png)
+![클라이언트가 루트, .com, example.com DNS 서버를 순서대로 거쳐 참조받으며 최종적으로 www.example.com의 IP 주소를 응답받는 반복(iterative) DNS 해석 과정을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-10.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-10.html)
 
@@ -661,7 +662,7 @@ Kubernetes는 클러스터 내 DNS 서비스(일반적으로 CoreDNS)를 실행�
 - **포드 DNS**: `<pod-ip>.<namespace>.pod.cluster.local`
 - **헤드리스 서비스**: 서비스 이름이 모든 포드 IP의 DNS 레코드로 확인됨
 
-![포드 A가 CoreDNS에 service-b를 조회하면 CoreDNS가 서비스 B(ClusterIP 10.0.0.1)를 확인하고 백엔드 포드 B1, B2, B3 중 하나를 선택한 뒤 포드 A에 10.0.0.1을 응답하는 Kubernetes DNS 서비스 디스커버리 시퀀스 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-11.png)
+![포드 A가 CoreDNS에 service-b를 조회하면 CoreDNS가 서비스 B(ClusterIP 10.0.0.1)를 확인하고 백엔드 포드 B1, B2, B3 중 하나를 선택한 뒤 포드 A에 10.0.0.1을 응답하는 Kubernetes DNS 서비스 디스커버리 시퀀스 다이어그램을 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-11.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-11.html)
 
@@ -760,7 +761,7 @@ L4 로드 밸런싱은 IP 주소와 포트 번호와 같은 전송 계층 정보
 - **단점**: 애플리케이션 계층 정보에 기반한 고급 라우팅 불가
 - **사용 사례**: TCP/UDP 기반 서비스, 고성능 요구 사항
 
-![클라이언트의 요청이 L4 로드 밸런서에서 TCP/UDP 헤더만 분석되어 두 백엔드 서버 중 하나로 분배되는 전송 계층(L4) 로드 밸런싱 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-12.png)
+![클라이언트의 요청이 L4 로드 밸런서에서 TCP/UDP 헤더만 분석되어 두 백엔드 서버 중 하나로 분배되는 전송 계층(L4) 로드 밸런싱 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-12.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-12.html)
 
@@ -773,7 +774,7 @@ L7 로드 밸런싱은 HTTP 헤더, URL, 쿠키 등과 같은 애플리케이션
 - **단점**: 더 높은 처리 오버헤드, 암호화된 트래픽의 경우 SSL 종료 필요
 - **사용 사례**: 웹 애플리케이션, 마이크로서비스, API 게이트웨이
 
-![클라이언트의 HTTP 요청이 L7 로드 밸런서에서 URL 경로와 헤더까지 검사되어 API 서버와 웹 서버 중 알맞은 백엔드로 분배되는 애플리케이션 계층(L7) 로드 밸런싱 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-13.png)
+![클라이언트의 HTTP 요청이 L7 로드 밸런서에서 URL 경로와 헤더까지 검사되어 API 서버와 웹 서버 중 알맞은 백엔드로 분배되는 애플리케이션 계층(L7) 로드 밸런싱 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-13.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-13.html)
 
@@ -880,7 +881,7 @@ Cilium은 eBPF를 활용하여 효율적인 로드 밸런싱을 구현합니다:
 - **확장성**: 대규모 서비스 및 엔드포인트 지원
 - **연결 추적 최적화**: 효율적인 상태 관리
 
-![포드 A가 서비스 IP로 보낸 패킷이 커널의 eBPF 프로그램에서 패킷 인터셉트·서비스 맵 조회·백엔드 선택·패킷 전달의 4단계를 거쳐 kube-proxy 없이 곧바로 포드 B로 전달되는 Cilium eBPF 기반 로드 밸런싱 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-14.png)
+![포드 A가 서비스 IP로 보낸 패킷이 커널의 eBPF 프로그램에서 패킷 인터셉트·서비스 맵 조회·백엔드 선택·패킷 전달의 4단계를 거쳐 kube-proxy 없이 곧바로 포드 B로 전달되는 Cilium eBPF 기반 로드 밸런싱 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-networking-concepts-14.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-networking-concepts-14.html)
 

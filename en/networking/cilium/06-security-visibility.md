@@ -38,7 +38,7 @@ Cilium leverages eBPF to provide powerful security features for containerized en
 
 ### Cilium Security Architecture
 
-![Cilium security architecture: traffic passes through Network Security (L3/L4 policy, encryption, microsegmentation) and then Application Security (L7 policy, API-aware filtering, identity-based policy), flow logs from the L3/L4, L7 and API policy points converge on Hubble observability in Threat Detection to drive intrusion and anomaly detection, and identity-based policy extends into Runtime Security (process monitoring, system call filtering, container security).](../../.gitbook/assets/en-networking-cilium-06-security-visibility-0.png)
+![Cilium security architecture: traffic is covered by Network Security and Application Security feature groups, flow logs converge on Hubble for intrusion and anomaly detection, and identity-based policy extends into Runtime Security.](../../.gitbook/assets/en-networking-cilium-06-security-visibility-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-06-security-visibility-0.html)
 

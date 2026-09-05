@@ -36,7 +36,7 @@ IPAM is a system responsible for allocating, tracking, and managing IP addresses
 
 ### Cilium IPAM Architecture
 
-![Diagram grouping Cilium IPAM modes into four scopes (Cluster Scope with Cluster Pool and Multi-Pool, Node Scope with Kubernetes Host Scope, Cloud Provider with AWS ENI, Azure IPAM and GKE IPAM, and Custom with CRD-based IPAM), each flowing down to its allocation model (Centralized, Distributed, Cloud Native, and Custom Allocation), with the AWS ENI path to Cloud Native Allocation highlighted as the mode most relevant to EKS.](../../.gitbook/assets/en-networking-cilium-04-ipam-policy-0.png)
+![Diagram grouping Cilium IPAM modes into cluster, node, cloud-provider and custom scopes and mapping each to its allocation model, with the AWS ENI path to cloud-native allocation highlighted as the mode most relevant to EKS.](../../.gitbook/assets/en-networking-cilium-04-ipam-policy-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-04-ipam-policy-0.html)
 
@@ -55,7 +55,7 @@ IPAM is a system responsible for allocating, tracking, and managing IP addresses
    - Prevents IP conflicts between nodes
 
 3. **CRD-based IPAM**:
-   - IP pool definition through CiliumIPPool custom resource
+   - IP pool definition through CiliumPodIPPool custom resource
    - Allocate IP pools to specific namespaces or pods
    - Fine-grained IP address management
    - Dynamic IP pool management
@@ -164,7 +164,7 @@ data:
 ```yaml
 # cilium-ippool.yaml
 apiVersion: "cilium.io/v2alpha1"
-kind: CiliumIPPool
+kind: CiliumPodIPPool
 metadata:
   name: "production-pool"
 spec:
@@ -244,7 +244,7 @@ Multi-Pool IPAM provides the ability to define multiple IP pools and allocate sp
 - Support for various network requirements
 
 **How it works**:
-1. Define multiple IP pools using CiliumIPPool CRD.
+1. Define multiple IP pools using CiliumPodIPPool CRD.
 2. Use selectors to allocate specific pools to specific workloads.
 3. Cilium allocates IP addresses from the appropriate pool according to defined rules.
 

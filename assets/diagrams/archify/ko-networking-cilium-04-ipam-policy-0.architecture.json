@@ -65,7 +65,7 @@
           "crd-ipam",
           "custom-alloc"
         ],
-        "note": "CiliumIPPool 커스텀 리소스로 IP 풀을 정의해 네임스페이스나 파드 단위로 세분화해 관리한다."
+        "note": "CiliumPodIPPool 커스텀 리소스로 IP 풀을 정의해 네임스페이스나 파드 단위로 세분화해 관리한다."
       }
     ]
   },
@@ -101,7 +101,7 @@
     {
       "id": "host-scope",
       "type": "backend",
-      "label": "쿠버네티스 호스트 범위",
+      "label": "Kubernetes 호스트 범위",
       "sublabel": "노드별 IP 범위",
       "pos": [
         420,
@@ -158,7 +158,7 @@
       "id": "crd-ipam",
       "type": "external",
       "label": "CRD 기반 IPAM",
-      "sublabel": "CiliumIPPool 리소스",
+      "sublabel": "CiliumPodIPPool 리소스",
       "pos": [
         1176,
         70
@@ -307,7 +307,7 @@
       "label": "Azure VNET IP 할당",
       "fromSide": "bottom",
       "toSide": "top",
-      "labelDy": 20
+      "labelDy": 68
     },
     {
       "id": "gke-to-cloud",
@@ -351,7 +351,7 @@
       "dot": "violet",
       "title": "CRD 기반 IPAM",
       "items": [
-        "CiliumIPPool 커스텀 리소스로 IP 풀 정의",
+        "CiliumPodIPPool 커스텀 리소스로 IP 풀 정의",
         "특정 네임스페이스 또는 파드에 IP 풀 할당",
         "동적 IP 풀 관리"
       ]

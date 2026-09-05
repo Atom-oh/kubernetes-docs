@@ -31,7 +31,7 @@
           "postrouting",
           "pkt_out_ipt"
         ],
-        "note": "Sequential chains: PREROUTING, conntrack, INPUT, FILTER, FORWARD, OUTPUT, POSTROUTING (O(n) rule matching)."
+        "note": "Forwarded packet walks sequential chains: PREROUTING → conntrack → FORWARD (filter table) → POSTROUTING, with O(n) rule matching."
       },
       {
         "id": "ebpf-path",
@@ -61,7 +61,7 @@
   "groups": [
     {
       "id": "chain_walk",
-      "label": "7 sequential chains",
+      "label": "Sequential rule chains",
       "lane": "iptables",
       "fromCol": 1,
       "toCol": 4,
@@ -112,8 +112,8 @@
       "lane": "iptables",
       "col": 3,
       "type": "backend",
-      "label": "Filter Chains",
-      "sublabel": "4 chains in sequence"
+      "label": "FORWARD",
+      "sublabel": "filter table"
     },
     {
       "id": "postrouting",

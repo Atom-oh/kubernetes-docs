@@ -40,7 +40,7 @@ OSI 모델은 네트워크 통신을 7개의 추상화 계층으로 분류한 �
 
 ### OSI 모델 계층 다이어그램
 
-![OSI 모델 7계층을 응용 계층부터 물리 계층까지 세로로 쌓아 각 계층의 데이터 단위와 주소 체계를 보여주고, Cilium이 L7(HTTP/gRPC/Kafka 정책), L4(포트/프로토콜 정책), L3(IP/CIDR 정책), L2(ARP 처리/MAC 필터링)에서 제공하는 기능을 해당 계층에 점선으로 매핑한 아키텍처 다이어그램.](../../.gitbook/assets/ko-networking-cilium-05-l2-l7-networking-0.png)
+![OSI 모델 7계층을 응용 계층부터 물리 계층까지 세로로 쌓아 각 계층의 데이터 단위와 주소 체계를 보여주고, Cilium이 L7(HTTP/gRPC/Kafka 정책), L4(포트/프로토콜 정책), L3(IP/CIDR 정책), L2(ARP 처리/MAC 필터링)에서 제공하는 기능을 해당 계층에 점선으로 매핑한 아키텍처 다이어그램을 보여준다.](../../.gitbook/assets/ko-networking-cilium-05-l2-l7-networking-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-05-l2-l7-networking-0.html)
 
