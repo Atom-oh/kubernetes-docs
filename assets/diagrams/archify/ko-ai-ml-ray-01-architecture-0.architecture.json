@@ -5,7 +5,18 @@
     "title": "Ray 클러스터 아키텍처",
     "output": "ko-ai-ml-ray-01-architecture-0.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        }
+      }
+    }
   },
   "components": [
     {

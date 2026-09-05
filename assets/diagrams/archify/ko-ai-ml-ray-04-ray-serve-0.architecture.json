@@ -6,7 +6,7 @@
     "output": "ko-ai-ml-ray-04-ray-serve-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [1160, 760],
+    "viewBox": [1160, 700],
     "views": [
       { "id": "request-path", "label": "요청 처리 경로", "focus": ["client", "ingress", "preprocess", "inference", "response"], "note": "클라이언트 요청이 Ray Serve 인그레스를 거쳐 전처리 → 모델 추론 deployment로 흐르고 응답으로 돌아온다." },
       { "id": "autoscaling-chain", "label": "3단계 오토스케일링", "focus": ["serve-autoscaler", "kuberay-autoscaler", "karpenter", "preprocess", "inference"], "note": "각 계층은 바로 아래 계층만 본다. replica 수 → worker Pod 수 → 노드 수 순으로 조정된다." }
@@ -18,9 +18,9 @@
     { "id": "preprocess", "type": "backend", "label": "Deployment: 전처리", "sublabel": "actor replicas", "pos": [470, 120], "size": [190, 60] },
     { "id": "inference", "type": "backend", "label": "Deployment: 모델 추론", "sublabel": "actor replicas", "pos": [720, 120], "size": [200, 60] },
     { "id": "response", "type": "external", "label": "응답", "sublabel": "클라이언트로 반환", "pos": [990, 120], "size": [140, 60] },
-    { "id": "serve-autoscaler", "type": "backend", "label": "Ray Serve Autoscaler", "sublabel": "deployment별 replica 수", "pos": [590, 330], "size": [210, 60] },
-    { "id": "kuberay-autoscaler", "type": "backend", "label": "Ray / KubeRay Autoscaler", "sublabel": "worker Pod 수", "pos": [590, 480], "size": [210, 60] },
-    { "id": "karpenter", "type": "cloud", "label": "Karpenter", "sublabel": "EC2 노드 수", "pos": [590, 630], "size": [210, 60] }
+    { "id": "serve-autoscaler", "type": "backend", "label": "Ray Serve Autoscaler", "sublabel": "deployment별 replica 수", "pos": [590, 310], "size": [210, 60] },
+    { "id": "kuberay-autoscaler", "type": "backend", "label": "Ray / KubeRay Autoscaler", "sublabel": "worker Pod 수", "pos": [590, 450], "size": [210, 60] },
+    { "id": "karpenter", "type": "cloud", "label": "Karpenter", "sublabel": "EC2 노드 수", "pos": [590, 590], "size": [210, 60] }
   ],
   "boundaries": [
     { "kind": "region", "label": "Application (Serve 파이프라인)", "wraps": ["preprocess", "inference"] }

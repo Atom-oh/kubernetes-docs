@@ -7,8 +7,8 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      860,
-      560
+      900,
+      540
     ],
     "legend": {
       "mode": "auto",
@@ -30,7 +30,7 @@
       "sublabel": "KV 캐시 블록 단위 관리",
       "pos": [
         60,
-        90
+        60
       ],
       "size": [
         220,
@@ -43,7 +43,7 @@
       "label": "연속 배치 처리",
       "pos": [
         60,
-        200
+        160
       ],
       "size": [
         220,
@@ -57,7 +57,7 @@
       "sublabel": "--enable-prefix-caching",
       "pos": [
         60,
-        310
+        260
       ],
       "size": [
         220,
@@ -71,7 +71,7 @@
       "sublabel": "--enable-chunked-prefill",
       "pos": [
         60,
-        420
+        360
       ],
       "size": [
         220,
@@ -84,8 +84,8 @@
       "label": "메모리 효율 95%+",
       "sublabel": "GPU 메모리를 KV 캐시에 할당",
       "pos": [
-        580,
-        90
+        620,
+        60
       ],
       "size": [
         220,
@@ -97,8 +97,8 @@
       "type": "external",
       "label": "처리량 24x 향상",
       "pos": [
-        580,
-        200
+        620,
+        160
       ],
       "size": [
         220,
@@ -111,8 +111,8 @@
       "label": "지연시간 최소화",
       "sublabel": "TTFT 50-80% 단축",
       "pos": [
-        580,
-        310
+        620,
+        260
       ],
       "size": [
         220,
@@ -125,8 +125,8 @@
       "label": "긴 컨텍스트 지원",
       "sublabel": "혼합 프롬프트 지연 안정화",
       "pos": [
-        580,
-        420
+        620,
+        360
       ],
       "size": [
         220,

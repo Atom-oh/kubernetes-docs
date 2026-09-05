@@ -43,7 +43,27 @@
         ],
         "note": "ArgoCD가 Slurm 컨트롤 플레인을 GitOps로 배포하고, Karpenter가 GPU NodePool로 컴퓨트 노드를 늘리며, 이미지는 Amazon ECR에서 받는다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
   },
   "components": [
     {

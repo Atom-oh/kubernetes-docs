@@ -5,7 +5,7 @@
     "title": "AI/ML 파드 콜드 스타트 타임라인",
     "quality_profile": "showcase",
     "column_fit": "spread",
-    "viewBox": [1040, 760],
+    "viewBox": [1040, 650],
     "animation": "trace",
     "views": [
       { "id": "schedule", "label": "스케줄링", "focus": ["scheduler", "kubelet"], "note": "노드 선택은 ~100ms로, 전체 콜드 스타트에서 무시할 수 있는 수준이다." },
@@ -21,24 +21,24 @@
     { "id": "app", "type": "frontend", "label": "AI/ML 애플리케이션", "sublabel": "모델 서빙 프로세스" }
   ],
   "segments": [
-    { "from": 165, "to": 240, "label": "노드 선택: ~100ms" },
-    { "from": 258, "to": 400, "label": "이미지 풀: 2-10분 (10-50GB 이미지)" },
-    { "from": 418, "to": 488, "label": "컨테이너 생성: ~5s" },
-    { "from": 506, "to": 660, "label": "모델 로딩: 1-5분 (GPU 메모리에 가중치 로드) → 헬스 체크 통과: ~30s" }
+    { "from": 160, "to": 220, "label": "노드 선택: ~100ms" },
+    { "from": 235, "to": 345, "label": "이미지 풀: 2-10분 (10-50GB 이미지)" },
+    { "from": 360, "to": 420, "label": "컨테이너 생성: ~5s" },
+    { "from": 435, "to": 565, "label": "모델 로딩: 1-5분 (GPU 메모리에 가중치 로드) → 헬스 체크 통과: ~30s" }
   ],
   "messages": [
-    { "id": "scheduled", "from": "scheduler", "to": "kubelet", "y": 205, "label": "파드 스케줄링됨" },
-    { "id": "pull-request", "from": "kubelet", "to": "registry", "y": 295, "label": "이미지 풀 요청", "variant": "emphasis", "note": "10-50GB 이미지, 2-10분 소요" },
-    { "id": "image-layers", "from": "registry", "to": "kubelet", "y": 372, "label": "이미지 레이어", "variant": "return" },
-    { "id": "create", "from": "kubelet", "to": "runtime", "y": 455, "label": "컨테이너 생성" },
-    { "id": "start", "from": "runtime", "to": "app", "y": 545, "label": "프로세스 시작", "variant": "emphasis", "note": "모델 가중치를 GPU 메모리에 로드, 1-5분 소요" },
-    { "id": "ready", "from": "app", "to": "runtime", "y": 630, "label": "준비됨", "variant": "return", "note": "헬스 체크 통과: ~30s" }
+    { "id": "scheduled", "from": "scheduler", "to": "kubelet", "y": 190, "label": "파드 스케줄링됨" },
+    { "id": "pull-request", "from": "kubelet", "to": "registry", "y": 267, "label": "이미지 풀 요청", "variant": "emphasis", "note": "10-50GB 이미지, 2-10분 소요" },
+    { "id": "image-layers", "from": "registry", "to": "kubelet", "y": 327, "label": "이미지 레이어", "variant": "return" },
+    { "id": "create", "from": "kubelet", "to": "runtime", "y": 393, "label": "컨테이너 생성" },
+    { "id": "start", "from": "runtime", "to": "app", "y": 475, "label": "프로세스 시작", "variant": "emphasis", "note": "모델 가중치를 GPU 메모리에 로드, 1-5분 소요" },
+    { "id": "ready", "from": "app", "to": "runtime", "y": 550, "label": "준비됨", "variant": "return", "note": "헬스 체크 통과: ~30s" }
   ],
   "activations": [
-    { "participant": "kubelet", "from": 200, "to": 462, "type": "backend" },
-    { "participant": "registry", "from": 290, "to": 378, "type": "database" },
-    { "participant": "runtime", "from": 450, "to": 636, "type": "cloud" },
-    { "participant": "app", "from": 540, "to": 636, "type": "frontend" }
+    { "participant": "kubelet", "from": 185, "to": 400, "type": "backend" },
+    { "participant": "registry", "from": 262, "to": 333, "type": "database" },
+    { "participant": "runtime", "from": 388, "to": 556, "type": "cloud" },
+    { "participant": "app", "from": 470, "to": 556, "type": "frontend" }
   ],
   "cards": [
     {

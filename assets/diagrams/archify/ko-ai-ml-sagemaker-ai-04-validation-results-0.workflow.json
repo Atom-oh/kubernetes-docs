@@ -43,7 +43,24 @@
         ],
         "note": "프로젝트 1개가 남은 상태를 기록하고 GPU 학습을 시작하지 않았습니다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "database": {
+          "label": "데이터"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

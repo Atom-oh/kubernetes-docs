@@ -56,7 +56,7 @@ Slinky는 친숙한 Slurm 워크로드 관리자를 Kubernetes에 도입하여 A
 
 ### Slinky 아키텍처
 
-![ArgoCD, Amazon ECR, NLB 같은 외부 서비스가 EKS 클러스터 안의 Slurm 컨트롤 플레인(slurmctld/slurmdbd/slurmrestd), 로그인 Pod와 JupyterHub, GPU slurmd Pod, FSx for Lustre 공유 스토리지, Karpenter GPU NodePool과 어떻게 연결되는지 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-2.png)
+![ArgoCD, Amazon ECR, NLB 같은 외부 서비스가 EKS 클러스터 안의 Slurm 컨트롤 플레인(slurmctld/slurmdbd/slurmrestd), 로그인 Pod와 JupyterHub, GPU slurmd 파드, FSx for Lustre 공유 스토리지, Karpenter GPU NodePool과 어떻게 연결되는지 보여준다.](../.gitbook/assets/ko-ai-ml-05-model-training-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-05-model-training-2.html)
 

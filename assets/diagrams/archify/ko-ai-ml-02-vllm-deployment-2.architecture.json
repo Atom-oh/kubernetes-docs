@@ -46,7 +46,24 @@
         ],
         "note": "컨테이너 이미지는 ECR에서 가져오고, 지표와 로그는 CloudWatch로 보내며, 권한은 IAM이 관리한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

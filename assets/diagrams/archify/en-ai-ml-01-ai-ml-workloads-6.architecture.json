@@ -66,7 +66,7 @@
       "sublabel": "Node metrics",
       "pos": [
         40,
-        170
+        160
       ],
       "size": [
         180,
@@ -80,7 +80,7 @@
       "sublabel": "Cluster object state",
       "pos": [
         40,
-        280
+        260
       ],
       "size": [
         180,
@@ -93,8 +93,8 @@
       "label": "Prometheus",
       "sublabel": "Metric store · rule evaluation",
       "pos": [
-        320,
-        170
+        340,
+        160
       ],
       "size": [
         170,
@@ -107,7 +107,7 @@
       "label": "Alert Manager",
       "sublabel": "Alert routing",
       "pos": [
-        590,
+        630,
         60
       ],
       "size": [
@@ -121,8 +121,8 @@
       "label": "Grafana",
       "sublabel": "Visualization",
       "pos": [
-        590,
-        280
+        630,
+        260
       ],
       "size": [
         160,
@@ -135,7 +135,7 @@
       "label": "Alerts",
       "sublabel": "GPU · Performance · Cost",
       "pos": [
-        850,
+        920,
         60
       ],
       "size": [
@@ -149,8 +149,8 @@
       "label": "Dashboards",
       "sublabel": "GPU · Training · Inference · Cost",
       "pos": [
-        850,
-        280
+        920,
+        260
       ],
       "size": [
         180,
@@ -164,7 +164,7 @@
       "sublabel": "Container log collection",
       "pos": [
         40,
-        490
+        470
       ],
       "size": [
         180,
@@ -177,8 +177,8 @@
       "label": "CloudWatch Logs",
       "sublabel": "/eks/ml-cluster/pods",
       "pos": [
-        320,
-        430
+        340,
+        410
       ],
       "size": [
         170,
@@ -191,8 +191,8 @@
       "label": "ElasticSearch",
       "sublabel": "Log index",
       "pos": [
-        320,
-        550
+        340,
+        530
       ],
       "size": [
         170,
@@ -205,8 +205,8 @@
       "label": "Kibana",
       "sublabel": "Log search",
       "pos": [
-        590,
-        550
+        630,
+        530
       ],
       "size": [
         160,

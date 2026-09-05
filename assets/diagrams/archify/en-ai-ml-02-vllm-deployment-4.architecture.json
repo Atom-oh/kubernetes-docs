@@ -107,7 +107,7 @@
     {
       "id": "memory-util",
       "type": "backend",
-      "label": "GPU Memory Utilization Adjustment",
+      "label": "GPU Memory Utilization",
       "sublabel": "--gpu-memory-utilization=0.9",
       "pos": [
         40,
@@ -192,7 +192,7 @@
       "id": "performance",
       "type": "external",
       "label": "Performance Improvement",
-      "sublabel": "Where all three tuning areas converge",
+      "sublabel": "tuning areas converge",
       "pos": [
         560,
         350

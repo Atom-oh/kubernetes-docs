@@ -9,7 +9,7 @@
 
 EKS 기반 AI/ML 인프라는 관심사를 분리하고 각 레이어의 독립적인 확장을 가능하게 하는 계층형 아키텍처를 따릅니다.
 
-![ML 워크로드, 플랫폼 서비스, 컴퓨팅, EKS 기반의 4개 레이어가 위에서 아래로 서로 의존하며 쌓여 있고, 컴퓨팅 레이어의 GPU/Neuron/CPU NodePool과 스팟 인스턴스가 강조되어 있는 AI/ML 인프라 레이어 구조도.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-0.png)
+![ML 워크로드, 플랫폼 서비스, 컴퓨팅, EKS 기반의 4개 레이어가 위에서 아래로 서로 의존하며 쌓여 있고, 컴퓨팅 레이어의 GPU/Neuron/CPU NodePool과 스팟 인스턴스가 강조되어 있는 AI/ML 인프라 레이어 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-06-ai-infrastructure-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-06-ai-infrastructure-0.html)
 

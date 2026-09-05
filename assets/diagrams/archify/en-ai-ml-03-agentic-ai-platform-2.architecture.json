@@ -8,8 +8,8 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      860,
-      560
+      900,
+      540
     ],
     "legend": {
       "mode": "auto",
@@ -31,7 +31,7 @@
       "sublabel": "Block-level KV cache management",
       "pos": [
         60,
-        90
+        60
       ],
       "size": [
         220,
@@ -44,7 +44,7 @@
       "label": "Continuous Batching",
       "pos": [
         60,
-        200
+        160
       ],
       "size": [
         220,
@@ -58,7 +58,7 @@
       "sublabel": "--enable-prefix-caching",
       "pos": [
         60,
-        310
+        260
       ],
       "size": [
         220,
@@ -72,7 +72,7 @@
       "sublabel": "--enable-chunked-prefill",
       "pos": [
         60,
-        420
+        360
       ],
       "size": [
         220,
@@ -85,8 +85,8 @@
       "label": "Memory Efficiency 95%+",
       "sublabel": "GPU memory allocated to KV cache",
       "pos": [
-        580,
-        90
+        620,
+        60
       ],
       "size": [
         220,
@@ -98,8 +98,8 @@
       "type": "external",
       "label": "Throughput 24x Improvement",
       "pos": [
-        580,
-        200
+        620,
+        160
       ],
       "size": [
         220,
@@ -112,8 +112,8 @@
       "label": "Latency Minimization",
       "sublabel": "TTFT reduced 50-80%",
       "pos": [
-        580,
-        310
+        620,
+        260
       ],
       "size": [
         220,
@@ -126,8 +126,8 @@
       "label": "Long Context Support",
       "sublabel": "stable latency for mixed prompts",
       "pos": [
-        580,
-        420
+        620,
+        360
       ],
       "size": [
         220,

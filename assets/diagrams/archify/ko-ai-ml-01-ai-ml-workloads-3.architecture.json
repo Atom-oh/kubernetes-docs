@@ -38,7 +38,24 @@
         ],
         "note": "Worker가 FSx for Lustre에 기록하면 S3와 체크포인트 저장소로 이어진다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
   },
   "components": [
     {

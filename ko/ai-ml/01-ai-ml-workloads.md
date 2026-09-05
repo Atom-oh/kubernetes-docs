@@ -140,7 +140,7 @@ AI/ML 워크로드에는 고성능 스토리지가 필요합니다:
 
 ## AI/ML 워크로드 배포
 
-![Amazon EKS 위에서 NVIDIA GPU 운영자가 노드 수준 GPU 스택을, Kubeflow가 노트북·훈련 작업·Pipelines·Katib를, KServe가 TorchServe·Triton 등 모델 서빙 옵션을, MPI Operator가 MPIJob 분산 훈련을 담당하는 소프트웨어 구성 요소 구조를 보여주는 다이어그램.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-2.png)
+![Amazon EKS 위에서 NVIDIA GPU 운영자가 노드 수준 GPU 스택을, Kubeflow가 노트북·훈련 작업·Pipelines·Katib를, KServe가 TorchServe·Triton 등 모델 서빙 옵션을, MPI Operator가 MPIJob 분산 훈련을 담당하는 소프트웨어 구성 요소 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-01-ai-ml-workloads-2.html)
 
@@ -186,7 +186,7 @@ Kubeflow는 다음과 같은 구성 요소를 제공합니다:
 
 분산 훈련을 위한 Kubernetes 리소스:
 
-![MPI Job의 Launcher 파드가 Worker 파드를 기동하고, Worker들이 NCCL·MPI·EFA로 통신하며, 체크포인트를 FSx for Lustre를 거쳐 S3와 체크포인트 저장소에 저장하는 분산 훈련 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-3.png)
+![MPI Job의 Launcher Pod가 Worker Pod를 기동하고, Worker들이 NCCL·MPI·EFA로 통신하며, 체크포인트를 FSx for Lustre를 거쳐 S3와 체크포인트 저장소에 저장하는 분산 훈련 구조를 보여준다.](../.gitbook/assets/ko-ai-ml-01-ai-ml-workloads-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-01-ai-ml-workloads-3.html)
 

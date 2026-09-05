@@ -46,7 +46,24 @@
         ],
         "note": "세밀한 할당은 메모리 파티셔닝과 멀티테넌트 공유를, 토폴로지 인식은 NVLink와 P6e-GB200 지원을 가능하게 한다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
   },
   "components": [
     {

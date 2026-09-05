@@ -14,17 +14,17 @@
   },
   "components": [
     { "id": "dcgm", "type": "backend", "label": "NVIDIA DCGM Exporter", "sublabel": "GPU 메트릭", "pos": [40, 60], "size": [180, 60] },
-    { "id": "node-exporter", "type": "backend", "label": "Node Exporter", "sublabel": "노드 메트릭", "pos": [40, 170], "size": [180, 60] },
-    { "id": "ksm", "type": "backend", "label": "Kube State Metrics", "sublabel": "클러스터 오브젝트 상태", "pos": [40, 280], "size": [180, 60] },
-    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "메트릭 저장 · 규칙 평가", "pos": [320, 170], "size": [170, 60] },
-    { "id": "alertmanager", "type": "backend", "label": "Alert Manager", "sublabel": "알림 라우팅", "pos": [590, 60], "size": [160, 60] },
-    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "시각화", "pos": [590, 280], "size": [160, 60] },
-    { "id": "alerts", "type": "external", "label": "알림", "sublabel": "GPU · 성능 · 비용", "pos": [850, 60], "size": [180, 60] },
-    { "id": "dashboards", "type": "frontend", "label": "대시보드", "sublabel": "GPU · 훈련 · 추론 · 비용", "pos": [850, 280], "size": [180, 60] },
-    { "id": "fluentd", "type": "backend", "label": "Fluentd", "sublabel": "컨테이너 로그 수집", "pos": [40, 490], "size": [180, 60] },
-    { "id": "cloudwatch", "type": "cloud", "label": "CloudWatch Logs", "sublabel": "/eks/ml-cluster/pods", "pos": [320, 430], "size": [170, 60] },
-    { "id": "elasticsearch", "type": "database", "label": "ElasticSearch", "sublabel": "로그 인덱스", "pos": [320, 550], "size": [170, 60] },
-    { "id": "kibana", "type": "frontend", "label": "Kibana", "sublabel": "로그 조회", "pos": [590, 550], "size": [160, 60] }
+    { "id": "node-exporter", "type": "backend", "label": "Node Exporter", "sublabel": "노드 메트릭", "pos": [40, 160], "size": [180, 60] },
+    { "id": "ksm", "type": "backend", "label": "Kube State Metrics", "sublabel": "클러스터 오브젝트 상태", "pos": [40, 260], "size": [180, 60] },
+    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "메트릭 저장 · 규칙 평가", "pos": [340, 160], "size": [170, 60] },
+    { "id": "alertmanager", "type": "backend", "label": "Alert Manager", "sublabel": "알림 라우팅", "pos": [630, 60], "size": [160, 60] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "시각화", "pos": [630, 260], "size": [160, 60] },
+    { "id": "alerts", "type": "external", "label": "알림", "sublabel": "GPU · 성능 · 비용", "pos": [920, 60], "size": [180, 60] },
+    { "id": "dashboards", "type": "frontend", "label": "대시보드", "sublabel": "GPU · 훈련 · 추론 · 비용", "pos": [920, 260], "size": [180, 60] },
+    { "id": "fluentd", "type": "backend", "label": "Fluentd", "sublabel": "컨테이너 로그 수집", "pos": [40, 470], "size": [180, 60] },
+    { "id": "cloudwatch", "type": "cloud", "label": "CloudWatch Logs", "sublabel": "/eks/ml-cluster/pods", "pos": [340, 410], "size": [170, 60] },
+    { "id": "elasticsearch", "type": "database", "label": "ElasticSearch", "sublabel": "로그 인덱스", "pos": [340, 530], "size": [170, 60] },
+    { "id": "kibana", "type": "frontend", "label": "Kibana", "sublabel": "로그 조회", "pos": [630, 530], "size": [160, 60] }
   ],
   "boundaries": [
     { "kind": "region", "label": "메트릭 수집", "wraps": ["dcgm", "node-exporter", "ksm"] },

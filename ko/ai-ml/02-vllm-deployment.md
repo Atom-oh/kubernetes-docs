@@ -235,7 +235,7 @@ vLLM을 EKS에 배포하기 위한 시스템 요구 사항은 다음과 같습�
 
 ## EKS 인프라 구성
 
-![EKS 컨트롤 플레인이 GPU/CPU 노드 그룹에 vLLM 포드를 배치하고, 노드가 S3에서 내려받은 모델 가중치를 FSx for Lustre에서 로드하며 ECR, CloudWatch, IAM 같은 AWS 서비스가 이를 지원하는 EKS 인프라 구성을 보여준다.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-2.png)
+![EKS 컨트롤 플레인이 GPU/CPU 노드 그룹에 vLLM 파드를 배치하고, 노드가 S3에서 내려받은 모델 가중치를 FSx for Lustre에서 로드하며 ECR, CloudWatch, IAM 같은 AWS 서비스가 이를 지원하는 EKS 인프라 구성을 보여준다.](../.gitbook/assets/ko-ai-ml-02-vllm-deployment-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-02-vllm-deployment-2.html)
 

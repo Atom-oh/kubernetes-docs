@@ -82,7 +82,7 @@
       "sublabel": "metadata: params, metrics, tags",
       "pos": [
         300,
-        260
+        230
       ],
       "size": [
         220,
@@ -96,7 +96,7 @@
       "sublabel": "files: models, plots, datasets",
       "pos": [
         640,
-        260
+        230
       ],
       "size": [
         220,
@@ -110,7 +110,7 @@
       "sublabel": "browse experiments · runs · models · traces",
       "pos": [
         470,
-        450
+        400
       ],
       "size": [
         220,

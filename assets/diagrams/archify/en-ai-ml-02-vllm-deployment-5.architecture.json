@@ -135,7 +135,7 @@
       "id": "dashboards",
       "type": "frontend",
       "label": "Dashboards",
-      "sublabel": "GPU utilization / throughput / latency / error rate",
+      "sublabel": "GPU util · throughput · latency",
       "pos": [
         840,
         80
@@ -149,7 +149,7 @@
       "id": "alerts",
       "type": "external",
       "label": "Alerts",
-      "sublabel": "high latency / low throughput / GPU error / OOM",
+      "sublabel": "latency · throughput · GPU error · OOM",
       "pos": [
         840,
         280

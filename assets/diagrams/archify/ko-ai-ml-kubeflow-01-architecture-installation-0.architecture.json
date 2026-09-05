@@ -5,7 +5,18 @@
     "title": "Kubeflow 컴포넌트 아키텍처",
     "output": "ko-ai-ml-kubeflow-01-architecture-installation-0.html",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
   },
   "components": [
     {

@@ -107,7 +107,7 @@
       "id": "performance",
       "type": "external",
       "label": "Performance Improvement",
-      "sublabel": "Result of GPU, training, and storage optimization",
+      "sublabel": "GPU, training, storage gains",
       "pos": [
         600,
         170

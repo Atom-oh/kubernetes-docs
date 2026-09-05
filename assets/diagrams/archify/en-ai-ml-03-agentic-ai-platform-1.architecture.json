@@ -9,7 +9,7 @@
     "animation": "trace",
     "viewBox": [
       1000,
-      660
+      580
     ],
     "legend": {
       "entries": {
@@ -29,7 +29,7 @@
       "label": "1. GPU Resource Management",
       "pos": [
         60,
-        80
+        60
       ],
       "size": [
         270,
@@ -42,7 +42,7 @@
       "label": "2. Multi-LLM Integration",
       "pos": [
         60,
-        210
+        170
       ],
       "size": [
         270,
@@ -55,7 +55,7 @@
       "label": "3. Workflow Orchestration",
       "pos": [
         60,
-        340
+        280
       ],
       "size": [
         270,
@@ -68,7 +68,7 @@
       "label": "4. Real-time Cost Optimization",
       "pos": [
         60,
-        470
+        390
       ],
       "size": [
         270,
@@ -82,7 +82,7 @@
       "sublabel": "Karpenter",
       "pos": [
         650,
-        80
+        60
       ],
       "size": [
         270,
@@ -96,7 +96,7 @@
       "sublabel": "Inference Gateway",
       "pos": [
         650,
-        210
+        170
       ],
       "size": [
         270,
@@ -110,7 +110,7 @@
       "sublabel": "Kagent",
       "pos": [
         650,
-        340
+        280
       ],
       "size": [
         270,
@@ -124,7 +124,7 @@
       "sublabel": "Prompt Cache",
       "pos": [
         650,
-        470
+        390
       ],
       "size": [
         270,

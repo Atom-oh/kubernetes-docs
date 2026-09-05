@@ -41,7 +41,27 @@
         ],
         "note": "Istio 사이드카가 주입된 Pod가 Dashboard 프록시를 통해 사용자에게 노출된다."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
   },
   "participants": [
     {

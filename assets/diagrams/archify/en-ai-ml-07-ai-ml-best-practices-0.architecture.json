@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1400,
+      1380,
       720
     ],
     "legend": {
@@ -78,7 +78,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "image size · layers"
     },
     {
       "id": "gpu",
@@ -91,7 +92,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "instance type fit"
     },
     {
       "id": "benchmarking",
@@ -104,7 +106,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "latency · throughput"
     },
     {
       "id": "network",
@@ -117,7 +120,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "RDMA · topology"
     },
     {
       "id": "storage",
@@ -130,7 +134,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "model artifact I/O"
     },
     {
       "id": "observability",
@@ -143,7 +148,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "GPU · queue metrics"
     },
     {
       "id": "security",
@@ -156,7 +162,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "isolation · supply chain"
     },
     {
       "id": "cost",
@@ -169,7 +176,8 @@
       "size": [
         260,
         48
-      ]
+      ],
+      "sublabel": "spot · right-sizing"
     },
     {
       "id": "efficiency",
@@ -182,7 +190,8 @@
       "size": [
         260,
         54
-      ]
+      ],
+      "sublabel": "utilization · density"
     },
     {
       "id": "performance",
@@ -195,7 +204,8 @@
       "size": [
         260,
         54
-      ]
+      ],
+      "sublabel": "5 contributing practices"
     },
     {
       "id": "reliability",
@@ -208,7 +218,8 @@
       "size": [
         260,
         54
-      ]
+      ],
+      "sublabel": "MTTR · incident rate"
     },
     {
       "id": "cost-savings",
@@ -221,7 +232,8 @@
       "size": [
         260,
         54
-      ]
+      ],
+      "sublabel": "$/token · $/epoch"
     }
   ],
   "boundaries": [

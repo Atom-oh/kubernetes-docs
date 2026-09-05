@@ -9,7 +9,7 @@
     "animation": "trace",
     "viewBox": [
       1160,
-      760
+      700
     ],
     "views": [
       {
@@ -116,7 +116,7 @@
       "sublabel": "per-deployment replica count",
       "pos": [
         590,
-        330
+        310
       ],
       "size": [
         210,
@@ -130,7 +130,7 @@
       "sublabel": "worker Pod count",
       "pos": [
         590,
-        480
+        450
       ],
       "size": [
         210,
@@ -144,7 +144,7 @@
       "sublabel": "EC2 node count",
       "pos": [
         590,
-        630
+        590
       ],
       "size": [
         210,
