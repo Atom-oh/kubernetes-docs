@@ -1,0 +1,291 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KServe 추론 요청 흐름과 배포 모드",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "클라이언트"
+        },
+        "backend": {
+          "label": "KServe 컴포넌트"
+        },
+        "cloud": {
+          "label": "실행 단위 (Pod)"
+        },
+        "security": {
+          "label": "배포 모드 결정"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "entry",
+        "label": "요청 진입",
+        "focus": [
+          "request",
+          "isvc",
+          "predictor"
+        ],
+        "note": "클라이언트 요청이 InferenceService에 도달하면 필수 컴포넌트인 Predictor 스펙이 요청을 받습니다."
+      },
+      {
+        "id": "optional",
+        "label": "선택 컴포넌트",
+        "focus": [
+          "predictor",
+          "transformer",
+          "explainer",
+          "mode"
+        ],
+        "note": "Transformer(전/후처리)와 Explainer(모델 설명)는 필요할 때만 추가하는 선택 컴포넌트입니다."
+      },
+      {
+        "id": "modes",
+        "label": "배포 모드 분기",
+        "focus": [
+          "mode",
+          "knative",
+          "rawdep"
+        ],
+        "note": "Serverless는 Knative가 Pod를 관리해 scale-to-zero가 가능하고, Raw Deployment는 Deployment/Service + HPA로 상시 실행됩니다."
+      },
+      {
+        "id": "inference",
+        "label": "추론과 응답",
+        "focus": [
+          "knative",
+          "rawdep",
+          "model",
+          "response"
+        ],
+        "note": "어느 모드든 모델 서버가 아티팩트를 로드해 추론을 수행하고 결과를 클라이언트에 돌려줍니다."
+      }
+    ],
+    "viewBox": [
+      1160,
+      776
+    ]
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "클라이언트"
+    },
+    {
+      "id": "isvc",
+      "label": "InferenceService"
+    },
+    {
+      "id": "optional",
+      "label": "선택 컴포넌트"
+    },
+    {
+      "id": "serverless",
+      "label": "Serverless 모드 (Knative)"
+    },
+    {
+      "id": "raw",
+      "label": "Raw Deployment 모드"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "isvc",
+    "predictor",
+    "mode",
+    "knative",
+    "model",
+    "response"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "client",
+      "col": 0,
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "추론 요청",
+      "width": 136
+    },
+    {
+      "id": "isvc",
+      "lane": "isvc",
+      "col": 1,
+      "type": "backend",
+      "label": "InferenceService",
+      "sublabel": "KServe CRD",
+      "width": 136
+    },
+    {
+      "id": "predictor",
+      "lane": "isvc",
+      "col": 2,
+      "type": "backend",
+      "label": "Predictor 스펙",
+      "sublabel": "필수 · 모델 서버",
+      "width": 132
+    },
+    {
+      "id": "transformer",
+      "lane": "optional",
+      "col": 1,
+      "type": "backend",
+      "label": "Transformer",
+      "sublabel": "선택 · 전/후처리",
+      "width": 184
+    },
+    {
+      "id": "explainer",
+      "lane": "optional",
+      "col": 2,
+      "type": "backend",
+      "label": "Explainer",
+      "sublabel": "선택 · 모델 설명",
+      "width": 184
+    },
+    {
+      "id": "mode",
+      "lane": "isvc",
+      "col": 3,
+      "type": "security",
+      "label": "배포 모드",
+      "sublabel": "Serverless / Raw",
+      "width": 148
+    },
+    {
+      "id": "knative",
+      "lane": "serverless",
+      "col": 4,
+      "type": "cloud",
+      "label": "Knative 관리 Pod",
+      "sublabel": "scale-to-zero 가능",
+      "width": 168
+    },
+    {
+      "id": "rawdep",
+      "lane": "raw",
+      "col": 3,
+      "type": "cloud",
+      "label": "Deployment/Service + HPA",
+      "sublabel": "scale-to-zero 없음",
+      "width": 196
+    },
+    {
+      "id": "model",
+      "lane": "isvc",
+      "col": 5,
+      "type": "backend",
+      "label": "모델 서버 추론",
+      "sublabel": "아티팩트 로드 후 추론",
+      "width": 196
+    },
+    {
+      "id": "response",
+      "lane": "client",
+      "col": 5,
+      "type": "external",
+      "label": "클라이언트에 응답",
+      "sublabel": "추론 결과",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-isvc",
+      "from": "request",
+      "to": "isvc"
+    },
+    {
+      "id": "isvc-predictor",
+      "from": "isvc",
+      "to": "predictor"
+    },
+    {
+      "id": "predictor-transformer",
+      "from": "predictor",
+      "to": "transformer",
+      "label": "선택",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-explainer",
+      "from": "predictor",
+      "to": "explainer",
+      "label": "선택",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-mode",
+      "from": "predictor",
+      "to": "mode"
+    },
+    {
+      "id": "mode-knative",
+      "from": "mode",
+      "to": "knative",
+      "label": "Serverless",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mode-rawdep",
+      "from": "mode",
+      "to": "rawdep",
+      "label": "Raw Deployment",
+      "role": "branch"
+    },
+    {
+      "id": "knative-model",
+      "from": "knative",
+      "to": "model",
+      "route": "outside-right"
+    },
+    {
+      "id": "rawdep-model",
+      "from": "rawdep",
+      "to": "model",
+      "role": "branch"
+    },
+    {
+      "id": "model-response",
+      "from": "model",
+      "to": "response",
+      "label": "응답",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "InferenceService 컴포넌트",
+      "items": [
+        "Predictor(필수): 모델 아티팩트를 로드하고 추론 요청에 응답",
+        "Transformer(선택): predictor 앞단의 전/후처리",
+        "Explainer(선택): 피처 중요도 등 모델 설명 생성"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Serverless 모드 (Knative)",
+      "items": [
+        "Knative Serving이 Pod 라이프사이클을 관리",
+        "트래픽이 없으면 Pod를 0개까지 축소",
+        "0에서 스케일 업할 때 콜드 스타트 지연 발생"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Raw Deployment 모드",
+      "items": [
+        "일반 Deployment · Service · HPA를 직접 관리",
+        "Knative 의존성 없음, 콜드 스타트 없음",
+        "최소 레플리카가 항상 실행되어 scale-to-zero 불가"
+      ]
+    }
+  ]
+}

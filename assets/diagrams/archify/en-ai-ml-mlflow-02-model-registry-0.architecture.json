@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Champion / Challenger Alias Routing",
+    "locale": "en",
+    "output": "en-ai-ml-mlflow-02-model-registry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Serving system (out of scope for this part)"
+        },
+        "backend": {
+          "label": "Alias — movable pointer"
+        },
+        "database": {
+          "label": "Model Version — immutable"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "champion-path",
+        "label": "Live serving path",
+        "focus": [
+          "serving",
+          "champion",
+          "v2"
+        ],
+        "note": "The serving system resolves models:/fraud-detector@champion and loads whichever version currently holds the alias."
+      },
+      {
+        "id": "challenger-path",
+        "label": "Promotion review path",
+        "focus": [
+          "serving",
+          "challenger",
+          "v4"
+        ],
+        "note": "The challenger alias marks the version under evaluation for promotion without disturbing what is currently serving."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "serving",
+      "type": "external",
+      "label": "Serving system",
+      "sublabel": "never hardcodes a version number",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "champion",
+      "type": "backend",
+      "label": "champion",
+      "sublabel": "alias",
+      "pos": [
+        360,
+        150
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "challenger",
+      "type": "backend",
+      "label": "challenger",
+      "sublabel": "alias",
+      "pos": [
+        360,
+        330
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "v1",
+      "type": "database",
+      "label": "Version 1",
+      "pos": [
+        660,
+        60
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "database",
+      "label": "Version 2",
+      "pos": [
+        660,
+        150
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "v3",
+      "type": "database",
+      "label": "Version 3",
+      "pos": [
+        660,
+        240
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "v4",
+      "type": "database",
+      "label": "Version 4",
+      "pos": [
+        660,
+        330
+      ],
+      "size": [
+        150,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Registered Model: fraud-detector",
+      "wraps": [
+        "v1",
+        "v2",
+        "v3",
+        "v4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "resolve-champion",
+      "from": "serving",
+      "to": "champion",
+      "label": "resolves models:/fraud-detector@champion",
+      "variant": "emphasis",
+      "labelAt": [
+        295,
+        146
+      ]
+    },
+    {
+      "id": "evaluate-challenger",
+      "from": "serving",
+      "to": "challenger",
+      "label": "evaluates via models:/fraud-detector@challenger",
+      "variant": "dashed"
+    },
+    {
+      "id": "champion-to-v2",
+      "from": "champion",
+      "to": "v2",
+      "label": "currently points at",
+      "variant": "emphasis"
+    },
+    {
+      "id": "challenger-to-v4",
+      "from": "challenger",
+      "to": "v4",
+      "label": "version under evaluation",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Alias",
+      "items": [
+        "A mutable, named pointer to a specific Model Version",
+        "Moved via set_registered_model_alias only after the evaluation gates pass",
+        "Consumers need no code change"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Model Version",
+      "items": [
+        "Immutable, numbered version under a Registered Model name",
+        "A new training result becomes a new version",
+        "Points back to the LoggedModel / Run that produced it"
+      ]
+    }
+  ]
+}

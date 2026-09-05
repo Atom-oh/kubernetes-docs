@@ -1,0 +1,382 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LLM Inference Framework Landscape",
+    "locale": "en",
+    "output": "en-ai-ml-04-inference-frameworks-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "LLM gateway"
+        },
+        "backend": {
+          "label": "Serving framework"
+        },
+        "cloud": {
+          "label": "Provisioning / AWS silicon"
+        },
+        "external": {
+          "label": "Local dev tool"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gateway",
+        "label": "Gateway routing",
+        "focus": [
+          "litellm",
+          "nim",
+          "vllm",
+          "sglang"
+        ],
+        "note": "The LiteLLM gateway integrates 100+ model providers with cost tracking and routes requests to the NIM, vLLM and SGLang backends."
+      },
+      {
+        "id": "dynamo",
+        "label": "Dynamo orchestration",
+        "focus": [
+          "dynamo",
+          "nim",
+          "trt",
+          "vllm",
+          "sglang"
+        ],
+        "note": "NVIDIA Dynamo orchestrates vLLM, SGLang and TensorRT-LLM with disaggregated serving and intelligent routing; NIM runs on TensorRT-LLM."
+      },
+      {
+        "id": "distributed",
+        "label": "Distributed inference",
+        "focus": [
+          "kuberay",
+          "rayserve",
+          "aibrix",
+          "vllm",
+          "sglang"
+        ],
+        "note": "Ray Serve (managed by the KubeRay Operator) and AIBrix add distributed inference at scale and LoRA multi-tenancy on top of vLLM and SGLang."
+      },
+      {
+        "id": "provision",
+        "label": "Node provisioning",
+        "focus": [
+          "karpenter",
+          "dynamo",
+          "rayserve",
+          "neuron"
+        ],
+        "note": "Karpenter provisions the nodes needed by the NVIDIA stack, the open-source frameworks and AWS Neuron / Inferentia2 workloads."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "litellm",
+      "type": "frontend",
+      "label": "LiteLLM",
+      "sublabel": "Multi-provider gateway",
+      "pos": [
+        60,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ollama",
+      "type": "external",
+      "label": "Ollama",
+      "sublabel": "Local runtime on llama.cpp",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sglang",
+      "type": "backend",
+      "label": "SGLang",
+      "sublabel": "RadixAttention · structured output",
+      "pos": [
+        480,
+        160
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aibrix",
+      "type": "backend",
+      "label": "AIBrix",
+      "sublabel": "LoRA · heterogeneous GPUs",
+      "pos": [
+        480,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vllm",
+      "type": "backend",
+      "label": "vLLM",
+      "sublabel": "Open-source serving engine",
+      "pos": [
+        480,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rayserve",
+      "type": "backend",
+      "label": "Ray Serve",
+      "sublabel": "Distributed inference at scale",
+      "pos": [
+        480,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nim",
+      "type": "backend",
+      "label": "NVIDIA NIM",
+      "sublabel": "Inference microservices",
+      "pos": [
+        920,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "trt",
+      "type": "backend",
+      "label": "TensorRT-LLM",
+      "sublabel": "Inference engine",
+      "pos": [
+        920,
+        160
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dynamo",
+      "type": "backend",
+      "label": "NVIDIA Dynamo",
+      "sublabel": "Disaggregated serving · routing",
+      "pos": [
+        920,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "kuberay",
+      "type": "backend",
+      "label": "KubeRay Operator",
+      "sublabel": "Ray cluster management",
+      "pos": [
+        480,
+        640
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "GPU node autoscaling",
+      "pos": [
+        780,
+        640
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "neuron",
+      "type": "cloud",
+      "label": "Neuron SDK · Inferentia2",
+      "sublabel": "Inference on AWS silicon",
+      "pos": [
+        1000,
+        640
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Dev / Gateway Tools",
+      "wraps": [
+        "litellm",
+        "ollama"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NVIDIA Stack",
+      "wraps": [
+        "nim",
+        "trt",
+        "dynamo"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Open Source Frameworks",
+      "wraps": [
+        "vllm",
+        "aibrix",
+        "sglang",
+        "rayserve"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Orchestration Layer",
+      "wraps": [
+        "kuberay",
+        "karpenter"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Native",
+      "wraps": [
+        "neuron"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "litellm-vllm",
+      "from": "litellm",
+      "to": "vllm",
+      "label": "request routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "litellm-sglang",
+      "from": "litellm",
+      "to": "sglang"
+    },
+    {
+      "id": "litellm-nim",
+      "from": "litellm",
+      "to": "nim"
+    },
+    {
+      "id": "nim-trt",
+      "from": "nim",
+      "to": "trt"
+    },
+    {
+      "id": "dynamo-trt",
+      "from": "dynamo",
+      "to": "trt"
+    },
+    {
+      "id": "dynamo-vllm",
+      "from": "dynamo",
+      "to": "vllm",
+      "label": "orchestration"
+    },
+    {
+      "id": "dynamo-sglang",
+      "from": "dynamo",
+      "to": "sglang"
+    },
+    {
+      "id": "aibrix-vllm",
+      "from": "aibrix",
+      "to": "vllm"
+    },
+    {
+      "id": "aibrix-sglang",
+      "from": "aibrix",
+      "to": "sglang"
+    },
+    {
+      "id": "rayserve-vllm",
+      "from": "rayserve",
+      "to": "vllm"
+    },
+    {
+      "id": "kuberay-rayserve",
+      "from": "kuberay",
+      "to": "rayserve"
+    },
+    {
+      "id": "karpenter-rayserve",
+      "from": "karpenter",
+      "to": "rayserve",
+      "variant": "dashed"
+    },
+    {
+      "id": "karpenter-dynamo",
+      "from": "karpenter",
+      "to": "dynamo",
+      "variant": "dashed",
+      "label": "GPU node provisioning",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "karpenter-neuron",
+      "from": "karpenter",
+      "to": "neuron",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Framework Selection Guide",
+      "items": [
+        "Enterprise production with NVIDIA GPUs → NVIDIA NIM (optimized containers, support, monitoring)",
+        "High throughput with KV cache optimization → NVIDIA Dynamo (disaggregated serving, intelligent routing)",
+        "Distributed inference at scale → Ray Serve + vLLM / LoRA multi-tenancy → AIBrix",
+        "Cost optimization with AWS silicon → AWS Neuron + Inferentia2 (40-70% cheaper than GPUs)"
+      ]
+    }
+  ]
+}

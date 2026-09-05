@@ -9,7 +9,9 @@
 
 Kubernetes에서 AI/ML 워크로드를 효율적으로 실행하려면 여러 차원에서 신중한 고려가 필요합니다:
 
-![EKS AI/ML 모범 사례 8개 영역(벤치마킹, 컨테이너 최적화, GPU 선택, 네트워킹, 스토리지, 관측성, 비용 최적화, 보안)이 고성능, 리소스 효율성, 안정성, 비용 절감이라는 4가지 기대 결과로 이어지는 관계를 보여주는 아키텍처형 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-07-ai-ml-best-practices-0.svg)
+![EKS AI/ML 모범 사례 8개 영역(벤치마킹, 컨테이너 최적화, GPU 선택, 네트워킹, 스토리지, 관측성, 비용 최적화, 보안)이 고성능, 리소스 효율성, 안정성, 비용 절감이라는 4가지 기대 결과로 이어지는 관계를 보여준다.](../.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-07-ai-ml-best-practices-0.html)
 
 ## LLM 추론 벤치마킹
 
@@ -19,7 +21,9 @@ Kubernetes에서 AI/ML 워크로드를 효율적으로 실행하려면 여러 �
 
 LLM 추론 성능을 평가하기 위한 핵심 지표를 이해하는 것이 중요합니다:
 
-![TTFT, ITL, TPS, 종단간 지연, 처리량이라는 5가지 LLM 추론 지표가 인지된 응답성, 스트리밍 품질, 시스템 용량이라는 3가지 사용자 경험 요소에 미치는 영향을 보여주는 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-07-ai-ml-best-practices-1.svg)
+![TTFT, ITL, TPS, 종단간 지연, 처리량이라는 5가지 LLM 추론 지표가 인지된 응답성, 스트리밍 품질, 시스템 용량이라는 3가지 사용자 경험 요소에 각각 어떻게 이어지는지 보여준다.](../.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-07-ai-ml-best-practices-1.html)
 
 | 지표 | 설명 | 공식 | 목표 범위 |
 |------|------|------|----------|
@@ -219,7 +223,9 @@ AI/ML 컨테이너는 큰 이미지 크기와 모델 로딩 요구 사항으로 
 
 ### 콜드 스타트 타임라인 분석
 
-![쿠버네티스 스케줄러, Kubelet, 컨테이너 레지스트리, 컨테이너 런타임, AI/ML 애플리케이션 5개 참여자 사이에서 파드 스케줄링, 이미지 풀, 컨테이너 생성, 모델 로딩, 헬스 체크로 이어지는 콜드 스타트 시퀀스와 각 단계의 소요 시간을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/ko-ai-ml-07-ai-ml-best-practices-2.svg)
+![K8s 스케줄러, Kubelet, 컨테이너 레지스트리, 컨테이너 런타임, AI/ML 애플리케이션 사이에서 파드 스케줄링, 이미지 풀(2-10분), 컨테이너 생성, 모델 로딩(1-5분), 헬스 체크로 이어지는 콜드 스타트 시퀀스와 각 단계의 소요 시간을 보여준다.](../.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-07-ai-ml-best-practices-2.html)
 
 ### 이미지 크기 분석
 

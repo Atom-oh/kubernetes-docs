@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DRA vs 기존 GPU 스케줄링",
+    "output": "ko-ai-ml-06-ai-infrastructure-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      774
+    ],
+    "views": [
+      {
+        "id": "traditional",
+        "label": "기존 디바이스 플러그인",
+        "focus": [
+          "t1",
+          "t2",
+          "t3"
+        ],
+        "note": "nvidia.com/gpu: 1 요청은 GPU를 통째로 할당하므로 공유나 세밀한 제어가 불가능하다."
+      },
+      {
+        "id": "dra-flow",
+        "label": "DRA 할당 흐름",
+        "focus": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5"
+        ],
+        "note": "ResourceClaim → DRA 드라이버 → ResourceSlice 토폴로지 → 세밀한 할당 → 토폴로지 인식 스케줄링."
+      },
+      {
+        "id": "benefits",
+        "label": "DRA 이점",
+        "focus": [
+          "d4",
+          "d5",
+          "b1",
+          "b2",
+          "b3",
+          "b4"
+        ],
+        "note": "세밀한 할당은 메모리 파티셔닝과 멀티테넌트 공유를, 토폴로지 인식은 NVLink와 P6e-GB200 지원을 가능하게 한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "external",
+      "label": "파드 요청",
+      "sublabel": "nvidia.com/gpu: 1",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "external",
+      "label": "디바이스 플러그인",
+      "sublabel": "전체 GPU 할당",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "external",
+      "label": "독점적 GPU 접근",
+      "sublabel": "공유 불가 · 세밀한 제어 불가",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "cloud",
+      "label": "GPU 메모리 파티셔닝",
+      "pos": [
+        430,
+        300
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "cloud",
+      "label": "멀티테넌트 GPU 공유",
+      "pos": [
+        430,
+        410
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "cloud",
+      "label": "NVLink 토폴로지 인식",
+      "pos": [
+        430,
+        520
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "cloud",
+      "label": "P6e-GB200 UltraServer 지원",
+      "pos": [
+        430,
+        630
+      ],
+      "size": [
+        220,
+        56
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "backend",
+      "label": "ResourceClaim 생성",
+      "sublabel": "파드가 클레임 요청",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d2",
+      "type": "backend",
+      "label": "DRA 드라이버",
+      "sublabel": "클레임 평가",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d3",
+      "type": "database",
+      "label": "ResourceSlice",
+      "sublabel": "GPU 토폴로지 추적",
+      "pos": [
+        820,
+        280
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d4",
+      "type": "backend",
+      "label": "세밀한 할당",
+      "sublabel": "MIG · MPS · 타임슬라이스",
+      "pos": [
+        820,
+        390
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "d5",
+      "type": "backend",
+      "label": "토폴로지 인식 스케줄링",
+      "sublabel": "NVLink · IMEX",
+      "pos": [
+        820,
+        500
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "기존 디바이스 플러그인 방식",
+      "wraps": [
+        "t1",
+        "t2",
+        "t3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DRA 이점",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3",
+        "b4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "DRA 방식 (Kubernetes 1.31+)",
+      "wraps": [
+        "d1",
+        "d2",
+        "d3",
+        "d4",
+        "d5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "t1-t2",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "t2-t3",
+      "from": "t2",
+      "to": "t3"
+    },
+    {
+      "id": "t3-b2",
+      "from": "t3",
+      "to": "b2",
+      "label": "제한적",
+      "variant": "dashed"
+    },
+    {
+      "id": "d1-d2",
+      "from": "d1",
+      "to": "d2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d2-d3",
+      "from": "d2",
+      "to": "d3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d3-d4",
+      "from": "d3",
+      "to": "d4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d4-d5",
+      "from": "d4",
+      "to": "d5",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d4-b1",
+      "from": "d4",
+      "to": "b1",
+      "label": "활성화"
+    },
+    {
+      "id": "d4-b2",
+      "from": "d4",
+      "to": "b2"
+    },
+    {
+      "id": "d5-b3",
+      "from": "d5",
+      "to": "b3",
+      "label": "활성화"
+    },
+    {
+      "id": "d5-b4",
+      "from": "d5",
+      "to": "b4"
+    }
+  ]
+}

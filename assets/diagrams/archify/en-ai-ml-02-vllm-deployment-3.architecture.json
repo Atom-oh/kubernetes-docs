@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM Deployment Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client"
+        },
+        "frontend": {
+          "label": "Networking"
+        },
+        "backend": {
+          "label": "vLLM Pod"
+        },
+        "messagebus": {
+          "label": "Collective communication"
+        },
+        "database": {
+          "label": "Shared Storage"
+        },
+        "cloud": {
+          "label": "AWS storage"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "lb",
+          "svc",
+          "pod1",
+          "pod2"
+        ],
+        "note": "Client requests reach the vLLM pods through the Load Balancer and the Kubernetes Service."
+      },
+      {
+        "id": "single-node",
+        "label": "Single Node Deployment",
+        "focus": [
+          "pod1",
+          "fsx"
+        ],
+        "note": "One pod uses all 8 GPUs of the node with tensor-parallel-size=8."
+      },
+      {
+        "id": "multi-node",
+        "label": "Multi-Node Deployment",
+        "focus": [
+          "pod2",
+          "nccl",
+          "pod3"
+        ],
+        "note": "One pod per node, with NCCL handling GPU-to-GPU communication across nodes."
+      },
+      {
+        "id": "model-storage",
+        "label": "Model storage",
+        "focus": [
+          "pod1",
+          "pod2",
+          "pod3",
+          "fsx",
+          "s3"
+        ],
+        "note": "Models are downloaded from S3 to FSx for Lustre, and every pod mounts the same PVC."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "HTTP requests",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "frontend",
+      "label": "Load Balancer",
+      "sublabel": "Service type: LoadBalancer",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "frontend",
+      "label": "Kubernetes Service",
+      "sublabel": "vllm-inference :8000",
+      "pos": [
+        590,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "vLLM Pod",
+      "sublabel": "8 GPUs · tensor-parallel-size=8",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "vLLM Pod 0",
+      "sublabel": "Node 0 · 8 GPUs",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "messagebus",
+      "label": "NCCL Communication",
+      "sublabel": "GPU-to-GPU collectives",
+      "pos": [
+        680,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "vLLM Pod 1",
+      "sublabel": "Node 1 · 8 GPUs",
+      "pos": [
+        900,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "vllm-models-pvc (RWX)",
+      "pos": [
+        420,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "Model repository",
+      "pos": [
+        420,
+        600
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Networking",
+      "wraps": [
+        "client",
+        "lb",
+        "svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Single Node Deployment",
+      "wraps": [
+        "pod1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Multi-Node Deployment",
+      "wraps": [
+        "pod2",
+        "nccl",
+        "pod3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Shared Storage",
+      "wraps": [
+        "fsx",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "inference request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-svc",
+      "from": "lb",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-pod1",
+      "from": "svc",
+      "to": "pod1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-pod2",
+      "from": "svc",
+      "to": "pod2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod2-nccl",
+      "from": "pod2",
+      "to": "nccl",
+      "variant": "dashed"
+    },
+    {
+      "id": "nccl-pod3",
+      "from": "nccl",
+      "to": "pod3",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod1-fsx",
+      "from": "pod1",
+      "to": "fsx",
+      "label": "load model",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "pod2-fsx",
+      "from": "pod2",
+      "to": "fsx",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod3-fsx",
+      "from": "pod3",
+      "to": "fsx",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "s3-fsx",
+      "from": "s3",
+      "to": "fsx",
+      "label": "model download Job",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Single Node Deployment",
+      "items": [
+        "One pod uses 8 GPUs with tensor-parallel-size=8",
+        "A Service of type LoadBalancer exposes port 8000"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Multi-Node Distributed Deployment",
+      "items": [
+        "hostfile: vllm-inference-0/1, slots=8 each",
+        "GPU communication across nodes runs over NCCL"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Shared Storage",
+      "items": [
+        "Every pod mounts the FSx for Lustre PVC (ReadWriteMany)",
+        "Hugging Face models are stored in S3 and downloaded to FSx by a Job"
+      ]
+    }
+  ]
+}

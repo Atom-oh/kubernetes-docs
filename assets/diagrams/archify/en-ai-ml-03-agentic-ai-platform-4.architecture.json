@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kagent Architecture",
+    "output": "en-ai-ml-03-agentic-ai-platform-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      900,
+      560
+    ],
+    "views": [
+      {
+        "id": "control",
+        "label": "Kagent control path",
+        "focus": [
+          "controller",
+          "crd",
+          "runtime"
+        ],
+        "note": "The Kagent Controller reconciles the Agent CRD and starts the Agent Runtime."
+      },
+      {
+        "id": "agent",
+        "label": "AI agent components",
+        "focus": [
+          "llm",
+          "tools",
+          "memory",
+          "state",
+          "runtime"
+        ],
+        "note": "LLM backend, tool set, memory store and state management feed the Runtime for inference, execution, store/query and management."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Kagent Controller",
+      "sublabel": "Kubernetes controller",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "security",
+      "label": "Agent CRD",
+      "sublabel": "kagent.dev/v1alpha1 Agent",
+      "pos": [
+        620,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "runtime",
+      "type": "backend",
+      "label": "Agent Runtime",
+      "sublabel": "Agent execution environment",
+      "pos": [
+        620,
+        340
+      ],
+      "size": [
+        200,
+        110
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "LLM Backend",
+      "sublabel": "via LiteLLM gateway",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "cloud",
+      "label": "Tool Set",
+      "sublabel": "HTTP / Milvus / Python tools",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "database",
+      "label": "Memory Store",
+      "sublabel": "Redis",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "state",
+      "type": "database",
+      "label": "State Management",
+      "sublabel": "Agent state",
+      "pos": [
+        60,
+        440
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kagent Architecture",
+      "wraps": [
+        "controller",
+        "crd",
+        "runtime"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AI Agent",
+      "wraps": [
+        "llm",
+        "tools",
+        "memory",
+        "state"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-crd",
+      "from": "controller",
+      "to": "crd",
+      "label": "watch / reconcile",
+      "variant": "emphasis",
+      "labelAt": [
+        720,
+        134
+      ]
+    },
+    {
+      "id": "crd-runtime",
+      "from": "crd",
+      "to": "runtime",
+      "label": "start",
+      "variant": "emphasis",
+      "labelAt": [
+        720,
+        264
+      ]
+    },
+    {
+      "id": "llm-runtime",
+      "from": "llm",
+      "to": "runtime",
+      "label": "Inference",
+      "labelAt": [
+        330,
+        110
+      ]
+    },
+    {
+      "id": "tools-runtime",
+      "from": "tools",
+      "to": "runtime",
+      "label": "Execution",
+      "labelAt": [
+        330,
+        230
+      ]
+    },
+    {
+      "id": "memory-runtime",
+      "from": "memory",
+      "to": "runtime",
+      "label": "Store / Query",
+      "labelAt": [
+        330,
+        350
+      ]
+    },
+    {
+      "id": "state-runtime",
+      "from": "state",
+      "to": "runtime",
+      "label": "Management",
+      "labelAt": [
+        330,
+        470
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Agent CRD spec (example)",
+      "items": [
+        "llm: provider litellm, model llama3-70b",
+        "tools: web_search(http), document_search(milvus), calculator(python)",
+        "memory: redis, ttl 3600"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Lifecycle management",
+      "items": [
+        "Kagent is a Kubernetes-native AI agent lifecycle management tool",
+        "replicas 2, autoscaling 2-10 (CPU 70%)"
+      ]
+    }
+  ]
+}

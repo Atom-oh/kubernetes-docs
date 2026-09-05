@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MLflow Tracking Structure: Backend Store and Artifact Store",
+    "locale": "en",
+    "output": "en-ai-ml-mlflow-01-tracking-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "write-path",
+        "label": "Experiment logging path",
+        "focus": [
+          "script",
+          "api",
+          "server",
+          "backend",
+          "artifact"
+        ],
+        "note": "The training script never talks to either store directly; it always logs through the Tracking API."
+      },
+      {
+        "id": "read-path",
+        "label": "UI read path",
+        "focus": [
+          "ui",
+          "backend",
+          "artifact"
+        ],
+        "note": "The Tracking UI reads from both stores to render experiments, runs, logged models, and traces."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "script",
+      "type": "external",
+      "label": "Training Script",
+      "sublabel": "mlflow.log_param / log_metric",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "MLflow Tracking API",
+      "sublabel": "Python / REST",
+      "pos": [
+        290,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Tracking Server",
+      "sublabel": "routes metadata / file writes",
+      "pos": [
+        550,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "database",
+      "label": "Backend Store",
+      "sublabel": "metadata: params, metrics, tags",
+      "pos": [
+        300,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "artifact",
+      "type": "cloud",
+      "label": "Artifact Store",
+      "sublabel": "files: models, plots, datasets",
+      "pos": [
+        640,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Tracking UI",
+      "sublabel": "browse experiments · runs · models · traces",
+      "pos": [
+        470,
+        450
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "script-to-api",
+      "from": "script",
+      "to": "api",
+      "label": "mlflow API calls",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "api-to-server",
+      "from": "api",
+      "to": "server",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-to-backend",
+      "from": "server",
+      "to": "backend",
+      "label": "write metadata",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "server-to-artifact",
+      "from": "server",
+      "to": "artifact",
+      "label": "write files",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ui-to-backend",
+      "from": "ui",
+      "to": "backend",
+      "label": "read",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ui-to-artifact",
+      "from": "ui",
+      "to": "artifact",
+      "label": "read",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Backend Store",
+      "items": [
+        "Params, metrics, tags, and experiment · run · logged model records",
+        "At team scale, a relational DB such as PostgreSQL or MySQL"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Artifact Store",
+      "items": [
+        "Large binaries: model files, plots, datasets",
+        "Typically object storage such as an S3-compatible bucket"
+      ]
+    }
+  ]
+}

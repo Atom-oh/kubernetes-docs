@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 아키텍처",
+    "output": "ko-ai-ml-03-agentic-ai-platform-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "vLLM 핵심 기술"
+        },
+        "external": {
+          "label": "성능 이점"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "paged-attention",
+      "type": "backend",
+      "label": "PagedAttention",
+      "sublabel": "KV 캐시 블록 단위 관리",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "continuous-batching",
+      "type": "backend",
+      "label": "연속 배치 처리",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "prefix-caching",
+      "type": "backend",
+      "label": "Prefix 캐싱",
+      "sublabel": "--enable-prefix-caching",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "chunked-prefill",
+      "type": "backend",
+      "label": "Chunked Prefill",
+      "sublabel": "--enable-chunked-prefill",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "external",
+      "label": "메모리 효율 95%+",
+      "sublabel": "GPU 메모리를 KV 캐시에 할당",
+      "pos": [
+        580,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "external",
+      "label": "처리량 24x 향상",
+      "pos": [
+        580,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "latency",
+      "type": "external",
+      "label": "지연시간 최소화",
+      "sublabel": "TTFT 50-80% 단축",
+      "pos": [
+        580,
+        310
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "context",
+      "type": "external",
+      "label": "긴 컨텍스트 지원",
+      "sublabel": "혼합 프롬프트 지연 안정화",
+      "pos": [
+        580,
+        420
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "vLLM 핵심 기술",
+      "wraps": [
+        "paged-attention",
+        "continuous-batching",
+        "prefix-caching",
+        "chunked-prefill"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "성능 이점",
+      "wraps": [
+        "memory",
+        "throughput",
+        "latency",
+        "context"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "paged-to-memory",
+      "from": "paged-attention",
+      "to": "memory",
+      "label": "--gpu-memory-utilization 0.95",
+      "variant": "emphasis"
+    },
+    {
+      "id": "batching-to-throughput",
+      "from": "continuous-batching",
+      "to": "throughput"
+    },
+    {
+      "id": "prefix-to-latency",
+      "from": "prefix-caching",
+      "to": "latency",
+      "label": "반복 시스템 프롬프트 캐싱"
+    },
+    {
+      "id": "chunked-to-context",
+      "from": "chunked-prefill",
+      "to": "context",
+      "label": "--max-num-batched-tokens 32768"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "vLLM 튜닝 포인트",
+      "items": [
+        "KV Cache 관리: GPU 메모리의 95%를 KV 캐시에 할당, --block-size 16",
+        "Prefix 캐싱: 동일한 시스템 프롬프트를 쓰는 요청의 TTFT를 50-80% 단축",
+        "Chunked Prefill: 긴 프롬프트와 짧은 프롬프트가 혼합된 워크로드의 응답 지연시간 안정화"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Deployment 플래그",
+      "items": [
+        "--gpu-memory-utilization 0.95",
+        "--enable-prefix-caching",
+        "--enable-chunked-prefill",
+        "--max-num-batched-tokens 32768"
+      ]
+    }
+  ]
+}

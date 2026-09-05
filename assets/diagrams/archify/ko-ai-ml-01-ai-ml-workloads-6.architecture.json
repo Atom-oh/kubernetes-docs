@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "모니터링 및 로깅 아키텍처",
+    "output": "ko-ai-ml-01-ai-ml-workloads-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "metrics-path", "label": "메트릭 경로", "focus": ["dcgm", "node-exporter", "ksm", "prometheus", "grafana", "dashboards"], "note": "익스포터가 노출한 메트릭을 Prometheus가 scrape하고 Grafana가 대시보드로 시각화한다." },
+      { "id": "alert-path", "label": "알림 경로", "focus": ["prometheus", "alertmanager", "alerts"], "note": "Prometheus 알림 규칙이 Alert Manager를 거쳐 GPU·성능·비용 알림으로 전달된다." },
+      { "id": "log-path", "label": "로그 경로", "focus": ["fluentd", "cloudwatch", "elasticsearch", "kibana"], "note": "Fluentd가 컨테이너 로그를 수집해 CloudWatch Logs와 ElasticSearch로 전달하고 Kibana로 조회한다." }
+    ]
+  },
+  "components": [
+    { "id": "dcgm", "type": "backend", "label": "NVIDIA DCGM Exporter", "sublabel": "GPU 메트릭", "pos": [40, 60], "size": [180, 60] },
+    { "id": "node-exporter", "type": "backend", "label": "Node Exporter", "sublabel": "노드 메트릭", "pos": [40, 170], "size": [180, 60] },
+    { "id": "ksm", "type": "backend", "label": "Kube State Metrics", "sublabel": "클러스터 오브젝트 상태", "pos": [40, 280], "size": [180, 60] },
+    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "메트릭 저장 · 규칙 평가", "pos": [320, 170], "size": [170, 60] },
+    { "id": "alertmanager", "type": "backend", "label": "Alert Manager", "sublabel": "알림 라우팅", "pos": [590, 60], "size": [160, 60] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "시각화", "pos": [590, 280], "size": [160, 60] },
+    { "id": "alerts", "type": "external", "label": "알림", "sublabel": "GPU · 성능 · 비용", "pos": [850, 60], "size": [180, 60] },
+    { "id": "dashboards", "type": "frontend", "label": "대시보드", "sublabel": "GPU · 훈련 · 추론 · 비용", "pos": [850, 280], "size": [180, 60] },
+    { "id": "fluentd", "type": "backend", "label": "Fluentd", "sublabel": "컨테이너 로그 수집", "pos": [40, 490], "size": [180, 60] },
+    { "id": "cloudwatch", "type": "cloud", "label": "CloudWatch Logs", "sublabel": "/eks/ml-cluster/pods", "pos": [320, 430], "size": [170, 60] },
+    { "id": "elasticsearch", "type": "database", "label": "ElasticSearch", "sublabel": "로그 인덱스", "pos": [320, 550], "size": [170, 60] },
+    { "id": "kibana", "type": "frontend", "label": "Kibana", "sublabel": "로그 조회", "pos": [590, 550], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "메트릭 수집", "wraps": ["dcgm", "node-exporter", "ksm"] },
+    { "kind": "region", "label": "모니터링 스택", "wraps": ["prometheus", "alertmanager", "grafana"] },
+    { "kind": "region", "label": "로깅 스택", "wraps": ["fluentd", "cloudwatch", "elasticsearch", "kibana"] }
+  ],
+  "connections": [
+    { "id": "dcgm-prom", "from": "dcgm", "to": "prometheus", "label": "scrape", "variant": "emphasis" },
+    { "id": "node-prom", "from": "node-exporter", "to": "prometheus", "variant": "emphasis" },
+    { "id": "ksm-prom", "from": "ksm", "to": "prometheus", "variant": "emphasis" },
+    { "id": "prom-alertmanager", "from": "prometheus", "to": "alertmanager", "label": "알림 규칙" },
+    { "id": "prom-grafana", "from": "prometheus", "to": "grafana", "label": "쿼리", "variant": "emphasis" },
+    { "id": "alertmanager-alerts", "from": "alertmanager", "to": "alerts" },
+    { "id": "grafana-dashboards", "from": "grafana", "to": "dashboards", "variant": "emphasis" },
+    { "id": "fluentd-cloudwatch", "from": "fluentd", "to": "cloudwatch" },
+    { "id": "fluentd-es", "from": "fluentd", "to": "elasticsearch" },
+    { "id": "es-kibana", "from": "elasticsearch", "to": "kibana" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "메트릭", "items": ["ServiceMonitor가 dcgm-exporter를 15초 간격으로 scrape한다", "Grafana GPU 대시보드는 DCGM_FI_DEV_GPU_UTIL 등을 표시한다"] },
+    { "dot": "amber", "title": "로그", "items": ["Fluentd가 /var/log/containers/*.log를 tail하고 Kubernetes 메타데이터를 붙인다", "cloudwatch_logs 플러그인이 /eks/ml-cluster/pods 로그 그룹으로 전송한다"] }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Champion / Challenger 별칭 라우팅",
+    "output": "ko-ai-ml-mlflow-02-model-registry-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": { "label": "서빙 시스템 (이 문서 범위 밖)" },
+        "backend": { "label": "Alias — 옮길 수 있는 포인터" },
+        "database": { "label": "Model Version — 불변" }
+      }
+    },
+    "views": [
+      { "id": "champion-path", "label": "정식 서빙 경로", "focus": ["serving", "champion", "v2"], "note": "서빙 시스템은 models:/fraud-detector@champion 을 resolve해 현재 별칭이 가리키는 버전을 로드한다." },
+      { "id": "challenger-path", "label": "승격 검토 경로", "focus": ["serving", "challenger", "v4"], "note": "challenger 별칭은 현재 서빙 중인 버전을 건드리지 않으면서 승격 검토 중인 버전을 표시한다." }
+    ]
+  },
+  "components": [
+    { "id": "serving", "type": "external", "label": "서빙 시스템", "sublabel": "버전 번호를 하드코딩하지 않음", "pos": [40, 210], "size": [190, 64] },
+    { "id": "champion", "type": "backend", "label": "champion", "sublabel": "alias", "pos": [360, 150], "size": [150, 56] },
+    { "id": "challenger", "type": "backend", "label": "challenger", "sublabel": "alias", "pos": [360, 330], "size": [150, 56] },
+    { "id": "v1", "type": "database", "label": "Version 1", "pos": [660, 60], "size": [150, 56] },
+    { "id": "v2", "type": "database", "label": "Version 2", "pos": [660, 150], "size": [150, 56] },
+    { "id": "v3", "type": "database", "label": "Version 3", "pos": [660, 240], "size": [150, 56] },
+    { "id": "v4", "type": "database", "label": "Version 4", "pos": [660, 330], "size": [150, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Registered Model: fraud-detector", "wraps": ["v1", "v2", "v3", "v4"] }
+  ],
+  "connections": [
+    { "id": "resolve-champion", "from": "serving", "to": "champion", "label": "models:/fraud-detector@champion resolve", "variant": "emphasis", "labelAt": [295, 146] },
+    { "id": "evaluate-challenger", "from": "serving", "to": "challenger", "label": "models:/fraud-detector@challenger 로 평가", "variant": "dashed" },
+    { "id": "champion-to-v2", "from": "champion", "to": "v2", "label": "현재 가리키는 버전", "variant": "emphasis" },
+    { "id": "challenger-to-v4", "from": "challenger", "to": "v4", "label": "검토 중인 버전", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Alias", "items": ["특정 Model Version을 가리키는, 옮길 수 있는 이름", "평가 게이트를 통과한 뒤 set_registered_model_alias 로 이동", "소비하는 쪽 코드는 수정하지 않는다"] },
+    { "dot": "slate", "title": "Model Version", "items": ["Registered Model 이름 아래의 불변·번호 버전", "새 학습 결과는 새 버전이 된다", "자신을 만든 LoggedModel / Run 을 가리킨다"] }
+  ]
+}

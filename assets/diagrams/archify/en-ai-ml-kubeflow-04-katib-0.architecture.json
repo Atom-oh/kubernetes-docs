@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How an Experiment Runs, End to End",
+    "locale": "en",
+    "output": "en-ai-ml-kubeflow-04-katib-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      740
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Experiment input"
+        },
+        "backend": {
+          "label": "Katib components"
+        },
+        "cloud": {
+          "label": "Trial training jobs"
+        },
+        "messagebus": {
+          "label": "Metrics reporting"
+        },
+        "database": {
+          "label": "Experiment status"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "submit",
+        "label": "Submit and start Suggestion",
+        "focus": [
+          "experiment",
+          "controller",
+          "suggestion"
+        ],
+        "note": "The controller reconciles the Experiment and starts a Suggestion service for the requested algorithm."
+      },
+      {
+        "id": "loop",
+        "label": "Search loop",
+        "focus": [
+          "suggestion",
+          "propose",
+          "trial1",
+          "trial2",
+          "trialn",
+          "sidecar"
+        ],
+        "note": "Each proposal becomes a Trial training job; metrics reported by the sidecar inform the next round of proposals."
+      },
+      {
+        "id": "finish",
+        "label": "Stop and record",
+        "focus": [
+          "suggestion",
+          "succeeded",
+          "record"
+        ],
+        "note": "Once maxTrialCount or the target objective is reached, the best Trial's hyperparameters and metric are recorded on status."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "experiment",
+      "type": "frontend",
+      "label": "Experiment CRD created",
+      "sublabel": "objective · parameters · trialTemplate",
+      "pos": [
+        40,
+        30
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Katib controller",
+      "sublabel": "reconciles the Experiment",
+      "pos": [
+        300,
+        30
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "suggestion",
+      "type": "backend",
+      "label": "Suggestion service created",
+      "sublabel": "for the chosen algorithm",
+      "pos": [
+        500,
+        150
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "propose",
+      "type": "backend",
+      "label": "Proposes hyperparameter set(s)",
+      "sublabel": "bounded by parallelTrialCount",
+      "pos": [
+        500,
+        300
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "trial1",
+      "type": "cloud",
+      "label": "Trial 1",
+      "sublabel": "training job",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trial2",
+      "type": "cloud",
+      "label": "Trial 2",
+      "sublabel": "training job",
+      "pos": [
+        530,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trialn",
+      "type": "cloud",
+      "label": "Trial N",
+      "sublabel": "training job",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "messagebus",
+      "label": "Reports objective metric",
+      "sublabel": "metrics-collector sidecar",
+      "pos": [
+        500,
+        580
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "succeeded",
+      "type": "database",
+      "label": "Experiment marked Succeeded",
+      "sublabel": "stop condition met",
+      "pos": [
+        960,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "record",
+      "type": "database",
+      "label": "Best Trial recorded",
+      "sublabel": "hyperparameters + metric on status",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "exp-ctrl",
+      "from": "experiment",
+      "to": "controller",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-sugg",
+      "from": "controller",
+      "to": "suggestion",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sugg-propose",
+      "from": "suggestion",
+      "to": "propose",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-t1",
+      "from": "propose",
+      "to": "trial1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-t2",
+      "from": "propose",
+      "to": "trial2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "propose-tn",
+      "from": "propose",
+      "to": "trialn",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t1-sidecar",
+      "from": "trial1",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2-sidecar",
+      "from": "trial2",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tn-sidecar",
+      "from": "trialn",
+      "to": "sidecar",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sidecar-sugg",
+      "from": "sidecar",
+      "to": "suggestion",
+      "label": "results feed back",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          230,
+          612
+        ],
+        [
+          230,
+          182
+        ]
+      ]
+    },
+    {
+      "id": "sugg-succeeded",
+      "from": "suggestion",
+      "to": "succeeded",
+      "label": "maxTrialCount reached or target objective hit",
+      "variant": "emphasis"
+    },
+    {
+      "id": "succeeded-record",
+      "from": "succeeded",
+      "to": "record",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

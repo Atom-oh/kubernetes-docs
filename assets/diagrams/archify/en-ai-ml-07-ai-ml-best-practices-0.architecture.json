@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML Best Practices on EKS and Expected Outcomes",
+    "output": "en-ai-ml-07-ai-ml-best-practices-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1400,
+      720
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Best-practice area"
+        },
+        "external": {
+          "label": "Expected outcome"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "perf",
+        "label": "High performance",
+        "focus": [
+          "benchmarking",
+          "container",
+          "gpu",
+          "network",
+          "storage",
+          "performance"
+        ],
+        "note": "Five areas - benchmarking, container optimization, GPU selection, networking, storage - feed high performance."
+      },
+      {
+        "id": "eff",
+        "label": "Resource efficiency",
+        "focus": [
+          "container",
+          "gpu",
+          "efficiency"
+        ],
+        "note": "Container optimization and GPU selection also drive resource efficiency, not just performance."
+      },
+      {
+        "id": "rel",
+        "label": "Reliability",
+        "focus": [
+          "observability",
+          "security",
+          "reliability"
+        ],
+        "note": "Observability and security underpin reliability."
+      },
+      {
+        "id": "cost",
+        "label": "Cost savings",
+        "focus": [
+          "cost",
+          "cost-savings"
+        ],
+        "note": "Cost optimization maps directly to cost savings."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "Container Optimization",
+      "pos": [
+        80,
+        90
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "backend",
+      "label": "GPU Selection",
+      "pos": [
+        80,
+        156
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "benchmarking",
+      "type": "backend",
+      "label": "Benchmarking & Performance",
+      "pos": [
+        80,
+        222
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "network",
+      "type": "backend",
+      "label": "Networking",
+      "pos": [
+        80,
+        288
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "backend",
+      "label": "Storage",
+      "pos": [
+        80,
+        354
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "backend",
+      "label": "Observability",
+      "pos": [
+        80,
+        420
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "security",
+      "type": "backend",
+      "label": "Security",
+      "pos": [
+        80,
+        486
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "cost",
+      "type": "backend",
+      "label": "Cost Optimization",
+      "pos": [
+        80,
+        552
+      ],
+      "size": [
+        260,
+        48
+      ]
+    },
+    {
+      "id": "efficiency",
+      "type": "external",
+      "label": "Resource Efficiency",
+      "pos": [
+        800,
+        153
+      ],
+      "size": [
+        260,
+        54
+      ]
+    },
+    {
+      "id": "performance",
+      "type": "external",
+      "label": "High Performance",
+      "pos": [
+        800,
+        273
+      ],
+      "size": [
+        260,
+        54
+      ]
+    },
+    {
+      "id": "reliability",
+      "type": "external",
+      "label": "Reliability",
+      "pos": [
+        800,
+        450
+      ],
+      "size": [
+        260,
+        54
+      ]
+    },
+    {
+      "id": "cost-savings",
+      "type": "external",
+      "label": "Cost Savings",
+      "pos": [
+        800,
+        549
+      ],
+      "size": [
+        260,
+        54
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AI/ML Best Practices on EKS",
+      "wraps": [
+        "container",
+        "gpu",
+        "benchmarking",
+        "network",
+        "storage",
+        "observability",
+        "security",
+        "cost"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Expected Outcomes",
+      "wraps": [
+        "efficiency",
+        "performance",
+        "reliability",
+        "cost-savings"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "benchmarking-to-performance",
+      "from": "benchmarking",
+      "to": "performance"
+    },
+    {
+      "id": "container-to-performance",
+      "from": "container",
+      "to": "performance",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          210,
+          44
+        ],
+        [
+          1160,
+          44
+        ],
+        [
+          1160,
+          300
+        ]
+      ]
+    },
+    {
+      "id": "gpu-to-performance",
+      "from": "gpu",
+      "to": "performance"
+    },
+    {
+      "id": "network-to-performance",
+      "from": "network",
+      "to": "performance"
+    },
+    {
+      "id": "storage-to-performance",
+      "from": "storage",
+      "to": "performance"
+    },
+    {
+      "id": "container-to-efficiency",
+      "from": "container",
+      "to": "efficiency"
+    },
+    {
+      "id": "gpu-to-efficiency",
+      "from": "gpu",
+      "to": "efficiency"
+    },
+    {
+      "id": "observability-to-reliability",
+      "from": "observability",
+      "to": "reliability"
+    },
+    {
+      "id": "security-to-reliability",
+      "from": "security",
+      "to": "reliability"
+    },
+    {
+      "id": "cost-to-cost-savings",
+      "from": "cost",
+      "to": "cost-savings"
+    }
+  ]
+}

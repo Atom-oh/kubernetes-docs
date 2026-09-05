@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow Trainer 조정 흐름",
+    "output": "ko-ai-ml-kubeflow-05-training-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "입력 리소스"
+        },
+        "backend": {
+          "label": "컨트롤러 / JobSet"
+        },
+        "cloud": {
+          "label": "워커 Pod"
+        },
+        "messagebus": {
+          "label": "피어 디스커버리"
+        },
+        "database": {
+          "label": "상태 저장"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "declare",
+        "label": "무엇을 · 어떻게",
+        "focus": [
+          "tj",
+          "rt",
+          "c"
+        ],
+        "note": "TrainJob은 무엇을, ClusterTrainingRuntime은 어떻게 실행할지를 기술하고 컨트롤러가 둘을 감시한다."
+      },
+      {
+        "id": "launch",
+        "label": "생성과 갱 스케줄링",
+        "focus": [
+          "c",
+          "js",
+          "w",
+          "svc"
+        ],
+        "note": "컨트롤러가 JobSet/PodGroup을 만들면 워커 Pod가 all-or-nothing으로 스케줄되고 헤드리스 Service로 서로를 찾는다."
+      },
+      {
+        "id": "report",
+        "label": "상태 보고",
+        "focus": [
+          "w",
+          "c",
+          "st"
+        ],
+        "note": "워커가 전달한 진행 상황과 메트릭을 컨트롤러가 TrainJob.status에 반영한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "tj",
+      "type": "frontend",
+      "label": "TrainJob",
+      "sublabel": "스크립트 · 인자 · 워커 수",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "frontend",
+      "label": "ClusterTrainingRuntime",
+      "sublabel": "이미지 · 실행 메커니즘",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "Trainer 컨트롤러",
+      "sublabel": "조정 루프",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "st",
+      "type": "database",
+      "label": "TrainJob.status",
+      "sublabel": "진행 상황 · 메트릭 · 완료 여부",
+      "pos": [
+        840,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "js",
+      "type": "backend",
+      "label": "JobSet / PodGroup",
+      "sublabel": "갱 스케줄된 워커 Pod",
+      "pos": [
+        330,
+        390
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "w",
+      "type": "cloud",
+      "label": "워커 Pod 0..N",
+      "sublabel": "RANK=0 · RANK=1 · … · RANK=N",
+      "pos": [
+        330,
+        560
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "messagebus",
+      "label": "헤드리스 Service",
+      "sublabel": "피어 DNS 이름",
+      "pos": [
+        720,
+        560
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "tj-rt",
+      "from": "tj",
+      "to": "rt",
+      "label": "참조",
+      "variant": "dashed"
+    },
+    {
+      "id": "tj-c",
+      "from": "tj",
+      "to": "c",
+      "label": "감시",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rt-c",
+      "from": "rt",
+      "to": "c",
+      "label": "감시",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c-js",
+      "from": "c",
+      "to": "js",
+      "label": "생성",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "js-w",
+      "from": "js",
+      "to": "w"
+    },
+    {
+      "id": "w-svc",
+      "from": "w",
+      "to": "svc",
+      "label": "피어 탐색",
+      "variant": "dashed"
+    },
+    {
+      "id": "w-c",
+      "from": "w",
+      "to": "c",
+      "label": "진행/메트릭 전달",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          250,
+          592
+        ],
+        [
+          250,
+          252
+        ]
+      ],
+      "labelSegment": 1,
+      "labelDx": -52
+    },
+    {
+      "id": "c-st",
+      "from": "c",
+      "to": "st",
+      "label": "상태 반영"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "TrainJob과 런타임의 분리",
+      "items": [
+        "TrainJob: 스크립트, 인자, 워커 수 — 실행마다 생성",
+        "ClusterTrainingRuntime: 이미지, 분산 실행 메커니즘 — 플랫폼 팀이 한 번 정의",
+        "StorageClass ↔ PVC와 비슷한 템플릿/인스턴스 관계"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "분산 학습 기본 요소",
+      "items": [
+        "헤드리스 Service: Pod IP 대신 안정적인 DNS 이름으로 피어 탐색",
+        "주입된 환경 변수: RANK · WORLD_SIZE · MASTER_ADDR 역할을 런타임이 일반화",
+        "갱 스케줄링: 모든 워커가 함께 스케줄되어야 학습 시작"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray Train과 Ray Tune의 결합",
+    "output": "ko-ai-ml-ray-03-ray-train-tune-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Ray Tune Driver",
+      "sublabel": "탐색 알고리즘",
+      "tag": "다음 라운드 trial 결정",
+      "pos": [
+        470,
+        50
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "t1w1",
+      "type": "backend",
+      "label": "Worker Actor 1",
+      "sublabel": "Ray Train",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t1w2",
+      "type": "backend",
+      "label": "Worker Actor 2",
+      "sublabel": "Ray Train",
+      "pos": [
+        270,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t1os",
+      "type": "database",
+      "label": "Object Store",
+      "sublabel": "trial 내 공유",
+      "pos": [
+        165,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t2w1",
+      "type": "backend",
+      "label": "Worker Actor 1",
+      "sublabel": "Ray Train",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t2w2",
+      "type": "backend",
+      "label": "Worker Actor 2",
+      "sublabel": "Ray Train",
+      "pos": [
+        950,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t2os",
+      "type": "database",
+      "label": "Object Store",
+      "sublabel": "trial 내 공유",
+      "pos": [
+        845,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Trial 1: Ray Train 실행",
+      "wraps": [
+        "t1w1",
+        "t1w2",
+        "t1os"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Trial 2: Ray Train 실행",
+      "wraps": [
+        "t2w1",
+        "t2w2",
+        "t2os"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "launch-a",
+      "from": "driver",
+      "to": "t1w1",
+      "label": "하이퍼파라미터 조합 A로 실행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "launch-b",
+      "from": "driver",
+      "to": "t2w2",
+      "label": "하이퍼파라미터 조합 B로 실행",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report-1",
+      "from": "t1w2",
+      "to": "driver",
+      "label": "결과/체크포인트 보고",
+      "variant": "dashed"
+    },
+    {
+      "id": "report-2",
+      "from": "t2w1",
+      "to": "driver",
+      "label": "결과/체크포인트 보고",
+      "variant": "dashed"
+    },
+    {
+      "id": "t1w1-os",
+      "from": "t1w1",
+      "to": "t1os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t1w2-os",
+      "from": "t1w2",
+      "to": "t1os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2w1-os",
+      "from": "t2w1",
+      "to": "t2os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2w2-os",
+      "from": "t2w2",
+      "to": "t2os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "탐색 루프",
+      "items": [
+        "Driver는 각 trial이 보고한 결과/체크포인트를 받아 다음 라운드 trial을 결정한다",
+        "각 trial은 별도의 분산 워커 집합을 가진 독립적인 Ray Train 실행이다"
+      ]
+    }
+  ]
+}

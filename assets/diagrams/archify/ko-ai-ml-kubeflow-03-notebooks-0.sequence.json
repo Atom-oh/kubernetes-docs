@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "노트북 조정(Reconciliation) 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1070,
+      625
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "spawn",
+        "label": "노트북 생성 요청",
+        "focus": [
+          "user",
+          "dash",
+          "crd"
+        ],
+        "note": "사용자가 스포너에서 고른 사양이 Profile 네임스페이스 안의 Notebook CR로 기록된다."
+      },
+      {
+        "id": "reconcile",
+        "label": "컨트롤러 조정",
+        "focus": [
+          "crd",
+          "ctrl",
+          "k8s"
+        ],
+        "note": "컨트롤러가 CR 이벤트를 감시하고 StatefulSet/Pod로 조정하며 PVC 마운트와 GPU 요청을 반영한다."
+      },
+      {
+        "id": "expose",
+        "label": "노트북 UI 노출",
+        "focus": [
+          "k8s",
+          "istio",
+          "user"
+        ],
+        "note": "Istio 사이드카가 주입된 Pod가 Dashboard 프록시를 통해 사용자에게 노출된다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "데이터 과학자"
+    },
+    {
+      "id": "dash",
+      "type": "frontend",
+      "label": "Central Dashboard",
+      "sublabel": "스포너 UI"
+    },
+    {
+      "id": "crd",
+      "type": "database",
+      "label": "Notebook CR",
+      "sublabel": "Profile 네임스페이스 내"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Notebook 컨트롤러",
+      "sublabel": "조정 루프"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "StatefulSet / Pod",
+      "sublabel": "노트북 서버"
+    },
+    {
+      "id": "istio",
+      "type": "security",
+      "label": "Istio 사이드카",
+      "sublabel": "네임스페이스 라우팅"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "생성 요청"
+    },
+    {
+      "from": 295,
+      "to": 405,
+      "label": "조정(Reconcile)"
+    },
+    {
+      "from": 425,
+      "to": 535,
+      "label": "노출"
+    }
+  ],
+  "messages": [
+    {
+      "id": "choose",
+      "from": "user",
+      "to": "dash",
+      "y": 195,
+      "label": "이미지, CPU/메모리, GPU 개수, PVC 선택"
+    },
+    {
+      "id": "create-cr",
+      "from": "dash",
+      "to": "crd",
+      "y": 245,
+      "label": "Notebook 커스텀 리소스 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "ctrl",
+      "to": "crd",
+      "y": 320,
+      "label": "생성/변경 이벤트 감시",
+      "variant": "dashed"
+    },
+    {
+      "id": "reconcile",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 365,
+      "label": "StatefulSet/Pod로 조정",
+      "variant": "emphasis",
+      "note": "PVC 마운트 · nvidia.com/gpu 요청"
+    },
+    {
+      "id": "inject",
+      "from": "k8s",
+      "to": "istio",
+      "y": 445,
+      "label": "Istio 사이드카 주입",
+      "variant": "security",
+      "note": "네임스페이스 단위 라우팅"
+    },
+    {
+      "id": "expose",
+      "from": "istio",
+      "to": "user",
+      "y": 505,
+      "label": "Dashboard 프록시를 통해 노트북 UI 노출",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "dash",
+      "from": 190,
+      "to": 252,
+      "type": "frontend"
+    },
+    {
+      "participant": "ctrl",
+      "from": 315,
+      "to": 372,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 360,
+      "to": 452,
+      "type": "cloud"
+    },
+    {
+      "participant": "istio",
+      "from": 440,
+      "to": 512,
+      "type": "security"
+    }
+  ]
+}

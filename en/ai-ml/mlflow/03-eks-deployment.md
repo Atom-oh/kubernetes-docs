@@ -29,7 +29,9 @@ A production MLflow deployment on EKS has three moving pieces, and none of them 
 
 **Artifact store.** Backend store rows are small; the things MLflow logs alongside them often aren't. Serialized models, plots, datasets, and other large binary objects go to a separate artifact store instead of the database. On AWS, that's Amazon S3: the tracking server writes and reads artifacts under an S3 URI configured as the default artifact root, and clients fetch artifacts either through the tracking server's proxy or with direct S3 access, depending on how the server is configured.
 
-![A user reaches a load-balanced MLflow tracking server running as replicated pods inside an EKS cluster, where an IAM-mapped service account grants the pods access to an RDS/Aurora Postgres backend store and an S3 artifact store outside the cluster.](../../../assets/diagrams/rendered/en-ai-ml-mlflow-03-eks-deployment-0.svg)
+![A user reaches a load-balanced MLflow tracking server running as replicated pods inside an EKS cluster, where an IAM-mapped service account grants the pods access to an RDS/Aurora Postgres backend store and an S3 artifact store outside the cluster.](../../.gitbook/assets/en-ai-ml-mlflow-03-eks-deployment-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-03-eks-deployment-0.html)
 
 ## Installation Approaches
 

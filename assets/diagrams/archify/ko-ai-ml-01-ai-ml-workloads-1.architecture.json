@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS에서의 AI/ML 인프라 구성",
+    "output": "ko-ai-ml-01-ai-ml-workloads-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "EKS 클러스터"
+        },
+        "backend": {
+          "label": "노드 그룹"
+        },
+        "database": {
+          "label": "스토리지"
+        },
+        "messagebus": {
+          "label": "네트워킹"
+        },
+        "external": {
+          "label": "AWS 서비스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "node-groups",
+        "label": "노드 그룹",
+        "focus": [
+          "training",
+          "inference",
+          "cpu"
+        ],
+        "note": "훈련·추론·CPU 워크로드별로 EC2 인스턴스 유형을 나눈 세 개의 노드 그룹."
+      },
+      {
+        "id": "shared-layers",
+        "label": "공유 스토리지 · 네트워킹",
+        "focus": [
+          "training",
+          "inference",
+          "cpu",
+          "storage",
+          "networking"
+        ],
+        "note": "모든 노드 그룹이 같은 스토리지 계층과 네트워킹 계층을 사용한다."
+      },
+      {
+        "id": "aws-services",
+        "label": "AWS 서비스 연동",
+        "focus": [
+          "eks",
+          "services"
+        ],
+        "note": "EKS 클러스터가 SageMaker, ECR, CloudWatch와 연동된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS 클러스터",
+      "pos": [
+        430,
+        170
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "services",
+      "type": "external",
+      "label": "AWS 서비스",
+      "sublabel": "SageMaker · ECR · CloudWatch",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "training",
+      "type": "backend",
+      "label": "훈련 노드 그룹",
+      "sublabel": "p4d.24xlarge · p3.16xlarge · g5.48xlarge",
+      "pos": [
+        430,
+        300
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "backend",
+      "label": "추론 노드 그룹",
+      "sublabel": "g4dn.xlarge · inf1.24xlarge · trn1.32xlarge",
+      "pos": [
+        430,
+        430
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "cpu",
+      "type": "backend",
+      "label": "CPU 노드 그룹",
+      "sublabel": "c6i.32xlarge · r6i.32xlarge",
+      "pos": [
+        430,
+        560
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "스토리지",
+      "sublabel": "EBS · EFS · FSx for Lustre · S3",
+      "pos": [
+        60,
+        430
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "networking",
+      "type": "messagebus",
+      "label": "네트워킹",
+      "sublabel": "VPC CNI · ENA/EFA · 배치 그룹",
+      "pos": [
+        830,
+        430
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 클라우드",
+      "wraps": [
+        "eks",
+        "services",
+        "training",
+        "inference",
+        "cpu",
+        "storage",
+        "networking"
+      ],
+      "pad": 36
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS",
+      "wraps": [
+        "eks",
+        "training",
+        "inference",
+        "cpu",
+        "storage",
+        "networking"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "노드 그룹",
+      "wraps": [
+        "training",
+        "inference",
+        "cpu"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "eks-services",
+      "from": "eks",
+      "to": "services",
+      "label": "연동",
+      "variant": "dashed"
+    },
+    {
+      "id": "training-storage",
+      "from": "training",
+      "to": "storage",
+      "label": "데이터셋 · 모델 아티팩트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "training-networking",
+      "from": "training",
+      "to": "networking",
+      "label": "분산 훈련"
+    },
+    {
+      "id": "inference-storage",
+      "from": "inference",
+      "to": "storage"
+    },
+    {
+      "id": "inference-networking",
+      "from": "inference",
+      "to": "networking"
+    },
+    {
+      "id": "cpu-storage",
+      "from": "cpu",
+      "to": "storage"
+    },
+    {
+      "id": "cpu-networking",
+      "from": "cpu",
+      "to": "networking"
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SGLang Core Technology",
+    "locale": "en",
+    "output": "en-ai-ml-04-inference-frameworks-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Frontend APIs"
+        },
+        "backend": {
+          "label": "Runtime engine components"
+        },
+        "cloud": {
+          "label": "Optimization techniques"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "dsl",
+          "openai",
+          "radix"
+        ],
+        "note": "Requests arriving via the SGLang DSL and the OpenAI-compatible API are handed to the runtime engine."
+      },
+      {
+        "id": "optimizations",
+        "label": "Optimization links",
+        "focus": [
+          "radix",
+          "fsm",
+          "kv-reuse",
+          "overlap"
+        ],
+        "note": "RadixAttention feeds KV cache reuse; the compressed FSM speeds up structured decoding."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dsl",
+      "type": "frontend",
+      "label": "SGLang DSL",
+      "sublabel": "Programming interface",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "openai",
+      "type": "frontend",
+      "label": "OpenAI Compatible API",
+      "sublabel": "HTTP endpoint",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "native",
+      "type": "frontend",
+      "label": "Native API",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "radix",
+      "type": "backend",
+      "label": "RadixAttention",
+      "sublabel": "Radix tree-based KV cache",
+      "pos": [
+        390,
+        80
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "fsm",
+      "type": "backend",
+      "label": "Compressed FSM Structured Output",
+      "sublabel": "JSON Schema / regex",
+      "pos": [
+        390,
+        180
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "chunked",
+      "type": "backend",
+      "label": "Chunked Prefill",
+      "pos": [
+        390,
+        280
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "flashinfer",
+      "type": "backend",
+      "label": "FlashInfer Kernels",
+      "sublabel": "Optimized attention kernels",
+      "pos": [
+        390,
+        380
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "kv-reuse",
+      "type": "cloud",
+      "label": "KV Cache Reuse",
+      "sublabel": "Shared across partially overlapping prompts",
+      "pos": [
+        800,
+        130
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "overlap",
+      "type": "cloud",
+      "label": "Schedule Overlapping",
+      "pos": [
+        800,
+        230
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "data-parallel",
+      "type": "cloud",
+      "label": "Data Parallelism",
+      "pos": [
+        800,
+        330
+      ],
+      "size": [
+        240,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Frontend",
+      "wraps": [
+        "dsl",
+        "openai",
+        "native"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Runtime Engine",
+      "wraps": [
+        "radix",
+        "fsm",
+        "chunked",
+        "flashinfer"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Optimization",
+      "wraps": [
+        "kv-reuse",
+        "overlap",
+        "data-parallel"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dsl-to-runtime",
+      "from": "dsl",
+      "to": "radix",
+      "label": "run program",
+      "variant": "emphasis",
+      "labelDx": -60
+    },
+    {
+      "id": "openai-to-runtime",
+      "from": "openai",
+      "to": "radix",
+      "label": "request"
+    },
+    {
+      "id": "radix-to-kv",
+      "from": "radix",
+      "to": "kv-reuse",
+      "label": "cache sharing"
+    },
+    {
+      "id": "fsm-to-overlap",
+      "from": "fsm",
+      "to": "overlap"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Core technology",
+      "items": [
+        "RadixAttention: Radix tree-based KV cache reuse shares cache even across partially overlapping prompts",
+        "Compressed FSM structured output: up to 10x faster structured decoding vs vLLM for JSON Schema and regex output",
+        "FlashInfer kernels: attention kernels delivering peak performance across GPU architectures"
+      ]
+    }
+  ]
+}

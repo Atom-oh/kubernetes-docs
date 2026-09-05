@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM Monitoring and Logging",
+    "output": "en-ai-ml-02-vllm-deployment-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "metrics",
+        "label": "Metrics collection",
+        "focus": [
+          "kube-metrics",
+          "gpu-metrics",
+          "vllm-metrics",
+          "prometheus"
+        ],
+        "note": "vLLM, GPU, and Kubernetes metrics land in Prometheus; a ServiceMonitor scrapes the vLLM metrics every 15 seconds."
+      },
+      {
+        "id": "outputs",
+        "label": "Dashboards and alerts",
+        "focus": [
+          "prometheus",
+          "grafana",
+          "alertmanager",
+          "dashboards",
+          "alerts"
+        ],
+        "note": "Grafana visualizes Prometheus data as dashboards while Alert Manager routes alerts."
+      },
+      {
+        "id": "logging",
+        "label": "Log pipeline",
+        "focus": [
+          "vllm-metrics",
+          "fluentd",
+          "cloudwatch",
+          "elasticsearch",
+          "kibana"
+        ],
+        "note": "Fluentd tails the vLLM container logs and ships them to CloudWatch Logs and ElasticSearch."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "kube-metrics",
+      "type": "backend",
+      "label": "Kubernetes Metrics",
+      "sublabel": "nodes / pods",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "gpu-metrics",
+      "type": "backend",
+      "label": "GPU Metrics",
+      "sublabel": "utilization / memory",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vllm-metrics",
+      "type": "backend",
+      "label": "vLLM Metrics",
+      "sublabel": "metrics :8001",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "time-series store",
+      "pos": [
+        320,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "TSDB"
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "visualization",
+      "pos": [
+        580,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "backend",
+      "label": "Alert Manager",
+      "sublabel": "alert routing",
+      "pos": [
+        580,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dashboards",
+      "type": "frontend",
+      "label": "Dashboards",
+      "sublabel": "GPU utilization / throughput / latency / error rate",
+      "pos": [
+        840,
+        80
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "alerts",
+      "type": "external",
+      "label": "Alerts",
+      "sublabel": "high latency / low throughput / GPU error / OOM",
+      "pos": [
+        840,
+        280
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "fluentd",
+      "type": "backend",
+      "label": "Fluentd",
+      "sublabel": "log collection",
+      "pos": [
+        320,
+        500
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "/eks/vllm/logs",
+      "pos": [
+        580,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "elasticsearch",
+      "type": "database",
+      "label": "ElasticSearch",
+      "sublabel": "log index",
+      "pos": [
+        580,
+        560
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "kibana",
+      "type": "frontend",
+      "label": "Kibana",
+      "sublabel": "log search",
+      "pos": [
+        840,
+        560
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Metrics Collection",
+      "wraps": [
+        "kube-metrics",
+        "gpu-metrics",
+        "vllm-metrics"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring Stack",
+      "wraps": [
+        "prometheus",
+        "grafana",
+        "alertmanager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Logging Stack",
+      "wraps": [
+        "fluentd",
+        "cloudwatch",
+        "elasticsearch",
+        "kibana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kube-to-prom",
+      "from": "kube-metrics",
+      "to": "prometheus"
+    },
+    {
+      "id": "gpu-to-prom",
+      "from": "gpu-metrics",
+      "to": "prometheus"
+    },
+    {
+      "id": "vllm-to-prom",
+      "from": "vllm-metrics",
+      "to": "prometheus",
+      "label": "scrape 15s",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-to-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prom-to-alertmanager",
+      "from": "prometheus",
+      "to": "alertmanager"
+    },
+    {
+      "id": "grafana-to-dashboards",
+      "from": "grafana",
+      "to": "dashboards",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alertmanager-to-alerts",
+      "from": "alertmanager",
+      "to": "alerts"
+    },
+    {
+      "id": "vllm-to-fluentd",
+      "from": "vllm-metrics",
+      "to": "fluentd",
+      "label": "container logs",
+      "variant": "dashed"
+    },
+    {
+      "id": "fluentd-to-cloudwatch",
+      "from": "fluentd",
+      "to": "cloudwatch",
+      "variant": "dashed"
+    },
+    {
+      "id": "fluentd-to-elasticsearch",
+      "from": "fluentd",
+      "to": "elasticsearch",
+      "variant": "dashed"
+    },
+    {
+      "id": "elasticsearch-to-kibana",
+      "from": "elasticsearch",
+      "to": "kibana",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Metrics",
+      "items": [
+        "A ServiceMonitor scrapes the vllm-metrics Service (:8001) every 15s",
+        "Grafana dashboards and Alert Manager alerts are built on Prometheus data"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Logs",
+      "items": [
+        "Fluentd tails /var/log/containers/vllm-*.log",
+        "Shipped to the CloudWatch Logs group /eks/vllm/logs (us-west-2)"
+      ]
+    }
+  ]
+}

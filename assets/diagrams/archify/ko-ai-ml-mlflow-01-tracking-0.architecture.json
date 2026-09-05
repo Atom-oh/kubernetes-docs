@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MLflow Tracking 구조: Backend Store와 Artifact Store",
+    "output": "ko-ai-ml-mlflow-01-tracking-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "write-path",
+        "label": "실험 기록 경로",
+        "focus": [
+          "script",
+          "api",
+          "server",
+          "backend",
+          "artifact"
+        ],
+        "note": "학습 스크립트는 저장소와 직접 통신하지 않고 항상 Tracking API를 통해 기록한다."
+      },
+      {
+        "id": "read-path",
+        "label": "UI 조회 경로",
+        "focus": [
+          "ui",
+          "backend",
+          "artifact"
+        ],
+        "note": "Tracking UI는 experiment, run, logged model, trace를 표시하기 위해 두 저장소를 모두 조회한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "script",
+      "type": "external",
+      "label": "학습 스크립트",
+      "sublabel": "mlflow.log_param / log_metric",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "MLflow Tracking API",
+      "sublabel": "Python / REST",
+      "pos": [
+        290,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Tracking 서버",
+      "sublabel": "메타데이터 / 파일 쓰기 라우팅",
+      "pos": [
+        550,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "database",
+      "label": "Backend Store",
+      "sublabel": "메타데이터: 파라미터, 메트릭, 태그",
+      "pos": [
+        300,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "artifact",
+      "type": "cloud",
+      "label": "Artifact Store",
+      "sublabel": "파일: 모델, 플롯, 데이터셋",
+      "pos": [
+        640,
+        260
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Tracking UI",
+      "sublabel": "experiment · run · model · trace 조회",
+      "pos": [
+        470,
+        450
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "script-to-api",
+      "from": "script",
+      "to": "api",
+      "label": "mlflow API 호출",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "api-to-server",
+      "from": "api",
+      "to": "server",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-to-backend",
+      "from": "server",
+      "to": "backend",
+      "label": "메타데이터 저장",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "server-to-artifact",
+      "from": "server",
+      "to": "artifact",
+      "label": "파일 저장",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ui-to-backend",
+      "from": "ui",
+      "to": "backend",
+      "label": "조회",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ui-to-artifact",
+      "from": "ui",
+      "to": "artifact",
+      "label": "조회",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Backend Store",
+      "items": [
+        "파라미터, 메트릭, 태그와 experiment · run · logged model 레코드",
+        "팀 규모에서는 PostgreSQL, MySQL 같은 관계형 DB 사용"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Artifact Store",
+      "items": [
+        "모델 파일, 플롯, 데이터셋 등 대용량 바이너리",
+        "S3 호환 버킷 같은 객체 스토리지가 일반적"
+      ]
+    }
+  ]
+}

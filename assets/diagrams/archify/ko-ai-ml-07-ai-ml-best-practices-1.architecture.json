@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LLM 추론 핵심 성능 지표",
+    "output": "ko-ai-ml-07-ai-ml-best-practices-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "LLM 추론 지표"
+        },
+        "frontend": {
+          "label": "사용자 경험 영향"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "responsiveness",
+        "label": "인지된 응답성",
+        "focus": [
+          "ttft",
+          "e2e",
+          "responsiveness"
+        ],
+        "note": "TTFT와 E2E 지연 시간이 사용자가 느끼는 응답성을 결정한다. 대화형 앱은 TTFT < 500ms를 목표로 한다."
+      },
+      {
+        "id": "streaming",
+        "label": "스트리밍 품질",
+        "focus": [
+          "itl",
+          "tps",
+          "streaming"
+        ],
+        "note": "ITL < 50ms, TPS > 20이면 토큰이 끊김 없이 부드럽게 스트리밍된다."
+      },
+      {
+        "id": "capacity",
+        "label": "시스템 용량",
+        "focus": [
+          "throughput",
+          "capacity"
+        ],
+        "note": "처리량(초당 요청 수)은 지연 시간 SLO를 지키는 범위 안에서 최대화한다."
+      }
+    ],
+    "viewBox": [
+      1040,
+      612
+    ]
+  },
+  "components": [
+    {
+      "id": "ttft",
+      "type": "backend",
+      "label": "TTFT",
+      "sublabel": "요청부터 첫 토큰까지",
+      "tag": "< 500ms",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "e2e",
+      "type": "backend",
+      "label": "E2E 지연 시간",
+      "sublabel": "요청부터 완료까지 총 시간",
+      "tag": "출력 길이에 따라 다름",
+      "pos": [
+        60,
+        160
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "itl",
+      "type": "backend",
+      "label": "ITL",
+      "sublabel": "연속 토큰 간 평균 시간",
+      "tag": "< 50ms",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "tps",
+      "type": "backend",
+      "label": "TPS",
+      "sublabel": "요청당 초당 생성 토큰 수",
+      "tag": "> 20 TPS",
+      "pos": [
+        60,
+        360
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "backend",
+      "label": "처리량",
+      "sublabel": "초당 처리 요청 수",
+      "tag": "SLO 내 최대화",
+      "pos": [
+        60,
+        460
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "responsiveness",
+      "type": "frontend",
+      "label": "인지된 응답성",
+      "sublabel": "첫 반응과 전체 대기 시간",
+      "pos": [
+        720,
+        110
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "streaming",
+      "type": "frontend",
+      "label": "스트리밍 품질",
+      "sublabel": "토큰 출력의 부드러움",
+      "pos": [
+        720,
+        310
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "capacity",
+      "type": "frontend",
+      "label": "시스템 용량",
+      "sublabel": "동시 처리 가능한 요청 수",
+      "pos": [
+        720,
+        460
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "LLM 추론 지표",
+      "wraps": [
+        "ttft",
+        "e2e",
+        "itl",
+        "tps",
+        "throughput"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "사용자 경험 영향",
+      "wraps": [
+        "responsiveness",
+        "streaming",
+        "capacity"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ttft-responsiveness",
+      "from": "ttft",
+      "to": "responsiveness",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e2e-responsiveness",
+      "from": "e2e",
+      "to": "responsiveness"
+    },
+    {
+      "id": "itl-streaming",
+      "from": "itl",
+      "to": "streaming"
+    },
+    {
+      "id": "tps-streaming",
+      "from": "tps",
+      "to": "streaming"
+    },
+    {
+      "id": "throughput-capacity",
+      "from": "throughput",
+      "to": "capacity"
+    }
+  ]
+}

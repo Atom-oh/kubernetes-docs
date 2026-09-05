@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "훈련 파이프라인 개요",
+    "output": "ko-ai-ml-05-model-training-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1200, 560],
+    "views": [
+      { "id": "data-prep", "label": "데이터 준비", "focus": ["s3", "loader", "preprocess"], "note": "S3 데이터 레이크의 데이터를 로더 Pod가 읽어 전처리 Job으로 넘긴다." },
+      { "id": "training", "label": "분산 훈련", "focus": ["scheduler", "workers", "ps", "allreduce"], "note": "Job 스케줄러가 배치한 워커 Pods가 파라미터 서버와 AllReduce로 동기화한다." },
+      { "id": "checkpointing", "label": "체크포인팅", "focus": ["workers", "fsx", "ckptmgr"], "note": "워커가 FSx for Lustre에 체크포인트를 저장하고 체크포인트 관리자가 관리한다." },
+      { "id": "evaluation", "label": "모델 평가", "focus": ["ckptmgr", "eval", "metrics", "registry"], "note": "평가 Job이 메트릭을 수집하고 모델 레지스트리에 등록한다." }
+    ]
+  },
+  "components": [
+    { "id": "s3", "type": "database", "label": "S3 데이터 레이크", "pos": [40, 80], "size": [170, 60] },
+    { "id": "loader", "type": "backend", "label": "데이터 로더 Pod", "pos": [40, 240], "size": [170, 60] },
+    { "id": "preprocess", "type": "backend", "label": "전처리 Job", "pos": [40, 400], "size": [170, 60] },
+    { "id": "ps", "type": "backend", "label": "파라미터 서버", "pos": [300, 80], "size": [170, 60] },
+    { "id": "allreduce", "type": "messagebus", "label": "AllReduce 통신", "pos": [510, 80], "size": [170, 60] },
+    { "id": "workers", "type": "backend", "label": "워커 Pods", "sublabel": "분산 훈련", "pos": [300, 240], "size": [170, 60] },
+    { "id": "scheduler", "type": "backend", "label": "Job 스케줄러", "pos": [300, 400], "size": [170, 60] },
+    { "id": "fsx", "type": "database", "label": "FSx for Lustre", "sublabel": "체크포인트 저장", "pos": [760, 240], "size": [170, 60] },
+    { "id": "ckptmgr", "type": "backend", "label": "체크포인트 관리자", "pos": [760, 400], "size": [170, 60] },
+    { "id": "eval", "type": "backend", "label": "평가 Job", "pos": [1000, 400], "size": [170, 60] },
+    { "id": "metrics", "type": "backend", "label": "메트릭 수집", "pos": [1000, 240], "size": [170, 60] },
+    { "id": "registry", "type": "database", "label": "모델 레지스트리", "pos": [1000, 80], "size": [170, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "데이터 준비", "wraps": ["s3", "loader", "preprocess"] },
+    { "kind": "region", "label": "분산 훈련", "wraps": ["ps", "allreduce", "workers", "scheduler"] },
+    { "kind": "region", "label": "체크포인팅", "wraps": ["fsx", "ckptmgr"] },
+    { "kind": "region", "label": "모델 평가", "wraps": ["eval", "metrics", "registry"] }
+  ],
+  "connections": [
+    { "id": "s3-loader", "from": "s3", "to": "loader", "label": "로드", "labelDy": 24 },
+    { "id": "loader-preprocess", "from": "loader", "to": "preprocess" },
+    { "id": "preprocess-scheduler", "from": "preprocess", "to": "scheduler", "label": "제출" },
+    { "id": "scheduler-workers", "from": "scheduler", "to": "workers", "label": "실행", "variant": "emphasis" },
+    { "id": "workers-ps", "from": "workers", "to": "ps", "label": "파라미터 동기화" },
+    { "id": "workers-allreduce", "from": "workers", "to": "allreduce", "label": "그래디언트 AllReduce" },
+    { "id": "workers-fsx", "from": "workers", "to": "fsx", "label": "체크포인트 저장", "variant": "emphasis" },
+    { "id": "fsx-ckptmgr", "from": "fsx", "to": "ckptmgr" },
+    { "id": "ckptmgr-eval", "from": "ckptmgr", "to": "eval", "label": "평가" },
+    { "id": "eval-metrics", "from": "eval", "to": "metrics" },
+    { "id": "metrics-registry", "from": "metrics", "to": "registry", "label": "등록" }
+  ]
+}

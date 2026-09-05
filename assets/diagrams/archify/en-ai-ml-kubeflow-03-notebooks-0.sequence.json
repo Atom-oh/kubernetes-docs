@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Notebook Reconciliation Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1070,
+      625
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "spawn",
+        "label": "Spawn request",
+        "focus": [
+          "user",
+          "dash",
+          "crd"
+        ],
+        "note": "The spec the user picks in the spawner is recorded as a Notebook CR inside the Profile namespace."
+      },
+      {
+        "id": "reconcile",
+        "label": "Controller reconcile",
+        "focus": [
+          "crd",
+          "ctrl",
+          "k8s"
+        ],
+        "note": "The controller watches CR events, reconciles into a StatefulSet/Pod, and applies the PVC mount and GPU request."
+      },
+      {
+        "id": "expose",
+        "label": "Notebook UI exposure",
+        "focus": [
+          "k8s",
+          "istio",
+          "user"
+        ],
+        "note": "The pod with the injected Istio sidecar is exposed to the user through the Dashboard proxy."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "data scientist"
+    },
+    {
+      "id": "dash",
+      "type": "frontend",
+      "label": "Central Dashboard",
+      "sublabel": "spawner UI"
+    },
+    {
+      "id": "crd",
+      "type": "database",
+      "label": "Notebook CR",
+      "sublabel": "in Profile namespace"
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Notebook Controller",
+      "sublabel": "reconcile loop"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "StatefulSet / Pod",
+      "sublabel": "notebook server"
+    },
+    {
+      "id": "istio",
+      "type": "security",
+      "label": "Istio Sidecar",
+      "sublabel": "namespace routing"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "Spawn"
+    },
+    {
+      "from": 295,
+      "to": 405,
+      "label": "Reconcile"
+    },
+    {
+      "from": 425,
+      "to": 535,
+      "label": "Expose"
+    }
+  ],
+  "messages": [
+    {
+      "id": "choose",
+      "from": "user",
+      "to": "dash",
+      "y": 195,
+      "label": "Choose image, CPU/mem, GPU count, PVC"
+    },
+    {
+      "id": "create-cr",
+      "from": "dash",
+      "to": "crd",
+      "y": 245,
+      "label": "Create Notebook CR",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
+      "from": "ctrl",
+      "to": "crd",
+      "y": 320,
+      "label": "Watch create/update events",
+      "variant": "dashed"
+    },
+    {
+      "id": "reconcile",
+      "from": "ctrl",
+      "to": "k8s",
+      "y": 365,
+      "label": "Reconcile to StatefulSet/Pod",
+      "variant": "emphasis",
+      "note": "PVC mount · nvidia.com/gpu request"
+    },
+    {
+      "id": "inject",
+      "from": "k8s",
+      "to": "istio",
+      "y": 445,
+      "label": "Inject Istio sidecar",
+      "variant": "security",
+      "note": "namespace-scoped routing"
+    },
+    {
+      "id": "expose",
+      "from": "istio",
+      "to": "user",
+      "y": 505,
+      "label": "Expose notebook UI through Dashboard proxy",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "dash",
+      "from": 190,
+      "to": 252,
+      "type": "frontend"
+    },
+    {
+      "participant": "ctrl",
+      "from": 315,
+      "to": 372,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 360,
+      "to": 452,
+      "type": "cloud"
+    },
+    {
+      "participant": "istio",
+      "from": 440,
+      "to": 512,
+      "type": "security"
+    }
+  ]
+}

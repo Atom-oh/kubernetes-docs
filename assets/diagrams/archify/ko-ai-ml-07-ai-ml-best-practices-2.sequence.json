@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "AI/ML 파드 콜드 스타트 타임라인",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1040, 760],
+    "animation": "trace",
+    "views": [
+      { "id": "schedule", "label": "스케줄링", "focus": ["scheduler", "kubelet"], "note": "노드 선택은 ~100ms로, 전체 콜드 스타트에서 무시할 수 있는 수준이다." },
+      { "id": "pull", "label": "이미지 풀", "focus": ["kubelet", "registry"], "note": "10-50GB 이미지를 받는 데 2-10분이 걸려 가장 큰 병목이 된다." },
+      { "id": "load", "label": "모델 로딩", "focus": ["runtime", "app"], "note": "컨테이너 생성은 ~5s지만 GPU 메모리에 가중치를 올리는 데 1-5분이 걸린다." }
+    ]
+  },
+  "participants": [
+    { "id": "scheduler", "type": "backend", "label": "K8s 스케줄러", "sublabel": "kube-scheduler" },
+    { "id": "kubelet", "type": "backend", "label": "Kubelet", "sublabel": "워커 노드" },
+    { "id": "registry", "type": "database", "label": "컨테이너 레지스트리", "sublabel": "예: Amazon ECR" },
+    { "id": "runtime", "type": "cloud", "label": "컨테이너 런타임", "sublabel": "containerd" },
+    { "id": "app", "type": "frontend", "label": "AI/ML 애플리케이션", "sublabel": "모델 서빙 프로세스" }
+  ],
+  "segments": [
+    { "from": 165, "to": 240, "label": "노드 선택: ~100ms" },
+    { "from": 258, "to": 400, "label": "이미지 풀: 2-10분 (10-50GB 이미지)" },
+    { "from": 418, "to": 488, "label": "컨테이너 생성: ~5s" },
+    { "from": 506, "to": 660, "label": "모델 로딩: 1-5분 (GPU 메모리에 가중치 로드) → 헬스 체크 통과: ~30s" }
+  ],
+  "messages": [
+    { "id": "scheduled", "from": "scheduler", "to": "kubelet", "y": 205, "label": "파드 스케줄링됨" },
+    { "id": "pull-request", "from": "kubelet", "to": "registry", "y": 295, "label": "이미지 풀 요청", "variant": "emphasis", "note": "10-50GB 이미지, 2-10분 소요" },
+    { "id": "image-layers", "from": "registry", "to": "kubelet", "y": 372, "label": "이미지 레이어", "variant": "return" },
+    { "id": "create", "from": "kubelet", "to": "runtime", "y": 455, "label": "컨테이너 생성" },
+    { "id": "start", "from": "runtime", "to": "app", "y": 545, "label": "프로세스 시작", "variant": "emphasis", "note": "모델 가중치를 GPU 메모리에 로드, 1-5분 소요" },
+    { "id": "ready", "from": "app", "to": "runtime", "y": 630, "label": "준비됨", "variant": "return", "note": "헬스 체크 통과: ~30s" }
+  ],
+  "activations": [
+    { "participant": "kubelet", "from": 200, "to": 462, "type": "backend" },
+    { "participant": "registry", "from": 290, "to": 378, "type": "database" },
+    { "participant": "runtime", "from": 450, "to": 636, "type": "cloud" },
+    { "participant": "app", "from": 540, "to": 636, "type": "frontend" }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "총 콜드 스타트 시간: 5-15분",
+      "items": [
+        "대규모 AI/ML 이미지 기준 총 소요 시간",
+        "이미지 풀(2-10분)과 모델 로딩(1-5분)이 대부분을 차지",
+        "노드 선택, 컨테이너 생성, 헬스 체크는 합쳐도 1분 미만"
+      ]
+    }
+  ]
+}

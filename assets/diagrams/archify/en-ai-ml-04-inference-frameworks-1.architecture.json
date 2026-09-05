@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NVIDIA NIM Deployment on EKS",
+    "output": "en-ai-ml-04-inference-frameworks-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "alb",
+          "nginx",
+          "container",
+          "engine",
+          "cache"
+        ],
+        "note": "A request passes through the ALB and Nginx Ingress and is served by the TensorRT-LLM engine inside the NIM container."
+      },
+      {
+        "id": "gpu-nodes",
+        "label": "GPU node pool",
+        "focus": [
+          "container",
+          "node1",
+          "node2"
+        ],
+        "note": "NIM pods are scheduled onto the GPU node pool provisioned by Karpenter."
+      },
+      {
+        "id": "model-storage",
+        "label": "Model storage",
+        "focus": [
+          "cache",
+          "fsx",
+          "s3",
+          "ngc"
+        ],
+        "note": "Models pulled from the NGC Catalog are cached on FSx for Lustre and archived in S3."
+      },
+      {
+        "id": "monitoring",
+        "label": "Monitoring",
+        "focus": [
+          "container",
+          "exporter",
+          "prometheus",
+          "grafana"
+        ],
+        "note": "Prometheus scrapes NIM metrics and Grafana dashboards visualize them."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1390,
+      730
+    ]
+  },
+  "components": [
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Application Load Balancer",
+      "sublabel": "External entry point",
+      "pos": [
+        30,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nginx",
+      "type": "cloud",
+      "label": "Nginx Ingress Controller",
+      "sublabel": "Request routing",
+      "pos": [
+        240,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "NIM Container",
+      "sublabel": "OpenAI-compatible API :8000",
+      "pos": [
+        490,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "TensorRT-LLM Engine",
+      "sublabel": "Optimized inference",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Model Cache",
+      "sublabel": "/opt/nim/.cache",
+      "pos": [
+        950,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "cloud",
+      "label": "p4d.24xlarge",
+      "sublabel": "8x A100",
+      "pos": [
+        490,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "node2",
+      "type": "cloud",
+      "label": "g5.48xlarge",
+      "sublabel": "8x A10G",
+      "pos": [
+        720,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "Shared file system",
+      "pos": [
+        950,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "Model archive",
+      "pos": [
+        1180,
+        450
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ngc",
+      "type": "external",
+      "label": "NGC Catalog",
+      "sublabel": "NIM images · models",
+      "pos": [
+        950,
+        600
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "exporter",
+      "type": "backend",
+      "label": "NIM Metrics Exporter",
+      "sublabel": ":8000/metrics",
+      "pos": [
+        490,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "Metrics collection",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana Dashboards",
+      "sublabel": "Visualization",
+      "pos": [
+        950,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ingress Layer",
+      "wraps": [
+        "alb",
+        "nginx"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "NIM Pods (replicas: 2)",
+      "wraps": [
+        "container",
+        "engine",
+        "cache"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GPU Node Pool",
+      "wraps": [
+        "node1",
+        "node2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Model Storage",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ngc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring Stack",
+      "wraps": [
+        "exporter",
+        "prometheus",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alb-to-nginx",
+      "from": "alb",
+      "to": "nginx",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nginx-to-container",
+      "from": "nginx",
+      "to": "container",
+      "label": "forward",
+      "variant": "emphasis"
+    },
+    {
+      "id": "container-to-engine",
+      "from": "container",
+      "to": "engine",
+      "label": "inference",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-to-cache",
+      "from": "engine",
+      "to": "cache",
+      "label": "load model",
+      "variant": "emphasis"
+    },
+    {
+      "id": "container-to-node1",
+      "from": "container",
+      "to": "node1",
+      "label": "schedule",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        570,
+        420
+      ]
+    },
+    {
+      "id": "container-to-node2",
+      "from": "container",
+      "to": "node2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cache-to-fsx",
+      "from": "cache",
+      "to": "fsx",
+      "label": "cache backend",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1030,
+        385
+      ]
+    },
+    {
+      "id": "fsx-to-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "sync"
+    },
+    {
+      "id": "ngc-to-fsx",
+      "from": "ngc",
+      "to": "fsx",
+      "label": "model download",
+      "variant": "dashed",
+      "labelAt": [
+        1030,
+        555
+      ],
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "container-to-exporter",
+      "from": "container",
+      "to": "exporter",
+      "label": "expose metrics",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        570,
+        190
+      ]
+    },
+    {
+      "id": "exporter-to-prometheus",
+      "from": "exporter",
+      "to": "prometheus",
+      "label": "scrape",
+      "variant": "dashed",
+      "labelDy": -24
+    },
+    {
+      "id": "prometheus-to-grafana",
+      "from": "prometheus",
+      "to": "grafana",
+      "label": "query",
+      "variant": "dashed"
+    }
+  ]
+}

@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Client Integration",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      480
+    ]
+  },
+  "components": [
+    {
+      "id": "python-client",
+      "type": "external",
+      "label": "Python Client",
+      "sublabel": "requests",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "js-client",
+      "type": "external",
+      "label": "JavaScript Client",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "curl-client",
+      "type": "external",
+      "label": "Curl Client",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "nginx",
+      "type": "cloud",
+      "label": "Nginx",
+      "sublabel": "reverse proxy",
+      "pos": [
+        310,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api-gateway",
+      "type": "cloud",
+      "label": "API Gateway",
+      "pos": [
+        310,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "cloud",
+      "label": "Envoy Proxy",
+      "sublabel": "proxy",
+      "pos": [
+        310,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Authentication",
+      "pos": [
+        570,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "rate-limit",
+      "type": "security",
+      "label": "Rate Limiting",
+      "sublabel": "Rate Limit",
+      "pos": [
+        570,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "cors",
+      "type": "security",
+      "label": "CORS",
+      "sublabel": "Cross-Origin",
+      "pos": [
+        570,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "load-balancer",
+      "type": "backend",
+      "label": "Load Balancer",
+      "sublabel": "request distribution",
+      "pos": [
+        830,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "vllm-service",
+      "type": "backend",
+      "label": "vLLM Service",
+      "sublabel": "vllm-inference:8000",
+      "pos": [
+        1090,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Clients",
+      "wraps": [
+        "python-client",
+        "js-client",
+        "curl-client"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "API Gateway",
+      "wraps": [
+        "nginx",
+        "api-gateway",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Security",
+      "wraps": [
+        "auth",
+        "rate-limit",
+        "cors"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backend",
+      "wraps": [
+        "load-balancer",
+        "vllm-service"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "python-to-nginx",
+      "from": "python-client",
+      "to": "nginx",
+      "label": "HTTP Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "js-to-apigw",
+      "from": "js-client",
+      "to": "api-gateway",
+      "label": "HTTP Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "curl-to-envoy",
+      "from": "curl-client",
+      "to": "envoy",
+      "label": "HTTP Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nginx-to-auth",
+      "from": "nginx",
+      "to": "auth"
+    },
+    {
+      "id": "apigw-to-ratelimit",
+      "from": "api-gateway",
+      "to": "rate-limit"
+    },
+    {
+      "id": "envoy-to-cors",
+      "from": "envoy",
+      "to": "cors"
+    },
+    {
+      "id": "auth-to-lb",
+      "from": "auth",
+      "to": "load-balancer",
+      "variant": "security"
+    },
+    {
+      "id": "ratelimit-to-lb",
+      "from": "rate-limit",
+      "to": "load-balancer",
+      "variant": "security"
+    },
+    {
+      "id": "cors-to-lb",
+      "from": "cors",
+      "to": "load-balancer",
+      "variant": "security"
+    },
+    {
+      "id": "lb-to-vllm",
+      "from": "load-balancer",
+      "to": "vllm-service",
+      "label": "distribute",
+      "variant": "emphasis"
+    }
+  ]
+}

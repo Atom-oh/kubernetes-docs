@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray Serve 요청 흐름과 3단계 오토스케일링",
+    "output": "ko-ai-ml-ray-04-ray-serve-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1160, 760],
+    "views": [
+      { "id": "request-path", "label": "요청 처리 경로", "focus": ["client", "ingress", "preprocess", "inference", "response"], "note": "클라이언트 요청이 Ray Serve 인그레스를 거쳐 전처리 → 모델 추론 deployment로 흐르고 응답으로 돌아온다." },
+      { "id": "autoscaling-chain", "label": "3단계 오토스케일링", "focus": ["serve-autoscaler", "kuberay-autoscaler", "karpenter", "preprocess", "inference"], "note": "각 계층은 바로 아래 계층만 본다. replica 수 → worker Pod 수 → 노드 수 순으로 조정된다." }
+    ]
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "Client", "sublabel": "HTTP / gRPC", "pos": [30, 120], "size": [140, 60] },
+    { "id": "ingress", "type": "frontend", "label": "Ray Serve 인그레스", "sublabel": "요청 라우터", "pos": [230, 120], "size": [170, 60] },
+    { "id": "preprocess", "type": "backend", "label": "Deployment: 전처리", "sublabel": "actor replicas", "pos": [470, 120], "size": [190, 60] },
+    { "id": "inference", "type": "backend", "label": "Deployment: 모델 추론", "sublabel": "actor replicas", "pos": [720, 120], "size": [200, 60] },
+    { "id": "response", "type": "external", "label": "응답", "sublabel": "클라이언트로 반환", "pos": [990, 120], "size": [140, 60] },
+    { "id": "serve-autoscaler", "type": "backend", "label": "Ray Serve Autoscaler", "sublabel": "deployment별 replica 수", "pos": [590, 330], "size": [210, 60] },
+    { "id": "kuberay-autoscaler", "type": "backend", "label": "Ray / KubeRay Autoscaler", "sublabel": "worker Pod 수", "pos": [590, 480], "size": [210, 60] },
+    { "id": "karpenter", "type": "cloud", "label": "Karpenter", "sublabel": "EC2 노드 수", "pos": [590, 630], "size": [210, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Application (Serve 파이프라인)", "wraps": ["preprocess", "inference"] }
+  ],
+  "connections": [
+    { "id": "client-to-ingress", "from": "client", "to": "ingress", "label": "HTTP / gRPC", "variant": "emphasis" },
+    { "id": "ingress-to-preprocess", "from": "ingress", "to": "preprocess", "variant": "emphasis" },
+    { "id": "preprocess-to-inference", "from": "preprocess", "to": "inference", "variant": "emphasis" },
+    { "id": "inference-to-response", "from": "inference", "to": "response", "variant": "emphasis" },
+    { "id": "serve-watches-preprocess", "from": "serve-autoscaler", "to": "preprocess", "label": "큐 깊이 · 진행 중 요청 수 감시", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "serve-watches-inference", "from": "serve-autoscaler", "to": "inference", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "kuberay-watches-serve", "from": "kuberay-autoscaler", "to": "serve-autoscaler", "label": "대기 중인 actor 배치 감시", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "karpenter-watches-kuberay", "from": "karpenter", "to": "kuberay-autoscaler", "label": "대기 중인 worker Pod에 맞춰 노드 프로비저닝", "variant": "dashed", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "요청 처리 경로", "items": ["Ray Serve가 HTTP/gRPC 요청을 deployment의 actor replica로 라우팅한다", "전처리 → 모델 추론 두 deployment가 하나의 application을 구성한다", "각 deployment는 독립적으로 스케일·버전·리소스를 관리한다"] },
+    { "dot": "amber", "title": "3단계 오토스케일링", "items": ["Ray Serve Autoscaler: replica당 진행 중 요청 수(대기 + 처리 중)를 목표값과 비교해 replica 수 조정", "Ray/KubeRay Autoscaler: 대기 중인 actor 배치를 기준으로 worker Pod 수 결정", "Karpenter: 대기 중인 worker Pod를 실행할 EC2 노드 수 결정"] }
+  ]
+}

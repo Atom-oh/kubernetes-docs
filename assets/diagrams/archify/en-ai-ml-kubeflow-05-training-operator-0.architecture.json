@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow Trainer Reconciliation Flow",
+    "locale": "en",
+    "output": "en-ai-ml-kubeflow-05-training-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Input resources"
+        },
+        "backend": {
+          "label": "Controller / JobSet"
+        },
+        "cloud": {
+          "label": "Worker Pods"
+        },
+        "messagebus": {
+          "label": "Peer discovery"
+        },
+        "database": {
+          "label": "Status store"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "declare",
+        "label": "What vs. how",
+        "focus": [
+          "tj",
+          "rt",
+          "c"
+        ],
+        "note": "TrainJob says what to run, ClusterTrainingRuntime says how; the controller watches both."
+      },
+      {
+        "id": "launch",
+        "label": "Create and schedule",
+        "focus": [
+          "c",
+          "js",
+          "w",
+          "svc"
+        ],
+        "note": "The controller creates a JobSet/PodGroup; worker Pods are scheduled all-or-nothing and find each other via the headless Service."
+      },
+      {
+        "id": "report",
+        "label": "Status reporting",
+        "focus": [
+          "w",
+          "c",
+          "st"
+        ],
+        "note": "Workers report progress and metrics; the controller writes them into TrainJob.status."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "tj",
+      "type": "frontend",
+      "label": "TrainJob",
+      "sublabel": "script · args · worker count",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "frontend",
+      "label": "ClusterTrainingRuntime",
+      "sublabel": "image · launch mechanics",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "Trainer Controller",
+      "sublabel": "reconciliation loop",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "st",
+      "type": "database",
+      "label": "TrainJob.status",
+      "sublabel": "progress · metrics · completion",
+      "pos": [
+        840,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "js",
+      "type": "backend",
+      "label": "JobSet / PodGroup",
+      "sublabel": "gang-scheduled worker Pods",
+      "pos": [
+        330,
+        390
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "w",
+      "type": "cloud",
+      "label": "Worker Pod 0..N",
+      "sublabel": "RANK=0 · RANK=1 · … · RANK=N",
+      "pos": [
+        330,
+        560
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "messagebus",
+      "label": "Headless Service",
+      "sublabel": "peer DNS names",
+      "pos": [
+        720,
+        560
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "tj-rt",
+      "from": "tj",
+      "to": "rt",
+      "label": "references",
+      "variant": "dashed"
+    },
+    {
+      "id": "tj-c",
+      "from": "tj",
+      "to": "c",
+      "label": "watched by",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rt-c",
+      "from": "rt",
+      "to": "c",
+      "label": "watched by",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c-js",
+      "from": "c",
+      "to": "js",
+      "label": "creates",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "js-w",
+      "from": "js",
+      "to": "w"
+    },
+    {
+      "id": "w-svc",
+      "from": "w",
+      "to": "svc",
+      "label": "discover peers",
+      "variant": "dashed"
+    },
+    {
+      "id": "w-c",
+      "from": "w",
+      "to": "c",
+      "label": "progress / metrics",
+      "fromSide": "left",
+      "toSide": "left",
+      "via": [
+        [
+          250,
+          592
+        ],
+        [
+          250,
+          252
+        ]
+      ],
+      "labelSegment": 1,
+      "labelDx": -52
+    },
+    {
+      "id": "c-st",
+      "from": "c",
+      "to": "st",
+      "label": "reports status"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "TrainJob vs. runtime split",
+      "items": [
+        "TrainJob: script, args, worker count — created per run",
+        "ClusterTrainingRuntime: image, distributed launch mechanics — defined once by the platform team",
+        "Template/instance relationship, like StorageClass ↔ PVC"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Distributed training primitives",
+      "items": [
+        "Headless Service: stable DNS names for peers instead of Pod IPs",
+        "Injected env vars: the runtime generalizes the RANK · WORLD_SIZE · MASTER_ADDR role",
+        "Gang scheduling: all workers must be scheduled together before training starts"
+      ]
+    }
+  ]
+}

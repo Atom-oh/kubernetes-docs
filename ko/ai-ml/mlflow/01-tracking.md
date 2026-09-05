@@ -76,7 +76,9 @@ Tracking 서버는 저장하는 데이터를 두 범주로 나누고, 이를 각
 
 이 구분이 중요한 이유는 두 저장소의 내구성, 확장성, 접근 패턴 요구사항이 서로 다르기 때문입니다. 데이터베이스는 작고 구조화된 쓰기·조회가 많은 상황에 적합하고, 객체 스토리지는 크기가 큰 파일을 저장하고 조회하는 데 적합합니다. 직접 EKS에서 tracking 서버를 운영할 때 이 구분이 어떤 인프라 선택으로 이어지는지는 [Part 3: EKS 배포](./03-eks-deployment.md)에서 자세히 다룹니다. 지금은 두 저장소가 존재하며 서로 다른 목적을 담당한다는 점만 알아두면 충분합니다.
 
-![학습 스크립트가 MLflow Tracking API를 통해 Tracking 서버에 실험 데이터를 기록하고, 서버는 메타데이터를 Backend Store에, 파일을 Artifact Store에 저장하며, Tracking UI는 두 저장소를 조회하여 결과를 보여주는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-mlflow-01-tracking-0.svg)
+![학습 스크립트가 MLflow Tracking API를 통해 Tracking 서버에 실험 데이터를 기록하고, 서버는 메타데이터를 Backend Store에, 파일을 Artifact Store에 저장하며, Tracking UI는 두 저장소를 조회하여 결과를 보여주는 구조를 보여준다.](../../.gitbook/assets/ko-ai-ml-mlflow-01-tracking-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-mlflow-01-tracking-0.html)
 
 학습 스크립트는 두 저장소와 직접 통신하지 않고 항상 Tracking API를 통해서만 접근합니다. Tracking 서버는 이 API를 통해 들어온 요청 중 메타데이터 쓰기는 backend store로, 파일 쓰기는 artifact store로 각각 라우팅합니다. UI는 experiment, run, logged model, trace를 화면에 표시하기 위해 두 저장소를 모두 조회합니다.
 

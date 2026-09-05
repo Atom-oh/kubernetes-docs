@@ -1,0 +1,292 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KServe Inference Flow and Deployment Modes",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "KServe component"
+        },
+        "cloud": {
+          "label": "Runtime unit (pods)"
+        },
+        "security": {
+          "label": "Deployment-mode decision"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "entry",
+        "label": "Request entry",
+        "focus": [
+          "request",
+          "isvc",
+          "predictor"
+        ],
+        "note": "A client request reaches the InferenceService, where the required predictor spec receives it."
+      },
+      {
+        "id": "optional",
+        "label": "Optional components",
+        "focus": [
+          "predictor",
+          "transformer",
+          "explainer",
+          "mode"
+        ],
+        "note": "The transformer (pre/post-processing) and explainer (model explanations) are optional, added only when needed."
+      },
+      {
+        "id": "modes",
+        "label": "Deployment-mode branch",
+        "focus": [
+          "mode",
+          "knative",
+          "rawdep"
+        ],
+        "note": "Serverless lets Knative manage pods with scale-to-zero; Raw Deployment keeps a Deployment/Service + HPA always running."
+      },
+      {
+        "id": "inference",
+        "label": "Inference and response",
+        "focus": [
+          "knative",
+          "rawdep",
+          "model",
+          "response"
+        ],
+        "note": "In either mode the model server loads the artifact, runs inference, and returns the result to the client."
+      }
+    ],
+    "viewBox": [
+      1160,
+      776
+    ]
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "Client"
+    },
+    {
+      "id": "isvc",
+      "label": "InferenceService"
+    },
+    {
+      "id": "optional",
+      "label": "Optional components"
+    },
+    {
+      "id": "serverless",
+      "label": "Serverless mode (Knative)"
+    },
+    {
+      "id": "raw",
+      "label": "Raw Deployment mode"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "isvc",
+    "predictor",
+    "mode",
+    "knative",
+    "model",
+    "response"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "client",
+      "col": 0,
+      "type": "external",
+      "label": "Client request",
+      "sublabel": "inference request",
+      "width": 136
+    },
+    {
+      "id": "isvc",
+      "lane": "isvc",
+      "col": 1,
+      "type": "backend",
+      "label": "InferenceService",
+      "sublabel": "KServe CRD",
+      "width": 136
+    },
+    {
+      "id": "predictor",
+      "lane": "isvc",
+      "col": 2,
+      "type": "backend",
+      "label": "Predictor spec",
+      "sublabel": "required · model server",
+      "width": 132
+    },
+    {
+      "id": "transformer",
+      "lane": "optional",
+      "col": 1,
+      "type": "backend",
+      "label": "Transformer",
+      "sublabel": "optional · pre/post-processing",
+      "width": 184
+    },
+    {
+      "id": "explainer",
+      "lane": "optional",
+      "col": 2,
+      "type": "backend",
+      "label": "Explainer",
+      "sublabel": "optional · model explanations",
+      "width": 184
+    },
+    {
+      "id": "mode",
+      "lane": "isvc",
+      "col": 3,
+      "type": "security",
+      "label": "Deployment mode",
+      "sublabel": "Serverless / Raw",
+      "width": 148
+    },
+    {
+      "id": "knative",
+      "lane": "serverless",
+      "col": 4,
+      "type": "cloud",
+      "label": "Knative-managed pod",
+      "sublabel": "scale-to-zero capable",
+      "width": 168
+    },
+    {
+      "id": "rawdep",
+      "lane": "raw",
+      "col": 3,
+      "type": "cloud",
+      "label": "Deployment/Service + HPA",
+      "sublabel": "no scale-to-zero",
+      "width": 196
+    },
+    {
+      "id": "model",
+      "lane": "isvc",
+      "col": 5,
+      "type": "backend",
+      "label": "Model server inference",
+      "sublabel": "loads artifact, runs inference",
+      "width": 196
+    },
+    {
+      "id": "response",
+      "lane": "client",
+      "col": 5,
+      "type": "external",
+      "label": "Response to client",
+      "sublabel": "inference result",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-isvc",
+      "from": "request",
+      "to": "isvc"
+    },
+    {
+      "id": "isvc-predictor",
+      "from": "isvc",
+      "to": "predictor"
+    },
+    {
+      "id": "predictor-transformer",
+      "from": "predictor",
+      "to": "transformer",
+      "label": "optional",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-explainer",
+      "from": "predictor",
+      "to": "explainer",
+      "label": "optional",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "predictor-mode",
+      "from": "predictor",
+      "to": "mode"
+    },
+    {
+      "id": "mode-knative",
+      "from": "mode",
+      "to": "knative",
+      "label": "Serverless",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mode-rawdep",
+      "from": "mode",
+      "to": "rawdep",
+      "label": "Raw Deployment",
+      "role": "branch"
+    },
+    {
+      "id": "knative-model",
+      "from": "knative",
+      "to": "model",
+      "route": "outside-right"
+    },
+    {
+      "id": "rawdep-model",
+      "from": "rawdep",
+      "to": "model",
+      "role": "branch"
+    },
+    {
+      "id": "model-response",
+      "from": "model",
+      "to": "response",
+      "label": "response",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "InferenceService components",
+      "items": [
+        "Predictor (required): loads the model artifact and answers inference requests",
+        "Transformer (optional): pre/post-processing in front of the predictor",
+        "Explainer (optional): produces model explanations such as feature importance"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Serverless mode (Knative)",
+      "items": [
+        "Knative Serving manages the pod lifecycle",
+        "Scales to zero pods when there is no traffic",
+        "Cold-start latency when scaling up from zero"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Raw Deployment mode",
+      "items": [
+        "Manages a plain Deployment · Service · HPA directly",
+        "No Knative dependency, no cold start",
+        "Minimum replicas always run, so no scale-to-zero"
+      ]
+    }
+  ]
+}

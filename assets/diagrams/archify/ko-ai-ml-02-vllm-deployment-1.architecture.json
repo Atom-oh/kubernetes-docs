@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 시스템 요구 사항",
+    "output": "ko-ai-ml-02-vllm-deployment-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "하드웨어"
+        },
+        "external": {
+          "label": "모델 크기별 요구 사항"
+        },
+        "backend": {
+          "label": "소프트웨어"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "memory-tiers",
+        "label": "GPU 메모리와 모델 크기",
+        "focus": [
+          "gpu",
+          "gpu-memory",
+          "model-7b",
+          "model-13b",
+          "model-70b"
+        ],
+        "note": "GPU 메모리 용량이 어떤 크기의 모델을 서빙할 수 있는지를 결정한다."
+      },
+      {
+        "id": "software-stack",
+        "label": "소프트웨어 스택",
+        "focus": [
+          "cuda",
+          "python",
+          "pytorch"
+        ],
+        "note": "vLLM 실행에 필요한 최소 소프트웨어 버전이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu",
+      "type": "cloud",
+      "label": "NVIDIA GPU",
+      "sublabel": "Volta / Turing / Ampere / Hopper",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gpu-memory",
+      "type": "cloud",
+      "label": "GPU 메모리",
+      "sublabel": "모델 크기에 따라 다름",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "핵심 요건"
+    },
+    {
+      "id": "cpu",
+      "type": "cloud",
+      "label": "CPU 코어",
+      "sublabel": "vCPU 수",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-7b",
+      "type": "external",
+      "label": "7B 모델",
+      "sublabel": "최소 16GB GPU 메모리",
+      "pos": [
+        400,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-13b",
+      "type": "external",
+      "label": "13B 모델",
+      "sublabel": "최소 24GB GPU 메모리",
+      "pos": [
+        400,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-70b",
+      "type": "external",
+      "label": "70B 모델",
+      "sublabel": "최소 80GB GPU 메모리",
+      "pos": [
+        400,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "또는 다중 GPU 분산"
+    },
+    {
+      "id": "cuda",
+      "type": "backend",
+      "label": "CUDA",
+      "sublabel": "12.1 이상",
+      "pos": [
+        760,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "python",
+      "type": "backend",
+      "label": "Python",
+      "sublabel": "3.9 이상",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pytorch",
+      "type": "backend",
+      "label": "PyTorch",
+      "sublabel": "2.4.0 이상",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "하드웨어",
+      "wraps": [
+        "gpu",
+        "gpu-memory",
+        "cpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "모델 크기별 요구 사항",
+      "wraps": [
+        "model-7b",
+        "model-13b",
+        "model-70b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "소프트웨어",
+      "wraps": [
+        "cuda",
+        "python",
+        "pytorch"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-to-memory",
+      "from": "gpu",
+      "to": "gpu-memory",
+      "label": "VRAM 용량",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "memory-to-7b",
+      "from": "gpu-memory",
+      "to": "model-7b",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "memory-to-13b",
+      "from": "gpu-memory",
+      "to": "model-13b",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "memory-to-70b",
+      "from": "gpu-memory",
+      "to": "model-70b",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "GPU 메모리 기준",
+      "items": [
+        "7B 모델: 최소 16GB GPU 메모리",
+        "13B 모델: 최소 24GB GPU 메모리",
+        "70B 모델: 최소 80GB GPU 메모리 (또는 여러 GPU에 분산)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "EKS GPU 노드 유형",
+      "items": [
+        "p5.48xlarge: 8x H100, 각 80GB",
+        "p4d.24xlarge: 8x A100, 각 40GB 또는 80GB",
+        "g6.12xlarge: 4x L4, 각 24GB (비용 효율적)",
+        "g6e.12xlarge: 4x L40S, 각 48GB"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "소프트웨어",
+      "items": [
+        "CUDA 12.1 이상 (FP8 사용 시 CUDA 12.4 권장)",
+        "Python 3.9 이상",
+        "PyTorch 2.4.0 이상"
+      ]
+    }
+  ]
+}

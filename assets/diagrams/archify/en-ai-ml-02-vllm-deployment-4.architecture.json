@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM Performance Optimization",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1340,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "vLLM server option"
+        },
+        "cloud": {
+          "label": "EKS / AWS infrastructure setting"
+        },
+        "external": {
+          "label": "Performance improvement (convergence point)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gpu-memory",
+        "label": "GPU Memory Optimization",
+        "focus": [
+          "memory-util",
+          "quantization",
+          "swap-space",
+          "performance"
+        ],
+        "note": "Optimize vLLM's GPU memory usage with memory utilization, quantization, and swap space."
+      },
+      {
+        "id": "throughput",
+        "label": "Throughput Optimization",
+        "focus": [
+          "batch-size",
+          "kv-cache",
+          "tensor-parallel",
+          "performance"
+        ],
+        "note": "Optimize vLLM's throughput with batch size, KV cache block size, and tensor parallel size."
+      },
+      {
+        "id": "network",
+        "label": "Network Optimization",
+        "focus": [
+          "efa",
+          "nccl",
+          "node-placement",
+          "performance"
+        ],
+        "note": "Optimize network performance in distributed deployments with EFA, NCCL settings, and node placement."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "efa",
+      "type": "cloud",
+      "label": "EFA Utilization",
+      "sublabel": "vpc.amazonaws.com/efa: 1",
+      "pos": [
+        320,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "cloud",
+      "label": "NCCL Settings Optimization",
+      "sublabel": "NCCL_DEBUG=INFO",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "node-placement",
+      "type": "cloud",
+      "label": "Node Placement Optimization",
+      "sublabel": "topology.kubernetes.io/zone",
+      "pos": [
+        800,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "memory-util",
+      "type": "backend",
+      "label": "GPU Memory Utilization Adjustment",
+      "sublabel": "--gpu-memory-utilization=0.9",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "quantization",
+      "type": "backend",
+      "label": "Quantization Application",
+      "sublabel": "--quantization awq",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "swap-space",
+      "type": "backend",
+      "label": "Swap Space Utilization",
+      "sublabel": "--swap-space=16",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "batch-size",
+      "type": "backend",
+      "label": "Batch Size Adjustment",
+      "sublabel": "--max-num-batched-tokens=8192",
+      "pos": [
+        1080,
+        240
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "kv-cache",
+      "type": "backend",
+      "label": "KV Cache Optimization",
+      "sublabel": "--block-size=16",
+      "pos": [
+        1080,
+        340
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "tensor-parallel",
+      "type": "backend",
+      "label": "Tensor Parallel Adjustment",
+      "sublabel": "--tensor-parallel-size=8",
+      "pos": [
+        1080,
+        440
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "performance",
+      "type": "external",
+      "label": "Performance Improvement",
+      "sublabel": "Where all three tuning areas converge",
+      "pos": [
+        560,
+        350
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Network Optimization",
+      "wraps": [
+        "efa",
+        "nccl",
+        "node-placement"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GPU Memory Optimization",
+      "wraps": [
+        "memory-util",
+        "quantization",
+        "swap-space"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Throughput Optimization",
+      "wraps": [
+        "batch-size",
+        "kv-cache",
+        "tensor-parallel"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "efa-perf",
+      "from": "efa",
+      "to": "performance"
+    },
+    {
+      "id": "nccl-perf",
+      "from": "nccl",
+      "to": "performance",
+      "variant": "emphasis"
+    },
+    {
+      "id": "node-placement-perf",
+      "from": "node-placement",
+      "to": "performance"
+    },
+    {
+      "id": "memory-util-perf",
+      "from": "memory-util",
+      "to": "performance"
+    },
+    {
+      "id": "quantization-perf",
+      "from": "quantization",
+      "to": "performance",
+      "variant": "emphasis"
+    },
+    {
+      "id": "swap-space-perf",
+      "from": "swap-space",
+      "to": "performance"
+    },
+    {
+      "id": "batch-size-perf",
+      "from": "batch-size",
+      "to": "performance"
+    },
+    {
+      "id": "kv-cache-perf",
+      "from": "kv-cache",
+      "to": "performance",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tensor-parallel-perf",
+      "from": "tensor-parallel",
+      "to": "performance"
+    }
+  ]
+}

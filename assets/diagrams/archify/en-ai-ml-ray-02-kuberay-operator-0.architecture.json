@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The KubeRay Operator and Two-Tier Autoscaling",
+    "output": "en-ai-ml-ray-02-kuberay-operator-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Custom resource"
+        },
+        "backend": {
+          "label": "Controller / Pod"
+        },
+        "cloud": {
+          "label": "Node provisioner"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "reconcile",
+        "label": "Reconcile",
+        "focus": [
+          "rc",
+          "op",
+          "hp",
+          "wg1",
+          "wg2"
+        ],
+        "note": "The KubeRay operator creates, updates, and deletes the Head Pod and worker group Pods to match the RayCluster spec."
+      },
+      {
+        "id": "ray-autoscaler",
+        "label": "Ray autoscaler loop",
+        "focus": [
+          "wg1",
+          "wg2",
+          "ra",
+          "rc"
+        ],
+        "note": "The Ray autoscaler watches pending tasks and actors and adjusts a worker group's replica count (Pod count)."
+      },
+      {
+        "id": "karpenter",
+        "label": "Karpenter loop",
+        "focus": [
+          "ra",
+          "kp",
+          "wg1",
+          "wg2"
+        ],
+        "note": "Karpenter reacts only to pending Pods and provisions EC2 nodes sized to match them (node count)."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1300,
+      620
+    ]
+  },
+  "components": [
+    {
+      "id": "rc",
+      "type": "database",
+      "label": "RayCluster CR",
+      "sublabel": "head + worker group specs",
+      "pos": [
+        230,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "op",
+      "type": "backend",
+      "label": "KubeRay Operator",
+      "sublabel": "reconciles",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "hp",
+      "type": "backend",
+      "label": "Head Pod",
+      "sublabel": "Ray head",
+      "pos": [
+        20,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "wg1",
+      "type": "backend",
+      "label": "CPU Worker Group Pods",
+      "sublabel": "replicas",
+      "pos": [
+        520,
+        140
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "wg2",
+      "type": "backend",
+      "label": "GPU Worker Group Pods",
+      "sublabel": "nvidia.com/gpu limit",
+      "pos": [
+        520,
+        500
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "ra",
+      "type": "backend",
+      "label": "Ray Autoscaler",
+      "sublabel": "decides Pod count",
+      "pos": [
+        990,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "kp",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "decides EC2 node count",
+      "pos": [
+        740,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rc-op",
+      "from": "rc",
+      "to": "op",
+      "label": "watches spec",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 40
+    },
+    {
+      "id": "op-hp",
+      "from": "op",
+      "to": "hp",
+      "label": "creates",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "op-wg1",
+      "from": "op",
+      "to": "wg1",
+      "label": "creates",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          470,
+          332
+        ],
+        [
+          470,
+          172
+        ]
+      ]
+    },
+    {
+      "id": "op-wg2",
+      "from": "op",
+      "to": "wg2",
+      "label": "creates",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          325,
+          532
+        ]
+      ]
+    },
+    {
+      "id": "wg1-ra",
+      "from": "wg1",
+      "to": "ra",
+      "label": "monitored by",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          1085,
+          172
+        ]
+      ]
+    },
+    {
+      "id": "wg2-ra",
+      "from": "wg2",
+      "to": "ra",
+      "label": "monitored by",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1085,
+          532
+        ]
+      ]
+    },
+    {
+      "id": "ra-rc",
+      "from": "ra",
+      "to": "rc",
+      "label": "requests more replicas",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1230,
+          332
+        ],
+        [
+          1230,
+          92
+        ]
+      ],
+      "labelSegment": 2
+    },
+    {
+      "id": "ra-kp",
+      "from": "ra",
+      "to": "kp",
+      "label": "pending Pods",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "kp-wg1",
+      "from": "kp",
+      "to": "wg1",
+      "label": "provisions EC2 nodes",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          815,
+          250
+        ],
+        [
+          610,
+          250
+        ]
+      ]
+    },
+    {
+      "id": "kp-wg2",
+      "from": "kp",
+      "to": "wg2",
+      "label": "provisions EC2 nodes",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          815,
+          430
+        ],
+        [
+          610,
+          430
+        ]
+      ]
+    }
+  ]
+}

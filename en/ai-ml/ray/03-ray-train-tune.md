@@ -49,7 +49,9 @@ A trial that Ray Tune runs does not have to be a single-process function. A comm
 
 This combination matters whenever a model is expensive enough to train that a single trial itself needs distributed training to finish in a reasonable amount of time. Without it, a team would face an awkward choice: tune hyperparameters serially against a distributed training job, or give up distributed training during the search phase. Because both libraries share the same underlying Ray primitives, Tune can drive many concurrent Ray Train runs, each with its own set of distributed workers, without either library needing special-case integration code for the other.
 
-![A Ray Tune driver launches two parallel hyperparameter trials, each running its own Ray Train job with worker actors sharing a per-trial object store, and reports results back so the driver can decide the next round of trials.](../../../assets/diagrams/rendered/en-ai-ml-ray-03-ray-train-tune-0.svg)
+![A Ray Tune driver launches two parallel hyperparameter trials, each running its own Ray Train job with worker actors sharing a per-trial object store, and reports results back so the driver can decide the next round of trials.](../../.gitbook/assets/en-ai-ml-ray-03-ray-train-tune-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-ray-03-ray-train-tune-0.html)
 
 ## Resource Allocation and the Cluster Autoscaler
 

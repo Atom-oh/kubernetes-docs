@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray Serve Request Flow and Three-Tier Autoscaling",
+    "locale": "en",
+    "output": "en-ai-ml-ray-04-ray-serve-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      760
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "ingress",
+          "preprocess",
+          "inference",
+          "response"
+        ],
+        "note": "A client request passes through the Ray Serve ingress into the Preprocess → Model Inference deployments and returns as a response."
+      },
+      {
+        "id": "autoscaling-chain",
+        "label": "Three-tier autoscaling",
+        "focus": [
+          "serve-autoscaler",
+          "kuberay-autoscaler",
+          "karpenter",
+          "preprocess",
+          "inference"
+        ],
+        "note": "Each layer only sees the layer immediately below it: replica count → worker Pod count → node count."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "HTTP / gRPC",
+      "pos": [
+        30,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "frontend",
+      "label": "Ray Serve Ingress",
+      "sublabel": "request router",
+      "pos": [
+        230,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "preprocess",
+      "type": "backend",
+      "label": "Deployment: Preprocess",
+      "sublabel": "actor replicas",
+      "pos": [
+        470,
+        120
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "backend",
+      "label": "Deployment: Model Inference",
+      "sublabel": "actor replicas",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "response",
+      "type": "external",
+      "label": "Response",
+      "sublabel": "returned to client",
+      "pos": [
+        990,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "serve-autoscaler",
+      "type": "backend",
+      "label": "Ray Serve Autoscaler",
+      "sublabel": "per-deployment replica count",
+      "pos": [
+        590,
+        330
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "kuberay-autoscaler",
+      "type": "backend",
+      "label": "Ray / KubeRay Autoscaler",
+      "sublabel": "worker Pod count",
+      "pos": [
+        590,
+        480
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "EC2 node count",
+      "pos": [
+        590,
+        630
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Application (Serve pipeline)",
+      "wraps": [
+        "preprocess",
+        "inference"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-ingress",
+      "from": "client",
+      "to": "ingress",
+      "label": "HTTP / gRPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ingress-to-preprocess",
+      "from": "ingress",
+      "to": "preprocess",
+      "variant": "emphasis"
+    },
+    {
+      "id": "preprocess-to-inference",
+      "from": "preprocess",
+      "to": "inference",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inference-to-response",
+      "from": "inference",
+      "to": "response",
+      "variant": "emphasis"
+    },
+    {
+      "id": "serve-watches-preprocess",
+      "from": "serve-autoscaler",
+      "to": "preprocess",
+      "label": "watches queue depth / ongoing requests",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "serve-watches-inference",
+      "from": "serve-autoscaler",
+      "to": "inference",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "kuberay-watches-serve",
+      "from": "kuberay-autoscaler",
+      "to": "serve-autoscaler",
+      "label": "watches pending actor placement",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "karpenter-watches-kuberay",
+      "from": "karpenter",
+      "to": "kuberay-autoscaler",
+      "label": "provisions nodes for pending worker Pods",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request path",
+      "items": [
+        "Ray Serve routes HTTP/gRPC requests to a deployment's actor replicas",
+        "The Preprocess → Model Inference deployments compose one application",
+        "Each deployment is scaled, versioned, and resourced independently"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Three-tier autoscaling",
+      "items": [
+        "Ray Serve Autoscaler: compares ongoing requests per replica (queued + in-flight) against a target and adjusts replicas",
+        "Ray/KubeRay Autoscaler: decides worker Pod count from pending actor placement",
+        "Karpenter: decides how many EC2 nodes are needed to run the pending worker Pods"
+      ]
+    }
+  ]
+}

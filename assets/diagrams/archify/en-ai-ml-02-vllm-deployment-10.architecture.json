@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM Autoscaling Structure",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pod-scaling",
+        "label": "Pod Scaling",
+        "focus": [
+          "cpu",
+          "rps",
+          "queue",
+          "gpu",
+          "hpa",
+          "keda",
+          "custom"
+        ],
+        "note": "CPU utilization feeds the HPA, request rate and queue length feed KEDA, GPU utilization feeds custom metrics; all adjust the vLLM pod count."
+      },
+      {
+        "id": "node-scaling",
+        "label": "Node Scaling",
+        "focus": [
+          "hpa",
+          "keda",
+          "custom",
+          "karpenter",
+          "ca",
+          "spot"
+        ],
+        "note": "When more pods outgrow the GPU nodes, Karpenter or Cluster Autoscaler adds nodes, and Karpenter can cut cost with Spot instances."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cpu",
+      "type": "external",
+      "label": "CPU Utilization",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "rps",
+      "type": "external",
+      "label": "Requests Per Second",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "external",
+      "label": "Queue Length",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "external",
+      "label": "GPU Utilization",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HorizontalPodAutoscaler",
+      "sublabel": "autoscaling/v2",
+      "pos": [
+        360,
+        60
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "keda",
+      "type": "backend",
+      "label": "KEDA",
+      "sublabel": "event-driven scaler",
+      "pos": [
+        360,
+        195
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "custom",
+      "type": "backend",
+      "label": "Custom Metrics",
+      "sublabel": "GPU-metric based",
+      "pos": [
+        360,
+        360
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "NodePool · EC2NodeClass",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "spot",
+      "type": "cloud",
+      "label": "Spot Instances",
+      "sublabel": "cost savings",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "cloud",
+      "label": "Cluster Autoscaler",
+      "pos": [
+        720,
+        360
+      ],
+      "size": [
+        200,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Scaling Triggers",
+      "wraps": [
+        "cpu",
+        "rps",
+        "queue",
+        "gpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pod Scaling",
+      "wraps": [
+        "hpa",
+        "keda",
+        "custom"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node Scaling",
+      "wraps": [
+        "karpenter",
+        "spot",
+        "ca"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cpu-hpa",
+      "from": "cpu",
+      "to": "hpa"
+    },
+    {
+      "id": "rps-keda",
+      "from": "rps",
+      "to": "keda"
+    },
+    {
+      "id": "queue-keda",
+      "from": "queue",
+      "to": "keda"
+    },
+    {
+      "id": "gpu-custom",
+      "from": "gpu",
+      "to": "custom",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hpa-karpenter",
+      "from": "hpa",
+      "to": "karpenter",
+      "label": "GPU nodes exhausted"
+    },
+    {
+      "id": "keda-karpenter",
+      "from": "keda",
+      "to": "karpenter"
+    },
+    {
+      "id": "custom-ca",
+      "from": "custom",
+      "to": "ca"
+    },
+    {
+      "id": "karpenter-spot",
+      "from": "karpenter",
+      "to": "spot",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

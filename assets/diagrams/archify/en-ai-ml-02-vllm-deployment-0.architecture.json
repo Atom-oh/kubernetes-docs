@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      520
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Key Features"
+        },
+        "backend": {
+          "label": "Core Components"
+        },
+        "cloud": {
+          "label": "Key Benefits"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "features-to-benefits",
+        "label": "Features to benefits",
+        "focus": [
+          "paged",
+          "batching",
+          "distributed",
+          "quant",
+          "memory",
+          "throughput",
+          "scalability"
+        ],
+        "note": "PagedAttention and quantization yield memory efficiency, continuous batching yields throughput, distributed inference yields scalability."
+      },
+      {
+        "id": "engine-pipeline",
+        "label": "Inference engine pipeline",
+        "focus": [
+          "scheduler",
+          "loader",
+          "engine",
+          "kvcache",
+          "apiserver"
+        ],
+        "note": "The scheduler and model loader feed the inference engine, which drives the KV cache manager and the OpenAI-compatible API server."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "batching",
+      "type": "external",
+      "label": "Continuous Batching",
+      "sublabel": "Maximizes GPU utilization",
+      "pos": [
+        50,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "distributed",
+      "type": "external",
+      "label": "Distributed Inference",
+      "sublabel": "Tensor-parallel sharding",
+      "pos": [
+        50,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "paged",
+      "type": "external",
+      "label": "PagedAttention",
+      "sublabel": "KV cache memory management",
+      "pos": [
+        50,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "quant",
+      "type": "external",
+      "label": "Quantization",
+      "sublabel": "INT8 / INT4 / FP16",
+      "pos": [
+        50,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "cloud",
+      "label": "High Throughput",
+      "sublabel": "Up to 2x improvement",
+      "pos": [
+        330,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scalability",
+      "type": "cloud",
+      "label": "Scalability",
+      "sublabel": "175B+ parameter models",
+      "pos": [
+        330,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "cloud",
+      "label": "Memory Efficiency",
+      "sublabel": "Up to 2x improvement",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Request Scheduler",
+      "sublabel": "Dynamic batching",
+      "pos": [
+        610,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "loader",
+      "type": "backend",
+      "label": "Model Loader",
+      "sublabel": "Loads model weights",
+      "pos": [
+        610,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "Inference Engine",
+      "sublabel": "vLLM Engine",
+      "pos": [
+        880,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kvcache",
+      "type": "backend",
+      "label": "KV Cache Manager",
+      "sublabel": "Block-level KV cache",
+      "pos": [
+        1150,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "OpenAI-compatible API",
+      "pos": [
+        1150,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Key Features",
+      "wraps": [
+        "paged",
+        "batching",
+        "distributed",
+        "quant"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Key Benefits",
+      "wraps": [
+        "memory",
+        "throughput",
+        "scalability"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Core Components",
+      "wraps": [
+        "scheduler",
+        "loader",
+        "engine",
+        "kvcache",
+        "apiserver"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "paged-memory",
+      "from": "paged",
+      "to": "memory"
+    },
+    {
+      "id": "batching-throughput",
+      "from": "batching",
+      "to": "throughput"
+    },
+    {
+      "id": "distributed-scalability",
+      "from": "distributed",
+      "to": "scalability"
+    },
+    {
+      "id": "quant-memory",
+      "from": "quant",
+      "to": "memory",
+      "variant": "dashed"
+    },
+    {
+      "id": "scheduler-engine",
+      "from": "scheduler",
+      "to": "engine",
+      "label": "batched requests",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loader-engine",
+      "from": "loader",
+      "to": "engine",
+      "label": "weights"
+    },
+    {
+      "id": "engine-kvcache",
+      "from": "engine",
+      "to": "kvcache",
+      "label": "KV blocks",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-apiserver",
+      "from": "engine",
+      "to": "apiserver",
+      "label": "responses"
+    }
+  ]
+}
