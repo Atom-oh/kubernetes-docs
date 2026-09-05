@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Crossplane Core Concepts",
+    "locale": "en",
+    "output": "en-platform-engineering-07-crossplane-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "self-service",
+        "label": "Developer self-service",
+        "focus": [
+          "xc",
+          "xr"
+        ],
+        "note": "A namespace-scoped Claim creates the cluster-scoped Composite Resource without cluster-level permissions."
+      },
+      {
+        "id": "abstraction",
+        "label": "Platform abstraction",
+        "focus": [
+          "xrd",
+          "xr",
+          "comp"
+        ],
+        "note": "The XRD defines the schema for XR and Claim; the XR selects a Composition."
+      },
+      {
+        "id": "reconcile",
+        "label": "Reconcile to AWS",
+        "focus": [
+          "comp",
+          "mr-s3",
+          "mr-rds",
+          "mr-sg",
+          "s3",
+          "rds",
+          "sg"
+        ],
+        "note": "The Composition maps the XR to Managed Resources, each reconciled 1:1 into a real AWS resource."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "xc",
+      "type": "frontend",
+      "label": "Claim (XC)",
+      "sublabel": "namespace-scoped",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "xrd",
+      "type": "backend",
+      "label": "CompositeResourceDefinition (XRD)",
+      "sublabel": "defines schema for XR and XC",
+      "pos": [
+        230,
+        220
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource (XR)",
+      "sublabel": "cluster-scoped",
+      "pos": [
+        590,
+        220
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "comp",
+      "type": "backend",
+      "label": "Composition",
+      "sublabel": "maps XR to Managed Resources",
+      "pos": [
+        840,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "mr-s3",
+      "type": "cloud",
+      "label": "Managed Resource",
+      "sublabel": "S3 Bucket",
+      "pos": [
+        340,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "mr-rds",
+      "type": "cloud",
+      "label": "Managed Resource",
+      "sublabel": "RDS Instance",
+      "pos": [
+        600,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "mr-sg",
+      "type": "cloud",
+      "label": "Managed Resource",
+      "sublabel": "Security Group",
+      "pos": [
+        860,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "external",
+      "label": "S3 Bucket",
+      "pos": [
+        340,
+        590
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "rds",
+      "type": "external",
+      "label": "RDS Instance",
+      "pos": [
+        600,
+        590
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "external",
+      "label": "Security Group",
+      "pos": [
+        860,
+        590
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Developer Interface",
+      "wraps": [
+        "xc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Platform Abstraction Layer",
+      "wraps": [
+        "xrd",
+        "xr",
+        "comp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cloud Provider Layer",
+      "wraps": [
+        "mr-s3",
+        "mr-rds",
+        "mr-sg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS Account",
+      "wraps": [
+        "s3",
+        "rds",
+        "sg"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "xc-creates-xr",
+      "from": "xc",
+      "to": "xr",
+      "label": "creates",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "xrd-schema-xr",
+      "from": "xrd",
+      "to": "xr",
+      "label": "defines schema"
+    },
+    {
+      "id": "xrd-schema-xc",
+      "from": "xrd",
+      "to": "xc",
+      "label": "defines schema",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "xr-selects-comp",
+      "from": "xr",
+      "to": "comp",
+      "label": "selects",
+      "variant": "emphasis"
+    },
+    {
+      "id": "comp-maps-s3",
+      "from": "comp",
+      "to": "mr-s3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "comp-maps-rds",
+      "from": "comp",
+      "to": "mr-rds",
+      "label": "maps to",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "comp-maps-sg",
+      "from": "comp",
+      "to": "mr-sg"
+    },
+    {
+      "id": "s3-reconcile",
+      "from": "mr-s3",
+      "to": "s3"
+    },
+    {
+      "id": "rds-reconcile",
+      "from": "mr-rds",
+      "to": "rds",
+      "label": "reconciles",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "sg-reconcile",
+      "from": "mr-sg",
+      "to": "sg"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Developer interface",
+      "items": [
+        "Claim (XC) is a namespace-scoped projection of a Composite Resource",
+        "A developer in team-alpha can create a DatabaseClaim without cluster-level permissions"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Platform abstraction",
+      "items": [
+        "XRD defines the schema for both the XR and its Claim",
+        "Composition is the recipe: given an XR, create these Managed Resources and patch XR spec values into MR fields"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Cloud provider layer",
+      "items": [
+        "Managed Resource is a 1:1 cluster-scoped representation of an external cloud resource",
+        "Provider controllers continuously reconcile MRs against the AWS API"
+      ]
+    }
+  ]
+}

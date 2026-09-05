@@ -1364,7 +1364,9 @@ images:
 
 The fully automated pipeline uses Flux Image Automation to detect new container images, commit the updated tag to Git, and let Flagger handle the progressive rollout:
 
-![A new image built and pushed to ECR is picked up by Flux's image automation controllers, which commit an updated manifest that Kustomize applies, and Flagger's metrics analysis then promotes the resulting canary to primary or leaves it in place.](../../assets/diagrams/rendered/en-gitops-04-flagger-6.svg)
+![A new web-app image pushed to Amazon ECR is scanned by Flux image automation, which commits the updated tag to Git; the Kustomize Controller applies the Deployment, and Flagger runs a progressive canary rollout that promotes to primary or rolls back.](../.gitbook/assets/en-gitops-04-flagger-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-6.html)
 
 **Flux Image Automation resources:**
 

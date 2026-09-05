@@ -569,7 +569,9 @@ export const authModuleOidc = createBackendModule({
 
 The Backstage Software Catalog uses a well-defined entity model to represent your organization's software ecosystem. Understanding this model is essential for effective catalog management.
 
-![Entity-relationship diagram showing a Domain owning a System, which is built from Components that expose APIs and depend on Resources, with a Group owning the System and Component and a User belonging to that Group.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-1.svg)
+![Backstage Software Catalog entity model: a Domain groups a System that is built from Components, which provide APIs and depend on Resources, while a Group owns the System and Component and a User is a member of that Group.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-11.html)
 
 ### Entity Types
 

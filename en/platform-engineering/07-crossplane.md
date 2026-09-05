@@ -85,7 +85,9 @@ After completing this document, you will be able to:
 
 Crossplane introduces five fundamental concepts that work together to provide infrastructure abstraction:
 
-![Architecture diagram showing a developer's namespaced Claim creating a cluster-scoped Composite Resource, which a Composition maps to Managed Resources that Crossplane reconciles into real S3, RDS, and Security Group objects in the AWS account.](../../assets/diagrams/rendered/en-platform-engineering-07-crossplane-0.svg)
+![Architecture diagram showing a developer's namespaced Claim creating a cluster-scoped Composite Resource, which a Composition maps to Managed Resources that Crossplane reconciles into real S3, RDS, and Security Group objects in the AWS account.](../.gitbook/assets/en-platform-engineering-07-crossplane-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-07-crossplane-0.html)
 
 **1. Provider**: A Crossplane package that installs CRDs and controllers for a specific cloud provider. For example, `provider-aws` installs CRDs for every AWS service (S3, RDS, VPC, IAM, etc.) and runs controllers that know how to create, update, and delete those AWS resources.
 
