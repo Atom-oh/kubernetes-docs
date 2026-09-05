@@ -139,7 +139,6 @@ Calico는 컨테이너, 가상 머신, 네이티브 호스트 기반 워크로�
 | **2019** | Calico Enterprise | 엔터프라이즈 기능 (L7 정책, 암호화 등) 출시 |
 | **2020** | eBPF 데이터플레인 | eBPF 기반 데이터플레인 베타 도입 |
 | **2021** | Calico Cloud | SaaS 형태의 Calico 서비스 출시 |
-| **2022** | eBPF 데이터플레인 GA | 최신 데이터플레인 옵션 정식 제공 |
 | **2023** | eBPF GA | eBPF 데이터플레인 정식 출시 |
 | **2024** | Calico 3.28 | Windows eBPF 지원, 향상된 관측성 |
 | **2025** | Calico 3.29 | Kubernetes 1.32 지원, ARM64 최적화 |

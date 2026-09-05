@@ -92,7 +92,7 @@ Calico is an open-source networking and network security solution designed for c
 |------|-----------|--------------|
 | 2014 | Project Calico founded | Started as networking for OpenStack |
 | 2016 | Kubernetes CNI support | Expanded to container orchestration |
-| 2017 | Tigera founded | Commercial backing and enterprise features |
+| 2016 | Tigera founded | Commercial backing and enterprise features |
 | 2018 | Calico 3.0 | Kubernetes-native datastore support |
 | 2019 | Windows support | Enterprise adoption accelerated |
 | 2020 | Calico Enterprise GA | Full enterprise feature set |
@@ -101,7 +101,7 @@ Calico is an open-source networking and network security solution designed for c
 | 2024 | nftables backend | Next-gen Linux firewall support |
 | 2025 | Calico 3.29 | Full eBPF feature parity |
 
-### Project Governance
+### Governance and Commercial Model
 
 ![Diagram of Calico project governance showing CNCF and the community backing the open-source Project Calico while Tigera Inc. delivers Calico Enterprise for on-premises and Calico Cloud as SaaS.](../../.gitbook/assets/en-networking-calico-01-introduction-4.png)
 
@@ -356,7 +356,7 @@ Calico Enterprise provides advanced features for regulated industries:
 
 ### Open Source Governance
 
-Calico is an open-source project hosted under the Cloud Native Computing Foundation (CNCF) ecosystem:
+Calico is an open-source project listed in the CNCF Landscape and maintained primarily by Tigera:
 
 - **License**: Apache 2.0
 - **Governance**: Open community with Tigera as primary maintainer
