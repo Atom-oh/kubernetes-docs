@@ -17,7 +17,9 @@
 - 어디서 오류가 발생했는가?
 - 서비스 간 의존성은 어떻게 되는가?
 
-![사용자 요청이 API Gateway를 거쳐 여러 마이크로서비스로 분기되며, 지연 지점과 오류 원인, 서비스 의존성을 기존 모니터링으로는 파악하기 어렵다는 문제를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-0.png)
+![사용자 요청이 API Gateway를 거쳐 여러 마이크로서비스로 분기되며, 지연 지점과 오류 원인, 서비스 의존성을 기존 모니터링으로는 파악하기 어렵다는 문제를 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-0.html)
 
 ## 핵심 개념
 
@@ -25,7 +27,9 @@
 
 Trace는 단일 요청의 전체 여정을 나타냅니다. 하나의 요청이 시스템을 통과하면서 생성되는 모든 작업의 집합입니다.
 
-![API Gateway에서 시작한 하나의 요청이 User·Order·Payment·Notification 서비스로 분기되며 각 구간(Span)의 소요 시간이 합산되어 총 500ms의 Trace를 이룬다.](../../.gitbook/assets/ko-observability-tracing-README-1.png)
+![API Gateway에서 시작한 하나의 요청이 User·Order·Payment·Notification 서비스로 분기되며 각 구간(Span)의 소요 시간이 합산되어 총 500ms의 Trace를 이루는 과정을 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-1.html)
 
 ### 2. Span (스팬)
 
@@ -42,13 +46,17 @@ Span은 하나의 작업 단위를 나타냅니다. 각 Span은 다음 정보를
 | **Tags** | 메타데이터 | `http.status_code=200` |
 | **Logs** | 이벤트 기록 | `error: connection timeout` |
 
-![하나의 Span이 식별자 헤더, 시간 정보, 운영 메타데이터, 최종 상태의 네 그룹으로 구성되어 순서대로 채워지는 구조를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-2.png)
+![하나의 Span이 식별자 헤더, 시간 정보, 운영 메타데이터, 최종 상태의 네 그룹으로 구성되어 순서대로 채워지는 구조를 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-2.html)
 
 ### 3. Span 관계와 계층 구조
 
 Span들은 부모-자식 관계를 형성하여 트리 구조를 이룹니다:
 
-![Root Span인 API Gateway가 Auth·Order 두 Child Span을 낳고, Order Span이 다시 Payment·Inventory Grandchild Span으로 갈라지는 부모-자식 트리 구조를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-3.png)
+![Root Span인 API Gateway가 Auth·Order 두 Child Span을 낳고, Order Span이 다시 Payment·Inventory Grandchild Span으로 갈라지는 부모-자식 트리 구조를 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-3.html)
 
 ### 4. SpanContext (스팬 컨텍스트)
 
@@ -115,7 +123,9 @@ X-B3-Sampled: 1
 
 요청 시작 시점에 샘플링 결정:
 
-![요청이 도착하는 시점에 샘플링 여부를 즉시 결정해, 10%는 추적을 수집하고 90%는 건너뛰는 헤드 기반 샘플링 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-4.png)
+![요청이 도착하는 시점에 샘플링 여부를 즉시 결정해, 10%는 추적을 수집하고 90%는 건너뛰는 헤드 기반 샘플링 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-4.html)
 
 **장점:**
 - 구현이 간단함
@@ -138,7 +148,9 @@ sampling:
 
 요청 완료 후 결과를 보고 샘플링 결정:
 
-![요청이 끝날 때까지 모든 Span을 모아둔 뒤 오류나 지연이 있으면 보관하고 정상이면 삭제하는 테일 기반 샘플링 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-5.png)
+![요청이 끝날 때까지 모든 Span을 모아둔 뒤 오류나 지연이 있으면 보관하고 정상이면 삭제하는 테일 기반 샘플링 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-5.html)
 
 **장점:**
 - 중요한 요청(오류, 지연)을 놓치지 않음
@@ -211,7 +223,9 @@ http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
 
 ### Grafana에서의 상관분석
 
-![메트릭 대시보드의 응답 시간 스파이크에서 Exemplar를 클릭해 Tempo의 Trace로, 다시 Loki의 로그로 이어졌다가 메트릭으로 되돌아오는 4단계 상관분석 순환을 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-6.png)
+![메트릭 대시보드의 응답 시간 스파이크에서 Exemplar를 클릭해 Tempo의 Trace로, 다시 Loki의 로그로 이어졌다가 메트릭으로 되돌아오는 4단계 상관분석 순환을 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-6.html)
 
 ## 솔루션 비교
 
@@ -231,7 +245,9 @@ http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
 
 ### 선택 가이드
 
-![AWS 네이티브 통합, 비용, Grafana 스택 사용 여부, AI 분석 필요성을 차례로 물어 X-Ray·Tempo·Jaeger·Datadog APM·Dynatrace 중 하나로 안내하는 의사결정 트리를 보여준다.](../../.gitbook/assets/ko-observability-tracing-README-7.png)
+![AWS 네이티브 통합, 비용, Grafana 스택 사용 여부, AI 분석 필요성을 차례로 물어 X-Ray·Tempo·Jaeger·Datadog APM·Dynatrace 중 하나로 안내하는 의사결정 트리를 보여준다.](../../.gitbook/assets/ko-observability-tracing-readme-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-7.html)
 
 ## Best Practices
 

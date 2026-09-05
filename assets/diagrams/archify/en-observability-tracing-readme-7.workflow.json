@@ -1,0 +1,224 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Distributed Tracing Solution Selection Guide",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "aws-path",
+        "label": "AWS-native path",
+        "focus": [
+          "q_aws",
+          "xray"
+        ],
+        "note": "If you need AWS-native integration, choose AWS X-Ray right away. It integrates natively with EKS and is billed by usage."
+      },
+      {
+        "id": "oss-path",
+        "label": "Cost-first path",
+        "focus": [
+          "q_aws",
+          "q_cost",
+          "q_grafana",
+          "tempo",
+          "jaeger"
+        ],
+        "note": "If cost comes first, go open source. Pick Tempo if you already run the Grafana stack, otherwise Jaeger."
+      },
+      {
+        "id": "saas-path",
+        "label": "Commercial SaaS path",
+        "focus": [
+          "q_aws",
+          "q_cost",
+          "q_ai",
+          "dynatrace",
+          "datadog"
+        ],
+        "note": "If features matter more than cost, go commercial SaaS. Pick Dynatrace (Davis AI) if you need AI analysis, otherwise Datadog APM."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "AWS managed"
+        },
+        "frontend": {
+          "label": "Open source"
+        },
+        "external": {
+          "label": "Commercial SaaS"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "step1",
+      "label": "Step 1 · AWS-native integration"
+    },
+    {
+      "id": "step2",
+      "label": "Step 2 · Cost priority"
+    },
+    {
+      "id": "step3",
+      "label": "Step 3 · Existing stack / AI analysis"
+    },
+    {
+      "id": "result",
+      "label": "Recommended solution"
+    }
+  ],
+  "mainPath": [
+    "q_aws",
+    "q_cost",
+    "q_grafana",
+    "tempo"
+  ],
+  "nodes": [
+    {
+      "id": "q_aws",
+      "lane": "step1",
+      "col": 0,
+      "width": 160,
+      "type": "backend",
+      "label": "AWS-native required?",
+      "sublabel": "EKS integration model"
+    },
+    {
+      "id": "q_cost",
+      "lane": "step2",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Cost comes first?",
+      "sublabel": "open source vs commercial SaaS"
+    },
+    {
+      "id": "q_grafana",
+      "lane": "step3",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Using Grafana stack?",
+      "sublabel": "existing dashboard integration"
+    },
+    {
+      "id": "q_ai",
+      "lane": "step3",
+      "col": 3,
+      "width": 160,
+      "type": "backend",
+      "label": "Need AI analysis?",
+      "sublabel": "Davis AI · Watchdog"
+    },
+    {
+      "id": "xray",
+      "lane": "result",
+      "col": 0,
+      "width": 160,
+      "type": "cloud",
+      "label": "AWS X-Ray",
+      "sublabel": "AWS managed · usage-based"
+    },
+    {
+      "id": "tempo",
+      "lane": "result",
+      "col": 1,
+      "width": 160,
+      "type": "frontend",
+      "label": "Grafana Tempo",
+      "sublabel": "storage cost only · TraceQL"
+    },
+    {
+      "id": "jaeger",
+      "lane": "result",
+      "col": 2,
+      "width": 160,
+      "type": "frontend",
+      "label": "Jaeger",
+      "sublabel": "infrastructure cost · Cassandra/ES"
+    },
+    {
+      "id": "dynatrace",
+      "lane": "result",
+      "col": 3,
+      "width": 160,
+      "type": "external",
+      "label": "Dynatrace",
+      "sublabel": "Davis AI · OneAgent"
+    },
+    {
+      "id": "datadog",
+      "lane": "result",
+      "col": 4,
+      "width": 160,
+      "type": "external",
+      "label": "Datadog APM",
+      "sublabel": "Watchdog · host/span-based"
+    }
+  ],
+  "edges": [
+    {
+      "id": "aws-yes",
+      "from": "q_aws",
+      "to": "xray",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "id": "aws-no",
+      "from": "q_aws",
+      "to": "q_cost",
+      "label": "No"
+    },
+    {
+      "id": "cost-yes",
+      "from": "q_cost",
+      "to": "q_grafana",
+      "label": "Yes",
+      "toSide": "top"
+    },
+    {
+      "id": "cost-no",
+      "from": "q_cost",
+      "to": "q_ai",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "id": "grafana-yes",
+      "from": "q_grafana",
+      "to": "tempo",
+      "label": "Yes"
+    },
+    {
+      "id": "grafana-no",
+      "from": "q_grafana",
+      "to": "jaeger",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "id": "ai-yes",
+      "from": "q_ai",
+      "to": "dynatrace",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "id": "ai-no",
+      "from": "q_ai",
+      "to": "datadog",
+      "label": "No",
+      "role": "branch"
+    }
+  ]
+}

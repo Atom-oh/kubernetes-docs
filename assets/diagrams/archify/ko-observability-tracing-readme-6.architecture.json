@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Grafana에서의 상관분석",
+    "output": "ko-observability-tracing-readme-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [900, 600]
+  },
+  "components": [
+    { "id": "dashboard", "type": "frontend", "label": "메트릭 대시보드", "sublabel": "응답 시간 스파이크", "pos": [360, 80], "size": [180, 64] },
+    { "id": "exemplar", "type": "backend", "label": "Exemplar", "sublabel": "TraceID: abc123", "pos": [660, 260], "size": [180, 64] },
+    { "id": "tempo", "type": "database", "label": "Tempo", "sublabel": "Trace 상세", "pos": [360, 440], "size": [180, 64] },
+    { "id": "loki", "type": "database", "label": "Loki", "sublabel": "관련 로그", "pos": [60, 260], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Grafana", "wraps": ["dashboard", "exemplar", "tempo", "loki"] }
+  ],
+  "connections": [
+    { "id": "dashboard-to-exemplar", "from": "dashboard", "to": "exemplar", "label": "Exemplar 클릭", "variant": "emphasis" },
+    { "id": "exemplar-to-tempo", "from": "exemplar", "to": "tempo", "label": "Trace 조회", "variant": "emphasis" },
+    { "id": "tempo-to-loki", "from": "tempo", "to": "loki", "label": "로그 링크", "variant": "emphasis" },
+    { "id": "loki-to-dashboard", "from": "loki", "to": "dashboard", "label": "메트릭 연결", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "연결 고리", "items": [
+      "Prometheus 메트릭의 Exemplar가 TraceID(abc123)를 담아 Tempo의 Trace로 연결한다",
+      "로그에 MDC로 넣은 traceId 필드로 Tempo에서 Loki의 관련 로그로 이동한다",
+      "로그에서 다시 메트릭으로 돌아와 하나의 순환으로 조사를 이어간다"
+    ] }
+  ]
+}

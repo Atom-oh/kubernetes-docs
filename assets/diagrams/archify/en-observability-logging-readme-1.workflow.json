@@ -1,0 +1,246 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Log Storage Decision Flowchart",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "grafana-path",
+        "label": "Existing Grafana stack",
+        "focus": [
+          "start",
+          "q_grafana",
+          "q_search",
+          "loki",
+          "opensearch"
+        ],
+        "note": "With a Grafana stack in place, only full-text search remains to decide: Loki when it is not needed, OpenSearch when it is."
+      },
+      {
+        "id": "aws-path",
+        "label": "AWS-native preference",
+        "focus": [
+          "q_grafana",
+          "q_aws",
+          "q_complex",
+          "cloudwatch",
+          "opensearch"
+        ],
+        "note": "Without Grafana, an AWS-native preference leads to analysis complexity: CloudWatch Logs for simple analysis, OpenSearch for complex."
+      },
+      {
+        "id": "cost-path",
+        "label": "Cost vs. features",
+        "focus": [
+          "q_aws",
+          "q_cost",
+          "loki",
+          "opensearch"
+        ],
+        "note": "If AWS-native tooling is not a priority, decide between cost and features. Cost-first points to Loki, feature-first to OpenSearch."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "backend": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "Recommended store"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "Start"
+    },
+    {
+      "id": "yes",
+      "label": "Existing Grafana stack"
+    },
+    {
+      "id": "result",
+      "label": "Recommendation"
+    },
+    {
+      "id": "no",
+      "label": "No Grafana stack"
+    },
+    {
+      "id": "aws",
+      "label": "AWS-native preference"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_grafana",
+    "q_search",
+    "loki"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "Choose a log store",
+      "sublabel": "review requirements",
+      "width": 176
+    },
+    {
+      "id": "q_grafana",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "Grafana stack in use?",
+      "sublabel": "yes / no",
+      "width": 176
+    },
+    {
+      "id": "q_search",
+      "lane": "yes",
+      "col": 2,
+      "type": "backend",
+      "label": "Full-text search?",
+      "sublabel": "yes / no",
+      "width": 176
+    },
+    {
+      "id": "q_aws",
+      "lane": "no",
+      "col": 2,
+      "type": "backend",
+      "label": "Prefer AWS-native?",
+      "sublabel": "yes / no",
+      "width": 176
+    },
+    {
+      "id": "q_cost",
+      "lane": "no",
+      "col": 3,
+      "type": "backend",
+      "label": "Cost vs. features?",
+      "sublabel": "priority",
+      "width": 176
+    },
+    {
+      "id": "q_complex",
+      "lane": "aws",
+      "col": 4,
+      "type": "backend",
+      "label": "Analysis complexity?",
+      "sublabel": "simple / complex",
+      "width": 176
+    },
+    {
+      "id": "loki",
+      "lane": "result",
+      "col": 3,
+      "type": "cloud",
+      "label": "Loki",
+      "sublabel": "cost-efficient · Grafana-native",
+      "width": 176
+    },
+    {
+      "id": "opensearch",
+      "lane": "result",
+      "col": 4,
+      "type": "cloud",
+      "label": "OpenSearch",
+      "sublabel": "full-text search · complex analytics",
+      "width": 176
+    },
+    {
+      "id": "cloudwatch",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "AWS-native · simple operations",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-grafana",
+      "from": "start",
+      "to": "q_grafana"
+    },
+    {
+      "id": "grafana-search",
+      "from": "q_grafana",
+      "to": "q_search",
+      "label": "yes"
+    },
+    {
+      "id": "grafana-aws",
+      "from": "q_grafana",
+      "to": "q_aws",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "search-loki",
+      "from": "q_search",
+      "to": "loki",
+      "label": "no"
+    },
+    {
+      "id": "search-opensearch",
+      "from": "q_search",
+      "to": "opensearch",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "id": "aws-cost",
+      "from": "q_aws",
+      "to": "q_cost",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "id": "aws-complex",
+      "from": "q_aws",
+      "to": "q_complex",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "id": "cost-loki",
+      "from": "q_cost",
+      "to": "loki",
+      "label": "cost first",
+      "role": "branch"
+    },
+    {
+      "id": "cost-opensearch",
+      "from": "q_cost",
+      "to": "opensearch",
+      "label": "features first",
+      "role": "branch"
+    },
+    {
+      "id": "complex-opensearch",
+      "from": "q_complex",
+      "to": "opensearch",
+      "label": "complex",
+      "role": "branch"
+    },
+    {
+      "id": "complex-cloudwatch",
+      "from": "q_complex",
+      "to": "cloudwatch",
+      "label": "simple",
+      "role": "branch"
+    }
+  ]
+}

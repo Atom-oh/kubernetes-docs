@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Observability vs Monitoring",
+    "output": "ko-observability-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "monitoring",
+        "label": "Monitoring (모니터링)",
+        "focus": [
+          "predefined-metrics",
+          "threshold-alerts",
+          "dashboards"
+        ],
+        "note": "사전 정의된 메트릭이 임계값 알림과 고정 대시보드로 한 방향으로만 흐른다."
+      },
+      {
+        "id": "evolution",
+        "label": "진화",
+        "focus": [
+          "threshold-alerts",
+          "metrics"
+        ],
+        "note": "알려진 문제를 탐지하는 모니터링이 알려지지 않은 문제를 탐색하는 관측성으로 확장된다."
+      },
+      {
+        "id": "observability",
+        "label": "Observability (관측성)",
+        "focus": [
+          "logs",
+          "metrics",
+          "traces"
+        ],
+        "note": "로그·메트릭·트레이스가 서로 연결되어 내부 상태를 추론한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "predefined-metrics",
+      "type": "external",
+      "label": "사전 정의된 메트릭",
+      "sublabel": "알려진 지표",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "threshold-alerts",
+      "type": "external",
+      "label": "임계값 알림",
+      "sublabel": "What? (무엇이 잘못되었나)",
+      "pos": [
+        80,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "dashboards",
+      "type": "external",
+      "label": "대시보드",
+      "sublabel": "사전 정의된 화면",
+      "pos": [
+        80,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "database",
+      "label": "Logs",
+      "sublabel": "로그 · 이벤트 기록",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics",
+      "sublabel": "메트릭 · 시계열",
+      "pos": [
+        600,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "traces",
+      "type": "database",
+      "label": "Traces",
+      "sublabel": "추적 · 요청 경로",
+      "pos": [
+        880,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Monitoring (모니터링)",
+      "wraps": [
+        "predefined-metrics",
+        "threshold-alerts",
+        "dashboards"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability (관측성)",
+      "wraps": [
+        "logs",
+        "metrics",
+        "traces"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-to-alerts",
+      "from": "predefined-metrics",
+      "to": "threshold-alerts",
+      "label": "임계값 비교",
+      "labelDy": 24
+    },
+    {
+      "id": "alerts-to-dashboards",
+      "from": "threshold-alerts",
+      "to": "dashboards",
+      "label": "표시",
+      "labelDy": 24
+    },
+    {
+      "id": "evolution",
+      "from": "threshold-alerts",
+      "to": "metrics",
+      "label": "진화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "logs-to-metrics",
+      "from": "logs",
+      "to": "metrics",
+      "label": "레이블 매칭",
+      "labelDy": 24
+    },
+    {
+      "id": "metrics-to-traces",
+      "from": "metrics",
+      "to": "traces",
+      "label": "Exemplar"
+    },
+    {
+      "id": "traces-to-logs",
+      "from": "traces",
+      "to": "logs",
+      "label": "TraceID",
+      "fromSide": "top",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Monitoring",
+      "items": [
+        "사전 정의된 메트릭과 임계값 기반",
+        "\"무엇이 잘못되었나?\" (What)",
+        "알려진 문제 탐지, 사전 정의된 대시보드"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Observability",
+      "items": [
+        "시스템 출력을 통한 내부 상태 추론",
+        "\"왜 잘못되었나?\" (Why)",
+        "알려지지 않은 문제 탐색, 동적 쿼리"
+      ]
+    }
+  ]
+}

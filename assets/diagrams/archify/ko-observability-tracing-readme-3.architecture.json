@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Span 관계와 계층 구조",
+    "output": "ko-observability-tracing-readme-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "views": [
+      {
+        "id": "root-children",
+        "label": "Root → Child Span",
+        "focus": [
+          "gateway",
+          "auth",
+          "order"
+        ],
+        "note": "API Gateway의 Root Span(span001)이 Auth·Order 서비스 호출마다 Child Span을 만든다."
+      },
+      {
+        "id": "grandchildren",
+        "label": "Child → Grandchild Span",
+        "focus": [
+          "order",
+          "payment",
+          "inventory"
+        ],
+        "note": "Order Span(span003)이 다시 Payment·Inventory 호출의 부모가 되어 트리가 깊어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "Root Span · span001",
+      "pos": [
+        450,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth Service",
+      "sublabel": "Child Span · span002",
+      "pos": [
+        170,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "Child Span · span003",
+      "pos": [
+        730,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "Grandchild Span · span004",
+      "pos": [
+        530,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory Service",
+      "sublabel": "Grandchild Span · span005",
+      "pos": [
+        790,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gateway-auth",
+      "from": "gateway",
+      "to": "auth",
+      "label": "ParentSpanID span001",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gateway-order",
+      "from": "gateway",
+      "to": "order",
+      "label": "ParentSpanID span001",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-payment",
+      "from": "order",
+      "to": "payment",
+      "label": "ParentSpanID span003",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "order-inventory",
+      "from": "order",
+      "to": "inventory",
+      "label": "ParentSpanID span003",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    }
+  ]
+}

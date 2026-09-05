@@ -17,7 +17,9 @@ In microservices environments, traditional logging and metrics alone cannot answ
 - Where did errors occur?
 - What are the dependencies between services?
 
-![Tree diagram showing a user request fanning out through an API gateway into auth, product, and order services and their downstream dependencies, illustrating why traditional logging and metrics cannot answer where latency or errors occur across the call tree.](../../.gitbook/assets/en-observability-tracing-README-0.png)
+![Tree diagram showing a user request fanning out through an API gateway into auth, product, and order services and their downstream dependencies, illustrating why traditional logging and metrics cannot answer where latency or errors occur across the call tree.](../../.gitbook/assets/en-observability-tracing-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-0.html)
 
 ## Core Concepts
 
@@ -25,7 +27,9 @@ In microservices environments, traditional logging and metrics alone cannot answ
 
 A Trace represents the complete journey of a single request. It is the collection of all operations generated as a request passes through the system.
 
-![Flowchart showing a trace as a container of five timed spans across an API gateway, user, order, payment, and notification service, whose branching durations sum to a total request duration of 500 milliseconds.](../../.gitbook/assets/en-observability-tracing-README-1.png)
+![Architecture diagram showing one trace as the full journey of a single request from an API gateway through user, order, payment, and notification service spans, whose durations sum to a total of 500 milliseconds.](../../.gitbook/assets/en-observability-tracing-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-1.html)
 
 ### 2. Span
 
@@ -42,13 +46,17 @@ A Span represents a single unit of work. Each Span contains the following inform
 | **Tags** | Metadata | `http.status_code=200` |
 | **Logs** | Event records | `error: connection timeout` |
 
-![Flowchart showing the four record groups that make up one span — header identifiers, timing, metadata tags and logs, and status — flowing top to bottom from identification to outcome.](../../.gitbook/assets/en-observability-tracing-README-2.png)
+![Flowchart showing the four record groups that make up one span — header identifiers, timing, metadata tags and logs, and status — filled in order from identification to outcome.](../../.gitbook/assets/en-observability-tracing-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-2.html)
 
 ### 3. Span Relationships and Hierarchy
 
 Spans form parent-child relationships creating a tree structure:
 
-![Tree diagram showing a root span at the API gateway with two child spans for auth and order service, where the order service span itself has two grandchild spans for payment and inventory service.](../../.gitbook/assets/en-observability-tracing-README-3.png)
+![Tree diagram showing a root span at the API gateway with two child spans for auth and order service, where the order service span itself has two grandchild spans for payment and inventory service.](../../.gitbook/assets/en-observability-tracing-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-3.html)
 
 ### 4. SpanContext
 
@@ -115,7 +123,9 @@ Tracing all requests causes cost and performance issues. Sampling manages this.
 
 Sampling decision at request start:
 
-![Flowchart showing head-based sampling: a request arrives, a sampling decision is made immediately, and the request is either collected as a full trace at roughly 10 percent or skipped at roughly 90 percent, with no knowledge of the eventual outcome.](../../.gitbook/assets/en-observability-tracing-README-4.png)
+![Flowchart of head-based sampling: a request arrives, the sampling decision is made immediately, and the trace is either collected (10%) or skipped (90%) without knowing the eventual outcome.](../../.gitbook/assets/en-observability-tracing-readme-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-4.html)
 
 **Advantages:**
 - Simple implementation
@@ -138,7 +148,9 @@ sampling:
 
 Sampling decision after request completion based on results:
 
-![Flowchart showing tail-based sampling: a request is received, every span is collected first, the full set is analyzed for errors or high latency, and only then is the trace kept or dropped based on what actually happened.](../../.gitbook/assets/en-observability-tracing-README-5.png)
+![Flowchart showing tail-based sampling: a request is received, every span is collected first, the full set is analyzed for errors or high latency, and only then is the trace kept or dropped based on what actually happened.](../../.gitbook/assets/en-observability-tracing-readme-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-5.html)
 
 **Advantages:**
 - Never miss important requests (errors, latency)
@@ -211,7 +223,9 @@ http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
 
 ### Correlation in Grafana
 
-![Flowchart showing a click-through loop in Grafana: a metrics dashboard spike leads to an exemplar carrying a trace ID, the exemplar opens the full trace in Tempo, the trace links out to related logs in Loki, and the logs link back to the metric that started the investigation.](../../.gitbook/assets/en-observability-tracing-README-6.png)
+![Click-through correlation loop in Grafana: a response-time spike on the metrics dashboard leads to an exemplar carrying a TraceID, which opens the trace in Tempo, links to related logs in Loki, and returns to the metric.](../../.gitbook/assets/en-observability-tracing-readme-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-6.html)
 
 ## Solution Comparison
 
@@ -231,7 +245,9 @@ http_request_duration_seconds_bucket{le="1.0"} 1500 # {traceID="def456"}
 
 ### Selection Guide
 
-![Decision tree for selecting a distributed tracing solution: it checks for AWS-native integration first, then cost priority, then whether AI-assisted analysis or an existing Grafana stack matters, ending at AWS X-Ray, Grafana Tempo, Jaeger, Datadog APM, or Dynatrace.](../../.gitbook/assets/en-observability-tracing-README-7.png)
+![Decision tree for selecting a distributed tracing solution: it checks for AWS-native integration first, then cost priority, then whether AI-assisted analysis or an existing Grafana stack matters, ending at AWS X-Ray, Grafana Tempo, Jaeger, Datadog APM, or Dynatrace.](../../.gitbook/assets/en-observability-tracing-readme-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-7.html)
 
 ## Best Practices
 

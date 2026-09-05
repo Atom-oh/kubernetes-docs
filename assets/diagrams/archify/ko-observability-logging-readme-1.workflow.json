@@ -1,0 +1,245 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "로그 저장소 의사결정 플로우차트",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "grafana-path",
+        "label": "기존 Grafana 스택 보유",
+        "focus": [
+          "start",
+          "q_grafana",
+          "q_search",
+          "loki",
+          "opensearch"
+        ],
+        "note": "이미 Grafana 스택을 운영 중이면 전문 검색 필요성만 확인한다. 전문 검색이 필요 없으면 Loki, 필요하면 OpenSearch를 선택한다."
+      },
+      {
+        "id": "aws-path",
+        "label": "AWS 네이티브 선호",
+        "focus": [
+          "q_grafana",
+          "q_aws",
+          "q_complex",
+          "cloudwatch",
+          "opensearch"
+        ],
+        "note": "Grafana 스택이 없고 AWS 네이티브를 선호하면 분석 복잡성을 본다. 단순 분석은 CloudWatch Logs, 복잡한 분석은 OpenSearch가 적합하다."
+      },
+      {
+        "id": "cost-path",
+        "label": "비용 vs 기능",
+        "focus": [
+          "q_aws",
+          "q_cost",
+          "loki",
+          "opensearch"
+        ],
+        "note": "AWS 네이티브 선호가 아니면 비용과 기능 중 우선순위를 정한다. 비용 우선이면 Loki, 기능 우선이면 OpenSearch를 추천한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "결정 분기"
+        },
+        "cloud": {
+          "label": "추천 저장소"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "시작"
+    },
+    {
+      "id": "yes",
+      "label": "Grafana 스택 보유"
+    },
+    {
+      "id": "result",
+      "label": "추천 결과"
+    },
+    {
+      "id": "no",
+      "label": "Grafana 스택 미보유"
+    },
+    {
+      "id": "aws",
+      "label": "AWS 네이티브 선호"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q_grafana",
+    "q_search",
+    "loki"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "로그 저장소 선택",
+      "sublabel": "요구사항 확인",
+      "width": 176
+    },
+    {
+      "id": "q_grafana",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "기존 Grafana 스택 보유?",
+      "sublabel": "예 / 아니오",
+      "width": 176
+    },
+    {
+      "id": "q_search",
+      "lane": "yes",
+      "col": 2,
+      "type": "backend",
+      "label": "전문 검색 필요?",
+      "sublabel": "예 / 아니오",
+      "width": 176
+    },
+    {
+      "id": "q_aws",
+      "lane": "no",
+      "col": 2,
+      "type": "backend",
+      "label": "AWS 네이티브 선호?",
+      "sublabel": "예 / 아니오",
+      "width": 176
+    },
+    {
+      "id": "q_cost",
+      "lane": "no",
+      "col": 3,
+      "type": "backend",
+      "label": "비용 vs 기능?",
+      "sublabel": "우선순위",
+      "width": 176
+    },
+    {
+      "id": "q_complex",
+      "lane": "aws",
+      "col": 4,
+      "type": "backend",
+      "label": "분석 복잡성?",
+      "sublabel": "단순 / 복잡",
+      "width": 176
+    },
+    {
+      "id": "loki",
+      "lane": "result",
+      "col": 3,
+      "type": "cloud",
+      "label": "Loki",
+      "sublabel": "비용 효율 · Grafana 연동",
+      "width": 176
+    },
+    {
+      "id": "opensearch",
+      "lane": "result",
+      "col": 4,
+      "type": "cloud",
+      "label": "OpenSearch",
+      "sublabel": "전문 검색 · 복잡한 분석",
+      "width": 176
+    },
+    {
+      "id": "cloudwatch",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "AWS 네이티브 · 간편한 운영",
+      "width": 176
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-grafana",
+      "from": "start",
+      "to": "q_grafana"
+    },
+    {
+      "id": "grafana-search",
+      "from": "q_grafana",
+      "to": "q_search",
+      "label": "예"
+    },
+    {
+      "id": "grafana-aws",
+      "from": "q_grafana",
+      "to": "q_aws",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "search-loki",
+      "from": "q_search",
+      "to": "loki",
+      "label": "아니오"
+    },
+    {
+      "id": "search-opensearch",
+      "from": "q_search",
+      "to": "opensearch",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "aws-cost",
+      "from": "q_aws",
+      "to": "q_cost",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "id": "aws-complex",
+      "from": "q_aws",
+      "to": "q_complex",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "id": "cost-loki",
+      "from": "q_cost",
+      "to": "loki",
+      "label": "비용 우선",
+      "role": "branch"
+    },
+    {
+      "id": "cost-opensearch",
+      "from": "q_cost",
+      "to": "opensearch",
+      "label": "기능 우선",
+      "role": "branch"
+    },
+    {
+      "id": "complex-opensearch",
+      "from": "q_complex",
+      "to": "opensearch",
+      "label": "복잡",
+      "role": "branch"
+    },
+    {
+      "id": "complex-cloudwatch",
+      "from": "q_complex",
+      "to": "cloudwatch",
+      "label": "단순",
+      "role": "branch"
+    }
+  ]
+}

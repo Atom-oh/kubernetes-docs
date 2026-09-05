@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenTelemetry Data Collection Architecture",
+    "locale": "en",
+    "output": "en-observability-readme-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1370,
+      520
+    ],
+    "views": [
+      {
+        "id": "instrument",
+        "label": "Application instrumentation",
+        "focus": [
+          "apps",
+          "auto",
+          "manual"
+        ],
+        "note": "Applications in any language emit telemetry through the OTel SDK, using auto- or manual instrumentation."
+      },
+      {
+        "id": "pipeline",
+        "label": "Collector pipeline",
+        "focus": [
+          "receivers",
+          "processors",
+          "exporters"
+        ],
+        "note": "The Collector processes telemetry in three stages: receive, process, export."
+      },
+      {
+        "id": "backends",
+        "label": "Backend delivery",
+        "focus": [
+          "exporters",
+          "backends"
+        ],
+        "note": "Because the standard is vendor-neutral, Exporters can send data to several observability backends at once."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apps",
+      "type": "external",
+      "label": "Applications",
+      "sublabel": "Java · Python · Node.js · Go",
+      "pos": [
+        30,
+        230
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "auto",
+      "type": "backend",
+      "label": "Auto-instrumentation",
+      "sublabel": "auto-instrumentation",
+      "pos": [
+        290,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "manual",
+      "type": "backend",
+      "label": "Manual instrumentation",
+      "sublabel": "manual instrumentation",
+      "pos": [
+        290,
+        340
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "receivers",
+      "type": "backend",
+      "label": "Receivers",
+      "sublabel": "receive",
+      "pos": [
+        560,
+        230
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "processors",
+      "type": "backend",
+      "label": "Processors",
+      "sublabel": "process",
+      "pos": [
+        720,
+        230
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "exporters",
+      "type": "backend",
+      "label": "Exporters",
+      "sublabel": "export",
+      "pos": [
+        880,
+        230
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "backends",
+      "type": "database",
+      "label": "Observability backends",
+      "sublabel": "Tempo · Prometheus · Loki · X-Ray · Datadog",
+      "pos": [
+        1080,
+        230
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OpenTelemetry SDK",
+      "wraps": [
+        "auto",
+        "manual"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "OpenTelemetry Collector",
+      "wraps": [
+        "receivers",
+        "processors",
+        "exporters"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "apps-auto",
+      "from": "apps",
+      "to": "auto",
+      "label": "instrument"
+    },
+    {
+      "id": "apps-manual",
+      "from": "apps",
+      "to": "manual",
+      "label": "instrument"
+    },
+    {
+      "id": "auto-receivers",
+      "from": "auto",
+      "to": "receivers"
+    },
+    {
+      "id": "manual-receivers",
+      "from": "manual",
+      "to": "receivers"
+    },
+    {
+      "id": "receivers-processors",
+      "from": "receivers",
+      "to": "processors"
+    },
+    {
+      "id": "processors-exporters",
+      "from": "processors",
+      "to": "exporters"
+    },
+    {
+      "id": "exporters-backends",
+      "from": "exporters",
+      "to": "backends",
+      "label": "fan-out",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Benefits of OpenTelemetry",
+      "items": [
+        "Vendor-neutral standard",
+        "Support for multiple language SDKs",
+        "Auto-instrumentation capabilities",
+        "Multi-backend support",
+        "Active community"
+      ]
+    }
+  ]
+}

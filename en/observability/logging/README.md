@@ -124,7 +124,9 @@ In Kubernetes environments, JSON format is the de facto standard. Most log colle
 
 ### Architecture Overview
 
-![A five-stage log collection pipeline: raw sources (application, system, Kubernetes, control plane logs) flow through a collection layer of agents, into a processing layer that parses, enriches, filters, and buffers records, then fan out into a storage layer of four backends, which are each queried by a matching analysis tool.](../../.gitbook/assets/en-observability-logging-README-0.png)
+![Log pipeline in which app, system, Kubernetes and control-plane logs pass through collection (DaemonSet, Sidecar, OTEL Collector) and processing (parse, enrich, filter, buffer), then fan out to four storage backends each queried by its analysis tool.](../../.gitbook/assets/en-observability-logging-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-readme-0.html)
 
 ### Layer Responsibilities
 
@@ -465,7 +467,9 @@ ClickHouse (self-hosted):
 
 ### Decision Flowchart
 
-![A decision tree for choosing a log storage backend: it branches on an existing Grafana stack, need for full-text search, preference for AWS-native tooling, analysis complexity, and cost versus features, converging on Loki, OpenSearch, or CloudWatch Logs.](../../.gitbook/assets/en-observability-logging-README-1.png)
+![A decision flowchart for choosing a log storage backend that branches on an existing Grafana stack, need for full-text search, AWS-native preference, analysis complexity, and cost versus features, converging on Loki, OpenSearch, or CloudWatch Logs.](../../.gitbook/assets/en-observability-logging-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-readme-1.html)
 
 ***
 

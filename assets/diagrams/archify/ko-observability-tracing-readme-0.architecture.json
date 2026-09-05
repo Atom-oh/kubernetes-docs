@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "기존 모니터링의 한계",
+    "output": "ko-observability-tracing-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      720
+    ],
+    "views": [
+      {
+        "id": "entry",
+        "label": "요청 진입",
+        "focus": [
+          "user",
+          "gateway"
+        ],
+        "note": "사용자 요청은 단일 진입점인 API Gateway를 거쳐 여러 서비스로 분기된다."
+      },
+      {
+        "id": "fanout",
+        "label": "서비스 분기",
+        "focus": [
+          "gateway",
+          "auth",
+          "product",
+          "order"
+        ],
+        "note": "요청이 어떤 서비스들을 거쳤는지, 각 서비스에서 얼마나 걸렸는지 로그와 메트릭만으로는 알기 어렵다."
+      },
+      {
+        "id": "downstream",
+        "label": "하위 의존성",
+        "focus": [
+          "order",
+          "payment",
+          "notification",
+          "fraud",
+          "product",
+          "inventory"
+        ],
+        "note": "서비스가 다시 다른 서비스를 호출하므로 오류 지점과 의존성 파악이 더욱 어려워진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "요청",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "API Gateway",
+      "sublabel": "단일 진입점",
+      "pos": [
+        455,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth Service",
+      "sublabel": "인증",
+      "pos": [
+        110,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "product",
+      "type": "backend",
+      "label": "Product Service",
+      "sublabel": "상품",
+      "pos": [
+        465,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "주문",
+      "pos": [
+        820,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory · Pricing Service",
+      "sublabel": "재고 · 가격",
+      "pos": [
+        455,
+        470
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "결제",
+      "pos": [
+        700,
+        470
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "messagebus",
+      "label": "Notification",
+      "sublabel": "알림",
+      "pos": [
+        920,
+        470
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "fraud",
+      "type": "security",
+      "label": "Fraud Detection",
+      "sublabel": "이상 거래 탐지",
+      "pos": [
+        700,
+        610
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "마이크로서비스",
+      "wraps": [
+        "auth",
+        "product",
+        "order",
+        "inventory",
+        "payment",
+        "notification",
+        "fraud"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-gateway",
+      "from": "user",
+      "to": "gateway",
+      "label": "HTTP 요청",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gateway-auth",
+      "from": "gateway",
+      "to": "auth"
+    },
+    {
+      "id": "gateway-product",
+      "from": "gateway",
+      "to": "product"
+    },
+    {
+      "id": "gateway-order",
+      "from": "gateway",
+      "to": "order"
+    },
+    {
+      "id": "product-inventory",
+      "from": "product",
+      "to": "inventory"
+    },
+    {
+      "id": "order-payment",
+      "from": "order",
+      "to": "payment",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-notification",
+      "from": "order",
+      "to": "notification",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "payment-fraud",
+      "from": "payment",
+      "to": "fraud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "로그와 메트릭만으로 답하기 어려운 질문",
+      "items": [
+        "요청이 어떤 서비스들을 거쳤는가?",
+        "각 서비스에서 얼마나 시간이 걸렸는가?",
+        "어디서 오류가 발생했는가?",
+        "서비스 간 의존성은 어떻게 되는가?"
+      ]
+    }
+  ]
+}

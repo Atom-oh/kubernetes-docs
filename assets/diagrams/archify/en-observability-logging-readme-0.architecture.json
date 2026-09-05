@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Log Collection Pipeline Architecture",
+    "output": "en-observability-logging-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      640
+    ],
+    "views": [
+      {
+        "id": "ingest-path",
+        "label": "Ingest path",
+        "focus": [
+          "sources",
+          "collect",
+          "process"
+        ],
+        "note": "The main path from log sources through the collection layer into the processing layer."
+      },
+      {
+        "id": "storage-fanout",
+        "label": "Storage fan-out",
+        "focus": [
+          "process",
+          "loki",
+          "clickhouse",
+          "opensearch",
+          "cloudwatch"
+        ],
+        "note": "Processed logs are written to four backends: Loki, ClickHouse, OpenSearch and CloudWatch Logs."
+      },
+      {
+        "id": "analysis",
+        "label": "Analysis tools",
+        "focus": [
+          "loki",
+          "clickhouse",
+          "opensearch",
+          "cloudwatch",
+          "grafana",
+          "osd",
+          "cwi"
+        ],
+        "note": "Each backend is queried by its matching analysis tool; Grafana covers both Loki and ClickHouse."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "Log Sources",
+      "sublabel": "App · System · K8s · Control Plane",
+      "pos": [
+        30,
+        290
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "collect",
+      "type": "backend",
+      "label": "Collection Layer",
+      "sublabel": "DaemonSet · Sidecar · OTEL Collector",
+      "pos": [
+        280,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "process",
+      "type": "backend",
+      "label": "Processing Layer",
+      "sublabel": "Parse → Enrich → Filter → Buffer",
+      "pos": [
+        520,
+        290
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "S3 object storage",
+      "pos": [
+        800,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "clickhouse",
+      "type": "database",
+      "label": "ClickHouse",
+      "sublabel": "S3 object storage",
+      "pos": [
+        800,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "database",
+      "label": "OpenSearch",
+      "sublabel": "Index storage",
+      "pos": [
+        800,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "database",
+      "label": "CloudWatch Logs",
+      "sublabel": "Managed log groups",
+      "pos": [
+        800,
+        500
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Loki · ClickHouse dashboards",
+      "pos": [
+        1040,
+        150
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "osd",
+      "type": "frontend",
+      "label": "OpenSearch Dashboards",
+      "sublabel": "Full-text search · aggregation",
+      "pos": [
+        1040,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cwi",
+      "type": "frontend",
+      "label": "CloudWatch Logs Insights",
+      "sublabel": "CloudWatch console queries",
+      "pos": [
+        1040,
+        500
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Storage Layer",
+      "wraps": [
+        "loki",
+        "clickhouse",
+        "opensearch",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Analysis Layer",
+      "wraps": [
+        "grafana",
+        "osd",
+        "cwi"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-collect",
+      "from": "sources",
+      "to": "collect",
+      "label": "collect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collect-process",
+      "from": "collect",
+      "to": "process",
+      "label": "forward",
+      "variant": "emphasis"
+    },
+    {
+      "id": "process-loki",
+      "from": "process",
+      "to": "loki"
+    },
+    {
+      "id": "process-clickhouse",
+      "from": "process",
+      "to": "clickhouse",
+      "label": "store",
+      "labelSegment": 2
+    },
+    {
+      "id": "process-opensearch",
+      "from": "process",
+      "to": "opensearch"
+    },
+    {
+      "id": "process-cloudwatch",
+      "from": "process",
+      "to": "cloudwatch"
+    },
+    {
+      "id": "loki-grafana",
+      "from": "loki",
+      "to": "grafana",
+      "variant": "dashed"
+    },
+    {
+      "id": "clickhouse-grafana",
+      "from": "clickhouse",
+      "to": "grafana",
+      "variant": "dashed",
+      "label": "query"
+    },
+    {
+      "id": "opensearch-osd",
+      "from": "opensearch",
+      "to": "osd",
+      "variant": "dashed"
+    },
+    {
+      "id": "cloudwatch-cwi",
+      "from": "cloudwatch",
+      "to": "cwi",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Collection Layer",
+      "items": [
+        "DaemonSet: one per node, resource efficient, centrally managed",
+        "Sidecar: per-application isolation and custom processing",
+        "OTEL Collector: unified OpenTelemetry-based collection"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Processing Layer",
+      "items": [
+        "Merge Kubernetes metadata and parse records (Parse)",
+        "Add fields such as cluster_name and environment (Enrich)",
+        "Drop noise like HealthCheck (Filter), then buffer (Buffer)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Storage and Analysis Layers",
+      "items": [
+        "Loki and ClickHouse store on S3 at low cost and are queried from Grafana",
+        "OpenSearch excels at full-text search and is queried from OpenSearch Dashboards",
+        "CloudWatch Logs is queried with Logs Insights in the CloudWatch console"
+      ]
+    }
+  ]
+}
