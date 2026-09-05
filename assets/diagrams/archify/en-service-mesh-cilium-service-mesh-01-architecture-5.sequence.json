@@ -7,8 +7,8 @@
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
-      900,
-      720
+      1080,
+      660
     ],
     "animation": "trace",
     "views": [
@@ -73,12 +73,12 @@
   "segments": [
     {
       "from": 215,
-      "to": 325,
+      "to": 315,
       "label": "OPT — L7 policy required (request)"
     },
     {
-      "from": 445,
-      "to": 555,
+      "from": 425,
+      "to": 525,
       "label": "OPT — L7 policy required (response)"
     }
   ],
@@ -96,7 +96,7 @@
       "id": "redirect-request",
       "from": "ebpf",
       "to": "envoy",
-      "y": 245,
+      "y": 240,
       "label": "redirect to proxy",
       "variant": "emphasis"
     },
@@ -104,7 +104,7 @@
       "id": "processed-request",
       "from": "envoy",
       "to": "ebpf",
-      "y": 300,
+      "y": 290,
       "label": "processed request",
       "variant": "return",
       "note": "HTTP parsing · L7 policy · header manipulation"
@@ -113,7 +113,7 @@
       "id": "deliver-packet",
       "from": "ebpf",
       "to": "server",
-      "y": 365,
+      "y": 350,
       "label": "deliver packet",
       "variant": "default"
     },
@@ -121,7 +121,7 @@
       "id": "http-response",
       "from": "server",
       "to": "ebpf",
-      "y": 410,
+      "y": 395,
       "label": "HTTP response",
       "variant": "return"
     },
@@ -129,7 +129,7 @@
       "id": "redirect-response",
       "from": "ebpf",
       "to": "envoy",
-      "y": 475,
+      "y": 450,
       "label": "redirect response",
       "variant": "emphasis"
     },
@@ -137,7 +137,7 @@
       "id": "processed-response",
       "from": "envoy",
       "to": "ebpf",
-      "y": 530,
+      "y": 500,
       "label": "processed response",
       "variant": "return"
     },
@@ -145,7 +145,7 @@
       "id": "deliver-response",
       "from": "ebpf",
       "to": "client",
-      "y": 600,
+      "y": 560,
       "label": "deliver response",
       "variant": "emphasis"
     }
@@ -154,25 +154,25 @@
     {
       "participant": "ebpf",
       "from": 180,
-      "to": 605,
+      "to": 565,
       "type": "backend"
     },
     {
       "participant": "envoy",
-      "from": 240,
-      "to": 305,
+      "from": 235,
+      "to": 295,
       "type": "security"
     },
     {
       "participant": "server",
-      "from": 360,
-      "to": 415,
+      "from": 345,
+      "to": 400,
       "type": "external"
     },
     {
       "participant": "envoy",
-      "from": 470,
-      "to": 535,
+      "from": 445,
+      "to": 505,
       "type": "security"
     }
   ]

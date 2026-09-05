@@ -37,7 +37,7 @@
       "label": "istiod",
       "sublabel": "서비스 검색 · 구성 관리 · 인증서 관리",
       "pos": [
-        440,
+        470,
         60
       ],
       "size": [
@@ -51,7 +51,7 @@
       "label": "App Container",
       "sublabel": "애플리케이션",
       "pos": [
-        80,
+        110,
         360
       ],
       "size": [
@@ -65,7 +65,7 @@
       "label": "Envoy Proxy",
       "sublabel": "사이드카",
       "pos": [
-        80,
+        110,
         260
       ],
       "size": [
@@ -79,7 +79,7 @@
       "label": "App Container",
       "sublabel": "애플리케이션",
       "pos": [
-        500,
+        530,
         360
       ],
       "size": [
@@ -93,7 +93,7 @@
       "label": "Envoy Proxy",
       "sublabel": "사이드카",
       "pos": [
-        500,
+        530,
         260
       ],
       "size": [
@@ -107,7 +107,7 @@
       "label": "App Container",
       "sublabel": "애플리케이션",
       "pos": [
-        920,
+        950,
         360
       ],
       "size": [
@@ -121,7 +121,7 @@
       "label": "Envoy Proxy",
       "sublabel": "사이드카",
       "pos": [
-        920,
+        950,
         260
       ],
       "size": [
@@ -149,7 +149,7 @@
         "app-c",
         "envoy-c"
       ],
-      "pad": 60
+      "pad": 80
     },
     {
       "kind": "security-group",
@@ -157,7 +157,8 @@
       "wraps": [
         "app-a",
         "envoy-a"
-      ]
+      ],
+      "pad": 24
     },
     {
       "kind": "security-group",
@@ -165,7 +166,8 @@
       "wraps": [
         "app-b",
         "envoy-b"
-      ]
+      ],
+      "pad": 24
     },
     {
       "kind": "security-group",
@@ -173,7 +175,8 @@
       "wraps": [
         "app-c",
         "envoy-c"
-      ]
+      ],
+      "pad": 24
     }
   ],
   "connections": [
@@ -223,25 +226,25 @@
       "toSide": "right",
       "via": [
         [
-          40,
+          58,
           288
         ],
         [
-          40,
-          480
+          58,
+          470
         ],
         [
-          1120,
-          480
+          1162,
+          470
         ],
         [
-          1120,
+          1162,
           288
         ]
       ],
       "labelAt": [
-        580,
-        472
+        610,
+        462
       ]
     }
   ]

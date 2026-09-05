@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Maglev 해싱",
+    "output": "ko-service-mesh-cilium-service-mesh-02-traffic-management-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1140, 600],
+    "views": [
+      { "id": "hash-path", "label": "해시 계산 경로", "focus": ["client", "hash", "table", "select"], "note": "요청의 5-튜플을 해시해 65,537개 엔트리의 룩업 테이블에서 백엔드를 찾는다." },
+      { "id": "fanout", "label": "백엔드 분산", "focus": ["select", "b1", "b2", "b3"], "note": "같은 5-튜플은 항상 같은 백엔드로 향하고, 백엔드가 바뀌어도 재배치는 최소화된다." }
+    ]
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "클라이언트 요청", "sublabel": "Service로 향하는 연결", "pos": [40, 300], "size": [150, 60] },
+    { "id": "hash", "type": "backend", "label": "해시 함수", "sublabel": "5-튜플 (IP · port · protocol)", "pos": [250, 300], "size": [190, 64] },
+    { "id": "table", "type": "database", "label": "룩업 테이블", "sublabel": "65,537 entries", "pos": [500, 300], "size": [160, 60] },
+    { "id": "select", "type": "backend", "label": "백엔드 선택", "sublabel": "일관 해싱 결과", "pos": [720, 300], "size": [160, 60] },
+    { "id": "b1", "type": "backend", "label": "백엔드 1", "sublabel": "Pod", "pos": [960, 160], "size": [140, 60] },
+    { "id": "b2", "type": "backend", "label": "백엔드 2", "sublabel": "Pod", "pos": [960, 300], "size": [140, 60] },
+    { "id": "b3", "type": "backend", "label": "백엔드 3", "sublabel": "Pod", "pos": [960, 440], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Maglev 일관 해싱 (eBPF)", "wraps": ["client", "hash", "table", "select"] },
+    { "kind": "region", "label": "백엔드", "wraps": ["b1", "b2", "b3"] }
+  ],
+  "connections": [
+    { "id": "client-hash", "from": "client", "to": "hash", "label": "5-튜플", "variant": "emphasis" },
+    { "id": "hash-table", "from": "hash", "to": "table", "label": "해시 값", "variant": "emphasis" },
+    { "id": "table-select", "from": "table", "to": "select", "label": "엔트리 조회", "variant": "emphasis" },
+    { "id": "select-b1", "from": "select", "to": "b1" },
+    { "id": "select-b2", "from": "select", "to": "b2" },
+    { "id": "select-b3", "from": "select", "to": "b3" }
+  ]
+}

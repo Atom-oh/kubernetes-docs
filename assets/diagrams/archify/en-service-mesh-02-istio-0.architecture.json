@@ -36,9 +36,9 @@
       "id": "istiod",
       "type": "backend",
       "label": "istiod",
-      "sublabel": "Service discovery · Config management · Certificate management",
+      "sublabel": "Service discovery · Config · Certificates",
       "pos": [
-        440,
+        470,
         60
       ],
       "size": [
@@ -52,7 +52,7 @@
       "label": "App Container",
       "sublabel": "Application",
       "pos": [
-        80,
+        110,
         360
       ],
       "size": [
@@ -66,7 +66,7 @@
       "label": "Envoy Proxy",
       "sublabel": "Sidecar",
       "pos": [
-        80,
+        110,
         260
       ],
       "size": [
@@ -80,7 +80,7 @@
       "label": "App Container",
       "sublabel": "Application",
       "pos": [
-        500,
+        530,
         360
       ],
       "size": [
@@ -94,7 +94,7 @@
       "label": "Envoy Proxy",
       "sublabel": "Sidecar",
       "pos": [
-        500,
+        530,
         260
       ],
       "size": [
@@ -108,7 +108,7 @@
       "label": "App Container",
       "sublabel": "Application",
       "pos": [
-        920,
+        950,
         360
       ],
       "size": [
@@ -122,7 +122,7 @@
       "label": "Envoy Proxy",
       "sublabel": "Sidecar",
       "pos": [
-        920,
+        950,
         260
       ],
       "size": [
@@ -150,7 +150,7 @@
         "app-c",
         "envoy-c"
       ],
-      "pad": 60
+      "pad": 80
     },
     {
       "kind": "security-group",
@@ -158,7 +158,8 @@
       "wraps": [
         "app-a",
         "envoy-a"
-      ]
+      ],
+      "pad": 24
     },
     {
       "kind": "security-group",
@@ -166,7 +167,8 @@
       "wraps": [
         "app-b",
         "envoy-b"
-      ]
+      ],
+      "pad": 24
     },
     {
       "kind": "security-group",
@@ -174,7 +176,8 @@
       "wraps": [
         "app-c",
         "envoy-c"
-      ]
+      ],
+      "pad": 24
     }
   ],
   "connections": [
@@ -224,25 +227,25 @@
       "toSide": "right",
       "via": [
         [
-          40,
+          58,
           288
         ],
         [
-          40,
-          480
+          58,
+          470
         ],
         [
-          1120,
-          480
+          1162,
+          470
         ],
         [
-          1120,
+          1162,
           288
         ]
       ],
       "labelAt": [
-        580,
-        472
+        610,
+        462
       ]
     }
   ]

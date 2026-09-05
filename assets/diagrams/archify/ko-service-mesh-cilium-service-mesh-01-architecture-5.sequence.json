@@ -5,38 +5,174 @@
     "title": "노드 Envoy를 통한 L7 처리 흐름",
     "quality_profile": "showcase",
     "column_fit": "spread",
-    "viewBox": [900, 720],
+    "viewBox": [
+      1080,
+      660
+    ],
     "animation": "trace",
     "views": [
-      { "id": "request-leg", "label": "요청 경로", "focus": ["client", "ebpf", "envoy"], "note": "eBPF가 L4 정책을 확인하고, L7 정책이 필요한 요청만 노드 Envoy로 리다이렉트한다." },
-      { "id": "server-hop", "label": "서버 전달", "focus": ["ebpf", "server"], "note": "처리된 패킷을 목적지 Server Pod로 전달하고 HTTP 응답을 받는다." },
-      { "id": "response-leg", "label": "응답 경로", "focus": ["server", "ebpf", "envoy", "client"], "note": "응답도 L7 정책이 필요할 때만 Envoy를 거친 뒤 Client Pod로 전달된다." }
+      {
+        "id": "request-leg",
+        "label": "요청 경로",
+        "focus": [
+          "client",
+          "ebpf",
+          "envoy"
+        ],
+        "note": "eBPF가 L4 정책을 확인하고, L7 정책이 필요한 요청만 노드 Envoy로 리다이렉트한다."
+      },
+      {
+        "id": "server-hop",
+        "label": "서버 전달",
+        "focus": [
+          "ebpf",
+          "server"
+        ],
+        "note": "처리된 패킷을 목적지 Server Pod로 전달하고 HTTP 응답을 받는다."
+      },
+      {
+        "id": "response-leg",
+        "label": "응답 경로",
+        "focus": [
+          "server",
+          "ebpf",
+          "envoy",
+          "client"
+        ],
+        "note": "응답도 L7 정책이 필요할 때만 Envoy를 거친 뒤 Client Pod로 전달된다."
+      }
     ]
   },
   "participants": [
-    { "id": "client", "type": "external", "label": "Client Pod", "sublabel": "워크로드" },
-    { "id": "ebpf", "type": "backend", "label": "eBPF Datapath", "sublabel": "커널" },
-    { "id": "envoy", "type": "security", "label": "Node Envoy", "sublabel": "L7 프록시" },
-    { "id": "server", "type": "external", "label": "Server Pod", "sublabel": "워크로드" }
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Pod",
+      "sublabel": "워크로드"
+    },
+    {
+      "id": "ebpf",
+      "type": "backend",
+      "label": "eBPF Datapath",
+      "sublabel": "커널"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Node Envoy",
+      "sublabel": "L7 프록시"
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "Server Pod",
+      "sublabel": "워크로드"
+    }
   ],
   "segments": [
-    { "from": 215, "to": 325, "label": "OPT — L7 정책 필요 (요청)" },
-    { "from": 445, "to": 555, "label": "OPT — L7 정책 필요 (응답)" }
+    {
+      "from": 215,
+      "to": 315,
+      "label": "OPT — L7 정책 필요 (요청)"
+    },
+    {
+      "from": 425,
+      "to": 525,
+      "label": "OPT — L7 정책 필요 (응답)"
+    }
   ],
   "messages": [
-    { "id": "http-request", "from": "client", "to": "ebpf", "y": 185, "label": "HTTP 요청", "variant": "default", "note": "L4 정책 확인" },
-    { "id": "redirect-request", "from": "ebpf", "to": "envoy", "y": 245, "label": "트래픽 리다이렉트", "variant": "emphasis" },
-    { "id": "processed-request", "from": "envoy", "to": "ebpf", "y": 300, "label": "처리된 요청", "variant": "return", "note": "HTTP 파싱 · L7 정책 적용 · 헤더 조작" },
-    { "id": "deliver-packet", "from": "ebpf", "to": "server", "y": 365, "label": "패킷 전달", "variant": "default" },
-    { "id": "http-response", "from": "server", "to": "ebpf", "y": 410, "label": "HTTP 응답", "variant": "return" },
-    { "id": "redirect-response", "from": "ebpf", "to": "envoy", "y": 475, "label": "응답 리다이렉트", "variant": "emphasis" },
-    { "id": "processed-response", "from": "envoy", "to": "ebpf", "y": 530, "label": "처리된 응답", "variant": "return" },
-    { "id": "deliver-response", "from": "ebpf", "to": "client", "y": 600, "label": "응답 전달", "variant": "emphasis" }
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "ebpf",
+      "y": 185,
+      "label": "HTTP 요청",
+      "variant": "default",
+      "note": "L4 정책 확인"
+    },
+    {
+      "id": "redirect-request",
+      "from": "ebpf",
+      "to": "envoy",
+      "y": 240,
+      "label": "트래픽 리다이렉트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processed-request",
+      "from": "envoy",
+      "to": "ebpf",
+      "y": 290,
+      "label": "처리된 요청",
+      "variant": "return",
+      "note": "HTTP 파싱 · L7 정책 적용 · 헤더 조작"
+    },
+    {
+      "id": "deliver-packet",
+      "from": "ebpf",
+      "to": "server",
+      "y": 350,
+      "label": "패킷 전달",
+      "variant": "default"
+    },
+    {
+      "id": "http-response",
+      "from": "server",
+      "to": "ebpf",
+      "y": 395,
+      "label": "HTTP 응답",
+      "variant": "return"
+    },
+    {
+      "id": "redirect-response",
+      "from": "ebpf",
+      "to": "envoy",
+      "y": 450,
+      "label": "응답 리다이렉트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "processed-response",
+      "from": "envoy",
+      "to": "ebpf",
+      "y": 500,
+      "label": "처리된 응답",
+      "variant": "return"
+    },
+    {
+      "id": "deliver-response",
+      "from": "ebpf",
+      "to": "client",
+      "y": 560,
+      "label": "응답 전달",
+      "variant": "emphasis"
+    }
   ],
   "activations": [
-    { "participant": "ebpf", "from": 180, "to": 605, "type": "backend" },
-    { "participant": "envoy", "from": 240, "to": 305, "type": "security" },
-    { "participant": "server", "from": 360, "to": 415, "type": "external" },
-    { "participant": "envoy", "from": 470, "to": 535, "type": "security" }
+    {
+      "participant": "ebpf",
+      "from": 180,
+      "to": 565,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 235,
+      "to": 295,
+      "type": "security"
+    },
+    {
+      "participant": "server",
+      "from": 345,
+      "to": 400,
+      "type": "external"
+    },
+    {
+      "participant": "envoy",
+      "from": 445,
+      "to": 505,
+      "type": "security"
+    }
   ]
 }

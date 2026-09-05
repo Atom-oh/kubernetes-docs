@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Hubble UI 서비스 맵",
+    "output": "ko-service-mesh-cilium-service-mesh-04-observability-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [780, 420]
+  },
+  "components": [
+    { "id": "frontend", "type": "frontend", "label": "Frontend", "sublabel": "파드 3개", "pos": [60, 120], "size": [150, 60] },
+    { "id": "backend", "type": "backend", "label": "Backend", "sublabel": "파드 5개", "pos": [320, 120], "size": [150, 60] },
+    { "id": "database", "type": "database", "label": "Database", "sublabel": "파드 2개", "pos": [580, 60], "size": [150, 60] },
+    { "id": "cache", "type": "database", "label": "Redis", "sublabel": "파드 3개 (캐시)", "pos": [580, 200], "size": [150, 60] },
+    { "id": "static", "type": "external", "label": "Static Assets", "sublabel": "CDN", "pos": [60, 280], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "서비스 맵 보기", "wraps": ["frontend", "backend", "database", "cache", "static"] }
+  ],
+  "connections": [
+    { "id": "fe-be", "from": "frontend", "to": "backend", "label": "API 요청", "variant": "emphasis" },
+    { "id": "be-db", "from": "backend", "to": "database", "label": "조회 / 저장" },
+    { "id": "be-cache", "from": "backend", "to": "cache", "label": "캐시 조회" },
+    { "id": "fe-static", "from": "frontend", "to": "static", "label": "정적 자산", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 60 }
+  ]
+}

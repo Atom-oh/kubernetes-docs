@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "mTLS 동작 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [960, 640],
+    "animation": "trace",
+    "views": [
+      { "id": "upgrade", "label": "평문 → mTLS 업그레이드", "focus": ["app-a", "proxy-a", "proxy-b"], "note": "Proxy A가 대상이 메시 내부임을 확인하고 인증서로 TLS를 시작해 Proxy B와 SPIFFE ID를 상호 검증합니다." },
+      { "id": "deliver", "label": "암호화 전송과 TLS 종료", "focus": ["proxy-a", "proxy-b", "app-b"], "note": "요청은 프록시 사이에서만 암호화되고, Proxy B가 TLS를 종료해 Application B에는 평문 HTTP로 전달합니다." },
+      { "id": "response", "label": "응답 경로", "focus": ["app-b", "proxy-b", "proxy-a", "app-a"], "note": "응답도 같은 경로를 거슬러 프록시 사이에서만 암호화되어 돌아옵니다." }
+    ]
+  },
+  "participants": [
+    { "id": "app-a", "type": "frontend", "label": "Application A", "sublabel": "평문 HTTP만 인식" },
+    { "id": "proxy-a", "type": "security", "label": "Proxy A", "sublabel": "linkerd-proxy 사이드카" },
+    { "id": "proxy-b", "type": "security", "label": "Proxy B", "sublabel": "linkerd-proxy 사이드카" },
+    { "id": "app-b", "type": "backend", "label": "Application B", "sublabel": "평문 HTTP만 인식" }
+  ],
+  "segments": [
+    { "from": 165, "to": 295, "label": "mTLS 수립" },
+    { "from": 310, "to": 400, "label": "암호화 전송" },
+    { "from": 415, "to": 555, "label": "응답" }
+  ],
+  "messages": [
+    { "id": "plain-req", "from": "app-a", "to": "proxy-a", "y": 190, "label": "Plain HTTP", "note": "대상이 메시 내부인지 확인 → 인증서로 TLS 초기화" },
+    { "id": "handshake", "from": "proxy-a", "to": "proxy-b", "y": 260, "label": "mTLS Handshake", "variant": "security", "note": "SPIFFE ID 상호 검증" },
+    { "id": "enc-req", "from": "proxy-a", "to": "proxy-b", "y": 330, "label": "Encrypted Request", "variant": "emphasis" },
+    { "id": "plain-fwd", "from": "proxy-b", "to": "app-b", "y": 380, "label": "Plain HTTP", "note": "Proxy B가 TLS 종료 후 평문 전달" },
+    { "id": "plain-resp", "from": "app-b", "to": "proxy-b", "y": 440, "label": "Plain HTTP Response", "variant": "return" },
+    { "id": "enc-resp", "from": "proxy-b", "to": "proxy-a", "y": 490, "label": "Encrypted Response", "variant": "return" },
+    { "id": "plain-resp-a", "from": "proxy-a", "to": "app-a", "y": 540, "label": "Plain HTTP Response", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "proxy-a", "from": 185, "to": 545, "type": "security" },
+    { "participant": "proxy-b", "from": 255, "to": 495, "type": "security" },
+    { "participant": "app-b", "from": 375, "to": 445, "type": "backend" }
+  ]
+}

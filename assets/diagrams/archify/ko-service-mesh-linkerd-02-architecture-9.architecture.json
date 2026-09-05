@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컴포넌트 간 통신",
+    "output": "ko-service-mesh-linkerd-02-architecture-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Kubernetes"
+        },
+        "backend": {
+          "label": "컨트롤 플레인"
+        },
+        "frontend": {
+          "label": "데이터 플레인 프록시"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "grpc-path",
+        "label": "프록시 gRPC 통신",
+        "focus": [
+          "proxies",
+          "destination",
+          "identity",
+          "policy"
+        ],
+        "note": "각 프록시는 gRPC 클라이언트로 Destination(8086)·Identity(8080)·Policy(8090) API에 연결한다."
+      },
+      {
+        "id": "admission-path",
+        "label": "Admission Webhook",
+        "focus": [
+          "apiserver",
+          "webhook-config",
+          "proxy-injector"
+        ],
+        "note": "Pod 생성 시 API 서버가 Webhook Config에 등록된 Proxy Injector(8443)를 HTTPS로 호출한다."
+      },
+      {
+        "id": "watch-path",
+        "label": "서비스 디스커버리",
+        "focus": [
+          "destination",
+          "apiserver"
+        ],
+        "note": "Destination은 API 서버에서 Service/Endpoint 변화를 감시해 프록시에 스트리밍한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "external",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        270,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "webhook-config",
+      "type": "external",
+      "label": "Webhook Config",
+      "sublabel": "MutatingWebhookConfiguration",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "gRPC :8086",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "backend",
+      "label": "Identity",
+      "sublabel": "gRPC :8080",
+      "pos": [
+        270,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxy-injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "HTTPS :8443",
+      "pos": [
+        560,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "Policy",
+      "sublabel": "gRPC :8090",
+      "pos": [
+        790,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxies",
+      "type": "frontend",
+      "label": "Proxies (1..N)",
+      "sublabel": "linkerd2-proxy · gRPC 클라이언트",
+      "pos": [
+        400,
+        500
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes",
+      "wraps": [
+        "apiserver",
+        "webhook-config"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "destination",
+        "identity",
+        "proxy-injector",
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "proxies"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "proxies-destination",
+      "from": "proxies",
+      "to": "destination",
+      "label": "gRPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxies-identity",
+      "from": "proxies",
+      "to": "identity",
+      "label": "gRPC",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "proxies-policy",
+      "from": "proxies",
+      "to": "policy",
+      "label": "gRPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apiserver-injector",
+      "from": "apiserver",
+      "to": "proxy-injector",
+      "label": "Admission"
+    },
+    {
+      "id": "webhook-injector",
+      "from": "webhook-config",
+      "to": "proxy-injector",
+      "label": "웹훅 등록",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "destination-apiserver",
+      "from": "destination",
+      "to": "apiserver",
+      "label": "Service/Endpoint 감시",
+      "fromSide": "top",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "gRPC API 포트",
+      "items": [
+        "Destination 8086 — 서비스 디스커버리 API",
+        "Identity 8080 — 인증서 발급 API",
+        "Policy 8090 — 정책 API"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Admission Webhook",
+      "items": [
+        "Proxy Injector 8443 — HTTPS Admission Webhook",
+        "Pod 생성 요청 시 API 서버가 호출해 사이드카를 주입한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "프록시 포트",
+      "items": [
+        "Inbound 4143 · Outbound 4140 — HTTP/gRPC",
+        "Admin 4191 — 메트릭, 상태 확인"
+      ]
+    }
+  ]
+}

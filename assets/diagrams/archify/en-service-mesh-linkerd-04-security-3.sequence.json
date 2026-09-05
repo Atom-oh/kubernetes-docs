@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Identity Issuance Process",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      660
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod / Proxy",
+      "sublabel": "linkerd-proxy"
+    },
+    {
+      "id": "sa",
+      "type": "cloud",
+      "label": "ServiceAccount",
+      "sublabel": "Kubernetes token"
+    },
+    {
+      "id": "id",
+      "type": "security",
+      "label": "Identity Controller",
+      "sublabel": "linkerd-identity"
+    },
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Trust Anchor",
+      "sublabel": "root CA"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "Pod starts — obtain token and prepare CSR"
+    },
+    {
+      "from": 320,
+      "to": 470,
+      "label": "Identity Controller validation and signing"
+    },
+    {
+      "from": 490,
+      "to": 560,
+      "label": "Workload certificate issuance"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-token",
+      "from": "pod",
+      "to": "sa",
+      "y": 195,
+      "label": "Obtain ServiceAccount token"
+    },
+    {
+      "id": "send-csr",
+      "from": "pod",
+      "to": "id",
+      "y": 265,
+      "label": "Send CSR + SA token",
+      "variant": "emphasis",
+      "note": "Pod generates a CSR containing its SPIFFE ID"
+    },
+    {
+      "id": "sign-req",
+      "from": "id",
+      "to": "ca",
+      "y": 375,
+      "label": "Certificate signing request",
+      "variant": "security",
+      "note": "Validate SA token · validate Pod info · generate SPIFFE ID"
+    },
+    {
+      "id": "signed",
+      "from": "ca",
+      "to": "id",
+      "y": 440,
+      "label": "Signed certificate",
+      "variant": "return"
+    },
+    {
+      "id": "issue",
+      "from": "id",
+      "to": "pod",
+      "y": 525,
+      "label": "Workload certificate (valid 24h)",
+      "variant": "emphasis",
+      "note": "auto-renewed before expiry"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "pod",
+      "from": 185,
+      "to": 275,
+      "type": "backend"
+    },
+    {
+      "participant": "id",
+      "from": 265,
+      "to": 532,
+      "type": "security"
+    },
+    {
+      "participant": "ca",
+      "from": 370,
+      "to": 446,
+      "type": "security"
+    }
+  ]
+}

@@ -1,0 +1,271 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio · VPC Lattice · Linkerd 최종 권장 결정 트리",
+    "output": "public/archmaps/ko-service-mesh-istio-comparison-02-istio-vs-lattice-20.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "sufficient",
+        "label": "예산·인력 충분",
+        "focus": [
+          "budget",
+          "multi",
+          "awsonly",
+          "istioAmbient",
+          "latticeFull",
+          "istio"
+        ],
+        "note": "멀티 클라우드면 Istio(Ambient Mode), AWS 전용이면 VPC Lattice, 그 외에는 Istio를 권장합니다."
+      },
+      {
+        "id": "limited",
+        "label": "예산·인력 제한",
+        "focus": [
+          "budget",
+          "simple",
+          "aws",
+          "latticeSimple",
+          "linkerd"
+        ],
+        "note": "간단한 솔루션이 필요하면 AWS 환경은 VPC Lattice, 아니면 Linkerd를 권장합니다."
+      }
+    ],
+    "viewBox": [
+      1150,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "판단 기준"
+    },
+    {
+      "id": "full",
+      "label": "충분한 예산·인력 → 권장"
+    },
+    {
+      "id": "lite",
+      "label": "제한적 예산·인력 → 권장"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "budget",
+    "multi",
+    "awsonly",
+    "latticeFull"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "istioAmbient",
+      "latticeFull",
+      "istio",
+      "latticeSimple",
+      "linkerd"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "istioAmbient"
+      },
+      {
+        "from": "start",
+        "to": "linkerd"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "frontend",
+      "label": "서비스 네트워킹 필요",
+      "width": 150
+    },
+    {
+      "id": "budget",
+      "lane": "decide",
+      "col": 1,
+      "type": "backend",
+      "label": "예산 및 인력?",
+      "tag": "결정",
+      "width": 118
+    },
+    {
+      "id": "multi",
+      "lane": "decide",
+      "col": 2,
+      "type": "backend",
+      "label": "멀티 클라우드?",
+      "tag": "결정",
+      "width": 122
+    },
+    {
+      "id": "awsonly",
+      "lane": "decide",
+      "col": 3,
+      "type": "backend",
+      "label": "AWS Only?",
+      "tag": "결정",
+      "width": 104
+    },
+    {
+      "id": "istioAmbient",
+      "lane": "full",
+      "col": 2,
+      "type": "external",
+      "label": "Istio",
+      "sublabel": "+ Ambient Mode",
+      "width": 118
+    },
+    {
+      "id": "latticeFull",
+      "lane": "full",
+      "col": 3,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "width": 112
+    },
+    {
+      "id": "istio",
+      "lane": "full",
+      "col": 4,
+      "type": "external",
+      "label": "Istio",
+      "width": 96
+    },
+    {
+      "id": "simple",
+      "lane": "lite",
+      "col": 2,
+      "type": "backend",
+      "label": "간단한 솔루션",
+      "width": 122
+    },
+    {
+      "id": "aws",
+      "lane": "lite",
+      "col": 3,
+      "type": "backend",
+      "label": "AWS?",
+      "tag": "결정",
+      "width": 96
+    },
+    {
+      "id": "latticeSimple",
+      "lane": "lite",
+      "col": 4,
+      "type": "cloud",
+      "label": "VPC Lattice",
+      "width": 112
+    },
+    {
+      "id": "linkerd",
+      "lane": "lite",
+      "col": 5,
+      "type": "external",
+      "label": "Linkerd",
+      "width": 100
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "budget",
+      "role": "main"
+    },
+    {
+      "from": "budget",
+      "to": "multi",
+      "label": "충분함",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "multi",
+      "to": "awsonly",
+      "label": "아니오",
+      "role": "main"
+    },
+    {
+      "from": "awsonly",
+      "to": "latticeFull",
+      "label": "AWS Only",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "multi",
+      "to": "istioAmbient",
+      "label": "멀티 클라우드",
+      "role": "branch"
+    },
+    {
+      "from": "awsonly",
+      "to": "istio",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "budget",
+      "to": "simple",
+      "label": "제한적",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "simple",
+      "to": "aws",
+      "role": "branch"
+    },
+    {
+      "from": "aws",
+      "to": "latticeSimple",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "aws",
+      "to": "linkerd",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Istio 선택 전 확인",
+      "items": [
+        "전담 Platform 팀 2-3명, 연간 $50k+ 추가 예산",
+        "6-12개월 PoC 기간과 업그레이드 유지보수 창",
+        "리소스 오버헤드 50-100% 증가와 24/7 온콜 수용"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "VPC Lattice 선택 전 확인",
+      "items": [
+        "AWS 중심 아키텍처, 멀티 클라우드 전략 없음",
+        "기본적인 트래픽 관리로 충분, 빠른 출시 우선",
+        "소규모 팀(10명 이하)"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "판단 규칙",
+      "items": [
+        "Istio 체크리스트 3개 이상 미충족 → VPC Lattice 또는 Linkerd 고려",
+        "멀티 클라우드 필요 시 → Istio 필수"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Proxy Injector — 사이드카 자동 주입 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1000, 640],
+    "animation": "trace"
+  },
+  "participants": [
+    { "id": "kubectl", "type": "external", "label": "kubectl", "sublabel": "Pod 생성 요청" },
+    { "id": "apiserver", "type": "backend", "label": "API Server", "sublabel": "Admission Webhook 호출" },
+    { "id": "injector", "type": "security", "label": "Proxy Injector", "sublabel": "Mutating Webhook" },
+    { "id": "podspec", "type": "database", "label": "Pod Spec", "sublabel": "요청된 Pod 매니페스트" },
+    { "id": "pod", "type": "cloud", "label": "Pod", "sublabel": "사이드카 포함" }
+  ],
+  "segments": [
+    { "from": 312, "to": 478, "label": "ALT [주입 활성화] — linkerd.io/inject: enabled" }
+  ],
+  "messages": [
+    { "id": "create", "from": "kubectl", "to": "apiserver", "y": 190, "label": "Pod 생성 요청", "variant": "emphasis" },
+    { "id": "review", "from": "apiserver", "to": "injector", "y": 236, "label": "Admission Review", "variant": "security" },
+    { "id": "check", "from": "injector", "to": "podspec", "y": 280, "label": "주입 조건 확인", "note": "Namespace/Pod 어노테이션 linkerd.io/inject 검사" },
+    { "id": "add-proxy", "from": "injector", "to": "podspec", "y": 340, "label": "linkerd-proxy 추가", "note": "사이드카 컨테이너" },
+    { "id": "add-init", "from": "injector", "to": "podspec", "y": 384, "label": "linkerd-init 추가", "note": "Init 컨테이너, iptables 규칙" },
+    { "id": "add-vol", "from": "injector", "to": "podspec", "y": 428, "label": "볼륨/환경변수 설정", "note": "Identity 토큰, 프록시 설정" },
+    { "id": "mutated", "from": "injector", "to": "apiserver", "y": 470, "label": "Mutated Pod Spec", "variant": "return" },
+    { "id": "created", "from": "apiserver", "to": "pod", "y": 530, "label": "Pod 생성", "variant": "emphasis" }
+  ],
+  "activations": [
+    { "participant": "apiserver", "from": 185, "to": 538, "type": "backend" },
+    { "participant": "injector", "from": 231, "to": 476, "type": "security" },
+    { "participant": "podspec", "from": 275, "to": 434, "type": "database" }
+  ]
+}

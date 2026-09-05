@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 트래픽 관리 아키텍처",
+    "output": "ko-service-mesh-linkerd-03-traffic-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ]
+  },
+  "components": [
+    {
+      "id": "sp",
+      "type": "frontend",
+      "label": "ServiceProfile",
+      "sublabel": "라우트별 설정",
+      "pos": [
+        230,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ts",
+      "type": "frontend",
+      "label": "TrafficSplit",
+      "sublabel": "트래픽 분할",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "hr",
+      "type": "frontend",
+      "label": "HTTPRoute",
+      "sublabel": "Gateway API",
+      "pos": [
+        730,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "dest",
+      "type": "backend",
+      "label": "Endpoint Discovery",
+      "sublabel": "엔드포인트 탐색",
+      "pos": [
+        290,
+        300
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "backend",
+      "label": "Policy Distribution",
+      "sublabel": "linkerd-proxy로 정책 전달",
+      "pos": [
+        660,
+        300
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancing",
+      "sublabel": "EWMA",
+      "pos": [
+        60,
+        540
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "cloud",
+      "label": "Retries",
+      "sublabel": "재시도",
+      "pos": [
+        340,
+        540
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "to",
+      "type": "cloud",
+      "label": "Timeouts",
+      "sublabel": "타임아웃",
+      "pos": [
+        620,
+        540
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cb",
+      "type": "cloud",
+      "label": "Circuit Breaking",
+      "sublabel": "장애 격리",
+      "pos": [
+        900,
+        540
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "트래픽 관리 리소스",
+      "wraps": [
+        "sp",
+        "ts",
+        "hr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Destination Controller",
+      "wraps": [
+        "dest",
+        "policy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "프록시 기능",
+      "wraps": [
+        "lb",
+        "rt",
+        "to",
+        "cb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sp-dest",
+      "from": "sp",
+      "to": "dest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ts-dest",
+      "from": "ts",
+      "to": "dest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hr-dest",
+      "from": "hr",
+      "to": "dest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "dest-policy",
+      "from": "dest",
+      "to": "policy",
+      "label": "정책 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-lb",
+      "from": "policy",
+      "to": "lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "policy-rt",
+      "from": "policy",
+      "to": "rt",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "policy-to",
+      "from": "policy",
+      "to": "to",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "policy-cb",
+      "from": "policy",
+      "to": "cb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

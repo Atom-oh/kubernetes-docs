@@ -1,0 +1,201 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Flagger 배포 흐름",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy_path",
+        "label": "단계적 프로모션",
+        "focus": [
+          "start",
+          "init",
+          "analyze",
+          "check",
+          "step",
+          "promote",
+          "done"
+        ],
+        "note": "메트릭 분석을 통과할 때마다 카나리 트래픽을 10%씩 늘리고, 50%에 도달하면 프로모션한다."
+      },
+      {
+        "id": "rollback_path",
+        "label": "롤백 경로",
+        "focus": [
+          "analyze",
+          "check",
+          "rollback",
+          "done"
+        ],
+        "note": "성공 기준을 충족하지 못하면 카나리 트래픽을 0%로 되돌린다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "flagger",
+      "label": "Flagger 컨트롤러"
+    },
+    {
+      "id": "analysis",
+      "label": "메트릭 분석"
+    },
+    {
+      "id": "rollout",
+      "label": "트래픽 전환"
+    },
+    {
+      "id": "exceptions",
+      "label": "롤백",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "init",
+    "analyze",
+    "check",
+    "step",
+    "promote",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "flagger",
+      "col": 0,
+      "type": "backend",
+      "label": "Deployment 변경 감지",
+      "width": 200
+    },
+    {
+      "id": "init",
+      "lane": "flagger",
+      "col": 1,
+      "type": "backend",
+      "label": "Canary 초기화",
+      "sublabel": "0% 트래픽",
+      "width": 150
+    },
+    {
+      "id": "done",
+      "lane": "flagger",
+      "col": 5,
+      "type": "backend",
+      "label": "완료",
+      "width": 110
+    },
+    {
+      "id": "analyze",
+      "lane": "analysis",
+      "col": 2,
+      "type": "database",
+      "label": "메트릭 분석",
+      "sublabel": "30초 간격",
+      "width": 140
+    },
+    {
+      "id": "check",
+      "lane": "analysis",
+      "col": 3,
+      "type": "security",
+      "label": "성공 기준 충족?",
+      "sublabel": "성공률 · p99 지연",
+      "width": 172
+    },
+    {
+      "id": "step",
+      "lane": "rollout",
+      "col": 4,
+      "type": "cloud",
+      "label": "트래픽 증가",
+      "sublabel": "+10%",
+      "width": 140
+    },
+    {
+      "id": "promote",
+      "lane": "rollout",
+      "col": 5,
+      "type": "cloud",
+      "label": "프로모션",
+      "sublabel": "100% 카나리",
+      "width": 130
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "security",
+      "label": "롤백",
+      "sublabel": "0% 카나리",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "init"
+    },
+    {
+      "from": "init",
+      "to": "analyze"
+    },
+    {
+      "from": "analyze",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "step",
+      "label": "예",
+      "variant": "emphasis"
+    },
+    {
+      "from": "step",
+      "to": "analyze",
+      "label": "50% 미만",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "step",
+      "to": "promote",
+      "label": "50% 도달",
+      "variant": "emphasis"
+    },
+    {
+      "from": "promote",
+      "to": "done"
+    },
+    {
+      "from": "check",
+      "to": "rollback",
+      "label": "아니오",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "rollback",
+      "to": "done",
+      "variant": "security",
+      "role": "error",
+      "route": "outside-right",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "성공 기준 (Canary analysis)",
+      "items": [
+        "request-success-rate 99% 이상",
+        "request-duration p99 500ms 이하",
+        "threshold 5회 연속 성공 후 다음 단계",
+        "stepWeight 10 · maxWeight 50"
+      ]
+    }
+  ]
+}

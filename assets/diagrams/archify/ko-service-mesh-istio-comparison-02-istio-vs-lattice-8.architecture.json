@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode vs Ambient Mode 아키텍처 비교",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "sidecar",
+        "label": "Sidecar Mode",
+        "focus": [
+          "istiod-s",
+          "app",
+          "sidecar"
+        ],
+        "note": "파드마다 Envoy Sidecar가 붙어 프록시 리소스가 파드 수만큼 늘어난다."
+      },
+      {
+        "id": "ambient",
+        "label": "Ambient Mode",
+        "focus": [
+          "istiod-a",
+          "node1",
+          "node2",
+          "waypoint"
+        ],
+        "note": "노드당 하나의 ztunnel이 L4 mTLS를 처리하고 L7이 필요할 때만 Waypoint를 거친다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod-s",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        200,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "256MB ×3 파드",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "sidecar",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "128MB · 100m ×3",
+      "pos": [
+        280,
+        240
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "파드당 프록시"
+    },
+    {
+      "id": "istiod-a",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        760,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "node1",
+      "type": "backend",
+      "label": "Node 1",
+      "sublabel": "App ×2 + ztunnel 100MB",
+      "pos": [
+        590,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "노드당 프록시"
+    },
+    {
+      "id": "node2",
+      "type": "backend",
+      "label": "Node 2",
+      "sublabel": "App + ztunnel 100MB",
+      "pos": [
+        900,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "노드당 프록시"
+    },
+    {
+      "id": "waypoint",
+      "type": "security",
+      "label": "Waypoint Proxy (L7)",
+      "sublabel": "선택적 배포",
+      "pos": [
+        760,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Sidecar Mode · 파드당 프록시",
+      "wraps": [
+        "istiod-s",
+        "app",
+        "sidecar"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Ambient Mode · 노드당 프록시",
+      "wraps": [
+        "istiod-a",
+        "node1",
+        "node2",
+        "waypoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s-config",
+      "from": "istiod-s",
+      "to": "sidecar",
+      "label": "config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "s-local",
+      "from": "app",
+      "to": "sidecar",
+      "label": "local",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a-config-1",
+      "from": "istiod-a",
+      "to": "node1",
+      "label": "config",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a-config-2",
+      "from": "istiod-a",
+      "to": "node2",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a-mtls",
+      "from": "node1",
+      "to": "node2",
+      "label": "mTLS L4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a-l7-1",
+      "from": "node1",
+      "to": "waypoint",
+      "label": "L7 필요시",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "a-l7-2",
+      "from": "waypoint",
+      "to": "node2",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Sidecar Mode",
+      "items": [
+        "파드당 Envoy +128MB · +100m",
+        "100 파드 환경: +12.8GB 메모리, +10 vCPU"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ambient Mode",
+      "items": [
+        "노드당 ztunnel ~100MB · 50m (DaemonSet)",
+        "100 파드 환경: ~300MB (3 nodes) · ~150m",
+        "L7 기능 필요 시에만 Waypoint Proxy 배포"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "리소스 비교 (100 파드 환경)",
+      "items": [
+        "메모리 12.8GB → 300MB, 97% 절감",
+        "CPU 10 vCPU → ~150m, 98% 절감"
+      ]
+    }
+  ]
+}

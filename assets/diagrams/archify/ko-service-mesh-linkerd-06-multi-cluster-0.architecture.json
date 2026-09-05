@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 다중 클러스터 아키텍처",
+    "output": "ko-service-mesh-linkerd-06-multi-cluster-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1260,
+      720
+    ],
+    "views": [
+      {
+        "id": "mirroring",
+        "label": "서비스 미러링",
+        "focus": [
+          "sm_e",
+          "sm_w",
+          "svc_w",
+          "mirror_e"
+        ],
+        "note": "East의 Service Mirror Controller가 West를 감시(Watch)해 web-service의 미러 서비스를 로컬에 만든다."
+      },
+      {
+        "id": "gateway",
+        "label": "Gateway mTLS",
+        "focus": [
+          "gw_w",
+          "gw_e"
+        ],
+        "note": "클러스터 간 트래픽은 두 Gateway 사이의 mTLS 연결로만 오간다."
+      },
+      {
+        "id": "routing",
+        "label": "크로스 클러스터 라우팅",
+        "focus": [
+          "mirror_e",
+          "gw_w",
+          "svc_w"
+        ],
+        "note": "East 앱이 web-service-west를 호출하면 West Gateway를 거쳐 실제 web-service에 도달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "mc_w",
+      "type": "cloud",
+      "label": "Multicluster Extension",
+      "sublabel": "linkerd-multicluster",
+      "pos": [
+        100,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "sm_w",
+      "type": "backend",
+      "label": "Service Mirror Controller",
+      "sublabel": "내보낸 서비스 관리",
+      "pos": [
+        100,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc_w",
+      "type": "backend",
+      "label": "web-service",
+      "sublabel": "production ns",
+      "pos": [
+        100,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxy_w",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        100,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "gw_w",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "인그레스 · west",
+      "pos": [
+        320,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gw_e",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "인그레스 · east",
+      "pos": [
+        600,
+        370
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svc_e",
+      "type": "backend",
+      "label": "web-service",
+      "sublabel": "production ns",
+      "pos": [
+        790,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxy_e",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "사이드카 프록시",
+      "pos": [
+        790,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "mirror_e",
+      "type": "external",
+      "label": "web-service-west",
+      "sublabel": "미러 서비스",
+      "pos": [
+        1000,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "sm_e",
+      "type": "backend",
+      "label": "Service Mirror Controller",
+      "sublabel": "West 감시 · 미러 생성",
+      "pos": [
+        1000,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "mc_e",
+      "type": "cloud",
+      "label": "Multicluster Extension",
+      "sublabel": "linkerd-multicluster",
+      "pos": [
+        1000,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster West",
+      "wraps": [
+        "mc_w",
+        "sm_w",
+        "svc_w",
+        "proxy_w",
+        "gw_w"
+      ],
+      "pad": 48
+    },
+    {
+      "kind": "security-group",
+      "label": "컨트롤 플레인 West",
+      "wraps": [
+        "mc_w",
+        "sm_w"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "데이터 플레인 West",
+      "wraps": [
+        "svc_w",
+        "proxy_w",
+        "gw_w"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster East",
+      "wraps": [
+        "mc_e",
+        "sm_e",
+        "gw_e",
+        "svc_e",
+        "proxy_e",
+        "mirror_e"
+      ],
+      "pad": 48
+    },
+    {
+      "kind": "security-group",
+      "label": "컨트롤 플레인 East",
+      "wraps": [
+        "mc_e",
+        "sm_e"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "데이터 플레인 East",
+      "wraps": [
+        "gw_e",
+        "svc_e",
+        "proxy_e",
+        "mirror_e"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "smw-svcw",
+      "from": "sm_w",
+      "to": "svc_w"
+    },
+    {
+      "id": "sme-mirror",
+      "from": "sm_e",
+      "to": "mirror_e",
+      "label": "미러 생성",
+      "labelDy": 60
+    },
+    {
+      "id": "watch",
+      "from": "sm_e",
+      "to": "sm_w",
+      "label": "Watch",
+      "variant": "dashed"
+    },
+    {
+      "id": "mtls",
+      "from": "gw_e",
+      "to": "gw_w",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "route",
+      "from": "mirror_e",
+      "to": "gw_w",
+      "label": "Route",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1085,
+          640
+        ],
+        [
+          395,
+          640
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "서비스 미러링 특성",
+      "items": [
+        "투명한 디스커버리: 원격 서비스가 로컬 서비스처럼 보인다",
+        "mTLS 보안: 클러스터 간 통신도 암호화된다",
+        "헬스 체크: 원격 서비스 가용성을 자동 확인한다",
+        "로드 밸런싱: EWMA 알고리즘으로 지연 시간 기반 분배"
+      ]
+    }
+  ]
+}

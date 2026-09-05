@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "linkerd2-proxy Sidecar Structure",
+    "output": "en-service-mesh-linkerd-02-architecture-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inbound-path",
+        "label": "Inbound path",
+        "focus": [
+          "ext-in",
+          "inbound",
+          "tls",
+          "app"
+        ],
+        "note": "External requests are redirected to the :4143 inbound listener, TLS-terminated, and handed to the application."
+      },
+      {
+        "id": "outbound-path",
+        "label": "Outbound path",
+        "focus": [
+          "app",
+          "outbound",
+          "lb",
+          "tls",
+          "ext-out"
+        ],
+        "note": "Application requests are redirected to :4140, load-balanced with EWMA, and leave with TLS originated."
+      },
+      {
+        "id": "admin-path",
+        "label": "Admin server",
+        "focus": [
+          "admin"
+        ],
+        "note": "The :4191 admin server exposes proxy metrics."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "ext-in",
+      "type": "external",
+      "label": "External client",
+      "sublabel": "Inbound traffic",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "inbound",
+      "type": "backend",
+      "label": "Inbound Listener",
+      "sublabel": ":4143",
+      "pos": [
+        270,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tls",
+      "type": "security",
+      "label": "TLS Term / Orig",
+      "sublabel": "mTLS hub",
+      "pos": [
+        510,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancing",
+      "sublabel": "EWMA",
+      "pos": [
+        760,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "admin",
+      "type": "backend",
+      "label": "Admin Server",
+      "sublabel": ":4191 metrics",
+      "pos": [
+        760,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "Application container",
+      "pos": [
+        510,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "outbound",
+      "type": "backend",
+      "label": "Outbound Listener",
+      "sublabel": ":4140",
+      "pos": [
+        760,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ext-out",
+      "type": "external",
+      "label": "External service",
+      "sublabel": "Outbound traffic",
+      "pos": [
+        1060,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod",
+      "wraps": [
+        "inbound",
+        "tls",
+        "lb",
+        "admin",
+        "app",
+        "outbound"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "linkerd-proxy",
+      "wraps": [
+        "inbound",
+        "tls",
+        "lb",
+        "admin",
+        "outbound"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ext-in-to-inbound",
+      "from": "ext-in",
+      "to": "inbound",
+      "label": "inbound request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inbound-to-tls",
+      "from": "inbound",
+      "to": "tls",
+      "label": "TLS termination"
+    },
+    {
+      "id": "tls-to-app",
+      "from": "tls",
+      "to": "app",
+      "label": "plaintext",
+      "labelDy": 24
+    },
+    {
+      "id": "app-to-outbound",
+      "from": "app",
+      "to": "outbound",
+      "label": "outbound"
+    },
+    {
+      "id": "outbound-to-lb",
+      "from": "outbound",
+      "to": "lb",
+      "label": "EWMA pick"
+    },
+    {
+      "id": "lb-to-tls",
+      "from": "lb",
+      "to": "tls",
+      "label": "TLS origination"
+    },
+    {
+      "id": "tls-to-ext-out",
+      "from": "tls",
+      "to": "ext-out",
+      "label": "mTLS request",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Proxy processing",
+      "items": [
+        "Retries, timeouts and circuit breaking (CB) applied automatically by the proxy",
+        "EWMA load balancing picks the lowest-latency endpoint"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "linkerd2-proxy characteristics",
+      "items": [
+        "Rust micro-proxy, ~10MB memory",
+        "<1ms p99 added latency",
+        "HTTP/1.1, HTTP/2, gRPC, TCP · TLS 1.3 (rustls)"
+      ]
+    }
+  ]
+}

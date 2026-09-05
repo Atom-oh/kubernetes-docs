@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "linkerd2-proxy 사이드카 구조",
+    "output": "ko-service-mesh-linkerd-02-architecture-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inbound-path",
+        "label": "인바운드 경로",
+        "focus": [
+          "ext-in",
+          "inbound",
+          "tls",
+          "app"
+        ],
+        "note": "외부 요청은 :4143 Inbound 리스너로 리다이렉트되어 TLS 종료 후 애플리케이션에 전달된다."
+      },
+      {
+        "id": "outbound-path",
+        "label": "아웃바운드 경로",
+        "focus": [
+          "app",
+          "outbound",
+          "lb",
+          "tls",
+          "ext-out"
+        ],
+        "note": "애플리케이션의 요청은 :4140으로 리다이렉트되어 EWMA 로드밸런싱과 TLS 발신을 거쳐 밖으로 나간다."
+      },
+      {
+        "id": "admin-path",
+        "label": "Admin 서버",
+        "focus": [
+          "admin"
+        ],
+        "note": ":4191 Admin 서버는 프록시 메트릭을 노출한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ext-in",
+      "type": "external",
+      "label": "외부 클라이언트",
+      "sublabel": "인바운드 트래픽",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "inbound",
+      "type": "backend",
+      "label": "Inbound 리스너",
+      "sublabel": ":4143",
+      "pos": [
+        270,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tls",
+      "type": "security",
+      "label": "TLS 종료 / 발신",
+      "sublabel": "mTLS 허브",
+      "pos": [
+        510,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancing",
+      "sublabel": "EWMA",
+      "pos": [
+        760,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "admin",
+      "type": "backend",
+      "label": "Admin 서버",
+      "sublabel": ":4191 메트릭",
+      "pos": [
+        760,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        510,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "outbound",
+      "type": "backend",
+      "label": "Outbound 리스너",
+      "sublabel": ":4140",
+      "pos": [
+        760,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ext-out",
+      "type": "external",
+      "label": "외부 서비스",
+      "sublabel": "아웃바운드 트래픽",
+      "pos": [
+        1060,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod",
+      "wraps": [
+        "inbound",
+        "tls",
+        "lb",
+        "admin",
+        "app",
+        "outbound"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "linkerd-proxy",
+      "wraps": [
+        "inbound",
+        "tls",
+        "lb",
+        "admin",
+        "outbound"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ext-in-to-inbound",
+      "from": "ext-in",
+      "to": "inbound",
+      "label": "인바운드 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inbound-to-tls",
+      "from": "inbound",
+      "to": "tls",
+      "label": "TLS 종료"
+    },
+    {
+      "id": "tls-to-app",
+      "from": "tls",
+      "to": "app",
+      "label": "평문 전달",
+      "labelDy": 24
+    },
+    {
+      "id": "app-to-outbound",
+      "from": "app",
+      "to": "outbound",
+      "label": "아웃바운드 요청"
+    },
+    {
+      "id": "outbound-to-lb",
+      "from": "outbound",
+      "to": "lb",
+      "label": "EWMA 선택"
+    },
+    {
+      "id": "lb-to-tls",
+      "from": "lb",
+      "to": "tls",
+      "label": "TLS 발신"
+    },
+    {
+      "id": "tls-to-ext-out",
+      "from": "tls",
+      "to": "ext-out",
+      "label": "mTLS 요청",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "프록시 처리",
+      "items": [
+        "재시도, 타임아웃, 서킷 브레이커(CB)를 프록시가 자동 적용",
+        "EWMA 기반 로드밸런싱으로 지연이 낮은 엔드포인트 선택"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "linkerd2-proxy 특성",
+      "items": [
+        "Rust 마이크로 프록시, 메모리 ~10MB",
+        "지연 시간 추가 <1ms p99",
+        "HTTP/1.1, HTTP/2, gRPC, TCP · TLS 1.3 (rustls)"
+      ]
+    }
+  ]
+}

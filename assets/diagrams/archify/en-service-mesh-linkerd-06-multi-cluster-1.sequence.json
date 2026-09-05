@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Service Mirroring Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      700
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Cluster East"
+    },
+    {
+      "id": "mirror",
+      "type": "backend",
+      "label": "Mirror Service",
+      "sublabel": "web-west · Cluster East"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "Cluster West"
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target Service",
+      "sublabel": "web · Cluster West"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 390,
+      "label": "Request — East to West"
+    },
+    {
+      "from": 410,
+      "to": 575,
+      "label": "Response — returned along the same path"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req",
+      "from": "app",
+      "to": "mirror",
+      "y": 195,
+      "label": "Request to web-west",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls",
+      "from": "mirror",
+      "to": "gateway",
+      "y": 270,
+      "label": "mTLS connection",
+      "variant": "security",
+      "note": "Mirror service resolves the Gateway IP, then connects"
+    },
+    {
+      "id": "forward",
+      "from": "gateway",
+      "to": "target",
+      "y": 350,
+      "label": "Forward request",
+      "variant": "emphasis",
+      "note": "Gateway verifies identity, then forwards"
+    },
+    {
+      "id": "resp1",
+      "from": "target",
+      "to": "gateway",
+      "y": 440,
+      "label": "Response",
+      "variant": "return"
+    },
+    {
+      "id": "resp2",
+      "from": "gateway",
+      "to": "mirror",
+      "y": 490,
+      "label": "mTLS response",
+      "variant": "return"
+    },
+    {
+      "id": "resp3",
+      "from": "mirror",
+      "to": "app",
+      "y": 540,
+      "label": "Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "mirror",
+      "from": 195,
+      "to": 545,
+      "type": "backend"
+    },
+    {
+      "participant": "gateway",
+      "from": 270,
+      "to": 495,
+      "type": "security"
+    },
+    {
+      "participant": "target",
+      "from": 350,
+      "to": 445,
+      "type": "backend"
+    }
+  ]
+}

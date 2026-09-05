@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Management Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-02-traffic-management-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "http",
+          "lb",
+          "routing",
+          "server"
+        ],
+        "note": "A client request passes through each layer's core function in L7 → L4 → L3 order before reaching the server."
+      },
+      {
+        "id": "l7-envoy",
+        "label": "L7 · Envoy",
+        "focus": [
+          "http",
+          "grpc",
+          "tls",
+          "headers"
+        ],
+        "note": "The Envoy proxy handles HTTP/gRPC routing, TLS termination, and header manipulation."
+      },
+      {
+        "id": "l4-ebpf",
+        "label": "L4 · eBPF",
+        "focus": [
+          "lb",
+          "ct",
+          "nat",
+          "dsr"
+        ],
+        "note": "Kernel eBPF handles load balancing, connection tracking, NAT/SNAT, and DSR."
+      },
+      {
+        "id": "l3-ebpf",
+        "label": "L3 · eBPF",
+        "focus": [
+          "routing",
+          "tunnel",
+          "policy"
+        ],
+        "note": "IP routing, tunnel/overlay, and network policy are applied at L3."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client / Server"
+        },
+        "backend": {
+          "label": "Traffic management feature"
+        },
+        "security": {
+          "label": "Network Policy"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "request origin",
+      "pos": [
+        30,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "http",
+      "type": "backend",
+      "label": "HTTP Routing",
+      "sublabel": "Envoy",
+      "pos": [
+        240,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "grpc",
+      "type": "backend",
+      "label": "gRPC Routing",
+      "pos": [
+        240,
+        170
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "tls",
+      "type": "backend",
+      "label": "TLS Termination",
+      "pos": [
+        240,
+        230
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "headers",
+      "type": "backend",
+      "label": "Header Manipulation",
+      "pos": [
+        240,
+        290
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancing",
+      "sublabel": "eBPF",
+      "pos": [
+        500,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ct",
+      "type": "backend",
+      "label": "Connection Tracking",
+      "pos": [
+        500,
+        170
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "nat",
+      "type": "backend",
+      "label": "NAT / SNAT",
+      "pos": [
+        500,
+        230
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "dsr",
+      "type": "backend",
+      "label": "Direct Server Return",
+      "pos": [
+        500,
+        290
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "routing",
+      "type": "backend",
+      "label": "IP Routing",
+      "sublabel": "eBPF",
+      "pos": [
+        760,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tunnel",
+      "type": "backend",
+      "label": "Tunnel / Overlay",
+      "pos": [
+        760,
+        170
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Network Policy",
+      "pos": [
+        760,
+        230
+      ],
+      "size": [
+        180,
+        44
+      ]
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "Server",
+      "sublabel": "request destination",
+      "pos": [
+        1030,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "L7 · Envoy",
+      "wraps": [
+        "http",
+        "grpc",
+        "tls",
+        "headers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "L4 · eBPF",
+      "wraps": [
+        "lb",
+        "ct",
+        "nat",
+        "dsr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "L3 · eBPF",
+      "wraps": [
+        "routing",
+        "tunnel",
+        "policy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-http",
+      "from": "client",
+      "to": "http",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "http-to-lb",
+      "from": "http",
+      "to": "lb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-routing",
+      "from": "lb",
+      "to": "routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "routing-to-server",
+      "from": "routing",
+      "to": "server",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "L7 configuration surfaces",
+      "items": [
+        "CiliumEnvoyConfig defines per-service Envoy configuration",
+        "L7 rules in CiliumNetworkPolicy",
+        "Gateway API integration"
+      ]
+    }
+  ]
+}

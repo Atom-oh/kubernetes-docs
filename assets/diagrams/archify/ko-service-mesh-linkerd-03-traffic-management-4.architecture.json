@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TrafficSplit 카나리 배포",
+    "output": "ko-service-mesh-linkerd-03-traffic-management-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [760, 440]
+  },
+  "components": [
+    { "id": "svc", "type": "backend", "label": "my-service", "sublabel": "트래픽 진입점 (apex 서비스)", "tag": "spec.service", "pos": [290, 80], "size": [200, 64] },
+    { "id": "v1", "type": "backend", "label": "my-service-v1", "sublabel": "Stable · weight 90", "pos": [80, 300], "size": [200, 64] },
+    { "id": "v2", "type": "backend", "label": "my-service-v2", "sublabel": "Canary · weight 10", "pos": [500, 300], "size": [200, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Canary Deployment", "wraps": ["svc", "v1", "v2"] }
+  ],
+  "connections": [
+    { "id": "svc-to-v1", "from": "svc", "to": "v1", "label": "90%", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "svc-to-v2", "from": "svc", "to": "v2", "label": "10%", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "TrafficSplit (SMI)", "items": ["spec.service: my-service — 트래픽을 분할할 apex 서비스", "backends: my-service-v1 weight 90, my-service-v2 weight 10", "가중치를 단계적으로 조정해 카나리 비율을 확대한다"] }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "4가지 골든 시그널",
+    "output": "ko-service-mesh-cilium-service-mesh-04-observability-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 300]
+  },
+  "components": [
+    { "id": "latency", "type": "backend", "label": "Latency", "sublabel": "응답 시간", "tag": "hubble_http_request_duration_seconds", "pos": [60, 110], "size": [200, 64] },
+    { "id": "traffic", "type": "backend", "label": "Traffic", "sublabel": "처리량", "tag": "hubble_http_requests_total", "pos": [290, 110], "size": [200, 64] },
+    { "id": "errors", "type": "backend", "label": "Errors", "sublabel": "오류율", "tag": "hubble_http_responses_total 5xx", "pos": [520, 110], "size": [200, 64] },
+    { "id": "saturation", "type": "backend", "label": "Saturation", "sublabel": "포화도", "tag": "hubble_tcp_connections_total", "pos": [750, 110], "size": [200, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Golden Signals", "wraps": ["latency", "traffic", "errors", "saturation"] }
+  ],
+  "connections": []
+}

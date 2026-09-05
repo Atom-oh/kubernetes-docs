@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Security Layers",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-04-security-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      860,
+      460
+    ],
+    "views": [
+      {
+        "id": "network-level",
+        "label": "Network Level (Linkerd)",
+        "focus": [
+          "mtls",
+          "authz",
+          "identity"
+        ],
+        "note": "Defenses the Linkerd proxy applies automatically, with no configuration."
+      },
+      {
+        "id": "application-level",
+        "label": "Application Level",
+        "focus": [
+          "jwt",
+          "rbac",
+          "input"
+        ],
+        "note": "Defenses the application itself must implement."
+      },
+      {
+        "id": "defense-in-depth",
+        "label": "Defense in Depth",
+        "focus": [
+          "mtls",
+          "authz",
+          "identity",
+          "jwt",
+          "rbac",
+          "input"
+        ],
+        "note": "Network-level and application-level controls pair up to form defense in depth."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "mtls",
+      "type": "security",
+      "label": "mTLS Encryption",
+      "sublabel": "Automatic transport encryption",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "authz",
+      "type": "security",
+      "label": "Service Authorization",
+      "sublabel": "ServerAuthorization",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Workload Identity",
+      "sublabel": "SPIFFE ID",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "jwt",
+      "type": "backend",
+      "label": "JWT / OAuth",
+      "sublabel": "User authentication",
+      "pos": [
+        60,
+        310
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "backend",
+      "label": "Application RBAC",
+      "sublabel": "Role-based permission checks",
+      "pos": [
+        330,
+        310
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "input",
+      "type": "backend",
+      "label": "Input Validation",
+      "sublabel": "Sanitization and validation",
+      "pos": [
+        600,
+        310
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Network Level (Linkerd)",
+      "wraps": [
+        "mtls",
+        "authz",
+        "identity"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Application Level",
+      "wraps": [
+        "jwt",
+        "rbac",
+        "input"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mtls-to-jwt",
+      "from": "mtls",
+      "to": "jwt",
+      "variant": "security"
+    },
+    {
+      "id": "authz-to-rbac",
+      "from": "authz",
+      "to": "rbac",
+      "variant": "security"
+    },
+    {
+      "id": "identity-to-input",
+      "from": "identity",
+      "to": "input",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Linkerd Role",
+      "items": [
+        "Transport encryption: mTLS (automatic)",
+        "Service authentication: SPIFFE ID",
+        "Service authorization: ServerAuthorization"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Application Role",
+      "items": [
+        "Service authentication: API keys, JWT",
+        "Service authorization: RBAC, permission checks",
+        "Data validation: input validation, sanitization"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Failure Accrual 동작",
+    "output": "ko-service-mesh-linkerd-03-traffic-management-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      566
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "시작"
+        },
+        "active": {
+          "label": "정상 (Closed)"
+        },
+        "failure": {
+          "label": "차단 (Open)"
+        },
+        "waiting": {
+          "label": "프로브 (Half-Open)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "엔드포인트 요청 전달 상태"
+    },
+    {
+      "id": "probe",
+      "label": "복구 확인"
+    }
+  ],
+  "states": [
+    {
+      "id": "start",
+      "type": "start",
+      "label": "시작",
+      "sublabel": "엔드포인트 등록",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "closed",
+      "type": "active",
+      "label": "Closed",
+      "sublabel": "정상 작동 · 모든 요청 전달",
+      "lane": "main",
+      "col": 1,
+      "tag": "정상"
+    },
+    {
+      "id": "open",
+      "type": "failure",
+      "label": "Open",
+      "sublabel": "엔드포인트로 요청 전달 안함",
+      "lane": "main",
+      "col": 3,
+      "tag": "차단"
+    },
+    {
+      "id": "halfopen",
+      "type": "waiting",
+      "label": "Half-Open",
+      "sublabel": "주기적으로 프로브 요청 전송",
+      "lane": "probe",
+      "col": 2,
+      "tag": "프로브"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-init",
+      "from": "start",
+      "to": "closed",
+      "label": "정상 상태",
+      "labelDy": -25
+    },
+    {
+      "id": "t-trip",
+      "from": "closed",
+      "to": "open",
+      "label": "연속 실패 임계값 초과",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "t-backoff",
+      "from": "open",
+      "to": "halfopen",
+      "label": "백오프 시간 경과",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-recover",
+      "from": "halfopen",
+      "to": "closed",
+      "label": "프로브 성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-retrip",
+      "from": "halfopen",
+      "to": "open",
+      "label": "프로브 실패",
+      "variant": "security",
+      "route": "right-channel",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ]
+}

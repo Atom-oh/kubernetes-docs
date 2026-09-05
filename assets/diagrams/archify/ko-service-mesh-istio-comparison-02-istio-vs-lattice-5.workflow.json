@@ -1,0 +1,242 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Istio Revision 기반 Canary 업그레이드 아키텍처",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "coexist",
+        "label": "Phase 1: 두 버전 공존",
+        "focus": [
+          "old_cp",
+          "new_cp",
+          "pods_prod",
+          "pods_stg"
+        ],
+        "note": "Istiod 1.23.0과 1.24.0이 동시에 실행되며 각자 담당 네임스페이스 파드에 xDS 설정을 배포한다."
+      },
+      {
+        "id": "rollout",
+        "label": "Phase 2: 순차적 전환",
+        "focus": [
+          "step1",
+          "step2",
+          "step3",
+          "step4"
+        ],
+        "note": "staging을 먼저 전환해 검증한 뒤 production을 점진적으로 롤아웃하고 이전 버전을 제거한다."
+      },
+      {
+        "id": "risks",
+        "label": "리스크",
+        "focus": [
+          "risk_double",
+          "risk_restart",
+          "risk_compat"
+        ],
+        "note": "두 Control Plane 동시 실행, 전체 파드 재시작, 설정 호환성 문제가 업그레이드의 주요 위험이다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "기존 Istiod 1.23.0"
+        },
+        "cloud": {
+          "label": "새 Istiod 1.24.0"
+        },
+        "frontend": {
+          "label": "전환 단계"
+        },
+        "security": {
+          "label": "검증 · 리스크"
+        },
+        "external": {
+          "label": "정리"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "cp",
+      "label": "Control Plane · Phase 1 공존"
+    },
+    {
+      "id": "dp",
+      "label": "Data Plane · Phase 1 공존"
+    },
+    {
+      "id": "steps",
+      "label": "Phase 2 · 순차적 전환"
+    },
+    {
+      "id": "risk",
+      "label": "리스크",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "step1",
+    "step2",
+    "step3",
+    "step4"
+  ],
+  "nodes": [
+    {
+      "id": "old_cp",
+      "lane": "cp",
+      "col": 1,
+      "type": "backend",
+      "label": "Istiod 1.23.0",
+      "sublabel": "기존 Control Plane",
+      "tag": "기존",
+      "width": 150
+    },
+    {
+      "id": "new_cp",
+      "lane": "cp",
+      "col": 2,
+      "type": "cloud",
+      "label": "Istiod 1.24.0",
+      "sublabel": "새 Control Plane",
+      "tag": "revision 1-24-0",
+      "width": 150
+    },
+    {
+      "id": "pods_prod",
+      "lane": "dp",
+      "col": 1,
+      "type": "backend",
+      "label": "Pod A · Pod B",
+      "sublabel": "production · Envoy 1.23.0",
+      "width": 150,
+      "tag": "xDS Config"
+    },
+    {
+      "id": "pods_stg",
+      "lane": "dp",
+      "col": 2,
+      "type": "cloud",
+      "label": "Pod C · Pod D",
+      "sublabel": "staging · Envoy 1.24.0",
+      "width": 150,
+      "tag": "xDS Config"
+    },
+    {
+      "id": "step1",
+      "lane": "steps",
+      "col": 2,
+      "type": "frontend",
+      "label": "1. staging 전환",
+      "sublabel": "파드 재시작",
+      "width": 150
+    },
+    {
+      "id": "step2",
+      "lane": "steps",
+      "col": 3,
+      "type": "security",
+      "label": "2. 검증",
+      "sublabel": "트래픽/메트릭 확인",
+      "width": 150
+    },
+    {
+      "id": "step3",
+      "lane": "steps",
+      "col": 4,
+      "type": "frontend",
+      "label": "3. production 전환",
+      "sublabel": "점진적 롤아웃",
+      "width": 160
+    },
+    {
+      "id": "step4",
+      "lane": "steps",
+      "col": 5,
+      "type": "external",
+      "label": "4. 이전 버전 제거",
+      "sublabel": "Istiod 1.23.0",
+      "width": 150
+    },
+    {
+      "id": "risk_double",
+      "lane": "risk",
+      "col": 1,
+      "type": "security",
+      "label": "두 CP 동시 실행",
+      "sublabel": "리소스 2배",
+      "width": 150
+    },
+    {
+      "id": "risk_restart",
+      "lane": "risk",
+      "col": 3,
+      "type": "security",
+      "label": "모든 파드 재시작 필요",
+      "sublabel": "순간적 연결 끊김",
+      "width": 150
+    },
+    {
+      "id": "risk_compat",
+      "lane": "risk",
+      "col": 4,
+      "type": "security",
+      "label": "설정 호환성 문제",
+      "sublabel": "수동 수정 필요",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "old_cp",
+      "to": "pods_prod",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "new_cp",
+      "to": "pods_stg",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "step1",
+      "to": "step2"
+    },
+    {
+      "from": "step2",
+      "to": "step3"
+    },
+    {
+      "from": "step3",
+      "to": "step4"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Revision 전환 명령",
+      "items": [
+        "istioctl install --revision=1-24-0 로 새 Control Plane 설치",
+        "kubectl label namespace <ns> istio.io/rev=1-24-0 로 네임스페이스 전환",
+        "kubectl rollout restart deployment -n <ns> 로 Sidecar 교체"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "검증 항목",
+      "items": [
+        "istioctl proxy-status 로 1-24-0 연결 확인",
+        "istio_requests_total, istio_request_duration_milliseconds 메트릭 확인",
+        "pilot_xds_pushes 로 Control Plane 부하 확인"
+      ]
+    }
+  ]
+}

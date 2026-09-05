@@ -1,0 +1,213 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "업그레이드 복잡도 비교: Istio vs VPC Lattice",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "istio-path",
+        "label": "Istio 수동 업그레이드",
+        "focus": [
+          "prep",
+          "install",
+          "canary",
+          "verify",
+          "cleanup",
+          "istio_total"
+        ],
+        "note": "Canary(revision) 방식으로 Phase 1~4를 직접 수행하며, 네임스페이스 수에 따라 총 6-10시간이 걸린다."
+      },
+      {
+        "id": "lattice-path",
+        "label": "VPC Lattice 자동 업그레이드",
+        "focus": [
+          "auto",
+          "lattice_total"
+        ],
+        "note": "AWS가 관리형 서비스로 업데이트하므로 사용자 작업과 다운타임이 없다."
+      }
+    ],
+    "viewBox": [
+      1000,
+      408
+    ]
+  },
+  "lanes": [
+    {
+      "id": "istio",
+      "label": "Istio 업그레이드 (수동, Canary)"
+    },
+    {
+      "id": "lattice",
+      "label": "VPC Lattice 업그레이드 (AWS 관리형)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "Phase 1 사전 준비",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "Phase 2 설치",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "Phase 3 전환·검증",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p4",
+      "label": "Phase 4 정리",
+      "fromCol": 4,
+      "toCol": 4
+    },
+    {
+      "id": "sum",
+      "label": "총 소요 시간",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "prep",
+    "install",
+    "canary",
+    "verify",
+    "cleanup",
+    "istio_total"
+  ],
+  "nodes": [
+    {
+      "id": "prep",
+      "lane": "istio",
+      "col": 0,
+      "type": "backend",
+      "label": "사전 준비",
+      "sublabel": "1-2시간"
+    },
+    {
+      "id": "install",
+      "lane": "istio",
+      "col": 1,
+      "type": "backend",
+      "label": "Control Plane 설치",
+      "sublabel": "30분",
+      "tag": "새 revision",
+      "width": 172
+    },
+    {
+      "id": "canary",
+      "lane": "istio",
+      "col": 2,
+      "type": "backend",
+      "label": "Canary 전환",
+      "sublabel": "2-3시간",
+      "tag": "네임스페이스별",
+      "width": 112
+    },
+    {
+      "id": "verify",
+      "lane": "istio",
+      "col": 3,
+      "type": "security",
+      "label": "검증",
+      "sublabel": "1-2시간"
+    },
+    {
+      "id": "cleanup",
+      "lane": "istio",
+      "col": 4,
+      "type": "backend",
+      "label": "정리",
+      "sublabel": "1시간",
+      "tag": "이전 revision 제거"
+    },
+    {
+      "id": "istio_total",
+      "lane": "istio",
+      "col": 5,
+      "type": "external",
+      "label": "총 6-10시간",
+      "sublabel": "수동 작업",
+      "tag": "파드 재시작 필요",
+      "width": 132
+    },
+    {
+      "id": "auto",
+      "lane": "lattice",
+      "col": 0,
+      "type": "cloud",
+      "label": "자동 업그레이드",
+      "sublabel": "AWS 관리",
+      "tag": "사용자 작업 없음",
+      "width": 116
+    },
+    {
+      "id": "lattice_total",
+      "lane": "lattice",
+      "col": 5,
+      "type": "cloud",
+      "label": "총 0시간",
+      "sublabel": "다운타임 없음"
+    }
+  ],
+  "edges": [
+    {
+      "from": "prep",
+      "to": "install"
+    },
+    {
+      "from": "install",
+      "to": "canary"
+    },
+    {
+      "from": "canary",
+      "to": "verify",
+      "label": "네임스페이스 순차"
+    },
+    {
+      "from": "verify",
+      "to": "cleanup"
+    },
+    {
+      "from": "cleanup",
+      "to": "istio_total"
+    },
+    {
+      "from": "auto",
+      "to": "lattice_total",
+      "label": "AWS가 대신 수행",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Istio 수동 업그레이드",
+      "items": [
+        "Zero-downtime·점진적 롤아웃·롤백 가능",
+        "복잡한 수동 프로세스와 전문 지식 필요",
+        "두 버전 Control Plane 동시 실행 (리소스 2배)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "VPC Lattice",
+      "items": [
+        "AWS가 관리형 서비스로 업데이트",
+        "사용자 작업 없음, 다운타임 없음"
+      ]
+    }
+  ]
+}

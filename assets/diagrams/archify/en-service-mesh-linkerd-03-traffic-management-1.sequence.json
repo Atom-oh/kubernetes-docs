@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Retry Behavior — Transparent Retries by linkerd-proxy",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      660
+    ],
+    "animation": "trace",
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "calling application"
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "linkerd-proxy",
+      "sublabel": "sidecar proxy"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "target service"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "First attempt — fails with 503"
+    },
+    {
+      "from": 355,
+      "to": 545,
+      "label": "Retry — the Client only sees 200 OK"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "proxy",
+      "y": 190,
+      "label": "HTTP Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "request-1",
+      "from": "proxy",
+      "to": "service",
+      "y": 240,
+      "label": "Request #1"
+    },
+    {
+      "id": "resp-503",
+      "from": "service",
+      "to": "proxy",
+      "y": 300,
+      "label": "503 Service Unavailable",
+      "variant": "return"
+    },
+    {
+      "id": "request-2",
+      "from": "proxy",
+      "to": "service",
+      "y": 400,
+      "label": "Request #2 (retry)",
+      "variant": "emphasis",
+      "note": "Check retry conditions: isRetryable: true · 5xx response · retry budget available"
+    },
+    {
+      "id": "resp-200",
+      "from": "service",
+      "to": "proxy",
+      "y": 460,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "client-200",
+      "from": "proxy",
+      "to": "client",
+      "y": 520,
+      "label": "200 OK",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy",
+      "from": 185,
+      "to": 528,
+      "type": "security"
+    },
+    {
+      "participant": "service",
+      "from": 235,
+      "to": 306,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 395,
+      "to": 466,
+      "type": "backend"
+    }
+  ]
+}

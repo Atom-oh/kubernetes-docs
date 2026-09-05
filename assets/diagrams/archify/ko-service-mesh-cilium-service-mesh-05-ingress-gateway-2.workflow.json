@@ -1,0 +1,251 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "인그레스 선택 가이드: Cilium Gateway vs AWS Load Balancer Controller",
+    "output": "public/archmaps/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작 · 완료"
+        },
+        "security": {
+          "label": "판단 질문"
+        },
+        "cloud": {
+          "label": "AWS 로드 밸런서"
+        },
+        "backend": {
+          "label": "Cilium 데이터 플레인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "aws-native",
+        "label": "AWS 네이티브 경로",
+        "focus": [
+          "q1",
+          "q2",
+          "alb"
+        ],
+        "note": "AWS 네이티브 통합과 WAF/Shield가 모두 필요하면 AWS LB Controller의 ALB로 귀결됩니다."
+      },
+      {
+        "id": "l4-perf",
+        "label": "고성능 L4 경로",
+        "focus": [
+          "q2",
+          "q3",
+          "nlb"
+        ],
+        "note": "WAF/Shield는 불필요하지만 고성능 L4가 필요하면 NLB 앞단에 Cilium을 결합합니다."
+      },
+      {
+        "id": "cilium-only",
+        "label": "Cilium 단독 경로",
+        "focus": [
+          "q1",
+          "q3",
+          "cilium"
+        ],
+        "note": "AWS 네이티브 통합이 불필요하거나 L4 성능 요구가 없으면 Cilium Gateway만으로 충분합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "ciliumPath",
+      "label": "Cilium 단독 경로"
+    },
+    {
+      "id": "decision",
+      "label": "요구 사항 판단"
+    },
+    {
+      "id": "awsPath",
+      "label": "AWS 로드 밸런서 경로"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "q1",
+    "q2",
+    "q3",
+    "cilium",
+    "done"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "alb"
+      },
+      {
+        "from": "start",
+        "to": "nlb"
+      },
+      {
+        "from": "start",
+        "to": "cilium"
+      },
+      {
+        "from": "alb",
+        "to": "done"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decision",
+      "col": 0,
+      "type": "frontend",
+      "label": "시작",
+      "sublabel": "인그레스 방식 선택",
+      "width": 140
+    },
+    {
+      "id": "q1",
+      "lane": "decision",
+      "col": 1,
+      "type": "security",
+      "label": "AWS 네이티브 통합 필요?",
+      "width": 224
+    },
+    {
+      "id": "q2",
+      "lane": "decision",
+      "col": 2,
+      "type": "security",
+      "label": "WAF/Shield 필요?",
+      "width": 156
+    },
+    {
+      "id": "q3",
+      "lane": "decision",
+      "col": 3,
+      "type": "security",
+      "label": "고성능 L4 필요?",
+      "width": 156
+    },
+    {
+      "id": "alb",
+      "lane": "awsPath",
+      "col": 2,
+      "type": "cloud",
+      "label": "AWS ALB",
+      "sublabel": "AWS LB Controller",
+      "tag": "WAF/Shield",
+      "width": 126
+    },
+    {
+      "id": "nlb",
+      "lane": "awsPath",
+      "col": 3,
+      "type": "cloud",
+      "label": "NLB + Cilium",
+      "sublabel": "L4 NLB 앞단",
+      "tag": "고성능 L4",
+      "width": 136
+    },
+    {
+      "id": "cilium",
+      "lane": "ciliumPath",
+      "col": 4,
+      "type": "backend",
+      "label": "Cilium Gateway",
+      "sublabel": "Envoy L7 · eBPF L4",
+      "tag": "Gateway API",
+      "width": 138
+    },
+    {
+      "id": "done",
+      "lane": "decision",
+      "col": 5,
+      "type": "frontend",
+      "label": "완료",
+      "sublabel": "선택 확정"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "q1",
+      "role": "main"
+    },
+    {
+      "from": "q1",
+      "to": "q2",
+      "label": "예",
+      "role": "main"
+    },
+    {
+      "from": "q1",
+      "to": "cilium",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "alb",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "q2",
+      "to": "q3",
+      "label": "아니오",
+      "role": "main"
+    },
+    {
+      "from": "q3",
+      "to": "nlb",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "q3",
+      "to": "cilium",
+      "label": "아니오",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "alb",
+      "to": "done",
+      "role": "branch",
+      "route": "bottom-channel"
+    },
+    {
+      "from": "nlb",
+      "to": "done",
+      "role": "branch"
+    },
+    {
+      "from": "cilium",
+      "to": "done",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "비교 표 요점",
+      "items": [
+        "Cilium Ingress/Gateway: Envoy 기반 L7, eBPF 기반 L4, mTLS 네이티브, Gateway API 완전 지원",
+        "AWS LB Controller: ALB 기반 L7, NLB 기반 L4, mTLS는 ACM 통합, Gateway API 제한적",
+        "비용: Cilium은 노드 리소스만 사용, AWS LB Controller는 LB 비용 추가"
+      ]
+    }
+  ]
+}

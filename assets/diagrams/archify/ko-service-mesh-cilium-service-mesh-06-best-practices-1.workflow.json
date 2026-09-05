@@ -1,0 +1,240 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "사이드카 메시에서 Cilium으로 마이그레이션 전략",
+    "output": "public/archmaps/ko-service-mesh-cilium-service-mesh-06-best-practices-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1400,
+      528
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Cilium CNI 도입"
+        },
+        "backend": {
+          "label": "워크로드 전환 작업"
+        },
+        "security": {
+          "label": "정책·인젝션 설정"
+        },
+        "external": {
+          "label": "기존 사이드카 메시"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "phase1",
+        "label": "Phase 1 · 준비",
+        "focus": [
+          "installCni",
+          "coexist",
+          "validate"
+        ],
+        "note": "Cilium CNI를 기존 CNI와 공존시키고 테스트 워크로드로 먼저 검증합니다."
+      },
+      {
+        "id": "phase2",
+        "label": "Phase 2 · 점진적 전환",
+        "focus": [
+          "perNamespace",
+          "disableSidecar",
+          "l7Policy"
+        ],
+        "note": "네임스페이스 단위로 사이드카 인젝션을 끄고 Cilium L7 정책을 적용합니다."
+      },
+      {
+        "id": "phase3",
+        "label": "Phase 3 · 완전 전환",
+        "focus": [
+          "allWorkloads",
+          "removeMesh",
+          "cleanup"
+        ],
+        "note": "모든 워크로드를 전환한 뒤 Istio/Linkerd를 제거하고 정리·최적화합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "Phase 1: 준비"
+    },
+    {
+      "id": "gradual",
+      "label": "Phase 2: 점진적 전환"
+    },
+    {
+      "id": "complete",
+      "label": "Phase 3: 완전 전환"
+    }
+  ],
+  "mainPath": [
+    "installCni",
+    "coexist",
+    "validate",
+    "perNamespace",
+    "disableSidecar",
+    "l7Policy"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "installCni"
+    ],
+    "allowedTerminals": [
+      "cleanup"
+    ],
+    "requiredPaths": [
+      {
+        "from": "installCni",
+        "to": "cleanup"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "installCni",
+      "lane": "prep",
+      "col": 0,
+      "type": "cloud",
+      "label": "Cilium CNI 설치",
+      "width": 168
+    },
+    {
+      "id": "coexist",
+      "lane": "prep",
+      "col": 1,
+      "type": "cloud",
+      "label": "기존 CNI와 공존",
+      "width": 214
+    },
+    {
+      "id": "validate",
+      "lane": "prep",
+      "col": 2,
+      "type": "backend",
+      "label": "테스트 워크로드로 검증",
+      "width": 236
+    },
+    {
+      "id": "perNamespace",
+      "lane": "gradual",
+      "col": 3,
+      "type": "backend",
+      "label": "네임스페이스별 전환",
+      "width": 196
+    },
+    {
+      "id": "disableSidecar",
+      "lane": "gradual",
+      "col": 4,
+      "type": "security",
+      "label": "사이드카 인젝션 비활성화",
+      "width": 212
+    },
+    {
+      "id": "l7Policy",
+      "lane": "gradual",
+      "col": 5,
+      "type": "security",
+      "label": "Cilium L7 정책 적용",
+      "width": 208
+    },
+    {
+      "id": "allWorkloads",
+      "lane": "complete",
+      "col": 0,
+      "type": "backend",
+      "label": "모든 워크로드 전환",
+      "width": 192
+    },
+    {
+      "id": "removeMesh",
+      "lane": "complete",
+      "col": 1,
+      "type": "external",
+      "label": "Istio/Linkerd 제거",
+      "width": 188
+    },
+    {
+      "id": "cleanup",
+      "lane": "complete",
+      "col": 2,
+      "type": "backend",
+      "label": "정리 및 최적화",
+      "width": 184
+    }
+  ],
+  "edges": [
+    {
+      "from": "installCni",
+      "to": "coexist",
+      "role": "main"
+    },
+    {
+      "from": "coexist",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "from": "validate",
+      "to": "perNamespace",
+      "label": "검증 통과",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "perNamespace",
+      "to": "disableSidecar",
+      "role": "main"
+    },
+    {
+      "from": "disableSidecar",
+      "to": "l7Policy",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "l7Policy",
+      "to": "allWorkloads",
+      "label": "전 네임스페이스 완료",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allWorkloads",
+      "to": "removeMesh",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "removeMesh",
+      "to": "cleanup",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Phase 1 · Istio와 공존 설정",
+      "items": [
+        "tunnel: vxlan 등 기존 CNI와 호환되는 모드로 설치",
+        "kubeProxyReplacement: false로 시작",
+        "envoy.enabled: true, hubble.enabled: true"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Phase 2 · 네임스페이스 단위 전환",
+      "items": [
+        "kubectl label namespace <ns> istio-injection=disabled",
+        "VirtualService → CiliumEnvoyConfig",
+        "AuthorizationPolicy → CiliumNetworkPolicy"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Migration Steps from Istio to Linkerd",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-linkerd-07-best-practices-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Migration step"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "Phase 1 · Preparation",
+        "focus": [
+          "analyze",
+          "testenv",
+          "mapping"
+        ],
+        "note": "Analyze the existing Istio environment and review the feature mapping in a Linkerd test environment."
+      },
+      {
+        "id": "parallel",
+        "label": "Phase 2 · Parallel Operation",
+        "focus": [
+          "mapping",
+          "migrate_ns",
+          "verify",
+          "monitoring"
+        ],
+        "note": "Switch to Linkerd namespace by namespace while verifying traffic and integrating monitoring."
+      },
+      {
+        "id": "complete",
+        "label": "Phase 3 · Completion",
+        "focus": [
+          "monitoring",
+          "remove_istio",
+          "optimize"
+        ],
+        "note": "Once every namespace is migrated, remove Istio and optimize Linkerd."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "p1",
+      "label": "Phase 1 · Preparation"
+    },
+    {
+      "id": "p2",
+      "label": "Phase 2 · Parallel Operation"
+    },
+    {
+      "id": "p3",
+      "label": "Phase 3 · Completion"
+    }
+  ],
+  "mainPath": [
+    "analyze",
+    "testenv",
+    "mapping",
+    "migrate_ns",
+    "verify",
+    "monitoring",
+    "remove_istio",
+    "optimize"
+  ],
+  "nodes": [
+    {
+      "id": "analyze",
+      "lane": "p1",
+      "col": 0,
+      "type": "backend",
+      "label": "Analyze Istio Environment",
+      "width": 206
+    },
+    {
+      "id": "testenv",
+      "lane": "p1",
+      "col": 1,
+      "type": "backend",
+      "label": "Build Test Environment",
+      "sublabel": "Linkerd",
+      "width": 200
+    },
+    {
+      "id": "mapping",
+      "lane": "p1",
+      "col": 2,
+      "type": "backend",
+      "label": "Review Feature Mapping",
+      "sublabel": "VirtualService → ServiceProfile",
+      "width": 186
+    },
+    {
+      "id": "migrate_ns",
+      "lane": "p2",
+      "col": 2,
+      "type": "backend",
+      "label": "Migrate by Namespace",
+      "sublabel": "linkerd.io/inject=enabled",
+      "width": 186
+    },
+    {
+      "id": "verify",
+      "lane": "p2",
+      "col": 3,
+      "type": "backend",
+      "label": "Verify Traffic",
+      "sublabel": "linkerd viz stat / tap",
+      "width": 126
+    },
+    {
+      "id": "monitoring",
+      "lane": "p2",
+      "col": 4,
+      "type": "backend",
+      "label": "Integrate Monitoring",
+      "width": 176
+    },
+    {
+      "id": "remove_istio",
+      "lane": "p3",
+      "col": 4,
+      "type": "backend",
+      "label": "Remove Istio",
+      "width": 126
+    },
+    {
+      "id": "optimize",
+      "lane": "p3",
+      "col": 5,
+      "type": "backend",
+      "label": "Optimize Linkerd",
+      "tag": "completion goal",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "from": "analyze",
+      "to": "testenv",
+      "role": "main"
+    },
+    {
+      "from": "testenv",
+      "to": "mapping",
+      "role": "main"
+    },
+    {
+      "from": "mapping",
+      "to": "migrate_ns",
+      "role": "main"
+    },
+    {
+      "from": "migrate_ns",
+      "to": "verify",
+      "role": "main"
+    },
+    {
+      "from": "verify",
+      "to": "monitoring",
+      "role": "main"
+    },
+    {
+      "from": "monitoring",
+      "to": "remove_istio",
+      "role": "main"
+    },
+    {
+      "from": "remove_istio",
+      "to": "optimize",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Namespace Cutover Procedure",
+      "items": [
+        "Disable Istio by removing the istio-injection label",
+        "Add the linkerd.io/inject=enabled annotation",
+        "Restart workloads with kubectl rollout restart",
+        "Verify traffic with linkerd viz stat / tap"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Feature Mapping",
+      "items": [
+        "VirtualService · DestinationRule → ServiceProfile, HTTPRoute",
+        "PeerAuthentication → Automatic mTLS (default)",
+        "AuthorizationPolicy → ServerAuthorization",
+        "Gateway → Separate Ingress required"
+      ]
+    }
+  ]
+}

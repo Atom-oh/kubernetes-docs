@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gradual L7 Transition",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-06-best-practices-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "security": {
+          "label": "L3/L4 network policy (Cilium)"
+        },
+        "backend": {
+          "label": "L7 service mesh"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "phase1",
+        "label": "Phase 1 · Cilium for L3/L4 only",
+        "focus": [
+          "p1-l34",
+          "p1-l7"
+        ],
+        "note": "Cilium runs as the L3/L4 CNI only, with Cilium L7 disabled via envoy.enabled: false. Istio keeps handling L7 routing."
+      },
+      {
+        "id": "phase2",
+        "label": "Phase 2 · Mixed L7",
+        "focus": [
+          "p1-l7",
+          "p2-l7",
+          "p2-l34"
+        ],
+        "note": "Transition period: L7 policies move workload by workload to CiliumNetworkPolicy while Cilium and Istio share L7."
+      },
+      {
+        "id": "phase3",
+        "label": "Phase 3 · Target",
+        "focus": [
+          "p2-l7",
+          "p3-l7",
+          "p3-l34"
+        ],
+        "note": "Final state where Cilium owns both L3/L4 and L7. Istio sidecars are no longer needed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "p1-l34",
+      "type": "security",
+      "label": "L3/L4: Cilium",
+      "sublabel": "Network policy",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p1-l7",
+      "type": "backend",
+      "label": "L7: Istio",
+      "sublabel": "Sidecar service mesh",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2-l34",
+      "type": "security",
+      "label": "L3/L4: Cilium",
+      "sublabel": "Network policy",
+      "pos": [
+        380,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p2-l7",
+      "type": "backend",
+      "label": "L7: Cilium + Istio mixed",
+      "sublabel": "Per-workload migration",
+      "pos": [
+        380,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p3-l34",
+      "type": "security",
+      "label": "L3/L4: Cilium",
+      "sublabel": "Network policy",
+      "pos": [
+        700,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "p3-l7",
+      "type": "backend",
+      "label": "L7: Cilium",
+      "sublabel": "Embedded Envoy proxy",
+      "pos": [
+        700,
+        230
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "Target"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Phase 1",
+      "wraps": [
+        "p1-l34",
+        "p1-l7"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 2",
+      "wraps": [
+        "p2-l34",
+        "p2-l7"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Phase 3",
+      "wraps": [
+        "p3-l34",
+        "p3-l7"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l34-keep-1",
+      "from": "p1-l34",
+      "to": "p2-l34",
+      "label": "Cilium retained",
+      "variant": "dashed"
+    },
+    {
+      "id": "l34-keep-2",
+      "from": "p2-l34",
+      "to": "p3-l34",
+      "label": "Cilium retained",
+      "variant": "dashed"
+    },
+    {
+      "id": "l7-handoff-1",
+      "from": "p1-l7",
+      "to": "p2-l7",
+      "label": "L7 hand-off",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l7-handoff-2",
+      "from": "p2-l7",
+      "to": "p3-l7",
+      "label": "L7 hand-off",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Phase 1 starting point",
+      "items": [
+        "Use Cilium as the L3/L4 CNI only",
+        "Disable Cilium L7 with envoy.enabled: false in values.yaml",
+        "Keep Istio for L7 routing"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Rollback plan",
+      "items": [
+        "Disable Cilium L7 policies by deleting CiliumNetworkPolicy",
+        "Re-apply istio-injection=enabled on the namespace",
+        "Restart Pods with a Deployment rollout restart"
+      ]
+    }
+  ]
+}

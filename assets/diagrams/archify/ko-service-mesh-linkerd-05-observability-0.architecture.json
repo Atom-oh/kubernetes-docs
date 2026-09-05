@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 관찰성 아키텍처",
+    "output": "ko-service-mesh-linkerd-05-observability-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "metrics-path", "label": "메트릭 수집 경로", "focus": ["proxy", "prom", "metrics", "web", "graf"], "note": "프록시가 노출한 메트릭이 Prometheus에 저장되고 Metrics API를 거쳐 대시보드와 Grafana에 표시된다." },
+      { "id": "tap-stream", "label": "Tap 실시간 스트림", "focus": ["tap", "web"], "note": "Tap API는 실시간 요청 스트림을 Web Dashboard의 Tap 뷰로 전달한다." },
+      { "id": "external", "label": "외부 연동 (선택)", "focus": ["prom", "ext-prom", "ext-graf", "proxy", "jaeger"], "note": "기존 Prometheus/Grafana로 메트릭을 넘기거나 Jaeger로 분산 추적 스팬을 보낼 수 있다." }
+    ]
+  },
+  "components": [
+    { "id": "proxy", "type": "backend", "label": "Linkerd Proxy", "sublabel": "메트릭 수집", "tag": "×3", "pos": [40, 520], "size": [160, 64] },
+    { "id": "prom", "type": "database", "label": "Prometheus", "sublabel": "메트릭 저장", "pos": [300, 140], "size": [160, 64] },
+    { "id": "graf", "type": "frontend", "label": "Grafana", "sublabel": "시각화", "pos": [560, 60], "size": [150, 64] },
+    { "id": "metrics", "type": "backend", "label": "Metrics API", "sublabel": "집계", "pos": [560, 220], "size": [150, 64] },
+    { "id": "tap", "type": "backend", "label": "Tap API", "sublabel": "실시간 스트림", "pos": [560, 380], "size": [150, 64] },
+    { "id": "web", "type": "frontend", "label": "Web Dashboard", "sublabel": "UI", "pos": [800, 300], "size": [160, 64] },
+    { "id": "ext-prom", "type": "external", "label": "External Prometheus", "sublabel": "기존 메트릭 저장소", "pos": [1080, 140], "size": [180, 64] },
+    { "id": "ext-graf", "type": "external", "label": "External Grafana", "sublabel": "기존 대시보드", "pos": [1080, 300], "size": [180, 64] },
+    { "id": "jaeger", "type": "external", "label": "Jaeger", "sublabel": "분산 추적", "pos": [1080, 520], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Data Plane", "wraps": ["proxy"] },
+    { "kind": "region", "label": "Viz Extension", "wraps": ["prom", "graf", "metrics", "tap", "web"] },
+    { "kind": "region", "label": "External (선택)", "wraps": ["ext-prom", "ext-graf", "jaeger"] }
+  ],
+  "connections": [
+    { "id": "proxy-to-prom", "from": "proxy", "to": "prom", "label": ":4191 scrape", "variant": "emphasis" },
+    { "id": "prom-to-graf", "from": "prom", "to": "graf" },
+    { "id": "prom-to-metrics", "from": "prom", "to": "metrics", "variant": "emphasis" },
+    { "id": "metrics-to-web", "from": "metrics", "to": "web", "variant": "emphasis" },
+    { "id": "tap-to-web", "from": "tap", "to": "web" },
+    { "id": "prom-to-ext-prom", "from": "prom", "to": "ext-prom", "label": "선택", "variant": "dashed" },
+    { "id": "ext-prom-to-ext-graf", "from": "ext-prom", "to": "ext-graf", "variant": "dashed" },
+    { "id": "proxy-to-jaeger", "from": "proxy", "to": "jaeger", "label": "스팬 (선택)", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "골든 메트릭", "items": ["성공률: response_total{classification=\"success\"}", "요청률(RPS): request_total", "지연 시간(p50/p95/p99): response_latency_ms_bucket"] },
+    { "dot": "cyan", "title": "Viz 대시보드 뷰", "items": ["Namespace · Deployments · Pods · TCP", "Routes(ServiceProfile) · Topology", "Tap: 실시간 요청 스트림"] }
+  ]
+}

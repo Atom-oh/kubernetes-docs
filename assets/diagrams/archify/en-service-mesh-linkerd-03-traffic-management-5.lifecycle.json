@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Failure Accrual Behavior",
+    "output": "en-service-mesh-linkerd-03-traffic-management-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      566
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "start": {
+          "label": "Start"
+        },
+        "active": {
+          "label": "Normal"
+        },
+        "failure": {
+          "label": "Tripped"
+        },
+        "waiting": {
+          "label": "Probing"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Endpoint request forwarding state"
+    },
+    {
+      "id": "probe",
+      "label": "Recovery check"
+    }
+  ],
+  "states": [
+    {
+      "id": "start",
+      "type": "start",
+      "label": "Start",
+      "sublabel": "endpoint registered",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "closed",
+      "type": "active",
+      "label": "Closed",
+      "sublabel": "all requests forwarded",
+      "lane": "main",
+      "col": 1,
+      "tag": "normal"
+    },
+    {
+      "id": "open",
+      "type": "failure",
+      "label": "Open",
+      "sublabel": "no requests forwarded",
+      "lane": "main",
+      "col": 3,
+      "tag": "tripped"
+    },
+    {
+      "id": "halfopen",
+      "type": "waiting",
+      "label": "Half-Open",
+      "sublabel": "sends periodic probes",
+      "lane": "probe",
+      "col": 2,
+      "tag": "probe"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-init",
+      "from": "start",
+      "to": "closed",
+      "label": "Normal state",
+      "labelDy": -25
+    },
+    {
+      "id": "t-trip",
+      "from": "closed",
+      "to": "open",
+      "label": "Consecutive failures exceed threshold",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "t-backoff",
+      "from": "open",
+      "to": "halfopen",
+      "label": "Backoff time elapsed",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-recover",
+      "from": "halfopen",
+      "to": "closed",
+      "label": "Probe succeeds",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-retrip",
+      "from": "halfopen",
+      "to": "open",
+      "label": "Probe fails",
+      "variant": "security",
+      "route": "right-channel",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ]
+}

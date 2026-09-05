@@ -1,0 +1,241 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Migration Strategy from a Sidecar Mesh to Cilium",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-cilium-service-mesh-06-best-practices-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1400,
+      528
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Cilium CNI rollout"
+        },
+        "backend": {
+          "label": "Workload migration step"
+        },
+        "security": {
+          "label": "Policy / injection setting"
+        },
+        "external": {
+          "label": "Existing sidecar mesh"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "phase1",
+        "label": "Phase 1 · Preparation",
+        "focus": [
+          "installCni",
+          "coexist",
+          "validate"
+        ],
+        "note": "Run Cilium CNI alongside the existing CNI and validate with test workloads first."
+      },
+      {
+        "id": "phase2",
+        "label": "Phase 2 · Gradual Transition",
+        "focus": [
+          "perNamespace",
+          "disableSidecar",
+          "l7Policy"
+        ],
+        "note": "Disable sidecar injection namespace by namespace and apply Cilium L7 policies."
+      },
+      {
+        "id": "phase3",
+        "label": "Phase 3 · Complete Transition",
+        "focus": [
+          "allWorkloads",
+          "removeMesh",
+          "cleanup"
+        ],
+        "note": "Convert every workload, then remove Istio/Linkerd and clean up and optimize."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "Phase 1: Preparation"
+    },
+    {
+      "id": "gradual",
+      "label": "Phase 2: Gradual Transition"
+    },
+    {
+      "id": "complete",
+      "label": "Phase 3: Complete Transition"
+    }
+  ],
+  "mainPath": [
+    "installCni",
+    "coexist",
+    "validate",
+    "perNamespace",
+    "disableSidecar",
+    "l7Policy"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "installCni"
+    ],
+    "allowedTerminals": [
+      "cleanup"
+    ],
+    "requiredPaths": [
+      {
+        "from": "installCni",
+        "to": "cleanup"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "installCni",
+      "lane": "prep",
+      "col": 0,
+      "type": "cloud",
+      "label": "Install Cilium CNI",
+      "width": 168
+    },
+    {
+      "id": "coexist",
+      "lane": "prep",
+      "col": 1,
+      "type": "cloud",
+      "label": "Coexist with existing CNI",
+      "width": 214
+    },
+    {
+      "id": "validate",
+      "lane": "prep",
+      "col": 2,
+      "type": "backend",
+      "label": "Validate with test workloads",
+      "width": 236
+    },
+    {
+      "id": "perNamespace",
+      "lane": "gradual",
+      "col": 3,
+      "type": "backend",
+      "label": "Convert per namespace",
+      "width": 196
+    },
+    {
+      "id": "disableSidecar",
+      "lane": "gradual",
+      "col": 4,
+      "type": "security",
+      "label": "Disable sidecar injection",
+      "width": 212
+    },
+    {
+      "id": "l7Policy",
+      "lane": "gradual",
+      "col": 5,
+      "type": "security",
+      "label": "Apply Cilium L7 policies",
+      "width": 208
+    },
+    {
+      "id": "allWorkloads",
+      "lane": "complete",
+      "col": 0,
+      "type": "backend",
+      "label": "Convert all workloads",
+      "width": 192
+    },
+    {
+      "id": "removeMesh",
+      "lane": "complete",
+      "col": 1,
+      "type": "external",
+      "label": "Remove Istio/Linkerd",
+      "width": 188
+    },
+    {
+      "id": "cleanup",
+      "lane": "complete",
+      "col": 2,
+      "type": "backend",
+      "label": "Cleanup and optimize",
+      "width": 184
+    }
+  ],
+  "edges": [
+    {
+      "from": "installCni",
+      "to": "coexist",
+      "role": "main"
+    },
+    {
+      "from": "coexist",
+      "to": "validate",
+      "role": "main"
+    },
+    {
+      "from": "validate",
+      "to": "perNamespace",
+      "label": "validation passed",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "perNamespace",
+      "to": "disableSidecar",
+      "role": "main"
+    },
+    {
+      "from": "disableSidecar",
+      "to": "l7Policy",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "l7Policy",
+      "to": "allWorkloads",
+      "label": "all namespaces converted",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allWorkloads",
+      "to": "removeMesh",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "removeMesh",
+      "to": "cleanup",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Phase 1 · Coexisting with Istio",
+      "items": [
+        "Install in a mode compatible with the existing CNI, e.g. tunnel: vxlan",
+        "Start with kubeProxyReplacement: false",
+        "envoy.enabled: true, hubble.enabled: true"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Phase 2 · Per-namespace Conversion",
+      "items": [
+        "kubectl label namespace <ns> istio-injection=disabled",
+        "VirtualService → CiliumEnvoyConfig",
+        "AuthorizationPolicy → CiliumNetworkPolicy"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Proxy Injector — Automatic Sidecar Injection Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      640
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "kubectl",
+      "type": "external",
+      "label": "kubectl",
+      "sublabel": "Pod create request"
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "calls admission webhook"
+    },
+    {
+      "id": "injector",
+      "type": "security",
+      "label": "Proxy Injector",
+      "sublabel": "Mutating Webhook"
+    },
+    {
+      "id": "podspec",
+      "type": "database",
+      "label": "Pod Spec",
+      "sublabel": "requested Pod manifest"
+    },
+    {
+      "id": "pod",
+      "type": "cloud",
+      "label": "Pod",
+      "sublabel": "with sidecar"
+    }
+  ],
+  "segments": [
+    {
+      "from": 312,
+      "to": 478,
+      "label": "ALT [injection enabled] — linkerd.io/inject: enabled"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "kubectl",
+      "to": "apiserver",
+      "y": 190,
+      "label": "Pod create request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "review",
+      "from": "apiserver",
+      "to": "injector",
+      "y": 236,
+      "label": "Admission Review",
+      "variant": "security"
+    },
+    {
+      "id": "check",
+      "from": "injector",
+      "to": "podspec",
+      "y": 280,
+      "label": "check injection conditions",
+      "note": "inspects linkerd.io/inject annotation on Namespace/Pod"
+    },
+    {
+      "id": "add-proxy",
+      "from": "injector",
+      "to": "podspec",
+      "y": 340,
+      "label": "add linkerd-proxy",
+      "note": "sidecar container"
+    },
+    {
+      "id": "add-init",
+      "from": "injector",
+      "to": "podspec",
+      "y": 384,
+      "label": "add linkerd-init",
+      "note": "init container, iptables rules"
+    },
+    {
+      "id": "add-vol",
+      "from": "injector",
+      "to": "podspec",
+      "y": 428,
+      "label": "set volumes / env vars",
+      "note": "identity token, proxy config"
+    },
+    {
+      "id": "mutated",
+      "from": "injector",
+      "to": "apiserver",
+      "y": 470,
+      "label": "Mutated Pod Spec",
+      "variant": "return"
+    },
+    {
+      "id": "created",
+      "from": "apiserver",
+      "to": "pod",
+      "y": 530,
+      "label": "create Pod",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "apiserver",
+      "from": 185,
+      "to": 538,
+      "type": "backend"
+    },
+    {
+      "participant": "injector",
+      "from": 231,
+      "to": 476,
+      "type": "security"
+    },
+    {
+      "participant": "podspec",
+      "from": 275,
+      "to": 434,
+      "type": "database"
+    }
+  ]
+}
