@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GitOps Reconciliation Loop",
+    "locale": "en",
+    "output": "en-gitops-readme-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1160, 470],
+    "views": [
+      { "id": "desired-state", "label": "Desired state path", "focus": ["developer", "git", "agent", "reconcile", "cluster"], "note": "A Git commit becomes the desired state; the agent pulls it and applies it to the cluster." },
+      { "id": "feedback", "label": "Status and drift", "focus": ["cluster", "agent", "reconcile", "apps"], "note": "The cluster reports actual state back so the agent can detect and correct drift." }
+    ]
+  },
+  "components": [
+    { "id": "developer", "type": "external", "label": "Developer", "sublabel": "commits change", "pos": [40, 120], "size": [130, 60] },
+    { "id": "git", "type": "database", "label": "Git Repository", "sublabel": "declarative config", "pos": [250, 120], "size": [140, 60] },
+    { "id": "agent", "type": "backend", "label": "GitOps Agent", "sublabel": "Flux / ArgoCD", "pos": [480, 120], "size": [140, 60] },
+    { "id": "reconcile", "type": "backend", "label": "Reconciliation Loop", "sublabel": "desired vs actual", "pos": [700, 120], "size": [150, 60] },
+    { "id": "cluster", "type": "cloud", "label": "Kubernetes Cluster", "sublabel": "actual state", "pos": [940, 120], "size": [150, 60] },
+    { "id": "apps", "type": "backend", "label": "Applications", "sublabel": "running workloads", "pos": [940, 280], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Source of truth", "wraps": ["git"] },
+    { "kind": "region", "label": "GitOps engine", "wraps": ["agent", "reconcile"] },
+    { "kind": "region", "label": "Target environment", "wraps": ["cluster", "apps"] }
+  ],
+  "connections": [
+    { "id": "push", "from": "developer", "to": "git", "label": "push" },
+    { "id": "watch", "from": "git", "to": "agent", "label": "watch / pull", "variant": "emphasis" },
+    { "id": "drift", "from": "agent", "to": "reconcile", "label": "compare" },
+    { "id": "apply", "from": "reconcile", "to": "cluster", "label": "apply", "variant": "emphasis" },
+    { "id": "run", "from": "cluster", "to": "apps", "label": "runs", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "report", "from": "cluster", "to": "agent", "label": "report status", "variant": "dashed", "fromSide": "top", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "Git as single source of truth", "items": ["Application configurations", "Infrastructure definitions", "Security policies", "Environment-specific settings"] },
+    { "dot": "cyan", "title": "Agent loop", "items": ["Monitor the Git repository for changes", "Compare desired state with actual state", "Apply changes to bring systems into compliance", "Report status and drift"] },
+    { "dot": "emerald", "title": "Self-healing", "items": ["Manual changes or failures cause drift", "Agent restores the declared state automatically"] }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Argo CD Sync Waves: Apply Order",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-argocd-03-sync-strategies-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [1000, 340],
+    "legend": { "mode": "hidden" },
+    "views": [
+      { "id": "prereqs", "label": "Negative waves first", "focus": ["wave_m2", "wave_m1"], "note": "CRDs, then Namespaces and ServiceAccounts, are applied before anything in the default wave." },
+      { "id": "default-wave", "label": "Default wave 0", "focus": ["wave_0"], "note": "Resources without a sync-wave annotation land in wave 0: ConfigMaps, Secrets, Deployments." },
+      { "id": "expose-last", "label": "Expose last", "focus": ["wave_0", "wave_1"], "note": "Services and Ingress are applied only after the wave 0 workloads report healthy." }
+    ]
+  },
+  "lanes": [
+    { "id": "sync", "label": "Argo CD sync (lowest sync-wave first)" }
+  ],
+  "phases": [
+    { "id": "negative", "label": "Negative waves", "fromCol": 0, "toCol": 1 },
+    { "id": "default", "label": "Default wave", "fromCol": 2, "toCol": 2, "variant": "emphasis" },
+    { "id": "positive", "label": "Positive waves", "fromCol": 3, "toCol": 3 }
+  ],
+  "mainPath": ["wave_m2", "wave_m1", "wave_0", "wave_1"],
+  "nodes": [
+    { "id": "wave_m2", "lane": "sync", "col": 0, "type": "security", "label": "Wave -2", "sublabel": "CRDs", "tag": "1 kind" },
+    { "id": "wave_m1", "lane": "sync", "col": 1, "width": 120, "type": "cloud", "label": "Wave -1", "sublabel": "Namespaces, ServiceAccounts", "tag": "2 kinds" },
+    { "id": "wave_0", "lane": "sync", "col": 2, "width": 136, "type": "backend", "label": "Wave 0", "sublabel": "ConfigMaps, Secrets, Deployments", "tag": "default · 3 kinds" },
+    { "id": "wave_1", "lane": "sync", "col": 3, "type": "frontend", "label": "Wave 1", "sublabel": "Services, Ingress", "tag": "2 kinds" }
+  ],
+  "edges": [
+    { "from": "wave_m2", "to": "wave_m1", "label": "healthy" },
+    { "from": "wave_m1", "to": "wave_0", "label": "healthy" },
+    { "from": "wave_0", "to": "wave_1", "label": "healthy", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "amber", "title": "How Waves Work", "items": ["Lowest wave number first (can be negative)", "Within a wave, hooks run first, then resources", "Next wave starts only after the previous one completes"] },
+    { "dot": "cyan", "title": "Setting the Wave", "items": ["Annotation: argocd.argoproj.io/sync-wave: \"-2\"", "Resources without the annotation default to wave 0", "Argo CD waits for the previous wave's resources to become healthy before continuing"] }
+  ]
+}

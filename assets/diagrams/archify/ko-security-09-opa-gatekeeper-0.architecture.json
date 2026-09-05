@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OPA Gatekeeper 아키텍처",
+    "output": "ko-security-09-opa-gatekeeper-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "컨트롤 플레인"
+        },
+        "security": {
+          "label": "정책 평가"
+        },
+        "database": {
+          "label": "정책 리소스 / 감사"
+        },
+        "external": {
+          "label": "대상 워크로드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "admission-path",
+        "label": "어드미션 요청 경로",
+        "focus": [
+          "api",
+          "webhook",
+          "gk",
+          "opa"
+        ],
+        "note": "API Server의 요청이 Admission Webhook을 거쳐 Gatekeeper Controller에 전달되고 OPA Engine이 Rego로 평가한다."
+      },
+      {
+        "id": "policy-model",
+        "label": "정책 구성요소",
+        "focus": [
+          "opa",
+          "ct",
+          "c",
+          "rego",
+          "target"
+        ],
+        "note": "ConstraintTemplate이 Rego 정책을 정의하고, Constraint가 그 정책을 대상 리소스에 적용한다."
+      },
+      {
+        "id": "audit",
+        "label": "감사(Audit)",
+        "focus": [
+          "gk",
+          "audit"
+        ],
+        "note": "Gatekeeper Controller는 이미 존재하는 리소스도 주기적으로 검사해 감사 결과를 남긴다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Webhook",
+      "sublabel": "Admission Webhook",
+      "pos": [
+        250,
+        70
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gk",
+      "type": "backend",
+      "label": "Gatekeeper Controller",
+      "sublabel": "controller-runtime",
+      "pos": [
+        470,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "opa",
+      "type": "security",
+      "label": "OPA Engine",
+      "sublabel": "Rego 평가",
+      "pos": [
+        730,
+        70
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "database",
+      "label": "Audit Results",
+      "sublabel": "주기적 감사",
+      "pos": [
+        470,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ct",
+      "type": "database",
+      "label": "Constraint Templates",
+      "sublabel": "CRD 스키마",
+      "pos": [
+        730,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "c",
+      "type": "database",
+      "label": "Constraints",
+      "sublabel": "CR 인스턴스",
+      "pos": [
+        990,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "rego",
+      "type": "security",
+      "label": "Rego 정책",
+      "sublabel": "정책 로직",
+      "pos": [
+        730,
+        450
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "target",
+      "type": "external",
+      "label": "대상 리소스",
+      "sublabel": "K8s 리소스",
+      "pos": [
+        990,
+        450
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OPA Gatekeeper 아키텍처",
+      "wraps": [
+        "api",
+        "webhook",
+        "gk",
+        "opa",
+        "audit",
+        "ct",
+        "c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "정책 구성요소",
+      "wraps": [
+        "rego",
+        "target"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-webhook",
+      "from": "api",
+      "to": "webhook",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-gk",
+      "from": "webhook",
+      "to": "gk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gk-opa",
+      "from": "gk",
+      "to": "opa",
+      "variant": "emphasis"
+    },
+    {
+      "id": "opa-ct",
+      "from": "opa",
+      "to": "ct",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "opa-c",
+      "from": "opa",
+      "to": "c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gk-audit",
+      "from": "gk",
+      "to": "audit",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ct-rego",
+      "from": "ct",
+      "to": "rego",
+      "label": "정의",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    },
+    {
+      "id": "c-target",
+      "from": "c",
+      "to": "target",
+      "label": "적용",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    }
+  ]
+}

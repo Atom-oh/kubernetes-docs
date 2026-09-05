@@ -1,0 +1,216 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "KEDA + Karpenter 연동 — Pod-Level과 Node-Level 스케일링 조합",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      680
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pre-event",
+        "label": "이벤트 30분 전 (Cron)",
+        "focus": [
+          "keda",
+          "hpa",
+          "scheduler"
+        ],
+        "note": "Cron 트리거가 desiredReplicas 200을 밀어 넣고, 195개 새 Pod가 기존 Node에 배치되지 못해 Pending 상태가 된다."
+      },
+      {
+        "id": "node-provision",
+        "label": "Node 프로비저닝",
+        "focus": [
+          "scheduler",
+          "karpenter",
+          "ec2"
+        ],
+        "note": "Karpenter가 Pending Pod를 감지해 EC2 Node 20대를 요청하고, 60-90초 뒤 Node Ready가 되면 Pending Pod가 스케줄링된다."
+      },
+      {
+        "id": "event-start",
+        "label": "이벤트 시작 (메트릭)",
+        "focus": [
+          "keda",
+          "hpa",
+          "scheduler",
+          "karpenter",
+          "ec2"
+        ],
+        "note": "메트릭 트리거가 목표를 250으로 올리고, 추가 Pending 50개를 위해 Node 5대만 더 확보한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "keda",
+      "type": "messagebus",
+      "label": "KEDA",
+      "sublabel": "이벤트 트리거"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA",
+      "sublabel": "오토스케일러"
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "K8s Scheduler",
+      "sublabel": "Pod 배치"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Node 프로비저너"
+    },
+    {
+      "id": "ec2",
+      "type": "external",
+      "label": "AWS EC2",
+      "sublabel": "인스턴스"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 410,
+      "label": "이벤트 30분 전 (Cron 트리거)"
+    },
+    {
+      "from": 434,
+      "to": 592,
+      "label": "이벤트 시작 (메트릭 트리거)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "cron-replicas",
+      "from": "keda",
+      "to": "hpa",
+      "y": 195,
+      "label": "desiredReplicas: 200",
+      "variant": "emphasis"
+    },
+    {
+      "id": "create-pods",
+      "from": "hpa",
+      "to": "scheduler",
+      "y": 232,
+      "label": "195개 새 Pod 생성 요청",
+      "note": "기존 Node에 배치 불가 → Pending"
+    },
+    {
+      "id": "detect-pending",
+      "from": "scheduler",
+      "to": "karpenter",
+      "y": 280,
+      "label": "Pending Pod 감지"
+    },
+    {
+      "id": "provision-nodes",
+      "from": "karpenter",
+      "to": "ec2",
+      "y": 316,
+      "label": "20개 Node 프로비저닝 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nodes-ready",
+      "from": "ec2",
+      "to": "karpenter",
+      "y": 352,
+      "label": "~60-90초 후 Node Ready",
+      "variant": "return"
+    },
+    {
+      "id": "register-nodes",
+      "from": "karpenter",
+      "to": "scheduler",
+      "y": 388,
+      "label": "새 Node 등록",
+      "variant": "return",
+      "note": "Pending Pod 스케줄링"
+    },
+    {
+      "id": "metric-replicas",
+      "from": "keda",
+      "to": "hpa",
+      "y": 464,
+      "label": "desiredReplicas: 250 (메트릭 기반)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "more-pods",
+      "from": "hpa",
+      "to": "scheduler",
+      "y": 500,
+      "label": "50개 추가 Pod 요청"
+    },
+    {
+      "id": "more-pending",
+      "from": "scheduler",
+      "to": "karpenter",
+      "y": 536,
+      "label": "추가 Pending 감지"
+    },
+    {
+      "id": "more-nodes",
+      "from": "karpenter",
+      "to": "ec2",
+      "y": 572,
+      "label": "5개 Node 추가",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "hpa",
+      "from": 190,
+      "to": 237,
+      "type": "backend"
+    },
+    {
+      "participant": "scheduler",
+      "from": 227,
+      "to": 395,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 275,
+      "to": 393,
+      "type": "cloud"
+    },
+    {
+      "participant": "ec2",
+      "from": 311,
+      "to": 357,
+      "type": "external"
+    },
+    {
+      "participant": "hpa",
+      "from": 459,
+      "to": 507,
+      "type": "backend"
+    },
+    {
+      "participant": "scheduler",
+      "from": 495,
+      "to": 543,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 531,
+      "to": 579,
+      "type": "cloud"
+    }
+  ]
+}

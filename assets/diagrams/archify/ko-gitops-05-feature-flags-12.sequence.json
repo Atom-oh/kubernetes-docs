@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "FeatureFlag CRD → ConfigMap 동기화",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      520
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자 / GitOps",
+      "sublabel": "kubectl · Argo CD"
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "Kubernetes API",
+      "sublabel": "kube-apiserver"
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Operator",
+      "sublabel": "OpenFeature Operator"
+    },
+    {
+      "id": "configmap",
+      "type": "database",
+      "label": "ConfigMap",
+      "sublabel": "flagd 플래그 파일"
+    },
+    {
+      "id": "flagd",
+      "type": "backend",
+      "label": "flagd",
+      "sublabel": "사이드카"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 275,
+      "label": "CR 변경 감지"
+    },
+    {
+      "from": 295,
+      "to": 436,
+      "label": "ConfigMap 반영 · 무중단 재로드"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply-cr",
+      "from": "user",
+      "to": "apiserver",
+      "y": 195,
+      "label": "FeatureFlag CR 생성/수정",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch-event",
+      "from": "apiserver",
+      "to": "operator",
+      "y": 250,
+      "label": "Watch 이벤트 수신"
+    },
+    {
+      "id": "write-cm",
+      "from": "operator",
+      "to": "configmap",
+      "y": 335,
+      "label": "ConfigMap 생성/갱신",
+      "variant": "emphasis",
+      "note": "CR 검증 / 변환 후 flagd 형식으로 기록"
+    },
+    {
+      "id": "file-change",
+      "from": "configmap",
+      "to": "flagd",
+      "y": 420,
+      "label": "파일 변경 감지",
+      "variant": "dashed",
+      "note": "구성 재로드 — 무중단 실시간 반영"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "operator",
+      "from": 245,
+      "to": 342,
+      "type": "backend"
+    },
+    {
+      "participant": "flagd",
+      "from": 415,
+      "to": 436,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cert-manager 리소스 관계도",
+    "output": "ko-security-10-cert-manager-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "user-defined",
+        "label": "사용자 정의 리소스",
+        "focus": [
+          "certificate",
+          "issuer",
+          "clusterissuer"
+        ],
+        "note": "Certificate는 원하는 인증서 명세를 정의하고 issuerRef로 Issuer 또는 ClusterIssuer를 참조한다."
+      },
+      {
+        "id": "acme-flow",
+        "label": "자동 생성과 ACME 검증",
+        "focus": [
+          "certificate",
+          "certreq",
+          "order",
+          "challenge"
+        ],
+        "note": "Certificate가 CertificateRequest를 만들고, ACME 발급자면 Order와 Challenge가 이어서 생성되어 도메인을 검증한다."
+      },
+      {
+        "id": "result",
+        "label": "결과물 Secret",
+        "focus": [
+          "certreq",
+          "secret"
+        ],
+        "note": "발급된 인증서는 spec.secretName에 지정한 Secret에 tls.crt와 tls.key로 저장된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "issuer",
+      "type": "security",
+      "label": "Issuer",
+      "sublabel": "네임스페이스 범위",
+      "tag": "CRD",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "certificate",
+      "type": "security",
+      "label": "Certificate",
+      "sublabel": "인증서 요청 명세",
+      "tag": "CRD",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "clusterissuer",
+      "type": "security",
+      "label": "ClusterIssuer",
+      "sublabel": "클러스터 범위",
+      "tag": "CRD",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "certreq",
+      "type": "backend",
+      "label": "CertificateRequest",
+      "sublabel": "발급 요청",
+      "pos": [
+        320,
+        280
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "ACME 주문",
+      "tag": "ACME",
+      "pos": [
+        620,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "challenge",
+      "type": "backend",
+      "label": "Challenge",
+      "sublabel": "도메인 검증",
+      "tag": "ACME",
+      "pos": [
+        900,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "database",
+      "label": "Secret",
+      "sublabel": "tls.crt + tls.key",
+      "pos": [
+        320,
+        480
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사용자 정의",
+      "wraps": [
+        "issuer",
+        "certificate",
+        "clusterissuer"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "자동 생성",
+      "wraps": [
+        "certreq",
+        "order",
+        "challenge"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "결과물",
+      "wraps": [
+        "secret"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cert-ref-issuer",
+      "from": "certificate",
+      "to": "issuer",
+      "label": "참조",
+      "variant": "dashed"
+    },
+    {
+      "id": "cert-ref-clusterissuer",
+      "from": "certificate",
+      "to": "clusterissuer",
+      "label": "참조",
+      "variant": "dashed"
+    },
+    {
+      "id": "cert-create-certreq",
+      "from": "certificate",
+      "to": "certreq",
+      "label": "생성",
+      "variant": "emphasis",
+      "labelAt": [
+        415,
+        210
+      ]
+    },
+    {
+      "id": "issuer-issue",
+      "from": "issuer",
+      "to": "certreq",
+      "label": "발급",
+      "toSide": "top"
+    },
+    {
+      "id": "clusterissuer-issue",
+      "from": "clusterissuer",
+      "to": "certreq",
+      "label": "발급",
+      "toSide": "top"
+    },
+    {
+      "id": "certreq-order",
+      "from": "certreq",
+      "to": "order",
+      "label": "ACME 발급자인 경우"
+    },
+    {
+      "id": "order-challenge",
+      "from": "order",
+      "to": "challenge",
+      "label": "생성"
+    },
+    {
+      "id": "certreq-secret",
+      "from": "certreq",
+      "to": "secret",
+      "label": "저장",
+      "variant": "emphasis",
+      "labelAt": [
+        415,
+        410
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Issuer vs ClusterIssuer",
+      "items": [
+        "Issuer는 단일 네임스페이스에서만 사용하는 팀/앱별 발급자",
+        "ClusterIssuer는 클러스터 전체가 공유하는 발급자(Let's Encrypt 등)",
+        "Certificate는 issuerRef.kind로 둘 중 하나를 지정"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "결과물 Secret",
+      "items": [
+        "spec.secretName에 지정한 이름의 Secret에 인증서가 저장됨",
+        "tls.crt와 tls.key를 담고 있어 Ingress 등이 참조",
+        "renewBefore 시점에 자동 갱신되어 Secret이 교체됨"
+      ]
+    }
+  ]
+}

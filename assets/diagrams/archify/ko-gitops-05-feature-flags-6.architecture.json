@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenFeature Operator 구조",
+    "output": "ko-gitops-05-feature-flags-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "crd-sync",
+        "label": "CR 감시와 ConfigMap 동기화",
+        "focus": [
+          "featureflag",
+          "ffsource",
+          "controller",
+          "reconciler",
+          "configmap",
+          "pod"
+        ],
+        "note": "Controller Manager가 FeatureFlag/FeatureFlagSource CR 변경을 감시하고, Reconciler가 flagd가 읽는 ConfigMap을 생성·갱신한다."
+      },
+      {
+        "id": "sidecar-injection",
+        "label": "flagd 사이드카 자동 주입",
+        "focus": [
+          "deployment",
+          "webhook",
+          "pod"
+        ],
+        "note": "openfeature.dev/enabled 어노테이션이 붙은 Pod가 생성될 때 Mutating Webhook이 flagd 컨테이너를 주입한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "featureflag",
+      "type": "external",
+      "label": "FeatureFlag",
+      "sublabel": "Flag 정의 CR",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ffsource",
+      "type": "external",
+      "label": "FeatureFlagSource",
+      "sublabel": "flagd 소스 구성 CR",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Controller Manager",
+      "sublabel": "CR 변경 감시",
+      "pos": [
+        390,
+        90
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "reconciler",
+      "type": "backend",
+      "label": "Reconciler",
+      "sublabel": "ConfigMap 생성·갱신",
+      "pos": [
+        390,
+        250
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Mutating Webhook",
+      "sublabel": "사이드카 주입",
+      "pos": [
+        390,
+        490
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "configmap",
+      "type": "database",
+      "label": "ConfigMap",
+      "sublabel": "flagd가 읽는 Flag 정의",
+      "pos": [
+        750,
+        250
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Pod + flagd 사이드카",
+      "sublabel": "파일 감시로 실시간 재로드",
+      "pos": [
+        750,
+        410
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "deployment",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "openfeature.dev/enabled: \"true\"",
+      "pos": [
+        750,
+        570
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Custom Resources",
+      "wraps": [
+        "featureflag",
+        "ffsource"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "OpenFeature Operator",
+      "wraps": [
+        "controller",
+        "reconciler",
+        "webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 리소스",
+      "wraps": [
+        "configmap",
+        "pod",
+        "deployment"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ff-to-controller",
+      "from": "featureflag",
+      "to": "controller",
+      "label": "감시",
+      "variant": "emphasis",
+      "labelDx": -50
+    },
+    {
+      "id": "ffs-to-controller",
+      "from": "ffsource",
+      "to": "controller",
+      "label": "감시"
+    },
+    {
+      "id": "controller-to-reconciler",
+      "from": "controller",
+      "to": "reconciler",
+      "label": "조정 요청",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "reconciler-to-configmap",
+      "from": "reconciler",
+      "to": "configmap",
+      "label": "생성 / 갱신",
+      "variant": "emphasis"
+    },
+    {
+      "id": "configmap-to-pod",
+      "from": "configmap",
+      "to": "pod",
+      "label": "볼륨 마운트",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "deployment-to-webhook",
+      "from": "deployment",
+      "to": "webhook",
+      "label": "Pod 생성 시",
+      "variant": "dashed"
+    },
+    {
+      "id": "webhook-to-pod",
+      "from": "webhook",
+      "to": "pod",
+      "label": "flagd 컨테이너 주입",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Operator가 도입하는 CRD",
+      "items": [
+        "FeatureFlag: Flag 키, variant, targeting 규칙을 인라인으로 선언한다",
+        "FeatureFlagSource: flagd가 Flag 정의를 가져올 소스(kubernetes / http / grpc)와 포트를 지정한다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Pod 자동 Injection",
+      "items": [
+        "Namespace 라벨 또는 Pod 어노테이션 openfeature.dev/enabled: \"true\"로 활성화한다",
+        "별도 Pod 어노테이션으로 사용할 FeatureFlagSource를 참조한다",
+        "CR이 바뀌면 ConfigMap이 자동 갱신되고 flagd는 재시작 없이 변경을 반영한다"
+      ]
+    }
+  ]
+}

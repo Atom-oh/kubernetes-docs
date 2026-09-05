@@ -460,7 +460,9 @@ policy.csv: |
 
 ### Namespace-per-Team
 
-![Diagram showing three ArgoCD AppProjects (team-a, team-b, platform) each restricted to deploy only into its designated Kubernetes namespace, with the platform project scoped to the shared kube-system and monitoring namespaces.](../../../assets/diagrams/rendered/en-gitops-argocd-06-projects-rbac-0.svg)
+![Namespace-per-Team architecture diagram. In the Teams (SSO groups) region on the left, Team A, Team B, and Platform Team each own Project: team-a, Project: team-b, and Project: platform in the central ArgoCD AppProject region, and each project can deploy only to its namespaces in the Kubernetes Cluster on the right: team-a, team-b, and the shared monitoring · logging namespaces. Each team owns its own AppProject, and the AppProject destinations restrict where it can deploy.](../../.gitbook/assets/en-gitops-argocd-06-projects-rbac-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-06-projects-rbac-0.html)
 
 Implementation:
 

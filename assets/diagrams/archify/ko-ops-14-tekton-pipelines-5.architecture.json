@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CI/CD 분리 아키텍처",
+    "output": "ko-ops-14-tekton-pipelines-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      520
+    ],
+    "views": [
+      {
+        "id": "ci",
+        "label": "Tekton CI 파이프라인",
+        "focus": [
+          "src",
+          "trigger",
+          "clone",
+          "test",
+          "build",
+          "push",
+          "update"
+        ],
+        "note": "소스 push가 Webhook으로 Tekton을 트리거하고 클론·테스트·빌드·ECR Push·매니페스트 업데이트가 순서대로 실행된다."
+      },
+      {
+        "id": "handoff",
+        "label": "GitOps 핸드오프",
+        "focus": [
+          "update",
+          "gitops",
+          "sync"
+        ],
+        "note": "CI 마지막 Task가 GitOps 리포지토리의 이미지 태그를 커밋하면 ArgoCD가 변경을 감지한다."
+      },
+      {
+        "id": "cd",
+        "label": "ArgoCD CD 배포",
+        "focus": [
+          "ecr",
+          "sync",
+          "deploy"
+        ],
+        "note": "ArgoCD가 매니페스트를 동기화하고 클러스터는 ECR에서 새 이미지를 pull해 배포한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "app-source",
+      "sublabel": "소스 리포지토리",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "trigger",
+      "type": "messagebus",
+      "label": "Trigger",
+      "sublabel": "Webhook 수신",
+      "pos": [
+        198,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "clone",
+      "type": "backend",
+      "label": "git-clone",
+      "sublabel": "소스 클론",
+      "pos": [
+        366,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "테스트 / 린트",
+      "sublabel": "단위 테스트·린트",
+      "pos": [
+        534,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "이미지 빌드",
+      "sublabel": "컨테이너 이미지",
+      "pos": [
+        702,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "push",
+      "type": "backend",
+      "label": "ECR Push",
+      "sublabel": "이미지 푸시",
+      "pos": [
+        870,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "update",
+      "type": "backend",
+      "label": "매니페스트 업데이트",
+      "sublabel": "이미지 태그 갱신",
+      "pos": [
+        1038,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Container Registry",
+      "sublabel": "Amazon ECR",
+      "pos": [
+        534,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "app-manifests",
+      "sublabel": "GitOps 리포지토리",
+      "pos": [
+        1038,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "ArgoCD Sync",
+      "sublabel": "매니페스트 동기화",
+      "pos": [
+        786,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "K8s 배포",
+      "sublabel": "클러스터에 롤아웃",
+      "pos": [
+        534,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tekton (CI)",
+      "wraps": [
+        "trigger",
+        "clone",
+        "test",
+        "build",
+        "push",
+        "update"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ArgoCD (CD)",
+      "wraps": [
+        "sync",
+        "deploy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-trigger",
+      "from": "src",
+      "to": "trigger",
+      "label": "push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trigger-clone",
+      "from": "trigger",
+      "to": "clone"
+    },
+    {
+      "id": "clone-test",
+      "from": "clone",
+      "to": "test"
+    },
+    {
+      "id": "test-build",
+      "from": "test",
+      "to": "build"
+    },
+    {
+      "id": "build-push",
+      "from": "build",
+      "to": "push"
+    },
+    {
+      "id": "push-ecr",
+      "from": "push",
+      "to": "ecr",
+      "label": "이미지"
+    },
+    {
+      "id": "push-update",
+      "from": "push",
+      "to": "update"
+    },
+    {
+      "id": "update-gitops",
+      "from": "update",
+      "to": "gitops",
+      "label": "commit",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gitops-sync",
+      "from": "gitops",
+      "to": "sync",
+      "label": "감지",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-deploy",
+      "from": "sync",
+      "to": "deploy"
+    },
+    {
+      "id": "ecr-deploy",
+      "from": "ecr",
+      "to": "deploy",
+      "label": "pull",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI — Tekton",
+      "items": [
+        "빌드·테스트·이미지 Push까지를 Tekton 파이프라인이 담당한다",
+        "마지막 Task가 GitOps 리포지토리의 이미지 태그를 업데이트하고 커밋/푸시한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "CD — ArgoCD",
+      "items": [
+        "ArgoCD가 GitOps 리포지토리 변경을 감지해 클러스터를 동기화한다",
+        "CI/CD 분리는 프로덕션에서 가장 권장되는 패턴이다"
+      ]
+    }
+  ]
+}

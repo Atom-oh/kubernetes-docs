@@ -75,7 +75,9 @@ spec:
     automated: {}  # Enable auto-sync with defaults
 ```
 
-![Flow diagram showing Argo CD detecting changes in Git via webhook or polling, comparing desired vs live state, applying changes when drift is detected, and receiving status feedback from the target cluster.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-0.svg)
+![Argo CD continuously compares the desired state in the Git repository with the live state of the Kubernetes cluster and, when it detects an OutOfSync difference, applies the changes so the live state matches Git again.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-0.html)
 
 ## Auto-Sync Policies
 
@@ -105,7 +107,9 @@ syncPolicy:
 
 **Use case**: Prevent configuration drift from manual kubectl changes or other tools.
 
-![Sequence diagram showing a user manually scaling a deployment with kubectl, Argo CD detecting the state change, reading the desired replica count from Git, and reapplying it so Kubernetes self-heals back to the Git-declared state.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-1.svg)
+![Sequence diagram showing a user manually scaling a deployment with kubectl, Argo CD detecting the state change, reading the desired replica count from Git, and reapplying it so Kubernetes self-heals back to the Git-declared state.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-1.html)
 
 ### Allow Empty
 
@@ -660,7 +664,9 @@ spec:
 
 ### Retry Flow
 
-![Sequence diagram showing a controller retrying a failed sync against Kubernetes with exponential backoff waits of 5, 10, and 20 seconds, succeeding on the fourth attempt and reporting the synced status back to the application.](../../../assets/diagrams/rendered/en-gitops-argocd-03-sync-strategies-3.svg)
+![Workflow showing a sync request being evaluated against the AppProject syncWindows: an active deny window is checked first and blocks the sync; otherwise an active allow window lets the sync run, and with no active window at all the sync is allowed by default.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-4.html)
 
 ### Retry Only on Specific Errors
 

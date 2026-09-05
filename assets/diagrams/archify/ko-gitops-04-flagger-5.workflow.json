@@ -1,0 +1,219 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "A/B Testing 동작 원리",
+    "output": "ko-gitops-04-flagger-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "routing",
+        "label": "라우팅 조건 분기",
+        "focus": [
+          "user",
+          "lb",
+          "match",
+          "canary",
+          "primary"
+        ],
+        "note": "analysis.match 조건(x-canary 헤더 등)에 맞는 요청만 Canary v2로, 나머지는 Primary v1로 라우팅된다."
+      },
+      {
+        "id": "analysis",
+        "label": "분석과 승격",
+        "focus": [
+          "canary",
+          "primary",
+          "metrics",
+          "verdict",
+          "promote"
+        ],
+        "note": "두 버전의 메트릭을 수집해 분석 결과가 성공이면 Canary를 전체 승격한다."
+      },
+      {
+        "id": "rollback",
+        "label": "실패 시 롤백",
+        "focus": [
+          "metrics",
+          "verdict",
+          "rollback"
+        ],
+        "note": "분석 결과가 실패이면 롤백되어 Primary v1이 그대로 유지된다."
+      }
+    ],
+    "viewBox": [
+      1100,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "traffic",
+      "label": "사용자 트래픽"
+    },
+    {
+      "id": "canary_lane",
+      "label": "Canary"
+    },
+    {
+      "id": "primary_lane",
+      "label": "Primary · 롤백"
+    },
+    {
+      "id": "analysis_lane",
+      "label": "Flagger 분석"
+    }
+  ],
+  "phases": [
+    {
+      "id": "route",
+      "label": "라우팅",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "serve",
+      "label": "버전별 처리",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "decide",
+      "label": "분석 + 결정",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "user",
+    "lb",
+    "match",
+    "canary",
+    "metrics",
+    "verdict",
+    "promote"
+  ],
+  "nodes": [
+    {
+      "id": "user",
+      "lane": "traffic",
+      "col": 0,
+      "type": "external",
+      "label": "사용자 요청"
+    },
+    {
+      "id": "lb",
+      "lane": "traffic",
+      "col": 1,
+      "type": "cloud",
+      "label": "Load Balancer"
+    },
+    {
+      "id": "match",
+      "lane": "traffic",
+      "col": 2,
+      "type": "security",
+      "label": "라우팅 조건",
+      "sublabel": "analysis.match",
+      "tag": "헤더 · 쿠키"
+    },
+    {
+      "id": "canary",
+      "lane": "canary_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "Canary · v2",
+      "sublabel": "x-canary: true"
+    },
+    {
+      "id": "primary",
+      "lane": "primary_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "Primary · v1",
+      "sublabel": "조건 미충족 트래픽"
+    },
+    {
+      "id": "metrics",
+      "lane": "analysis_lane",
+      "col": 4,
+      "type": "database",
+      "label": "메트릭 수집",
+      "sublabel": "성공률 · 지연시간"
+    },
+    {
+      "id": "verdict",
+      "lane": "analysis_lane",
+      "col": 5,
+      "type": "security",
+      "label": "분석 결과",
+      "sublabel": "threshold 판정"
+    },
+    {
+      "id": "promote",
+      "lane": "canary_lane",
+      "col": 5,
+      "type": "backend",
+      "label": "전체 승격",
+      "sublabel": "v2 → Primary"
+    },
+    {
+      "id": "rollback",
+      "lane": "primary_lane",
+      "col": 5,
+      "type": "messagebus",
+      "label": "롤백",
+      "sublabel": "v1 유지"
+    }
+  ],
+  "edges": [
+    {
+      "from": "user",
+      "to": "lb"
+    },
+    {
+      "from": "lb",
+      "to": "match"
+    },
+    {
+      "from": "match",
+      "to": "canary",
+      "label": "CANARY",
+      "variant": "emphasis"
+    },
+    {
+      "from": "match",
+      "to": "primary",
+      "label": "조건 미충족",
+      "role": "branch"
+    },
+    {
+      "from": "canary",
+      "to": "metrics"
+    },
+    {
+      "from": "primary",
+      "to": "metrics"
+    },
+    {
+      "from": "metrics",
+      "to": "verdict"
+    },
+    {
+      "from": "verdict",
+      "to": "promote",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "from": "verdict",
+      "to": "rollback",
+      "label": "실패",
+      "variant": "security",
+      "role": "error"
+    }
+  ]
+}

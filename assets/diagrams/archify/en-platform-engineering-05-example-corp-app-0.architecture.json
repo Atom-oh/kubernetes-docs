@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ACK + KRO Integrated Deployment Architecture",
+    "locale": "en",
+    "output": "en-platform-engineering-05-example-corp-app-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "KRO custom resource"
+        },
+        "backend": {
+          "label": "KRO child resources"
+        },
+        "cloud": {
+          "label": "ACK-managed AWS infrastructure"
+        },
+        "database": {
+          "label": "ACK-managed database"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "kro-children",
+        "label": "KRO child resource creation",
+        "focus": [
+          "cr",
+          "svc",
+          "tgb",
+          "dep",
+          "cm"
+        ],
+        "note": "A single WebApp CR creates the Service, TargetGroupBinding, Deployment, and ConfigMap together."
+      },
+      {
+        "id": "traffic-path",
+        "label": "Traffic path wiring",
+        "focus": [
+          "r53",
+          "nlb",
+          "tg",
+          "tgb",
+          "svc"
+        ],
+        "note": "Traffic arriving via Route 53 → NLB → Target Group is wired to the Service's Pods by the TargetGroupBinding."
+      },
+      {
+        "id": "db-config",
+        "label": "DB connection injection",
+        "focus": [
+          "aurora",
+          "cm",
+          "dep"
+        ],
+        "note": "Aurora endpoints go into the ConfigMap, which the Deployment reads via envFrom."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cr",
+      "type": "frontend",
+      "label": "WebApp CR",
+      "sublabel": "Single application API",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "ClusterIP",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "tgb",
+      "type": "backend",
+      "label": "TargetGroupBinding",
+      "sublabel": "Pod ↔ Target Group link",
+      "pos": [
+        300,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dep",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "Order API Pods",
+      "pos": [
+        300,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cm",
+      "type": "backend",
+      "label": "ConfigMap",
+      "sublabel": "DB connection info",
+      "pos": [
+        300,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "NLB",
+      "sublabel": "Network Load Balancer",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "r53",
+      "type": "cloud",
+      "label": "Route 53 Record",
+      "sublabel": "app.example.com",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "tg",
+      "type": "cloud",
+      "label": "Target Group",
+      "sublabel": "Pod IP targets",
+      "pos": [
+        680,
+        200
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "aurora",
+      "type": "database",
+      "label": "Aurora PostgreSQL",
+      "sublabel": "Writer / Reader endpoint",
+      "pos": [
+        680,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "KRO (Application)",
+      "wraps": [
+        "cr",
+        "svc",
+        "tgb",
+        "dep",
+        "cm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ACK (AWS Infrastructure)",
+      "wraps": [
+        "nlb",
+        "r53",
+        "tg",
+        "aurora"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cr-svc",
+      "from": "cr",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-tgb",
+      "from": "cr",
+      "to": "tgb",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-dep",
+      "from": "cr",
+      "to": "dep",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cr-cm",
+      "from": "cr",
+      "to": "cm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-tgb",
+      "from": "svc",
+      "to": "tgb",
+      "label": "serviceRef",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tgb-tg",
+      "from": "tgb",
+      "to": "tg",
+      "label": "targetGroupARN",
+      "variant": "dashed"
+    },
+    {
+      "id": "dep-cm",
+      "from": "dep",
+      "to": "cm",
+      "label": "envFrom",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "cm-aurora",
+      "from": "cm",
+      "to": "aurora",
+      "label": "endpoints",
+      "variant": "dashed"
+    },
+    {
+      "id": "r53-nlb",
+      "from": "r53",
+      "to": "nlb"
+    },
+    {
+      "id": "nlb-tg",
+      "from": "nlb",
+      "to": "tg",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "ACK (AWS Infrastructure)",
+      "items": [
+        "elbv2 controller: NLB + TargetGroup + Listener",
+        "route53 controller: app.example.com → NLB",
+        "rds controller: Aurora PostgreSQL Writer + Readers"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "KRO (Application)",
+      "items": [
+        "A ResourceGraphDefinition defines the WebApp CR",
+        "One CR manages Deployment, Service, TargetGroupBinding, and ConfigMap",
+        "References ACK infrastructure via targetGroupARN and endpoints"
+      ]
+    }
+  ]
+}

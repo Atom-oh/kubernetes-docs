@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "패턴 1: 개발 환경 격리 (팀별 vCluster)",
+    "output": "ko-platform-engineering-08-vcluster-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    { "id": "fe-team", "type": "external", "label": "프론트엔드 팀", "sublabel": "개발자", "pos": [40, 90], "size": [150, 60] },
+    { "id": "be-team", "type": "external", "label": "백엔드 팀", "sublabel": "개발자", "pos": [40, 250], "size": [150, 60] },
+    { "id": "data-team", "type": "external", "label": "데이터 팀", "sublabel": "개발자", "pos": [40, 410], "size": [150, 60] },
+    { "id": "vc-frontend", "type": "backend", "label": "vCluster: frontend", "sublabel": "K8s v1.31 · Istio 설치됨", "pos": [330, 90], "size": [220, 60] },
+    { "id": "vc-backend", "type": "backend", "label": "vCluster: backend", "sublabel": "K8s v1.30 · Custom CRD", "pos": [330, 250], "size": [220, 60] },
+    { "id": "vc-data", "type": "backend", "label": "vCluster: data", "sublabel": "K8s v1.31 · Spark Operator", "pos": [330, 410], "size": [220, 60] },
+    { "id": "alb", "type": "cloud", "label": "ALB Controller", "sublabel": "공유 Ingress", "pos": [690, 90], "size": [180, 60] },
+    { "id": "ebs", "type": "cloud", "label": "EBS CSI", "sublabel": "공유 스토리지", "pos": [690, 250], "size": [180, 60] },
+    { "id": "mon", "type": "cloud", "label": "Prometheus Stack", "sublabel": "공유 모니터링", "pos": [690, 410], "size": [180, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "호스트 EKS 클러스터", "wraps": ["vc-frontend", "vc-backend", "vc-data", "alb", "ebs", "mon"], "pad": 44 },
+    { "kind": "security-group", "label": "vcluster-frontend", "wraps": ["vc-frontend"] },
+    { "kind": "security-group", "label": "vcluster-backend", "wraps": ["vc-backend"] },
+    { "kind": "security-group", "label": "vcluster-data", "wraps": ["vc-data"] },
+    { "kind": "security-group", "label": "공유 인프라", "wraps": ["alb", "ebs", "mon"] }
+  ],
+  "connections": [
+    { "id": "fe-owns", "from": "fe-team", "to": "vc-frontend", "label": "팀 소유", "variant": "emphasis" },
+    { "id": "be-owns", "from": "be-team", "to": "vc-backend", "label": "팀 소유" },
+    { "id": "data-owns", "from": "data-team", "to": "vc-data", "label": "팀 소유" }
+  ]
+}

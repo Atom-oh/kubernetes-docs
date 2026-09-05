@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton Chains 공급망 보안 흐름",
+    "output": "ko-ops-14-tekton-pipelines-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "build-to-sign",
+        "label": "빌드 완료 → 자동 서명",
+        "focus": [
+          "taskrun",
+          "observer",
+          "sign",
+          "provenance"
+        ],
+        "note": "TaskRun이 끝나면 Chains가 이를 감지해 Cosign 서명과 SLSA Provenance/in-toto Attestation을 만든다."
+      },
+      {
+        "id": "transparency",
+        "label": "투명성 로그 기록",
+        "focus": [
+          "sign",
+          "provenance",
+          "rekor"
+        ],
+        "note": "서명과 attestation을 Rekor 투명성 로그에 기록해 감사 가능성을 확보한다."
+      },
+      {
+        "id": "deploy-verify",
+        "label": "배포 시점 검증",
+        "focus": [
+          "rekor",
+          "verify",
+          "policy",
+          "admission"
+        ],
+        "note": "배포 시 cosign verify로 서명을 확인하고 Kyverno 정책이 허용/차단을 결정한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "taskrun",
+      "type": "backend",
+      "label": "TaskRun",
+      "sublabel": "이미지 빌드",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "observer",
+      "type": "backend",
+      "label": "TaskRun 완료 감지",
+      "sublabel": "Chains Observer",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sign",
+      "type": "security",
+      "label": "OCI 이미지 서명",
+      "sublabel": "Cosign",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "provenance",
+      "type": "security",
+      "label": "Provenance / Attestation",
+      "sublabel": "SLSA · in-toto",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rekor",
+      "type": "external",
+      "label": "투명성 로그 기록",
+      "sublabel": "Rekor",
+      "pos": [
+        380,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "verify",
+      "type": "security",
+      "label": "이미지 서명 검증",
+      "sublabel": "cosign verify",
+      "pos": [
+        820,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "정책 적용",
+      "sublabel": "Kyverno",
+      "pos": [
+        820,
+        250
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "admission",
+      "type": "security",
+      "label": "Admission Control",
+      "sublabel": "허용 · 차단",
+      "pos": [
+        820,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "빌드 단계",
+      "wraps": [
+        "taskrun"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton Chains 자동 처리",
+      "wraps": [
+        "observer",
+        "sign",
+        "provenance",
+        "rekor"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "검증 단계 (배포 시점)",
+      "wraps": [
+        "verify",
+        "policy",
+        "admission"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "taskrun-observer",
+      "from": "taskrun",
+      "to": "observer",
+      "label": "완료 훅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "observer-sign",
+      "from": "observer",
+      "to": "sign",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "observer-provenance",
+      "from": "observer",
+      "to": "provenance",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sign-rekor",
+      "from": "sign",
+      "to": "rekor",
+      "label": "서명 기록",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "provenance-rekor",
+      "from": "provenance",
+      "to": "rekor",
+      "label": "attestation 기록",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rekor-verify",
+      "from": "rekor",
+      "to": "verify",
+      "label": "배포 시 인출",
+      "variant": "dashed",
+      "labelDy": 59
+    },
+    {
+      "id": "verify-policy",
+      "from": "verify",
+      "to": "policy"
+    },
+    {
+      "id": "policy-admission",
+      "from": "policy",
+      "to": "admission",
+      "label": "허용 / 차단",
+      "labelDy": 24
+    }
+  ]
+}

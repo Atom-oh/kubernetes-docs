@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "flagd Standalone Mode",
+    "locale": "en",
+    "output": "en-gitops-05-feature-flags-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "grpc-path", "label": "Shared gRPC evaluation", "focus": ["app1", "app2", "app3", "svc"], "note": "Every application pod evaluates flags through the same flagd Service over gRPC (one network hop)." },
+      { "id": "flag-source", "label": "Flag source of truth", "focus": ["dep", "crd"], "note": "The centralized flagd replicas watch the FeatureFlag custom resource for configuration changes." }
+    ]
+  },
+  "components": [
+    { "id": "app1", "type": "frontend", "label": "App Pod 1", "sublabel": "gRPC client", "pos": [40, 60], "size": [150, 60] },
+    { "id": "app2", "type": "frontend", "label": "App Pod 2", "sublabel": "gRPC client", "pos": [40, 180], "size": [150, 60] },
+    { "id": "app3", "type": "frontend", "label": "App Pod 3", "sublabel": "gRPC client", "pos": [40, 300], "size": [150, 60] },
+    { "id": "svc", "type": "backend", "label": "flagd Service", "sublabel": "ClusterIP · shared", "pos": [350, 180], "size": [160, 60], "tag": "SVC" },
+    { "id": "dep", "type": "backend", "label": "flagd Deployment", "sublabel": "2+ replicas", "pos": [610, 180], "size": [170, 60], "tag": "DEP" },
+    { "id": "crd", "type": "database", "label": "FeatureFlag CRD", "sublabel": "source of truth", "pos": [890, 180], "size": [170, 60], "tag": "CRD" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Application namespace", "wraps": ["app1", "app2", "app3"] },
+    { "kind": "region", "label": "flagd-system namespace", "wraps": ["svc", "dep"] }
+  ],
+  "connections": [
+    { "id": "app1-svc", "from": "app1", "to": "svc", "variant": "emphasis" },
+    { "id": "app2-svc", "from": "app2", "to": "svc", "label": "gRPC", "variant": "emphasis", "labelDx": -40, "labelDy": -12 },
+    { "id": "app3-svc", "from": "app3", "to": "svc", "variant": "emphasis" },
+    { "id": "svc-dep", "from": "svc", "to": "dep", "label": "routes to" },
+    { "id": "dep-crd", "from": "dep", "to": "crd", "label": "watch", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "Standalone trade-offs", "items": ["Shared across pods: lower resource usage than one sidecar per pod", "Slightly higher latency: a network hop instead of localhost", "Shared blast radius: an outage affects all consumers"] },
+    { "dot": "slate", "title": "Best for", "items": ["Cost-sensitive environments with many small services", "Independent scaling of flagd via Helm/YAML"] }
+  ]
+}

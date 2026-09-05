@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPIRE Component Overview",
+    "locale": "en",
+    "output": "en-security-12-spiffe-spire-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "SPIRE components"
+        },
+        "database": {
+          "label": "Data store"
+        },
+        "backend": {
+          "label": "Workloads"
+        },
+        "external": {
+          "label": "Registration automation"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Control plane",
+        "focus": [
+          "server",
+          "datastore",
+          "ca",
+          "controller-manager"
+        ],
+        "note": "The SPIRE Server manages the data store and CA while the Controller Manager creates registration entries."
+      },
+      {
+        "id": "node-attestation",
+        "label": "Node attestation",
+        "focus": [
+          "agent1",
+          "agent2",
+          "server"
+        ],
+        "note": "The SPIRE Agent on each node attests the node to the Server and requests SVIDs."
+      },
+      {
+        "id": "workload-api",
+        "label": "Workload API",
+        "focus": [
+          "wl1a",
+          "wl1b",
+          "agent1",
+          "wl2a",
+          "wl2b",
+          "agent2"
+        ],
+        "note": "Workloads receive SVIDs over the Workload API (Unix domain socket) served by the Agent on their own node."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller-manager",
+      "type": "external",
+      "label": "SPIRE Controller Manager",
+      "sublabel": "Watches ClusterSPIFFEID",
+      "pos": [
+        300,
+        30
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "Data store",
+      "sublabel": "SQLite / PostgreSQL",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "server",
+      "type": "security",
+      "label": "SPIRE Server",
+      "sublabel": "Registration API · Node Attestation",
+      "pos": [
+        320,
+        176
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Built-in CA or Upstream CA",
+      "sublabel": "Signs SVIDs",
+      "pos": [
+        570,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "agent1",
+      "type": "security",
+      "label": "SPIRE Agent",
+      "sublabel": "Workload API · SVID cache",
+      "pos": [
+        180,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "agent2",
+      "type": "security",
+      "label": "SPIRE Agent",
+      "sublabel": "Workload API · SVID cache",
+      "pos": [
+        610,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wl1a",
+      "type": "backend",
+      "label": "Workload Pod A",
+      "pos": [
+        90,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "wl1b",
+      "type": "backend",
+      "label": "Workload Pod B",
+      "pos": [
+        290,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "wl2a",
+      "type": "backend",
+      "label": "Workload Pod C",
+      "pos": [
+        520,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "wl2b",
+      "type": "backend",
+      "label": "Workload Pod D",
+      "pos": [
+        720,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control plane",
+      "wraps": [
+        "datastore",
+        "server",
+        "ca"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Node 1",
+      "wraps": [
+        "agent1",
+        "wl1a",
+        "wl1b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Node 2",
+      "wraps": [
+        "agent2",
+        "wl2a",
+        "wl2b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cm-to-server",
+      "from": "controller-manager",
+      "to": "server",
+      "label": "Manages registration entries",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "server-to-datastore",
+      "from": "server",
+      "to": "datastore",
+      "label": "Persistent data"
+    },
+    {
+      "id": "server-to-ca",
+      "from": "server",
+      "to": "ca",
+      "label": "Signs SVIDs"
+    },
+    {
+      "id": "agent1-to-server",
+      "from": "agent1",
+      "to": "server",
+      "label": "Node attestation · SVID requests",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": -14
+    },
+    {
+      "id": "agent2-to-server",
+      "from": "agent2",
+      "to": "server",
+      "label": "Node attestation · SVID requests",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": 14
+    },
+    {
+      "id": "wl1a-to-agent1",
+      "from": "wl1a",
+      "to": "agent1",
+      "label": "Workload API",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wl1b-to-agent1",
+      "from": "wl1b",
+      "to": "agent1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wl2a-to-agent2",
+      "from": "wl2a",
+      "to": "agent2",
+      "label": "Workload API",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wl2b-to-agent2",
+      "from": "wl2b",
+      "to": "agent2",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "SPIRE Server",
+      "items": [
+        "Certificate Authority: signs X.509-SVIDs and JWT-SVIDs",
+        "Registration API: manages workload registration entries",
+        "Node Attestation: verifies agent identity during bootstrap",
+        "Data Store: persists registration entries and CA state"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "SPIRE Agent",
+      "items": [
+        "Workload API: serves SVIDs to workloads via Unix socket",
+        "Workload Attestation: identifies workloads requesting SVIDs",
+        "SVID caching and automatic rotation",
+        "SDS Server: Envoy SDS API for service meshes"
+      ]
+    }
+  ]
+}

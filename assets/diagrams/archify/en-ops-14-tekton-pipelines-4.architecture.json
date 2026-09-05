@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton Chains Supply Chain Security Flow",
+    "locale": "en",
+    "output": "en-ops-14-tekton-pipelines-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "build-to-sign",
+        "label": "Build completion → auto signing",
+        "focus": [
+          "taskrun",
+          "observer",
+          "sign",
+          "provenance"
+        ],
+        "note": "When a TaskRun completes, Chains observes it and produces a Cosign signature plus SLSA provenance / in-toto attestation."
+      },
+      {
+        "id": "transparency",
+        "label": "Transparency log",
+        "focus": [
+          "sign",
+          "provenance",
+          "rekor"
+        ],
+        "note": "Signatures and attestations are recorded in the Rekor transparency log for auditability."
+      },
+      {
+        "id": "deploy-verify",
+        "label": "Verification at deploy time",
+        "focus": [
+          "rekor",
+          "verify",
+          "policy",
+          "admission"
+        ],
+        "note": "At deploy time cosign verify checks the signature and a Kyverno policy decides allow or deny."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "taskrun",
+      "type": "backend",
+      "label": "TaskRun",
+      "sublabel": "image build",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "observer",
+      "type": "backend",
+      "label": "Observe TaskRun completion",
+      "sublabel": "Chains Observer",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sign",
+      "type": "security",
+      "label": "Sign OCI image",
+      "sublabel": "Cosign",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "provenance",
+      "type": "security",
+      "label": "Provenance / Attestation",
+      "sublabel": "SLSA · in-toto",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rekor",
+      "type": "external",
+      "label": "Transparency log",
+      "sublabel": "Rekor",
+      "pos": [
+        380,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "verify",
+      "type": "security",
+      "label": "Verify image signature",
+      "sublabel": "cosign verify",
+      "pos": [
+        820,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Policy enforcement",
+      "sublabel": "Kyverno",
+      "pos": [
+        820,
+        250
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "admission",
+      "type": "security",
+      "label": "Admission Control",
+      "sublabel": "allow · deny",
+      "pos": [
+        820,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Build stage",
+      "wraps": [
+        "taskrun"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton Chains (automatic)",
+      "wraps": [
+        "observer",
+        "sign",
+        "provenance",
+        "rekor"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Verification stage (deploy time)",
+      "wraps": [
+        "verify",
+        "policy",
+        "admission"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "taskrun-observer",
+      "from": "taskrun",
+      "to": "observer",
+      "label": "completion hook",
+      "variant": "emphasis"
+    },
+    {
+      "id": "observer-sign",
+      "from": "observer",
+      "to": "sign",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "observer-provenance",
+      "from": "observer",
+      "to": "provenance",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sign-rekor",
+      "from": "sign",
+      "to": "rekor",
+      "label": "record signature",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "provenance-rekor",
+      "from": "provenance",
+      "to": "rekor",
+      "label": "record attestation",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rekor-verify",
+      "from": "rekor",
+      "to": "verify",
+      "label": "fetch at deploy",
+      "variant": "dashed",
+      "labelDy": 59
+    },
+    {
+      "id": "verify-policy",
+      "from": "verify",
+      "to": "policy"
+    },
+    {
+      "id": "policy-admission",
+      "from": "policy",
+      "to": "admission",
+      "label": "allow / deny",
+      "labelDy": 24
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "자동 리소스 조정 파이프라인 — VPA 추천값에서 PR 리뷰를 거쳐 ArgoCD 배포까지",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1000,
+      600
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "cronjob",
+      "type": "cloud",
+      "label": "CronJob",
+      "sublabel": "매주 실행"
+    },
+    {
+      "id": "vpa",
+      "type": "backend",
+      "label": "VPA",
+      "sublabel": "추천 엔진"
+    },
+    {
+      "id": "script",
+      "type": "backend",
+      "label": "스크립트",
+      "sublabel": "추천값·현재 requests 비교"
+    },
+    {
+      "id": "gitci",
+      "type": "external",
+      "label": "Git / CI",
+      "sublabel": "PR · 린트 검증"
+    },
+    {
+      "id": "lead",
+      "type": "external",
+      "label": "팀 리더",
+      "sublabel": "리뷰어"
+    },
+    {
+      "id": "argocd",
+      "type": "cloud",
+      "label": "ArgoCD",
+      "sublabel": "GitOps 배포"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 260,
+      "label": "주간 자동 실행"
+    },
+    {
+      "from": 275,
+      "to": 425,
+      "label": "PR 기반 리뷰"
+    },
+    {
+      "from": 440,
+      "to": 505,
+      "label": "안전한 적용"
+    }
+  ],
+  "messages": [
+    {
+      "id": "query",
+      "from": "cronjob",
+      "to": "vpa",
+      "y": 190,
+      "label": "추천값 조회 (kubectl get vpa)"
+    },
+    {
+      "id": "recs",
+      "from": "vpa",
+      "to": "script",
+      "y": 235,
+      "label": "추천 데이터 반환",
+      "variant": "return"
+    },
+    {
+      "id": "pr",
+      "from": "script",
+      "to": "gitci",
+      "y": 295,
+      "label": "20% 이상 변경 PR 생성",
+      "variant": "emphasis",
+      "note": "현재 requests와 비교 · 변경 임계값 20%"
+    },
+    {
+      "id": "review",
+      "from": "gitci",
+      "to": "lead",
+      "y": 355,
+      "label": "PR 리뷰 요청",
+      "note": "CI 트리거 · 린트 검증 통과 후"
+    },
+    {
+      "id": "approve",
+      "from": "lead",
+      "to": "gitci",
+      "y": 400,
+      "label": "승인 + 머지",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync",
+      "from": "gitci",
+      "to": "argocd",
+      "y": 465,
+      "label": "머지된 매니페스트 동기화"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "script",
+      "from": 230,
+      "to": 300,
+      "type": "backend"
+    },
+    {
+      "participant": "gitci",
+      "from": 290,
+      "to": 470,
+      "type": "external"
+    },
+    {
+      "participant": "lead",
+      "from": 350,
+      "to": 405,
+      "type": "external"
+    },
+    {
+      "participant": "argocd",
+      "from": 460,
+      "to": 500,
+      "type": "cloud"
+    }
+  ]
+}

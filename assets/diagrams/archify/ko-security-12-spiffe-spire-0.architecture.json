@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPIRE 컴포넌트 개요",
+    "output": "ko-security-12-spiffe-spire-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "SPIRE 컴포넌트"
+        },
+        "database": {
+          "label": "데이터스토어"
+        },
+        "backend": {
+          "label": "워크로드"
+        },
+        "external": {
+          "label": "등록 자동화"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "server",
+          "datastore",
+          "ca",
+          "controller-manager"
+        ],
+        "note": "SPIRE Server가 데이터스토어와 CA를 관리하고, Controller Manager가 등록 엔트리를 생성한다."
+      },
+      {
+        "id": "node-attestation",
+        "label": "노드 어테스테이션",
+        "focus": [
+          "agent1",
+          "agent2",
+          "server"
+        ],
+        "note": "각 노드의 SPIRE Agent가 Server에 노드 어테스테이션을 수행하고 SVID를 요청한다."
+      },
+      {
+        "id": "workload-api",
+        "label": "Workload API",
+        "focus": [
+          "wl1a",
+          "wl1b",
+          "agent1",
+          "wl2a",
+          "wl2b",
+          "agent2"
+        ],
+        "note": "워크로드는 같은 노드의 Agent가 노출하는 Workload API(Unix 도메인 소켓)로 SVID를 받는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller-manager",
+      "type": "external",
+      "label": "SPIRE Controller Manager",
+      "sublabel": "ClusterSPIFFEID 감시",
+      "pos": [
+        300,
+        30
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": "데이터스토어",
+      "sublabel": "SQLite / PostgreSQL",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "server",
+      "type": "security",
+      "label": "SPIRE Server",
+      "sublabel": "Registration API · Node Attestation",
+      "pos": [
+        320,
+        176
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "내장 CA 또는 Upstream CA",
+      "sublabel": "SVID 서명",
+      "pos": [
+        570,
+        180
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "agent1",
+      "type": "security",
+      "label": "SPIRE Agent",
+      "sublabel": "Workload API · SVID 캐싱",
+      "pos": [
+        180,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "agent2",
+      "type": "security",
+      "label": "SPIRE Agent",
+      "sublabel": "Workload API · SVID 캐싱",
+      "pos": [
+        610,
+        350
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wl1a",
+      "type": "backend",
+      "label": "워크로드 A",
+      "pos": [
+        90,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "wl1b",
+      "type": "backend",
+      "label": "워크로드 B",
+      "pos": [
+        290,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "wl2a",
+      "type": "backend",
+      "label": "워크로드 C",
+      "pos": [
+        520,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "wl2b",
+      "type": "backend",
+      "label": "워크로드 D",
+      "pos": [
+        720,
+        500
+      ],
+      "size": [
+        150,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "datastore",
+        "server",
+        "ca"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 1",
+      "wraps": [
+        "agent1",
+        "wl1a",
+        "wl1b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 2",
+      "wraps": [
+        "agent2",
+        "wl2a",
+        "wl2b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cm-to-server",
+      "from": "controller-manager",
+      "to": "server",
+      "label": "등록 엔트리 관리",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "server-to-datastore",
+      "from": "server",
+      "to": "datastore",
+      "label": "영속 데이터"
+    },
+    {
+      "id": "server-to-ca",
+      "from": "server",
+      "to": "ca",
+      "label": "SVID 서명"
+    },
+    {
+      "id": "agent1-to-server",
+      "from": "agent1",
+      "to": "server",
+      "label": "노드 어테스테이션 · SVID 요청",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": -14
+    },
+    {
+      "id": "agent2-to-server",
+      "from": "agent2",
+      "to": "server",
+      "label": "노드 어테스테이션 · SVID 요청",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDx": 14
+    },
+    {
+      "id": "wl1a-to-agent1",
+      "from": "wl1a",
+      "to": "agent1",
+      "label": "Workload API",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wl1b-to-agent1",
+      "from": "wl1b",
+      "to": "agent1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wl2a-to-agent2",
+      "from": "wl2a",
+      "to": "agent2",
+      "label": "Workload API",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "wl2b-to-agent2",
+      "from": "wl2b",
+      "to": "agent2",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "SPIRE Server",
+      "items": [
+        "Certificate Authority: X.509-SVID 및 JWT-SVID 서명",
+        "Registration API: 워크로드 등록 엔트리 관리",
+        "Node Attestation: 에이전트 노드 검증",
+        "Datastore: 등록 엔트리, CA 키 등 영속 데이터 저장"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "SPIRE Agent",
+      "items": [
+        "Workload API: Unix 도메인 소켓을 통한 SVID 제공",
+        "Workload Attestation: 로컬 워크로드 검증",
+        "SVID 캐싱 및 갱신",
+        "SDS(Secret Discovery Service): Envoy 통합"
+      ]
+    }
+  ]
+}

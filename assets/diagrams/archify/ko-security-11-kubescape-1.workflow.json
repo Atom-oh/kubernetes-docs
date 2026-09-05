@@ -1,0 +1,256 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubescape 스캔 파이프라인 흐름",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "input-framework",
+        "label": "입력과 프레임워크 선택",
+        "focus": [
+          "cli",
+          "fw",
+          "parse"
+        ],
+        "note": "kubescape scan 명령이 매니페스트·Helm 차트·라이브 클러스터를 받아 NSA-CISA, CIS, MITRE, AllControls 중 하나를 기준으로 삼는다."
+      },
+      {
+        "id": "evaluation",
+        "label": "컨트롤 평가",
+        "focus": [
+          "parse",
+          "evalc",
+          "check",
+          "calc"
+        ],
+        "note": "리소스를 파싱한 뒤 프레임워크의 각 컨트롤을 실행하고 규칙을 검사한다."
+      },
+      {
+        "id": "scoring-output",
+        "label": "점수 산정과 결과 출력",
+        "focus": [
+          "calc",
+          "sev",
+          "prio",
+          "pretty",
+          "json",
+          "sarif",
+          "htmlpdf"
+        ],
+        "note": "리스크 점수를 계산하고 심각도·우선순위를 매긴 뒤 -o 옵션에 따라 원하는 형식으로 출력한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "input",
+      "label": "입력"
+    },
+    {
+      "id": "framework",
+      "label": "프레임워크 선택"
+    },
+    {
+      "id": "evaluation",
+      "label": "컨트롤 평가"
+    },
+    {
+      "id": "scoring",
+      "label": "점수 산정"
+    },
+    {
+      "id": "output",
+      "label": "결과 출력"
+    }
+  ],
+  "mainPath": [
+    "cli",
+    "fw",
+    "parse",
+    "evalc",
+    "check",
+    "calc",
+    "sev",
+    "prio",
+    "htmlpdf"
+  ],
+  "nodes": [
+    {
+      "id": "cli",
+      "lane": "input",
+      "col": 0,
+      "type": "frontend",
+      "label": "kubescape CLI",
+      "sublabel": "매니페스트 · Helm · 클러스터",
+      "width": 150
+    },
+    {
+      "id": "fw",
+      "lane": "framework",
+      "col": 0,
+      "type": "security",
+      "label": "프레임워크",
+      "sublabel": "NSA · CIS · MITRE · All",
+      "width": 150
+    },
+    {
+      "id": "parse",
+      "lane": "evaluation",
+      "col": 1,
+      "type": "backend",
+      "label": "리소스 파싱"
+    },
+    {
+      "id": "evalc",
+      "lane": "evaluation",
+      "col": 2,
+      "type": "backend",
+      "label": "컨트롤 실행"
+    },
+    {
+      "id": "check",
+      "lane": "evaluation",
+      "col": 3,
+      "type": "security",
+      "label": "규칙 검사"
+    },
+    {
+      "id": "calc",
+      "lane": "scoring",
+      "col": 3,
+      "type": "backend",
+      "label": "리스크 계산",
+      "tag": "핵심 판정"
+    },
+    {
+      "id": "sev",
+      "lane": "scoring",
+      "col": 4,
+      "type": "backend",
+      "label": "심각도 분류"
+    },
+    {
+      "id": "prio",
+      "lane": "scoring",
+      "col": 5,
+      "type": "backend",
+      "label": "우선순위 지정"
+    },
+    {
+      "id": "pretty",
+      "lane": "output",
+      "col": 2,
+      "type": "external",
+      "label": "Pretty Print",
+      "sublabel": "터미널 출력"
+    },
+    {
+      "id": "json",
+      "lane": "output",
+      "col": 3,
+      "type": "database",
+      "label": "JSON",
+      "sublabel": "-o json"
+    },
+    {
+      "id": "sarif",
+      "lane": "output",
+      "col": 4,
+      "type": "security",
+      "label": "SARIF",
+      "sublabel": "-o sarif"
+    },
+    {
+      "id": "htmlpdf",
+      "lane": "output",
+      "col": 5,
+      "type": "external",
+      "label": "HTML / PDF",
+      "sublabel": "-o html · -o pdf"
+    }
+  ],
+  "edges": [
+    {
+      "from": "cli",
+      "to": "fw",
+      "label": "scan framework"
+    },
+    {
+      "from": "fw",
+      "to": "parse"
+    },
+    {
+      "from": "parse",
+      "to": "evalc"
+    },
+    {
+      "from": "evalc",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "calc"
+    },
+    {
+      "from": "calc",
+      "to": "sev"
+    },
+    {
+      "from": "sev",
+      "to": "prio"
+    },
+    {
+      "from": "prio",
+      "to": "pretty",
+      "role": "branch"
+    },
+    {
+      "from": "prio",
+      "to": "json",
+      "role": "branch"
+    },
+    {
+      "from": "prio",
+      "to": "sarif",
+      "role": "branch",
+      "variant": "emphasis"
+    },
+    {
+      "from": "prio",
+      "to": "htmlpdf",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "입력 소스",
+      "items": [
+        "kubescape scan deployment.yaml — 단일 YAML 파일",
+        "Helm 차트 디렉토리 — 배포 전 Shift-Left 스캔",
+        "kubescape scan framework nsa — 라이브 클러스터"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "리스크 점수",
+      "items": [
+        "리스크 점수 = Σ(컨트롤 심각도 × 영향 범위 × 실패 비율) / 전체 컨트롤 수",
+        "Critical · High · Medium · Low 심각도로 분류",
+        "점수 기준 우선순위 지정 후 출력"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "출력 형식",
+      "items": [
+        "Pretty Print — 기본 터미널 출력",
+        "JSON — 구조화 데이터, CI 게이트에서 jq로 파싱",
+        "SARIF — GitHub Security 통합용",
+        "HTML / PDF — 공유용 리포트"
+      ]
+    }
+  ]
+}

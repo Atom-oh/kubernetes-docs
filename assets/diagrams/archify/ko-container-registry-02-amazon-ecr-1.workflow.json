@@ -1,0 +1,233 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Lifecycle Policy 동작 원리",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "이미지"
+        },
+        "backend": {
+          "label": "규칙 평가 (rulePriority 순)"
+        },
+        "security": {
+          "label": "규칙 적용 · 보존 판정"
+        },
+        "external": {
+          "label": "결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "evaluate",
+        "label": "규칙 순차 평가",
+        "focus": [
+          "push",
+          "eval",
+          "rule1",
+          "rule2",
+          "ruleN"
+        ],
+        "note": "rulePriority가 낮은 규칙부터 순서대로 평가하고, 이미지는 첫 번째로 매칭되는 규칙 하나에만 걸린다."
+      },
+      {
+        "id": "decide",
+        "label": "보존 기준 판정",
+        "focus": [
+          "apply",
+          "threshold",
+          "expire",
+          "keep"
+        ],
+        "note": "매칭된 규칙의 countType(imageCountMoreThan / sinceImagePushed) 기준을 초과한 이미지만 삭제되고 나머지는 보존된다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "evaluate",
+      "label": "규칙 평가"
+    },
+    {
+      "id": "action",
+      "label": "규칙 적용 · 판정"
+    },
+    {
+      "id": "result",
+      "label": "삭제 실행"
+    }
+  ],
+  "mainPath": [
+    "push",
+    "eval",
+    "rule1",
+    "apply",
+    "threshold",
+    "expire"
+  ],
+  "nodes": [
+    {
+      "id": "push",
+      "lane": "evaluate",
+      "col": 0,
+      "type": "frontend",
+      "label": "이미지 Push",
+      "sublabel": "리포지토리에 저장",
+      "width": 118
+    },
+    {
+      "id": "eval",
+      "lane": "evaluate",
+      "col": 1,
+      "type": "backend",
+      "label": "Lifecycle Policy 평가",
+      "sublabel": "등록된 규칙 순회",
+      "width": 214
+    },
+    {
+      "id": "rule1",
+      "lane": "evaluate",
+      "col": 2,
+      "type": "backend",
+      "label": "규칙 1 매칭?",
+      "sublabel": "예: SemVer 태그 패턴",
+      "tag": "rulePriority 1",
+      "width": 124
+    },
+    {
+      "id": "rule2",
+      "lane": "evaluate",
+      "col": 3,
+      "type": "backend",
+      "label": "규칙 2 매칭?",
+      "sublabel": "예: dev / stage 태그",
+      "tag": "rulePriority 2",
+      "width": 124
+    },
+    {
+      "id": "ruleN",
+      "lane": "evaluate",
+      "col": 4,
+      "type": "backend",
+      "label": "규칙 N 매칭?",
+      "sublabel": "tagStatus: untagged",
+      "tag": "rulePriority N",
+      "width": 124
+    },
+    {
+      "id": "keep",
+      "lane": "evaluate",
+      "col": 5,
+      "type": "external",
+      "label": "보존",
+      "sublabel": "이미지 유지",
+      "width": 128
+    },
+    {
+      "id": "apply",
+      "lane": "action",
+      "col": 4,
+      "type": "security",
+      "label": "매칭 규칙 적용",
+      "sublabel": "첫 번째 매칭 규칙만",
+      "width": 152
+    },
+    {
+      "id": "threshold",
+      "lane": "action",
+      "col": 5,
+      "type": "security",
+      "label": "보존 기준 초과?",
+      "sublabel": "countType · countNumber",
+      "width": 176
+    },
+    {
+      "id": "expire",
+      "lane": "result",
+      "col": 5,
+      "type": "external",
+      "label": "삭제",
+      "sublabel": "action: expire",
+      "width": 128
+    }
+  ],
+  "edges": [
+    {
+      "id": "push-eval",
+      "from": "push",
+      "to": "eval"
+    },
+    {
+      "id": "eval-rule1",
+      "from": "eval",
+      "to": "rule1"
+    },
+    {
+      "id": "rule1-rule2",
+      "from": "rule1",
+      "to": "rule2",
+      "label": "불일치"
+    },
+    {
+      "id": "rule2-ruleN",
+      "from": "rule2",
+      "to": "ruleN",
+      "label": "불일치"
+    },
+    {
+      "id": "ruleN-keep",
+      "from": "ruleN",
+      "to": "keep",
+      "label": "불일치",
+      "role": "branch"
+    },
+    {
+      "id": "rule1-apply",
+      "from": "rule1",
+      "to": "apply",
+      "label": "매칭",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rule2-apply",
+      "from": "rule2",
+      "to": "apply",
+      "label": "매칭",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "id": "ruleN-apply",
+      "from": "ruleN",
+      "to": "apply",
+      "variant": "emphasis",
+      "role": "branch",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "apply-threshold",
+      "from": "apply",
+      "to": "threshold"
+    },
+    {
+      "id": "threshold-expire",
+      "from": "threshold",
+      "to": "expire",
+      "label": "초과",
+      "variant": "security"
+    },
+    {
+      "id": "threshold-keep",
+      "from": "threshold",
+      "to": "keep",
+      "label": "기준 이내",
+      "role": "branch"
+    }
+  ]
+}

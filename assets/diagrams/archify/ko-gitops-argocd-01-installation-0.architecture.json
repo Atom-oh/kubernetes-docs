@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArgoCD HA 아키텍처",
+    "output": "ko-gitops-argocd-01-installation-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "UI / API 요청 경로",
+        "focus": [
+          "alb",
+          "api",
+          "redis-master"
+        ],
+        "note": "로드밸런서가 여러 API Server 레플리카로 요청을 분산하고, API Server는 상태를 Redis에 캐시한다."
+      },
+      {
+        "id": "reconcile-path",
+        "label": "컨트롤러와 Repo Server",
+        "focus": [
+          "ctrl-leader",
+          "ctrl-standby",
+          "repo",
+          "redis-master"
+        ],
+        "note": "리더 Application Controller가 Repo Server에서 매니페스트를 받아 비교하고 결과를 Redis에 캐시한다."
+      },
+      {
+        "id": "redis-ha",
+        "label": "Redis HA",
+        "focus": [
+          "redis-master",
+          "redis-replica",
+          "sentinel"
+        ],
+        "note": "Master 1개, Replica 2개, Sentinel 3개로 구성되며 Sentinel이 장애를 감지해 자동 페일오버한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "ALB / Ingress",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "argocd-server · 레플리카 2개 이상",
+      "pos": [
+        330,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ctrl-standby",
+      "type": "backend",
+      "label": "Application Controller 2",
+      "sublabel": "스탠바이",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ctrl-leader",
+      "type": "backend",
+      "label": "Application Controller 1",
+      "sublabel": "리더 (활성)",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "tag": "Leader"
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repo Server",
+      "sublabel": "argocd-repo-server · 레플리카 2개 이상",
+      "pos": [
+        940,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "redis-master",
+      "type": "database",
+      "label": "Redis Master",
+      "sublabel": "단일 writer",
+      "pos": [
+        620,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "redis-replica",
+      "type": "database",
+      "label": "Redis Replica ×2",
+      "sublabel": "Master에서 복제",
+      "pos": [
+        620,
+        640
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "sentinel",
+      "type": "security",
+      "label": "Sentinel ×3",
+      "sublabel": "장애 감지 · 자동 페일오버",
+      "pos": [
+        940,
+        640
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ArgoCD HA (argocd 네임스페이스)",
+      "wraps": [
+        "api",
+        "ctrl-standby",
+        "ctrl-leader",
+        "repo",
+        "redis-master",
+        "redis-replica",
+        "sentinel"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Application Controllers (리더 선출)",
+      "wraps": [
+        "ctrl-standby",
+        "ctrl-leader"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Redis HA",
+      "wraps": [
+        "redis-master",
+        "redis-replica",
+        "sentinel"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "alb-to-api",
+      "from": "alb",
+      "to": "api",
+      "label": "HTTPS 분산",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-redis",
+      "from": "api",
+      "to": "redis-master",
+      "label": "캐시 저장"
+    },
+    {
+      "id": "ctrl-to-repo",
+      "from": "ctrl-leader",
+      "to": "repo",
+      "label": "매니페스트 요청"
+    },
+    {
+      "id": "ctrl-to-redis",
+      "from": "ctrl-leader",
+      "to": "redis-master",
+      "label": "앱 상태 캐시",
+      "labelAt": [
+        725,
+        372
+      ]
+    },
+    {
+      "id": "repo-to-redis",
+      "from": "repo",
+      "to": "redis-master",
+      "label": "매니페스트 캐시"
+    },
+    {
+      "id": "master-to-replica",
+      "from": "redis-master",
+      "to": "redis-replica",
+      "label": "복제",
+      "labelAt": [
+        725,
+        592
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Application Controller",
+      "items": [
+        "리더 선출 방식으로 동작하며 ARGOCD_CONTROLLER_REPLICAS로 레플리카 수를 지정한다",
+        "대규모 클러스터는 controller.sharding.algorithm: round-robin으로 샤딩한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Repo Server",
+      "items": [
+        "매니페스트 생성을 담당하므로 레플리카를 늘려 스케일 아웃한다",
+        "ARGOCD_REPO_SERVER_PARALLELISM_LIMIT로 병렬 생성 수를 제한한다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Redis HA",
+      "items": [
+        "redis-ha 서브차트: redis 3 · sentinel 3 · haproxy 3 레플리카",
+        "단일 Redis(redis.enabled: false)를 끄고 HA 구성으로 대체한다"
+      ]
+    }
+  ]
+}

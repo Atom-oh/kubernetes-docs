@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluxCD HelmRelease + Flagger Canary Workflow",
+    "locale": "en",
+    "output": "en-gitops-04-flagger-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Declared state in Git"
+        },
+        "backend": {
+          "label": "Controllers / workloads"
+        },
+        "frontend": {
+          "label": "Traffic routing"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gitops-path",
+        "label": "GitOps delivery path",
+        "focus": [
+          "helmrelease",
+          "source-controller",
+          "helm-controller",
+          "deployment"
+        ],
+        "note": "FluxCD fetches the HelmRelease from Git and applies it as a Deployment."
+      },
+      {
+        "id": "progressive-delivery",
+        "label": "Flagger progressive delivery",
+        "focus": [
+          "canary-crd",
+          "flagger",
+          "deployment",
+          "primary-service",
+          "canary-service",
+          "service-mesh"
+        ],
+        "note": "Flagger watches the Canary CRD and controls the primary/canary Services and mesh routing."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "helmrelease",
+      "type": "external",
+      "label": "HelmRelease YAML",
+      "sublabel": "includes canary values",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "source-controller",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "fetches HelmRepository",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "helm-controller",
+      "type": "backend",
+      "label": "Helm Controller",
+      "sublabel": "reconciles HelmRelease",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "canary-crd",
+      "type": "backend",
+      "label": "Canary CRD",
+      "sublabel": "targets the Deployment",
+      "pos": [
+        560,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger",
+      "sublabel": "progressive delivery controller",
+      "pos": [
+        560,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "deployment",
+      "type": "backend",
+      "label": "Deployment",
+      "sublabel": "created from the Helm chart",
+      "pos": [
+        560,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "primary-service",
+      "type": "frontend",
+      "label": "Primary Service",
+      "sublabel": "stable-version traffic",
+      "pos": [
+        840,
+        90
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "canary-service",
+      "type": "frontend",
+      "label": "Canary Service",
+      "sublabel": "new-version traffic",
+      "pos": [
+        840,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-mesh",
+      "type": "frontend",
+      "label": "Service Mesh",
+      "sublabel": "shifts traffic weight",
+      "pos": [
+        840,
+        410
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Git Repository",
+      "wraps": [
+        "helmrelease"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "FluxCD",
+      "wraps": [
+        "source-controller",
+        "helm-controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "canary-crd",
+        "flagger",
+        "deployment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Progressive Delivery",
+      "wraps": [
+        "primary-service",
+        "canary-service",
+        "service-mesh"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hr-to-source",
+      "from": "helmrelease",
+      "to": "source-controller",
+      "label": "Git sync",
+      "variant": "emphasis"
+    },
+    {
+      "id": "source-to-helm",
+      "from": "source-controller",
+      "to": "helm-controller",
+      "label": "chart artifact",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "helm-to-deployment",
+      "from": "helm-controller",
+      "to": "deployment",
+      "label": "apply release",
+      "variant": "emphasis"
+    },
+    {
+      "id": "crd-to-flagger",
+      "from": "canary-crd",
+      "to": "flagger",
+      "label": "watches",
+      "labelDy": 24
+    },
+    {
+      "id": "flagger-to-deployment",
+      "from": "flagger",
+      "to": "deployment",
+      "label": "clones primary · controls",
+      "labelDy": 24
+    },
+    {
+      "id": "flagger-to-primary",
+      "from": "flagger",
+      "to": "primary-service"
+    },
+    {
+      "id": "flagger-to-canary",
+      "from": "flagger",
+      "to": "canary-service"
+    },
+    {
+      "id": "flagger-to-mesh",
+      "from": "flagger",
+      "to": "service-mesh",
+      "label": "weighted routing"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Managed by Flux",
+      "items": [
+        "Flagger itself is installed as a HelmRelease in the flagger-system namespace",
+        "The application HelmRelease creates and updates the Deployment"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Managed by Flagger",
+      "items": [
+        "The Canary CRD names the target Deployment and its analysis conditions",
+        "Adjusts primary/canary Services and mesh routing (meshProvider: istio)"
+      ]
+    }
+  ]
+}

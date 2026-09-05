@@ -20,7 +20,9 @@
 
 동기화(Sync)는 Git 저장소의 원하는 상태(Desired State)를 Kubernetes 클러스터의 실제 상태(Live State)와 일치시키는 과정입니다.
 
-![ArgoCD가 Git 저장소의 원하는 상태와 Kubernetes 클러스터의 실제 상태를 지속적으로 비교하고, 차이(OutOfSync)가 발견되면 변경을 적용해 실제 상태를 원하는 상태로 되돌리는 순환 구조를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-0.svg)
+![ArgoCD가 Git 저장소의 원하는 상태와 Kubernetes 클러스터의 실제 상태를 지속적으로 비교하고, 차이(OutOfSync)가 발견되면 변경을 적용해 실제 상태를 원하는 상태로 되돌리는 순환 구조를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-03-sync-strategies-0.html)
 
 ### 동기화 상태
 
@@ -130,7 +132,9 @@ syncPolicy:
 
 **동작 예시:**
 
-![Git에서 deployment-A가 삭제되면 ArgoCD가 변경을 감지하고 prune 옵션이 켜져 있음을 확인한 뒤 Kubernetes 클러스터에서 해당 리소스를 실제로 삭제하는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-1.svg)
+![Git에서 deployment-A가 삭제되면 ArgoCD가 변경을 감지하고 prune 옵션이 켜져 있음을 확인한 뒤 Kubernetes 클러스터에서 해당 리소스를 실제로 삭제하는 흐름을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-03-sync-strategies-1.html)
 
 ### selfHeal
 
@@ -632,7 +636,9 @@ spec:
 
 ### 동기화 윈도우 동작
 
-![동기화 요청이 들어오면 Allow 윈도우가 활성인지 먼저 확인해 동기화를 실행하고, 아니면 Deny 윈도우가 활성인지 확인해 활성이면 동기화를 차단하고 그렇지 않으면 기본 허용으로 동기화를 실행하는 판정 순서를 보여준다.](../../../assets/diagrams/rendered/ko-gitops-argocd-03-sync-strategies-4.svg)
+![동기화 요청이 들어오면 AppProject의 syncWindows를 조회해 먼저 Deny 윈도우가 활성인지 판정하고, 활성이면 동기화를 차단한다. 활성이 아니면 Allow 윈도우 활성 여부를 확인해 활성이면 동기화를 실행하고, 활성 윈도우가 하나도 없으면 기본 허용으로 동기화를 실행하는 판정 순서를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-03-sync-strategies-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-03-sync-strategies-4.html)
 
 ### 윈도우 우선순위
 

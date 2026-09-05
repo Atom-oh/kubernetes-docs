@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubescape 지속적 스캔 아키텍처",
+    "output": "ko-security-11-kubescape-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "scan-pipeline",
+        "label": "스케줄 스캔 파이프라인",
+        "focus": [
+          "cron",
+          "ctrl",
+          "config",
+          "vuln",
+          "rbac",
+          "targets"
+        ],
+        "note": "CronJob이 Operator Controller를 깨우고, Controller가 세 스캐너를 실행해 클러스터 리소스를 검사한다."
+      },
+      {
+        "id": "results-baseline",
+        "label": "결과 저장과 Baseline 비교",
+        "focus": [
+          "ctrl",
+          "crd",
+          "baseline"
+        ],
+        "note": "Operator Controller가 스캔 결과를 CRD로 저장하고, Baseline과 비교해 변경을 탐지한다."
+      },
+      {
+        "id": "runtime-external",
+        "label": "런타임 탐지와 외부 연동",
+        "focus": [
+          "nodeagent",
+          "ctrl",
+          "crd",
+          "cloud",
+          "alert",
+          "siem"
+        ],
+        "note": "Node Agent의 eBPF 이벤트가 Controller로 모이고, 변경 탐지 결과는 Alerting과 SIEM/SOAR, Kubescape Cloud로 전달된다."
+      }
+    ],
+    "viewBox": [
+      1160,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "cron",
+      "type": "backend",
+      "label": "CronJob Trigger",
+      "sublabel": "스케줄 트리거",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Operator Controller",
+      "sublabel": "스캔 조정 · CRD 관리",
+      "pos": [
+        280,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "nodeagent",
+      "type": "security",
+      "label": "Node Agent",
+      "sublabel": "DaemonSet · eBPF 런타임 탐지",
+      "pos": [
+        280,
+        50
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "config",
+      "type": "security",
+      "label": "Configuration Scanner",
+      "sublabel": "구성 점검",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "vuln",
+      "type": "security",
+      "label": "Vulnerability Scanner",
+      "sublabel": "Kubevuln · 이미지 취약점",
+      "pos": [
+        280,
+        370
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "security",
+      "label": "RBAC Scanner",
+      "sublabel": "권한 분석",
+      "pos": [
+        510,
+        370
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "targets",
+      "type": "backend",
+      "label": "스캔 대상",
+      "sublabel": "Deployments · Pods · Services · Secrets · ServiceAccounts",
+      "pos": [
+        190,
+        530
+      ],
+      "size": [
+        370,
+        64
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "database",
+      "label": "Baseline",
+      "sublabel": "비교 기준선",
+      "pos": [
+        580,
+        50
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "crd",
+      "type": "database",
+      "label": "Scan Results CRDs",
+      "sublabel": "스캔 결과 저장",
+      "pos": [
+        580,
+        210
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "Kubescape Cloud",
+      "sublabel": "중앙 대시보드",
+      "pos": [
+        940,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "alert",
+      "type": "external",
+      "label": "Alerting",
+      "sublabel": "변경 탐지 알림",
+      "pos": [
+        940,
+        370
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "siem",
+      "type": "external",
+      "label": "SIEM / SOAR",
+      "sublabel": "보안 운영 연계",
+      "pos": [
+        940,
+        530
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "cron",
+        "ctrl",
+        "nodeagent",
+        "config",
+        "vuln",
+        "rbac",
+        "targets",
+        "baseline",
+        "crd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부 연동",
+      "wraps": [
+        "cloud",
+        "alert",
+        "siem"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cron-to-ctrl",
+      "from": "cron",
+      "to": "ctrl",
+      "label": "스케줄 트리거",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ctrl-to-config",
+      "from": "ctrl",
+      "to": "config"
+    },
+    {
+      "id": "ctrl-to-vuln",
+      "from": "ctrl",
+      "to": "vuln",
+      "label": "스캔 실행",
+      "labelDy": 24
+    },
+    {
+      "id": "ctrl-to-rbac",
+      "from": "ctrl",
+      "to": "rbac"
+    },
+    {
+      "id": "nodeagent-to-ctrl",
+      "from": "nodeagent",
+      "to": "ctrl",
+      "label": "eBPF 이벤트",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-to-crd",
+      "from": "ctrl",
+      "to": "crd",
+      "label": "스캔 결과 CRD 저장",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "config-to-targets",
+      "from": "config",
+      "to": "targets",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "vuln-to-targets",
+      "from": "vuln",
+      "to": "targets"
+    },
+    {
+      "id": "rbac-to-targets",
+      "from": "rbac",
+      "to": "targets",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "baseline-to-crd",
+      "from": "baseline",
+      "to": "crd",
+      "label": "비교",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "crd-to-cloud",
+      "from": "crd",
+      "to": "cloud",
+      "label": "결과 게시"
+    },
+    {
+      "id": "crd-to-alert",
+      "from": "crd",
+      "to": "alert",
+      "label": "변경 탐지",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alert-to-siem",
+      "from": "alert",
+      "to": "siem"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "스캐너별 스캔 대상",
+      "items": [
+        "Configuration Scanner: Deployments · Pods · Services",
+        "Vulnerability Scanner: Pods의 컨테이너 이미지",
+        "RBAC Scanner: ServiceAccounts · Secrets"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Operator 컴포넌트 리소스",
+      "items": [
+        "Operator 256Mi / 200m — 스캔 조정, CRD 관리",
+        "Kubevuln 512Mi / 500m — 이미지 취약점 스캔",
+        "Node Agent 500Mi / 500m per node — eBPF 런타임 탐지",
+        "Storage 1Gi PVC, Gateway 128Mi / 100m — Cloud 연동, API"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "스캔 스케줄 (ConfigMap)",
+      "items": [
+        "scanSchedule 0 */6 * * * — 6시간마다 구성 스캔",
+        "vulnerabilityScanSchedule 0 2 * * * — 매일 02:00 취약점 스캔",
+        "frameworks nsa, mitre · severityThreshold medium · continuousScanning true"
+      ]
+    }
+  ]
+}

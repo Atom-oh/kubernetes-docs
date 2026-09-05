@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "istio-csr 아키텍처",
+    "output": "ko-security-10-cert-manager-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "csr-path",
+        "label": "1-2. CSR 요청",
+        "focus": [
+          "envoy",
+          "csr-agent",
+          "cm-controller",
+          "cert-request"
+        ],
+        "note": "Envoy 사이드카가 istio-csr에 CSR을 보내면 istio-csr가 cert-manager에 CertificateRequest를 생성한다."
+      },
+      {
+        "id": "issue-path",
+        "label": "3-4. 발급",
+        "focus": [
+          "cert-request",
+          "cluster-issuer",
+          "ca-backend",
+          "svid"
+        ],
+        "note": "CertificateRequest는 ClusterIssuer(istio-ca)를 거쳐 외부 PKI에서 서명되어 SPIFFE SVID 인증서가 된다."
+      },
+      {
+        "id": "return-path",
+        "label": "5. 반환과 mTLS",
+        "focus": [
+          "svid",
+          "envoy",
+          "app"
+        ],
+        "note": "발급된 SVID가 Envoy로 돌아오고, Envoy가 이 인증서로 워크로드 간 mTLS를 맺는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "sublabel": "앱 컨테이너",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "워크로드 프록시",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "csr-agent",
+      "type": "backend",
+      "label": "istio-csr Agent",
+      "sublabel": "gRPC CA 서버",
+      "pos": [
+        280,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cm-controller",
+      "type": "backend",
+      "label": "cert-manager Controller",
+      "sublabel": "CertificateRequest 처리",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cert-request",
+      "type": "backend",
+      "label": "CertificateRequest",
+      "sublabel": "cert-manager.io/v1",
+      "pos": [
+        610,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cluster-issuer",
+      "type": "security",
+      "label": "ClusterIssuer",
+      "sublabel": "istio-ca",
+      "pos": [
+        890,
+        400
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ca-backend",
+      "type": "external",
+      "label": "외부 PKI",
+      "sublabel": "CA / Vault PKI / AWS PCA",
+      "pos": [
+        1120,
+        400
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svid",
+      "type": "security",
+      "label": "SVID 인증서",
+      "sublabel": "spiffe://cluster.local/ns/.../sa/...",
+      "pos": [
+        890,
+        60
+      ],
+      "size": [
+        250,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "워크로드 Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "istio-csr",
+      "wraps": [
+        "csr-agent"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "cert-manager",
+      "wraps": [
+        "cm-controller",
+        "cert-request"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "발급자",
+      "wraps": [
+        "cluster-issuer",
+        "ca-backend"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "envoy-to-csr",
+      "from": "envoy",
+      "to": "csr-agent",
+      "label": "1. CSR 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "csr-to-cm",
+      "from": "csr-agent",
+      "to": "cm-controller",
+      "label": "2. CertificateRequest 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cm-to-cr",
+      "from": "cm-controller",
+      "to": "cert-request",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cr-to-issuer",
+      "from": "cert-request",
+      "to": "cluster-issuer",
+      "label": "3. 발급 요청",
+      "variant": "emphasis",
+      "labelDy": 54
+    },
+    {
+      "id": "issuer-to-ca",
+      "from": "cluster-issuer",
+      "to": "ca-backend",
+      "label": "서명"
+    },
+    {
+      "id": "ca-to-svid",
+      "from": "ca-backend",
+      "to": "svid",
+      "label": "4. SVID 발급",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "svid-to-envoy",
+      "from": "svid",
+      "to": "envoy",
+      "label": "5. 인증서 반환",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-to-app",
+      "from": "envoy",
+      "to": "app",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ]
+}

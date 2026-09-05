@@ -19,7 +19,9 @@
 
 ### 모노레포 vs 폴리레포
 
-![모노레포는 하나의 저장소 안에 app-a, app-b, infra 디렉터리가 함께 들어있고, 폴리레포는 같은 구성 요소가 서로 독립된 세 개의 저장소로 분리되어 있음을 비교하는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-09-best-practices-0.svg)
+![모노레포는 하나의 Git 저장소 안에 app-a, app-b, infra 디렉터리가 함께 들어있고, 폴리레포는 같은 구성 요소를 app-a-repo, app-b-repo, infra-repo라는 독립된 세 개의 Git 저장소로 분리한 구조를 비교해 보여준다.](../../.gitbook/assets/ko-gitops-argocd-09-best-practices-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-09-best-practices-0.html)
 
 | 방식 | 장점 | 단점 |
 |------|------|------|

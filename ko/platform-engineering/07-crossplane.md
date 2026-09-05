@@ -684,7 +684,9 @@ spec:
 
 Composition은 Crossplane의 가장 강력한 기능입니다. 플랫폼 엔지니어가 복잡한 인프라를 **단순한 API**로 추상화하여, 개발자가 클라우드 리소스의 세부 사항을 몰라도 인프라를 프로비저닝할 수 있게 합니다.
 
-![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 원하는 Composition을 참조해 서로 다른 사양의 리소스 묶음이 자동 생성되는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-2.svg)
+![플랫폼 팀이 정의한 하나의 XRD 아래 dev/prod 두 Composition을 두고, 개발팀의 각 Claim이 compositionRef로 원하는 Composition을 참조해 RDS Instance, SecurityGroup, SubnetGroup 등 서로 다른 사양의 리소스 묶음이 자동 생성되는 아키텍처 다이어그램.](../.gitbook/assets/ko-platform-engineering-07-crossplane-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-2.html)
 
 ### CompositeResourceDefinition (XRD) 정의
 
@@ -1108,7 +1110,9 @@ spec:
 
 Claim은 Crossplane의 **셀프서비스 인터페이스**입니다. 개발자는 자신의 네임스페이스에서 Claim을 생성하여 인프라를 요청하며, 플랫폼 팀이 정의한 Composition에 따라 실제 클라우드 리소스가 프로비저닝됩니다.
 
-![개발자가 database-claim.yaml을 적용하면 Crossplane이 Composite Resource를 만들고 Composition을 조회해 AWS에 SecurityGroup·SubnetGroup·RDS Instance를 순서대로 생성한 뒤 Connection Secret과 Ready 상태를 돌려주는 순서도.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-3.svg)
+![개발자가 database-claim.yaml을 적용하면 Crossplane이 Composite Resource를 만들고 Composition을 조회해 AWS에 SecurityGroup·SubnetGroup·RDS Instance를 순서대로 생성한 뒤 Connection Secret과 Ready 상태를 돌려주고 이후 드리프트를 감지해 자동 복원하는 순서를 보여준다.](../.gitbook/assets/ko-platform-engineering-07-crossplane-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-3.html)
 
 ### 데이터베이스 Claim 예제
 
@@ -1321,7 +1325,9 @@ ACK과 Crossplane은 동일 클러스터에서 공존할 수 있습니다. 단, 
 
 [Backstage IDP](./06-backstage-idp.md)와 Crossplane을 통합하면, 개발자가 Backstage UI에서 버튼 클릭만으로 데이터베이스, 캐시, 메시지 큐 등의 인프라를 셀프서비스로 프로비저닝할 수 있습니다.
 
-![개발자가 Backstage 폼에 입력하면 Scaffolder가 Claim YAML을 Git에 커밋하고 ArgoCD가 이를 클러스터에 적용해 Crossplane이 Composite Resource와 Managed Resource를 거쳐 RDS·S3·SecurityGroup을 프로비저닝하는 셀프서비스 흐름을 보여주는 아키텍처 다이어그램.](../../assets/diagrams/rendered/ko-platform-engineering-07-crossplane-4.svg)
+![개발자가 Backstage 폼에 입력하면 Scaffolder가 Claim YAML을 Git에 푸시하고 ArgoCD가 이를 클러스터에 적용해 Crossplane이 Composite Resource와 Managed Resource를 거쳐 RDS·S3·SecurityGroup을 프로비저닝하는 셀프서비스 흐름을 보여준다.](../.gitbook/assets/ko-platform-engineering-07-crossplane-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-4.html)
 
 ### Backstage Template에서 Crossplane Claim 생성
 

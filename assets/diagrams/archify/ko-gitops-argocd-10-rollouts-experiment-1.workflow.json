@@ -1,0 +1,174 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "결과 전파와 Rollout 상태 전이",
+    "output": "public/archmaps/ko-gitops-argocd-10-rollouts-experiment-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "AnalysisRun 판정 · Experiment 성공"
+        },
+        "security": {
+          "label": "실패 · Rollout 중단"
+        },
+        "cloud": {
+          "label": "Rollout 진행"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "success-path",
+        "label": "Successful 경로",
+        "focus": [
+          "analysisRun",
+          "expSuccess",
+          "nextStep"
+        ],
+        "note": "duration 경과와 분석 성공이 모두 충족되면 Experiment가 Successful이 되고 Rollout이 다음 step으로 진행합니다."
+      },
+      {
+        "id": "failure-path",
+        "label": "실패 경로",
+        "focus": [
+          "analysisRun",
+          "expFailed",
+          "degraded"
+        ],
+        "note": "Failed·Inconclusive·Error면 Experiment가 실패하고 Rollout이 abort되어 Degraded 상태로 남습니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "analysis",
+      "label": "AnalysisRun 판정"
+    },
+    {
+      "id": "proceed",
+      "label": "Experiment 성공 → Rollout 진행"
+    },
+    {
+      "id": "abort",
+      "label": "Experiment 실패 → Rollout 중단",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "analysisRun",
+    "expSuccess",
+    "nextStep"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "analysisRun"
+    ],
+    "allowedTerminals": [
+      "nextStep",
+      "degraded"
+    ],
+    "requiredPaths": [
+      {
+        "from": "analysisRun",
+        "to": "nextStep"
+      },
+      {
+        "from": "analysisRun",
+        "to": "degraded"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "analysisRun",
+      "lane": "analysis",
+      "col": 0,
+      "type": "backend",
+      "label": "AnalysisRun 최종 상태",
+      "sublabel": "limit 필드로 판정",
+      "tag": "판정",
+      "width": 212
+    },
+    {
+      "id": "expSuccess",
+      "lane": "proceed",
+      "col": 2,
+      "type": "backend",
+      "label": "Experiment Successful",
+      "sublabel": "duration 경과 + 분석 성공",
+      "width": 196
+    },
+    {
+      "id": "nextStep",
+      "lane": "proceed",
+      "col": 4,
+      "type": "cloud",
+      "label": "Rollout 다음 step 진행",
+      "sublabel": "예: setWeight 20",
+      "tag": "진행",
+      "width": 244
+    },
+    {
+      "id": "expFailed",
+      "lane": "abort",
+      "col": 2,
+      "type": "security",
+      "label": "Experiment Failed",
+      "sublabel": "Rollout abort",
+      "width": 196
+    },
+    {
+      "id": "degraded",
+      "lane": "abort",
+      "col": 4,
+      "type": "security",
+      "label": "Rollout Degraded",
+      "sublabel": "stable 버전 유지",
+      "tag": "중단",
+      "width": 244
+    }
+  ],
+  "edges": [
+    {
+      "from": "analysisRun",
+      "to": "expSuccess",
+      "label": "Successful",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "expSuccess",
+      "to": "nextStep",
+      "label": "성공 보고",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "analysisRun",
+      "to": "expFailed",
+      "label": "Failed / Inconclusive / Error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "expFailed",
+      "to": "degraded",
+      "label": "abort",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "어느 쪽이든 완료 시",
+      "items": [
+        "Experiment의 ReplicaSet은 0으로 스케일 다운",
+        "service 속성으로 만든 Service도 함께 정리"
+      ]
+    }
+  ]
+}

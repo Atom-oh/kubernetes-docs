@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "KEDA 복합 트리거 동작",
+    "output": "ko-ops-12-event-capacity-planning-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      460
+    ],
+    "views": [
+      {
+        "id": "triggers",
+        "label": "세 트리거",
+        "focus": [
+          "cron",
+          "prometheus",
+          "sqs",
+          "max"
+        ],
+        "note": "Cron이 바닥(100 Pods)을 잡고, Prometheus 주문률과 SQS 큐 깊이가 각각 목표 replica 수를 산출한다."
+      },
+      {
+        "id": "apply",
+        "label": "MAX 적용",
+        "focus": [
+          "max",
+          "hpa",
+          "pods"
+        ],
+        "note": "세 값 중 최댓값 하나만 HPA의 desiredReplicas로 반영되어 실제 Pod 스케일링이 일어난다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cron",
+      "type": "external",
+      "label": "Cron 트리거",
+      "sublabel": "바닥: 100 Pods",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "external",
+      "label": "Prometheus 트리거",
+      "sublabel": "주문률 기반",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "sqs",
+      "type": "messagebus",
+      "label": "SQS 트리거",
+      "sublabel": "큐 깊이 기반",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "max",
+      "type": "backend",
+      "label": "MAX 선택",
+      "sublabel": "세 값 중 최댓값",
+      "pos": [
+        420,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "KEDA"
+    },
+    {
+      "id": "hpa",
+      "type": "backend",
+      "label": "HPA 적용",
+      "sublabel": "desiredReplicas",
+      "pos": [
+        700,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "backend",
+      "label": "Pod 스케일링",
+      "sublabel": "최종 결과",
+      "pos": [
+        980,
+        190
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ScaledObject triggers",
+      "wraps": [
+        "cron",
+        "prometheus",
+        "sqs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cron-to-max",
+      "from": "cron",
+      "to": "max",
+      "label": "100"
+    },
+    {
+      "id": "prometheus-to-max",
+      "from": "prometheus",
+      "to": "max",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sqs-to-max",
+      "from": "sqs",
+      "to": "max"
+    },
+    {
+      "id": "max-to-hpa",
+      "from": "max",
+      "to": "hpa",
+      "label": "선택값 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hpa-to-pods",
+      "from": "hpa",
+      "to": "pods",
+      "label": "replicas 반영",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "선택 규칙",
+      "items": [
+        "KEDA는 복수 트리거 중 가장 높은 replica 수를 선택한다",
+        "Cron이 100, Prometheus가 150을 요구하면 150이 적용된다"
+      ]
+    }
+  ]
+}

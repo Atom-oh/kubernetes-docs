@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-Cluster Flagger",
+    "output": "ko-gitops-04-flagger-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "GitOps 소스"
+        },
+        "backend": {
+          "label": "컨트롤러"
+        },
+        "frontend": {
+          "label": "워크로드"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "gitops-source",
+        "label": "단일 Git 소스",
+        "focus": [
+          "git",
+          "flux"
+        ],
+        "note": "관리 클러스터의 FluxCD가 하나의 Git 저장소를 기준으로 모든 클러스터에 배포를 전파한다."
+      },
+      {
+        "id": "per-cluster-canary",
+        "label": "클러스터별 카나리",
+        "focus": [
+          "flagger-a",
+          "app-a",
+          "flagger-b",
+          "app-b",
+          "flagger-s",
+          "app-s"
+        ],
+        "note": "각 클러스터의 Flagger는 로컬 리소스만 관리하며 승격/롤백을 독립적으로 수행한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "단일 진실 공급원",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "FluxCD",
+      "sublabel": "Kustomization 동기화",
+      "pos": [
+        60,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "flagger-a",
+      "type": "backend",
+      "label": "Flagger A",
+      "sublabel": "카나리 분석",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "frontend",
+      "label": "App Primary / Canary",
+      "sublabel": "interval 2m · stepWeight 5",
+      "pos": [
+        680,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "flagger-b",
+      "type": "backend",
+      "label": "Flagger B",
+      "sublabel": "카나리 분석",
+      "pos": [
+        440,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "frontend",
+      "label": "App Primary / Canary",
+      "sublabel": "클러스터별 오버레이",
+      "pos": [
+        680,
+        260
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "flagger-s",
+      "type": "backend",
+      "label": "Flagger S",
+      "sublabel": "카나리 분석",
+      "pos": [
+        440,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app-s",
+      "type": "frontend",
+      "label": "App Primary / Canary",
+      "sublabel": "스테이징 설정",
+      "pos": [
+        680,
+        460
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "관리 클러스터",
+      "wraps": [
+        "flux"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Production A · ap-northeast-2",
+      "wraps": [
+        "flagger-a",
+        "app-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Production B · us-west-2",
+      "wraps": [
+        "flagger-b",
+        "app-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Staging",
+      "wraps": [
+        "flagger-s",
+        "app-s"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-to-flux",
+      "from": "git",
+      "to": "flux",
+      "label": "Git 동기화",
+      "variant": "emphasis",
+      "labelAt": [
+        205,
+        210
+      ]
+    },
+    {
+      "id": "flux-to-a",
+      "from": "flux",
+      "to": "flagger-a",
+      "label": "클러스터별 전파"
+    },
+    {
+      "id": "flux-to-b",
+      "from": "flux",
+      "to": "flagger-b"
+    },
+    {
+      "id": "flux-to-s",
+      "from": "flux",
+      "to": "flagger-s"
+    },
+    {
+      "id": "a-canary",
+      "from": "flagger-a",
+      "to": "app-a",
+      "label": "승격 / 롤백",
+      "labelDy": -24
+    },
+    {
+      "id": "b-canary",
+      "from": "flagger-b",
+      "to": "app-b"
+    },
+    {
+      "id": "s-canary",
+      "from": "flagger-s",
+      "to": "app-s"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "GitOps 배포 소스",
+      "items": [
+        "관리 클러스터의 FluxCD가 하나의 Git 저장소를 기준으로 모든 클러스터에 배포를 전파한다",
+        "클러스터별 kustomization.yaml 패치로 Canary의 interval, stepWeight, maxWeight를 분리한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "클러스터별 Flagger",
+      "items": [
+        "Flagger는 클러스터마다 독립 인스턴스로 배포되며 로컬 리소스만 관리한다",
+        "Primary / Canary 승격과 롤백은 클러스터별로 독립적으로 수행된다"
+      ]
+    }
+  ]
+}

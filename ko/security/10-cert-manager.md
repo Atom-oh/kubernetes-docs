@@ -57,7 +57,9 @@ cert-manager는 2022년 CNCF Graduated 프로젝트로 승격되었습니다. �
 
 ### 구성요소
 
-![cert-manager 컨트롤 플레인(컨트롤러·웹훅·CA 인젝터)이 Certificate·CertificateRequest·Issuer 커스텀 리소스를 관리하고, 외부 발급자와 통신해 인증서를 발급한 뒤 Kubernetes Secret에 저장하며 Ingress·Gateway가 이를 참조하는 전체 아키텍처를 보여준다.](../../assets/diagrams/rendered/ko-security-10-cert-manager-0.svg)
+![cert-manager 컨트롤 플레인(컨트롤러·웹훅·CA 인젝터)이 Certificate·CertificateRequest·Issuer 커스텀 리소스를 관리하고, 외부 발급자와 통신해 인증서를 발급한 뒤 Kubernetes Secret에 저장하며 Ingress·Gateway가 이를 참조하는 전체 아키텍처를 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-10-cert-manager-0.html)
 
 ### 구성요소 상세
 
@@ -189,7 +191,9 @@ kubectl api-resources --api-group=cert-manager.io
 
 ### 리소스 관계도
 
-![사용자가 정의한 Certificate와 Issuer/ClusterIssuer로부터 CertificateRequest, ACME Order, Challenge가 자동 생성되고 최종적으로 인증서가 Kubernetes Secret에 저장되는 리소스 관계를 보여준다.](../../assets/diagrams/rendered/ko-security-10-cert-manager-1.svg)
+![사용자가 정의한 Certificate와 Issuer/ClusterIssuer로부터 CertificateRequest, ACME Order, Challenge가 자동 생성되고 최종적으로 인증서가 Kubernetes Secret에 저장되는 리소스 관계를 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-10-cert-manager-1.html)
 
 ### Certificate
 
@@ -398,7 +402,9 @@ spec:
 
 #### 인증서 발급 흐름
 
-![사용자가 Certificate를 생성하면 cert-manager가 ACME Order·Authorization·Challenge를 거쳐 HTTP-01 또는 DNS-01 솔버로 도메인 소유권을 검증하고, Let's Encrypt가 인증서를 발급해 Secret에 저장하는 단계별 흐름을 보여준다.](../../assets/diagrams/rendered/ko-security-10-cert-manager-2.svg)
+![사용자가 Certificate를 생성하면 cert-manager가 ACME Order·Authorization·Challenge를 거쳐 HTTP-01 또는 DNS-01 솔버로 도메인 소유권을 검증하고, Let's Encrypt가 인증서를 발급해 Secret에 저장하는 단계별 흐름을 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-10-cert-manager-2.html)
 
 #### HTTP-01 솔버
 
@@ -870,7 +876,9 @@ istio-csr는 Istio의 워크로드 인증서를 cert-manager를 통해 발급합
 
 #### istio-csr 아키텍처
 
-![Envoy 사이드카가 istio-csr로 인증서 서명 요청을 보내면 cert-manager가 CertificateRequest를 생성해 발급자(CA/Vault/AWS PCA)에 요청하고, 발급된 SVID 인증서가 Envoy로 반환되어 애플리케이션과 mTLS를 맺는 흐름을 보여준다.](../../assets/diagrams/rendered/ko-security-10-cert-manager-3.svg)
+![Envoy 사이드카가 istio-csr로 인증서 서명 요청을 보내면 cert-manager가 CertificateRequest를 생성해 ClusterIssuer를 통해 발급자(CA/Vault/AWS PCA)에 서명을 요청하고, 발급된 SVID 인증서가 Envoy로 반환되어 애플리케이션과 mTLS를 맺는 흐름을 보여준다.](../.gitbook/assets/ko-security-10-cert-manager-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-10-cert-manager-3.html)
 
 #### istio-csr 설치
 

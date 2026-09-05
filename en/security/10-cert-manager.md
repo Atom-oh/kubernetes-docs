@@ -77,7 +77,9 @@ cert-manager is a **CNCF Graduated project**, indicating production-ready maturi
 
 cert-manager consists of three main components that work together to manage certificate lifecycles:
 
-![Architecture diagram showing the cert-manager control plane watching Certificate and Issuer custom resources, requesting signed certificates from an external CA, and writing the result into a TLS Secret that Ingress and Gateway resources reference.](../../assets/diagrams/rendered/en-security-10-cert-manager-0.svg)
+![Architecture diagram showing the cert-manager control plane watching Certificate and Issuer custom resources, requesting signed certificates from an external CA, and writing the result into a TLS Secret that Ingress and Gateway resources reference.](../.gitbook/assets/en-security-10-cert-manager-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-0.html)
 
 ### Component Responsibilities
 
@@ -89,7 +91,9 @@ cert-manager consists of three main components that work together to manage cert
 
 ### Certificate Issuance Flow
 
-![Flowchart showing cert-manager creating a CertificateRequest from a Certificate resource, branching into an ACME order-and-challenge sequence for ACME issuers or going straight to storage for non-ACME issuers, and finally writing the TLS Secret.](../../assets/diagrams/rendered/en-security-10-cert-manager-1.svg)
+![Resource map showing a user-defined Certificate referencing an Issuer or ClusterIssuer, cert-manager auto-creating a CertificateRequest plus an ACME Order and Challenge, and the issued certificate being stored in a TLS Secret.](../.gitbook/assets/en-security-10-cert-manager-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-1.html)
 
 ---
 
@@ -450,7 +454,9 @@ ACME (Automatic Certificate Management Environment) is used with Let's Encrypt a
 
 #### ACME Challenge Types
 
-![Flowchart showing cert-manager choosing between an HTTP-01 challenge when port 80 is reachable and a DNS-01 challenge for wildcard certificates or blocked ports, with the DNS-01 path also creating a Route 53 TXT record through an IRSA-authenticated pod before both paths verify and complete.](../../assets/diagrams/rendered/en-security-10-cert-manager-2.svg)
+![Workflow showing a user creating a Certificate, cert-manager driving the ACME Order, Authorization and Challenge, an HTTP-01 or DNS-01 solver proving domain ownership, and Let's Encrypt issuing a certificate that is stored in a Secret.](../.gitbook/assets/en-security-10-cert-manager-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-2.html)
 
 #### HTTP-01 Solver
 
@@ -906,7 +912,9 @@ The two approaches aren't mutually exclusive — for example, public-domain cert
 
 istio-csr is a cert-manager agent that integrates with Istio to provide workload certificates. It replaces the default istiod CA with certificates signed by cert-manager.
 
-![Sequence diagram showing an Envoy sidecar requesting a certificate from istio-csr, which forwards a CertificateRequest through cert-manager to a ClusterIssuer for signing, then returns the signed SPIFFE SVID so Envoy can enable mutual TLS.](../../assets/diagrams/rendered/en-security-10-cert-manager-3.svg)
+![Envoy sidecar sends a CSR to istio-csr, which creates a CertificateRequest in cert-manager; the ClusterIssuer has it signed by the external PKI (CA, Vault or AWS PCA) and the SPIFFE SVID returns to Envoy to establish mTLS with the application.](../.gitbook/assets/en-security-10-cert-manager-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-10-cert-manager-3.html)
 
 #### Installing istio-csr
 

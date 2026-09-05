@@ -1,0 +1,337 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Backstage + Crossplane 통합 아키텍처",
+    "output": "ko-platform-engineering-07-crossplane-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "self-service",
+        "label": "셀프서비스 요청",
+        "focus": [
+          "ui",
+          "tpl",
+          "scf"
+        ],
+        "note": "개발자가 Backstage 폼에 입력하면 Scaffolder가 Crossplane Claim YAML을 생성한다."
+      },
+      {
+        "id": "gitops",
+        "label": "GitOps 전달",
+        "focus": [
+          "scf",
+          "repo",
+          "argo",
+          "claim"
+        ],
+        "note": "Claim YAML은 Git에 푸시되고 ArgoCD가 클러스터에 적용한다."
+      },
+      {
+        "id": "provisioning",
+        "label": "Crossplane 프로비저닝",
+        "focus": [
+          "claim",
+          "xr",
+          "mr",
+          "rds",
+          "s3",
+          "sg"
+        ],
+        "note": "Claim이 Composite Resource와 Managed Resource를 거쳐 AWS 리소스로 프로비저닝된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Backstage UI",
+      "sublabel": "개발자 포털",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "tpl",
+      "type": "backend",
+      "label": "Software Template",
+      "sublabel": "폼 정의",
+      "pos": [
+        250,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "scf",
+      "type": "backend",
+      "label": "Scaffolder",
+      "sublabel": "Claim YAML 생성",
+      "pos": [
+        470,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "GitHub",
+      "pos": [
+        700,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "GitOps 컨트롤러",
+      "pos": [
+        910,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "claim",
+      "type": "backend",
+      "label": "Claim",
+      "sublabel": "Namespace-scoped",
+      "pos": [
+        910,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "xr",
+      "type": "backend",
+      "label": "Composite Resource",
+      "sublabel": "XR",
+      "pos": [
+        690,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "mr",
+      "type": "backend",
+      "label": "Managed Resources",
+      "sublabel": "Provider 리소스",
+      "pos": [
+        470,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rds",
+      "type": "database",
+      "label": "RDS",
+      "sublabel": "데이터베이스",
+      "pos": [
+        250,
+        520
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "버킷",
+      "pos": [
+        480,
+        520
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "sg",
+      "type": "security",
+      "label": "SecurityGroup",
+      "sublabel": "보안 그룹",
+      "pos": [
+        710,
+        520
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Backstage IDP",
+      "wraps": [
+        "ui",
+        "tpl",
+        "scf"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GitOps",
+      "wraps": [
+        "repo",
+        "argo"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Crossplane",
+      "wraps": [
+        "claim",
+        "xr",
+        "mr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "rds",
+        "s3",
+        "sg"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ui-tpl",
+      "from": "ui",
+      "to": "tpl",
+      "label": "1. 폼 입력",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "tpl-scf",
+      "from": "tpl",
+      "to": "scf",
+      "label": "2. Claim YAML 생성",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "scf-repo",
+      "from": "scf",
+      "to": "repo",
+      "label": "3. Git Push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "repo-argo",
+      "from": "repo",
+      "to": "argo",
+      "label": "4. Sync",
+      "variant": "emphasis"
+    },
+    {
+      "id": "argo-claim",
+      "from": "argo",
+      "to": "claim",
+      "label": "5. Apply",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 54
+    },
+    {
+      "id": "claim-xr",
+      "from": "claim",
+      "to": "xr",
+      "label": "6. XR 생성",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "xr-mr",
+      "from": "xr",
+      "to": "mr",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mr-rds",
+      "from": "mr",
+      "to": "rds",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "프로비저닝",
+      "labelDy": 54,
+      "labelDx": -75
+    },
+    {
+      "id": "mr-s3",
+      "from": "mr",
+      "to": "s3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mr-sg",
+      "from": "mr",
+      "to": "sg",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "셀프서비스",
+      "items": [
+        "개발자는 Backstage UI에서 폼 입력만으로 데이터베이스 등 인프라를 요청한다",
+        "Software Template이 입력값을 Crossplane Claim YAML로 변환한다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "GitOps + Crossplane",
+      "items": [
+        "Claim은 Git에 커밋되고 ArgoCD가 클러스터에 적용한다",
+        "Composition이 Claim을 RDS, S3, SecurityGroup 등 Managed Resource로 확장한다"
+      ]
+    }
+  ]
+}

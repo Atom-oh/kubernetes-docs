@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Backstage Software Catalog Entity Model",
+    "locale": "en",
+    "output": "en-platform-engineering-06-backstage-idp-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Domain / System"
+        },
+        "backend": {
+          "label": "Component"
+        },
+        "external": {
+          "label": "API"
+        },
+        "database": {
+          "label": "Resource (DB)"
+        },
+        "messagebus": {
+          "label": "Resource (Queue)"
+        },
+        "security": {
+          "label": "Group (Team)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "hierarchy",
+        "label": "Domain → System → Component",
+        "focus": [
+          "domain",
+          "order-system",
+          "payment-system",
+          "order-api",
+          "order-worker",
+          "payment-gateway"
+        ],
+        "note": "payments-domain groups two Systems, and each System contains its own Components."
+      },
+      {
+        "id": "ownership",
+        "label": "Ownership and membership",
+        "focus": [
+          "platform-team",
+          "backend-team",
+          "order-system",
+          "payment-system"
+        ],
+        "note": "A Group owns a System through the owns relation; Users (alice, bob) belong to a Group via memberOf."
+      },
+      {
+        "id": "api-resource",
+        "label": "APIs and Resources",
+        "focus": [
+          "order-api",
+          "order-worker",
+          "payment-gateway",
+          "order-rest-api",
+          "payment-grpc-api",
+          "order-db",
+          "payment-queue"
+        ],
+        "note": "Components provide/consume APIs and depend on Resources through dependsOn."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "platform-team",
+      "type": "security",
+      "label": "platform-team",
+      "sublabel": "Group · alice memberOf",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "domain",
+      "type": "cloud",
+      "label": "payments-domain",
+      "sublabel": "Domain",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "backend-team",
+      "type": "security",
+      "label": "backend-team",
+      "sublabel": "Group · bob memberOf",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order-system",
+      "type": "cloud",
+      "label": "order-system",
+      "sublabel": "System",
+      "pos": [
+        210,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "payment-system",
+      "type": "cloud",
+      "label": "payment-system",
+      "sublabel": "System",
+      "pos": [
+        660,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "order-worker",
+      "type": "backend",
+      "label": "order-worker",
+      "sublabel": "Component",
+      "pos": [
+        80,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order-api",
+      "type": "backend",
+      "label": "order-api",
+      "sublabel": "Component",
+      "pos": [
+        340,
+        330
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "payment-gateway",
+      "type": "backend",
+      "label": "payment-gateway",
+      "sublabel": "Component",
+      "pos": [
+        660,
+        330
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "payment-queue",
+      "type": "messagebus",
+      "label": "payment-queue",
+      "sublabel": "Resource",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order-rest-api",
+      "type": "external",
+      "label": "order-rest-api",
+      "sublabel": "API",
+      "pos": [
+        260,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order-db",
+      "type": "database",
+      "label": "order-db",
+      "sublabel": "Resource",
+      "pos": [
+        480,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "payment-grpc-api",
+      "type": "external",
+      "label": "payment-grpc-api",
+      "sublabel": "API",
+      "pos": [
+        700,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "domain-order",
+      "from": "domain",
+      "to": "order-system",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "domain-payment",
+      "from": "domain",
+      "to": "payment-system",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "platform-owns-order",
+      "from": "platform-team",
+      "to": "order-system",
+      "label": "owns",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "backend-owns-payment",
+      "from": "backend-team",
+      "to": "payment-system",
+      "label": "owns",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-system-worker",
+      "from": "order-system",
+      "to": "order-worker",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-system-api",
+      "from": "order-system",
+      "to": "order-api",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "payment-system-gateway",
+      "from": "payment-system",
+      "to": "payment-gateway",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-api-provides",
+      "from": "order-api",
+      "to": "order-rest-api",
+      "label": "provides",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gateway-provides",
+      "from": "payment-gateway",
+      "to": "payment-grpc-api",
+      "label": "provides",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-api-consumes",
+      "from": "order-api",
+      "to": "payment-grpc-api",
+      "label": "consumes",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "order-api-db",
+      "from": "order-api",
+      "to": "order-db",
+      "label": "dependsOn",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "worker-queue",
+      "from": "order-worker",
+      "to": "payment-queue",
+      "label": "dependsOn",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

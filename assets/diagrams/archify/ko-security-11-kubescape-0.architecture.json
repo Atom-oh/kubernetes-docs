@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubescape 아키텍처 개요",
+    "output": "ko-security-11-kubescape-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1370,
+      560
+    ],
+    "views": [
+      {
+        "id": "inputs",
+        "label": "입력 소스",
+        "focus": [
+          "cli",
+          "operator",
+          "cicd",
+          "ctrl"
+        ],
+        "note": "CLI 단발 실행, Operator 상시 스캔, CI/CD 빌드 단계 스캔이 모두 같은 스캔 엔진으로 들어온다."
+      },
+      {
+        "id": "engine",
+        "label": "스캔 엔진",
+        "focus": [
+          "frameworks",
+          "ctrl",
+          "vuln",
+          "rbac",
+          "risk"
+        ],
+        "note": "프레임워크 기준의 컨트롤 평가, 이미지 취약점 스캔, RBAC 분석 결과가 Risk Calculator에서 하나의 위험도로 합쳐진다."
+      },
+      {
+        "id": "outputs",
+        "label": "출력",
+        "focus": [
+          "risk",
+          "report",
+          "json",
+          "cloud",
+          "alert"
+        ],
+        "note": "산정된 위험도는 리포트로 취합되어 JSON/SARIF, Kubescape Cloud, 알림 채널로 전달된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "Kubescape CLI",
+      "sublabel": "터미널 실행",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Kubescape Operator",
+      "sublabel": "클러스터 상시 운영",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI/CD Pipeline",
+      "sublabel": "빌드 단계 스캔",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "frameworks",
+      "type": "security",
+      "label": "보안 프레임워크",
+      "sublabel": "NSA-CISA · CIS · MITRE ATT&CK · 커스텀",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Control Evaluator",
+      "sublabel": "컨트롤 평가",
+      "pos": [
+        330,
+        170
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vuln",
+      "type": "backend",
+      "label": "Vulnerability Scanner",
+      "sublabel": "이미지 취약점 스캔",
+      "pos": [
+        330,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "backend",
+      "label": "RBAC Analyzer",
+      "sublabel": "권한 분석",
+      "pos": [
+        330,
+        430
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "risk",
+      "type": "security",
+      "label": "Risk Calculator",
+      "sublabel": "통합 위험도 산정",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "report",
+      "type": "backend",
+      "label": "리포트 생성",
+      "sublabel": "스캔 결과 취합",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "json",
+      "type": "external",
+      "label": "JSON / SARIF",
+      "sublabel": "구조화 출력",
+      "pos": [
+        1160,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "Kubescape Cloud",
+      "sublabel": "중앙 대시보드",
+      "pos": [
+        1160,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alert",
+      "type": "messagebus",
+      "label": "알림 / 알람",
+      "sublabel": "Slack · SIEM 등",
+      "pos": [
+        1160,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "입력 소스",
+      "wraps": [
+        "cli",
+        "operator",
+        "cicd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스캔 엔진",
+      "wraps": [
+        "ctrl",
+        "vuln",
+        "rbac",
+        "risk"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "출력",
+      "wraps": [
+        "report",
+        "json",
+        "cloud",
+        "alert"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cli-to-engine",
+      "from": "cli",
+      "to": "ctrl"
+    },
+    {
+      "id": "operator-to-engine",
+      "from": "operator",
+      "to": "ctrl",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cicd-to-engine",
+      "from": "cicd",
+      "to": "ctrl"
+    },
+    {
+      "id": "frameworks-to-ctrl",
+      "from": "frameworks",
+      "to": "ctrl",
+      "label": "컨트롤 기준",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-to-risk",
+      "from": "ctrl",
+      "to": "risk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vuln-to-risk",
+      "from": "vuln",
+      "to": "risk"
+    },
+    {
+      "id": "rbac-to-risk",
+      "from": "rbac",
+      "to": "risk"
+    },
+    {
+      "id": "risk-to-report",
+      "from": "risk",
+      "to": "report",
+      "label": "위험도 점수",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report-to-json",
+      "from": "report",
+      "to": "json"
+    },
+    {
+      "id": "report-to-cloud",
+      "from": "report",
+      "to": "cloud",
+      "variant": "dashed"
+    },
+    {
+      "id": "report-to-alert",
+      "from": "report",
+      "to": "alert"
+    }
+  ]
+}

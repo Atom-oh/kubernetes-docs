@@ -80,7 +80,9 @@ Kubernetes에서 멀티 테넌시를 구현하는 전통적인 방법들에는 �
 
 vCluster의 핵심은 호스트 클러스터 내부에서 실행되는 **가상 컨트롤 플레인**입니다. 각 가상 클러스터는 자체 API Server, Controller Manager, 데이터 저장소를 보유합니다.
 
-![호스트 EKS 클러스터 위에서 두 팀의 vCluster가 각자의 네임스페이스에서 가상 API 서버를 운영하고, Syncer가 이를 호스트 API 서버와 동기화하며 실제 워크로드 Pod를 호스트 노드에 생성하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-0.svg)
+![호스트 EKS 클러스터 위에서 두 팀의 vCluster가 각자의 네임스페이스에서 가상 API 서버를 운영하고, Syncer가 이를 호스트 API 서버와 동기화하며 실제 워크로드 Pod를 호스트 노드에 생성하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-0.html)
 
 ### Syncer 컴포넌트
 
@@ -783,7 +785,9 @@ controlPlane:
 
 각 개발 팀에 독립된 가상 클러스터를 제공하여, 팀 간 간섭 없이 자유롭게 개발할 수 있는 환경을 구성합니다.
 
-![호스트 EKS 클러스터 안에서 프론트엔드·백엔드·데이터 세 팀이 각각 다른 쿠버네티스 버전의 vCluster를 소유하고, ALB Controller·EBS CSI·Prometheus 같은 공유 인프라를 함께 사용하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-08-vcluster-3.svg)
+![호스트 EKS 클러스터 안에서 프론트엔드·백엔드·데이터 세 팀이 각각 다른 Kubernetes 버전의 vCluster를 소유하고, ALB Controller·EBS CSI·Prometheus 같은 공유 인프라를 함께 사용하는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-08-vcluster-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-3.html)
 
 ```yaml
 # team-frontend-vcluster.yaml

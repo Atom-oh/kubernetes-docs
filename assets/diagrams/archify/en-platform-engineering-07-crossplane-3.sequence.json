@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Claim Lifecycle",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      724
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "claim",
+        "label": "Claim request",
+        "focus": [
+          "dev",
+          "ns",
+          "xp"
+        ],
+        "note": "The developer applies a Claim in their own namespace; Crossplane detects it and creates the XR."
+      },
+      {
+        "id": "compose",
+        "label": "Composition",
+        "focus": [
+          "xp",
+          "comp"
+        ],
+        "note": "The Composition matched to the XR returns the list of managed resources to create."
+      },
+      {
+        "id": "provision",
+        "label": "AWS provisioning",
+        "focus": [
+          "xp",
+          "aws"
+        ],
+        "note": "SecurityGroup, SubnetGroup, and RDS Instance are created in order."
+      },
+      {
+        "id": "result",
+        "label": "Results returned",
+        "focus": [
+          "xp",
+          "ns",
+          "dev"
+        ],
+        "note": "A Connection Secret is written to the developer namespace and the Claim becomes Ready."
+      },
+      {
+        "id": "reconcile",
+        "label": "Reconciliation",
+        "focus": [
+          "xp",
+          "aws"
+        ],
+        "note": "After provisioning, any detected drift is corrected automatically."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "ns",
+      "type": "frontend",
+      "label": "Dev Namespace",
+      "sublabel": "Claim · Secret"
+    },
+    {
+      "id": "xp",
+      "type": "backend",
+      "label": "Crossplane",
+      "sublabel": "XR controller"
+    },
+    {
+      "id": "comp",
+      "type": "database",
+      "label": "Composition",
+      "sublabel": "defined by platform team"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "provider-aws"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 548,
+      "label": "Claim provisioning"
+    },
+    {
+      "from": 560,
+      "to": 630,
+      "label": "Continuous reconciliation loop"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply",
+      "from": "dev",
+      "to": "ns",
+      "y": 182,
+      "label": "kubectl apply -f database-claim.yaml",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect",
+      "from": "ns",
+      "to": "xp",
+      "y": 216,
+      "label": "Claim detected → XR created",
+      "note": "XR (Composite Resource) created automatically"
+    },
+    {
+      "id": "lookup",
+      "from": "xp",
+      "to": "comp",
+      "y": 256,
+      "label": "Select Composition"
+    },
+    {
+      "id": "mrlist",
+      "from": "comp",
+      "to": "xp",
+      "y": 288,
+      "label": "Managed Resource list",
+      "variant": "return"
+    },
+    {
+      "id": "sg",
+      "from": "xp",
+      "to": "aws",
+      "y": 324,
+      "label": "Create SecurityGroup API"
+    },
+    {
+      "id": "subnet",
+      "from": "xp",
+      "to": "aws",
+      "y": 358,
+      "label": "Create SubnetGroup API"
+    },
+    {
+      "id": "rds",
+      "from": "xp",
+      "to": "aws",
+      "y": 392,
+      "label": "Create RDS Instance API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "done",
+      "from": "aws",
+      "to": "xp",
+      "y": 426,
+      "label": "Resources created",
+      "variant": "return"
+    },
+    {
+      "id": "secret",
+      "from": "xp",
+      "to": "ns",
+      "y": 462,
+      "label": "Write Connection Secret",
+      "variant": "security"
+    },
+    {
+      "id": "ready",
+      "from": "xp",
+      "to": "ns",
+      "y": 496,
+      "label": "Update Claim status (Ready)",
+      "variant": "return"
+    },
+    {
+      "id": "get",
+      "from": "dev",
+      "to": "ns",
+      "y": 530,
+      "label": "kubectl get database my-db"
+    },
+    {
+      "id": "drift",
+      "from": "aws",
+      "to": "xp",
+      "y": 582,
+      "label": "Drift detected",
+      "variant": "dashed"
+    },
+    {
+      "id": "correct",
+      "from": "xp",
+      "to": "aws",
+      "y": 616,
+      "label": "Correct drift automatically",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "xp",
+      "from": 211,
+      "to": 502,
+      "type": "backend"
+    },
+    {
+      "participant": "comp",
+      "from": 251,
+      "to": 294,
+      "type": "database"
+    },
+    {
+      "participant": "aws",
+      "from": 319,
+      "to": 432,
+      "type": "cloud"
+    },
+    {
+      "participant": "xp",
+      "from": 577,
+      "to": 622,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubescape Architecture",
+    "locale": "en",
+    "output": "en-security-11-kubescape-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1370,
+      560
+    ],
+    "views": [
+      {
+        "id": "inputs",
+        "label": "Input Sources",
+        "focus": [
+          "cli",
+          "operator",
+          "cicd",
+          "ctrl"
+        ],
+        "note": "One-off CLI runs, continuous Operator scans, and CI/CD build-stage scans all feed the same scan engine."
+      },
+      {
+        "id": "engine",
+        "label": "Scan Engine",
+        "focus": [
+          "frameworks",
+          "ctrl",
+          "vuln",
+          "rbac",
+          "risk"
+        ],
+        "note": "Framework-based control evaluation, image vulnerability scanning, and RBAC analysis are merged into one score by the Risk Calculator."
+      },
+      {
+        "id": "outputs",
+        "label": "Output",
+        "focus": [
+          "risk",
+          "report",
+          "json",
+          "cloud",
+          "alert"
+        ],
+        "note": "The computed risk score is compiled into a report and delivered as JSON/SARIF, to Kubescape Cloud, and to alert channels."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "frontend",
+      "label": "Kubescape CLI",
+      "sublabel": "Terminal runs",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "backend",
+      "label": "Kubescape Operator",
+      "sublabel": "Always-on in cluster",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "cicd",
+      "type": "external",
+      "label": "CI/CD Pipeline",
+      "sublabel": "Build-stage scans",
+      "pos": [
+        40,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "frameworks",
+      "type": "security",
+      "label": "Security Frameworks",
+      "sublabel": "NSA-CISA · CIS · MITRE ATT&CK · Custom",
+      "pos": [
+        330,
+        40
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "ctrl",
+      "type": "backend",
+      "label": "Control Evaluator",
+      "sublabel": "Control evaluation",
+      "pos": [
+        330,
+        170
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vuln",
+      "type": "backend",
+      "label": "Vulnerability Scanner",
+      "sublabel": "Image vulnerability scan",
+      "pos": [
+        330,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rbac",
+      "type": "backend",
+      "label": "RBAC Analyzer",
+      "sublabel": "Permission analysis",
+      "pos": [
+        330,
+        430
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "risk",
+      "type": "security",
+      "label": "Risk Calculator",
+      "sublabel": "Aggregated risk score",
+      "pos": [
+        620,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "report",
+      "type": "backend",
+      "label": "Report Generation",
+      "sublabel": "Compiles scan results",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "json",
+      "type": "external",
+      "label": "JSON / SARIF",
+      "sublabel": "Structured output",
+      "pos": [
+        1160,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cloud",
+      "type": "cloud",
+      "label": "Kubescape Cloud",
+      "sublabel": "Central dashboard",
+      "pos": [
+        1160,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "alert",
+      "type": "messagebus",
+      "label": "Alerts / Alarms",
+      "sublabel": "Slack · SIEM etc.",
+      "pos": [
+        1160,
+        430
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Input Sources",
+      "wraps": [
+        "cli",
+        "operator",
+        "cicd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Scan Engine",
+      "wraps": [
+        "ctrl",
+        "vuln",
+        "rbac",
+        "risk"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Output",
+      "wraps": [
+        "report",
+        "json",
+        "cloud",
+        "alert"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cli-to-engine",
+      "from": "cli",
+      "to": "ctrl"
+    },
+    {
+      "id": "operator-to-engine",
+      "from": "operator",
+      "to": "ctrl",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cicd-to-engine",
+      "from": "cicd",
+      "to": "ctrl"
+    },
+    {
+      "id": "frameworks-to-ctrl",
+      "from": "frameworks",
+      "to": "ctrl",
+      "label": "Controls",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ctrl-to-risk",
+      "from": "ctrl",
+      "to": "risk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vuln-to-risk",
+      "from": "vuln",
+      "to": "risk"
+    },
+    {
+      "id": "rbac-to-risk",
+      "from": "rbac",
+      "to": "risk"
+    },
+    {
+      "id": "risk-to-report",
+      "from": "risk",
+      "to": "report",
+      "label": "Risk score",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report-to-json",
+      "from": "report",
+      "to": "json"
+    },
+    {
+      "id": "report-to-cloud",
+      "from": "report",
+      "to": "cloud",
+      "variant": "dashed"
+    },
+    {
+      "id": "report-to-alert",
+      "from": "report",
+      "to": "alert"
+    }
+  ]
+}

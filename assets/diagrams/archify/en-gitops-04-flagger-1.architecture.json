@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flagger Core Components",
+    "locale": "en",
+    "output": "en-gitops-04-flagger-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      940,
+      570
+    ],
+    "views": [
+      {
+        "id": "detect",
+        "label": "1. Detect canary",
+        "focus": [
+          "crd",
+          "flagger",
+          "canary"
+        ],
+        "note": "Flagger watches the Canary CRD and, when a new deployment is detected, starts the new version in the canary Deployment."
+      },
+      {
+        "id": "shift",
+        "label": "2. Shift traffic",
+        "focus": [
+          "flagger",
+          "traffic"
+        ],
+        "note": "Updates the mesh/ingress provider's routing rules to raise the canary traffic weight step by step."
+      },
+      {
+        "id": "analyze",
+        "label": "3. Analyze metrics",
+        "focus": [
+          "flagger",
+          "metrics"
+        ],
+        "note": "Queries the metrics backend for success rate and latency to decide whether to advance or roll back."
+      },
+      {
+        "id": "promote",
+        "label": "4. Promote and notify",
+        "focus": [
+          "flagger",
+          "primary",
+          "alerts"
+        ],
+        "note": "Once every step passes, the canary spec is copied to the primary and the result is sent to the alert channels."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "crd",
+      "type": "external",
+      "label": "Canary CRD",
+      "sublabel": "targetRef · analysis · webhooks",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger",
+      "sublabel": "Kubernetes controller · control loop",
+      "pos": [
+        340,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "tag": "focal"
+    },
+    {
+      "id": "primary",
+      "type": "backend",
+      "label": "app-primary",
+      "sublabel": "Deployment · Service (stable version)",
+      "pos": [
+        40,
+        460
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "app (Canary)",
+      "sublabel": "Deployment · app-canary Service",
+      "pos": [
+        330,
+        460
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "traffic",
+      "type": "cloud",
+      "label": "Mesh / Ingress Provider",
+      "sublabel": "Istio · Linkerd · Gateway API",
+      "pos": [
+        670,
+        250
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "database",
+      "label": "Metrics backend",
+      "sublabel": "Prometheus · Datadog · CloudWatch",
+      "pos": [
+        670,
+        60
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "alerts",
+      "type": "external",
+      "label": "Alert channels",
+      "sublabel": "Slack · Teams",
+      "pos": [
+        670,
+        460
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Created by Flagger",
+      "wraps": [
+        "primary",
+        "canary"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "crd-to-flagger",
+      "from": "crd",
+      "to": "flagger",
+      "label": "watches Canary"
+    },
+    {
+      "id": "flagger-to-traffic",
+      "from": "flagger",
+      "to": "traffic",
+      "label": "routing rules · weights",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flagger-to-metrics",
+      "from": "flagger",
+      "to": "metrics",
+      "label": "queries metrics",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "flagger-to-alerts",
+      "from": "flagger",
+      "to": "alerts",
+      "label": "notifies result",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1
+    },
+    {
+      "id": "flagger-to-canary",
+      "from": "flagger",
+      "to": "canary",
+      "label": "starts new version",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 100
+    },
+    {
+      "id": "flagger-to-primary",
+      "from": "flagger",
+      "to": "primary",
+      "label": "promote (copy spec)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Canary CRD",
+      "items": [
+        "References the existing Deployment via targetRef (no Deployment replacement needed)",
+        "analysis defines traffic weights, metric thresholds, and pre/post-rollout webhooks"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Created by Flagger",
+      "items": [
+        "The app-primary Deployment/Service serves stable-version traffic",
+        "The original app Deployment is used as the canary and stays at 0 replicas when no rollout is running",
+        "A VirtualService / TrafficSplit manages the traffic ratio"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Analysis and alerting",
+      "items": [
+        "Queries metrics from Prometheus, Datadog, or CloudWatch",
+        "Advances and promotes when thresholds pass; rolls back automatically on failure",
+        "Reports the result through Slack / Teams webhooks"
+      ]
+    }
+  ]
+}

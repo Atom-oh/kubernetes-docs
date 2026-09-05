@@ -301,7 +301,9 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 ### HA Architecture
 
-![Diagram showing an Argo CD high-availability control plane: a load balancer fans traffic into redundant API server, application controller, and repo server tiers, all of which share state through a three-node Redis HA cluster at the center of the topology.](../../../assets/diagrams/rendered/en-gitops-argocd-01-installation-0.svg)
+![ArgoCD HA layout: a load balancer fans requests into API Server replicas, while the API Server, leader Application Controller, and Repo Server cache state in a Redis Master that replicates to two Replicas and is guarded by three Sentinels.](../../.gitbook/assets/en-gitops-argocd-01-installation-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-01-installation-0.html)
 
 ### Controller Sharding
 

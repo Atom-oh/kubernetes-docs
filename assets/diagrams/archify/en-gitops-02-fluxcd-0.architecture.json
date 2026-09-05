@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FluxCD Architecture Overview",
+    "locale": "en",
+    "output": "en-gitops-02-fluxcd-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      700
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Source (Source CRD)"
+        },
+        "backend": {
+          "label": "FluxCD controllers"
+        },
+        "cloud": {
+          "label": "Cluster resources"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sources",
+        "label": "Fetch sources",
+        "focus": [
+          "git",
+          "helm",
+          "oci",
+          "bucket",
+          "source"
+        ],
+        "note": "The Source Controller acquires artifacts from Git, Helm, OCI, and S3-compatible buckets."
+      },
+      {
+        "id": "reconcile",
+        "label": "Reconcile to cluster",
+        "focus": [
+          "source",
+          "kustomize",
+          "helmctl",
+          "cluster"
+        ],
+        "note": "The Kustomize and Helm controllers reconcile the artifacts into cluster resources."
+      },
+      {
+        "id": "automation",
+        "label": "Notifications and image automation",
+        "focus": [
+          "notification",
+          "image",
+          "git",
+          "source",
+          "kustomize",
+          "helmctl"
+        ],
+        "note": "The Notification Controller handles events and Image Automation commits new image tags to Git."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "GitRepository",
+      "sublabel": "Git branch / tag",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "helm",
+      "type": "external",
+      "label": "HelmRepository",
+      "sublabel": "Helm chart repository",
+      "pos": [
+        340,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "oci",
+      "type": "external",
+      "label": "OCIRepository",
+      "sublabel": "OCI registry",
+      "pos": [
+        600,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "bucket",
+      "type": "external",
+      "label": "Bucket",
+      "sublabel": "S3-compatible storage",
+      "pos": [
+        860,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "image",
+      "type": "backend",
+      "label": "Image Automation Controller",
+      "sublabel": "Image tag updates",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "source",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "Acquires artifacts",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "kustomize",
+      "type": "backend",
+      "label": "Kustomize Controller",
+      "sublabel": "Applies Kustomizations",
+      "pos": [
+        290,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "helmctl",
+      "type": "backend",
+      "label": "Helm Controller",
+      "sublabel": "Manages HelmReleases",
+      "pos": [
+        830,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Controller",
+      "sublabel": "Inbound / outbound events",
+      "pos": [
+        560,
+        400
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cluster",
+      "type": "cloud",
+      "label": "Cluster resources",
+      "sublabel": "Namespaces · Deployments · Services · ConfigMaps",
+      "pos": [
+        545,
+        560
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Git repository (sources)",
+      "wraps": [
+        "git",
+        "helm",
+        "oci",
+        "bucket"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "FluxCD controllers",
+      "wraps": [
+        "image",
+        "source",
+        "kustomize",
+        "helmctl",
+        "notification"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes cluster",
+      "wraps": [
+        "cluster"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-source",
+      "from": "git",
+      "to": "source",
+      "label": "Fetch sources",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "helm-source",
+      "from": "helm",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "oci-source",
+      "from": "oci",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bucket-source",
+      "from": "bucket",
+      "to": "source",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-kustomize",
+      "from": "source",
+      "to": "kustomize",
+      "label": "Manifests",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "source-helmctl",
+      "from": "source",
+      "to": "helmctl",
+      "label": "Helm charts",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "kustomize-cluster",
+      "from": "kustomize",
+      "to": "cluster",
+      "label": "apply",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "helmctl-cluster",
+      "from": "helmctl",
+      "to": "cluster",
+      "label": "release",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "notification-source",
+      "from": "notification",
+      "to": "source",
+      "label": "Events / alerts",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "notification-kustomize",
+      "from": "notification",
+      "to": "kustomize",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "notification-helmctl",
+      "from": "notification",
+      "to": "helmctl",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "image-git",
+      "from": "image",
+      "to": "git",
+      "label": "Commit new image tag",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        170,
+        188
+      ]
+    }
+  ]
+}

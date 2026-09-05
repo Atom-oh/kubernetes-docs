@@ -23,7 +23,9 @@ Harbor is an open-source, cloud-native container registry that provides enterpri
 
 ### Architecture
 
-![Nginx and Portal both front Harbor's Core API, which hands work to the Registry service, which in turn depends on a metadata/queue data store and writes image layers to the storage backend.](../../assets/diagrams/rendered/en-container-registry-03-harbor-0.svg)
+![Harbor's internal structure: the Portal fronts the Core API, which fans out to the Registry, Job Service, PostgreSQL and Redis, while the Job Service drives the Trivy and Notary security layer.](../.gitbook/assets/en-container-registry-03-harbor-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-0.html)
 
 ### Component Responsibilities
 
@@ -407,7 +409,9 @@ docker push harbor.example.com/myapp/app:v1.0.0
 
 ## Image Replication
 
-![Harbor supports two replication directions: pulling images in from an external registry to mirror them locally, and pushing images out from a source Harbor to a remote registry to distribute them.](../../assets/diagrams/rendered/en-container-registry-03-harbor-1.svg)
+![Harbor supports two replication directions: pulling images in from an external registry to mirror them locally, and pushing images out from a source Harbor to a remote registry to distribute them.](../.gitbook/assets/en-container-registry-03-harbor-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-1.html)
 
 Harbor supports bidirectional replication between registries.
 
@@ -947,7 +951,9 @@ spec:
 
 ### Proxy Cache Configuration
 
-![A client pull request hits Harbor's proxy cache; a cache hit returns the cached image directly, while a cache miss fetches the image from the upstream registry, stores it in Harbor, and then returns it to the client.](../../assets/diagrams/rendered/en-container-registry-03-harbor-2.svg)
+![A client pull request hits Harbor's proxy cache; a cache hit returns the cached image directly, while a cache miss fetches the image from the upstream registry, stores it in Harbor, and then returns it to the client.](../.gitbook/assets/en-container-registry-03-harbor-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-03-harbor-2.html)
 
 Configure Harbor as a proxy cache for external registries:
 

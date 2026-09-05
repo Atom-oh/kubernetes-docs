@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flagger in the Flux Ecosystem",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-04-flagger-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Flux controller"
+        },
+        "external": {
+          "label": "External system"
+        },
+        "cloud": {
+          "label": "Cluster resource"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "reconcile",
+        "label": "GitOps reconciliation",
+        "focus": [
+          "git",
+          "source",
+          "kustomize",
+          "helm",
+          "deployments"
+        ],
+        "note": "Source Controller pulls from Git; Kustomize and Helm controllers reconcile Deployments into the cluster."
+      },
+      {
+        "id": "progressive",
+        "label": "Progressive delivery",
+        "focus": [
+          "flagger",
+          "deployments",
+          "prometheus",
+          "services",
+          "routes"
+        ],
+        "note": "Flagger watches Deployments, queries Prometheus, and manages the Services and routes that shift traffic."
+      },
+      {
+        "id": "automation",
+        "label": "Image automation and alerts",
+        "focus": [
+          "imageauto",
+          "git",
+          "notification",
+          "flagger"
+        ],
+        "note": "Image Automation commits new tags back to Git; the Notification Controller delivers alerts."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "external",
+      "label": "Prometheus",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "mesh",
+      "type": "external",
+      "label": "Service Mesh",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Ingress Controller"
+    },
+    {
+      "id": "source",
+      "type": "backend",
+      "label": "Source Controller",
+      "sublabel": "Git, Helm, OCI",
+      "pos": [
+        320,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "imageauto",
+      "type": "backend",
+      "label": "Image Automation",
+      "pos": [
+        320,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "Controller"
+    },
+    {
+      "id": "kustomize",
+      "type": "backend",
+      "label": "Kustomize Controller",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "helm",
+      "type": "backend",
+      "label": "Helm Controller",
+      "pos": [
+        580,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Controller",
+      "pos": [
+        320,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger",
+      "sublabel": "Progressive Delivery",
+      "pos": [
+        580,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "deployments",
+      "type": "cloud",
+      "label": "Deployments",
+      "pos": [
+        860,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "services",
+      "type": "cloud",
+      "label": "Services",
+      "pos": [
+        860,
+        360
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "routes",
+      "type": "cloud",
+      "label": "VirtualServices",
+      "pos": [
+        860,
+        480
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "HTTPRoutes"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "External Systems",
+      "wraps": [
+        "git",
+        "prometheus",
+        "mesh"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Flux GitOps Toolkit",
+      "wraps": [
+        "source",
+        "imageauto",
+        "kustomize",
+        "helm",
+        "notification",
+        "flagger"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "deployments",
+        "services",
+        "routes"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "git-source",
+      "from": "git",
+      "to": "source",
+      "label": "pull",
+      "variant": "emphasis"
+    },
+    {
+      "id": "source-kustomize",
+      "from": "source",
+      "to": "kustomize"
+    },
+    {
+      "id": "source-helm",
+      "from": "source",
+      "to": "helm"
+    },
+    {
+      "id": "kustomize-deploy",
+      "from": "kustomize",
+      "to": "deployments"
+    },
+    {
+      "id": "helm-deploy",
+      "from": "helm",
+      "to": "deployments"
+    },
+    {
+      "id": "imageauto-git",
+      "from": "imageauto",
+      "to": "git",
+      "label": "commit",
+      "variant": "dashed"
+    },
+    {
+      "id": "flagger-deploy",
+      "from": "flagger",
+      "to": "deployments",
+      "label": "watches",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "flagger-prom",
+      "from": "flagger",
+      "to": "prometheus",
+      "label": "queries"
+    },
+    {
+      "id": "flagger-services",
+      "from": "flagger",
+      "to": "services",
+      "label": "manages"
+    },
+    {
+      "id": "flagger-routes",
+      "from": "flagger",
+      "to": "routes",
+      "label": "manages"
+    },
+    {
+      "id": "notification-flagger",
+      "from": "notification",
+      "to": "flagger",
+      "label": "alerts"
+    }
+  ]
+}

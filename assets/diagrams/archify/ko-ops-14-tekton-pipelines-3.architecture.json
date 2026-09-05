@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton Triggers 아키텍처",
+    "output": "ko-ops-14-tekton-pipelines-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "receive-verify",
+        "label": "이벤트 수신과 검증",
+        "focus": [
+          "webhook",
+          "eventlistener",
+          "github-interceptor",
+          "cel-interceptor"
+        ],
+        "note": "Webhook을 EventListener가 받고, GitHub Interceptor가 Secret을 검증한 뒤 CEL Interceptor가 브랜치·액션을 필터링한다."
+      },
+      {
+        "id": "map-create",
+        "label": "파라미터 매핑과 PipelineRun 생성",
+        "focus": [
+          "cel-interceptor",
+          "triggerbinding",
+          "triggertemplate",
+          "pipelinerun"
+        ],
+        "note": "TriggerBinding이 페이로드에서 파라미터를 추출하고 TriggerTemplate이 그 값으로 새 PipelineRun을 생성한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "webhook",
+      "type": "external",
+      "label": "GitHub Webhook",
+      "sublabel": "push / PR 이벤트",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "eventlistener",
+      "type": "backend",
+      "label": "EventListener",
+      "sublabel": "Webhook 수신 HTTP 서버",
+      "pos": [
+        250,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "github-interceptor",
+      "type": "security",
+      "label": "GitHub Interceptor",
+      "sublabel": "Webhook Secret 검증",
+      "pos": [
+        460,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cel-interceptor",
+      "type": "security",
+      "label": "CEL Interceptor",
+      "sublabel": "브랜치·액션 필터",
+      "pos": [
+        670,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "triggerbinding",
+      "type": "backend",
+      "label": "TriggerBinding",
+      "sublabel": "페이로드 파라미터 추출",
+      "pos": [
+        670,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "triggertemplate",
+      "type": "backend",
+      "label": "TriggerTemplate",
+      "sublabel": "PipelineRun 템플릿",
+      "pos": [
+        880,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pipelinerun",
+      "type": "backend",
+      "label": "PipelineRun",
+      "sublabel": "파이프라인 실행 시작",
+      "pos": [
+        1090,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tekton Triggers",
+      "wraps": [
+        "eventlistener",
+        "github-interceptor",
+        "cel-interceptor",
+        "triggerbinding",
+        "triggertemplate"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton Pipelines",
+      "wraps": [
+        "pipelinerun"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "webhook-to-el",
+      "from": "webhook",
+      "to": "eventlistener",
+      "label": "HTTP POST",
+      "variant": "emphasis"
+    },
+    {
+      "id": "el-to-github",
+      "from": "eventlistener",
+      "to": "github-interceptor"
+    },
+    {
+      "id": "github-to-cel",
+      "from": "github-interceptor",
+      "to": "cel-interceptor",
+      "label": "검증 통과",
+      "variant": "security"
+    },
+    {
+      "id": "cel-to-binding",
+      "from": "cel-interceptor",
+      "to": "triggerbinding",
+      "label": "필터 통과",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "binding-to-template",
+      "from": "triggerbinding",
+      "to": "triggertemplate",
+      "label": "파라미터"
+    },
+    {
+      "id": "template-to-run",
+      "from": "triggertemplate",
+      "to": "pipelinerun",
+      "label": "생성",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "수신과 검증",
+      "items": [
+        "EventListener는 Webhook을 받는 HTTP 서버를 Kubernetes에 배포한다",
+        "GitHub Interceptor는 Webhook Secret과 eventTypes를 검증한다",
+        "CEL Interceptor는 main 브랜치 push, PR opened/synchronize만 통과시킨다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "매핑과 생성",
+      "items": [
+        "TriggerBinding은 body.after, body.ref 등 페이로드 값을 파라미터로 추출한다",
+        "TriggerTemplate은 파라미터를 채워 PipelineRun을 생성한다"
+      ]
+    }
+  ]
+}

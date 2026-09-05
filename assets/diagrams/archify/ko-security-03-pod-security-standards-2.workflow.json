@@ -1,0 +1,213 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PSP → PSS 마이그레이션 절차",
+    "output": "ko-security-03-pod-security-standards-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1228,
+      652
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "분석·수정 작업"
+        },
+        "security": {
+          "label": "PSS 모드 적용"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "prepare",
+        "label": "1~3단계: 준비",
+        "focus": [
+          "analyze",
+          "map_profile",
+          "validate_test"
+        ],
+        "note": "기존 PSP를 분석해 PSS 프로파일에 매핑하고, 테스트 네임스페이스에서 warn 모드로 먼저 검증한다."
+      },
+      {
+        "id": "rollout",
+        "label": "4~5단계: 점진적 적용",
+        "focus": [
+          "validate_test",
+          "warn_audit",
+          "fix_workloads"
+        ],
+        "note": "warn/audit 모드로 위반을 드러내고, 경고와 감사 로그를 보며 워크로드를 수정한다."
+      },
+      {
+        "id": "enforce",
+        "label": "6~7단계: enforce 전환",
+        "focus": [
+          "fix_workloads",
+          "enforce_mode",
+          "remove_psp"
+        ],
+        "note": "위반이 해소된 뒤 enforce 모드로 전환하고 마지막에 PSP를 제거한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "준비 · 분석과 검증"
+    },
+    {
+      "id": "rollout",
+      "label": "점진적 적용"
+    },
+    {
+      "id": "cutover",
+      "label": "enforce 전환"
+    },
+    {
+      "id": "cleanup",
+      "label": "PSP 정리"
+    }
+  ],
+  "mainPath": [
+    "analyze",
+    "map_profile",
+    "validate_test",
+    "warn_audit",
+    "fix_workloads",
+    "enforce_mode",
+    "remove_psp"
+  ],
+  "nodes": [
+    {
+      "id": "analyze",
+      "lane": "prepare",
+      "col": 0,
+      "type": "backend",
+      "label": "1. 현재 상태 분석",
+      "sublabel": "kubectl get psp",
+      "width": 212
+    },
+    {
+      "id": "map_profile",
+      "lane": "prepare",
+      "col": 1,
+      "type": "backend",
+      "label": "2. PSS 프로파일 매핑",
+      "sublabel": "Privileged / Baseline / Restricted",
+      "width": 200
+    },
+    {
+      "id": "validate_test",
+      "lane": "prepare",
+      "col": 2,
+      "type": "security",
+      "label": "3. 테스트 환경에서 검증",
+      "sublabel": "pss-test 네임스페이스, warn 모드",
+      "width": 260
+    },
+    {
+      "id": "warn_audit",
+      "lane": "rollout",
+      "col": 2,
+      "type": "security",
+      "label": "4. warn/audit 모드로 적용",
+      "sublabel": "enforce는 기존 수준 유지 (모니터링)",
+      "width": 260
+    },
+    {
+      "id": "fix_workloads",
+      "lane": "rollout",
+      "col": 3,
+      "type": "backend",
+      "label": "5. 워크로드 수정",
+      "sublabel": "securityContext 보강",
+      "width": 220
+    },
+    {
+      "id": "enforce_mode",
+      "lane": "cutover",
+      "col": 3,
+      "type": "security",
+      "label": "6. enforce 모드 전환",
+      "sublabel": "enforce: restricted · 차단 시작",
+      "width": 220
+    },
+    {
+      "id": "remove_psp",
+      "lane": "cleanup",
+      "col": 3,
+      "type": "backend",
+      "label": "7. PSP 제거",
+      "sublabel": "PodSecurityPolicy 삭제",
+      "width": 220
+    }
+  ],
+  "edges": [
+    {
+      "from": "analyze",
+      "to": "map_profile"
+    },
+    {
+      "from": "map_profile",
+      "to": "validate_test"
+    },
+    {
+      "from": "validate_test",
+      "to": "warn_audit",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "warn_audit",
+      "to": "fix_workloads"
+    },
+    {
+      "from": "fix_workloads",
+      "to": "enforce_mode",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "enforce_mode",
+      "to": "remove_psp",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "PSP → PSS 매핑 기준",
+      "items": [
+        "privileged: true → Privileged",
+        "privileged: false + allowPrivilegeEscalation: true → Baseline",
+        "allowPrivilegeEscalation: false + MustRunAsNonRoot → Restricted (모든 capabilities drop)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "4단계 점진적 적용 순서",
+      "items": [
+        "Phase 1: enforce privileged, audit/warn baseline (모니터링만)",
+        "Phase 2: enforce baseline, audit/warn restricted",
+        "Phase 3: enforce restricted"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "restricted 준수 워크로드 수정",
+      "items": [
+        "runAsNonRoot: true, seccompProfile RuntimeDefault",
+        "allowPrivilegeEscalation: false, capabilities drop ALL",
+        "readOnlyRootFilesystem: true"
+      ]
+    }
+  ]
+}

@@ -83,7 +83,9 @@ After completing this document, you will be able to:
 
 ### High-Level Architecture
 
-![Architecture diagram showing browser traffic reaching the Backstage backend, which fans out to core and integration plugins, a PostgreSQL store, TechDocs storage in S3, and external systems including GitHub, EKS, ArgoCD, and an OIDC identity provider.](../../assets/diagrams/rendered/en-platform-engineering-06-backstage-idp-0.svg)
+![Backstage catalog entity diagram in which payments-domain contains order-system and payment-system, their components provide or consume APIs and depend on resources, and platform-team and backend-team own the two systems.](../.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-1.html)
 
 ### Core Concepts
 

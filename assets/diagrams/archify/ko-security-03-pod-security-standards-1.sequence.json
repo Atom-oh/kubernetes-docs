@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "PSA 작동 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "admission",
+        "label": "Admission 검증",
+        "focus": [
+          "user",
+          "api",
+          "psa",
+          "ns"
+        ],
+        "note": "API Server가 Pod 요청을 PSA Controller에 넘기고, PSA는 네임스페이스 레이블로 적용 수준을 읽는다."
+      },
+      {
+        "id": "allow",
+        "label": "정책 준수",
+        "focus": [
+          "psa",
+          "api",
+          "etcd",
+          "user"
+        ],
+        "note": "restricted 수준을 만족하면 승인되어 etcd에 저장되고 201 Created를 받는다."
+      },
+      {
+        "id": "deny",
+        "label": "정책 위반",
+        "focus": [
+          "psa",
+          "api",
+          "user"
+        ],
+        "note": "enforce 모드에서 위반한 Pod는 거부되고 403 Forbidden으로 응답한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자/컨트롤러",
+      "sublabel": "kubectl · Deployment"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver"
+    },
+    {
+      "id": "psa",
+      "type": "security",
+      "label": "PSA Controller",
+      "sublabel": "내장 Admission"
+    },
+    {
+      "id": "ns",
+      "type": "cloud",
+      "label": "Namespace Labels",
+      "sublabel": "pod-security.kubernetes.io/*"
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장소"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 322,
+      "label": "Admission 검증"
+    },
+    {
+      "from": 342,
+      "to": 468,
+      "label": "Pod가 정책 준수"
+    },
+    {
+      "from": 488,
+      "to": 580,
+      "label": "Pod가 정책 위반 (enforce 모드)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "api",
+      "y": 188,
+      "label": "Pod 생성 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "admit",
+      "from": "api",
+      "to": "psa",
+      "y": 226,
+      "label": "Admission 검증 요청"
+    },
+    {
+      "id": "read-labels",
+      "from": "psa",
+      "to": "ns",
+      "y": 264,
+      "label": "네임스페이스 레이블 확인",
+      "variant": "security"
+    },
+    {
+      "id": "labels",
+      "from": "ns",
+      "to": "psa",
+      "y": 302,
+      "label": "enforce=restricted, audit=restricted",
+      "variant": "return"
+    },
+    {
+      "id": "approve",
+      "from": "psa",
+      "to": "api",
+      "y": 367,
+      "label": "승인",
+      "variant": "return"
+    },
+    {
+      "id": "store",
+      "from": "api",
+      "to": "etcd",
+      "y": 405,
+      "label": "Pod 저장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "created",
+      "from": "api",
+      "to": "user",
+      "y": 445,
+      "label": "201 Created",
+      "variant": "return"
+    },
+    {
+      "id": "deny",
+      "from": "psa",
+      "to": "api",
+      "y": 512,
+      "label": "거부 (enforce 모드)",
+      "variant": "security"
+    },
+    {
+      "id": "forbidden",
+      "from": "api",
+      "to": "user",
+      "y": 552,
+      "label": "403 Forbidden",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 183,
+      "to": 453,
+      "type": "backend"
+    },
+    {
+      "participant": "psa",
+      "from": 221,
+      "to": 374,
+      "type": "security"
+    },
+    {
+      "participant": "ns",
+      "from": 259,
+      "to": 308,
+      "type": "cloud"
+    },
+    {
+      "participant": "etcd",
+      "from": 400,
+      "to": 425,
+      "type": "database"
+    },
+    {
+      "participant": "api",
+      "from": 507,
+      "to": 560,
+      "type": "backend"
+    },
+    {
+      "participant": "psa",
+      "from": 507,
+      "to": 519,
+      "type": "security"
+    }
+  ]
+}

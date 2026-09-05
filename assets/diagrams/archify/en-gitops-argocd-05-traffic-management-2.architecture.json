@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Canary Deployment Traffic Split",
+    "output": "en-gitops-argocd-05-traffic-management-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Client requests"
+        },
+        "cloud": {
+          "label": "Load balancer / Ingress"
+        },
+        "frontend": {
+          "label": "Service"
+        },
+        "backend": {
+          "label": "Pod"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "stable-path",
+        "label": "Stable path 80%",
+        "focus": [
+          "client",
+          "lb",
+          "svc-stable",
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "note": "80% of requests go through the myapp-stable Service to the four v1.0.0 pods."
+      },
+      {
+        "id": "canary-path",
+        "label": "Canary path 20%",
+        "focus": [
+          "client",
+          "lb",
+          "svc-canary",
+          "c1"
+        ],
+        "note": "With the canary weight at 20%, only 20% of requests flow through the myapp-canary Service to the single v2.0.0 pod."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client requests",
+      "sublabel": "All traffic 100%",
+      "pos": [
+        30,
+        270
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "trafficRouting (Ingress)",
+      "pos": [
+        240,
+        270
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "svc-stable",
+      "type": "frontend",
+      "label": "myapp-stable",
+      "sublabel": "stableService",
+      "pos": [
+        490,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-canary",
+      "type": "frontend",
+      "label": "myapp-canary",
+      "sublabel": "canaryService",
+      "pos": [
+        490,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "v1.0.0",
+      "pos": [
+        740,
+        40
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "v1.0.0",
+      "pos": [
+        910,
+        40
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "v1.0.0",
+      "pos": [
+        740,
+        190
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "s4",
+      "type": "backend",
+      "label": "Pod 4",
+      "sublabel": "v1.0.0",
+      "pos": [
+        910,
+        190
+      ],
+      "size": [
+        130,
+        56
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "v2.0.0",
+      "tag": "canary",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        130,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Stable (v1.0.0)",
+      "wraps": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Canary (v2.0.0)",
+      "wraps": [
+        "c1"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-stable",
+      "from": "lb",
+      "to": "svc-stable",
+      "label": "80%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-canary",
+      "from": "lb",
+      "to": "svc-canary",
+      "label": "20%",
+      "variant": "dashed"
+    },
+    {
+      "id": "stable-s1",
+      "from": "svc-stable",
+      "to": "s1"
+    },
+    {
+      "id": "stable-s2",
+      "from": "svc-stable",
+      "to": "s2"
+    },
+    {
+      "id": "stable-s3",
+      "from": "svc-stable",
+      "to": "s3"
+    },
+    {
+      "id": "stable-s4",
+      "from": "svc-stable",
+      "to": "s4"
+    },
+    {
+      "id": "canary-c1",
+      "from": "svc-canary",
+      "to": "c1",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Canary steps",
+      "items": [
+        "setWeight: 5 → pause 2m → setWeight: 10 → analysis (success-rate)",
+        "setWeight: 25 → pause 5m → setWeight: 50 → pause 5m",
+        "setWeight: 75 → analysis (success-rate, latency-check) → setWeight: 100"
+      ]
+    }
+  ]
+}

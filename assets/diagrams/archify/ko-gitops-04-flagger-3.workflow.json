@@ -1,0 +1,267 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Canary CRD와 배포 프로세스",
+    "output": "public/archmaps/ko-gitops-04-flagger-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Canary CRD 필드"
+        },
+        "backend": {
+          "label": "배포 단계"
+        },
+        "messagebus": {
+          "label": "트래픽 전환"
+        },
+        "security": {
+          "label": "메트릭 분석 게이트"
+        },
+        "cloud": {
+          "label": "승격"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "crd-fields",
+        "label": "CRD 필드",
+        "focus": [
+          "targetRef",
+          "service",
+          "provider",
+          "analysis",
+          "init"
+        ],
+        "note": "Canary CRD의 targetRef·service·provider·analysis가 각 배포 단계에 어떻게 반영되는지 확인합니다."
+      },
+      {
+        "id": "traffic-steps",
+        "label": "트래픽 전환과 분석",
+        "focus": [
+          "scale",
+          "route",
+          "metric"
+        ],
+        "note": "stepWeight 10씩 maxWeight 50까지 올리며 단계마다 1분 간격으로 메트릭을 분석합니다."
+      },
+      {
+        "id": "promote-or-rollback",
+        "label": "승격 또는 롤백",
+        "focus": [
+          "metric",
+          "promote",
+          "init"
+        ],
+        "note": "분석 성공이면 Primary로 승격하고, threshold 횟수만큼 실패하면 롤백합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "crd",
+      "label": "Canary CRD"
+    },
+    {
+      "id": "process",
+      "label": "배포 프로세스"
+    }
+  ],
+  "mainPath": [
+    "init",
+    "detect",
+    "scale",
+    "route",
+    "metric",
+    "promote"
+  ],
+  "nodes": [
+    {
+      "id": "targetRef",
+      "lane": "crd",
+      "col": 0,
+      "type": "database",
+      "label": "targetRef",
+      "sublabel": "Deployment",
+      "width": 150
+    },
+    {
+      "id": "service",
+      "lane": "crd",
+      "col": 1,
+      "type": "database",
+      "label": "service",
+      "sublabel": "포트 · 프로토콜",
+      "width": 150
+    },
+    {
+      "id": "provider",
+      "lane": "crd",
+      "col": 3,
+      "type": "database",
+      "label": "provider",
+      "sublabel": "mesh / ingress",
+      "width": 150
+    },
+    {
+      "id": "analysis",
+      "lane": "crd",
+      "col": 4,
+      "type": "database",
+      "label": "analysis",
+      "sublabel": "메트릭 · 임계값 · webhooks",
+      "width": 170
+    },
+    {
+      "id": "init",
+      "lane": "process",
+      "col": 0,
+      "type": "backend",
+      "label": "초기화",
+      "sublabel": "Primary 생성",
+      "width": 150
+    },
+    {
+      "id": "detect",
+      "lane": "process",
+      "col": 1,
+      "type": "backend",
+      "label": "변경 감지",
+      "sublabel": "새 이미지 · spec 변경",
+      "width": 150
+    },
+    {
+      "id": "scale",
+      "lane": "process",
+      "col": 2,
+      "type": "backend",
+      "label": "Canary 스케일 업",
+      "sublabel": "Canary Pod 시작",
+      "width": 150
+    },
+    {
+      "id": "route",
+      "lane": "process",
+      "col": 3,
+      "type": "messagebus",
+      "label": "트래픽 전환",
+      "sublabel": "10% → 50% · stepWeight 10",
+      "width": 170
+    },
+    {
+      "id": "metric",
+      "lane": "process",
+      "col": 4,
+      "type": "security",
+      "label": "메트릭 분석",
+      "sublabel": "성공률 ≥ 99% · P99 ≤ 500ms",
+      "tag": "1분마다",
+      "width": 190
+    },
+    {
+      "id": "promote",
+      "lane": "process",
+      "col": 5,
+      "type": "cloud",
+      "label": "승격",
+      "sublabel": "Primary 트래픽 100%",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "targetRef",
+      "to": "init",
+      "label": "대상 참조",
+      "role": "branch"
+    },
+    {
+      "from": "service",
+      "to": "init",
+      "label": "Service 생성",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "provider",
+      "to": "route",
+      "label": "라우팅 제어",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "analysis",
+      "to": "metric",
+      "label": "분석 조건",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "init",
+      "to": "detect",
+      "role": "main"
+    },
+    {
+      "from": "detect",
+      "to": "scale",
+      "role": "main"
+    },
+    {
+      "from": "scale",
+      "to": "route",
+      "role": "main"
+    },
+    {
+      "from": "route",
+      "to": "metric",
+      "label": "단계마다",
+      "role": "main"
+    },
+    {
+      "from": "metric",
+      "to": "promote",
+      "label": "성공",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "metric",
+      "to": "init",
+      "label": "실패 · 롤백",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "트래픽 전환 단계",
+      "items": [
+        "stepWeight 10 · maxWeight 50 → 10% → 20% → 30% → 40% → 50%",
+        "단계마다 interval 1m 동안 메트릭 분석 후 다음 비율로 이동",
+        "50% 도달 후 승격: Canary spec을 Primary에 복사, 트래픽 100% Primary"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "단계별 분석 조건",
+      "items": [
+        "request-success-rate: thresholdRange.min 99 (5xx 제외 성공률)",
+        "request-duration: thresholdRange.max 500 (P99 ms)",
+        "webhooks: load-test → flagger-loadtester가 부하 테스트 실행"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "자동 롤백 조건",
+      "items": [
+        "메트릭 조건을 threshold 횟수만큼 충족하지 못할 때",
+        "Canary Pod가 Ready가 아니거나 webhook이 실패를 반환할 때",
+        "롤백 시 트래픽은 Primary로 복귀, Canary는 0으로 축소, 상태 Failed"
+      ]
+    }
+  ]
+}

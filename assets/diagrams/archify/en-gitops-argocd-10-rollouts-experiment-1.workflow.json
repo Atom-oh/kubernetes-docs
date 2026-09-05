@@ -1,0 +1,175 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Result Propagation and Rollout State Transitions",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-argocd-10-rollouts-experiment-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "AnalysisRun verdict · Experiment success"
+        },
+        "security": {
+          "label": "Failure · Rollout aborted"
+        },
+        "cloud": {
+          "label": "Rollout proceeds"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "success-path",
+        "label": "Successful path",
+        "focus": [
+          "analysisRun",
+          "expSuccess",
+          "nextStep"
+        ],
+        "note": "Once the duration has elapsed and the analysis succeeded, the Experiment becomes Successful and the Rollout proceeds to its next step."
+      },
+      {
+        "id": "failure-path",
+        "label": "Failure path",
+        "focus": [
+          "analysisRun",
+          "expFailed",
+          "degraded"
+        ],
+        "note": "A Failed, Inconclusive, or Error result fails the Experiment; the Rollout is aborted and left Degraded."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "analysis",
+      "label": "AnalysisRun verdict"
+    },
+    {
+      "id": "proceed",
+      "label": "Experiment succeeds → Rollout proceeds"
+    },
+    {
+      "id": "abort",
+      "label": "Experiment fails → Rollout aborted",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "analysisRun",
+    "expSuccess",
+    "nextStep"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "analysisRun"
+    ],
+    "allowedTerminals": [
+      "nextStep",
+      "degraded"
+    ],
+    "requiredPaths": [
+      {
+        "from": "analysisRun",
+        "to": "nextStep"
+      },
+      {
+        "from": "analysisRun",
+        "to": "degraded"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "analysisRun",
+      "lane": "analysis",
+      "col": 0,
+      "type": "backend",
+      "label": "AnalysisRun final status",
+      "sublabel": "decided by limit fields",
+      "tag": "verdict",
+      "width": 212
+    },
+    {
+      "id": "expSuccess",
+      "lane": "proceed",
+      "col": 2,
+      "type": "backend",
+      "label": "Experiment Successful",
+      "sublabel": "duration elapsed + analysis passed",
+      "width": 196
+    },
+    {
+      "id": "nextStep",
+      "lane": "proceed",
+      "col": 4,
+      "type": "cloud",
+      "label": "Rollout proceeds to next step",
+      "sublabel": "e.g. setWeight 20",
+      "tag": "proceed",
+      "width": 244
+    },
+    {
+      "id": "expFailed",
+      "lane": "abort",
+      "col": 2,
+      "type": "security",
+      "label": "Experiment Failed",
+      "sublabel": "Rollout abort",
+      "width": 196
+    },
+    {
+      "id": "degraded",
+      "lane": "abort",
+      "col": 4,
+      "type": "security",
+      "label": "Rollout Degraded",
+      "sublabel": "stable version stays in place",
+      "tag": "aborted",
+      "width": 244
+    }
+  ],
+  "edges": [
+    {
+      "from": "analysisRun",
+      "to": "expSuccess",
+      "label": "Successful",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "expSuccess",
+      "to": "nextStep",
+      "label": "reports success",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "analysisRun",
+      "to": "expFailed",
+      "label": "Failed / Inconclusive / Error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "expFailed",
+      "to": "degraded",
+      "label": "abort",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Either way, on completion",
+      "items": [
+        "The Experiment's ReplicaSets are scaled down to 0",
+        "Any Service created via the service attribute is cleaned up too"
+      ]
+    }
+  ]
+}

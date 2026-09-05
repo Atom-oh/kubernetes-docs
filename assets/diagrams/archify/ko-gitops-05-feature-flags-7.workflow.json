@@ -1,0 +1,292 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Flagger + Feature Flag 워크플로우",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "start",
+        "label": "배포와 카나리 시작",
+        "focus": [
+          "deploy",
+          "canary",
+          "flag_on"
+        ],
+        "note": "새 버전은 Feature Flag OFF로 배포되고, Flagger가 카나리를 시작하면 pre-rollout webhook이 카나리 Pod에서만 Flag를 켠다."
+      },
+      {
+        "id": "gate",
+        "label": "메트릭 분석과 롤백",
+        "focus": [
+          "canary",
+          "flag_on",
+          "metrics",
+          "rollback",
+          "expand"
+        ],
+        "note": "오류율과 지연시간이 임계값을 통과하면 트래픽을 늘리고, 실패하면 자동 롤백과 함께 rollback webhook이 Flag를 끈다."
+      },
+      {
+        "id": "expand",
+        "label": "점진적 확대와 정리",
+        "focus": [
+          "expand",
+          "flag_expand",
+          "full",
+          "flag_full",
+          "cleanup"
+        ],
+        "note": "stepWeight 단위로 트래픽을 늘리며 Flag 타겟도 같은 비율로 넓히고, 100% 릴리스 뒤 Flag 코드를 정리한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "코드 배포"
+        },
+        "cloud": {
+          "label": "트래픽 분할 (Flagger)"
+        },
+        "backend": {
+          "label": "Flag 제어 (flagd)"
+        },
+        "security": {
+          "label": "분석 게이트 · 롤백"
+        }
+      }
+    },
+    "viewBox": [
+      1180,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "traffic",
+      "label": "인프라 수준 · 트래픽 분할 (Flagger)"
+    },
+    {
+      "id": "flag",
+      "label": "애플리케이션 수준 · Feature Flag"
+    },
+    {
+      "id": "exceptions",
+      "label": "실패 · 자동 롤백",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "1단계 · 코드 배포",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "2단계 · 카나리 트래픽",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "3단계 · 메트릭 분석",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p4",
+      "label": "4단계 · 점진적 확대",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "p5",
+      "label": "5단계 · 전체 릴리스",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "canary",
+    "flag_on",
+    "metrics",
+    "expand",
+    "full",
+    "flag_full",
+    "cleanup"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "traffic",
+      "col": 0,
+      "type": "frontend",
+      "label": "새 버전 배포",
+      "sublabel": "Feature Flag OFF",
+      "width": 160
+    },
+    {
+      "id": "canary",
+      "lane": "traffic",
+      "col": 1,
+      "type": "cloud",
+      "label": "카나리 릴리스",
+      "sublabel": "소량 트래픽만 라우팅",
+      "width": 160
+    },
+    {
+      "id": "flag_on",
+      "lane": "flag",
+      "col": 1,
+      "type": "backend",
+      "label": "Feature Flag ON",
+      "sublabel": "카나리 Pod만",
+      "tag": "pre-rollout webhook",
+      "width": 160
+    },
+    {
+      "id": "metrics",
+      "lane": "traffic",
+      "col": 2,
+      "type": "security",
+      "label": "메트릭 분석",
+      "sublabel": "오류율 · 지연시간",
+      "tag": "interval 1m",
+      "width": 160
+    },
+    {
+      "id": "expand",
+      "lane": "traffic",
+      "col": 3,
+      "type": "cloud",
+      "label": "트래픽 확대",
+      "sublabel": "stepWeight 10 → maxWeight 50",
+      "width": 160
+    },
+    {
+      "id": "flag_expand",
+      "lane": "flag",
+      "col": 3,
+      "type": "backend",
+      "label": "Flag 타겟 확대",
+      "sublabel": "CanaryWeight 비율 전달",
+      "width": 160
+    },
+    {
+      "id": "full",
+      "lane": "traffic",
+      "col": 4,
+      "type": "cloud",
+      "label": "전체 릴리스",
+      "sublabel": "100% 트래픽",
+      "width": 160
+    },
+    {
+      "id": "flag_full",
+      "lane": "flag",
+      "col": 4,
+      "type": "backend",
+      "label": "Flag ON 전체 사용자",
+      "sublabel": "전체 노출",
+      "width": 160
+    },
+    {
+      "id": "cleanup",
+      "lane": "flag",
+      "col": 5,
+      "type": "backend",
+      "label": "Flag 정리",
+      "sublabel": "플래그 코드 제거",
+      "width": 160
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "security",
+      "label": "자동 롤백",
+      "sublabel": "Flag 비활성화",
+      "tag": "rollback webhook",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploy-canary",
+      "from": "deploy",
+      "to": "canary"
+    },
+    {
+      "id": "canary-flag_on",
+      "from": "canary",
+      "to": "flag_on",
+      "label": "webhook"
+    },
+    {
+      "id": "flag_on-metrics",
+      "from": "flag_on",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-expand",
+      "from": "metrics",
+      "to": "expand",
+      "label": "통과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-rollback",
+      "from": "metrics",
+      "to": "rollback",
+      "label": "실패",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "expand-flag_expand",
+      "from": "expand",
+      "to": "flag_expand",
+      "label": "비율 동기화"
+    },
+    {
+      "id": "expand-full",
+      "from": "expand",
+      "to": "full"
+    },
+    {
+      "id": "full-flag_full",
+      "from": "full",
+      "to": "flag_full"
+    },
+    {
+      "id": "flag_full-cleanup",
+      "from": "flag_full",
+      "to": "cleanup"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "분석 게이트 (Canary.spec.analysis)",
+      "items": [
+        "interval 1m · threshold 10회 연속 성공 시 승격",
+        "request-success-rate ≥ 99%",
+        "request-duration ≤ 500ms",
+        "stepWeight 10, maxWeight 50"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Feature Flag 연동 webhook",
+      "items": [
+        "pre-rollout: new-checkout Flag를 CanaryWeight 비율로 활성화",
+        "rollback: 롤백 시 같은 Flag를 비활성화"
+      ]
+    }
+  ]
+}

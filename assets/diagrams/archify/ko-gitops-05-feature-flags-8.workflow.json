@@ -1,0 +1,260 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PR 기반 Flag 변경 워크플로우",
+    "output": "ko-gitops-05-feature-flags-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "change-and-ci",
+        "label": "PR 생성과 CI 검증",
+        "focus": [
+          "pr_create",
+          "schema",
+          "impact"
+        ],
+        "note": "Flag 변경 PR이 열리면 CI가 스키마 검증과 영향도 분석을 자동으로 수행한다."
+      },
+      {
+        "id": "review-gate",
+        "label": "리뷰와 승인",
+        "focus": [
+          "reviewer",
+          "approve",
+          "merge",
+          "pr_create"
+        ],
+        "note": "CODEOWNERS 리뷰어가 승인하면 PR이 머지되고, 거부되면 PR 수정 단계로 되돌아간다."
+      },
+      {
+        "id": "deploy-verify",
+        "label": "GitOps 배포와 검증",
+        "focus": [
+          "sync",
+          "apply",
+          "verify",
+          "notify"
+        ],
+        "note": "ArgoCD/Flux가 FeatureFlag CR을 동기화하고, 헬스 체크와 메트릭 확인 후 알림을 보낸다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "개발자 작업"
+        },
+        "backend": {
+          "label": "자동화 단계"
+        },
+        "security": {
+          "label": "리뷰 게이트"
+        },
+        "cloud": {
+          "label": "GitOps 도구"
+        },
+        "external": {
+          "label": "알림 채널"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "dev",
+      "label": "개발자"
+    },
+    {
+      "id": "ci",
+      "label": "CI 파이프라인"
+    },
+    {
+      "id": "review",
+      "label": "리뷰 프로세스"
+    },
+    {
+      "id": "gitops",
+      "label": "GitOps 배포"
+    },
+    {
+      "id": "verify",
+      "label": "검증"
+    }
+  ],
+  "mainPath": [
+    "pr_create",
+    "schema",
+    "impact",
+    "reviewer",
+    "approve",
+    "merge",
+    "sync",
+    "apply",
+    "verify",
+    "notify"
+  ],
+  "nodes": [
+    {
+      "id": "pr_create",
+      "lane": "dev",
+      "col": 0,
+      "type": "frontend",
+      "label": "Flag 변경 PR 생성",
+      "sublabel": "FeatureFlag YAML 수정",
+      "width": 160
+    },
+    {
+      "id": "schema",
+      "lane": "ci",
+      "col": 0,
+      "type": "backend",
+      "label": "Flag 스키마 검증",
+      "sublabel": "kubectl --dry-run=client",
+      "width": 160
+    },
+    {
+      "id": "impact",
+      "lane": "ci",
+      "col": 1,
+      "type": "backend",
+      "label": "영향도 분석",
+      "sublabel": "영향 받는 서비스 확인",
+      "width": 160
+    },
+    {
+      "id": "reviewer",
+      "lane": "review",
+      "col": 1,
+      "type": "security",
+      "label": "자동 리뷰어 할당",
+      "sublabel": "CODEOWNERS",
+      "width": 160
+    },
+    {
+      "id": "approve",
+      "lane": "review",
+      "col": 2,
+      "type": "security",
+      "label": "승인 여부",
+      "sublabel": "코드 리뷰",
+      "tag": "사람 승인",
+      "width": 160
+    },
+    {
+      "id": "merge",
+      "lane": "gitops",
+      "col": 2,
+      "type": "backend",
+      "label": "PR 머지",
+      "sublabel": "main 브랜치",
+      "width": 160
+    },
+    {
+      "id": "sync",
+      "lane": "gitops",
+      "col": 3,
+      "type": "cloud",
+      "label": "ArgoCD/Flux 동기화",
+      "sublabel": "자동 sync",
+      "width": 160
+    },
+    {
+      "id": "apply",
+      "lane": "gitops",
+      "col": 4,
+      "type": "cloud",
+      "label": "FeatureFlag CR 적용",
+      "sublabel": "클러스터 반영",
+      "width": 160
+    },
+    {
+      "id": "verify",
+      "lane": "verify",
+      "col": 4,
+      "type": "backend",
+      "label": "헬스·메트릭 확인",
+      "sublabel": "CR 상태와 Flag 평가 지표",
+      "width": 160
+    },
+    {
+      "id": "notify",
+      "lane": "verify",
+      "col": 5,
+      "type": "external",
+      "label": "Slack/Teams 알림",
+      "sublabel": "변경 결과 공유",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "from": "pr_create",
+      "to": "schema",
+      "toSide": "left"
+    },
+    {
+      "from": "schema",
+      "to": "impact"
+    },
+    {
+      "from": "impact",
+      "to": "reviewer"
+    },
+    {
+      "from": "reviewer",
+      "to": "approve"
+    },
+    {
+      "from": "approve",
+      "to": "merge",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "approve",
+      "to": "pr_create",
+      "label": "거부",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "merge",
+      "to": "sync"
+    },
+    {
+      "from": "sync",
+      "to": "apply"
+    },
+    {
+      "from": "apply",
+      "to": "verify"
+    },
+    {
+      "from": "verify",
+      "to": "notify"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI 검증 단계",
+      "items": [
+        "FeatureFlag CRD 스키마 검증 (kubectl apply --dry-run=client)",
+        "Flag 이름 규칙 검증 (kebab-case)",
+        "영향도 분석 결과를 PR 코멘트로 요약"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "GitOps 배포 설정",
+      "items": [
+        "ArgoCD automated sync: prune, selfHeal",
+        "sync 성공/실패 시 Slack 채널 알림",
+        "Flux healthChecks로 FeatureFlag CR 상태 확인"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Flagger Control Loop — Detection to Promotion or Rollback",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1600,
+      840
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "trigger",
+        "label": "GitOps trigger",
+        "focus": [
+          "dev",
+          "git",
+          "flux",
+          "k8s",
+          "flagger"
+        ],
+        "note": "An image tag change flows through FluxCD to update the Deployment, which Flagger detects."
+      },
+      {
+        "id": "analysis",
+        "label": "Step-wise analysis loop",
+        "focus": [
+          "flagger",
+          "mesh",
+          "prom"
+        ],
+        "note": "Each step raises canary traffic by stepWeight and queries Prometheus metrics before moving on."
+      },
+      {
+        "id": "rollback",
+        "label": "Automatic rollback",
+        "focus": [
+          "flagger",
+          "mesh",
+          "k8s",
+          "dev",
+          "prom"
+        ],
+        "note": "If metrics breach thresholds, traffic returns to 0%, the canary is rolled back, and the developer is notified."
+      },
+      {
+        "id": "promote",
+        "label": "Promotion",
+        "focus": [
+          "flagger",
+          "k8s",
+          "mesh",
+          "dev"
+        ],
+        "note": "Once every step passes, the primary is updated and 100% of traffic is routed to it."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git Repository"
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "FluxCD"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes"
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger"
+    },
+    {
+      "id": "mesh",
+      "type": "messagebus",
+      "label": "Service Mesh"
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 318,
+      "label": "1. Change detection"
+    },
+    {
+      "from": 332,
+      "to": 458,
+      "label": "2. Repeat per step (by stepWeight) — metrics healthy"
+    },
+    {
+      "from": 472,
+      "to": 632,
+      "label": "3. Metrics unhealthy — automatic rollback"
+    },
+    {
+      "from": 646,
+      "to": 780,
+      "label": "4. Promotion"
+    }
+  ],
+  "messages": [
+    {
+      "id": "tag-update",
+      "from": "dev",
+      "to": "git",
+      "y": 190,
+      "label": "Update image tag"
+    },
+    {
+      "id": "git-detect",
+      "from": "git",
+      "to": "flux",
+      "y": 226,
+      "label": "Detect change"
+    },
+    {
+      "id": "deploy-update",
+      "from": "flux",
+      "to": "k8s",
+      "y": 262,
+      "label": "Update Deployment",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy-detect",
+      "from": "k8s",
+      "to": "flagger",
+      "y": 298,
+      "label": "Detect Deployment change"
+    },
+    {
+      "id": "weight-up",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 358,
+      "label": "Increase traffic weight",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metric-query",
+      "from": "flagger",
+      "to": "prom",
+      "y": 396,
+      "label": "Query metrics"
+    },
+    {
+      "id": "metric-ok",
+      "from": "prom",
+      "to": "flagger",
+      "y": 434,
+      "label": "Success response",
+      "variant": "return",
+      "note": "Advance to the next step"
+    },
+    {
+      "id": "metric-fail",
+      "from": "prom",
+      "to": "flagger",
+      "y": 498,
+      "label": "Failure response",
+      "variant": "return"
+    },
+    {
+      "id": "weight-reset",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 536,
+      "label": "Reset traffic (0%)",
+      "variant": "security"
+    },
+    {
+      "id": "canary-rollback",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 574,
+      "label": "Roll back canary Deployment",
+      "variant": "security"
+    },
+    {
+      "id": "rollback-notify",
+      "from": "flagger",
+      "to": "dev",
+      "y": 612,
+      "label": "Rollback notification",
+      "variant": "dashed"
+    },
+    {
+      "id": "primary-update",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 672,
+      "label": "Update primary Deployment",
+      "variant": "emphasis"
+    },
+    {
+      "id": "traffic-primary",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 710,
+      "label": "Route 100% traffic to primary"
+    },
+    {
+      "id": "done-notify",
+      "from": "flagger",
+      "to": "dev",
+      "y": 748,
+      "label": "Deployment complete notification",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "flux",
+      "from": 220,
+      "to": 268,
+      "type": "backend"
+    },
+    {
+      "participant": "flagger",
+      "from": 292,
+      "to": 756,
+      "type": "backend"
+    },
+    {
+      "participant": "prom",
+      "from": 390,
+      "to": 442,
+      "type": "database"
+    },
+    {
+      "participant": "prom",
+      "from": 492,
+      "to": 506,
+      "type": "database"
+    }
+  ]
+}

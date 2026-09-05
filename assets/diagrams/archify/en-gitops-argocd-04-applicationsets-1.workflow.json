@@ -1,0 +1,141 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Progressive Sync Flow",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "pre_prod",
+        "label": "Dev → Staging",
+        "focus": [
+          "dev",
+          "staging"
+        ],
+        "note": "The Step 2 staging Application syncs only after the Step 1 dev Application has succeeded."
+      },
+      {
+        "id": "prod_rolling",
+        "label": "Sequential prod rollout",
+        "focus": [
+          "staging",
+          "prod_ap",
+          "prod_us"
+        ],
+        "note": "Step 3 uses maxUpdate: 1, so prod-us starts only after prod-ap has completed, one at a time."
+      }
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Argo CD Application"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "env_dev",
+      "label": "env: dev"
+    },
+    {
+      "id": "env_staging",
+      "label": "env: staging"
+    },
+    {
+      "id": "env_prod",
+      "label": "env: prod"
+    }
+  ],
+  "phases": [
+    {
+      "id": "step1",
+      "label": "Step 1: Dev",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "step2",
+      "label": "Step 2: Staging",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "step3",
+      "label": "Step 3: Prod (maxUpdate: 1)",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "prod_one_at_a_time",
+      "label": "maxUpdate: 1 · one at a time",
+      "lane": "env_prod",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "dev",
+    "staging",
+    "prod_ap",
+    "prod_us"
+  ],
+  "nodes": [
+    {
+      "id": "dev",
+      "lane": "env_dev",
+      "col": 0,
+      "type": "backend",
+      "label": "myapp-dev",
+      "sublabel": "ns myapp-dev"
+    },
+    {
+      "id": "staging",
+      "lane": "env_staging",
+      "col": 1,
+      "type": "backend",
+      "label": "myapp-staging",
+      "sublabel": "ns myapp-staging"
+    },
+    {
+      "id": "prod_ap",
+      "lane": "env_prod",
+      "col": 2,
+      "type": "backend",
+      "label": "myapp-prod-ap",
+      "sublabel": "region: ap-northeast-2"
+    },
+    {
+      "id": "prod_us",
+      "lane": "env_prod",
+      "col": 3,
+      "type": "backend",
+      "label": "myapp-prod-us",
+      "sublabel": "region: us-west-2"
+    }
+  ],
+  "edges": [
+    {
+      "from": "dev",
+      "to": "staging",
+      "label": "after success"
+    },
+    {
+      "from": "staging",
+      "to": "prod_ap",
+      "label": "after success"
+    },
+    {
+      "from": "prod_ap",
+      "to": "prod_us",
+      "label": "after completion",
+      "variant": "emphasis"
+    }
+  ]
+}

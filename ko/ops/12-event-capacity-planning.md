@@ -335,7 +335,9 @@ spec:
 
 **동작 원리:**
 
-![PM이 D-7에 이벤트 정보를 전달하면 인프라팀이 Pause Pod로 Karpenter를 통해 노드를 미리 확보해두고, D-Day에 실제 워크로드가 스케일업하면서 낮은 우선순위의 Pause Pod를 축출해 즉시 스케줄링되는 과정을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/ko-ops-12-event-capacity-planning-0.svg)
+![PM이 D-7에 이벤트 정보를 전달하면 인프라팀이 Pause Pod를 배포해 Karpenter로 Node를 미리 확보하고, D-Day에 실제 워크로드가 스케일 업하면서 낮은 PriorityClass의 Pause Pod를 축출해 즉시 스케줄링되는 흐름을 보여준다.](../.gitbook/assets/ko-ops-12-event-capacity-planning-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-12-event-capacity-planning-0.html)
 
 ---
 
@@ -521,7 +523,9 @@ spec:
 
 KEDA는 복수 트리거 중 **가장 높은 replica 수를 선택**합니다. 따라서 Cron이 100을 요구하고 Prometheus가 150을 요구하면 150이 적용됩니다.
 
-![Cron, Prometheus, SQS 세 트리거가 각각 산출한 목표 Pod 수 중 최댓값(MAX)을 선택해 HPA에 반영하고 실제 Pod 스케일링으로 이어지는 KEDA 복합 트리거 동작을 보여주는 흐름도.](../../assets/diagrams/rendered/ko-ops-12-event-capacity-planning-1.svg)
+![Cron, Prometheus, SQS 세 트리거가 각각 산출한 목표 Pod 수 중 최댓값(MAX)을 KEDA가 선택해 HPA의 desiredReplicas로 반영하고 실제 Pod 스케일링으로 이어지는 복합 트리거 동작을 보여준다.](../.gitbook/assets/ko-ops-12-event-capacity-planning-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-12-event-capacity-planning-1.html)
 
 ---
 
@@ -529,7 +533,9 @@ KEDA는 복수 트리거 중 **가장 높은 replica 수를 선택**합니다. �
 
 ### 4.1 Pod-Level과 Node-Level 스케일링 조합
 
-![이벤트 30분 전 Cron 트리거로 KEDA가 200개 Pod를 요청해 Scheduler가 Pending을 감지하면 Karpenter가 AWS EC2에 노드 20대를 프로비저닝하고, 이벤트 시작 후 메트릭 트리거가 목표를 250개로 올려 노드 5대를 추가로 확보하는 과정을 보여주는 시퀀스 다이어그램.](../../assets/diagrams/rendered/ko-ops-12-event-capacity-planning-2.svg)
+![이벤트 30분 전 Cron 트리거로 KEDA가 Pod 200개를 요청해 Pending이 생기면 Karpenter가 AWS EC2에 Node 20대를 프로비저닝하고, 이벤트 시작 후 메트릭 트리거가 목표를 250개로 올려 Node 5대를 추가 확보하는 KEDA와 Karpenter의 연동 순서를 보여준다.](../.gitbook/assets/ko-ops-12-event-capacity-planning-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-12-event-capacity-planning-2.html)
 
 ### 4.2 스케일링 타이밍 최적화
 

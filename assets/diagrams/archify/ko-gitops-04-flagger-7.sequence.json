@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Image Automation + Canary 자동화 파이프라인",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [960, 640],
+    "views": [
+      { "id": "image-automation", "label": "이미지 자동화", "focus": ["cicd", "ecr", "flux", "git"], "note": "새 이미지 태그를 Flux가 스캔해 Git에 커밋하는 구간" },
+      { "id": "gitops-sync", "label": "GitOps 동기화", "focus": ["git", "flux", "k8s"], "note": "Git 변경을 감지해 Deployment를 갱신하는 구간" },
+      { "id": "canary-rollout", "label": "Canary 배포", "focus": ["k8s", "flagger"], "note": "Flagger가 Pod 변경을 감지해 점진적 배포 후 완료 또는 롤백" }
+    ]
+  },
+  "participants": [
+    { "id": "cicd", "type": "external", "label": "CI/CD", "sublabel": "이미지 빌드" },
+    { "id": "ecr", "type": "cloud", "label": "Amazon ECR", "sublabel": "이미지 레지스트리" },
+    { "id": "flux", "type": "backend", "label": "Flux", "sublabel": "Image Automation" },
+    { "id": "git", "type": "database", "label": "Git 저장소", "sublabel": "fleet-infra" },
+    { "id": "k8s", "type": "cloud", "label": "Kubernetes", "sublabel": "Deployment" },
+    { "id": "flagger", "type": "security", "label": "Flagger", "sublabel": "Canary 컨트롤러" }
+  ],
+  "segments": [
+    { "from": 165, "to": 330, "label": "이미지 자동화" },
+    { "from": 338, "to": 418, "label": "GitOps 동기화" },
+    { "from": 426, "to": 520, "label": "Canary 배포" }
+  ],
+  "messages": [
+    { "id": "push-image", "from": "cicd", "to": "ecr", "y": 185, "label": "1 · 새 이미지 push v2.0.0", "variant": "emphasis" },
+    { "id": "scan-tags", "from": "flux", "to": "ecr", "y": 228, "label": "2 · 이미지 태그 스캔", "note": "ImageRepository interval 5m · provider aws" },
+    { "id": "commit-tag", "from": "flux", "to": "git", "y": 270, "label": "3 · 태그 갱신 커밋", "variant": "emphasis", "note": "ImageUpdateAutomation · Setters 전략" },
+    { "id": "detect-git", "from": "git", "to": "flux", "y": 312, "label": "4 · Git 변경 감지", "variant": "return" },
+    { "id": "update-deploy", "from": "flux", "to": "k8s", "y": 355, "label": "5 · Deployment 갱신", "variant": "emphasis" },
+    { "id": "detect-pod", "from": "k8s", "to": "flagger", "y": 398, "label": "6 · Pod 변경 감지" },
+    { "id": "start-canary", "from": "flagger", "to": "k8s", "y": 445, "label": "7 · 카나리 점진적 배포 시작", "variant": "emphasis", "note": "stepWeight 10 → maxWeight 50 · interval 1m" },
+    { "id": "finish-or-rollback", "from": "flagger", "to": "k8s", "y": 495, "label": "8 · 배포 완료 또는 롤백", "variant": "return", "note": "request-success-rate ≥ 99% 유지 시 완료" }
+  ],
+  "activations": [
+    { "participant": "flux", "from": 222, "to": 362, "type": "backend" },
+    { "participant": "k8s", "from": 350, "to": 502, "type": "cloud" },
+    { "participant": "flagger", "from": 392, "to": 500, "type": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Flux Image Automation",
+      "items": [
+        "ImageRepository가 ECR을 5분 간격으로 스캔 (provider: aws)",
+        "ImagePolicy semver range \">=6.0.0\"으로 최신 태그 선택",
+        "ImageUpdateAutomation이 \"chore: update podinfo to {{.NewTag}}\" 커밋을 main에 push"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Flagger Canary 분석",
+      "items": [
+        "Deployment 변경을 감지하면 stepWeight 10%씩 maxWeight 50%까지 트래픽 이동",
+        "interval 1m마다 request-success-rate ≥ 99% 검사, threshold 5회 실패 시 롤백",
+        "환경별 Kustomize 패치로 production은 더 보수적으로(maxWeight 30, stepWeight 5)"
+      ]
+    }
+  ]
+}

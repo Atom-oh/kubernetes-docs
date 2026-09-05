@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton Pipeline Task Graph",
+    "locale": "en",
+    "output": "en-ops-14-tekton-pipelines-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "parallel",
+        "label": "Parallel execution",
+        "focus": [
+          "clone",
+          "test",
+          "lint"
+        ],
+        "note": "After git-clone, lint and unit-test declared with runAfter run at the same time."
+      },
+      {
+        "id": "converge",
+        "label": "Convergence and deploy",
+        "focus": [
+          "test",
+          "lint",
+          "build",
+          "scan",
+          "deploy"
+        ],
+        "note": "build-image waits for both to succeed, then security-scan and deploy follow."
+      },
+      {
+        "id": "finally",
+        "label": "finally Tasks",
+        "focus": [
+          "deploy",
+          "notify",
+          "cleanup"
+        ],
+        "note": "Notification and cleanup Tasks always run when the Pipeline ends, success or failure."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clone",
+      "type": "backend",
+      "label": "git-clone",
+      "sublabel": "fetch source",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "unit-test",
+      "sublabel": "test suite",
+      "pos": [
+        240,
+        140
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "lint",
+      "type": "backend",
+      "label": "lint",
+      "sublabel": "static checks",
+      "pos": [
+        240,
+        360
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "build-image",
+      "sublabel": "image build",
+      "pos": [
+        440,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "scan",
+      "type": "security",
+      "label": "security-scan",
+      "sublabel": "vulnerability scan",
+      "pos": [
+        650,
+        250
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "deploy",
+      "sublabel": "deploy to cluster",
+      "pos": [
+        850,
+        250
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "notify",
+      "type": "backend",
+      "label": "notify-slack",
+      "sublabel": "Slack notification",
+      "pos": [
+        1080,
+        140
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cleanup",
+      "type": "backend",
+      "label": "cleanup",
+      "sublabel": "workspace cleanup",
+      "pos": [
+        1080,
+        360
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "CI/CD Pipeline (tasks)",
+      "wraps": [
+        "clone",
+        "test",
+        "lint",
+        "build",
+        "scan",
+        "deploy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "finally Tasks",
+      "wraps": [
+        "notify",
+        "cleanup"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clone-test",
+      "from": "clone",
+      "to": "test",
+      "label": "runAfter"
+    },
+    {
+      "id": "clone-lint",
+      "from": "clone",
+      "to": "lint"
+    },
+    {
+      "id": "test-build",
+      "from": "test",
+      "to": "build"
+    },
+    {
+      "id": "lint-build",
+      "from": "lint",
+      "to": "build"
+    },
+    {
+      "id": "build-scan",
+      "from": "build",
+      "to": "scan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scan-deploy",
+      "from": "scan",
+      "to": "deploy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy-notify",
+      "from": "deploy",
+      "to": "notify",
+      "label": "always runs",
+      "variant": "dashed"
+    },
+    {
+      "id": "deploy-cleanup",
+      "from": "deploy",
+      "to": "cleanup",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ordering and parallelism",
+      "items": [
+        "runAfter declares ordering between Tasks",
+        "lint and unit-test run in parallel after git-clone",
+        "build-image starts only after both succeed"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "finally Tasks",
+      "items": [
+        "Always execute regardless of Pipeline success or failure",
+        "Used for Slack notification and workspace cleanup"
+      ]
+    }
+  ]
+}

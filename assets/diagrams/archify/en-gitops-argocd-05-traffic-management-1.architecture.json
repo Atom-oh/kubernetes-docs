@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Blue-Green Deployment Switch",
+    "locale": "en",
+    "output": "en-gitops-argocd-05-traffic-management-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Load balancer"
+        },
+        "backend": {
+          "label": "Application version"
+        },
+        "external": {
+          "label": "Cleanup target"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "before",
+        "label": "Before switch",
+        "focus": [
+          "lb-before",
+          "blue-before",
+          "green-before"
+        ],
+        "note": "The load balancer sends traffic only to Blue v1.0.0 (activeService) while Green v2.0.0 stands by behind previewService."
+      },
+      {
+        "id": "switch",
+        "label": "Instant switch",
+        "focus": [
+          "blue-before",
+          "green-after",
+          "lb-after"
+        ],
+        "note": "The activeService selector flips to Green, moving all production traffic to v2.0.0 at once."
+      },
+      {
+        "id": "after",
+        "label": "After switch",
+        "focus": [
+          "lb-after",
+          "green-after",
+          "blue-after",
+          "scale-down"
+        ],
+        "note": "The previous version Blue v1.0.0 stays up for scaleDownDelaySeconds as a rollback target, then scales down."
+      }
+    ],
+    "viewBox": [
+      960,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "lb-before",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "production traffic",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blue-before",
+      "type": "backend",
+      "label": "Blue",
+      "sublabel": "v1.0.0 · active",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "green-before",
+      "type": "backend",
+      "label": "Green",
+      "sublabel": "v2.0.0 · preview",
+      "pos": [
+        60,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lb-after",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "production traffic",
+      "pos": [
+        720,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "green-after",
+      "type": "backend",
+      "label": "Green",
+      "sublabel": "v2.0.0 · active",
+      "pos": [
+        720,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blue-after",
+      "type": "backend",
+      "label": "Blue",
+      "sublabel": "v1.0.0 · previous version",
+      "pos": [
+        720,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scale-down",
+      "type": "external",
+      "label": "Scale down",
+      "sublabel": "after scaleDownDelaySeconds",
+      "pos": [
+        720,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Before switch",
+      "wraps": [
+        "lb-before",
+        "blue-before",
+        "green-before"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "After switch",
+      "wraps": [
+        "lb-after",
+        "green-after",
+        "blue-after",
+        "scale-down"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lb-to-blue",
+      "from": "lb-before",
+      "to": "blue-before",
+      "label": "traffic",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "blue-to-green-standby",
+      "from": "blue-before",
+      "to": "green-before",
+      "label": "standby",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "switch",
+      "from": "blue-before",
+      "to": "green-after",
+      "label": "switch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-green",
+      "from": "lb-after",
+      "to": "green-after",
+      "label": "traffic",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "green-to-blue-old",
+      "from": "green-after",
+      "to": "blue-after",
+      "label": "kept as previous version",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "blue-to-scale-down",
+      "from": "blue-after",
+      "to": "scale-down",
+      "label": "to be removed",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Before switch",
+      "items": [
+        "activeService routes traffic to Blue v1.0.0",
+        "Green v2.0.0 is verified through previewService",
+        "prePromotionAnalysis runs smoke tests before promotion"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "After switch",
+      "items": [
+        "autoPromotionEnabled or manual promotion switches traffic instantly",
+        "postPromotionAnalysis checks the success rate after the switch",
+        "Blue scales down after scaleDownDelaySeconds"
+      ]
+    }
+  ]
+}

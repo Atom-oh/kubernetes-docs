@@ -1,0 +1,179 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PSP → PSS Transition Roadmap",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "deprecation",
+        "label": "PSP deprecation",
+        "focus": [
+          "psp_deprecated",
+          "psa_alpha"
+        ],
+        "note": "PodSecurityPolicy is deprecated in Kubernetes 1.21, and its replacement, PSA, arrives as alpha in 1.22."
+      },
+      {
+        "id": "maturity",
+        "label": "PSA maturity",
+        "focus": [
+          "psa_alpha",
+          "psa_beta",
+          "psa_ga"
+        ],
+        "note": "Pod Security Admission moves from alpha in 1.22 to beta in 1.23 and reaches GA in 1.25."
+      },
+      {
+        "id": "cutover",
+        "label": "Cutover complete",
+        "focus": [
+          "psa_ga",
+          "psp_removed",
+          "pss_stable"
+        ],
+        "note": "PSP is completely removed in 1.25 alongside PSA GA, and PSS/PSA stabilize from 1.28 onward."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "PSP event"
+        },
+        "backend": {
+          "label": "PSA release stage"
+        },
+        "security": {
+          "label": "Key turning point (PSP removed · PSA GA)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "psp",
+      "label": "PodSecurityPolicy (PSP)"
+    },
+    {
+      "id": "psa",
+      "label": "Pod Security Admission (PSA) · Pod Security Standards (PSS)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "announce",
+      "label": "Deprecation notice",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "mature",
+      "label": "PSA maturity",
+      "fromCol": 1,
+      "toCol": 2
+    },
+    {
+      "id": "cutover",
+      "label": "Cutover · stabilization",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "psp_deprecated",
+    "psa_alpha",
+    "psa_beta",
+    "psa_ga",
+    "pss_stable"
+  ],
+  "nodes": [
+    {
+      "id": "psp_deprecated",
+      "lane": "psp",
+      "col": 0,
+      "width": 160,
+      "type": "external",
+      "label": "PSP deprecated",
+      "sublabel": "v1.21 · deprecated"
+    },
+    {
+      "id": "psp_removed",
+      "lane": "psp",
+      "col": 3,
+      "width": 160,
+      "type": "security",
+      "label": "PSP removed",
+      "sublabel": "v1.25 · removed from the API"
+    },
+    {
+      "id": "psa_alpha",
+      "lane": "psa",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "PSA alpha",
+      "sublabel": "v1.22 · alpha"
+    },
+    {
+      "id": "psa_beta",
+      "lane": "psa",
+      "col": 2,
+      "width": 160,
+      "type": "backend",
+      "label": "PSA beta",
+      "sublabel": "v1.23 · beta"
+    },
+    {
+      "id": "psa_ga",
+      "lane": "psa",
+      "col": 3,
+      "width": 160,
+      "type": "security",
+      "label": "PSA GA",
+      "sublabel": "v1.25 · Generally Available"
+    },
+    {
+      "id": "pss_stable",
+      "lane": "psa",
+      "col": 4,
+      "width": 160,
+      "type": "backend",
+      "label": "PSS/PSA stabilized",
+      "sublabel": "v1.28+ · stable"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deprecated-alpha",
+      "from": "psp_deprecated",
+      "to": "psa_alpha",
+      "label": "replacement introduced"
+    },
+    {
+      "id": "alpha-beta",
+      "from": "psa_alpha",
+      "to": "psa_beta"
+    },
+    {
+      "id": "beta-ga",
+      "from": "psa_beta",
+      "to": "psa_ga"
+    },
+    {
+      "id": "ga-stable",
+      "from": "psa_ga",
+      "to": "pss_stable"
+    },
+    {
+      "id": "ga-removed",
+      "from": "psa_ga",
+      "to": "psp_removed",
+      "label": "same release",
+      "role": "branch",
+      "variant": "security"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubescape 수정 워크플로우",
+    "output": "public/archmaps/ko-security-11-kubescape-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "detect-triage", "label": "탐지와 분류", "focus": ["scan", "alert", "classify", "review", "decide"], "note": "정기 스캔 또는 알림으로 발견된 문제를 심각도와 영향도로 분류한 뒤 수정 여부를 결정한다." },
+      { "id": "fix-verify", "label": "수정과 재검증", "focus": ["decide", "fix", "deploy", "rescan", "pass", "close"], "note": "코드를 고쳐 배포한 뒤 재스캔으로 통과를 확인하고 이슈를 종료한다." },
+      { "id": "exception-retry", "label": "예외와 재수정", "focus": ["decide", "exception", "pass", "retry", "fix", "close"], "note": "허용 가능한 위험은 예외로 등록해 종료하고, 재스캔 실패는 코드 수정으로 되돌아간다." }
+    ]
+  },
+  "lanes": [
+    { "id": "detect", "label": "탐지" },
+    { "id": "triage", "label": "분류 · 분석" },
+    { "id": "decision", "label": "수정 결정" },
+    { "id": "remediate", "label": "수정 · 검증" },
+    { "id": "closure", "label": "종결" },
+    { "id": "exceptions", "label": "재수정 루프", "variant": "exception" }
+  ],
+  "mainPath": ["scan", "alert", "classify", "review", "decide", "fix", "deploy", "rescan", "pass", "close"],
+  "nodes": [
+    { "id": "scan", "lane": "detect", "col": 0, "type": "backend", "label": "정기 스캔", "sublabel": "kubescape scan" },
+    { "id": "alert", "lane": "detect", "col": 1, "type": "messagebus", "label": "알림 수신", "sublabel": "Slack · PagerDuty · Email" },
+    { "id": "classify", "lane": "triage", "col": 1, "type": "backend", "label": "심각도 분류" },
+    { "id": "review", "lane": "triage", "col": 2, "type": "backend", "label": "컨트롤 검토 · 영향도 분석" },
+    { "id": "decide", "lane": "decision", "col": 2, "type": "security", "label": "수정 결정", "sublabel": "수정 필요 / 허용된 리스크", "tag": "의사 결정" },
+    { "id": "fix", "lane": "remediate", "col": 2, "type": "frontend", "label": "코드 수정", "sublabel": "매니페스트 · 설정 변경", "tag": "핵심 조치" },
+    { "id": "deploy", "lane": "remediate", "col": 3, "type": "cloud", "label": "테스트 · 배포" },
+    { "id": "rescan", "lane": "remediate", "col": 4, "type": "backend", "label": "재스캔", "sublabel": "kubescape scan" },
+    { "id": "pass", "lane": "remediate", "col": 5, "type": "security", "label": "통과?", "sublabel": "통과 / 실패", "tag": "의사 결정" },
+    { "id": "exception", "lane": "closure", "col": 3, "type": "database", "label": "예외 등록", "sublabel": "허용된 리스크" },
+    { "id": "close", "lane": "closure", "col": 5, "type": "backend", "label": "이슈 종료", "sublabel": "Close" },
+    { "id": "retry", "lane": "exceptions", "col": 5, "type": "security", "label": "재수정 대기", "sublabel": "Retry" }
+  ],
+  "edges": [
+    { "from": "scan", "to": "alert" },
+    { "from": "alert", "to": "classify", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "classify", "to": "review" },
+    { "from": "review", "to": "decide", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "decide", "to": "fix", "label": "수정 필요", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "fix", "to": "deploy" },
+    { "from": "deploy", "to": "rescan" },
+    { "from": "rescan", "to": "pass" },
+    { "from": "pass", "to": "close", "label": "통과", "variant": "emphasis", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "decide", "to": "exception", "label": "허용된 리스크", "role": "branch", "variant": "security" },
+    { "from": "exception", "to": "close" },
+    { "from": "pass", "to": "retry", "label": "실패", "variant": "security", "role": "error", "route": "drop", "fromSide": "bottom", "toSide": "top" },
+    { "from": "retry", "to": "fix", "label": "재수정", "variant": "dashed", "role": "return", "route": "return-left", "fromSide": "left", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "정기 스캔 일정", "items": ["프로덕션: 6시간마다, production NS, JSON + PagerDuty", "CI/CD: PR마다 변경된 매니페스트, SARIF + PR 코멘트", "이미지 취약점: 매일 · RBAC: 주간 · 컴플라이언스: 월간"] },
+    { "dot": "amber", "title": "알림 · 에스컬레이션", "items": ["Slack: medium 이상 · PagerDuty: critical · Email: high 이상", "critical은 1시간 내 미조치 시 PagerDuty로 에스컬레이션", "high는 24시간 내 미조치 시 Email로 에스컬레이션"] },
+    { "dot": "rose", "title": "루프 종료 조건", "items": ["재스캔 통과 시 이슈 종료", "재스캔 실패 시 코드 수정으로 복귀", "허용 가능한 위험은 예외 등록 후 종료"] }
+  ]
+}

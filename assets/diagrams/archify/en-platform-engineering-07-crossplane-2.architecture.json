@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Platform Abstraction with Compositions",
+    "locale": "en",
+    "output": "en-platform-engineering-07-crossplane-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "schema",
+        "label": "XRD and Compositions",
+        "focus": [
+          "xrd",
+          "comp_dev",
+          "comp_prod"
+        ],
+        "note": "The platform team defines one XRD and places two Compositions, dev and prod, beneath it."
+      },
+      {
+        "id": "dev-path",
+        "label": "dev Claim path",
+        "focus": [
+          "claim_a",
+          "comp_dev",
+          "rds_a",
+          "sg_a",
+          "sub_a"
+        ],
+        "note": "The my-db Claim references the dev Composition and gets a t3.medium resource bundle."
+      },
+      {
+        "id": "prod-path",
+        "label": "prod Claim path",
+        "focus": [
+          "claim_b",
+          "comp_prod",
+          "rds_b",
+          "sg_b",
+          "sub_b"
+        ],
+        "note": "The order-db Claim references the prod Composition and gets an r6g.xlarge Multi-AZ bundle."
+      }
+    ],
+    "viewBox": [
+      1140,
+      580
+    ]
+  },
+  "components": [
+    {
+      "id": "claim_a",
+      "type": "external",
+      "label": "Claim: my-db",
+      "sublabel": "size: small",
+      "pos": [
+        40,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "claim_b",
+      "type": "external",
+      "label": "Claim: order-db",
+      "sublabel": "size: large",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "xrd",
+      "type": "backend",
+      "label": "XRD",
+      "sublabel": "CompositeResourceDefinition · defines the API schema",
+      "pos": [
+        420,
+        225
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "comp_dev",
+      "type": "backend",
+      "label": "Composition (dev)",
+      "sublabel": "t3.medium · 20GB · Single-AZ",
+      "pos": [
+        420,
+        110
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "comp_prod",
+      "type": "backend",
+      "label": "Composition (prod)",
+      "sublabel": "r6g.xlarge · 100GB · Multi-AZ · encrypted",
+      "pos": [
+        420,
+        340
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "rds_a",
+      "type": "database",
+      "label": "RDS Instance",
+      "sublabel": "t3.medium",
+      "pos": [
+        900,
+        56
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "sg_a",
+      "type": "security",
+      "label": "SecurityGroup",
+      "pos": [
+        900,
+        118
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "sub_a",
+      "type": "cloud",
+      "label": "SubnetGroup",
+      "pos": [
+        900,
+        180
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "rds_b",
+      "type": "database",
+      "label": "RDS Instance",
+      "sublabel": "r6g.xlarge",
+      "pos": [
+        900,
+        286
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "sg_b",
+      "type": "security",
+      "label": "SecurityGroup",
+      "pos": [
+        900,
+        348
+      ],
+      "size": [
+        170,
+        48
+      ]
+    },
+    {
+      "id": "sub_b",
+      "type": "cloud",
+      "label": "SubnetGroup",
+      "pos": [
+        900,
+        410
+      ],
+      "size": [
+        170,
+        48
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Used by development teams",
+      "wraps": [
+        "claim_a",
+        "claim_b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Defined by the platform team",
+      "wraps": [
+        "xrd",
+        "comp_dev",
+        "comp_prod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Automatically created resources",
+      "wraps": [
+        "rds_a",
+        "sg_a",
+        "sub_a",
+        "rds_b",
+        "sg_b",
+        "sub_b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "xrd-dev",
+      "from": "xrd",
+      "to": "comp_dev"
+    },
+    {
+      "id": "xrd-prod",
+      "from": "xrd",
+      "to": "comp_prod"
+    },
+    {
+      "id": "claim-a-dev",
+      "from": "claim_a",
+      "to": "comp_dev",
+      "label": "compositionRef: dev",
+      "variant": "emphasis"
+    },
+    {
+      "id": "claim-b-prod",
+      "from": "claim_b",
+      "to": "comp_prod",
+      "label": "compositionRef: prod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dev-rds",
+      "from": "comp_dev",
+      "to": "rds_a"
+    },
+    {
+      "id": "dev-sg",
+      "from": "comp_dev",
+      "to": "sg_a"
+    },
+    {
+      "id": "dev-sub",
+      "from": "comp_dev",
+      "to": "sub_a"
+    },
+    {
+      "id": "prod-rds",
+      "from": "comp_prod",
+      "to": "rds_b"
+    },
+    {
+      "id": "prod-sg",
+      "from": "comp_prod",
+      "to": "sg_b"
+    },
+    {
+      "id": "prod-sub",
+      "from": "comp_prod",
+      "to": "sub_b"
+    }
+  ]
+}

@@ -778,7 +778,9 @@ spec:
 
 ### Progressive Sync 흐름
 
-![myapp-dev에서 myapp-staging을 거쳐 myapp-prod-ap, myapp-prod-us 순으로 진행되는 3단계 프로그레시브 롤아웃과 Prod 단계의 maxUpdate 1 제약을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-gitops-argocd-04-applicationsets-1.svg)
+![myapp-dev에서 myapp-staging을 거쳐 myapp-prod-ap, myapp-prod-us 순으로 진행되는 3단계 Progressive Sync 롤아웃과 prod 단계의 maxUpdate: 1 제약을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-04-applicationsets-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-04-applicationsets-1.html)
 
 ## 멀티 클러스터 배포 패턴
 

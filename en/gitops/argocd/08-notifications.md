@@ -29,7 +29,9 @@ ArgoCD Notifications is a component that monitors ArgoCD applications and sends 
 
 ## Architecture
 
-![Flow diagram of ArgoCD's notification pipeline: the Application Controller watches Applications, hands events to the Notifications Controller which watches apps and evaluates trigger conditions, and once a trigger matches, dispatches messages out to Slack, Teams, Email, a webhook, and GitHub.](../../../assets/diagrams/rendered/en-gitops-argocd-08-notifications-0.svg)
+![Flow diagram of ArgoCD notifications: Application events reach the Notifications Controller, which evaluates triggers and renders templates, then fans the messages out to Slack, Microsoft Teams, Email, Webhook, and GitHub.](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-08-notifications-0.html)
 
 ### Installation
 

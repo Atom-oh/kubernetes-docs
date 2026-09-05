@@ -70,7 +70,9 @@ Both Flagger and Argo Rollouts solve the progressive delivery problem for Kubern
 
 Flagger is designed as the progressive delivery component of the Flux GitOps toolkit:
 
-![Flux's source, kustomize, helm, notification and image-automation controllers reconcile Kubernetes deployments from a Git repository, while Flagger watches those deployments, queries Prometheus, and manages the Services and routes used for progressive delivery.](../../assets/diagrams/rendered/en-gitops-04-flagger-0.svg)
+![Flux's source, kustomize, helm, notification and image-automation controllers reconcile Deployments from a Git repository, while Flagger watches them, queries Prometheus, and manages the Services and routes used for progressive delivery.](../.gitbook/assets/en-gitops-04-flagger-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-0.html)
 
 ---
 
@@ -80,7 +82,9 @@ Flagger is designed as the progressive delivery component of the Flux GitOps too
 
 Flagger implements a control loop that progressively advances a new version of an application by analyzing metrics, running conformance tests, and managing traffic routing. The core reconciliation loop is:
 
-![A canary progresses from initialized through step-wise traffic increases to waiting for promotion, promoting, and finalising into a successful rollout, or diverts to a failed state and rolls back to initialized if metrics or a timeout fail along the way.](../../assets/diagrams/rendered/en-gitops-04-flagger-1.svg)
+![Flagger, running as a Kubernetes controller, watches the Canary CRD, starts the new version in the canary Deployment, adjusts routing weights on the mesh/ingress provider, judges success from the metrics backend, then promotes to app-primary and reports the result to Slack/Teams alert channels.](../.gitbook/assets/en-gitops-04-flagger-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-1.html)
 
 ### Detailed Control Loop Steps
 
@@ -122,7 +126,9 @@ Flagger's metrics analysis engine queries Prometheus to evaluate whether a canar
 
 Both metrics are derived from the service mesh or ingress controller's Prometheus metrics (e.g., `istio_requests_total`, `istio_request_duration_milliseconds_bucket`).
 
-![Flagger shifts a slice of traffic to the canary pod through the mesh, then queries Prometheus for success rate and latency against thresholds before advancing the traffic weight.](../../assets/diagrams/rendered/en-gitops-04-flagger-2.svg)
+![An image tag update flows through FluxCD to the Deployment, then Flagger raises canary traffic step by step while querying Prometheus, promoting to primary when metrics pass or rolling back the canary and notifying the developer when they fail.](../.gitbook/assets/en-gitops-04-flagger-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-2.html)
 
 ---
 
@@ -403,7 +409,9 @@ Step 5: Canary 50%, Primary 50%  ->  Analyze metrics
 Step 6: Promote -> Canary spec copied to Primary, all traffic to Primary
 ```
 
-![Canary traffic weight climbs in five steps from 10% to 50% before promotion to 100%, and at each step Flagger analyzes the request success rate and P99 duration and runs any configured webhooks.](../../assets/diagrams/rendered/en-gitops-04-flagger-3.svg)
+![Canary CRD fields feed a deployment process that initializes the primary, detects a change, scales up the canary, shifts traffic from 10% to 50%, analyzes metrics at each step, then promotes on success or rolls back on failure.](../.gitbook/assets/en-gitops-04-flagger-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-3.html)
 
 You can also define non-linear traffic stepping with `stepWeights` (an array):
 
@@ -618,7 +626,9 @@ In Blue-Green mode:
 - After all iterations pass, traffic is switched 100% from primary to canary in a single step
 - If any iteration fails, the canary is scaled down with no impact on production traffic
 
-![Flagger deploys a green canary, drives synthetic load through it in repeated analysis iterations, then switches all user traffic to green, updates the primary spec, and scales the old canary down.](../../assets/diagrams/rendered/en-gitops-04-flagger-4.svg)
+![Shows the three Blue-Green phases: before the switch the load balancer sends all live traffic to Blue v1 while Green v2 stands ready, during the test phase only mirrored traffic reaches Green for validation, and after the switch traffic moves to Green v2 with Blue v1 on standby.](../.gitbook/assets/en-gitops-04-flagger-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-4.html)
 
 ### Mirror Traffic
 
@@ -1810,7 +1820,9 @@ webhooks:
 
 For organizations running multiple EKS clusters, Flagger can be deployed in a hub-and-spoke pattern:
 
-![A single management cluster's Flux controllers read one Git repository and apply the same Kustomization to three production clusters in different regions, each running its own Flagger, Istio, and web-app canary.](../../assets/diagrams/rendered/en-gitops-04-flagger-7.svg)
+![A management cluster's FluxCD reads one Git repository and propagates deployments to independent Flagger instances in two production clusters (Seoul, Oregon) and a staging cluster, each promoting or rolling back its own canary.](../.gitbook/assets/en-gitops-04-flagger-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-8.html)
 
 **Key considerations for multi-cluster Flagger:**
 

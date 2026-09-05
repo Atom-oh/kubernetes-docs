@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenFeature Provider Model",
+    "output": "en-gitops-05-feature-flags-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "sdk-api",
+        "label": "SDK API layer",
+        "focus": [
+          "api"
+        ],
+        "note": "The application calls only the vendor-neutral API layer and never knows the backend directly."
+      },
+      {
+        "id": "provider-swap",
+        "label": "Swapping providers",
+        "focus": [
+          "api",
+          "flagd",
+          "launchdarkly",
+          "inmemory"
+        ],
+        "note": "Register the provider that fits the environment with SetProvider() and the whole flag system changes."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      920,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Layer",
+      "sublabel": "openfeature.Client",
+      "pos": [
+        60,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "flagd",
+      "type": "backend",
+      "label": "flagd Provider",
+      "sublabel": "dev / staging",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "launchdarkly",
+      "type": "external",
+      "label": "LaunchDarkly Provider",
+      "sublabel": "production",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "inmemory",
+      "type": "backend",
+      "label": "In-Memory Provider",
+      "sublabel": "tests",
+      "pos": [
+        620,
+        380
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "OpenFeature SDK",
+      "wraps": [
+        "api"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Provider selection (per environment)",
+      "wraps": [
+        "flagd",
+        "launchdarkly",
+        "inmemory"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-flagd",
+      "from": "api",
+      "to": "flagd",
+      "label": "SetProvider()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-launchdarkly",
+      "from": "api",
+      "to": "launchdarkly",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-inmemory",
+      "from": "api",
+      "to": "inmemory",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Provider model",
+      "items": [
+        "A provider is the adapter that connects the OpenFeature SDK to a concrete feature flag backend",
+        "One line, openfeature.SetProvider(provider), registers the provider",
+        "Swapping only the provider changes the entire flag system with no application code change"
+      ]
+    }
+  ]
+}

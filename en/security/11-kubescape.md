@@ -56,7 +56,9 @@ Kubescape joined the CNCF Sandbox in 2022, demonstrating its commitment to open-
 
 ### Kubescape Architecture
 
-![Diagram showing Kubescape input sources and security frameworks feeding control evaluation and vulnerability scanning, which converge on a risk calculator before producing reports and metrics.](../../assets/diagrams/rendered/en-security-11-kubescape-0.svg)
+![Kubescape architecture: CLI, Operator, and CI/CD scan requests pass through framework-based control evaluation, vulnerability scanning, and RBAC analysis into a Risk Calculator, whose report goes to JSON/SARIF, Kubescape Cloud, and alerts.](../.gitbook/assets/en-security-11-kubescape-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-0.html)
 
 ---
 
@@ -477,7 +479,9 @@ RBAC analysis capabilities:
 
 ### Continuous Scanning Architecture
 
-![Architecture diagram showing a scheduled scanner pod inside a Kubernetes cluster collecting workload resources and runtime events into results storage, which feeds Prometheus, a dashboard, and the Kubescape API outside the cluster.](../../assets/diagrams/rendered/en-security-11-kubescape-2.svg)
+![Inside the cluster a CronJob triggers the Operator Controller, which runs the Configuration, Vulnerability and RBAC scanners against Deployments, Pods, Services, Secrets and ServiceAccounts while Node Agent eBPF events also flow into the Controller. The Controller stores scan results as CRDs and compares them with the Baseline; results are published to Kubescape Cloud and detected changes go to external Alerting and SIEM/SOAR.](../.gitbook/assets/en-security-11-kubescape-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-2.html)
 
 ### Operator Components
 
@@ -724,7 +728,9 @@ kubescape scan framework nsa --format json | \
 
 ### CI/CD Integration Workflow
 
-![Flowchart showing a CI pipeline checking out code, running a Kubescape scan, and evaluating the risk score against a threshold to either deploy to the cluster or block the deployment.](../../assets/diagrams/rendered/en-security-11-kubescape-3.svg)
+![Kubescape CI/CD integration workflow: a code change and Git commit fire the CI trigger, then the image build and a Kubescape scan (framework nsa, mitre); the security gate's gate check compares the risk score with the threshold — at or below it the run passes and deploys to the cluster, above it the run fails, deployment is blocked (exit 1), and a PR comment or alert is sent.](../.gitbook/assets/en-security-11-kubescape-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-11-kubescape-3.html)
 
 ### GitHub Actions Workflow
 

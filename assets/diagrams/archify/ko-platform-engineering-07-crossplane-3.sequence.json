@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Claim 셀프서비스 프로비저닝 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      724
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "claim",
+        "label": "Claim 요청",
+        "focus": [
+          "dev",
+          "ns",
+          "xp"
+        ],
+        "note": "개발자가 자신의 Namespace에 Claim을 적용하면 Crossplane이 이를 감지해 XR을 만든다."
+      },
+      {
+        "id": "compose",
+        "label": "Composition 조회",
+        "focus": [
+          "xp",
+          "comp"
+        ],
+        "note": "XR에 매칭되는 Composition에서 생성할 Managed Resource 목록을 가져온다."
+      },
+      {
+        "id": "provision",
+        "label": "AWS 프로비저닝",
+        "focus": [
+          "xp",
+          "aws"
+        ],
+        "note": "SecurityGroup, SubnetGroup, RDS Instance를 순서대로 생성한다."
+      },
+      {
+        "id": "result",
+        "label": "결과 반환",
+        "focus": [
+          "xp",
+          "ns",
+          "dev"
+        ],
+        "note": "Connection Secret이 개발자 Namespace에 생성되고 Claim이 Ready 상태가 된다."
+      },
+      {
+        "id": "reconcile",
+        "label": "지속적 조정",
+        "focus": [
+          "xp",
+          "aws"
+        ],
+        "note": "프로비저닝 이후에도 드리프트를 감지하면 자동으로 복원한다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "ns",
+      "type": "frontend",
+      "label": "개발자 Namespace",
+      "sublabel": "Claim · Secret"
+    },
+    {
+      "id": "xp",
+      "type": "backend",
+      "label": "Crossplane",
+      "sublabel": "XR 컨트롤러"
+    },
+    {
+      "id": "comp",
+      "type": "database",
+      "label": "Composition",
+      "sublabel": "플랫폼 팀 정의"
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "provider-aws"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 548,
+      "label": "Claim 프로비저닝"
+    },
+    {
+      "from": 560,
+      "to": 630,
+      "label": "지속적 조정 (Continuous Reconciliation)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "apply",
+      "from": "dev",
+      "to": "ns",
+      "y": 182,
+      "label": "kubectl apply -f database-claim.yaml",
+      "variant": "emphasis"
+    },
+    {
+      "id": "detect",
+      "from": "ns",
+      "to": "xp",
+      "y": 216,
+      "label": "Claim 감지 → XR 자동 생성",
+      "note": "XR (Composite Resource) 자동 생성"
+    },
+    {
+      "id": "lookup",
+      "from": "xp",
+      "to": "comp",
+      "y": 256,
+      "label": "Composition 조회"
+    },
+    {
+      "id": "mrlist",
+      "from": "comp",
+      "to": "xp",
+      "y": 288,
+      "label": "Managed Resource 목록 반환",
+      "variant": "return"
+    },
+    {
+      "id": "sg",
+      "from": "xp",
+      "to": "aws",
+      "y": 324,
+      "label": "SecurityGroup 생성 API"
+    },
+    {
+      "id": "subnet",
+      "from": "xp",
+      "to": "aws",
+      "y": 358,
+      "label": "SubnetGroup 생성 API"
+    },
+    {
+      "id": "rds",
+      "from": "xp",
+      "to": "aws",
+      "y": 392,
+      "label": "RDS Instance 생성 API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "done",
+      "from": "aws",
+      "to": "xp",
+      "y": 426,
+      "label": "리소스 생성 완료",
+      "variant": "return"
+    },
+    {
+      "id": "secret",
+      "from": "xp",
+      "to": "ns",
+      "y": 462,
+      "label": "Connection Secret 생성",
+      "variant": "security"
+    },
+    {
+      "id": "ready",
+      "from": "xp",
+      "to": "ns",
+      "y": 496,
+      "label": "Claim 상태 업데이트 (Ready)",
+      "variant": "return"
+    },
+    {
+      "id": "get",
+      "from": "dev",
+      "to": "ns",
+      "y": 530,
+      "label": "kubectl get database my-db"
+    },
+    {
+      "id": "drift",
+      "from": "aws",
+      "to": "xp",
+      "y": 582,
+      "label": "드리프트 감지",
+      "variant": "dashed"
+    },
+    {
+      "id": "correct",
+      "from": "xp",
+      "to": "aws",
+      "y": 616,
+      "label": "자동 복원",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "xp",
+      "from": 211,
+      "to": 502,
+      "type": "backend"
+    },
+    {
+      "participant": "comp",
+      "from": 251,
+      "to": 294,
+      "type": "database"
+    },
+    {
+      "participant": "aws",
+      "from": 319,
+      "to": 432,
+      "type": "cloud"
+    },
+    {
+      "participant": "xp",
+      "from": 577,
+      "to": 622,
+      "type": "backend"
+    }
+  ]
+}

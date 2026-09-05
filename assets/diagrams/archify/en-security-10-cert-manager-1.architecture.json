@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cert-manager Resource Relationships",
+    "output": "en-security-10-cert-manager-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "user-defined",
+        "label": "User-defined resources",
+        "focus": [
+          "certificate",
+          "issuer",
+          "clusterissuer"
+        ],
+        "note": "A Certificate declares the desired certificate spec and points at an Issuer or ClusterIssuer through issuerRef."
+      },
+      {
+        "id": "acme-flow",
+        "label": "Auto-created and ACME",
+        "focus": [
+          "certificate",
+          "certreq",
+          "order",
+          "challenge"
+        ],
+        "note": "The Certificate creates a CertificateRequest; for an ACME issuer an Order and a Challenge follow to validate the domain."
+      },
+      {
+        "id": "result",
+        "label": "Resulting Secret",
+        "focus": [
+          "certreq",
+          "secret"
+        ],
+        "note": "The issued certificate is stored as tls.crt and tls.key in the Secret named by spec.secretName."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "issuer",
+      "type": "security",
+      "label": "Issuer",
+      "sublabel": "Namespace scoped",
+      "tag": "CRD",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "certificate",
+      "type": "security",
+      "label": "Certificate",
+      "sublabel": "Desired certificate spec",
+      "tag": "CRD",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "clusterissuer",
+      "type": "security",
+      "label": "ClusterIssuer",
+      "sublabel": "Cluster scoped",
+      "tag": "CRD",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "certreq",
+      "type": "backend",
+      "label": "CertificateRequest",
+      "sublabel": "Issuance request",
+      "pos": [
+        320,
+        280
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order",
+      "sublabel": "ACME order",
+      "tag": "ACME",
+      "pos": [
+        620,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "challenge",
+      "type": "backend",
+      "label": "Challenge",
+      "sublabel": "Domain validation",
+      "tag": "ACME",
+      "pos": [
+        900,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "database",
+      "label": "Secret",
+      "sublabel": "tls.crt + tls.key",
+      "pos": [
+        320,
+        480
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "User-defined",
+      "wraps": [
+        "issuer",
+        "certificate",
+        "clusterissuer"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Auto-created",
+      "wraps": [
+        "certreq",
+        "order",
+        "challenge"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Result",
+      "wraps": [
+        "secret"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cert-ref-issuer",
+      "from": "certificate",
+      "to": "issuer",
+      "label": "references",
+      "variant": "dashed"
+    },
+    {
+      "id": "cert-ref-clusterissuer",
+      "from": "certificate",
+      "to": "clusterissuer",
+      "label": "references",
+      "variant": "dashed"
+    },
+    {
+      "id": "cert-create-certreq",
+      "from": "certificate",
+      "to": "certreq",
+      "label": "creates",
+      "variant": "emphasis",
+      "labelAt": [
+        415,
+        210
+      ]
+    },
+    {
+      "id": "issuer-issue",
+      "from": "issuer",
+      "to": "certreq",
+      "label": "issues",
+      "toSide": "top"
+    },
+    {
+      "id": "clusterissuer-issue",
+      "from": "clusterissuer",
+      "to": "certreq",
+      "label": "issues",
+      "toSide": "top"
+    },
+    {
+      "id": "certreq-order",
+      "from": "certreq",
+      "to": "order",
+      "label": "if ACME issuer"
+    },
+    {
+      "id": "order-challenge",
+      "from": "order",
+      "to": "challenge",
+      "label": "creates"
+    },
+    {
+      "id": "certreq-secret",
+      "from": "certreq",
+      "to": "secret",
+      "label": "stores",
+      "variant": "emphasis",
+      "labelAt": [
+        415,
+        410
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Issuer vs ClusterIssuer",
+      "items": [
+        "Issuer: a per-team/app issuer usable only within a single namespace",
+        "ClusterIssuer: a shared, cluster-wide issuer (for example Let's Encrypt)",
+        "A Certificate selects one of them with issuerRef.kind"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Resulting Secret",
+      "items": [
+        "The certificate is stored in the Secret named by spec.secretName",
+        "It holds tls.crt and tls.key, referenced by Ingress and others",
+        "Renewed automatically at renewBefore, replacing the Secret contents"
+      ]
+    }
+  ]
+}

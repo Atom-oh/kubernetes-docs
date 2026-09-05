@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArgoCD Notification Flow",
+    "locale": "en",
+    "output": "en-gitops-argocd-08-notifications-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      560
+    ],
+    "views": [
+      {
+        "id": "event-intake",
+        "label": "Event intake",
+        "focus": [
+          "app",
+          "controller"
+        ],
+        "note": "The Notifications Controller watches Application state changes and evaluates trigger conditions."
+      },
+      {
+        "id": "fan-out",
+        "label": "Service fan-out",
+        "focus": [
+          "controller",
+          "slack",
+          "teams",
+          "email",
+          "webhook",
+          "github"
+        ],
+        "note": "Once a trigger matches, the message rendered from a template is sent to the subscribed services."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "argoproj.io/v1alpha1",
+      "pos": [
+        50,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Notifications Controller",
+      "sublabel": "evaluates triggers · renders templates",
+      "pos": [
+        330,
+        240
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "slack",
+      "type": "external",
+      "label": "Slack",
+      "pos": [
+        740,
+        40
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "teams",
+      "type": "external",
+      "label": "Microsoft Teams",
+      "pos": [
+        740,
+        140
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Email",
+      "sublabel": "SMTP",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "external",
+      "label": "Webhook",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "github",
+      "type": "external",
+      "label": "GitHub",
+      "pos": [
+        740,
+        440
+      ],
+      "size": [
+        190,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ArgoCD",
+      "wraps": [
+        "app",
+        "controller"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Notification Services",
+      "wraps": [
+        "slack",
+        "teams",
+        "email",
+        "webhook",
+        "github"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-controller",
+      "from": "app",
+      "to": "controller",
+      "label": "event",
+      "variant": "emphasis"
+    },
+    {
+      "id": "controller-to-slack",
+      "from": "controller",
+      "to": "slack"
+    },
+    {
+      "id": "controller-to-teams",
+      "from": "controller",
+      "to": "teams"
+    },
+    {
+      "id": "controller-to-email",
+      "from": "controller",
+      "to": "email"
+    },
+    {
+      "id": "controller-to-webhook",
+      "from": "controller",
+      "to": "webhook"
+    },
+    {
+      "id": "controller-to-github",
+      "from": "controller",
+      "to": "github"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Components",
+      "items": [
+        "Trigger — condition that fires a notification",
+        "Template — notification message format",
+        "Service — notification target (Slack, Email, ...)",
+        "Subscription — links an Application to notifications"
+      ]
+    }
+  ]
+}

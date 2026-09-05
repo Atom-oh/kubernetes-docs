@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Blue-Green Works",
+    "output": "en-gitops-04-flagger-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "before",
+        "label": "Before switch",
+        "focus": [
+          "lb1",
+          "blue1",
+          "green1"
+        ],
+        "note": "All live traffic goes to Blue v1 (primary); Green v2 (canary) is deployed but only standing by."
+      },
+      {
+        "id": "testing",
+        "label": "Test phase",
+        "focus": [
+          "lb2",
+          "blue2",
+          "green2"
+        ],
+        "note": "Live traffic still goes to Blue; only mirrored traffic reaches Green while metrics are checked for the configured iterations."
+      },
+      {
+        "id": "after",
+        "label": "After switch",
+        "focus": [
+          "lb3",
+          "blue3",
+          "green3"
+        ],
+        "note": "Once analysis passes, traffic is switched to Green v2 in a single step and Blue v1 becomes standby."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "lb1",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "routing",
+      "pos": [
+        130,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue1",
+      "type": "backend",
+      "label": "Blue · v1",
+      "sublabel": "active (primary)",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green1",
+      "type": "backend",
+      "label": "Green · v2",
+      "sublabel": "ready (canary)",
+      "pos": [
+        220,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb2",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "routing",
+      "pos": [
+        530,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue2",
+      "type": "backend",
+      "label": "Blue · v1",
+      "sublabel": "active (primary)",
+      "pos": [
+        440,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green2",
+      "type": "backend",
+      "label": "Green · v2",
+      "sublabel": "under test (canary)",
+      "pos": [
+        620,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb3",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "routing",
+      "pos": [
+        930,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "blue3",
+      "type": "backend",
+      "label": "Blue · v1",
+      "sublabel": "standby",
+      "pos": [
+        840,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "green3",
+      "type": "backend",
+      "label": "Green · v2",
+      "sublabel": "active",
+      "pos": [
+        1020,
+        260
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1. Before switch",
+      "wraps": [
+        "lb1",
+        "blue1",
+        "green1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2. Test phase",
+      "wraps": [
+        "lb2",
+        "blue2",
+        "green2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "3. After switch",
+      "wraps": [
+        "lb3",
+        "blue3",
+        "green3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "before-live",
+      "from": "lb1",
+      "to": "blue1",
+      "label": "live traffic 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "testing-live",
+      "from": "lb2",
+      "to": "blue2",
+      "label": "live traffic 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "testing-mirror",
+      "from": "lb2",
+      "to": "green2",
+      "label": "mirrored traffic (mirror)",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 40
+    },
+    {
+      "id": "after-live",
+      "from": "lb3",
+      "to": "green3",
+      "label": "switched traffic 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Blue-Green analysis settings",
+      "items": [
+        "iterations: number of analysis cycles against Green (replaces stepWeight/maxWeight)",
+        "mirror: true mirrors live traffic to Green for pre-validation",
+        "mirrorWeight: share of traffic to mirror (100 = everything)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Switch and rollback",
+      "items": [
+        "After every iteration passes, traffic is switched 100% in one step",
+        "threshold consecutive failures trigger an automatic rollback"
+      ]
+    }
+  ]
+}

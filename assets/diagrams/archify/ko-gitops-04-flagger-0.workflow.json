@@ -1,0 +1,170 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "전통적 배포와 점진적 배포 비교",
+    "output": "public/archmaps/ko-gitops-04-flagger-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "배포 단계"
+        },
+        "security": {
+          "label": "롤백"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "traditional",
+        "label": "전통적 배포",
+        "focus": [
+          "rolling",
+          "fullSwitch",
+          "manualMonitor",
+          "manualRollback"
+        ],
+        "note": "롤링 업데이트로 전체 트래픽을 한번에 전환하고, 모니터링과 롤백은 사람이 직접 수행합니다."
+      },
+      {
+        "id": "progressive",
+        "label": "점진적 배포",
+        "focus": [
+          "smallSlice",
+          "analyze",
+          "increase",
+          "autoRollback"
+        ],
+        "note": "소량 트래픽부터 시작해 메트릭을 자동 분석하고, 성공하면 비율을 늘리고 실패하면 자동 롤백합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "traditional",
+      "label": "전통적 배포"
+    },
+    {
+      "id": "progressive",
+      "label": "점진적 배포"
+    }
+  ],
+  "mainPath": [
+    "smallSlice",
+    "analyze",
+    "increase"
+  ],
+  "nodes": [
+    {
+      "id": "rolling",
+      "lane": "traditional",
+      "col": 0,
+      "type": "backend",
+      "label": "롤링 업데이트",
+      "width": 130
+    },
+    {
+      "id": "fullSwitch",
+      "lane": "traditional",
+      "col": 1,
+      "type": "backend",
+      "label": "전체 트래픽 전환",
+      "width": 130
+    },
+    {
+      "id": "manualMonitor",
+      "lane": "traditional",
+      "col": 2,
+      "type": "backend",
+      "label": "수동 모니터링",
+      "width": 130
+    },
+    {
+      "id": "manualRollback",
+      "lane": "traditional",
+      "col": 3,
+      "type": "security",
+      "label": "수동 롤백",
+      "width": 130
+    },
+    {
+      "id": "smallSlice",
+      "lane": "progressive",
+      "col": 0,
+      "type": "backend",
+      "label": "소량 트래픽 전환",
+      "width": 130
+    },
+    {
+      "id": "analyze",
+      "lane": "progressive",
+      "col": 1,
+      "type": "backend",
+      "label": "메트릭 자동 분석",
+      "width": 130
+    },
+    {
+      "id": "increase",
+      "lane": "progressive",
+      "col": 2,
+      "type": "backend",
+      "label": "트래픽 비율 증가",
+      "width": 130
+    },
+    {
+      "id": "autoRollback",
+      "lane": "progressive",
+      "col": 3,
+      "type": "security",
+      "label": "자동 롤백",
+      "width": 130
+    }
+  ],
+  "edges": [
+    {
+      "from": "rolling",
+      "to": "fullSwitch"
+    },
+    {
+      "from": "fullSwitch",
+      "to": "manualMonitor"
+    },
+    {
+      "from": "manualMonitor",
+      "to": "manualRollback",
+      "role": "error"
+    },
+    {
+      "from": "smallSlice",
+      "to": "analyze",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "increase",
+      "label": "성공",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "analyze",
+      "to": "autoRollback",
+      "label": "실패",
+      "variant": "security",
+      "role": "error",
+      "route": "bottom-channel",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "from": "increase",
+      "to": "analyze",
+      "label": "반복",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ]
+}

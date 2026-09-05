@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Harbor Architecture",
+    "locale": "en",
+    "output": "en-container-registry-03-harbor-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "image-path",
+        "label": "Image request path",
+        "focus": [
+          "portal",
+          "core",
+          "registry"
+        ],
+        "note": "Core authenticates and authorizes Portal requests, then Registry stores and serves the images."
+      },
+      {
+        "id": "async-security",
+        "label": "Async jobs and security",
+        "focus": [
+          "core",
+          "jobservice",
+          "trivy",
+          "notary"
+        ],
+        "note": "Core hands replication, GC and scan jobs to Job Service; Trivy scans images for vulnerabilities."
+      },
+      {
+        "id": "data-layer",
+        "label": "Data Layer",
+        "focus": [
+          "core",
+          "postgres",
+          "redis"
+        ],
+        "note": "PostgreSQL holds project, user and policy metadata; Redis backs sessions and the job queue."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "portal",
+      "type": "frontend",
+      "label": "Portal",
+      "sublabel": "Web UI · admin dashboard",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Core",
+      "sublabel": "API · AuthN/AuthZ · projects",
+      "pos": [
+        500,
+        190
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "API"
+    },
+    {
+      "id": "registry",
+      "type": "backend",
+      "label": "Registry",
+      "sublabel": "Docker Distribution (registry:2)",
+      "pos": [
+        120,
+        340
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "jobservice",
+      "type": "backend",
+      "label": "Job Service",
+      "sublabel": "Replication · GC · scan",
+      "pos": [
+        880,
+        340
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Metadata",
+      "pos": [
+        400,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "Cache · job queue",
+      "pos": [
+        620,
+        520
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "trivy",
+      "type": "security",
+      "label": "Trivy",
+      "sublabel": "Vulnerability scanning",
+      "pos": [
+        880,
+        520
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "notary",
+      "type": "security",
+      "label": "Notary",
+      "sublabel": "Image signing (optional)",
+      "pos": [
+        880,
+        620
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Harbor",
+      "wraps": [
+        "portal",
+        "core",
+        "registry",
+        "jobservice",
+        "postgres",
+        "redis",
+        "trivy",
+        "notary"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Layer",
+      "wraps": [
+        "postgres",
+        "redis"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Security",
+      "wraps": [
+        "trivy",
+        "notary"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "portal-core",
+      "from": "portal",
+      "to": "core",
+      "label": "UI requests",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "core-registry",
+      "from": "core",
+      "to": "registry",
+      "label": "Image push/pull",
+      "variant": "emphasis"
+    },
+    {
+      "id": "core-jobservice",
+      "from": "core",
+      "to": "jobservice",
+      "label": "Job requests"
+    },
+    {
+      "id": "core-postgres",
+      "from": "core",
+      "to": "postgres",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "core-redis",
+      "from": "core",
+      "to": "redis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "jobservice-trivy",
+      "from": "jobservice",
+      "to": "trivy",
+      "label": "Scan",
+      "variant": "security",
+      "labelDy": 24
+    }
+  ]
+}

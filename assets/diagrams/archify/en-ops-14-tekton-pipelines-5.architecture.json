@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CI/CD Separation Architecture",
+    "locale": "en",
+    "output": "en-ops-14-tekton-pipelines-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      520
+    ],
+    "views": [
+      {
+        "id": "ci",
+        "label": "Tekton CI pipeline",
+        "focus": [
+          "src",
+          "trigger",
+          "clone",
+          "test",
+          "build",
+          "push",
+          "update"
+        ],
+        "note": "A source push triggers Tekton via webhook, then clone, test, build, ECR push, and manifest update run in order."
+      },
+      {
+        "id": "handoff",
+        "label": "GitOps handoff",
+        "focus": [
+          "update",
+          "gitops",
+          "sync"
+        ],
+        "note": "The final CI Task commits the new image tag to the GitOps repository and ArgoCD detects the change."
+      },
+      {
+        "id": "cd",
+        "label": "ArgoCD CD deployment",
+        "focus": [
+          "ecr",
+          "sync",
+          "deploy"
+        ],
+        "note": "ArgoCD syncs the manifests and the cluster pulls the new image from ECR to deploy it."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src",
+      "type": "external",
+      "label": "app-source",
+      "sublabel": "Source repository",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "trigger",
+      "type": "messagebus",
+      "label": "Trigger",
+      "sublabel": "Webhook receiver",
+      "pos": [
+        198,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "clone",
+      "type": "backend",
+      "label": "git-clone",
+      "sublabel": "Clone source",
+      "pos": [
+        366,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "test",
+      "type": "backend",
+      "label": "Test / Lint",
+      "sublabel": "Unit tests + lint",
+      "pos": [
+        534,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "Image Build",
+      "sublabel": "Container image",
+      "pos": [
+        702,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "push",
+      "type": "backend",
+      "label": "ECR Push",
+      "sublabel": "Push image",
+      "pos": [
+        870,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "update",
+      "type": "backend",
+      "label": "Manifest Update",
+      "sublabel": "Bump image tag",
+      "pos": [
+        1038,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Container Registry",
+      "sublabel": "Amazon ECR",
+      "pos": [
+        534,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "app-manifests",
+      "sublabel": "GitOps repository",
+      "pos": [
+        1038,
+        230
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "ArgoCD Sync",
+      "sublabel": "Sync manifests",
+      "pos": [
+        786,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "backend",
+      "label": "K8s Deploy",
+      "sublabel": "Roll out to cluster",
+      "pos": [
+        534,
+        400
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tekton (CI)",
+      "wraps": [
+        "trigger",
+        "clone",
+        "test",
+        "build",
+        "push",
+        "update"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "ArgoCD (CD)",
+      "wraps": [
+        "sync",
+        "deploy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "src-trigger",
+      "from": "src",
+      "to": "trigger",
+      "label": "push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trigger-clone",
+      "from": "trigger",
+      "to": "clone"
+    },
+    {
+      "id": "clone-test",
+      "from": "clone",
+      "to": "test"
+    },
+    {
+      "id": "test-build",
+      "from": "test",
+      "to": "build"
+    },
+    {
+      "id": "build-push",
+      "from": "build",
+      "to": "push"
+    },
+    {
+      "id": "push-ecr",
+      "from": "push",
+      "to": "ecr",
+      "label": "image"
+    },
+    {
+      "id": "push-update",
+      "from": "push",
+      "to": "update"
+    },
+    {
+      "id": "update-gitops",
+      "from": "update",
+      "to": "gitops",
+      "label": "commit",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "gitops-sync",
+      "from": "gitops",
+      "to": "sync",
+      "label": "detect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sync-deploy",
+      "from": "sync",
+      "to": "deploy"
+    },
+    {
+      "id": "ecr-deploy",
+      "from": "ecr",
+      "to": "deploy",
+      "label": "pull",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CI — Tekton",
+      "items": [
+        "The Tekton pipeline owns build, test, and image push",
+        "Its final Task updates the image tag in the GitOps repository and commits/pushes it"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "CD — ArgoCD",
+      "items": [
+        "ArgoCD detects the GitOps repository change and syncs the cluster",
+        "Separating CI from CD is the most recommended production pattern"
+      ]
+    }
+  ]
+}

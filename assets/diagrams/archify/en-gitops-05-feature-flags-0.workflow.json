@@ -1,0 +1,171 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Traditional Deployment vs Feature Flag Deployment",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "traditional",
+        "label": "Traditional deployment",
+        "focus": [
+          "deploy_t",
+          "release_t",
+          "all_users"
+        ],
+        "note": "Deploying the code is the release: the moment the new version rolls out, every user sees the new feature."
+      },
+      {
+        "id": "flagged",
+        "label": "Feature flag deployment",
+        "focus": [
+          "deploy_f",
+          "flag",
+          "target_users",
+          "existing"
+        ],
+        "note": "Deployment and release are decoupled: the flag value alone controls when and to whom the feature is exposed, with no code change."
+      },
+      {
+        "id": "decision",
+        "label": "Flag evaluation outcome",
+        "focus": [
+          "flag",
+          "target_users",
+          "existing"
+        ],
+        "note": "Only target users whose flag evaluates ON see the new feature; users with OFF keep the existing experience."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Code deployment"
+        },
+        "backend": {
+          "label": "Release decision"
+        },
+        "cloud": {
+          "label": "User exposure"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "trad",
+      "label": "Traditional deployment"
+    },
+    {
+      "id": "ff",
+      "label": "Feature flag deployment"
+    }
+  ],
+  "mainPath": [
+    "deploy_f",
+    "flag",
+    "target_users"
+  ],
+  "nodes": [
+    {
+      "id": "deploy_t",
+      "lane": "trad",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "Deploy",
+      "sublabel": "roll out new version"
+    },
+    {
+      "id": "release_t",
+      "lane": "trad",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Release",
+      "sublabel": "exposed on deploy"
+    },
+    {
+      "id": "all_users",
+      "lane": "trad",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "All Users",
+      "sublabel": "everyone gets the feature"
+    },
+    {
+      "id": "deploy_f",
+      "lane": "ff",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "Deploy",
+      "sublabel": "roll out new version"
+    },
+    {
+      "id": "flag",
+      "lane": "ff",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "Feature Flag",
+      "sublabel": "runtime flag evaluation"
+    },
+    {
+      "id": "target_users",
+      "lane": "ff",
+      "col": 2,
+      "width": 160,
+      "type": "cloud",
+      "label": "Target Users",
+      "sublabel": "new feature exposed"
+    },
+    {
+      "id": "existing",
+      "lane": "ff",
+      "col": 3,
+      "width": 200,
+      "type": "cloud",
+      "label": "Existing Experience",
+      "sublabel": "legacy behavior kept"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploy_t-release_t",
+      "from": "deploy_t",
+      "to": "release_t",
+      "label": "immediately"
+    },
+    {
+      "id": "release_t-all_users",
+      "from": "release_t",
+      "to": "all_users"
+    },
+    {
+      "id": "deploy_f-flag",
+      "from": "deploy_f",
+      "to": "flag"
+    },
+    {
+      "id": "flag-target_users",
+      "from": "flag",
+      "to": "target_users",
+      "label": "ON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "flag-existing",
+      "from": "flag",
+      "to": "existing",
+      "label": "OFF",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

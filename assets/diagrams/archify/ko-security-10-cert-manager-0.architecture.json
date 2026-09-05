@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "cert-manager 구성요소",
+    "output": "ko-security-10-cert-manager-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "issuance",
+        "label": "인증서 발급 경로",
+        "focus": [
+          "controller",
+          "cert",
+          "certreq",
+          "issuer",
+          "external",
+          "secret"
+        ],
+        "note": "controller가 Certificate를 감시해 CertificateRequest를 만들고, Issuer가 가리키는 발급자에게 서명을 받아 Secret에 저장한다."
+      },
+      {
+        "id": "admission",
+        "label": "웹훅과 CA 주입",
+        "focus": [
+          "webhook",
+          "cainjector",
+          "cert",
+          "issuer"
+        ],
+        "note": "webhook이 cert-manager 리소스를 검증·변환하고, cainjector가 웹훅 구성에 CA 번들을 자동 주입한다."
+      },
+      {
+        "id": "acme",
+        "label": "ACME 발급",
+        "focus": [
+          "certreq",
+          "order",
+          "external"
+        ],
+        "note": "Let's Encrypt 같은 ACME 발급자는 Order와 Challenge 리소스를 거쳐 도메인 소유를 검증한다."
+      },
+      {
+        "id": "consume",
+        "label": "TLS Secret 사용",
+        "focus": [
+          "secret",
+          "ingress"
+        ],
+        "note": "Ingress와 Gateway API 리소스가 발급된 tls.crt·tls.key Secret을 참조해 TLS를 종료한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "cert-manager 컨트롤 플레인"
+        },
+        "cloud": {
+          "label": "커스텀 리소스 (CRD)"
+        },
+        "external": {
+          "label": "외부 발급자"
+        },
+        "database": {
+          "label": "Kubernetes Secret"
+        },
+        "frontend": {
+          "label": "TLS 종료 리소스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "cert-manager-controller",
+      "sublabel": "인증서 수명주기 관리",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "backend",
+      "label": "cert-manager-webhook",
+      "sublabel": "리소스 검증 / 변환",
+      "pos": [
+        390,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cainjector",
+      "type": "backend",
+      "label": "cert-manager-cainjector",
+      "sublabel": "CA 번들 자동 주입",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "cert",
+      "type": "cloud",
+      "label": "Certificate",
+      "sublabel": "인증서 요청 명세",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "certreq",
+      "type": "cloud",
+      "label": "CertificateRequest",
+      "sublabel": "발급 요청 (자동 생성)",
+      "pos": [
+        390,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "issuer",
+      "type": "cloud",
+      "label": "Issuer / ClusterIssuer",
+      "sublabel": "발급 방법 정의",
+      "pos": [
+        720,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "cloud",
+      "label": "Order / Challenge",
+      "sublabel": "ACME 도메인 검증",
+      "pos": [
+        1050,
+        230
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "external",
+      "type": "external",
+      "label": "외부 발급자",
+      "sublabel": "Let's Encrypt · Vault · AWS PCA · Self-Signed",
+      "pos": [
+        720,
+        400
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "secret",
+      "type": "database",
+      "label": "Secret",
+      "sublabel": "tls.crt · tls.key",
+      "pos": [
+        60,
+        570
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "frontend",
+      "label": "Ingress / Gateway",
+      "sublabel": "TLS 종료 리소스",
+      "pos": [
+        720,
+        570
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "cert-manager 컨트롤 플레인",
+      "wraps": [
+        "controller",
+        "webhook",
+        "cainjector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Custom Resources",
+      "wraps": [
+        "cert",
+        "certreq",
+        "issuer",
+        "order"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 리소스",
+      "wraps": [
+        "secret",
+        "ingress"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-cert",
+      "from": "controller",
+      "to": "cert",
+      "label": "감시 / 조정",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "cert-certreq",
+      "from": "cert",
+      "to": "certreq",
+      "label": "발급 요청 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "certreq-issuer",
+      "from": "certreq",
+      "to": "issuer",
+      "label": "issuerRef",
+      "variant": "emphasis"
+    },
+    {
+      "id": "issuer-external",
+      "from": "issuer",
+      "to": "external",
+      "label": "서명 요청",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cert-secret",
+      "from": "cert",
+      "to": "secret",
+      "label": "인증서 저장",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 120
+    },
+    {
+      "id": "certreq-order",
+      "from": "certreq",
+      "to": "order",
+      "label": "ACME 발급자일 때",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "webhook-cert",
+      "from": "webhook",
+      "to": "cert",
+      "label": "유효성 검증",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cainjector-webhook",
+      "from": "cainjector",
+      "to": "webhook",
+      "label": "CA 번들 주입",
+      "variant": "security"
+    },
+    {
+      "id": "ingress-secret",
+      "from": "ingress",
+      "to": "secret",
+      "label": "TLS Secret 참조",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤 플레인 구성요소",
+      "items": [
+        "controller: Certificate·Issuer 리소스 감시 및 인증서 수명주기 관리",
+        "webhook: CRD 유효성 검증, 기본값 설정, 버전 변환",
+        "cainjector: ValidatingWebhookConfiguration·MutatingWebhookConfiguration에 CA 번들 자동 주입"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "발급 흐름",
+      "items": [
+        "Certificate CR 생성 시 자동 발급, 만료 30일 전 자동 갱신",
+        "Let's Encrypt, Vault, AWS PCA, Self-Signed 등 다중 Issuer 지원",
+        "결과는 tls.crt·tls.key를 담은 Secret으로 저장"
+      ]
+    }
+  ]
+}

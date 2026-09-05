@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "selfHeal 동작 예시 — 드리프트 자동 복구",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      580
+    ],
+    "views": [
+      {
+        "id": "drift",
+        "label": "수동 변경 (드리프트)",
+        "focus": [
+          "user",
+          "k8s"
+        ],
+        "note": "사용자가 kubectl scale로 Git에 없는 변경을 클러스터에 직접 가한다."
+      },
+      {
+        "id": "detect",
+        "label": "드리프트 감지",
+        "focus": [
+          "argocd",
+          "k8s",
+          "git"
+        ],
+        "note": "ArgoCD가 라이브 상태(5)와 Git 선언값(3)의 차이를 감지한다."
+      },
+      {
+        "id": "heal",
+        "label": "selfHeal 복구",
+        "focus": [
+          "argocd",
+          "k8s"
+        ],
+        "note": "selfHeal: true이므로 클러스터를 Git에 선언된 값으로 되돌린다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "cluster"
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "controller"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git Repo",
+      "sublabel": "source of truth"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 225,
+      "label": "수동 변경"
+    },
+    {
+      "from": 245,
+      "to": 360,
+      "label": "감지"
+    },
+    {
+      "from": 380,
+      "to": 495,
+      "label": "복구"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scale",
+      "from": "user",
+      "to": "k8s",
+      "y": 190,
+      "label": "kubectl scale --replicas=5",
+      "variant": "default",
+      "note": "레플리카 5로 변경"
+    },
+    {
+      "id": "monitor",
+      "from": "argocd",
+      "to": "k8s",
+      "y": 268,
+      "label": "상태 모니터링",
+      "variant": "default"
+    },
+    {
+      "id": "live",
+      "from": "k8s",
+      "to": "argocd",
+      "y": 300,
+      "label": "replicas: 5",
+      "variant": "return"
+    },
+    {
+      "id": "desired",
+      "from": "argocd",
+      "to": "git",
+      "y": 336,
+      "label": "replicas: 3 확인",
+      "variant": "default",
+      "note": "드리프트 감지 (5 ≠ 3)"
+    },
+    {
+      "id": "heal",
+      "from": "argocd",
+      "to": "k8s",
+      "y": 410,
+      "label": "replicas=3으로 복구",
+      "variant": "emphasis",
+      "note": "selfHeal=true 확인"
+    },
+    {
+      "id": "done",
+      "from": "k8s",
+      "to": "argocd",
+      "y": 470,
+      "label": "복구 완료",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8s",
+      "from": 185,
+      "to": 210,
+      "type": "cloud"
+    },
+    {
+      "participant": "argocd",
+      "from": 258,
+      "to": 482,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 405,
+      "to": 478,
+      "type": "cloud"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "드리프트",
+      "items": [
+        "kubectl 등으로 클러스터를 직접 변경하면 Git 선언 상태와 라이브 상태가 어긋난다",
+        "ArgoCD는 이 차이를 OutOfSync(드리프트)로 감지한다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "selfHeal: true",
+      "items": [
+        "syncPolicy.automated.selfHeal이 켜져 있으면 드리프트를 자동 복구한다",
+        "복구 결과는 항상 Git에 선언된 값(replicas: 3)이다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Pause Pod 동작 원리 — D-7 사전 확보와 D-Day 축출",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      640
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "pm",
+      "type": "external",
+      "label": "PM",
+      "sublabel": "PM/기획자"
+    },
+    {
+      "id": "ops",
+      "type": "security",
+      "label": "인프라팀",
+      "sublabel": "Ops"
+    },
+    {
+      "id": "workload",
+      "type": "frontend",
+      "label": "실제 워크로드",
+      "sublabel": "이벤트 서비스 Pod"
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes",
+      "sublabel": "스케줄러"
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Node 프로비저닝"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 350,
+      "label": "D-7 — Pause Pod로 Node 사전 확보"
+    },
+    {
+      "from": 370,
+      "to": 520,
+      "label": "D-Day — 실제 워크로드가 Pause Pod 축출"
+    }
+  ],
+  "messages": [
+    {
+      "id": "d7-info",
+      "from": "pm",
+      "to": "ops",
+      "y": 190,
+      "label": "D-7: 이벤트 정보 전달"
+    },
+    {
+      "id": "deploy-pause",
+      "from": "ops",
+      "to": "k8s",
+      "y": 230,
+      "label": "Pause Pod 배포 (replicas: 20)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pending",
+      "from": "k8s",
+      "to": "karpenter",
+      "y": 270,
+      "label": "Pending Pod 감지"
+    },
+    {
+      "id": "provision",
+      "from": "karpenter",
+      "to": "k8s",
+      "y": 310,
+      "label": "Node 20대 프로비저닝",
+      "variant": "return",
+      "note": "Pause Pod가 Node를 차지한 채 대기"
+    },
+    {
+      "id": "dday-start",
+      "from": "pm",
+      "to": "ops",
+      "y": 400,
+      "label": "D-Day: 이벤트 시작"
+    },
+    {
+      "id": "scale-up",
+      "from": "workload",
+      "to": "k8s",
+      "y": 440,
+      "label": "워크로드 스케일 업",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evict",
+      "from": "k8s",
+      "to": "workload",
+      "y": 490,
+      "label": "Pause Pod 축출, 즉시 배치",
+      "variant": "return",
+      "note": "낮은 PriorityClass의 Pause Pod가 선점되고 새 Pod가 즉시 스케줄링됨"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8s",
+      "from": 225,
+      "to": 320,
+      "type": "backend"
+    },
+    {
+      "participant": "karpenter",
+      "from": 265,
+      "to": 315,
+      "type": "cloud"
+    },
+    {
+      "participant": "k8s",
+      "from": 435,
+      "to": 500,
+      "type": "backend"
+    }
+  ]
+}

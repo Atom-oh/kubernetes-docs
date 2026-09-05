@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton Pipeline Task 그래프",
+    "output": "ko-ops-14-tekton-pipelines-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "parallel", "label": "병렬 실행", "focus": ["clone", "test", "lint"], "note": "clone이 끝나면 runAfter로 지정된 테스트와 린트가 동시에 실행된다." },
+      { "id": "converge", "label": "합류와 배포", "focus": ["test", "lint", "build", "scan", "deploy"], "note": "두 Task가 모두 성공해야 이미지 빌드가 시작되고 취약점 스캔을 거쳐 배포된다." },
+      { "id": "finally", "label": "finally Task", "focus": ["deploy", "notify", "cleanup"], "note": "성공/실패와 무관하게 Pipeline이 끝나면 알림과 정리 Task가 항상 실행된다." }
+    ]
+  },
+  "components": [
+    { "id": "clone", "type": "backend", "label": "git-clone", "sublabel": "소스 클론", "pos": [40, 250], "size": [130, 60] },
+    { "id": "test", "type": "backend", "label": "run-tests", "sublabel": "테스트", "pos": [240, 140], "size": [130, 60] },
+    { "id": "lint", "type": "backend", "label": "lint", "sublabel": "린트", "pos": [240, 360], "size": [130, 60] },
+    { "id": "build", "type": "backend", "label": "kaniko-build", "sublabel": "이미지 빌드", "pos": [440, 250], "size": [140, 60] },
+    { "id": "scan", "type": "security", "label": "trivy-scan", "sublabel": "취약점 스캔", "pos": [650, 250], "size": [130, 60] },
+    { "id": "deploy", "type": "backend", "label": "deploy", "sublabel": "배포", "pos": [850, 250], "size": [120, 60] },
+    { "id": "notify", "type": "backend", "label": "notify-slack", "sublabel": "슬랙 알림", "pos": [1080, 140], "size": [140, 60] },
+    { "id": "cleanup", "type": "backend", "label": "cleanup", "sublabel": "정리", "pos": [1080, 360], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "CI/CD Pipeline (tasks)", "wraps": ["clone", "test", "lint", "build", "scan", "deploy"] },
+    { "kind": "region", "label": "finally Tasks", "wraps": ["notify", "cleanup"] }
+  ],
+  "connections": [
+    { "id": "clone-test", "from": "clone", "to": "test", "label": "runAfter" },
+    { "id": "clone-lint", "from": "clone", "to": "lint" },
+    { "id": "test-build", "from": "test", "to": "build" },
+    { "id": "lint-build", "from": "lint", "to": "build" },
+    { "id": "build-scan", "from": "build", "to": "scan", "variant": "emphasis" },
+    { "id": "scan-deploy", "from": "scan", "to": "deploy", "variant": "emphasis" },
+    { "id": "deploy-notify", "from": "deploy", "to": "notify", "label": "항상 실행", "variant": "dashed" },
+    { "id": "deploy-cleanup", "from": "deploy", "to": "cleanup", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "순서와 병렬 실행", "items": ["runAfter로 Task 간 순서를 선언한다", "clone 이후 테스트와 린트는 병렬로 실행된다", "이미지 빌드는 두 Task가 모두 성공한 뒤 시작된다"] },
+    { "dot": "amber", "title": "finally Task", "items": ["Pipeline 성공/실패와 무관하게 항상 실행된다", "슬랙 알림과 workspace 정리에 사용한다"] }
+  ]
+}

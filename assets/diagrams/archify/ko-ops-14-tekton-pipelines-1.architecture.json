@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tekton 컨트롤러 아키텍처",
+    "output": "ko-ops-14-tekton-pipelines-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "create-validate",
+        "label": "리소스 생성과 검증",
+        "focus": [
+          "user",
+          "apiserver",
+          "webhook",
+          "etcd"
+        ],
+        "note": "사용자가 PipelineRun/TaskRun을 생성하면 webhook이 CRD 유효성을 검증하고 etcd에 저장된다."
+      },
+      {
+        "id": "watch-create-pod",
+        "label": "CRD 감시와 Pod 생성",
+        "focus": [
+          "apiserver",
+          "controller",
+          "pod1",
+          "pod2"
+        ],
+        "note": "controller가 리소스 변경을 감지해 각 Task마다 TaskRun Pod를 생성한다."
+      },
+      {
+        "id": "workspace",
+        "label": "Workspace 공유",
+        "focus": [
+          "pod1",
+          "pod2",
+          "pvc"
+        ],
+        "note": "생성된 TaskRun Pod들은 같은 Workspace PVC를 공유해 데이터를 주고받는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "kubectl / CI 클라이언트",
+      "pos": [
+        20,
+        260
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "kube-apiserver",
+      "sublabel": "Kubernetes API",
+      "pos": [
+        270,
+        260
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장",
+      "pos": [
+        270,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "tekton-pipelines-controller",
+      "sublabel": "CRD 감시 · Pod 생성",
+      "pos": [
+        550,
+        130
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "tekton-pipelines-webhook",
+      "sublabel": "CRD 유효성 검증",
+      "pos": [
+        550,
+        260
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "resolver",
+      "type": "backend",
+      "label": "tekton-pipelines-resolver",
+      "sublabel": "원격 리소스 해석",
+      "pos": [
+        550,
+        390
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "TaskRun Pod 1",
+      "sublabel": "Step 컨테이너 + Sidecar",
+      "pos": [
+        900,
+        130
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "TaskRun Pod 2",
+      "sublabel": "Step 컨테이너 + Sidecar",
+      "pos": [
+        900,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "pvc",
+      "type": "database",
+      "label": "PVC",
+      "sublabel": "Workspace",
+      "pos": [
+        1160,
+        195
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes API",
+      "wraps": [
+        "apiserver",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton 컨트롤 플레인",
+      "wraps": [
+        "controller",
+        "webhook",
+        "resolver"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tekton 데이터 플레인",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pvc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-api",
+      "from": "user",
+      "to": "apiserver",
+      "label": "PipelineRun 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-etcd",
+      "from": "apiserver",
+      "to": "etcd",
+      "label": "저장",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "api-to-controller",
+      "from": "apiserver",
+      "to": "controller",
+      "label": "CRD 감시",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "controller-to-pod1",
+      "from": "controller",
+      "to": "pod1",
+      "label": "Pod 생성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "controller-to-pod2",
+      "from": "controller",
+      "to": "pod2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webhook-to-api",
+      "from": "webhook",
+      "to": "apiserver",
+      "label": "유효성 검증",
+      "variant": "security",
+      "labelDy": -18
+    },
+    {
+      "id": "resolver-to-api",
+      "from": "resolver",
+      "to": "apiserver",
+      "label": "원격 리소스 해석",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod1-to-pvc",
+      "from": "pod1",
+      "to": "pvc"
+    },
+    {
+      "id": "pod2-to-pvc",
+      "from": "pod2",
+      "to": "pvc",
+      "label": "Workspace 공유",
+      "labelAt": [
+        1140,
+        300
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "컨트롤러 동작 원리",
+      "items": [
+        "사용자가 PipelineRun 또는 TaskRun 리소스를 생성한다",
+        "tekton-pipelines-webhook이 CRD의 유효성을 검증한다",
+        "tekton-pipelines-controller가 리소스 변경을 감지하고 각 Task에 대해 Pod을 생성한다",
+        "각 Pod 내에서 Step 컨테이너가 순서대로 실행된다",
+        "실행 결과(상태, Results, 아티팩트)가 CRD 상태에 기록된다"
+      ]
+    }
+  ]
+}

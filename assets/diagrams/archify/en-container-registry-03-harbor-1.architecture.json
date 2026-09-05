@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Harbor Image Replication Modes",
+    "output": "en-container-registry-03-harbor-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pull",
+        "label": "Pull Replication",
+        "focus": [
+          "ext-registry",
+          "harbor-local"
+        ],
+        "note": "Images are pulled from an external registry into Harbor for mirroring and caching."
+      },
+      {
+        "id": "push",
+        "label": "Push Replication",
+        "focus": [
+          "harbor-src",
+          "remote-registry"
+        ],
+        "note": "Images are pushed from Harbor out to a remote registry for distribution and DR."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "ext-registry",
+      "type": "external",
+      "label": "External Registry",
+      "sublabel": "Docker Hub / ECR",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "harbor-local",
+      "type": "backend",
+      "label": "Harbor (Local)",
+      "sublabel": "local mirror",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "harbor-src",
+      "type": "backend",
+      "label": "Harbor (Source)",
+      "sublabel": "source registry",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "remote-registry",
+      "type": "external",
+      "label": "Remote Registry",
+      "sublabel": "ECR / Harbor DR",
+      "pos": [
+        520,
+        300
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pull Replication (Mirror)",
+      "wraps": [
+        "ext-registry",
+        "harbor-local"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Push Replication (Distribute / DR)",
+      "wraps": [
+        "harbor-src",
+        "remote-registry"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pull-flow",
+      "from": "ext-registry",
+      "to": "harbor-local",
+      "label": "Pull",
+      "variant": "emphasis"
+    },
+    {
+      "id": "push-flow",
+      "from": "harbor-src",
+      "to": "remote-registry",
+      "label": "Push",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pull mode",
+      "items": [
+        "Direction: external → Harbor",
+        "Replicates external images into Harbor",
+        "Use cases: mirroring, caching"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Push mode",
+      "items": [
+        "Direction: Harbor → external",
+        "Replicates Harbor images outward",
+        "Use cases: distribution, DR"
+      ]
+    }
+  ]
+}

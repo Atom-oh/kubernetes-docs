@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "KIP-392 Follower Fetching — Redirect to the Same-AZ Follower",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      560
+    ],
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "Data (same AZ)"
+        },
+        "return": {
+          "label": "Redirect hint"
+        },
+        "default": {
+          "label": "Fetch"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "consumer",
+      "type": "frontend",
+      "label": "Consumer",
+      "sublabel": "AZ-a · client.rack=AZ-a"
+    },
+    {
+      "id": "leader",
+      "type": "messagebus",
+      "label": "Leader Broker",
+      "sublabel": "AZ-b"
+    },
+    {
+      "id": "follower",
+      "type": "messagebus",
+      "label": "Follower Broker",
+      "sublabel": "AZ-a"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 300,
+      "label": "1. Fetch from the leader — learn the preferred replica"
+    },
+    {
+      "from": 325,
+      "to": 470,
+      "label": "2. Fetch from the same-AZ follower — no inter-AZ cost"
+    }
+  ],
+  "messages": [
+    {
+      "id": "fetch-leader",
+      "from": "consumer",
+      "to": "leader",
+      "y": 200,
+      "label": "Fetch request (includes client.rack=AZ-a)",
+      "variant": "default"
+    },
+    {
+      "id": "preferred-replica",
+      "from": "leader",
+      "to": "consumer",
+      "y": 265,
+      "label": "\"Go to the AZ-a follower\" (preferred replica hint)",
+      "variant": "return",
+      "note": "RackAwareReplicaSelector matches broker.rack against client.rack"
+    },
+    {
+      "id": "fetch-follower",
+      "from": "consumer",
+      "to": "follower",
+      "y": 360,
+      "label": "Re-send fetch request",
+      "variant": "default"
+    },
+    {
+      "id": "data-return",
+      "from": "follower",
+      "to": "consumer",
+      "y": 430,
+      "label": "Returns data (same AZ, no inter-AZ cost)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "consumer",
+      "from": 190,
+      "to": 445,
+      "type": "frontend"
+    },
+    {
+      "participant": "leader",
+      "from": 195,
+      "to": 272,
+      "type": "messagebus"
+    },
+    {
+      "participant": "follower",
+      "from": 355,
+      "to": 437,
+      "type": "messagebus"
+    }
+  ]
+}

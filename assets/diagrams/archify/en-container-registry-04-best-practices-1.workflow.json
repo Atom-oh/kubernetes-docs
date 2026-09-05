@@ -1,0 +1,246 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Registry Mirroring and Caching Decision Tree",
+    "locale": "en",
+    "output": "public/archmaps/en-container-registry-04-best-practices-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Decision step"
+        },
+        "cloud": {
+          "label": "AWS managed (ECR)"
+        },
+        "external": {
+          "label": "Self-hosted (Harbor / containerd)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ratelimit",
+        "label": "Rate limit issues",
+        "focus": [
+          "need",
+          "rl",
+          "ecr_ptc",
+          "harbor_proxy",
+          "containerd"
+        ],
+        "note": "If pull limits on Docker Hub or other upstreams are the problem, put a cache that fits your environment in front."
+      },
+      {
+        "id": "perf",
+        "label": "Availability/Performance",
+        "focus": [
+          "need",
+          "perf",
+          "harbor_full",
+          "ecr_rep",
+          "harbor_rep"
+        ],
+        "note": "If external dependency and latency are the problem, replicate images ahead of time to match your infrastructure."
+      },
+      {
+        "id": "eks",
+        "label": "AWS/EKS standard path",
+        "focus": [
+          "need",
+          "rl",
+          "ecr_ptc"
+        ],
+        "note": "On EKS, ECR pull-through cache rules (one per upstream) give you a managed cache for Docker Hub and Quay."
+      }
+    ],
+    "viewBox": [
+      1100,
+      776
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "Identify the problem"
+    },
+    {
+      "id": "rl_check",
+      "label": "Rate limit issues · your environment"
+    },
+    {
+      "id": "rl_out",
+      "label": "Rate limit strategies"
+    },
+    {
+      "id": "perf_check",
+      "label": "Availability/Performance · infrastructure"
+    },
+    {
+      "id": "perf_out",
+      "label": "Availability/Performance strategies"
+    }
+  ],
+  "phases": [
+    {
+      "id": "diagnose",
+      "label": "Diagnose",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "choose",
+      "label": "Choose a strategy",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "need",
+    "rl",
+    "ecr_ptc"
+  ],
+  "nodes": [
+    {
+      "id": "need",
+      "lane": "decide",
+      "col": 0,
+      "type": "backend",
+      "label": "Cache or mirror needed?",
+      "sublabel": "what is the problem?",
+      "width": 200
+    },
+    {
+      "id": "rl",
+      "lane": "rl_check",
+      "col": 1,
+      "type": "backend",
+      "label": "Your environment",
+      "sublabel": "where do you run?",
+      "width": 200
+    },
+    {
+      "id": "ecr_ptc",
+      "lane": "rl_out",
+      "col": 2,
+      "type": "cloud",
+      "label": "ECR Pull-through Cache",
+      "sublabel": "pull-through-cache-rule",
+      "width": 200
+    },
+    {
+      "id": "harbor_proxy",
+      "lane": "rl_out",
+      "col": 3,
+      "type": "external",
+      "label": "Harbor Proxy Cache",
+      "sublabel": "Proxy Cache project",
+      "width": 200
+    },
+    {
+      "id": "containerd",
+      "lane": "rl_out",
+      "col": 4,
+      "type": "external",
+      "label": "containerd mirror config",
+      "sublabel": "config.toml mirrors",
+      "width": 200
+    },
+    {
+      "id": "perf",
+      "lane": "perf_check",
+      "col": 1,
+      "type": "backend",
+      "label": "Infrastructure",
+      "sublabel": "what does it look like?",
+      "width": 200
+    },
+    {
+      "id": "harbor_full",
+      "lane": "perf_out",
+      "col": 2,
+      "type": "external",
+      "label": "Harbor full mirror",
+      "sublabel": "disconnected environment",
+      "width": 200
+    },
+    {
+      "id": "ecr_rep",
+      "lane": "perf_out",
+      "col": 3,
+      "type": "cloud",
+      "label": "ECR Replication",
+      "sublabel": "cross-region replication",
+      "width": 200
+    },
+    {
+      "id": "harbor_rep",
+      "lane": "perf_out",
+      "col": 4,
+      "type": "external",
+      "label": "Harbor Pull Replication",
+      "sublabel": "pull to edge sites",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "from": "need",
+      "to": "rl",
+      "label": "Rate limit issues",
+      "variant": "emphasis",
+      "role": "main",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "need",
+      "to": "perf",
+      "label": "Availability/Performance",
+      "role": "branch"
+    },
+    {
+      "from": "rl",
+      "to": "ecr_ptc",
+      "label": "AWS/EKS",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rl",
+      "to": "harbor_proxy",
+      "label": "Self-hosted",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "from": "rl",
+      "to": "containerd",
+      "label": "Simple mirror",
+      "role": "branch"
+    },
+    {
+      "from": "perf",
+      "to": "harbor_full",
+      "label": "Air-gap",
+      "role": "branch"
+    },
+    {
+      "from": "perf",
+      "to": "ecr_rep",
+      "label": "Multi-region",
+      "role": "branch"
+    },
+    {
+      "from": "perf",
+      "to": "harbor_rep",
+      "label": "Edge",
+      "role": "branch"
+    }
+  ]
+}

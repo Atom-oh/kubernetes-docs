@@ -1,0 +1,245 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "레지스트리 미러링·캐싱 전략 의사결정 트리",
+    "output": "public/archmaps/ko-container-registry-04-best-practices-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "판단 단계"
+        },
+        "cloud": {
+          "label": "AWS 관리형 (ECR)"
+        },
+        "external": {
+          "label": "자체 운영 (Harbor / containerd)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ratelimit",
+        "label": "Rate Limit 이슈",
+        "focus": [
+          "need",
+          "rl",
+          "ecr_ptc",
+          "harbor_proxy",
+          "containerd"
+        ],
+        "note": "Docker Hub 등 외부 레지스트리의 Pull 제한이 문제라면 환경에 맞는 캐시를 앞에 둡니다."
+      },
+      {
+        "id": "perf",
+        "label": "가용성/성능",
+        "focus": [
+          "need",
+          "perf",
+          "harbor_full",
+          "ecr_rep",
+          "harbor_rep"
+        ],
+        "note": "외부 의존성과 지연이 문제라면 인프라 형태에 맞게 이미지를 미리 복제해 둡니다."
+      },
+      {
+        "id": "eks",
+        "label": "AWS/EKS 표준 경로",
+        "focus": [
+          "need",
+          "rl",
+          "ecr_ptc"
+        ],
+        "note": "EKS에서는 ECR Pull-through Cache 규칙(업스트림별 1개)으로 Docker Hub·Quay 캐시를 관리형으로 해결합니다."
+      }
+    ],
+    "viewBox": [
+      1100,
+      776
+    ]
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "문제 유형 판단"
+    },
+    {
+      "id": "rl_check",
+      "label": "Rate Limit 이슈 · 환경 확인"
+    },
+    {
+      "id": "rl_out",
+      "label": "Rate Limit 해결 전략"
+    },
+    {
+      "id": "perf_check",
+      "label": "가용성/성능 · 인프라 확인"
+    },
+    {
+      "id": "perf_out",
+      "label": "가용성/성능 해결 전략"
+    }
+  ],
+  "phases": [
+    {
+      "id": "diagnose",
+      "label": "판단",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "choose",
+      "label": "전략 선택",
+      "fromCol": 2,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "need",
+    "rl",
+    "ecr_ptc"
+  ],
+  "nodes": [
+    {
+      "id": "need",
+      "lane": "decide",
+      "col": 0,
+      "type": "backend",
+      "label": "캐싱/미러링 필요한가?",
+      "sublabel": "문제 유형 확인",
+      "width": 200
+    },
+    {
+      "id": "rl",
+      "lane": "rl_check",
+      "col": 1,
+      "type": "backend",
+      "label": "환경 확인",
+      "sublabel": "어디서 운영하나?",
+      "width": 200
+    },
+    {
+      "id": "ecr_ptc",
+      "lane": "rl_out",
+      "col": 2,
+      "type": "cloud",
+      "label": "ECR Pull-through Cache",
+      "sublabel": "pull-through-cache-rule",
+      "width": 200
+    },
+    {
+      "id": "harbor_proxy",
+      "lane": "rl_out",
+      "col": 3,
+      "type": "external",
+      "label": "Harbor Proxy Cache",
+      "sublabel": "Proxy Cache 프로젝트",
+      "width": 200
+    },
+    {
+      "id": "containerd",
+      "lane": "rl_out",
+      "col": 4,
+      "type": "external",
+      "label": "containerd 미러 설정",
+      "sublabel": "config.toml mirrors",
+      "width": 200
+    },
+    {
+      "id": "perf",
+      "lane": "perf_check",
+      "col": 1,
+      "type": "backend",
+      "label": "인프라 확인",
+      "sublabel": "어떤 형태의 인프라인가?",
+      "width": 200
+    },
+    {
+      "id": "harbor_full",
+      "lane": "perf_out",
+      "col": 2,
+      "type": "external",
+      "label": "Harbor 전체 미러링",
+      "sublabel": "외부 단절 환경",
+      "width": 200
+    },
+    {
+      "id": "ecr_rep",
+      "lane": "perf_out",
+      "col": 3,
+      "type": "cloud",
+      "label": "ECR 멀티 리전 복제",
+      "sublabel": "리전 간 복제",
+      "width": 200
+    },
+    {
+      "id": "harbor_rep",
+      "lane": "perf_out",
+      "col": 4,
+      "type": "external",
+      "label": "Harbor Pull Replication",
+      "sublabel": "엣지 사이트로 Pull",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "from": "need",
+      "to": "rl",
+      "label": "Rate Limit 이슈",
+      "variant": "emphasis",
+      "role": "main",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "need",
+      "to": "perf",
+      "label": "가용성/성능",
+      "role": "branch"
+    },
+    {
+      "from": "rl",
+      "to": "ecr_ptc",
+      "label": "AWS/EKS",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rl",
+      "to": "harbor_proxy",
+      "label": "자체 인프라",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "from": "rl",
+      "to": "containerd",
+      "label": "단순 미러",
+      "role": "branch"
+    },
+    {
+      "from": "perf",
+      "to": "harbor_full",
+      "label": "에어갭",
+      "role": "branch"
+    },
+    {
+      "from": "perf",
+      "to": "ecr_rep",
+      "label": "멀티 리전",
+      "role": "branch"
+    },
+    {
+      "from": "perf",
+      "to": "harbor_rep",
+      "label": "엣지",
+      "role": "branch"
+    }
+  ]
+}

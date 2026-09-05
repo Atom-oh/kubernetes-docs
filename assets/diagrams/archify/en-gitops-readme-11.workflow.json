@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Push vs Pull Model",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-readme-11.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "push-model",
+        "label": "Push model",
+        "focus": ["ci_pipeline", "push_cluster"],
+        "note": "The CI/CD pipeline holds cluster credentials and applies changes from outside the cluster."
+      },
+      {
+        "id": "pull-model",
+        "label": "Pull model (GitOps)",
+        "focus": ["git_repo", "gitops_agent", "pull_cluster"],
+        "note": "An agent inside the cluster watches Git and applies the desired state itself; no external cluster access."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "push", "label": "Push model · traditional CI/CD" },
+    { "id": "pull", "label": "Pull model · GitOps (recommended)" }
+  ],
+  "mainPath": ["git_repo", "gitops_agent", "pull_cluster"],
+  "semanticChecks": {
+    "allowedRoots": ["ci_pipeline", "git_repo"],
+    "allowedTerminals": ["push_cluster", "pull_cluster"],
+    "requiredPaths": [
+      { "from": "git_repo", "to": "pull_cluster" },
+      { "from": "ci_pipeline", "to": "push_cluster" }
+    ]
+  },
+  "nodes": [
+    { "id": "ci_pipeline", "lane": "push", "col": 0, "type": "backend", "label": "CI Pipeline", "sublabel": "cluster credentials", "tag": "outside cluster" },
+    { "id": "push_cluster", "lane": "push", "col": 2, "type": "cloud", "label": "Cluster", "sublabel": "changes pushed in" },
+    { "id": "git_repo", "lane": "pull", "col": 0, "type": "database", "label": "Git Repo", "sublabel": "desired state", "tag": "source of truth" },
+    { "id": "gitops_agent", "lane": "pull", "col": 1, "type": "backend", "label": "GitOps Agent", "sublabel": "inside the cluster", "tag": "reconciles" },
+    { "id": "pull_cluster", "lane": "pull", "col": 2, "type": "cloud", "label": "Cluster", "sublabel": "actual state" }
+  ],
+  "edges": [
+    { "from": "ci_pipeline", "to": "push_cluster", "label": "kubectl apply", "variant": "dashed" },
+    { "from": "git_repo", "to": "gitops_agent", "label": "watch", "variant": "emphasis" },
+    { "from": "gitops_agent", "to": "pull_cluster", "label": "apply", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "slate", "title": "Push Model Disadvantages", "items": ["Requires cluster credentials in the CI system", "Harder to audit who made changes", "No automatic drift detection"] },
+    { "dot": "orange", "title": "Pull Model Advantages", "items": ["Enhanced security (no external credentials)", "Complete audit trail in Git", "Automatic drift detection and correction", "Works behind firewalls"] }
+  ]
+}

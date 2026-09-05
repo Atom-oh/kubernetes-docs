@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPIRE 페더레이션 아키텍처",
+    "output": "ko-security-12-spiffe-spire-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "domain-identity",
+        "label": "도메인 내 신원 발급",
+        "focus": [
+          "wl_a",
+          "server_a",
+          "bundle_a"
+        ],
+        "note": "각 Trust Domain의 SPIRE Server가 자기 워크로드에 SVID를 발급하고 Trust Bundle을 관리한다."
+      },
+      {
+        "id": "bundle-exchange",
+        "label": "Trust Bundle 교환",
+        "focus": [
+          "server_a",
+          "be_a",
+          "be_b",
+          "server_b"
+        ],
+        "note": "두 서버가 Bundle Endpoint(:8443)로 서로의 Trust Bundle을 주기적으로 가져와 저장한다."
+      },
+      {
+        "id": "cross-mtls",
+        "label": "크로스 도메인 mTLS",
+        "focus": [
+          "wl_a",
+          "wl_b"
+        ],
+        "note": "교환된 Bundle을 신뢰 기반으로 두 도메인의 워크로드가 직접 mTLS로 통신한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "wl_a",
+      "type": "backend",
+      "label": "워크로드 A",
+      "sublabel": "prod.us.example.com",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "server_a",
+      "type": "security",
+      "label": "SPIRE Server A",
+      "sublabel": "federation.enabled",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bundle_a",
+      "type": "database",
+      "label": "Trust Bundle A",
+      "sublabel": "자체 + B의 Bundle",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "be_a",
+      "type": "cloud",
+      "label": "Bundle Endpoint A",
+      "sublabel": ":8443",
+      "pos": [
+        330,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "be_b",
+      "type": "cloud",
+      "label": "Bundle Endpoint B",
+      "sublabel": ":8443",
+      "pos": [
+        600,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wl_b",
+      "type": "backend",
+      "label": "워크로드 B",
+      "sublabel": "prod.eu.example.com",
+      "pos": [
+        890,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "server_b",
+      "type": "security",
+      "label": "SPIRE Server B",
+      "sublabel": "federation.enabled",
+      "pos": [
+        890,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "bundle_b",
+      "type": "database",
+      "label": "Trust Bundle B",
+      "sublabel": "자체 + A의 Bundle",
+      "pos": [
+        890,
+        360
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Trust Domain A · prod.us.example.com",
+      "wraps": [
+        "wl_a",
+        "server_a",
+        "bundle_a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Trust Domain B · prod.eu.example.com",
+      "wraps": [
+        "wl_b",
+        "server_b",
+        "bundle_b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "페더레이션 설정",
+      "wraps": [
+        "be_a",
+        "be_b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "wl-a-svid",
+      "from": "wl_a",
+      "to": "server_a",
+      "label": "SVID",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "server-a-bundle",
+      "from": "server_a",
+      "to": "bundle_a",
+      "label": "B의 Bundle 저장",
+      "labelDy": 24
+    },
+    {
+      "id": "server-a-publish",
+      "from": "server_a",
+      "to": "be_a",
+      "label": "Bundle 공개"
+    },
+    {
+      "id": "bundle-exchange",
+      "from": "be_a",
+      "to": "be_b",
+      "label": "Trust Bundle 교환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-b-publish",
+      "from": "server_b",
+      "to": "be_b",
+      "label": "Bundle 공개"
+    },
+    {
+      "id": "wl-b-svid",
+      "from": "wl_b",
+      "to": "server_b",
+      "label": "SVID",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "server-b-bundle",
+      "from": "server_b",
+      "to": "bundle_b",
+      "label": "A의 Bundle 저장",
+      "labelDy": 24
+    },
+    {
+      "id": "cross-mtls",
+      "from": "wl_a",
+      "to": "wl_b",
+      "label": "mTLS 통신",
+      "variant": "security"
+    }
+  ]
+}

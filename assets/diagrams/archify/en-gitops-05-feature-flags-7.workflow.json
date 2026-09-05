@@ -1,0 +1,293 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Flagger + Feature Flag Workflow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "start",
+        "label": "Deploy and start the canary",
+        "focus": [
+          "deploy",
+          "canary",
+          "flag_on"
+        ],
+        "note": "v2 ships with the flag off; when Flagger starts the canary, the flag is turned on only inside the canary pods."
+      },
+      {
+        "id": "gate",
+        "label": "Analysis gate and rollback",
+        "focus": [
+          "canary",
+          "flag_on",
+          "metrics",
+          "rollback",
+          "expand"
+        ],
+        "note": "If error rate and latency stay within thresholds, traffic grows; if not, Flagger rolls back and the flag is turned off."
+      },
+      {
+        "id": "expand",
+        "label": "Progressive rollout and cleanup",
+        "focus": [
+          "expand",
+          "flag_expand",
+          "full",
+          "flag_full",
+          "cleanup"
+        ],
+        "note": "Traffic grows by stepWeight while flag targeting widens in step; after 100% promotion the flag code is removed."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Code deployment"
+        },
+        "cloud": {
+          "label": "Traffic split (Flagger)"
+        },
+        "backend": {
+          "label": "Flag control (flagd)"
+        },
+        "security": {
+          "label": "Analysis gate / rollback"
+        }
+      }
+    },
+    "viewBox": [
+      1180,
+      534
+    ]
+  },
+  "lanes": [
+    {
+      "id": "traffic",
+      "label": "Infrastructure level: traffic split (Flagger)"
+    },
+    {
+      "id": "flag",
+      "label": "Application level: feature flag"
+    },
+    {
+      "id": "exceptions",
+      "label": "Failure / automatic rollback",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "Deploy",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "Canary traffic",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "Metric analysis",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p4",
+      "label": "Progressive rollout",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "p5",
+      "label": "Full release",
+      "fromCol": 4,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "canary",
+    "flag_on",
+    "metrics",
+    "expand",
+    "full",
+    "flag_full",
+    "cleanup"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "traffic",
+      "col": 0,
+      "type": "frontend",
+      "label": "Deploy new version",
+      "sublabel": "Feature flag off",
+      "width": 160
+    },
+    {
+      "id": "canary",
+      "lane": "traffic",
+      "col": 1,
+      "type": "cloud",
+      "label": "Canary release",
+      "sublabel": "small share of traffic",
+      "width": 160
+    },
+    {
+      "id": "flag_on",
+      "lane": "flag",
+      "col": 1,
+      "type": "backend",
+      "label": "Feature flag on",
+      "sublabel": "canary pods only",
+      "tag": "internal users first",
+      "width": 160
+    },
+    {
+      "id": "metrics",
+      "lane": "traffic",
+      "col": 2,
+      "type": "security",
+      "label": "Metric analysis",
+      "sublabel": "error rate · latency",
+      "tag": "interval 1m",
+      "width": 160
+    },
+    {
+      "id": "expand",
+      "lane": "traffic",
+      "col": 3,
+      "type": "cloud",
+      "label": "Expand traffic",
+      "sublabel": "stepWeight 10 → maxWeight 50",
+      "width": 160
+    },
+    {
+      "id": "flag_expand",
+      "lane": "flag",
+      "col": 3,
+      "type": "backend",
+      "label": "Widen flag targets",
+      "sublabel": "10% of all users",
+      "width": 160
+    },
+    {
+      "id": "full",
+      "lane": "traffic",
+      "col": 4,
+      "type": "cloud",
+      "label": "Full release",
+      "sublabel": "100% traffic, v2 promoted",
+      "width": 160
+    },
+    {
+      "id": "flag_full",
+      "lane": "flag",
+      "col": 4,
+      "type": "backend",
+      "label": "Flag on: all users",
+      "sublabel": "fully exposed",
+      "width": 160
+    },
+    {
+      "id": "cleanup",
+      "lane": "flag",
+      "col": 5,
+      "type": "backend",
+      "label": "Flag cleanup",
+      "sublabel": "remove flag code",
+      "width": 160
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "security",
+      "label": "Automatic rollback",
+      "sublabel": "flag turned off",
+      "tag": "canary aborted",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "deploy-canary",
+      "from": "deploy",
+      "to": "canary"
+    },
+    {
+      "id": "canary-flag_on",
+      "from": "canary",
+      "to": "flag_on",
+      "label": "flag update"
+    },
+    {
+      "id": "flag_on-metrics",
+      "from": "flag_on",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-expand",
+      "from": "metrics",
+      "to": "expand",
+      "label": "pass",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metrics-rollback",
+      "from": "metrics",
+      "to": "rollback",
+      "label": "fail",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "expand-flag_expand",
+      "from": "expand",
+      "to": "flag_expand",
+      "label": "in step"
+    },
+    {
+      "id": "expand-full",
+      "from": "expand",
+      "to": "full"
+    },
+    {
+      "id": "full-flag_full",
+      "from": "full",
+      "to": "flag_full"
+    },
+    {
+      "id": "flag_full-cleanup",
+      "from": "flag_full",
+      "to": "cleanup"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Analysis gate (Canary.spec.analysis)",
+      "items": [
+        "interval 1m · threshold 5 successful checks to promote",
+        "request-success-rate ≥ 99%",
+        "request-duration ≤ 500ms",
+        "stepWeight 10, maxWeight 50"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Feature flag alongside the canary",
+      "items": [
+        "Flag enabled first for @company.com users on v2 pods, then 10% of all users",
+        "Flagger promotion and 100% flag exposure complete the release"
+      ]
+    }
+  ]
+}

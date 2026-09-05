@@ -1,0 +1,283 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "GitOps Tool Selection Decision Framework",
+    "locale": "en",
+    "output": "public/archmaps/en-gitops-readme-12.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      960,
+      660
+    ],
+    "views": [
+      {
+        "id": "argocd-path",
+        "label": "ArgoCD path",
+        "focus": [
+          "start",
+          "webUi",
+          "multiCluster",
+          "rbac",
+          "argocd"
+        ],
+        "note": "A web UI need leads to ArgoCD when multi-cluster management or enterprise RBAC is required."
+      },
+      {
+        "id": "fluxcd-path",
+        "label": "FluxCD path",
+        "focus": [
+          "start",
+          "webUi",
+          "imageAutomation",
+          "lightweight",
+          "fluxcd"
+        ],
+        "note": "Without a UI need, FluxCD wins when image automation or a lightweight footprint is the priority."
+      },
+      {
+        "id": "either-path",
+        "label": "Either works",
+        "focus": [
+          "rbac",
+          "lightweight",
+          "either"
+        ],
+        "note": "When none of the differentiating requirements apply, both tools fit."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "requirement",
+      "label": "Requirement"
+    },
+    {
+      "id": "uiFirst",
+      "label": "UI-first path · ArgoCD strengths"
+    },
+    {
+      "id": "recommendation",
+      "label": "Shared outcome"
+    },
+    {
+      "id": "cliFirst",
+      "label": "CLI-first path · FluxCD strengths"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "webUi",
+    "multiCluster",
+    "rbac",
+    "argocd"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "argocd",
+      "fluxcd",
+      "either"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "argocd"
+      },
+      {
+        "from": "start",
+        "to": "fluxcd"
+      },
+      {
+        "from": "start",
+        "to": "either"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "requirement",
+      "col": 0,
+      "type": "frontend",
+      "label": "Need GitOps Tool",
+      "tag": "START",
+      "width": 128
+    },
+    {
+      "id": "webUi",
+      "lane": "requirement",
+      "col": 1,
+      "type": "security",
+      "label": "Need web UI?",
+      "tag": "DECISION",
+      "width": 118
+    },
+    {
+      "id": "multiCluster",
+      "lane": "uiFirst",
+      "col": 2,
+      "type": "security",
+      "label": "Multi-cluster?",
+      "tag": "DECISION",
+      "width": 118
+    },
+    {
+      "id": "rbac",
+      "lane": "uiFirst",
+      "col": 3,
+      "type": "security",
+      "label": "Enterprise RBAC?",
+      "tag": "DECISION",
+      "width": 128
+    },
+    {
+      "id": "argocd",
+      "lane": "uiFirst",
+      "col": 5,
+      "type": "cloud",
+      "label": "ArgoCD",
+      "sublabel": "UI, multi-cluster, RBAC",
+      "tag": "OUTCOME",
+      "width": 140
+    },
+    {
+      "id": "imageAutomation",
+      "lane": "cliFirst",
+      "col": 2,
+      "type": "security",
+      "label": "Image automation?",
+      "tag": "DECISION",
+      "width": 140
+    },
+    {
+      "id": "lightweight",
+      "lane": "cliFirst",
+      "col": 3,
+      "type": "security",
+      "label": "Lightweight?",
+      "tag": "DECISION",
+      "width": 128
+    },
+    {
+      "id": "fluxcd",
+      "lane": "cliFirst",
+      "col": 5,
+      "type": "cloud",
+      "label": "FluxCD",
+      "sublabel": "CLI-first, modular",
+      "tag": "OUTCOME",
+      "width": 140
+    },
+    {
+      "id": "either",
+      "lane": "recommendation",
+      "col": 4,
+      "type": "external",
+      "label": "Either works",
+      "sublabel": "no differentiating need",
+      "tag": "OUTCOME",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "webUi",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "webUi",
+      "to": "multiCluster",
+      "label": "yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "webUi",
+      "to": "imageAutomation",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "multiCluster",
+      "to": "argocd",
+      "label": "yes",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "multiCluster",
+      "to": "rbac",
+      "label": "no",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rbac",
+      "to": "argocd",
+      "label": "yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rbac",
+      "to": "either",
+      "label": "no",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "imageAutomation",
+      "to": "fluxcd",
+      "label": "yes",
+      "role": "branch",
+      "route": "bottom-channel"
+    },
+    {
+      "from": "imageAutomation",
+      "to": "lightweight",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "lightweight",
+      "to": "fluxcd",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "from": "lightweight",
+      "to": "either",
+      "label": "no",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Choose ArgoCD when",
+      "items": [
+        "You need a visual dashboard for operations",
+        "Multi-cluster management is required",
+        "Enterprise SSO/RBAC is important",
+        "You need ApplicationSet for fleet management"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Choose FluxCD when",
+      "items": [
+        "You prefer lightweight, modular architecture",
+        "Image automation is a primary requirement",
+        "CLI-first workflow is preferred",
+        "Resource constraints are a concern"
+      ]
+    }
+  ]
+}

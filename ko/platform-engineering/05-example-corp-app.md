@@ -18,7 +18,9 @@ ACK는 [ACK 문서](./02-ack.md)에서 설명한 ELBv2, Route 53, RDS 컨트롤�
 
 ## 아키텍처 다이어그램
 
-![KRO로 정의한 WebApp 커스텀 리소스가 Deployment, Service, TargetGroupBinding, ConfigMap을 생성하고, 이 리소스들의 참조 필드(serviceRef, targetGroupARN, endpoints, envFrom)를 통해 ACK가 관리하는 AWS 인프라(NLB, Target Group, Route 53, Aurora PostgreSQL)와 연결되는 구조를 보여준다.](../../assets/diagrams/rendered/ko-platform-engineering-05-example-corp-app-0.svg)
+![KRO로 정의한 WebApp 커스텀 리소스가 Deployment, Service, TargetGroupBinding, ConfigMap을 생성하고, 이 리소스들의 참조 필드(serviceRef, targetGroupARN, endpoints, envFrom)를 통해 ACK가 관리하는 AWS 인프라(NLB, Target Group, Route 53, Aurora PostgreSQL)와 연결되는 구조를 보여준다.](../.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-05-example-corp-app-0.html)
 
 ## Step 1: ACK로 인프라 프로비저닝
 

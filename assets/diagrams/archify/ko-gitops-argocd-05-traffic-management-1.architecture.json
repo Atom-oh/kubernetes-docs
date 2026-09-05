@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "블루/그린 배포 전환",
+    "output": "ko-gitops-argocd-05-traffic-management-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "로드 밸런서"
+        },
+        "backend": {
+          "label": "애플리케이션 버전"
+        },
+        "external": {
+          "label": "정리 대상"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "before",
+        "label": "전환 전",
+        "focus": [
+          "lb-before",
+          "blue-before",
+          "green-before"
+        ],
+        "note": "로드 밸런서는 Blue v1.0.0(activeService)에만 트래픽을 보내고, Green v2.0.0은 previewService로 대기한다."
+      },
+      {
+        "id": "switch",
+        "label": "즉시 전환",
+        "focus": [
+          "blue-before",
+          "green-after",
+          "lb-after"
+        ],
+        "note": "activeService 셀렉터가 Green으로 바뀌면서 프로덕션 트래픽이 한 번에 v2.0.0으로 이동한다."
+      },
+      {
+        "id": "after",
+        "label": "전환 후",
+        "focus": [
+          "lb-after",
+          "green-after",
+          "blue-after",
+          "scale-down"
+        ],
+        "note": "이전 버전 Blue v1.0.0은 scaleDownDelaySeconds 동안 롤백용으로 남은 뒤 스케일 다운된다."
+      }
+    ],
+    "viewBox": [
+      960,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "lb-before",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "프로덕션 트래픽",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blue-before",
+      "type": "backend",
+      "label": "Blue",
+      "sublabel": "v1.0.0 · active",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "green-before",
+      "type": "backend",
+      "label": "Green",
+      "sublabel": "v2.0.0 · preview",
+      "pos": [
+        60,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "lb-after",
+      "type": "cloud",
+      "label": "Load Balancer",
+      "sublabel": "프로덕션 트래픽",
+      "pos": [
+        720,
+        50
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "green-after",
+      "type": "backend",
+      "label": "Green",
+      "sublabel": "v2.0.0 · active",
+      "pos": [
+        720,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "blue-after",
+      "type": "backend",
+      "label": "Blue",
+      "sublabel": "v1.0.0 · 이전 버전",
+      "pos": [
+        720,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scale-down",
+      "type": "external",
+      "label": "스케일 다운",
+      "sublabel": "scaleDownDelaySeconds 이후",
+      "pos": [
+        720,
+        410
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "전환 전",
+      "wraps": [
+        "lb-before",
+        "blue-before",
+        "green-before"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "전환 후",
+      "wraps": [
+        "lb-after",
+        "green-after",
+        "blue-after",
+        "scale-down"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lb-to-blue",
+      "from": "lb-before",
+      "to": "blue-before",
+      "label": "트래픽",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "blue-to-green-standby",
+      "from": "blue-before",
+      "to": "green-before",
+      "label": "대기",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "switch",
+      "from": "blue-before",
+      "to": "green-after",
+      "label": "전환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-to-green",
+      "from": "lb-after",
+      "to": "green-after",
+      "label": "트래픽",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "green-to-blue-old",
+      "from": "green-after",
+      "to": "blue-after",
+      "label": "이전 버전 유지",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "blue-to-scale-down",
+      "from": "blue-after",
+      "to": "scale-down",
+      "label": "삭제 예정",
+      "variant": "dashed",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "전환 전",
+      "items": [
+        "activeService가 Blue v1.0.0으로 트래픽 전달",
+        "previewService로 Green v2.0.0 검증",
+        "prePromotionAnalysis로 승격 전 스모크 테스트"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "전환 후",
+      "items": [
+        "autoPromotionEnabled 또는 수동 승격으로 트래픽 즉시 전환",
+        "postPromotionAnalysis로 전환 후 성공률 확인",
+        "Blue는 scaleDownDelaySeconds 후 스케일 다운"
+      ]
+    }
+  ]
+}

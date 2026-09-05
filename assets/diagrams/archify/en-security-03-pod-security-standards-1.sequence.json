@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "How PSA Works",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      660
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "admission",
+        "label": "Admission validation",
+        "focus": [
+          "user",
+          "api",
+          "psa",
+          "ns"
+        ],
+        "note": "The API Server hands the Pod request to the PSA Controller, which reads the enforcement level from the namespace labels."
+      },
+      {
+        "id": "allow",
+        "label": "Policy compliant",
+        "focus": [
+          "psa",
+          "api",
+          "etcd",
+          "user"
+        ],
+        "note": "A Pod that satisfies the restricted level is approved, stored in etcd, and answered with 201 Created."
+      },
+      {
+        "id": "deny",
+        "label": "Policy violation",
+        "focus": [
+          "psa",
+          "api",
+          "user"
+        ],
+        "note": "In enforce mode a violating Pod is denied and the request returns 403 Forbidden."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User/Controller",
+      "sublabel": "kubectl · Deployment"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver"
+    },
+    {
+      "id": "psa",
+      "type": "security",
+      "label": "PSA Controller",
+      "sublabel": "built-in Admission"
+    },
+    {
+      "id": "ns",
+      "type": "cloud",
+      "label": "Namespace Labels",
+      "sublabel": "pod-security.kubernetes.io/*"
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "cluster state store"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 322,
+      "label": "Admission validation"
+    },
+    {
+      "from": 342,
+      "to": 468,
+      "label": "Pod complies with policy"
+    },
+    {
+      "from": 488,
+      "to": 580,
+      "label": "Pod violates policy (enforce mode)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "create",
+      "from": "user",
+      "to": "api",
+      "y": 188,
+      "label": "Pod creation request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "admit",
+      "from": "api",
+      "to": "psa",
+      "y": 226,
+      "label": "Admission validation request"
+    },
+    {
+      "id": "read-labels",
+      "from": "psa",
+      "to": "ns",
+      "y": 264,
+      "label": "Check namespace labels",
+      "variant": "security"
+    },
+    {
+      "id": "labels",
+      "from": "ns",
+      "to": "psa",
+      "y": 302,
+      "label": "enforce=restricted, audit=restricted",
+      "variant": "return"
+    },
+    {
+      "id": "approve",
+      "from": "psa",
+      "to": "api",
+      "y": 367,
+      "label": "Approved",
+      "variant": "return"
+    },
+    {
+      "id": "store",
+      "from": "api",
+      "to": "etcd",
+      "y": 405,
+      "label": "Store Pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "created",
+      "from": "api",
+      "to": "user",
+      "y": 445,
+      "label": "201 Created",
+      "variant": "return"
+    },
+    {
+      "id": "deny",
+      "from": "psa",
+      "to": "api",
+      "y": 512,
+      "label": "Denied (enforce mode)",
+      "variant": "security"
+    },
+    {
+      "id": "forbidden",
+      "from": "api",
+      "to": "user",
+      "y": 552,
+      "label": "403 Forbidden",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 183,
+      "to": 453,
+      "type": "backend"
+    },
+    {
+      "participant": "psa",
+      "from": 221,
+      "to": 374,
+      "type": "security"
+    },
+    {
+      "participant": "ns",
+      "from": 259,
+      "to": 308,
+      "type": "cloud"
+    },
+    {
+      "participant": "etcd",
+      "from": 400,
+      "to": 425,
+      "type": "database"
+    },
+    {
+      "participant": "api",
+      "from": 507,
+      "to": 560,
+      "type": "backend"
+    },
+    {
+      "participant": "psa",
+      "from": 507,
+      "to": 519,
+      "type": "security"
+    }
+  ]
+}

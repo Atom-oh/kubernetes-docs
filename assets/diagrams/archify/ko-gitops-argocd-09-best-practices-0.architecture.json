@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "모노레포 vs 폴리레포",
+    "output": "ko-gitops-argocd-09-best-practices-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "monorepo", "label": "모노레포", "focus": ["mono-repo", "mono-app-a", "mono-app-b", "mono-infra"], "note": "하나의 Git 저장소 안에 app-a, app-b, infra 디렉터리가 함께 들어가 단일 PR로 여러 앱을 바꿀 수 있다." },
+      { "id": "polyrepo", "label": "폴리레포", "focus": ["poly-app-a", "poly-app-b", "poly-infra"], "note": "같은 구성 요소를 팀별로 독립된 Git 저장소로 분리해 세분화된 권한을 준다." }
+    ]
+  },
+  "components": [
+    { "id": "mono-repo", "type": "database", "label": "단일 저장소", "sublabel": "하나의 Git 저장소", "pos": [190, 60], "size": [180, 60] },
+    { "id": "mono-app-a", "type": "backend", "label": "app-a/", "sublabel": "디렉터리", "pos": [40, 220], "size": [140, 60] },
+    { "id": "mono-app-b", "type": "backend", "label": "app-b/", "sublabel": "디렉터리", "pos": [210, 220], "size": [140, 60] },
+    { "id": "mono-infra", "type": "backend", "label": "infra/", "sublabel": "디렉터리", "pos": [380, 220], "size": [140, 60] },
+    { "id": "poly-app-a", "type": "database", "label": "app-a-repo", "sublabel": "독립 Git 저장소", "pos": [640, 140], "size": [150, 60] },
+    { "id": "poly-app-b", "type": "database", "label": "app-b-repo", "sublabel": "독립 Git 저장소", "pos": [820, 140], "size": [150, 60] },
+    { "id": "poly-infra", "type": "database", "label": "infra-repo", "sublabel": "독립 Git 저장소", "pos": [1000, 140], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "모노레포", "wraps": ["mono-repo", "mono-app-a", "mono-app-b", "mono-infra"] },
+    { "kind": "region", "label": "폴리레포", "wraps": ["poly-app-a", "poly-app-b", "poly-infra"] }
+  ],
+  "connections": [
+    { "id": "mono-to-app-a", "from": "mono-repo", "to": "mono-app-a", "fromSide": "bottom", "toSide": "top" },
+    { "id": "mono-to-app-b", "from": "mono-repo", "to": "mono-app-b", "fromSide": "bottom", "toSide": "top" },
+    { "id": "mono-to-infra", "from": "mono-repo", "to": "mono-infra", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "모노레포", "items": ["장점: 단일 PR로 여러 앱 변경, 일관성", "단점: 권한 관리 복잡, 저장소 크기 증가"] },
+    { "dot": "violet", "title": "폴리레포", "items": ["장점: 팀별 독립성, 세분화된 권한", "단점: 크로스 앱 변경 어려움"] }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kubescape CI/CD Integration Workflow",
+    "locale": "en",
+    "output": "en-security-11-kubescape-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "commit-to-scan",
+        "label": "Commit to scan",
+        "focus": [
+          "code",
+          "commit",
+          "trigger",
+          "build",
+          "scan"
+        ],
+        "note": "A code change is committed, triggers the pipeline, and after the image build a Kubescape scan runs."
+      },
+      {
+        "id": "gate-decision",
+        "label": "Security gate decision",
+        "focus": [
+          "scan",
+          "threshold",
+          "pass",
+          "deploy",
+          "fail",
+          "block",
+          "notify"
+        ],
+        "note": "The risk score is compared with the threshold: pass deploys, exceeding it blocks the deployment and sends a notification."
+      }
+    ],
+    "viewBox": [
+      1100,
+      790
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Developer step"
+        },
+        "backend": {
+          "label": "Pipeline step"
+        },
+        "security": {
+          "label": "Security decision"
+        },
+        "cloud": {
+          "label": "Deployment"
+        },
+        "messagebus": {
+          "label": "Notification"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "dev",
+      "label": "Developer"
+    },
+    {
+      "id": "ci",
+      "label": "CI Pipeline"
+    },
+    {
+      "id": "gate",
+      "label": "Security Gate"
+    },
+    {
+      "id": "cd",
+      "label": "CD Pipeline"
+    },
+    {
+      "id": "blocked",
+      "label": "Blocked Path",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "code",
+    "commit",
+    "trigger",
+    "build",
+    "scan",
+    "threshold",
+    "pass",
+    "deploy"
+  ],
+  "nodes": [
+    {
+      "id": "code",
+      "lane": "dev",
+      "col": 0,
+      "type": "frontend",
+      "label": "Code Change",
+      "sublabel": "manifests / Helm charts",
+      "width": 120
+    },
+    {
+      "id": "commit",
+      "lane": "dev",
+      "col": 1,
+      "type": "frontend",
+      "label": "Git Commit",
+      "sublabel": "PR or push to main",
+      "width": 120
+    },
+    {
+      "id": "trigger",
+      "lane": "ci",
+      "col": 1,
+      "type": "backend",
+      "label": "CI Trigger",
+      "sublabel": "e.g. GitHub Actions",
+      "width": 120
+    },
+    {
+      "id": "build",
+      "lane": "ci",
+      "col": 2,
+      "type": "backend",
+      "label": "Image Build",
+      "width": 120
+    },
+    {
+      "id": "scan",
+      "lane": "ci",
+      "col": 3,
+      "type": "security",
+      "label": "Kubescape",
+      "sublabel": "scan framework nsa, mitre",
+      "tag": "key decision step",
+      "width": 120
+    },
+    {
+      "id": "threshold",
+      "lane": "gate",
+      "col": 3,
+      "type": "security",
+      "label": "Gate Check",
+      "sublabel": "risk score vs threshold",
+      "width": 120
+    },
+    {
+      "id": "pass",
+      "lane": "gate",
+      "col": 4,
+      "type": "backend",
+      "label": "Pass",
+      "sublabel": "gate passed",
+      "width": 120
+    },
+    {
+      "id": "deploy",
+      "lane": "cd",
+      "col": 4,
+      "type": "cloud",
+      "label": "Deploy",
+      "sublabel": "roll out to cluster",
+      "width": 120
+    },
+    {
+      "id": "fail",
+      "lane": "blocked",
+      "col": 3,
+      "type": "security",
+      "label": "Fail",
+      "sublabel": "gate failed",
+      "width": 120
+    },
+    {
+      "id": "block",
+      "lane": "blocked",
+      "col": 4,
+      "type": "security",
+      "label": "Block Deploy",
+      "sublabel": "pipeline exit 1",
+      "width": 120
+    },
+    {
+      "id": "notify",
+      "lane": "blocked",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Notify",
+      "sublabel": "PR comment / alert",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "from": "code",
+      "to": "commit"
+    },
+    {
+      "from": "commit",
+      "to": "trigger",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "trigger",
+      "to": "build"
+    },
+    {
+      "from": "build",
+      "to": "scan"
+    },
+    {
+      "from": "scan",
+      "to": "threshold",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "threshold",
+      "to": "pass",
+      "label": "Score ≤ Threshold",
+      "variant": "emphasis"
+    },
+    {
+      "from": "pass",
+      "to": "deploy",
+      "variant": "emphasis",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "threshold",
+      "to": "fail",
+      "label": "Score > Threshold",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "fail",
+      "to": "block",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "block",
+      "to": "notify",
+      "variant": "security",
+      "role": "error"
+    }
+  ]
+}

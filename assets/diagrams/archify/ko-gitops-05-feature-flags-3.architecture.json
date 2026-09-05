@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "flagd Kubernetes 배포 구조",
+    "output": "ko-gitops-05-feature-flags-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": { "label": "Flag 소스" },
+        "backend": { "label": "flagd 평가 엔진" },
+        "frontend": { "label": "애플리케이션" }
+      }
+    },
+    "views": [
+      { "id": "sidecar-path", "label": "사이드카 모드", "focus": ["flagsrc", "sidecar", "app"], "note": "flagd가 애플리케이션과 같은 Pod에 사이드카로 실행되고, 애플리케이션은 localhost로 flag를 평가한다." },
+      { "id": "standalone-path", "label": "독립형 모드", "focus": ["flagsrc", "flagd-deploy", "svc-a", "svc-b", "svc-c"], "note": "별도 flagd Deployment 하나를 여러 서비스가 공유하며 gRPC / HTTP로 평가 결과를 받는다." }
+    ]
+  },
+  "components": [
+    { "id": "flagsrc", "type": "external", "label": "Flag 소스", "sublabel": "CRD · ConfigMap · 파일 · HTTP", "pos": [40, 260], "size": [190, 64] },
+    { "id": "sidecar", "type": "backend", "label": "flagd 사이드카", "sublabel": "같은 Pod · localhost", "pos": [340, 90], "size": [170, 64] },
+    { "id": "app", "type": "frontend", "label": "애플리케이션", "sublabel": "OpenFeature SDK", "pos": [600, 90], "size": [170, 64] },
+    { "id": "flagd-deploy", "type": "backend", "label": "flagd Deployment", "sublabel": "독립 실행 flagd", "pos": [340, 400], "size": [190, 64] },
+    { "id": "svc-a", "type": "frontend", "label": "Service A", "sublabel": "OpenFeature SDK", "pos": [860, 300], "size": [160, 56] },
+    { "id": "svc-b", "type": "frontend", "label": "Service B", "sublabel": "OpenFeature SDK", "pos": [860, 400], "size": [160, 56] },
+    { "id": "svc-c", "type": "frontend", "label": "Service C", "sublabel": "OpenFeature SDK", "pos": [860, 500], "size": [160, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "사이드카 모드", "wraps": ["sidecar", "app"] },
+    { "kind": "region", "label": "독립형 모드", "wraps": ["flagd-deploy"] },
+    { "kind": "region", "label": "애플리케이션 Pod", "wraps": ["svc-a", "svc-b", "svc-c"] }
+  ],
+  "connections": [
+    { "id": "src-to-sidecar", "from": "flagsrc", "to": "sidecar", "label": "flag 동기화", "variant": "dashed" },
+    { "id": "src-to-deploy", "from": "flagsrc", "to": "flagd-deploy", "label": "flag 동기화", "variant": "dashed" },
+    { "id": "sidecar-to-app", "from": "sidecar", "to": "app", "label": "gRPC / HTTP", "variant": "emphasis", "labelDy": -26 },
+    { "id": "deploy-to-a", "from": "flagd-deploy", "to": "svc-a", "label": "gRPC / HTTP" },
+    { "id": "deploy-to-b", "from": "flagd-deploy", "to": "svc-b" },
+    { "id": "deploy-to-c", "from": "flagd-deploy", "to": "svc-c" }
+  ],
+  "cards": [
+    { "dot": "slate", "title": "Flag 소스", "items": ["FeatureFlag CRD, ConfigMap, 파일, HTTP 엔드포인트에서 flag 설정을 읽는다", "소스 변경을 감시해 flag 상태를 즉시 갱신한다"] },
+    { "dot": "orange", "title": "사이드카 모드", "items": ["OpenFeature Operator가 관리하는 flagd 사이드카가 애플리케이션과 같은 Pod에서 실행된다", "애플리케이션은 localhost(기본 포트 8013)로 flag를 평가한다"] },
+    { "dot": "cyan", "title": "독립형 모드", "items": ["Helm으로 설치한 flagd Deployment를 여러 서비스가 공유한다", "gRPC / HTTP 엔드포인트로 평가 결과를 제공한다"] }
+  ]
+}

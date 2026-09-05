@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vCluster 가상 컨트롤 플레인 구조",
+    "output": "ko-platform-engineering-08-vcluster-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      720
+    ],
+    "views": [
+      {
+        "id": "dev-access",
+        "label": "개발자 접근",
+        "focus": [
+          "dev_a",
+          "api_a",
+          "dev_b",
+          "api_b"
+        ],
+        "note": "각 팀은 자기 kubeconfig로 자신의 가상 API Server에만 접근한다."
+      },
+      {
+        "id": "vcluster-pod",
+        "label": "vCluster Pod 내부",
+        "focus": [
+          "api_a",
+          "syncer_a",
+          "store_a"
+        ],
+        "note": "Namespace vcluster-team-a 안에서 가상 API Server, Syncer, 데이터 저장소가 하나의 Pod(StatefulSet)로 실행되고 Service: team-a와 ServiceAccount가 함께 배치된다."
+      },
+      {
+        "id": "sync-path",
+        "label": "Syncer 동기화",
+        "focus": [
+          "syncer_a",
+          "syncer_b",
+          "host_api",
+          "nodes"
+        ],
+        "note": "Syncer가 호스트 API Server와 리소스를 동기화하고 실제 Pod는 호스트 노드에 생성된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dev_a",
+      "type": "external",
+      "label": "개발자 A",
+      "sublabel": "kubectl",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "dev_b",
+      "type": "external",
+      "label": "개발자 B",
+      "sublabel": "kubectl",
+      "pos": [
+        1000,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "host_api",
+      "type": "backend",
+      "label": "호스트 API Server",
+      "sublabel": "EKS 컨트롤 플레인",
+      "pos": [
+        430,
+        180
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "host_etcd",
+      "type": "database",
+      "label": "호스트 etcd",
+      "sublabel": "클러스터 상태",
+      "pos": [
+        660,
+        180
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "api_a",
+      "type": "backend",
+      "label": "가상 API Server",
+      "sublabel": "k3s / k0s / k8s",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "syncer_a",
+      "type": "backend",
+      "label": "Syncer",
+      "sublabel": "리소스 동기화",
+      "pos": [
+        260,
+        340
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "store_a",
+      "type": "database",
+      "label": "데이터 저장소",
+      "sublabel": "SQLite / etcd",
+      "pos": [
+        60,
+        450
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "syncer_b",
+      "type": "backend",
+      "label": "Syncer",
+      "sublabel": "리소스 동기화",
+      "pos": [
+        810,
+        340
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "api_b",
+      "type": "backend",
+      "label": "가상 API Server",
+      "sublabel": "k3s / k0s / k8s",
+      "pos": [
+        1000,
+        340
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "store_b",
+      "type": "database",
+      "label": "데이터 저장소",
+      "sublabel": "SQLite / etcd",
+      "pos": [
+        1000,
+        450
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "cloud",
+      "label": "호스트 노드 (EC2) · 워크로드 Pod",
+      "sublabel": "team-a-app-x · team-a-app-y · team-b-web",
+      "pos": [
+        60,
+        600
+      ],
+      "size": [
+        1110,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "호스트 클러스터 (EKS)",
+      "wraps": [
+        "host_api",
+        "host_etcd",
+        "api_a",
+        "syncer_a",
+        "store_a",
+        "syncer_b",
+        "api_b",
+        "store_b",
+        "nodes"
+      ],
+      "pad": 40
+    },
+    {
+      "kind": "security-group",
+      "label": "vcluster-team-a",
+      "wraps": [
+        "api_a",
+        "syncer_a",
+        "store_a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "vcluster-team-b",
+      "wraps": [
+        "syncer_b",
+        "api_b",
+        "store_b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dev-a-kubeconfig",
+      "from": "dev_a",
+      "to": "api_a",
+      "label": "kubeconfig",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "dev-b-kubeconfig",
+      "from": "dev_b",
+      "to": "api_b",
+      "label": "kubeconfig",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "api-a-store",
+      "from": "api_a",
+      "to": "store_a"
+    },
+    {
+      "id": "api-b-store",
+      "from": "api_b",
+      "to": "store_b"
+    },
+    {
+      "id": "api-a-syncer",
+      "from": "api_a",
+      "to": "syncer_a"
+    },
+    {
+      "id": "api-b-syncer",
+      "from": "api_b",
+      "to": "syncer_b"
+    },
+    {
+      "id": "host-api-etcd",
+      "from": "host_api",
+      "to": "host_etcd"
+    },
+    {
+      "id": "sync-a",
+      "from": "syncer_a",
+      "to": "host_api",
+      "label": "리소스 동기화",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sync-b",
+      "from": "syncer_b",
+      "to": "host_api",
+      "label": "리소스 동기화",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pods-a",
+      "from": "syncer_a",
+      "to": "nodes",
+      "label": "Pod 생성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pods-b",
+      "from": "syncer_b",
+      "to": "nodes",
+      "label": "Pod 생성",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -230,7 +230,9 @@ docker build \
 
 ## 레지스트리 미러링 및 캐싱
 
-![레이트 리밋 문제인지 가용성/성능 문제인지, 그리고 AWS/EKS 환경인지 자체 인프라인지에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 설정, Harbor 전체 미러링, ECR 멀티 리전 복제, Harbor Pull Replication 중 적합한 캐싱/미러링 전략을 선택하는 의사결정 트리.](../../assets/diagrams/rendered/ko-container-registry-04-best-practices-0.svg)
+![레이트 리밋 문제인지 가용성/성능 문제인지, 그리고 AWS/EKS 환경인지 자체 인프라인지에 따라 ECR Pull-through Cache, Harbor Proxy Cache, containerd 미러 설정, Harbor 전체 미러링, ECR 멀티 리전 복제, Harbor Pull Replication 중 적합한 캐싱/미러링 전략을 고르는 의사결정 트리를 보여준다.](../.gitbook/assets/ko-container-registry-04-best-practices-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-container-registry-04-best-practices-0.html)
 
 ### containerd 레지스트리 미러 설정
 

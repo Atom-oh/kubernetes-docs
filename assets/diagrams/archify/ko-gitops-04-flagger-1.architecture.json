@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Flagger 핵심 컴포넌트",
+    "output": "ko-gitops-04-flagger-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [940, 570],
+    "views": [
+      { "id": "detect", "label": "1. Canary 감지", "focus": ["crd", "flagger", "canary"], "note": "Flagger는 Canary CRD를 감시하고, 새 배포가 감지되면 Canary Deployment에 새 버전을 기동한다." },
+      { "id": "shift", "label": "2. 트래픽 전환", "focus": ["flagger", "traffic"], "note": "Mesh/Ingress Provider의 라우팅 규칙을 갱신해 Canary 트래픽 가중치를 단계적으로 늘린다." },
+      { "id": "analyze", "label": "3. 메트릭 분석", "focus": ["flagger", "metrics"], "note": "메트릭 백엔드에서 성공률·지연 시간을 조회해 단계 진행 또는 롤백을 판정한다." },
+      { "id": "promote", "label": "4. 승격과 알림", "focus": ["flagger", "primary", "alerts"], "note": "모든 단계를 통과하면 Canary spec을 Primary에 복사하고 결과를 알림 채널로 전달한다." }
+    ]
+  },
+  "components": [
+    { "id": "crd", "type": "external", "label": "Canary CRD", "sublabel": "targetRef · analysis · webhooks", "pos": [40, 250], "size": [200, 64] },
+    { "id": "flagger", "type": "backend", "label": "Flagger", "sublabel": "Kubernetes 컨트롤러 · 제어 루프", "pos": [340, 250], "size": [200, 64], "tag": "focal" },
+    { "id": "primary", "type": "backend", "label": "app-primary", "sublabel": "Deployment · Service (안정 버전)", "pos": [40, 460], "size": [210, 60] },
+    { "id": "canary", "type": "backend", "label": "app (Canary)", "sublabel": "Deployment · app-canary Service", "pos": [330, 460], "size": [210, 60] },
+    { "id": "traffic", "type": "cloud", "label": "Mesh / Ingress Provider", "sublabel": "Istio · Linkerd · Gateway API", "pos": [670, 250], "size": [230, 64] },
+    { "id": "metrics", "type": "database", "label": "메트릭 백엔드", "sublabel": "Prometheus · Datadog · CloudWatch", "pos": [670, 60], "size": [230, 60] },
+    { "id": "alerts", "type": "external", "label": "알림 채널", "sublabel": "Slack · Teams", "pos": [670, 460], "size": [230, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Flagger 생성 리소스", "wraps": ["primary", "canary"] }
+  ],
+  "connections": [
+    { "id": "crd-to-flagger", "from": "crd", "to": "flagger", "label": "Canary 감시" },
+    { "id": "flagger-to-traffic", "from": "flagger", "to": "traffic", "label": "라우팅 규칙 · 가중치", "variant": "emphasis" },
+    { "id": "flagger-to-metrics", "from": "flagger", "to": "metrics", "label": "메트릭 조회", "fromSide": "top", "toSide": "left" },
+    { "id": "flagger-to-alerts", "from": "flagger", "to": "alerts", "label": "결과 알림", "fromSide": "bottom", "toSide": "top", "labelSegment": 1 },
+    { "id": "flagger-to-canary", "from": "flagger", "to": "canary", "label": "새 버전 기동", "fromSide": "bottom", "toSide": "top", "labelDy": 100 },
+    { "id": "flagger-to-primary", "from": "flagger", "to": "primary", "label": "승격 (spec 복사)", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelSegment": 1 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Canary CRD", "items": ["기존 Deployment를 targetRef로 참조한다 (Deployment 교체 불필요)", "analysis에 트래픽 가중치, 메트릭 임계값, Pre/Post rollout webhook을 정의한다"] },
+    { "dot": "emerald", "title": "Flagger 생성 리소스", "items": ["app-primary Deployment/Service가 안정 버전 트래픽을 처리한다", "원본 app Deployment는 Canary 용도로 쓰이며 배포 중이 아닐 때 replicas 0으로 유지된다", "VirtualService / TrafficSplit이 트래픽 비율을 관리한다"] },
+    { "dot": "amber", "title": "분석과 알림", "items": ["Prometheus · Datadog · CloudWatch에서 메트릭을 조회한다", "임계값 통과 시 단계 진행·승격, 실패 시 자동 롤백", "Slack · Teams webhook으로 결과를 알린다"] }
+  ]
+}

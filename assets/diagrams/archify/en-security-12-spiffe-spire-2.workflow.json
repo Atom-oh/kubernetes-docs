@@ -1,0 +1,269 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Node and Workload Attestation Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-attestation",
+        "label": "Node Attestation",
+        "focus": [
+          "agent_start",
+          "psat",
+          "aws_iid",
+          "validate",
+          "node_svid"
+        ],
+        "note": "The SPIRE Agent submits a k8s_psat token or an aws_iid document to the Server and receives a Node SVID once validation passes."
+      },
+      {
+        "id": "workload-attestation",
+        "label": "Workload Attestation",
+        "focus": [
+          "node_svid",
+          "wl_call",
+          "collect",
+          "pod_meta",
+          "unix",
+          "match",
+          "wl_svid"
+        ],
+        "note": "With its Node SVID, the Agent checks the caller's Pod metadata and UID/GID, matches registration entries, and issues a Workload SVID."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "SPIRE processing step"
+        },
+        "cloud": {
+          "label": "Attestation evidence"
+        },
+        "security": {
+          "label": "SVID issuance"
+        },
+        "frontend": {
+          "label": "Workload"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "k8s",
+      "label": "Kubernetes workload / API"
+    },
+    {
+      "id": "agent",
+      "label": "SPIRE Agent"
+    },
+    {
+      "id": "node",
+      "label": "Node (EC2 / OS)"
+    },
+    {
+      "id": "server",
+      "label": "SPIRE Server"
+    }
+  ],
+  "phases": [
+    {
+      "id": "node-phase",
+      "label": "Node Attestation",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "workload-phase",
+      "label": "Workload Attestation",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "agent_start",
+    "psat",
+    "validate",
+    "node_svid",
+    "wl_call",
+    "collect",
+    "pod_meta",
+    "match",
+    "wl_svid"
+  ],
+  "nodes": [
+    {
+      "id": "agent_start",
+      "lane": "agent",
+      "col": 0,
+      "type": "backend",
+      "label": "SPIRE Agent starts",
+      "sublabel": "DaemonSet",
+      "width": 190
+    },
+    {
+      "id": "psat",
+      "lane": "k8s",
+      "col": 1,
+      "type": "cloud",
+      "label": "k8s_psat",
+      "sublabel": "Obtain ServiceAccount Token",
+      "width": 190
+    },
+    {
+      "id": "aws_iid",
+      "lane": "node",
+      "col": 1,
+      "type": "cloud",
+      "label": "aws_iid",
+      "sublabel": "Obtain Instance Identity Doc",
+      "width": 190
+    },
+    {
+      "id": "validate",
+      "lane": "server",
+      "col": 2,
+      "type": "backend",
+      "label": "Validate attestation",
+      "sublabel": "Submitted token/document",
+      "width": 190
+    },
+    {
+      "id": "node_svid",
+      "lane": "agent",
+      "col": 2,
+      "type": "security",
+      "label": "Node SVID issued",
+      "sublabel": "Agent identity established",
+      "width": 190
+    },
+    {
+      "id": "wl_call",
+      "lane": "k8s",
+      "col": 3,
+      "type": "frontend",
+      "label": "Call Workload API",
+      "sublabel": "Unix socket",
+      "width": 190
+    },
+    {
+      "id": "collect",
+      "lane": "agent",
+      "col": 3,
+      "type": "backend",
+      "label": "Collect process info",
+      "sublabel": "Identify calling process",
+      "width": 190
+    },
+    {
+      "id": "pod_meta",
+      "lane": "k8s",
+      "col": 4,
+      "type": "cloud",
+      "label": "Look up Pod metadata",
+      "sublabel": "k8s workload attestor",
+      "width": 190
+    },
+    {
+      "id": "unix",
+      "lane": "node",
+      "col": 4,
+      "type": "cloud",
+      "label": "Check UID/GID",
+      "sublabel": "unix workload attestor",
+      "width": 190
+    },
+    {
+      "id": "match",
+      "lane": "agent",
+      "col": 5,
+      "type": "backend",
+      "label": "Match selectors",
+      "sublabel": "Compare with registration entries",
+      "width": 190
+    },
+    {
+      "id": "wl_svid",
+      "lane": "k8s",
+      "col": 5,
+      "type": "security",
+      "label": "Workload SVID issued",
+      "sublabel": "X.509 / JWT",
+      "width": 190
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-psat",
+      "from": "agent_start",
+      "to": "psat"
+    },
+    {
+      "id": "start-iid",
+      "from": "agent_start",
+      "to": "aws_iid",
+      "role": "branch"
+    },
+    {
+      "id": "psat-validate",
+      "from": "psat",
+      "to": "validate"
+    },
+    {
+      "id": "iid-validate",
+      "from": "aws_iid",
+      "to": "validate",
+      "role": "branch"
+    },
+    {
+      "id": "validate-nodesvid",
+      "from": "validate",
+      "to": "node_svid",
+      "variant": "security"
+    },
+    {
+      "id": "nodesvid-wlcall",
+      "from": "node_svid",
+      "to": "wl_call",
+      "label": "Uses Node SVID",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wlcall-collect",
+      "from": "wl_call",
+      "to": "collect"
+    },
+    {
+      "id": "collect-podmeta",
+      "from": "collect",
+      "to": "pod_meta"
+    },
+    {
+      "id": "collect-unix",
+      "from": "collect",
+      "to": "unix",
+      "role": "branch"
+    },
+    {
+      "id": "podmeta-match",
+      "from": "pod_meta",
+      "to": "match"
+    },
+    {
+      "id": "unix-match",
+      "from": "unix",
+      "to": "match",
+      "role": "branch"
+    },
+    {
+      "id": "match-wlsvid",
+      "from": "match",
+      "to": "wl_svid",
+      "variant": "security"
+    }
+  ]
+}

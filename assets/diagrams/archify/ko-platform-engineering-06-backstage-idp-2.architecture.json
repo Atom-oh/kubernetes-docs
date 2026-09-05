@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TechDocs 워크플로우",
+    "output": "ko-platform-engineering-06-backstage-idp-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      330
+    ]
+  },
+  "components": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자",
+      "sublabel": "문서 작성자",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repository",
+      "sublabel": "docs/ + mkdocs.yml",
+      "pos": [
+        270,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "MkDocs Build",
+      "sublabel": "CI 잡",
+      "pos": [
+        520,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 Bucket",
+      "sublabel": "정적 HTML 저장",
+      "pos": [
+        760,
+        120
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "techdocs",
+      "type": "frontend",
+      "label": "Backstage TechDocs UI",
+      "sublabel": "통합 문서 뷰어",
+      "pos": [
+        990,
+        120
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dev-write",
+      "from": "dev",
+      "to": "git",
+      "label": "Markdown 작성",
+      "variant": "emphasis"
+    },
+    {
+      "id": "git-build",
+      "from": "git",
+      "to": "build",
+      "label": "CI에서 빌드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "build-upload",
+      "from": "build",
+      "to": "s3",
+      "label": "업로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s3-render",
+      "from": "s3",
+      "to": "techdocs",
+      "label": "렌더링",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dev-read",
+      "from": "dev",
+      "to": "techdocs",
+      "label": "문서 열람",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "docs-as-code",
+      "items": [
+        "코드 리포지토리에 Markdown 문서 작성",
+        "mkdocs.yml로 문서 구조 정의",
+        "builder: external — CI에서 빌드"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "S3 스토리지 백엔드",
+      "items": [
+        "publisher: awsS3",
+        "Backstage 인스턴스 간 문서 공유·확장성 향상",
+        "IRSA 역할로 버킷 접근"
+      ]
+    }
+  ]
+}

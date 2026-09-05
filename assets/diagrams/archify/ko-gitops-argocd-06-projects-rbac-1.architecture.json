@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "패턴 1: 팀별 프로젝트",
+    "output": "ko-gitops-argocd-06-projects-rbac-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "frontend-path",
+        "label": "Frontend 프로젝트 배포 경로",
+        "focus": [
+          "proj-frontend",
+          "dest-any",
+          "dev",
+          "staging",
+          "prod"
+        ],
+        "note": "destinations의 server: '*' 덕분에 Frontend 프로젝트는 세 클러스터 모두에 배포할 수 있다."
+      },
+      {
+        "id": "backend-path",
+        "label": "Backend 프로젝트 배포 경로",
+        "focus": [
+          "proj-backend",
+          "dest-any",
+          "dev",
+          "staging",
+          "prod"
+        ],
+        "note": "Backend 프로젝트도 같은 방식으로 세 클러스터 전체를 대상으로 한다."
+      },
+      {
+        "id": "shared-clusters",
+        "label": "공유 클러스터",
+        "focus": [
+          "dev",
+          "staging",
+          "prod"
+        ],
+        "note": "Dev · Staging · Prod 클러스터는 모든 프로젝트가 공유하는 배포 대상이다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "proj-frontend",
+      "type": "security",
+      "label": "Project: Frontend",
+      "sublabel": "frontend-web · frontend-api",
+      "tag": "namespace: frontend-*",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "proj-backend",
+      "type": "security",
+      "label": "Project: Backend",
+      "sublabel": "user-service · order-service",
+      "tag": "namespace: backend-*",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "proj-data",
+      "type": "security",
+      "label": "Project: Data",
+      "sublabel": "analytics · ml-pipeline",
+      "pos": [
+        740,
+        80
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dest-any",
+      "type": "backend",
+      "label": "destinations.server: '*'",
+      "sublabel": "모든 클러스터를 배포 대상으로 허용",
+      "pos": [
+        390,
+        270
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "dev",
+      "type": "cloud",
+      "label": "Dev Cluster",
+      "sublabel": "개발 환경",
+      "pos": [
+        80,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "staging",
+      "type": "cloud",
+      "label": "Staging Cluster",
+      "sublabel": "스테이징 환경",
+      "pos": [
+        420,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "prod",
+      "type": "cloud",
+      "label": "Prod Cluster",
+      "sublabel": "프로덕션 환경",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "ArgoCD · AppProject (팀별)",
+      "wraps": [
+        "proj-frontend",
+        "proj-backend",
+        "proj-data"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Clusters · 모든 프로젝트가 공유하는 대상",
+      "wraps": [
+        "dev",
+        "staging",
+        "prod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fe-dest",
+      "from": "proj-frontend",
+      "to": "dest-any",
+      "label": "배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "be-dest",
+      "from": "proj-backend",
+      "to": "dest-any"
+    },
+    {
+      "id": "data-dest",
+      "from": "proj-data",
+      "to": "dest-any"
+    },
+    {
+      "id": "dest-dev",
+      "from": "dest-any",
+      "to": "dev",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dest-staging",
+      "from": "dest-any",
+      "to": "staging",
+      "label": "모든 클러스터에 동일하게 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dest-prod",
+      "from": "dest-any",
+      "to": "prod",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "프로젝트별 격리 (팀 단위)",
+      "items": [
+        "sourceRepos: https://github.com/myorg/frontend-* 처럼 팀 저장소만 허용",
+        "destinations.namespace: frontend-* 처럼 팀 네임스페이스만 허용"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "공유 클러스터",
+      "items": [
+        "destinations.server: '*' 로 Dev · Staging · Prod 전체를 대상으로 한다",
+        "클러스터 격리는 네임스페이스 패턴이 담당한다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "프로젝트 역할",
+      "items": [
+        "admin: applications * 허용, 그룹 frontend-leads",
+        "developer: get · sync 만 허용, 그룹 frontend-developers"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PSP → PSS 전환 로드맵",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "deprecation",
+        "label": "PSP 사용 중단",
+        "focus": [
+          "psp_deprecated",
+          "psa_alpha"
+        ],
+        "note": "Kubernetes 1.21에서 PodSecurityPolicy 사용 중단이 발표되고, 1.22에서 대체 메커니즘인 PSA가 알파로 도입된다."
+      },
+      {
+        "id": "maturity",
+        "label": "PSA 성숙",
+        "focus": [
+          "psa_alpha",
+          "psa_beta",
+          "psa_ga"
+        ],
+        "note": "Pod Security Admission은 1.22 알파, 1.23 베타를 거쳐 1.25에서 GA가 된다."
+      },
+      {
+        "id": "cutover",
+        "label": "전환 완료",
+        "focus": [
+          "psa_ga",
+          "psp_removed",
+          "pss_stable"
+        ],
+        "note": "1.25에서 PSP가 완전히 제거되어 PSA GA와 함께 전환이 마무리되고, 1.28 이후 PSS/PSA가 안정화된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "PSP 이벤트"
+        },
+        "backend": {
+          "label": "PSA 릴리스 단계"
+        },
+        "security": {
+          "label": "주요 전환점 (PSP 제거·PSA GA)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "psp",
+      "label": "PodSecurityPolicy (PSP)"
+    },
+    {
+      "id": "psa",
+      "label": "Pod Security Admission (PSA) · Pod Security Standards (PSS)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "announce",
+      "label": "사용 중단 예고",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "mature",
+      "label": "PSA 성숙",
+      "fromCol": 1,
+      "toCol": 2
+    },
+    {
+      "id": "cutover",
+      "label": "전환 완료 · 안정화",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "psp_deprecated",
+    "psa_alpha",
+    "psa_beta",
+    "psa_ga",
+    "pss_stable"
+  ],
+  "nodes": [
+    {
+      "id": "psp_deprecated",
+      "lane": "psp",
+      "col": 0,
+      "width": 160,
+      "type": "external",
+      "label": "PSP 사용 중단 발표",
+      "sublabel": "v1.21 · deprecated"
+    },
+    {
+      "id": "psp_removed",
+      "lane": "psp",
+      "col": 3,
+      "width": 160,
+      "type": "security",
+      "label": "PSP 제거",
+      "sublabel": "v1.25 · API에서 완전히 제거"
+    },
+    {
+      "id": "psa_alpha",
+      "lane": "psa",
+      "col": 1,
+      "width": 160,
+      "type": "backend",
+      "label": "PSA 알파 도입",
+      "sublabel": "v1.22 · alpha"
+    },
+    {
+      "id": "psa_beta",
+      "lane": "psa",
+      "col": 2,
+      "width": 160,
+      "type": "backend",
+      "label": "PSA 베타",
+      "sublabel": "v1.23 · beta"
+    },
+    {
+      "id": "psa_ga",
+      "lane": "psa",
+      "col": 3,
+      "width": 160,
+      "type": "security",
+      "label": "PSA GA",
+      "sublabel": "v1.25 · Generally Available"
+    },
+    {
+      "id": "pss_stable",
+      "lane": "psa",
+      "col": 4,
+      "width": 160,
+      "type": "backend",
+      "label": "PSS/PSA 안정화",
+      "sublabel": "v1.28+ · stable"
+    }
+  ],
+  "edges": [
+    {
+      "id": "deprecated-alpha",
+      "from": "psp_deprecated",
+      "to": "psa_alpha",
+      "label": "대체 메커니즘 도입"
+    },
+    {
+      "id": "alpha-beta",
+      "from": "psa_alpha",
+      "to": "psa_beta"
+    },
+    {
+      "id": "beta-ga",
+      "from": "psa_beta",
+      "to": "psa_ga"
+    },
+    {
+      "id": "ga-stable",
+      "from": "psa_ga",
+      "to": "pss_stable"
+    },
+    {
+      "id": "ga-removed",
+      "from": "psa_ga",
+      "to": "psp_removed",
+      "label": "같은 릴리스",
+      "role": "branch",
+      "variant": "security"
+    }
+  ]
+}

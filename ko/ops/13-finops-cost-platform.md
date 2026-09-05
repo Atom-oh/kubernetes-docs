@@ -986,7 +986,9 @@ Kubernetes 클러스터에는 모든 팀이 공유하는 인프라 비용이 존
 | 보안 | cert-manager, OPA, Falco | 균등 분배 | 모든 팀이 동일하게 혜택 |
 | 유휴 비용 | 미사용 노드 리소스 | 노드별 가중치 | 노드 사용량에 비례 |
 
-![총 1만 달러의 클러스터 비용을 직접·공유·유휴 비용으로 나눠 팀 A, B, C에 배분한 누적 막대 그래프로, 유휴 비용을 최적화 대상으로 강조한다.](../../assets/diagrams/rendered/ko-ops-13-finops-cost-platform-1.svg)
+![월 $10,000의 총 클러스터 비용을 직접 비용 65%·공유 비용 25%·유휴 비용 10%로 나눈 뒤 분배 규칙을 거쳐 팀 A $4,120, 팀 B $2,840, 팀 C $3,040으로 배분하는 공유 비용 분배 흐름을 보여준다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-13-finops-cost-platform-1.html)
 
 ### 3.4 Grafana Showback 대시보드
 
@@ -2482,7 +2484,9 @@ kubectl get vpa -n data-production
 
 VPA 추천을 수동으로 적용하는 대신, CI/CD 파이프라인을 통해 추천값을 PR로 생성하고 리뷰 후 적용하는 자동화 워크플로우를 구축합니다.
 
-![CronJob이 매주 VPA 추천값을 조회해 스크립트가 PR을 생성하고, Git/CI가 검증 후 팀 리더의 승인·머지를 거쳐 ArgoCD로 안전하게 배포하는 시퀀스 다이어그램이다.](../../assets/diagrams/rendered/ko-ops-13-finops-cost-platform-2.svg)
+![자동 리소스 조정 파이프라인 시퀀스 다이어그램: 매주 실행되는 CronJob이 VPA 추천값을 조회하고, 라이트사이징 스크립트가 추천값을 현재 requests와 비교해 20% 이상 변경 건에 대해 PR을 생성한다. Git/CI가 린트 검증을 거쳐 팀 리더에게 리뷰를 요청하고, 승인·머지 후 ArgoCD가 머지된 매니페스트를 동기화한다.](../.gitbook/assets/ko-ops-13-finops-cost-platform-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ops-13-finops-cost-platform-2.html)
 
 **라이트사이징 자동화 CronJob:**
 

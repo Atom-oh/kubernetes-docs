@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "prune 동작 예시 — Git에서 삭제된 리소스 정리",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      860,
+      520
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git Repo",
+      "sublabel": "source of truth"
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "controller"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "cluster"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "감지 및 상태 확인"
+    },
+    {
+      "from": 320,
+      "to": 430,
+      "label": "prune=true → 삭제"
+    }
+  ],
+  "messages": [
+    {
+      "id": "detect",
+      "from": "git",
+      "to": "argocd",
+      "y": 190,
+      "label": "변경 감지 (deployment-A 삭제 커밋)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check",
+      "from": "argocd",
+      "to": "k8s",
+      "y": 235,
+      "label": "deployment-A 상태 확인"
+    },
+    {
+      "id": "exists",
+      "from": "k8s",
+      "to": "argocd",
+      "y": 280,
+      "label": "deployment-A 존재",
+      "variant": "return"
+    },
+    {
+      "id": "delete",
+      "from": "argocd",
+      "to": "k8s",
+      "y": 360,
+      "label": "deployment-A 삭제",
+      "variant": "emphasis",
+      "note": "prune=true 확인 후 삭제 실행"
+    },
+    {
+      "id": "done",
+      "from": "k8s",
+      "to": "argocd",
+      "y": 410,
+      "label": "삭제 완료",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "argocd",
+      "from": 185,
+      "to": 418,
+      "type": "backend"
+    },
+    {
+      "participant": "k8s",
+      "from": 230,
+      "to": 286,
+      "type": "cloud"
+    },
+    {
+      "participant": "k8s",
+      "from": 355,
+      "to": 416,
+      "type": "cloud"
+    }
+  ]
+}

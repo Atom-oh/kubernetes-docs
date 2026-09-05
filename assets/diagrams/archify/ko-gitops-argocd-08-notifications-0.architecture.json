@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArgoCD 알림 전송 흐름",
+    "output": "ko-gitops-argocd-08-notifications-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [980, 560],
+    "views": [
+      { "id": "event-intake", "label": "이벤트 수신", "focus": ["app", "controller"], "note": "Application 상태 변화를 Notifications Controller가 감시하고 Trigger 조건을 평가한다." },
+      { "id": "fan-out", "label": "서비스 전달", "focus": ["controller", "slack", "teams", "email", "webhook", "github"], "note": "Trigger가 일치하면 Template로 렌더링한 메시지를 구독된 서비스로 전송한다." }
+    ]
+  },
+  "components": [
+    { "id": "app", "type": "backend", "label": "Application", "sublabel": "argoproj.io/v1alpha1", "pos": [50, 240], "size": [170, 64] },
+    { "id": "controller", "type": "backend", "label": "Notifications Controller", "sublabel": "Trigger 평가 · Template 렌더링", "pos": [330, 240], "size": [230, 64] },
+    { "id": "slack", "type": "external", "label": "Slack", "pos": [740, 40], "size": [190, 56] },
+    { "id": "teams", "type": "external", "label": "Microsoft Teams", "pos": [740, 140], "size": [190, 56] },
+    { "id": "email", "type": "external", "label": "Email", "sublabel": "SMTP", "pos": [740, 240], "size": [190, 56] },
+    { "id": "webhook", "type": "external", "label": "Webhook", "pos": [740, 340], "size": [190, 56] },
+    { "id": "github", "type": "external", "label": "GitHub", "pos": [740, 440], "size": [190, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "ArgoCD", "wraps": ["app", "controller"] },
+    { "kind": "region", "label": "알림 서비스", "wraps": ["slack", "teams", "email", "webhook", "github"] }
+  ],
+  "connections": [
+    { "id": "app-to-controller", "from": "app", "to": "controller", "label": "이벤트", "variant": "emphasis" },
+    { "id": "controller-to-slack", "from": "controller", "to": "slack" },
+    { "id": "controller-to-teams", "from": "controller", "to": "teams" },
+    { "id": "controller-to-email", "from": "controller", "to": "email" },
+    { "id": "controller-to-webhook", "from": "controller", "to": "webhook" },
+    { "id": "controller-to-github", "from": "controller", "to": "github" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "구성 요소", "items": ["Trigger — 알림을 발생시키는 조건", "Template — 알림 메시지 형식", "Service — 알림 대상 (Slack, Email 등)", "Subscription — Application과 알림 연결"] }
+  ]
+}

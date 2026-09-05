@@ -35,7 +35,9 @@ Standard Kubernetes Deployments only support rolling updates. Argo Rollouts exte
 
 ### Architecture
 
-![Architecture diagram showing the Argo Rollouts controller driving an ingress controller, service mesh, and active/preview replica sets, while the Analysis controller queries metrics backends and reports pass/fail back to the controller.](../../../assets/diagrams/rendered/en-gitops-argocd-05-traffic-management-0.svg)
+![Argo Rollouts controller executing blue-green, canary, and experiment strategies, shifting traffic via the ingress controller and service mesh, and querying an analysis provider whose Pass/Fail result drives promotion or rollback.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-0.html)
 
 ## Installation
 
@@ -183,7 +185,9 @@ spec:
 
 ### Blue-Green Flow
 
-![Sequence diagram showing a Rollout shifting traffic from an active v1 service to a preview v2 service, running pre- and post-promotion analysis, and switching production traffic to v2 after either automatic or manually approved promotion.](../../../assets/diagrams/rendered/en-gitops-argocd-05-traffic-management-1.svg)
+![Before the blue-green switch the load balancer sends traffic to Blue v1.0.0 while Green v2.0.0 waits as preview; after the switch traffic moves instantly to Green v2.0.0 and the previous Blue v1.0.0 is scaled down after scaleDownDelaySeconds.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-1.html)
 
 ### Blue-Green with Auto-Promotion
 
@@ -325,7 +329,9 @@ kubectl argo rollouts promote myapp-canary --full
 
 ### Canary Traffic Flow
 
-![Architecture diagram showing an ingress controller splitting all incoming requests, sending 90 percent of traffic to three stable v1 pods and 10 percent to one canary v2 pod.](../../../assets/diagrams/rendered/en-gitops-argocd-05-traffic-management-2.svg)
+![Diagram showing client requests split at the load balancer: 80 percent reach four stable v1.0.0 pods via the myapp-stable Service and 20 percent reach one canary v2.0.0 pod via the myapp-canary Service.](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-2.html)
 
 ## Analysis and Verification
 

@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Monorepo vs Polyrepo",
+    "locale": "en",
+    "output": "en-gitops-argocd-09-best-practices-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "monorepo",
+        "label": "Monorepo",
+        "focus": [
+          "mono-repo",
+          "mono-app-a",
+          "mono-app-b",
+          "mono-infra"
+        ],
+        "note": "One Git repository holds the app-a, app-b, and infra directories, so a single PR can change several apps."
+      },
+      {
+        "id": "polyrepo",
+        "label": "Polyrepo",
+        "focus": [
+          "poly-app-a",
+          "poly-app-b",
+          "poly-infra"
+        ],
+        "note": "The same components are split into independent Git repositories per team, giving fine-grained access control."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "mono-repo",
+      "type": "database",
+      "label": "Single repository",
+      "sublabel": "one Git repository",
+      "pos": [
+        190,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "mono-app-a",
+      "type": "backend",
+      "label": "app-a/",
+      "sublabel": "directory",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "mono-app-b",
+      "type": "backend",
+      "label": "app-b/",
+      "sublabel": "directory",
+      "pos": [
+        210,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "mono-infra",
+      "type": "backend",
+      "label": "infra/",
+      "sublabel": "directory",
+      "pos": [
+        380,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "poly-app-a",
+      "type": "database",
+      "label": "app-a-repo",
+      "sublabel": "independent Git repository",
+      "pos": [
+        640,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "poly-app-b",
+      "type": "database",
+      "label": "app-b-repo",
+      "sublabel": "independent Git repository",
+      "pos": [
+        820,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "poly-infra",
+      "type": "database",
+      "label": "infra-repo",
+      "sublabel": "independent Git repository",
+      "pos": [
+        1000,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Monorepo",
+      "wraps": [
+        "mono-repo",
+        "mono-app-a",
+        "mono-app-b",
+        "mono-infra"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Polyrepo",
+      "wraps": [
+        "poly-app-a",
+        "poly-app-b",
+        "poly-infra"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "mono-to-app-a",
+      "from": "mono-repo",
+      "to": "mono-app-a",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mono-to-app-b",
+      "from": "mono-repo",
+      "to": "mono-app-b",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mono-to-infra",
+      "from": "mono-repo",
+      "to": "mono-infra",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Monorepo",
+      "items": [
+        "Pros: change several apps in one PR, consistency",
+        "Cons: complex access control, growing repo size"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Polyrepo",
+      "items": [
+        "Pros: team independence, fine-grained permissions",
+        "Cons: cross-app changes are hard"
+      ]
+    }
+  ]
+}

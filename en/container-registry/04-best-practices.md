@@ -209,7 +209,9 @@ myapp:v1.0.0-arm64     # ARM64-specific
 4. **Security**: Control over what images enter your environment
 5. **Cost savings**: Reduce cross-region/internet transfer costs
 
-![A decision tree for choosing a caching or mirroring strategy: it first asks whether the problem is registry rate limits or availability/performance, then routes rate-limit cases by environment (AWS/EKS, self-hosted, or a simple mirror) and performance cases by infrastructure need (air-gapped, multi-region, or edge).](../../assets/diagrams/rendered/en-container-registry-04-best-practices-1.svg)
+![A decision tree for choosing a caching or mirroring strategy: it first asks whether the problem is registry rate limits or availability/performance, then routes rate-limit cases by environment (AWS/EKS, self-hosted, or a simple mirror) and performance cases by infrastructure need (air-gapped, multi-region, or edge).](../.gitbook/assets/en-container-registry-04-best-practices-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-container-registry-04-best-practices-1.html)
 
 ### Pull-Through Cache Comparison
 

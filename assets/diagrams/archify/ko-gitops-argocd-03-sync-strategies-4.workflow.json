@@ -1,0 +1,182 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "동기화 윈도우 동작",
+    "output": "public/archmaps/ko-gitops-argocd-03-sync-strategies-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "deny-path",
+        "label": "차단 경로",
+        "focus": [
+          "request",
+          "check",
+          "deny_q",
+          "sync_block"
+        ],
+        "note": "deny 윈도우가 활성이면 allow 윈도우보다 우선해 동기화를 차단합니다."
+      },
+      {
+        "id": "allow-path",
+        "label": "허용 경로",
+        "focus": [
+          "deny_q",
+          "allow_q",
+          "default_allow",
+          "sync_run"
+        ],
+        "note": "allow 윈도우가 활성이거나, 활성 윈도우가 하나도 없으면 동기화를 실행합니다."
+      }
+    ],
+    "viewBox": [
+      1040,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "app",
+      "label": "Application 동기화 요청"
+    },
+    {
+      "id": "windows",
+      "label": "AppProject syncWindows 판정"
+    },
+    {
+      "id": "result",
+      "label": "판정 결과"
+    },
+    {
+      "id": "blocked",
+      "label": "차단",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "check",
+    "deny_q",
+    "allow_q",
+    "default_allow",
+    "sync_run"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "app",
+      "col": 0,
+      "type": "frontend",
+      "label": "동기화 요청",
+      "sublabel": "자동 또는 수동 sync",
+      "width": 120
+    },
+    {
+      "id": "check",
+      "lane": "app",
+      "col": 1,
+      "type": "backend",
+      "label": "윈도우 확인",
+      "sublabel": "syncWindows 조회",
+      "width": 130
+    },
+    {
+      "id": "deny_q",
+      "lane": "windows",
+      "col": 2,
+      "type": "security",
+      "label": "Deny 윈도우 활성?",
+      "sublabel": "kind: deny",
+      "tag": "우선 적용",
+      "width": 180
+    },
+    {
+      "id": "allow_q",
+      "lane": "windows",
+      "col": 3,
+      "type": "security",
+      "label": "Allow 윈도우 활성?",
+      "sublabel": "kind: allow",
+      "width": 180
+    },
+    {
+      "id": "default_allow",
+      "lane": "windows",
+      "col": 4,
+      "type": "backend",
+      "label": "기본 허용",
+      "sublabel": "활성 윈도우 없음",
+      "width": 130
+    },
+    {
+      "id": "sync_run",
+      "lane": "result",
+      "col": 5,
+      "type": "cloud",
+      "label": "동기화 실행",
+      "sublabel": "클러스터에 변경 적용",
+      "width": 150
+    },
+    {
+      "id": "sync_block",
+      "lane": "blocked",
+      "col": 2,
+      "type": "security",
+      "label": "동기화 차단",
+      "sublabel": "deny 윈도우 동안 차단",
+      "width": 136
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "deny_q",
+      "toSide": "top"
+    },
+    {
+      "from": "deny_q",
+      "to": "sync_block",
+      "label": "예",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "deny_q",
+      "to": "allow_q",
+      "label": "아니오"
+    },
+    {
+      "from": "allow_q",
+      "to": "sync_run",
+      "label": "예",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allow_q",
+      "to": "default_allow",
+      "label": "아니오"
+    },
+    {
+      "from": "default_allow",
+      "to": "sync_run",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "윈도우 우선순위",
+      "items": [
+        "deny 윈도우가 allow 윈도우보다 우선한다",
+        "더 구체적인 매칭이 우선한다 (애플리케이션 이름 > 네임스페이스 > 클러스터)",
+        "활성 윈도우가 없으면 동기화를 허용한다"
+      ]
+    }
+  ]
+}

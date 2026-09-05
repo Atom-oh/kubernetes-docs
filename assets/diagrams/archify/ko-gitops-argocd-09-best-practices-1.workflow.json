@@ -1,0 +1,194 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Git 브랜치 기반 환경 승격",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "branch-promotion",
+        "label": "브랜치 승격",
+        "focus": [
+          "develop",
+          "staging",
+          "main"
+        ],
+        "note": "develop → staging → main 순서로 PR 승인을 거쳐 코드가 승격된다."
+      },
+      {
+        "id": "auto-sync",
+        "label": "자동 배포 환경",
+        "focus": [
+          "develop",
+          "dev_env",
+          "staging",
+          "staging_env"
+        ],
+        "note": "Dev와 Staging Application은 syncPolicy.automated로 브랜치 변경을 즉시 반영한다."
+      },
+      {
+        "id": "manual-gate",
+        "label": "Prod 수동 게이트",
+        "focus": [
+          "main",
+          "prod_env"
+        ],
+        "note": "Prod Application은 automated 없이 운영자가 직접 Sync해야 배포된다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "git",
+      "label": "Git 브랜치"
+    },
+    {
+      "id": "env",
+      "label": "Argo CD Application (배포 환경)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "dev_phase",
+      "label": "Dev",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "staging_phase",
+      "label": "Staging",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "prod_phase",
+      "label": "Prod",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "develop",
+    "staging",
+    "main",
+    "prod_env"
+  ],
+  "nodes": [
+    {
+      "id": "develop",
+      "lane": "git",
+      "col": 0,
+      "type": "frontend",
+      "label": "develop 브랜치",
+      "sublabel": "git branch"
+    },
+    {
+      "id": "staging",
+      "lane": "git",
+      "col": 1,
+      "type": "frontend",
+      "label": "staging 브랜치",
+      "sublabel": "git branch"
+    },
+    {
+      "id": "main",
+      "lane": "git",
+      "col": 2,
+      "type": "frontend",
+      "label": "main 브랜치",
+      "sublabel": "git branch"
+    },
+    {
+      "id": "dev_env",
+      "lane": "env",
+      "col": 0,
+      "type": "cloud",
+      "label": "Dev 환경",
+      "sublabel": "env: dev",
+      "tag": "automated"
+    },
+    {
+      "id": "staging_env",
+      "lane": "env",
+      "col": 1,
+      "type": "cloud",
+      "label": "Staging 환경",
+      "sublabel": "env: staging",
+      "tag": "automated"
+    },
+    {
+      "id": "prod_env",
+      "lane": "env",
+      "col": 2,
+      "type": "security",
+      "label": "Prod 환경",
+      "sublabel": "env: prod",
+      "tag": "수동 승인 게이트"
+    }
+  ],
+  "edges": [
+    {
+      "from": "develop",
+      "to": "staging",
+      "label": "PR 승인"
+    },
+    {
+      "from": "staging",
+      "to": "main",
+      "label": "PR 승인"
+    },
+    {
+      "from": "develop",
+      "to": "dev_env",
+      "label": "자동 배포",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "staging",
+      "to": "staging_env",
+      "label": "자동 배포",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "main",
+      "to": "prod_env",
+      "label": "수동 동기화",
+      "variant": "security",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "브랜치 = 환경",
+      "items": [
+        "develop → Dev, staging → Staging, main → Prod로 targetRevision을 매핑",
+        "브랜치 간 승격은 PR 승인으로만 진행"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "자동 동기화 (Dev/Staging)",
+      "items": [
+        "syncPolicy.automated에 prune: true, selfHeal: true 설정",
+        "브랜치에 머지되면 Argo CD가 즉시 배포"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "수동 동기화 (Prod)",
+      "items": [
+        "syncPolicy에 automated를 두지 않아 수동 Sync가 필요",
+        "syncOptions: CreateNamespace=true만 지정"
+      ]
+    }
+  ]
+}

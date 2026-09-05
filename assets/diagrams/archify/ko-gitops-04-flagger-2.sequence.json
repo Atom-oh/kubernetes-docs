@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Flagger 제어 루프 — 변경 감지부터 승격·롤백까지",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1600,
+      840
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "trigger",
+        "label": "GitOps 트리거",
+        "focus": [
+          "dev",
+          "git",
+          "flux",
+          "k8s",
+          "flagger"
+        ],
+        "note": "이미지 태그 변경이 FluxCD를 거쳐 Deployment를 갱신하면 Flagger가 이를 감지합니다."
+      },
+      {
+        "id": "analysis",
+        "label": "단계별 분석 루프",
+        "focus": [
+          "flagger",
+          "mesh",
+          "prom"
+        ],
+        "note": "stepWeight만큼 트래픽을 늘리고 Prometheus 메트릭을 조회하는 과정을 각 단계마다 반복합니다."
+      },
+      {
+        "id": "rollback",
+        "label": "자동 롤백",
+        "focus": [
+          "flagger",
+          "mesh",
+          "k8s",
+          "dev",
+          "prom"
+        ],
+        "note": "메트릭이 임계값을 벗어나면 트래픽을 0%로 되돌리고 Canary를 롤백한 뒤 알립니다."
+      },
+      {
+        "id": "promote",
+        "label": "승격",
+        "focus": [
+          "flagger",
+          "k8s",
+          "mesh",
+          "dev"
+        ],
+        "note": "모든 단계를 통과하면 Primary를 갱신하고 트래픽 100%를 Primary로 돌립니다."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "개발자"
+    },
+    {
+      "id": "git",
+      "type": "database",
+      "label": "Git Repository"
+    },
+    {
+      "id": "flux",
+      "type": "backend",
+      "label": "FluxCD"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes"
+    },
+    {
+      "id": "flagger",
+      "type": "backend",
+      "label": "Flagger"
+    },
+    {
+      "id": "mesh",
+      "type": "messagebus",
+      "label": "Service Mesh"
+    },
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 318,
+      "label": "1. 변경 감지"
+    },
+    {
+      "from": 332,
+      "to": 458,
+      "label": "2. 각 단계 반복 (stepWeight만큼) — 메트릭 정상"
+    },
+    {
+      "from": 472,
+      "to": 632,
+      "label": "3. 메트릭 이상 — 자동 롤백"
+    },
+    {
+      "from": 646,
+      "to": 780,
+      "label": "4. 승격"
+    }
+  ],
+  "messages": [
+    {
+      "id": "tag-update",
+      "from": "dev",
+      "to": "git",
+      "y": 190,
+      "label": "이미지 태그 업데이트"
+    },
+    {
+      "id": "git-detect",
+      "from": "git",
+      "to": "flux",
+      "y": 226,
+      "label": "변경 감지"
+    },
+    {
+      "id": "deploy-update",
+      "from": "flux",
+      "to": "k8s",
+      "y": 262,
+      "label": "Deployment 업데이트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "deploy-detect",
+      "from": "k8s",
+      "to": "flagger",
+      "y": 298,
+      "label": "Deployment 변경 감지"
+    },
+    {
+      "id": "weight-up",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 358,
+      "label": "트래픽 비율 증가",
+      "variant": "emphasis"
+    },
+    {
+      "id": "metric-query",
+      "from": "flagger",
+      "to": "prom",
+      "y": 396,
+      "label": "메트릭 쿼리"
+    },
+    {
+      "id": "metric-ok",
+      "from": "prom",
+      "to": "flagger",
+      "y": 434,
+      "label": "성공 응답",
+      "variant": "return",
+      "note": "다음 단계로 진행"
+    },
+    {
+      "id": "metric-fail",
+      "from": "prom",
+      "to": "flagger",
+      "y": 498,
+      "label": "실패 응답",
+      "variant": "return"
+    },
+    {
+      "id": "weight-reset",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 536,
+      "label": "트래픽 원복 (0%)",
+      "variant": "security"
+    },
+    {
+      "id": "canary-rollback",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 574,
+      "label": "Canary Deployment 롤백",
+      "variant": "security"
+    },
+    {
+      "id": "rollback-notify",
+      "from": "flagger",
+      "to": "dev",
+      "y": 612,
+      "label": "롤백 알림",
+      "variant": "dashed"
+    },
+    {
+      "id": "primary-update",
+      "from": "flagger",
+      "to": "k8s",
+      "y": 672,
+      "label": "Primary Deployment 업데이트",
+      "variant": "emphasis"
+    },
+    {
+      "id": "traffic-primary",
+      "from": "flagger",
+      "to": "mesh",
+      "y": 710,
+      "label": "트래픽 100% Primary로 전환"
+    },
+    {
+      "id": "done-notify",
+      "from": "flagger",
+      "to": "dev",
+      "y": 748,
+      "label": "배포 완료 알림",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "flux",
+      "from": 220,
+      "to": 268,
+      "type": "backend"
+    },
+    {
+      "participant": "flagger",
+      "from": 292,
+      "to": 756,
+      "type": "backend"
+    },
+    {
+      "participant": "prom",
+      "from": 390,
+      "to": 442,
+      "type": "database"
+    },
+    {
+      "participant": "prom",
+      "from": 492,
+      "to": 506,
+      "type": "database"
+    }
+  ]
+}

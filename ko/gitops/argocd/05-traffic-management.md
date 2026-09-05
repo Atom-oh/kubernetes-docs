@@ -18,7 +18,9 @@
 
 Argo Rollouts는 Kubernetes를 위한 프로그레시브 딜리버리(Progressive Delivery) 컨트롤러입니다. 블루/그린 배포, 카나리 배포, 실험, 자동 롤백 등 고급 배포 전략을 제공합니다.
 
-![Argo Rollouts 컨트롤러가 블루/그린, 카나리, 실험 배포 전략을 실행하고 Ingress Controller, Service Mesh, Analysis Provider와 연동하며 분석 결과를 Metrics Server로 피드백하는 아키텍처를 보여주는 다이어그램입니다.](../../../assets/diagrams/rendered/ko-gitops-argocd-05-traffic-management-0.svg)
+![Argo Rollouts 컨트롤러가 블루/그린, 카나리, 실험 배포 전략을 실행하고 Ingress Controller와 Service Mesh로 트래픽을 전환하며, Analysis Provider에 메트릭을 질의해 Pass/Fail 결과로 자동 승격 또는 롤백하는 아키텍처를 보여준다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-05-traffic-management-0.html)
 
 ### 주요 특징
 
@@ -73,7 +75,9 @@ kubectl argo rollouts dashboard
 
 블루/그린 배포는 두 개의 동일한 환경(블루=현재, 그린=새로운)을 유지하고 트래픽을 즉시 전환합니다.
 
-![블루/그린 전환 전에는 로드 밸런서가 Blue v1.0.0으로 트래픽을 보내고 Green v2.0.0은 대기 상태이며, 전환 후에는 로드 밸런서가 Green v2.0.0으로 전환되고 이전 버전 Blue v1.0.0은 삭제 대상이 되는 과정을 보여주는 다이어그램입니다.](../../../assets/diagrams/rendered/ko-gitops-argocd-05-traffic-management-1.svg)
+![블루/그린 전환 전에는 로드 밸런서가 Blue v1.0.0으로 트래픽을 보내고 Green v2.0.0은 preview로 대기하며, 전환 후에는 트래픽이 Green v2.0.0으로 즉시 이동하고 이전 버전 Blue v1.0.0은 scaleDownDelaySeconds 후 스케일 다운되는 과정을 보여준다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-05-traffic-management-1.html)
 
 ### 블루/그린 Rollout 정의
 
@@ -209,7 +213,9 @@ kubectl argo rollouts retry rollout my-app-bluegreen -n production
 
 카나리 배포는 새 버전에 점진적으로 트래픽을 이동시켜 위험을 최소화합니다.
 
-![로드 밸런서가 안정 버전 v1.0.0 파드 4개에 80%, 카나리 버전 v2.0.0 파드 1개에 20%의 트래픽을 분배하는 구조를 보여주는 다이어그램입니다.](../../../assets/diagrams/rendered/ko-gitops-argocd-05-traffic-management-2.svg)
+![로드 밸런서가 클라이언트 요청을 분배하여 80%는 my-app-stable Service를 거쳐 안정 버전 v1.0.0 파드 4개로, 20%는 my-app-canary Service를 거쳐 카나리 버전 v2.0.0 파드 1개로 전달되는 구조를 보여주는 다이어그램입니다.](../../.gitbook/assets/ko-gitops-argocd-05-traffic-management-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-05-traffic-management-2.html)
 
 ### 카나리 Rollout 정의
 

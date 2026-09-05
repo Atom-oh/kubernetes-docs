@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "다크 런칭 (Dark Launch) 패턴",
+    "output": "public/archmaps/ko-gitops-05-feature-flags-13.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      840,
+      416
+    ],
+    "views": [
+      {
+        "id": "user-path",
+        "label": "사용자 응답 경로",
+        "focus": [
+          "request",
+          "flag",
+          "legacy",
+          "response"
+        ],
+        "note": "Flag 상태와 무관하게 legacySearch 결과만 사용자에게 반환됩니다."
+      },
+      {
+        "id": "dark-path",
+        "label": "다크 런칭 경로",
+        "focus": [
+          "flag",
+          "newlogic",
+          "compare"
+        ],
+        "note": "Flag가 켜지면 새 검색 엔진을 goroutine으로 비동기 실행하고 결과는 비교용으로만 씁니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "user",
+      "label": "사용자 경로 (동기)"
+    },
+    {
+      "id": "dark",
+      "label": "다크 런칭 경로 (비동기 · 사용자 비노출)"
+    }
+  ],
+  "groups": [
+    {
+      "id": "parallel",
+      "label": "병렬 처리",
+      "lane": "dark",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "flag",
+    "legacy",
+    "response"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "request"
+    ],
+    "allowedTerminals": [
+      "response",
+      "compare"
+    ],
+    "requiredPaths": [
+      {
+        "from": "request",
+        "to": "response"
+      },
+      {
+        "from": "flag",
+        "to": "compare"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "user",
+      "col": 0,
+      "type": "external",
+      "label": "사용자 요청",
+      "sublabel": "handleSearch"
+    },
+    {
+      "id": "flag",
+      "lane": "user",
+      "col": 1,
+      "type": "security",
+      "label": "Flag 평가",
+      "sublabel": "dark-launch-new-search"
+    },
+    {
+      "id": "legacy",
+      "lane": "user",
+      "col": 3,
+      "type": "backend",
+      "label": "기존 로직",
+      "sublabel": "legacySearch"
+    },
+    {
+      "id": "response",
+      "lane": "user",
+      "col": 5,
+      "type": "frontend",
+      "label": "사용자 응답",
+      "sublabel": "기존 결과만 반환"
+    },
+    {
+      "id": "newlogic",
+      "lane": "dark",
+      "col": 3,
+      "type": "backend",
+      "label": "새 로직",
+      "sublabel": "newSearchEngine",
+      "tag": "goroutine"
+    },
+    {
+      "id": "compare",
+      "lane": "dark",
+      "col": 5,
+      "type": "database",
+      "label": "결과 비교",
+      "sublabel": "compareResults",
+      "tag": "메트릭 수집"
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "flag",
+      "role": "main"
+    },
+    {
+      "from": "flag",
+      "to": "legacy",
+      "label": "항상 실행",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "legacy",
+      "to": "response",
+      "label": "oldResults",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "flag",
+      "to": "newlogic",
+      "label": "flag = true",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "from": "newlogic",
+      "to": "compare",
+      "label": "newResults",
+      "variant": "dashed",
+      "role": "async"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "사용자에게 보이는 것",
+      "items": [
+        "legacySearch 결과만 JSON으로 인코딩해 반환",
+        "Flag가 켜져도 응답 내용은 변하지 않음"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "숨겨진 검증",
+      "items": [
+        "dark-launch-new-search Flag가 true일 때만 새 검색 엔진 실행",
+        "goroutine으로 비동기 실행해 응답 지연에 영향 없음"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "수집 메트릭",
+      "items": [
+        "darkLaunchAccuracy: 기존·새 결과의 겹침 비율",
+        "darkLaunchResultDiff: 결과 수 차이"
+      ]
+    }
+  ]
+}

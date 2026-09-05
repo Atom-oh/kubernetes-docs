@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "ApplicationSet 템플릿 병합 동작",
+    "output": "ko-gitops-argocd-04-applicationsets-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inputs",
+        "label": "두 가지 입력",
+        "focus": [
+          "base",
+          "override",
+          "merge"
+        ],
+        "note": "spec.template 기본값과 generators[].template 오버라이드가 Deep Merge 단계로 들어간다."
+      },
+      {
+        "id": "result",
+        "label": "최종 Application",
+        "focus": [
+          "merge",
+          "final"
+        ],
+        "note": "key-by-key로 병합된 결과가 생성기 요소마다 하나의 Application spec이 된다."
+      }
+    ],
+    "viewBox": [
+      680,
+      540
+    ]
+  },
+  "stages": [
+    {
+      "label": "입력"
+    },
+    {
+      "label": "병합"
+    },
+    {
+      "label": "결과"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "base",
+      "type": "backend",
+      "label": "기본 템플릿",
+      "sublabel": "spec.template",
+      "stage": 0,
+      "row": 0,
+      "tag": "기본값"
+    },
+    {
+      "id": "override",
+      "type": "backend",
+      "label": "생성기별 오버라이드",
+      "sublabel": "generators[].template",
+      "stage": 0,
+      "row": 2,
+      "tag": "우선 적용"
+    },
+    {
+      "id": "merge",
+      "type": "cloud",
+      "label": "Deep Merge",
+      "sublabel": "key-by-key override",
+      "stage": 1,
+      "row": 1,
+      "tag": "병합"
+    },
+    {
+      "id": "final",
+      "type": "backend",
+      "label": "최종 템플릿",
+      "sublabel": "Application spec",
+      "stage": 2,
+      "row": 1,
+      "tag": "생성기 요소별"
+    }
+  ],
+  "flows": [
+    {
+      "id": "base-in",
+      "from": "base",
+      "to": "merge",
+      "label": "기본값",
+      "classification": "모든 생성기 공통",
+      "variant": "default"
+    },
+    {
+      "id": "override-in",
+      "from": "override",
+      "to": "merge",
+      "label": "오버라이드",
+      "classification": "해당 생성기 결과에만 적용",
+      "variant": "emphasis"
+    },
+    {
+      "id": "merged-out",
+      "from": "merge",
+      "to": "final",
+      "label": "병합 결과",
+      "classification": "오버라이드가 기본값보다 항상 우선",
+      "variant": "emphasis",
+      "labelDy": 53
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "병합 규칙",
+      "items": [
+        "같은 키가 양쪽에 있으면 generators[].template 값이 spec.template 값을 덮어쓴다",
+        "오버라이드에 없는 키는 기본 템플릿 값이 그대로 유지된다",
+        "오버라이드는 해당 생성기가 만든 요소에만 적용된다"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "페이지 예시",
+      "items": [
+        "list 생성기: metadata.annotations에 custom-annotation 추가",
+        "clusters 생성기(staging): syncPolicy.automated.prune을 false로 덮어씀",
+        "기본 템플릿: prune true, selfHeal true"
+      ]
+    }
+  ]
+}

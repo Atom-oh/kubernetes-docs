@@ -753,7 +753,9 @@ spec:
 
 ### Progressive Sync Flow
 
-![Diagram showing a progressive-rollout ApplicationSet strategy that promotes a change through a canary cluster, a manual approval gate, a 25% rollout to two production clusters, and finally a full rollout to all six production clusters.](../../../assets/diagrams/rendered/en-gitops-argocd-04-applicationsets-1.svg)
+![Diagram of a three-step Progressive Sync rollout that promotes myapp-dev, then myapp-staging, then myapp-prod-ap and myapp-prod-us, with the prod step constrained to maxUpdate: 1.](../../.gitbook/assets/en-gitops-argocd-04-applicationsets-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-04-applicationsets-1.html)
 
 ## Multi-Cluster Patterns
 

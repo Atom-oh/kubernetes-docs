@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Self-Heal in Action — Reverting Manual Drift",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      520
+    ],
+    "animation": "trace"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "kubectl"
+    },
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "cluster"
+    },
+    {
+      "id": "argocd",
+      "type": "backend",
+      "label": "ArgoCD",
+      "sublabel": "controller"
+    },
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git",
+      "sublabel": "source of truth"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "Manual change detected"
+    },
+    {
+      "from": 320,
+      "to": 430,
+      "label": "selfHeal=true → revert to Git"
+    }
+  ],
+  "messages": [
+    {
+      "id": "scale",
+      "from": "user",
+      "to": "k8s",
+      "y": 190,
+      "label": "kubectl scale deployment --replicas=5",
+      "variant": "emphasis"
+    },
+    {
+      "id": "changed",
+      "from": "k8s",
+      "to": "argocd",
+      "y": 235,
+      "label": "live state changed (drift)",
+      "variant": "dashed"
+    },
+    {
+      "id": "desired",
+      "from": "argocd",
+      "to": "git",
+      "y": 280,
+      "label": "get desired state"
+    },
+    {
+      "id": "replicas",
+      "from": "git",
+      "to": "argocd",
+      "y": 345,
+      "label": "replicas: 3",
+      "variant": "return"
+    },
+    {
+      "id": "apply",
+      "from": "argocd",
+      "to": "k8s",
+      "y": 410,
+      "label": "apply replicas: 3",
+      "variant": "emphasis",
+      "note": "self-healed back to the Git-declared state"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "k8s",
+      "from": 185,
+      "to": 240,
+      "type": "cloud"
+    },
+    {
+      "participant": "argocd",
+      "from": 230,
+      "to": 418,
+      "type": "backend"
+    },
+    {
+      "participant": "git",
+      "from": 275,
+      "to": 351,
+      "type": "external"
+    },
+    {
+      "participant": "k8s",
+      "from": 405,
+      "to": 418,
+      "type": "cloud"
+    }
+  ]
+}

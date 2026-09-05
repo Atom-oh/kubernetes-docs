@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AppProject 개요",
+    "output": "ko-gitops-argocd-06-projects-rbac-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "ownership", "label": "팀별 프로젝트 소유", "focus": ["team-frontend", "team-backend", "team-platform", "proj-frontend", "proj-backend", "proj-platform"], "note": "각 팀의 SSO 그룹이 자신의 AppProject를 소유한다." },
+      { "id": "destinations", "label": "배포 대상 제한", "focus": ["proj-frontend", "proj-backend", "proj-platform", "ns-frontend", "ns-backend", "ns-platform"], "note": "AppProject의 destinations가 배포 가능한 네임스페이스를 제한한다." }
+    ]
+  },
+  "components": [
+    { "id": "team-frontend", "type": "external", "label": "Frontend Team", "sublabel": "그룹: frontend-team", "pos": [40, 70], "size": [180, 60] },
+    { "id": "team-backend", "type": "external", "label": "Backend Team", "sublabel": "그룹: backend-team", "pos": [40, 210], "size": [180, 60] },
+    { "id": "team-platform", "type": "external", "label": "Platform Team", "sublabel": "그룹: platform-team", "pos": [40, 350], "size": [180, 60] },
+    { "id": "proj-frontend", "type": "security", "label": "Project: Frontend", "sublabel": "frontend-web · frontend-mobile", "pos": [340, 70], "size": [230, 60] },
+    { "id": "proj-backend", "type": "security", "label": "Project: Backend", "sublabel": "api-gateway · user-service", "pos": [340, 210], "size": [230, 60] },
+    { "id": "proj-platform", "type": "security", "label": "Project: Platform", "sublabel": "monitoring · logging", "pos": [340, 350], "size": [230, 60] },
+    { "id": "ns-frontend", "type": "backend", "label": "Namespace: frontend-*", "sublabel": "Frontend 앱만 배포", "pos": [720, 70], "size": [230, 60] },
+    { "id": "ns-backend", "type": "backend", "label": "Namespace: backend-*", "sublabel": "Backend 앱만 배포", "pos": [720, 210], "size": [230, 60] },
+    { "id": "ns-platform", "type": "backend", "label": "monitoring · logging", "sublabel": "공용 플랫폼 네임스페이스", "pos": [720, 350], "size": [230, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Teams (SSO 그룹)", "wraps": ["team-frontend", "team-backend", "team-platform"] },
+    { "kind": "security-group", "label": "ArgoCD · AppProject", "wraps": ["proj-frontend", "proj-backend", "proj-platform"] },
+    { "kind": "region", "label": "Kubernetes 클러스터", "wraps": ["ns-frontend", "ns-backend", "ns-platform"] }
+  ],
+  "connections": [
+    { "id": "own-frontend", "from": "team-frontend", "to": "proj-frontend", "label": "소유", "variant": "emphasis" },
+    { "id": "own-backend", "from": "team-backend", "to": "proj-backend", "label": "소유" },
+    { "id": "own-platform", "from": "team-platform", "to": "proj-platform", "label": "소유" },
+    { "id": "deploy-frontend", "from": "proj-frontend", "to": "ns-frontend", "label": "배포 가능", "variant": "emphasis" },
+    { "id": "deploy-backend", "from": "proj-backend", "to": "ns-backend", "label": "배포 가능" },
+    { "id": "deploy-platform", "from": "proj-platform", "to": "ns-platform", "label": "배포 가능" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "AppProject가 하는 일", "items": ["Application을 논리적으로 그룹화한다", "소스 저장소·대상 클러스터/네임스페이스·리소스 유형을 제한한다", "프로젝트 역할(roles)과 권한을 정의한다"] },
+    { "dot": "slate", "title": "기본 프로젝트 (default)", "items": ["모든 저장소·대상·리소스를 허용한다", "프로덕션 환경에서는 권장하지 않는다"] }
+  ]
+}

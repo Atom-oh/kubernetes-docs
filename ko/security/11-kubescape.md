@@ -49,7 +49,9 @@ Kubescape는 개발부터 운영까지 전체 Kubernetes 보안 라이프사이�
 
 ### 아키텍처 개요
 
-![CLI·Operator·CI/CD에서 들어온 스캔 요청이 보안 프레임워크 기준으로 컨트롤 평가·취약점 스캔·RBAC 분석을 거쳐 Risk Calculator에서 통합 위험도를 산정하고, 그 결과가 리포트·JSON/SARIF·Kubescape Cloud·알림으로 출력되는 전체 아키텍처.](../../assets/diagrams/rendered/ko-security-11-kubescape-0.svg)
+![CLI·Operator·CI/CD의 스캔 요청이 보안 프레임워크 기준의 컨트롤 평가·취약점 스캔·RBAC 분석을 거쳐 Risk Calculator에서 통합 위험도로 산정되고, 리포트로 취합되어 JSON/SARIF·Kubescape Cloud·알림으로 출력되는 Kubescape 아키텍처를 보여준다.](../.gitbook/assets/ko-security-11-kubescape-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-0.html)
 
 ---
 
@@ -522,7 +524,9 @@ Dangerous Role Bindings:
 
 ### 지속적 스캔 아키텍처
 
-![클러스터 안에서 CronJob이 Operator Controller를 트리거해 스캐너들이 배포·파드·서비스·Secret·ServiceAccount를 검사하고 Node Agent의 eBPF 이벤트도 Controller로 모여, 그 결과가 CRD로 저장되어 Baseline과 비교되며 변경 감지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조.](../../assets/diagrams/rendered/ko-security-11-kubescape-2.svg)
+![클러스터 안에서 CronJob이 Operator Controller를 트리거하면 Controller가 Configuration·Vulnerability·RBAC 스캐너를 실행해 Deployments·Pods·Services·Secrets·ServiceAccounts를 검사하고, Node Agent의 eBPF 이벤트도 Controller로 모인다. Controller는 스캔 결과를 CRD로 저장하고 Baseline과 비교하며, 결과는 Kubescape Cloud로 게시되고 변경 탐지 시 외부 Alerting과 SIEM/SOAR로 이어지는 구조.](../.gitbook/assets/ko-security-11-kubescape-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-2.html)
 
 ### Operator 컴포넌트
 
@@ -725,7 +729,9 @@ Priority 3 - Medium (Within 1 Week):
 
 ### CI/CD 워크플로우
 
-![코드 커밋과 이미지 빌드 후 Kubescape 스캔을 거쳐 점수가 임계값을 넘는지 판정하고, 통과하면 배포를 진행하고 실패하면 배포를 차단한 뒤 알림을 보내는 CI/CD 보안 게이트 흐름.](../../assets/diagrams/rendered/ko-security-11-kubescape-3.svg)
+![Kubescape CI/CD 워크플로우: 코드 변경과 Git Commit이 CI 트리거를 거쳐 이미지 빌드, Kubescape 스캔(framework nsa, mitre)으로 이어지고, 보안 게이트의 임계값 검사에서 점수가 임계값 이하면 Pass 후 클러스터에 배포하며, 임계값을 초과하면 Fail로 배포를 차단(exit 1)하고 PR 코멘트 또는 알림을 발송한다.](../.gitbook/assets/ko-security-11-kubescape-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-security-11-kubescape-3.html)
 
 ### GitHub Actions 워크플로우
 

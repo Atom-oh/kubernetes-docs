@@ -17,7 +17,9 @@
 
 AppProject는 ArgoCD에서 Application을 논리적으로 그룹화하고 접근 제어를 설정하는 리소스입니다.
 
-![ArgoCD 안에서 Frontend, Backend, Platform 세 프로젝트가 각각 애플리케이션을 묶고, 그 아래 각 팀이 자신의 프로젝트만 소유하도록 1대1로 연결되는 RBAC 경계를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-gitops-argocd-06-projects-rbac-0.svg)
+![AppProject 개요 아키텍처 다이어그램. 왼쪽 Teams(SSO 그룹) 영역의 Frontend Team, Backend Team, Platform Team이 각각 가운데 ArgoCD AppProject 영역의 Project: Frontend, Project: Backend, Project: Platform을 소유하고, 각 프로젝트는 오른쪽 Kubernetes 클러스터의 Namespace frontend-*, backend-*, monitoring · logging 네임스페이스에만 배포 가능하다. 각 팀이 자신의 AppProject를 소유하고, AppProject의 destinations가 배포 가능한 네임스페이스를 제한한다.](../../.gitbook/assets/ko-gitops-argocd-06-projects-rbac-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-gitops-argocd-06-projects-rbac-0.html)
 
 ### 기본 프로젝트 vs 커스텀 프로젝트
 
