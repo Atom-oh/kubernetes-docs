@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "소스 NAT(SNAT) 동작",
+    "output": "ko-networking-cilium-networking-concepts-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1160, 420],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": { "label": "내부 호스트" },
+        "security": { "label": "NAT 장비" },
+        "external": { "label": "외부 서버" }
+      }
+    },
+    "views": [
+      {
+        "id": "private-side",
+        "label": "사설 출발지",
+        "focus": ["client", "snat"],
+        "note": "내부 호스트는 사설 IP 10.0.0.2와 포트 1234로 패킷을 보내고, NAT 라우터가 이를 받는다."
+      },
+      {
+        "id": "public-side",
+        "label": "공용 출발지로 변환",
+        "focus": ["snat", "server"],
+        "note": "SNAT가 출발지를 공용 IP 198.51.100.1:5678로 바꿔 인터넷의 서버에 전달하고, 연결 상태는 NAT 테이블에 저장한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "클라이언트",
+      "sublabel": "10.0.0.2",
+      "pos": [80, 160],
+      "size": [220, 72]
+    },
+    {
+      "id": "snat",
+      "type": "security",
+      "label": "SNAT",
+      "sublabel": "사설 IP → 공용 IP 변환",
+      "pos": [470, 160],
+      "size": [220, 72]
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "서버",
+      "sublabel": "203.0.113.5",
+      "pos": [860, 160],
+      "size": [220, 72]
+    }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "내부 네트워크", "wraps": ["client"] },
+    { "kind": "region", "label": "NAT 라우터", "wraps": ["snat"] },
+    { "kind": "region", "label": "인터넷", "wraps": ["server"] }
+  ],
+  "connections": [
+    {
+      "id": "client-to-snat",
+      "from": "client",
+      "to": "snat",
+      "label": "출발지 10.0.0.2:1234",
+      "variant": "emphasis"
+    },
+    {
+      "id": "snat-to-server",
+      "from": "snat",
+      "to": "server",
+      "label": "출발지 198.51.100.1:5678",
+      "variant": "emphasis"
+    }
+  ]
+}

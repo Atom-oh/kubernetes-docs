@@ -1,0 +1,210 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "알림 채널 우선순위",
+    "output": "public/archmaps/ko-observability-alerting-03-grafana-oncall-7.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "important-path",
+        "label": "Important 알림",
+        "focus": [
+          "fired",
+          "importance",
+          "allChannels",
+          "push",
+          "phone",
+          "sms",
+          "slack",
+          "email"
+        ],
+        "note": "Important 알림은 Push·Phone Call·SMS·Slack·Email 모든 채널로 전달됩니다."
+      },
+      {
+        "id": "default-path",
+        "label": "Default 알림",
+        "focus": [
+          "fired",
+          "importance",
+          "defaultChannels",
+          "slack",
+          "email"
+        ],
+        "note": "Default 알림은 Slack과 Email 기본 채널로만 전달됩니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "route",
+      "label": "알림 라우팅"
+    },
+    {
+      "id": "channels",
+      "label": "알림 채널"
+    },
+    {
+      "id": "default",
+      "label": "Default 알림"
+    }
+  ],
+  "mainPath": [
+    "fired",
+    "importance",
+    "allChannels"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "fired"
+    ],
+    "requiredPaths": [
+      {
+        "from": "fired",
+        "to": "push"
+      },
+      {
+        "from": "fired",
+        "to": "email"
+      },
+      {
+        "from": "defaultChannels",
+        "to": "slack"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "fired",
+      "lane": "route",
+      "col": 0,
+      "type": "messagebus",
+      "label": "알림 발생",
+      "width": 140
+    },
+    {
+      "id": "importance",
+      "lane": "route",
+      "col": 1,
+      "type": "security",
+      "label": "중요도?",
+      "width": 150
+    },
+    {
+      "id": "allChannels",
+      "lane": "route",
+      "col": 2,
+      "type": "backend",
+      "label": "모든 채널",
+      "tag": "IMPORTANT",
+      "width": 150
+    },
+    {
+      "id": "push",
+      "lane": "channels",
+      "col": 1,
+      "type": "frontend",
+      "label": "Push Notification",
+      "width": 176
+    },
+    {
+      "id": "phone",
+      "lane": "channels",
+      "col": 2,
+      "type": "frontend",
+      "label": "Phone Call",
+      "width": 130
+    },
+    {
+      "id": "sms",
+      "lane": "channels",
+      "col": 3,
+      "type": "frontend",
+      "label": "SMS"
+    },
+    {
+      "id": "slack",
+      "lane": "channels",
+      "col": 4,
+      "type": "external",
+      "label": "Slack"
+    },
+    {
+      "id": "email",
+      "lane": "channels",
+      "col": 5,
+      "type": "external",
+      "label": "Email"
+    },
+    {
+      "id": "defaultChannels",
+      "lane": "default",
+      "col": 0,
+      "type": "backend",
+      "label": "기본 채널만",
+      "tag": "DEFAULT",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "from": "fired",
+      "to": "importance",
+      "role": "main"
+    },
+    {
+      "from": "importance",
+      "to": "allChannels",
+      "label": "Important",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "importance",
+      "to": "defaultChannels",
+      "label": "Default",
+      "role": "branch"
+    },
+    {
+      "from": "allChannels",
+      "to": "push",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "allChannels",
+      "to": "phone",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allChannels",
+      "to": "sms",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allChannels",
+      "to": "slack",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "allChannels",
+      "to": "email",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "defaultChannels",
+      "to": "slack",
+      "role": "branch"
+    },
+    {
+      "from": "defaultChannels",
+      "to": "email",
+      "role": "branch"
+    }
+  ]
+}

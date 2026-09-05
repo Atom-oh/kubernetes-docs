@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Promtail Architecture",
+    "locale": "en",
+    "output": "en-observability-logging-05-collectors-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "discover-scrape",
+        "label": "Discovery and scrape",
+        "focus": [
+          "k8s-sd",
+          "file-sd",
+          "static",
+          "pod-logs",
+          "journal",
+          "syslog"
+        ],
+        "note": "Service discovery finds targets; Pod logs, Journal and Syslog are scraped."
+      },
+      {
+        "id": "pipeline",
+        "label": "Pipeline stages",
+        "focus": [
+          "pod-logs",
+          "parse",
+          "enrich",
+          "output"
+        ],
+        "note": "Stages apply in order: parsing, labels and timestamp, then output."
+      },
+      {
+        "id": "push",
+        "label": "Push to Loki",
+        "focus": [
+          "output",
+          "loki"
+        ],
+        "note": "Processed logs go to a single destination: the Loki push API."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "k8s-sd",
+      "type": "cloud",
+      "label": "kubernetes_sd",
+      "sublabel": "role: pod",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "file-sd",
+      "type": "cloud",
+      "label": "file_sd",
+      "sublabel": "file-based targets",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "static",
+      "type": "cloud",
+      "label": "static",
+      "sublabel": "static targets",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod-logs",
+      "type": "external",
+      "label": "Pod Logs",
+      "sublabel": "/var/log/pods",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "journal",
+      "type": "external",
+      "label": "Journal",
+      "sublabel": "systemd journal",
+      "pos": [
+        330,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "syslog",
+      "type": "external",
+      "label": "Syslog",
+      "sublabel": "syslog receiver",
+      "pos": [
+        330,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "parse",
+      "type": "backend",
+      "label": "Parsing stages",
+      "sublabel": "docker · cri · json · regex · multiline",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "enrich",
+      "type": "backend",
+      "label": "labels · timestamp",
+      "sublabel": "label and timestamp extraction",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "output",
+      "type": "backend",
+      "label": "output",
+      "sublabel": "final log line selection",
+      "pos": [
+        620,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki API",
+      "sublabel": "/loki/api/v1/push",
+      "pos": [
+        940,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Discovery",
+      "wraps": [
+        "k8s-sd",
+        "file-sd",
+        "static"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Scrape Targets",
+      "wraps": [
+        "pod-logs",
+        "journal",
+        "syslog"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pipeline Stages",
+      "wraps": [
+        "parse",
+        "enrich",
+        "output"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Push to Loki",
+      "wraps": [
+        "loki"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-sd-to-pods",
+      "from": "k8s-sd",
+      "to": "pod-logs",
+      "label": "discover targets",
+      "variant": "emphasis"
+    },
+    {
+      "id": "file-sd-to-pods",
+      "from": "file-sd",
+      "to": "pod-logs",
+      "variant": "dashed"
+    },
+    {
+      "id": "static-to-pods",
+      "from": "static",
+      "to": "pod-logs",
+      "variant": "dashed"
+    },
+    {
+      "id": "pods-to-parse",
+      "from": "pod-logs",
+      "to": "parse",
+      "label": "scrape",
+      "variant": "emphasis"
+    },
+    {
+      "id": "journal-to-parse",
+      "from": "journal",
+      "to": "parse"
+    },
+    {
+      "id": "syslog-to-parse",
+      "from": "syslog",
+      "to": "parse"
+    },
+    {
+      "id": "parse-to-enrich",
+      "from": "parse",
+      "to": "enrich",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "enrich-to-output",
+      "from": "enrich",
+      "to": "output",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "output-to-loki",
+      "from": "output",
+      "to": "loki",
+      "label": "batched push",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Promtail overview",
+      "items": [
+        "Written in Go, ~50MB memory",
+        "Loki-only destination, native K8s integration",
+        "AGPL-3.0 license (Grafana Labs)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Loki client settings",
+      "items": [
+        "batchwait 1s, batchsize 1MiB",
+        "backoff 500ms to 5m, up to 10 retries",
+        "external_labels attach cluster and environment"
+      ]
+    }
+  ]
+}

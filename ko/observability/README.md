@@ -18,13 +18,17 @@
 | **유연성** | 사전 정의된 대시보드 | 동적 쿼리와 탐색 |
 | **복잡도** | 단순한 시스템에 적합 | 복잡한 분산 시스템에 필수 |
 
-![사전 정의된 지표를 쌓아가는 모니터링 체계가 로그·메트릭·트레이스가 서로 연결된 관측성 체계로 진화하는 과정을 보여준다.](../.gitbook/assets/ko-observability-README-0.png)
+![사전 정의된 메트릭이 임계값 알림과 대시보드로 한 방향으로 흐르는 모니터링 체계가, Logs·Metrics·Traces가 서로 연결된 관측성 체계로 진화하는 과정을 보여준다.](../.gitbook/assets/ko-observability-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-readme-0.html)
 
 ## 관측성의 3가지 축 (Three Pillars)
 
 관측성은 세 가지 핵심 데이터 유형으로 구성됩니다:
 
-![로그, 메트릭, 트레이스가 각각 독립된 데이터 축이면서 TraceID와 Exemplar, 레이블 매칭을 통해 서로 연결되어 있음을 보여준다.](../.gitbook/assets/ko-observability-README-1.png)
+![로그, 메트릭, 트레이스가 각각 독립된 데이터 축이면서 TraceID와 Exemplar, 레이블 매칭을 통해 서로 연결되어 있음을 보여준다.](../.gitbook/assets/ko-observability-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-readme-1.html)
 
 ### 1. Logs (로그)
 
@@ -83,7 +87,9 @@
 
 세 가지 축은 독립적이지 않고 서로 연결되어 강력한 분석 능력을 제공합니다:
 
-![사용자 요청이 여러 마이크로서비스를 거치는 동안 각 서비스가 남긴 로그·메트릭·트레이스가 공통 TraceID로 상관분석되어 하나로 묶이는 과정을 보여준다.](../.gitbook/assets/ko-observability-README-2.png)
+![사용자 요청이 API Gateway를 거쳐 User·Order·Payment 서비스로 전파되는 동안 각 서비스가 남긴 로그·메트릭·트레이스가 공통 TraceID로 묶이고, 이 TraceID가 Metric Exemplar 및 Log Correlation과 양방향으로 연결되어 세 축을 오갈 수 있음을 보여준다.](../.gitbook/assets/ko-observability-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-readme-2.html)
 
 ### Trace-to-Log 상관분석
 
@@ -113,7 +119,9 @@ http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
 
 OpenTelemetry(OTel)는 관측성 데이터 수집을 위한 업계 표준입니다:
 
-![여러 언어의 애플리케이션이 OpenTelemetry SDK로 계측되고, 수집기가 수신·가공·내보내기 단계를 거쳐 다양한 관측성 백엔드로 데이터를 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-observability-README-3.png)
+![여러 언어의 애플리케이션이 OpenTelemetry SDK로 계측되고, 수집기가 수신·가공·내보내기 단계를 거쳐 다양한 관측성 백엔드로 데이터를 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-observability-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-readme-3.html)
 
 **OpenTelemetry의 장점:**
 - 벤더 중립적 표준
@@ -128,7 +136,9 @@ Amazon EKS에서 효과적인 관측성을 구현하기 위한 전략:
 
 ### 1. 계층별 관측성
 
-![인프라, 쿠버네티스, 애플리케이션 세 계층에서 각각 발생하는 데이터가 CloudWatch, Prometheus/Grafana, Tempo/X-Ray, Loki 네 가지 관측성 도구로 모이는 구조를 보여준다.](../.gitbook/assets/ko-observability-README-4.png)
+![인프라, Kubernetes, 애플리케이션 세 계층에서 발생하는 데이터가 CloudWatch, Prometheus/Grafana, Tempo/X-Ray, Loki 네 가지 관측성 도구로 각각 모이는 구조를 보여준다.](../.gitbook/assets/ko-observability-readme-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-readme-4.html)
 
 ### 2. 권장 도구 스택
 
@@ -148,7 +158,9 @@ Amazon EKS에서 효과적인 관측성을 구현하기 위한 전략:
 
 ## 관측성 성숙도 모델
 
-![기본 모니터링에서 시작해 중앙 집중화, 3축 상관분석을 거쳐 AIOps 기반 자동 이상 탐지로 발전하는 관측성 성숙도 단계를 보여준다.](../.gitbook/assets/ko-observability-README-5.png)
+![기본 모니터링에서 시작해 중앙 집중화, 3축 상관분석을 거쳐 AIOps 기반 자동 이상 탐지로 발전하는 관측성 성숙도 단계를 보여준다.](../.gitbook/assets/ko-observability-readme-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-readme-5.html)
 
 | 레벨 | 특징 | 도구 예시 |
 |-----|------|---------|

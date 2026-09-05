@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "스토리지 관리 모범 사례",
+    "output": "ko-eks-04-eks-storage-part3-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "스토리지 수명 주기 단계"
+        },
+        "backend": {
+          "label": "단계별 모범 사례 (3단계 순서)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "plan",
+        "label": "계획 및 설계",
+        "focus": [
+          "planning-phase",
+          "planning-design"
+        ],
+        "note": "요구사항 분석 → 스토리지 유형 선택 → 용량 계획 순으로 진행한다."
+      },
+      {
+        "id": "implement",
+        "label": "자동화 및 IaC",
+        "focus": [
+          "implementation-phase",
+          "automation-iac"
+        ],
+        "note": "Terraform/CloudFormation → Helm 차트 → GitOps 워크플로우로 스토리지 리소스를 선언적으로 관리한다."
+      },
+      {
+        "id": "operate",
+        "label": "백업 및 재해 복구",
+        "focus": [
+          "operation-phase",
+          "backup-dr"
+        ],
+        "note": "정기적인 백업 → 재해 복구 계획 → Velero 백업으로 운영 단계의 데이터를 보호한다."
+      },
+      {
+        "id": "optimize",
+        "label": "성능 및 비용 최적화",
+        "focus": [
+          "optimization-phase",
+          "perf-cost-optimization"
+        ],
+        "note": "성능 검토 → 비용 최적화 검토 → 자동 스케일링을 정기적으로 반복한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "planning-phase",
+      "type": "frontend",
+      "label": "계획 단계",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "implementation-phase",
+      "type": "frontend",
+      "label": "구현 단계",
+      "pos": [
+        310,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "operation-phase",
+      "type": "frontend",
+      "label": "운영 단계",
+      "pos": [
+        580,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "optimization-phase",
+      "type": "frontend",
+      "label": "최적화 단계",
+      "pos": [
+        850,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "planning-design",
+      "type": "backend",
+      "label": "계획 및 설계",
+      "sublabel": "요구사항 분석 → 유형 선택 → 용량 계획",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "automation-iac",
+      "type": "backend",
+      "label": "자동화 및 IaC",
+      "sublabel": "Terraform/CFN → Helm → GitOps",
+      "pos": [
+        310,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "backup-dr",
+      "type": "backend",
+      "label": "백업 및 재해 복구",
+      "sublabel": "정기 백업 → DR 계획 → Velero",
+      "pos": [
+        580,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "perf-cost-optimization",
+      "type": "backend",
+      "label": "성능 및 비용 최적화",
+      "sublabel": "성능 검토 → 비용 검토 → 자동 스케일링",
+      "pos": [
+        850,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "스토리지 수명 주기",
+      "wraps": [
+        "planning-phase",
+        "implementation-phase",
+        "operation-phase",
+        "optimization-phase"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지 관리 모범 사례",
+      "wraps": [
+        "planning-design",
+        "automation-iac",
+        "backup-dr",
+        "perf-cost-optimization"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "plan-to-design",
+      "from": "planning-phase",
+      "to": "planning-design",
+      "variant": "emphasis"
+    },
+    {
+      "id": "impl-to-iac",
+      "from": "implementation-phase",
+      "to": "automation-iac"
+    },
+    {
+      "id": "ops-to-backup",
+      "from": "operation-phase",
+      "to": "backup-dr"
+    },
+    {
+      "id": "opt-to-review",
+      "from": "optimization-phase",
+      "to": "perf-cost-optimization"
+    }
+  ]
+}

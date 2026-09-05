@@ -57,7 +57,9 @@ OpenSearch는 2021년 AWS가 Elasticsearch 7.10을 포크하여 만든 오픈소
 
 ### OpenSearch 클러스터 아키텍처
 
-![애플리케이션, FluentBit, Kinesis Data Firehose가 VPC 내 Multi-AZ OpenSearch 클러스터의 Data Node로 로그를 전송하고, Master Node가 클러스터를 관리하며, Data Node가 UltraWarm을 거쳐 S3 Cold Storage로 데이터를 이동시키는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-02-opensearch-0.svg)
+![애플리케이션, FluentBit, Kinesis Data Firehose가 VPC 내 Multi-AZ OpenSearch 클러스터의 Data Node로 로그를 전송하고, Master Node가 클러스터를 관리하며, Data Node가 Hot 데이터를 EBS에 저장하고 UltraWarm을 거쳐 S3 Cold Storage로 데이터를 이동시키는 구조를 보여준다.](../../.gitbook/assets/ko-observability-logging-02-opensearch-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-0.html)
 
 ### 노드 유형
 
@@ -72,7 +74,9 @@ OpenSearch는 2021년 AWS가 Elasticsearch 7.10을 포크하여 만든 오픈소
 
 ### 데이터 흐름
 
-![애플리케이션의 로그가 FluentBit의 Bulk API 호출로 OpenSearch에 색인되고, 7일 후 ISM 정책에 따라 UltraWarm으로, 30일 후 다시 S3 Cold Storage로 자동 이동하는 라이프사이클을 보여준다.](../../../assets/diagrams/rendered/ko-observability-logging-02-opensearch-1.svg)
+![애플리케이션의 로그가 FluentBit의 Bulk API 호출로 OpenSearch에 색인되고, 7일 후 ISM 정책에 따라 UltraWarm으로, 30일 후 다시 S3 Cold Storage로 자동 이동하는 라이프사이클을 보여준다.](../../.gitbook/assets/ko-observability-logging-02-opensearch-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-logging-02-opensearch-1.html)
 
 ---
 

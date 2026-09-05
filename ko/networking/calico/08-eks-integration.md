@@ -16,7 +16,9 @@
 
 EKS에서는 AWS VPC CNI가 Pod 네트워킹을 담당하고, Calico는 Network Policy 적용을 담당하는 하이브리드 구성이 일반적입니다.
 
-![EKS 클러스터의 Worker Node에서 Pod, VPC CNI, Calico가 각각 EC2 ENI로 트래픽을 전달하고, ENI가 다시 AWS VPC로 라우팅하는 하이브리드 네트워킹 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-0.svg)
+![EKS Worker Node 안에서 Pod(Application + Pause Container), VPC CNI(aws-node IPAMD + CNI Plugin), Calico(Felix + iptables/eBPF Rules)가 각각 EC2 ENI의 Secondary IP로 이어지고 ENI가 AWS VPC Subnet으로 라우팅하며, AWS 관리 Control Plane의 API Server를 aws-node와 Felix가 watch하는 VPC CNI + Calico 하이브리드 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-08-eks-integration-0.html)
 
 ### 트래픽 흐름
 
@@ -358,7 +360,9 @@ eksctl create iamserviceaccount \
 
 ### 계층형 보안 모델
 
-![인터넷에서 들어온 트래픽이 AWS 레벨의 Network ACL과 Security Group, Kubernetes 레벨의 Calico NetworkPolicy와 GlobalNetworkPolicy, Application 레벨의 mTLS와 Authorization을 차례로 거쳐 애플리케이션에 도달하는 계층형 보안 체계를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-08-eks-integration-3.svg)
+![인터넷에서 들어온 트래픽이 AWS 레벨의 Network ACL과 Security Group, Kubernetes 레벨의 Calico NetworkPolicy와 GlobalNetworkPolicy, Application 레벨의 mTLS와 Authorization을 차례로 거쳐 애플리케이션에 도달하는 계층형 보안 체계를 보여준다.](../../.gitbook/assets/ko-networking-calico-08-eks-integration-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-08-eks-integration-3.html)
 
 ### 사용 가이드
 

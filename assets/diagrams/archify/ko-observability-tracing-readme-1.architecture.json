@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Trace: 하나의 요청, 여러 Span",
+    "output": "ko-observability-tracing-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "진입점 Span"
+        },
+        "backend": {
+          "label": "서비스 Span"
+        },
+        "external": {
+          "label": "임계 경로 소요 시간"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "gateway",
+          "user",
+          "order",
+          "payment",
+          "notification"
+        ],
+        "note": "API Gateway에서 시작한 요청이 User·Order로 갈라지고, Order가 다시 Payment·Notification을 호출한다."
+      },
+      {
+        "id": "critical-path",
+        "label": "임계 경로 소요 시간",
+        "focus": [
+          "gateway",
+          "order",
+          "payment",
+          "total"
+        ],
+        "note": "루트 Span(API Gateway)에서 Order, Payment로 이어지는 가장 긴 호출 사슬이 Trace의 전체 소요 시간 650ms를 결정한다. 형제 Span(User, Notification)은 병렬로 실행되어 총 시간에 더해지지 않는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gateway",
+      "type": "frontend",
+      "label": "API Gateway",
+      "sublabel": "150ms",
+      "pos": [
+        40,
+        310
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "user",
+      "type": "backend",
+      "label": "User Service",
+      "sublabel": "50ms",
+      "pos": [
+        320,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "200ms",
+      "pos": [
+        320,
+        430
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "300ms",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "notification",
+      "type": "backend",
+      "label": "Notification Service",
+      "sublabel": "100ms",
+      "pos": [
+        600,
+        530
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "total",
+      "type": "external",
+      "label": "루트 Span 총 소요 시간",
+      "sublabel": "650ms · 임계 경로",
+      "pos": [
+        900,
+        310
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "Trace"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Trace — 단일 요청의 전체 여정",
+      "wraps": [
+        "gateway",
+        "user",
+        "order",
+        "payment",
+        "notification"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gw-user",
+      "from": "gateway",
+      "to": "user",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-order",
+      "from": "gateway",
+      "to": "order",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order-payment",
+      "from": "order",
+      "to": "payment",
+      "label": "호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "order-notification",
+      "from": "order",
+      "to": "notification",
+      "label": "호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-total",
+      "from": "gateway",
+      "to": "total",
+      "variant": "dashed"
+    },
+    {
+      "id": "order-total",
+      "from": "order",
+      "to": "total",
+      "variant": "dashed"
+    },
+    {
+      "id": "payment-total",
+      "from": "payment",
+      "to": "total",
+      "label": "임계 경로",
+      "variant": "dashed"
+    }
+  ]
+}

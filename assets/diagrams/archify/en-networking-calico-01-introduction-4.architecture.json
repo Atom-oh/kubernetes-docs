@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Project Governance",
+    "locale": "en",
+    "output": "en-networking-calico-01-introduction-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "oss-core",
+        "label": "Open-source core",
+        "focus": ["cncf", "community", "oss"],
+        "note": "Project Calico is an open-source project in the CNCF ecosystem (landscape) that the community contributes to."
+      },
+      {
+        "id": "tigera-products",
+        "label": "Tigera commercial products",
+        "focus": ["tigera", "enterprise", "cloud"],
+        "note": "Tigera Inc. delivers Calico Enterprise for on-premises and Calico Cloud as SaaS."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": { "label": "Foundation / community" },
+        "backend": { "label": "Company / commercial product" },
+        "frontend": { "label": "Open-source core" },
+        "cloud": { "label": "SaaS" }
+      }
+    }
+  },
+  "components": [
+    { "id": "cncf", "type": "external", "label": "CNCF ecosystem", "sublabel": "Landscape", "pos": [40, 60], "size": [190, 64] },
+    { "id": "community", "type": "external", "label": "Community", "sublabel": "Contributors", "pos": [40, 170], "size": [190, 64] },
+    { "id": "tigera", "type": "backend", "label": "Tigera Inc.", "sublabel": "Primary maintainer", "pos": [40, 330], "size": [190, 64] },
+    { "id": "oss", "type": "frontend", "label": "Project Calico", "sublabel": "Open source", "pos": [560, 60], "size": [190, 64] },
+    { "id": "enterprise", "type": "backend", "label": "Calico Enterprise", "sublabel": "On-premises", "pos": [560, 270], "size": [190, 64] },
+    { "id": "cloud", "type": "cloud", "label": "Calico Cloud", "sublabel": "SaaS", "pos": [560, 390], "size": [190, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Stewards", "wraps": ["cncf", "community", "tigera"] },
+    { "kind": "region", "label": "Calico ecosystem", "wraps": ["oss", "enterprise", "cloud"] }
+  ],
+  "connections": [
+    { "id": "cncf-to-oss", "from": "cncf", "to": "oss", "label": "landscape / ecosystem", "variant": "emphasis" },
+    { "id": "community-to-oss", "from": "community", "to": "oss", "label": "Contributes", "variant": "emphasis" },
+    { "id": "tigera-to-enterprise", "from": "tigera", "to": "enterprise", "label": "Commercial product" },
+    { "id": "tigera-to-cloud", "from": "tigera", "to": "cloud", "label": "Operates SaaS", "labelDy": 18 }
+  ]
+}

@@ -15,7 +15,9 @@ OpenTelemetry has officially achieved CNCF **graduated** status, the foundation'
 
 OpenTelemetry was born from the merger of OpenTracing and OpenCensus projects:
 
-![OpenTracing and OpenCensus merged in 2019 to form OpenTelemetry, which now defines the specification, SDKs, Collector, and wire protocol used across the observability ecosystem.](../../../assets/diagrams/rendered/en-observability-tracing-03-opentelemetry-0.svg)
+![OpenTracing (2016) and OpenCensus (2017) merged in 2019 to form OpenTelemetry, which in turn defines four core components: Specification, SDKs, Collector, and Protocol.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-0.html)
 
 ## Core Concepts
 
@@ -29,7 +31,9 @@ OpenTelemetry was born from the merger of OpenTracing and OpenCensus projects:
 
 ### Core Components
 
-![Application code emits telemetry through the OTel API and SDK into a receive-process-export pipeline that fans out to five observability backends: Tempo, Prometheus, Loki, X-Ray, and Datadog.](../../../assets/diagrams/rendered/en-observability-tracing-03-opentelemetry-1.svg)
+![Application code emits telemetry through the OTel API and SDK into a receive-process-export pipeline that fans out to five observability backends: Tempo, Prometheus, Loki, X-Ray, and Datadog.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-2.html)
 
 ## OpenTelemetry SDK
 
@@ -239,7 +243,9 @@ public class OrderService {
 
 ### Architecture
 
-![Five receiver protocols feed a six-stage Collector processor chain — batch, memory limiter, attributes, filter, tail sampling, and resource — before the data fans out to six exporter backends.](../../../assets/diagrams/rendered/en-observability-tracing-03-opentelemetry-2.svg)
+![Inside the OTel Collector, data from the receivers flows through the memory limiter, resource, attributes, filter, tail sampling and batch processors in traces-pipeline order before reaching the exporters, with tail sampling deciding what is kept.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-3.html)
 
 ### Collector Configuration
 

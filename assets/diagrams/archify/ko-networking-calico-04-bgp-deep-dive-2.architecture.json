@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "BGP 경로 선택 알고리즘",
+    "output": "public/archmaps/ko-networking-calico-04-bgp-deep-dive-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "경로 입력"
+        },
+        "backend": {
+          "label": "비교 속성"
+        },
+        "security": {
+          "label": "최적 경로"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "steps-1-4",
+        "label": "1~4단계",
+        "focus": [
+          "start",
+          "weight",
+          "localpref",
+          "origin_local",
+          "aspath"
+        ],
+        "note": "Weight는 Cisco 전용으로 로컬 라우터에만 적용되고, Local Preference는 AS 내 선호도(기본값 100)입니다."
+      },
+      {
+        "id": "steps-5-8",
+        "label": "5~8단계",
+        "focus": [
+          "origin",
+          "med",
+          "ebgp",
+          "igp"
+        ],
+        "note": "Origin은 IGP(i) > EGP(e) > Incomplete(?) 순으로 선호하고, MED는 Multi-Exit Discriminator입니다."
+      },
+      {
+        "id": "steps-9-11",
+        "label": "9~11단계와 확정",
+        "focus": [
+          "oldest",
+          "routerid",
+          "neighborip",
+          "best"
+        ],
+        "note": "앞 단계가 모두 동일하면 먼저 학습된 경로, 낮은 Router ID, 낮은 Neighbor IP 순으로 최종 확정합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "start",
+      "type": "external",
+      "label": "경로 수신",
+      "sublabel": "같은 목적지의 여러 경로",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "weight",
+      "type": "backend",
+      "label": "1. Weight",
+      "sublabel": "높을수록 선호",
+      "pos": [
+        250,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "localpref",
+      "type": "backend",
+      "label": "2. Local Preference",
+      "sublabel": "높을수록 선호",
+      "pos": [
+        450,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "origin_local",
+      "type": "backend",
+      "label": "3. Locally Originated",
+      "sublabel": "로컬 경로 선호",
+      "pos": [
+        650,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "aspath",
+      "type": "backend",
+      "label": "4. AS Path Length",
+      "sublabel": "짧을수록 선호",
+      "pos": [
+        850,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "origin",
+      "type": "backend",
+      "label": "5. Origin Code",
+      "sublabel": "IGP > EGP > Incomplete",
+      "pos": [
+        250,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "med",
+      "type": "backend",
+      "label": "6. MED",
+      "sublabel": "낮을수록 선호",
+      "pos": [
+        450,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebgp",
+      "type": "backend",
+      "label": "7. eBGP over iBGP",
+      "sublabel": "eBGP 선호",
+      "pos": [
+        650,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "igp",
+      "type": "backend",
+      "label": "8. IGP Metric",
+      "sublabel": "가까운 next-hop 선호",
+      "pos": [
+        850,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "oldest",
+      "type": "backend",
+      "label": "9. Oldest Path",
+      "sublabel": "먼저 학습된 경로",
+      "pos": [
+        250,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "routerid",
+      "type": "backend",
+      "label": "10. Router ID",
+      "sublabel": "낮은 ID 선호",
+      "pos": [
+        450,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "neighborip",
+      "type": "backend",
+      "label": "11. Neighbor IP",
+      "sublabel": "낮은 IP 선호",
+      "pos": [
+        650,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "best",
+      "type": "security",
+      "label": "최적 경로 선택",
+      "sublabel": "값이 다른 첫 속성에서 확정",
+      "tag": "BEST",
+      "pos": [
+        1090,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "속성 비교 순서 (1 → 11)",
+      "wraps": [
+        "weight",
+        "localpref",
+        "origin_local",
+        "aspath",
+        "origin",
+        "med",
+        "ebgp",
+        "igp",
+        "oldest",
+        "routerid",
+        "neighborip"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-weight",
+      "from": "start",
+      "to": "weight",
+      "variant": "emphasis"
+    },
+    {
+      "id": "weight-localpref",
+      "from": "weight",
+      "to": "localpref",
+      "label": "동일"
+    },
+    {
+      "id": "localpref-origin_local",
+      "from": "localpref",
+      "to": "origin_local"
+    },
+    {
+      "id": "origin_local-aspath",
+      "from": "origin_local",
+      "to": "aspath"
+    },
+    {
+      "id": "aspath-origin",
+      "from": "aspath",
+      "to": "origin",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "origin-med",
+      "from": "origin",
+      "to": "med"
+    },
+    {
+      "id": "med-ebgp",
+      "from": "med",
+      "to": "ebgp"
+    },
+    {
+      "id": "ebgp-igp",
+      "from": "ebgp",
+      "to": "igp"
+    },
+    {
+      "id": "igp-oldest",
+      "from": "igp",
+      "to": "oldest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "oldest-routerid",
+      "from": "oldest",
+      "to": "routerid"
+    },
+    {
+      "id": "routerid-neighborip",
+      "from": "routerid",
+      "to": "neighborip"
+    },
+    {
+      "id": "neighborip-best",
+      "from": "neighborip",
+      "to": "best",
+      "label": "다름",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "판정 규칙",
+      "items": [
+        "1번 Weight부터 11번 Neighbor IP까지 순서대로 비교한다",
+        "값이 다른 첫 속성에서 최적 경로가 즉시 확정된다 (다름 → 선택)",
+        "값이 모두 동일하면 다음 속성으로 넘어간다 (동일 → 다음 단계)"
+      ]
+    }
+  ]
+}

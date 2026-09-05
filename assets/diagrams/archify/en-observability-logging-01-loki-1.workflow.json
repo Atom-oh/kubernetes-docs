@@ -1,0 +1,149 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Cardinality Management",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-logging-01-loki-1.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "inputs",
+        "label": "Labels create streams",
+        "focus": [
+          "labelCount",
+          "valueKinds",
+          "streams"
+        ],
+        "note": "Total streams = namespace values × app values × component values × … — the number of labels and the value types of each label multiply."
+      },
+      {
+        "id": "impact",
+        "label": "What stream count drives",
+        "focus": [
+          "streams",
+          "indexSize",
+          "queryPerf",
+          "memory"
+        ],
+        "note": "That single stream count determines index size, query performance, and memory usage together."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Label design inputs"
+        },
+        "database": {
+          "label": "Stream count"
+        },
+        "backend": {
+          "label": "Loki Impact"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "designLane",
+      "label": "Label Design"
+    },
+    {
+      "id": "streamLane",
+      "label": "Streams"
+    },
+    {
+      "id": "impactLane",
+      "label": "Loki Impact"
+    }
+  ],
+  "mainPath": [
+    "labelCount",
+    "streams",
+    "indexSize"
+  ],
+  "nodes": [
+    {
+      "id": "labelCount",
+      "lane": "designLane",
+      "col": 0,
+      "type": "frontend",
+      "label": "Number of Labels",
+      "sublabel": "namespace, app, component …",
+      "width": 190
+    },
+    {
+      "id": "valueKinds",
+      "lane": "designLane",
+      "col": 1,
+      "type": "frontend",
+      "label": "Label Value Types",
+      "sublabel": "unique values per label",
+      "width": 170
+    },
+    {
+      "id": "streams",
+      "lane": "streamLane",
+      "col": 2,
+      "type": "database",
+      "label": "Total Streams",
+      "sublabel": "product of per-label values",
+      "tag": "< 100,000 per cluster",
+      "width": 190
+    },
+    {
+      "id": "indexSize",
+      "lane": "impactLane",
+      "col": 3,
+      "type": "backend",
+      "label": "Index Size",
+      "width": 170
+    },
+    {
+      "id": "queryPerf",
+      "lane": "impactLane",
+      "col": 4,
+      "type": "backend",
+      "label": "Query Performance",
+      "width": 170
+    },
+    {
+      "id": "memory",
+      "lane": "impactLane",
+      "col": 5,
+      "type": "backend",
+      "label": "Memory Usage",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "labelCount",
+      "to": "streams",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "valueKinds",
+      "to": "streams",
+      "role": "branch"
+    },
+    {
+      "from": "streams",
+      "to": "indexSize",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "streams",
+      "to": "queryPerf",
+      "role": "branch"
+    },
+    {
+      "from": "streams",
+      "to": "memory",
+      "role": "branch"
+    }
+  ]
+}

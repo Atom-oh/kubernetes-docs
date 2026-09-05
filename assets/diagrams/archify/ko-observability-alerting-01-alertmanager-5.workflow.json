@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Silence 관리 모범 사례",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "create",
+        "label": "Silence 생성",
+        "focus": [
+          "need",
+          "type",
+          "comment"
+        ],
+        "note": "유형에 맞게 기간을 정하고, 왜 Silence를 만들었는지 코멘트로 반드시 남긴다."
+      },
+      {
+        "id": "review",
+        "label": "정기 검토와 만료",
+        "focus": [
+          "review",
+          "expired",
+          "auto_remove",
+          "manual"
+        ],
+        "note": "장기 Silence는 정기적으로 검토하고, 만료되면 자동 제거, 아직이면 수동으로 다시 검토한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "create",
+      "label": "Silence 생성"
+    },
+    {
+      "id": "review",
+      "label": "정기 검토"
+    },
+    {
+      "id": "followup",
+      "label": "후속 조치"
+    }
+  ],
+  "mainPath": [
+    "need",
+    "type",
+    "comment",
+    "review",
+    "expired",
+    "auto_remove"
+  ],
+  "nodes": [
+    {
+      "id": "need",
+      "lane": "create",
+      "col": 0,
+      "type": "frontend",
+      "label": "Silence 필요",
+      "sublabel": "알림 일시 중지 요청",
+      "width": 150
+    },
+    {
+      "id": "type",
+      "lane": "create",
+      "col": 1,
+      "type": "security",
+      "label": "유형?",
+      "sublabel": "유지보수 · 배포 · 조사 중 · 알려진 이슈",
+      "tag": "기간 결정",
+      "width": 290
+    },
+    {
+      "id": "comment",
+      "lane": "create",
+      "col": 2,
+      "type": "backend",
+      "label": "명확한 코멘트",
+      "sublabel": "이유 · 작성자 기록",
+      "tag": "필수",
+      "width": 150
+    },
+    {
+      "id": "review",
+      "lane": "review",
+      "col": 3,
+      "type": "backend",
+      "label": "정기 검토",
+      "sublabel": "장기 Silence 점검",
+      "width": 150
+    },
+    {
+      "id": "expired",
+      "lane": "review",
+      "col": 4,
+      "type": "security",
+      "label": "만료?",
+      "sublabel": "endsAt 도달 여부",
+      "tag": "검토 지점"
+    },
+    {
+      "id": "auto_remove",
+      "lane": "review",
+      "col": 5,
+      "type": "cloud",
+      "label": "자동 제거",
+      "sublabel": "만료된 Silence 정리",
+      "width": 150
+    },
+    {
+      "id": "manual",
+      "lane": "followup",
+      "col": 5,
+      "type": "external",
+      "label": "수동 검토",
+      "sublabel": "담당자가 직접 확인",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "need",
+      "to": "type"
+    },
+    {
+      "from": "type",
+      "to": "comment",
+      "label": "유형별 기간 설정",
+      "variant": "emphasis"
+    },
+    {
+      "from": "comment",
+      "to": "review"
+    },
+    {
+      "from": "review",
+      "to": "expired"
+    },
+    {
+      "from": "expired",
+      "to": "auto_remove",
+      "label": "YES",
+      "variant": "emphasis"
+    },
+    {
+      "from": "expired",
+      "to": "manual",
+      "label": "NO",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "권장 사항",
+      "items": [
+        "항상 코멘트 작성: 왜 Silence를 만들었는지 기록",
+        "최소 기간 설정: 필요한 만큼만 Silence",
+        "정기적 검토: 장기 Silence는 정기적으로 검토",
+        "알림 설정: Silence 만료 전 알림"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "유형별 Silence 기간",
+      "items": [
+        "유지보수: 계획된 시간만큼",
+        "배포: 배포 완료까지",
+        "조사 중: 최대 4시간",
+        "알려진 이슈: 수정 완료까지"
+      ]
+    }
+  ]
+}

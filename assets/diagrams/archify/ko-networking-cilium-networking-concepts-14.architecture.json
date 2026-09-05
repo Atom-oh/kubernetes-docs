@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium eBPF 기반 로드 밸런싱",
+    "output": "ko-networking-cilium-networking-concepts-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1320,
+      360
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "frontend",
+      "label": "포드 A",
+      "sublabel": "클라이언트",
+      "pos": [
+        0,
+        150
+      ],
+      "size": [
+        100,
+        64
+      ]
+    },
+    {
+      "id": "intercept",
+      "type": "backend",
+      "label": "1. 패킷 인터셉트",
+      "sublabel": "커널 내 처리",
+      "pos": [
+        240,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "lookup",
+      "type": "database",
+      "label": "2. 서비스 맵 조회",
+      "sublabel": "eBPF 맵",
+      "pos": [
+        450,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "select",
+      "type": "backend",
+      "label": "3. 백엔드 선택",
+      "sublabel": "로드 밸런싱 알고리즘",
+      "pos": [
+        660,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "forward",
+      "type": "backend",
+      "label": "4. 패킷 전달",
+      "sublabel": "백엔드로 DNAT",
+      "pos": [
+        870,
+        150
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "포드 B",
+      "sublabel": "서버",
+      "pos": [
+        1220,
+        150
+      ],
+      "size": [
+        100,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "커널 + eBPF 프로그램 (kube-proxy 대체)",
+      "wraps": [
+        "intercept",
+        "lookup",
+        "select",
+        "forward"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-intercept",
+      "from": "pod-a",
+      "to": "intercept",
+      "label": "서비스 IP로 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "intercept-to-lookup",
+      "from": "intercept",
+      "to": "lookup",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lookup-to-select",
+      "from": "lookup",
+      "to": "select",
+      "variant": "emphasis"
+    },
+    {
+      "id": "select-to-forward",
+      "from": "select",
+      "to": "forward",
+      "variant": "emphasis"
+    },
+    {
+      "id": "forward-to-b",
+      "from": "forward",
+      "to": "pod-b",
+      "label": "포드 IP로 직접 전달",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "eBPF 기반 로드 밸런싱",
+      "items": [
+        "kube-proxy 대체: 커널 내에서 직접 서비스 로드 밸런싱",
+        "성능 향상: 네트워크 스택 바이패스로 지연 시간 감소",
+        "확장성: 대규모 서비스 및 엔드포인트 지원",
+        "연결 추적 최적화: 효율적인 상태 관리"
+      ]
+    }
+  ]
+}

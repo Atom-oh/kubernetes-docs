@@ -18,13 +18,17 @@ Observability and monitoring are often used interchangeably, but there are funda
 | **Flexibility** | Predefined dashboards | Dynamic queries and exploration |
 | **Complexity** | Suitable for simple systems | Essential for complex distributed systems |
 
-![Monitoring's predefined metrics feed threshold alerts and fixed dashboards in a one-way chain, while observability's logs, metrics, and traces cross-reference each other in a closed loop, with monitoring evolving into observability.](../.gitbook/assets/en-observability-README-0.png)
+![Monitoring's predefined metrics feed threshold alerts and fixed dashboards in a one-way chain, while observability's logs, metrics, and traces cross-reference each other in a closed loop, with monitoring evolving into observability.](../.gitbook/assets/en-observability-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-0.html)
 
 ## The Three Pillars of Observability
 
 Observability consists of three core data types:
 
-![Logs, metrics, and traces each break into three concrete data forms, and the three pillar groups correlate pairwise through label matching, exemplars, and a shared trace ID.](../.gitbook/assets/en-observability-README-1.png)
+![Logs, metrics, and traces each break into three concrete data forms, and the three pillar groups correlate pairwise through label matching, exemplars, and a shared trace ID.](../.gitbook/assets/en-observability-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-1.html)
 
 ### 1. Logs
 
@@ -83,7 +87,9 @@ Traces track the complete path of requests across distributed systems.
 
 The three pillars are not independent but interconnected, providing powerful analytical capabilities:
 
-![An HTTP request fans out from an API gateway through user, order, and payment services; each service emits telemetry tagged with one shared trace ID, which links to a metric exemplar and a correlated log entry in a closed loop.](../.gitbook/assets/en-observability-README-2.png)
+![An HTTP request fans out from an API gateway through user, order, and payment services; each service emits logs, metrics, and traces tagged with one shared trace ID, which links in both directions to a metric exemplar and to correlated log entries so you can pivot between the three pillars.](../.gitbook/assets/en-observability-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-2.html)
 
 ### Trace-to-Log Correlation
 
@@ -113,7 +119,9 @@ http_request_duration_seconds_bucket{le="0.5"} 1000 # {traceID="abc123"}
 
 OpenTelemetry (OTel) is the industry standard for observability data collection:
 
-![Applications in any of four languages instrument via auto- or manual instrumentation, send data through the OpenTelemetry collector's receive, process, and export stages, and land in one of five observability backends.](../.gitbook/assets/en-observability-README-3.png)
+![Applications in any of four languages instrument via auto- or manual instrumentation, send data through the OpenTelemetry collector's receive, process, and export stages, and land in one of five observability backends.](../.gitbook/assets/en-observability-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-3.html)
 
 **Benefits of OpenTelemetry:**
 - Vendor-neutral standard
@@ -128,7 +136,9 @@ Strategies for implementing effective observability in Amazon EKS:
 
 ### 1. Layer-based Observability
 
-![Infrastructure, Kubernetes, and application layers each feed their signals into a matching observability tool: infrastructure metrics go to CloudWatch, cluster and business metrics go to Prometheus/Grafana, and application logs and traces go to Loki and Tempo/X-Ray.](../.gitbook/assets/en-observability-README-4.png)
+![Infrastructure, Kubernetes, and application layers each feed their signals into a matching observability tool: infrastructure metrics go to CloudWatch, cluster and business metrics go to Prometheus/Grafana, and application traces and logs go to Tempo/X-Ray and Loki.](../.gitbook/assets/en-observability-readme-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-4.html)
 
 ### 2. Recommended Tool Stack
 
@@ -148,7 +158,9 @@ Strategies for implementing effective observability in Amazon EKS:
 
 ## Observability Maturity Model
 
-![Organizations progress from basic monitoring, to centralized log/metric collection, to trace-ID-linked correlation across the three pillars, and finally to AIOps with ML-based anomaly analysis.](../.gitbook/assets/en-observability-README-5.png)
+![Organizations progress from basic monitoring, to centralized log/metric collection, to trace-ID-linked correlation across the three pillars, and finally to AIOps with ML-based anomaly analysis.](../.gitbook/assets/en-observability-readme-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-readme-5.html)
 
 | Level | Characteristics | Example Tools |
 |-------|-----------------|---------------|

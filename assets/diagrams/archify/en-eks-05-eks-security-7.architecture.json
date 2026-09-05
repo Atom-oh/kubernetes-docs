@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Private Cluster Access via Transit Gateway",
+    "output": "en-eks-05-eks-security-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      1330,
+      290
+    ]
+  },
+  "components": [
+    {
+      "id": "admin",
+      "type": "external",
+      "label": "Admin Workstation",
+      "sublabel": "kubectl client",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "dx",
+      "type": "cloud",
+      "label": "Direct Connect",
+      "sublabel": "or Site-to-Site VPN",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "tgw",
+      "type": "cloud",
+      "label": "Transit Gateway",
+      "sublabel": "on-prem ↔ VPC routing",
+      "pos": [
+        560,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "EKS VPC",
+      "sublabel": "private subnets",
+      "pos": [
+        830,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "backend",
+      "label": "EKS Cluster",
+      "sublabel": "Private Endpoint (API server)",
+      "pos": [
+        1080,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "On-Premises",
+      "wraps": [
+        "admin"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "dx",
+        "tgw",
+        "vpc",
+        "eks"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "admin-to-dx",
+      "from": "admin",
+      "to": "dx",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dx-to-tgw",
+      "from": "dx",
+      "to": "tgw",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tgw-to-vpc",
+      "from": "tgw",
+      "to": "vpc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vpc-to-eks",
+      "from": "vpc",
+      "to": "eks",
+      "label": "kubectl (HTTPS 443)",
+      "variant": "emphasis",
+      "labelDy": -26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Private Endpoint Access Patterns",
+      "items": [
+        "Private-only clusters are reachable only via VPN, Direct Connect, or a bastion host",
+        "Transit Gateway links the on-premises network to the EKS VPC",
+        "Alternatives: direct Site-to-Site VPN, SSM Session Manager port forwarding"
+      ]
+    }
+  ]
+}

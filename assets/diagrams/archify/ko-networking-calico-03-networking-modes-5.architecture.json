@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CrossSubnet 동작 원리",
+    "output": "ko-networking-calico-03-networking-modes-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [930, 470],
+    "views": [
+      { "id": "same-subnet", "label": "같은 서브넷: Direct", "focus": ["n1", "n2", "n3", "n4"], "note": "같은 서브넷의 노드 간에는 캡슐화 없이 Direct 라우팅으로 통신한다." },
+      { "id": "cross-subnet", "label": "다른 서브넷: 캡슐화", "focus": ["n1", "n3"], "note": "서브넷 경계를 넘는 노드 간 트래픽만 IPIP 또는 VXLAN으로 캡슐화한다." }
+    ]
+  },
+  "components": [
+    { "id": "n1", "type": "backend", "label": "Node 1", "sublabel": "10.0.1.10", "pos": [80, 70], "size": [250, 60] },
+    { "id": "n2", "type": "backend", "label": "Node 2", "sublabel": "10.0.1.11", "pos": [600, 70], "size": [250, 60] },
+    { "id": "n3", "type": "backend", "label": "Node 3", "sublabel": "10.0.2.10", "pos": [80, 330], "size": [250, 60] },
+    { "id": "n4", "type": "backend", "label": "Node 4", "sublabel": "10.0.2.11", "pos": [600, 330], "size": [250, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Subnet A (10.0.1.0/24)", "wraps": ["n1", "n2"] },
+    { "kind": "region", "label": "Subnet B (10.0.2.0/24)", "wraps": ["n3", "n4"] }
+  ],
+  "connections": [
+    { "id": "a-direct", "from": "n1", "to": "n2", "label": "Direct · 캡슐화 없음", "variant": "emphasis" },
+    { "id": "b-direct", "from": "n3", "to": "n4", "label": "Direct · 캡슐화 없음", "variant": "emphasis" },
+    { "id": "ab-encap-1", "from": "n1", "to": "n3", "label": "IPIP/VXLAN 캡슐화", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [205, 230] },
+    { "id": "ab-encap-2", "from": "n2", "to": "n4", "label": "IPIP/VXLAN 캡슐화", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelAt": [725, 230] }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "같은 서브넷", "items": ["Direct 라우팅, 캡슐화 오버헤드 없음", "노드 간 L3 라우팅으로 Pod 트래픽 전달"] },
+    { "dot": "orange", "title": "다른 서브넷", "items": ["ipipMode: CrossSubnet 또는 vxlanMode: CrossSubnet", "서브넷 경계를 넘는 트래픽만 IPIP 또는 VXLAN으로 캡슐화"] },
+    { "dot": "amber", "title": "AWS (EKS) 권장", "items": ["CrossSubnet 권장: AZ 간 트래픽만 캡슐화", "IPIP는 Security Group에서 Protocol 4, VXLAN은 UDP 4789 허용 필요"] }
+  ]
+}

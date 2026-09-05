@@ -16,7 +16,9 @@ This deep dive explores eBPF fundamentals from a networking perspective, Calico'
 
 eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows running sandboxed programs in the Linux kernel without modifying kernel source code or loading kernel modules.
 
-![Diagram showing an eBPF program moving from user space, through the libbpf loader and kernel verifier and JIT compiler, into kernel hooks that share BPF maps with the verifying application.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
+![Architecture diagram showing an eBPF program written in C/Rust in user space being loaded into the kernel through the libbpf/BCC loader via bpf(), passing the eBPF Verifier's safety check and the JIT Compiler's native-code translation, executing in the eBPF VM, attaching to hook points such as XDP, TC, Socket Ops and Kprobes, and sharing state with the user-space application through BPF Maps.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-1.html)
 
 ### Key eBPF Concepts for Networking
 
@@ -49,13 +51,17 @@ eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows
 
 ### Architecture Comparison
 
-![Diagram contrasting a packet traversing seven sequential iptables chains with the same packet traversing a single eBPF program that consults BPF maps between TC ingress and egress hooks.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
+![Diagram contrasting a packet walking sequential iptables chains, PREROUTING, conntrack, FORWARD and POSTROUTING, with the same packet handled by a single eBPF program consulting BPF maps between TC ingress and egress hooks.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-11.html)
 
 ### eBPF Program Types in Calico
 
 Calico uses multiple eBPF program types for different functions:
 
-![Diagram showing XDP and TC ingress hooks feeding socket-level sockops and sk_msg programs, which hand off to a TC egress hook, with the cgroup scope program shown as an unconnected socket-level primitive.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
+![Diagram showing XDP and TC ingress hooks feeding socket-level sockops and sk_msg programs, which hand off to a TC egress hook, with the cgroup scope program shown as an unconnected socket-level primitive.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-2.html)
 
 ### TC (Traffic Control) Programs
 
@@ -80,7 +86,9 @@ Egress TC Program Functions:
 
 XDP provides the earliest packet processing hook:
 
-![Flowchart showing a packet arriving from the network card into an XDP program, which returns one of four verdicts: drop for DDoS protection, pass to normal TC processing, direct TX return, or redirect to another interface.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
+![Flowchart showing a packet arriving from the network card into an XDP program, which returns one of four verdicts: drop for DDoS protection, pass to normal TC processing, direct TX return, or redirect to another interface.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-3.html)
 
 ### Socket Programs
 
@@ -179,7 +187,9 @@ struct calico_policy_value {
 
 DSR allows response traffic to bypass the load balancer, reducing latency and load balancer resource consumption.
 
-![Diagram comparing a normal load-balanced flow, where the server response returns through the load balancer to the client, with a Direct Server Return flow, where the response bypasses the load balancer and goes straight from server to client.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
+![Sequence diagram comparing normal load-balanced mode, where the backend Pod response returns through the LB node and is SNAT'd before reaching the client, with DSR mode, where the backend Pod bypasses the LB node and replies directly to the client with the VIP as source IP.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-6.html)
 
 ### DSR Modes in Calico
 
@@ -214,7 +224,9 @@ spec:
 
 ### Traditional vs Connect-Time LB
 
-![Diagram contrasting kube-proxy's per-packet approach, where every SYN, data, and FIN packet is DNAT'd to Pod A, with eBPF connect-time load balancing, where a single connect() syscall picks Pod B once and every packet in that connection is sent to it directly.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
+![Sequence contrasting kube-proxy per-packet iptables DNAT and conntrack lookups with eBPF connect-time load balancing, where the cgroup connect4 hook rewrites the VIP once so later packets reach the Pod with no per-packet NAT.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-7.html)
 
 ### Benefits of Connect-Time LB
 
@@ -249,7 +261,9 @@ int bpf_connect4(struct bpf_sock_addr *ctx) {
 
 ### XDP Processing Levels
 
-![Diagram showing that XDP programs offloaded onto the NIC are fastest, programs run natively in the driver are fast, and programs run in the generic network stack are the slowest but work on any NIC.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
+![Diagram showing that XDP programs offloaded onto the NIC are fastest, programs run natively in the driver are fast, and programs run in the generic network stack are the slowest but work on any NIC.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-10.html)
 
 ### XDP Modes
 

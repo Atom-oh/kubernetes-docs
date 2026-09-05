@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "IPIP Packet Flow Diagram",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "encap",
+        "label": "Node 1: encapsulate",
+        "focus": [
+          "podA",
+          "felix1",
+          "tunl1"
+        ],
+        "note": "Felix finds the tunl0 route in the routing table and tunl0 wraps the packet in an outer IP header."
+      },
+      {
+        "id": "transit",
+        "label": "Network transit",
+        "focus": [
+          "tunl1",
+          "net",
+          "tunl2"
+        ],
+        "note": "The IP Protocol 4 packet crosses the physical network between node IPs (10.0.1.10 to 10.0.1.11)."
+      },
+      {
+        "id": "decap",
+        "label": "Node 2: decapsulate",
+        "focus": [
+          "tunl2",
+          "felix2",
+          "podB"
+        ],
+        "note": "tunl0 strips the outer header, Felix runs the policy check, and the inner packet reaches Pod B."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "podA",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "192.168.1.10"
+    },
+    {
+      "id": "felix1",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "Node 1"
+    },
+    {
+      "id": "tunl1",
+      "type": "cloud",
+      "label": "tunl0",
+      "sublabel": "Node 1"
+    },
+    {
+      "id": "net",
+      "type": "external",
+      "label": "Network",
+      "sublabel": "physical network"
+    },
+    {
+      "id": "tunl2",
+      "type": "cloud",
+      "label": "tunl0",
+      "sublabel": "Node 2"
+    },
+    {
+      "id": "felix2",
+      "type": "backend",
+      "label": "Felix",
+      "sublabel": "Node 2"
+    },
+    {
+      "id": "podB",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "192.168.2.10"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "Node 1 — IPIP encapsulation"
+    },
+    {
+      "from": 320,
+      "to": 395,
+      "label": "Physical network (IP Protocol 4)"
+    },
+    {
+      "from": 415,
+      "to": 560,
+      "label": "Node 2 — IPIP decapsulation"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "podA",
+      "to": "felix1",
+      "y": 190,
+      "label": "Packet to 192.168.2.10",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "felix1",
+      "to": "tunl1",
+      "y": 235,
+      "label": "Route lookup → forward to tunl0",
+      "variant": "default",
+      "note": "Route lookup: via tunl0"
+    },
+    {
+      "id": "m3",
+      "from": "tunl1",
+      "to": "net",
+      "y": 285,
+      "label": "IPIP packet · 10.0.1.10 → 10.0.1.11",
+      "variant": "emphasis",
+      "note": "Outer 10.0.1.10 → 10.0.1.11 · Inner 192.168.1.10 → 192.168.2.10"
+    },
+    {
+      "id": "m4",
+      "from": "net",
+      "to": "tunl2",
+      "y": 365,
+      "label": "Deliver to Node 2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m5",
+      "from": "tunl2",
+      "to": "felix2",
+      "y": 450,
+      "label": "Outer header removed · inner packet",
+      "variant": "default",
+      "note": "Decapsulate IPIP (remove outer header)"
+    },
+    {
+      "id": "m6",
+      "from": "felix2",
+      "to": "podB",
+      "y": 520,
+      "label": "Policy check → deliver to Pod B",
+      "variant": "default",
+      "note": "Policy check passed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "felix1",
+      "from": 185,
+      "to": 240,
+      "type": "backend"
+    },
+    {
+      "participant": "tunl1",
+      "from": 230,
+      "to": 290,
+      "type": "cloud"
+    },
+    {
+      "participant": "net",
+      "from": 280,
+      "to": 370,
+      "type": "external"
+    },
+    {
+      "participant": "tunl2",
+      "from": 360,
+      "to": 455,
+      "type": "cloud"
+    },
+    {
+      "participant": "felix2",
+      "from": 445,
+      "to": 525,
+      "type": "backend"
+    }
+  ]
+}

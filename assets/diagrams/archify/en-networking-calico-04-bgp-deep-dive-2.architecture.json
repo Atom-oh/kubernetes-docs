@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "BGP Route Selection Process",
+    "locale": "en",
+    "output": "public/archmaps/en-networking-calico-04-bgp-deep-dive-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Route input"
+        },
+        "backend": {
+          "label": "Comparison attribute"
+        },
+        "security": {
+          "label": "Best route"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "steps-1-4",
+        "label": "Steps 1-4",
+        "focus": [
+          "start",
+          "weight",
+          "localpref",
+          "origin_local",
+          "aspath"
+        ],
+        "note": "Weight is Cisco-specific and applies only to the local router; LOCAL_PREF expresses preference inside the AS (default 100)."
+      },
+      {
+        "id": "steps-5-8",
+        "label": "Steps 5-8",
+        "focus": [
+          "origin",
+          "med",
+          "ebgp",
+          "igp"
+        ],
+        "note": "Origin type is preferred in the order IGP(i) > EGP(e) > Incomplete(?); MED is the Multi-Exit Discriminator."
+      },
+      {
+        "id": "steps-9-11",
+        "label": "Steps 9-11 and selection",
+        "focus": [
+          "oldest",
+          "routerid",
+          "neighborip",
+          "best"
+        ],
+        "note": "If every earlier step ties, the oldest route, then the lowest Router ID, then the lowest neighbor IP settles the choice."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "start",
+      "type": "external",
+      "label": "Receive Routes",
+      "sublabel": "candidate routes",
+      "pos": [
+        30,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "weight",
+      "type": "backend",
+      "label": "1. Weight",
+      "sublabel": "higher is preferred",
+      "pos": [
+        250,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "localpref",
+      "type": "backend",
+      "label": "2. LOCAL_PREF",
+      "sublabel": "higher is preferred",
+      "pos": [
+        450,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "origin_local",
+      "type": "backend",
+      "label": "3. Locally Originated",
+      "sublabel": "prefer locally originated",
+      "pos": [
+        650,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "aspath",
+      "type": "backend",
+      "label": "4. AS_PATH Length",
+      "sublabel": "shorter is preferred",
+      "pos": [
+        850,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "origin",
+      "type": "backend",
+      "label": "5. Origin Type",
+      "sublabel": "IGP > EGP > Incomplete",
+      "pos": [
+        250,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "med",
+      "type": "backend",
+      "label": "6. MED",
+      "sublabel": "lower is preferred",
+      "pos": [
+        450,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ebgp",
+      "type": "backend",
+      "label": "7. eBGP over iBGP",
+      "sublabel": "prefer eBGP",
+      "pos": [
+        650,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "igp",
+      "type": "backend",
+      "label": "8. IGP Metric",
+      "sublabel": "nearest next-hop preferred",
+      "pos": [
+        850,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "oldest",
+      "type": "backend",
+      "label": "9. Oldest Route",
+      "sublabel": "earliest learned route",
+      "pos": [
+        250,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "routerid",
+      "type": "backend",
+      "label": "10. Router ID",
+      "sublabel": "lower ID preferred",
+      "pos": [
+        450,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "neighborip",
+      "type": "backend",
+      "label": "11. Neighbor IP",
+      "sublabel": "lower IP preferred",
+      "pos": [
+        650,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "best",
+      "type": "security",
+      "label": "Select Best Route",
+      "sublabel": "first difference decides",
+      "tag": "BEST",
+      "pos": [
+        1090,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Comparison order (1 → 11)",
+      "wraps": [
+        "weight",
+        "localpref",
+        "origin_local",
+        "aspath",
+        "origin",
+        "med",
+        "ebgp",
+        "igp",
+        "oldest",
+        "routerid",
+        "neighborip"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-weight",
+      "from": "start",
+      "to": "weight",
+      "variant": "emphasis"
+    },
+    {
+      "id": "weight-localpref",
+      "from": "weight",
+      "to": "localpref",
+      "label": "tie"
+    },
+    {
+      "id": "localpref-origin_local",
+      "from": "localpref",
+      "to": "origin_local"
+    },
+    {
+      "id": "origin_local-aspath",
+      "from": "origin_local",
+      "to": "aspath"
+    },
+    {
+      "id": "aspath-origin",
+      "from": "aspath",
+      "to": "origin",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "origin-med",
+      "from": "origin",
+      "to": "med"
+    },
+    {
+      "id": "med-ebgp",
+      "from": "med",
+      "to": "ebgp"
+    },
+    {
+      "id": "ebgp-igp",
+      "from": "ebgp",
+      "to": "igp"
+    },
+    {
+      "id": "igp-oldest",
+      "from": "igp",
+      "to": "oldest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "oldest-routerid",
+      "from": "oldest",
+      "to": "routerid"
+    },
+    {
+      "id": "routerid-neighborip",
+      "from": "routerid",
+      "to": "neighborip"
+    },
+    {
+      "id": "neighborip-best",
+      "from": "neighborip",
+      "to": "best",
+      "label": "differs",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Decision Rule",
+      "items": [
+        "Attributes are compared in order from 1 (Weight) to 11 (Neighbor IP)",
+        "The first attribute whose values differ immediately decides the best route (differs → select)",
+        "If the values tie, evaluation moves on to the next attribute (tie → next step)"
+      ]
+    }
+  ]
+}

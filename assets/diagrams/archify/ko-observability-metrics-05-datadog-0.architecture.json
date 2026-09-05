@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Datadog vs 오픈소스 vs CloudWatch",
+    "output": "ko-observability-metrics-05-datadog-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1160, 560]
+  },
+  "components": [
+    { "id": "dd-platform", "type": "external", "label": "통합 플랫폼", "sublabel": "메트릭·로그·트레이스·프로파일링", "pos": [70, 90], "size": [260, 60] },
+    { "id": "dd-ai", "type": "external", "label": "AI 분석", "sublabel": "Watchdog AI 이상 탐지", "pos": [70, 190], "size": [260, 60] },
+    { "id": "dd-integrations", "type": "external", "label": "750+ 통합", "sublabel": "AWS·Kubernetes·데이터베이스", "pos": [70, 290], "size": [260, 60] },
+    { "id": "dd-pricing", "type": "external", "label": "호스트당 과금", "sublabel": "비용 예측성 높음", "pos": [70, 390], "size": [260, 60] },
+    { "id": "cw-native", "type": "cloud", "label": "AWS 네이티브", "sublabel": "관리형 서비스", "pos": [450, 90], "size": [260, 60] },
+    { "id": "cw-pricing", "type": "cloud", "label": "사용량 과금", "sublabel": "비용 예측성 낮음", "pos": [450, 190], "size": [260, 60] },
+    { "id": "cw-integrations", "type": "cloud", "label": "AWS 통합", "sublabel": "AWS 서비스 중심", "pos": [450, 290], "size": [260, 60] },
+    { "id": "cw-apm", "type": "cloud", "label": "제한된 APM", "sublabel": "X-Ray 별도", "pos": [450, 390], "size": [260, 60] },
+    { "id": "os-control", "type": "backend", "label": "완전 제어", "sublabel": "Prometheus + Grafana", "pos": [830, 90], "size": [260, 60] },
+    { "id": "os-cost", "type": "backend", "label": "인프라 비용", "sublabel": "비용 예측성 높음", "pos": [830, 190], "size": [260, 60] },
+    { "id": "os-flexibility", "type": "backend", "label": "높은 유연성", "sublabel": "구성 자유도", "pos": [830, 290], "size": [260, 60] },
+    { "id": "os-overhead", "type": "backend", "label": "운영 오버헤드", "sublabel": "운영 부담 높음", "pos": [830, 390], "size": [260, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Datadog · SaaS", "wraps": ["dd-platform", "dd-ai", "dd-integrations", "dd-pricing"] },
+    { "kind": "region", "label": "CloudWatch · 관리형", "wraps": ["cw-native", "cw-pricing", "cw-integrations", "cw-apm"] },
+    { "kind": "region", "label": "오픈소스 · 자체 호스팅", "wraps": ["os-control", "os-cost", "os-flexibility", "os-overhead"] }
+  ],
+  "connections": []
+}

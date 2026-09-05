@@ -1,0 +1,225 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Mimir 쿼리 캐싱 전략",
+    "output": "public/archmaps/ko-observability-metrics-03-mimir-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "result-cache",
+        "label": "결과 캐시",
+        "focus": [
+          "query",
+          "resultCache",
+          "cachedResult"
+        ],
+        "note": "Query-frontend가 먼저 결과 캐시를 확인하고, 적중하면 캐시된 결과를 바로 반환합니다."
+      },
+      {
+        "id": "metadata-cache",
+        "label": "메타데이터 캐시",
+        "focus": [
+          "resultCache",
+          "metaCache",
+          "cachedMeta"
+        ],
+        "note": "결과 캐시가 없으면 Querier로 내려가 메타데이터 캐시를 확인합니다."
+      },
+      {
+        "id": "chunk-cache-s3",
+        "label": "청크 캐시와 S3",
+        "focus": [
+          "metaCache",
+          "chunkCache",
+          "cachedChunk",
+          "s3"
+        ],
+        "note": "Store-gateway의 청크 캐시까지 모두 미스일 때만 S3 객체 스토리지를 읽습니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "쿼리 입력"
+        },
+        "database": {
+          "label": "캐시 확인"
+        },
+        "backend": {
+          "label": "캐시 적중 응답"
+        },
+        "cloud": {
+          "label": "객체 스토리지"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "frontend",
+      "label": "Query-frontend"
+    },
+    {
+      "id": "querier",
+      "label": "Querier"
+    },
+    {
+      "id": "storegw",
+      "label": "Store-gateway"
+    },
+    {
+      "id": "storage",
+      "label": "객체 스토리지"
+    }
+  ],
+  "mainPath": [
+    "query",
+    "resultCache",
+    "metaCache",
+    "chunkCache",
+    "s3"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "query"
+    ],
+    "allowedTerminals": [
+      "cachedResult",
+      "cachedMeta",
+      "cachedChunk",
+      "s3"
+    ],
+    "requiredPaths": [
+      {
+        "from": "query",
+        "to": "s3"
+      },
+      {
+        "from": "query",
+        "to": "cachedResult"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "query",
+      "lane": "frontend",
+      "col": 0,
+      "type": "frontend",
+      "label": "Query",
+      "sublabel": "PromQL 요청"
+    },
+    {
+      "id": "resultCache",
+      "lane": "frontend",
+      "col": 1,
+      "type": "database",
+      "label": "결과 캐시 확인",
+      "sublabel": "results_cache",
+      "width": 168
+    },
+    {
+      "id": "cachedResult",
+      "lane": "frontend",
+      "col": 2,
+      "type": "backend",
+      "label": "캐시된 결과",
+      "sublabel": "즉시 응답",
+      "width": 150
+    },
+    {
+      "id": "metaCache",
+      "lane": "querier",
+      "col": 2,
+      "type": "database",
+      "label": "메타데이터 캐시 확인",
+      "sublabel": "블록 메타데이터",
+      "width": 190
+    },
+    {
+      "id": "cachedMeta",
+      "lane": "querier",
+      "col": 3,
+      "type": "backend",
+      "label": "캐시된 메타데이터",
+      "sublabel": "즉시 응답",
+      "width": 170
+    },
+    {
+      "id": "chunkCache",
+      "lane": "storegw",
+      "col": 3,
+      "type": "database",
+      "label": "청크 캐시 확인",
+      "sublabel": "chunks_cache",
+      "width": 168
+    },
+    {
+      "id": "cachedChunk",
+      "lane": "storegw",
+      "col": 4,
+      "type": "backend",
+      "label": "캐시된 청크",
+      "sublabel": "즉시 응답",
+      "width": 150
+    },
+    {
+      "id": "s3",
+      "lane": "storage",
+      "col": 4,
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "블록 직접 읽기",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "query",
+      "to": "resultCache",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "resultCache",
+      "to": "cachedResult",
+      "label": "hit",
+      "role": "branch"
+    },
+    {
+      "from": "resultCache",
+      "to": "metaCache",
+      "label": "miss",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "metaCache",
+      "to": "cachedMeta",
+      "label": "hit",
+      "role": "branch"
+    },
+    {
+      "from": "metaCache",
+      "to": "chunkCache",
+      "label": "miss",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "chunkCache",
+      "to": "cachedChunk",
+      "label": "hit",
+      "role": "branch"
+    },
+    {
+      "from": "chunkCache",
+      "to": "s3",
+      "label": "miss",
+      "role": "main",
+      "variant": "emphasis"
+    }
+  ]
+}

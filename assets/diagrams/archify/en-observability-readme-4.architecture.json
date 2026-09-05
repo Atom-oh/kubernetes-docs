@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Layer-based Observability",
+    "output": "en-observability-readme-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "infra",
+      "type": "cloud",
+      "label": "Infrastructure Layer",
+      "sublabel": "EC2/Fargate · VPC Flow Logs · EBS",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes Layer",
+      "sublabel": "kube-state-metrics · Node Exporter · API Server",
+      "pos": [
+        60,
+        230
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Layer",
+      "sublabel": "Business metrics · Logs · Distributed traces",
+      "pos": [
+        60,
+        390
+      ],
+      "size": [
+        250,
+        64
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "Infrastructure metrics · Logs",
+      "pos": [
+        620,
+        70
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus / Grafana",
+      "sublabel": "Metrics · Dashboards",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo / X-Ray",
+      "sublabel": "Distributed tracing",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "sublabel": "Log aggregation",
+      "pos": [
+        620,
+        460
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS observed layers",
+      "wraps": [
+        "infra",
+        "k8s",
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability tools",
+      "wraps": [
+        "cloudwatch",
+        "prometheus",
+        "tempo",
+        "loki"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "infra-to-cloudwatch",
+      "from": "infra",
+      "to": "cloudwatch",
+      "label": "Infra metrics"
+    },
+    {
+      "id": "k8s-to-prometheus",
+      "from": "k8s",
+      "to": "prometheus",
+      "label": "Cluster metrics",
+      "variant": "emphasis",
+      "labelDx": -70
+    },
+    {
+      "id": "app-to-prometheus",
+      "from": "app",
+      "to": "prometheus",
+      "label": "Business metrics"
+    },
+    {
+      "id": "app-to-tempo",
+      "from": "app",
+      "to": "tempo",
+      "label": "Traces",
+      "labelDx": -70
+    },
+    {
+      "id": "app-to-loki",
+      "from": "app",
+      "to": "loki",
+      "label": "Logs"
+    }
+  ]
+}

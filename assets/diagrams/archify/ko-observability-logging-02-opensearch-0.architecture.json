@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "OpenSearch 클러스터 아키텍처",
+    "output": "ko-observability-logging-02-opensearch-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingest",
+        "label": "로그 수집 경로",
+        "focus": [
+          "app",
+          "fluentbit",
+          "firehose",
+          "data-a",
+          "data-b"
+        ],
+        "note": "애플리케이션 로그가 FluentBit 또는 Kinesis Data Firehose를 거쳐 Data Node에 색인된다."
+      },
+      {
+        "id": "cluster",
+        "label": "클러스터 관리와 복제",
+        "focus": [
+          "master",
+          "data-a",
+          "data-b"
+        ],
+        "note": "3개 AZ에 배치된 Master Node 쿼럼이 클러스터를 관리하고, Data Node는 AZ 간에 데이터를 복제한다."
+      },
+      {
+        "id": "tiering",
+        "label": "스토리지 계층 이동",
+        "focus": [
+          "data-a",
+          "data-b",
+          "ebs",
+          "ultrawarm",
+          "s3"
+        ],
+        "note": "Hot 데이터는 EBS에 저장되고, 오래된 인덱스는 UltraWarm을 거쳐 S3 기반 Cold Storage로 이동한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "컴퓨트 노드"
+        },
+        "database": {
+          "label": "스토리지"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "로그 소스",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fluentbit",
+      "type": "backend",
+      "label": "FluentBit",
+      "sublabel": "로그 수집 에이전트",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "firehose",
+      "type": "messagebus",
+      "label": "Kinesis Data Firehose",
+      "sublabel": "스트리밍 전송",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "master",
+      "type": "backend",
+      "label": "Master Node",
+      "sublabel": "3개 AZ · 클러스터 관리",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "m6g.large ×3"
+    },
+    {
+      "id": "data-a",
+      "type": "backend",
+      "label": "Data Node",
+      "sublabel": "AZ-a · 색인/검색",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "r6g.xlarge"
+    },
+    {
+      "id": "data-b",
+      "type": "backend",
+      "label": "Data Node",
+      "sublabel": "AZ-b · 색인/검색",
+      "pos": [
+        420,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "r6g.xlarge"
+    },
+    {
+      "id": "ultrawarm",
+      "type": "backend",
+      "label": "UltraWarm Node",
+      "sublabel": "읽기 전용 계층",
+      "pos": [
+        760,
+        440
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "ultrawarm1.medium"
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS",
+      "sublabel": "Hot 스토리지",
+      "pos": [
+        1060,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3",
+      "sublabel": "Cold Storage 아카이브",
+      "pos": [
+        1060,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "클라이언트",
+      "wraps": [
+        "app",
+        "fluentbit",
+        "firehose"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VPC · Multi-AZ",
+      "wraps": [
+        "master",
+        "data-a",
+        "data-b",
+        "ultrawarm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지",
+      "wraps": [
+        "ebs",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-data",
+      "from": "app",
+      "to": "data-a",
+      "label": "로그 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fluentbit-to-data",
+      "from": "fluentbit",
+      "to": "data-a",
+      "label": "Bulk API"
+    },
+    {
+      "id": "firehose-to-data",
+      "from": "firehose",
+      "to": "data-b",
+      "label": "스트림 적재"
+    },
+    {
+      "id": "master-manages",
+      "from": "master",
+      "to": "data-a",
+      "label": "클러스터 관리",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        510,
+        170
+      ]
+    },
+    {
+      "id": "data-replica",
+      "from": "data-a",
+      "to": "data-b",
+      "label": "AZ 간 복제",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        510,
+        370
+      ]
+    },
+    {
+      "id": "data-a-to-ebs",
+      "from": "data-a",
+      "to": "ebs",
+      "label": "Hot 인덱스"
+    },
+    {
+      "id": "data-b-to-warm",
+      "from": "data-b",
+      "to": "ultrawarm",
+      "label": "UltraWarm 이동",
+      "variant": "dashed"
+    },
+    {
+      "id": "warm-to-s3",
+      "from": "ultrawarm",
+      "to": "s3",
+      "label": "Cold Storage"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "노드 유형",
+      "items": [
+        "Master: 클러스터 관리, 인덱스 메타데이터 · m6g.large.search 3개",
+        "Data: 데이터 저장, 검색/인덱싱 · r6g.xlarge.search",
+        "UltraWarm: 읽기 전용, 비용 효율적 저장 · ultrawarm1.medium",
+        "Cold: S3 기반 아카이브"
+      ]
+    }
+  ]
+}

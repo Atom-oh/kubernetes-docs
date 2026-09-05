@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VPC CNI + Calico 통합 아키텍처",
+    "output": "ko-networking-calico-08-eks-integration-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "pos": [
+        90,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "AWS 관리"
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "AWS 관리"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Container",
+      "pos": [
+        90,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "애플리케이션 컨테이너"
+    },
+    {
+      "id": "pause",
+      "type": "backend",
+      "label": "Pause Container",
+      "pos": [
+        90,
+        460
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Pod 네트워크 네임스페이스 보유"
+    },
+    {
+      "id": "ipamd",
+      "type": "backend",
+      "label": "aws-node (IPAMD)",
+      "pos": [
+        330,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "IP 주소 관리"
+    },
+    {
+      "id": "cni",
+      "type": "backend",
+      "label": "CNI Plugin",
+      "pos": [
+        510,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Pod 네트워킹 설정"
+    },
+    {
+      "id": "felix",
+      "type": "security",
+      "label": "Felix",
+      "pos": [
+        750,
+        280
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Policy Agent"
+    },
+    {
+      "id": "ipt",
+      "type": "security",
+      "label": "iptables / eBPF Rules",
+      "pos": [
+        750,
+        420
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sublabel": "Network Policy 적용"
+    },
+    {
+      "id": "eni",
+      "type": "cloud",
+      "label": "EC2 ENI",
+      "pos": [
+        330,
+        580
+      ],
+      "size": [
+        280,
+        60
+      ],
+      "sublabel": "Secondary IP"
+    },
+    {
+      "id": "vpc",
+      "type": "cloud",
+      "label": "AWS VPC",
+      "pos": [
+        1020,
+        580
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "sublabel": "Subnet CIDR"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane (AWS 관리)",
+      "wraps": [
+        "api",
+        "etcd"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Worker Node (고객 관리)",
+      "wraps": [
+        "app",
+        "pause",
+        "ipamd",
+        "cni",
+        "felix",
+        "ipt",
+        "eni"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod",
+      "wraps": [
+        "app",
+        "pause"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "VPC CNI",
+      "wraps": [
+        "ipamd",
+        "cni"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Calico",
+      "wraps": [
+        "felix",
+        "ipt"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-pause",
+      "from": "app",
+      "to": "pause",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pause-eni",
+      "from": "pause",
+      "to": "eni",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "ipamd-eni",
+      "from": "ipamd",
+      "to": "eni",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cni-eni",
+      "from": "cni",
+      "to": "eni",
+      "label": "Pod 인터페이스 연결",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "felix-ipt",
+      "from": "felix",
+      "to": "ipt",
+      "label": "규칙 프로그래밍",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "ipt-eni",
+      "from": "ipt",
+      "to": "eni",
+      "label": "Policy 적용",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelDy": 24
+    },
+    {
+      "id": "eni-vpc",
+      "from": "eni",
+      "to": "vpc",
+      "label": "VPC 라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-ipamd",
+      "from": "api",
+      "to": "ipamd",
+      "label": "watch",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-felix",
+      "from": "api",
+      "to": "felix",
+      "label": "Policy watch",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -15,7 +15,9 @@ OpenTelemetry가 CNCF의 최고 성숙 단계인 **졸업(graduated)** 프로젝
 
 OpenTelemetry는 OpenTracing과 OpenCensus 프로젝트가 합쳐져 탄생했습니다:
 
-![2016년 OpenTracing과 2017년 OpenCensus가 2019년 OpenTelemetry로 통합되었고, OpenTelemetry가 Specification, SDKs, Collector, Protocol의 네 가지 핵심 구성 요소로 이어짐을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-tracing-03-opentelemetry-0.svg)
+![2016년 OpenTracing과 2017년 OpenCensus가 2019년 OpenTelemetry로 통합되었고, OpenTelemetry가 Specification, SDKs, Collector, Protocol의 네 가지 핵심 구성 요소로 이어짐을 보여준다.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-03-opentelemetry-0.html)
 
 ## 핵심 개념
 
@@ -27,11 +29,15 @@ OpenTelemetry는 OpenTracing과 OpenCensus 프로젝트가 합쳐져 탄생했�
 | **Metrics** | 수치 측정값 | 리소스 사용량, SLI/SLO |
 | **Logs** | 이벤트 기록 | 디버깅, 감사 |
 
-![OpenTelemetry가 Traces, Metrics, Logs 세 가지 신호를 생성하며, 각 신호가 포함하는 구성요소(Span/SpanContext/Links, Counter/Gauge/Histogram, LogRecord/Severity/Body)와, Traces-Logs가 TraceID로, Metrics-Traces가 Exemplar로 서로 연결됨을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-tracing-03-opentelemetry-1.svg)
+![OpenTelemetry가 Traces(Span·SpanContext·Links), Metrics(Counter·Gauge·Histogram), Logs(LogRecord·Severity·Body) 세 가지 신호를 생성하고, Traces와 Logs는 TraceID로, Metrics와 Traces는 Exemplar로 서로 연결됨을 보여준다.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-03-opentelemetry-1.html)
 
 ### 핵심 컴포넌트
 
-![애플리케이션의 OTel API와 SDK에서 시작해 Receivers, Processors, Exporters 파이프라인을 거쳐 Tempo·Prometheus·Loki·X-Ray·Datadog 등 여러 백엔드로 데이터가 전달되는 흐름을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-tracing-03-opentelemetry-2.svg)
+![애플리케이션의 OTel API와 SDK에서 시작해 Receivers, Processors, Exporters 파이프라인을 거쳐 Tempo·Prometheus·Loki·X-Ray·Datadog 등 여러 백엔드로 데이터가 전달되는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-03-opentelemetry-2.html)
 
 ## OpenTelemetry SDK
 
@@ -394,7 +400,9 @@ class UserService:
 
 ### 아키텍처
 
-![OTel Collector 내부에서 Receivers가 수집한 데이터가 Batch, Memory Limiter, Attributes, Filter, Tail Sampling, Resource 프로세서 체인을 순서대로 거쳐 Exporters로 전달되며, Tail Sampling이 수집 여부를 결정하는 핵심 단계임을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-observability-tracing-03-opentelemetry-3.svg)
+![OTel Collector 내부에서 Receivers가 받은 데이터가 Memory Limiter, Resource, Attributes, Filter, Tail Sampling, Batch 프로세서 체인을 traces 파이프라인 순서대로 거쳐 Exporters로 전달되며, Tail Sampling이 수집 여부를 결정하는 단계임을 보여준다.](../../.gitbook/assets/ko-observability-tracing-03-opentelemetry-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-03-opentelemetry-3.html)
 
 ### Collector 설정
 

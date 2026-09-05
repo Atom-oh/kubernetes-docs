@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Storage Management Best Practices",
+    "output": "en-eks-04-eks-storage-part3-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Storage lifecycle phase"
+        },
+        "backend": {
+          "label": "Best practices per phase (3-step order)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "plan",
+        "label": "Planning and Design",
+        "focus": [
+          "planning-phase",
+          "planning-design"
+        ],
+        "note": "Proceed from requirements analysis to storage type selection, then capacity planning."
+      },
+      {
+        "id": "implement",
+        "label": "Automation and IaC",
+        "focus": [
+          "implementation-phase",
+          "automation-iac"
+        ],
+        "note": "Manage storage resources declaratively: Terraform/CloudFormation, then Helm charts, then a GitOps workflow."
+      },
+      {
+        "id": "operate",
+        "label": "Backup and DR",
+        "focus": [
+          "operation-phase",
+          "backup-dr"
+        ],
+        "note": "Protect operational data with regular backups, a disaster recovery plan, and Velero backups."
+      },
+      {
+        "id": "optimize",
+        "label": "Performance and Cost",
+        "focus": [
+          "optimization-phase",
+          "perf-cost-optimization"
+        ],
+        "note": "Repeat performance review, cost optimization review, and auto scaling on a regular cadence."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "planning-phase",
+      "type": "frontend",
+      "label": "Planning Phase",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "implementation-phase",
+      "type": "frontend",
+      "label": "Implementation Phase",
+      "pos": [
+        310,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "operation-phase",
+      "type": "frontend",
+      "label": "Operation Phase",
+      "pos": [
+        580,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "optimization-phase",
+      "type": "frontend",
+      "label": "Optimization Phase",
+      "pos": [
+        850,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "planning-design",
+      "type": "backend",
+      "label": "Planning and Design",
+      "sublabel": "Requirements → Type selection → Capacity planning",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "automation-iac",
+      "type": "backend",
+      "label": "Automation and IaC",
+      "sublabel": "Terraform/CFN → Helm → GitOps",
+      "pos": [
+        310,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "backup-dr",
+      "type": "backend",
+      "label": "Backup and Disaster Recovery",
+      "sublabel": "Regular backups → DR plan → Velero",
+      "pos": [
+        580,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    },
+    {
+      "id": "perf-cost-optimization",
+      "type": "backend",
+      "label": "Performance and Cost Optimization",
+      "sublabel": "Performance review → Cost review → Auto scaling",
+      "pos": [
+        850,
+        290
+      ],
+      "size": [
+        240,
+        84
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Storage Lifecycle",
+      "wraps": [
+        "planning-phase",
+        "implementation-phase",
+        "operation-phase",
+        "optimization-phase"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage Management Best Practices",
+      "wraps": [
+        "planning-design",
+        "automation-iac",
+        "backup-dr",
+        "perf-cost-optimization"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "plan-to-design",
+      "from": "planning-phase",
+      "to": "planning-design",
+      "variant": "emphasis"
+    },
+    {
+      "id": "impl-to-iac",
+      "from": "implementation-phase",
+      "to": "automation-iac"
+    },
+    {
+      "id": "ops-to-backup",
+      "from": "operation-phase",
+      "to": "backup-dr"
+    },
+    {
+      "id": "opt-to-review",
+      "from": "optimization-phase",
+      "to": "perf-cost-optimization"
+    }
+  ]
+}

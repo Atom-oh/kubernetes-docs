@@ -25,7 +25,9 @@
 
 ### 1.1 로깅, 메트릭, 트레이싱의 관계
 
-![로깅, 메트릭, 트레이싱 3대 관측성 축이 각각 어떤 데이터 특성을 가지며 Exemplars, Context, Correlation ID로 서로 연결되는지를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-0.svg)
+![로깅, 메트릭, 트레이싱 3대 관측성 축이 각각 어떤 데이터 특성을 가지며 Exemplars, Context, Correlation ID로 서로 연결되는지를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-0.html)
 
 ### 1.2 각 축의 역할과 선택 기준
 
@@ -37,7 +39,9 @@
 
 ### 1.3 EKS 관측성 아키텍처 전체 그림
 
-![애플리케이션 파드에서 수집된 로그·메트릭·트레이스가 각 저장소를 거쳐 Grafana 하나로 통합 시각화되는 EKS 관측성 아키텍처 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-1.svg)
+![애플리케이션 Pod에서 나온 로그·메트릭·트레이스가 Fluent Bit, OTel Collector, Prometheus를 거쳐 각 저장소에 쌓이고 Grafana 하나로 통합 시각화되는 EKS 관측성 아키텍처 전체 그림을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-1.html)
 
 ---
 
@@ -338,7 +342,9 @@ spec:
 
 ### 3.4 장기 저장 전략
 
-![Prometheus의 단기 저장 데이터를 Thanos, VictoriaMetrics, AMP로 원격 기록해 장기 보관하고 각자의 쿼리 계층을 거쳐 Grafana에서 조회하는 세 가지 대안 경로를 보여주는 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-2.svg)
+![Prometheus의 7일 단기 저장 데이터를 Thanos, VictoriaMetrics, AMP로 Remote Write해 장기 보관하고 각자의 쿼리 계층을 거쳐 Grafana에서 통합 조회하는 세 가지 대안 경로를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-2.html)
 
 ---
 
@@ -348,7 +354,9 @@ spec:
 
 OpenTelemetry(OTel)는 관측성 데이터(트레이스, 메트릭, 로그)를 수집하고 내보내기 위한 벤더 중립적 표준입니다.
 
-![애플리케이션이 보낸 트레이스가 Receiver로 들어와 배치·속성·Tail Sampling 처리기를 거쳐 Exporter를 통해 백엔드로 전달되는 OTel Collector 파이프라인 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-3.svg)
+![애플리케이션이 보낸 트레이스가 OTel Collector의 Receiver로 들어와 Batch·Attributes·Tail Sampling 처리기를 거친 뒤 Exporter를 통해 Grafana Tempo, Jaeger, AWS X-Ray 백엔드로 전달되는 파이프라인을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-3.html)
 
 ### 4.2 트레이싱 백엔드 비교
 
@@ -580,7 +588,9 @@ spec:
 
 **eBPF(extended Berkeley Packet Filter)**는 리눅스 커널에서 안전하게 프로그램을 실행할 수 있는 기술입니다. eBPF 기반 모니터링의 가장 큰 장점은 **코드 수정 없이** 관측성을 확보할 수 있다는 점입니다.
 
-![전통적 계측은 SDK 추가와 코드 재배포를 거쳐야 하지만 eBPF 계측은 애플리케이션 코드 변경 없이 커널 레벨 훅에서 데이터를 수집한다는 것을 비교하는 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-4.svg)
+![전통적 계측은 SDK 추가와 코드 수정/재배포를 거쳐야 데이터를 수집하지만, eBPF 계측은 애플리케이션 코드 변경 없이 eBPF 프로그램이 커널 레벨 훅에서 데이터를 수집한다는 두 방식의 차이를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-4.html)
 
 | 특성 | 전통적 계측 | eBPF 계측 |
 |---|---|---|
@@ -952,7 +962,9 @@ done
 
 ### 6.4 로그/메트릭 저장 비용 절감 전략
 
-![수집된 데이터를 중요도에 따라 분류해 전체 저장, 샘플링, 집계 중 하나로 처리한 뒤 각각 다른 비용의 저장소로 보내는 비용 절감 의사결정 흐름 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-5.svg)
+![수집한 로그·메트릭을 중요도에 따라 분류해 전체 저장, 샘플링, 집계 중 하나로 처리한 뒤 각각 비용이 다른 저장소(S3 Glacier Deep Archive, S3 Standard-IA, 메모리/로컬)로 보내는 비용 절감 흐름을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-5.html)
 
 | 전략 | 적용 대상 | 예상 절감 |
 |---|---|---|
@@ -1303,7 +1315,9 @@ data:
 
 ### 8.3 도구 간 데이터 상관관계 분석
 
-![사용자가 느린 API를 조사할 때 Grafana가 Prometheus, Tempo, Loki를 traceID로 이어 병목 서비스를 식별하고 통합된 분석 결과를 돌려주는 과정을 보여주는 시퀀스 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-6.svg)
+![사용자가 느린 API를 조사할 때 Grafana가 Prometheus의 P99 Exemplar에서 얻은 traceID로 Tempo 트레이스를 조회해 병목 서비스를 식별하고, 같은 traceID로 Loki 로그를 필터링해 통합된 분석 결과를 돌려주는 과정을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-6.html)
 
 ### 8.4 대규모 클러스터에서 모니터링 시스템 성능 유지
 
@@ -1352,7 +1366,9 @@ spec:
 
 ### 8.5 고가용성 관측성 스택 구성
 
-![여러 노드의 Fluent Bit가 로드밸런서를 거쳐 이중화된 OTel Collector로 모이고, 이중화된 Loki 및 VictoriaMetrics 쓰기 경로가 각각 S3와 자체 스토리지에 데이터를 기록하는 고가용성 관측성 스택 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-7.svg)
+![여러 노드의 Fluent Bit가 Load Balancer를 거쳐 이중화된 OTel Collector로 모이고, 두 Loki Write가 공유 S3 Bucket에 로그를, 두 vminsert가 vmstorage x3에 메트릭을 기록하는 고가용성 관측성 스택 구성을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-7.html)
 
 ---
 
@@ -1360,7 +1376,9 @@ spec:
 
 ### 9.1 단계별 도입 전략
 
-![CloudWatch 기본 구성에서 시작해 Prometheus/Grafana 스택을 거쳐 OpenTelemetry와 eBPF 기반 고급 관측성으로 단계적으로 성장하는 EKS 관측성 도입 경로 다이어그램](../../assets/diagrams/rendered/ko-observability-09-observability-optimization-8.svg)
+![CloudWatch 기본 구성에서 시작해 Prometheus/Grafana 스택을 거쳐 OpenTelemetry와 eBPF, 비용 모니터링 기반 고급 관측성으로 단계적으로 성장하는 EKS 관측성 3단계 도입 경로를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-8.html)
 
 | 단계 | 구성 요소 | 소요 기간 | 비용 | 운영 복잡도 |
 |---|---|---|---|---|

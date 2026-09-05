@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typha를 통한 대규모 확장성",
+    "output": "ko-networking-calico-01-introduction-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without-typha",
+        "label": "Typha 없이 (소규모)",
+        "focus": [
+          "ds1",
+          "f1",
+          "f2",
+          "fn"
+        ],
+        "note": "Datastore가 모든 Felix 에이전트와 직접 연결을 유지해야 하므로 노드 수만큼 연결이 늘어난다."
+      },
+      {
+        "id": "with-typha",
+        "label": "Typha 도입 (대규모)",
+        "focus": [
+          "ds2",
+          "t1",
+          "t2",
+          "t3",
+          "fa",
+          "fb",
+          "fc"
+        ],
+        "note": "Datastore는 Typha 3대에만 연결되고, 각 Typha가 담당 Felix 그룹으로 연결을 분산시킨다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "messagebus": {
+          "label": "Typha (팬아웃 캐시 프록시)"
+        },
+        "backend": {
+          "label": "Felix (노드 에이전트)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ds1",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "etcd / K8s API",
+      "pos": [
+        190,
+        70
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "f1",
+      "type": "backend",
+      "label": "Felix 1",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "f2",
+      "type": "backend",
+      "label": "Felix 2",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        190,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "fn",
+      "type": "backend",
+      "label": "Felix N",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        340,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "ds2",
+      "type": "database",
+      "label": "Datastore",
+      "sublabel": "etcd / K8s API",
+      "pos": [
+        720,
+        70
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "messagebus",
+      "label": "Typha 1",
+      "sublabel": "cache proxy",
+      "pos": [
+        570,
+        235
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "messagebus",
+      "label": "Typha 2",
+      "sublabel": "cache proxy",
+      "pos": [
+        720,
+        235
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "messagebus",
+      "label": "Typha 3",
+      "sublabel": "cache proxy",
+      "pos": [
+        870,
+        235
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "fa",
+      "type": "backend",
+      "label": "Felix A-M",
+      "sublabel": "Felix 그룹",
+      "pos": [
+        570,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "fb",
+      "type": "backend",
+      "label": "Felix N-Z",
+      "sublabel": "Felix 그룹",
+      "pos": [
+        720,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "fc",
+      "type": "backend",
+      "label": "Felix ...",
+      "sublabel": "Felix 그룹",
+      "pos": [
+        870,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Without Typha (소규모)",
+      "wraps": [
+        "ds1",
+        "f1",
+        "f2",
+        "fn"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "With Typha (대규모)",
+      "wraps": [
+        "ds2",
+        "t1",
+        "t2",
+        "t3",
+        "fa",
+        "fb",
+        "fc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ds1-f1",
+      "from": "ds1",
+      "to": "f1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ds1-f2",
+      "from": "ds1",
+      "to": "f2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ds1-fn",
+      "from": "ds1",
+      "to": "fn",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "N개 직접 연결",
+      "labelSegment": 2
+    },
+    {
+      "id": "ds2-t1",
+      "from": "ds2",
+      "to": "t1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ds2-t2",
+      "from": "ds2",
+      "to": "t2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ds2-t3",
+      "from": "ds2",
+      "to": "t3",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "Typha에만 연결",
+      "labelSegment": 2
+    },
+    {
+      "id": "t1-fa",
+      "from": "t1",
+      "to": "fa",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2-fb",
+      "from": "t2",
+      "to": "fb",
+      "label": "그룹별 분산",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 65
+    },
+    {
+      "id": "t3-fc",
+      "from": "t3",
+      "to": "fc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Typha 없이 (소규모)",
+      "items": [
+        "Datastore가 모든 Felix 에이전트와 직접 연결을 유지한다",
+        "노드 수가 늘면 Datastore 연결 수도 N개로 늘어난다"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Typha 도입 (대규모)",
+      "items": [
+        "Datastore는 Typha에만 연결한다",
+        "Typha가 각 Felix 그룹으로 연결을 분산시킨다",
+        "Calico 3.0(2018)에서 Typha 도입"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "확장성 지표",
+      "items": [
+        "단일 클러스터 최대 5,000+ 노드",
+        "100,000+ Pod 지원",
+        "수백만 개의 Network Policy 규칙"
+      ]
+    }
+  ]
+}

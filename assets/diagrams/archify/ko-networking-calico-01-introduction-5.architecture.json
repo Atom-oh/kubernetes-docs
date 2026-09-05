@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico의 클라우드 네이티브 접근",
+    "output": "ko-networking-calico-01-introduction-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "pod-to-felix", "label": "Pod → Felix", "focus": ["pod1", "pod2", "felix"], "note": "각 노드의 Felix 에이전트가 Pod 트래픽에 노드별 정책을 적용한다." },
+      { "id": "bgp-path", "label": "BGP 라우팅 경로", "focus": ["felix", "bgp", "network"], "note": "오버레이 없이 BGP로 Pod IP를 광고해 네트워크에 직접 연결한다." }
+    ]
+  },
+  "components": [
+    { "id": "pod1", "type": "backend", "label": "Pod 1", "sublabel": "워크로드", "pos": [40, 140], "size": [140, 60] },
+    { "id": "pod2", "type": "backend", "label": "Pod 2", "sublabel": "워크로드", "pos": [40, 280], "size": [140, 60] },
+    { "id": "felix", "type": "security", "label": "Felix", "sublabel": "노드별 정책 적용", "tag": "노드별 에이전트", "pos": [300, 210], "size": [160, 64] },
+    { "id": "bgp", "type": "cloud", "label": "BGP", "sublabel": "Pod IP 라우팅 광고", "pos": [580, 210], "size": [160, 64] },
+    { "id": "network", "type": "external", "label": "네트워크", "sublabel": "오버레이 없는 L3", "pos": [860, 210], "size": [160, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Calico 네트워킹", "wraps": ["pod1", "pod2", "felix", "bgp"] }
+  ],
+  "connections": [
+    { "id": "pod1-felix", "from": "pod1", "to": "felix" },
+    { "id": "pod2-felix", "from": "pod2", "to": "felix" },
+    { "id": "felix-bgp", "from": "felix", "to": "bgp", "label": "라우팅", "variant": "emphasis" },
+    { "id": "bgp-network", "from": "bgp", "to": "network", "label": "직접 연결", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "무제한 확장", "items": ["VLAN 개수 제한 없이 IP 기반으로 확장"] },
+    { "dot": "emerald", "title": "동적 구성", "items": ["선언적 설정이 초 단위로 자동 적용"] },
+    { "dot": "violet", "title": "분산 처리", "items": ["각 노드의 Felix가 라벨 기반 정책을 적용"] }
+  ]
+}

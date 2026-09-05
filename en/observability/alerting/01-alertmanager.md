@@ -35,7 +35,9 @@ Prometheus Alertmanager is a component that processes alerts sent from Prometheu
 
 ### Prometheus Alert Flow
 
-![Sequence diagram showing Prometheus evaluating and firing an alert, Alertmanager running it through deduplication, grouping, routing, inhibition and silence checks, then notifying a receiver, which confirms delivery.](../../../assets/diagrams/rendered/alertmanager-alert-flow.svg)
+![Sequence diagram showing Prometheus evaluating an alert rule through Pending to Firing, posting it to Alertmanager, which runs deduplication, grouping, routing and inhibition/silence checks before notifying a receiver that returns a delivery result.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-0.html)
 
 ---
 
@@ -43,7 +45,9 @@ Prometheus Alertmanager is a component that processes alerts sent from Prometheu
 
 ### Alertmanager Internal Structure
 
-![Architecture diagram showing alerts entering Alertmanager's API, flowing through a pipeline of dispatcher, inhibitor, silencer, aggregation and notification stages to receivers, while a clustered gossip protocol keeps the notification log and silence store synced across replicas.](../../../assets/diagrams/rendered/alertmanager-internal-structure.svg)
+![Alerts from Prometheus enter the Alertmanager API, pass through the Dispatcher, Inhibitor, Silencer, Aggregation Group and Notification Pipeline to receivers, while the Gossip Protocol syncs the Silences and nflog stores across cluster nodes.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-1.html)
 
 ### Component Description
 
@@ -230,7 +234,9 @@ rules:
 
 ### Alert States
 
-![State machine showing an alert moving from Inactive to Pending once its PromQL condition is met, then to Firing once the 'for' duration elapses, with paths back to Inactive if the condition clears.](../../../assets/diagrams/rendered/alertmanager-alert-states.svg)
+![State machine showing an alert rule moving from Inactive to Pending once its expr condition is met, then to Firing (sent to Alertmanager) once the 'for' duration elapses, with both Pending and Firing returning to Inactive when the condition clears.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
 ---
 
@@ -275,7 +281,9 @@ route:
 
 ### Routing Flow
 
-![Flowchart showing how Alertmanager routes a received alert down its matcher tree — critical severity to the critical receiver, then service and owner matchers deciding between team-a, the service team, or the default receiver.](../../../assets/diagrams/rendered/alertmanager-routing-flow.svg)
+![Alertmanager routing tree decision flow: a received alert is checked against the severity=critical, service=foo|bar and owner=team-a matchers in turn and delivered to critical-receiver, default-receiver, team-a or service-team.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-3.html)
 
 ### Matchers
 
@@ -501,7 +509,9 @@ receivers:
 
 Inhibition is a feature that suppresses related alerts when a specific alert fires.
 
-![Architecture diagram contrasting alert delivery without inhibition, where three related alerts all reach the receiver, against delivery with inhibition, where a node-down alert still reaches the receiver while the pod and service alerts it implies are suppressed.](../../../assets/diagrams/rendered/alertmanager-inhibition-concept.svg)
+![Side-by-side comparison of alert delivery without inhibition, where NodeDown, PodNotReady and ServiceUnavailable all reach the receiver, and with inhibition, where only NodeDown is sent and the two related alerts are blocked.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-4.html)
 
 ### Inhibition Rule Configuration
 
@@ -611,7 +621,9 @@ curl -X POST http://alertmanager:9093/api/v2/silences \
 
 ### Silence Management Best Practices
 
-![Flowchart showing a silence's duration set by its type — maintenance, deployment, investigation, or known issue — followed by a mandatory comment, regular review, and either automatic removal on expiry or a manual review.](../../../assets/diagrams/rendered/alertmanager-silence-best-practices.svg)
+![Flowchart showing a silence's duration set by its type — maintenance (planned window), deployment (until the deploy completes), investigation (max 4 hours), or known issue (until the fix lands) — followed by a mandatory comment, regular review, and either automatic removal on expiry or a manual review.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-5.html)
 
 **Recommendations:**
 
@@ -718,7 +730,9 @@ data:
 
 ### Clustering Architecture
 
-![Architecture diagram showing Prometheus sending the same alerts to a three-replica Alertmanager cluster, the replicas gossiping state amongst themselves in a ring, replicas 2 and 3 forwarding their view to replica 1 for deduplication, and replica 1 forwarding to the receivers.](../../../assets/diagrams/rendered/alertmanager-clustering-architecture.svg)
+![Diagram showing Prometheus sending the same alerts to all three Alertmanager replicas, the replicas syncing their notification log over gossip on port 9094 to deduplicate, and one replica delivering the final notification to the receivers.](../../.gitbook/assets/en-observability-alerting-01-alertmanager-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-6.html)
 
 ### StatefulSet Configuration
 

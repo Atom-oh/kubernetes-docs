@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Benefits of Gateway API",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "Protocol routing"
+        },
+        "security": {
+          "label": "Permission model"
+        },
+        "cloud": {
+          "label": "Standard resources"
+        },
+        "backend": {
+          "label": "Extension mechanism"
+        }
+      }
+    },
+    "locale": "en",
+    "viewBox": [
+      972,
+      282
+    ]
+  },
+  "lanes": [
+    {
+      "id": "features",
+      "label": "Gateway API Features"
+    }
+  ],
+  "mainPath": [
+    "exp",
+    "role",
+    "port",
+    "ext"
+  ],
+  "nodes": [
+    {
+      "id": "exp",
+      "lane": "features",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Expressiveness",
+      "sublabel": "Multiple protocol support",
+      "tag": "HTTP · gRPC · TCP · UDP",
+      "width": 160
+    },
+    {
+      "id": "role",
+      "lane": "features",
+      "col": 2,
+      "type": "security",
+      "label": "Role Separation",
+      "sublabel": "Role-based permissions",
+      "width": 160,
+      "tag": "infra · operator · developer"
+    },
+    {
+      "id": "port",
+      "lane": "features",
+      "col": 3,
+      "type": "cloud",
+      "label": "Portability",
+      "sublabel": "Standardized resources",
+      "tag": "no annotation dependence",
+      "width": 160
+    },
+    {
+      "id": "ext",
+      "lane": "features",
+      "col": 4,
+      "type": "backend",
+      "label": "Extensibility",
+      "sublabel": "CRD-based extension",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "exp-role",
+      "from": "exp",
+      "to": "role"
+    },
+    {
+      "id": "role-port",
+      "from": "role",
+      "to": "port"
+    },
+    {
+      "id": "port-ext",
+      "from": "port",
+      "to": "ext"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Ingress API Limitations Addressed",
+      "items": [
+        "Limited expressiveness: poor support for TCP/UDP/gRPC beyond HTTP routing",
+        "No role separation: hard to separate infrastructure admin and application developer permissions",
+        "Annotation abuse: implementation-specific features handled via annotations, reducing portability",
+        "Limited extensibility: difficult to add new protocols or features"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Development and Implementations",
+      "items": [
+        "Next-generation ingress API developed by SIG-Network",
+        "Supported by implementations such as Istio, Cilium, and Envoy Gateway"
+      ]
+    }
+  ]
+}

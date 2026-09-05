@@ -36,7 +36,9 @@ IPAM은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니�
 
 ### Cilium IPAM 아키텍처
 
-![클러스터 범위, 노드 범위, 클라우드 제공업체, 사용자 정의라는 네 가지 Cilium IPAM 구현 방식이 각각 중앙 집중식, 분산, 클라우드 네이티브, 사용자 정의 할당 결과로 이어지는 것을 보여주는 다이어그램으로, 여러 퍼블릭 클라우드의 VPC/VNET IP를 그대로 쓰는 클라우드 네이티브 할당 경로가 강조되어 있다.](../../../assets/diagrams/rendered/ko-networking-cilium-04-ipam-policy-0.svg)
+![Cilium IPAM 모드를 클러스터 범위, 노드 범위, 클라우드 제공업체, 사용자 정의 네 그룹으로 묶어 각 할당 모델과 연결하고, VPC IP를 그대로 포드에 할당하는 AWS ENI 경로를 강조해 보여준다.](../../.gitbook/assets/ko-networking-cilium-04-ipam-policy-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-04-ipam-policy-0.html)
 
 ### Cilium IPAM 모드:
 
@@ -46,14 +48,14 @@ IPAM은 IP 주소의 할당, 추적 및 관리를 담당하는 시스템입니�
    - 단일 또는 여러 IP 풀 구성 가능
    - 간단하고 사용하기 쉬움
 
-2. **쿠버네티스 호스트 범위(Kubernetes Host Scope)**:
+2. **Kubernetes 호스트 범위(Kubernetes Host Scope)**:
    - 각 노드에 IP 주소 범위 할당
    - 노드는 자체 범위 내에서 IP 주소 할당
    - 중앙 조정 필요 없음
    - 노드 간 IP 충돌 방지
 
 3. **CRD 기반 IPAM**:
-   - CiliumIPPool 커스텀 리소스를 통한 IP 풀 정의
+   - CiliumPodIPPool 커스텀 리소스를 통한 IP 풀 정의
    - 특정 네임스페이스 또는 포드에 IP 풀 할당
    - 세분화된 IP 주소 관리
    - 동적 IP 풀 관리
@@ -162,7 +164,7 @@ data:
 ```yaml
 # cilium-ippool.yaml
 apiVersion: "cilium.io/v2alpha1"
-kind: CiliumIPPool
+kind: CiliumPodIPPool
 metadata:
   name: "production-pool"
 spec:
@@ -242,7 +244,7 @@ Kubernetes 호스트 스코프 IPAM은 각 노드에 IP 주소 범위를 할당�
 - 다양한 네트워크 요구 사항 지원
 
 **작동 방식**:
-1. CiliumIPPool CRD를 사용하여 여러 IP 풀을 정의합니다.
+1. CiliumPodIPPool CRD를 사용하여 여러 IP 풀을 정의합니다.
 2. 선택기를 사용하여 특정 워크로드에 특정 풀을 할당합니다.
 3. Cilium은 정의된 규칙에 따라 적절한 풀에서 IP 주소를 할당합니다.
 

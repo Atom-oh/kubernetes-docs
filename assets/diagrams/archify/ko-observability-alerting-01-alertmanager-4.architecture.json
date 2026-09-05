@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Inhibition 개념",
+    "output": "ko-observability-alerting-01-alertmanager-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "without",
+        "label": "억제 없이",
+        "focus": [
+          "l-nodedown",
+          "l-podnotready",
+          "l-serviceunavailable",
+          "l-receiver"
+        ],
+        "note": "억제 규칙이 없으면 NodeDown과 그로 인해 발생한 PodNotReady, ServiceUnavailable 알림이 모두 수신자에게 전송된다."
+      },
+      {
+        "id": "with",
+        "label": "억제 적용",
+        "focus": [
+          "r-nodedown",
+          "r-podnotready",
+          "r-serviceunavailable",
+          "r-receiver",
+          "r-inhibited"
+        ],
+        "note": "NodeDown이 source_match 알림이 되어 target_match에 해당하는 관련 알림 2건은 차단되고 NodeDown만 전송된다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "l-nodedown",
+      "type": "messagebus",
+      "label": "NodeDown",
+      "sublabel": "알림",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "l-podnotready",
+      "type": "messagebus",
+      "label": "PodNotReady",
+      "sublabel": "알림",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "l-serviceunavailable",
+      "type": "messagebus",
+      "label": "ServiceUnavailable",
+      "sublabel": "알림",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "l-receiver",
+      "type": "external",
+      "label": "Receiver",
+      "sublabel": "3건 모두 수신",
+      "pos": [
+        330,
+        80
+      ],
+      "size": [
+        160,
+        296
+      ]
+    },
+    {
+      "id": "r-nodedown",
+      "type": "messagebus",
+      "label": "NodeDown",
+      "sublabel": "source_match 알림",
+      "pos": [
+        620,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "source"
+    },
+    {
+      "id": "r-podnotready",
+      "type": "messagebus",
+      "label": "PodNotReady",
+      "sublabel": "target_match 알림",
+      "pos": [
+        620,
+        200
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "r-serviceunavailable",
+      "type": "messagebus",
+      "label": "ServiceUnavailable",
+      "sublabel": "target_match 알림",
+      "pos": [
+        620,
+        320
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "r-receiver",
+      "type": "external",
+      "label": "Receiver",
+      "sublabel": "NodeDown만 수신",
+      "pos": [
+        910,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "r-inhibited",
+      "type": "security",
+      "label": "억제됨",
+      "sublabel": "2건 차단",
+      "pos": [
+        910,
+        200
+      ],
+      "size": [
+        160,
+        176
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "억제 없이",
+      "wraps": [
+        "l-nodedown",
+        "l-podnotready",
+        "l-serviceunavailable",
+        "l-receiver"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "억제 적용",
+      "wraps": [
+        "r-nodedown",
+        "r-podnotready",
+        "r-serviceunavailable",
+        "r-receiver",
+        "r-inhibited"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "l-nodedown-send",
+      "from": "l-nodedown",
+      "to": "l-receiver",
+      "label": "전송",
+      "labelAt": [
+        232,
+        108
+      ]
+    },
+    {
+      "id": "l-podnotready-send",
+      "from": "l-podnotready",
+      "to": "l-receiver",
+      "label": "전송",
+      "labelAt": [
+        232,
+        228
+      ]
+    },
+    {
+      "id": "l-serviceunavailable-send",
+      "from": "l-serviceunavailable",
+      "to": "l-receiver",
+      "label": "전송",
+      "labelAt": [
+        232,
+        348
+      ]
+    },
+    {
+      "id": "r-nodedown-send",
+      "from": "r-nodedown",
+      "to": "r-receiver",
+      "label": "전송",
+      "variant": "emphasis",
+      "labelAt": [
+        812,
+        108
+      ]
+    },
+    {
+      "id": "r-podnotready-inhibit",
+      "from": "r-podnotready",
+      "to": "r-inhibited",
+      "label": "억제",
+      "variant": "dashed",
+      "labelAt": [
+        812,
+        228
+      ]
+    },
+    {
+      "id": "r-serviceunavailable-inhibit",
+      "from": "r-serviceunavailable",
+      "to": "r-inhibited",
+      "label": "억제",
+      "variant": "dashed",
+      "labelAt": [
+        812,
+        348
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "억제 규칙 예시",
+      "items": [
+        "source_match: alertname: NodeDown",
+        "target_match_re: alertname: ^(PodNotReady|PodCrashLooping|ContainerOOMKilled)$",
+        "equal: ['node'] — 같은 node 라벨을 가진 알림만 억제"
+      ]
+    }
+  ]
+}

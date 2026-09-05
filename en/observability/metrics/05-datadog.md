@@ -33,7 +33,9 @@ Datadog is a unified observability platform for monitoring cloud-scale infrastru
 
 ### Datadog vs Open Source vs CloudWatch
 
-![Three side-by-side profiles comparing Datadog, Amazon CloudWatch, and a self-hosted open-source stack across platform model, intelligence, integration breadth, and pricing shape.](../../../assets/diagrams/rendered/en-observability-metrics-05-datadog-0.svg)
+![Three side-by-side profiles comparing Datadog, Amazon CloudWatch, and a self-hosted open-source stack across platform model, intelligence, integration breadth, and pricing shape.](../../.gitbook/assets/en-observability-metrics-05-datadog-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-0.html)
 
 | Item | Datadog | CloudWatch | Prometheus+Grafana |
 |------|---------|------------|-------------------|
@@ -49,7 +51,9 @@ Datadog is a unified observability platform for monitoring cloud-scale infrastru
 
 ### Overall Architecture
 
-![The Datadog Agent DaemonSet and Cluster Agent collect metrics, logs, traces, and profiles from an EKS cluster's applications and forward them into the Datadog platform, where they feed dashboards, and where Watchdog AI generates monitor alerts.](../../../assets/diagrams/rendered/en-observability-metrics-05-datadog-1.svg)
+![The Datadog Agent DaemonSet and Cluster Agent forward an EKS cluster's metrics, logs, traces and profiles into the Datadog platform, which feeds dashboards while Watchdog AI detects anomalies and raises monitor alerts.](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-1.html)
 
 ### Components
 
@@ -800,7 +804,9 @@ Estimated total cost: ~$3,350/month
 
 ### Cost Optimization Strategies
 
-![A tree showing Datadog cost optimization branching into metric, log, and APM optimization, each listing its own set of concrete tuning strategies.](../../../assets/diagrams/rendered/en-observability-metrics-05-datadog-2.svg)
+![A tree showing Datadog cost optimization branching into metric, log, and APM optimization, each with its own three concrete tuning strategies.](../../.gitbook/assets/en-observability-metrics-05-datadog-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-2.html)
 
 #### 1. Metric Optimization
 

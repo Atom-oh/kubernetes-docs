@@ -1,0 +1,239 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "CloudWatch Alarm Automatic Response Configuration",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-alerting-02-cloudwatch-alarms-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "alarm-to-rule",
+        "label": "Alarm to EventBridge",
+        "focus": [
+          "alarm",
+          "eventbridge",
+          "rule"
+        ],
+        "note": "The ALARM state-change event enters EventBridge and is matched by an event rule with an event pattern."
+      },
+      {
+        "id": "lambda-targets",
+        "label": "Lambda responses",
+        "focus": [
+          "rule",
+          "autoscale",
+          "restart",
+          "notify"
+        ],
+        "note": "Lambda targets perform auto scaling, instance restart, and Slack notification."
+      },
+      {
+        "id": "aws-automation",
+        "label": "SSM and Step Functions",
+        "focus": [
+          "rule",
+          "runbook",
+          "recovery"
+        ],
+        "note": "Run an SSM runbook or start a Step Functions recovery workflow."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "detect",
+      "label": "Detect and route"
+    },
+    {
+      "id": "lambda",
+      "label": "Lambda responses"
+    },
+    {
+      "id": "aws",
+      "label": "AWS service responses"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p-detect",
+      "label": "Detect",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p-route",
+      "label": "Route",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p-respond",
+      "label": "Automatic response",
+      "fromCol": 3,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "alarm",
+    "eventbridge",
+    "rule",
+    "autoscale"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "alarm"
+    ],
+    "allowedTerminals": [
+      "autoscale",
+      "restart",
+      "notify",
+      "runbook",
+      "recovery"
+    ],
+    "requiredPaths": [
+      {
+        "from": "alarm",
+        "to": "autoscale"
+      },
+      {
+        "from": "alarm",
+        "to": "recovery"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "alarm",
+      "lane": "detect",
+      "col": 0,
+      "type": "cloud",
+      "label": "CloudWatch Alarm",
+      "width": 156
+    },
+    {
+      "id": "eventbridge",
+      "lane": "detect",
+      "col": 1,
+      "type": "messagebus",
+      "label": "EventBridge",
+      "width": 164
+    },
+    {
+      "id": "rule",
+      "lane": "detect",
+      "col": 2,
+      "type": "security",
+      "label": "Event Rule",
+      "tag": "put-rule",
+      "width": 150
+    },
+    {
+      "id": "autoscale",
+      "lane": "lambda",
+      "col": 3,
+      "type": "backend",
+      "label": "Lambda: Auto Scaling",
+      "width": 200
+    },
+    {
+      "id": "restart",
+      "lane": "lambda",
+      "col": 4,
+      "type": "backend",
+      "label": "Lambda: Instance Restart",
+      "width": 210
+    },
+    {
+      "id": "notify",
+      "lane": "lambda",
+      "col": 5,
+      "type": "backend",
+      "label": "Lambda: Slack Notification",
+      "width": 220
+    },
+    {
+      "id": "runbook",
+      "lane": "aws",
+      "col": 3,
+      "type": "cloud",
+      "label": "SSM: Runbook Execution",
+      "width": 200
+    },
+    {
+      "id": "recovery",
+      "lane": "aws",
+      "col": 5,
+      "type": "cloud",
+      "label": "Step Functions: Recovery Workflow",
+      "width": 268
+    }
+  ],
+  "edges": [
+    {
+      "from": "alarm",
+      "to": "eventbridge",
+      "label": "state change event",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "eventbridge",
+      "to": "rule",
+      "label": "pattern match",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "rule",
+      "to": "autoscale",
+      "label": "target",
+      "role": "main"
+    },
+    {
+      "from": "rule",
+      "to": "restart",
+      "role": "branch",
+      "channelY": 168
+    },
+    {
+      "from": "rule",
+      "to": "notify",
+      "role": "branch",
+      "channelY": 168
+    },
+    {
+      "from": "rule",
+      "to": "runbook",
+      "role": "branch",
+      "channelY": 294
+    },
+    {
+      "from": "rule",
+      "to": "recovery",
+      "role": "branch",
+      "channelY": 294
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Event pattern",
+      "items": [
+        "source: aws.cloudwatch",
+        "detail-type: CloudWatch Alarm State Change",
+        "detail.state.value: ALARM"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Target registration",
+      "items": [
+        "Add targets to the rule with aws events put-targets",
+        "Lambda, SSM Automation, and Step Functions can all be targets"
+      ]
+    }
+  ]
+}

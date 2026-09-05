@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "컴플라이언스 및 감사",
+    "output": "ko-eks-05-eks-security-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1340, 700],
+    "views": [
+      { "id": "audit-pipeline", "label": "감사 로그 파이프라인", "focus": ["cp-logs", "audit-logs", "cloudtrail", "fluentbit", "cloudwatch", "storage-analysis", "securityhub", "alerting-reporting"], "note": "컨트롤 플레인·감사 로그가 CloudWatch에 모여 저장·분석되고 Security Hub를 거쳐 알림과 보고로 이어진다." },
+      { "id": "compliance-check", "label": "컴플라이언스 평가", "focus": ["config", "inspector", "cis", "standards", "securityhub"], "note": "AWS Config 규칙과 Inspector 결과를 CIS Kubernetes Benchmark로 평가해 규제 표준 준수 여부를 확인한다." }
+    ]
+  },
+  "components": [
+    { "id": "cp-logs", "type": "backend", "label": "컨트롤 플레인 로그", "sublabel": "api · authenticator · scheduler", "pos": [40, 60], "size": [190, 56] },
+    { "id": "audit-logs", "type": "backend", "label": "감사 로그", "sublabel": "audit (모든 API 호출)", "pos": [40, 150], "size": [190, 56] },
+    { "id": "cloudtrail", "type": "cloud", "label": "AWS CloudTrail", "sublabel": "AWS API 호출 기록", "pos": [40, 240], "size": [190, 56] },
+    { "id": "fluentbit", "type": "backend", "label": "Fluent Bit", "sublabel": "노드 · 애플리케이션 로그", "pos": [40, 330], "size": [190, 56] },
+    { "id": "cloudwatch", "type": "cloud", "label": "Amazon CloudWatch", "sublabel": "로그 수집", "pos": [300, 195], "size": [180, 60] },
+    { "id": "storage-analysis", "type": "database", "label": "로그 저장 · 분석", "sublabel": "CloudWatch Logs Insights", "pos": [560, 195], "size": [180, 60] },
+    { "id": "securityhub", "type": "security", "label": "AWS Security Hub", "sublabel": "보안 상태 중앙 관리", "pos": [800, 195], "size": [180, 60] },
+    { "id": "alerting-reporting", "type": "external", "label": "알림 · 보고", "sublabel": "Alerting / Reporting", "pos": [1020, 195], "size": [260, 60] },
+    { "id": "config", "type": "cloud", "label": "AWS Config", "sublabel": "eks-* 규칙 평가", "pos": [40, 480], "size": [190, 56] },
+    { "id": "inspector", "type": "cloud", "label": "Amazon Inspector", "sublabel": "취약점 결과", "pos": [40, 570], "size": [190, 56] },
+    { "id": "cis", "type": "security", "label": "CIS Kubernetes Benchmark", "sublabel": "업계 표준 점검", "pos": [560, 510], "size": [180, 60] },
+    { "id": "standards", "type": "external", "label": "규제 표준", "sublabel": "PCI DSS · HIPAA · GDPR · SOC 2 · ISO 27001", "pos": [1020, 510], "size": [260, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "로깅 및 모니터링", "wraps": ["cp-logs", "audit-logs", "cloudtrail", "fluentbit", "cloudwatch"] },
+    { "kind": "region", "label": "감사 워크플로우", "wraps": ["storage-analysis", "securityhub", "alerting-reporting"] },
+    { "kind": "region", "label": "컴플라이언스 도구", "wraps": ["config", "inspector", "cis"] },
+    { "kind": "region", "label": "컴플라이언스 표준", "wraps": ["standards"] }
+  ],
+  "connections": [
+    { "id": "cp-to-cw", "from": "cp-logs", "to": "cloudwatch" },
+    { "id": "audit-to-cw", "from": "audit-logs", "to": "cloudwatch", "variant": "emphasis" },
+    { "id": "trail-to-cw", "from": "cloudtrail", "to": "cloudwatch" },
+    { "id": "fb-to-cw", "from": "fluentbit", "to": "cloudwatch" },
+    { "id": "cw-to-storage", "from": "cloudwatch", "to": "storage-analysis", "label": "저장", "variant": "emphasis" },
+    { "id": "storage-to-hub", "from": "storage-analysis", "to": "securityhub", "label": "분석 결과", "variant": "emphasis" },
+    { "id": "hub-to-alert", "from": "securityhub", "to": "alerting-reporting", "variant": "emphasis" },
+    { "id": "hub-to-cis", "from": "securityhub", "to": "cis", "label": "표준 준수 확인", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "id": "config-to-cis", "from": "config", "to": "cis", "label": "규칙 평가" },
+    { "id": "inspector-to-cis", "from": "inspector", "to": "cis" },
+    { "id": "cis-to-standards", "from": "cis", "to": "standards", "label": "준수 여부", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "EKS 감사 로깅", "items": ["update-cluster-config로 컨트롤 플레인 로그 활성화", "로그 유형: api, audit, authenticator, controllerManager, scheduler", "감사 로그는 클러스터에서 수행된 모든 API 호출을 기록"] },
+    { "dot": "orange", "title": "AWS Config 규칙", "items": ["eks-cluster-logging-enabled", "eks-cluster-oldest-supported-version", "eks-endpoint-no-public-access", "eks-secrets-encrypted"] },
+    { "dot": "rose", "title": "Security Hub", "items": ["EKS 보안 상태를 중앙에서 관리·모니터링", "CIS Kubernetes Benchmark 등 업계 표준 준수 확인"] }
+  ]
+}

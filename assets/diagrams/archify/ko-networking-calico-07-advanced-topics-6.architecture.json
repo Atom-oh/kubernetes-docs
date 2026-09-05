@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Route Reflector 토폴로지",
+    "output": "ko-networking-calico-07-advanced-topics-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "rr-mesh",
+        "label": "Tier 1 RR 풀메시",
+        "focus": [
+          "rr1",
+          "rr2",
+          "rr3"
+        ],
+        "note": "Route Reflector 노드끼리만 iBGP 풀메시로 피어링한다."
+      },
+      {
+        "id": "rack-fanout",
+        "label": "랙 RR로 반영",
+        "focus": [
+          "rr1",
+          "rr2",
+          "rr3",
+          "rack1",
+          "rack2",
+          "rack3"
+        ],
+        "note": "각 RR은 자신이 담당하는 랙 RR로 라우트를 반영한다. Tier 2는 선택 사항이다."
+      },
+      {
+        "id": "node-peering",
+        "label": "워커 노드 피어링",
+        "focus": [
+          "rack1",
+          "rack2",
+          "rack3",
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "note": "일반 노드는 nodeToNodeMeshEnabled: false 상태에서 RR과만 피어링한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rr1",
+      "type": "security",
+      "label": "RR 1",
+      "sublabel": "Cluster ID 1.0.0.1",
+      "pos": [
+        60,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rr2",
+      "type": "security",
+      "label": "RR 2",
+      "sublabel": "Cluster ID 1.0.0.2",
+      "pos": [
+        400,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rr3",
+      "type": "security",
+      "label": "RR 3",
+      "sublabel": "Cluster ID 1.0.0.3",
+      "pos": [
+        740,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rack1",
+      "type": "backend",
+      "label": "Rack 1 RR",
+      "sublabel": "랙 단위 Route Reflector",
+      "pos": [
+        60,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rack2",
+      "type": "backend",
+      "label": "Rack 2 RR",
+      "sublabel": "랙 단위 Route Reflector",
+      "pos": [
+        400,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "rack3",
+      "type": "backend",
+      "label": "Rack 3 RR",
+      "sublabel": "랙 단위 Route Reflector",
+      "pos": [
+        740,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "cloud",
+      "label": "Node 1-100",
+      "sublabel": "워커 노드",
+      "pos": [
+        60,
+        470
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "n2",
+      "type": "cloud",
+      "label": "Node 101-200",
+      "sublabel": "워커 노드",
+      "pos": [
+        400,
+        470
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "n3",
+      "type": "cloud",
+      "label": "Node 201-300",
+      "sublabel": "워커 노드",
+      "pos": [
+        740,
+        470
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Tier 1 · Route Reflector",
+      "wraps": [
+        "rr1",
+        "rr2",
+        "rr3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tier 2 · 랙 RR (선택 사항)",
+      "wraps": [
+        "rack1",
+        "rack2",
+        "rack3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "n1",
+        "n2",
+        "n3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rr1-rr2",
+      "from": "rr1",
+      "to": "rr2",
+      "label": "iBGP 풀메시 피어링",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rr2-rr3",
+      "from": "rr2",
+      "to": "rr3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rr1-rr3",
+      "from": "rr1",
+      "to": "rr3",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "rr1-rack1",
+      "from": "rr1",
+      "to": "rack1",
+      "label": "라우트 반영",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        202
+      ]
+    },
+    {
+      "id": "rr2-rack2",
+      "from": "rr2",
+      "to": "rack2"
+    },
+    {
+      "id": "rr3-rack3",
+      "from": "rr3",
+      "to": "rack3"
+    },
+    {
+      "id": "rack1-n1",
+      "from": "rack1",
+      "to": "n1",
+      "label": "노드 → RR 피어링",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        145,
+        402
+      ]
+    },
+    {
+      "id": "rack2-n2",
+      "from": "rack2",
+      "to": "n2"
+    },
+    {
+      "id": "rack3-n3",
+      "from": "rack3",
+      "to": "n3"
+    }
+  ]
+}

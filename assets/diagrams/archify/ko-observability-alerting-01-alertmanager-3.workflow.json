@@ -1,0 +1,236 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Alertmanager 라우팅 흐름",
+    "output": "public/archmaps/ko-observability-alerting-01-alertmanager-3.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "알림 진입"
+        },
+        "security": {
+          "label": "판단 조건 (matcher)"
+        },
+        "external": {
+          "label": "수신자"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "critical-first",
+        "label": "critical 우선 라우트",
+        "focus": [
+          "alert",
+          "crit",
+          "criticalRecv"
+        ],
+        "note": "severity=critical 알림은 첫 하위 route에서 바로 critical-receiver로 보내진다 (group_wait 10s)."
+      },
+      {
+        "id": "nested-route",
+        "label": "service → owner 중첩 라우트",
+        "focus": [
+          "svc",
+          "owner",
+          "teamA",
+          "serviceTeam"
+        ],
+        "note": "service가 foo|bar면 하위 route에서 owner를 다시 판별하고, 불일치 시 상위 route의 service-team으로 간다."
+      },
+      {
+        "id": "fallback",
+        "label": "기본 수신자",
+        "focus": [
+          "crit",
+          "svc",
+          "defaultRecv"
+        ],
+        "note": "어느 하위 route에도 일치하지 않은 알림은 루트 route의 default-receiver가 받는다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "match",
+      "label": "라우팅 트리 · matcher 판별"
+    },
+    {
+      "id": "recv",
+      "label": "수신자 (receiver)"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "crit",
+    "svc",
+    "owner",
+    "teamA"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "alert"
+    ],
+    "allowedTerminals": [
+      "criticalRecv",
+      "defaultRecv",
+      "teamA",
+      "serviceTeam"
+    ],
+    "requiredPaths": [
+      {
+        "from": "alert",
+        "to": "criticalRecv"
+      },
+      {
+        "from": "alert",
+        "to": "defaultRecv"
+      },
+      {
+        "from": "alert",
+        "to": "teamA"
+      },
+      {
+        "from": "alert",
+        "to": "serviceTeam"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "match",
+      "col": 0,
+      "type": "backend",
+      "label": "알림 수신",
+      "sublabel": "루트 route 진입",
+      "width": 134
+    },
+    {
+      "id": "crit",
+      "lane": "match",
+      "col": 1,
+      "type": "security",
+      "label": "severity=critical?",
+      "sublabel": "match",
+      "width": 150
+    },
+    {
+      "id": "svc",
+      "lane": "match",
+      "col": 2,
+      "type": "security",
+      "label": "service=foo|bar?",
+      "sublabel": "match_re",
+      "width": 150
+    },
+    {
+      "id": "owner",
+      "lane": "match",
+      "col": 3,
+      "type": "security",
+      "label": "owner=team-a?",
+      "sublabel": "하위 route · match",
+      "width": 150
+    },
+    {
+      "id": "criticalRecv",
+      "lane": "recv",
+      "col": 1,
+      "type": "external",
+      "label": "critical-receiver",
+      "sublabel": "group_wait 10s",
+      "width": 150
+    },
+    {
+      "id": "defaultRecv",
+      "lane": "recv",
+      "col": 2,
+      "type": "external",
+      "label": "default-receiver",
+      "sublabel": "루트 route 기본 수신자",
+      "width": 150
+    },
+    {
+      "id": "teamA",
+      "lane": "recv",
+      "col": 3,
+      "type": "external",
+      "label": "team-a",
+      "sublabel": "하위 route 수신자",
+      "width": 150
+    },
+    {
+      "id": "serviceTeam",
+      "lane": "recv",
+      "col": 4,
+      "type": "external",
+      "label": "service-team",
+      "sublabel": "상위 route 수신자",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "crit",
+      "role": "main"
+    },
+    {
+      "from": "crit",
+      "to": "criticalRecv",
+      "label": "일치",
+      "variant": "emphasis",
+      "role": "branch"
+    },
+    {
+      "from": "crit",
+      "to": "svc",
+      "label": "불일치",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "svc",
+      "to": "defaultRecv",
+      "label": "불일치",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "svc",
+      "to": "owner",
+      "label": "일치",
+      "role": "main",
+      "route": "straight"
+    },
+    {
+      "from": "owner",
+      "to": "teamA",
+      "label": "일치",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "owner",
+      "to": "serviceTeam",
+      "label": "불일치",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "페이지 예시 route 설정",
+      "items": [
+        "루트 route: receiver default-receiver, group_wait 30s, group_interval 5m, repeat_interval 4h",
+        "critical route: match severity=critical, group_wait 10s로 단축",
+        "service route: match_re ^(foo|bar)$ → service-team, 그 아래 owner=team-a → team-a"
+      ]
+    }
+  ]
+}

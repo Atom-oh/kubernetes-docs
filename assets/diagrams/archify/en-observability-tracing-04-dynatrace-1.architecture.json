@@ -1,0 +1,304 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How Davis AI Works",
+    "locale": "en",
+    "output": "en-observability-tracing-04-dynatrace-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "collect",
+        "label": "Data Collection",
+        "focus": [
+          "metrics",
+          "traces",
+          "logs",
+          "events",
+          "topo",
+          "baseline"
+        ],
+        "note": "All five telemetry types (metrics, traces, logs, events, topology) feed baseline learning."
+      },
+      {
+        "id": "analyze",
+        "label": "Davis AI Analysis",
+        "focus": [
+          "baseline",
+          "anomaly",
+          "correlate",
+          "root"
+        ],
+        "note": "Processing runs baseline learning, anomaly detection, correlation analysis, then root cause identification."
+      },
+      {
+        "id": "results",
+        "label": "Analysis Results",
+        "focus": [
+          "root",
+          "problem",
+          "impact",
+          "remediation"
+        ],
+        "note": "The identified root cause is delivered as a problem card, an impact analysis, and remediation suggestions."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "metrics",
+      "type": "external",
+      "label": "Metrics",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "traces",
+      "type": "external",
+      "label": "Traces",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "external",
+      "label": "Logs",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "events",
+      "type": "external",
+      "label": "Events",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "topo",
+      "type": "external",
+      "label": "Topology",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "backend",
+      "label": "Baseline Learning",
+      "sublabel": "Step 1",
+      "pos": [
+        280,
+        216
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "anomaly",
+      "type": "backend",
+      "label": "Anomaly Detection",
+      "sublabel": "Step 2",
+      "pos": [
+        460,
+        216
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "correlate",
+      "type": "backend",
+      "label": "Correlation Analysis",
+      "sublabel": "Step 3",
+      "pos": [
+        640,
+        216
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "Root Cause Identification",
+      "sublabel": "Step 4",
+      "pos": [
+        820,
+        216
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "problem",
+      "type": "frontend",
+      "label": "Problem Card",
+      "pos": [
+        1100,
+        100
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "impact",
+      "type": "frontend",
+      "label": "Impact Analysis",
+      "pos": [
+        1100,
+        216
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "remediation",
+      "type": "frontend",
+      "label": "Remediation Suggestions",
+      "pos": [
+        1100,
+        332
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data Collection",
+      "wraps": [
+        "metrics",
+        "traces",
+        "logs",
+        "events",
+        "topo"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Davis AI Engine",
+      "wraps": [
+        "baseline",
+        "anomaly",
+        "correlate",
+        "root"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Analysis Results",
+      "wraps": [
+        "problem",
+        "impact",
+        "remediation"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "metrics-baseline",
+      "from": "metrics",
+      "to": "baseline"
+    },
+    {
+      "id": "traces-baseline",
+      "from": "traces",
+      "to": "baseline"
+    },
+    {
+      "id": "logs-baseline",
+      "from": "logs",
+      "to": "baseline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "events-baseline",
+      "from": "events",
+      "to": "baseline"
+    },
+    {
+      "id": "topo-baseline",
+      "from": "topo",
+      "to": "baseline"
+    },
+    {
+      "id": "baseline-anomaly",
+      "from": "baseline",
+      "to": "anomaly",
+      "variant": "emphasis"
+    },
+    {
+      "id": "anomaly-correlate",
+      "from": "anomaly",
+      "to": "correlate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "correlate-root",
+      "from": "correlate",
+      "to": "root",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-problem",
+      "from": "root",
+      "to": "problem"
+    },
+    {
+      "id": "root-impact",
+      "from": "root",
+      "to": "impact",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-remediation",
+      "from": "root",
+      "to": "remediation"
+    }
+  ]
+}

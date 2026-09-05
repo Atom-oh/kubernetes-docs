@@ -1,0 +1,287 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "심각도와 팀 기준 알림 라우팅",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "severity-routing",
+        "label": "심각도별 라우팅",
+        "focus": [
+          "alert",
+          "severity",
+          "phone",
+          "slack_pd",
+          "slack",
+          "email"
+        ],
+        "note": "첫 번째 매치가 채널을 정한다. Critical은 전화 호출, High와 Warning은 Slack, Info는 Email로만 전달된다."
+      },
+      {
+        "id": "team-routing",
+        "label": "담당 팀별 라우팅",
+        "focus": [
+          "phone",
+          "slack_pd",
+          "slack",
+          "team",
+          "sre",
+          "dev",
+          "dba",
+          "security"
+        ],
+        "note": "Critical, High, Warning 알림은 장애 컴포넌트를 담당하는 팀으로 한 번 더 라우팅된다."
+      },
+      {
+        "id": "critical-path",
+        "label": "Critical 인프라 알림",
+        "focus": [
+          "alert",
+          "severity",
+          "phone",
+          "team",
+          "sre"
+        ],
+        "note": "Critical 인프라 알림은 첫 라우팅 단계에서 전화로 SRE 온콜 담당자에게 도달한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "messagebus": {
+          "label": "발생한 알림"
+        },
+        "backend": {
+          "label": "라우팅 판단"
+        },
+        "external": {
+          "label": "알림 채널"
+        },
+        "frontend": {
+          "label": "담당 팀"
+        }
+      }
+    },
+    "viewBox": [
+      1010,
+      660
+    ]
+  },
+  "lanes": [
+    {
+      "id": "router",
+      "label": "Alertmanager: 심각도 매치"
+    },
+    {
+      "id": "channels",
+      "label": "알림 채널"
+    },
+    {
+      "id": "teamrouter",
+      "label": "Alertmanager: 팀 매치"
+    },
+    {
+      "id": "teams",
+      "label": "담당 팀"
+    }
+  ],
+  "mainPath": [
+    "alert",
+    "severity",
+    "phone",
+    "team",
+    "sre"
+  ],
+  "nodes": [
+    {
+      "id": "alert",
+      "lane": "router",
+      "col": 0,
+      "type": "messagebus",
+      "label": "알림 발생",
+      "sublabel": "severity + team 라벨",
+      "width": 124
+    },
+    {
+      "id": "severity",
+      "lane": "router",
+      "col": 1,
+      "type": "backend",
+      "label": "심각도?",
+      "sublabel": "1차 매치",
+      "tag": "decision"
+    },
+    {
+      "id": "phone",
+      "lane": "channels",
+      "col": 2,
+      "type": "external",
+      "label": "즉시 전화/SMS",
+      "sublabel": "critical, 1차 온콜",
+      "width": 116
+    },
+    {
+      "id": "slack_pd",
+      "lane": "channels",
+      "col": 3,
+      "type": "external",
+      "label": "Slack + PagerDuty",
+      "sublabel": "high",
+      "width": 124
+    },
+    {
+      "id": "slack",
+      "lane": "channels",
+      "col": 4,
+      "type": "external",
+      "label": "Slack 채널",
+      "sublabel": "warning"
+    },
+    {
+      "id": "email",
+      "lane": "channels",
+      "col": 5,
+      "type": "external",
+      "label": "Email",
+      "sublabel": "info, 종단"
+    },
+    {
+      "id": "team",
+      "lane": "teamrouter",
+      "col": 3,
+      "type": "backend",
+      "label": "팀 구분?",
+      "sublabel": "2차 매치",
+      "tag": "decision"
+    },
+    {
+      "id": "sre",
+      "lane": "teams",
+      "col": 3,
+      "type": "frontend",
+      "label": "SRE 팀",
+      "sublabel": "인프라"
+    },
+    {
+      "id": "dev",
+      "lane": "teams",
+      "col": 2,
+      "type": "frontend",
+      "label": "개발 팀",
+      "sublabel": "애플리케이션"
+    },
+    {
+      "id": "dba",
+      "lane": "teams",
+      "col": 4,
+      "type": "frontend",
+      "label": "DBA 팀",
+      "sublabel": "데이터베이스"
+    },
+    {
+      "id": "security",
+      "lane": "teams",
+      "col": 5,
+      "type": "frontend",
+      "label": "보안 팀",
+      "sublabel": "보안",
+      "width": 104
+    }
+  ],
+  "edges": [
+    {
+      "from": "alert",
+      "to": "severity"
+    },
+    {
+      "from": "severity",
+      "to": "phone",
+      "label": "CRITICAL",
+      "variant": "emphasis"
+    },
+    {
+      "from": "severity",
+      "to": "slack_pd",
+      "label": "HIGH"
+    },
+    {
+      "from": "severity",
+      "to": "slack",
+      "label": "WARNING"
+    },
+    {
+      "from": "severity",
+      "to": "email",
+      "label": "INFO",
+      "variant": "dashed"
+    },
+    {
+      "from": "phone",
+      "to": "team",
+      "variant": "emphasis"
+    },
+    {
+      "from": "slack_pd",
+      "to": "team"
+    },
+    {
+      "from": "slack",
+      "to": "team"
+    },
+    {
+      "from": "team",
+      "to": "sre",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
+    },
+    {
+      "from": "team",
+      "to": "dev",
+      "label": "애플리케이션",
+      "toSide": "top"
+    },
+    {
+      "from": "team",
+      "to": "dba",
+      "label": "데이터베이스"
+    },
+    {
+      "from": "team",
+      "to": "security",
+      "label": "보안",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "심각도가 채널을 결정",
+      "items": [
+        "Critical 알림은 즉시 전화 호출 후 매칭을 계속한다 (continue: true)",
+        "High 알림은 Slack과 PagerDuty로, Warning은 Slack 채널에만 전달된다",
+        "Info 알림은 Email에서 끝나며 팀으로 라우팅되지 않는다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "라우팅 트리의 팀 리시버",
+      "items": [
+        "alertname ^(Node|Disk|CPU|Memory).* 는 sre-team으로",
+        "namespace ^(app|api|web).* 는 dev-team으로",
+        "alertname ^(MySQL|PostgreSQL|Redis|MongoDB).* 는 dba-team으로"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "전달 이후 에스컬레이션",
+      "items": [
+        "0분: 1차 온콜 담당자에게 Slack과 PagerDuty로",
+        "15분: 2차 온콜 담당자, SMS 추가",
+        "30분: 팀 리드에게 전화; 45분·60분에는 매니저와 CTO/VP까지 에스컬레이션"
+      ]
+    }
+  ]
+}

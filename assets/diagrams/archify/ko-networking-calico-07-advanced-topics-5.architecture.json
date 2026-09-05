@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Windows HNS 통합",
+    "output": "ko-networking-calico-07-advanced-topics-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      500
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "컨테이너 / Calico 에이전트"
+        },
+        "cloud": {
+          "label": "HNS (트래픽 통합 지점)"
+        },
+        "security": {
+          "label": "패킷 필터링 계층"
+        },
+        "external": {
+          "label": "물리 인터페이스"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-traffic",
+        "label": "컨테이너 트래픽 경로",
+        "focus": [
+          "c1",
+          "c2",
+          "hns",
+          "vfp",
+          "nic"
+        ],
+        "note": "컨테이너 트래픽은 모두 HNS로 모여 VFP 필터링을 거친 뒤 물리 NIC로 나간다."
+      },
+      {
+        "id": "policy-programming",
+        "label": "Calico의 HNS 프로그래밍",
+        "focus": [
+          "cw",
+          "hns",
+          "vfp"
+        ],
+        "note": "Calico Node Windows Service가 HNS 데이터플레인(windowsDataplane: HNS)에 네트워크와 정책을 프로그래밍한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "c1",
+      "type": "backend",
+      "label": "Container 1",
+      "sublabel": "Windows Pod",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "backend",
+      "label": "Container 2",
+      "sublabel": "Windows Pod",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "cw",
+      "type": "backend",
+      "label": "Calico Node",
+      "sublabel": "Windows Service",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "hns",
+      "type": "cloud",
+      "label": "HNS",
+      "sublabel": "Host Networking Service",
+      "pos": [
+        560,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "vfp",
+      "type": "security",
+      "label": "VFP",
+      "sublabel": "Virtual Filtering Platform",
+      "pos": [
+        820,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "nic",
+      "type": "external",
+      "label": "Physical NIC",
+      "sublabel": "노드 물리 인터페이스",
+      "pos": [
+        1080,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Windows Node",
+      "wraps": [
+        "c1",
+        "c2",
+        "cw",
+        "hns",
+        "vfp",
+        "nic"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Container Runtime",
+      "wraps": [
+        "c1",
+        "c2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Calico Windows",
+      "wraps": [
+        "cw",
+        "hns",
+        "vfp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1-hns",
+      "from": "c1",
+      "to": "hns",
+      "label": "Pod 트래픽"
+    },
+    {
+      "id": "c2-hns",
+      "from": "c2",
+      "to": "hns"
+    },
+    {
+      "id": "cw-hns",
+      "from": "cw",
+      "to": "hns",
+      "label": "네트워크 / 정책 프로그래밍",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "hns-vfp",
+      "from": "hns",
+      "to": "vfp",
+      "label": "패킷 필터링",
+      "labelDy": -24
+    },
+    {
+      "id": "vfp-nic",
+      "from": "vfp",
+      "to": "nic",
+      "label": "송출"
+    }
+  ]
+}

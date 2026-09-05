@@ -1,0 +1,272 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Mimir와 VictoriaMetrics 선택 기준",
+    "output": "public/archmaps/ko-observability-metrics-03-mimir-4.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "mimir-path",
+        "label": "Mimir로 가는 경로",
+        "focus": [
+          "start",
+          "grafana",
+          "tenancy",
+          "objstore",
+          "mimir"
+        ],
+        "note": "Grafana 에코시스템 중심이면서 멀티테넌시나 객체 스토리지가 필요할 때 Mimir로 수렴합니다."
+      },
+      {
+        "id": "vm-path",
+        "label": "VictoriaMetrics로 가는 경로",
+        "focus": [
+          "start",
+          "grafana",
+          "simplicity",
+          "cost",
+          "vm"
+        ],
+        "note": "Grafana 중심이 아니고 운영 단순성이나 비용이 우선이면 VictoriaMetrics로 수렴합니다."
+      },
+      {
+        "id": "crossover",
+        "label": "교차 분기",
+        "focus": [
+          "objstore",
+          "cost",
+          "mimir",
+          "vm"
+        ],
+        "note": "객체 스토리지를 원하지 않으면 VictoriaMetrics, 확장성이 더 중요하면 Mimir로 넘어갑니다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작"
+        },
+        "backend": {
+          "label": "결정 지점"
+        },
+        "database": {
+          "label": "추천 결과"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "시작"
+    },
+    {
+      "id": "yes",
+      "label": "Grafana 에코시스템 중심: 예"
+    },
+    {
+      "id": "mimirLane",
+      "label": "추천: Grafana Mimir"
+    },
+    {
+      "id": "no",
+      "label": "Grafana 에코시스템 중심: 아니오"
+    },
+    {
+      "id": "vmLane",
+      "label": "추천: VictoriaMetrics"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "grafana",
+    "tenancy",
+    "mimir"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "mimir",
+      "vm"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "mimir"
+      },
+      {
+        "from": "start",
+        "to": "vm"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "메트릭 저장소 선택",
+      "width": 204
+    },
+    {
+      "id": "grafana",
+      "lane": "entry",
+      "col": 1,
+      "type": "backend",
+      "label": "Grafana 에코시스템 중심?",
+      "width": 220
+    },
+    {
+      "id": "tenancy",
+      "lane": "yes",
+      "col": 2,
+      "type": "backend",
+      "label": "멀티테넌시 필요?",
+      "sublabel": "엔터프라이즈급",
+      "width": 176
+    },
+    {
+      "id": "objstore",
+      "lane": "yes",
+      "col": 3,
+      "type": "backend",
+      "label": "객체 스토리지 활용 원함?",
+      "width": 190
+    },
+    {
+      "id": "mimir",
+      "lane": "mimirLane",
+      "col": 4,
+      "type": "database",
+      "label": "Mimir",
+      "sublabel": "객체 스토리지 · 네이티브 멀티테넌시",
+      "width": 200
+    },
+    {
+      "id": "simplicity",
+      "lane": "no",
+      "col": 2,
+      "type": "backend",
+      "label": "운영 단순성 우선?",
+      "width": 200
+    },
+    {
+      "id": "cost",
+      "lane": "no",
+      "col": 3,
+      "type": "backend",
+      "label": "클라우드 스토리지 비용?",
+      "width": 186
+    },
+    {
+      "id": "vm",
+      "lane": "vmLane",
+      "col": 5,
+      "type": "database",
+      "label": "VictoriaMetrics",
+      "sublabel": "로컬 디스크 가능 · 낮은 운영 복잡성",
+      "width": 200
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "grafana",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "grafana",
+      "to": "tenancy",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "grafana",
+      "to": "simplicity",
+      "label": "아니오",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "from": "tenancy",
+      "to": "mimir",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "tenancy",
+      "to": "objstore",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "objstore",
+      "to": "mimir",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "objstore",
+      "to": "vm",
+      "label": "아니오",
+      "role": "branch",
+      "variant": "dashed"
+    },
+    {
+      "from": "simplicity",
+      "to": "vm",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "simplicity",
+      "to": "cost",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "cost",
+      "to": "vm",
+      "label": "비용 중요",
+      "role": "branch"
+    },
+    {
+      "from": "cost",
+      "to": "mimir",
+      "label": "확장성 중요",
+      "role": "branch",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Mimir 선택 시",
+      "items": [
+        "Grafana Cloud 또는 Grafana 에코시스템 사용",
+        "엔터프라이즈급 멀티테넌시 필요",
+        "객체 스토리지 활용 원함",
+        "복잡한 운영 환경 관리 가능"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "VictoriaMetrics 선택 시",
+      "items": [
+        "단순한 운영 환경 선호",
+        "로컬 디스크 기반 저장 선호",
+        "최대 압축률 및 성능 중요",
+        "비용 효율성 우선"
+      ]
+    }
+  ]
+}

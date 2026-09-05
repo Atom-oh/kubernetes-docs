@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Upgrade Validation and Troubleshooting",
+    "output": "en-eks-08-eks-upgrades-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Post-upgrade phase"
+        },
+        "backend": {
+          "label": "Validation step"
+        },
+        "security": {
+          "label": "Troubleshooting step"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "validation",
+        "label": "Upgrade Validation",
+        "focus": [
+          "root",
+          "validation",
+          "version",
+          "state",
+          "workload",
+          "functional"
+        ],
+        "note": "Confirm the cluster is healthy in order: version, cluster state, workloads, then functional tests."
+      },
+      {
+        "id": "troubleshooting",
+        "label": "Upgrade Troubleshooting",
+        "focus": [
+          "root",
+          "troubleshooting",
+          "issues",
+          "steps",
+          "rollback"
+        ],
+        "note": "Identify the common issue type, check logs, events, resources and API versions, then roll back if needed."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Upgrade Validation and Troubleshooting",
+      "sublabel": "Performed after the upgrade",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "validation",
+      "type": "backend",
+      "label": "Upgrade Validation",
+      "sublabel": "Confirm normal operation",
+      "pos": [
+        350,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "version",
+      "type": "backend",
+      "label": "Check Cluster Version",
+      "sublabel": "kubectl version · node kubelet version",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "state",
+      "type": "backend",
+      "label": "Check Cluster State",
+      "sublabel": "Nodes · Pods · Namespaces · Services",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "backend",
+      "label": "Workload Validation",
+      "sublabel": "Deployment · StatefulSet · DaemonSet · Endpoints",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "functional",
+      "type": "backend",
+      "label": "Functional Testing",
+      "sublabel": "Pod creation · Service creation · Scaling",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "type": "security",
+      "label": "Upgrade Troubleshooting",
+      "sublabel": "Diagnose and recover",
+      "pos": [
+        630,
+        300
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "issues",
+      "type": "security",
+      "label": "Common Upgrade Issues",
+      "sublabel": "Control plane · Node · Add-on · Workload",
+      "pos": [
+        870,
+        180
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "steps",
+      "type": "security",
+      "label": "Troubleshooting Steps",
+      "sublabel": "Logs · Events · Resources · API version",
+      "pos": [
+        870,
+        260
+      ],
+      "size": [
+        250,
+        56
+      ]
+    },
+    {
+      "id": "rollback",
+      "type": "security",
+      "label": "Rollback Procedure",
+      "sublabel": "Control plane · Node group · Add-ons",
+      "pos": [
+        870,
+        340
+      ],
+      "size": [
+        250,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Upgrade Validation",
+      "wraps": [
+        "validation",
+        "version",
+        "state",
+        "workload",
+        "functional"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Upgrade Troubleshooting",
+      "wraps": [
+        "troubleshooting",
+        "issues",
+        "steps",
+        "rollback"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-validation",
+      "from": "root",
+      "to": "validation",
+      "label": "Validate",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-troubleshooting",
+      "from": "root",
+      "to": "troubleshooting",
+      "label": "When issues occur",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "validation-version",
+      "from": "validation",
+      "to": "version"
+    },
+    {
+      "id": "validation-state",
+      "from": "validation",
+      "to": "state"
+    },
+    {
+      "id": "validation-workload",
+      "from": "validation",
+      "to": "workload"
+    },
+    {
+      "id": "validation-functional",
+      "from": "validation",
+      "to": "functional"
+    },
+    {
+      "id": "troubleshooting-issues",
+      "from": "troubleshooting",
+      "to": "issues"
+    },
+    {
+      "id": "troubleshooting-steps",
+      "from": "troubleshooting",
+      "to": "steps"
+    },
+    {
+      "id": "troubleshooting-rollback",
+      "from": "troubleshooting",
+      "to": "rollback"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Upgrade Validation",
+      "items": [
+        "Check cluster version: compare kubectl version with node kubelet versions",
+        "Check cluster state: nodes · pods · namespaces · services",
+        "Workload validation: deployments · statefulsets · daemonsets · service endpoints",
+        "Functional testing: pod creation · service creation · scaling"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Upgrade Troubleshooting",
+      "items": [
+        "Common issues: control plane upgrade failure · node · add-on · workload issues",
+        "Troubleshooting steps: check logs · events · resource status · API version",
+        "Rollback procedure: control plane · node group · add-ons"
+      ]
+    }
+  ]
+}

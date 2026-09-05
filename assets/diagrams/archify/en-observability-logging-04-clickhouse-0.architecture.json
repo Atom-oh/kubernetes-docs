@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ClickHouse Cluster Architecture",
+    "output": "en-observability-logging-04-clickhouse-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Log ingestion path",
+        "focus": [
+          "collectors",
+          "kafka",
+          "shard1",
+          "shard2",
+          "shard3"
+        ],
+        "note": "Logs from the collectors flow through the optional Kafka Topic and are distributed across the 3 shards."
+      },
+      {
+        "id": "replication",
+        "label": "Replication coordination",
+        "focus": [
+          "keeper",
+          "shard1",
+          "shard2",
+          "shard3"
+        ],
+        "note": "ZooKeeper/ClickHouse Keeper coordinates replication between Replica 1 and Replica 2 of every shard."
+      },
+      {
+        "id": "storage",
+        "label": "Hot/Cold storage",
+        "focus": [
+          "shard1",
+          "shard2",
+          "shard3",
+          "ebs",
+          "s3"
+        ],
+        "note": "Shards write to EBS (Hot); the TTL policy moves aged data to S3 (Cold)."
+      },
+      {
+        "id": "query",
+        "label": "Visualization queries",
+        "focus": [
+          "grafana",
+          "superset",
+          "shard1",
+          "shard3"
+        ],
+        "note": "Grafana and Apache Superset query the cluster with SQL."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "collectors",
+      "type": "external",
+      "label": "Collectors",
+      "sublabel": "FluentBit / Vector / OTEL Collector",
+      "pos": [
+        545,
+        40
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": "Dashboards",
+      "pos": [
+        340,
+        170
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka Topic",
+      "sublabel": "Message queue (optional)",
+      "pos": [
+        585,
+        170
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "superset",
+      "type": "frontend",
+      "label": "Apache Superset",
+      "sublabel": "BI analytics",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "shard1",
+      "type": "database",
+      "label": "Shard 1",
+      "sublabel": "Replica 1 · Replica 2",
+      "pos": [
+        340,
+        350
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "shard2",
+      "type": "database",
+      "label": "Shard 2",
+      "sublabel": "Replica 1 · Replica 2",
+      "pos": [
+        580,
+        350
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "shard3",
+      "type": "database",
+      "label": "Shard 3",
+      "sublabel": "Replica 1 · Replica 2",
+      "pos": [
+        820,
+        350
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "keeper",
+      "type": "backend",
+      "label": "ZooKeeper / ClickHouse Keeper",
+      "sublabel": "Replication coordination",
+      "pos": [
+        1060,
+        350
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS",
+      "sublabel": "Hot Data",
+      "pos": [
+        590,
+        530
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "Cold Data",
+      "pos": [
+        820,
+        530
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ClickHouse Cluster",
+      "wraps": [
+        "shard1",
+        "shard2",
+        "shard3",
+        "keeper"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "ebs",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "collect-to-kafka",
+      "from": "collectors",
+      "to": "kafka",
+      "label": "send logs",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "kafka-to-shard1",
+      "from": "kafka",
+      "to": "shard1"
+    },
+    {
+      "id": "kafka-to-shard2",
+      "from": "kafka",
+      "to": "shard2",
+      "label": "ingest",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "kafka-to-shard3",
+      "from": "kafka",
+      "to": "shard3"
+    },
+    {
+      "id": "keeper-shard3",
+      "from": "keeper",
+      "to": "shard3",
+      "label": "coordinate (all shards)",
+      "variant": "dashed",
+      "labelDy": 56
+    },
+    {
+      "id": "shard1-to-ebs",
+      "from": "shard1",
+      "to": "ebs"
+    },
+    {
+      "id": "shard2-to-ebs",
+      "from": "shard2",
+      "to": "ebs",
+      "label": "write",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "shard3-to-ebs",
+      "from": "shard3",
+      "to": "ebs",
+      "toSide": "top"
+    },
+    {
+      "id": "ebs-to-s3",
+      "from": "ebs",
+      "to": "s3",
+      "label": "TTL move"
+    },
+    {
+      "id": "grafana-shard1",
+      "from": "grafana",
+      "to": "shard1",
+      "label": "SQL query",
+      "labelDy": 24
+    },
+    {
+      "id": "superset-shard3",
+      "from": "superset",
+      "to": "shard3",
+      "label": "SQL query",
+      "labelDy": 24
+    }
+  ]
+}

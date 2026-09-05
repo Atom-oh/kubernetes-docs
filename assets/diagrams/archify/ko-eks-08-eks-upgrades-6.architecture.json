@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "업그레이드 자동화",
+    "output": "ko-eks-08-eks-upgrades-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "eksctl · CI/CD 단계"
+        },
+        "database": {
+          "label": "Git 저장소"
+        },
+        "cloud": {
+          "label": "AWS CLI 단계"
+        },
+        "security": {
+          "label": "모범 사례"
+        },
+        "external": {
+          "label": "GitOps 도구"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "eksctl-path",
+        "label": "eksctl 자동화",
+        "focus": [
+          "root",
+          "eksctl",
+          "eksctl-cluster",
+          "eksctl-nodegroup"
+        ],
+        "note": "eksctl upgrade cluster 후 eksctl upgrade nodegroup 두 명령으로 끝나는 가장 단순한 경로."
+      },
+      {
+        "id": "cli-path",
+        "label": "AWS CLI 스크립트",
+        "focus": [
+          "root",
+          "cli",
+          "cli-cluster",
+          "cli-addon",
+          "cli-nodegroup"
+        ],
+        "note": "변수 설정 후 클러스터 → 애드온 → 관리형 노드 그룹 순으로 업그레이드하며 각 단계 완료를 대기하는 셸 스크립트."
+      },
+      {
+        "id": "gitops-path",
+        "label": "GitOps 자동화",
+        "focus": [
+          "root",
+          "gitops",
+          "git-config",
+          "cicd"
+        ],
+        "note": "cluster.yaml을 Git에 저장하고, 변경 push 시 CI/CD 파이프라인이 eksctl upgrade cluster -f를 실행."
+      },
+      {
+        "id": "best-practices",
+        "label": "자동화 모범 사례",
+        "focus": [
+          "root",
+          "best-practices"
+        ],
+        "note": "세 경로 모두에 적용되는 점진적 접근, 롤백 계획, 검증 단계, 알림, 문서화."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "업그레이드 자동화",
+      "sublabel": "대규모 EKS 환경",
+      "pos": [
+        475,
+        24
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "eksctl",
+      "type": "backend",
+      "label": "eksctl을 사용한 자동화",
+      "sublabel": "EKS 관리 명령줄 도구",
+      "pos": [
+        40,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "eksctl-cluster",
+      "type": "backend",
+      "label": "클러스터 업그레이드",
+      "sublabel": "eksctl upgrade cluster",
+      "pos": [
+        40,
+        258
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "eksctl-nodegroup",
+      "type": "backend",
+      "label": "노드 그룹 업그레이드",
+      "sublabel": "eksctl upgrade nodegroup",
+      "pos": [
+        40,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli",
+      "type": "cloud",
+      "label": "AWS CLI 및 스크립트 자동화",
+      "sublabel": "변수 설정 후 셸 스크립트 순차 실행",
+      "pos": [
+        330,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "cli-cluster",
+      "type": "cloud",
+      "label": "클러스터 업그레이드 스크립트",
+      "sublabel": "aws eks update-cluster-version",
+      "pos": [
+        330,
+        258
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli-addon",
+      "type": "cloud",
+      "label": "애드온 업그레이드 스크립트",
+      "sublabel": "vpc-cni · coredns · kube-proxy",
+      "pos": [
+        330,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cli-nodegroup",
+      "type": "cloud",
+      "label": "노드 그룹 업그레이드 스크립트",
+      "sublabel": "aws eks update-nodegroup-version",
+      "pos": [
+        330,
+        458
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "GitOps를 사용한 자동화",
+      "sublabel": "Flux · ArgoCD 등",
+      "pos": [
+        620,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "git-config",
+      "type": "database",
+      "label": "클러스터 구성을 Git에 저장",
+      "sublabel": "cluster.yaml (ClusterConfig)",
+      "pos": [
+        620,
+        258
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "cicd",
+      "type": "backend",
+      "label": "CI/CD 파이프라인 구성",
+      "sublabel": "eksctl upgrade cluster -f cluster.yaml",
+      "pos": [
+        620,
+        358
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "best-practices",
+      "type": "security",
+      "label": "자동화 모범 사례",
+      "sublabel": "세 경로에 공통 적용",
+      "pos": [
+        910,
+        152
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "eksctl",
+      "wraps": [
+        "eksctl",
+        "eksctl-cluster",
+        "eksctl-nodegroup"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "AWS CLI + 셸 스크립트",
+      "wraps": [
+        "cli",
+        "cli-cluster",
+        "cli-addon",
+        "cli-nodegroup"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "GitOps",
+      "wraps": [
+        "gitops",
+        "git-config",
+        "cicd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-eksctl",
+      "from": "root",
+      "to": "eksctl",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-cli",
+      "from": "root",
+      "to": "cli",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-gitops",
+      "from": "root",
+      "to": "gitops",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-bp",
+      "from": "root",
+      "to": "best-practices",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "eksctl-1",
+      "from": "eksctl",
+      "to": "eksctl-cluster"
+    },
+    {
+      "id": "eksctl-2",
+      "from": "eksctl-cluster",
+      "to": "eksctl-nodegroup"
+    },
+    {
+      "id": "cli-1",
+      "from": "cli",
+      "to": "cli-cluster"
+    },
+    {
+      "id": "cli-2",
+      "from": "cli-cluster",
+      "to": "cli-addon",
+      "label": "update-successful 대기",
+      "labelDy": 24
+    },
+    {
+      "id": "cli-3",
+      "from": "cli-addon",
+      "to": "cli-nodegroup"
+    },
+    {
+      "id": "gitops-1",
+      "from": "gitops",
+      "to": "git-config"
+    },
+    {
+      "id": "gitops-2",
+      "from": "git-config",
+      "to": "cicd",
+      "label": "cluster.yaml push 시 실행",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "자동화 모범 사례",
+      "items": [
+        "점진적 접근: 비프로덕션 환경부터 시작해 프로덕션으로 진행",
+        "롤백 계획: 자동화된 롤백 메커니즘 구현",
+        "검증 단계: 업그레이드 후 자동 검증 단계 포함",
+        "알림: 업그레이드 성공·실패 시 알림 구성",
+        "문서화: 자동화 프로세스와 단계 문서화"
+      ]
+    }
+  ]
+}

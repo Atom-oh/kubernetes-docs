@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "dm-verity 루트 파일시스템 무결성 검증",
+    "output": "ko-eks-05-eks-security-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "read-path", "label": "블록 읽기와 해시 계산", "focus": ["rootfs", "read", "hash"], "note": "루트 파일시스템에서 블록을 읽을 때마다 블록 레벨에서 해시를 계산한다." },
+      { "id": "verify-path", "label": "Merkle Tree 대조", "focus": ["hash", "merkle", "verify"], "note": "계산한 해시를 Merkle Tree에 저장된 값과 대조한다." },
+      { "id": "decision", "label": "허용 / 차단", "focus": ["verify", "allow", "deny"], "note": "해시가 일치하면 접근을 허용하고, 불일치하면 접근을 차단해 변조를 막는다." }
+    ]
+  },
+  "components": [
+    { "id": "rootfs", "type": "database", "label": "루트 파일시스템", "sublabel": "읽기 전용", "pos": [40, 200], "size": [150, 60] },
+    { "id": "read", "type": "backend", "label": "블록 읽기", "sublabel": "블록 레벨 접근", "pos": [270, 200], "size": [150, 60] },
+    { "id": "hash", "type": "backend", "label": "해시 계산", "sublabel": "읽은 블록의 해시", "pos": [480, 200], "size": [150, 60] },
+    { "id": "verify", "type": "security", "label": "해시 검증", "sublabel": "저장된 해시와 대조", "pos": [690, 200], "size": [160, 60] },
+    { "id": "allow", "type": "backend", "label": "접근 허용", "sublabel": "블록 반환", "pos": [940, 110], "size": [150, 60] },
+    { "id": "deny", "type": "security", "label": "접근 차단", "sublabel": "변조 감지", "pos": [940, 290], "size": [150, 60] },
+    { "id": "merkle", "type": "database", "label": "Merkle Tree", "sublabel": "해시 저장소", "pos": [690, 400], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "dm-verity 동작", "wraps": ["read", "hash", "verify", "allow", "deny"] }
+  ],
+  "connections": [
+    { "id": "rootfs-to-read", "from": "rootfs", "to": "read", "label": "블록", "variant": "emphasis" },
+    { "id": "read-to-hash", "from": "read", "to": "hash", "variant": "emphasis" },
+    { "id": "hash-to-verify", "from": "hash", "to": "verify", "variant": "emphasis" },
+    { "id": "merkle-to-verify", "from": "merkle", "to": "verify", "label": "저장된 해시", "variant": "security" },
+    { "id": "verify-to-allow", "from": "verify", "to": "allow", "label": "일치", "variant": "emphasis" },
+    { "id": "verify-to-deny", "from": "verify", "to": "deny", "label": "불일치", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "검증 흐름", "items": ["블록을 읽을 때마다 해시를 계산한다", "Merkle Tree에 저장된 해시와 대조한다"] },
+    { "dot": "rose", "title": "보호 효과", "items": ["부팅 시 루트 파일시스템 무결성 검증", "런타임 수정 시도 감지 및 차단", "악성 코드 주입 방지"] }
+  ]
+}

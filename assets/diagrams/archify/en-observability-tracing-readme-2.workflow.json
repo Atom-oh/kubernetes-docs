@@ -1,0 +1,147 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Anatomy of a Single Span",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "identifiers",
+        "label": "Identifier header",
+        "focus": [
+          "header"
+        ],
+        "note": "TraceID names the whole trace, SpanID this span, and ParentSpanID its parent. A root span has ParentSpanID null."
+      },
+      {
+        "id": "timing",
+        "label": "Timing",
+        "focus": [
+          "header",
+          "timing"
+        ],
+        "note": "Start Time and Duration record when this unit of work began and how long it took, e.g. start 10:30:00, 150 ms."
+      },
+      {
+        "id": "metadata",
+        "label": "Operational metadata",
+        "focus": [
+          "timing",
+          "metadata"
+        ],
+        "note": "Holds the Operation Name (HTTP GET /users), Tags (service=api, http.method=GET) and Logs (request received, response sent)."
+      },
+      {
+        "id": "outcome",
+        "label": "Final status",
+        "focus": [
+          "metadata",
+          "status"
+        ],
+        "note": "When the work completes, Status records the outcome. The example span closes with Status: OK."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Identifiers"
+        },
+        "backend": {
+          "label": "Timing"
+        },
+        "database": {
+          "label": "Metadata"
+        },
+        "security": {
+          "label": "Status"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "identity",
+      "label": "Identification · timing — filled when the span starts"
+    },
+    {
+      "id": "outcome",
+      "label": "Metadata · status — filled during work and at completion"
+    }
+  ],
+  "mainPath": [
+    "header",
+    "timing",
+    "metadata",
+    "status"
+  ],
+  "nodes": [
+    {
+      "id": "header",
+      "lane": "identity",
+      "col": 0,
+      "width": 176,
+      "type": "frontend",
+      "label": "Header",
+      "sublabel": "TraceID · SpanID · ParentSpanID",
+      "tag": "01 · identifiers",
+      "height": 116
+    },
+    {
+      "id": "timing",
+      "lane": "identity",
+      "col": 1,
+      "width": 176,
+      "type": "backend",
+      "label": "Timing",
+      "sublabel": "Start Time · Duration 150ms",
+      "tag": "02 · timing",
+      "height": 116
+    },
+    {
+      "id": "metadata",
+      "lane": "outcome",
+      "col": 1,
+      "width": 176,
+      "type": "database",
+      "label": "Metadata",
+      "sublabel": "Operation · Tags · Logs",
+      "tag": "03 · metadata",
+      "height": 116
+    },
+    {
+      "id": "status",
+      "lane": "outcome",
+      "col": 2,
+      "width": 176,
+      "type": "security",
+      "label": "Status",
+      "sublabel": "Status: OK",
+      "tag": "04 · outcome",
+      "height": 116
+    }
+  ],
+  "edges": [
+    {
+      "id": "header-timing",
+      "from": "header",
+      "to": "timing"
+    },
+    {
+      "id": "timing-metadata",
+      "from": "timing",
+      "to": "metadata",
+      "route": "drop",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "metadata-status",
+      "from": "metadata",
+      "to": "status",
+      "variant": "emphasis",
+      "route": "straight"
+    }
+  ]
+}

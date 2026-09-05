@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS와 VPC Lattice 통합 아키텍처",
+    "output": "ko-networking-02-vpc-lattice-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "resource-mapping",
+        "label": "리소스 변환",
+        "focus": [
+          "controller",
+          "gwapi",
+          "k8ssvc",
+          "pod",
+          "latticesvc",
+          "targetgroup"
+        ],
+        "note": "Gateway API Controller가 Gateway API 리소스를 VPC Lattice 서비스와 대상 그룹으로 변환하고 파드를 등록한다."
+      },
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "client",
+          "servicenetwork",
+          "latticesvc",
+          "targetgroup",
+          "pod"
+        ],
+        "note": "다른 VPC의 애플리케이션이 서비스 네트워크에 포함된 VPC Lattice 서비스로 요청을 보내 EKS 파드에 도달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Gateway API Controller",
+      "sublabel": "AWS Gateway API Controller",
+      "pos": [
+        80,
+        90
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "gwapi",
+      "type": "backend",
+      "label": "Gateway API 리소스",
+      "sublabel": "Gateway / HTTPRoute",
+      "pos": [
+        80,
+        230
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "k8ssvc",
+      "type": "backend",
+      "label": "Kubernetes 서비스",
+      "sublabel": "Service",
+      "pos": [
+        80,
+        370
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "Kubernetes 파드",
+      "sublabel": "워크로드",
+      "pos": [
+        80,
+        510
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "servicenetwork",
+      "type": "cloud",
+      "label": "VPC Lattice 서비스 네트워크",
+      "sublabel": "EKS 클러스터가 연결되는 네트워크",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "latticesvc",
+      "type": "cloud",
+      "label": "VPC Lattice 서비스",
+      "sublabel": "Kubernetes 서비스에 매핑",
+      "pos": [
+        640,
+        300
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "targetgroup",
+      "type": "cloud",
+      "label": "VPC Lattice 대상 그룹",
+      "sublabel": "Kubernetes 파드에 매핑",
+      "pos": [
+        640,
+        510
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "client",
+      "type": "external",
+      "label": "애플리케이션",
+      "sublabel": "서비스 DNS 이름으로 요청",
+      "pos": [
+        1000,
+        300
+      ],
+      "size": [
+        220,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "controller",
+        "gwapi",
+        "k8ssvc",
+        "pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "다른 VPC의 클라이언트",
+      "wraps": [
+        "client"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "controller-gwapi",
+      "from": "controller",
+      "to": "gwapi",
+      "label": "변환",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "gwapi-k8ssvc",
+      "from": "gwapi",
+      "to": "k8ssvc",
+      "label": "참조",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "k8ssvc-pod",
+      "from": "k8ssvc",
+      "to": "pod",
+      "label": "선택",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 50
+    },
+    {
+      "id": "controller-latticesvc",
+      "from": "controller",
+      "to": "latticesvc",
+      "label": "생성 / 관리"
+    },
+    {
+      "id": "servicenetwork-latticesvc",
+      "from": "servicenetwork",
+      "to": "latticesvc",
+      "label": "포함",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    },
+    {
+      "id": "latticesvc-targetgroup",
+      "from": "latticesvc",
+      "to": "targetgroup",
+      "label": "라우팅",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 88
+    },
+    {
+      "id": "targetgroup-pod",
+      "from": "targetgroup",
+      "to": "pod",
+      "label": "등록",
+      "variant": "emphasis"
+    },
+    {
+      "id": "client-latticesvc",
+      "from": "client",
+      "to": "latticesvc",
+      "label": "요청",
+      "variant": "emphasis"
+    }
+  ]
+}

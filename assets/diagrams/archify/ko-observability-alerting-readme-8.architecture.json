@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "하이브리드 알림 파이프라인",
+    "output": "ko-observability-alerting-readme-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "sources",
+        "label": "알림 소스",
+        "focus": [
+          "prometheus",
+          "cloudwatch",
+          "alertmanager"
+        ],
+        "note": "Prometheus 규칙과 CloudWatch 알람이 모두 Alertmanager로 모여 1차 알림 처리를 거친다."
+      },
+      {
+        "id": "oncall",
+        "label": "온콜 라우팅",
+        "focus": [
+          "alertmanager",
+          "oncall",
+          "pagerduty"
+        ],
+        "note": "Alertmanager가 온콜 관리와 에스컬레이션을 위해 Grafana OnCall 또는 PagerDuty로 라우팅한다."
+      },
+      {
+        "id": "channels",
+        "label": "알림 채널",
+        "focus": [
+          "oncall",
+          "pagerduty",
+          "slack",
+          "email",
+          "sms"
+        ],
+        "note": "어느 온콜 도구를 쓰든 Slack, Email, SMS로 전달된다."
+      }
+    ],
+    "viewBox": [
+      1250,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "prometheus",
+      "type": "backend",
+      "label": "Prometheus",
+      "sublabel": "알림 규칙",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "AWS 서비스 메트릭",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "alertmanager",
+      "type": "messagebus",
+      "label": "Alertmanager",
+      "sublabel": "그룹화 / 라우팅",
+      "pos": [
+        290,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "oncall",
+      "type": "backend",
+      "label": "Grafana OnCall",
+      "sublabel": "온콜 + 에스컬레이션",
+      "pos": [
+        540,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "pagerduty",
+      "type": "external",
+      "label": "PagerDuty",
+      "sublabel": "온콜 + 에스컬레이션",
+      "pos": [
+        1050,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "slack",
+      "type": "external",
+      "label": "Slack",
+      "sublabel": "ChatOps",
+      "pos": [
+        800,
+        60
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "email",
+      "type": "external",
+      "label": "Email",
+      "sublabel": "알림 전달",
+      "pos": [
+        800,
+        220
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sms",
+      "type": "external",
+      "label": "SMS",
+      "sublabel": "알림 전달",
+      "pos": [
+        800,
+        380
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "알림 소스",
+      "wraps": [
+        "prometheus",
+        "cloudwatch"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "라우팅",
+      "wraps": [
+        "alertmanager"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "온콜 관리",
+      "wraps": [
+        "oncall"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "알림 채널",
+      "wraps": [
+        "slack",
+        "email",
+        "sms"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "온콜 관리",
+      "wraps": [
+        "pagerduty"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prom-to-am",
+      "from": "prometheus",
+      "to": "alertmanager",
+      "label": "알림",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cw-to-am",
+      "from": "cloudwatch",
+      "to": "alertmanager",
+      "label": "알람"
+    },
+    {
+      "id": "am-to-oncall",
+      "from": "alertmanager",
+      "to": "oncall",
+      "label": "라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "am-to-pd",
+      "from": "alertmanager",
+      "to": "pagerduty",
+      "label": "라우팅",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          370,
+          530
+        ],
+        [
+          1130,
+          530
+        ]
+      ]
+    },
+    {
+      "id": "oncall-to-slack",
+      "from": "oncall",
+      "to": "slack",
+      "variant": "emphasis"
+    },
+    {
+      "id": "oncall-to-email",
+      "from": "oncall",
+      "to": "email"
+    },
+    {
+      "id": "oncall-to-sms",
+      "from": "oncall",
+      "to": "sms"
+    },
+    {
+      "id": "pd-to-slack",
+      "from": "pagerduty",
+      "to": "slack",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "pd-to-email",
+      "from": "pagerduty",
+      "to": "email",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "pd-to-sms",
+      "from": "pagerduty",
+      "to": "sms",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "수집",
+      "items": [
+        "Prometheus + Alertmanager: 메트릭 수집 및 1차 알림 처리",
+        "CloudWatch: AWS 서비스 메트릭 수집 (Control Plane, EC2, EBS, ALB/NLB)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "에스컬레이션",
+      "items": [
+        "Grafana OnCall 또는 PagerDuty: 온콜 관리 및 에스컬레이션",
+        "Alertmanager 단독으로는 온콜 관리가 없고 에스컬레이션도 기본 수준"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "알림",
+      "items": [
+        "Slack: 실시간 알림 및 협업",
+        "Email과 SMS를 추가 채널로 활용"
+      ]
+    }
+  ]
+}

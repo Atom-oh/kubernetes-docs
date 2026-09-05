@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 컨테이너 로깅 아키텍처",
+    "output": "ko-eks-06-eks-monitoring-logging-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "node-collect",
+        "label": "노드 내 수집",
+        "focus": [
+          "containers",
+          "kubelet",
+          "agent"
+        ],
+        "note": "컨테이너의 stdout/stderr를 kubelet이 /var/log/containers/ 아래 파일로 남기고, 로그 에이전트가 이를 tail한다."
+      },
+      {
+        "id": "aws-fanout",
+        "label": "AWS 전송",
+        "focus": [
+          "agent",
+          "cwl",
+          "opensearch",
+          "s3"
+        ],
+        "note": "로그 에이전트가 CloudWatch Logs, Amazon OpenSearch, Amazon S3로 로그를 분산 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "containers",
+      "type": "backend",
+      "label": "컨테이너",
+      "sublabel": "애플리케이션 프로세스",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "kubelet",
+      "type": "backend",
+      "label": "kubelet",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        300,
+        220
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "로그 에이전트",
+      "sublabel": "Fluent Bit",
+      "pos": [
+        620,
+        220
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "cwl",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "로그 그룹",
+      "pos": [
+        940,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "cloud",
+      "label": "Amazon OpenSearch",
+      "sublabel": "검색 / 분석",
+      "pos": [
+        940,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "장기 보관",
+      "pos": [
+        940,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "워커 노드",
+      "wraps": [
+        "containers",
+        "kubelet",
+        "agent"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "containers-to-kubelet",
+      "from": "containers",
+      "to": "kubelet",
+      "label": "stdout/stderr",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kubelet-to-agent",
+      "from": "kubelet",
+      "to": "agent",
+      "label": "/var/log/containers/",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-to-cwl",
+      "from": "agent",
+      "to": "cwl"
+    },
+    {
+      "id": "agent-to-opensearch",
+      "from": "agent",
+      "to": "opensearch",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-to-s3",
+      "from": "agent",
+      "to": "s3"
+    }
+  ]
+}

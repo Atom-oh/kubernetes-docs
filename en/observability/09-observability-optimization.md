@@ -25,7 +25,9 @@ In modern cloud-native environments, **observability** is the ability to underst
 
 ### 1.1 Relationship Between Logging, Metrics, and Tracing
 
-![Logging, Metrics, and Tracing shown as three peer pillars, each with its own data shape and best-fit question, linked by a dashed cycle of correlation signals — exemplars, trace context, and correlation IDs — that let an engineer jump between them.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-0.svg)
+![Logging, Metrics, and Tracing shown as three peer pillars, each mapped to its data shape and best-fit question, and linked by a dashed cycle of correlation signals — exemplars, trace context, and correlation IDs.](../.gitbook/assets/en-observability-09-observability-optimization-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-0.html)
 
 ### 1.2 Role of Each Pillar and Selection Criteria
 
@@ -37,7 +39,9 @@ In modern cloud-native environments, **observability** is the ability to underst
 
 ### 1.3 Overall EKS Observability Architecture
 
-![Application pods emit data to Fluent Bit and the OTel Collector, which fan out to log, metrics, and trace storage backends alongside Prometheus, all converging into Grafana as the single-pane-of-glass dashboard.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-1.svg)
+![Application Pods emit logs, metrics, and traces to Fluent Bit, the OTel Collector, and Prometheus, which land in log, metrics, and trace storage backends that all converge into Grafana as the single unified visualization layer.](../.gitbook/assets/en-observability-09-observability-optimization-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-1.html)
 
 ---
 
@@ -338,7 +342,9 @@ spec:
 
 ### 3.4 Long-term Storage Strategy
 
-![Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-2.svg)
+![Prometheus's 7-day local storage remote-writes to three long-term backend choices — Thanos, VictoriaMetrics, or AMP — each with its own query layer, all converging on Grafana as the single query surface.](../.gitbook/assets/en-observability-09-observability-optimization-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-2.html)
 
 ---
 
@@ -348,7 +354,9 @@ spec:
 
 OpenTelemetry (OTel) is a vendor-neutral standard for collecting and exporting observability data (traces, metrics, logs).
 
-![Application services send OTLP data through the OTel Collector's receive, batch, and attribute stages into tail sampling, which decides what survives and routes surviving spans to Tempo/Jaeger, AWS X-Ray, or a Prometheus exporter.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-3.svg)
+![Application services send OTLP traces into the OTel Collector, where receivers, batch and attribute processors, and tail sampling decide what survives before exporters forward spans to Grafana Tempo, Jaeger, or AWS X-Ray.](../.gitbook/assets/en-observability-09-observability-optimization-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-3.html)
 
 ### 4.2 Tracing Backend Comparison
 
@@ -580,7 +588,9 @@ spec:
 
 **eBPF (extended Berkeley Packet Filter)** is a technology that allows safe program execution within the Linux kernel. The biggest advantage of eBPF-based monitoring is achieving observability **without code modifications**.
 
-![Traditional code-based instrumentation requires adding an SDK and redeploying code before data collection begins, while eBPF instrumentation reaches the same data collection through kernel-level hooks without any change to the running application.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-4.svg)
+![Traditional instrumentation must add an SDK and modify/redeploy code before collecting data, while eBPF instrumentation collects the same data from kernel-level hooks via an eBPF program without changing the application code.](../.gitbook/assets/en-observability-09-observability-optimization-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-4.html)
 
 | Characteristic | Traditional Instrumentation | eBPF Instrumentation |
 |---|---|---|
@@ -952,7 +962,9 @@ done
 
 ### 6.4 Log/Metrics Storage Cost Reduction Strategies
 
-![Collected data is classified by priority — high-priority data gets full storage and long-term retention in Glacier, medium-priority data is sampled into Standard-IA, and low-priority data is aggregated only and kept in fast local memory.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-5.svg)
+![Collected logs and metrics are classified by priority into full storage, sampling, or aggregation only, then routed to storage tiers of different cost (S3 Glacier Deep Archive, S3 Standard-IA, or memory/local) to cut retention cost.](../.gitbook/assets/en-observability-09-observability-optimization-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-5.html)
 
 | Strategy | Target | Expected Savings |
 |---|---|---|
@@ -1303,7 +1315,9 @@ data:
 
 ### 8.3 Cross-Tool Data Correlation Analysis
 
-![A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-6.svg)
+![A user's slow-API investigation flows entirely through Grafana, which queries Prometheus for a P99 exemplar, follows the trace ID into Tempo to find the bottleneck service, then filters Loki logs by that same trace ID before returning one unified answer.](../.gitbook/assets/en-observability-09-observability-optimization-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-6.html)
 
 ### 8.4 Maintaining Monitoring System Performance at Large Scale
 
@@ -1352,7 +1366,9 @@ spec:
 
 ### 8.5 High Availability Observability Stack Configuration
 
-![Multiple Fluent Bit agents fan into a load balancer that spreads work across a redundant pair of OTel Collectors, which write logs to an HA Loki-write pair backed by shared S3 and metrics to an HA vminsert pair backed by replicated vmstorage.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-7.svg)
+![Fluent Bit agents on every node fan through a Load Balancer into a redundant pair of OTel Collectors, which write logs to two Loki Write replicas backed by a shared S3 Bucket and metrics to two vminsert replicas backed by vmstorage x3.](../.gitbook/assets/en-observability-09-observability-optimization-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-7.html)
 
 ---
 
@@ -1360,7 +1376,9 @@ spec:
 
 ### 9.1 Phased Adoption Strategy
 
-![A three-phase adoption path: Phase 1 uses CloudWatch-only basics, Phase 2 layers on the Prometheus/Grafana and Loki/X-Ray stack, and Phase 3 arrives at OpenTelemetry, eBPF monitoring, and cost monitoring as the advanced end state.](../../assets/diagrams/rendered/en-observability-09-observability-optimization-8.svg)
+![A three-phase adoption path: Phase 1 uses CloudWatch-only basics, Phase 2 layers on the Prometheus/Grafana and Loki/X-Ray stack, and Phase 3 arrives at OpenTelemetry, eBPF monitoring, and cost monitoring as the advanced end state.](../.gitbook/assets/en-observability-09-observability-optimization-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-09-observability-optimization-8.html)
 
 | Phase | Components | Duration | Cost | Operational Complexity |
 |---|---|---|---|---|

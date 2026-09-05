@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "비용 최적화 모범 사례",
+    "output": "ko-eks-07-eks-cost-optimization-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      540
+    ],
+    "views": [
+      {
+        "id": "categories",
+        "label": "세 가지 갈래",
+        "focus": [
+          "root",
+          "general",
+          "workload",
+          "finance"
+        ],
+        "note": "EKS 비용 최적화 모범 사례는 일반적인 모범 사례, 워크로드별 최적화, 금융 서비스를 위한 비용 최적화로 나뉩니다."
+      },
+      {
+        "id": "loop",
+        "label": "지속적인 비용 최적화",
+        "focus": [
+          "general",
+          "measure",
+          "analyze",
+          "optimize",
+          "monitor",
+          "iterate"
+        ],
+        "note": "비용 최적화는 일회성 작업이 아닌 지속적인 프로세스입니다. 측정→분석→최적화→모니터링→반복."
+      },
+      {
+        "id": "workload-finance",
+        "label": "워크로드 · 금융 서비스",
+        "focus": [
+          "workload",
+          "finance"
+        ],
+        "note": "개발/테스트·배치·웹·DB 워크로드별 전략과, 규제 준수·고가용성·보안 요구사항과 비용의 균형."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "비용 최적화 모범 사례",
+      "sublabel": "EKS 클러스터",
+      "pos": [
+        490,
+        40
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "general",
+      "type": "backend",
+      "label": "일반적인 모범 사례",
+      "sublabel": "지속적 최적화 · 비용 인식 문화 · 자동화 활용",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "workload",
+      "type": "backend",
+      "label": "워크로드별 최적화",
+      "sublabel": "개발/테스트 · 배치 · 웹 앱 · DB",
+      "pos": [
+        450,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "finance",
+      "type": "security",
+      "label": "금융 서비스를 위한 비용 최적화",
+      "sublabel": "규제 준수 · 고가용성/보안과 비용 균형",
+      "pos": [
+        840,
+        190
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "measure",
+      "type": "backend",
+      "label": "측정",
+      "sublabel": "현재 비용·리소스 사용량",
+      "pos": [
+        120,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "analyze",
+      "type": "backend",
+      "label": "분석",
+      "sublabel": "비용 동인·최적화 기회",
+      "pos": [
+        330,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "optimize",
+      "type": "backend",
+      "label": "최적화",
+      "sublabel": "최적화 전략 구현",
+      "pos": [
+        540,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "monitor",
+      "type": "backend",
+      "label": "모니터링",
+      "sublabel": "결과 모니터링·조정",
+      "pos": [
+        750,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "iterate",
+      "type": "backend",
+      "label": "반복",
+      "sublabel": "프로세스 반복",
+      "pos": [
+        960,
+        390
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "지속적인 비용 최적화",
+      "wraps": [
+        "measure",
+        "analyze",
+        "optimize",
+        "monitor",
+        "iterate"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-general",
+      "from": "root",
+      "to": "general"
+    },
+    {
+      "id": "root-workload",
+      "from": "root",
+      "to": "workload",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-finance",
+      "from": "root",
+      "to": "finance"
+    },
+    {
+      "id": "general-measure",
+      "from": "general",
+      "to": "measure",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "measure-analyze",
+      "from": "measure",
+      "to": "analyze"
+    },
+    {
+      "id": "analyze-optimize",
+      "from": "analyze",
+      "to": "optimize"
+    },
+    {
+      "id": "optimize-monitor",
+      "from": "optimize",
+      "to": "monitor"
+    },
+    {
+      "id": "monitor-iterate",
+      "from": "monitor",
+      "to": "iterate"
+    },
+    {
+      "id": "iterate-measure",
+      "from": "iterate",
+      "to": "measure",
+      "label": "반복",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          1035,
+          490
+        ],
+        [
+          195,
+          490
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "일반적인 모범 사례",
+      "items": [
+        "지속적인 비용 최적화: 측정 → 분석 → 최적화 → 모니터링 → 반복",
+        "비용 인식 문화 구축: 팀에 비용 가시성 제공, 최적화 목표 설정과 성과 보상",
+        "자동화 활용: 자동 스케일링, 비용 이상 탐지 알림, 유휴 리소스 자동 제거"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워크로드별 최적화",
+      "items": [
+        "개발 및 테스트 환경: 미사용 시 자동 종료, 스팟 인스턴스 사용, 리소스 제한 설정",
+        "배치 워크로드: 스팟 인스턴스 사용, 오프 피크 시간에 실행 예약, 작업 완료 후 리소스 해제",
+        "웹 애플리케이션과 데이터베이스 워크로드도 각각의 특성에 맞춰 최적화"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "금융 서비스를 위한 비용 최적화",
+      "items": [
+        "규제 준수 비용 관리",
+        "고가용성과 비용 균형",
+        "보안 요구사항과 비용 균형"
+      ]
+    }
+  ]
+}

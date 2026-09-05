@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes 서비스 유형",
+    "output": "ko-eks-03-eks-networking-part2-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      560
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Kubernetes Service"
+        },
+        "frontend": {
+          "label": "클러스터 내 접근 경로"
+        },
+        "cloud": {
+          "label": "AWS 로드 밸런서"
+        },
+        "external": {
+          "label": "외부 DNS"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "internal",
+        "label": "클러스터 내부 노출",
+        "focus": [
+          "clusterip",
+          "nodeport",
+          "internal",
+          "node-access"
+        ],
+        "note": "ClusterIP는 클러스터 안에서만, NodePort는 모든 노드의 특정 포트로 서비스를 노출한다."
+      },
+      {
+        "id": "external",
+        "label": "외부 노출",
+        "focus": [
+          "loadbalancer",
+          "externalname",
+          "external-lb",
+          "dns"
+        ],
+        "note": "LoadBalancer는 AWS 로드 밸런서(CLB, NLB, ALB)를 통해, ExternalName은 CNAME 레코드로 외부 서비스를 가리킨다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clusterip",
+      "type": "backend",
+      "label": "ClusterIP",
+      "sublabel": "클러스터 내부에서만 액세스",
+      "tag": "기본 유형",
+      "pos": [
+        70,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "nodeport",
+      "type": "backend",
+      "label": "NodePort",
+      "sublabel": "모든 노드의 특정 포트로 액세스",
+      "pos": [
+        70,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "loadbalancer",
+      "type": "backend",
+      "label": "LoadBalancer",
+      "sublabel": "외부 로드 밸런서로 액세스",
+      "pos": [
+        70,
+        290
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "externalname",
+      "type": "backend",
+      "label": "ExternalName",
+      "sublabel": "외부 서비스에 대한 CNAME 레코드",
+      "pos": [
+        70,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "internal",
+      "type": "frontend",
+      "label": "클러스터 내부",
+      "sublabel": "Pod 간 통신",
+      "pos": [
+        600,
+        70
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "node-access",
+      "type": "frontend",
+      "label": "노드 IP:포트",
+      "sublabel": "예: nodePort 30080",
+      "pos": [
+        600,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "external-lb",
+      "type": "cloud",
+      "label": "외부 로드 밸런서",
+      "sublabel": "CLB / NLB / ALB",
+      "pos": [
+        600,
+        290
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "dns",
+      "type": "external",
+      "label": "DNS CNAME",
+      "sublabel": "예: my-service.example.com",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 서비스 유형",
+      "wraps": [
+        "clusterip",
+        "nodeport",
+        "loadbalancer",
+        "externalname"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "액세스 방법",
+      "wraps": [
+        "internal",
+        "node-access",
+        "external-lb",
+        "dns"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clusterip-internal",
+      "from": "clusterip",
+      "to": "internal",
+      "label": "클러스터 내부 전용"
+    },
+    {
+      "id": "nodeport-node",
+      "from": "nodeport",
+      "to": "node-access",
+      "label": "노드 포트 개방"
+    },
+    {
+      "id": "lb-external",
+      "from": "loadbalancer",
+      "to": "external-lb",
+      "label": "AWS LB 프로비저닝",
+      "variant": "emphasis"
+    },
+    {
+      "id": "externalname-dns",
+      "from": "externalname",
+      "to": "dns",
+      "label": "CNAME 반환",
+      "variant": "dashed"
+    }
+  ]
+}

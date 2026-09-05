@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Data Flow — From Log Ingestion to UltraWarm and Cold Storage",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      630
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "main path"
+        },
+        "dashed": {
+          "label": "cold archive move"
+        },
+        "default": {
+          "label": "default message"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingest",
+        "label": "Ingestion and hot indexing",
+        "focus": [
+          "app",
+          "fb",
+          "os",
+          "ebs"
+        ],
+        "note": "Application logs reach OpenSearch through FluentBit's Bulk API calls and are indexed on EBS as hot data."
+      },
+      {
+        "id": "warm",
+        "label": "After 7 days: UltraWarm",
+        "focus": [
+          "os",
+          "uw"
+        ],
+        "note": "An ISM policy moves indices older than 7 days to the read-only UltraWarm tier."
+      },
+      {
+        "id": "cold",
+        "label": "After 30 days: cold storage",
+        "focus": [
+          "uw",
+          "s3"
+        ],
+        "note": "After 30 days the data moves on to S3-backed cold storage to cut retention cost."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "emits logs"
+    },
+    {
+      "id": "fb",
+      "type": "backend",
+      "label": "FluentBit",
+      "sublabel": "log collector"
+    },
+    {
+      "id": "os",
+      "type": "backend",
+      "label": "OpenSearch",
+      "sublabel": "Data Node"
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "EBS Storage",
+      "sublabel": "hot tier"
+    },
+    {
+      "id": "uw",
+      "type": "database",
+      "label": "UltraWarm",
+      "sublabel": "read-only tier"
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Cold Storage",
+      "sublabel": "S3-based archive"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "Ingestion and hot indexing"
+    },
+    {
+      "from": 320,
+      "to": 400,
+      "label": "After 7 days"
+    },
+    {
+      "from": 420,
+      "to": 500,
+      "label": "After 30 days"
+    }
+  ],
+  "messages": [
+    {
+      "id": "send-logs",
+      "from": "app",
+      "to": "fb",
+      "y": 190,
+      "label": "Send logs",
+      "variant": "default"
+    },
+    {
+      "id": "bulk-api",
+      "from": "fb",
+      "to": "os",
+      "y": 232,
+      "label": "Bulk API call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "index-hot",
+      "from": "os",
+      "to": "ebs",
+      "y": 275,
+      "label": "Index (Hot)",
+      "variant": "default"
+    },
+    {
+      "id": "to-ultrawarm",
+      "from": "os",
+      "to": "uw",
+      "y": 365,
+      "label": "Move to UltraWarm by ISM policy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "to-cold",
+      "from": "uw",
+      "to": "s3",
+      "y": 465,
+      "label": "Move to cold storage",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "fb",
+      "from": 185,
+      "to": 238,
+      "type": "backend"
+    },
+    {
+      "participant": "os",
+      "from": 227,
+      "to": 372,
+      "type": "backend"
+    },
+    {
+      "participant": "ebs",
+      "from": 270,
+      "to": 295,
+      "type": "database"
+    },
+    {
+      "participant": "uw",
+      "from": 360,
+      "to": 472,
+      "type": "database"
+    },
+    {
+      "participant": "s3",
+      "from": 460,
+      "to": 485,
+      "type": "cloud"
+    }
+  ]
+}

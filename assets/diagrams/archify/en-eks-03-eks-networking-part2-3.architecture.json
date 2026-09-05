@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service and Load Balancer Best Practices",
+    "output": "en-eks-03-eks-networking-part2-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      470
+    ],
+    "views": [
+      {
+        "id": "service-type",
+        "label": "Choosing the Service type",
+        "focus": [
+          "root",
+          "clusterip",
+          "lb-ingress"
+        ],
+        "note": "Use ClusterIP for internal-only services and LoadBalancer or Ingress for services that must be reached from outside."
+      },
+      {
+        "id": "lb-type",
+        "label": "Choosing the load balancer",
+        "focus": [
+          "root",
+          "alb",
+          "nlb",
+          "internal-lb"
+        ],
+        "note": "Use ALB for L7 features, NLB for TCP/UDP, high performance, or static IPs, and an internal load balancer for cluster-internal access."
+      },
+      {
+        "id": "lb-tuning",
+        "label": "Load balancer settings",
+        "focus": [
+          "root",
+          "cross-zone",
+          "target-type"
+        ],
+        "note": "Enable cross-zone load balancing for high availability and pick the ip or instance target type deliberately."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "Service and Load Balancer Best Practices",
+      "sublabel": "7 principles for exposing EKS workloads",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        380,
+        64
+      ]
+    },
+    {
+      "id": "clusterip",
+      "type": "backend",
+      "label": "Use ClusterIP",
+      "sublabel": "Internal-only services",
+      "pos": [
+        10,
+        260
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "lb-ingress",
+      "type": "backend",
+      "label": "LoadBalancer / Ingress",
+      "sublabel": "Externally reached services",
+      "pos": [
+        170,
+        260
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "Use ALB",
+      "sublabel": "Path routing · SSL · auth",
+      "pos": [
+        350,
+        260
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "nlb",
+      "type": "cloud",
+      "label": "Use NLB",
+      "sublabel": "TCP/UDP · performance · static IP",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "internal-lb",
+      "type": "cloud",
+      "label": "Use internal LB",
+      "sublabel": "Cluster-internal access",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cross-zone",
+      "type": "cloud",
+      "label": "Cross-zone balancing",
+      "sublabel": "Enable for HA",
+      "pos": [
+        890,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "target-type",
+      "type": "cloud",
+      "label": "Pick the target type",
+      "sublabel": "ip or instance",
+      "pos": [
+        1060,
+        260
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-clusterip",
+      "from": "root",
+      "to": "clusterip",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-lb-ingress",
+      "from": "root",
+      "to": "lb-ingress",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-alb",
+      "from": "root",
+      "to": "alb",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-nlb",
+      "from": "root",
+      "to": "nlb",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-internal-lb",
+      "from": "root",
+      "to": "internal-lb",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-cross-zone",
+      "from": "root",
+      "to": "cross-zone",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-target-type",
+      "from": "root",
+      "to": "target-type",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

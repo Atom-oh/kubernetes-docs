@@ -55,7 +55,9 @@ Understanding how to optimize Cilium's performance and resolve common issues is 
 
 ### Performance Tuning Architecture
 
-![Tree diagram showing Cilium performance optimization branching into four tuning areas — kernel parameters, eBPF maps, resource allocation, and networking mode — each expanded into its four concrete tunables.](../../../assets/diagrams/rendered/en-networking-cilium-07-advanced-topics-0.svg)
+![Diagram showing Cilium performance optimization branching into four tuning areas — kernel parameters, eBPF maps, resource allocation, and networking mode — each listing its four concrete tunables.](../../.gitbook/assets/en-networking-cilium-07-advanced-topics-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-07-advanced-topics-0.html)
 
 ### Performance Tuning Areas:
 

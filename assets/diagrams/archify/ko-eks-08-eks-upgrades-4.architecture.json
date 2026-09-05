@@ -1,0 +1,384 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "애드온 업그레이드",
+    "output": "ko-eks-08-eks-upgrades-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1272,
+      500
+    ],
+    "views": [
+      {
+        "id": "managed",
+        "label": "AWS 관리형 애드온",
+        "focus": [
+          "root",
+          "managed",
+          "managed-check",
+          "managed-upgrade"
+        ],
+        "note": "list-addons·describe-addon으로 버전을 확인한 뒤 update-addon 또는 eksctl로 업그레이드합니다."
+      },
+      {
+        "id": "self-managed",
+        "label": "자체 관리형 애드온",
+        "focus": [
+          "root",
+          "self-managed"
+        ],
+        "note": "Helm 또는 kubectl apply로 자체 관리형 애드온을 업그레이드합니다."
+      },
+      {
+        "id": "guides",
+        "label": "주요 애드온 가이드",
+        "focus": [
+          "root",
+          "guides",
+          "coredns",
+          "kube-proxy",
+          "vpc-cni"
+        ],
+        "note": "CoreDNS·kube-proxy·VPC CNI 세 핵심 애드온의 개별 업그레이드 가이드입니다."
+      },
+      {
+        "id": "troubleshooting",
+        "label": "문제 해결",
+        "focus": [
+          "root",
+          "troubleshooting",
+          "common-issues",
+          "steps"
+        ],
+        "note": "구성 충돌·호환성·리소스 제약을 상태·로그·이벤트 확인 순서로 진단합니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "애드온 업그레이드",
+      "sublabel": "EKS 클러스터 애드온",
+      "pos": [
+        536,
+        36
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "managed",
+      "type": "cloud",
+      "label": "AWS 관리형 애드온",
+      "sublabel": "AWS CLI · eksctl · 콘솔",
+      "pos": [
+        36,
+        176
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "managed-check",
+      "type": "cloud",
+      "label": "버전 확인",
+      "sublabel": "list-addons · describe-addon",
+      "pos": [
+        36,
+        316
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "managed-upgrade",
+      "type": "cloud",
+      "label": "관리형 애드온 업그레이드",
+      "sublabel": "update-addon · eksctl",
+      "pos": [
+        36,
+        416
+      ],
+      "size": [
+        200,
+        56
+      ]
+    },
+    {
+      "id": "self-managed",
+      "type": "backend",
+      "label": "자체 관리형 애드온",
+      "sublabel": "Helm · kubectl",
+      "pos": [
+        280,
+        176
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "guides",
+      "type": "backend",
+      "label": "주요 애드온 업그레이드 가이드",
+      "sublabel": "kube-system 핵심 애드온",
+      "pos": [
+        524,
+        176
+      ],
+      "size": [
+        356,
+        60
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS",
+      "sublabel": "DNS 서비스",
+      "pos": [
+        524,
+        316
+      ],
+      "size": [
+        112,
+        56
+      ]
+    },
+    {
+      "id": "kube-proxy",
+      "type": "backend",
+      "label": "kube-proxy",
+      "sublabel": "서비스 네트워킹",
+      "pos": [
+        646,
+        316
+      ],
+      "size": [
+        112,
+        56
+      ]
+    },
+    {
+      "id": "vpc-cni",
+      "type": "backend",
+      "label": "VPC CNI",
+      "sublabel": "파드 네트워킹",
+      "pos": [
+        768,
+        316
+      ],
+      "size": [
+        112,
+        56
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "type": "security",
+      "label": "애드온 업그레이드 문제 해결",
+      "sublabel": "업그레이드 중 발생하는 문제",
+      "pos": [
+        924,
+        176
+      ],
+      "size": [
+        312,
+        60
+      ]
+    },
+    {
+      "id": "common-issues",
+      "type": "security",
+      "label": "일반적인 문제",
+      "sublabel": "구성 충돌 · 호환성 · 리소스",
+      "pos": [
+        924,
+        316
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "steps",
+      "type": "security",
+      "label": "문제 해결 단계",
+      "sublabel": "상태 → 로그 → 이벤트",
+      "pos": [
+        1086,
+        316
+      ],
+      "size": [
+        150,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 관리형 애드온",
+      "wraps": [
+        "managed",
+        "managed-check",
+        "managed-upgrade"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "자체 관리형 애드온",
+      "wraps": [
+        "self-managed"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "주요 애드온 업그레이드 가이드",
+      "wraps": [
+        "guides",
+        "coredns",
+        "kube-proxy",
+        "vpc-cni"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "문제 해결",
+      "wraps": [
+        "troubleshooting",
+        "common-issues",
+        "steps"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-managed",
+      "from": "root",
+      "to": "managed",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-self",
+      "from": "root",
+      "to": "self-managed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-guides",
+      "from": "root",
+      "to": "guides",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-troubleshooting",
+      "from": "root",
+      "to": "troubleshooting",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "managed-to-check",
+      "from": "managed",
+      "to": "managed-check",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "check-to-upgrade",
+      "from": "managed-check",
+      "to": "managed-upgrade",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "guides-coredns",
+      "from": "guides",
+      "to": "coredns",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "guides-kube-proxy",
+      "from": "guides",
+      "to": "kube-proxy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "guides-vpc-cni",
+      "from": "guides",
+      "to": "vpc-cni",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ts-common",
+      "from": "troubleshooting",
+      "to": "common-issues",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ts-steps",
+      "from": "troubleshooting",
+      "to": "steps",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS 관리형 애드온 절차",
+      "items": [
+        "aws eks list-addons로 설치된 관리형 애드온 확인",
+        "describe-addon / describe-addon-versions로 현재·사용 가능 버전 확인",
+        "aws eks update-addon --resolve-conflicts PRESERVE 또는 eksctl update addon --preserve로 업그레이드"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "일반적인 문제",
+      "items": [
+        "구성 충돌: 사용자 정의 구성과 새 버전 간의 충돌",
+        "호환성 문제: 애드온과 Kubernetes 버전 간의 호환성",
+        "리소스 제약: 업그레이드에 필요한 리소스 부족"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "문제 해결 단계",
+      "items": [
+        "aws eks describe-addon으로 애드온 상태 확인",
+        "kubectl logs -n kube-system으로 애드온 로그 확인",
+        "kubectl get events -n kube-system으로 이벤트 확인"
+      ]
+    }
+  ]
+}

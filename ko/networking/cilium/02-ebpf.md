@@ -207,7 +207,9 @@ eBPF는 단순한 기술이 아닌 완전한 기술 스택으로, 커널 내부�
 
 ### eBPF 아키텍처 상세 다이어그램
 
-![사용자 공간의 로더가 eBPF 프로그램을 커널의 검증기에 전달하면, 검증기·JIT 컴파일러를 거쳐 eBPF 가상 머신이 이를 실행하고, 이 가상 머신이 다양한 커널 훅 포인트에 연결되며 eBPF 맵을 통해 사용자 공간과 데이터를 주고받는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-cilium-02-ebpf-0.svg)
+![사용자 공간의 로더가 eBPF 프로그램을 커널의 검증기에 전달하면, 검증기·JIT 컴파일러를 거쳐 eBPF 가상 머신이 이를 실행하고, 이 가상 머신이 다양한 커널 훅 포인트에 연결되며 eBPF 맵을 통해 사용자 공간과 데이터를 주고받는 구조를 보여준다.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-02-ebpf-0.html)
 
 ### eBPF 아키텍처 구성 요소 상세 설명
 
@@ -699,7 +701,9 @@ Cilium은 eBPF를 활용하여 컨테이너 네트워킹, 로드 밸런싱, 네�
 
 Cilium은 다음과 같은 구성 요소로 이루어져 있으며, 각 구성 요소에서 eBPF가 중요한 역할을 합니다:
 
-![쿠버네티스 API 서버와 연동하는 Cilium Agent가 클러스터 컨트롤 플레인(Operator·CLI·Hubble)과 노드 위의 eBPF 프로그램·맵을 모두 매개하여, 파드 트래픽을 커널 수준에서 로드밸런싱·정책 적용하는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-cilium-02-ebpf-1.svg)
+![Kubernetes API Server·Cilium Operator·Cilium CLI·Hubble로 이루어진 클러스터 컴포넌트와, 각 워커 노드에서 실행되는 Cilium Agent가 eBPF 프로그램을 로드하고 eBPF 맵을 관리하며 Pod 트래픽을 커널 수준에서 처리하는 Cilium 아키텍처를 보여준다.](../../.gitbook/assets/ko-networking-cilium-02-ebpf-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-cilium-02-ebpf-1.html)
 
 #### 주요 구성 요소:
 

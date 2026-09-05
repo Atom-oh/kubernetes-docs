@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "포드 보안 계층",
+    "output": "ko-eks-05-eks-security-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      720
+    ],
+    "views": [
+      {
+        "id": "pss-levels",
+        "label": "포드 보안 표준",
+        "focus": [
+          "ns-labels",
+          "privileged",
+          "baseline",
+          "restricted",
+          "app-pod",
+          "privileged-pod"
+        ],
+        "note": "네임스페이스 레이블로 PSS 레벨을 지정하면 그 레벨이 파드 유형별로 적용된다."
+      },
+      {
+        "id": "security-context",
+        "label": "보안 컨텍스트",
+        "focus": [
+          "security-context",
+          "app-pod",
+          "system-pod"
+        ],
+        "note": "파드·컨테이너 수준 securityContext로 애플리케이션 파드와 시스템 파드의 권한을 제한한다."
+      },
+      {
+        "id": "policy-engines",
+        "label": "정책 엔진",
+        "focus": [
+          "opa-gatekeeper",
+          "kyverno",
+          "admission-webhook",
+          "app-pod"
+        ],
+        "note": "OPA Gatekeeper와 Kyverno가 어드미션 웹훅을 통해 클러스터 전체에 정책을 적용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ns-labels",
+      "type": "cloud",
+      "label": "네임스페이스 레이블",
+      "sublabel": "enforce · audit · warn",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "privileged",
+      "type": "security",
+      "label": "Privileged",
+      "sublabel": "제한 없음",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "baseline",
+      "type": "security",
+      "label": "Baseline",
+      "sublabel": "권한 에스컬레이션 방지",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "restricted",
+      "type": "security",
+      "label": "Restricted",
+      "sublabel": "강력한 제한",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "security-context",
+      "type": "security",
+      "label": "보안 컨텍스트",
+      "sublabel": "securityContext",
+      "pos": [
+        300,
+        470
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "opa-gatekeeper",
+      "type": "backend",
+      "label": "OPA Gatekeeper",
+      "sublabel": "정책 엔진",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kyverno",
+      "type": "backend",
+      "label": "Kyverno",
+      "sublabel": "정책 엔진",
+      "pos": [
+        880,
+        390
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "admission-webhook",
+      "type": "backend",
+      "label": "어드미션 웹훅",
+      "sublabel": "어드미션 컨트롤러",
+      "pos": [
+        880,
+        280
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "privileged-pod",
+      "type": "frontend",
+      "label": "권한 있는 파드",
+      "sublabel": "Privileged 허용",
+      "pos": [
+        600,
+        60
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app-pod",
+      "type": "frontend",
+      "label": "애플리케이션 파드",
+      "sublabel": "Baseline / Restricted",
+      "pos": [
+        600,
+        280
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "system-pod",
+      "type": "frontend",
+      "label": "시스템 파드",
+      "sublabel": "보안 컨텍스트 적용",
+      "pos": [
+        600,
+        600
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "적용 방법",
+      "wraps": [
+        "ns-labels"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "포드 보안 표준 (PSS)",
+      "wraps": [
+        "privileged",
+        "baseline",
+        "restricted"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "보안 컨텍스트",
+      "wraps": [
+        "security-context"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "정책 엔진",
+      "wraps": [
+        "opa-gatekeeper",
+        "kyverno",
+        "admission-webhook"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드 유형별 보안",
+      "wraps": [
+        "privileged-pod",
+        "app-pod",
+        "system-pod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "labels-to-pss",
+      "from": "ns-labels",
+      "to": "restricted",
+      "label": "PSS 레벨 지정",
+      "variant": "emphasis"
+    },
+    {
+      "id": "privileged-to-pod",
+      "from": "privileged",
+      "to": "privileged-pod"
+    },
+    {
+      "id": "baseline-to-app",
+      "from": "baseline",
+      "to": "app-pod",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "restricted-to-app",
+      "from": "restricted",
+      "to": "app-pod",
+      "variant": "emphasis"
+    },
+    {
+      "id": "context-to-app",
+      "from": "security-context",
+      "to": "app-pod",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "context-to-system",
+      "from": "security-context",
+      "to": "system-pod",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "opa-to-webhook",
+      "from": "opa-gatekeeper",
+      "to": "admission-webhook"
+    },
+    {
+      "id": "kyverno-to-webhook",
+      "from": "kyverno",
+      "to": "admission-webhook"
+    },
+    {
+      "id": "webhook-to-app",
+      "from": "admission-webhook",
+      "to": "app-pod",
+      "label": "정책 검증",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "포드 보안 표준 (PSS)",
+      "items": [
+        "Privileged: 제한 없음",
+        "Baseline: 알려진 권한 에스컬레이션 방지",
+        "Restricted: 강력한 보안 제한 적용",
+        "네임스페이스 레이블 pod-security.kubernetes.io/enforce·audit·warn 으로 지정"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "보안 컨텍스트",
+      "items": [
+        "runAsUser: 비루트 사용자로 실행",
+        "readOnlyRootFilesystem: 읽기 전용 파일 시스템",
+        "allowPrivilegeEscalation: false",
+        "capabilities.drop: ALL"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "정책 엔진",
+      "items": [
+        "OPA Gatekeeper 또는 Kyverno로 클러스터 전체 정책 적용",
+        "어드미션 웹훅에서 파드 생성 요청을 검증",
+        "예: 권한 있는 컨테이너 방지 ClusterPolicy"
+      ]
+    }
+  ]
+}

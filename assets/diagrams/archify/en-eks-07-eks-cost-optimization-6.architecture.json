@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cost Monitoring and Analysis",
+    "output": "en-eks-07-eks-cost-optimization-6.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1240,
+      500
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Monitoring goal"
+        },
+        "cloud": {
+          "label": "AWS service"
+        },
+        "backend": {
+          "label": "Kubecost"
+        },
+        "frontend": {
+          "label": "Custom dashboard"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "v-cost-explorer",
+        "label": "AWS Cost Explorer",
+        "focus": [
+          "root",
+          "cost-explorer",
+          "cost-analysis",
+          "anomaly-detection",
+          "budgets"
+        ],
+        "note": "Cost analysis by service and tag, anomaly detection with Cost Anomaly Detection, overrun alerts via AWS Budgets"
+      },
+      {
+        "id": "v-kubecost",
+        "label": "Kubecost",
+        "focus": [
+          "root",
+          "kubecost",
+          "kubecost-dashboard",
+          "kubecost-alerts"
+        ],
+        "note": "Cost by namespace, deployment, service and node, efficiency, chargeback reports, and anomaly/budget alerts"
+      },
+      {
+        "id": "v-container-insights",
+        "label": "Container Insights",
+        "focus": [
+          "root",
+          "container-insights",
+          "resource-usage",
+          "cost-insights"
+        ],
+        "note": "Monitor CPU, memory and I/O metrics, then identify over-provisioned resources and underused nodes"
+      },
+      {
+        "id": "v-custom",
+        "label": "Custom dashboard",
+        "focus": [
+          "root",
+          "custom-dashboard",
+          "grafana-dashboard",
+          "optimization-score"
+        ],
+        "note": "Visualize Prometheus metrics in Grafana with Cost Explorer API data; track efficiency with an optimization score"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "external",
+      "label": "Cost Monitoring and Analysis",
+      "sublabel": "EKS cluster costs",
+      "pos": [
+        520,
+        184
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "cost-explorer",
+      "type": "cloud",
+      "label": "AWS Cost Explorer",
+      "sublabel": "Visualize AWS cost and usage",
+      "pos": [
+        280,
+        96
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "container-insights",
+      "type": "cloud",
+      "label": "CloudWatch Container Insights",
+      "sublabel": "Resource usage metrics",
+      "pos": [
+        280,
+        311
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "kubecost",
+      "type": "backend",
+      "label": "Kubecost",
+      "sublabel": "Kubernetes-native cost tool",
+      "pos": [
+        750,
+        61
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "custom-dashboard",
+      "type": "frontend",
+      "label": "Custom Cost Dashboard",
+      "sublabel": "Prometheus + Grafana",
+      "pos": [
+        750,
+        311
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "cost-analysis",
+      "type": "cloud",
+      "label": "Cost Analysis",
+      "sublabel": "By service, tag, and over time",
+      "pos": [
+        30,
+        30
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "anomaly-detection",
+      "type": "cloud",
+      "label": "Cost Anomaly Detection",
+      "sublabel": "AWS Cost Anomaly Detection",
+      "pos": [
+        30,
+        100
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "budgets",
+      "type": "cloud",
+      "label": "Cost Budget Setting",
+      "sublabel": "AWS Budgets overrun alerts",
+      "pos": [
+        30,
+        170
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "resource-usage",
+      "type": "cloud",
+      "label": "Resource Usage Monitoring",
+      "sublabel": "CPU, memory, disk, network",
+      "pos": [
+        30,
+        280
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "cost-insights",
+      "type": "cloud",
+      "label": "Cost Optimization Insights",
+      "sublabel": "Over-provisioning, underused nodes",
+      "pos": [
+        30,
+        350
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "kubecost-dashboard",
+      "type": "backend",
+      "label": "Kubecost Dashboard",
+      "sublabel": "Cost by namespace / deployment",
+      "pos": [
+        990,
+        30
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "kubecost-alerts",
+      "type": "backend",
+      "label": "Kubecost Alerts",
+      "sublabel": "Cost anomalies and budget overruns",
+      "pos": [
+        990,
+        100
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "grafana-dashboard",
+      "type": "frontend",
+      "label": "Grafana Dashboard",
+      "sublabel": "Prometheus + Cost Explorer API",
+      "pos": [
+        990,
+        280
+      ],
+      "size": [
+        210,
+        52
+      ]
+    },
+    {
+      "id": "optimization-score",
+      "type": "frontend",
+      "label": "Cost Optimization Score",
+      "sublabel": "Request/usage, node, Spot, idle",
+      "pos": [
+        990,
+        350
+      ],
+      "size": [
+        210,
+        52
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-to-cost-explorer",
+      "from": "root",
+      "to": "cost-explorer",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-to-kubecost",
+      "from": "root",
+      "to": "kubecost",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-to-container-insights",
+      "from": "root",
+      "to": "container-insights",
+      "variant": "emphasis"
+    },
+    {
+      "id": "root-to-custom-dashboard",
+      "from": "root",
+      "to": "custom-dashboard",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cost-explorer-to-cost-analysis",
+      "from": "cost-explorer",
+      "to": "cost-analysis"
+    },
+    {
+      "id": "cost-explorer-to-anomaly-detection",
+      "from": "cost-explorer",
+      "to": "anomaly-detection"
+    },
+    {
+      "id": "cost-explorer-to-budgets",
+      "from": "cost-explorer",
+      "to": "budgets"
+    },
+    {
+      "id": "kubecost-to-kubecost-dashboard",
+      "from": "kubecost",
+      "to": "kubecost-dashboard"
+    },
+    {
+      "id": "kubecost-to-kubecost-alerts",
+      "from": "kubecost",
+      "to": "kubecost-alerts"
+    },
+    {
+      "id": "container-insights-to-resource-usage",
+      "from": "container-insights",
+      "to": "resource-usage"
+    },
+    {
+      "id": "container-insights-to-cost-insights",
+      "from": "container-insights",
+      "to": "cost-insights"
+    },
+    {
+      "id": "custom-dashboard-to-grafana-dashboard",
+      "from": "custom-dashboard",
+      "to": "grafana-dashboard"
+    },
+    {
+      "id": "custom-dashboard-to-optimization-score",
+      "from": "custom-dashboard",
+      "to": "optimization-score"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "AWS-native tools",
+      "items": [
+        "Cost Explorer: cost by service and tag, trends over time",
+        "Cost Anomaly Detection: detect abnormal cost increases",
+        "AWS Budgets: alerts when a budget is exceeded",
+        "Container Insights: CPU, memory, I/O usage and over-provisioning"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Kubecost",
+      "items": [
+        "Cost by namespace, deployment, service, node",
+        "Resource efficiency and cost optimization recommendations",
+        "Cost allocation and chargeback reports; anomaly and budget alerts"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Custom cost dashboard",
+      "items": [
+        "Collect Prometheus metrics -> Grafana dashboard -> integrate Cost Explorer API",
+        "Optimization score: request-to-usage ratio, node utilization, Spot ratio, idle ratio"
+      ]
+    }
+  ]
+}

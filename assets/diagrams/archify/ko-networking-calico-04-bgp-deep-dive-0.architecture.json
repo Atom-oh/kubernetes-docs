@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "자율 시스템(AS) 간 BGP 관계",
+    "output": "ko-networking-calico-04-bgp-deep-dive-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "ibgp",
+        "label": "iBGP · 동일 AS 내부",
+        "focus": [
+          "r1",
+          "r2",
+          "r3",
+          "r4"
+        ],
+        "note": "같은 AS 번호를 가진 라우터끼리 맺는 세션. Next-hop을 바꾸지 않으며 full-mesh 또는 RR이 필요하다."
+      },
+      {
+        "id": "ebgp",
+        "label": "eBGP · AS 경계",
+        "focus": [
+          "r1",
+          "r3",
+          "r2",
+          "r4",
+          "r5"
+        ],
+        "note": "서로 다른 AS 사이의 세션. TTL 기본값 1, Next-hop을 자신으로 바꿔 경로를 전파한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "r1",
+      "type": "backend",
+      "label": "라우터 1",
+      "sublabel": "AS 64512",
+      "pos": [
+        120,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "backend",
+      "label": "라우터 2",
+      "sublabel": "AS 64512",
+      "pos": [
+        120,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "backend",
+      "label": "라우터 3",
+      "sublabel": "AS 64513",
+      "pos": [
+        710,
+        120
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "r4",
+      "type": "backend",
+      "label": "라우터 4",
+      "sublabel": "AS 64513",
+      "pos": [
+        710,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "r5",
+      "type": "external",
+      "label": "라우터 5",
+      "sublabel": "AS 64514",
+      "pos": [
+        415,
+        470
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인터넷 구조",
+      "wraps": [
+        "r1",
+        "r2",
+        "r3",
+        "r4",
+        "r5"
+      ],
+      "pad": 90
+    },
+    {
+      "kind": "security-group",
+      "label": "AS 64512",
+      "wraps": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "AS 64513",
+      "wraps": [
+        "r3",
+        "r4"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "AS 64514",
+      "wraps": [
+        "r5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "r1-r2",
+      "from": "r1",
+      "to": "r2",
+      "label": "iBGP",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "r3-r4",
+      "from": "r3",
+      "to": "r4",
+      "label": "iBGP",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "r1-r3",
+      "from": "r1",
+      "to": "r3",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r2-r5",
+      "from": "r2",
+      "to": "r5",
+      "label": "eBGP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r4-r5",
+      "from": "r4",
+      "to": "r5",
+      "label": "eBGP",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "iBGP (Internal BGP)",
+      "items": [
+        "동일 AS 내 라우터 간 세션",
+        "TTL 기본값 255, Next-hop 변경 없음",
+        "Full-mesh 또는 Route Reflector 필요",
+        "Administrative Distance 200"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "eBGP (External BGP)",
+      "items": [
+        "서로 다른 AS 간 세션",
+        "TTL 기본값 1 (멀티홉 필요), Next-hop을 자신으로 변경",
+        "경로 자동 전파",
+        "Administrative Distance 20"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "AS 번호",
+      "items": [
+        "64512-65534는 프라이빗 AS 범위",
+        "Calico는 클러스터 내부용으로 프라이빗 AS 사용을 권장 (BGPConfiguration.spec.asNumber)"
+      ]
+    }
+  ]
+}

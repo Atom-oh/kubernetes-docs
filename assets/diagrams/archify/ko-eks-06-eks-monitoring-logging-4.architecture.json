@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "로그 분석 및 시각화 파이프라인",
+    "output": "ko-eks-06-eks-monitoring-logging-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "cloudwatch-path",
+        "label": "CloudWatch 경로",
+        "focus": [
+          "src-direct",
+          "src-workload",
+          "collectors",
+          "cwlogs",
+          "insights"
+        ],
+        "note": "컨트롤 플레인·AWS 서비스 로그는 CloudWatch Logs로 직접 들어가고, Logs Insights로 쿼리한다."
+      },
+      {
+        "id": "opensearch-path",
+        "label": "OpenSearch 경로",
+        "focus": [
+          "src-workload",
+          "collectors",
+          "opensearch",
+          "osdash"
+        ],
+        "note": "Fluent Bit 또는 Vector가 Amazon OpenSearch로 보내고 OpenSearch Dashboards에서 시각화한다."
+      },
+      {
+        "id": "s3-loki-path",
+        "label": "S3 · Loki 경로",
+        "focus": [
+          "src-workload",
+          "collectors",
+          "s3",
+          "athena",
+          "loki",
+          "grafana"
+        ],
+        "note": "S3 아카이브는 Athena·QuickSight로, Loki는 Grafana Explore·대시보드로 분석한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "src-direct",
+      "type": "external",
+      "label": "컨트롤 플레인 · AWS 서비스 로그",
+      "sublabel": "CloudWatch로 직접 전송",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "src-workload",
+      "type": "external",
+      "label": "컨테이너 · 애플리케이션 로그",
+      "sublabel": "워커 노드 stdout/stderr",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "collectors",
+      "type": "backend",
+      "label": "수집 에이전트",
+      "sublabel": "Fluent Bit · Fluentd · Vector · CloudWatch 에이전트",
+      "pos": [
+        360,
+        340
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "cwlogs",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "sublabel": "Fluent Bit · CloudWatch 에이전트",
+      "pos": [
+        740,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "opensearch",
+      "type": "cloud",
+      "label": "Amazon OpenSearch",
+      "sublabel": "Fluent Bit · Vector",
+      "pos": [
+        740,
+        200
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "Fluent Bit · 장기 아카이브",
+      "pos": [
+        740,
+        340
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "loki",
+      "type": "database",
+      "label": "Grafana Loki",
+      "sublabel": "Fluentd",
+      "pos": [
+        740,
+        480
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "insights",
+      "type": "frontend",
+      "label": "CloudWatch Logs Insights",
+      "sublabel": "쿼리 → 사용자 정의 대시보드",
+      "pos": [
+        1050,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "osdash",
+      "type": "frontend",
+      "label": "OpenSearch Dashboards",
+      "sublabel": "OpenSearch 시각화",
+      "pos": [
+        1050,
+        200
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "athena",
+      "type": "frontend",
+      "label": "Amazon Athena",
+      "sublabel": "SQL 쿼리 → QuickSight",
+      "pos": [
+        1050,
+        340
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana Explore",
+      "sublabel": "Grafana 대시보드",
+      "pos": [
+        1050,
+        480
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "로그 소스",
+      "wraps": [
+        "src-direct",
+        "src-workload"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로그 수집",
+      "wraps": [
+        "collectors"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로그 저장",
+      "wraps": [
+        "cwlogs",
+        "opensearch",
+        "s3",
+        "loki"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "로그 분석 · 시각화",
+      "wraps": [
+        "insights",
+        "osdash",
+        "athena",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "direct-to-cw",
+      "from": "src-direct",
+      "to": "cwlogs",
+      "label": "직접 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "workload-to-collectors",
+      "from": "src-workload",
+      "to": "collectors",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collectors-to-cw",
+      "from": "collectors",
+      "to": "cwlogs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "collectors-to-os",
+      "from": "collectors",
+      "to": "opensearch"
+    },
+    {
+      "id": "collectors-to-s3",
+      "from": "collectors",
+      "to": "s3"
+    },
+    {
+      "id": "collectors-to-loki",
+      "from": "collectors",
+      "to": "loki"
+    },
+    {
+      "id": "cw-to-insights",
+      "from": "cwlogs",
+      "to": "insights",
+      "variant": "emphasis"
+    },
+    {
+      "id": "os-to-dash",
+      "from": "opensearch",
+      "to": "osdash"
+    },
+    {
+      "id": "s3-to-athena",
+      "from": "s3",
+      "to": "athena"
+    },
+    {
+      "id": "loki-to-grafana",
+      "from": "loki",
+      "to": "grafana"
+    }
+  ]
+}

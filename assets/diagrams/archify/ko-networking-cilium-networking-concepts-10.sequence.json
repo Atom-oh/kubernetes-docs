@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "DNS 해석 과정 — www.example.com 조회",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [1000, 520],
+    "animation": "trace"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "클라이언트", "sublabel": "www.example.com 조회 요청" },
+    { "id": "root", "type": "backend", "label": "루트 DNS 서버", "sublabel": "계층 최상위" },
+    { "id": "tld", "type": "backend", "label": ".com DNS 서버", "sublabel": "TLD" },
+    { "id": "auth", "type": "backend", "label": "example.com DNS 서버", "sublabel": "권한 있는(authoritative) 서버" }
+  ],
+  "segments": [
+    { "from": 165, "to": 340, "label": "계층을 따라 참조" },
+    { "from": 360, "to": 440, "label": "최종 응답" }
+  ],
+  "messages": [
+    { "id": "q1", "from": "client", "to": "root", "y": 200, "label": "1. www.example.com 조회", "variant": "emphasis" },
+    { "id": "r2", "from": "root", "to": "tld", "y": 260, "label": "2. .com DNS 서버 참조" },
+    { "id": "r3", "from": "tld", "to": "auth", "y": 320, "label": "3. example.com DNS 서버 참조" },
+    { "id": "a4", "from": "auth", "to": "client", "y": 405, "label": "4. www.example.com = 192.0.2.1", "variant": "return", "note": "A 레코드 응답" }
+  ],
+  "activations": [
+    { "participant": "root", "from": 195, "to": 265, "type": "backend" },
+    { "participant": "tld", "from": 255, "to": 325, "type": "backend" },
+    { "participant": "auth", "from": 315, "to": 412, "type": "backend" }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "4계층 감지 파이프라인",
+    "output": "ko-eks-11-eks-advanced-debugging-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "데이터 소스"
+        },
+        "backend": {
+          "label": "수집 계층"
+        },
+        "cloud": {
+          "label": "분석 계층"
+        },
+        "messagebus": {
+          "label": "알림 채널"
+        }
+      }
+    },
+    "viewBox": [
+      1160,
+      400
+    ]
+  },
+  "components": [
+    {
+      "id": "sources",
+      "type": "external",
+      "label": "데이터 소스",
+      "sublabel": "메트릭 · 로그 · 트레이스 · 이벤트",
+      "tag": "01 · 소스",
+      "pos": [
+        60,
+        50
+      ],
+      "size": [
+        480,
+        72
+      ]
+    },
+    {
+      "id": "collection",
+      "type": "backend",
+      "label": "수집",
+      "sublabel": "CloudWatch Agent · Fluent Bit · ADOT Collector · Prometheus",
+      "tag": "02 · 수집",
+      "pos": [
+        620,
+        50
+      ],
+      "size": [
+        480,
+        72
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "cloud",
+      "label": "분석",
+      "sublabel": "CloudWatch Logs Insights · 메트릭 알림 · Anomaly Detection · Composite Alarms",
+      "tag": "03 · 분석",
+      "pos": [
+        620,
+        250
+      ],
+      "size": [
+        480,
+        72
+      ]
+    },
+    {
+      "id": "alerting",
+      "type": "messagebus",
+      "label": "알림",
+      "sublabel": "SNS · Slack · PagerDuty · EventBridge",
+      "tag": "04 · 알림",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        480,
+        72
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sources-to-collection",
+      "from": "sources",
+      "to": "collection",
+      "label": "텔레메트리 수집",
+      "variant": "emphasis",
+      "labelDy": -30
+    },
+    {
+      "id": "collection-to-analysis",
+      "from": "collection",
+      "to": "analysis",
+      "label": "저장 · 쿼리 · 알람 평가",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "analysis-to-alerting",
+      "from": "analysis",
+      "to": "alerting",
+      "label": "이상 판정 시 알림 전달",
+      "variant": "emphasis",
+      "labelDy": -30
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "레퍼런스 아키텍처 1: AWS 네이티브",
+      "items": [
+        "Fluent Bit이 컨테이너 로그를 CloudWatch Logs(/aws/eks/my-cluster/containers)로 전송",
+        "ADOT Collector가 트레이스는 X-Ray로, 메트릭은 CloudWatch EMF와 Prometheus 원격 쓰기로 내보냄"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "레퍼런스 아키텍처 2: 오픈소스 스택",
+      "items": [
+        "Prometheus + Alertmanager + Grafana 조합",
+        "Alertmanager 라우팅: severity=critical → PagerDuty, severity=warning → Slack"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Calico Cloud (SaaS)",
+    "locale": "en",
+    "output": "en-networking-calico-07-advanced-topics-8.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1040, 520],
+    "views": [
+      { "id": "reporting-path", "label": "Agent to Management UI", "focus": ["agent", "mgmt-ui"], "note": "Every customer cluster's Calico agent reports into the shared SaaS Management UI." },
+      { "id": "analytics-outputs", "label": "Analytics outputs", "focus": ["mgmt-ui", "analytics", "threat-intel", "compliance"], "note": "Management data feeds the Analytics Engine, which drives threat intelligence and compliance reports." }
+    ]
+  },
+  "components": [
+    { "id": "workloads", "type": "backend", "label": "Workloads", "sublabel": "pods on the cluster", "pos": [60, 320], "size": [170, 60] },
+    { "id": "agent", "type": "security", "label": "Calico Agent", "sublabel": "per cluster", "pos": [60, 180], "size": [170, 60] },
+    { "id": "mgmt-ui", "type": "frontend", "label": "Management UI", "sublabel": "multi-cluster web UI", "pos": [400, 180], "size": [190, 60] },
+    { "id": "analytics", "type": "backend", "label": "Analytics Engine", "sublabel": "flow / DNS / L7 logs", "pos": [660, 180], "size": [190, 60] },
+    { "id": "threat-intel", "type": "security", "label": "Threat Intel", "sublabel": "threat & anomaly detection", "pos": [660, 60], "size": [190, 60] },
+    { "id": "compliance", "type": "database", "label": "Compliance", "sublabel": "compliance reports", "pos": [660, 320], "size": [190, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Customer Clusters ×3", "wraps": ["agent", "workloads"] },
+    { "kind": "region", "label": "Calico Cloud (SaaS)", "wraps": ["mgmt-ui", "analytics", "threat-intel", "compliance"] }
+  ],
+  "connections": [
+    { "id": "agent-to-ui", "from": "agent", "to": "mgmt-ui", "label": "reports ×3", "variant": "emphasis" },
+    { "id": "ui-to-analytics", "from": "mgmt-ui", "to": "analytics" },
+    { "id": "analytics-to-threat", "from": "analytics", "to": "threat-intel", "fromSide": "top", "toSide": "bottom" },
+    { "id": "analytics-to-compliance", "from": "analytics", "to": "compliance", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Customer side", "items": ["A Calico agent runs in each customer cluster (×3 shown)", "Agents report cluster telemetry to the shared SaaS"] },
+    { "dot": "violet", "title": "Calico Cloud", "items": ["Management UI: unified multi-cluster management", "Analytics Engine drives Threat Intel and Compliance reporting"] }
+  ]
+}
