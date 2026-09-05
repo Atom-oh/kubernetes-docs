@@ -355,7 +355,7 @@
       "items": [
         "Parallel file system for HPC, ML and analytics",
         "ReadWriteMany with very high throughput",
-        "Used for vLLM model storage in this guide"
+        "High-throughput storage for AI/ML training data and model files"
       ]
     }
   ]

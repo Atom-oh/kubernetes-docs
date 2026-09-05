@@ -79,7 +79,7 @@ Kubernetes 볼륨은 포드 내의 컨테이너가 데이터를 저장하고 공
 
 ### Kubernetes 스토리지 아키텍처
 
-![파드가 PersistentVolumeClaim과 StorageClass를 거쳐 PersistentVolume에 바인딩되고 CSI 드라이버가 클라우드·로컬·NFS 스토리지에 연결하는 3계층 구조를 보여준다.](../.gitbook/assets/ko-core-04-storage-0.png)
+![포드가 PersistentVolumeClaim과 StorageClass를 거쳐 PersistentVolume에 바인딩되고 CSI 드라이버가 클라우드·로컬·NFS 스토리지에 연결하는 3계층 구조를 보여준다.](../.gitbook/assets/ko-core-04-storage-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-0.html)
 
@@ -287,7 +287,7 @@ spec:
 
 퍼시스턴트 볼륨(PV)은 관리자가 프로비저닝하거나 스토리지 클래스를 사용하여 동적으로 프로비저닝된 클러스터의 스토리지입니다. PV는 포드와 독립적인 수명 주기를 가지며, 포드가 삭제되어도 PV는 유지됩니다.
 
-![클러스터 관리자가 만든 PersistentVolume에 사용자가 만든 PersistentVolumeClaim이 바인딩되고, 파드가 그 PVC를 볼륨으로 사용하며 PV는 물리적 스토리지에 연결되는 정적 프로비저닝 흐름을 보여준다.](../.gitbook/assets/ko-core-04-storage-1.png)
+![클러스터 관리자가 만든 PersistentVolume에 사용자가 만든 PersistentVolumeClaim이 바인딩되고, 포드가 그 PVC를 볼륨으로 사용하며 PV는 물리적 스토리지에 연결되는 정적 프로비저닝 흐름을 보여준다.](../.gitbook/assets/ko-core-04-storage-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-1.html)
 
@@ -396,7 +396,7 @@ spec:
 
 스토리지 클래스는 관리자가 제공하는 스토리지의 "클래스"를 설명합니다. 스토리지 클래스는 PV를 동적으로 프로비저닝하는 데 사용됩니다.
 
-![사용자가 만든 PVC가 StorageClass를 참조해 PersistentVolume을 동적으로 생성·바인딩하고 파드가 이를 사용하는 동적 프로비저닝 과정을 보여준다.](../.gitbook/assets/ko-core-04-storage-2.png)
+![사용자가 만든 PVC가 StorageClass를 참조해 PersistentVolume을 동적으로 생성·바인딩하고 포드가 이를 사용하는 동적 프로비저닝 과정을 보여준다.](../.gitbook/assets/ko-core-04-storage-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-2.html)
 
@@ -565,7 +565,7 @@ spec:
 
 Kubernetes는 PVC의 크기를 확장하는 기능을 지원합니다. 이를 위해서는 스토리지 클래스에서 `allowVolumeExpansion: true`를 설정해야 합니다.
 
-![사용자의 PVC 크기 증가 요청이 StorageClass의 allowVolumeExpansion: true 확인을 거쳐 PersistentVolume이 물리적 스토리지의 볼륨 크기와 파드의 파일 시스템을 확장하는 절차를 보여준다.](../.gitbook/assets/ko-core-04-storage-4.png)
+![사용자의 PVC 크기 증가 요청이 StorageClass의 allowVolumeExpansion: true 확인을 거쳐 PersistentVolume이 물리적 스토리지의 볼륨 크기와 포드의 파일 시스템을 확장하는 절차를 보여준다.](../.gitbook/assets/ko-core-04-storage-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-4.html)
 

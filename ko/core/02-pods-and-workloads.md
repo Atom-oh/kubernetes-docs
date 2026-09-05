@@ -95,7 +95,7 @@ kubectl -n workloads-demo get deployments,pods
 3. **네트워크**: 파드에 할당된 IP 주소와 포트
 4. **컨테이너 스펙**: 컨테이너 이미지, 환경 변수, 리소스 요구사항 등
 
-![쿠버네티스 파드는 하나의 IP와 네트워크 네임스페이스를 공유하며, 애플리케이션·사이드카·초기화 컨테이너와 emptyDir·configMap·secret·PVC 볼륨을 하나의 배포 단위로 함께 담는 구조를 보여준다.](../.gitbook/assets/ko-core-02-pods-and-workloads-0.png)
+![Kubernetes 파드는 하나의 IP와 네트워크 네임스페이스를 공유하며, 애플리케이션·사이드카·초기화 컨테이너와 emptyDir·configMap·secret·PVC 볼륨을 하나의 배포 단위로 함께 담는 구조를 보여준다.](../.gitbook/assets/ko-core-02-pods-and-workloads-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-02-pods-and-workloads-0.html)
 

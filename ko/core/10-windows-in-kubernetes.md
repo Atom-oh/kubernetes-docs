@@ -436,7 +436,7 @@ Windows 노드에서 사용할 수 있는 스토리지 옵션을 알아보겠습
 
 다음 다이어그램은 Windows 노드에서 사용 가능한 다양한 스토리지 옵션을 보여줍니다:
 
-![Windows 파드의 컨테이너가 Windows 노드의 emptyDir·hostPath 볼륨(hostPath는 노드 디스크로 연결), Kubernetes API에서 전달되는 ConfigMap·Secret 볼륨, 그리고 CSI 드라이버를 거쳐 Azure Disk/File, AWS EBS, SMB 공유에 연결되는 PersistentVolume을 마운트하는 세 가지 스토리지 경로를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-3.png)
+![Windows 포드의 컨테이너가 Windows 노드의 emptyDir·hostPath 볼륨(hostPath는 노드 디스크로 연결), Kubernetes API에서 전달되는 ConfigMap·Secret 볼륨, 그리고 CSI 드라이버를 거쳐 Azure Disk/File, AWS EBS, SMB 공유에 연결되는 PersistentVolume을 마운트하는 세 가지 스토리지 경로를 보여준다.](../.gitbook/assets/ko-core-10-windows-in-kubernetes-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-10-windows-in-kubernetes-3.html)
 

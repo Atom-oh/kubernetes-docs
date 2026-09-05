@@ -259,7 +259,7 @@ spec:
 
 인그레스는 클러스터 외부에서 클러스터 내부 서비스로의 HTTP 및 HTTPS 경로를 노출하는 API 객체입니다. 인그레스는 로드 밸런싱, SSL 종료, 이름 기반 가상 호스팅을 제공합니다.
 
-![외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 host/path 라우팅 규칙에 따라 서비스 A 또는 서비스 B로 분기되고, 각 서비스가 자신의 백엔드 파드(A-1, A-2 / B-1, B-2)로 부하를 분산하는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
+![외부 클라이언트 요청이 로드 밸런서와 인그레스 컨트롤러를 지나 인그레스 리소스의 host/path 라우팅 규칙에 따라 서비스 A 또는 서비스 B로 분기되고, 각 서비스가 자신의 백엔드 포드(A-1, A-2 / B-1, B-2)로 부하를 분산하는 경로를 보여준다.](../.gitbook/assets/ko-core-03-services-networking-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-03-services-networking-1.html)
 
