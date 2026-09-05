@@ -11,7 +11,7 @@
       500
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "security": {
           "label": "컨트롤러(오퍼레이터)"

@@ -265,6 +265,10 @@ Set up time-based escalation policies to ensure alerts are not ignored:
 
 On-call refers to a designated responder responsible for system issues during a specified period.
 
+![Gantt chart showing four SRE engineers each taking a sequential seven-day on-call shift over four weeks.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
+
 ![Flowchart showing an alert routed first by severity to a phone, PagerDuty, Slack, or email channel, then, for the three actionable severities, routed again by owning team to SRE, dev, DBA, or security.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
@@ -432,10 +436,6 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 
 ### Solution Selection Guide
 
-![Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
-
 #### Recommended Solutions by Situation
 
 1. **Small team, cost-conscious**: Alertmanager + Slack
@@ -448,9 +448,9 @@ EKS integrates with various AWS services, so alerts for these are also needed:
 
 Most production environments use a combination of solutions:
 
-![Gantt chart showing four SRE engineers each taking a sequential seven-day on-call shift over four weeks.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+![Architecture diagram of a hybrid alerting pipeline: Prometheus and CloudWatch feed Alertmanager, which routes to Grafana OnCall and PagerDuty for on-call management, fanning out to Slack, email, and SMS notification channels.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
 **Recommended Architecture:**
 

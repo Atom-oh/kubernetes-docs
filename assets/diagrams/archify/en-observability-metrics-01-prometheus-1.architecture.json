@@ -12,7 +12,7 @@
       500
     ],
     "legend": {
-      "mode": "all",
+      "mode": "auto",
       "entries": {
         "security": {
           "label": "Controller (Operator)"

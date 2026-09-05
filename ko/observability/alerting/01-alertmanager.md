@@ -621,7 +621,7 @@ curl -X POST http://alertmanager:9093/api/v2/silences \
 
 ### Silence 관리 모범 사례
 
-![Silence가 필요할 때 유지보수·배포·조사 중·알려진 이슈 유형에 따라 기간(계획된 시간, 배포 완료까지, 최대 4시간, 수정 완료까지)을 정하고 명확한 코멘트를 남긴 뒤, 정기 검토를 거쳐 만료된 Silence는 자동 제거되고 아직 만료되지 않은 Silence는 수동 검토로 이어지는 흐름을 보여줍니다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-5.png)
+![Silence가 필요할 때 유지보수·배포·조사 중·알려진 이슈 유형에 따라 기간(계획된 시간, 배포 완료까지, 최대 4시간, 수정 완료까지)을 정하고 명확한 코멘트를 남긴 뒤, 정기 검토를 거쳐 만료된 Silence는 자동 제거되고 아직 만료되지 않은 Silence는 수동 검토로 이어지는 흐름을 보여준다.](../../.gitbook/assets/ko-observability-alerting-01-alertmanager-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-01-alertmanager-5.html)
 
