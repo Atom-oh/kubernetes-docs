@@ -6,8 +6,8 @@
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
-      960,
-      720
+      1080,
+      690
     ],
     "animation": "trace",
     "legend": {

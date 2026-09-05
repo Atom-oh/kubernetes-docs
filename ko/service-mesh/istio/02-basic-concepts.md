@@ -111,7 +111,7 @@
 
 **주요 마일스톤**:
 
-![2017년 0.1 발표 이후 2018년 1.0 GA, 2020년 1.5 Istiod 통합, 2023년 Ambient Mode 도입을 거쳐 2025년 1.28에 이르는 Istio의 주요 버전 역사를 시간순으로 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-4.png)
+![2017년 0.1 발표 이후 2018년 1.0 GA, 2020년 1.5 Istiod 통합, 2023년 1.18 Ambient Mode Alpha 도입을 거쳐 2025년 11월 1.28에 이르는 Istio의 주요 버전 역사를 시간순으로 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-02-basic-concepts-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-02-basic-concepts-4.html)
 

@@ -96,7 +96,7 @@ Ambient Mode solutions:
 | **Header manipulation** | Supported | Requires Waypoint |
 | **Performance overhead** | Medium (~5-10%) | Low (~1-3%) |
 | **Operational complexity** | High | Low |
-| **Production readiness** | Mature | Beta (Istio 1.28+) |
+| **Production readiness** | Mature | GA (Istio 1.24+) |
 
 ### Resource Usage Comparison
 
@@ -657,15 +657,15 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-11.html)
 
-**Production Usage Status** (as of 2024):
+**Production Usage Status** (as of 2025):
 - Solo.io: Migrated entire internal clusters to Ambient Mode
 - Financial Enterprises: Applied Ambient Mode to thousands of microservices (80% cost reduction)
 - E-commerce: Hybrid operation with L4 ztunnel + selective Waypoint
 
 **Key Feature Roadmap**:
 - 1.24 (2024 Q4): Ambient Mode GA (General Availability)
-- 1.29 (2024 Q2): Multi-cluster Ambient support
-- 1.30+ (2024 Q3+): Complete Gateway API integration, performance optimization
+- 1.26 (2025 Q2): Multi-cluster Ambient support
+- 1.27+ (2025 Q3+): Complete Gateway API integration, performance optimization
 
 ## Summary
 

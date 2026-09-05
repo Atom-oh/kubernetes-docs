@@ -47,7 +47,7 @@
           "v1_22",
           "v1_28"
         ],
-        "note": "1.20에서 Ambient Mode가 도입되었고, 현재 버전은 1.28이다."
+        "note": "1.18에서 Ambient Mode가 Alpha로 도입되었고, 현재 버전은 1.28이다."
       }
     ]
   },
@@ -140,8 +140,8 @@
       "lane": "y22",
       "col": 4,
       "type": "cloud",
-      "label": "Istio 1.20",
-      "sublabel": "Ambient Mode · 2023-11",
+      "label": "Istio 1.18",
+      "sublabel": "Ambient Alpha · 2023-06",
       "width": 164
     },
     {
@@ -159,7 +159,7 @@
       "col": 5,
       "type": "backend",
       "label": "Istio 1.28",
-      "sublabel": "현재 버전 · 2025-01",
+      "sublabel": "현재 버전 · 2025-11",
       "width": 164
     }
   ],

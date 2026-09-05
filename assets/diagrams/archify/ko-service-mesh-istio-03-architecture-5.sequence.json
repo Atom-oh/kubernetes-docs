@@ -6,8 +6,8 @@
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
-      960,
-      780
+      1080,
+      690
     ],
     "animation": "trace",
     "views": [
@@ -94,18 +94,18 @@
   ],
   "segments": [
     {
-      "from": 165,
-      "to": 300,
+      "from": 164,
+      "to": 286,
       "label": "1. 파드 시작 — istio-init"
     },
     {
-      "from": 318,
-      "to": 418,
+      "from": 302,
+      "to": 392,
       "label": "2. 컨테이너 기동"
     },
     {
-      "from": 436,
-      "to": 625,
+      "from": 408,
+      "to": 578,
       "label": "3. 아웃바운드 요청 가로채기"
     }
   ],
@@ -114,14 +114,14 @@
       "id": "start-init",
       "from": "k8s",
       "to": "init",
-      "y": 195,
+      "y": 192,
       "label": "Init Container 시작"
     },
     {
       "id": "set-rules",
       "from": "init",
       "to": "iptables",
-      "y": 235,
+      "y": 228,
       "label": "iptables 규칙 설정",
       "variant": "security",
       "note": "모든 트래픽을 Envoy로 리다이렉트"
@@ -130,7 +130,7 @@
       "id": "init-done",
       "from": "init",
       "to": "k8s",
-      "y": 288,
+      "y": 275,
       "label": "완료 (Exit 0)",
       "variant": "return"
     },
@@ -138,28 +138,28 @@
       "id": "start-app",
       "from": "k8s",
       "to": "app",
-      "y": 350,
+      "y": 331,
       "label": "애플리케이션 시작"
     },
     {
       "id": "start-envoy",
       "from": "k8s",
       "to": "envoy",
-      "y": 395,
+      "y": 372,
       "label": "Envoy 시작"
     },
     {
       "id": "outbound",
       "from": "app",
       "to": "iptables",
-      "y": 470,
+      "y": 439,
       "label": "아웃바운드 요청"
     },
     {
       "id": "redirect",
       "from": "iptables",
       "to": "envoy",
-      "y": 515,
+      "y": 480,
       "label": "리다이렉트 (15001)",
       "variant": "emphasis",
       "note": "Envoy가 라우팅 결정 후 실제 요청 전송"
@@ -168,7 +168,7 @@
       "id": "real-send",
       "from": "envoy",
       "to": "iptables",
-      "y": 590,
+      "y": 547,
       "label": "실제 요청 전송",
       "note": "Envoy UID는 iptables 우회 (RETURN)"
     }
@@ -176,20 +176,20 @@
   "activations": [
     {
       "participant": "init",
-      "from": 190,
-      "to": 293,
+      "from": 187,
+      "to": 280,
       "type": "backend"
     },
     {
       "participant": "iptables",
-      "from": 230,
-      "to": 245,
+      "from": 223,
+      "to": 236,
       "type": "security"
     },
     {
       "participant": "envoy",
-      "from": 510,
-      "to": 597,
+      "from": 475,
+      "to": 553,
       "type": "backend"
     }
   ]

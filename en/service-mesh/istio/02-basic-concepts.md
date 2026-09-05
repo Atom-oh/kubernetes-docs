@@ -113,7 +113,7 @@ In the early 2010s, companies began breaking down monolithic applications into m
 
 **Major Milestones**:
 
-![Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in January 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.20 introduction of Ambient Mode as major milestones.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-4.png)
+![Timeline of Istio's major releases from the 0.1 announcement in May 2017 through version 1.28 in November 2025, marking the 1.0 production-ready release, the 1.5 istiod consolidation, and the 1.18 alpha introduction of Ambient Mode as major milestones.](../../.gitbook/assets/en-service-mesh-istio-02-basic-concepts-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-02-basic-concepts-4.html)
 

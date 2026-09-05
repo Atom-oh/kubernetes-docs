@@ -7,8 +7,8 @@
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
-      960,
-      780
+      1080,
+      690
     ],
     "animation": "trace",
     "views": [
@@ -78,18 +78,18 @@
   ],
   "segments": [
     {
-      "from": 165,
-      "to": 300,
+      "from": 164,
+      "to": 286,
       "label": "1. Pod start — istio-init"
     },
     {
-      "from": 318,
-      "to": 418,
+      "from": 302,
+      "to": 392,
       "label": "2. Container startup"
     },
     {
-      "from": 436,
-      "to": 625,
+      "from": 408,
+      "to": 578,
       "label": "3. Outbound request interception"
     }
   ],
@@ -98,14 +98,14 @@
       "id": "start-init",
       "from": "k8s",
       "to": "init",
-      "y": 195,
+      "y": 192,
       "label": "start init container"
     },
     {
       "id": "set-rules",
       "from": "init",
       "to": "iptables",
-      "y": 235,
+      "y": 228,
       "label": "set iptables rules",
       "variant": "security",
       "note": "redirect all traffic to Envoy"
@@ -114,7 +114,7 @@
       "id": "init-done",
       "from": "init",
       "to": "k8s",
-      "y": 288,
+      "y": 275,
       "label": "done (exit 0)",
       "variant": "return"
     },
@@ -122,28 +122,28 @@
       "id": "start-app",
       "from": "k8s",
       "to": "app",
-      "y": 350,
+      "y": 331,
       "label": "start application"
     },
     {
       "id": "start-envoy",
       "from": "k8s",
       "to": "envoy",
-      "y": 395,
+      "y": 372,
       "label": "start Envoy"
     },
     {
       "id": "outbound",
       "from": "app",
       "to": "iptables",
-      "y": 470,
+      "y": 439,
       "label": "outbound request"
     },
     {
       "id": "redirect",
       "from": "iptables",
       "to": "envoy",
-      "y": 515,
+      "y": 480,
       "label": "redirect (15001)",
       "variant": "emphasis",
       "note": "Envoy decides routing, then sends the real request"
@@ -152,7 +152,7 @@
       "id": "real-send",
       "from": "envoy",
       "to": "iptables",
-      "y": 590,
+      "y": 547,
       "label": "send real request",
       "note": "Envoy UID bypasses iptables (RETURN)"
     }
@@ -160,20 +160,20 @@
   "activations": [
     {
       "participant": "init",
-      "from": 190,
-      "to": 293,
+      "from": 187,
+      "to": 280,
       "type": "backend"
     },
     {
       "participant": "iptables",
-      "from": 230,
-      "to": 245,
+      "from": 223,
+      "to": 236,
       "type": "security"
     },
     {
       "participant": "envoy",
-      "from": 510,
-      "to": 597,
+      "from": 475,
+      "to": 553,
       "type": "backend"
     }
   ]
