@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "사이드카 vs 노드 프록시",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      440
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "애플리케이션 컨테이너"
+        },
+        "security": {
+          "label": "Envoy 프록시"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sidecar",
+        "label": "사이드카 모델",
+        "focus": [
+          "appA1",
+          "proxyA1",
+          "appB1",
+          "proxyB1",
+          "appC1",
+          "proxyC1"
+        ],
+        "note": "파드마다 Envoy 사이드카가 하나씩 붙어 파드 수만큼 프록시 메모리가 늘어난다."
+      },
+      {
+        "id": "node-proxy",
+        "label": "노드 프록시 모델",
+        "focus": [
+          "appA2",
+          "appB2",
+          "appC2",
+          "nodeProxy"
+        ],
+        "note": "Cilium은 노드당 하나의 Envoy를 DaemonSet으로 배포해 같은 노드의 파드들이 함께 사용한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "appA1",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        60,
+        120
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "proxyA1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "50MB RAM",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "appB1",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        230,
+        120
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "proxyB1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "50MB RAM",
+      "pos": [
+        230,
+        260
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "appC1",
+      "type": "backend",
+      "label": "App",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        400,
+        120
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "proxyC1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "50MB RAM",
+      "pos": [
+        400,
+        260
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "appA2",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "App",
+      "pos": [
+        660,
+        120
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "appB2",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "App",
+      "pos": [
+        820,
+        120
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "appC2",
+      "type": "backend",
+      "label": "Pod C",
+      "sublabel": "App",
+      "pos": [
+        980,
+        120
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "nodeProxy",
+      "type": "security",
+      "label": "Shared Envoy",
+      "sublabel": "100MB RAM · 노드당 1개",
+      "pos": [
+        800,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사이드카 모델",
+      "wraps": [
+        "appA1",
+        "proxyA1",
+        "appB1",
+        "proxyB1",
+        "appC1",
+        "proxyC1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "appA1",
+        "proxyA1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "appB1",
+        "proxyB1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod C",
+      "wraps": [
+        "appC1",
+        "proxyC1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "노드 프록시 모델",
+      "wraps": [
+        "appA2",
+        "appB2",
+        "appC2",
+        "nodeProxy"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Node",
+      "wraps": [
+        "appA2",
+        "appB2",
+        "appC2",
+        "nodeProxy"
+      ],
+      "pad": 14
+    }
+  ],
+  "connections": [
+    {
+      "id": "a1",
+      "from": "appA1",
+      "to": "proxyA1",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "b1",
+      "from": "appB1",
+      "to": "proxyB1",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "c1",
+      "from": "appC1",
+      "to": "proxyC1",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "a2",
+      "from": "appA2",
+      "to": "nodeProxy",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b2",
+      "from": "appB2",
+      "to": "nodeProxy",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis",
+      "label": "공유 프록시",
+      "labelDy": 24
+    },
+    {
+      "id": "c2",
+      "from": "appC2",
+      "to": "nodeProxy",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "사이드카 모델",
+      "items": [
+        "파드마다 Envoy 프록시 1개 (약 50MB RAM)",
+        "파드 3개면 프록시 메모리도 3배"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "노드 프록시 모델 (Cilium)",
+      "items": [
+        "노드당 Envoy 1개를 cilium-envoy DaemonSet으로 배포",
+        "같은 노드의 파드가 약 100MB RAM 프록시 하나를 공유"
+      ]
+    }
+  ]
+}

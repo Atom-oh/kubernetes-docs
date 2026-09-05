@@ -34,7 +34,9 @@ HTTP 503 Service Unavailable
 
 ### Root Cause
 
-![Sequence diagram showing Kubernetes sending SIGTERM to both the application and Envoy proxy at the same time; because Envoy terminates first while the application keeps running, a client request during that window gets connection refused before Kubernetes finally sends SIGKILL to both after the grace period.](../../../../assets/diagrams/rendered/en-service-mesh-istio-troubleshooting-common-errors-0.svg)
+![Sequence diagram: Kubernetes sends SIGTERM to the app and Envoy sidecar at once; Envoy exits first while the app still runs, so a client request gets connection refused before both receive SIGKILL after the 30-second grace period.](../../../.gitbook/assets/en-service-mesh-istio-troubleshooting-common-errors-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-troubleshooting-common-errors-0.html)
 
 **Root Causes**:
 1. Envoy and application receive SIGTERM simultaneously
@@ -69,7 +71,9 @@ spec:
 ```
 
 **How It Works**:
-![Sequence diagram showing that once Envoy enters drain mode on SIGTERM it keeps serving existing connections for the full grace period, so a client request during shutdown still gets forwarded to the application and returned normally, and both Envoy and the application terminate cleanly afterward.](../../../../assets/diagrams/rendered/en-service-mesh-istio-troubleshooting-common-errors-1.svg)
+![Sequence diagram showing that once Envoy enters drain mode on SIGTERM it keeps existing connections open, so a client request during pod shutdown is still forwarded to the application and answered normally before Envoy and the app terminate cleanly.](../../../.gitbook/assets/en-service-mesh-istio-troubleshooting-common-errors-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-troubleshooting-common-errors-1.html)
 
 #### Method 2: Control Envoy Termination Behavior with Pod Annotation
 
@@ -300,7 +304,9 @@ SSL routines:OPENSSL_internal:WRONG_VERSION_NUMBER
 
 ### Cause 1: PeerAuthentication Mode Mismatch
 
-![Flowchart showing a client service in STRICT mTLS mode attempting an encrypted connection to a server service configured in DISABLE mode; the server demands a plaintext connection instead, and the mismatch surfaces to the client as a 503 upstream connect error.](../../../../assets/diagrams/rendered/en-service-mesh-istio-troubleshooting-common-errors-2.svg)
+![Flow showing a Client Service in PeerAuthentication STRICT mode attempting an mTLS connection to a Server Service in DISABLE mode; the server requires a plaintext connection, so the connection fails and surfaces as a 503 upstream connect error.](../../../.gitbook/assets/en-service-mesh-istio-troubleshooting-common-errors-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-troubleshooting-common-errors-2.html)
 
 **Solution**:
 

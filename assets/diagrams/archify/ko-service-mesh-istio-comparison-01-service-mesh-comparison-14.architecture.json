@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Multi-cluster",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "클러스터 간 요청 경로",
+        "focus": [
+          "app1",
+          "gw1",
+          "gw2",
+          "app2"
+        ],
+        "note": "Service A가 소스 Gateway를 거쳐 mTLS로 타깃 Gateway에 닿고, 미러 서비스로 전달된다."
+      },
+      {
+        "id": "control-planes",
+        "label": "클러스터별 Control Plane",
+        "focus": [
+          "cp1",
+          "cp2"
+        ],
+        "note": "각 클러스터가 독립된 Linkerd Control Plane을 운영한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "cp1",
+      "type": "backend",
+      "label": "Linkerd Control Plane",
+      "sublabel": "소스 클러스터",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "원본 서비스",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "gw1",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "소스 클러스터",
+      "pos": [
+        310,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "cp2",
+      "type": "backend",
+      "label": "Linkerd Control Plane",
+      "sublabel": "타깃 클러스터",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gw2",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "타깃 클러스터",
+      "pos": [
+        620,
+        210
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Service A Mirror",
+      "sublabel": "미러링된 서비스",
+      "pos": [
+        850,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "소스 클러스터",
+      "wraps": [
+        "cp1",
+        "app1",
+        "gw1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "타깃 클러스터",
+      "wraps": [
+        "cp2",
+        "gw2",
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-to-gw1",
+      "from": "app1",
+      "to": "gw1",
+      "label": "Gateway 경유",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw1-to-gw2",
+      "from": "gw1",
+      "to": "gw2",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "gw2-to-app2",
+      "from": "gw2",
+      "to": "app2",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Linkerd 멀티 클러스터 특성",
+      "items": [
+        "Service Discovery: Mirror 서비스",
+        "mTLS: Gateway를 통해 클러스터 간 암호화",
+        "네트워크 요구사항: Gateway (Flat 네트워크 불필요)"
+      ]
+    }
+  ]
+}

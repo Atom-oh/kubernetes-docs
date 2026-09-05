@@ -9,7 +9,9 @@ Cilium Service Mesh는 Kubernetes Ingress Controller와 Gateway API를 네이티
 
 ## 아키텍처
 
-![외부 클라이언트가 클라우드 로드밸런서와 Gateway/Ingress를 거쳐 Cilium Envoy L7 프록시에서 세 개의 백엔드 서비스로 라우팅되는 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-0.svg)
+![외부 클라이언트가 클라우드 로드밸런서와 Gateway/Ingress를 거쳐 Cilium Envoy L7 프록시에서 세 개의 백엔드 서비스로 라우팅되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-0.html)
 
 ## Cilium Ingress Controller
 
@@ -560,7 +562,9 @@ spec:
 
 ### 하이브리드 아키텍처
 
-![외부 클라이언트의 트래픽이 AWS ALB와 NLB 두 경로로 나뉘어 각각 Cilium Gateway의 L7 라우팅과 Cilium LB의 L4 로드밸런싱을 거쳐 애플리케이션에 도달하는 하이브리드 구성을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-1.svg)
+![외부 클라이언트의 트래픽이 AWS ALB와 NLB 두 경로로 나뉘어 각각 Cilium Gateway의 L7 라우팅과 Cilium LB의 L4 로드밸런싱을 거쳐 애플리케이션에 도달하는 하이브리드 구성을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-1.html)
 
 ## 멀티테넌트 게이트웨이
 
@@ -773,7 +777,9 @@ spec:
 
 ### 선택 가이드
 
-![AWS 네이티브 통합, WAF/Shield, L4 고성능 필요 여부를 순서대로 물어 AWS ALB, NLB+Cilium, Cilium Gateway 중 하나로 귀결되는 인그레스 선택 의사결정 흐름을 보여준다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-2.svg)
+![AWS 네이티브 통합, WAF/Shield, L4 고성능 필요 여부를 순서대로 물어 AWS ALB, NLB+Cilium, Cilium Gateway 중 하나로 귀결되는 인그레스 선택 의사결정 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-05-ingress-gateway-2.html)
 
 ## 모니터링
 

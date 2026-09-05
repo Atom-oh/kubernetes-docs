@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Connection Errors During Pod Termination — Root Cause",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "default": {
+          "label": "Signal"
+        },
+        "emphasis": {
+          "label": "Problem window"
+        },
+        "dashed": {
+          "label": "Failed response"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "kubelet"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "app container"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "istio-proxy sidecar"
+    },
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "external request"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 280,
+      "label": "Pod termination starts (kubectl delete pod)"
+    },
+    {
+      "from": 300,
+      "to": 435,
+      "label": "Envoy is gone · App is still running"
+    },
+    {
+      "from": 455,
+      "to": 565,
+      "label": "After 30 seconds (terminationGracePeriodSeconds)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "sigterm-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 190,
+      "label": "Send SIGTERM"
+    },
+    {
+      "id": "sigterm-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 235,
+      "label": "Send SIGTERM",
+      "variant": "emphasis",
+      "note": "Problem: Envoy starts terminating immediately, before the App"
+    },
+    {
+      "id": "client-req",
+      "from": "client",
+      "to": "envoy",
+      "y": 335,
+      "label": "Send request",
+      "note": "App is still processing requests"
+    },
+    {
+      "id": "refused",
+      "from": "envoy",
+      "to": "client",
+      "y": 390,
+      "label": "Connection refused",
+      "variant": "dashed"
+    },
+    {
+      "id": "sigkill-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 485,
+      "label": "SIGKILL (force termination)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sigkill-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 535,
+      "label": "SIGKILL (force termination)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "app",
+      "from": 185,
+      "to": 490,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 230,
+      "to": 275,
+      "type": "security"
+    }
+  ]
+}

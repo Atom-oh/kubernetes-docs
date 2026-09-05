@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Flagger Deployment Flow",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Flagger step"
+        },
+        "database": {
+          "label": "Metric analysis"
+        },
+        "security": {
+          "label": "Decision · rollback"
+        },
+        "cloud": {
+          "label": "Traffic shift"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "happy_path",
+        "label": "Stepwise promotion",
+        "focus": [
+          "start",
+          "init",
+          "analyze",
+          "check",
+          "step",
+          "promote",
+          "done"
+        ],
+        "note": "Each time metric analysis passes, canary traffic grows by 10%; reaching 50% triggers promotion."
+      },
+      {
+        "id": "rollback_path",
+        "label": "Rollback path",
+        "focus": [
+          "analyze",
+          "check",
+          "rollback",
+          "done"
+        ],
+        "note": "When the success criteria are not met, canary traffic is reset to 0%."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "flagger",
+      "label": "Flagger Controller"
+    },
+    {
+      "id": "analysis",
+      "label": "Metric Analysis"
+    },
+    {
+      "id": "rollout",
+      "label": "Traffic Shift"
+    },
+    {
+      "id": "exceptions",
+      "label": "Rollback",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "init",
+    "analyze",
+    "check",
+    "step",
+    "promote",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "flagger",
+      "col": 0,
+      "type": "backend",
+      "label": "Detect Deployment Change",
+      "width": 200
+    },
+    {
+      "id": "init",
+      "lane": "flagger",
+      "col": 1,
+      "type": "backend",
+      "label": "Initialize Canary",
+      "sublabel": "0% traffic",
+      "width": 150
+    },
+    {
+      "id": "done",
+      "lane": "flagger",
+      "col": 5,
+      "type": "backend",
+      "label": "Complete",
+      "width": 110
+    },
+    {
+      "id": "analyze",
+      "lane": "analysis",
+      "col": 2,
+      "type": "database",
+      "label": "Metric Analysis",
+      "sublabel": "every 30s",
+      "width": 140
+    },
+    {
+      "id": "check",
+      "lane": "analysis",
+      "col": 3,
+      "type": "security",
+      "label": "Success Criteria Met?",
+      "sublabel": "success rate · p99 latency",
+      "width": 172
+    },
+    {
+      "id": "step",
+      "lane": "rollout",
+      "col": 4,
+      "type": "cloud",
+      "label": "Increase Traffic",
+      "sublabel": "+10%",
+      "width": 140
+    },
+    {
+      "id": "promote",
+      "lane": "rollout",
+      "col": 5,
+      "type": "cloud",
+      "label": "Promotion",
+      "sublabel": "100% canary",
+      "width": 130
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "security",
+      "label": "Rollback",
+      "sublabel": "0% canary",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "init"
+    },
+    {
+      "from": "init",
+      "to": "analyze"
+    },
+    {
+      "from": "analyze",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "step",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "from": "step",
+      "to": "analyze",
+      "label": "Below 50%",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "step",
+      "to": "promote",
+      "label": "Reached 50%",
+      "variant": "emphasis"
+    },
+    {
+      "from": "promote",
+      "to": "done"
+    },
+    {
+      "from": "check",
+      "to": "rollback",
+      "label": "No",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "rollback",
+      "to": "done",
+      "variant": "security",
+      "role": "error",
+      "route": "outside-right",
+      "fromSide": "right",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Success Criteria (Canary analysis)",
+      "items": [
+        "request-success-rate at least 99%",
+        "request-duration p99 at most 500ms",
+        "threshold 5 (required successful iterations before promotion)",
+        "stepWeight 10 · maxWeight 50"
+      ]
+    }
+  ]
+}

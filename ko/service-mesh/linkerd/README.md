@@ -30,7 +30,9 @@ Linkerd는 CNCF(Cloud Native Computing Foundation) 졸업 프로젝트로, 경�
 
 ## Linkerd 아키텍처 개요
 
-![Linkerd 컨트롤 플레인(Destination, Identity, Proxy Injector)이 Pod에 주입된 linkerd-proxy 사이드카를 설정·인증하고, 두 프록시가 mTLS로 통신하며 Viz 확장이 이를 관찰하는 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-service-mesh-linkerd-README-0.png)
+![Linkerd 컨트롤 플레인(Destination, Identity, Proxy Injector)이 Pod에 주입된 linkerd-proxy 사이드카를 설정·인증하고, 두 프록시가 mTLS로 통신하며 Viz 등 확장 기능이 이를 관찰하는 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-readme-0.html)
 
 ## 서비스 메시 비교
 

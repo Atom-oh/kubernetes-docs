@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "서비스 맵 예시",
+    "output": "ko-service-mesh-cilium-service-mesh-04-observability-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 진입 경로",
+        "focus": [
+          "ingress",
+          "frontend",
+          "api"
+        ],
+        "note": "Ingress Controller가 받은 요청이 Frontend를 거쳐 API Gateway로 전달된다."
+      },
+      {
+        "id": "user-deps",
+        "label": "User Service 의존성",
+        "focus": [
+          "api",
+          "users",
+          "db",
+          "redis"
+        ],
+        "note": "User Service는 PostgreSQL과 Redis를 함께 사용한다."
+      },
+      {
+        "id": "order-fanout",
+        "label": "Order Service 팬아웃",
+        "focus": [
+          "api",
+          "orders",
+          "db",
+          "kafka",
+          "payments"
+        ],
+        "note": "Order Service는 PostgreSQL, Kafka, Payment Service로 갈라지는 가장 넓은 팬아웃 지점이다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ingress",
+      "type": "frontend",
+      "label": "Ingress Controller",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "RPS 1000 · P99 50ms",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "RPS 800 · P99 100ms",
+      "pos": [
+        470,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "users",
+      "type": "backend",
+      "label": "User Service",
+      "sublabel": "RPS 500 · P99 80ms",
+      "pos": [
+        690,
+        180
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "orders",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "RPS 300 · P99 120ms",
+      "pos": [
+        690,
+        430
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "pos": [
+        920,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "공유 데이터베이스",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "payments",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "RPS 100 · P99 200ms",
+      "pos": [
+        920,
+        430
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka",
+      "pos": [
+        920,
+        560
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Production 네임스페이스",
+      "wraps": [
+        "ingress",
+        "frontend",
+        "api",
+        "users",
+        "orders",
+        "redis",
+        "db",
+        "payments",
+        "kafka"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ingress-frontend",
+      "from": "ingress",
+      "to": "frontend",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-users",
+      "from": "api",
+      "to": "users"
+    },
+    {
+      "id": "api-orders",
+      "from": "api",
+      "to": "orders",
+      "variant": "emphasis"
+    },
+    {
+      "id": "users-db",
+      "from": "users",
+      "to": "db"
+    },
+    {
+      "id": "users-redis",
+      "from": "users",
+      "to": "redis"
+    },
+    {
+      "id": "orders-db",
+      "from": "orders",
+      "to": "db"
+    },
+    {
+      "id": "orders-kafka",
+      "from": "orders",
+      "to": "kafka"
+    },
+    {
+      "id": "orders-payments",
+      "from": "orders",
+      "to": "payments",
+      "variant": "emphasis"
+    },
+    {
+      "id": "payments-kafka",
+      "from": "payments",
+      "to": "kafka",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "의존성 추출 방법",
+      "items": [
+        "hubble observe --namespace production -o json 으로 플로우를 수집한다",
+        "source/destination의 k8s:app= 레이블 쌍을 sort | uniq -c 로 집계해 의존성 그래프를 만든다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "지표 읽기",
+      "items": [
+        "RPS는 hubble_http_requests_total, P99는 hubble_http_request_duration_seconds_bucket 기반이다",
+        "Order Service가 PostgreSQL·Kafka·Payment Service로 갈라지는 가장 넓은 팬아웃 지점이다"
+      ]
+    }
+  ]
+}

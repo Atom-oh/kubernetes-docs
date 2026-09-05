@@ -1,0 +1,162 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "백그라운드 Analysis 동작 흐름",
+    "output": "public/archmaps/ko-service-mesh-istio-advanced-08-argo-rollouts-5.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1200,
+      440
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Rollout 단계"
+        },
+        "cloud": {
+          "label": "Analysis 시작"
+        },
+        "database": {
+          "label": "메트릭 측정"
+        },
+        "security": {
+          "label": "롤백"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "canary",
+      "label": "Canary 단계 (Rollout steps)"
+    },
+    {
+      "id": "analysis",
+      "label": "백그라운드 Analysis"
+    }
+  ],
+  "mainPath": [
+    "step1",
+    "step2",
+    "step3"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "step1"
+    ],
+    "allowedTerminals": [
+      "step3",
+      "rollback"
+    ],
+    "requiredEdges": [
+      {
+        "from": "step2",
+        "to": "analysisStart"
+      }
+    ],
+    "requiredPaths": [
+      {
+        "from": "step1",
+        "to": "step3"
+      },
+      {
+        "from": "step2",
+        "to": "rollback"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "step1",
+      "lane": "canary",
+      "col": 0,
+      "type": "backend",
+      "label": "Step 1",
+      "sublabel": "setWeight 10 · 2분 대기",
+      "width": 150
+    },
+    {
+      "id": "step2",
+      "lane": "canary",
+      "col": 1,
+      "type": "backend",
+      "label": "Step 2",
+      "sublabel": "setWeight 30 · 2분 대기",
+      "tag": "startingStep: 2",
+      "width": 150
+    },
+    {
+      "id": "step3",
+      "lane": "canary",
+      "col": 2,
+      "type": "backend",
+      "label": "Step 3",
+      "sublabel": "setWeight 50",
+      "width": 150
+    },
+    {
+      "id": "analysisStart",
+      "lane": "analysis",
+      "col": 2,
+      "type": "cloud",
+      "label": "Analysis 시작",
+      "sublabel": "AnalysisRun 생성",
+      "width": 150
+    },
+    {
+      "id": "measure",
+      "lane": "analysis",
+      "col": 3,
+      "type": "database",
+      "label": "30초마다 측정",
+      "sublabel": "success-rate 템플릿",
+      "width": 180
+    },
+    {
+      "id": "rollback",
+      "lane": "analysis",
+      "col": 4,
+      "type": "security",
+      "label": "실패 시 즉시 롤백",
+      "sublabel": "Canary 중단",
+      "width": 250
+    }
+  ],
+  "edges": [
+    {
+      "from": "step1",
+      "to": "step2",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step2",
+      "to": "step3",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "step2",
+      "to": "analysisStart",
+      "label": "백그라운드 시작",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "from": "analysisStart",
+      "to": "measure",
+      "label": "병행 실행",
+      "role": "async"
+    },
+    {
+      "from": "measure",
+      "to": "rollback",
+      "label": "실패",
+      "variant": "security",
+      "role": "error"
+    }
+  ]
+}

@@ -1,0 +1,267 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "데이터 플레인 라이프사이클",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kuma DP 내부 단계"
+        },
+        "messagebus": {
+          "label": "Zone CP 연동"
+        },
+        "security": {
+          "label": "mTLS 트래픽 처리"
+        },
+        "external": {
+          "label": "외부 신호"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "기동과 설정 수신",
+        "focus": [
+          "start",
+          "register",
+          "connect",
+          "receive"
+        ],
+        "note": "Kuma DP가 토큰으로 Zone CP에 등록하고 gRPC 스트림으로 xDS 설정을 받는다."
+      },
+      {
+        "id": "runtime",
+        "label": "런타임 동작",
+        "focus": [
+          "receive",
+          "proxy",
+          "traffic",
+          "metrics"
+        ],
+        "note": "받은 설정으로 Envoy를 구성하고 mTLS 트래픽을 프록시하며 메트릭을 수집한다."
+      },
+      {
+        "id": "update",
+        "label": "동적 업데이트",
+        "focus": [
+          "metrics",
+          "watch",
+          "hotreload",
+          "traffic"
+        ],
+        "note": "Zone CP 변경을 감지하면 새 설정을 Hot Reload로 무중단 적용하고 트래픽 처리를 계속한다."
+      },
+      {
+        "id": "shutdown",
+        "label": "종료 단계",
+        "focus": [
+          "metrics",
+          "signal",
+          "drain",
+          "deregister"
+        ],
+        "note": "SIGTERM을 받으면 기존 연결을 드레이닝한 뒤 Zone CP 등록을 해제하고 프로세스를 종료한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "bootstrap",
+      "label": "초기화 · 설정 수신"
+    },
+    {
+      "id": "runtime",
+      "label": "런타임 동작"
+    },
+    {
+      "id": "update",
+      "label": "동적 업데이트"
+    },
+    {
+      "id": "shutdown",
+      "label": "종료 단계",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "register",
+    "connect",
+    "receive",
+    "proxy",
+    "traffic",
+    "metrics"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "bootstrap",
+      "col": 0,
+      "type": "backend",
+      "label": "Kuma DP 시작",
+      "sublabel": "Data Plane Token 획득",
+      "width": 160
+    },
+    {
+      "id": "register",
+      "lane": "bootstrap",
+      "col": 1,
+      "type": "messagebus",
+      "label": "Zone CP에 등록",
+      "sublabel": "Data Plane Token 인증",
+      "width": 158
+    },
+    {
+      "id": "connect",
+      "lane": "bootstrap",
+      "col": 2,
+      "type": "messagebus",
+      "label": "gRPC 스트림 연결",
+      "sublabel": "Zone CP와 연결",
+      "width": 150
+    },
+    {
+      "id": "receive",
+      "lane": "bootstrap",
+      "col": 3,
+      "type": "messagebus",
+      "label": "xDS Configuration 수신",
+      "sublabel": "Listeners · Routes · Clusters · Endpoints",
+      "width": 220
+    },
+    {
+      "id": "proxy",
+      "lane": "runtime",
+      "col": 3,
+      "type": "backend",
+      "label": "Envoy Proxy 설정",
+      "width": 144
+    },
+    {
+      "id": "traffic",
+      "lane": "runtime",
+      "col": 4,
+      "type": "security",
+      "label": "트래픽 프록시",
+      "sublabel": "mTLS · 로드 밸런싱 · 헬스체크",
+      "width": 150
+    },
+    {
+      "id": "metrics",
+      "lane": "runtime",
+      "col": 5,
+      "type": "backend",
+      "label": "메트릭 수집",
+      "sublabel": "요청 수 · Latency · 에러율",
+      "width": 150
+    },
+    {
+      "id": "watch",
+      "lane": "update",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Zone CP 변경 감지",
+      "sublabel": "설정 업데이트 수신",
+      "width": 182
+    },
+    {
+      "id": "hotreload",
+      "lane": "update",
+      "col": 4,
+      "type": "backend",
+      "label": "Hot Reload",
+      "sublabel": "무중단 적용",
+      "width": 116
+    },
+    {
+      "id": "signal",
+      "lane": "shutdown",
+      "col": 0,
+      "type": "external",
+      "label": "SIGTERM 수신",
+      "width": 160
+    },
+    {
+      "id": "drain",
+      "lane": "shutdown",
+      "col": 2,
+      "type": "backend",
+      "label": "Connection Draining",
+      "sublabel": "기존 연결 처리",
+      "width": 180
+    },
+    {
+      "id": "deregister",
+      "lane": "shutdown",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Zone CP 등록 해제",
+      "sublabel": "프로세스 종료",
+      "width": 204
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "register"
+    },
+    {
+      "from": "register",
+      "to": "connect"
+    },
+    {
+      "from": "connect",
+      "to": "receive"
+    },
+    {
+      "from": "receive",
+      "to": "proxy"
+    },
+    {
+      "from": "proxy",
+      "to": "traffic"
+    },
+    {
+      "from": "traffic",
+      "to": "metrics"
+    },
+    {
+      "from": "metrics",
+      "to": "watch"
+    },
+    {
+      "from": "watch",
+      "to": "hotreload",
+      "role": "return"
+    },
+    {
+      "from": "hotreload",
+      "to": "traffic",
+      "role": "return",
+      "label": "재적용"
+    },
+    {
+      "from": "metrics",
+      "to": "signal",
+      "role": "async",
+      "variant": "dashed",
+      "label": "SIGTERM",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "from": "signal",
+      "to": "drain",
+      "role": "error"
+    },
+    {
+      "from": "drain",
+      "to": "deregister",
+      "role": "error"
+    }
+  ]
+}

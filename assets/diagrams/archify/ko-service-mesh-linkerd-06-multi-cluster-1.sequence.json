@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "서비스 미러링 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      960,
+      700
+    ],
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Cluster East"
+    },
+    {
+      "id": "mirror",
+      "type": "backend",
+      "label": "Mirror Service",
+      "sublabel": "web-west · Cluster East"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Gateway",
+      "sublabel": "Cluster West"
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target Service",
+      "sublabel": "web · Cluster West"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 390,
+      "label": "요청 — East에서 West로"
+    },
+    {
+      "from": 410,
+      "to": 575,
+      "label": "응답 — 역순으로 반환"
+    }
+  ],
+  "messages": [
+    {
+      "id": "req",
+      "from": "app",
+      "to": "mirror",
+      "y": 195,
+      "label": "web-west 호출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls",
+      "from": "mirror",
+      "to": "gateway",
+      "y": 270,
+      "label": "Gateway IP 해석 후 mTLS 연결",
+      "variant": "security",
+      "note": "미러 서비스가 Gateway IP로 주소를 해석해 연결"
+    },
+    {
+      "id": "forward",
+      "from": "gateway",
+      "to": "target",
+      "y": 350,
+      "label": "신원 검증 후 요청 전달",
+      "variant": "emphasis",
+      "note": "Gateway가 신원을 검증한 뒤 전달"
+    },
+    {
+      "id": "resp1",
+      "from": "target",
+      "to": "gateway",
+      "y": 440,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "resp2",
+      "from": "gateway",
+      "to": "mirror",
+      "y": 490,
+      "label": "mTLS 응답",
+      "variant": "return"
+    },
+    {
+      "id": "resp3",
+      "from": "mirror",
+      "to": "app",
+      "y": 540,
+      "label": "응답",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "mirror",
+      "from": 195,
+      "to": 545,
+      "type": "backend"
+    },
+    {
+      "participant": "gateway",
+      "from": 270,
+      "to": 495,
+      "type": "security"
+    },
+    {
+      "participant": "target",
+      "from": 350,
+      "to": 445,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "운영 복잡도 종합 비교",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "istio_ops",
+        "label": "Istio 운영 현실",
+        "focus": [
+          "istio_setup",
+          "istio_daily",
+          "istio_upgrade",
+          "istio_sidecar",
+          "istio_troubleshoot",
+          "istio_cost"
+        ],
+        "note": "초기 설정부터 전문 인력까지 여섯 항목 모두 부담이 커 연간 $31,600으로 귀결된다."
+      },
+      {
+        "id": "lattice_ops",
+        "label": "VPC Lattice 운영 현실",
+        "focus": [
+          "lattice_setup",
+          "lattice_daily",
+          "lattice_upgrade",
+          "lattice_overhead",
+          "lattice_troubleshoot",
+          "lattice_cost"
+        ],
+        "note": "같은 여섯 항목이 모두 가벼워 연간 $7,608로 귀결된다."
+      },
+      {
+        "id": "cost_compare",
+        "label": "연간 비용 대조",
+        "focus": [
+          "istio_cost",
+          "lattice_cost"
+        ],
+        "note": "연간 운영 현실 비용: Istio $31,600 vs VPC Lattice $7,608 (그림 원본 수치)."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Istio 운영 항목"
+        },
+        "security": {
+          "label": "전문 인력 필요"
+        },
+        "cloud": {
+          "label": "VPC Lattice 운영 항목"
+        },
+        "database": {
+          "label": "연간 비용"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "istio",
+      "label": "Istio 운영 현실"
+    },
+    {
+      "id": "lattice",
+      "label": "VPC Lattice 운영 현실"
+    }
+  ],
+  "phases": [
+    {
+      "id": "ph_setup",
+      "label": "초기 설정",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "ph_daily",
+      "label": "일상 운영",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "ph_upgrade",
+      "label": "업그레이드",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "ph_overhead",
+      "label": "리소스 오버헤드",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "ph_troubleshoot",
+      "label": "트러블슈팅 · 인력",
+      "fromCol": 4,
+      "toCol": 4
+    },
+    {
+      "id": "ph_cost",
+      "label": "연간 비용",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "istio_setup",
+    "istio_daily",
+    "istio_upgrade",
+    "istio_sidecar",
+    "istio_troubleshoot",
+    "istio_cost"
+  ],
+  "nodes": [
+    {
+      "id": "istio_setup",
+      "lane": "istio",
+      "col": 0,
+      "type": "backend",
+      "label": "초기 설정",
+      "sublabel": "30-60분",
+      "tag": "★★★★"
+    },
+    {
+      "id": "istio_daily",
+      "lane": "istio",
+      "col": 1,
+      "type": "backend",
+      "label": "일상 운영",
+      "sublabel": "15-25h/월",
+      "tag": "★★★★★"
+    },
+    {
+      "id": "istio_upgrade",
+      "lane": "istio",
+      "col": 2,
+      "type": "backend",
+      "label": "업그레이드",
+      "sublabel": "6-10시간",
+      "tag": "★★★★★"
+    },
+    {
+      "id": "istio_sidecar",
+      "lane": "istio",
+      "col": 3,
+      "type": "backend",
+      "label": "Sidecar",
+      "sublabel": "CPU/Memory 2배",
+      "tag": "★★★★★"
+    },
+    {
+      "id": "istio_troubleshoot",
+      "lane": "istio",
+      "col": 4,
+      "type": "security",
+      "label": "복잡함",
+      "sublabel": "고급 K8s 전문가",
+      "tag": "★★★★★"
+    },
+    {
+      "id": "istio_cost",
+      "lane": "istio",
+      "col": 5,
+      "type": "database",
+      "label": "$31,600",
+      "sublabel": "높은 인프라 + 운영 비용",
+      "tag": "Istio"
+    },
+    {
+      "id": "lattice_setup",
+      "lane": "lattice",
+      "col": 0,
+      "type": "cloud",
+      "label": "초기 설정",
+      "sublabel": "10-20분",
+      "tag": "★"
+    },
+    {
+      "id": "lattice_daily",
+      "lane": "lattice",
+      "col": 1,
+      "type": "cloud",
+      "label": "일상 운영",
+      "sublabel": "2-5h/월",
+      "tag": "★"
+    },
+    {
+      "id": "lattice_upgrade",
+      "lane": "lattice",
+      "col": 2,
+      "type": "cloud",
+      "label": "업그레이드",
+      "sublabel": "자동",
+      "tag": "★"
+    },
+    {
+      "id": "lattice_overhead",
+      "lane": "lattice",
+      "col": 3,
+      "type": "cloud",
+      "label": "오버헤드 0",
+      "sublabel": "Sidecar 없음",
+      "tag": "★"
+    },
+    {
+      "id": "lattice_troubleshoot",
+      "lane": "lattice",
+      "col": 4,
+      "type": "cloud",
+      "label": "간단함",
+      "sublabel": "일반 AWS 엔지니어",
+      "tag": "★★"
+    },
+    {
+      "id": "lattice_cost",
+      "lane": "lattice",
+      "col": 5,
+      "type": "database",
+      "label": "$7,608",
+      "sublabel": "낮은 사용량 + 운영 비용",
+      "tag": "VPC Lattice"
+    }
+  ],
+  "edges": [
+    {
+      "from": "istio_setup",
+      "to": "istio_daily"
+    },
+    {
+      "from": "istio_daily",
+      "to": "istio_upgrade"
+    },
+    {
+      "from": "istio_upgrade",
+      "to": "istio_sidecar"
+    },
+    {
+      "from": "istio_sidecar",
+      "to": "istio_troubleshoot"
+    },
+    {
+      "from": "istio_troubleshoot",
+      "to": "istio_cost",
+      "label": "누적",
+      "variant": "emphasis"
+    },
+    {
+      "from": "lattice_setup",
+      "to": "lattice_daily",
+      "role": "branch"
+    },
+    {
+      "from": "lattice_daily",
+      "to": "lattice_upgrade",
+      "role": "branch"
+    },
+    {
+      "from": "lattice_upgrade",
+      "to": "lattice_overhead",
+      "role": "branch"
+    },
+    {
+      "from": "lattice_overhead",
+      "to": "lattice_troubleshoot",
+      "role": "branch"
+    },
+    {
+      "from": "lattice_troubleshoot",
+      "to": "lattice_cost",
+      "label": "누적",
+      "role": "branch",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Istio 운영의 숨겨진 비용",
+      "items": [
+        "10+ 종류의 CRD와 VirtualService·DestinationRule 간 의존성 관리",
+        "Service Mesh 전문가 채용 어려움(연봉 $150k+), 온보딩 3-6개월",
+        "Control Plane 업그레이드 실패 시 전체 메시 영향, 24/7 온콜 필요"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "VPC Lattice 운영",
+      "items": [
+        "AWS 관리형: 업그레이드 자동, Sidecar 관리 불필요",
+        "트러블슈팅은 CloudWatch와 AWS Console 중심",
+        "일반 AWS 엔지니어로 운영 가능, 학습 곡선 1-2주"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "결론",
+      "items": [
+        "운영 복잡도 측면에서 VPC Lattice가 압도적 우위",
+        "Istio를 선택한다면 전담 Platform 팀(최소 2-3명)과 예산 확보",
+        "장기 유지보수 계획과 24/7 지원 체계 필수"
+      ]
+    }
+  ]
+}

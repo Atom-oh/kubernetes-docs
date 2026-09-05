@@ -9,7 +9,9 @@ Linkerd는 ServiceProfile, TrafficSplit, HTTPRoute 등을 통해 서비스 간 �
 
 ## 트래픽 관리 아키텍처
 
-![ServiceProfile, TrafficSplit, HTTPRoute가 Destination Controller를 거쳐 정책을 배포하고, 그 정책이 로드밸런싱·재시도·타임아웃·서킷브레이킹 등 프록시 기능으로 분배되는 흐름을 보여주는 아키텍처 다이어그램.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-0.svg)
+![ServiceProfile, TrafficSplit, HTTPRoute가 Destination Controller를 거쳐 정책을 배포하고, 그 정책이 로드밸런싱·재시도·타임아웃·서킷브레이킹 등 프록시 기능으로 분배되는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-0.html)
 
 ## ServiceProfile
 
@@ -163,7 +165,9 @@ Linkerd는 실패한 요청을 자동으로 재시도하여 일시적인 장애�
 
 ### 재시도 동작 방식
 
-![클라이언트 요청이 linkerd-proxy를 거쳐 백엔드에서 503 오류를 받으면, 재시도 조건을 확인한 뒤 프록시가 요청을 다시 보내 200 OK를 클라이언트에 전달하는 과정을 보여주는 시퀀스 다이어그램.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-1.svg)
+![클라이언트 요청이 linkerd-proxy를 거쳐 백엔드에서 503 오류를 받으면, 재시도 조건을 확인한 뒤 프록시가 요청을 다시 보내 200 OK를 클라이언트에 전달하는 과정을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-1.html)
 
 ### 재시도 조건
 
@@ -265,7 +269,9 @@ spec:
 
 ### 타임아웃 동작
 
-![linkerd-proxy가 요청에 5초 타임아웃을 적용해, 정상 응답이면 200 OK를 반환하고 5초를 넘기면 백엔드 처리와 무관하게 클라이언트에 504 Gateway Timeout을 반환하는 두 가지 경로를 보여주는 시퀀스 다이어그램.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-2.svg)
+![linkerd-proxy가 요청에 5초 타임아웃을 적용해, 정상 응답이면 200 OK를 반환하고 5초를 넘기면 백엔드 처리와 무관하게 클라이언트에 504 Gateway Timeout을 반환하는 두 가지 경로를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-2.html)
 
 ## 로드 밸런싱
 
@@ -273,7 +279,9 @@ Linkerd는 EWMA(Exponentially Weighted Moving Average) 알고리즘을 사용하
 
 ### EWMA 알고리즘
 
-![새 요청을 받은 로드 밸런서가 지연 시간 기반 EWMA 점수에 따라 가장 응답이 빠른 엔드포인트를 선택하고, 느린 엔드포인트는 대기시키는 흐름을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-3.svg)
+![새 요청을 받은 로드 밸런서가 지연 시간 기반 EWMA 점수에 따라 가장 응답이 빠른 엔드포인트를 선택하고, 느린 엔드포인트는 대기시키는 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-3.html)
 
 **EWMA 특성:**
 
@@ -323,7 +331,9 @@ spec:
 
 ### 카나리 배포
 
-![TrafficSplit이 트래픽 진입점인 my-service에서 안정 버전에 90%, 카나리 버전에 10%의 트래픽을 가중치로 분배하는 구조를 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-4.svg)
+![TrafficSplit이 트래픽 진입점인 my-service에서 안정 버전 my-service-v1에 90%, 카나리 버전 my-service-v2에 10%의 트래픽을 가중치로 분배하는 카나리 배포 구조를 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-4.html)
 
 **단계적 카나리 배포:**
 
@@ -619,7 +629,9 @@ Linkerd는 failure accrual을 통해 서킷 브레이커 패턴을 구현합니�
 
 ### Failure Accrual 동작
 
-![연속 실패 임계값을 넘으면 정상(Closed) 상태의 엔드포인트가 차단(Open) 상태로 바뀌고, 백오프 시간이 지나면 절반 개방(Half-Open) 상태에서 프로브를 보내 성공하면 다시 정상으로, 실패하면 다시 차단 상태로 돌아가는 흐름을 보여주는 상태 머신 다이어그램.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-5.svg)
+![연속 실패 임계값을 넘으면 정상(Closed) 상태의 엔드포인트가 차단(Open) 상태로 바뀌고, 백오프 시간이 지나면 절반 개방(Half-Open) 상태에서 프로브를 보내 성공하면 다시 정상으로, 실패하면 다시 차단 상태로 돌아가는 failure accrual 상태 머신을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-5.html)
 
 **동작 방식:**
 
@@ -729,7 +741,9 @@ spec:
 
 ### Flagger 배포 흐름
 
-![Flagger가 배포 변경을 감지해 카나리를 초기화하고, 메트릭 분석 결과 성공 기준을 충족하면 트래픽을 단계적으로 늘려 50%에 도달하면 프로모션하고, 기준을 충족하지 못하면 롤백하는 의사결정 흐름을 보여주는 플로차트.](../../../assets/diagrams/rendered/ko-service-mesh-linkerd-03-traffic-management-6.svg)
+![Flagger가 Deployment 변경을 감지해 카나리를 0% 트래픽으로 초기화한 뒤, 메트릭 분석에서 성공 기준을 충족하면 트래픽을 10%씩 늘려 50%에 도달하면 프로모션하고, 충족하지 못하면 롤백하는 의사결정 흐름을 보여준다.](../../.gitbook/assets/ko-service-mesh-linkerd-03-traffic-management-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-linkerd-03-traffic-management-6.html)
 
 ### Flagger 메트릭 템플릿
 

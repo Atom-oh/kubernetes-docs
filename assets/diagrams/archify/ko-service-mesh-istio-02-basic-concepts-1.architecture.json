@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "초기 해결 방법: 언어별 라이브러리",
+    "output": "ko-service-mesh-istio-02-basic-concepts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1000, 400],
+    "legend": {
+      "entries": {
+        "backend": { "label": "애플리케이션 코드" },
+        "external": { "label": "장애 처리 라이브러리" }
+      }
+    }
+  },
+  "components": [
+    { "id": "java-app", "type": "backend", "label": "애플리케이션 코드", "sublabel": "Java", "pos": [70, 90], "size": [200, 60] },
+    { "id": "java-lib", "type": "external", "label": "Hystrix", "sublabel": "Netflix OSS", "pos": [70, 250], "size": [200, 60] },
+    { "id": "go-app", "type": "backend", "label": "애플리케이션 코드", "sublabel": "Go", "pos": [400, 90], "size": [200, 60] },
+    { "id": "go-lib", "type": "external", "label": "Go 라이브러리", "sublabel": "별도 개발", "pos": [400, 250], "size": [200, 60] },
+    { "id": "py-app", "type": "backend", "label": "애플리케이션 코드", "sublabel": "Python", "pos": [730, 90], "size": [200, 60] },
+    { "id": "py-lib", "type": "external", "label": "Requests + Retry", "sublabel": "Python 라이브러리", "pos": [730, 250], "size": [200, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Java 서비스", "wraps": ["java-app", "java-lib"] },
+    { "kind": "region", "label": "Go 서비스", "wraps": ["go-app", "go-lib"] },
+    { "kind": "region", "label": "Python 서비스", "wraps": ["py-app", "py-lib"] }
+  ],
+  "connections": [
+    { "id": "java-couple", "from": "java-app", "to": "java-lib", "label": "긴밀 결합", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "go-couple", "from": "go-app", "to": "go-lib", "label": "긴밀 결합", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "py-couple", "from": "py-app", "to": "py-lib", "label": "긴밀 결합", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "라이브러리 방식의 문제점",
+      "items": [
+        "언어별로 라이브러리를 따로 개발해야 한다",
+        "애플리케이션 코드에 긴밀히 결합된다",
+        "업데이트할 때마다 모든 서비스를 재배포해야 한다",
+        "버전 관리가 복잡해진다"
+      ]
+    }
+  ]
+}

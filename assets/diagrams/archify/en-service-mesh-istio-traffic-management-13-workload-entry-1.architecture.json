@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Flow Comparison",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-13-workload-entry-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "Kubernetes Pod path"
+        },
+        "cloud": {
+          "label": "WorkloadEntry (VM) path"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pod-flow",
+        "label": "Kubernetes Pod Flow",
+        "focus": [
+          "client-k8s",
+          "k8s-service",
+          "k8s-pod"
+        ],
+        "note": "The Service discovers endpoints automatically and routes to a Pod with an auto-injected Envoy sidecar."
+      },
+      {
+        "id": "vm-flow",
+        "label": "WorkloadEntry Flow",
+        "focus": [
+          "client-vm",
+          "service-entry",
+          "workload-entry"
+        ],
+        "note": "A ServiceEntry must be registered manually before traffic is routed to the Envoy-equipped VM (WorkloadEntry)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client-k8s",
+      "type": "external",
+      "label": "Client",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "k8s-service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "Auto Discovery",
+      "pos": [
+        270,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "k8s-pod",
+      "type": "backend",
+      "label": "Pod",
+      "sublabel": "Auto Envoy Injection",
+      "pos": [
+        530,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "client-vm",
+      "type": "external",
+      "label": "Client",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "service-entry",
+      "type": "cloud",
+      "label": "ServiceEntry",
+      "sublabel": "Manual Registration",
+      "pos": [
+        270,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "workload-entry",
+      "type": "cloud",
+      "label": "WorkloadEntry",
+      "sublabel": "VM + Envoy",
+      "pos": [
+        530,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Pod Flow",
+      "wraps": [
+        "client-k8s",
+        "k8s-service",
+        "k8s-pod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "WorkloadEntry Flow",
+      "wraps": [
+        "client-vm",
+        "service-entry",
+        "workload-entry"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-request",
+      "from": "client-k8s",
+      "to": "k8s-service",
+      "label": "1. Request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "k8s-routing",
+      "from": "k8s-service",
+      "to": "k8s-pod",
+      "label": "2. Routing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-request",
+      "from": "client-vm",
+      "to": "service-entry",
+      "label": "1. Request"
+    },
+    {
+      "id": "vm-routing",
+      "from": "service-entry",
+      "to": "workload-entry",
+      "label": "2. Routing"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Kubernetes Pod",
+      "items": [
+        "Automatic Envoy injection (sidecar)",
+        "Automatic service discovery (Service)",
+        "IP management by Kubernetes CNI"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "WorkloadEntry (VM)",
+      "items": [
+        "Manual Envoy installation",
+        "Manual service discovery (WorkloadEntry + ServiceEntry)",
+        "Manual IP specification"
+      ]
+    }
+  ]
+}

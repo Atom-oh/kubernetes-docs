@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium CRD 구조",
+    "output": "ko-service-mesh-cilium-service-mesh-01-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "policy-crds",
+        "label": "네트워크 정책 CRD",
+        "focus": [
+          "cnp",
+          "ccnp",
+          "cep"
+        ],
+        "note": "CiliumNetworkPolicy는 네임스페이스 범위, CiliumClusterwideNetworkPolicy는 클러스터 전체에 L3-L7 규칙을 적용한다."
+      },
+      {
+        "id": "envoy-crds",
+        "label": "Envoy 설정 CRD",
+        "focus": [
+          "cec",
+          "ccec",
+          "cep"
+        ],
+        "note": "CiliumEnvoyConfig는 네임스페이스 범위, CiliumClusterwideEnvoyConfig는 클러스터 전체에 적용되는 Envoy 설정을 정의한다."
+      },
+      {
+        "id": "identity-crds",
+        "label": "Identity CRD",
+        "focus": [
+          "cid",
+          "cep"
+        ],
+        "note": "정책과 Envoy 설정은 모두 파드별 CiliumEndpoint로 귀결되며, CiliumIdentity가 보안 identity를 나타낸다."
+      }
+    ],
+    "viewBox": [
+      1220,
+      640
+    ]
+  },
+  "components": [
+    {
+      "id": "cnp",
+      "type": "security",
+      "label": "CiliumNetworkPolicy",
+      "sublabel": "네임스페이스 범위 정책",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "ccnp",
+      "type": "security",
+      "label": "CiliumClusterwideNetworkPolicy",
+      "sublabel": "클러스터 전체 정책",
+      "pos": [
+        320,
+        90
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "cec",
+      "type": "backend",
+      "label": "CiliumEnvoyConfig",
+      "sublabel": "네임스페이스 범위 Envoy 설정",
+      "pos": [
+        630,
+        90
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "ccec",
+      "type": "backend",
+      "label": "CiliumClusterwideEnvoyConfig",
+      "sublabel": "클러스터 전체 Envoy 설정",
+      "pos": [
+        910,
+        90
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "clb",
+      "type": "cloud",
+      "label": "CiliumLoadBalancerIPPool",
+      "sublabel": "LB IP 풀",
+      "pos": [
+        880,
+        330
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "cbgp",
+      "type": "cloud",
+      "label": "CiliumBGPPeeringPolicy",
+      "sublabel": "BGP 피어링",
+      "pos": [
+        880,
+        420
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "ceg",
+      "type": "cloud",
+      "label": "CiliumEgressGateway",
+      "sublabel": "이그레스 게이트웨이",
+      "pos": [
+        880,
+        510
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "cid",
+      "type": "database",
+      "label": "CiliumIdentity",
+      "sublabel": "보안 identity",
+      "pos": [
+        170,
+        350
+      ],
+      "size": [
+        250,
+        58
+      ]
+    },
+    {
+      "id": "cep",
+      "type": "database",
+      "label": "CiliumEndpoint",
+      "sublabel": "파드별 identity + 정책 상태",
+      "pos": [
+        470,
+        350
+      ],
+      "size": [
+        250,
+        58
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Network Policy CRDs",
+      "wraps": [
+        "cnp",
+        "ccnp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Envoy Configuration CRDs",
+      "wraps": [
+        "cec",
+        "ccec"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Service Mesh CRDs",
+      "wraps": [
+        "clb",
+        "cbgp",
+        "ceg"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Identity CRDs",
+      "wraps": [
+        "cid",
+        "cep"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cnp-to-cep",
+      "from": "cnp",
+      "to": "cep",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ccnp-to-cep",
+      "from": "ccnp",
+      "to": "cep",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cec-to-cep",
+      "from": "cec",
+      "to": "cep",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ccec-to-cep",
+      "from": "ccec",
+      "to": "cep",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -256,7 +256,9 @@ spec:
 
 #### 점진적 Istio 도입
 
-![Istio를 시작에서 완전 도입까지 5단계로 점진 도입하는 흐름을 보여주며, Observability 확보 후 mTLS를 PERMISSIVE로 켜고 STRICT로 강화한 다음 고급 기능을 도입하는 과정을 강조한다.](../../../assets/diagrams/rendered/ko-service-mesh-istio-best-practices-0.svg)
+![Istio를 시작에서 완전 도입까지 단계적으로 도입하는 흐름으로, Sidecar 주입으로 Observability를 먼저 확보한 뒤 mTLS를 PERMISSIVE에서 STRICT로 강화하고 마지막에 고급 기능을 도입하는 순서를 보여준다.](../../.gitbook/assets/ko-service-mesh-istio-best-practices-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-best-practices-0.html)
 
 **Phase 1: Observability (1-2주)**
 ```bash

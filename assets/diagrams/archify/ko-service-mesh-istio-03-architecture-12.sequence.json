@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "xDS 통신 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "연결과 인증",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "파드가 시작되면 Envoy가 Istiod에 gRPC로 연결하고 mTLS로 인증을 마친다."
+      },
+      {
+        "id": "xds-loop",
+        "label": "xDS 리소스 순회",
+        "focus": [
+          "envoy",
+          "istiod"
+        ],
+        "note": "LDS·CDS·EDS·RDS·SDS 리소스를 차례로 요청·응답해 초기 구성을 완료한다."
+      },
+      {
+        "id": "push",
+        "label": "변경 감지와 푸시",
+        "focus": [
+          "k8s",
+          "istiod",
+          "envoy"
+        ],
+        "note": "Kubernetes API의 Service 변경을 감지한 Istiod가 새 Endpoint를 Envoy에 푸시한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "xDS Server"
+    },
+    {
+      "id": "k8s",
+      "type": "external",
+      "label": "Kubernetes API",
+      "sublabel": "watch events"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 275,
+      "label": "파드 시작 · 연결"
+    },
+    {
+      "from": 295,
+      "to": 435,
+      "label": "loop — LDS·CDS·EDS·RDS·SDS 순회"
+    },
+    {
+      "from": 455,
+      "to": 610,
+      "label": "구성 완료 후 — 변경 푸시"
+    }
+  ],
+  "messages": [
+    {
+      "id": "connect",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 200,
+      "label": "연결 (gRPC :15012)",
+      "variant": "default",
+      "note": "파드 시작 시 Envoy가 먼저 연결"
+    },
+    {
+      "id": "mtls",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 250,
+      "label": "mTLS 인증",
+      "variant": "security"
+    },
+    {
+      "id": "xds-req",
+      "from": "envoy",
+      "to": "istiod",
+      "y": 330,
+      "label": "리소스 요청",
+      "variant": "default"
+    },
+    {
+      "id": "xds-res",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 390,
+      "label": "리소스 반환",
+      "variant": "return",
+      "note": "순회가 끝나면 구성 완료 · 트래픽 준비"
+    },
+    {
+      "id": "svc-change",
+      "from": "k8s",
+      "to": "istiod",
+      "y": 500,
+      "label": "Service 변경 감지",
+      "variant": "default"
+    },
+    {
+      "id": "eds-push",
+      "from": "istiod",
+      "to": "envoy",
+      "y": 555,
+      "label": "EDS 푸시 (새 Endpoint)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "istiod",
+      "from": 195,
+      "to": 398,
+      "type": "cloud"
+    },
+    {
+      "participant": "istiod",
+      "from": 495,
+      "to": 563,
+      "type": "cloud"
+    }
+  ]
+}

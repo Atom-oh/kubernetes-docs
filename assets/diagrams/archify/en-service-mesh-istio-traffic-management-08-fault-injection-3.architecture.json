@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Microservice Cascade Failure Test",
+    "output": "en-service-mesh-istio-traffic-management-08-fault-injection-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Normal request path",
+        "focus": [
+          "frontend",
+          "order",
+          "payment",
+          "inventory"
+        ],
+        "note": "Frontend requests pass through the order service to the payment and inventory services."
+      },
+      {
+        "id": "fault",
+        "label": "Fault injection",
+        "focus": [
+          "payment",
+          "order"
+        ],
+        "note": "VirtualService fault.abort makes 30% of payment-service requests fail with HTTP 503."
+      },
+      {
+        "id": "breaker",
+        "label": "Circuit Breaker",
+        "focus": [
+          "order",
+          "frontend",
+          "inventory"
+        ],
+        "note": "DestinationRule outlierDetection trips, propagating safely to the frontend while the inventory service stays unaffected."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend",
+      "sublabel": "Shows user message",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "order",
+      "type": "backend",
+      "label": "Order Service",
+      "sublabel": "order-service",
+      "pos": [
+        380,
+        220
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "Circuit Breaker"
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "Payment Service",
+      "sublabel": "payment-service",
+      "pos": [
+        720,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "Fault Injection"
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Inventory Service",
+      "sublabel": "inventory-service",
+      "pos": [
+        720,
+        380
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend-to-order",
+      "from": "frontend",
+      "to": "order",
+      "label": "order request",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "order-to-payment",
+      "from": "order",
+      "to": "payment",
+      "label": "payment call",
+      "fromSide": "top",
+      "toSide": "left",
+      "labelDx": -50
+    },
+    {
+      "id": "order-to-inventory",
+      "from": "order",
+      "to": "inventory",
+      "label": "inventory check",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "payment-fails",
+      "from": "payment",
+      "to": "order",
+      "label": "30% failure (503)",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelDx": 64,
+      "labelDy": 34
+    },
+    {
+      "id": "order-breaker",
+      "from": "order",
+      "to": "frontend",
+      "label": "Circuit Breaker",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Fault injection (VirtualService)",
+      "items": [
+        "Abort 30% of payment-service requests",
+        "Return httpStatus 503"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Circuit Breaker (DestinationRule)",
+      "items": [
+        "outlierDetection consecutiveErrors 5",
+        "interval 30s / baseEjectionTime 30s"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Test objectives",
+      "items": [
+        "Does the order service handle payment failure gracefully?",
+        "Does the inventory service keep operating normally?",
+        "Is an appropriate user message shown on the frontend?"
+      ]
+    }
+  ]
+}

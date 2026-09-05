@@ -1,0 +1,176 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "전통적인 테스트 vs Chaos Engineering",
+    "output": "public/archmaps/ko-service-mesh-istio-traffic-management-08-fault-injection-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "traditional",
+        "label": "전통적인 테스트",
+        "focus": [
+          "devTest",
+          "stagingTest",
+          "prodIssue"
+        ],
+        "note": "개발·스테이징에서만 검증하면 장애는 프로덕션에서 처음 드러납니다."
+      },
+      {
+        "id": "chaos",
+        "label": "Chaos Engineering",
+        "focus": [
+          "contTest",
+          "discover",
+          "fix",
+          "resilient"
+        ],
+        "note": "장애를 지속적으로 주입해 약점을 사전에 발견·수정하고 복원력을 키웁니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "테스트·검증 단계"
+        },
+        "security": {
+          "label": "프로덕션 장애"
+        },
+        "messagebus": {
+          "label": "장애 주입"
+        },
+        "cloud": {
+          "label": "복원력 결과"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "traditionalLane",
+      "label": "전통적인 테스트",
+      "variant": "exception"
+    },
+    {
+      "id": "chaosLane",
+      "label": "Chaos Engineering"
+    }
+  ],
+  "mainPath": [
+    "contTest",
+    "discover",
+    "fix",
+    "resilient"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "devTest",
+      "contTest"
+    ],
+    "allowedTerminals": [
+      "prodIssue",
+      "resilient"
+    ],
+    "requiredPaths": [
+      {
+        "from": "devTest",
+        "to": "prodIssue"
+      },
+      {
+        "from": "contTest",
+        "to": "resilient"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "devTest",
+      "lane": "traditionalLane",
+      "col": 0,
+      "type": "backend",
+      "label": "개발 환경 테스트",
+      "width": 230
+    },
+    {
+      "id": "stagingTest",
+      "lane": "traditionalLane",
+      "col": 1,
+      "type": "backend",
+      "label": "스테이징 환경 테스트",
+      "width": 230
+    },
+    {
+      "id": "prodIssue",
+      "lane": "traditionalLane",
+      "col": 2,
+      "type": "security",
+      "label": "프로덕션 장애 발생",
+      "width": 230
+    },
+    {
+      "id": "contTest",
+      "lane": "chaosLane",
+      "col": 0,
+      "type": "messagebus",
+      "label": "지속적인 장애 주입",
+      "width": 230
+    },
+    {
+      "id": "discover",
+      "lane": "chaosLane",
+      "col": 1,
+      "type": "backend",
+      "label": "약점 발견",
+      "width": 230
+    },
+    {
+      "id": "fix",
+      "lane": "chaosLane",
+      "col": 2,
+      "type": "backend",
+      "label": "사전 수정",
+      "width": 230
+    },
+    {
+      "id": "resilient",
+      "lane": "chaosLane",
+      "col": 3,
+      "type": "cloud",
+      "label": "복원력 있는 시스템",
+      "width": 230
+    }
+  ],
+  "edges": [
+    {
+      "from": "devTest",
+      "to": "stagingTest",
+      "role": "branch"
+    },
+    {
+      "from": "stagingTest",
+      "to": "prodIssue",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "contTest",
+      "to": "discover",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "discover",
+      "to": "fix",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "fix",
+      "to": "resilient",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

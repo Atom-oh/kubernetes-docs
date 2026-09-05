@@ -4,7 +4,21 @@
   "meta": {
     "title": "Cilium 보안 아키텍처",
     "quality_profile": "showcase",
-    "animation": "trace"
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "처리 단계"
+        },
+        "external": {
+          "label": "외부 · 참조"
+        },
+        "security": {
+          "label": "판단 · 정책"
+        }
+      }
+    }
   },
   "lanes": [
     {

@@ -19,7 +19,9 @@ Grafana, Kiali, Prometheus를 통해 Istio 서비스 메시를 종합적으로 �
 
 ### 관찰성 스택 아키텍처
 
-![데이터 플레인의 Envoy 사이드카가 메트릭·로그·트레이스를 Prometheus, Loki, Jaeger, Tempo로 보내고, 이 백엔드들이 Kiali와 Grafana, Jaeger UI 같은 시각화 도구로 이어지며, istiod가 설정 정보를 Kiali에 전달하는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-observability-04-dashboards-0.svg)
+![데이터 플레인의 Envoy 사이드카가 메트릭·로그·트레이스를 Prometheus, Loki, Jaeger, Tempo로 보내고, 이 백엔드들이 Kiali와 Grafana, Jaeger UI 같은 시각화 도구로 이어지며, istiod가 설정 정보를 Kiali에 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-observability-04-dashboards-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-observability-04-dashboards-0.html)
 
 ### 도구별 용도
 

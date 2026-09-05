@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DNS Proxy 아키텍처",
+    "output": "ko-service-mesh-istio-advanced-04-dns-cache-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "애플리케이션"
+        },
+        "security": {
+          "label": "iptables NAT 규칙"
+        },
+        "backend": {
+          "label": "Envoy / Istiod"
+        },
+        "database": {
+          "label": "DNS 테이블"
+        },
+        "external": {
+          "label": "외부 · 클러스터 DNS"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "dns-path",
+        "label": "DNS 해석 경로",
+        "focus": [
+          "app",
+          "dns-rule",
+          "dns-listener",
+          "dns-table"
+        ],
+        "note": "UDP 53 DNS 쿼리를 iptables가 15053으로 보내고, Envoy가 ServiceEntry 기반 DNS 테이블에서 가상 IP를 찾아 응답한다."
+      },
+      {
+        "id": "http-path",
+        "label": "HTTP 전달 경로",
+        "focus": [
+          "app",
+          "tcp-rule",
+          "http-listener",
+          "api"
+        ],
+        "note": "가상 IP로 향하는 HTTP 요청은 15001로 리다이렉트되고, HTTP Listener가 실제 IP로 변환해 외부 서비스에 전달한다."
+      },
+      {
+        "id": "control-fallback",
+        "label": "구성 푸시와 CoreDNS 위임",
+        "focus": [
+          "xds",
+          "dns-table",
+          "dns-listener",
+          "coredns"
+        ],
+        "note": "Istiod가 ServiceEntry를 xDS로 푸시하고, ServiceEntry에 없는 도메인은 CoreDNS로 넘긴다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "curl api.example.com",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "dns-rule",
+      "type": "security",
+      "label": "DNS 규칙",
+      "sublabel": "UDP 53 → 15053",
+      "pos": [
+        320,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "tcp-rule",
+      "type": "security",
+      "label": "TCP 규칙",
+      "sublabel": "TCP → 15001",
+      "pos": [
+        320,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dns-table",
+      "type": "database",
+      "label": "DNS 테이블",
+      "sublabel": "ServiceEntry 기반",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "dns-listener",
+      "type": "backend",
+      "label": "DNS Listener",
+      "sublabel": ":15053",
+      "pos": [
+        580,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "http-listener",
+      "type": "backend",
+      "label": "HTTP Listener",
+      "sublabel": ":15001",
+      "pos": [
+        580,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "xds",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "xDS Server · ServiceEntry 구성",
+      "pos": [
+        880,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "external",
+      "label": "CoreDNS",
+      "sublabel": "클러스터 DNS",
+      "pos": [
+        880,
+        200
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "external",
+      "label": "api.example.com",
+      "sublabel": "실제 IP",
+      "pos": [
+        880,
+        440
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "애플리케이션 파드",
+      "wraps": [
+        "app",
+        "dns-rule",
+        "tcp-rule",
+        "dns-table",
+        "dns-listener",
+        "http-listener"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "iptables NAT",
+      "wraps": [
+        "dns-rule",
+        "tcp-rule"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Envoy Proxy",
+      "wraps": [
+        "dns-table",
+        "dns-listener",
+        "http-listener"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부",
+      "wraps": [
+        "coredns",
+        "api"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s1-dns-query",
+      "from": "app",
+      "to": "dns-rule",
+      "label": "1. DNS 쿼리 UDP 53"
+    },
+    {
+      "id": "s2-redirect-dns",
+      "from": "dns-rule",
+      "to": "dns-listener",
+      "label": "2. 리다이렉트",
+      "labelDy": -17
+    },
+    {
+      "id": "s3-lookup",
+      "from": "dns-listener",
+      "to": "dns-table",
+      "label": "3. 조회",
+      "labelDx": -40
+    },
+    {
+      "id": "s4-virtual-ip",
+      "from": "dns-table",
+      "to": "dns-listener",
+      "label": "4. 가상 IP 240.240.0.1",
+      "labelDx": 70,
+      "labelDy": 24
+    },
+    {
+      "id": "s5-dns-response",
+      "from": "dns-listener",
+      "to": "app",
+      "label": "5. DNS 응답",
+      "variant": "emphasis"
+    },
+    {
+      "id": "s6-http-request",
+      "from": "app",
+      "to": "tcp-rule",
+      "label": "6. HTTP 요청 240.240.0.1"
+    },
+    {
+      "id": "s7-redirect-http",
+      "from": "tcp-rule",
+      "to": "http-listener",
+      "label": "7. 리다이렉트"
+    },
+    {
+      "id": "s8-real-ip",
+      "from": "http-listener",
+      "to": "api",
+      "label": "8. 실제 IP로 변환"
+    },
+    {
+      "id": "xds-push",
+      "from": "xds",
+      "to": "dns-table",
+      "label": "ServiceEntry 푸시",
+      "variant": "dashed"
+    },
+    {
+      "id": "coredns-fallback",
+      "from": "dns-listener",
+      "to": "coredns",
+      "label": "Istio 외부 도메인",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "DNS Proxy 주요 기능",
+      "items": [
+        "UDP 53 DNS 요청을 Envoy가 가로채 처리",
+        "ServiceEntry로 등록한 외부 서비스는 자동으로 DNS 응답 생성",
+        "외부 서비스에 가상 IP 자동 할당",
+        "CoreDNS를 우회해 클러스터 DNS 부하 감소"
+      ]
+    }
+  ]
+}

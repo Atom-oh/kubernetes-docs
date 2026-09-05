@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Outlier Detection Overview",
+    "locale": "en",
+    "output": "en-service-mesh-istio-resilience-01-outlier-detection-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "normal-traffic",
+        "label": "Healthy traffic path",
+        "focus": [
+          "client",
+          "envoy",
+          "pod1",
+          "pod2"
+        ],
+        "note": "Client requests pass through the Envoy proxy and reach only the healthy pods."
+      },
+      {
+        "id": "eject-recover",
+        "label": "Ejection and recovery",
+        "focus": [
+          "envoy",
+          "pod3"
+        ],
+        "note": "Pod 3 crossed the thresholds, is ejected from traffic, and is retried after 30s."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Request",
+      "sublabel": "service call",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "Outlier Detection",
+      "tag": "Load Balancer",
+      "pos": [
+        290,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "response time 50ms · error rate 0%",
+      "pos": [
+        640,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "response time 60ms · error rate 1%",
+      "pos": [
+        640,
+        220
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "response time 5000ms · error rate 80%",
+      "pos": [
+        640,
+        430
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Healthy Pods",
+      "wraps": [
+        "pod1",
+        "pod2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Unhealthy Pods",
+      "wraps": [
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-envoy",
+      "from": "client",
+      "to": "envoy",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-pod1",
+      "from": "envoy",
+      "to": "pod1",
+      "label": "send traffic",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "envoy-to-pod2",
+      "from": "envoy",
+      "to": "pod2",
+      "label": "send traffic",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "envoy-to-pod3",
+      "from": "envoy",
+      "to": "pod3",
+      "label": "ejected",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "pod3-to-envoy",
+      "from": "pod3",
+      "to": "envoy",
+      "label": "recovery attempt after 30s",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Key Features",
+      "items": [
+        "Automatic detection: monitors error rate, latency, and response failures",
+        "Automatic ejection: removed from traffic when a threshold is exceeded",
+        "Automatic recovery: retried after a set time"
+      ]
+    }
+  ]
+}

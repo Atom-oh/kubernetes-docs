@@ -16,7 +16,9 @@ Outlier Detection은 비정상적으로 동작하는 서비스 인스턴스를 �
 
 Outlier Detection은 다음과 같은 상황에서 자동으로 인스턴스를 제외합니다:
 
-![클라이언트 요청이 Envoy Proxy의 Outlier Detection을 거쳐 정상 파드(Pod 1, Pod 2)로만 전달되고, 지연시간과 에러율이 높은 비정상 파드(Pod 3)는 트래픽에서 제외되었다가 30초 후 복구를 시도하는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-01-outlier-detection-0.svg)
+![클라이언트 요청이 Envoy Proxy의 Outlier Detection을 거쳐 정상 Pod(Pod 1, Pod 2)로만 전달되고, 지연시간과 에러율이 높은 비정상 Pod(Pod 3)는 트래픽에서 제외되었다가 30초 후 복구를 시도하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-0.html)
 
 ### 주요 기능
 
@@ -28,7 +30,9 @@ Outlier Detection은 다음과 같은 상황에서 자동으로 인스턴스를 
 
 ### Outlier Detection 프로세스
 
-![요청마다 에러 여부를 확인해 연속 에러를 카운트하고, 임계값을 넘으면 인스턴스를 제외한 뒤 대기 시간 후 복구를 시도하여 다시 요청 순환으로 돌아가는 Outlier Detection의 판단 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-01-outlier-detection-1.svg)
+![요청마다 에러 여부를 확인해 연속 에러를 카운트하고, consecutiveErrors 임계값을 넘으면 인스턴스를 제외한 뒤 baseEjectionTime 대기 후 복구를 시도하여 다시 요청 순환으로 돌아가는 Outlier Detection의 판단 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-1.html)
 
 ### 감지 방식
 
@@ -239,7 +243,9 @@ spec:
 
 ### 외부 API 보호 아키텍처
 
-![클러스터 안의 애플리케이션 파드가 Envoy Proxy를 통해 여러 외부 API 인스턴스로 트래픽을 보내는데, 에러가 발생한 인스턴스는 Outlier Detection에 의해 트래픽에서 제외되고 정상 인스턴스만 계속 트래픽을 받는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-resilience-01-outlier-detection-2.svg)
+![클러스터 안의 애플리케이션 Pod가 Envoy Proxy를 통해 여러 외부 API 인스턴스로 트래픽을 보내는데, 에러가 발생한 인스턴스는 Outlier Detection에 의해 트래픽에서 제외되고 정상 인스턴스만 계속 트래픽을 받는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-resilience-01-outlier-detection-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-resilience-01-outlier-detection-2.html)
 
 ### 예제 1: 단일 외부 API (DNS 기반)
 

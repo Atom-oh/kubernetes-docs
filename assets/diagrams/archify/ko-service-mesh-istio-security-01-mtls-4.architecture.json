@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "End-to-End mTLS 아키텍처",
+    "output": "ko-service-mesh-istio-security-01-mtls-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      540
+    ],
+    "views": [
+      {
+        "id": "edge-handoff",
+        "label": "엣지 구간",
+        "focus": [
+          "client",
+          "cloudfront",
+          "alb",
+          "gateway"
+        ],
+        "note": "클라이언트 인증서는 CloudFront에서 mTLS로 검증되고, 이후 ALB와 Istio Gateway까지는 TLS 위에 인증서 정보 헤더로 전달된다."
+      },
+      {
+        "id": "mesh-mtls",
+        "label": "메시 내부",
+        "focus": [
+          "gateway",
+          "svc-a",
+          "svc-b",
+          "svc-c"
+        ],
+        "note": "Istio Gateway부터 서비스 A·B·C까지는 Envoy 사이드카가 자동 mTLS(Envoy-to-Envoy)로 연결한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "Client Cert",
+      "pos": [
+        30,
+        80
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "cloudfront",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "mTLS 검증",
+      "pos": [
+        250,
+        80
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB",
+      "sublabel": "헤더 전달",
+      "pos": [
+        480,
+        80
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "헤더 검증",
+      "pos": [
+        480,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        930,
+        330
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        1140,
+        330
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Edge",
+      "wraps": [
+        "cloudfront",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Cluster",
+      "wraps": [
+        "gateway",
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Service Mesh",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "client",
+      "to": "cloudfront",
+      "label": "1. mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "c2",
+      "from": "cloudfront",
+      "to": "alb",
+      "label": "2. TLS + 헤더"
+    },
+    {
+      "id": "c3",
+      "from": "alb",
+      "to": "gateway",
+      "label": "3. TLS + 헤더",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "c4",
+      "from": "gateway",
+      "to": "svc-a",
+      "label": "4. mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "c5",
+      "from": "svc-a",
+      "to": "svc-b",
+      "label": "5. mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "c6",
+      "from": "svc-b",
+      "to": "svc-c",
+      "label": "6. mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "구간별 보안",
+      "items": [
+        "클라이언트 → CloudFront: mTLS (클라이언트 인증서 검증)",
+        "CloudFront → ALB: TLS + 인증서 정보 헤더",
+        "ALB → Istio Gateway: TLS + 인증서 정보 헤더",
+        "Istio Mesh 내부: 자동 mTLS (Envoy-to-Envoy)"
+      ]
+    }
+  ]
+}

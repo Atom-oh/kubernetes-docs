@@ -256,7 +256,9 @@ spec:
 
 #### Gradual Istio Adoption
 
-![Flowchart of the five-phase Istio adoption path: starting from observability-only sidecar injection, moving through permissive then strict mutual TLS enforcement, then advanced traffic-management features, ending at full adoption.](../../../assets/diagrams/rendered/en-service-mesh-istio-best-practices-0.svg)
+![Workflow of the phased Istio adoption path: starting from observability-only sidecar injection, moving through PERMISSIVE then STRICT mutual TLS, then advanced traffic-management features, ending at full adoption.](../../.gitbook/assets/en-service-mesh-istio-best-practices-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-best-practices-0.html)
 
 **Phase 1: Observability (1-2 weeks)**
 ```bash

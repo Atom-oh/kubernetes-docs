@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Architecture Overview",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      540
+    ],
+    "views": [
+      {
+        "id": "control",
+        "label": "Control Plane",
+        "focus": [
+          "destination",
+          "identity",
+          "injector",
+          "poda",
+          "podb"
+        ],
+        "note": "Proxy Injector injects the sidecar; the proxy gets service information from Destination and certificates from Identity."
+      },
+      {
+        "id": "dataplane",
+        "label": "Data Plane mTLS",
+        "focus": [
+          "poda",
+          "podb"
+        ],
+        "note": "The two linkerd-proxy sidecars inside the pods talk to each other over automatic mTLS."
+      },
+      {
+        "id": "extensions",
+        "label": "Extensions",
+        "focus": [
+          "viz",
+          "jaeger",
+          "multicluster",
+          "poda",
+          "podb"
+        ],
+        "note": "Viz collects metrics from both proxies; Jaeger and Multicluster are optional installs."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "Service discovery",
+      "pos": [
+        40,
+        114
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "Sidecar injection",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "Certificate issuance (CA)",
+      "pos": [
+        40,
+        354
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "poda",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "app + linkerd-proxy",
+      "tag": "~10MB · <1ms p99",
+      "pos": [
+        430,
+        110
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "podb",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "app + linkerd-proxy",
+      "tag": "~10MB · <1ms p99",
+      "pos": [
+        430,
+        350
+      ],
+      "size": [
+        200,
+        72
+      ]
+    },
+    {
+      "id": "viz",
+      "type": "external",
+      "label": "Viz",
+      "sublabel": "Dashboard / metrics",
+      "pos": [
+        840,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "external",
+      "label": "Jaeger",
+      "sublabel": "Distributed tracing",
+      "pos": [
+        840,
+        230
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "multicluster",
+      "type": "external",
+      "label": "Multicluster",
+      "sublabel": "Multi-cluster",
+      "pos": [
+        840,
+        380
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "destination",
+        "identity",
+        "injector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "poda",
+        "podb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Extensions",
+      "wraps": [
+        "viz",
+        "jaeger",
+        "multicluster"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "inject-a",
+      "from": "injector",
+      "to": "poda",
+      "variant": "dashed"
+    },
+    {
+      "id": "inject-b",
+      "from": "injector",
+      "to": "podb",
+      "variant": "dashed",
+      "label": "Sidecar injection"
+    },
+    {
+      "id": "lookup",
+      "from": "poda",
+      "to": "destination",
+      "label": "service lookup"
+    },
+    {
+      "id": "cert",
+      "from": "podb",
+      "to": "identity",
+      "label": "certificate request",
+      "variant": "security",
+      "labelDy": 26
+    },
+    {
+      "id": "mtls",
+      "from": "poda",
+      "to": "podb",
+      "label": "mTLS",
+      "variant": "emphasis",
+      "labelAt": [
+        530,
+        266
+      ]
+    },
+    {
+      "id": "viz-a",
+      "from": "viz",
+      "to": "poda",
+      "label": "scrape metrics",
+      "labelSegment": 2
+    },
+    {
+      "id": "viz-b",
+      "from": "viz",
+      "to": "podb"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Control Plane",
+      "items": [
+        "Destination: provides service discovery and routing information",
+        "Identity: issues mTLS certificates to proxies (CA)",
+        "Proxy Injector: automatically injects the linkerd-proxy sidecar when a pod is created"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Data Plane",
+      "items": [
+        "linkerd-proxy micro-proxy written in Rust (~10MB memory)",
+        "Automatic mTLS with no configuration, under 1ms p99 latency overhead"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Extensions",
+      "items": [
+        "Viz: dashboard and metrics",
+        "Jaeger: distributed tracing",
+        "Multicluster: multi-cluster via service mirroring"
+      ]
+    }
+  ]
+}

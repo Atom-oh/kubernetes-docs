@@ -16,7 +16,9 @@ Rate Limiting is a feature that limits request rates to protect services from ov
 
 Rate Limiting is needed in the following situations:
 
-![Diagram showing three clients sending traffic through a token-bucket rate limiter that forwards allowed requests to two service pods and rejects excess traffic with a 429 response.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-02-rate-limiting-0.svg)
+![Diagram showing three clients sending traffic through a token-bucket rate limiter that forwards allowed requests to two service pods and rejects excess traffic with a 429 response.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-0.html)
 
 ### Purpose of Rate Limiting
 
@@ -64,7 +66,9 @@ Rate Limiting is needed in the following situations:
 
 ### Token Bucket Algorithm
 
-![Flowchart showing a token bucket refilled at a steady rate, checked on each incoming request, and either allowing the request while consuming a token or rejecting it with a 429 when empty.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-02-rate-limiting-1.svg)
+![Workflow of the token bucket algorithm: a refill adds tokens to the bucket every second, each arriving request is checked for an available token, and it is either allowed while consuming one token or rejected with a 429.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-1.html)
 
 ### Basic Configuration
 
@@ -230,7 +234,9 @@ Global Rate Limiting uses a centralized Rate Limit service to apply accurate rat
 
 ### Architecture
 
-![Architecture diagram showing clients sending requests through an Istio ingress gateway that checks a centralized rate limit server backed by an in-memory cache before forwarding allowed traffic to backend services.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-02-rate-limiting-2.svg)
+![Architecture diagram showing clients sending requests through an Istio ingress gateway that checks a centralized rate limit server backed by an in-memory cache before forwarding allowed traffic to backend services.](../../../.gitbook/assets/en-service-mesh-istio-resilience-02-rate-limiting-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-02-rate-limiting-2.html)
 
 ### Configuration Method
 

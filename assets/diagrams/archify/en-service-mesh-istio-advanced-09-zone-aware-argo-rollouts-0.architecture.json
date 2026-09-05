@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "PDB Problem Scenario in a Spot Instance Environment",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Healthy Zone"
+        },
+        "external": {
+          "label": "Fully Lost Zone"
+        },
+        "security": {
+          "label": "PodDisruptionBudget"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "before",
+        "label": "Before Full Zone Outage",
+        "focus": [
+          "zone-a-before",
+          "zone-b-before",
+          "zone-c-before",
+          "pdb-before"
+        ],
+        "note": "Three zones run 3 pods each (9 total); the 33% PDB requires at least 6 pods."
+      },
+      {
+        "id": "after",
+        "label": "After Zone C Full Outage",
+        "focus": [
+          "zone-a-after",
+          "zone-b-after",
+          "zone-c-after",
+          "pdb-after"
+        ],
+        "note": "Once the Spot interruption drops Zone C to 0 pods, the remaining 6 equal the minimum and no headroom is left."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "zone-a-before",
+      "type": "cloud",
+      "label": "Zone A",
+      "sublabel": "3 Pods",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "zone-b-before",
+      "type": "cloud",
+      "label": "Zone B",
+      "sublabel": "3 Pods",
+      "pos": [
+        220,
+        80
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "zone-c-before",
+      "type": "cloud",
+      "label": "Zone C",
+      "sublabel": "3 Pods",
+      "pos": [
+        380,
+        80
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "pdb-before",
+      "type": "security",
+      "label": "PodDisruptionBudget: 33%",
+      "sublabel": "Minimum 6 pods required (6/9)",
+      "pos": [
+        60,
+        210
+      ],
+      "size": [
+        450,
+        64
+      ]
+    },
+    {
+      "id": "zone-a-after",
+      "type": "cloud",
+      "label": "Zone A",
+      "sublabel": "3 Pods · Normal",
+      "pos": [
+        700,
+        80
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "zone-b-after",
+      "type": "cloud",
+      "label": "Zone B",
+      "sublabel": "3 Pods · Normal",
+      "pos": [
+        860,
+        80
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "zone-c-after",
+      "type": "external",
+      "label": "Zone C",
+      "sublabel": "0 Pods · Full outage",
+      "pos": [
+        1020,
+        80
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "pdb-after",
+      "type": "security",
+      "label": "PodDisruptionBudget: 33%",
+      "sublabel": "Actual 6/9 -> 6/6 = 100%, balance broken",
+      "pos": [
+        700,
+        210
+      ],
+      "size": [
+        450,
+        64
+      ],
+      "tag": "No headroom"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Before Full Zone Outage",
+      "wraps": [
+        "zone-a-before",
+        "zone-b-before",
+        "zone-c-before",
+        "pdb-before"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "After Zone C Full Outage",
+      "wraps": [
+        "zone-a-after",
+        "zone-b-after",
+        "zone-c-after",
+        "pdb-after"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "spot-interruption",
+      "from": "pdb-before",
+      "to": "pdb-after",
+      "label": "Spot Instance Interruption",
+      "variant": "emphasis"
+    }
+  ]
+}

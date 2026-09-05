@@ -21,7 +21,9 @@ The control plane is deployed in the `linkerd` namespace and consists of compone
 
 The Destination controller is the core component responsible for service discovery and policy distribution.
 
-![Architecture diagram showing the Destination controller reading Kubernetes Services, Endpoints, ServiceProfiles, and TrafficSplits, then streaming service-discovery, routing, and traffic-split data to proxies over its gRPC API.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-1.svg)
+![Architecture diagram showing the Destination controller reading Kubernetes Services, Endpoints, ServiceProfiles, and TrafficSplits, then streaming service-discovery, routing, and traffic-split data to proxies over its gRPC API.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-1.html)
 
 **Key Functions:**
 
@@ -50,7 +52,9 @@ service Destination {
 
 The Identity controller handles certificate issuance and management for mTLS.
 
-![Sequence diagram showing a linkerd-proxy requesting a certificate from the Identity controller, which validates the pod's ServiceAccount, has the trust anchor sign it, and later reissues a fresh certificate before the original expires.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-2.svg)
+![Sequence diagram showing a linkerd-proxy sending a CSR to the Identity Controller, which validates the Pod's ServiceAccount, has the Trust Anchor sign the certificate, delivers the workload certificate, and later reissues a fresh certificate before the original expires.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-2.html)
 
 **Certificate Issuance Process:**
 
@@ -85,7 +89,9 @@ data:
 
 The Proxy Injector operates as a Kubernetes Admission Webhook to automatically inject sidecars into Pods.
 
-![Sequence diagram showing the Kubernetes API server calling the Proxy Injector admission webhook on pod creation, which either injects the linkerd-proxy sidecar and returns a mutated pod spec, or returns the pod unchanged when injection is disabled.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-3.svg)
+![On Pod creation the Kubernetes API server calls the Proxy Injector webhook, which adds the linkerd-proxy and linkerd-init containers when linkerd.io/inject is enabled or returns the spec unchanged when disabled, and the API server then creates the Pod.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-3.html)
 
 **Injection Conditions:**
 
@@ -163,7 +169,9 @@ The data plane consists of `linkerd-proxy` sidecars injected into application Po
 
 Linkerd's data plane proxy is an ultra-lightweight micro-proxy written in Rust.
 
-![Architecture diagram showing traffic entering the linkerd-proxy sidecar through its inbound listener and TLS termination into the application, and application traffic leaving through the outbound listener, load balancer, and TLS origination back out, while the admin server exposes metrics.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-4.svg)
+![Architecture diagram showing traffic entering the linkerd-proxy sidecar through its inbound listener and TLS termination into the application, and application traffic leaving through the outbound listener, load balancer, and TLS origination back out, while the admin server exposes metrics.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-4.html)
 
 **Proxy Characteristics:**
 
@@ -190,7 +198,9 @@ Linkerd's data plane proxy is an ultra-lightweight micro-proxy written in Rust.
 
 ### Proxy Traffic Flow
 
-![Sequence diagram showing a client app's request transparently redirected into its linkerd-proxy, which resolves and load-balances the destination and opens an mTLS connection to the server's proxy, which verifies the connection and policy before forwarding to the server app and returning the response.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-5.svg)
+![Round-trip sequence in which the client proxy resolves the destination, load-balances and completes an mTLS handshake, sends the encrypted request to the server proxy, which verifies it and checks policy before forwarding to the server app.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-5.html)
 
 ### linkerd-init (Init Container)
 
@@ -272,7 +282,9 @@ Linkerd uses a hierarchical PKI (Public Key Infrastructure) to implement mTLS.
 
 ### Certificate Hierarchy Structure
 
-![Tree diagram showing the Linkerd PKI: a long-lived trust anchor root CA signs a one-year intermediate identity issuer, which in turn signs short-lived 24-hour workload certificates for each proxy.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-6.svg)
+![Tree diagram showing the Linkerd PKI: a long-lived trust anchor root CA signs a one-year intermediate identity issuer, which in turn signs short-lived 24-hour workload certificates for each proxy.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-6.html)
 
 ### Trust Anchor (Root CA)
 
@@ -359,7 +371,9 @@ data:
 
 Each proxy receives a unique workload certificate.
 
-![Sequence diagram showing a linkerd-proxy obtaining its ServiceAccount token, generating a CSR with a SPIFFE identity, and having the Identity controller validate and sign it into a 24-hour workload certificate that is renewed before it expires.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-7.svg)
+![Sequence diagram showing a linkerd-proxy obtaining its ServiceAccount token at Pod startup, sending a CSR with its SPIFFE ID to the Identity Controller, receiving a validated, Issuer-signed 24-hour workload certificate, and renewing it automatically before expiry.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-7.html)
 
 **SPIFFE ID Format:**
 
@@ -412,7 +426,9 @@ kubectl rollout restart deploy -n my-app
 
 ### Injection Workflow
 
-![Flowchart showing a pod creation request triggering the injection webhook, which checks the namespace annotation, pod annotation, and workload type before injecting the linkerd-proxy sidecar and letting pod creation proceed.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-8.svg)
+![Flowchart showing a pod creation request triggering the injection webhook, which checks the namespace annotation, pod annotation, and workload type before injecting the linkerd-proxy sidecar and letting pod creation proceed.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-8.html)
 
 ### Injection Annotations
 
@@ -466,7 +482,9 @@ readinessProbe:
 
 ## Inter-Component Communication
 
-![Architecture diagram showing proxies calling the Destination, Identity, and Policy controllers over gRPC, and the Kubernetes API server plus webhook configuration invoking the Proxy Injector's admission webhook on pod creation.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-9.svg)
+![Architecture diagram showing proxies calling the Destination, Identity, and Policy controllers over gRPC, all three controllers watching the Kubernetes API server (Services/Endpoints, ServiceAccounts, Server/ServerAuthorization), and the API server plus webhook configuration invoking the Proxy Injector's admission webhook on pod creation.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-9.html)
 
 **Port Summary:**
 
@@ -484,7 +502,9 @@ readinessProbe:
 
 ### Control Plane Comparison
 
-![Side-by-side comparison showing Linkerd's three small, distributed control-plane components and lightweight Rust proxy next to Istio's unified istiod control plane and heavier C++ Envoy proxy.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-02-architecture-10.svg)
+![Side-by-side comparison of Linkerd's distributed control plane (Destination, Identity, Proxy Injector) configuring the lightweight Rust linkerd-proxy over gRPC versus Istio's unified istiod configuring the heavier C++ Envoy proxy over xDS.](../../.gitbook/assets/en-service-mesh-linkerd-02-architecture-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-02-architecture-10.html)
 
 | Characteristic | Linkerd | Istio |
 |----------------|---------|-------|

@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The Essence of Subsets",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-03-destination-rule-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Service"
+        },
+        "cloud": {
+          "label": "Subset"
+        },
+        "backend": {
+          "label": "Pods"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "subset-definition",
+        "label": "Subset definition",
+        "focus": [
+          "service",
+          "subset-v1",
+          "subset-v2"
+        ],
+        "note": "The DestinationRule defines two subsets, v1 and v2, inside the reviews service, keyed on the version label."
+      },
+      {
+        "id": "label-matching",
+        "label": "Label matching",
+        "focus": [
+          "subset-v1",
+          "subset-v2",
+          "pod-v1-abc",
+          "pod-v1-def",
+          "pod-v2-xyz"
+        ],
+        "note": "Each subset contains only the pods whose labels match. The two version=v1 pods belong to v1; the version=v2 pod belongs to v2."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "service",
+      "type": "frontend",
+      "label": "Kubernetes Service",
+      "sublabel": "reviews",
+      "pos": [
+        40,
+        270
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "subset-v1",
+      "type": "cloud",
+      "label": "Subset: v1",
+      "sublabel": "labels: version=v1",
+      "pos": [
+        340,
+        150
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "subset-v2",
+      "type": "cloud",
+      "label": "Subset: v2",
+      "sublabel": "labels: version=v2",
+      "pos": [
+        340,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod-v1-abc",
+      "type": "backend",
+      "label": "reviews-v1-abc",
+      "sublabel": "version=v1",
+      "pos": [
+        680,
+        80
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pod-v1-def",
+      "type": "backend",
+      "label": "reviews-v1-def",
+      "sublabel": "version=v1",
+      "pos": [
+        680,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pod-v2-xyz",
+      "type": "backend",
+      "label": "reviews-v2-xyz",
+      "sublabel": "version=v2",
+      "pos": [
+        680,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "DestinationRule Subset Definition",
+      "wraps": [
+        "subset-v1",
+        "subset-v2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Actual Pods",
+      "wraps": [
+        "pod-v1-abc",
+        "pod-v1-def",
+        "pod-v2-xyz"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "service-to-v1",
+      "from": "service",
+      "to": "subset-v1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "service-to-v2",
+      "from": "service",
+      "to": "subset-v2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "v1-to-abc",
+      "from": "subset-v1",
+      "to": "pod-v1-abc",
+      "label": "Label matching",
+      "variant": "dashed"
+    },
+    {
+      "id": "v1-to-def",
+      "from": "subset-v1",
+      "to": "pod-v1-def",
+      "label": "Label matching",
+      "variant": "dashed"
+    },
+    {
+      "id": "v2-to-xyz",
+      "from": "subset-v2",
+      "to": "pod-v2-xyz",
+      "label": "Label matching",
+      "variant": "dashed"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPIFFE Integration",
+    "output": "en-service-mesh-cilium-service-mesh-01-architecture-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "locale": "en",
+    "viewBox": [
+      1220,
+      300
+    ]
+  },
+  "components": [
+    {
+      "id": "workload",
+      "type": "external",
+      "label": "Workload",
+      "sublabel": "Pod",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "spire-agent",
+      "type": "backend",
+      "label": "SPIRE Agent",
+      "sublabel": "Node agent",
+      "pos": [
+        280,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "spire-server",
+      "type": "backend",
+      "label": "SPIRE Server",
+      "sublabel": "SVID signing request",
+      "pos": [
+        520,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Certificate Authority",
+      "sublabel": "Signs certificates",
+      "pos": [
+        760,
+        80
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "svid",
+      "type": "security",
+      "label": "SVID",
+      "sublabel": "X.509 certificate",
+      "pos": [
+        1020,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "SPIRE",
+      "wraps": [
+        "spire-agent",
+        "spire-server"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "workload-to-agent",
+      "from": "workload",
+      "to": "spire-agent",
+      "label": "Identity request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-to-server",
+      "from": "spire-agent",
+      "to": "spire-server",
+      "variant": "emphasis"
+    },
+    {
+      "id": "server-to-ca",
+      "from": "spire-server",
+      "to": "ca",
+      "variant": "security"
+    },
+    {
+      "id": "ca-to-svid",
+      "from": "ca",
+      "to": "svid",
+      "label": "Sign",
+      "variant": "security"
+    },
+    {
+      "id": "svid-to-workload",
+      "from": "svid",
+      "to": "workload",
+      "label": "Issue SVID",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "labelDy": 16
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "SPIFFE ID format",
+      "items": [
+        "spiffe://cluster.local/ns/<namespace>/sa/<service-account>",
+        "Enable SPIRE integration with the Cilium Helm value authentication.mutual.spire.enabled: true"
+      ]
+    }
+  ]
+}

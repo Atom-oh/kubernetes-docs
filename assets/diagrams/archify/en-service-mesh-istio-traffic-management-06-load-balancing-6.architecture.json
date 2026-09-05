@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Load Balancing Algorithm Decision Tree",
+    "output": "en-service-mesh-istio-traffic-management-06-load-balancing-6.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "Start"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "backend": {
+          "label": "Algorithm"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "http-session-scale",
+        "label": "HTTP sessions and high traffic",
+        "focus": [
+          "start",
+          "q1",
+          "r1",
+          "q2",
+          "r2"
+        ],
+        "note": "Session persistence resolves to CONSISTENT_HASH; very high traffic resolves to RANDOM."
+      },
+      {
+        "id": "variable-latency",
+        "label": "Variable response times",
+        "focus": [
+          "q3",
+          "q4",
+          "r3",
+          "r4"
+        ],
+        "note": "Load adaptation calls for LEAST_REQUEST; multi-region adds the Locality Setting."
+      },
+      {
+        "id": "tcp-and-default",
+        "label": "TCP proxy and default",
+        "focus": [
+          "q3",
+          "q5",
+          "r5",
+          "r6"
+        ],
+        "note": "TCP proxying / SNI routing uses PASSTHROUGH; everything else keeps the ROUND_ROBIN default."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "start",
+      "type": "external",
+      "label": "Load Balancing Needed",
+      "sublabel": "DestinationRule setting",
+      "pos": [
+        20,
+        200
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "q1",
+      "type": "security",
+      "label": "Session persistence?",
+      "sublabel": "user-state based",
+      "pos": [
+        220,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "security",
+      "label": "Very high traffic?",
+      "sublabel": "10,000+ RPS",
+      "pos": [
+        440,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "security",
+      "label": "Variable response times?",
+      "sublabel": "10ms ~ 1s+",
+      "pos": [
+        660,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "q4",
+      "type": "security",
+      "label": "Geographic distribution?",
+      "sublabel": "Multi-region",
+      "pos": [
+        880,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "q5",
+      "type": "security",
+      "label": "TCP proxy?",
+      "sublabel": "incl. SNI routing",
+      "pos": [
+        660,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r1",
+      "type": "backend",
+      "label": "CONSISTENT_HASH",
+      "sublabel": "httpCookie or httpHeaderName",
+      "pos": [
+        220,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "backend",
+      "label": "RANDOM",
+      "sublabel": "minimal selection overhead",
+      "pos": [
+        440,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "backend",
+      "label": "LEAST_REQUEST",
+      "sublabel": "load adaptive",
+      "pos": [
+        880,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r4",
+      "type": "backend",
+      "label": "LEAST_REQUEST",
+      "sublabel": "+ Locality Setting",
+      "pos": [
+        1100,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r5",
+      "type": "backend",
+      "label": "PASSTHROUGH",
+      "sublabel": "direct to original destination",
+      "pos": [
+        880,
+        340
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r6",
+      "type": "backend",
+      "label": "ROUND_ROBIN",
+      "sublabel": "default",
+      "pos": [
+        660,
+        480
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "default"
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-q1",
+      "from": "start",
+      "to": "q1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q1-r1",
+      "from": "q1",
+      "to": "r1",
+      "label": "Yes"
+    },
+    {
+      "id": "q1-q2",
+      "from": "q1",
+      "to": "q2",
+      "label": "No",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q2-r2",
+      "from": "q2",
+      "to": "r2",
+      "label": "Yes"
+    },
+    {
+      "id": "q2-q3",
+      "from": "q2",
+      "to": "q3",
+      "label": "No",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q3-q4",
+      "from": "q3",
+      "to": "q4",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q3-q5",
+      "from": "q3",
+      "to": "q5",
+      "label": "No",
+      "labelDy": 24
+    },
+    {
+      "id": "q4-r4",
+      "from": "q4",
+      "to": "r4",
+      "label": "Yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q4-r3",
+      "from": "q4",
+      "to": "r3",
+      "label": "No"
+    },
+    {
+      "id": "q5-r5",
+      "from": "q5",
+      "to": "r5",
+      "label": "Yes"
+    },
+    {
+      "id": "q5-r6",
+      "from": "q5",
+      "to": "r6",
+      "label": "No",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Selection by traffic pattern",
+      "items": [
+        "Uniform small requests (< 10ms) → ROUND_ROBIN",
+        "Variable requests (10ms ~ 1s+) → LEAST_REQUEST",
+        "Very high traffic (10,000+ RPS) → RANDOM",
+        "Session-based (user state) → consistentHash.httpCookie",
+        "Multi-region → LEAST_REQUEST + localityLbSetting"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Recommended by service type",
+      "items": [
+        "REST / GraphQL / gRPC API → LEAST_REQUEST",
+        "Web frontend → CONSISTENT_HASH (cookie)",
+        "WebSocket, cache service → CONSISTENT_HASH (header)",
+        "Analytics / log collection → RANDOM",
+        "Static content → ROUND_ROBIN"
+      ]
+    }
+  ]
+}

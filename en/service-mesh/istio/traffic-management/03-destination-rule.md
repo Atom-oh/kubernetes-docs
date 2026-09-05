@@ -23,7 +23,9 @@ DestinationRule is a core Istio resource that defines how to handle traffic afte
 
 DestinationRule defines **traffic policies after routing**. If VirtualService determines "where" to send traffic, DestinationRule determines "how" to handle it.
 
-![Diagram showing a client request routed by VirtualService's routing decision, which splits 90/10 into DestinationRule's traffic policy, applying load balancing across two service versions.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-03-destination-rule-0.svg)
+![Diagram showing a client request passing through VirtualService's routing decision (where?) and DestinationRule's traffic policy (how?) before reaching the two service versions, subset v1 and v2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-0.html)
 
 ### Key Roles of DestinationRule
 
@@ -41,7 +43,9 @@ These two resources work together to provide complete traffic management.
 
 ### Role Comparison
 
-![Diagram showing an HTTP request condition-matched and routed by VirtualService to a named subset, then DestinationRule selecting that subset and load-balancing across its three matching pods.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-03-destination-rule-1.svg)
+![Diagram showing an HTTP request condition-matched and routed by VirtualService to a named subset, then DestinationRule selecting that subset and load-balancing across its three matching pods.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-1.html)
 
 ### Separation of Responsibilities
 
@@ -98,7 +102,9 @@ A Subset defines a **logical group** of a service. It's typically distinguished 
 
 ### The Essence of Subsets
 
-![Diagram showing a Kubernetes Service pointing to two DestinationRule subsets, v1 and v2, each resolving by label matching to the actual pods carrying that version label.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-03-destination-rule-2.svg)
+![Diagram showing a Kubernetes Service pointing to two DestinationRule subsets, v1 and v2, each resolving by label matching to the actual pods carrying that version label.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-2.html)
 
 ### Subset Use Cases
 
@@ -317,7 +323,9 @@ The `trafficPolicy` in DestinationRule provides various traffic control features
 
 ### Traffic Policy Hierarchy
 
-![Tree diagram showing DestinationRule setting a global traffic policy that subset v1 explicitly overrides while subset v2 simply inherits unchanged.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-03-destination-rule-3.svg)
+![Tree diagram of a DestinationRule whose global trafficPolicy is the default for every subset: subset v1 inherits it unchanged while subset v2 overrides it with its own trafficPolicy.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-03-destination-rule-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-03-destination-rule-3.html)
 
 ### Traffic Policy Components
 

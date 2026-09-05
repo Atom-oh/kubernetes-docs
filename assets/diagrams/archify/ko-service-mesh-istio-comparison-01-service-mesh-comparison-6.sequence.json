@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Kong Mesh 서비스 연결 및 트래픽 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1060,
+      720
+    ],
+    "views": [
+      {
+        "id": "setup",
+        "label": "초기 설정",
+        "focus": [
+          "gcp",
+          "zcp1",
+          "zcp2",
+          "dp1",
+          "dp2"
+        ],
+        "note": "Global CP가 두 Zone CP에 정책을 동기화하고, 각 Zone CP가 xDS로 Kuma DP를 설정한다."
+      },
+      {
+        "id": "traffic",
+        "label": "서비스 간 통신",
+        "focus": [
+          "app",
+          "dp1",
+          "dp2",
+          "target"
+        ],
+        "note": "애플리케이션의 평문 요청을 로컬 DP가 서비스 디스커버리로 Zone 2 엔드포인트를 확인한 뒤 mTLS로 암호화해 상대 Zone의 DP를 거쳐 대상 서비스에 전달한다."
+      },
+      {
+        "id": "metrics",
+        "label": "메트릭 및 추적",
+        "focus": [
+          "dp1",
+          "dp2",
+          "zcp1",
+          "zcp2",
+          "gcp"
+        ],
+        "note": "각 DP의 메트릭이 Zone CP로 모이고 Global CP에서 전체 메시 기준으로 집계된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "dashed": {
+          "label": "비동기 · 선택"
+        },
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Zone 1"
+    },
+    {
+      "id": "dp1",
+      "type": "security",
+      "label": "Kuma DP 1",
+      "sublabel": "Zone 1 · Envoy"
+    },
+    {
+      "id": "zcp1",
+      "type": "backend",
+      "label": "Zone CP 1",
+      "sublabel": "Zone 1 컨트롤 플레인"
+    },
+    {
+      "id": "gcp",
+      "type": "cloud",
+      "label": "Global CP",
+      "sublabel": "전역 정책 관리"
+    },
+    {
+      "id": "zcp2",
+      "type": "backend",
+      "label": "Zone CP 2",
+      "sublabel": "Zone 2 컨트롤 플레인"
+    },
+    {
+      "id": "dp2",
+      "type": "security",
+      "label": "Kuma DP 2",
+      "sublabel": "Zone 2 · Envoy"
+    },
+    {
+      "id": "target",
+      "type": "backend",
+      "label": "Target Service",
+      "sublabel": "Zone 2"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 270,
+      "label": "초기 설정 단계"
+    },
+    {
+      "from": 312,
+      "to": 496,
+      "label": "서비스 간 통신"
+    },
+    {
+      "from": 534,
+      "to": 636,
+      "label": "메트릭 및 추적"
+    }
+  ],
+  "messages": [
+    {
+      "id": "sync1",
+      "from": "gcp",
+      "to": "zcp1",
+      "y": 180,
+      "label": "정책 동기화 (TrafficRoute, mTLS)",
+      "variant": "default"
+    },
+    {
+      "id": "sync2",
+      "from": "gcp",
+      "to": "zcp2",
+      "y": 206,
+      "label": "정책 동기화 (TrafficRoute, mTLS)",
+      "variant": "default"
+    },
+    {
+      "id": "xds1",
+      "from": "zcp1",
+      "to": "dp1",
+      "y": 232,
+      "label": "xDS 설정 (서비스 엔드포인트, 정책)",
+      "variant": "default"
+    },
+    {
+      "id": "xds2",
+      "from": "zcp2",
+      "to": "dp2",
+      "y": 258,
+      "label": "xDS 설정 (서비스 엔드포인트, 정책)",
+      "variant": "default"
+    },
+    {
+      "id": "req",
+      "from": "app",
+      "to": "dp1",
+      "y": 328,
+      "label": "HTTP 요청 (localhost)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls-req",
+      "from": "dp1",
+      "to": "dp2",
+      "y": 360,
+      "label": "Zone 2 엔드포인트 디스커버리 후 mTLS 암호화 요청 (Cross-Zone)",
+      "variant": "security",
+      "note": "서비스 디스커버리로 Zone 2 엔드포인트를 확인한 뒤 전송"
+    },
+    {
+      "id": "plain-req",
+      "from": "dp2",
+      "to": "target",
+      "y": 390,
+      "label": "평문 요청 (localhost)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resp",
+      "from": "target",
+      "to": "dp2",
+      "y": 420,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "mtls-resp",
+      "from": "dp2",
+      "to": "dp1",
+      "y": 450,
+      "label": "mTLS 암호화 응답",
+      "variant": "return"
+    },
+    {
+      "id": "plain-resp",
+      "from": "dp1",
+      "to": "app",
+      "y": 480,
+      "label": "평문 응답",
+      "variant": "return"
+    },
+    {
+      "id": "met1",
+      "from": "dp1",
+      "to": "zcp1",
+      "y": 550,
+      "label": "메트릭 전송",
+      "variant": "dashed"
+    },
+    {
+      "id": "met2",
+      "from": "dp2",
+      "to": "zcp2",
+      "y": 576,
+      "label": "메트릭 전송",
+      "variant": "dashed"
+    },
+    {
+      "id": "agg1",
+      "from": "zcp1",
+      "to": "gcp",
+      "y": 602,
+      "label": "글로벌 메트릭 집계",
+      "variant": "dashed"
+    },
+    {
+      "id": "agg2",
+      "from": "zcp2",
+      "to": "gcp",
+      "y": 628,
+      "label": "글로벌 메트릭 집계",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "dp1",
+      "from": 323,
+      "to": 485,
+      "type": "security"
+    },
+    {
+      "participant": "dp2",
+      "from": 355,
+      "to": 455,
+      "type": "security"
+    },
+    {
+      "participant": "target",
+      "from": 385,
+      "to": 425,
+      "type": "backend"
+    }
+  ]
+}

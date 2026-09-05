@@ -21,7 +21,9 @@ Istio는 Envoy를 통해 다양한 로드 밸런싱 알고리즘을 제공하여
 
 로드 밸런싱은 트래픽을 여러 인스턴스에 분산시켜 시스템 전체의 처리량과 안정성을 향상시킵니다.
 
-![로드 밸런싱 없이 단일 서비스에 요청이 몰려 100% 과부하가 발생하는 상황과, 로드 밸런서가 요청을 세 서비스에 33%씩 균등하게 분산하는 상황을 나란히 비교한다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-0.svg)
+![로드 밸런싱 없이 모든 요청이 서비스 1에 몰려 100% 과부하가 나고 서비스 2·3은 0% 부하로 노는 상황과, 로드 밸런서가 같은 요청을 세 서비스에 33%·33%·34%로 나눠 균등하게 분산하는 상황을 나란히 비교해 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-0.html)
 
 ### 주요 이점
 
@@ -35,7 +37,9 @@ Istio는 Envoy를 통해 다양한 로드 밸런싱 알고리즘을 제공하여
 
 ## 로드 밸런싱 개요
 
-![클라이언트 요청이 로드 밸런서의 알고리즘을 거쳐 서로 다른 부하를 가진 세 파드 중 하나로 라우팅되는 개요를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-1.svg)
+![클라이언트 요청이 로드 밸런서의 알고리즘을 거쳐 서로 다른 부하를 가진 세 파드 중 하나로 라우팅되는 개요를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-1.html)
 
 ## 로드 밸런싱 알고리즘
 
@@ -55,7 +59,9 @@ Istio는 다음과 같은 로드 밸런싱 알고리즘을 제공합니다.
 
 요청을 순차적으로 각 엔드포인트에 분배합니다.
 
-![클라이언트가 보낸 4번의 요청을 로드 밸런서가 Pod 1, Pod 2, Pod 3에 순서대로 라우팅하고 네 번째 요청에서 다시 Pod 1로 순환하는 ROUND_ROBIN 동작을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-2.svg)
+![클라이언트가 보낸 4번의 요청을 로드 밸런서가 파드 1, 파드 2, 파드 3에 순서대로 라우팅하고 네 번째 요청에서 다시 파드 1로 순환하는 ROUND_ROBIN 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-2.html)
 
 **설정 예제:**
 
@@ -88,7 +94,9 @@ spec:
 
 가장 적은 활성 요청을 처리 중인 엔드포인트로 라우팅합니다.
 
-![로드 밸런서가 세 파드의 활성 요청 수를 확인한 뒤 활성 요청이 가장 적은 Pod 2로 새 요청을 라우팅하는 LEAST_REQUEST 동작을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-3.svg)
+![로드 밸런서가 세 파드의 활성 요청 수를 확인한 뒤 활성 요청이 가장 적은 파드 2로 새 요청을 라우팅하는 LEAST_REQUEST 동작을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-3.html)
 
 **설정 예제:**
 
@@ -220,7 +228,9 @@ Consistent Hash는 특정 속성을 기반으로 항상 같은 엔드포인트�
 
 ### Consistent Hash 동작 원리
 
-![동일한 쿠키를 가진 User A의 두 요청이 항상 같은 해시 값을 거쳐 같은 Pod 1로 라우팅되어 세션이 유지되는 Consistent Hash 동작 원리를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-4.svg)
+![동일한 쿠키를 가진 User A의 두 요청이 항상 같은 해시 값을 거쳐 같은 파드 1로 라우팅되어 세션이 유지되는 Consistent Hash 동작 원리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-4.html)
 
 ### 1. HTTP Header 기반
 
@@ -371,7 +381,9 @@ spec:
 
 #### 1. 불균형 위험
 
-![1000명의 사용자 중 80%가 같은 해시 값으로 몰려 Pod 1이 과부하 상태가 되는 Consistent Hash의 불균형 위험을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-5.svg)
+![1000명의 사용자 중 80%가 같은 해시 값으로 몰려 파드 1이 과부하 상태가 되는 Consistent Hash의 불균형 위험을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-5.html)
 
 **원인**: 특정 해시 값에 트래픽이 집중되는 경우
 
@@ -760,7 +772,9 @@ spec:
 
 ### 결정 트리
 
-![세션 유지, 트래픽 규모, 지리적 분산 여부를 차례로 물어 CONSISTENT_HASH, RANDOM, LEAST_REQUEST+Locality, PASSTHROUGH/ROUND_ROBIN 중 알맞은 알고리즘으로 안내하는 결정 트리를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-06-load-balancing-6.svg)
+![세션 유지, 트래픽 규모, 응답 시간 불균일, 지리적 분산, TCP 프록시 여부를 차례로 물어 CONSISTENT_HASH, RANDOM, LEAST_REQUEST(+Locality Setting), PASSTHROUGH, 기본값 ROUND_ROBIN 중 알맞은 로드 밸런싱 알고리즘으로 안내하는 결정 트리를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-06-load-balancing-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-06-load-balancing-6.html)
 
 ### 서비스 유형별 권장 알고리즘
 

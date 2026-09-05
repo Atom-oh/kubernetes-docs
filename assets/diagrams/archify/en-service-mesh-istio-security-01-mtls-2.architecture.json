@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ALB and Istio mTLS Integration",
+    "locale": "en",
+    "output": "en-service-mesh-istio-security-01-mtls-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1120,
+      400
+    ],
+    "views": [
+      {
+        "id": "client-alb",
+        "label": "Client certificate verification",
+        "focus": [
+          "client",
+          "alb"
+        ],
+        "note": "ALB verifies the client certificate against the Trust Store CA and terminates mTLS."
+      },
+      {
+        "id": "alb-gateway",
+        "label": "ALB to Istio Gateway",
+        "focus": [
+          "alb",
+          "gateway"
+        ],
+        "note": "Because ALB already completed mTLS verification, the Gateway accepts TLS with tls.mode SIMPLE."
+      },
+      {
+        "id": "mesh",
+        "label": "In-mesh mTLS",
+        "focus": [
+          "gateway",
+          "service"
+        ],
+        "note": "From the Gateway to the backend service, traffic is re-encrypted with mTLS between Envoy sidecars."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Client Cert",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB",
+      "sublabel": "mTLS Termination",
+      "pos": [
+        320,
+        170
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "tag": "Trust Store · verify"
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "TLS (mode: SIMPLE)",
+      "pos": [
+        600,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        880,
+        170
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS",
+      "wraps": [
+        "alb",
+        "gateway",
+        "service"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "EKS cluster · Istio mesh",
+      "wraps": [
+        "gateway",
+        "service"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-alb",
+      "from": "client",
+      "to": "alb",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "alb-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "TLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-service",
+      "from": "gateway",
+      "to": "service",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "ALB (Step 1)",
+      "items": [
+        "Register the CA certificate bundle as a Trust Store",
+        "Verify client certificates with listener mutual-authentication Mode=verify"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Istio Gateway (Step 3)",
+      "items": [
+        "tls.mode: SIMPLE because ALB already completed mTLS verification",
+        "Server certificate supplied via credentialName: gateway-cert"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Backend Service",
+      "items": [
+        "PeerAuthentication STRICT enforces mTLS between Envoy sidecars in the mesh"
+      ]
+    }
+  ]
+}

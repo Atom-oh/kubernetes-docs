@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Maglev Hashing",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-02-traffic-management-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1140,
+      600
+    ],
+    "views": [
+      {
+        "id": "hash-path",
+        "label": "Hash computation path",
+        "focus": [
+          "client",
+          "hash",
+          "table",
+          "select"
+        ],
+        "note": "The request's five-tuple is hashed and looked up in a 65,537-entry table to find a backend."
+      },
+      {
+        "id": "fanout",
+        "label": "Backend fan-out",
+        "focus": [
+          "select",
+          "b1",
+          "b2",
+          "b3"
+        ],
+        "note": "The same five-tuple always lands on the same backend; backend changes cause minimal reshuffling."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Request",
+      "sublabel": "Connection to a Service",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hash",
+      "type": "backend",
+      "label": "Hash Function",
+      "sublabel": "5-tuple (IP · port · protocol)",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "table",
+      "type": "database",
+      "label": "Lookup Table",
+      "sublabel": "65,537 entries",
+      "pos": [
+        500,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "select",
+      "type": "backend",
+      "label": "Backend Selection",
+      "sublabel": "Consistent hashing result",
+      "pos": [
+        720,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "Backend 1",
+      "sublabel": "Pod",
+      "pos": [
+        960,
+        160
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "backend",
+      "label": "Backend 2",
+      "sublabel": "Pod",
+      "pos": [
+        960,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "backend",
+      "label": "Backend 3",
+      "sublabel": "Pod",
+      "pos": [
+        960,
+        440
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Maglev Consistent Hashing (eBPF)",
+      "wraps": [
+        "client",
+        "hash",
+        "table",
+        "select"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backends",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-hash",
+      "from": "client",
+      "to": "hash",
+      "label": "5-tuple",
+      "variant": "emphasis"
+    },
+    {
+      "id": "hash-table",
+      "from": "hash",
+      "to": "table",
+      "label": "hash value",
+      "variant": "emphasis"
+    },
+    {
+      "id": "table-select",
+      "from": "table",
+      "to": "select",
+      "label": "lookup",
+      "variant": "emphasis"
+    },
+    {
+      "id": "select-b1",
+      "from": "select",
+      "to": "b1"
+    },
+    {
+      "id": "select-b2",
+      "from": "select",
+      "to": "b2"
+    },
+    {
+      "id": "select-b3",
+      "from": "select",
+      "to": "b3"
+    }
+  ]
+}

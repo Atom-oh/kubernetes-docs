@@ -18,7 +18,9 @@
 
 트래픽 분할은 VirtualService의 `weight` 필드를 사용하여 여러 서비스 버전 간에 트래픽을 비율로 분배합니다.
 
-![VirtualService가 사용자 요청을 가중치 기반으로 분할하여 Version 1에 90%, Version 2에 10%의 트래픽을 전달하는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-04-traffic-splitting-0.svg)
+![VirtualService가 사용자 요청을 가중치 기반으로 분할하여 Version 1에 90%, Version 2에 10%의 트래픽을 전달하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-0.html)
 
 ### 기본 구조
 
@@ -48,11 +50,15 @@ Canary 배포는 새 버전을 소수의 사용자에게만 먼저 배포하여 
 
 ### Argo Rollouts + Istio 아키텍처
 
-![Argo Rollouts가 VirtualService, DestinationRule과 파드 버전을 관리하고, AnalysisTemplate이 Prometheus 메트릭을 조회해 Canary 배포를 승인하거나 거부하는 아키텍처를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.svg)
+![Argo Rollouts가 VirtualService, DestinationRule과 Pod 버전을 관리하고, AnalysisTemplate이 Prometheus 메트릭을 조회해 Canary 배포를 승인하거나 거부하는 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-1.html)
 
 ### Canary 배포 흐름
 
-![Canary 배포가 신규 버전 트래픽을 10%에서 75%까지 단계적으로 올리며, 각 단계에서 에러율·지연시간·메트릭 실패 조건에 걸리면 v1 100%로 자동 롤백되는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-04-traffic-splitting-2.svg)
+![Canary 배포가 신규 버전 트래픽을 10%에서 75%까지 단계적으로 올리며, 각 단계에서 에러율·지연시간·메트릭 실패 조건에 걸리면 v1 100%로 자동 롤백되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-2.html)
 
 ### 1단계: Argo Rollouts 설치
 
@@ -972,11 +978,15 @@ Blue/Green 배포는 두 개의 동일한 프로덕션 환경을 유지하고, �
 
 ### Argo Rollouts Blue/Green 아키텍처
 
-![Argo Rollouts가 Green 파드를 Blue와 함께 배포해 Preview Service로 검증한 뒤, 검증이 끝나면 Active Service의 프로덕션 트래픽을 Blue에서 Green으로 전환하는 Blue/Green 아키텍처를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.svg)
+![Argo Rollouts가 Active/Preview Service를 관리하며 프로덕션 트래픽은 Blue Pod로, 테스트 전용 트래픽은 Green Pod로 보내고 PrePromotion/PostPromotion Analysis로 검증하는 Blue/Green 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-3.html)
 
 ### Blue/Green 배포 흐름
 
-![Blue/Green 배포가 Green을 배포·사전 테스트하고 승인 후 트래픽을 전환하며, 사전 테스트·승인·사후 검증 중 하나라도 실패하면 Blue로 자동 롤백되는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-04-traffic-splitting-4.svg)
+![Blue/Green 배포가 Green을 배포·사전 테스트하고 승인 후 트래픽을 전환하며, 사전 테스트·승인·사후 검증 중 하나라도 실패하면 Blue로 자동 롤백되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-4.html)
 
 ### 1단계: Service 정의
 
@@ -1296,7 +1306,9 @@ kubectl argo rollouts undo reviews --to-revision=3
 
 A/B 테스트는 두 가지 버전을 동시에 실행하고, 특정 기준으로 사용자를 분류하여 효과를 측정합니다.
 
-![전체 사용자를 그룹 A/B로 50대50 나눠 Version A/B를 노출하고, 각 버전의 전환·클릭·체류시간 메트릭을 분석해 더 나은 버전을 유지하거나 채택하는 A/B 테스트 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-04-traffic-splitting-5.svg)
+![전체 사용자를 그룹 A/B로 50대50 나눠 Version A/B를 노출하고, 각 버전의 전환·클릭·체류시간 메트릭을 분석해 더 나은 버전을 유지하거나 채택하는 A/B 테스트 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-04-traffic-splitting-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-04-traffic-splitting-5.html)
 
 ### Cookie 기반 A/B 테스트
 

@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zone-aware Argo Rollouts 전체 구조",
+    "output": "ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      680
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "클라이언트"
+        },
+        "cloud": {
+          "label": "Istio 트래픽 정책"
+        },
+        "backend": {
+          "label": "Argo Rollout (Zone별)"
+        },
+        "frontend": {
+          "label": "Stable / Canary Pod"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "통합 호출 경로",
+        "focus": [
+          "clients",
+          "vs",
+          "pods-a",
+          "pods-b",
+          "pods-c"
+        ],
+        "note": "클라이언트는 test.default 하나만 호출하고, VirtualService가 Zone별 route로 stable/canary 가중치를 나눈다."
+      },
+      {
+        "id": "locality",
+        "label": "Locality-aware 라우팅",
+        "focus": [
+          "dr",
+          "vs"
+        ],
+        "note": "DestinationRule의 localityLbSetting이 같은 Zone의 엔드포인트를 우선 선택하고 장애 시에만 failover한다."
+      },
+      {
+        "id": "independent-rollouts",
+        "label": "Zone별 독립 Rollout",
+        "focus": [
+          "rollout-a",
+          "rollout-b",
+          "rollout-c",
+          "vs"
+        ],
+        "note": "각 Rollout은 자기 Zone의 route와 subset 쌍(stable-a/canary-a 등)만 관리하므로 서로 충돌하지 않는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clients",
+      "type": "external",
+      "label": "클라이언트 (Zone A/B/C)",
+      "sublabel": "단일 서비스 이름으로 호출",
+      "pos": [
+        460,
+        60
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService: test",
+      "sublabel": "단일 VirtualService · Zone별 route",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "cloud",
+      "label": "DestinationRule: test",
+      "sublabel": "locality-aware routing",
+      "pos": [
+        460,
+        500
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "rollout-a",
+      "type": "backend",
+      "label": "Rollout: test-a",
+      "sublabel": "subset: stable-a / canary-a",
+      "pos": [
+        40,
+        155
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rollout-b",
+      "type": "backend",
+      "label": "Rollout: test-b",
+      "sublabel": "subset: stable-b / canary-b",
+      "pos": [
+        40,
+        305
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "rollout-c",
+      "type": "backend",
+      "label": "Rollout: test-c",
+      "sublabel": "subset: stable-c / canary-c",
+      "pos": [
+        40,
+        455
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pods-a",
+      "type": "frontend",
+      "label": "Pod (zone=a)",
+      "sublabel": "stable-a 90% · canary-a 10%",
+      "pos": [
+        920,
+        155
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pods-b",
+      "type": "frontend",
+      "label": "Pod (zone=b)",
+      "sublabel": "stable-b 90% · canary-b 10%",
+      "pos": [
+        920,
+        305
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pods-c",
+      "type": "frontend",
+      "label": "Pod (zone=c)",
+      "sublabel": "stable-c 90% · canary-c 10%",
+      "pos": [
+        920,
+        455
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio Control Plane",
+      "wraps": [
+        "vs",
+        "dr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Argo Rollouts (Zone별 독립)",
+      "wraps": [
+        "rollout-a",
+        "rollout-b",
+        "rollout-c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone A (us-east-1a)",
+      "wraps": [
+        "pods-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone B (us-east-1b)",
+      "wraps": [
+        "pods-b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Zone C (us-east-1c)",
+      "wraps": [
+        "pods-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clients-to-vs",
+      "from": "clients",
+      "to": "vs",
+      "label": "test.default",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "dr-to-vs",
+      "from": "dr",
+      "to": "vs",
+      "label": "localityLbSetting",
+      "variant": "dashed"
+    },
+    {
+      "id": "vs-to-pods-a",
+      "from": "vs",
+      "to": "pods-a"
+    },
+    {
+      "id": "vs-to-pods-b",
+      "from": "vs",
+      "to": "pods-b",
+      "label": "Zone별 route · 90/10",
+      "labelDx": -68,
+      "labelDy": -14
+    },
+    {
+      "id": "vs-to-pods-c",
+      "from": "vs",
+      "to": "pods-c"
+    },
+    {
+      "id": "rollout-a-to-vs",
+      "from": "rollout-a",
+      "to": "vs",
+      "variant": "dashed"
+    },
+    {
+      "id": "rollout-b-to-vs",
+      "from": "rollout-b",
+      "to": "vs",
+      "label": "route 가중치 관리",
+      "variant": "dashed",
+      "labelDx": -55
+    },
+    {
+      "id": "rollout-c-to-vs",
+      "from": "rollout-c",
+      "to": "vs",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "핵심 컴포넌트",
+      "items": [
+        "단일 VirtualService가 모든 Zone의 라우팅 규칙을 정의한다",
+        "Zone별 Rollout이 각 Zone의 Canary 배포를 독립적으로 관리한다",
+        "각 Rollout은 고유한 subset 쌍(stable-a/canary-a 등)만 다룬다",
+        "Locality-aware DestinationRule이 zone-local 라우팅과 failover를 자동 처리한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "충돌을 피하는 이유",
+      "items": [
+        "Argo Rollouts는 지정한 route 이름의 destinations 배열 전체를 덮어쓴다",
+        "그래서 Rollout마다 zone-a-route, zone-b-route, zone-c-route처럼 다른 route 이름을 참조한다"
+      ]
+    }
+  ]
+}

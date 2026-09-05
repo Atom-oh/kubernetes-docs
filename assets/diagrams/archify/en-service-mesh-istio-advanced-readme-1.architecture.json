@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ambient Mode Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "l4-path",
+        "label": "Default L4 path",
+        "focus": [
+          "app",
+          "ztunnel",
+          "service"
+        ],
+        "note": "Traffic from a sidecar-free pod passes through the node-level ztunnel and reaches the service directly over mTLS."
+      },
+      {
+        "id": "l7-path",
+        "label": "Optional L7 path",
+        "focus": [
+          "ztunnel",
+          "waypoint",
+          "service"
+        ],
+        "note": "Only when L7 routing is required does ztunnel detour traffic through the waypoint proxy."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "no sidecar",
+      "pos": [
+        60,
+        130
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "L4 · mTLS · telemetry",
+      "pos": [
+        340,
+        130
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "one per node"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint",
+      "sublabel": "L7 · advanced routing",
+      "pos": [
+        640,
+        320
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "optional"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Service",
+      "sublabel": "target workload",
+      "pos": [
+        940,
+        130
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod (app container only)",
+      "wraps": [
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes node",
+      "wraps": [
+        "ztunnel"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Waypoint proxy (optional)",
+      "wraps": [
+        "waypoint"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-ztunnel",
+      "from": "app",
+      "to": "ztunnel",
+      "label": "transparent redirect",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ztunnel-to-service",
+      "from": "ztunnel",
+      "to": "service",
+      "label": "L4 only",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ztunnel-to-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "L7 needed",
+      "variant": "dashed"
+    },
+    {
+      "id": "waypoint-to-service",
+      "from": "waypoint",
+      "to": "service",
+      "variant": "dashed"
+    }
+  ]
+}

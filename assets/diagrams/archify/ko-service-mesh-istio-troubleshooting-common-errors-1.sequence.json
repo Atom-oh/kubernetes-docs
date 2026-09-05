@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "terminationDrainDuration 설정 후 파드 종료 동작 방식",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      660
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "Drain·정상 응답"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "kubelet"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "앱 컨테이너"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "istio-proxy"
+    },
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "외부 요청"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 262,
+      "label": "파드 종료 시작 → Drain 모드 (terminationDrainDuration: 30s)"
+    },
+    {
+      "from": 278,
+      "to": 420,
+      "label": "종료 중 요청 처리 — 기존 연결 유지"
+    },
+    {
+      "from": 436,
+      "to": 548,
+      "label": "정상 종료"
+    }
+  ],
+  "messages": [
+    {
+      "id": "sigterm-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 185,
+      "label": "SIGTERM 전송"
+    },
+    {
+      "id": "sigterm-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 235,
+      "label": "SIGTERM 전송",
+      "variant": "emphasis",
+      "note": "Drain 모드 진입 · 새 연결 거부 · 기존 연결 유지 · 30초 대기"
+    },
+    {
+      "id": "req",
+      "from": "client",
+      "to": "envoy",
+      "y": 305,
+      "label": "요청 전송"
+    },
+    {
+      "id": "fwd",
+      "from": "envoy",
+      "to": "app",
+      "y": 340,
+      "label": "요청 전달"
+    },
+    {
+      "id": "resp",
+      "from": "app",
+      "to": "envoy",
+      "y": 375,
+      "label": "응답",
+      "variant": "return"
+    },
+    {
+      "id": "ok",
+      "from": "envoy",
+      "to": "client",
+      "y": 410,
+      "label": "정상 응답",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-exit",
+      "from": "envoy",
+      "to": "k8s",
+      "y": 470,
+      "label": "정상 종료",
+      "variant": "return",
+      "note": "활성 연결 종료 확인 후 종료"
+    },
+    {
+      "id": "app-exit",
+      "from": "app",
+      "to": "k8s",
+      "y": 520,
+      "label": "Graceful Shutdown",
+      "variant": "return",
+      "note": "App도 정상 종료"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "envoy",
+      "from": 235,
+      "to": 475,
+      "type": "security"
+    },
+    {
+      "participant": "app",
+      "from": 185,
+      "to": 525,
+      "type": "backend"
+    }
+  ]
+}

@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Ingress & Gateway 아키텍처",
+    "output": "ko-service-mesh-cilium-service-mesh-05-ingress-gateway-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "entry",
+        "label": "외부 진입 경로",
+        "focus": [
+          "client",
+          "lb",
+          "gw"
+        ],
+        "note": "외부 클라이언트 요청이 클라우드 로드밸런서(NLB/ALB)를 거쳐 Gateway 또는 Ingress 리소스에 도달한다."
+      },
+      {
+        "id": "l7",
+        "label": "L7 라우팅",
+        "focus": [
+          "gw",
+          "envoy",
+          "svca",
+          "svcb",
+          "svcc"
+        ],
+        "note": "Cilium Envoy L7 프록시가 호스트/경로 규칙에 따라 백엔드 서비스로 요청을 분배한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "외부 클라이언트",
+      "sublabel": "인터넷 사용자",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "cloud",
+      "label": "클라우드 로드밸런서",
+      "sublabel": "NLB / ALB",
+      "pos": [
+        240,
+        250
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "backend",
+      "label": "Gateway / Ingress",
+      "sublabel": "Gateway API 또는 Ingress 리소스",
+      "pos": [
+        470,
+        250
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Cilium Envoy",
+      "sublabel": "L7 프록시",
+      "pos": [
+        720,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "svca",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "백엔드",
+      "pos": [
+        960,
+        110
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svcb",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "백엔드",
+      "pos": [
+        960,
+        250
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svcc",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "백엔드",
+      "pos": [
+        960,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "외부",
+      "wraps": [
+        "client",
+        "lb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "gw",
+        "envoy",
+        "svca",
+        "svcb",
+        "svcc"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "region",
+      "label": "Cilium Ingress / Gateway",
+      "wraps": [
+        "gw",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "백엔드 서비스",
+      "wraps": [
+        "svca",
+        "svcb",
+        "svcc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "HTTPS 요청",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "lb-gw",
+      "from": "lb",
+      "to": "gw",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gw-envoy",
+      "from": "gw",
+      "to": "envoy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-svca",
+      "from": "envoy",
+      "to": "svca"
+    },
+    {
+      "id": "envoy-svcb",
+      "from": "envoy",
+      "to": "svcb"
+    },
+    {
+      "id": "envoy-svcc",
+      "from": "envoy",
+      "to": "svcc"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "진입점",
+      "items": [
+        "Cilium Ingress Controller와 Gateway API를 네이티브로 지원",
+        "LoadBalancer 타입 서비스로 EKS NLB 연결 (shared / dedicated 모드)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "L7 처리",
+      "items": [
+        "Cilium Envoy 프록시가 L7 라우팅, TLS 종료, 로드 밸런싱 수행",
+        "호스트 · 경로 규칙에 따라 백엔드 서비스로 분배"
+      ]
+    }
+  ]
+}

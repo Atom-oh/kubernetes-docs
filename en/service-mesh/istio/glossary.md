@@ -495,7 +495,9 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 #### 1. Sidecar Mode - Outbound Request
 
-![From the Envoy sidecar's perspective, the application sending the request is the downstream side and the backend service receiving it is the upstream side.](../../../assets/diagrams/rendered/en-service-mesh-istio-glossary-0.svg)
+![In sidecar mode the application (downstream) sends a request to the Envoy sidecar in the same Pod, and Envoy forwards it to the backend service (upstream).](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-0.html)
 
 **Perspective**:
 - **From Envoy's view**: Application is Downstream (sending requests)
@@ -503,7 +505,9 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 #### 2. Ingress Gateway - External Request
 
-![From the Ingress Gateway's Envoy perspective, an external client is the downstream side and the internal service it routes to is the upstream side.](../../../assets/diagrams/rendered/en-service-mesh-istio-glossary-1.svg)
+![From the Ingress Gateway's Envoy perspective, an external client is the downstream side and the internal service it routes to is the upstream side.](../../.gitbook/assets/en-service-mesh-istio-glossary-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-1.html)
 
 **Downstream-related Envoy Configuration**:
 
@@ -873,7 +877,9 @@ A signature protocol for authenticating AWS API requests.
 
 **How It Works**:
 
-![Sequence diagram showing Envoy transparently signing an outbound client request with AWS SigV4 credentials before forwarding it to an AWS service and returning the response.](../../../assets/diagrams/rendered/en-service-mesh-istio-glossary-2.svg)
+![Sequence diagram showing Envoy transparently signing an outbound client request with AWS SigV4 credentials before forwarding it to an AWS service and returning the response.](../../.gitbook/assets/en-service-mesh-istio-glossary-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-2.html)
 
 **Signature Components**:
 

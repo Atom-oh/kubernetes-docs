@@ -1,0 +1,231 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Kong Mesh Policy Propagation Mechanism",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-7.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "global-scope",
+        "label": "Global-scope path",
+        "focus": [
+          "decide",
+          "globalStore",
+          "sync",
+          "zoneRecv"
+        ],
+        "note": "Global policies such as Mesh, TrafficRoute and TrafficPermission are stored in the Global CP and then synced to every Zone CP."
+      },
+      {
+        "id": "zone-scope",
+        "label": "Zone-scope path",
+        "focus": [
+          "decide",
+          "zoneStore",
+          "dpUpdate"
+        ],
+        "note": "Zone policies such as HealthCheck and ProxyTemplate are stored only in that Zone CP and update only that zone's data plane."
+      },
+      {
+        "id": "enforce",
+        "label": "Data plane enforcement",
+        "focus": [
+          "zoneRecv",
+          "dpUpdate",
+          "envoy"
+        ],
+        "note": "On both paths the Zone CP updates the data plane over xDS, and Envoy applies the new config to live traffic control."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Operator action"
+        },
+        "security": {
+          "label": "Scope decision"
+        },
+        "backend": {
+          "label": "Global Control Plane"
+        },
+        "cloud": {
+          "label": "Zone Control Plane"
+        },
+        "messagebus": {
+          "label": "Data Plane (Envoy)"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "operator",
+      "label": "Operator"
+    },
+    {
+      "id": "global",
+      "label": "Global Control Plane"
+    },
+    {
+      "id": "zone",
+      "label": "Zone Control Plane"
+    },
+    {
+      "id": "dataplane",
+      "label": "Data Plane"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "apply",
+    "decide",
+    "globalStore",
+    "sync",
+    "zoneRecv",
+    "dpUpdate",
+    "envoy"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "operator",
+      "col": 0,
+      "type": "frontend",
+      "label": "Edit policy",
+      "sublabel": "create/modify policy.yaml",
+      "width": 160
+    },
+    {
+      "id": "apply",
+      "lane": "operator",
+      "col": 1,
+      "type": "frontend",
+      "label": "kubectl apply",
+      "sublabel": "-f policy.yaml",
+      "width": 124
+    },
+    {
+      "id": "decide",
+      "lane": "operator",
+      "col": 2,
+      "type": "security",
+      "label": "Apply to Global CP?",
+      "sublabel": "policy scope check",
+      "tag": "branch",
+      "width": 176
+    },
+    {
+      "id": "globalStore",
+      "lane": "global",
+      "col": 3,
+      "type": "backend",
+      "label": "Store in Global CP",
+      "sublabel": "global scope",
+      "width": 160
+    },
+    {
+      "id": "sync",
+      "lane": "global",
+      "col": 4,
+      "type": "backend",
+      "label": "Policy Sync",
+      "sublabel": "propagate to all zones",
+      "width": 130
+    },
+    {
+      "id": "zoneStore",
+      "lane": "zone",
+      "col": 3,
+      "type": "cloud",
+      "label": "Store in Zone CP",
+      "sublabel": "local · that Zone CP only",
+      "width": 168
+    },
+    {
+      "id": "zoneRecv",
+      "lane": "zone",
+      "col": 4,
+      "type": "cloud",
+      "label": "Zone CP receives",
+      "sublabel": "Zone CP 1, 2 and 3 each",
+      "width": 156
+    },
+    {
+      "id": "dpUpdate",
+      "lane": "dataplane",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Data Plane",
+      "sublabel": "xDS update",
+      "width": 130
+    },
+    {
+      "id": "envoy",
+      "lane": "dataplane",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Apply Envoy config",
+      "sublabel": "real-time traffic control",
+      "width": 168
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "apply",
+      "role": "main"
+    },
+    {
+      "from": "apply",
+      "to": "decide",
+      "role": "main"
+    },
+    {
+      "from": "decide",
+      "to": "globalStore",
+      "label": "Yes",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "decide",
+      "to": "zoneStore",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "globalStore",
+      "to": "sync",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "sync",
+      "to": "zoneRecv",
+      "label": "sync",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "zoneStore",
+      "to": "dpUpdate",
+      "label": "local",
+      "role": "branch"
+    },
+    {
+      "from": "zoneRecv",
+      "to": "dpUpdate",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "dpUpdate",
+      "to": "envoy",
+      "variant": "emphasis",
+      "role": "main"
+    }
+  ]
+}

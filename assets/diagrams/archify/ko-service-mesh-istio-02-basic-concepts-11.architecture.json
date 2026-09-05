@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VM 워크로드가 필요한 이유",
+    "output": "ko-service-mesh-istio-02-basic-concepts-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "before-migration",
+        "label": "마이그레이션 전",
+        "focus": [
+          "vm-legacy",
+          "app1"
+        ],
+        "note": "레거시 VM 앱은 메시 밖에서 신규 앱과 직접 통신한다."
+      },
+      {
+        "id": "after-registration",
+        "label": "메시 등록 후",
+        "focus": [
+          "app1",
+          "envoy1",
+          "vm-legacy",
+          "istiod"
+        ],
+        "note": "VM이 메시에 등록되면 mTLS와 정책이 적용되고 istiod가 VM에도 구성을 전달한다."
+      },
+      {
+        "id": "config-delivery",
+        "label": "구성 전달",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2",
+          "vm-legacy"
+        ],
+        "note": "istiod는 파드의 Envoy와 등록된 VM에 구성을 전달한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "vm-legacy",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "레거시 앱",
+      "pos": [
+        50,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm-db",
+      "type": "database",
+      "label": "VM",
+      "sublabel": "데이터베이스",
+      "pos": [
+        50,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "vm-ext",
+      "type": "external",
+      "label": "VM",
+      "sublabel": "외부 서비스",
+      "pos": [
+        50,
+        360
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "신규 앱",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        480,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Sidecar 프록시",
+      "pos": [
+        670,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "마이크로서비스",
+      "sublabel": "애플리케이션 컨테이너",
+      "pos": [
+        480,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy",
+      "sublabel": "Sidecar 프록시",
+      "pos": [
+        670,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "istiod",
+      "sublabel": "Control Plane",
+      "pos": [
+        980,
+        220
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "레거시 환경",
+      "wraps": [
+        "vm-legacy",
+        "vm-db",
+        "vm-ext"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "app1",
+        "envoy1",
+        "app2",
+        "envoy2"
+      ],
+      "pad": 48
+    },
+    {
+      "kind": "security-group",
+      "label": "파드",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "파드",
+      "wraps": [
+        "app2",
+        "envoy2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "direct-before",
+      "from": "vm-legacy",
+      "to": "app1",
+      "label": "마이그레이션 전 직접 통신",
+      "variant": "emphasis",
+      "labelDy": -24,
+      "labelDx": 20
+    },
+    {
+      "id": "mesh-after",
+      "from": "app1",
+      "to": "vm-legacy",
+      "label": "메시 등록 후 mTLS · 정책 적용",
+      "variant": "security",
+      "labelDy": 24,
+      "labelDx": -90
+    },
+    {
+      "id": "config-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "구성 전달",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "label": "구성 전달",
+      "variant": "dashed"
+    },
+    {
+      "id": "config-vm",
+      "from": "istiod",
+      "to": "vm-legacy",
+      "label": "VM도 등록 가능",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "사용 시나리오",
+      "items": [
+        "레거시 애플리케이션의 점진적 마이그레이션",
+        "데이터베이스 서버를 메시에 포함",
+        "클러스터 외부의 서비스 통합",
+        "하이브리드 클라우드 환경 구성"
+      ]
+    }
+  ]
+}

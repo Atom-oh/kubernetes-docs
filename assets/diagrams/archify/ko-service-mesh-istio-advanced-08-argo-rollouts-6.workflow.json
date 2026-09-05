@@ -1,0 +1,248 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Blue/Green 배포 동작 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "preview",
+        "label": "Preview 배포와 사전 분석",
+        "focus": [
+          "start",
+          "preview",
+          "pre_analysis",
+          "abort"
+        ],
+        "note": "새 버전은 먼저 previewService(test-preview)에 배포되고 prePromotionAnalysis의 smoke-test 템플릿으로 검증된다. 실패하면 배포가 중단된다."
+      },
+      {
+        "id": "promote",
+        "label": "수동 승인과 Active 전환",
+        "focus": [
+          "pre_analysis",
+          "wait",
+          "switch"
+        ],
+        "note": "autoPromotionEnabled: false이므로 promote 명령이 있을 때만 Rollout이 activeService를 Blue에서 Green으로 전환한다."
+      },
+      {
+        "id": "post",
+        "label": "사후 분석과 정리·롤백",
+        "focus": [
+          "switch",
+          "post_analysis",
+          "rollback",
+          "scale_down",
+          "done"
+        ],
+        "note": "postPromotionAnalysis(comprehensive-analysis)가 실패하면 Blue로 롤백하고, 성공하면 scaleDownDelaySeconds=600에 따라 10분 후 이전 버전을 삭제한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작 · 완료"
+        },
+        "cloud": {
+          "label": "배포 · 전환 · 정리"
+        },
+        "security": {
+          "label": "분석 게이트"
+        },
+        "backend": {
+          "label": "수동 승인"
+        },
+        "external": {
+          "label": "중단 · 롤백"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "preview_stage",
+      "label": "Preview 배포 · 사전 분석"
+    },
+    {
+      "id": "promote_stage",
+      "label": "수동 승인 · Active Service 전환"
+    },
+    {
+      "id": "verify_stage",
+      "label": "사후 분석 · 이전 버전 정리"
+    },
+    {
+      "id": "done_stage",
+      "label": "완료"
+    },
+    {
+      "id": "exceptions",
+      "label": "중단 · 롤백",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "preview",
+    "pre_analysis",
+    "wait",
+    "switch",
+    "post_analysis",
+    "scale_down",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "preview_stage",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "새 버전 배포 시작",
+      "sublabel": "Rollout 업데이트"
+    },
+    {
+      "id": "preview",
+      "lane": "preview_stage",
+      "col": 1,
+      "width": 160,
+      "type": "cloud",
+      "label": "Preview 환경에 배포",
+      "sublabel": "previewService: test-preview"
+    },
+    {
+      "id": "pre_analysis",
+      "lane": "preview_stage",
+      "col": 2,
+      "width": 160,
+      "type": "security",
+      "label": "사전 분석",
+      "sublabel": "smoke-test 템플릿"
+    },
+    {
+      "id": "wait",
+      "lane": "promote_stage",
+      "col": 3,
+      "width": 160,
+      "type": "backend",
+      "label": "수동 승인 대기",
+      "sublabel": "autoPromotionEnabled: false"
+    },
+    {
+      "id": "switch",
+      "lane": "promote_stage",
+      "col": 4,
+      "width": 160,
+      "type": "cloud",
+      "label": "Active Service 전환",
+      "sublabel": "Blue → Green",
+      "tag": "트래픽 전환"
+    },
+    {
+      "id": "post_analysis",
+      "lane": "verify_stage",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "사후 분석",
+      "sublabel": "comprehensive-analysis"
+    },
+    {
+      "id": "scale_down",
+      "lane": "verify_stage",
+      "col": 5,
+      "width": 160,
+      "type": "cloud",
+      "label": "이전 버전 삭제",
+      "sublabel": "scaleDownDelaySeconds: 600"
+    },
+    {
+      "id": "done",
+      "lane": "done_stage",
+      "col": 5,
+      "width": 160,
+      "type": "frontend",
+      "label": "배포 완료",
+      "sublabel": "Green이 Active"
+    },
+    {
+      "id": "abort",
+      "lane": "exceptions",
+      "col": 2,
+      "width": 160,
+      "type": "external",
+      "label": "배포 중단",
+      "sublabel": "사전 분석 실패"
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "width": 160,
+      "type": "external",
+      "label": "이전 버전으로 롤백",
+      "sublabel": "Green → Blue"
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-preview",
+      "from": "start",
+      "to": "preview"
+    },
+    {
+      "id": "preview-pre",
+      "from": "preview",
+      "to": "pre_analysis"
+    },
+    {
+      "id": "pre-abort",
+      "from": "pre_analysis",
+      "to": "abort",
+      "label": "실패",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "pre-wait",
+      "from": "pre_analysis",
+      "to": "wait",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wait-switch",
+      "from": "wait",
+      "to": "switch",
+      "label": "promote 명령",
+      "variant": "emphasis"
+    },
+    {
+      "id": "switch-post",
+      "from": "switch",
+      "to": "post_analysis"
+    },
+    {
+      "id": "post-rollback",
+      "from": "post_analysis",
+      "to": "rollback",
+      "label": "실패",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "post-scale",
+      "from": "post_analysis",
+      "to": "scale_down",
+      "label": "성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale-done",
+      "from": "scale_down",
+      "to": "done"
+    }
+  ]
+}

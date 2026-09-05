@@ -72,7 +72,9 @@ Practical scaling patterns covered in this document:
 
 ### Metrics-based Scaling Flow
 
-![A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus, compares the result to a threshold, and when it decides to scale out it updates the HPA target so Kubernetes creates new Pods, then waits out a cooldown period before evaluating again.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-0.svg)
+![A request passes through the Envoy sidecar, which exposes Istio metrics to Prometheus; KEDA polls Prometheus every pollingInterval, compares the RPS to the threshold, updates the HPA target so Kubernetes creates new Pods, then waits out cooldownPeriod.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-10-keda-autoscaling-0.html)
 
 ### ScaledObject Basic Structure
 
@@ -147,7 +149,9 @@ spec:
 
 #### How It Works
 
-![A polling loop collects RPS metrics, checks the RPS against a scale-out threshold and a scale-in threshold, adjusts replica count when a threshold is crossed, then waits and repeats.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-1.svg)
+![A KEDA polling loop collects RPS through a PromQL query every 30 seconds, increases replicas when RPS exceeds 100, decreases them when RPS falls below 50, then waits out the cooldown period before re-evaluating.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-10-keda-autoscaling-1.html)
 
 ### 2. Latency Based Scaling
 
@@ -716,7 +720,9 @@ spec:
 
 ### 1. Metric Selection Guide
 
-![A decision tree that routes a workload to RPS-based, latency-based, predictive, or composite scaling based on whether it is stateless, has a predictable traffic pattern, and is latency sensitive, with the two single-metric strategies able to combine into a composite one.](../../../../assets/diagrams/rendered/en-service-mesh-istio-advanced-10-keda-autoscaling-2.svg)
+![A decision flow that picks RPS-based, latency-based, or predictive + cron scaling based on whether a workload is stateless, has predictable traffic, and is latency sensitive, with the RPS and latency strategies combinable into composite-metric scaling.](../../../.gitbook/assets/en-service-mesh-istio-advanced-10-keda-autoscaling-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-10-keda-autoscaling-2.html)
 
 **Recommended Metrics**:
 

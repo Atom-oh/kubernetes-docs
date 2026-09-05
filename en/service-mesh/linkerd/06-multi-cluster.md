@@ -9,13 +9,17 @@ Linkerd's multi-cluster feature provides secure and transparent communication be
 
 ## Multi-cluster Architecture
 
-![Architecture diagram showing the East cluster's service mirror controller watching the West cluster, creating a local mirror of web-service that routes traffic through the West gateway over an mTLS connection between the two clusters' gateways.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-06-multi-cluster-0.svg)
+![Architecture diagram showing the East cluster's service mirror controller watching the West cluster, creating a local mirror of web-service that routes traffic through the West gateway over an mTLS connection between the two clusters' gateways.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-0.html)
 
 ## Service Mirroring Concept
 
 ### How It Works
 
-![Sequence diagram showing an application call to a local mirror service resolve to the remote cluster's gateway, open an mTLS connection, verify identity, and forward the request to the real target service, with the response returning along the same path.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-06-multi-cluster-1.svg)
+![Sequence showing an East application calling the local mirror service, which resolves the West gateway IP and connects over mTLS; the gateway verifies identity and forwards to the target service, with the response returning along the same path.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-1.html)
 
 ### Service Mirroring Characteristics
 
@@ -287,7 +291,9 @@ spec:
 
 ## Cross-Cluster Traffic Flow
 
-![Sequence diagram showing a client pod's request pass through its local proxy, cross an mTLS connection over the internet or VPN into the remote cluster's gateway, reach the server proxy and server pod, then return the response along the same hops.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-06-multi-cluster-2.svg)
+![Sequence diagram showing a client pod's request pass through its local proxy, cross an mTLS connection over the internet or VPN into the remote cluster's gateway, reach the server proxy and server pod, then return the response along the same hops.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-2.html)
 
 ## EKS Multi-cluster Patterns
 
@@ -372,7 +378,9 @@ eksctl create cluster \
 
 ### Shared Trust Anchor
 
-![Architecture diagram showing a single shared root Trust Anchor issuing a per-cluster intermediate issuer certificate to each cluster, which in turn issues workload certificates to that cluster's meshed pods.](../../../assets/diagrams/rendered/en-service-mesh-linkerd-06-multi-cluster-3.svg)
+![Architecture diagram showing a single shared root Trust Anchor issuing a per-cluster intermediate issuer certificate to each cluster, which in turn issues workload certificates to that cluster's meshed pods.](../../.gitbook/assets/en-service-mesh-linkerd-06-multi-cluster-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-linkerd-06-multi-cluster-3.html)
 
 ### Per-Cluster Authorization Policies
 

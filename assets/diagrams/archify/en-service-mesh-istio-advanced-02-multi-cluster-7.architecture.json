@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Primary-Remote Topology",
+    "locale": "en",
+    "output": "en-service-mesh-istio-advanced-02-multi-cluster-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "Single Control Plane",
+        "focus": [
+          "istiod",
+          "service-b",
+          "service-c"
+        ],
+        "note": "One Istiod in the primary cluster pushes configuration to the data plane in the remote cluster."
+      },
+      {
+        "id": "data-plane",
+        "label": "mTLS Data Plane",
+        "focus": [
+          "service-a",
+          "service-b",
+          "service-c"
+        ],
+        "note": "Service-to-service traffic stays protected by mTLS even across the cluster boundary."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "security",
+      "label": "Istiod",
+      "sublabel": "Control Plane",
+      "tag": "single point of failure",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-a",
+      "type": "backend",
+      "label": "Service A",
+      "sublabel": "Data Plane",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-b",
+      "type": "backend",
+      "label": "Service B",
+      "sublabel": "Data Plane",
+      "pos": [
+        500,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "service-c",
+      "type": "backend",
+      "label": "Service C",
+      "sublabel": "Data Plane",
+      "pos": [
+        760,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Primary Cluster · us-east-1",
+      "wraps": [
+        "istiod",
+        "service-a"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Remote Cluster · us-west-2",
+      "wraps": [
+        "service-b",
+        "service-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-b",
+      "from": "istiod",
+      "to": "service-b",
+      "label": "push config",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "push-c",
+      "from": "istiod",
+      "to": "service-c",
+      "label": "push config",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-a-b",
+      "from": "service-a",
+      "to": "service-b",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "mtls-b-c",
+      "from": "service-b",
+      "to": "service-c",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Primary-Remote characteristics",
+      "items": [
+        "Single Control Plane (Primary)",
+        "Multiple Data Planes (Remote)",
+        "Simple management",
+        "Single point of failure (Primary)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode: 파드별 Envoy 프록시",
+    "output": "ko-service-mesh-istio-02-basic-concepts-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inbound",
+        "label": "인바운드 트래픽",
+        "focus": [
+          "external",
+          "envoy",
+          "app"
+        ],
+        "note": "외부 요청은 먼저 Envoy 사이드카에 도착하고, 로컬 통신으로 애플리케이션 컨테이너에 전달된다."
+      },
+      {
+        "id": "outbound",
+        "label": "아웃바운드 호출",
+        "focus": [
+          "app",
+          "envoy",
+          "target"
+        ],
+        "note": "애플리케이션의 외부 호출도 같은 사이드카를 거쳐 네트워크로 대상 서비스에 전달된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "external",
+      "type": "external",
+      "label": "외부 요청",
+      "sublabel": "클라이언트 / 다른 서비스",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션 컨테이너",
+      "sublabel": "비즈니스 로직",
+      "pos": [
+        340,
+        130
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카 컨테이너",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "target",
+      "type": "external",
+      "label": "대상 서비스",
+      "sublabel": "메시 내 다른 파드",
+      "pos": [
+        840,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "파드",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "external-to-envoy",
+      "from": "external",
+      "to": "envoy",
+      "label": "트래픽",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          580,
+          472
+        ]
+      ]
+    },
+    {
+      "id": "envoy-to-app",
+      "from": "envoy",
+      "to": "app",
+      "label": "로컬",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          580,
+          162
+        ]
+      ]
+    },
+    {
+      "id": "app-to-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "외부 호출",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          332
+        ]
+      ],
+      "labelSegment": 0
+    },
+    {
+      "id": "envoy-to-target",
+      "from": "envoy",
+      "to": "target",
+      "label": "네트워크",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "장점",
+      "items": [
+        "성숙하고 안정적",
+        "모든 Istio 기능 지원",
+        "파드별 세밀한 제어"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "단점",
+      "items": [
+        "리소스 오버헤드 (각 파드마다 Envoy)",
+        "시작 시간 증가 (Init Container)",
+        "복잡한 권한 설정 (iptables)"
+      ]
+    }
+  ]
+}

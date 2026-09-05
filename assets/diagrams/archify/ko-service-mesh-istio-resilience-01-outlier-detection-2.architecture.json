@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "외부 API 보호 아키텍처",
+    "output": "ko-service-mesh-istio-resilience-01-outlier-detection-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "healthy-path",
+        "label": "정상 인스턴스로 전송",
+        "focus": [
+          "app",
+          "envoy",
+          "api1",
+          "api3"
+        ],
+        "note": "Envoy Proxy가 정상 인스턴스 1, 3으로만 트래픽을 계속 보낸다."
+      },
+      {
+        "id": "ejected-path",
+        "label": "에러 인스턴스 제외",
+        "focus": [
+          "envoy",
+          "api2"
+        ],
+        "note": "에러가 발생한 인스턴스 2는 Outlier Detection이 baseEjectionTime 동안 트래픽에서 제외한다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "애플리케이션 파드"
+        },
+        "security": {
+          "label": "Envoy Proxy (Outlier Detection)"
+        },
+        "external": {
+          "label": "외부 API 인스턴스 (ServiceEntry)"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Pod",
+      "sublabel": "외부 API 호출",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Outlier Detection",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "api1",
+      "type": "external",
+      "label": "External API Instance 1",
+      "sublabel": "정상",
+      "pos": [
+        520,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "api2",
+      "type": "external",
+      "label": "External API Instance 2",
+      "sublabel": "에러 발생",
+      "pos": [
+        520,
+        200
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "api3",
+      "type": "external",
+      "label": "External API Instance 3",
+      "sublabel": "정상",
+      "pos": [
+        520,
+        340
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes 클러스터",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "외부 서비스",
+      "wraps": [
+        "api1",
+        "api2",
+        "api3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-envoy",
+      "from": "app",
+      "to": "envoy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-to-api1",
+      "from": "envoy",
+      "to": "api1",
+      "label": "트래픽 전송",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-api2",
+      "from": "envoy",
+      "to": "api2",
+      "label": "제외됨",
+      "variant": "dashed",
+      "via": [
+        [
+          320,
+          290
+        ],
+        [
+          320,
+          230
+        ]
+      ],
+      "labelAt": [
+        455,
+        222
+      ]
+    },
+    {
+      "id": "envoy-to-api3",
+      "from": "envoy",
+      "to": "api3",
+      "label": "트래픽 전송",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "ServiceEntry",
+      "items": [
+        "외부 API를 hosts로 등록 (resolution: DNS)",
+        "location: MESH_EXTERNAL로 메시 외부 서비스임을 표시"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "DestinationRule outlierDetection",
+      "items": [
+        "consecutiveErrors: 3 — 외부 API는 빠르게 감지",
+        "interval: 10s / baseEjectionTime: 30s",
+        "maxEjectionPercent: 50 — 최대 절반까지만 제외"
+      ]
+    }
+  ]
+}

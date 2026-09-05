@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd 보안 아키텍처",
+    "output": "ko-service-mesh-linkerd-04-security-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "인증서 체인"
+        },
+        "backend": {
+          "label": "컨트롤러"
+        },
+        "frontend": {
+          "label": "mTLS 종단 프록시"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cert-chain",
+        "label": "인증서 체인",
+        "focus": [
+          "ta",
+          "ii",
+          "wc"
+        ],
+        "note": "Trust Anchor(Root CA)가 Identity Issuer(중간 CA)에 서명하고, Issuer가 각 프록시의 워크로드 인증서를 발급한다."
+      },
+      {
+        "id": "control-to-data",
+        "label": "Control Plane → Data Plane",
+        "focus": [
+          "id",
+          "pol",
+          "p1",
+          "p2"
+        ],
+        "note": "Identity Controller는 인증서 발급, Policy Controller는 인가 정책을 두 프록시에 함께 내려준다."
+      },
+      {
+        "id": "mtls",
+        "label": "프록시 간 mTLS",
+        "focus": [
+          "p1",
+          "p2"
+        ],
+        "note": "두 프록시가 서로 상호 인증하고 트래픽을 암호화하는 mTLS 종단점이 된다."
+      }
+    ],
+    "viewBox": [
+      940,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "ta",
+      "type": "security",
+      "label": "Trust Anchor",
+      "sublabel": "Root CA",
+      "pos": [
+        80,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ii",
+      "type": "security",
+      "label": "Identity Issuer",
+      "sublabel": "Intermediate CA",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "wc",
+      "type": "security",
+      "label": "Workload Certs",
+      "sublabel": "각 프록시별 인증서",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "id",
+      "type": "backend",
+      "label": "Identity Controller",
+      "sublabel": "인증서 발급",
+      "pos": [
+        80,
+        180
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pol",
+      "type": "backend",
+      "label": "Policy Controller",
+      "sublabel": "인가 정책",
+      "pos": [
+        80,
+        440
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p1",
+      "type": "frontend",
+      "label": "Proxy 1",
+      "sublabel": "mTLS 종단",
+      "pos": [
+        340,
+        305
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "p2",
+      "type": "frontend",
+      "label": "Proxy 2",
+      "sublabel": "mTLS 종단",
+      "pos": [
+        650,
+        305
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인증서 체인",
+      "wraps": [
+        "ta",
+        "ii",
+        "wc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "id",
+        "pol"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "p1",
+        "p2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ta-ii",
+      "from": "ta",
+      "to": "ii",
+      "label": "서명",
+      "variant": "security"
+    },
+    {
+      "id": "ii-wc",
+      "from": "ii",
+      "to": "wc",
+      "label": "발급",
+      "variant": "security"
+    },
+    {
+      "id": "id-p1",
+      "from": "id",
+      "to": "p1",
+      "label": "ID 인증서",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          165,
+          270
+        ],
+        [
+          425,
+          270
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "id-p2",
+      "from": "id",
+      "to": "p2",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          735,
+          210
+        ]
+      ]
+    },
+    {
+      "id": "pol-p1",
+      "from": "pol",
+      "to": "p1",
+      "label": "인가 정책",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          165,
+          405
+        ],
+        [
+          425,
+          405
+        ]
+      ],
+      "labelSegment": 1
+    },
+    {
+      "id": "pol-p2",
+      "from": "pol",
+      "to": "p2",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          735,
+          470
+        ]
+      ]
+    },
+    {
+      "id": "p1-p2",
+      "from": "p1",
+      "to": "p2",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Request Authentication 흐름",
+    "output": "ko-service-mesh-istio-security-02-authentication-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "최종 사용자",
+      "pos": [
+        120,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "idp",
+      "type": "security",
+      "label": "OAuth/OIDC Provider",
+      "sublabel": "JWT 토큰 발급",
+      "pos": [
+        420,
+        90
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "reqauth",
+      "type": "security",
+      "label": "Request Authentication",
+      "sublabel": "JWT 검증",
+      "pos": [
+        420,
+        320
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "애플리케이션",
+      "pos": [
+        780,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "인증 제공자",
+      "wraps": [
+        "idp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Gateway",
+      "wraps": [
+        "reqauth"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "서비스",
+      "wraps": [
+        "app"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "login",
+      "from": "user",
+      "to": "idp",
+      "label": "1. 로그인",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "token",
+      "from": "idp",
+      "to": "user",
+      "label": "2. JWT 토큰",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "request",
+      "from": "user",
+      "to": "reqauth",
+      "label": "3. JWT 포함 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "success",
+      "from": "reqauth",
+      "to": "app",
+      "label": "4. 검증 성공",
+      "variant": "emphasis"
+    },
+    {
+      "id": "failure",
+      "from": "reqauth",
+      "to": "user",
+      "label": "검증 실패",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ]
+}

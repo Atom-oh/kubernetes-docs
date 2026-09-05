@@ -21,7 +21,9 @@ DestinationRule은 VirtualService가 트래픽을 라우팅한 후, 해당 트�
 
 DestinationRule은 **라우팅 이후의 트래픽 정책**을 정의합니다. VirtualService가 "어디로" 보낼지 결정한다면, DestinationRule은 "어떻게" 처리할지 결정합니다.
 
-![클라이언트 요청이 VirtualService의 라우팅 결정을 거쳐 DestinationRule의 트래픽 정책에 따라 두 버전으로 분배되는 흐름을 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-0.svg)
+![클라이언트 요청이 VirtualService의 라우팅 결정(어디로?)을 거쳐 DestinationRule의 트래픽 정책(어떻게?)에 따라 subset v1과 v2 두 서비스 버전으로 분배되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-03-destination-rule-0.html)
 
 ### DestinationRule의 주요 역할
 
@@ -39,7 +41,9 @@ DestinationRule은 **라우팅 이후의 트래픽 정책**을 정의합니다. 
 
 ### 역할 비교
 
-![HTTP 요청이 조건 매칭과 라우팅 결정을 거쳐 DestinationRule의 Subset 선택과 정책 적용을 통해 v1·v2 파드로 로드 밸런싱되는 과정을 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-1.svg)
+![HTTP 요청이 VirtualService의 조건 매칭과 라우팅 결정을 거쳐 DestinationRule의 Subset 선택과 정책 적용을 통해 reviews v1·v2 파드로 로드 밸런싱되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-03-destination-rule-1.html)
 
 ### 책임 분리
 
@@ -98,7 +102,9 @@ Subset은 서비스의 **논리적 그룹**을 정의합니다. 주로 버전, �
 
 ### Subset의 본질
 
-![Kubernetes Service가 정의한 Subset v1·v2가 레이블 매칭을 통해 실제 파드들과 연결되는 관계를 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-2.svg)
+![Kubernetes Service reviews가 DestinationRule에 정의된 Subset v1·v2로 나뉘고, 각 Subset이 레이블 매칭으로 실제 파드에 연결되는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-03-destination-rule-2.html)
 
 ### Subset 사용 시나리오
 
@@ -321,7 +327,9 @@ DestinationRule의 `trafficPolicy`는 다양한 트래픽 제어 기능을 제�
 
 ### Traffic Policy 계층 구조
 
-![전역 Traffic Policy가 모든 subset에 기본으로 적용되고, v1은 이를 오버라이드하며 v2는 그대로 상속받는 계층 구조를 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-traffic-management-03-destination-rule-3.svg)
+![DestinationRule의 전역 trafficPolicy가 모든 subset의 기본값이 되고, subset v1은 이를 그대로 상속하며 v2는 자체 trafficPolicy로 전역 정책을 오버라이드하는 계층 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-traffic-management-03-destination-rule-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-traffic-management-03-destination-rule-3.html)
 
 ### Traffic Policy 구성 요소
 

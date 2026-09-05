@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "xDS Protocol 개요",
+    "output": "ko-service-mesh-istio-03-architecture-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "초기 부트스트랩 (LDS)",
+        "focus": [
+          "pilot",
+          "lds"
+        ],
+        "note": "Envoy는 먼저 LDS로 수신 포트(15001, 15006) 구성을 받아 트래픽을 받을 준비를 한다."
+      },
+      {
+        "id": "routing",
+        "label": "라우팅 구성 (RDS·CDS·EDS)",
+        "focus": [
+          "pilot",
+          "rds",
+          "cds",
+          "eds"
+        ],
+        "note": "VirtualService는 RDS, DestinationRule은 CDS, 파드 IP 목록은 EDS 채널로 Envoy에 전달된다."
+      },
+      {
+        "id": "secrets",
+        "label": "인증서 배포 (SDS)",
+        "focus": [
+          "pilot",
+          "sds"
+        ],
+        "note": "mTLS에 필요한 TLS 인증서는 SDS 채널로 Envoy에 전달된다."
+      }
+    ],
+    "viewBox": [
+      1040,
+      600
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "pilot",
+      "type": "backend",
+      "label": "Pilot",
+      "sublabel": "xDS Server",
+      "tag": "Istiod",
+      "pos": [
+        80,
+        240
+      ],
+      "size": [
+        180,
+        84
+      ]
+    },
+    {
+      "id": "lds",
+      "type": "backend",
+      "label": "Listener DS",
+      "sublabel": "수신 포트 · 15001, 15006",
+      "tag": "LDS",
+      "pos": [
+        680,
+        50
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "rds",
+      "type": "backend",
+      "label": "Route DS",
+      "sublabel": "HTTP 라우팅 · VirtualService",
+      "tag": "RDS",
+      "pos": [
+        680,
+        150
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "cds",
+      "type": "backend",
+      "label": "Cluster DS",
+      "sublabel": "업스트림 서비스 · DestinationRule",
+      "tag": "CDS",
+      "pos": [
+        680,
+        250
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "eds",
+      "type": "backend",
+      "label": "Endpoint DS",
+      "sublabel": "파드 IP 목록 · Service Endpoints",
+      "tag": "EDS",
+      "pos": [
+        680,
+        350
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "sds",
+      "type": "security",
+      "label": "Secret DS",
+      "sublabel": "TLS 인증서 · mTLS 인증서",
+      "tag": "SDS",
+      "pos": [
+        680,
+        450
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istiod",
+      "wraps": [
+        "pilot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Envoy Proxy",
+      "wraps": [
+        "lds",
+        "rds",
+        "cds",
+        "eds",
+        "sds"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pilot-lds",
+      "from": "pilot",
+      "to": "lds",
+      "label": "양방향 gRPC 스트림",
+      "variant": "emphasis",
+      "labelAt": [
+        610,
+        82
+      ]
+    },
+    {
+      "id": "pilot-rds",
+      "from": "pilot",
+      "to": "rds",
+      "label": "양방향 gRPC 스트림",
+      "labelAt": [
+        610,
+        182
+      ]
+    },
+    {
+      "id": "pilot-cds",
+      "from": "pilot",
+      "to": "cds",
+      "label": "양방향 gRPC 스트림",
+      "labelAt": [
+        610,
+        282
+      ]
+    },
+    {
+      "id": "pilot-eds",
+      "from": "pilot",
+      "to": "eds",
+      "label": "양방향 gRPC 스트림",
+      "labelAt": [
+        610,
+        382
+      ]
+    },
+    {
+      "id": "pilot-sds",
+      "from": "pilot",
+      "to": "sds",
+      "label": "양방향 gRPC 스트림",
+      "variant": "security",
+      "labelAt": [
+        610,
+        482
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "xDS API 종류",
+      "items": [
+        "LDS — Listener Discovery: 수신 포트 구성 (15001, 15006)",
+        "RDS — Route Discovery: HTTP 라우팅 규칙 (VirtualService)",
+        "CDS — Cluster Discovery: 업스트림 서비스 (DestinationRule)",
+        "EDS — Endpoint Discovery: 파드 IP 목록 (Service Endpoints)",
+        "SDS — Secret Discovery: TLS 인증서 (mTLS 인증서)"
+      ]
+    }
+  ]
+}

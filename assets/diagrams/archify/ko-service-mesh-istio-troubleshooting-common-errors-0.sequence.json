@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "파드 종료 시 연결 에러 — 발생 원인",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      640
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "default": {
+          "label": "신호 전송"
+        },
+        "emphasis": {
+          "label": "문제 구간"
+        },
+        "dashed": {
+          "label": "실패 응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "kubelet"
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application",
+      "sublabel": "앱 컨테이너"
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "istio-proxy 사이드카"
+    },
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "외부 요청"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 280,
+      "label": "파드 종료 시작 (kubectl delete pod)"
+    },
+    {
+      "from": 300,
+      "to": 435,
+      "label": "Envoy는 종료됨 · App은 아직 실행 중"
+    },
+    {
+      "from": 455,
+      "to": 565,
+      "label": "30초 후 (terminationGracePeriodSeconds)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "sigterm-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 190,
+      "label": "SIGTERM 전송"
+    },
+    {
+      "id": "sigterm-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 235,
+      "label": "SIGTERM 전송",
+      "variant": "emphasis",
+      "note": "문제: Envoy가 즉시 종료 시작 → App보다 먼저 종료"
+    },
+    {
+      "id": "client-req",
+      "from": "client",
+      "to": "envoy",
+      "y": 335,
+      "label": "요청 전송",
+      "note": "App은 아직 요청 처리 중"
+    },
+    {
+      "id": "refused",
+      "from": "envoy",
+      "to": "client",
+      "y": 390,
+      "label": "Connection refused",
+      "variant": "dashed"
+    },
+    {
+      "id": "sigkill-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 485,
+      "label": "SIGKILL (강제 종료)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sigkill-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 535,
+      "label": "SIGKILL (강제 종료)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "app",
+      "from": 185,
+      "to": 490,
+      "type": "backend"
+    },
+    {
+      "participant": "envoy",
+      "from": 230,
+      "to": 275,
+      "type": "security"
+    }
+  ]
+}

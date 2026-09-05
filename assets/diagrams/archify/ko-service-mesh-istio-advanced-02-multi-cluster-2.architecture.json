@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "재해 복구 (Active-Standby) 아키텍처",
+    "output": "ko-service-mesh-istio-advanced-02-multi-cluster-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "normal",
+        "label": "평상시",
+        "focus": [
+          "users",
+          "dns",
+          "prod1",
+          "prod2"
+        ],
+        "note": "Global DNS가 100% 트래픽을 활성 클러스터로 보내고, 대기 클러스터는 구성 복제만 받는다."
+      },
+      {
+        "id": "failover",
+        "label": "재해 발생 시",
+        "focus": [
+          "failover",
+          "dns",
+          "prod2"
+        ],
+        "note": "재해가 감지되면 Route53이 Failover하여 100% 트래픽을 대기 클러스터로 전환한다."
+      }
+    ],
+    "viewBox": [
+      880,
+      540
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "사용자",
+      "sublabel": "서비스 요청",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "failover",
+      "type": "security",
+      "label": "재해 발생",
+      "sublabel": "리전 장애",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "dns",
+      "type": "cloud",
+      "label": "Global DNS",
+      "sublabel": "Route53",
+      "pos": [
+        280,
+        220
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "prod1",
+      "type": "backend",
+      "label": "Production 워크로드",
+      "sublabel": "서비스 제공 중",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "prod2",
+      "type": "backend",
+      "label": "Standby 워크로드",
+      "sublabel": "대기 상태",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "활성 클러스터 · Primary Region",
+      "wraps": [
+        "prod1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "대기 클러스터 · DR Region",
+      "wraps": [
+        "prod2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-dns",
+      "from": "users",
+      "to": "dns",
+      "label": "정상 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dns-active",
+      "from": "dns",
+      "to": "prod1",
+      "label": "평상시 100% → 재해 시 0%",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dns-standby",
+      "from": "dns",
+      "to": "prod2",
+      "label": "평상시 0% → 재해 시 100%",
+      "variant": "dashed"
+    },
+    {
+      "id": "replication",
+      "from": "prod1",
+      "to": "prod2",
+      "label": "실시간 구성 복제",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 150
+    },
+    {
+      "id": "failover-dns",
+      "from": "failover",
+      "to": "dns",
+      "label": "Failover",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "DR 요구사항",
+      "items": [
+        "RTO (Recovery Time Objective) <1시간",
+        "RPO (Recovery Point Objective) <15분",
+        "리전 장애 시 자동 Failover"
+      ]
+    }
+  ]
+}

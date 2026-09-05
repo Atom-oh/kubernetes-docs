@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Traffic Flow (After iptables Applied)",
+    "output": "en-service-mesh-istio-03-architecture-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "outbound",
+        "label": "Outbound path",
+        "focus": [
+          "app",
+          "output",
+          "l15001",
+          "ext"
+        ],
+        "note": "The OUTPUT chain redirects the app request to 15001; Envoy (UID 1337) bypasses interception and sends it to the external service."
+      },
+      {
+        "id": "inbound",
+        "label": "Inbound path",
+        "focus": [
+          "ext",
+          "prerouting",
+          "l15006",
+          "app"
+        ],
+        "note": "The PREROUTING chain redirects incoming traffic to 15006; Envoy verifies mTLS and forwards it to localhost:8080."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "localhost:8080",
+      "tag": "APP container",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "output",
+      "type": "security",
+      "label": "OUTPUT Chain",
+      "sublabel": "iptables nat · outbound",
+      "tag": "! --uid-owner 1337",
+      "pos": [
+        280,
+        120
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l15001",
+      "type": "backend",
+      "label": "Listener 15001",
+      "sublabel": "Envoy outbound · routing",
+      "tag": "UID 1337",
+      "pos": [
+        640,
+        120
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "ext",
+      "type": "external",
+      "label": "External Service",
+      "sublabel": "reviews:9080",
+      "pos": [
+        960,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "prerouting",
+      "type": "security",
+      "label": "PREROUTING Chain",
+      "sublabel": "iptables nat · inbound",
+      "tag": "REDIRECT 15006",
+      "pos": [
+        640,
+        380
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "l15006",
+      "type": "backend",
+      "label": "Listener 15006",
+      "sublabel": "Envoy inbound · mTLS check",
+      "tag": "UID 1337",
+      "pos": [
+        280,
+        380
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod network namespace",
+      "wraps": [
+        "app",
+        "output",
+        "l15001",
+        "prerouting",
+        "l15006"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "app",
+      "to": "output",
+      "label": "1. curl reviews:9080",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "output",
+      "to": "l15001",
+      "label": "2. REDIRECT :15001",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3",
+      "from": "l15001",
+      "to": "ext",
+      "label": "3. Routing · UID 1337 bypass",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4",
+      "from": "ext",
+      "to": "prerouting",
+      "label": "4. Incoming request"
+    },
+    {
+      "id": "c5",
+      "from": "prerouting",
+      "to": "l15006",
+      "label": "5. REDIRECT :15006"
+    },
+    {
+      "id": "c6",
+      "from": "l15006",
+      "to": "app",
+      "label": "6. mTLS check, then localhost:8080",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "iptables nat rules",
+      "items": [
+        "OUTPUT: TCP except UID 1337 (Envoy) → REDIRECT 15001",
+        "PREROUTING: inbound TCP → REDIRECT 15006"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Excluded from interception",
+      "items": [
+        "localhost (127.0.0.1) traffic",
+        "Istiod communication on 15012",
+        "DNS (UDP 53)"
+      ]
+    }
+  ]
+}

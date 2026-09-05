@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Identity Controller Certificate Issuance Process",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      680
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "issue",
+        "label": "Initial issuance",
+        "focus": [
+          "proxy",
+          "identity",
+          "ca"
+        ],
+        "note": "At Pod startup the proxy sends a CSR; after ServiceAccount validation and Trust Anchor signing it receives its workload certificate."
+      },
+      {
+        "id": "renew",
+        "label": "Automatic renewal",
+        "focus": [
+          "proxy",
+          "identity"
+        ],
+        "note": "The certificate is valid for 24 hours by default and is reissued automatically via a renewal CSR before it expires."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "proxy",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "data plane sidecar"
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity Controller",
+      "sublabel": "control plane"
+    },
+    {
+      "id": "ca",
+      "type": "security",
+      "label": "Trust Anchor",
+      "sublabel": "Root CA"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 370,
+      "label": "Pod startup — CSR · ServiceAccount validation · initial issuance"
+    },
+    {
+      "from": 395,
+      "to": 535,
+      "label": "Before certificate expiry — automatic renewal (24h validity by default)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 195,
+      "label": "CSR (Certificate Signing Request)",
+      "variant": "default",
+      "note": "generated at proxy startup"
+    },
+    {
+      "id": "sign-req",
+      "from": "identity",
+      "to": "ca",
+      "y": 260,
+      "label": "signing request after ServiceAccount validation",
+      "variant": "default",
+      "note": "the Identity Controller validates the Pod ServiceAccount, then asks the Trust Anchor to sign"
+    },
+    {
+      "id": "signed",
+      "from": "ca",
+      "to": "identity",
+      "y": 305,
+      "label": "signed certificate",
+      "variant": "return"
+    },
+    {
+      "id": "workload-cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 350,
+      "label": "deliver workload certificate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "renew-csr",
+      "from": "proxy",
+      "to": "identity",
+      "y": 440,
+      "label": "renewal CSR",
+      "variant": "default",
+      "note": "performed automatically before expiry"
+    },
+    {
+      "id": "new-cert",
+      "from": "identity",
+      "to": "proxy",
+      "y": 495,
+      "label": "new certificate",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "identity",
+      "from": 190,
+      "to": 355,
+      "type": "security"
+    },
+    {
+      "participant": "ca",
+      "from": 255,
+      "to": 310,
+      "type": "security"
+    },
+    {
+      "participant": "identity",
+      "from": 435,
+      "to": 500,
+      "type": "security"
+    }
+  ]
+}

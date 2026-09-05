@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Consul Connect 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "registration",
+        "label": "서비스 등록",
+        "focus": [
+          "client2",
+          "client1",
+          "clientVM",
+          "server"
+        ],
+        "note": "각 Consul Client가 자신의 서비스를 Consul Server의 Service Catalog에 등록한다."
+      },
+      {
+        "id": "discovery",
+        "label": "서비스 디스커버리",
+        "focus": [
+          "server",
+          "envoy2",
+          "envoy1",
+          "envoyVM"
+        ],
+        "note": "Consul Server가 Envoy 프록시에 서비스 위치 정보를 내려 준다."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS 통신",
+        "focus": [
+          "envoy2",
+          "envoy1",
+          "envoyVM"
+        ],
+        "note": "Kubernetes 파드와 VM의 Envoy 프록시가 mTLS로 직접 통신한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "server",
+      "type": "database",
+      "label": "Consul Server Cluster",
+      "sublabel": "Service Catalog + KV Store",
+      "pos": [
+        480,
+        60
+      ],
+      "size": [
+        340,
+        64
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "Application",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "client2",
+      "type": "backend",
+      "label": "Consul Client",
+      "pos": [
+        230,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        340,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "Application",
+      "pos": [
+        480,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "client1",
+      "type": "backend",
+      "label": "Consul Client",
+      "pos": [
+        670,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "pos": [
+        480,
+        400
+      ],
+      "size": [
+        340,
+        60
+      ]
+    },
+    {
+      "id": "appVM",
+      "type": "external",
+      "label": "Legacy Application",
+      "pos": [
+        940,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "clientVM",
+      "type": "backend",
+      "label": "Consul Client",
+      "pos": [
+        1130,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoyVM",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "pos": [
+        940,
+        400
+      ],
+      "size": [
+        340,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Consul Servers",
+      "wraps": [
+        "server"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "app2",
+        "client2",
+        "envoy2",
+        "app1",
+        "client1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "app2",
+        "client2",
+        "envoy2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "app1",
+        "client1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "VM Infrastructure",
+      "wraps": [
+        "appVM",
+        "clientVM",
+        "envoyVM"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "reg1",
+      "from": "client1",
+      "to": "server",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    },
+    {
+      "id": "reg2",
+      "from": "client2",
+      "to": "server",
+      "label": "서비스 등록",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    },
+    {
+      "id": "regVM",
+      "from": "clientVM",
+      "to": "server",
+      "label": "서비스 등록",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    },
+    {
+      "id": "disc1",
+      "from": "server",
+      "to": "envoy1",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "disc2",
+      "from": "server",
+      "to": "envoy2",
+      "label": "서비스 디스커버리",
+      "fromSide": "left",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "discVM",
+      "from": "server",
+      "to": "envoyVM",
+      "label": "서비스 디스커버리",
+      "fromSide": "right",
+      "toSide": "top",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls12",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS",
+      "fromSide": "left",
+      "toSide": "right",
+      "variant": "security"
+    },
+    {
+      "id": "mtls1VM",
+      "from": "envoy1",
+      "to": "envoyVM",
+      "label": "mTLS",
+      "fromSide": "right",
+      "toSide": "left",
+      "variant": "security"
+    },
+    {
+      "id": "app1-envoy1",
+      "from": "app1",
+      "to": "envoy1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-envoy2",
+      "from": "app2",
+      "to": "envoy2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "appVM-envoyVM",
+      "from": "appVM",
+      "to": "envoyVM",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "핵심 구성 요소",
+      "items": [
+        "Consul Server: Service Catalog, KV Store, 인증서 관리",
+        "Consul Client: 각 노드에서 실행, 서비스 등록",
+        "Envoy Sidecar: 트래픽 프록시"
+      ]
+    }
+  ]
+}

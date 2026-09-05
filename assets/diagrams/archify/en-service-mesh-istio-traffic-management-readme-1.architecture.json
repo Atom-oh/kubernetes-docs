@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Traffic Flow",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-readme-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      520
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "external": {
+          "label": "External user"
+        },
+        "cloud": {
+          "label": "Ingress Gateway"
+        },
+        "backend": {
+          "label": "Routing rules / workloads"
+        },
+        "security": {
+          "label": "Traffic policy"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "ingress",
+        "label": "Ingress and routing",
+        "focus": [
+          "user",
+          "gateway",
+          "vs"
+        ],
+        "note": "An external request enters the Gateway (port 80/443) and VirtualService path, header and weight rules pick its destination."
+      },
+      {
+        "id": "policy",
+        "label": "DestinationRule policies",
+        "focus": [
+          "vs",
+          "dr"
+        ],
+        "note": "Load balancing, circuit breaker and connection pool policies apply to the subset the VirtualService selected."
+      },
+      {
+        "id": "delivery",
+        "label": "Pod delivery",
+        "focus": [
+          "dr",
+          "pod-v1-1",
+          "pod-v1-2",
+          "pod-v2-1"
+        ],
+        "note": "After the policies, the request is delivered to one of the subset v1 (two) or v2 (one) pods."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "External request",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        130,
+        60
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "port 80/443",
+      "tag": "Ingress",
+      "pos": [
+        230,
+        228
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "VirtualService routing",
+      "sublabel": "Path · Header · Weight matching",
+      "tag": "3 rules",
+      "pos": [
+        440,
+        220
+      ],
+      "size": [
+        250,
+        80
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "security",
+      "label": "DestinationRule policies",
+      "sublabel": "LB · Circuit breaker · Connection pool",
+      "tag": "3 policies",
+      "pos": [
+        750,
+        220
+      ],
+      "size": [
+        270,
+        80
+      ]
+    },
+    {
+      "id": "pod-v1-1",
+      "type": "backend",
+      "label": "Pod v1-1",
+      "sublabel": "subset v1",
+      "pos": [
+        1140,
+        110
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "pod-v1-2",
+      "type": "backend",
+      "label": "Pod v1-2",
+      "sublabel": "subset v1",
+      "pos": [
+        1140,
+        232
+      ],
+      "size": [
+        120,
+        56
+      ]
+    },
+    {
+      "id": "pod-v2-1",
+      "type": "backend",
+      "label": "Pod v2-1",
+      "sublabel": "subset v2",
+      "pos": [
+        1140,
+        354
+      ],
+      "size": [
+        120,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pods",
+      "wraps": [
+        "pod-v1-1",
+        "pod-v1-2",
+        "pod-v2-1"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-to-gateway",
+      "from": "user",
+      "to": "gateway",
+      "label": "request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gateway-to-vs",
+      "from": "gateway",
+      "to": "vs"
+    },
+    {
+      "id": "vs-to-dr",
+      "from": "vs",
+      "to": "dr",
+      "label": "select subset",
+      "labelDy": -34
+    },
+    {
+      "id": "dr-to-pod-v1-1",
+      "from": "dr",
+      "to": "pod-v1-1"
+    },
+    {
+      "id": "dr-to-pod-v1-2",
+      "from": "dr",
+      "to": "pod-v1-2"
+    },
+    {
+      "id": "dr-to-pod-v2-1",
+      "from": "dr",
+      "to": "pod-v2-1"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "VirtualService routing",
+      "items": [
+        "Path matching — choose a route by URI condition",
+        "Header matching — expose the new version via headers such as x-dev-user",
+        "Weight distribution — canary ratios such as v1 95% / v2 5%"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "DestinationRule policies",
+      "items": [
+        "Load balancing — spread requests across the pods in a subset",
+        "Circuit breaker — isolate failing pods with outlierDetection",
+        "Connection pool — cap connections and pending requests"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Pods",
+      "items": [
+        "Two subset v1 pods and one subset v2 pod (3 replicas total)",
+        "After the policies, a request lands on exactly one of them"
+      ]
+    }
+  ]
+}

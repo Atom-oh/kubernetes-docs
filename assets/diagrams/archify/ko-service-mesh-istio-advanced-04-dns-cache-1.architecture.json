@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "DNS Proxy와 DNS Caching 통합 사용",
+    "output": "ko-service-mesh-istio-advanced-04-dns-cache-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1160,
+      600
+    ],
+    "views": [
+      {
+        "id": "proxy-path",
+        "label": "1. DNS Proxy 경로",
+        "focus": [
+          "app",
+          "dns_proxy",
+          "serviceentry"
+        ],
+        "note": "ServiceEntry로 등록된 api.example.com은 Envoy DNS Proxy가 가상 IP로 즉시 응답한다."
+      },
+      {
+        "id": "cache-path",
+        "label": "2. DNS Cache 경로",
+        "focus": [
+          "app",
+          "dns_cache",
+          "coredns"
+        ],
+        "note": "그 외 외부 도메인은 캐시 미스 시 CoreDNS에 조회하고, 결과를 캐시해 재사용한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "외부 DNS 조회",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "dns_proxy",
+      "type": "backend",
+      "label": "DNS Proxy",
+      "sublabel": "ServiceEntry 서비스",
+      "pos": [
+        440,
+        110
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "dns_cache",
+      "type": "backend",
+      "label": "DNS Cache",
+      "sublabel": "기타 외부 서비스",
+      "pos": [
+        440,
+        390
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "serviceentry",
+      "type": "external",
+      "label": "ServiceEntry",
+      "sublabel": "api.example.com",
+      "pos": [
+        860,
+        110
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "external",
+      "label": "CoreDNS",
+      "sublabel": "google.com",
+      "pos": [
+        860,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Envoy Proxy",
+      "wraps": [
+        "dns_proxy",
+        "dns_cache"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-proxy",
+      "from": "app",
+      "to": "dns_proxy",
+      "label": "1. api.example.com",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "proxy-to-app",
+      "from": "dns_proxy",
+      "to": "app",
+      "label": "가상 IP",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "app-to-cache",
+      "from": "app",
+      "to": "dns_cache",
+      "label": "2. google.com",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "cache-to-coredns",
+      "from": "dns_cache",
+      "to": "coredns",
+      "label": "캐시 미스",
+      "labelDy": -14
+    },
+    {
+      "id": "coredns-to-cache",
+      "from": "coredns",
+      "to": "dns_cache",
+      "label": "실제 IP",
+      "variant": "dashed",
+      "labelDy": 14
+    },
+    {
+      "id": "cache-to-app",
+      "from": "dns_cache",
+      "to": "app",
+      "label": "캐시된 IP",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "se-to-proxy",
+      "from": "serviceentry",
+      "to": "dns_proxy",
+      "label": "등록",
+      "variant": "dashed"
+    }
+  ]
+}

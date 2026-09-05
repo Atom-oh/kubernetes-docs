@@ -307,13 +307,17 @@ spec:
 
 ### 벤치마크 결과
 
-![Native, Cilium 서비스 메시, Istio의 P99 지연 시간을 비교하는 막대 그래프로, Cilium 서비스 메시가 Native에 근접한 낮은 지연을 보이는 반면 Istio는 훨씬 높은 지연을 보인다.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-06-best-practices-0.svg)
+![클라이언트 Pod에서 서버 Pod로 향하는 동일 요청이 Native, Cilium 서비스 메시, Istio 사이드카 데이터 플레인을 거칠 때의 P99 지연 시간(0.1ms, 0.3ms, 2.5ms)을 비교해, eBPF 기반 Cilium이 Native에 근접하고 Istio는 훨씬 높은 지연을 더함을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-06-best-practices-0.html)
 
 ## 사이드카 메시에서 마이그레이션
 
 ### 마이그레이션 전략
 
-![사이드카 서비스 메시에서 Cilium으로 전환하는 3단계(준비, 점진적 전환, 완전 전환) 마이그레이션 전략을 보여주는 순서도.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-06-best-practices-1.svg)
+![사이드카 서비스 메시에서 Cilium 서비스 메시로 전환하는 준비, 점진적 전환, 완전 전환의 3단계 마이그레이션 전략과 각 단계의 세부 작업을 순서대로 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-06-best-practices-1.html)
 
 ### Istio에서 마이그레이션
 
@@ -491,7 +495,9 @@ envoy:
 
 ### 점진적 L7 전환
 
-![L3/L4는 Cilium이 담당하고 L7 소유권을 Istio에서 Cilium으로 점진적으로 이관하는 3단계 전환 과정을 보여주는 순서도.](../../../assets/diagrams/rendered/ko-service-mesh-cilium-service-mesh-06-best-practices-2.svg)
+![L3/L4 네트워크 정책은 세 단계 내내 Cilium이 유지하고 L7 소유권만 Istio에서 Cilium과 Istio 혼합을 거쳐 Cilium으로 단계적으로 이관하는 점진적 L7 전환 3단계를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-06-best-practices-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-06-best-practices-2.html)
 
 ## 모니터링 및 알림 설정
 

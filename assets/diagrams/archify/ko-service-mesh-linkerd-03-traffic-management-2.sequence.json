@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "타임아웃 동작",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      720
+    ],
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "dashed": {
+          "label": "타임아웃 응답 (504)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client"
+    },
+    {
+      "id": "proxy",
+      "type": "security",
+      "label": "linkerd-proxy",
+      "sublabel": "timeout: 5s"
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Backend Service"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 300,
+      "label": "요청 전달 — timeout: 5s 시작"
+    },
+    {
+      "from": 320,
+      "to": 430,
+      "label": "정상 응답 (5초 이내)"
+    },
+    {
+      "from": 450,
+      "to": 600,
+      "label": "타임아웃 (5초 초과) — 백엔드는 계속 처리 중일 수 있음"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "client",
+      "to": "proxy",
+      "y": 195,
+      "label": "HTTP Request",
+      "variant": "emphasis",
+      "note": "linkerd-proxy가 5초 타임아웃 시작"
+    },
+    {
+      "id": "forward",
+      "from": "proxy",
+      "to": "service",
+      "y": 265,
+      "label": "Request",
+      "variant": "default"
+    },
+    {
+      "id": "ok-service",
+      "from": "service",
+      "to": "proxy",
+      "y": 355,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "ok-client",
+      "from": "proxy",
+      "to": "client",
+      "y": 405,
+      "label": "200 OK",
+      "variant": "return"
+    },
+    {
+      "id": "timeout-504",
+      "from": "proxy",
+      "to": "client",
+      "y": 495,
+      "label": "504 Gateway Timeout",
+      "variant": "dashed",
+      "note": "5초 경과 — 백엔드는 요청을 계속 처리할 수 있음"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "proxy",
+      "from": 190,
+      "to": 505,
+      "type": "security"
+    },
+    {
+      "participant": "service",
+      "from": 260,
+      "to": 360,
+      "type": "backend"
+    },
+    {
+      "participant": "service",
+      "from": 460,
+      "to": 590,
+      "type": "backend"
+    }
+  ]
+}

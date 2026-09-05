@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CloudFront와 Istio mTLS 통합",
+    "output": "ko-service-mesh-istio-security-01-mtls-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "edge-mtls",
+        "label": "엣지 mTLS 검증",
+        "focus": [
+          "client",
+          "cloudfront"
+        ],
+        "note": "클라이언트 인증서는 CloudFront 엣지에서 검증되고, CloudFront Function이 인증서 정보를 헤더로 전달한다."
+      },
+      {
+        "id": "inner-chain",
+        "label": "내부 TLS / mTLS 구간",
+        "focus": [
+          "cloudfront",
+          "alb",
+          "gateway",
+          "service"
+        ],
+        "note": "CloudFront에서 ALB, Istio Gateway까지는 TLS로, 메시 내부는 Envoy mTLS로 이어진다."
+      }
+    ],
+    "viewBox": [
+      1180,
+      300
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "Client Cert",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "cloudfront",
+      "type": "cloud",
+      "label": "CloudFront",
+      "sublabel": "mTLS + Edge",
+      "pos": [
+        270,
+        70
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "CDN"
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB",
+      "sublabel": "TLS",
+      "pos": [
+        490,
+        70
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "security",
+      "label": "Istio Gateway",
+      "sublabel": "tls mode SIMPLE",
+      "pos": [
+        740,
+        70
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "Envoy mTLS",
+      "pos": [
+        970,
+        70
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 엣지 · 로드밸런서",
+      "wraps": [
+        "cloudfront",
+        "alb"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 클러스터 · Istio 메시",
+      "wraps": [
+        "gateway",
+        "service"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-cloudfront",
+      "from": "client",
+      "to": "cloudfront",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "cloudfront-alb",
+      "from": "cloudfront",
+      "to": "alb",
+      "label": "TLS"
+    },
+    {
+      "id": "alb-gateway",
+      "from": "alb",
+      "to": "gateway",
+      "label": "TLS"
+    },
+    {
+      "id": "gateway-service",
+      "from": "gateway",
+      "to": "service",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "CloudFront 엣지",
+      "items": [
+        "CloudFront가 Trust Store(S3의 CA 번들)로 클라이언트 인증서를 검증한다",
+        "CloudFront Function이 cloudfront-viewer-tls-client-cert-* 헤더를 확인해 x-client-cert-* 헤더로 전달한다"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Istio 메시",
+      "items": [
+        "Istio Gateway는 tls mode SIMPLE로 TLS를 종단한다",
+        "AuthorizationPolicy가 x-client-cert-serial / x-client-cert-subject 헤더를 검증한다",
+        "메시 내부는 Envoy 간 자동 mTLS로 보호된다"
+      ]
+    }
+  ]
+}
