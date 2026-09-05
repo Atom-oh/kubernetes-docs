@@ -236,7 +236,7 @@ metadata:
 
 ### Service and Load Balancer Best Practices
 
-![Seven best practices for Services and load balancers on EKS branching from one root: use ClusterIP for internal services, LoadBalancer or Ingress for external ones, ALB for path routing, SSL termination and auth, NLB for TCP/UDP, high performance and static IPs, internal load balancers for cluster-internal access, cross-zone load balancing for high availability, and the right ip or instance target type.](../.gitbook/assets/en-eks-03-eks-networking-part2-3.png)
+![Seven best practices for Services and load balancers on EKS branching from one root: ClusterIP for internal services, LoadBalancer or Ingress for external ones, ALB for path routing and SSL termination, NLB for TCP/UDP and static IPs, internal load balancers, cross-zone load balancing, and the right ip or instance target type.](../.gitbook/assets/en-eks-03-eks-networking-part2-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-03-eks-networking-part2-3.html)
 

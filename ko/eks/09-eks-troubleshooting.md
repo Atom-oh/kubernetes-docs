@@ -1458,7 +1458,7 @@ EOF
 ```
 ## IAM 및 인증 문제
 
-![IAM 및 인증 문제 진단 다이어그램. EKS 접근 관련 장애가 IAM 인증 문제와 RBAC 문제 두 갈래로 나뉜다. IAM 인증 문제의 일반적인 원인은 aws-auth ConfigMap 오류, IAM 역할 권한 부족, OIDC 공급자 문제, AWS CLI 자격 증명 문제, kubeconfig 문제이고, RBAC 문제의 일반적인 원인은 권한 부족, 역할 바인딩 문제, 네임스페이스 범위 문제, 서비스 계정 구성 오류, 클러스터 역할 문제다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-4.png)
+![EKS 접근 장애를 IAM 인증 문제(aws-auth ConfigMap, IAM 역할 권한, OIDC 공급자, CLI 자격 증명, kubeconfig)와 RBAC 문제(권한, 역할 바인딩, 네임스페이스 범위, 서비스 계정, 클러스터 역할)의 두 갈래로 나눠 진단하는 구조를 보여준다.](../.gitbook/assets/ko-eks-09-eks-troubleshooting-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-09-eks-troubleshooting-4.html)
 

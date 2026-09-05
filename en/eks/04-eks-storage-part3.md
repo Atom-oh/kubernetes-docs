@@ -178,7 +178,7 @@ spec:
 
 Let's explore common storage issues that can occur in EKS clusters and their solutions.
 
-![Diagram showing four common EKS storage issues — PVC pending, provisioning failure, mount issues, performance issues — routed in two groups to their diagnostic checks and fix actions. The CSI driver log, IAM permission, and storage class checks are shared by both provisioning issues; the node status check is shared by the mount and performance issues.](../.gitbook/assets/en-eks-04-eks-storage-part3-1.png)
+![Four common EKS storage issues (PVC pending, provisioning failure, mount issues, performance issues) routed in two groups to shared diagnostic checks and fix actions: CSI driver logs, IAM permissions and StorageClass for the provisioning pair, node status for the mount and performance pair.](../.gitbook/assets/en-eks-04-eks-storage-part3-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-04-eks-storage-part3-1.html)
 
