@@ -154,7 +154,9 @@ http_request_duration_seconds{quantile="0.99"}           # p99 지연시간 (직
 
 메트릭 수집에는 두 가지 주요 모델이 있습니다:
 
-![Prometheus가 애플리케이션의 /metrics 엔드포인트를 직접 가져오는 Pull 모델과, 애플리케이션이 Datadog·CloudWatch 같은 수집기로 메트릭을 직접 전송하는 Push 모델을 나란히 비교하는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-README-0.png)
+![Prometheus가 애플리케이션의 /metrics 엔드포인트를 직접 가져오는 Pull 모델과, 애플리케이션이 Datadog·CloudWatch 같은 수집기로 메트릭을 직접 전송하는 Push 모델을 나란히 비교하여 보여준다.](../../.gitbook/assets/ko-observability-metrics-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-readme-0.html)
 
 ### Pull 모델
 
@@ -304,7 +306,9 @@ count(count by (endpoint)(http_requests_total))
 
 Prometheus는 뛰어난 실시간 모니터링 도구이지만, 장기 데이터 저장에는 몇 가지 한계가 있습니다:
 
-![15~30일 보존하는 Prometheus의 단기 저장이 실시간 알림·최근 트렌드·즉각적 디버깅을 담당하고, 그 데이터를 VictoriaMetrics 등 장기 저장으로 remote_write 해 용량 계획·연간 트렌드·규정 준수·비용 분석에 쓰는 구조를 보여주는 아키텍처 다이어그램.](../../.gitbook/assets/ko-observability-metrics-README-1.png)
+![15~30일 보존하는 Prometheus의 단기 저장이 실시간 알림·최근 트렌드·즉각적 디버깅을 담당하고, 그 데이터를 VictoriaMetrics(Mimir/Thanos) 등 1년 이상 보존하는 장기 저장으로 remote_write 해 용량 계획·연간 트렌드·규정 준수·비용 분석에 쓰는 구조를 보여준다.](../../.gitbook/assets/ko-observability-metrics-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-readme-1.html)
 
 **Prometheus 장기 저장의 문제점**:
 
@@ -379,13 +383,17 @@ remote_write:
 
 ### 선택 가이드
 
-![팀 규모와 운영 역량, AWS 환경 여부, 비용 우선순위, 멀티클라우드 여부를 차례로 물어 CloudWatch, Datadog, VictoriaMetrics/Mimir, Amazon Managed Prometheus, AMP+Grafana 중 하나로 안내하는 메트릭 솔루션 선택 흐름도.](../../.gitbook/assets/ko-observability-metrics-README-2.png)
+![팀 규모와 운영 역량, AWS 환경 여부, 비용 우선순위, 멀티 클라우드 여부를 차례로 물어 CloudWatch, Datadog, VictoriaMetrics/Mimir, Amazon Managed Prometheus, AMP+Grafana 중 하나로 안내하는 메트릭 솔루션 선택 흐름을 보여준다.](../../.gitbook/assets/ko-observability-metrics-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-readme-2.html)
 
 ## 메트릭 수집 아키텍처
 
 ### Kubernetes 환경의 메트릭 수집 구조
 
-![node-exporter, kube-state-metrics, cAdvisor, 애플리케이션의 /metrics를 Prometheus(또는 vmagent)가 모두 수집해 Prometheus TSDB와 VictoriaMetrics 두 저장 계층으로 나눠 쓰고, 이 데이터를 Grafana와 Alertmanager가 조회하는 4단 Kubernetes 메트릭 아키텍처.](../../.gitbook/assets/ko-observability-metrics-README-3.png)
+![node-exporter, kube-state-metrics, cAdvisor, 애플리케이션의 /metrics를 Prometheus(또는 vmagent)가 스크레이프해 단기 저장용 Prometheus TSDB에 로컬 쓰기하고 remote_write로 장기 저장용 VictoriaMetrics에 전송하며, Grafana가 두 저장소를 조회하고 Alertmanager가 TSDB 기준 알림을 받는 Kubernetes 메트릭 수집 구조를 보여준다.](../../.gitbook/assets/ko-observability-metrics-readme-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-readme-3.html)
 
 ### 주요 메트릭 소스
 

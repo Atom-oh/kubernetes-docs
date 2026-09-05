@@ -1,0 +1,278 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "메트릭 솔루션 선택 가이드",
+    "output": "public/archmaps/ko-observability-metrics-readme-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "small-team",
+        "label": "소규모 / 제한적 운영",
+        "focus": [
+          "teamSize",
+          "awsEnv",
+          "cloudwatch",
+          "datadog"
+        ],
+        "note": "운영 역량이 제한적인 소규모 팀은 관리형 서비스를 선택한다. AWS 환경이면 CloudWatch, 아니면 Datadog."
+      },
+      {
+        "id": "medium-team",
+        "label": "중간 규모 팀",
+        "focus": [
+          "teamSize",
+          "costPriority",
+          "victoria",
+          "amp"
+        ],
+        "note": "비용 우선 여부에 따라 자체 호스팅 VictoriaMetrics와 Amazon Managed Prometheus 중 하나를 선택한다."
+      },
+      {
+        "id": "large-team",
+        "label": "대규모 / 전문 운영",
+        "focus": [
+          "teamSize",
+          "multiCloud",
+          "vmMimir",
+          "ampGrafana"
+        ],
+        "note": "멀티 클라우드 팀은 VictoriaMetrics 또는 Mimir를 자체 호스팅하고, AWS 전용 팀은 AMP와 Amazon Managed Grafana를 사용한다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "시작"
+    },
+    {
+      "id": "small",
+      "label": "소규모 팀 / 제한적 운영"
+    },
+    {
+      "id": "medium",
+      "label": "중간 규모 팀"
+    },
+    {
+      "id": "large",
+      "label": "대규모 팀 / 전문 운영"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "teamSize",
+    "costPriority",
+    "victoria"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "cloudwatch",
+      "datadog",
+      "victoria",
+      "amp",
+      "vmMimir",
+      "ampGrafana"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "cloudwatch"
+      },
+      {
+        "from": "start",
+        "to": "victoria"
+      },
+      {
+        "from": "start",
+        "to": "ampGrafana"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "메트릭 솔루션 선택",
+      "width": 190
+    },
+    {
+      "id": "teamSize",
+      "lane": "entry",
+      "col": 1,
+      "type": "security",
+      "label": "팀 규모와 운영 역량?",
+      "tag": "핵심 결정",
+      "width": 250
+    },
+    {
+      "id": "awsEnv",
+      "lane": "small",
+      "col": 2,
+      "type": "security",
+      "label": "AWS 환경?",
+      "width": 124
+    },
+    {
+      "id": "cloudwatch",
+      "lane": "small",
+      "col": 3,
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "Container Insights",
+      "width": 112
+    },
+    {
+      "id": "datadog",
+      "lane": "small",
+      "col": 4,
+      "type": "external",
+      "label": "Datadog",
+      "sublabel": "SaaS",
+      "width": 96
+    },
+    {
+      "id": "costPriority",
+      "lane": "medium",
+      "col": 2,
+      "type": "security",
+      "label": "비용 우선?",
+      "width": 110
+    },
+    {
+      "id": "victoria",
+      "lane": "medium",
+      "col": 3,
+      "type": "database",
+      "label": "VictoriaMetrics",
+      "sublabel": "자체 호스팅",
+      "width": 118
+    },
+    {
+      "id": "amp",
+      "lane": "medium",
+      "col": 4,
+      "type": "cloud",
+      "label": "Amazon Managed Prometheus",
+      "width": 184
+    },
+    {
+      "id": "multiCloud",
+      "lane": "large",
+      "col": 2,
+      "type": "security",
+      "label": "멀티 클라우드?",
+      "width": 104
+    },
+    {
+      "id": "vmMimir",
+      "lane": "large",
+      "col": 3,
+      "type": "database",
+      "label": "VictoriaMetrics 또는 Mimir",
+      "sublabel": "자체 호스팅",
+      "width": 176
+    },
+    {
+      "id": "ampGrafana",
+      "lane": "large",
+      "col": 4,
+      "type": "cloud",
+      "label": "AMP + Grafana",
+      "sublabel": "Amazon Managed Grafana",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "teamSize",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "teamSize",
+      "to": "awsEnv",
+      "label": "소규모 / 제한적",
+      "role": "branch"
+    },
+    {
+      "from": "teamSize",
+      "to": "costPriority",
+      "label": "중간",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "teamSize",
+      "to": "multiCloud",
+      "label": "대규모 / 전문",
+      "role": "branch"
+    },
+    {
+      "from": "awsEnv",
+      "to": "cloudwatch",
+      "label": "예",
+      "role": "branch",
+      "fromSide": "right"
+    },
+    {
+      "from": "awsEnv",
+      "to": "datadog",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "costPriority",
+      "to": "victoria",
+      "label": "예",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "costPriority",
+      "to": "amp",
+      "label": "아니오",
+      "role": "branch"
+    },
+    {
+      "from": "multiCloud",
+      "to": "vmMimir",
+      "label": "예",
+      "role": "branch"
+    },
+    {
+      "from": "multiCloud",
+      "to": "ampGrafana",
+      "label": "아니오",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "월간 비용 추정",
+      "items": [
+        "1,000개 노드 · 100만 활성 시계열 · 30일 보존",
+        "Prometheus + VictoriaMetrics ≈ $500 (인프라만)",
+        "Amazon Managed Prometheus ≈ $1,700",
+        "CloudWatch ≈ $3,000+ · Datadog ≈ $15,000+"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "분기 기준",
+      "items": [
+        "CloudWatch와 Datadog: 설정 복잡성 낮음, AWS 네이티브 통합",
+        "VictoriaMetrics와 Mimir: 수평 확장, 네이티브 고가용성, 무료 (인프라만)",
+        "AMP는 PromQL을 유지하면서 저장소 운영을 AWS에 맡긴다"
+      ]
+    }
+  ]
+}

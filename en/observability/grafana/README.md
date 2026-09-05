@@ -20,7 +20,9 @@ Grafana is an open-source platform for visualizing and analyzing metrics, logs, 
 
 ## Architecture
 
-![Architecture diagram of Grafana: browsers and API clients hit the Frontend, which calls the Backend; the Backend persists to PostgreSQL/MySQL and Redis/Memcached and drives a Plugin System that queries six data sources (Prometheus, VictoriaMetrics, Loki, Tempo, CloudWatch, Elasticsearch), while a separate Alerting Engine fires notifications to Slack, PagerDuty, Email, and Webhook.](../../.gitbook/assets/en-observability-grafana-README-0.png)
+![Architecture diagram of Grafana: browsers and API clients hit the Frontend, which calls the Backend; the Backend persists to PostgreSQL/MySQL and Redis/Memcached and drives a Plugin System that queries Prometheus, Loki, Tempo, CloudWatch and more, while a separate Alerting Engine notifies Slack, PagerDuty, Email, and Webhook.](../../.gitbook/assets/en-observability-grafana-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-grafana-readme-0.html)
 
 ## Helm Deployment
 

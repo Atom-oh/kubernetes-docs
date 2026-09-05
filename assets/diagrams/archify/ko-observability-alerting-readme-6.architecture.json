@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS 특화 알림 영역",
+    "output": "ko-observability-alerting-readme-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1100,
+      430
+    ],
+    "views": [
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "apiserver",
+          "etcd",
+          "sched-cm"
+        ],
+        "note": "EKS 관리형 컨트롤 플레인 구성 요소: API Server, etcd, Scheduler와 Controller Manager."
+      },
+      {
+        "id": "data-plane",
+        "label": "데이터 플레인",
+        "focus": [
+          "node",
+          "pod",
+          "container"
+        ],
+        "note": "워커 노드, 파드, 컨테이너 상태 - 워크로드 수준의 알림 대상."
+      },
+      {
+        "id": "networking",
+        "label": "네트워킹",
+        "focus": [
+          "vpc-cni",
+          "svc-ingress",
+          "coredns"
+        ],
+        "note": "VPC CNI, Service/Ingress, CoreDNS 상태."
+      },
+      {
+        "id": "storage",
+        "label": "스토리지",
+        "focus": [
+          "csi",
+          "pv-pvc"
+        ],
+        "note": "EBS/EFS CSI 드라이버와 PersistentVolume / PersistentVolumeClaim 상태."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        50,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "etcd",
+      "type": "database",
+      "label": "etcd",
+      "sublabel": "클러스터 상태 저장",
+      "pos": [
+        210,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "sched-cm",
+      "type": "backend",
+      "label": "Scheduler / Ctrl Mgr",
+      "sublabel": "스케줄링 + 컨트롤러",
+      "pos": [
+        370,
+        80
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "node",
+      "type": "cloud",
+      "label": "노드 상태",
+      "sublabel": "워커 노드",
+      "pos": [
+        610,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "파드 상태",
+      "sublabel": "phase / 재시작",
+      "pos": [
+        770,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "container",
+      "type": "backend",
+      "label": "컨테이너 상태",
+      "sublabel": "재시작 / OOM",
+      "pos": [
+        930,
+        80
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vpc-cni",
+      "type": "cloud",
+      "label": "VPC CNI",
+      "sublabel": "파드 네트워킹",
+      "pos": [
+        50,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-ingress",
+      "type": "cloud",
+      "label": "Service / Ingress",
+      "sublabel": "트래픽 진입점",
+      "pos": [
+        210,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "coredns",
+      "type": "backend",
+      "label": "CoreDNS",
+      "sublabel": "클러스터 DNS",
+      "pos": [
+        370,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "cloud",
+      "label": "EBS CSI / EFS CSI",
+      "sublabel": "스토리지 드라이버",
+      "pos": [
+        610,
+        280
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pv-pvc",
+      "type": "database",
+      "label": "PV / PVC",
+      "sublabel": "볼륨 바인딩",
+      "pos": [
+        800,
+        280
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인",
+      "wraps": [
+        "apiserver",
+        "etcd",
+        "sched-cm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "데이터 플레인",
+      "wraps": [
+        "node",
+        "pod",
+        "container"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "네트워킹",
+      "wraps": [
+        "vpc-cni",
+        "svc-ingress",
+        "coredns"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지",
+      "wraps": [
+        "csi",
+        "pv-pvc"
+      ]
+    }
+  ],
+  "connections": [],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 수준 알림",
+      "items": [
+        "EKSAPIServerDown - API Server 타깃이 1분간 down (critical)",
+        "EKSNodeNotReady - 노드 Ready 조건이 5분간 false (critical)",
+        "EKSClusterAutoscalerError - 오토스케일러 오류가 5분간 지속 (warning)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "워크로드 수준 알림",
+      "items": [
+        "PodCrashLooping - 15분 내 3회 이상 재시작",
+        "PodNotReady - Pending/Unknown 상태가 15분간 지속",
+        "DeploymentReplicasMismatch - 가용 레플리카 != 목표 레플리카가 10분간 지속"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "다이어그램 읽는 법",
+      "items": [
+        "네 가지 알림 영역: 컨트롤 플레인, 데이터 플레인, 네트워킹, 스토리지",
+        "각 상자는 트래픽 경로가 아닌 알림 대상을 나타냄"
+      ]
+    }
+  ]
+}
