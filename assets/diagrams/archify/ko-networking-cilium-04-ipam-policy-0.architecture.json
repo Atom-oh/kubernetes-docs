@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium IPAM 아키텍처",
+    "output": "ko-networking-cilium-04-ipam-policy-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1370,
+      410
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Cilium 자체 IPAM 모드"
+        },
+        "cloud": {
+          "label": "클라우드 제공업체 IPAM 모드"
+        },
+        "external": {
+          "label": "사용자 정의 IPAM 모드"
+        },
+        "frontend": {
+          "label": "할당 결과"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cluster-scope",
+        "label": "클러스터 범위 IPAM",
+        "focus": [
+          "cluster-pool",
+          "multi-pool",
+          "central"
+        ],
+        "note": "기본 모드인 클러스터 풀과 다중 풀은 클러스터 전체에서 중앙 집중식으로 IP를 할당한다."
+      },
+      {
+        "id": "node-scope",
+        "label": "노드 범위 IPAM",
+        "focus": [
+          "host-scope",
+          "distributed"
+        ],
+        "note": "각 노드가 자신에게 할당된 범위 안에서 IP를 배정하므로 중앙 조정이 필요 없다."
+      },
+      {
+        "id": "cloud-provider",
+        "label": "클라우드 제공업체 IPAM",
+        "focus": [
+          "aws-eni",
+          "azure-ipam",
+          "gke-ipam",
+          "cloud-native"
+        ],
+        "note": "AWS ENI, Azure, GKE 모드는 오버레이 없이 VPC/VNET의 네이티브 IP를 파드에 직접 할당한다."
+      },
+      {
+        "id": "custom",
+        "label": "사용자 정의 IPAM",
+        "focus": [
+          "crd-ipam",
+          "custom-alloc"
+        ],
+        "note": "CiliumIPPool 커스텀 리소스로 IP 풀을 정의해 네임스페이스나 파드 단위로 세분화해 관리한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cluster-pool",
+      "type": "backend",
+      "label": "클러스터 풀",
+      "sublabel": "ipam: cluster-pool",
+      "pos": [
+        42,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "multi-pool",
+      "type": "backend",
+      "label": "다중 풀",
+      "sublabel": "여러 IP 풀 구성",
+      "pos": [
+        210,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "host-scope",
+      "type": "backend",
+      "label": "쿠버네티스 호스트 범위",
+      "sublabel": "노드별 IP 범위",
+      "pos": [
+        420,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "aws-eni",
+      "type": "cloud",
+      "label": "AWS ENI",
+      "sublabel": "ipam: eni",
+      "pos": [
+        630,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "azure-ipam",
+      "type": "cloud",
+      "label": "Azure IPAM",
+      "sublabel": "Azure VNET 통합",
+      "pos": [
+        798,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "gke-ipam",
+      "type": "cloud",
+      "label": "GKE IPAM",
+      "sublabel": "GCP VPC 통합",
+      "pos": [
+        966,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "crd-ipam",
+      "type": "external",
+      "label": "CRD 기반 IPAM",
+      "sublabel": "CiliumIPPool 리소스",
+      "pos": [
+        1176,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "central",
+      "type": "frontend",
+      "label": "중앙 집중식 할당",
+      "sublabel": "클러스터 전체 풀에서 배정",
+      "pos": [
+        102,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "distributed",
+      "type": "frontend",
+      "label": "분산 할당",
+      "sublabel": "노드가 자체 범위에서 배정",
+      "pos": [
+        396,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cloud-native",
+      "type": "frontend",
+      "label": "클라우드 네이티브 할당",
+      "sublabel": "VPC/VNET 네이티브 IP",
+      "pos": [
+        774,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "custom-alloc",
+      "type": "frontend",
+      "label": "사용자 정의 할당",
+      "sublabel": "풀 단위 세분화 관리",
+      "pos": [
+        1152,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "클러스터 범위 IPAM",
+      "wraps": [
+        "cluster-pool",
+        "multi-pool"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "노드 범위 IPAM",
+      "wraps": [
+        "host-scope"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "클라우드 제공업체 IPAM",
+      "wraps": [
+        "aws-eni",
+        "azure-ipam",
+        "gke-ipam"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "사용자 정의 IPAM",
+      "wraps": [
+        "crd-ipam"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "cluster-pool-to-central",
+      "from": "cluster-pool",
+      "to": "central",
+      "label": "단일 풀에서 할당",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -24
+    },
+    {
+      "id": "multi-pool-to-central",
+      "from": "multi-pool",
+      "to": "central",
+      "label": "여러 풀에서 할당",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 24
+    },
+    {
+      "id": "host-scope-to-distributed",
+      "from": "host-scope",
+      "to": "distributed",
+      "label": "노드별 할당",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "aws-eni-to-cloud",
+      "from": "aws-eni",
+      "to": "cloud-native",
+      "label": "AWS VPC IP 할당",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -20
+    },
+    {
+      "id": "azure-to-cloud",
+      "from": "azure-ipam",
+      "to": "cloud-native",
+      "label": "Azure VNET IP 할당",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "gke-to-cloud",
+      "from": "gke-ipam",
+      "to": "cloud-native",
+      "label": "GCP VPC IP 할당",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 20
+    },
+    {
+      "id": "crd-to-custom",
+      "from": "crd-ipam",
+      "to": "custom-alloc",
+      "label": "사용자 정의 할당",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "클러스터 풀(Cluster Pool)",
+      "items": [
+        "기본 IPAM 모드",
+        "클러스터 전체에서 중앙 집중식으로 IP 주소 할당",
+        "단일 또는 여러 IP 풀 구성 가능"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "AWS ENI",
+      "items": [
+        "AWS VPC ENI 통합으로 파드에 네이티브 VPC IP 할당",
+        "오버레이 네트워크 없이 VPC 네이티브 네트워킹",
+        "AWS 환경에 최적화"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "CRD 기반 IPAM",
+      "items": [
+        "CiliumIPPool 커스텀 리소스로 IP 풀 정의",
+        "특정 네임스페이스 또는 파드에 IP 풀 할당",
+        "동적 IP 풀 관리"
+      ]
+    }
+  ]
+}

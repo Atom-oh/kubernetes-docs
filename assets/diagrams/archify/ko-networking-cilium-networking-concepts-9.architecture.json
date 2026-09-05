@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "직접 라우팅(Native Routing)",
+    "output": "ko-networking-cilium-networking-concepts-9.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "포드" },
+        "database": { "label": "노드 라우팅 테이블" },
+        "cloud": { "label": "노드 네트워크 인터페이스" }
+      }
+    }
+  },
+  "components": [
+    { "id": "podA", "type": "backend", "label": "포드 A", "sublabel": "10.0.0.2", "pos": [60, 80], "size": [150, 60] },
+    { "id": "routeA", "type": "database", "label": "라우팅 테이블", "sublabel": "10.0.0.0/24 → local · 10.0.1.0/24 → 노드 B", "pos": [300, 80], "size": [300, 60] },
+    { "id": "ethA", "type": "cloud", "label": "eth0", "sublabel": "192.168.1.10", "pos": [690, 80], "size": [150, 60] },
+    { "id": "podB", "type": "backend", "label": "포드 B", "sublabel": "10.0.1.2", "pos": [60, 330], "size": [150, 60] },
+    { "id": "routeB", "type": "database", "label": "라우팅 테이블", "sublabel": "10.0.1.0/24 → local · 10.0.0.0/24 → 노드 A", "pos": [300, 330], "size": [300, 60] },
+    { "id": "ethB", "type": "cloud", "label": "eth0", "sublabel": "192.168.1.11", "pos": [690, 330], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "노드 A", "wraps": ["podA", "routeA", "ethA"] },
+    { "kind": "region", "label": "노드 B", "wraps": ["podB", "routeB", "ethB"] }
+  ],
+  "connections": [
+    { "id": "podA-routeA", "from": "podA", "to": "routeA", "label": "포드 패킷" },
+    { "id": "routeA-ethA", "from": "routeA", "to": "ethA", "label": "경로 조회" },
+    { "id": "ethA-ethB", "from": "ethA", "to": "ethB", "label": "물리 네트워크 (캡슐화 없음)", "variant": "emphasis", "labelAt": [765, 235] },
+    { "id": "podB-routeB", "from": "podB", "to": "routeB", "label": "포드 패킷" },
+    { "id": "routeB-ethB", "from": "routeB", "to": "ethB", "label": "경로 조회" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "직접 라우팅 모드",
+      "items": [
+        "각 노드는 자신의 포드 CIDR에 대한 라우팅 정보를 광고한다",
+        "오버레이 캡슐화 없이 포드 IP를 직접 라우팅해 오버헤드가 없다",
+        "노드 간 라우팅 가능한 네트워크가 필요하다 (단일 서브넷 클러스터 등)"
+      ]
+    }
+  ]
+}

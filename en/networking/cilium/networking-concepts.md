@@ -31,7 +31,9 @@ The OSI (Open Systems Interconnection) model is a conceptual framework that clas
 
 ### OSI Model and TCP/IP Model Comparison
 
-![Diagram mapping the seven OSI reference layers to the four TCP/IP stack layers, with representative protocols shown under each layer.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-0.svg)
+![Diagram mapping the seven OSI reference layers to the four TCP/IP stack layers, with representative protocols shown under each OSI layer.](../../.gitbook/assets/en-networking-cilium-networking-concepts-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-0.html)
 
 ### OSI 7-Layer Model
 
@@ -153,7 +155,9 @@ There are several container networking models, each suitable for different use c
 - Efficient communication between containers on the same host
 - Default networking mode for Docker
 
-![Diagram showing two containers each connected through a veth pair to a shared Linux bridge, which forwards traffic onto the host network.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-1.svg)
+![Diagram showing two containers each connected through a veth pair to the docker0 Linux bridge on the Docker host, which forwards traffic onto the host network via eth0.](../../.gitbook/assets/en-networking-cilium-networking-concepts-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-1.html)
 
 #### 2. Host Networking
 
@@ -162,7 +166,9 @@ There are several container networking models, each suitable for different use c
 - Provides best network performance
 - Potential for port conflicts
 
-![Diagram showing two containers sharing the host's network namespace directly, with no bridge or isolation layer between them.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-2.svg)
+![Diagram showing two containers inside one host sharing the host network stack (eth0, 192.168.1.10) directly, with no separate network namespace or isolation layer between them.](../../.gitbook/assets/en-networking-cilium-networking-concepts-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-2.html)
 
 #### 3. Overlay Networking
 
@@ -171,7 +177,9 @@ There are several container networking models, each suitable for different use c
 - Suitable for large-scale clusters
 - Supported by Cilium, Calico, Flannel, etc.
 
-![Diagram showing two hosts, each running a container on a virtual overlay segment, tunneled to each other over VXLAN across the physical network.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-3.svg)
+![Diagram showing two hosts, each running a container on the 10.0.0.0/24 overlay network, with packets encapsulated at Host A's eth0, carried over a VXLAN tunnel across the physical network, and decapsulated at Host B's eth0 for delivery to the peer container.](../../.gitbook/assets/en-networking-cilium-networking-concepts-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-3.html)
 
 #### 4. Underlay Networking (Direct Routing)
 
@@ -180,7 +188,9 @@ There are several container networking models, each suitable for different use c
 - Requires control over network infrastructure
 - Can integrate with routing protocols like BGP
 
-![Diagram showing two hosts, each routing container traffic through a local routing table directly onto the physical network with no encapsulation.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-4.svg)
+![Diagram showing two hosts, each routing container traffic through a local routing table directly onto the physical network with no encapsulation.](../../.gitbook/assets/en-networking-cilium-networking-concepts-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-4.html)
 
 ### Kubernetes Networking Model
 
@@ -232,7 +242,9 @@ VXLAN is one of the most widely used overlay protocols in container networking.
 - **MAC-in-UDP Encapsulation**: Encapsulates original L2 frames into UDP packets
 
 VXLAN Packet Structure:
-![Diagram of a VXLAN-encapsulated packet, showing the outer Ethernet, IP, and UDP headers wrapping a VXLAN header, which itself wraps the original Ethernet frame, IP header, TCP/UDP header, and payload.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-5.svg)
+![Diagram of a VXLAN-encapsulated packet, showing the outer Ethernet, IP, and UDP headers wrapping a VXLAN header, which itself wraps the original Ethernet frame, IP header, TCP/UDP header, and payload.](../../.gitbook/assets/en-networking-cilium-networking-concepts-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-5.html)
 
 #### GENEVE (Generic Network Virtualization Encapsulation)
 
@@ -307,7 +319,9 @@ Source NAT modifies the source IP address of packets. It is typically used when 
 - **Use Cases**: Internet access, outbound connections
 - **Tracking**: Stores connection state in NAT table
 
-![Diagram showing a client on an internal network sending traffic through a NAT router that rewrites the source address, reaching a server on the internet with a public source IP.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-6.svg)
+![Diagram showing a client on an internal network (10.0.0.2:1234) sending traffic through a NAT router whose SNAT rewrites the source address to public IP 198.51.100.1:5678 before it reaches a server on the internet (203.0.113.5).](../../.gitbook/assets/en-networking-cilium-networking-concepts-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-6.html)
 
 #### 2. Destination NAT (DNAT)
 
@@ -317,7 +331,9 @@ Destination NAT modifies the destination IP address of packets. It is typically 
 - **Use Cases**: Port forwarding, load balancing, inbound connections
 - **Configuration**: Defines mappings for specific ports or port ranges
 
-![Diagram showing a client on the internet sending traffic through a NAT router that rewrites the destination address, reaching a server on the internal network at its private IP.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-7.svg)
+![Diagram showing a client on the internet sending traffic through a NAT router that rewrites the destination address, reaching a server on the internal network at its private IP.](../../.gitbook/assets/en-networking-cilium-networking-concepts-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-7.html)
 
 #### 3. Port Address Translation (PAT)
 
@@ -327,7 +343,9 @@ PAT modifies both IP addresses and port numbers. This allows multiple internal h
 - **Use Cases**: IP address conservation, support for many internal hosts
 - **Limitations**: Limited by the number of available ports (approximately 65,000)
 
-![Diagram showing two internal hosts sharing a single public IP through a PAT router, which assigns each host a distinct public port when reaching separate internet servers.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-8.svg)
+![Diagram showing two internal hosts sharing a single public IP (198.51.100.1) through a PAT router, which maps each host to a distinct public port (5000 and 5001) when reaching a server on the internet.](../../.gitbook/assets/en-networking-cilium-networking-concepts-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-8.html)
 
 #### 4. Bi-directional NAT
 
@@ -479,7 +497,9 @@ In native routing mode, Cilium routes pod IPs directly without overlay encapsula
 - **Requirements**: Routable network between nodes
 - **Use Cases**: Performance-critical workloads, single-subnet clusters
 
-![Diagram showing two Kubernetes nodes, each routing pod traffic through a local routing table directly onto the physical network with no overlay encapsulation.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-9.svg)
+![Diagram of Cilium native routing showing two Kubernetes nodes, each routing pod traffic through a local routing table directly onto the physical network with no overlay encapsulation.](../../.gitbook/assets/en-networking-cilium-networking-concepts-9.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-9.html)
 
 #### 2. BGP Routing
 
@@ -578,7 +598,9 @@ DNS is a distributed system that translates human-readable domain names into IP 
 
 #### DNS Resolution Process
 
-![Sequence diagram showing a client's iterative DNS query walking from the root DNS server to the .com TLD server to the example.com authoritative server, which returns the final IP address.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-10.svg)
+![Sequence diagram showing a client's iterative DNS query walking from the root DNS server to the .com TLD server to the example.com authoritative server, which returns the final IP address.](../../.gitbook/assets/en-networking-cilium-networking-concepts-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-10.html)
 
 ### Service Discovery in Container Environments
 
@@ -631,7 +653,9 @@ Kubernetes runs a cluster DNS service (typically CoreDNS) to support service dis
 - **Pod DNS**: `<pod-ip>.<namespace>.pod.cluster.local`
 - **Headless Services**: Service name resolves to DNS records of all pod IPs
 
-![Sequence diagram showing Pod A querying CoreDNS for a service name, CoreDNS resolving it against the Service's ClusterIP and selecting a backend pod, then returning the resolved IP to Pod A.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-11.svg)
+![Sequence diagram showing Pod A querying CoreDNS for service-b, CoreDNS resolving it against Service B (ClusterIP 10.0.0.1) and selecting one of backend pods B1, B2, B3, then returning 10.0.0.1 to Pod A.](../../.gitbook/assets/en-networking-cilium-networking-concepts-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-11.html)
 
 #### Kubernetes Service Discovery Mechanisms
 
@@ -729,7 +753,9 @@ L4 load balancing distributes traffic based on transport layer information such 
 - **Disadvantages**: Cannot perform advanced routing based on application layer information
 - **Use Cases**: TCP/UDP-based services, high-performance requirements
 
-![Diagram showing a client request routed by a transport-layer load balancer to one of two backend servers, based only on TCP/UDP header information.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-12.svg)
+![Diagram showing a client request routed by a transport-layer load balancer to one of two backend servers, based only on TCP/UDP header information.](../../.gitbook/assets/en-networking-cilium-networking-concepts-12.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-12.html)
 
 #### 2. L7 (Application Layer) Load Balancing
 
@@ -740,7 +766,9 @@ L7 load balancing distributes traffic based on application layer information suc
 - **Disadvantages**: Higher processing overhead, SSL termination required for encrypted traffic
 - **Use Cases**: Web applications, microservices, API gateways
 
-![Diagram showing a client HTTP request routed by an application-layer load balancer to one of two backend services, based on URL path and header inspection.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-13.svg)
+![Diagram showing a client HTTP request routed by an application-layer load balancer to one of two backend services, based on URL path and header inspection.](../../.gitbook/assets/en-networking-cilium-networking-concepts-13.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-13.html)
 
 ### Load Balancing Algorithms
 
@@ -845,7 +873,9 @@ Cilium implements efficient load balancing using eBPF:
 - **Scalability**: Supports large-scale services and endpoints
 - **Connection Tracking Optimization**: Efficient state management
 
-![Diagram showing a packet from Pod A moving through a four-step eBPF pipeline in the kernel — intercept, service lookup, backend selection, forwarding — before reaching Pod B, replacing kube-proxy.](../../../assets/diagrams/rendered/en-networking-cilium-networking-concepts-14.svg)
+![Diagram of Cilium eBPF-based load balancing: a packet Pod A sends to a Service IP passes through a four-step eBPF pipeline in the kernel — packet intercept, service map lookup, backend selection, packet forwarding — and is delivered straight to Pod B without kube-proxy.](../../.gitbook/assets/en-networking-cilium-networking-concepts-14.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-cilium-networking-concepts-14.html)
 
 #### 2. Load Balancing Algorithms
 

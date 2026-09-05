@@ -15,13 +15,17 @@ AWS Load Balancer Controller는 Kubernetes 클러스터에서 AWS Elastic Load B
 - **AWS WAF 통합**: 웹 애플리케이션 방화벽 적용
 - **AWS Shield**: DDoS 보호
 
-![EKS 클러스터의 Ingress·Service·TargetGroupBinding 리소스가 AWS Load Balancer Controller를 트리거하여 ALB·NLB를 생성하고, 이들이 타겟 그룹을 통해 Pod로 트래픽을 전달하는 구조를 보여준다.](../../assets/diagrams/rendered/ko-networking-03-aws-lb-controller-0.svg)
+![EKS 클러스터의 Ingress·Service 리소스가 AWS Load Balancer Controller를 트리거하여 ALB·NLB와 각각의 Target Group을 생성하고, TargetGroupBinding은 기존 Target Group을 직접 연결하며, 두 Target Group이 모두 Pod로 트래픽을 전달하는 구조를 보여준다.](../.gitbook/assets/ko-networking-03-aws-lb-controller-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-03-aws-lb-controller-0.html)
 
 ## 아키텍처
 
 ### 컨트롤러 동작 방식
 
-![사용자가 Ingress/Service를 생성하면 LB Controller가 Kubernetes API 변경을 감지해 AWS API로 ALB/NLB와 Target Group을 생성하고, 그 결과를 다시 Kubernetes API를 통해 사용자에게 DNS로 돌려주는 과정을 시간 순으로 보여준다.](../../assets/diagrams/rendered/ko-networking-03-aws-lb-controller-1.svg)
+![AWS Load Balancer Controller 동작 시퀀스: 사용자가 kubectl로 Ingress/Service를 생성하면 Kubernetes API의 Watch 이벤트를 받은 LB Controller가 AWS API(ELBv2)에 Load Balancer 생성을 요청해 ALB/NLB를 프로비저닝하고, ARN을 받은 뒤 Target Group 생성과 Listener 규칙 설정을 이어서 수행한다. 이후 Status를 업데이트하고 사용자에게 Load Balancer DNS를 제공하며, 마지막 단계 '지속 조정'에서 Pod 변경 시 Target이 자동으로 등록/해제된다는 점을 함께 표시한다.](../.gitbook/assets/ko-networking-03-aws-lb-controller-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-03-aws-lb-controller-1.html)
 
 ### 컴포넌트 구성
 

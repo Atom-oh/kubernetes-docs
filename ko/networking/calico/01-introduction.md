@@ -144,7 +144,9 @@ Calico는 컨테이너, 가상 머신, 네이티브 호스트 기반 워크로�
 
 ### 프로젝트 거버넌스
 
-![Tigera, CNCF, 커뮤니티라는 세 관리 주체가 각각 Calico Enterprise, Project Calico 오픈소스, Calico Cloud를 어떻게 지원하는지 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-calico-01-introduction-1.svg)
+![CNCF와 커뮤니티가 Project Calico 오픈소스를, Tigera Inc.가 온프레미스용 Calico Enterprise와 SaaS형 Calico Cloud를 각각 담당하는 Calico 프로젝트 거버넌스 구조를 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-01-introduction-1.html)
 
 ## 5가지 핵심 기능 상세
 
@@ -222,7 +224,9 @@ Typha 컴포넌트를 통해 수천 노드 클러스터를 지원합니다.
 
 ### 전통적인 VM 네트워킹의 한계
 
-![VM들이 VLAN을 거쳐 방화벽과 라우터로 나가는 전통적인 네트워킹 경로와, VLAN 개수 제한·정적 구성·중앙 집중이라는 세 가지 구조적 문제점을 함께 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-calico-01-introduction-4.svg)
+![VM들이 VLAN을 거쳐 방화벽과 라우터로 나가는 전통적인 네트워킹 경로와, VLAN 개수 제한·정적 구성·중앙 집중이라는 세 가지 구조적 문제점을 함께 보여주는 다이어그램.](../../.gitbook/assets/ko-networking-calico-01-introduction-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-01-introduction-4.html)
 
 ### Calico의 클라우드 네이티브 접근
 

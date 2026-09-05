@@ -16,7 +16,9 @@ Calico는 전통적인 iptables 기반 데이터플레인과 함께 현대적인
 
 eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 프로그램을 실행할 수 있게 해주는 기술입니다. 커널을 수정하거나 모듈을 로드하지 않고도 커널의 동작을 확장할 수 있습니다.
 
-![사용자 공간의 eBPF 프로그램이 libbpf를 통해 커널로 로드되어 Verifier 검증과 JIT 컴파일을 거쳐 eBPF VM에서 실행되고, Hook Point와 BPF Map으로 연결되는 구조를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-1.svg)
+![사용자 공간에서 C/Rust로 작성된 eBPF 프로그램이 libbpf/BCC 로더를 통해 bpf() 호출로 커널에 로드되어 eBPF Verifier의 안전성 검증과 JIT Compiler의 네이티브 코드 변환을 거쳐 eBPF VM에서 실행되고, XDP·TC·Socket Ops·Kprobes 같은 Hook Point에 연결되며 BPF Maps를 통해 사용자 공간 애플리케이션과 상태를 공유하는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-1.html)
 
 ### eBPF 핵심 구성 요소
 
@@ -164,7 +166,9 @@ DSR은 로드밸런서 응답 트래픽이 로드밸런서를 거치지 않고 �
 
 ### DSR 동작 원리
 
-![일반 모드에서는 백엔드 Pod의 응답이 로드밸런서 노드를 거쳐 SNAT된 뒤 클라이언트로 돌아가지만 DSR 모드에서는 로드밸런서를 거치지 않고 백엔드 Pod가 응답을 클라이언트에 직접 전송하는 과정을 비교한 시퀀스 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-6.svg)
+![일반 모드에서는 백엔드 Pod의 응답이 LB 노드를 거쳐 SNAT된 뒤 클라이언트로 돌아가지만 DSR 모드에서는 LB 노드를 거치지 않고 백엔드 Pod가 소스 IP를 VIP로 설정해 클라이언트에 직접 응답하는 과정을 비교한 시퀀스 다이어그램를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-6.html)
 
 ### DSR 모드 비교
 
@@ -201,7 +205,9 @@ spec:
 
 ### 동작 원리
 
-![애플리케이션이 VIP로 connect를 호출하면 eBPF 프로그램이 소켓 계층에서 NAT Map을 조회해 백엔드를 선택하고 목적지를 바꿔치기해 돌려주므로 이후 패킷은 NAT 없이 백엔드 Pod와 곧바로 TCP 연결되는 Connect-Time Load Balancing 과정을 보여주는 시퀀스 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-7.svg)
+![kube-proxy 방식에서는 SYN, DATA, FIN 패킷마다 iptables DNAT과 conntrack 조회를 거쳐 Pod A로 전달되지만, eBPF Connect-Time Load Balancing에서는 애플리케이션이 VIP로 connect를 호출할 때 소켓 계층의 cgroup/connect4 훅에서 eBPF 프로그램이 NAT Map을 조회해 백엔드 Pod B를 한 번만 선택하고 목적지를 재작성하므로 이후 모든 패킷이 패킷 레벨 NAT 없이 Pod B와 직접 연결되는 과정을 비교하는 시퀀스 다이어그램를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-7.html)
 
 **Connect-Time LB의 장점:**
 

@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VXLAN Packet Structure",
+    "locale": "en",
+    "output": "en-networking-cilium-networking-concepts-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Outer headers"
+        },
+        "messagebus": {
+          "label": "VXLAN header"
+        },
+        "backend": {
+          "label": "Original packet"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "outer",
+        "label": "Outer headers",
+        "focus": [
+          "outerEth",
+          "outerIP",
+          "outerUDP",
+          "vxlanHeader"
+        ],
+        "note": "The outer Ethernet, IP and UDP headers added by the VTEP, plus the VXLAN header carrying the VNI."
+      },
+      {
+        "id": "inner",
+        "label": "Original packet",
+        "focus": [
+          "vxlanHeader",
+          "origEth",
+          "origIP",
+          "origTCP",
+          "payload"
+        ],
+        "note": "The original L2 frame rides unchanged behind the VXLAN header (MAC-in-UDP encapsulation)."
+      }
+    ],
+    "viewBox": [
+      920,
+      470
+    ]
+  },
+  "components": [
+    {
+      "id": "outerEth",
+      "type": "cloud",
+      "label": "Outer Ethernet",
+      "sublabel": "outer L2 header",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "outerIP",
+      "type": "cloud",
+      "label": "Outer IP",
+      "sublabel": "host (VTEP) IP",
+      "pos": [
+        260,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "outerUDP",
+      "type": "cloud",
+      "label": "Outer UDP",
+      "sublabel": "dst port 4789",
+      "pos": [
+        480,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vxlanHeader",
+      "type": "messagebus",
+      "label": "VXLAN Header",
+      "sublabel": "carries the VNI",
+      "pos": [
+        700,
+        70
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "origEth",
+      "type": "backend",
+      "label": "Original Ethernet",
+      "sublabel": "original L2 frame",
+      "pos": [
+        40,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "origIP",
+      "type": "backend",
+      "label": "Original IP",
+      "sublabel": "container IP",
+      "pos": [
+        260,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "origTCP",
+      "type": "backend",
+      "label": "Original TCP/UDP",
+      "sublabel": "original L4 header",
+      "pos": [
+        480,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "payload",
+      "type": "backend",
+      "label": "Payload",
+      "sublabel": "application data",
+      "pos": [
+        700,
+        290
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Outer headers (VXLAN encapsulation)",
+      "wraps": [
+        "outerEth",
+        "outerIP",
+        "outerUDP",
+        "vxlanHeader"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Original packet",
+      "wraps": [
+        "origEth",
+        "origIP",
+        "origTCP",
+        "payload"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "outerEth-outerIP",
+      "from": "outerEth",
+      "to": "outerIP"
+    },
+    {
+      "id": "outerIP-outerUDP",
+      "from": "outerIP",
+      "to": "outerUDP"
+    },
+    {
+      "id": "outerUDP-vxlanHeader",
+      "from": "outerUDP",
+      "to": "vxlanHeader"
+    },
+    {
+      "id": "vxlanHeader-origEth",
+      "from": "vxlanHeader",
+      "to": "origEth",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "origEth-origIP",
+      "from": "origEth",
+      "to": "origIP"
+    },
+    {
+      "id": "origIP-origTCP",
+      "from": "origIP",
+      "to": "origTCP"
+    },
+    {
+      "id": "origTCP-payload",
+      "from": "origTCP",
+      "to": "payload"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "VXLAN essentials",
+      "items": [
+        "VTEP: encapsulates and decapsulates packets",
+        "VNI: supports up to 16,777,216 virtual networks",
+        "UDP encapsulation: transmitted via UDP port 4789",
+        "MAC-in-UDP: wraps the original L2 frame in a UDP packet"
+      ]
+    }
+  ]
+}

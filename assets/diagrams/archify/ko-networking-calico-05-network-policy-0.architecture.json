@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Network Policy 계층",
+    "output": "ko-networking-calico-05-network-policy-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Kubernetes 표준 정책"
+        },
+        "security": {
+          "label": "Calico 확장 정책"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "k8s-base",
+        "label": "Kubernetes 표준",
+        "focus": [
+          "k8s"
+        ],
+        "note": "네임스페이스 범위의 기본 L3/L4 Allow 규칙만 제공하는 표준 NetworkPolicy"
+      },
+      {
+        "id": "calico-ext",
+        "label": "Calico 확장",
+        "focus": [
+          "k8s",
+          "calico",
+          "global"
+        ],
+        "note": "Deny, L7, FQDN, order 필드를 더한 Calico NetworkPolicy와 클러스터 전역 GlobalNetworkPolicy"
+      },
+      {
+        "id": "tiers",
+        "label": "Tier 계층화",
+        "focus": [
+          "global",
+          "tier"
+        ],
+        "note": "정책을 Tier로 묶어 우선순위 순서대로 평가하는 계층화된 정책 관리"
+      }
+    ],
+    "viewBox": [
+      1180,
+      300
+    ]
+  },
+  "components": [
+    {
+      "id": "k8s",
+      "type": "backend",
+      "label": "Kubernetes NetworkPolicy",
+      "sublabel": "기본 L3/L4 정책",
+      "tag": "L1",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "calico",
+      "type": "security",
+      "label": "Calico NetworkPolicy",
+      "sublabel": "확장된 L3/L4/L7 정책",
+      "tag": "L2",
+      "pos": [
+        330,
+        70
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "global",
+      "type": "security",
+      "label": "GlobalNetworkPolicy",
+      "sublabel": "클러스터 전역 정책",
+      "tag": "L3",
+      "pos": [
+        620,
+        70
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "tier",
+      "type": "security",
+      "label": "Tier 기반 정책",
+      "sublabel": "계층화된 정책 관리",
+      "tag": "L4",
+      "pos": [
+        910,
+        70
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Network Policy 계층",
+      "wraps": [
+        "k8s",
+        "calico",
+        "global",
+        "tier"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "k8s-to-calico",
+      "from": "k8s",
+      "to": "calico",
+      "label": "확장",
+      "variant": "emphasis"
+    },
+    {
+      "id": "calico-to-global",
+      "from": "calico",
+      "to": "global",
+      "label": "전역화",
+      "variant": "emphasis"
+    },
+    {
+      "id": "global-to-tier",
+      "from": "global",
+      "to": "tier",
+      "label": "계층화",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Kubernetes 표준의 한계",
+      "items": [
+        "명시적 Deny 없음 (Allow 규칙만 가능)",
+        "L7 정책 · FQDN 기반 정책 없음",
+        "네임스페이스 범위로 제한, 정책 순서 지정 불가"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Calico 해결책",
+      "items": [
+        "action: Deny / Log 지원",
+        "HTTP/gRPC 인식, domains 필드 지원",
+        "GlobalNetworkPolicy와 order 필드로 우선순위 지정"
+      ]
+    }
+  ]
+}

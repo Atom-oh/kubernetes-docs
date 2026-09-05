@@ -17,7 +17,9 @@ Calico's IP Address Management (IPAM) system is designed for high performance an
 
 Calico uses a block-based IPAM system where IP addresses are allocated in blocks (default /26 = 64 IPs) to nodes. This approach minimizes datastore interactions and improves allocation speed.
 
-![A central datastore hands out fixed-size IP blocks to each node, and each node allocates individual pod IPs out of its own affine blocks.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-1.svg)
+![The datastore hands out fixed-size /26 blocks from the IPPool 10.244.0.0/16 to each node, and each node allocates individual pod IPs out of its own affine blocks, receiving another block when one is exhausted.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-0.html)
 
 ### IP Block Affinity
 
@@ -51,7 +53,9 @@ spec:
 
 The IPAM allocation follows this process:
 
-![On pod creation, Calico tries the node's own affine block first, then an unclaimed block, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-2.svg)
+![On pod creation, Calico tries the node's own affine block first, then claims an unclaimed block from the pool, then borrows from another node's block, and only fails when no free IP exists anywhere.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-1.html)
 
 ### Block Size Configuration
 
@@ -336,7 +340,9 @@ WireGuard provides efficient encryption for pod-to-pod traffic across nodes.
 
 ### WireGuard Architecture
 
-![Traffic leaves a pod in plaintext, is encrypted by the node's WireGuard interface, crosses the underlay as an encrypted UDP tunnel between the two nodes, and is decrypted back to plaintext before reaching the destination pod.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-3.svg)
+![Traffic leaves Pod A in plaintext, is encrypted by Node 1's WireGuard interface (wireguard.cali), crosses the underlay from eth0 to eth0 as an encrypted UDP 51820 WireGuard tunnel, and is decrypted by Node 2's WireGuard interface back to plaintext before reaching Pod B.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-2.html)
 
 ### Configuration
 
@@ -436,7 +442,9 @@ Egress Gateway provides controlled, predictable egress for pods requiring specif
 
 ### Architecture
 
-![Pods in the production namespace route outbound traffic through a dedicated Egress Gateway pod, which source-NATs it to a fixed external IP before it reaches partner services.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-5.svg)
+![Pods in the secure namespace send outbound traffic through designated Egress Gateway nodes that present fixed source IPs 203.0.113.10-11 to an external service whose firewall allows only those IPs, while a Pod in the default namespace exits directly.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-3.html)
 
 ### Configuration
 
@@ -575,7 +583,9 @@ Calico supports multi-cluster deployments for cross-cluster communication and po
 
 ### Federation Architecture
 
-![Three clusters each peer their API server with a shared Federation Controller for policy sync, while their pod workloads mesh directly with each other over BGP or overlay.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-6.svg)
+![Typha-based multi-cluster federation in which each cluster's Felix agents connect to their own Typha instances and one lead Typha per cluster reports state up to a single shared Federation Controller.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-4.html)
 
 ### Cross-Cluster Connectivity Setup
 
@@ -726,7 +736,9 @@ spec:
 
 ### HNS (Host Networking Service) Integration
 
-![A packet from a Windows container crosses its virtual NIC into the Hyper-V virtual switch, through the Host Networking Service and Virtual Filtering Platform for policy enforcement, while the Calico Windows agent programs both HNS and the VFP directly.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-7.svg)
+![On a Windows node, traffic from the Windows containers converges on the Host Networking Service (HNS), which the Calico Node Windows Service programs with networking and policy, then passes through the Virtual Filtering Platform (VFP) for packet filtering before leaving via the physical NIC.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-5.html)
 
 ### Windows Network Policy
 
@@ -894,7 +906,9 @@ spec:
 
 For large BGP deployments, use Route Reflectors instead of full mesh:
 
-![Instead of a full BGP mesh, one route reflector per zone peers with the other reflectors, and every regular node in its zone peers only with its own zone's reflector.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-9.svg)
+![Route Reflector hierarchy for 1000+ nodes: three Tier 1 Route Reflectors peer with each other in an iBGP full mesh, and each reflects routes down to its own rack RR and worker node group instead of a full node-to-node mesh.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-6.html)
 
 ```yaml
 # Route Reflector node configuration

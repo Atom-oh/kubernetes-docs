@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium IPAM Architecture",
+    "locale": "en",
+    "output": "en-networking-cilium-04-ipam-policy-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1370,
+      410
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Cilium built-in mode"
+        },
+        "cloud": {
+          "label": "Cloud provider mode"
+        },
+        "external": {
+          "label": "Custom mode"
+        },
+        "frontend": {
+          "label": "Allocation model"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cluster-scope",
+        "label": "Cluster Scope IPAM",
+        "focus": [
+          "cluster-pool",
+          "multi-pool",
+          "central"
+        ],
+        "note": "Cluster Pool (the default) and Multi-Pool allocate IPs centrally across the entire cluster."
+      },
+      {
+        "id": "node-scope",
+        "label": "Node Scope IPAM",
+        "focus": [
+          "host-scope",
+          "distributed"
+        ],
+        "note": "Each node assigns IPs from its own range, so no central coordination is needed."
+      },
+      {
+        "id": "cloud-provider",
+        "label": "Cloud Provider IPAM",
+        "focus": [
+          "aws-eni",
+          "azure-ipam",
+          "gke-ipam",
+          "cloud-native"
+        ],
+        "note": "AWS ENI, Azure, and GKE modes assign native VPC/VNET IPs to pods directly, with no overlay network."
+      },
+      {
+        "id": "custom",
+        "label": "Custom IPAM",
+        "focus": [
+          "crd-ipam",
+          "custom-alloc"
+        ],
+        "note": "IP pools are defined with the CiliumIPPool custom resource and managed per namespace or pod."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cluster-pool",
+      "type": "backend",
+      "label": "Cluster Pool",
+      "sublabel": "ipam: cluster-pool",
+      "pos": [
+        42,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "multi-pool",
+      "type": "backend",
+      "label": "Multi-Pool",
+      "sublabel": "Multiple IP pools",
+      "pos": [
+        210,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "host-scope",
+      "type": "backend",
+      "label": "Kubernetes Host Scope",
+      "sublabel": "Per-node IP range",
+      "pos": [
+        420,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "aws-eni",
+      "type": "cloud",
+      "label": "AWS ENI",
+      "sublabel": "ipam: eni",
+      "pos": [
+        630,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "azure-ipam",
+      "type": "cloud",
+      "label": "Azure IPAM",
+      "sublabel": "Azure VNET integration",
+      "pos": [
+        798,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "gke-ipam",
+      "type": "cloud",
+      "label": "GKE IPAM",
+      "sublabel": "GCP VPC integration",
+      "pos": [
+        966,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "crd-ipam",
+      "type": "external",
+      "label": "CRD-based IPAM",
+      "sublabel": "CiliumIPPool resource",
+      "pos": [
+        1176,
+        70
+      ],
+      "size": [
+        152,
+        56
+      ]
+    },
+    {
+      "id": "central",
+      "type": "frontend",
+      "label": "Centralized Allocation",
+      "sublabel": "Assigned from cluster-wide pools",
+      "pos": [
+        102,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "distributed",
+      "type": "frontend",
+      "label": "Distributed Allocation",
+      "sublabel": "Node assigns from its own range",
+      "pos": [
+        396,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "cloud-native",
+      "type": "frontend",
+      "label": "Cloud Native Allocation",
+      "sublabel": "Native VPC/VNET IPs",
+      "pos": [
+        774,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "custom-alloc",
+      "type": "frontend",
+      "label": "Custom Allocation",
+      "sublabel": "Fine-grained per-pool management",
+      "pos": [
+        1152,
+        260
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster Scope IPAM",
+      "wraps": [
+        "cluster-pool",
+        "multi-pool"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Node Scope IPAM",
+      "wraps": [
+        "host-scope"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Cloud Provider IPAM",
+      "wraps": [
+        "aws-eni",
+        "azure-ipam",
+        "gke-ipam"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "Custom IPAM",
+      "wraps": [
+        "crd-ipam"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "id": "cluster-pool-to-central",
+      "from": "cluster-pool",
+      "to": "central",
+      "label": "Allocate from single pool",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -24
+    },
+    {
+      "id": "multi-pool-to-central",
+      "from": "multi-pool",
+      "to": "central",
+      "label": "Allocate from multiple pools",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 24
+    },
+    {
+      "id": "host-scope-to-distributed",
+      "from": "host-scope",
+      "to": "distributed",
+      "label": "Per-node allocation",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    },
+    {
+      "id": "aws-eni-to-cloud",
+      "from": "aws-eni",
+      "to": "cloud-native",
+      "label": "AWS VPC IP allocation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": -20
+    },
+    {
+      "id": "azure-to-cloud",
+      "from": "azure-ipam",
+      "to": "cloud-native",
+      "label": "Azure VNET IP allocation",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "gke-to-cloud",
+      "from": "gke-ipam",
+      "to": "cloud-native",
+      "label": "GCP VPC IP allocation",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDx": 20
+    },
+    {
+      "id": "crd-to-custom",
+      "from": "crd-ipam",
+      "to": "custom-alloc",
+      "label": "Custom Allocation",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 60
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Cluster Pool",
+      "items": [
+        "Default IPAM mode",
+        "Centralized IP address allocation across the entire cluster",
+        "Can configure single or multiple IP pools"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "AWS ENI",
+      "items": [
+        "AWS VPC ENI integration assigns native VPC IPs to pods",
+        "VPC native networking without an overlay network",
+        "Optimized for AWS environments"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "CRD-based IPAM",
+      "items": [
+        "IP pool definition through the CiliumIPPool custom resource",
+        "Allocate IP pools to specific namespaces or pods",
+        "Dynamic IP pool management"
+      ]
+    }
+  ]
+}

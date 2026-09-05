@@ -15,13 +15,17 @@ AWS Load Balancer Controller is a controller that manages AWS Elastic Load Balan
 - **AWS WAF Integration**: Web Application Firewall enforcement
 - **AWS Shield**: DDoS protection
 
-![Diagram showing Ingress, Service, and TargetGroupBinding resources triggering the AWS Load Balancer Controller, which creates an Application Load Balancer and a Network Load Balancer, each with its own AWS Target Group, all registering the same backend Pods.](../../assets/diagrams/rendered/en-networking-03-aws-lb-controller-0.svg)
+![Diagram showing Ingress and Service resources in an EKS cluster triggering the AWS Load Balancer Controller, which creates an Application Load Balancer and a Network Load Balancer each with its own Target Group, while TargetGroupBinding binds an existing Target Group directly, and both Target Groups register the same backend Pods.](../.gitbook/assets/en-networking-03-aws-lb-controller-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-0.html)
 
 ## Architecture
 
 ### How the Controller Works
 
-![Sequence diagram showing a user creating an Ingress or Service, the Kubernetes API notifying the LB Controller, the controller calling the AWS API to provision an ALB or NLB plus its target group and listener rules, then writing status back to Kubernetes so the user receives the load balancer's DNS name, with a note that the controller keeps registering and deregistering targets as Pods change.](../../assets/diagrams/rendered/en-networking-03-aws-lb-controller-1.svg)
+![Sequence of how the AWS Load Balancer Controller works: a user creates an Ingress/Service with kubectl, the Kubernetes API emits a Watch event, and the LB Controller asks the AWS API (ELBv2) to create a Load Balancer, which provisions an ALB/NLB and returns its ARN; the controller then creates the Target Group and configures Listener rules, updates the resource Status, and the Load Balancer DNS is returned to the user. A final 'ongoing reconciliation' step shows that targets are auto-registered and deregistered as Pods change.](../.gitbook/assets/en-networking-03-aws-lb-controller-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-03-aws-lb-controller-1.html)
 
 ### Component Structure
 

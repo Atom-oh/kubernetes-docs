@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Gateway API Resource Model",
+    "locale": "en",
+    "output": "en-networking-04-gateway-api-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "infra-layer",
+        "label": "GatewayClass → Gateway",
+        "focus": [
+          "gc",
+          "gw"
+        ],
+        "note": "A cluster operator's Gateway references the GatewayClass defined by the infrastructure provider via gatewayClassName."
+      },
+      {
+        "id": "route-layer",
+        "label": "Route attachment",
+        "focus": [
+          "gw",
+          "httproute",
+          "grpcroute",
+          "tcproute",
+          "tlsroute",
+          "udproute"
+        ],
+        "note": "Routes created by application developers attach to the Gateway through parentRefs."
+      },
+      {
+        "id": "backend-layer",
+        "label": "Backend forwarding",
+        "focus": [
+          "httproute",
+          "grpcroute",
+          "tcproute",
+          "tlsroute",
+          "udproute",
+          "svc-a",
+          "svc-b",
+          "svc-c"
+        ],
+        "note": "Each Route forwards traffic to the Services named in its backendRefs."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gc",
+      "type": "cloud",
+      "label": "GatewayClass",
+      "sublabel": "Infrastructure template",
+      "pos": [
+        500,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "gw",
+      "type": "cloud",
+      "label": "Gateway",
+      "sublabel": "Load balancer instance",
+      "pos": [
+        500,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "httproute",
+      "type": "cloud",
+      "label": "HTTPRoute",
+      "sublabel": "L7",
+      "pos": [
+        150,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "grpcroute",
+      "type": "cloud",
+      "label": "GRPCRoute",
+      "sublabel": "L7",
+      "pos": [
+        325,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tcproute",
+      "type": "cloud",
+      "label": "TCPRoute",
+      "sublabel": "L4",
+      "pos": [
+        500,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tlsroute",
+      "type": "cloud",
+      "label": "TLSRoute",
+      "sublabel": "L4",
+      "pos": [
+        675,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "udproute",
+      "type": "cloud",
+      "label": "UDPRoute",
+      "sublabel": "L4",
+      "pos": [
+        850,
+        390
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "svc-a",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        240,
+        550
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-b",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        490,
+        550
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "svc-c",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        740,
+        550
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Infrastructure Provider",
+      "wraps": [
+        "gc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster Operator",
+      "wraps": [
+        "gw"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Application Developer",
+      "wraps": [
+        "httproute",
+        "grpcroute",
+        "tcproute",
+        "tlsroute",
+        "udproute"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backend",
+      "wraps": [
+        "svc-a",
+        "svc-b",
+        "svc-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gc-gw",
+      "from": "gc",
+      "to": "gw",
+      "label": "gatewayClassName",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        660,
+        180
+      ]
+    },
+    {
+      "id": "gw-http",
+      "from": "gw",
+      "to": "httproute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-grpc",
+      "from": "gw",
+      "to": "grpcroute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-tcp",
+      "from": "gw",
+      "to": "tcproute",
+      "label": "parentRefs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        630,
+        370
+      ]
+    },
+    {
+      "id": "gw-tls",
+      "from": "gw",
+      "to": "tlsroute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "gw-udp",
+      "from": "gw",
+      "to": "udproute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "http-a",
+      "from": "httproute",
+      "to": "svc-a",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "http-b",
+      "from": "httproute",
+      "to": "svc-b",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "grpc-b",
+      "from": "grpcroute",
+      "to": "svc-b",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "tcp-c",
+      "from": "tcproute",
+      "to": "svc-c",
+      "label": "backendRefs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        520,
+        475
+      ]
+    },
+    {
+      "id": "tls-c",
+      "from": "tlsroute",
+      "to": "svc-c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "udp-c",
+      "from": "udproute",
+      "to": "svc-c",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Role separation",
+      "items": [
+        "Infrastructure provider: defines base infrastructure with GatewayClass",
+        "Cluster operator: provisions the load balancer with Gateway",
+        "Application developer: defines routing rules with HTTPRoute, GRPCRoute, etc."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Route kinds",
+      "items": [
+        "L7: HTTPRoute, GRPCRoute",
+        "L4: TCPRoute, TLSRoute, UDPRoute"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Direct 모드 동작 원리",
+    "output": "ko-networking-calico-03-networking-modes-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1220,
+      340
+    ],
+    "legend": {
+      "mode": "all",
+      "entries": {
+        "backend": {
+          "label": "Pod / 노드 라우팅 테이블"
+        },
+        "cloud": {
+          "label": "노드 NIC (eth0)"
+        },
+        "external": {
+          "label": "BGP 피어 (Router/Switch)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "node-path",
+        "label": "노드 내부 경로",
+        "focus": [
+          "pod-a",
+          "rt-1",
+          "eth-1"
+        ],
+        "note": "Pod A의 패킷은 캡슐화 없이 라우팅 테이블을 거쳐 eth0으로 그대로 나간다."
+      },
+      {
+        "id": "bgp-path",
+        "label": "BGP 경로",
+        "focus": [
+          "eth-1",
+          "router",
+          "eth-2"
+        ],
+        "note": "BGP로 광고된 Pod CIDR 경로를 따라 라우터가 Node 2로 패킷을 전달한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pod-a",
+      "type": "backend",
+      "label": "Pod A",
+      "sublabel": "10.244.1.5",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "rt-1",
+      "type": "backend",
+      "label": "Routing Table",
+      "sublabel": "BGP 학습 경로",
+      "pos": [
+        200,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "eth-1",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "10.0.1.10",
+      "pos": [
+        360,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "router",
+      "type": "external",
+      "label": "Router / Switch",
+      "sublabel": "BGP Peer",
+      "pos": [
+        540,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "eth-2",
+      "type": "cloud",
+      "label": "eth0",
+      "sublabel": "10.0.1.11",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "rt-2",
+      "type": "backend",
+      "label": "Routing Table",
+      "sublabel": "로컬 Pod 경로",
+      "pos": [
+        880,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "pod-b",
+      "type": "backend",
+      "label": "Pod B",
+      "sublabel": "10.244.2.8",
+      "pos": [
+        1040,
+        120
+      ],
+      "size": [
+        120,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Node 1 (10.0.1.10)",
+      "wraps": [
+        "pod-a",
+        "rt-1",
+        "eth-1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "네트워크 인프라",
+      "wraps": [
+        "router"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2 (10.0.1.11)",
+      "wraps": [
+        "eth-2",
+        "rt-2",
+        "pod-b"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pod-a-to-rt",
+      "from": "pod-a",
+      "to": "rt-1",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rt-to-eth-1",
+      "from": "rt-1",
+      "to": "eth-1",
+      "label": "Native IP",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "eth-1-to-router",
+      "from": "eth-1",
+      "to": "router",
+      "label": "BGP Route",
+      "variant": "emphasis"
+    },
+    {
+      "id": "router-to-eth-2",
+      "from": "router",
+      "to": "eth-2",
+      "label": "BGP Route",
+      "variant": "emphasis"
+    },
+    {
+      "id": "eth-2-to-rt",
+      "from": "eth-2",
+      "to": "rt-2",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rt-to-pod-b",
+      "from": "rt-2",
+      "to": "pod-b",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Direct 모드 요구사항",
+      "items": [
+        "BGP 피어링: 외부 라우터와 BGP 세션 설정",
+        "L3 라우팅: 노드 간 L3 라우팅 가능",
+        "Pod CIDR 광고: BGP로 Pod 네트워크 광고"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "패킷 특성",
+      "items": [
+        "캡슐화 없음 — Pod IP 그대로 라우팅",
+        "오버헤드 0 bytes, MTU 1500 유지",
+        "ipipMode: Never / vxlanMode: Never"
+      ]
+    }
+  ]
+}

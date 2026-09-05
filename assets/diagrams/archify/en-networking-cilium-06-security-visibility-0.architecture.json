@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Cilium Security Architecture",
+    "locale": "en",
+    "output": "en-networking-cilium-06-security-visibility-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Traffic"
+        },
+        "security": {
+          "label": "Controls"
+        },
+        "backend": {
+          "label": "Detection"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "policy-path",
+        "label": "Policy enforcement path",
+        "focus": [
+          "traffic",
+          "l3l4",
+          "encrypt",
+          "segment",
+          "l7",
+          "api",
+          "identity"
+        ],
+        "note": "Traffic is inspected in stages, from network security (L3/L4) through application security (L7)."
+      },
+      {
+        "id": "hubble-visibility",
+        "label": "Hubble visibility",
+        "focus": [
+          "l3l4",
+          "l7",
+          "api",
+          "hubble",
+          "intrusion",
+          "anomaly"
+        ],
+        "note": "Flows from the L3/L4, L7 and API policy points converge in Hubble and feed intrusion and anomaly detection."
+      },
+      {
+        "id": "runtime",
+        "label": "Runtime Security",
+        "focus": [
+          "identity",
+          "process",
+          "syscall",
+          "container"
+        ],
+        "note": "Identity-based policy extends into process, system-call and container-level runtime security."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "traffic",
+      "type": "external",
+      "label": "Traffic",
+      "sublabel": "Pod / external ingress",
+      "pos": [
+        30,
+        100
+      ],
+      "size": [
+        130,
+        54
+      ]
+    },
+    {
+      "id": "l3l4",
+      "type": "security",
+      "label": "L3/L4 Policy",
+      "sublabel": "IP · port based",
+      "pos": [
+        230,
+        100
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "encrypt",
+      "type": "security",
+      "label": "Encryption",
+      "sublabel": "IPsec / WireGuard",
+      "pos": [
+        230,
+        190
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "segment",
+      "type": "security",
+      "label": "Microsegmentation",
+      "sublabel": "blocks lateral movement",
+      "pos": [
+        230,
+        280
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "l7",
+      "type": "security",
+      "label": "L7 Policy",
+      "sublabel": "HTTP / gRPC / Kafka",
+      "pos": [
+        520,
+        100
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "api",
+      "type": "security",
+      "label": "API-aware Filtering",
+      "sublabel": "method · path · header",
+      "pos": [
+        520,
+        190
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity-based Policy",
+      "sublabel": "service identity · mTLS",
+      "pos": [
+        520,
+        280
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "hubble",
+      "type": "backend",
+      "label": "Hubble Observability",
+      "sublabel": "eBPF flow visibility",
+      "pos": [
+        855,
+        100
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "intrusion",
+      "type": "backend",
+      "label": "Intrusion Detection",
+      "sublabel": "known attack patterns",
+      "pos": [
+        770,
+        230
+      ],
+      "size": [
+        160,
+        54
+      ]
+    },
+    {
+      "id": "anomaly",
+      "type": "backend",
+      "label": "Anomaly Detection",
+      "sublabel": "abnormal network activity",
+      "pos": [
+        960,
+        230
+      ],
+      "size": [
+        160,
+        54
+      ]
+    },
+    {
+      "id": "process",
+      "type": "security",
+      "label": "Process Monitoring",
+      "sublabel": "escalation prevention",
+      "pos": [
+        230,
+        440
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "syscall",
+      "type": "security",
+      "label": "System Call Filtering",
+      "sublabel": "syscall-level control",
+      "pos": [
+        520,
+        440
+      ],
+      "size": [
+        170,
+        54
+      ]
+    },
+    {
+      "id": "container",
+      "type": "security",
+      "label": "Container Security",
+      "sublabel": "escape detection",
+      "pos": [
+        810,
+        440
+      ],
+      "size": [
+        170,
+        54
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Network Security",
+      "wraps": [
+        "l3l4",
+        "encrypt",
+        "segment"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Application Security",
+      "wraps": [
+        "l7",
+        "api",
+        "identity"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Threat Detection",
+      "wraps": [
+        "hubble",
+        "intrusion",
+        "anomaly"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Runtime Security",
+      "wraps": [
+        "process",
+        "syscall",
+        "container"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "traffic-to-l3l4",
+      "from": "traffic",
+      "to": "l3l4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l3l4-to-encrypt",
+      "from": "l3l4",
+      "to": "encrypt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "encrypt-to-segment",
+      "from": "encrypt",
+      "to": "segment",
+      "variant": "emphasis"
+    },
+    {
+      "id": "segment-to-l7",
+      "from": "segment",
+      "to": "l7",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l7-to-api",
+      "from": "l7",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-identity",
+      "from": "api",
+      "to": "identity",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l3l4-to-hubble",
+      "from": "l3l4",
+      "to": "hubble",
+      "label": "flow logs",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          315,
+          40
+        ],
+        [
+          940,
+          40
+        ]
+      ],
+      "labelAt": [
+        628,
+        34
+      ]
+    },
+    {
+      "id": "l7-to-hubble",
+      "from": "l7",
+      "to": "hubble",
+      "variant": "dashed"
+    },
+    {
+      "id": "api-to-hubble",
+      "from": "api",
+      "to": "hubble",
+      "variant": "dashed"
+    },
+    {
+      "id": "hubble-to-intrusion",
+      "from": "hubble",
+      "to": "intrusion",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "hubble-to-anomaly",
+      "from": "hubble",
+      "to": "anomaly",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "identity-to-process",
+      "from": "identity",
+      "to": "process",
+      "variant": "security"
+    },
+    {
+      "id": "identity-to-syscall",
+      "from": "identity",
+      "to": "syscall",
+      "variant": "security"
+    },
+    {
+      "id": "identity-to-container",
+      "from": "identity",
+      "to": "container",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Network Security",
+      "items": [
+        "Microsegmentation prevents lateral movement and applies least privilege",
+        "Transparent inter-node IPsec or WireGuard encryption",
+        "DNS-based policies and malicious domain blocking"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Application Security",
+      "items": [
+        "API-aware filtering on HTTP method/path/header, gRPC and Kafka",
+        "Service identity-based policies with mTLS and SPIFFE/SPIRE integration"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Detection and Runtime",
+      "items": [
+        "Hubble uses eBPF flows to spot abnormal activity and known attack patterns",
+        "Process and system call monitoring, container escape detection, privilege escalation prevention"
+      ]
+    }
+  ]
+}

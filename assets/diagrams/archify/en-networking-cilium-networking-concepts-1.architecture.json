@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Bridge Networking",
+    "locale": "en",
+    "output": "en-networking-cilium-networking-concepts-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      520
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Container"
+        },
+        "messagebus": {
+          "label": "Virtual bridge"
+        },
+        "external": {
+          "label": "Host physical network"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "container-a",
+      "type": "backend",
+      "label": "Container A",
+      "sublabel": "IP: 172.17.0.2",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "container-b",
+      "type": "backend",
+      "label": "Container B",
+      "sublabel": "IP: 172.17.0.3",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "docker0",
+      "type": "messagebus",
+      "label": "docker0",
+      "sublabel": "Bridge · 172.17.0.1/24",
+      "pos": [
+        420,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "host-net",
+      "type": "external",
+      "label": "Host Network",
+      "sublabel": "eth0 · 192.168.1.10",
+      "pos": [
+        770,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Docker host",
+      "wraps": [
+        "container-a",
+        "container-b",
+        "docker0",
+        "host-net"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-to-bridge",
+      "from": "container-a",
+      "to": "docker0",
+      "label": "veth0",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b-to-bridge",
+      "from": "container-b",
+      "to": "docker0",
+      "label": "veth1"
+    },
+    {
+      "id": "bridge-to-host",
+      "from": "docker0",
+      "to": "host-net",
+      "label": "forwards outbound",
+      "variant": "emphasis"
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Networking Mode Decision Flowchart",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      640
+    ],
+    "views": [
+      {
+        "id": "cloud-path",
+        "label": "Cloud deployments",
+        "focus": [
+          "start",
+          "q1",
+          "q2",
+          "aws",
+          "azure",
+          "gcp",
+          "q4",
+          "ipip",
+          "vxlan"
+        ],
+        "note": "In the cloud, pick VXLAN or IPIP CrossSubnet based on the provider and whether the VPC routes pod IPs."
+      },
+      {
+        "id": "onprem-path",
+        "label": "On-premises",
+        "focus": [
+          "start",
+          "q1",
+          "q3",
+          "direct",
+          "q5",
+          "vxlan"
+        ],
+        "note": "On-premises with BGP, Direct mode gives the best performance; without BGP or L2 adjacency fall back to VXLAN."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "Recommended mode"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "start",
+      "type": "frontend",
+      "label": "Select Networking Mode",
+      "pos": [
+        510,
+        20
+      ],
+      "size": [
+        180,
+        52
+      ]
+    },
+    {
+      "id": "q1",
+      "type": "security",
+      "label": "Cloud or On-Prem?",
+      "pos": [
+        515,
+        120
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "security",
+      "label": "Which Provider?",
+      "pos": [
+        245,
+        230
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "security",
+      "label": "BGP Available?",
+      "pos": [
+        835,
+        230
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "aws",
+      "type": "cloud",
+      "label": "AWS",
+      "sublabel": "VXLAN or IPIP CrossSubnet",
+      "pos": [
+        30,
+        380
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "azure",
+      "type": "cloud",
+      "label": "Azure",
+      "sublabel": "VXLAN",
+      "pos": [
+        200,
+        380
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "gcp",
+      "type": "cloud",
+      "label": "GCP",
+      "sublabel": "IPIP CrossSubnet",
+      "pos": [
+        360,
+        380
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "q4",
+      "type": "security",
+      "label": "VPC supports IP routing?",
+      "pos": [
+        520,
+        380
+      ],
+      "size": [
+        190,
+        56
+      ]
+    },
+    {
+      "id": "direct",
+      "type": "cloud",
+      "label": "Direct Mode + BGP",
+      "sublabel": "best performance",
+      "pos": [
+        760,
+        380
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "q5",
+      "type": "security",
+      "label": "L2 Adjacency?",
+      "pos": [
+        960,
+        380
+      ],
+      "size": [
+        150,
+        56
+      ]
+    },
+    {
+      "id": "ipip",
+      "type": "cloud",
+      "label": "IPIP CrossSubnet",
+      "pos": [
+        450,
+        510
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "vxlan",
+      "type": "cloud",
+      "label": "VXLAN Mode",
+      "pos": [
+        800,
+        510
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cloud",
+      "wraps": [
+        "q2",
+        "aws",
+        "azure",
+        "gcp",
+        "q4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "On-Premises",
+      "wraps": [
+        "q3",
+        "direct",
+        "q5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-q1",
+      "from": "start",
+      "to": "q1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q1-q2",
+      "from": "q1",
+      "to": "q2",
+      "label": "Cloud",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q1-q3",
+      "from": "q1",
+      "to": "q3",
+      "label": "On-Premises",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q2-aws",
+      "from": "q2",
+      "to": "aws",
+      "label": "AWS",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "q2-azure",
+      "from": "q2",
+      "to": "azure",
+      "label": "Azure",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2,
+      "labelDy": 8
+    },
+    {
+      "id": "q2-gcp",
+      "from": "q2",
+      "to": "gcp",
+      "label": "GCP",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2,
+      "labelDy": 8
+    },
+    {
+      "id": "q2-q4",
+      "from": "q2",
+      "to": "q4",
+      "label": "Other",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 2
+    },
+    {
+      "id": "q3-direct",
+      "from": "q3",
+      "to": "direct",
+      "label": "Yes",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q3-q5",
+      "from": "q3",
+      "to": "q5",
+      "label": "No",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q4-ipip",
+      "from": "q4",
+      "to": "ipip",
+      "label": "Yes",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q4-vxlan",
+      "from": "q4",
+      "to": "vxlan",
+      "label": "No",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "q5-direct",
+      "from": "q5",
+      "to": "direct",
+      "label": "Yes",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "q5-vxlan",
+      "from": "q5",
+      "to": "vxlan",
+      "label": "No",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Key considerations",
+      "items": [
+        "Cloud deployments: VXLAN or IPIP CrossSubnet",
+        "On-premises with BGP: Direct mode for best performance",
+        "Mixed environments: IPIP or VXLAN CrossSubnet"
+      ]
+    }
+  ]
+}

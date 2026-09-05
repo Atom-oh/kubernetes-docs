@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "전통적인 VM 네트워킹의 한계",
+    "output": "ko-networking-calico-01-introduction-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      980,
+      520
+    ]
+  },
+  "components": [
+    {
+      "id": "vm1",
+      "type": "backend",
+      "label": "VM 1",
+      "sublabel": "가상 머신",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vm2",
+      "type": "backend",
+      "label": "VM 2",
+      "sublabel": "가상 머신",
+      "pos": [
+        60,
+        200
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "vlan",
+      "type": "cloud",
+      "label": "VLAN",
+      "sublabel": "단일 L2 세그먼트",
+      "tag": "L2",
+      "pos": [
+        300,
+        145
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "firewall",
+      "type": "security",
+      "label": "방화벽",
+      "sublabel": "중앙 방화벽 규칙",
+      "pos": [
+        540,
+        145
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "라우터",
+      "sublabel": "외부 네트워크 연결",
+      "pos": [
+        780,
+        145
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "limit-vlan",
+      "type": "external",
+      "label": "VLAN 수 제한",
+      "sublabel": "최대 4096개",
+      "pos": [
+        60,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "limit-static",
+      "type": "external",
+      "label": "정적 구성",
+      "sublabel": "수동 설정, 느린 변경",
+      "pos": [
+        390,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "limit-central",
+      "type": "external",
+      "label": "중앙 집중",
+      "sublabel": "방화벽·라우터 병목",
+      "pos": [
+        720,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "전통적인 VM 네트워킹",
+      "wraps": [
+        "vm1",
+        "vm2",
+        "vlan",
+        "firewall",
+        "router"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "구조적 문제점",
+      "wraps": [
+        "limit-vlan",
+        "limit-static",
+        "limit-central"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "vm1-vlan",
+      "from": "vm1",
+      "to": "vlan"
+    },
+    {
+      "id": "vm2-vlan",
+      "from": "vm2",
+      "to": "vlan"
+    },
+    {
+      "id": "vlan-firewall",
+      "from": "vlan",
+      "to": "firewall",
+      "variant": "emphasis"
+    },
+    {
+      "id": "firewall-router",
+      "from": "firewall",
+      "to": "router",
+      "variant": "emphasis"
+    }
+  ]
+}

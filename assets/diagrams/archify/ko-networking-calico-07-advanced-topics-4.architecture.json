@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Typha 기반 멀티 클러스터 페더레이션",
+    "output": "ko-networking-calico-07-advanced-topics-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "fed",
+      "type": "backend",
+      "label": "Federation Controller",
+      "sublabel": "페더레이션 레이어 · 상태 취합",
+      "pos": [
+        470,
+        40
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "typha-a1",
+      "type": "messagebus",
+      "label": "Typha A1",
+      "sublabel": "대표 인스턴스",
+      "pos": [
+        90,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-a2",
+      "type": "messagebus",
+      "label": "Typha A2",
+      "sublabel": "Typha 인스턴스",
+      "pos": [
+        330,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-a1",
+      "type": "backend",
+      "label": "Felix A1",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        90,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-a2",
+      "type": "backend",
+      "label": "Felix A2",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        330,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-b1",
+      "type": "messagebus",
+      "label": "Typha B1",
+      "sublabel": "대표 인스턴스",
+      "pos": [
+        660,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "typha-b2",
+      "type": "messagebus",
+      "label": "Typha B2",
+      "sublabel": "Typha 인스턴스",
+      "pos": [
+        900,
+        230
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-b1",
+      "type": "backend",
+      "label": "Felix B1",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        660,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "felix-b2",
+      "type": "backend",
+      "label": "Felix B2",
+      "sublabel": "노드 에이전트",
+      "pos": [
+        900,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cluster A",
+      "wraps": [
+        "typha-a1",
+        "typha-a2",
+        "felix-a1",
+        "felix-a2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cluster B",
+      "wraps": [
+        "typha-b1",
+        "typha-b2",
+        "felix-b1",
+        "felix-b2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "typha-a1-to-fed",
+      "from": "typha-a1",
+      "to": "fed",
+      "label": "클러스터 A 상태",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "typha-b1-to-fed",
+      "from": "typha-b1",
+      "to": "fed",
+      "label": "클러스터 B 상태",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "felix-a1-to-typha-a1",
+      "from": "felix-a1",
+      "to": "typha-a1",
+      "label": "sync"
+    },
+    {
+      "id": "felix-a2-to-typha-a2",
+      "from": "felix-a2",
+      "to": "typha-a2"
+    },
+    {
+      "id": "felix-b1-to-typha-b1",
+      "from": "felix-b1",
+      "to": "typha-b1",
+      "label": "sync"
+    },
+    {
+      "id": "felix-b2-to-typha-b2",
+      "from": "felix-b2",
+      "to": "typha-b2"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Typha 기반 페더레이션",
+      "items": [
+        "각 노드의 Felix는 자기 클러스터의 Typha에 연결한다",
+        "클러스터별 대표 Typha가 Federation Controller로 상태를 올린다",
+        "대규모 멀티 클러스터 환경을 위한 Typha 활용 페더레이션 구조"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "크로스 클러스터 정책",
+      "items": [
+        "GlobalNetworkPolicy: Cluster B Pod CIDR 10.245.0.0/16 → TCP 8080 허용",
+        "BGPPeer cluster-b-peer: peerIP 192.168.2.1, asNumber 64513"
+      ]
+    }
+  ]
+}

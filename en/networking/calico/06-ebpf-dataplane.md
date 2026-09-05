@@ -16,7 +16,9 @@ This deep dive explores eBPF fundamentals from a networking perspective, Calico'
 
 eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows running sandboxed programs in the Linux kernel without modifying kernel source code or loading kernel modules.
 
-![Diagram showing an eBPF program moving from user space, through the libbpf loader and kernel verifier and JIT compiler, into kernel hooks that share BPF maps with the verifying application.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-0.svg)
+![Architecture diagram showing an eBPF program written in C/Rust in user space being loaded into the kernel through the libbpf/BCC loader via bpf(), passing the eBPF Verifier's safety check and the JIT Compiler's native-code translation, executing in the eBPF VM, attaching to hook points such as XDP, TC, Socket Ops and Kprobes, and sharing state with the user-space application through BPF Maps.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-1.html)
 
 ### Key eBPF Concepts for Networking
 
@@ -179,7 +181,9 @@ struct calico_policy_value {
 
 DSR allows response traffic to bypass the load balancer, reducing latency and load balancer resource consumption.
 
-![Diagram comparing a normal load-balanced flow, where the server response returns through the load balancer to the client, with a Direct Server Return flow, where the response bypasses the load balancer and goes straight from server to client.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-4.svg)
+![Sequence diagram comparing normal load-balanced mode, where the backend Pod response returns through the LB node and is SNAT'd before reaching the client, with DSR mode, where the backend Pod bypasses the LB node and replies directly to the client with the VIP as source IP.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-6.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-6.html)
 
 ### DSR Modes in Calico
 
@@ -214,7 +218,9 @@ spec:
 
 ### Traditional vs Connect-Time LB
 
-![Diagram contrasting kube-proxy's per-packet approach, where every SYN, data, and FIN packet is DNAT'd to Pod A, with eBPF connect-time load balancing, where a single connect() syscall picks Pod B once and every packet in that connection is sent to it directly.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-5.svg)
+![Sequence diagram contrasting kube-proxy per-packet load balancing, where every SYN, DATA, and FIN packet goes through an iptables DNAT and conntrack lookup on its way to Pod A, with eBPF connect-time load balancing, where a single connect() to the VIP is intercepted by the cgroup/connect4 hook, the eBPF program looks up the NAT Map and rewrites the destination to Pod B once, and every subsequent packet reaches Pod B directly with no packet-level NAT.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-7.html)
 
 ### Benefits of Connect-Time LB
 

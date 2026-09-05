@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "L7 (Application Layer) Load Balancing",
+    "locale": "en",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "inspect",
+        "label": "HTTP request inspection",
+        "focus": [
+          "client",
+          "lb"
+        ],
+        "note": "The L7 load balancer makes routing decisions by inspecting HTTP request contents (URL path, headers), not just TCP/UDP headers."
+      },
+      {
+        "id": "route",
+        "label": "Content-based routing",
+        "focus": [
+          "lb",
+          "api_server",
+          "web_server"
+        ],
+        "note": "/api/* requests go to the API server and /web/* requests to the web server; GET /api/users is routed to the API server."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Client"
+        },
+        "backend": {
+          "label": "Backend server"
+        },
+        "cloud": {
+          "label": "Load balancer"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "client_lane",
+      "label": "Client"
+    },
+    {
+      "id": "lb_lane",
+      "label": "L7 Load Balancer"
+    },
+    {
+      "id": "backend_lane",
+      "label": "Backend Services"
+    }
+  ],
+  "mainPath": [
+    "client",
+    "lb",
+    "api_server"
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "lane": "client_lane",
+      "col": 0,
+      "type": "frontend",
+      "label": "Client",
+      "sublabel": "GET /api/users"
+    },
+    {
+      "id": "lb",
+      "lane": "lb_lane",
+      "col": 1,
+      "type": "cloud",
+      "label": "L7 Load Balancer",
+      "sublabel": "URL path · header inspection",
+      "tag": "HTTP inspection",
+      "width": 148
+    },
+    {
+      "id": "api_server",
+      "lane": "backend_lane",
+      "col": 2,
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "/api/*",
+      "width": 112
+    },
+    {
+      "id": "web_server",
+      "lane": "backend_lane",
+      "col": 3,
+      "type": "backend",
+      "label": "Web Server",
+      "sublabel": "/web/*",
+      "width": 112
+    }
+  ],
+  "edges": [
+    {
+      "from": "client",
+      "to": "lb",
+      "label": "HTTP Request"
+    },
+    {
+      "from": "lb",
+      "to": "api_server",
+      "label": "/api/* path"
+    },
+    {
+      "from": "lb",
+      "to": "web_server",
+      "label": "/web/* path",
+      "role": "branch"
+    }
+  ]
+}

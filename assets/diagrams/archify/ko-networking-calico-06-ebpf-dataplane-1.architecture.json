@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eBPF 아키텍처",
+    "output": "ko-networking-calico-06-ebpf-dataplane-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "사용자 공간 구성 요소"
+        },
+        "security": {
+          "label": "안전성 검증"
+        },
+        "backend": {
+          "label": "커널 실행 구성 요소"
+        },
+        "database": {
+          "label": "상태 저장소"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "load-path",
+        "label": "로드 경로",
+        "focus": [
+          "prog",
+          "lib",
+          "verifier",
+          "jit",
+          "vm"
+        ],
+        "note": "C/Rust로 작성한 eBPF 프로그램이 libbpf를 통해 커널로 로드되어 Verifier 검증과 JIT 컴파일을 거쳐 실행됩니다."
+      },
+      {
+        "id": "hook-points",
+        "label": "Hook Points",
+        "focus": [
+          "vm",
+          "xdp",
+          "tc",
+          "sk",
+          "kp"
+        ],
+        "note": "검증된 프로그램은 XDP, TC, Socket Ops, Kprobes 같은 커널 Hook Point에 연결되어 실행됩니다."
+      },
+      {
+        "id": "maps",
+        "label": "BPF Maps",
+        "focus": [
+          "app",
+          "vm",
+          "maps"
+        ],
+        "note": "BPF Maps는 커널의 eBPF 프로그램과 사용자 공간 애플리케이션이 상태를 공유하는 저장소입니다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prog",
+      "type": "frontend",
+      "label": "eBPF 프로그램",
+      "sublabel": "C/Rust 소스",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "lib",
+      "type": "frontend",
+      "label": "libbpf / BCC",
+      "sublabel": "로더",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "사용자 공간 프로세스",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "verifier",
+      "type": "security",
+      "label": "eBPF Verifier",
+      "sublabel": "안전성 검증",
+      "pos": [
+        330,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "jit",
+      "type": "backend",
+      "label": "JIT Compiler",
+      "sublabel": "네이티브 코드 변환",
+      "pos": [
+        570,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "backend",
+      "label": "eBPF VM",
+      "sublabel": "프로그램 실행",
+      "pos": [
+        810,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "maps",
+      "type": "database",
+      "label": "BPF Maps",
+      "sublabel": "상태 저장소",
+      "pos": [
+        810,
+        440
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "xdp",
+      "type": "backend",
+      "label": "XDP",
+      "sublabel": "네트워크 드라이버",
+      "pos": [
+        1090,
+        80
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "tc",
+      "type": "backend",
+      "label": "TC",
+      "sublabel": "Traffic Control",
+      "pos": [
+        1090,
+        190
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "sk",
+      "type": "backend",
+      "label": "Socket Ops",
+      "sublabel": "소켓 레벨",
+      "pos": [
+        1090,
+        300
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "kp",
+      "type": "backend",
+      "label": "Kprobes",
+      "sublabel": "커널 함수 추적",
+      "pos": [
+        1090,
+        410
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "사용자 공간",
+      "wraps": [
+        "prog",
+        "lib",
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "커널 공간",
+      "wraps": [
+        "verifier",
+        "jit",
+        "vm",
+        "maps",
+        "xdp",
+        "tc",
+        "sk",
+        "kp"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Hook Points",
+      "wraps": [
+        "xdp",
+        "tc",
+        "sk",
+        "kp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prog-to-lib",
+      "from": "prog",
+      "to": "lib"
+    },
+    {
+      "id": "lib-to-verifier",
+      "from": "lib",
+      "to": "verifier",
+      "label": "bpf() 로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "verifier-to-jit",
+      "from": "verifier",
+      "to": "jit",
+      "label": "검증 통과",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jit-to-vm",
+      "from": "jit",
+      "to": "vm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-to-xdp",
+      "from": "vm",
+      "to": "xdp"
+    },
+    {
+      "id": "vm-to-tc",
+      "from": "vm",
+      "to": "tc"
+    },
+    {
+      "id": "vm-to-sk",
+      "from": "vm",
+      "to": "sk"
+    },
+    {
+      "id": "vm-to-kp",
+      "from": "vm",
+      "to": "kp"
+    },
+    {
+      "id": "vm-maps",
+      "from": "vm",
+      "to": "maps",
+      "label": "읽기 / 쓰기",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "app-maps",
+      "from": "app",
+      "to": "maps",
+      "label": "상태 공유",
+      "variant": "dashed"
+    }
+  ]
+}

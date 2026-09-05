@@ -1,0 +1,141 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "L4 (Transport Layer) Load Balancing",
+    "locale": "en",
+    "output": "public/archmaps/en-networking-cilium-networking-concepts-12.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-in",
+        "label": "Receive request, inspect headers",
+        "focus": [
+          "client",
+          "lb"
+        ],
+        "note": "The L4 load balancer makes its routing decision from TCP/UDP header information alone, such as IP address and port."
+      },
+      {
+        "id": "distribute",
+        "label": "Distribute to backend servers",
+        "focus": [
+          "lb",
+          "serverA",
+          "serverB"
+        ],
+        "note": "Because the payload is never inspected, processing is fast and encrypted traffic can be distributed as-is."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Client"
+        },
+        "cloud": {
+          "label": "L4 Load Balancer"
+        },
+        "backend": {
+          "label": "Backend Servers"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "clientLane",
+      "label": "Client"
+    },
+    {
+      "id": "lbLane",
+      "label": "L4 Load Balancer"
+    },
+    {
+      "id": "backendLane",
+      "label": "Backend Servers"
+    }
+  ],
+  "mainPath": [
+    "client",
+    "lb",
+    "serverA"
+  ],
+  "nodes": [
+    {
+      "id": "client",
+      "lane": "clientLane",
+      "col": 0,
+      "type": "external",
+      "label": "Client",
+      "sublabel": "203.0.113.1:12345"
+    },
+    {
+      "id": "lb",
+      "lane": "lbLane",
+      "col": 1,
+      "type": "cloud",
+      "width": 156,
+      "label": "L4 Load Balancer",
+      "sublabel": "TCP/UDP header analysis",
+      "tag": "IP + port based"
+    },
+    {
+      "id": "serverA",
+      "lane": "backendLane",
+      "col": 2,
+      "type": "backend",
+      "label": "Server A",
+      "sublabel": "10.0.0.1:8080"
+    },
+    {
+      "id": "serverB",
+      "lane": "backendLane",
+      "col": 3,
+      "type": "backend",
+      "label": "Server B",
+      "sublabel": "10.0.0.2:8080"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-request",
+      "from": "client",
+      "to": "lb",
+      "label": "Request"
+    },
+    {
+      "id": "e-toA",
+      "from": "lb",
+      "to": "serverA",
+      "label": "distribute",
+      "fromSide": "right",
+      "toSide": "top",
+      "labelAt": [
+        368,
+        322
+      ]
+    },
+    {
+      "id": "e-toB",
+      "from": "lb",
+      "to": "serverB",
+      "label": "distribute",
+      "role": "branch",
+      "fromSide": "right",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "L4 Load Balancing at a Glance",
+      "items": [
+        "How it works: routing decisions based on TCP/UDP header information",
+        "Advantages: fast processing, low overhead, can handle encrypted traffic",
+        "Disadvantages: no advanced routing based on application-layer information",
+        "Use cases: TCP/UDP-based services, high-performance requirements"
+      ]
+    }
+  ]
+}

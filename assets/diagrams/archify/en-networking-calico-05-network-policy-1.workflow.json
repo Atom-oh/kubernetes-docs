@@ -1,0 +1,339 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Policy Evaluation Order",
+    "locale": "en",
+    "output": "en-networking-calico-05-network-policy-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Traffic"
+        },
+        "backend": {
+          "label": "Policy tier"
+        },
+        "frontend": {
+          "label": "Allow packet"
+        },
+        "security": {
+          "label": "Drop packet"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "pass-order",
+        "label": "Pass: evaluate by order",
+        "focus": [
+          "traffic",
+          "security",
+          "platform",
+          "application",
+          "default"
+        ],
+        "note": "A packet no rule matches is passed to the next tier: Security (100), Platform (200), Application (500), then Default (1000)."
+      },
+      {
+        "id": "allow-path",
+        "label": "Allow: accept immediately",
+        "focus": [
+          "security",
+          "platform",
+          "application",
+          "default",
+          "accept1",
+          "accept2",
+          "accept3",
+          "accept4"
+        ],
+        "note": "An Allow match in any tier ends evaluation at once and the packet is allowed."
+      },
+      {
+        "id": "deny-path",
+        "label": "Deny / No Match: drop",
+        "focus": [
+          "security",
+          "platform",
+          "application",
+          "default",
+          "drop1",
+          "drop2",
+          "drop3",
+          "drop4"
+        ],
+        "note": "A Deny match drops the packet immediately; with no match in the Default tier the packet hits the implicit deny."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "allow",
+      "label": "Allow → accept"
+    },
+    {
+      "id": "tiers",
+      "label": "Tier evaluation (by order)"
+    },
+    {
+      "id": "deny",
+      "label": "Deny → drop",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "traffic",
+    "security",
+    "platform",
+    "application",
+    "default"
+  ],
+  "nodes": [
+    {
+      "id": "traffic",
+      "lane": "tiers",
+      "col": 0,
+      "type": "external",
+      "label": "Traffic",
+      "sublabel": "packet arrives",
+      "width": 120
+    },
+    {
+      "id": "security",
+      "lane": "tiers",
+      "col": 1,
+      "type": "backend",
+      "label": "Security Tier",
+      "sublabel": "block threats → compliance checks",
+      "tag": "Order: 100",
+      "width": 176
+    },
+    {
+      "id": "platform",
+      "lane": "tiers",
+      "col": 2,
+      "type": "backend",
+      "label": "Platform Tier",
+      "sublabel": "allow monitoring → allow logging",
+      "tag": "Order: 200",
+      "width": 176
+    },
+    {
+      "id": "application",
+      "lane": "tiers",
+      "col": 3,
+      "type": "backend",
+      "label": "Application Tier",
+      "sublabel": "microservice policy → DB access",
+      "tag": "Order: 500",
+      "width": 176
+    },
+    {
+      "id": "default",
+      "lane": "tiers",
+      "col": 4,
+      "type": "backend",
+      "label": "Default Tier",
+      "sublabel": "K8s NetworkPolicy",
+      "tag": "Order: 1000",
+      "width": 176
+    },
+    {
+      "id": "accept1",
+      "lane": "allow",
+      "col": 1,
+      "type": "frontend",
+      "label": "Allow Packet",
+      "sublabel": "Security tier: Allow",
+      "width": 120
+    },
+    {
+      "id": "accept2",
+      "lane": "allow",
+      "col": 2,
+      "type": "frontend",
+      "label": "Allow Packet",
+      "sublabel": "Platform tier: Allow",
+      "width": 120
+    },
+    {
+      "id": "accept3",
+      "lane": "allow",
+      "col": 3,
+      "type": "frontend",
+      "label": "Allow Packet",
+      "sublabel": "Application tier: Allow",
+      "width": 120
+    },
+    {
+      "id": "accept4",
+      "lane": "allow",
+      "col": 4,
+      "type": "frontend",
+      "label": "Allow Packet",
+      "sublabel": "NetworkPolicy: Allow",
+      "width": 120
+    },
+    {
+      "id": "drop1",
+      "lane": "deny",
+      "col": 1,
+      "type": "security",
+      "label": "Drop Packet",
+      "sublabel": "Security tier: Deny",
+      "width": 120
+    },
+    {
+      "id": "drop2",
+      "lane": "deny",
+      "col": 2,
+      "type": "security",
+      "label": "Drop Packet",
+      "sublabel": "Platform tier: Deny",
+      "width": 120
+    },
+    {
+      "id": "drop3",
+      "lane": "deny",
+      "col": 3,
+      "type": "security",
+      "label": "Drop Packet",
+      "sublabel": "Application tier: Deny",
+      "width": 120
+    },
+    {
+      "id": "drop4",
+      "lane": "deny",
+      "col": 4,
+      "type": "security",
+      "label": "Implicit Deny",
+      "sublabel": "no rule matched",
+      "width": 120
+    }
+  ],
+  "edges": [
+    {
+      "id": "traffic-security",
+      "from": "traffic",
+      "to": "security",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "security-platform",
+      "from": "security",
+      "to": "platform",
+      "label": "Pass",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "platform-application",
+      "from": "platform",
+      "to": "application",
+      "label": "Pass",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "application-default",
+      "from": "application",
+      "to": "default",
+      "label": "Pass",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "security-allow",
+      "from": "security",
+      "to": "accept1",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "platform-allow",
+      "from": "platform",
+      "to": "accept2",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "application-allow",
+      "from": "application",
+      "to": "accept3",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "default-allow",
+      "from": "default",
+      "to": "accept4",
+      "label": "Allow",
+      "role": "branch"
+    },
+    {
+      "id": "security-deny",
+      "from": "security",
+      "to": "drop1",
+      "label": "Deny",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "platform-deny",
+      "from": "platform",
+      "to": "drop2",
+      "label": "Deny",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "application-deny",
+      "from": "application",
+      "to": "drop3",
+      "label": "Deny",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    },
+    {
+      "id": "default-deny",
+      "from": "default",
+      "to": "drop4",
+      "label": "No Match",
+      "role": "error",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 18
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Tiered evaluation",
+      "items": [
+        "Security (100), Platform (200) and Application (500) tiers separate the concerns of security, platform and application teams",
+        "An Allow or Deny match ends evaluation immediately; Pass hands the packet to the next tier"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Default tier",
+      "items": [
+        "Auto-created, lowest-priority tier (order 1000)",
+        "Kubernetes NetworkPolicy lives here; a packet no policy matches ends in an implicit deny"
+      ]
+    }
+  ]
+}

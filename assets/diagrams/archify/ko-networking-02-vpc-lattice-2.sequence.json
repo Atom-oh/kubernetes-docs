@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "VPC Lattice 트래픽 흐름",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [960, 600],
+    "animation": "trace",
+    "views": [
+      { "id": "request-path", "label": "요청 경로", "focus": ["client", "lattice", "service", "tg", "target"], "note": "클라이언트가 서비스 DNS 이름으로 보낸 요청이 리스너 규칙과 대상 그룹을 거쳐 EKS 파드에 도달한다." },
+      { "id": "response-path", "label": "응답 경로", "focus": ["target", "tg", "service", "lattice", "client"], "note": "대상이 처리한 응답이 같은 경로를 역순으로 거쳐 클라이언트에게 돌아간다." }
+    ]
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "클라이언트" },
+    { "id": "lattice", "type": "cloud", "label": "VPC Lattice" },
+    { "id": "service", "type": "backend", "label": "서비스", "sublabel": "리스너 규칙" },
+    { "id": "tg", "type": "backend", "label": "대상 그룹" },
+    { "id": "target", "type": "backend", "label": "대상", "sublabel": "EKS 파드" }
+  ],
+  "segments": [
+    { "from": 160, "to": 330, "label": "요청" },
+    { "from": 350, "to": 520, "label": "응답" }
+  ],
+  "messages": [
+    { "id": "req-in", "from": "client", "to": "lattice", "y": 185, "label": "요청 (service-name.vpc-lattice-svcs.region.on.aws)", "variant": "emphasis" },
+    { "id": "req-rules", "from": "lattice", "to": "service", "y": 225, "label": "요청 처리 및 리스너 규칙 적용" },
+    { "id": "req-route", "from": "service", "to": "tg", "y": 265, "label": "적절한 대상 그룹으로 라우팅" },
+    { "id": "req-forward", "from": "tg", "to": "target", "y": 305, "label": "요청을 대상으로 전달" },
+    { "id": "res-target", "from": "target", "to": "tg", "y": 375, "label": "응답 반환", "variant": "return" },
+    { "id": "res-tg", "from": "tg", "to": "service", "y": 415, "label": "응답 전달", "variant": "return" },
+    { "id": "res-service", "from": "service", "to": "lattice", "y": 455, "label": "응답 처리", "variant": "return" },
+    { "id": "res-out", "from": "lattice", "to": "client", "y": 495, "label": "응답 반환", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "lattice", "from": 180, "to": 500, "type": "cloud" },
+    { "participant": "service", "from": 220, "to": 460, "type": "backend" },
+    { "participant": "tg", "from": 260, "to": 420, "type": "backend" },
+    { "participant": "target", "from": 300, "to": 380, "type": "backend" }
+  ]
+}
