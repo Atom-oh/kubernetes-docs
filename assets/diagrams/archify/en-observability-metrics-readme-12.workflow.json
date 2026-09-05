@@ -1,0 +1,279 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Metrics Solution Selection Guide",
+    "locale": "en",
+    "output": "public/archmaps/en-observability-metrics-readme-12.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "small-team",
+        "label": "Small / limited ops",
+        "focus": [
+          "teamSize",
+          "awsEnv",
+          "cloudwatch",
+          "datadog"
+        ],
+        "note": "A small team with limited operations picks a managed service: CloudWatch on AWS, Datadog elsewhere."
+      },
+      {
+        "id": "medium-team",
+        "label": "Medium team",
+        "focus": [
+          "teamSize",
+          "costPriority",
+          "victoria",
+          "amp"
+        ],
+        "note": "Cost priority decides between self-hosted VictoriaMetrics and Amazon Managed Prometheus."
+      },
+      {
+        "id": "large-team",
+        "label": "Large / expert ops",
+        "focus": [
+          "teamSize",
+          "multiCloud",
+          "vmMimir",
+          "ampGrafana"
+        ],
+        "note": "Multi-cloud teams self-host VictoriaMetrics or Mimir; AWS-only teams use AMP with Amazon Managed Grafana."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "entry",
+      "label": "Start"
+    },
+    {
+      "id": "small",
+      "label": "Small team / limited ops"
+    },
+    {
+      "id": "medium",
+      "label": "Medium team"
+    },
+    {
+      "id": "large",
+      "label": "Large team / expert ops"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "teamSize",
+    "costPriority",
+    "victoria"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "cloudwatch",
+      "datadog",
+      "victoria",
+      "amp",
+      "vmMimir",
+      "ampGrafana"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "cloudwatch"
+      },
+      {
+        "from": "start",
+        "to": "victoria"
+      },
+      {
+        "from": "start",
+        "to": "ampGrafana"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "entry",
+      "col": 0,
+      "type": "frontend",
+      "label": "Metrics solution selection",
+      "width": 190
+    },
+    {
+      "id": "teamSize",
+      "lane": "entry",
+      "col": 1,
+      "type": "security",
+      "label": "Team size & operational capability?",
+      "tag": "KEY DECISION",
+      "width": 250
+    },
+    {
+      "id": "awsEnv",
+      "lane": "small",
+      "col": 2,
+      "type": "security",
+      "label": "AWS environment?",
+      "width": 124
+    },
+    {
+      "id": "cloudwatch",
+      "lane": "small",
+      "col": 3,
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "Container Insights",
+      "width": 112
+    },
+    {
+      "id": "datadog",
+      "lane": "small",
+      "col": 4,
+      "type": "external",
+      "label": "Datadog",
+      "sublabel": "SaaS",
+      "width": 96
+    },
+    {
+      "id": "costPriority",
+      "lane": "medium",
+      "col": 2,
+      "type": "security",
+      "label": "Cost priority?",
+      "width": 110
+    },
+    {
+      "id": "victoria",
+      "lane": "medium",
+      "col": 3,
+      "type": "database",
+      "label": "VictoriaMetrics",
+      "sublabel": "self-hosted",
+      "width": 118
+    },
+    {
+      "id": "amp",
+      "lane": "medium",
+      "col": 4,
+      "type": "cloud",
+      "label": "Amazon Managed Prometheus",
+      "width": 184
+    },
+    {
+      "id": "multiCloud",
+      "lane": "large",
+      "col": 2,
+      "type": "security",
+      "label": "Multi-cloud?",
+      "width": 104
+    },
+    {
+      "id": "vmMimir",
+      "lane": "large",
+      "col": 3,
+      "type": "database",
+      "label": "VictoriaMetrics or Mimir",
+      "sublabel": "self-hosted",
+      "width": 176
+    },
+    {
+      "id": "ampGrafana",
+      "lane": "large",
+      "col": 4,
+      "type": "cloud",
+      "label": "AMP + Grafana",
+      "sublabel": "Amazon Managed Grafana",
+      "width": 170
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "teamSize",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "teamSize",
+      "to": "awsEnv",
+      "label": "small / limited",
+      "role": "branch"
+    },
+    {
+      "from": "teamSize",
+      "to": "costPriority",
+      "label": "medium",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "teamSize",
+      "to": "multiCloud",
+      "label": "large / expert",
+      "role": "branch"
+    },
+    {
+      "from": "awsEnv",
+      "to": "cloudwatch",
+      "label": "yes",
+      "role": "branch",
+      "fromSide": "right"
+    },
+    {
+      "from": "awsEnv",
+      "to": "datadog",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "costPriority",
+      "to": "victoria",
+      "label": "yes",
+      "role": "main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "costPriority",
+      "to": "amp",
+      "label": "no",
+      "role": "branch"
+    },
+    {
+      "from": "multiCloud",
+      "to": "vmMimir",
+      "label": "yes",
+      "role": "branch"
+    },
+    {
+      "from": "multiCloud",
+      "to": "ampGrafana",
+      "label": "no",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Monthly cost estimate",
+      "items": [
+        "1,000 nodes · 1M active series · 30-day retention",
+        "Prometheus + VictoriaMetrics ≈ $500 (infra only)",
+        "Amazon Managed Prometheus ≈ $1,700",
+        "CloudWatch ≈ $3,000+ · Datadog ≈ $15,000+"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Why the branches split",
+      "items": [
+        "CloudWatch and Datadog: low setup complexity, native AWS integration",
+        "VictoriaMetrics and Mimir: horizontal scaling, native HA, free (infra only)",
+        "AMP keeps PromQL while AWS runs the storage"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Metrics Retention Tiers",
+    "locale": "en",
+    "output": "en-observability-metrics-readme-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "short-term",
+        "label": "Short-term (Prometheus)",
+        "focus": [
+          "prom",
+          "alerts",
+          "trends",
+          "debug"
+        ],
+        "note": "Prometheus keeps 15-30 days locally and serves alerting, recent trends and debugging directly."
+      },
+      {
+        "id": "remote-write",
+        "label": "remote_write hand-off",
+        "focus": [
+          "prom",
+          "lts"
+        ],
+        "note": "Prometheus forwards samples to remote storage through remote_write."
+      },
+      {
+        "id": "long-term",
+        "label": "Long-term (1+ year)",
+        "focus": [
+          "lts",
+          "capacity",
+          "annual",
+          "compliance",
+          "cost"
+        ],
+        "note": "Remote storage retains a year or more for planning, YoY trends, compliance and cost analysis."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prom",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "15-30 day retention",
+      "tag": "TSDB",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "alerts",
+      "type": "external",
+      "label": "Real-time alerts",
+      "pos": [
+        310,
+        130
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "trends",
+      "type": "external",
+      "label": "Recent trends",
+      "pos": [
+        310,
+        370
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "debug",
+      "type": "external",
+      "label": "Immediate debugging",
+      "pos": [
+        310,
+        460
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "lts",
+      "type": "database",
+      "label": "VictoriaMetrics",
+      "sublabel": "Mimir / Thanos · 1+ year",
+      "tag": "LTS",
+      "pos": [
+        590,
+        250
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "capacity",
+      "type": "external",
+      "label": "Capacity planning",
+      "pos": [
+        900,
+        60
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "annual",
+      "type": "external",
+      "label": "Annual trends",
+      "pos": [
+        900,
+        190
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "compliance",
+      "type": "external",
+      "label": "Compliance",
+      "pos": [
+        900,
+        320
+      ],
+      "size": [
+        170,
+        56
+      ]
+    },
+    {
+      "id": "cost",
+      "type": "external",
+      "label": "Cost analysis",
+      "pos": [
+        900,
+        450
+      ],
+      "size": [
+        170,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Short-term · Prometheus, 15-30 days",
+      "wraps": [
+        "prom",
+        "alerts",
+        "trends",
+        "debug"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Long-term · remote storage, 1+ year",
+      "wraps": [
+        "lts",
+        "capacity",
+        "annual",
+        "compliance",
+        "cost"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "prom-alerts",
+      "from": "prom",
+      "to": "alerts"
+    },
+    {
+      "id": "prom-trends",
+      "from": "prom",
+      "to": "trends"
+    },
+    {
+      "id": "prom-debug",
+      "from": "prom",
+      "to": "debug"
+    },
+    {
+      "id": "prom-lts",
+      "from": "prom",
+      "to": "lts",
+      "label": "remote_write",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lts-capacity",
+      "from": "lts",
+      "to": "capacity"
+    },
+    {
+      "id": "lts-annual",
+      "from": "lts",
+      "to": "annual"
+    },
+    {
+      "id": "lts-compliance",
+      "from": "lts",
+      "to": "compliance"
+    },
+    {
+      "id": "lts-cost",
+      "from": "lts",
+      "to": "cost"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Prometheus long-term limits",
+      "items": [
+        "Storage efficiency: low compression grows disk usage",
+        "Single-node architecture limits horizontal scaling",
+        "No native HA clustering",
+        "Slower queries over long time ranges"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Required retention by use case",
+      "items": [
+        "Real-time alerts: 1-7 days",
+        "Troubleshooting: 7-30 days",
+        "Capacity planning: 3-12 months",
+        "Year-over-year comparison: 12+ months",
+        "Compliance: 1-7 years",
+        "Cost optimization: 6-12 months"
+      ]
+    }
+  ]
+}

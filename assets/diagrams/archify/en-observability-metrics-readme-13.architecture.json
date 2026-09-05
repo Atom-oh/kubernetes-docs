@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubernetes Environment Metrics Collection Structure",
+    "locale": "en",
+    "output": "en-observability-metrics-readme-13.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "scrape", "label": "Scrape targets", "focus": ["node-exporter", "kube-state-metrics", "cadvisor", "apps", "prometheus"], "note": "Prometheus (or vmagent) scrapes node, Kubernetes object, container, and application /metrics endpoints." },
+      { "id": "storage", "label": "Short vs long-term storage", "focus": ["prometheus", "tsdb", "victoriametrics"], "note": "Local Prometheus TSDB keeps recent data; remote_write ships samples to VictoriaMetrics for long-term retention." },
+      { "id": "consume", "label": "Query and alerting", "focus": ["tsdb", "victoriametrics", "grafana", "alertmanager"], "note": "Grafana dashboards query both stores; Alertmanager receives alerts evaluated against Prometheus TSDB." }
+    ]
+  },
+  "components": [
+    { "id": "node-exporter", "type": "backend", "label": "node-exporter", "sublabel": "node metrics", "pos": [40, 60], "size": [170, 60] },
+    { "id": "kube-state-metrics", "type": "backend", "label": "kube-state-metrics", "sublabel": "k8s object metrics", "pos": [40, 180], "size": [170, 60] },
+    { "id": "cadvisor", "type": "backend", "label": "cAdvisor", "sublabel": "container metrics", "pos": [40, 300], "size": [170, 60] },
+    { "id": "apps", "type": "backend", "label": "Applications", "sublabel": "/metrics", "pos": [40, 420], "size": [170, 60] },
+    { "id": "prometheus", "type": "backend", "label": "Prometheus", "sublabel": "or vmagent", "tag": "collector", "pos": [330, 240], "size": [160, 64] },
+    { "id": "victoriametrics", "type": "database", "label": "VictoriaMetrics", "sublabel": "long-term", "pos": [620, 130], "size": [170, 60] },
+    { "id": "tsdb", "type": "database", "label": "Prometheus TSDB", "sublabel": "short-term", "pos": [620, 350], "size": [170, 60] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "visualization", "pos": [900, 130], "size": [160, 60] },
+    { "id": "alertmanager", "type": "backend", "label": "Alertmanager", "sublabel": "alert routing", "pos": [900, 350], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Metric Sources", "wraps": ["node-exporter", "kube-state-metrics", "cadvisor", "apps"] },
+    { "kind": "region", "label": "Storage Layer", "wraps": ["victoriametrics", "tsdb"] },
+    { "kind": "region", "label": "Query / Alerting", "wraps": ["grafana", "alertmanager"] }
+  ],
+  "connections": [
+    { "id": "ne-scrape", "from": "node-exporter", "to": "prometheus" },
+    { "id": "ksm-scrape", "from": "kube-state-metrics", "to": "prometheus", "label": "scrape", "labelDx": -40 },
+    { "id": "cadvisor-scrape", "from": "cadvisor", "to": "prometheus" },
+    { "id": "apps-scrape", "from": "apps", "to": "prometheus" },
+    { "id": "remote-write", "from": "prometheus", "to": "victoriametrics", "label": "remote_write", "variant": "emphasis" },
+    { "id": "local-write", "from": "prometheus", "to": "tsdb", "label": "local write" },
+    { "id": "vm-grafana", "from": "victoriametrics", "to": "grafana", "label": "query" },
+    { "id": "tsdb-grafana", "from": "tsdb", "to": "grafana", "label": "query" },
+    { "id": "tsdb-alertmanager", "from": "tsdb", "to": "alertmanager", "label": "alerts", "labelDy": 18 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Key metric sources", "items": ["node-exporter: CPU, memory, disk, network", "kube-state-metrics: Pod, Deployment, Node status", "cAdvisor: per-container CPU, memory, I/O", "Applications expose a /metrics endpoint"] },
+    { "dot": "orange", "title": "Storage", "items": ["Prometheus TSDB holds short-term data for real-time alerts", "remote_write ships samples to VictoriaMetrics for long-term retention"] },
+    { "dot": "emerald", "title": "Consumers", "items": ["Grafana queries both short- and long-term stores", "Alertmanager receives alerts evaluated from Prometheus TSDB"] }
+  ]
+}

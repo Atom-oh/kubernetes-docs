@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pull vs Push Model",
+    "output": "en-observability-metrics-readme-10.html",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "pull",
+        "label": "Pull model (Prometheus)",
+        "focus": [
+          "prom",
+          "pull-app1",
+          "pull-app2",
+          "pull-app3"
+        ],
+        "note": "The Prometheus server scrapes each application's /metrics endpoint over HTTP GET on its own schedule."
+      },
+      {
+        "id": "push",
+        "label": "Push model (Datadog, CloudWatch)",
+        "focus": [
+          "push-app1",
+          "push-app2",
+          "push-app3",
+          "collector"
+        ],
+        "note": "Each application sends its metrics via HTTP POST to a central collector or gateway."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "prom",
+      "type": "backend",
+      "label": "Prometheus Server",
+      "sublabel": "central scraper",
+      "tag": "SRV",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pull-app1",
+      "type": "frontend",
+      "label": "App 1",
+      "sublabel": "/metrics",
+      "pos": [
+        360,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pull-app2",
+      "type": "frontend",
+      "label": "App 2",
+      "sublabel": "/metrics",
+      "pos": [
+        360,
+        262
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "pull-app3",
+      "type": "frontend",
+      "label": "App 3",
+      "sublabel": "/metrics",
+      "pos": [
+        360,
+        424
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "push-app1",
+      "type": "frontend",
+      "label": "App 1",
+      "sublabel": "metrics client",
+      "pos": [
+        680,
+        100
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "push-app2",
+      "type": "frontend",
+      "label": "App 2",
+      "sublabel": "metrics client",
+      "pos": [
+        680,
+        262
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "push-app3",
+      "type": "frontend",
+      "label": "App 3",
+      "sublabel": "metrics client",
+      "pos": [
+        680,
+        424
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "collector",
+      "type": "cloud",
+      "label": "Collector / Gateway",
+      "sublabel": "Datadog · CloudWatch",
+      "tag": "GW",
+      "pos": [
+        960,
+        260
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pull model · Prometheus",
+      "wraps": [
+        "prom",
+        "pull-app1",
+        "pull-app2",
+        "pull-app3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Push model · Datadog, CloudWatch",
+      "wraps": [
+        "push-app1",
+        "push-app2",
+        "push-app3",
+        "collector"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "scrape-1",
+      "from": "prom",
+      "to": "pull-app1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "scrape-2",
+      "from": "prom",
+      "to": "pull-app2",
+      "label": "GET",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDx": 33
+    },
+    {
+      "id": "scrape-3",
+      "from": "prom",
+      "to": "pull-app3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "push-1",
+      "from": "push-app1",
+      "to": "collector",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "push-2",
+      "from": "push-app2",
+      "to": "collector",
+      "label": "POST",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelDx": -33
+    },
+    {
+      "id": "push-3",
+      "from": "push-app3",
+      "to": "collector",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pull model",
+      "items": [
+        "Prometheus controls collection targets and intervals centrally",
+        "Target availability is detected automatically; endpoints can be queried directly for debugging",
+        "Hard for short-lived jobs and targets behind NAT/firewalls; needs service discovery"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Push model",
+      "items": [
+        "Datadog, CloudWatch, Graphite send metrics from the client",
+        "Works for short-lived jobs and firewall/NAT environments; event-driven transmission",
+        "Collector can be overloaded; availability detection is harder; client needs transmission logic"
+      ]
+    }
+  ]
+}
