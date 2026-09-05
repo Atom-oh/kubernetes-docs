@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Tracking → Model Registry → 서빙",
+    "output": "ko-ai-ml-mlflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Tracking 서버"
+        },
+        "database": {
+          "label": "Model Registry (핵심 개념)"
+        },
+        "external": {
+          "label": "이 시리즈 범위 밖"
+        }
+      }
+    },
+    "viewBox": [
+      1040,
+      330
+    ]
+  },
+  "components": [
+    {
+      "id": "tracking",
+      "type": "backend",
+      "label": "Tracking",
+      "sublabel": "실험, Run, Trace",
+      "tag": "Part 1",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Model Registry",
+      "sublabel": "Registered Model, Alias",
+      "tag": "Part 2",
+      "pos": [
+        400,
+        90
+      ],
+      "size": [
+        200,
+        70
+      ]
+    },
+    {
+      "id": "serving",
+      "type": "external",
+      "label": "서빙",
+      "sublabel": "이 시리즈 범위 밖",
+      "pos": [
+        760,
+        90
+      ],
+      "size": [
+        200,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "이 문서 시리즈가 다루는 범위 (Part 1·2)",
+      "wraps": [
+        "tracking",
+        "registry"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "tracking-to-registry",
+      "from": "tracking",
+      "to": "registry",
+      "label": "모델 등록",
+      "variant": "emphasis"
+    },
+    {
+      "id": "registry-to-serving",
+      "from": "registry",
+      "to": "serving",
+      "label": "해석 대상",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Tracking (Part 1)",
+      "items": [
+        "실험 파라미터, 메트릭, 아티팩트, 모델, GenAI trace를 기록하고 조회한다",
+        "실험, Run, 오토로깅, MLflow 3의 LoggedModel 전환, GenAI 트레이싱을 다룬다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Model Registry (Part 2)",
+      "items": [
+        "특정 학습 실행에 종속되지 않는 안정적이고 버전화된 모델 식별자를 제공한다",
+        "Registered Model, Model Version, 별칭(alias), 계보(lineage)를 다룬다"
+      ]
+    }
+  ]
+}

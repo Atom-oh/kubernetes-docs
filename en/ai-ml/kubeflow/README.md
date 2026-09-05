@@ -18,7 +18,9 @@ Kubeflow is an open-source machine learning platform for Kubernetes that bundles
 | **Kubeflow Trainer** | Distributed model training across frameworks | `TrainJob`, `ClusterTrainingRuntime` | [Part 5](05-training-operator.md) |
 | **KServe** | Model serving and inference | `InferenceService` | [Part 6](06-kserve.md) |
 
-![Diagram showing Kubeflow's Central Dashboard routing to Notebooks, Pipelines, and Katib, with Pipelines and Katib both feeding the Kubeflow Trainer, which passes its trained model to KServe for serving.](../../.gitbook/assets/en-ai-ml-kubeflow-README-0.png)
+![Kubeflow component map showing the Central Dashboard as the entry point to Notebooks, Pipelines, and Katib, with Pipelines and Katib both handing training to Kubeflow Trainer, whose trained model flows to KServe for serving.](../../.gitbook/assets/en-ai-ml-kubeflow-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-readme-0.html)
 
 ## Why Run This on EKS
 

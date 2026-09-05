@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow Component Map",
+    "locale": "en",
+    "output": "en-ai-ml-kubeflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1080,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "dashboard",
+      "type": "frontend",
+      "label": "Central Dashboard",
+      "sublabel": "Profile-based multi-tenancy",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "notebooks",
+      "type": "backend",
+      "label": "Kubeflow Notebooks",
+      "sublabel": "Jupyter / RStudio / VS Code",
+      "pos": [
+        320,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pipelines",
+      "type": "backend",
+      "label": "Kubeflow Pipelines",
+      "sublabel": "ML workflow DAGs",
+      "pos": [
+        320,
+        250
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "katib",
+      "type": "backend",
+      "label": "Katib",
+      "sublabel": "hyperparameter tuning / AutoML",
+      "pos": [
+        320,
+        440
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "trainer",
+      "type": "backend",
+      "label": "Kubeflow Trainer",
+      "sublabel": "distributed training · TrainJob",
+      "pos": [
+        620,
+        250
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "kserve",
+      "type": "cloud",
+      "label": "KServe",
+      "sublabel": "InferenceService serving",
+      "pos": [
+        890,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dash-notebooks",
+      "from": "dashboard",
+      "to": "notebooks"
+    },
+    {
+      "id": "dash-pipelines",
+      "from": "dashboard",
+      "to": "pipelines",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dash-katib",
+      "from": "dashboard",
+      "to": "katib"
+    },
+    {
+      "id": "pipelines-trainer",
+      "from": "pipelines",
+      "to": "trainer",
+      "label": "runs training steps",
+      "variant": "emphasis"
+    },
+    {
+      "id": "katib-trainer",
+      "from": "katib",
+      "to": "trainer",
+      "label": "runs Trial training"
+    },
+    {
+      "id": "trainer-kserve",
+      "from": "trainer",
+      "to": "kserve",
+      "label": "trained model",
+      "variant": "emphasis"
+    }
+  ]
+}

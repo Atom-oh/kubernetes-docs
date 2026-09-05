@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kubeflow 컴포넌트 맵",
+    "output": "ko-ai-ml-kubeflow-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1080, 560]
+  },
+  "components": [
+    { "id": "dashboard", "type": "frontend", "label": "Central Dashboard", "sublabel": "Profile 기반 멀티테넌시", "pos": [40, 250], "size": [170, 64] },
+    { "id": "notebooks", "type": "backend", "label": "Kubeflow Notebooks", "sublabel": "Jupyter / RStudio / VS Code", "pos": [320, 60], "size": [190, 64] },
+    { "id": "pipelines", "type": "backend", "label": "Kubeflow Pipelines", "sublabel": "ML 워크플로우 DAG", "pos": [320, 250], "size": [190, 64] },
+    { "id": "katib", "type": "backend", "label": "Katib", "sublabel": "하이퍼파라미터 튜닝 / AutoML", "pos": [320, 440], "size": [190, 64] },
+    { "id": "trainer", "type": "backend", "label": "Kubeflow Trainer", "sublabel": "분산 학습 · TrainJob", "pos": [620, 250], "size": [180, 64] },
+    { "id": "kserve", "type": "cloud", "label": "KServe", "sublabel": "InferenceService 서빙", "pos": [890, 250], "size": [160, 64] }
+  ],
+  "connections": [
+    { "id": "dash-notebooks", "from": "dashboard", "to": "notebooks" },
+    { "id": "dash-pipelines", "from": "dashboard", "to": "pipelines", "variant": "emphasis" },
+    { "id": "dash-katib", "from": "dashboard", "to": "katib" },
+    { "id": "pipelines-trainer", "from": "pipelines", "to": "trainer", "label": "학습 단계 실행", "variant": "emphasis" },
+    { "id": "katib-trainer", "from": "katib", "to": "trainer", "label": "Trial 학습 실행" },
+    { "id": "trainer-kserve", "from": "trainer", "to": "kserve", "label": "학습된 모델", "variant": "emphasis" }
+  ]
+}
