@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "xDS Protocol Overview",
+    "output": "en-service-mesh-istio-03-architecture-11.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "bootstrap",
+        "label": "Initial bootstrap (LDS)",
+        "focus": [
+          "pilot",
+          "lds"
+        ],
+        "note": "Envoy first receives its listener configuration (ports 15001, 15006) over LDS so it is ready to accept traffic."
+      },
+      {
+        "id": "routing",
+        "label": "Routing (RDS/CDS/EDS)",
+        "focus": [
+          "pilot",
+          "rds",
+          "cds",
+          "eds"
+        ],
+        "note": "VirtualService arrives over RDS, DestinationRule over CDS, and the pod IP list over EDS."
+      },
+      {
+        "id": "secrets",
+        "label": "Certificates (SDS)",
+        "focus": [
+          "pilot",
+          "sds"
+        ],
+        "note": "The TLS certificates needed for mTLS are delivered to Envoy over the SDS channel."
+      }
+    ],
+    "locale": "en",
+    "viewBox": [
+      1040,
+      600
+    ]
+  },
+  "components": [
+    {
+      "id": "pilot",
+      "type": "backend",
+      "label": "Pilot",
+      "sublabel": "xDS Server",
+      "tag": "Istiod",
+      "pos": [
+        80,
+        240
+      ],
+      "size": [
+        180,
+        84
+      ]
+    },
+    {
+      "id": "lds",
+      "type": "backend",
+      "label": "Listener DS",
+      "sublabel": "Listener ports · 15001, 15006",
+      "tag": "LDS",
+      "pos": [
+        680,
+        50
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "rds",
+      "type": "backend",
+      "label": "Route DS",
+      "sublabel": "HTTP routing · VirtualService",
+      "tag": "RDS",
+      "pos": [
+        680,
+        150
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "cds",
+      "type": "backend",
+      "label": "Cluster DS",
+      "sublabel": "Upstream services · DestinationRule",
+      "tag": "CDS",
+      "pos": [
+        680,
+        250
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "eds",
+      "type": "backend",
+      "label": "Endpoint DS",
+      "sublabel": "Pod IP list · Service Endpoints",
+      "tag": "EDS",
+      "pos": [
+        680,
+        350
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "sds",
+      "type": "security",
+      "label": "Secret DS",
+      "sublabel": "TLS certificates · mTLS certificates",
+      "tag": "SDS",
+      "pos": [
+        680,
+        450
+      ],
+      "size": [
+        260,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istiod",
+      "wraps": [
+        "pilot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Envoy Proxy",
+      "wraps": [
+        "lds",
+        "rds",
+        "cds",
+        "eds",
+        "sds"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pilot-lds",
+      "from": "pilot",
+      "to": "lds",
+      "label": "bidirectional gRPC stream",
+      "variant": "emphasis",
+      "labelAt": [
+        610,
+        82
+      ]
+    },
+    {
+      "id": "pilot-rds",
+      "from": "pilot",
+      "to": "rds",
+      "label": "bidirectional gRPC stream",
+      "labelAt": [
+        610,
+        182
+      ]
+    },
+    {
+      "id": "pilot-cds",
+      "from": "pilot",
+      "to": "cds",
+      "label": "bidirectional gRPC stream",
+      "labelAt": [
+        610,
+        282
+      ]
+    },
+    {
+      "id": "pilot-eds",
+      "from": "pilot",
+      "to": "eds",
+      "label": "bidirectional gRPC stream",
+      "labelAt": [
+        610,
+        382
+      ]
+    },
+    {
+      "id": "pilot-sds",
+      "from": "pilot",
+      "to": "sds",
+      "label": "bidirectional gRPC stream",
+      "variant": "security",
+      "labelAt": [
+        610,
+        482
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "xDS API types",
+      "items": [
+        "LDS — Listener Discovery: listener port configuration (15001, 15006)",
+        "RDS — Route Discovery: HTTP routing rules (VirtualService)",
+        "CDS — Cluster Discovery: upstream services (DestinationRule)",
+        "EDS — Endpoint Discovery: pod IP list (Service Endpoints)",
+        "SDS — Secret Discovery: TLS certificates (mTLS certificates)"
+      ]
+    }
+  ]
+}

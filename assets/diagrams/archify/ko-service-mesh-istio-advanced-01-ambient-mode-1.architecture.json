@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode 아키텍처",
+    "output": "ko-service-mesh-istio-advanced-01-ambient-mode-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "backend",
+      "label": "App Container",
+      "sublabel": "애플리케이션",
+      "pos": [
+        80,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "파드별 프록시",
+      "pos": [
+        80,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "backend",
+      "label": "App Container",
+      "sublabel": "애플리케이션",
+      "pos": [
+        440,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "파드별 프록시",
+      "pos": [
+        440,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "app3",
+      "type": "backend",
+      "label": "App Container",
+      "sublabel": "애플리케이션",
+      "pos": [
+        800,
+        80
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "envoy3",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "파드별 프록시",
+      "pos": [
+        800,
+        260
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "파드 1",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드 2",
+      "wraps": [
+        "app2",
+        "envoy2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "파드 3",
+      "wraps": [
+        "app3",
+        "envoy3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-envoy1",
+      "from": "app1",
+      "to": "envoy1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-envoy2",
+      "from": "app2",
+      "to": "envoy2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app3-envoy3",
+      "from": "app3",
+      "to": "envoy3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy1-envoy2",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "envoy2-envoy3",
+      "from": "envoy2",
+      "to": "envoy3",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Sidecar Mode 특징",
+      "items": [
+        "각 파드에 Envoy 프록시 주입",
+        "모든 L4/L7 기능 지원",
+        "높은 리소스 사용량",
+        "파드 재시작 필요"
+      ]
+    }
+  ]
+}

@@ -9,7 +9,9 @@ This guide covers comprehensive AI/ML infrastructure patterns on Amazon EKS, inc
 
 Modern AI/ML infrastructure on EKS follows a layered architecture that separates concerns and enables independent scaling of each layer.
 
-![Layer stack showing the EKS AI/ML platform: ML workloads (training, inference, notebooks, pipelines, agents) run on platform services (Ray, KServe, Kubeflow, MLflow, Vector DB), which schedule onto GPU, Neuron, CPU, and Spot compute pools, all provisioned on the EKS base layer's control plane, storage, and networking.](../../assets/diagrams/rendered/en-ai-ml-06-ai-infrastructure-0.svg)
+![Layer stack showing the EKS AI/ML platform: ML workloads (training, inference, notebooks, pipelines, agents) run on platform services (Ray, KServe, Kubeflow, MLflow, Vector DB), which schedule onto GPU, Neuron, CPU, and Spot compute pools, all provisioned on the EKS base layer's control plane, storage, and networking.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-0.html)
 
 **Layer responsibilities:**
 
@@ -28,7 +30,9 @@ The JARK Stack (JupyterHub + Argo Workflows + Ray + Karpenter) provides a comple
 
 ### JARK Stack Architecture
 
-![Architecture diagram showing data scientists reaching JupyterHub notebooks that hand off to Argo Workflows and a Ray cluster for training and tuning, with Ray triggering Karpenter to provision GPU/Neuron nodes while JupyterHub and Ray both share EFS/FSx/S3 storage.](../../assets/diagrams/rendered/en-ai-ml-06-ai-infrastructure-1.svg)
+![JARK stack architecture in which data scientists work in JupyterHub notebooks that submit Argo Workflows and Ray jobs, Ray workers trigger Karpenter to provision CPU/GPU/Neuron NodePool nodes, and notebooks and Ray workers share EFS, FSx for Lustre, and S3 storage.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-1.html)
 
 ### JARK Stack Components
 
@@ -821,7 +825,9 @@ Dynamic Resource Allocation (DRA) is Kubernetes' next-generation approach to GPU
 
 ### DRA vs Traditional GPU Scheduling
 
-![Flowchart comparing the traditional GPU device-plugin allocation path, which yields exclusive whole-GPU access with no sharing, against the Kubernetes 1.31+ Dynamic Resource Allocation path, which evaluates topology-aware ResourceClaims to unlock fine-grained, multi-tenant GPU benefits.](../../assets/diagrams/rendered/en-ai-ml-06-ai-infrastructure-2.svg)
+![Comparison of the traditional device-plugin path, which allocates a whole GPU with no sharing, against the Kubernetes 1.31+ DRA path, where ResourceClaim and ResourceSlice drive fine-grained, topology-aware allocation that enables partitioning, multi-tenant sharing, NVLink awareness and P6e-GB200 support.](../.gitbook/assets/en-ai-ml-06-ai-infrastructure-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-06-ai-infrastructure-2.html)
 
 ### GPU Sharing Strategies with DRA
 

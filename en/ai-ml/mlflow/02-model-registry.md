@@ -65,7 +65,9 @@ A typical workflow looks like this:
 
 This separation means the people or systems producing candidate models never need direct control over what serves in production, and the systems consuming a model never need to track version numbers by hand. A `challenger` alias is commonly used alongside `champion` to mark a version under evaluation for promotion, without disturbing what is currently serving.
 
-![Diagram showing a serving system resolving the champion alias of the fraud-detector registered model (bound to Version 2) to route live production traffic, while separately evaluating the challenger alias (bound to Version 4) among four registered model versions.](../../../assets/diagrams/rendered/en-ai-ml-mlflow-02-model-registry-0.svg)
+![Diagram showing a serving system resolving the champion alias of the fraud-detector registered model (bound to Version 2) to route live production traffic, while separately evaluating the challenger alias (bound to Version 4) among four registered model versions.](../../.gitbook/assets/en-ai-ml-mlflow-02-model-registry-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-02-model-registry-0.html)
 
 ## Lineage and Reproducibility
 

@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Slinky 아키텍처",
+    "output": "ko-ai-ml-05-model-training-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "user-access",
+        "label": "사용자 접근",
+        "focus": [
+          "nlb",
+          "login",
+          "jupyterhub",
+          "slurmctld",
+          "slurmrestd"
+        ],
+        "note": "사용자는 NLB를 거쳐 로그인 Pod에 SSH로 접속하거나 JupyterHub에서 slurmrestd REST API로 작업을 제출한다."
+      },
+      {
+        "id": "job-scheduling",
+        "label": "작업 스케줄링",
+        "focus": [
+          "slurmctld",
+          "slurmdbd",
+          "slurmrestd",
+          "slurmd",
+          "fsx"
+        ],
+        "note": "slurmctld가 작업을 GPU slurmd Pod에 배치하고, 어카운팅은 slurmdbd에, 데이터와 체크포인트는 FSx for Lustre에 둔다."
+      },
+      {
+        "id": "deploy-scale",
+        "label": "배포와 스케일링",
+        "focus": [
+          "argocd",
+          "ecr",
+          "karpenter",
+          "nodepool",
+          "slurmd"
+        ],
+        "note": "ArgoCD가 Slurm 컨트롤 플레인을 GitOps로 배포하고, Karpenter가 GPU NodePool로 컴퓨트 노드를 늘리며, 이미지는 Amazon ECR에서 받는다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "nlb",
+      "type": "external",
+      "label": "NLB",
+      "sublabel": "Network Load Balancer",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "argocd",
+      "type": "external",
+      "label": "ArgoCD",
+      "sublabel": "GitOps 배포",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "external",
+      "label": "Amazon ECR",
+      "sublabel": "AWS DLC 이미지",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "jupyterhub",
+      "type": "frontend",
+      "label": "JupyterHub",
+      "sublabel": "노트북 작업 제출",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "login",
+      "type": "frontend",
+      "label": "로그인 Pod",
+      "sublabel": "NLB 통한 SSH",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmrestd",
+      "type": "backend",
+      "label": "slurmrestd",
+      "sublabel": "REST API",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmctld",
+      "type": "backend",
+      "label": "slurmctld",
+      "sublabel": "컨트롤러 데몬",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmdbd",
+      "type": "database",
+      "label": "slurmdbd",
+      "sublabel": "데이터베이스 데몬",
+      "pos": [
+        820,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmd",
+      "type": "backend",
+      "label": "slurmd Pod ×4",
+      "sublabel": "각 8x A100 GPU",
+      "pos": [
+        560,
+        560
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "공유 스토리지",
+      "pos": [
+        560,
+        700
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "오토 스케일링",
+      "pos": [
+        1080,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "nodepool",
+      "type": "cloud",
+      "label": "GPU NodePool",
+      "sublabel": "GPU 컴퓨트 노드 프로비저닝",
+      "pos": [
+        1080,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "외부 서비스",
+      "wraps": [
+        "nlb",
+        "argocd",
+        "ecr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS 클러스터",
+      "wraps": [
+        "jupyterhub",
+        "login",
+        "slurmrestd",
+        "slurmctld",
+        "slurmdbd",
+        "slurmd",
+        "fsx",
+        "karpenter",
+        "nodepool"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Slurm 컨트롤 플레인",
+      "wraps": [
+        "slurmrestd",
+        "slurmctld",
+        "slurmdbd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nlb-login",
+      "from": "nlb",
+      "to": "login",
+      "label": "SSH"
+    },
+    {
+      "id": "login-ctld",
+      "from": "login",
+      "to": "slurmctld",
+      "label": "작업 제출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jupyter-restd",
+      "from": "jupyterhub",
+      "to": "slurmrestd",
+      "label": "REST API"
+    },
+    {
+      "id": "ctld-restd",
+      "from": "slurmctld",
+      "to": "slurmrestd"
+    },
+    {
+      "id": "ctld-dbd",
+      "from": "slurmctld",
+      "to": "slurmdbd",
+      "label": "어카운팅"
+    },
+    {
+      "id": "ctld-slurmd",
+      "from": "slurmctld",
+      "to": "slurmd",
+      "label": "작업 배치",
+      "variant": "emphasis",
+      "labelAt": [
+        700,
+        430
+      ]
+    },
+    {
+      "id": "slurmd-fsx",
+      "from": "slurmd",
+      "to": "fsx",
+      "label": "/shared 마운트",
+      "labelAt": [
+        708,
+        660
+      ]
+    },
+    {
+      "id": "argocd-ctld",
+      "from": "argocd",
+      "to": "slurmctld",
+      "label": "GitOps 배포",
+      "variant": "dashed"
+    },
+    {
+      "id": "ecr-slurmd",
+      "from": "ecr",
+      "to": "slurmd",
+      "label": "이미지 pull",
+      "variant": "dashed"
+    },
+    {
+      "id": "karpenter-nodepool",
+      "from": "karpenter",
+      "to": "nodepool"
+    },
+    {
+      "id": "nodepool-slurmd",
+      "from": "nodepool",
+      "to": "slurmd",
+      "label": "GPU 노드 확장",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Slurm 컨트롤 플레인",
+      "items": [
+        "slurmctld: 작업·파티션·리소스를 관리하는 중앙 컨트롤러 (PVC가 있는 StatefulSet)",
+        "slurmdbd: 작업 어카운팅과 클러스터 상태 (MySQL/MariaDB가 있는 StatefulSet)",
+        "slurmrestd: 프로그래밍 방식 작업 제출용 REST API (Service가 있는 Deployment)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "컴퓨트와 스토리지",
+      "items": [
+        "slurmd: GPU 노드에서 실행되는 컴퓨트 데몬 (DaemonSet)",
+        "SlurmNodeSet gpu-a100: p4d.24xlarge 4대, 각 8x A100 GPU",
+        "FSx for Lustre를 /shared에 마운트해 모든 컴퓨트 Pod가 공유"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "접근과 운영",
+      "items": [
+        "로그인 Pod: NLB로 노출된 SSH 접근 지점",
+        "JupyterHub는 slurmrestd REST API로 작업 제출",
+        "ArgoCD GitOps 배포, Karpenter GPU NodePool 오토 스케일링"
+      ]
+    }
+  ]
+}

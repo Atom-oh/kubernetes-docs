@@ -1,0 +1,206 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Gradual Istio Adoption",
+    "output": "public/archmaps/en-service-mesh-istio-best-practices-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1232,
+      282
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Starting state"
+        },
+        "backend": {
+          "label": "Observability phase"
+        },
+        "security": {
+          "label": "mTLS policy phase"
+        },
+        "cloud": {
+          "label": "Advanced feature phase"
+        },
+        "external": {
+          "label": "End state"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "observe",
+        "label": "Observe first",
+        "focus": [
+          "start",
+          "phase1"
+        ],
+        "note": "Enable sidecar injection only, then verify metrics, logs, traces and the performance impact."
+      },
+      {
+        "id": "mtls",
+        "label": "Harden mTLS",
+        "focus": [
+          "phase2",
+          "phase3"
+        ],
+        "note": "Start PeerAuthentication in PERMISSIVE mode, verify, then switch to STRICT."
+      },
+      {
+        "id": "advanced",
+        "label": "Advanced features",
+        "focus": [
+          "phase4",
+          "done"
+        ],
+        "note": "Adopt Traffic Management, Authorization Policy and Rate Limiting on an ongoing basis."
+      }
+    ],
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "rollout",
+      "label": "Deployment strategy · phased rollout"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "phase1",
+    "phase2",
+    "phase3",
+    "phase4",
+    "done"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "done"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "rollout",
+      "col": 0,
+      "type": "frontend",
+      "label": "Start",
+      "sublabel": "No Istio yet",
+      "width": 90
+    },
+    {
+      "id": "phase1",
+      "lane": "rollout",
+      "col": 1,
+      "type": "backend",
+      "label": "Observability",
+      "sublabel": "Sidecar only",
+      "tag": "Phase 1 · 1-2 weeks",
+      "width": 122
+    },
+    {
+      "id": "phase2",
+      "lane": "rollout",
+      "col": 2,
+      "type": "security",
+      "label": "mTLS PERMISSIVE",
+      "sublabel": "PeerAuthentication",
+      "tag": "Phase 2 · 1-2 weeks",
+      "width": 138
+    },
+    {
+      "id": "phase3",
+      "lane": "rollout",
+      "col": 3,
+      "type": "security",
+      "label": "mTLS STRICT",
+      "sublabel": "PeerAuthentication",
+      "tag": "Phase 3 · 1 week",
+      "width": 124
+    },
+    {
+      "id": "phase4",
+      "lane": "rollout",
+      "col": 4,
+      "type": "cloud",
+      "label": "Advanced Features",
+      "sublabel": "Traffic · AuthZ · Limits",
+      "tag": "Phase 4 · Ongoing",
+      "width": 152
+    },
+    {
+      "id": "done",
+      "lane": "rollout",
+      "col": 5,
+      "type": "external",
+      "label": "Full Adoption",
+      "sublabel": "Mesh-wide",
+      "width": 114
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "phase1",
+      "label": "istio-injection=enabled",
+      "role": "main"
+    },
+    {
+      "from": "phase1",
+      "to": "phase2",
+      "label": "after evaluation",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "phase2",
+      "to": "phase3",
+      "label": "mode: STRICT",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "phase3",
+      "to": "phase4",
+      "label": "expand policies",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "phase4",
+      "to": "done",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Duration per phase",
+      "items": [
+        "Phase 1 Observability: 1-2 weeks — verify metrics, logs, traces after sidecar injection",
+        "Phase 2 mTLS PERMISSIVE: 1-2 weeks — plaintext and mTLS both accepted",
+        "Phase 3 mTLS STRICT: 1 week — switch to mTLS only",
+        "Phase 4 Advanced Features: ongoing"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Phase 4 advanced features",
+      "items": [
+        "Traffic Management (Canary, Circuit Breaker)",
+        "Authorization Policy",
+        "Rate Limiting"
+      ]
+    }
+  ]
+}

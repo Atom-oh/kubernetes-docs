@@ -18,7 +18,9 @@ Traffic Splitting is one of Istio's most powerful features, enabling Canary depl
 
 Traffic Splitting uses the `weight` field in VirtualService to distribute traffic between multiple service versions by ratio.
 
-![A VirtualService splits incoming user requests by weight, sending 90 percent to Version 1 and 10 percent to Version 2.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.svg)
+![A VirtualService splits incoming user requests by weight, sending 90 percent to Version 1 and 10 percent to Version 2.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-0.html)
 
 ### Basic Structure
 
@@ -48,11 +50,15 @@ Canary deployment is a strategy that safely validates a new version by deploying
 
 ### Argo Rollouts + Istio Architecture
 
-![Argo Rollouts manages the VirtualService, DestinationRule, and pod versions while AnalysisTemplate queries Prometheus metrics to approve or reject the canary rollout.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.svg)
+![Argo Rollouts manages the VirtualService, DestinationRule, and pod versions while AnalysisTemplate queries Prometheus metrics to approve or reject the canary rollout.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-1.html)
 
 ### Canary Deployment Flow
 
-![A canary rollout advances traffic to the new version in stages from 10 to 75 percent, and any stage that fails its error-rate, latency, or metrics check automatically rolls back to 100 percent of the stable version.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.svg)
+![A canary rollout advances traffic to the new version in stages from 10 to 75 percent, and any stage that fails its error-rate, latency, or metrics check automatically rolls back to 100 percent of the stable version.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-2.html)
 
 ### Step 1: Install Argo Rollouts
 
@@ -972,11 +978,15 @@ Blue/Green deployment maintains two identical production environments and switch
 
 ### Argo Rollouts Blue/Green Architecture
 
-![Argo Rollouts deploys Green pods alongside Blue, tests them through the Preview Service, and instantly switches all production traffic from Blue to Green on the Active Service once verification passes.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.svg)
+![Argo Rollouts manages the Active and Preview Services, sends 100% of production traffic to Blue pods and test-only traffic to Green pods, and verifies each side with PrePromotion and PostPromotion Analysis.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-3.html)
 
 ### Blue/Green Deployment Flow
 
-![A blue/green deployment deploys the green version, pre-tests it on the preview service, requires approval before switching production traffic, and rolls back to blue automatically if any pre-test, approval, or post-verification step fails.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.svg)
+![A blue/green deployment deploys the green version, pre-tests it on the preview service, requires approval before switching production traffic, and rolls back to blue automatically if any pre-test, approval, or post-verification step fails.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-4.html)
 
 ### Step 1: Define Services
 
@@ -1296,7 +1306,9 @@ kubectl argo rollouts undo reviews --to-revision=3
 
 A/B testing runs two versions simultaneously and classifies users based on specific criteria to measure effectiveness.
 
-![Users are split evenly between Version A and Version B, their engagement metrics feed a shared analysis, and the winning version is decided and kept or adopted.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.svg)
+![Users are split evenly between Version A and Version B, their engagement metrics feed a shared analysis, and the winning version is decided and kept or adopted.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-04-traffic-splitting-5.html)
 
 ### Cookie-based A/B Testing
 

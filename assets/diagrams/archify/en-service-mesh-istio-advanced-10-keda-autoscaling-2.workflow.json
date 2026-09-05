@@ -1,0 +1,232 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "KEDA Metric Selection Guide",
+    "locale": "en",
+    "output": "public/archmaps/en-service-mesh-istio-advanced-10-keda-autoscaling-2.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "stateful-path",
+        "label": "Stateful workload",
+        "focus": [
+          "start",
+          "stateless",
+          "latencyScale"
+        ],
+        "note": "Services that are not stateless skip the remaining questions and go straight to latency-based scaling (P95 latency)."
+      },
+      {
+        "id": "stateless-path",
+        "label": "Stateless workload",
+        "focus": [
+          "stateless",
+          "traffic",
+          "predictive",
+          "latency",
+          "rpsScale"
+        ],
+        "note": "Predictable traffic gets predictive + cron scaling; otherwise latency sensitivity decides between latency-based and RPS-based."
+      },
+      {
+        "id": "composite",
+        "label": "Composite metrics",
+        "focus": [
+          "rpsScale",
+          "latencyScale",
+          "composite"
+        ],
+        "note": "Combine the RPS and latency triggers so a primary and a secondary metric drive scaling together."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Decision question"
+        },
+        "backend": {
+          "label": "Single-metric strategy"
+        },
+        "cloud": {
+          "label": "Predictive + cron strategy"
+        },
+        "messagebus": {
+          "label": "Composite-metric strategy"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "decide",
+      "label": "Workload characteristics"
+    },
+    {
+      "id": "stateless_strategy",
+      "label": "Predictive / RPS-based strategies"
+    },
+    {
+      "id": "latency_strategy",
+      "label": "Latency-based strategy / combination"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "stateless",
+    "traffic",
+    "latency",
+    "rpsScale"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "predictive",
+      "composite"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "composite"
+      },
+      {
+        "from": "start",
+        "to": "predictive"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "decide",
+      "col": 0,
+      "type": "security",
+      "label": "Workload Characteristics",
+      "sublabel": "start here",
+      "width": 206
+    },
+    {
+      "id": "stateless",
+      "lane": "decide",
+      "col": 1,
+      "type": "security",
+      "label": "Stateless Service?",
+      "sublabel": "stateful or not",
+      "width": 168
+    },
+    {
+      "id": "traffic",
+      "lane": "decide",
+      "col": 2,
+      "type": "security",
+      "label": "Traffic Pattern Predictable?",
+      "sublabel": "business hours, periodicity",
+      "width": 232
+    },
+    {
+      "id": "latency",
+      "lane": "decide",
+      "col": 3,
+      "type": "security",
+      "label": "Latency Sensitive?",
+      "sublabel": "P95 target or not",
+      "width": 156
+    },
+    {
+      "id": "predictive",
+      "lane": "stateless_strategy",
+      "col": 2,
+      "type": "cloud",
+      "label": "Predictive Scaling + Cron",
+      "sublabel": "cron trigger",
+      "width": 212
+    },
+    {
+      "id": "latencyScale",
+      "lane": "latency_strategy",
+      "col": 3,
+      "type": "backend",
+      "label": "Latency-based Scaling",
+      "sublabel": "P95 Latency",
+      "width": 196
+    },
+    {
+      "id": "rpsScale",
+      "lane": "stateless_strategy",
+      "col": 4,
+      "type": "backend",
+      "label": "RPS-based Scaling",
+      "sublabel": "istio_requests_total",
+      "width": 172
+    },
+    {
+      "id": "composite",
+      "lane": "latency_strategy",
+      "col": 5,
+      "type": "messagebus",
+      "label": "Composite Metrics Scaling",
+      "sublabel": "primary + secondary metric",
+      "width": 212
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "stateless",
+      "role": "main"
+    },
+    {
+      "from": "stateless",
+      "to": "traffic",
+      "label": "Yes",
+      "role": "main"
+    },
+    {
+      "from": "stateless",
+      "to": "latencyScale",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "from": "traffic",
+      "to": "predictive",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "traffic",
+      "to": "latency",
+      "label": "No",
+      "role": "main"
+    },
+    {
+      "from": "latency",
+      "to": "latencyScale",
+      "label": "Yes",
+      "role": "branch"
+    },
+    {
+      "from": "latency",
+      "to": "rpsScale",
+      "label": "No",
+      "role": "main"
+    },
+    {
+      "from": "rpsScale",
+      "to": "composite",
+      "label": "Combine",
+      "variant": "dashed",
+      "role": "async"
+    },
+    {
+      "from": "latencyScale",
+      "to": "composite",
+      "label": "Combine",
+      "variant": "dashed",
+      "role": "async"
+    }
+  ]
+}

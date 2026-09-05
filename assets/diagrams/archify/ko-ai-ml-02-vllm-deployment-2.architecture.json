@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM을 위한 EKS 인프라 구성",
+    "output": "ko-ai-ml-02-vllm-deployment-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      640
+    ],
+    "views": [
+      {
+        "id": "scheduling",
+        "label": "워크로드 스케줄링",
+        "focus": [
+          "apiserver",
+          "scheduler",
+          "controller",
+          "gpu",
+          "cpu"
+        ],
+        "note": "컨트롤 플레인이 vLLM 포드를 GPU 노드 그룹에, 보조 워크로드를 CPU 노드 그룹에 배치한다."
+      },
+      {
+        "id": "model-storage",
+        "label": "모델 스토리지",
+        "focus": [
+          "gpu",
+          "cpu",
+          "fsx",
+          "s3",
+          "ebs"
+        ],
+        "note": "S3에 저장한 모델을 FSx for Lustre로 내려받고, 노드가 거기서 모델 가중치를 빠르게 로드한다."
+      },
+      {
+        "id": "aws-services",
+        "label": "AWS 서비스 연동",
+        "focus": [
+          "gpu",
+          "ecr",
+          "cloudwatch",
+          "iam"
+        ],
+        "note": "컨테이너 이미지는 ECR에서 가져오고, 지표와 로그는 CloudWatch로 보내며, 권한은 IAM이 관리한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Amazon ECR",
+      "sublabel": "컨테이너 이미지",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "지표 · 로그",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM",
+      "sublabel": "권한 · 역할",
+      "pos": [
+        760,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "스케줄러",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        40,
+        222
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "컨트롤러 매니저",
+      "sublabel": "kube-controller-manager",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "backend",
+      "label": "GPU 노드 그룹",
+      "sublabel": "p5 · p4d · g6 · g5",
+      "tag": "vLLM 서빙",
+      "pos": [
+        340,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cpu",
+      "type": "backend",
+      "label": "CPU 노드 그룹",
+      "sublabel": "c5 · m5",
+      "pos": [
+        340,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "모델 가중치 (RWX)",
+      "pos": [
+        720,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "모델 저장소",
+      "pos": [
+        720,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "Amazon EBS",
+      "sublabel": "블록 볼륨",
+      "pos": [
+        720,
+        500
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS 서비스",
+      "wraps": [
+        "ecr",
+        "cloudwatch",
+        "iam"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS 컨트롤 플레인",
+      "wraps": [
+        "scheduler",
+        "apiserver",
+        "controller"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "노드 그룹 · VPC 서브넷 / 보안 그룹 / EFA",
+      "wraps": [
+        "gpu",
+        "cpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "스토리지",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ebs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "포드 감시"
+    },
+    {
+      "id": "api-to-controller",
+      "from": "apiserver",
+      "to": "controller",
+      "label": "감시 / 조정",
+      "labelDy": 24
+    },
+    {
+      "id": "scheduler-to-gpu",
+      "from": "scheduler",
+      "to": "gpu",
+      "label": "vLLM 포드 배치",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-to-cpu",
+      "from": "scheduler",
+      "to": "cpu",
+      "label": "보조 워크로드 배치",
+      "labelDx": 24
+    },
+    {
+      "id": "gpu-to-fsx",
+      "from": "gpu",
+      "to": "fsx",
+      "label": "모델 가중치 로드",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cpu-to-fsx",
+      "from": "cpu",
+      "to": "fsx",
+      "label": "모델 마운트"
+    },
+    {
+      "id": "s3-to-fsx",
+      "from": "s3",
+      "to": "fsx",
+      "label": "모델 다운로드",
+      "variant": "dashed"
+    },
+    {
+      "id": "cpu-to-ebs",
+      "from": "cpu",
+      "to": "ebs",
+      "label": "볼륨 연결",
+      "variant": "dashed"
+    },
+    {
+      "id": "ecr-to-gpu",
+      "from": "ecr",
+      "to": "gpu",
+      "label": "이미지 풀",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "gpu-to-cloudwatch",
+      "from": "gpu",
+      "to": "cloudwatch",
+      "label": "지표 · 로그",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "GPU 노드 유형",
+      "items": [
+        "p5.48xlarge: 8x H100 80GB (최고 성능)",
+        "p4d.24xlarge: 8x A100 40/80GB",
+        "g6.12xlarge: 4x L4 24GB (비용 효율적)",
+        "g5.12xlarge: 4x A10G 24GB"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "모델 스토리지",
+      "items": [
+        "FSx for Lustre SCRATCH_2, 1200GiB, ReadWriteMany PVC",
+        "Hugging Face 모델을 S3에 저장한 뒤 Job으로 FSx에 다운로드"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "AWS 서비스",
+      "items": [
+        "ECR: vLLM 컨테이너 이미지",
+        "CloudWatch: 지표와 로그 수집",
+        "IAM: 노드와 포드 권한"
+      ]
+    }
+  ]
+}

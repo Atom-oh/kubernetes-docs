@@ -72,7 +72,9 @@ Istio Envoy 프록시가 제공하는 메트릭을 스케일링에 활용합니�
 
 ### 메트릭 기반 스케일링 흐름
 
-![KEDA가 Prometheus에서 Istio 메트릭을 조회해 임계값과 비교한 뒤 HPA를 통해 Pod 수를 조정하는 시퀀스](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-10-keda-autoscaling-0.svg)
+![KEDA가 pollingInterval마다 Prometheus에서 Envoy 사이드카의 Istio 메트릭을 조회해 임계값과 비교한 뒤 HPA 목표 레플리카를 갱신해 새 Pod가 생성되는 시퀀스를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-10-keda-autoscaling-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-10-keda-autoscaling-0.html)
 
 ### ScaledObject 기본 구조
 
@@ -147,7 +149,9 @@ spec:
 
 #### 동작 방식
 
-![RPS 임계값에 따라 레플리카를 늘리거나 줄이고 다시 대기 상태로 순환하는 KEDA 스케일링 결정 루프](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-10-keda-autoscaling-1.svg)
+![KEDA가 30초마다 PromQL로 RPS를 수집해 100을 넘으면 레플리카를 늘리고 50 아래면 줄인 뒤 cooldownPeriod 동안 대기하고 다시 평가하는 스케일링 판단 루프를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-10-keda-autoscaling-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-10-keda-autoscaling-1.html)
 
 ### 2. Latency (지연 시간) 기반 스케일링
 
@@ -716,7 +720,9 @@ spec:
 
 ### 1. 메트릭 선택 가이드
 
-![워크로드 특성(상태 유무, 트래픽 예측 가능성, 지연 시간 민감도)에 따라 RPS, Latency, 예측, 복합 스케일링 전략을 선택하는 의사결정 트리](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-10-keda-autoscaling-2.svg)
+![워크로드가 Stateless인지, 트래픽 패턴을 예측할 수 있는지, 지연 시간에 민감한지에 따라 RPS 기반·Latency 기반·예측 + Cron 스케일링 전략을 고르고, RPS와 Latency 전략을 조합해 복합 메트릭 스케일링으로 이어지는 KEDA 메트릭 선택 의사결정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-10-keda-autoscaling-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-10-keda-autoscaling-2.html)
 
 **권장 메트릭**:
 

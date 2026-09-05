@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 아키텍처 개요",
+    "output": "ko-service-mesh-02-istio-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "config-push",
+        "label": "구성 배포",
+        "focus": [
+          "istiod",
+          "envoy-a",
+          "envoy-b",
+          "envoy-c"
+        ],
+        "note": "istiod가 서비스 검색, 구성 관리, 인증서 관리를 담당하며 각 사이드카에 구성을 배포한다."
+      },
+      {
+        "id": "mtls-traffic",
+        "label": "사이드카 간 mTLS",
+        "focus": [
+          "envoy-a",
+          "envoy-b",
+          "envoy-c"
+        ],
+        "note": "Envoy 사이드카끼리 mTLS로 암호화된 트래픽을 직접 주고받는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "서비스 검색 · 구성 관리 · 인증서 관리",
+      "pos": [
+        470,
+        60
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "frontend",
+      "label": "App Container",
+      "sublabel": "애플리케이션",
+      "pos": [
+        110,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "envoy-a",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        110,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "frontend",
+      "label": "App Container",
+      "sublabel": "애플리케이션",
+      "pos": [
+        530,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "envoy-b",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        530,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "app-c",
+      "type": "frontend",
+      "label": "App Container",
+      "sublabel": "애플리케이션",
+      "pos": [
+        950,
+        360
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "envoy-c",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "사이드카",
+      "pos": [
+        950,
+        260
+      ],
+      "size": [
+        160,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "app-a",
+        "envoy-a",
+        "app-b",
+        "envoy-b",
+        "app-c",
+        "envoy-c"
+      ],
+      "pad": 80
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "app-a",
+        "envoy-a"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "app-b",
+        "envoy-b"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod C",
+      "wraps": [
+        "app-c",
+        "envoy-c"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "push-a",
+      "from": "istiod",
+      "to": "envoy-a",
+      "label": "구성 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "push-b",
+      "from": "istiod",
+      "to": "envoy-b",
+      "label": "구성 배포",
+      "variant": "emphasis",
+      "labelDy": 24
+    },
+    {
+      "id": "push-c",
+      "from": "istiod",
+      "to": "envoy-c",
+      "label": "구성 배포",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mtls-ab",
+      "from": "envoy-a",
+      "to": "envoy-b",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-bc",
+      "from": "envoy-b",
+      "to": "envoy-c",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-ac",
+      "from": "envoy-a",
+      "to": "envoy-c",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          58,
+          288
+        ],
+        [
+          58,
+          470
+        ],
+        [
+          1162,
+          470
+        ],
+        [
+          1162,
+          288
+        ]
+      ],
+      "labelAt": [
+        610,
+        462
+      ]
+    }
+  ]
+}

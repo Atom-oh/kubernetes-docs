@@ -1,0 +1,224 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Blue/Green 배포 흐름",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1183,
+      534
+    ],
+    "legend": {
+      "entries": {
+        "cloud": {
+          "label": "Argo Rollouts 단계"
+        },
+        "security": {
+          "label": "검증 (AnalysisRun)"
+        },
+        "frontend": {
+          "label": "승인 게이트"
+        },
+        "external": {
+          "label": "최종 상태"
+        },
+        "messagebus": {
+          "label": "롤백"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "promote",
+        "label": "전환 경로",
+        "focus": [
+          "deploy",
+          "pretest",
+          "approve",
+          "switch",
+          "posttest",
+          "scaledown",
+          "end"
+        ],
+        "note": "Green을 배포해 Preview Service에서 검증하고, 승인 후 프로덕션 트래픽을 Blue에서 Green으로 전환한다."
+      },
+      {
+        "id": "rollback",
+        "label": "롤백 경로",
+        "focus": [
+          "pretest",
+          "approve",
+          "posttest",
+          "rollback",
+          "quickrollback"
+        ],
+        "note": "사전 테스트 실패·승인 거부 시 Green을 삭제하고, 사후 검증 실패 시 즉시 Blue로 되돌린다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "prepare",
+      "label": "Green 배포 · 사전 검증 (Blue 활성)"
+    },
+    {
+      "id": "cutover",
+      "label": "트래픽 전환 · 사후 검증"
+    },
+    {
+      "id": "recovery",
+      "label": "롤백",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "deploy",
+    "pretest",
+    "approve",
+    "switch",
+    "posttest",
+    "scaledown",
+    "end"
+  ],
+  "nodes": [
+    {
+      "id": "deploy",
+      "lane": "prepare",
+      "col": 0,
+      "type": "cloud",
+      "label": "Green 배포",
+      "sublabel": "시작 · Blue 활성 유지",
+      "width": 150
+    },
+    {
+      "id": "pretest",
+      "lane": "prepare",
+      "col": 1,
+      "type": "security",
+      "label": "사전 테스트",
+      "sublabel": "Preview Service",
+      "tag": "smoke-tests",
+      "width": 150
+    },
+    {
+      "id": "approve",
+      "lane": "prepare",
+      "col": 2,
+      "type": "frontend",
+      "label": "수동 승인",
+      "sublabel": "또는 자동 승격",
+      "tag": "autoPromotion: off",
+      "width": 150
+    },
+    {
+      "id": "switch",
+      "lane": "prepare",
+      "col": 3,
+      "type": "cloud",
+      "label": "트래픽 전환",
+      "sublabel": "Blue → Green",
+      "tag": "Active Service",
+      "width": 150
+    },
+    {
+      "id": "posttest",
+      "lane": "cutover",
+      "col": 3,
+      "type": "security",
+      "label": "사후 검증",
+      "sublabel": "Green 프로덕션 검증",
+      "width": 150
+    },
+    {
+      "id": "scaledown",
+      "lane": "cutover",
+      "col": 4,
+      "type": "cloud",
+      "label": "Blue 축소",
+      "sublabel": "30초 후",
+      "tag": "scaleDownDelay 30s",
+      "width": 150
+    },
+    {
+      "id": "end",
+      "lane": "cutover",
+      "col": 5,
+      "type": "external",
+      "label": "완료",
+      "sublabel": "Green 활성",
+      "width": 150
+    },
+    {
+      "id": "rollback",
+      "lane": "recovery",
+      "col": 1,
+      "type": "messagebus",
+      "label": "롤백",
+      "sublabel": "Green 삭제",
+      "width": 150
+    },
+    {
+      "id": "quickrollback",
+      "lane": "recovery",
+      "col": 3,
+      "type": "messagebus",
+      "label": "즉시 롤백",
+      "sublabel": "Blue로 전환",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "deploy",
+      "to": "pretest"
+    },
+    {
+      "from": "pretest",
+      "to": "approve",
+      "label": "성공",
+      "route": "straight"
+    },
+    {
+      "from": "approve",
+      "to": "switch",
+      "label": "승인",
+      "variant": "emphasis"
+    },
+    {
+      "from": "switch",
+      "to": "posttest"
+    },
+    {
+      "from": "posttest",
+      "to": "scaledown",
+      "label": "성공",
+      "route": "straight"
+    },
+    {
+      "from": "scaledown",
+      "to": "end"
+    },
+    {
+      "from": "pretest",
+      "to": "rollback",
+      "label": "실패",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "approve",
+      "to": "rollback",
+      "label": "거부",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "posttest",
+      "to": "quickrollback",
+      "label": "실패",
+      "variant": "dashed",
+      "role": "error"
+    }
+  ]
+}

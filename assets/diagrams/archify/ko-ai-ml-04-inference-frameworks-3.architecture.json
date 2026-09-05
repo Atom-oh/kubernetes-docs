@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SGLang의 핵심 기술",
+    "output": "ko-ai-ml-04-inference-frameworks-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "프론트엔드 API"
+        },
+        "backend": {
+          "label": "런타임 엔진 구성 요소"
+        },
+        "cloud": {
+          "label": "최적화 기법"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "dsl",
+          "openai",
+          "radix"
+        ],
+        "note": "SGLang DSL과 OpenAI 호환 API로 들어온 요청이 런타임 엔진으로 전달된다."
+      },
+      {
+        "id": "optimizations",
+        "label": "최적화 연결",
+        "focus": [
+          "radix",
+          "fsm",
+          "kv-reuse",
+          "overlap"
+        ],
+        "note": "RadixAttention은 KV 캐시 재사용으로 이어지고, 압축 FSM은 구조화 디코딩을 가속한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dsl",
+      "type": "frontend",
+      "label": "SGLang DSL",
+      "sublabel": "프로그래밍 인터페이스",
+      "pos": [
+        40,
+        130
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "openai",
+      "type": "frontend",
+      "label": "OpenAI 호환 API",
+      "sublabel": "HTTP 엔드포인트",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "native",
+      "type": "frontend",
+      "label": "네이티브 API",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "radix",
+      "type": "backend",
+      "label": "RadixAttention",
+      "sublabel": "Radix 트리 기반 KV 캐시",
+      "pos": [
+        390,
+        80
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "fsm",
+      "type": "backend",
+      "label": "압축 FSM 구조화 출력",
+      "sublabel": "JSON Schema / 정규표현식",
+      "pos": [
+        390,
+        180
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "chunked",
+      "type": "backend",
+      "label": "Chunked Prefill",
+      "pos": [
+        390,
+        280
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "flashinfer",
+      "type": "backend",
+      "label": "FlashInfer 커널",
+      "sublabel": "최적화된 어텐션 커널",
+      "pos": [
+        390,
+        380
+      ],
+      "size": [
+        250,
+        60
+      ]
+    },
+    {
+      "id": "kv-reuse",
+      "type": "cloud",
+      "label": "KV 캐시 재사용",
+      "sublabel": "부분 겹침 프롬프트 공유",
+      "pos": [
+        800,
+        130
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "overlap",
+      "type": "cloud",
+      "label": "스케줄 오버래핑",
+      "pos": [
+        800,
+        230
+      ],
+      "size": [
+        240,
+        60
+      ]
+    },
+    {
+      "id": "data-parallel",
+      "type": "cloud",
+      "label": "데이터 병렬 처리",
+      "pos": [
+        800,
+        330
+      ],
+      "size": [
+        240,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "프론트엔드",
+      "wraps": [
+        "dsl",
+        "openai",
+        "native"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "런타임 엔진",
+      "wraps": [
+        "radix",
+        "fsm",
+        "chunked",
+        "flashinfer"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "최적화",
+      "wraps": [
+        "kv-reuse",
+        "overlap",
+        "data-parallel"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dsl-to-runtime",
+      "from": "dsl",
+      "to": "radix",
+      "label": "프로그램 실행",
+      "variant": "emphasis",
+      "labelDx": -60
+    },
+    {
+      "id": "openai-to-runtime",
+      "from": "openai",
+      "to": "radix",
+      "label": "요청"
+    },
+    {
+      "id": "radix-to-kv",
+      "from": "radix",
+      "to": "kv-reuse",
+      "label": "캐시 공유"
+    },
+    {
+      "id": "fsm-to-overlap",
+      "from": "fsm",
+      "to": "overlap"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "핵심 기술",
+      "items": [
+        "RadixAttention: Radix 트리 기반 KV 캐시 재사용으로 부분적으로 겹치는 프롬프트 간에도 캐시를 공유한다",
+        "압축 FSM 기반 구조화 출력: JSON Schema, 정규표현식 출력 시 vLLM 대비 최대 10배 빠른 구조화 디코딩",
+        "FlashInfer 커널: 다양한 GPU 아키텍처에서 최적 성능을 내는 어텐션 커널"
+      ]
+    }
+  ]
+}

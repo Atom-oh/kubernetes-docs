@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "EKS Infrastructure for vLLM",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      640
+    ],
+    "views": [
+      {
+        "id": "scheduling",
+        "label": "Workload scheduling",
+        "focus": [
+          "apiserver",
+          "scheduler",
+          "controller",
+          "gpu",
+          "cpu"
+        ],
+        "note": "The control plane places vLLM pods on the GPU node group and auxiliary workloads on the CPU node group."
+      },
+      {
+        "id": "model-storage",
+        "label": "Model storage",
+        "focus": [
+          "gpu",
+          "cpu",
+          "fsx",
+          "s3",
+          "ebs"
+        ],
+        "note": "Models stored in S3 are downloaded to FSx for Lustre, from which nodes load model weights quickly."
+      },
+      {
+        "id": "aws-services",
+        "label": "AWS service integration",
+        "focus": [
+          "gpu",
+          "ecr",
+          "cloudwatch",
+          "iam"
+        ],
+        "note": "Container images come from ECR, metrics and logs go to CloudWatch, and IAM manages permissions."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "ecr",
+      "type": "cloud",
+      "label": "Amazon ECR",
+      "sublabel": "Container images",
+      "pos": [
+        340,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cloudwatch",
+      "type": "cloud",
+      "label": "CloudWatch",
+      "sublabel": "Metrics · logs",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "iam",
+      "type": "security",
+      "label": "IAM",
+      "sublabel": "Permissions · roles",
+      "pos": [
+        760,
+        40
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Scheduler",
+      "sublabel": "kube-scheduler",
+      "pos": [
+        40,
+        222
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API Server",
+      "sublabel": "kube-apiserver",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "controller",
+      "type": "backend",
+      "label": "Controller Manager",
+      "sublabel": "kube-controller-manager",
+      "pos": [
+        40,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "backend",
+      "label": "GPU Node Group",
+      "sublabel": "p5 · p4d · g6 · g5",
+      "tag": "vLLM serving",
+      "pos": [
+        340,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cpu",
+      "type": "backend",
+      "label": "CPU Node Group",
+      "sublabel": "c5 · m5",
+      "pos": [
+        340,
+        430
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "Model weights (RWX)",
+      "pos": [
+        720,
+        220
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "Amazon S3",
+      "sublabel": "Model repository",
+      "pos": [
+        720,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "ebs",
+      "type": "database",
+      "label": "Amazon EBS",
+      "sublabel": "Block volumes",
+      "pos": [
+        720,
+        500
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AWS Services",
+      "wraps": [
+        "ecr",
+        "cloudwatch",
+        "iam"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "EKS Control Plane",
+      "wraps": [
+        "scheduler",
+        "apiserver",
+        "controller"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Node Groups · VPC Subnets / Security Groups / EFA",
+      "wraps": [
+        "gpu",
+        "cpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Storage",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ebs"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "api-to-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "watch pods"
+    },
+    {
+      "id": "api-to-controller",
+      "from": "apiserver",
+      "to": "controller",
+      "label": "watch / reconcile",
+      "labelDy": 24
+    },
+    {
+      "id": "scheduler-to-gpu",
+      "from": "scheduler",
+      "to": "gpu",
+      "label": "place vLLM pods",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scheduler-to-cpu",
+      "from": "scheduler",
+      "to": "cpu",
+      "label": "place auxiliary workloads",
+      "labelDx": 24
+    },
+    {
+      "id": "gpu-to-fsx",
+      "from": "gpu",
+      "to": "fsx",
+      "label": "load model weights",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cpu-to-fsx",
+      "from": "cpu",
+      "to": "fsx",
+      "label": "mount models"
+    },
+    {
+      "id": "s3-to-fsx",
+      "from": "s3",
+      "to": "fsx",
+      "label": "model download",
+      "variant": "dashed"
+    },
+    {
+      "id": "cpu-to-ebs",
+      "from": "cpu",
+      "to": "ebs",
+      "label": "attach volumes",
+      "variant": "dashed"
+    },
+    {
+      "id": "ecr-to-gpu",
+      "from": "ecr",
+      "to": "gpu",
+      "label": "image pull",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "gpu-to-cloudwatch",
+      "from": "gpu",
+      "to": "cloudwatch",
+      "label": "Metrics · logs",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "GPU node types",
+      "items": [
+        "p5.48xlarge: 8x H100 80GB (highest performance)",
+        "p4d.24xlarge: 8x A100 40/80GB",
+        "g6.12xlarge: 4x L4 24GB (cost-effective)",
+        "g5.12xlarge: 4x A10G 24GB"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Model storage",
+      "items": [
+        "FSx for Lustre SCRATCH_2, 1200GiB, ReadWriteMany PVC",
+        "Store Hugging Face models in S3, then download to FSx with a Job"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "AWS Services",
+      "items": [
+        "ECR: vLLM container images",
+        "CloudWatch: metrics and log collection",
+        "IAM: node and pod permissions"
+      ]
+    }
+  ]
+}

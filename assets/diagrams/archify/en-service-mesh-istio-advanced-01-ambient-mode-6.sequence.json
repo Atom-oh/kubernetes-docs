@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Ambient Mode Complete Traffic Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      704
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "l4-path",
+        "label": "L4 only path",
+        "focus": [
+          "client_app",
+          "client_ztunnel",
+          "server_ztunnel",
+          "server_app"
+        ],
+        "note": "Basic scenario through ztunnel only, with mTLS and L4 metrics applied automatically."
+      },
+      {
+        "id": "l7-path",
+        "label": "L7 path",
+        "focus": [
+          "client_app",
+          "client_ztunnel",
+          "waypoint",
+          "server_ztunnel",
+          "server_app"
+        ],
+        "note": "Scenario that additionally passes through the Waypoint over an HBONE tunnel for L7 routing."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client_app",
+      "type": "frontend",
+      "label": "Client App",
+      "sublabel": "No Sidecar"
+    },
+    {
+      "id": "client_ztunnel",
+      "type": "security",
+      "label": "Client ztunnel",
+      "sublabel": "client node · L4 proxy"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint Proxy",
+      "sublabel": "L7 · optional"
+    },
+    {
+      "id": "server_ztunnel",
+      "type": "security",
+      "label": "Server ztunnel",
+      "sublabel": "server node · L4 proxy"
+    },
+    {
+      "id": "server_app",
+      "type": "backend",
+      "label": "Server App",
+      "sublabel": "No Sidecar"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 350,
+      "label": "L4 Only Path (Basic Scenario)"
+    },
+    {
+      "from": 370,
+      "to": 616,
+      "label": "L7 Path (Advanced Routing)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "l4_tcp",
+      "from": "client_app",
+      "to": "client_ztunnel",
+      "y": 185,
+      "label": "1. TCP request"
+    },
+    {
+      "id": "l4_mtls",
+      "from": "client_ztunnel",
+      "to": "server_ztunnel",
+      "y": 213,
+      "label": "2. mTLS connection",
+      "variant": "security",
+      "note": "mTLS encrypt · L4 metrics"
+    },
+    {
+      "id": "l4_plain",
+      "from": "server_ztunnel",
+      "to": "server_app",
+      "y": 241,
+      "label": "3. Plain TCP",
+      "note": "mTLS decrypt · L4 metrics"
+    },
+    {
+      "id": "l4_resp",
+      "from": "server_app",
+      "to": "server_ztunnel",
+      "y": 269,
+      "label": "4. Response",
+      "variant": "return"
+    },
+    {
+      "id": "l4_mtls_resp",
+      "from": "server_ztunnel",
+      "to": "client_ztunnel",
+      "y": 297,
+      "label": "5. mTLS response",
+      "variant": "return"
+    },
+    {
+      "id": "l4_plain_resp",
+      "from": "client_ztunnel",
+      "to": "client_app",
+      "y": 325,
+      "label": "6. Plain response",
+      "variant": "return"
+    },
+    {
+      "id": "l7_http",
+      "from": "client_app",
+      "to": "client_ztunnel",
+      "y": 395,
+      "label": "1. HTTP request"
+    },
+    {
+      "id": "l7_hbone",
+      "from": "client_ztunnel",
+      "to": "waypoint",
+      "y": 423,
+      "label": "2. HBONE tunnel",
+      "variant": "emphasis",
+      "note": "L7 routing · header matching · circuit breaker · retry"
+    },
+    {
+      "id": "l7_mtls",
+      "from": "waypoint",
+      "to": "server_ztunnel",
+      "y": 451,
+      "label": "3. mTLS to target",
+      "variant": "security"
+    },
+    {
+      "id": "l7_plain",
+      "from": "server_ztunnel",
+      "to": "server_app",
+      "y": 479,
+      "label": "4. Plain HTTP"
+    },
+    {
+      "id": "l7_resp",
+      "from": "server_app",
+      "to": "server_ztunnel",
+      "y": 507,
+      "label": "5. Response",
+      "variant": "return"
+    },
+    {
+      "id": "l7_mtls_resp",
+      "from": "server_ztunnel",
+      "to": "waypoint",
+      "y": 535,
+      "label": "6. mTLS response",
+      "variant": "return"
+    },
+    {
+      "id": "l7_hbone_resp",
+      "from": "waypoint",
+      "to": "client_ztunnel",
+      "y": 563,
+      "label": "7. HBONE tunnel",
+      "variant": "return"
+    },
+    {
+      "id": "l7_final_resp",
+      "from": "client_ztunnel",
+      "to": "client_app",
+      "y": 591,
+      "label": "8. Response",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "client_ztunnel",
+      "from": 180,
+      "to": 331,
+      "type": "security"
+    },
+    {
+      "participant": "server_ztunnel",
+      "from": 208,
+      "to": 303,
+      "type": "security"
+    },
+    {
+      "participant": "server_app",
+      "from": 236,
+      "to": 275,
+      "type": "backend"
+    },
+    {
+      "participant": "client_ztunnel",
+      "from": 390,
+      "to": 597,
+      "type": "security"
+    },
+    {
+      "participant": "waypoint",
+      "from": 418,
+      "to": 569,
+      "type": "backend"
+    },
+    {
+      "participant": "server_ztunnel",
+      "from": 446,
+      "to": 541,
+      "type": "security"
+    },
+    {
+      "participant": "server_app",
+      "from": 474,
+      "to": 513,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "L4 Only Path (ztunnel only)",
+      "items": [
+        "Minimal latency (~1ms)",
+        "mTLS automatically applied · basic telemetry",
+        "Sufficient for 80-90% of workloads"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "L7 Path (ztunnel + Waypoint)",
+      "items": [
+        "Header-based routing",
+        "Circuit Breaking · Retry/Timeout",
+        "When complex traffic policies are needed"
+      ]
+    }
+  ]
+}

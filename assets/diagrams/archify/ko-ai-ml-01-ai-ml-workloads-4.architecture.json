@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "모델 서빙 아키텍처",
+    "output": "ko-ai-ml-01-ai-ml-workloads-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "client",
+          "networking",
+          "inference"
+        ],
+        "note": "클라이언트 추론 요청이 네트워킹 옵션(Ingress, AWS ALB, API Gateway)을 거쳐 추론 서비스에 도달한다."
+      },
+      {
+        "id": "model-load",
+        "label": "모델 로드",
+        "focus": [
+          "inference",
+          "storage"
+        ],
+        "note": "추론 서비스는 Amazon S3, ECR, EFS에 보관된 모델과 이미지를 읽어 서빙한다."
+      },
+      {
+        "id": "autoscale",
+        "label": "자동 확장",
+        "focus": [
+          "scaling",
+          "inference"
+        ],
+        "note": "HorizontalPodAutoscaler, KEDA, VerticalPodAutoscaler가 추론 서비스 파드를 확장한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "추론 요청",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "networking",
+      "type": "cloud",
+      "label": "네트워킹 옵션",
+      "sublabel": "Ingress · AWS ALB · API Gateway",
+      "pos": [
+        260,
+        60
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "backend",
+      "label": "추론 서비스",
+      "sublabel": "KServe · TorchServe · Triton Inference Server",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "모델 저장소",
+      "sublabel": "Amazon S3 · Amazon ECR · Amazon EFS",
+      "pos": [
+        930,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "scaling",
+      "type": "backend",
+      "label": "스케일링 옵션",
+      "sublabel": "HorizontalPodAutoscaler · KEDA · VerticalPodAutoscaler",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        300,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "모델 서빙 아키텍처",
+      "wraps": [
+        "networking",
+        "inference",
+        "storage",
+        "scaling"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-networking",
+      "from": "client",
+      "to": "networking",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "networking-to-inference",
+      "from": "networking",
+      "to": "inference",
+      "label": "라우팅",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inference-to-storage",
+      "from": "inference",
+      "to": "storage",
+      "label": "모델 로드"
+    },
+    {
+      "id": "scaling-to-inference",
+      "from": "scaling",
+      "to": "inference",
+      "label": "자동 확장",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "추론 서비스 배포 예시",
+      "items": [
+        "KServe: InferenceService, storageUri s3://로 모델 지정",
+        "TorchServe: Deployment + PVC model-store, LoadBalancer Service(8080/8081)",
+        "Triton Inference Server: Deployment + PVC model-repository, LoadBalancer Service(8000/8001/8002)"
+      ]
+    }
+  ]
+}

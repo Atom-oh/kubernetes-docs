@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pod에 AZ 레이블이 없어도 동작하는 원리",
+    "output": "ko-service-mesh-istio-resilience-03-zone-aware-routing-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Istiod 컨트롤 플레인"
+        },
+        "cloud": {
+          "label": "워크로드 Pod (Zone 레이블 없음)"
+        },
+        "frontend": {
+          "label": "데이터 플레인 사이드카"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "lookup",
+        "label": "1. Node 레이블 조회",
+        "focus": [
+          "discovery",
+          "podA",
+          "podB",
+          "podC"
+        ],
+        "note": "Istiod는 Pod가 실행 중인 Node의 topology.kubernetes.io/zone 레이블을 조회한다. Pod 자체에는 Zone 레이블이 없다."
+      },
+      {
+        "id": "locality",
+        "label": "2. Pod Locality 파악",
+        "focus": [
+          "discovery",
+          "eds"
+        ],
+        "note": "Pod → Node 매핑으로 Pod A → us-east-1a, Pod C → us-east-1b를 파악해 EDS에 Locality를 담는다."
+      },
+      {
+        "id": "push",
+        "label": "3. xDS 푸시",
+        "focus": [
+          "eds",
+          "envoy"
+        ],
+        "note": "Locality 정보가 포함된 EDS를 xDS로 Envoy Proxy에 푸시한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "discovery",
+      "type": "backend",
+      "label": "Service Discovery",
+      "sublabel": "Pod → Node 매핑",
+      "pos": [
+        60,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "eds",
+      "type": "backend",
+      "label": "EDS 생성",
+      "sublabel": "Locality 정보 포함",
+      "pos": [
+        420,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "frontend",
+      "label": "Envoy Proxy",
+      "sublabel": "Locality 기반 라우팅",
+      "pos": [
+        780,
+        80
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "podA",
+      "type": "cloud",
+      "label": "Pod A",
+      "sublabel": "Zone 레이블 없음",
+      "pos": [
+        60,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "podB",
+      "type": "cloud",
+      "label": "Pod B",
+      "sublabel": "Zone 레이블 없음",
+      "pos": [
+        240,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "podC",
+      "type": "cloud",
+      "label": "Pod C",
+      "sublabel": "Zone 레이블 없음",
+      "pos": [
+        560,
+        340
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istiod (Control Plane)",
+      "wraps": [
+        "discovery",
+        "eds"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 1 · topology.kubernetes.io/zone=us-east-1a",
+      "wraps": [
+        "podA",
+        "podB"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node 2 · topology.kubernetes.io/zone=us-east-1b",
+      "wraps": [
+        "podC"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "lookup-node1",
+      "from": "discovery",
+      "to": "podA",
+      "label": "1. Node 레이블 조회",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          150,
+          210
+        ],
+        [
+          10,
+          210
+        ],
+        [
+          10,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "lookup-node2",
+      "from": "discovery",
+      "to": "podC",
+      "label": "1. Node 레이블 조회",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelSegment": 2,
+      "via": [
+        [
+          150,
+          250
+        ],
+        [
+          760,
+          250
+        ],
+        [
+          760,
+          370
+        ]
+      ]
+    },
+    {
+      "id": "locality-to-eds",
+      "from": "discovery",
+      "to": "eds",
+      "label": "2. Pod Locality 파악",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds-push",
+      "from": "eds",
+      "to": "envoy",
+      "label": "3. xDS 푸시",
+      "variant": "emphasis"
+    }
+  ]
+}

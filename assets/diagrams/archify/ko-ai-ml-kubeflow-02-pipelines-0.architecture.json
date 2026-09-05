@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "파이프라인 실행이 시스템을 거치는 흐름",
+    "output": "ko-ai-ml-kubeflow-02-pipelines-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "KFP SDK (로컬)"
+        },
+        "backend": {
+          "label": "KFP 백엔드"
+        },
+        "cloud": {
+          "label": "컴포넌트 실행"
+        },
+        "database": {
+          "label": "저장소"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sdk",
+        "label": "SDK 컴파일",
+        "focus": [
+          "pipeline",
+          "compiler"
+        ],
+        "note": "SDK의 역할은 IR YAML을 만드는 데서 끝난다. 산출물은 백엔드에 종속되지 않는 PipelineSpec이다."
+      },
+      {
+        "id": "backend",
+        "label": "백엔드 실행",
+        "focus": [
+          "apiserver",
+          "translate",
+          "argo",
+          "pods"
+        ],
+        "note": "API 서버 이후는 백엔드의 책임 — IR YAML을 Argo Workflow로 변환하고 Argo 컨트롤러가 단계를 Pod로 스케줄링한다."
+      },
+      {
+        "id": "storage",
+        "label": "아티팩트 · 메타데이터",
+        "focus": [
+          "pods",
+          "objectstore",
+          "mlmd"
+        ],
+        "note": "컴포넌트 Pod는 아티팩트를 오브젝트 스토어에, 실행·아티팩트 메타데이터를 MLMD에 기록한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "pipeline",
+      "type": "frontend",
+      "label": "Python 파이프라인",
+      "sublabel": "@dsl.pipeline / @dsl.component",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "compiler",
+      "type": "frontend",
+      "label": "KFP SDK 컴파일러",
+      "sublabel": "IR YAML 생성",
+      "pos": [
+        320,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "KFP API 서버",
+      "sublabel": "파이프라인 저장 · Run 접수",
+      "pos": [
+        660,
+        80
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "translate",
+      "type": "backend",
+      "label": "IR YAML → Argo Workflow 변환",
+      "sublabel": "백엔드",
+      "pos": [
+        950,
+        80
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "backend",
+      "label": "Argo Workflow 컨트롤러",
+      "sublabel": "단계 스케줄링",
+      "pos": [
+        950,
+        280
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "pods",
+      "type": "cloud",
+      "label": "컴포넌트 Pod 실행",
+      "sublabel": "단계별 Pod",
+      "pos": [
+        660,
+        280
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "objectstore",
+      "type": "database",
+      "label": "오브젝트 스토어",
+      "sublabel": "S3 / MinIO · 아티팩트",
+      "pos": [
+        660,
+        480
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "mlmd",
+      "type": "database",
+      "label": "ML Metadata (MLMD)",
+      "sublabel": "실행 · 아티팩트 메타데이터",
+      "pos": [
+        950,
+        480
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "로컬 · KFP SDK",
+      "wraps": [
+        "pipeline",
+        "compiler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "KFP 백엔드 (Argo Workflows 기반)",
+      "wraps": [
+        "apiserver",
+        "translate",
+        "argo",
+        "pods"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "pipeline-compiler",
+      "from": "pipeline",
+      "to": "compiler",
+      "label": "컴파일"
+    },
+    {
+      "id": "compiler-apiserver",
+      "from": "compiler",
+      "to": "apiserver",
+      "label": "IR YAML 제출",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apiserver-translate",
+      "from": "apiserver",
+      "to": "translate"
+    },
+    {
+      "id": "translate-argo",
+      "from": "translate",
+      "to": "argo",
+      "label": "Workflow 리소스",
+      "labelDy": 60
+    },
+    {
+      "id": "argo-pods",
+      "from": "argo",
+      "to": "pods"
+    },
+    {
+      "id": "pods-objectstore",
+      "from": "pods",
+      "to": "objectstore",
+      "label": "아티팩트 기록",
+      "labelDy": 60
+    },
+    {
+      "id": "pods-mlmd",
+      "from": "pods",
+      "to": "mlmd",
+      "label": "메타데이터 기록"
+    },
+    {
+      "id": "objectstore-mlmd",
+      "from": "objectstore",
+      "to": "mlmd",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "KFP v2: IR YAML",
+      "items": [
+        "Python 파이프라인은 백엔드에 종속되지 않는 PipelineSpec(IR YAML)으로 컴파일된다",
+        "API 서버가 IR YAML을 저장하고 Run마다 다시 제출한다 — 일회성 Argo 매니페스트가 아니다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "EKS에서의 아티팩트 저장소",
+      "items": [
+        "기본값은 클러스터 내부 MinIO",
+        "S3로 연결하려면 pipeline-runner ServiceAccount에 IRSA 또는 EKS Pod Identity가 필요하다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Dynamo Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-04-inference-frameworks-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1370,
+      500
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "client",
+          "router",
+          "prefill"
+        ],
+        "note": "A client request passes through the KV-aware router to a prefill worker."
+      },
+      {
+        "id": "kv-handoff",
+        "label": "KV cache handoff",
+        "focus": [
+          "prefill",
+          "kvstore",
+          "kvtransfer",
+          "decode"
+        ],
+        "note": "The distributed KV cache hands the KV cache produced by prefill to the decode workers."
+      },
+      {
+        "id": "backends",
+        "label": "Inference backends",
+        "focus": [
+          "prefill",
+          "decode",
+          "vllm",
+          "sglang",
+          "trtllm"
+        ],
+        "note": "Each worker runs on a vLLM, SGLang, or TensorRT-LLM backend."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client Request",
+      "sublabel": "inference request",
+      "pos": [
+        30,
+        110
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Dynamo Router",
+      "sublabel": "KV-aware routing · load balancer",
+      "pos": [
+        220,
+        110
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "prefill",
+      "type": "backend",
+      "label": "Prefill Workers x2",
+      "sublabel": "8x A100 · compute-intensive",
+      "pos": [
+        470,
+        110
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kvstore",
+      "type": "database",
+      "label": "KV Cache Store",
+      "sublabel": "Distributed KV Cache",
+      "pos": [
+        700,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "kvtransfer",
+      "type": "messagebus",
+      "label": "KV Transfer Service",
+      "sublabel": "RDMA / TCP",
+      "pos": [
+        910,
+        110
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "decode",
+      "type": "backend",
+      "label": "Decode Workers x3",
+      "sublabel": "4x A10G · cost optimized",
+      "pos": [
+        1130,
+        110
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "vllm",
+      "type": "backend",
+      "label": "vLLM",
+      "sublabel": "Inference backends",
+      "pos": [
+        440,
+        320
+      ],
+      "size": [
+        220,
+        60
+      ]
+    },
+    {
+      "id": "sglang",
+      "type": "backend",
+      "label": "SGLang",
+      "sublabel": "Inference backends",
+      "pos": [
+        910,
+        320
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "trtllm",
+      "type": "backend",
+      "label": "TensorRT-LLM",
+      "sublabel": "Inference backends",
+      "pos": [
+        1130,
+        320
+      ],
+      "size": [
+        160,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "NVIDIA Dynamo Deployment",
+      "wraps": [
+        "router",
+        "prefill",
+        "kvstore",
+        "kvtransfer",
+        "decode",
+        "vllm",
+        "sglang",
+        "trtllm"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Distributed KV Cache",
+      "wraps": [
+        "kvstore",
+        "kvtransfer"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Inference backends",
+      "wraps": [
+        "vllm",
+        "sglang",
+        "trtllm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-router",
+      "from": "client",
+      "to": "router",
+      "variant": "emphasis"
+    },
+    {
+      "id": "router-prefill",
+      "from": "router",
+      "to": "prefill",
+      "label": "Prefill request",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "prefill-kvstore",
+      "from": "prefill",
+      "to": "kvstore",
+      "label": "KV cache",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "kvstore-kvtransfer",
+      "from": "kvstore",
+      "to": "kvtransfer"
+    },
+    {
+      "id": "kvtransfer-decode",
+      "from": "kvtransfer",
+      "to": "decode",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prefill-vllm",
+      "from": "prefill",
+      "to": "vllm",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "decode-sglang",
+      "from": "decode",
+      "to": "sglang",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "decode-trtllm",
+      "from": "decode",
+      "to": "trtllm",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "Disaggregated Serving",
+      "items": [
+        "Separates the prefill (compute-intensive) and decode (memory-bandwidth-intensive) phases",
+        "Heterogeneous GPU support: different GPU types for prefill and decode"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "KV Cache Routing",
+      "items": [
+        "Routes requests based on KV cache locality",
+        "The distributed KV cache hands prefill-generated KV cache to the decode workers"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Multi-Runtime Support",
+      "items": [
+        "Works with vLLM, SGLang, and TensorRT-LLM backends"
+      ]
+    }
+  ]
+}

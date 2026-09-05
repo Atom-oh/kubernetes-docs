@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 주요 운영 과제",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      960,
+      700
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "운영 과제"
+        },
+        "external": {
+          "label": "영향"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "cost",
+        "label": "운영 비용",
+        "focus": [
+          "sidecar",
+          "resource",
+          "cost"
+        ],
+        "note": "모든 파드에 주입되는 사이드카와 2배로 늘어나는 CPU/Memory가 전문 인력과 비용을 요구한다."
+      },
+      {
+        "id": "risk",
+        "label": "장애 위험",
+        "focus": [
+          "upgrade",
+          "troubleshoot",
+          "config",
+          "risk"
+        ],
+        "note": "수동 Canary 업그레이드, 복잡한 디버깅, CRD 간 의존성이 복잡한 아키텍처의 장애 위험을 키운다."
+      },
+      {
+        "id": "deploy",
+        "label": "배포 시간",
+        "focus": [
+          "cert",
+          "deploy"
+        ],
+        "note": "CA 운영과 인증서 갱신은 파드 재시작을 동반해 배포 시간을 늘린다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sidecar",
+      "type": "backend",
+      "label": "Sidecar 관리",
+      "sublabel": "모든 파드에 프록시 주입",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "resource",
+      "type": "backend",
+      "label": "리소스 오버헤드",
+      "sublabel": "CPU/Memory 2배 증가",
+      "pos": [
+        60,
+        150
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "upgrade",
+      "type": "backend",
+      "label": "업그레이드 복잡도",
+      "sublabel": "수동 Canary 프로세스",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "troubleshoot",
+      "type": "backend",
+      "label": "트러블슈팅",
+      "sublabel": "복잡한 디버깅",
+      "pos": [
+        60,
+        330
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "config",
+      "type": "backend",
+      "label": "설정 검증",
+      "sublabel": "CRD 간 의존성",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "cert",
+      "type": "backend",
+      "label": "인증서 관리",
+      "sublabel": "CA 및 갱신",
+      "pos": [
+        60,
+        510
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "cost",
+      "type": "external",
+      "label": "운영 비용 증가",
+      "sublabel": "전문 인력 필요",
+      "pos": [
+        620,
+        105
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "risk",
+      "type": "external",
+      "label": "장애 위험 증가",
+      "sublabel": "복잡한 아키텍처",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        230,
+        60
+      ]
+    },
+    {
+      "id": "deploy",
+      "type": "external",
+      "label": "배포 시간 증가",
+      "sublabel": "파드 재시작 필요",
+      "pos": [
+        620,
+        510
+      ],
+      "size": [
+        230,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Istio 운영 복잡도",
+      "wraps": [
+        "sidecar",
+        "resource",
+        "upgrade",
+        "troubleshoot",
+        "config",
+        "cert"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "영향",
+      "wraps": [
+        "cost",
+        "risk",
+        "deploy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sidecar-cost",
+      "from": "sidecar",
+      "to": "cost"
+    },
+    {
+      "id": "resource-cost",
+      "from": "resource",
+      "to": "cost"
+    },
+    {
+      "id": "upgrade-risk",
+      "from": "upgrade",
+      "to": "risk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "troubleshoot-risk",
+      "from": "troubleshoot",
+      "to": "risk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "config-risk",
+      "from": "config",
+      "to": "risk",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cert-deploy",
+      "from": "cert",
+      "to": "deploy"
+    }
+  ]
+}

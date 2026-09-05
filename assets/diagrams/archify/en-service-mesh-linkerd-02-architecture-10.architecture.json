@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd vs Istio Control Plane Comparison",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-02-architecture-10.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "linkerd-side",
+        "label": "Linkerd: distributed control plane",
+        "focus": [
+          "destination",
+          "identity",
+          "injector",
+          "linkerd-proxy"
+        ],
+        "note": "Three small components split the work and push configuration to the lightweight Rust proxy over custom gRPC."
+      },
+      {
+        "id": "istio-side",
+        "label": "Istio: unified istiod",
+        "focus": [
+          "istiod",
+          "envoy"
+        ],
+        "note": "Pilot, Citadel and Galley are merged into a single istiod that configures Envoy proxies over xDS."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "destination",
+      "type": "backend",
+      "label": "Destination",
+      "sublabel": "service discovery · gRPC :8086",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "security",
+      "label": "Identity",
+      "sublabel": "mTLS certificate issuance · gRPC :8080",
+      "pos": [
+        290,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "injector",
+      "type": "backend",
+      "label": "Proxy Injector",
+      "sublabel": "Admission Webhook · HTTPS :8443",
+      "pos": [
+        520,
+        90
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "linkerd-proxy",
+      "type": "backend",
+      "label": "linkerd-proxy",
+      "sublabel": "Rust · ~10MB",
+      "pos": [
+        290,
+        360
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "lightweight proxy"
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "istiod",
+      "sublabel": "Pilot + Citadel + Galley",
+      "pos": [
+        880,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy",
+      "sublabel": "C++ · ~50-100MB",
+      "pos": [
+        880,
+        360
+      ],
+      "size": [
+        220,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Linkerd Control Plane (3 components)",
+      "wraps": [
+        "destination",
+        "identity",
+        "injector"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Linkerd Data Plane",
+      "wraps": [
+        "linkerd-proxy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Control Plane (unified)",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Data Plane",
+      "wraps": [
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dest-to-proxy",
+      "from": "destination",
+      "to": "linkerd-proxy",
+      "label": "service discovery · gRPC",
+      "variant": "emphasis"
+    },
+    {
+      "id": "identity-to-proxy",
+      "from": "identity",
+      "to": "linkerd-proxy",
+      "label": "mTLS certificate issuance",
+      "labelDy": 180
+    },
+    {
+      "id": "injector-to-proxy",
+      "from": "injector",
+      "to": "linkerd-proxy",
+      "label": "sidecar injection",
+      "variant": "dashed"
+    },
+    {
+      "id": "istiod-to-envoy",
+      "from": "istiod",
+      "to": "envoy",
+      "label": "xDS config",
+      "variant": "emphasis",
+      "labelDy": 110
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Linkerd",
+      "items": [
+        "Control plane: distributed (3 components)",
+        "Proxy: linkerd2-proxy (Rust), configured over custom gRPC",
+        "~10 CRDs, low resource usage"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Istio",
+      "items": [
+        "Control plane: unified (istiod)",
+        "Proxy: Envoy (C++), configured over xDS",
+        "~50+ CRDs, extensible with Wasm and Lua"
+      ]
+    }
+  ]
+}

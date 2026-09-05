@@ -12,7 +12,9 @@ Session Affinity (or Sticky Session) is a technique that routes requests from th
 
 ## Session Affinity Overview
 
-![Diagram showing consistent-hash session affinity: a client request carrying a user ID is hashed by the load balancer and always routed to the same pod, while the other pod replicas remain unused for that session.](../../../../assets/diagrams/rendered/en-service-mesh-istio-traffic-management-10-session-affinity-0.svg)
+![Diagram showing consistent-hash session affinity: a client request carrying a user ID is hashed by the load balancer and always routed to the same pod, while the other pod replicas remain unused for that session.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-10-session-affinity-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-10-session-affinity-0.html)
 
 ## Consistent Hash Based
 

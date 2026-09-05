@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "External API Protection Architecture",
+    "output": "en-service-mesh-istio-resilience-01-outlier-detection-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "healthy-path",
+        "label": "Traffic to healthy instances",
+        "focus": [
+          "app",
+          "envoy",
+          "api1",
+          "api3"
+        ],
+        "note": "Envoy Proxy keeps sending traffic only to healthy instances 1 and 3."
+      },
+      {
+        "id": "ejected-path",
+        "label": "Ejecting the failing instance",
+        "focus": [
+          "envoy",
+          "api2"
+        ],
+        "note": "Outlier Detection ejects instance 2, which is returning errors, from traffic for baseEjectionTime."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Application pod"
+        },
+        "security": {
+          "label": "Envoy Proxy (Outlier Detection)"
+        },
+        "external": {
+          "label": "External API instances (ServiceEntry)"
+        }
+      }
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Pod",
+      "sublabel": "calls external API",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Outlier Detection",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "api1",
+      "type": "external",
+      "label": "External API Instance 1",
+      "sublabel": "Healthy",
+      "pos": [
+        520,
+        60
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "api2",
+      "type": "external",
+      "label": "External API Instance 2",
+      "sublabel": "Errors",
+      "pos": [
+        520,
+        200
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "api3",
+      "type": "external",
+      "label": "External API Instance 3",
+      "sublabel": "Healthy",
+      "pos": [
+        520,
+        340
+      ],
+      "size": [
+        210,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes Cluster",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External Services",
+      "wraps": [
+        "api1",
+        "api2",
+        "api3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-to-envoy",
+      "from": "app",
+      "to": "envoy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "envoy-to-api1",
+      "from": "envoy",
+      "to": "api1",
+      "label": "Send traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-api2",
+      "from": "envoy",
+      "to": "api2",
+      "label": "Ejected",
+      "variant": "dashed",
+      "via": [
+        [
+          320,
+          290
+        ],
+        [
+          320,
+          230
+        ]
+      ],
+      "labelAt": [
+        455,
+        222
+      ]
+    },
+    {
+      "id": "envoy-to-api3",
+      "from": "envoy",
+      "to": "api3",
+      "label": "Send traffic",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "ServiceEntry",
+      "items": [
+        "Registers the external API under hosts (resolution: DNS)",
+        "location: MESH_EXTERNAL marks it as outside the mesh"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "DestinationRule outlierDetection",
+      "items": [
+        "consecutiveErrors: 3 — detect external API failures quickly",
+        "interval: 10s / baseEjectionTime: 30s",
+        "maxEjectionPercent: 50 — eject at most half the instances"
+      ]
+    }
+  ]
+}

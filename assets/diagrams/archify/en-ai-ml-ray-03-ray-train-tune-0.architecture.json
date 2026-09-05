@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Combining Ray Train and Ray Tune",
+    "locale": "en",
+    "output": "en-ai-ml-ray-03-ray-train-tune-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace"
+  },
+  "components": [
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Ray Tune Driver",
+      "sublabel": "search algorithm",
+      "tag": "decides next round of trials",
+      "pos": [
+        470,
+        50
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "t1w1",
+      "type": "backend",
+      "label": "Worker Actor 1",
+      "sublabel": "Ray Train",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t1w2",
+      "type": "backend",
+      "label": "Worker Actor 2",
+      "sublabel": "Ray Train",
+      "pos": [
+        270,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t1os",
+      "type": "database",
+      "label": "Object Store",
+      "sublabel": "shared within the trial",
+      "pos": [
+        165,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t2w1",
+      "type": "backend",
+      "label": "Worker Actor 1",
+      "sublabel": "Ray Train",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t2w2",
+      "type": "backend",
+      "label": "Worker Actor 2",
+      "sublabel": "Ray Train",
+      "pos": [
+        950,
+        240
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "t2os",
+      "type": "database",
+      "label": "Object Store",
+      "sublabel": "shared within the trial",
+      "pos": [
+        845,
+        380
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Trial 1: Ray Train run",
+      "wraps": [
+        "t1w1",
+        "t1w2",
+        "t1os"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Trial 2: Ray Train run",
+      "wraps": [
+        "t2w1",
+        "t2w2",
+        "t2os"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "launch-a",
+      "from": "driver",
+      "to": "t1w1",
+      "label": "launches with hyperparameter set A",
+      "variant": "emphasis"
+    },
+    {
+      "id": "launch-b",
+      "from": "driver",
+      "to": "t2w2",
+      "label": "launches with hyperparameter set B",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report-1",
+      "from": "t1w2",
+      "to": "driver",
+      "label": "reports results/checkpoints",
+      "variant": "dashed"
+    },
+    {
+      "id": "report-2",
+      "from": "t2w1",
+      "to": "driver",
+      "label": "reports results/checkpoints",
+      "variant": "dashed"
+    },
+    {
+      "id": "t1w1-os",
+      "from": "t1w1",
+      "to": "t1os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t1w2-os",
+      "from": "t1w2",
+      "to": "t1os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2w1-os",
+      "from": "t2w1",
+      "to": "t2os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "t2w2-os",
+      "from": "t2w2",
+      "to": "t2os",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Search loop",
+      "items": [
+        "The driver takes each trial's reported results/checkpoints and decides the next round of trials",
+        "Each trial is an independent Ray Train run with its own set of distributed workers"
+      ]
+    }
+  ]
+}

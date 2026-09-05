@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MLflow Tracking Server Deployment Architecture on EKS",
+    "locale": "en",
+    "output": "en-ai-ml-mlflow-03-eks-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      620
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Request path",
+        "focus": [
+          "user",
+          "alb",
+          "svc",
+          "pod1",
+          "pod2"
+        ],
+        "note": "Training scripts and MLflow UI users reach the stateless tracking server Pods through the ALB/Ingress and the Service."
+      },
+      {
+        "id": "stores",
+        "label": "Backend and artifact stores",
+        "focus": [
+          "pod1",
+          "pod2",
+          "db",
+          "s3"
+        ],
+        "note": "All durable state lives outside the cluster in RDS/Aurora PostgreSQL and S3, so running several Pods is safe."
+      },
+      {
+        "id": "iam",
+        "label": "IAM access grant",
+        "focus": [
+          "sa",
+          "pod1",
+          "pod2",
+          "s3"
+        ],
+        "note": "A ServiceAccount bound via IRSA or Pod Identity grants the Pods S3 access without static credentials."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Training Script / MLflow UI User",
+      "sublabel": "Client SDK · Web UI",
+      "pos": [
+        30,
+        270
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB / Ingress",
+      "sublabel": "AWS Load Balancer Controller",
+      "pos": [
+        290,
+        270
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Kubernetes Service",
+      "sublabel": "Load-balances across Pods",
+      "pos": [
+        520,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Tracking Server Pod",
+      "sublabel": "mlflow server · replica 1",
+      "pos": [
+        740,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "ServiceAccount",
+      "sublabel": "IRSA / Pod Identity binding",
+      "pos": [
+        740,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Tracking Server Pod",
+      "sublabel": "mlflow server · replica 2",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "RDS / Aurora PostgreSQL",
+      "sublabel": "Backend store",
+      "pos": [
+        990,
+        270
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 Bucket",
+      "sublabel": "Artifact store",
+      "pos": [
+        1210,
+        270
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS cluster",
+      "wraps": [
+        "svc",
+        "pod1",
+        "pod2",
+        "sa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-alb",
+      "from": "user",
+      "to": "alb",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-svc",
+      "from": "alb",
+      "to": "svc"
+    },
+    {
+      "id": "svc-pod1",
+      "from": "svc",
+      "to": "pod1"
+    },
+    {
+      "id": "svc-pod2",
+      "from": "svc",
+      "to": "pod2"
+    },
+    {
+      "id": "sa-pod1",
+      "from": "sa",
+      "to": "pod1",
+      "variant": "security",
+      "label": "grants S3 access",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sa-pod2",
+      "from": "sa",
+      "to": "pod2",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod1-db",
+      "from": "pod1",
+      "to": "db",
+      "label": "metadata",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "pod2-db",
+      "from": "pod2",
+      "to": "db",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod1-s3",
+      "from": "pod1",
+      "to": "s3",
+      "label": "artifacts",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          825,
+          50
+        ],
+        [
+          1275,
+          50
+        ]
+      ]
+    },
+    {
+      "id": "pod2-s3",
+      "from": "pod2",
+      "to": "s3",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          825,
+          560
+        ],
+        [
+          1275,
+          560
+        ]
+      ]
+    }
+  ]
+}

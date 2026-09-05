@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 배포 아키텍처",
+    "output": "ko-ai-ml-02-vllm-deployment-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "클라이언트"
+        },
+        "frontend": {
+          "label": "네트워킹"
+        },
+        "backend": {
+          "label": "vLLM 파드"
+        },
+        "messagebus": {
+          "label": "집합 통신"
+        },
+        "database": {
+          "label": "공유 스토리지"
+        },
+        "cloud": {
+          "label": "AWS 스토리지"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "client",
+          "lb",
+          "svc",
+          "pod1",
+          "pod2"
+        ],
+        "note": "클라이언트 요청은 Load Balancer와 Kubernetes Service를 거쳐 vLLM 파드에 도달한다."
+      },
+      {
+        "id": "single-node",
+        "label": "단일 노드 배포",
+        "focus": [
+          "pod1",
+          "fsx"
+        ],
+        "note": "파드 하나가 노드의 GPU 8개를 tensor-parallel-size=8로 사용한다."
+      },
+      {
+        "id": "multi-node",
+        "label": "다중 노드 배포",
+        "focus": [
+          "pod2",
+          "nccl",
+          "pod3"
+        ],
+        "note": "노드마다 파드 하나씩 배치하고 NCCL로 GPU 간 통신을 수행한다."
+      },
+      {
+        "id": "model-storage",
+        "label": "모델 스토리지",
+        "focus": [
+          "pod1",
+          "pod2",
+          "pod3",
+          "fsx",
+          "s3"
+        ],
+        "note": "S3의 모델을 FSx for Lustre로 내려받아 모든 파드가 같은 PVC로 마운트한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "HTTP 요청",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "frontend",
+      "label": "Load Balancer",
+      "sublabel": "Service type: LoadBalancer",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "frontend",
+      "label": "Kubernetes Service",
+      "sublabel": "vllm-inference :8000",
+      "pos": [
+        590,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "vLLM 파드",
+      "sublabel": "GPU 8개 · tensor-parallel-size=8",
+      "pos": [
+        60,
+        240
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "vLLM 파드 0",
+      "sublabel": "노드 0 · GPU 8개",
+      "pos": [
+        420,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "messagebus",
+      "label": "NCCL 통신",
+      "sublabel": "GPU 간 집합 통신",
+      "pos": [
+        680,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "vLLM 파드 1",
+      "sublabel": "노드 1 · GPU 8개",
+      "pos": [
+        900,
+        240
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "vllm-models-pvc (RWX)",
+      "pos": [
+        420,
+        440
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "모델 저장소",
+      "pos": [
+        420,
+        600
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "네트워킹",
+      "wraps": [
+        "client",
+        "lb",
+        "svc"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "단일 노드 배포",
+      "wraps": [
+        "pod1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "다중 노드 배포",
+      "wraps": [
+        "pod2",
+        "nccl",
+        "pod3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "공유 스토리지",
+      "wraps": [
+        "fsx",
+        "s3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "추론 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lb-svc",
+      "from": "lb",
+      "to": "svc",
+      "variant": "emphasis"
+    },
+    {
+      "id": "svc-pod1",
+      "from": "svc",
+      "to": "pod1",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "svc-pod2",
+      "from": "svc",
+      "to": "pod2",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod2-nccl",
+      "from": "pod2",
+      "to": "nccl",
+      "variant": "dashed"
+    },
+    {
+      "id": "nccl-pod3",
+      "from": "nccl",
+      "to": "pod3",
+      "variant": "dashed"
+    },
+    {
+      "id": "pod1-fsx",
+      "from": "pod1",
+      "to": "fsx",
+      "label": "모델 로드",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "pod2-fsx",
+      "from": "pod2",
+      "to": "fsx",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod3-fsx",
+      "from": "pod3",
+      "to": "fsx",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "s3-fsx",
+      "from": "s3",
+      "to": "fsx",
+      "label": "모델 다운로드 Job",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "단일 노드 배포",
+      "items": [
+        "파드 하나가 GPU 8개를 tensor-parallel-size=8로 사용",
+        "Service type LoadBalancer가 8000 포트를 노출"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "다중 노드 분산 배포",
+      "items": [
+        "hostfile: vllm-inference-0/1 각 slots=8",
+        "노드 간 GPU 통신은 NCCL로 수행"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "공유 스토리지",
+      "items": [
+        "FSx for Lustre PVC(ReadWriteMany)를 모든 파드가 마운트",
+        "Hugging Face 모델을 S3에 두고 Job으로 FSx에 다운로드"
+      ]
+    }
+  ]
+}

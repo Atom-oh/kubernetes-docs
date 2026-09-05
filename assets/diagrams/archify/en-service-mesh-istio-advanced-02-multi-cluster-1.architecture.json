@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Geographic Distribution and Latency Optimization",
+    "output": "en-service-mesh-istio-advanced-02-multi-cluster-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "config-sync",
+        "label": "Config sync",
+        "focus": [
+          "mesh",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "The Istio mesh syncs the same configuration to EKS clusters in three regions for unified management."
+      },
+      {
+        "id": "cross-region",
+        "label": "Cross-region mTLS",
+        "focus": [
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "note": "Service calls between regions are protected by cross-region mTLS between the clusters."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "mesh",
+      "type": "security",
+      "label": "Istio Mesh",
+      "sublabel": "Unified Management",
+      "pos": [
+        500,
+        60
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "c1",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "us-east-1",
+      "pos": [
+        100,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "c2",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "eu-west-1",
+      "pos": [
+        500,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "c3",
+      "type": "cloud",
+      "label": "EKS Cluster",
+      "sublabel": "ap-northeast-2",
+      "pos": [
+        900,
+        320
+      ],
+      "size": [
+        180,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "US Region",
+      "wraps": [
+        "c1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Europe Region",
+      "wraps": [
+        "c2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Asia Region",
+      "wraps": [
+        "c3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync-us",
+      "from": "mesh",
+      "to": "c1",
+      "label": "Config sync",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sync-eu",
+      "from": "mesh",
+      "to": "c2",
+      "label": "Config sync",
+      "variant": "dashed",
+      "labelDy": 154
+    },
+    {
+      "id": "sync-apac",
+      "from": "mesh",
+      "to": "c3",
+      "label": "Config sync",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-us-eu",
+      "from": "c1",
+      "to": "c2",
+      "label": "Cross-region mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-eu-apac",
+      "from": "c2",
+      "to": "c3",
+      "label": "Cross-region mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "mtls-us-apac",
+      "from": "c1",
+      "to": "c3",
+      "label": "Cross-region mTLS",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          190,
+          470
+        ],
+        [
+          990,
+          470
+        ]
+      ]
+    }
+  ]
+}

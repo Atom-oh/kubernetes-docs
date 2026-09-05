@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Four Key Technical Challenges",
+    "locale": "en",
+    "output": "en-ai-ml-03-agentic-ai-platform-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1000,
+      580
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Technical challenge"
+        },
+        "backend": {
+          "label": "Solution tooling"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "gpu",
+      "type": "external",
+      "label": "1. GPU Resource Management",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "2. Multi-LLM Integration",
+      "pos": [
+        60,
+        170
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "workflow",
+      "type": "external",
+      "label": "3. Workflow Orchestration",
+      "pos": [
+        60,
+        280
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "cost",
+      "type": "external",
+      "label": "4. Real-time Cost Optimization",
+      "pos": [
+        60,
+        390
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "gpu-solution",
+      "type": "backend",
+      "label": "MIG · Time-Slicing",
+      "sublabel": "Karpenter",
+      "pos": [
+        650,
+        60
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "llm-solution",
+      "type": "backend",
+      "label": "LiteLLM",
+      "sublabel": "Inference Gateway",
+      "pos": [
+        650,
+        170
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "workflow-solution",
+      "type": "backend",
+      "label": "LangGraph",
+      "sublabel": "Kagent",
+      "pos": [
+        650,
+        280
+      ],
+      "size": [
+        270,
+        64
+      ]
+    },
+    {
+      "id": "cost-solution",
+      "type": "backend",
+      "label": "Langfuse",
+      "sublabel": "Prompt Cache",
+      "pos": [
+        650,
+        390
+      ],
+      "size": [
+        270,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Key Technical Challenges",
+      "wraps": [
+        "gpu",
+        "llm",
+        "workflow",
+        "cost"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Solutions",
+      "wraps": [
+        "gpu-solution",
+        "llm-solution",
+        "workflow-solution",
+        "cost-solution"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-map",
+      "from": "gpu",
+      "to": "gpu-solution",
+      "label": "Fragmentation · Sharing · Scheduling"
+    },
+    {
+      "id": "llm-map",
+      "from": "llm",
+      "to": "llm-solution",
+      "label": "Routing · Fallback · Load Balancing"
+    },
+    {
+      "id": "workflow-map",
+      "from": "workflow",
+      "to": "workflow-solution",
+      "label": "State · Branching · Error Handling"
+    },
+    {
+      "id": "cost-map",
+      "from": "cost",
+      "to": "cost-solution",
+      "label": "Caching · Batching · Tiering"
+    }
+  ]
+}

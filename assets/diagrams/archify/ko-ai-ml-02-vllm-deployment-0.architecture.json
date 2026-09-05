@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 아키텍처",
+    "output": "ko-ai-ml-02-vllm-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1380,
+      520
+    ],
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "주요 특징"
+        },
+        "backend": {
+          "label": "핵심 구성 요소"
+        },
+        "cloud": {
+          "label": "주요 이점"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "features-to-benefits",
+        "label": "특징이 만드는 이점",
+        "focus": [
+          "paged",
+          "batching",
+          "distributed",
+          "quant",
+          "memory",
+          "throughput",
+          "scalability"
+        ],
+        "note": "PagedAttention과 양자화는 메모리 효율성으로, 연속 배치 처리는 처리량으로, 분산 추론은 확장성으로 이어진다."
+      },
+      {
+        "id": "engine-pipeline",
+        "label": "추론 엔진 파이프라인",
+        "focus": [
+          "scheduler",
+          "loader",
+          "engine",
+          "kvcache",
+          "apiserver"
+        ],
+        "note": "스케줄러와 모델 로더가 추론 엔진에 입력을 주고, 엔진은 KV 캐시 관리자와 OpenAI 호환 API 서버로 이어진다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "batching",
+      "type": "external",
+      "label": "연속 배치 처리",
+      "sublabel": "GPU 활용도 극대화",
+      "pos": [
+        50,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "distributed",
+      "type": "external",
+      "label": "분산 추론",
+      "sublabel": "텐서 병렬화 · 모델 샤딩",
+      "pos": [
+        50,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "paged",
+      "type": "external",
+      "label": "PagedAttention",
+      "sublabel": "KV 캐시 메모리 관리",
+      "pos": [
+        50,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "quant",
+      "type": "external",
+      "label": "양자화",
+      "sublabel": "INT8 / INT4 / FP16",
+      "pos": [
+        50,
+        340
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "throughput",
+      "type": "cloud",
+      "label": "높은 처리량",
+      "sublabel": "최대 2배 향상",
+      "pos": [
+        330,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scalability",
+      "type": "cloud",
+      "label": "확장성",
+      "sublabel": "175B+ 파라미터 모델",
+      "pos": [
+        330,
+        160
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "cloud",
+      "label": "메모리 효율성",
+      "sublabel": "최대 2배 향상",
+      "pos": [
+        330,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "요청 스케줄러",
+      "sublabel": "동적 배치",
+      "pos": [
+        610,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "loader",
+      "type": "backend",
+      "label": "모델 로더",
+      "sublabel": "모델 가중치 로드",
+      "pos": [
+        610,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "추론 엔진",
+      "sublabel": "vLLM Engine",
+      "pos": [
+        880,
+        210
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "kvcache",
+      "type": "backend",
+      "label": "KV 캐시 관리자",
+      "sublabel": "블록 단위 KV 캐시",
+      "pos": [
+        1150,
+        130
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "apiserver",
+      "type": "backend",
+      "label": "API 서버",
+      "sublabel": "OpenAI 호환 API",
+      "pos": [
+        1150,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "주요 특징",
+      "wraps": [
+        "paged",
+        "batching",
+        "distributed",
+        "quant"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "주요 이점",
+      "wraps": [
+        "memory",
+        "throughput",
+        "scalability"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "핵심 구성 요소",
+      "wraps": [
+        "scheduler",
+        "loader",
+        "engine",
+        "kvcache",
+        "apiserver"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "paged-memory",
+      "from": "paged",
+      "to": "memory"
+    },
+    {
+      "id": "batching-throughput",
+      "from": "batching",
+      "to": "throughput"
+    },
+    {
+      "id": "distributed-scalability",
+      "from": "distributed",
+      "to": "scalability"
+    },
+    {
+      "id": "quant-memory",
+      "from": "quant",
+      "to": "memory",
+      "variant": "dashed"
+    },
+    {
+      "id": "scheduler-engine",
+      "from": "scheduler",
+      "to": "engine",
+      "label": "배치 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "loader-engine",
+      "from": "loader",
+      "to": "engine",
+      "label": "가중치"
+    },
+    {
+      "id": "engine-kvcache",
+      "from": "engine",
+      "to": "kvcache",
+      "label": "KV 블록",
+      "variant": "emphasis"
+    },
+    {
+      "id": "engine-apiserver",
+      "from": "engine",
+      "to": "apiserver",
+      "label": "응답"
+    }
+  ]
+}

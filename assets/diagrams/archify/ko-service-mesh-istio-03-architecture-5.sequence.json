@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "istio-init의 트래픽 리다이렉트 설정",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "init-phase",
+        "label": "istio-init 단계",
+        "focus": [
+          "k8s",
+          "init",
+          "iptables"
+        ],
+        "note": "Init Container가 iptables NAT 규칙을 먼저 설정하고 종료한다."
+      },
+      {
+        "id": "start-phase",
+        "label": "컨테이너 기동",
+        "focus": [
+          "k8s",
+          "app",
+          "envoy"
+        ],
+        "note": "규칙이 갖춰진 뒤 애플리케이션과 Envoy 컨테이너가 시작된다."
+      },
+      {
+        "id": "intercept-phase",
+        "label": "아웃바운드 가로채기",
+        "focus": [
+          "app",
+          "iptables",
+          "envoy"
+        ],
+        "note": "앱의 요청은 15001로 리다이렉트되고, UID 1337인 Envoy의 요청만 iptables를 우회한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        },
+        "security": {
+          "label": "보안 호출"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "k8s",
+      "type": "cloud",
+      "label": "Kubernetes",
+      "sublabel": "kubelet"
+    },
+    {
+      "id": "init",
+      "type": "backend",
+      "label": "istio-init",
+      "sublabel": "Init Container"
+    },
+    {
+      "id": "iptables",
+      "type": "security",
+      "label": "iptables",
+      "sublabel": "NAT 테이블"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "앱 컨테이너"
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "UID 1337"
+    }
+  ],
+  "segments": [
+    {
+      "from": 164,
+      "to": 286,
+      "label": "1. 파드 시작 — istio-init"
+    },
+    {
+      "from": 302,
+      "to": 392,
+      "label": "2. 컨테이너 기동"
+    },
+    {
+      "from": 408,
+      "to": 578,
+      "label": "3. 아웃바운드 요청 가로채기"
+    }
+  ],
+  "messages": [
+    {
+      "id": "start-init",
+      "from": "k8s",
+      "to": "init",
+      "y": 192,
+      "label": "Init Container 시작"
+    },
+    {
+      "id": "set-rules",
+      "from": "init",
+      "to": "iptables",
+      "y": 228,
+      "label": "iptables 규칙 설정",
+      "variant": "security",
+      "note": "모든 트래픽을 Envoy로 리다이렉트"
+    },
+    {
+      "id": "init-done",
+      "from": "init",
+      "to": "k8s",
+      "y": 275,
+      "label": "완료 (Exit 0)",
+      "variant": "return"
+    },
+    {
+      "id": "start-app",
+      "from": "k8s",
+      "to": "app",
+      "y": 331,
+      "label": "애플리케이션 시작"
+    },
+    {
+      "id": "start-envoy",
+      "from": "k8s",
+      "to": "envoy",
+      "y": 372,
+      "label": "Envoy 시작"
+    },
+    {
+      "id": "outbound",
+      "from": "app",
+      "to": "iptables",
+      "y": 439,
+      "label": "아웃바운드 요청"
+    },
+    {
+      "id": "redirect",
+      "from": "iptables",
+      "to": "envoy",
+      "y": 480,
+      "label": "리다이렉트 (15001)",
+      "variant": "emphasis",
+      "note": "Envoy가 라우팅 결정 후 실제 요청 전송"
+    },
+    {
+      "id": "real-send",
+      "from": "envoy",
+      "to": "iptables",
+      "y": 547,
+      "label": "실제 요청 전송",
+      "note": "Envoy UID는 iptables 우회 (RETURN)"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "init",
+      "from": 187,
+      "to": 280,
+      "type": "backend"
+    },
+    {
+      "participant": "iptables",
+      "from": 223,
+      "to": 236,
+      "type": "security"
+    },
+    {
+      "participant": "envoy",
+      "from": 475,
+      "to": 553,
+      "type": "backend"
+    }
+  ]
+}

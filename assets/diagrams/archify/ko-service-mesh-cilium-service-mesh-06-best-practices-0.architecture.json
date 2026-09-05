@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "지연 시간 비교 (P99)",
+    "output": "ko-service-mesh-cilium-service-mesh-06-best-practices-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [860, 470]
+  },
+  "components": [
+    { "id": "client", "type": "frontend", "label": "클라이언트 포드", "sublabel": "동일 워크로드 요청", "pos": [40, 210], "size": [150, 60] },
+    { "id": "native", "type": "cloud", "label": "Native", "sublabel": "포드 간 직접 네트워킹", "tag": "P99 0.1ms", "pos": [330, 70], "size": [190, 64] },
+    { "id": "cilium", "type": "cloud", "label": "Cilium SM", "sublabel": "eBPF 데이터 플레인", "tag": "P99 0.3ms", "pos": [330, 210], "size": [190, 64] },
+    { "id": "istio", "type": "cloud", "label": "Istio", "sublabel": "사이드카 프록시", "tag": "P99 2.5ms", "pos": [330, 350], "size": [190, 64] },
+    { "id": "server", "type": "backend", "label": "서버 포드", "sublabel": "요청 처리", "pos": [670, 210], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "데이터 플레인별 P99 지연 시간", "wraps": ["native", "cilium", "istio"] }
+  ],
+  "connections": [
+    { "id": "client-native", "from": "client", "to": "native" },
+    { "id": "client-cilium", "from": "client", "to": "cilium", "variant": "emphasis" },
+    { "id": "client-istio", "from": "client", "to": "istio" },
+    { "id": "native-server", "from": "native", "to": "server", "label": "0.1ms" },
+    { "id": "cilium-server", "from": "cilium", "to": "server", "label": "0.3ms", "variant": "emphasis", "labelDx": -40 },
+    { "id": "istio-server", "from": "istio", "to": "server", "label": "2.5ms" }
+  ],
+  "cards": [
+    { "dot": "orange", "title": "벤치마크 결과", "items": [
+      "Native 0.1ms · Cilium SM 0.3ms · Istio 2.5ms (P99)",
+      "Cilium 서비스 메시는 eBPF 데이터 플레인 덕분에 Native 성능에 가장 근접한다",
+      "Istio 사이드카는 Native 대비 한 자릿수 이상 높은 지연을 더한다"
+    ] }
+  ]
+}

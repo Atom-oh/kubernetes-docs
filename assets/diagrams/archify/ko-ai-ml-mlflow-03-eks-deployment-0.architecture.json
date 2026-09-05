@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MLflow 트래킹 서버 EKS 배포 아키텍처",
+    "output": "ko-ai-ml-mlflow-03-eks-deployment-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      620
+    ],
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": [
+          "user",
+          "alb",
+          "svc",
+          "pod1",
+          "pod2"
+        ],
+        "note": "학습 스크립트와 MLflow UI 사용자는 ALB/Ingress와 Service를 거쳐 무상태 트래킹 서버 Pod에 도달한다."
+      },
+      {
+        "id": "stores",
+        "label": "백엔드·아티팩트 저장소",
+        "focus": [
+          "pod1",
+          "pod2",
+          "db",
+          "s3"
+        ],
+        "note": "지속 상태는 모두 클러스터 밖의 RDS/Aurora PostgreSQL과 S3에 있어 Pod를 여러 개로 늘려도 안전하다."
+      },
+      {
+        "id": "iam",
+        "label": "IAM 권한 부여",
+        "focus": [
+          "sa",
+          "pod1",
+          "pod2",
+          "s3"
+        ],
+        "note": "IRSA 또는 Pod Identity가 연결된 ServiceAccount가 정적 자격 증명 없이 S3 접근 권한을 Pod에 부여한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "external": {
+          "label": "외부 시스템"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "학습 스크립트 / MLflow UI 사용자",
+      "sublabel": "클라이언트 SDK · 웹 UI",
+      "pos": [
+        30,
+        270
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "alb",
+      "type": "cloud",
+      "label": "ALB / Ingress",
+      "sublabel": "AWS Load Balancer Controller",
+      "pos": [
+        290,
+        270
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "svc",
+      "type": "backend",
+      "label": "Kubernetes Service",
+      "sublabel": "Pod 간 부하 분산",
+      "pos": [
+        520,
+        270
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "트래킹 서버 Pod",
+      "sublabel": "mlflow server · replica 1",
+      "pos": [
+        740,
+        110
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "sa",
+      "type": "security",
+      "label": "ServiceAccount",
+      "sublabel": "IRSA / Pod Identity 연결",
+      "pos": [
+        740,
+        270
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "트래킹 서버 Pod",
+      "sublabel": "mlflow server · replica 2",
+      "pos": [
+        740,
+        430
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "RDS / Aurora PostgreSQL",
+      "sublabel": "백엔드 저장소",
+      "pos": [
+        990,
+        270
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 버킷",
+      "sublabel": "아티팩트 저장소",
+      "pos": [
+        1210,
+        270
+      ],
+      "size": [
+        130,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "EKS 클러스터",
+      "wraps": [
+        "svc",
+        "pod1",
+        "pod2",
+        "sa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-alb",
+      "from": "user",
+      "to": "alb",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "alb-svc",
+      "from": "alb",
+      "to": "svc"
+    },
+    {
+      "id": "svc-pod1",
+      "from": "svc",
+      "to": "pod1"
+    },
+    {
+      "id": "svc-pod2",
+      "from": "svc",
+      "to": "pod2"
+    },
+    {
+      "id": "sa-pod1",
+      "from": "sa",
+      "to": "pod1",
+      "variant": "security",
+      "label": "S3 접근 권한 부여",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sa-pod2",
+      "from": "sa",
+      "to": "pod2",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pod1-db",
+      "from": "pod1",
+      "to": "db",
+      "label": "메타데이터",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "pod2-db",
+      "from": "pod2",
+      "to": "db",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "pod1-s3",
+      "from": "pod1",
+      "to": "s3",
+      "label": "아티팩트",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          825,
+          50
+        ],
+        [
+          1275,
+          50
+        ]
+      ]
+    },
+    {
+      "id": "pod2-s3",
+      "from": "pod2",
+      "to": "s3",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          825,
+          560
+        ],
+        [
+          1275,
+          560
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LEAST_REQUEST 로드 밸런싱",
+    "output": "ko-service-mesh-istio-traffic-management-06-load-balancing-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트",
+      "sublabel": "새 요청",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "lb",
+      "type": "backend",
+      "label": "Load Balancer",
+      "sublabel": "Envoy · LEAST_REQUEST",
+      "pos": [
+        300,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "활성 요청: 5개",
+      "pos": [
+        720,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "활성 요청: 2개 (최소)",
+      "pos": [
+        720,
+        250
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "선택"
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "활성 요청: 8개",
+      "pos": [
+        720,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "파드 상태",
+      "wraps": [
+        "pod1",
+        "pod2",
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-lb",
+      "from": "client",
+      "to": "lb",
+      "label": "새 요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-pod1",
+      "from": "lb",
+      "to": "pod1",
+      "label": "검사",
+      "variant": "dashed"
+    },
+    {
+      "id": "check-pod3",
+      "from": "lb",
+      "to": "pod3",
+      "label": "검사",
+      "variant": "dashed"
+    },
+    {
+      "id": "route-pod2",
+      "from": "lb",
+      "to": "pod2",
+      "label": "최소 부하로 라우팅",
+      "variant": "emphasis",
+      "labelAt": [
+        658,
+        266
+      ]
+    }
+  ]
+}

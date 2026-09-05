@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Training Pipeline Overview",
+    "locale": "en",
+    "output": "en-ai-ml-05-model-training-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      560
+    ],
+    "views": [
+      {
+        "id": "data-prep",
+        "label": "Data Preparation",
+        "focus": [
+          "s3",
+          "loader",
+          "preprocess"
+        ],
+        "note": "A data loader pod reads from the S3 data lake and hands the data to the preprocessing job."
+      },
+      {
+        "id": "training",
+        "label": "Distributed Training",
+        "focus": [
+          "scheduler",
+          "workers",
+          "ps",
+          "allreduce"
+        ],
+        "note": "Worker pods placed by the job scheduler synchronize through the parameter server and AllReduce."
+      },
+      {
+        "id": "checkpointing",
+        "label": "Checkpointing",
+        "focus": [
+          "workers",
+          "fsx",
+          "ckptmgr"
+        ],
+        "note": "Workers save checkpoints to FSx for Lustre, which the checkpoint manager tracks."
+      },
+      {
+        "id": "evaluation",
+        "label": "Model Evaluation",
+        "focus": [
+          "ckptmgr",
+          "eval",
+          "metrics",
+          "registry"
+        ],
+        "note": "The evaluation job collects metrics and registers the model in the registry."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "s3",
+      "type": "database",
+      "label": "S3 Data Lake",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "loader",
+      "type": "backend",
+      "label": "Data Loader Pod",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "preprocess",
+      "type": "backend",
+      "label": "Preprocessing Job",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ps",
+      "type": "backend",
+      "label": "Parameter Server",
+      "pos": [
+        300,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "allreduce",
+      "type": "messagebus",
+      "label": "AllReduce Communication",
+      "pos": [
+        510,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker Pods",
+      "sublabel": "Distributed Training",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Job Scheduler",
+      "pos": [
+        300,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "checkpoint store",
+      "pos": [
+        760,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ckptmgr",
+      "type": "backend",
+      "label": "Checkpoint Manager",
+      "pos": [
+        760,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "eval",
+      "type": "backend",
+      "label": "Evaluation Job",
+      "pos": [
+        1000,
+        400
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics Collection",
+      "pos": [
+        1000,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "database",
+      "label": "Model Registry",
+      "pos": [
+        1000,
+        80
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data Preparation",
+      "wraps": [
+        "s3",
+        "loader",
+        "preprocess"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Distributed Training",
+      "wraps": [
+        "ps",
+        "allreduce",
+        "workers",
+        "scheduler"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Checkpointing",
+      "wraps": [
+        "fsx",
+        "ckptmgr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Model Evaluation",
+      "wraps": [
+        "eval",
+        "metrics",
+        "registry"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "s3-loader",
+      "from": "s3",
+      "to": "loader",
+      "label": "load",
+      "labelDy": 24
+    },
+    {
+      "id": "loader-preprocess",
+      "from": "loader",
+      "to": "preprocess"
+    },
+    {
+      "id": "preprocess-scheduler",
+      "from": "preprocess",
+      "to": "scheduler",
+      "label": "submit"
+    },
+    {
+      "id": "scheduler-workers",
+      "from": "scheduler",
+      "to": "workers",
+      "label": "run",
+      "variant": "emphasis"
+    },
+    {
+      "id": "workers-ps",
+      "from": "workers",
+      "to": "ps",
+      "label": "parameter sync"
+    },
+    {
+      "id": "workers-allreduce",
+      "from": "workers",
+      "to": "allreduce",
+      "label": "gradient AllReduce"
+    },
+    {
+      "id": "workers-fsx",
+      "from": "workers",
+      "to": "fsx",
+      "label": "save checkpoint",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fsx-ckptmgr",
+      "from": "fsx",
+      "to": "ckptmgr"
+    },
+    {
+      "id": "ckptmgr-eval",
+      "from": "ckptmgr",
+      "to": "eval",
+      "label": "evaluate"
+    },
+    {
+      "id": "eval-metrics",
+      "from": "eval",
+      "to": "metrics"
+    },
+    {
+      "id": "metrics-registry",
+      "from": "metrics",
+      "to": "registry",
+      "label": "register"
+    }
+  ]
+}

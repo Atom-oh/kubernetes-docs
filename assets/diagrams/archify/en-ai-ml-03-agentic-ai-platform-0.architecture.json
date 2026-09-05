@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Agentic AI Characteristics and Workflow",
+    "locale": "en",
+    "output": "en-ai-ml-03-agentic-ai-platform-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "external": {
+          "label": "Agentic AI Characteristics"
+        },
+        "backend": {
+          "label": "Workflow Step"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "loop",
+        "label": "Workflow loop",
+        "focus": [
+          "goal",
+          "plan",
+          "execute",
+          "evaluate",
+          "result"
+        ],
+        "note": "From goal setting through planning, execution and evaluation, the loop either completes or returns to planning."
+      },
+      {
+        "id": "traits",
+        "label": "Characteristic mapping",
+        "focus": [
+          "planning",
+          "execution",
+          "memory",
+          "iteration",
+          "plan",
+          "execute",
+          "evaluate"
+        ],
+        "note": "Shows which workflow step each of the four Agentic AI characteristics supports."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "planning",
+      "type": "external",
+      "label": "Autonomous Planning",
+      "sublabel": "subtasks · execution order",
+      "pos": [
+        235,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "execution",
+      "type": "external",
+      "label": "Tool-based Execution",
+      "sublabel": "APIs · DBs · executors",
+      "pos": [
+        440,
+        70
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "external",
+      "label": "State and Memory Management",
+      "sublabel": "long-running task state",
+      "pos": [
+        610,
+        70
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "iteration",
+      "type": "external",
+      "label": "Iterative Improvement",
+      "sublabel": "evaluate · revise plan",
+      "pos": [
+        830,
+        70
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "goal",
+      "type": "backend",
+      "label": "Goal Setting",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "plan",
+      "type": "backend",
+      "label": "Planning",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "execute",
+      "type": "backend",
+      "label": "Execution",
+      "pos": [
+        440,
+        300
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "evaluate",
+      "type": "backend",
+      "label": "Evaluation",
+      "pos": [
+        830,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "result",
+      "type": "backend",
+      "label": "Return Result",
+      "pos": [
+        1040,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Agentic AI Characteristics",
+      "wraps": [
+        "planning",
+        "execution",
+        "memory",
+        "iteration"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Workflow",
+      "wraps": [
+        "goal",
+        "plan",
+        "execute",
+        "evaluate",
+        "result"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "goal-plan",
+      "from": "goal",
+      "to": "plan",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan-execute",
+      "from": "plan",
+      "to": "execute",
+      "variant": "emphasis"
+    },
+    {
+      "id": "execute-evaluate",
+      "from": "execute",
+      "to": "evaluate",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evaluate-result",
+      "from": "evaluate",
+      "to": "result",
+      "label": "Complete",
+      "variant": "emphasis"
+    },
+    {
+      "id": "evaluate-plan",
+      "from": "evaluate",
+      "to": "plan",
+      "label": "Improvement needed",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "planning-plan",
+      "from": "planning",
+      "to": "plan",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "execution-execute",
+      "from": "execution",
+      "to": "execute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "memory-execute",
+      "from": "memory",
+      "to": "execute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "iteration-evaluate",
+      "from": "iteration",
+      "to": "evaluate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Agentic AI Characteristics",
+      "items": [
+        "Autonomous planning: decomposes complex tasks into subtasks and determines execution order",
+        "Tool-based execution: uses external APIs, databases, code executors and other tools",
+        "Iterative improvement: evaluates execution results and revises the plan when needed",
+        "State management: maintains state and memory across long-running tasks"
+      ]
+    }
+  ]
+}

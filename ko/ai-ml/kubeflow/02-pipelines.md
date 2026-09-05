@@ -39,7 +39,9 @@ Kubeflow Pipelines 2.16.0은 Kubeflow Community Distribution 26.03에 포함된 
 
 ## 파이프라인 실행이 시스템을 거치는 흐름
 
-![Kubeflow Pipelines 실행 흐름: Python SDK 파이프라인이 IR YAML로 컴파일되어 API 서버에 제출되고, 백엔드가 이를 Argo Workflow로 변환·실행하며, 실행된 컴포넌트 Pod가 아티팩트는 오브젝트 스토어에, 실행 및 아티팩트 메타데이터는 MLMD에 기록하는 8단계 과정을 보여준다.](../../../assets/diagrams/rendered/ko-ai-ml-kubeflow-02-pipelines-0.svg)
+![Kubeflow Pipelines 실행 흐름: Python SDK 파이프라인이 IR YAML로 컴파일되어 API 서버에 제출되고, 백엔드가 이를 Argo Workflow로 변환·실행하며, 실행된 컴포넌트 Pod가 아티팩트는 오브젝트 스토어에, 실행 및 아티팩트 메타데이터는 MLMD에 기록하는 8단계 과정을 보여준다.](../../.gitbook/assets/ko-ai-ml-kubeflow-02-pipelines-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-kubeflow-02-pipelines-0.html)
 
 KFP SDK의 역할은 IR YAML을 만드는 데서 끝나며, API 서버 이후의 모든 과정은 백엔드의 책임입니다. 이 분리 구조가 "백엔드에 종속되지 않는 스펙"이라는 주장을 실질적으로 보여줍니다 — SDK는 그 아래에서 실제로 스케줄링을 담당하는 것이 Argo Workflows라는 사실을 알 필요도, 신경 쓸 필요도 없습니다.
 

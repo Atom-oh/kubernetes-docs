@@ -22,7 +22,9 @@ Resilience is a critical characteristic in distributed systems. Istio can automa
 
 ### Core Resilience Patterns
 
-![A client request flows through Outlier Detection, Rate Limiting, and Zone Aware Routing, which route traffic to healthy pods while an unhealthy pod is excluded.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-0.png)
+![A client request flows through Outlier Detection, Rate Limiting, and Zone Aware Routing, which route traffic to healthy pods while an unhealthy pod is excluded.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-0.html)
 
 ### 1. Outlier Detection
 
@@ -133,7 +135,9 @@ spec:
 ```
 
 **How It Works**:
-![A sequence diagram showing Envoy proxy forwarding normal client requests to a service, then rejecting a request past the connection limit with a 503 circuit-breaker-open response instead of forwarding it.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-1.png)
+![A sequence diagram showing Envoy proxy forwarding normal client requests to a service, then rejecting a request past the connection limit with a 503 circuit-breaker-open response instead of forwarding it.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-1.html)
 
 **Key Features**:
 - TCP connection limits
@@ -182,7 +186,9 @@ retries:
 ```
 
 **How It Works**:
-![A sequence diagram showing Envoy proxy's first attempt to Pod 1 fail with a 503, then Envoy retrying the same request against Pod 2, which succeeds and returns 200 OK to the client.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-2.png)
+![A sequence diagram showing Envoy proxy's first attempt to Pod 1 fail with a 503, then Envoy retrying the same request against Pod 2, which succeeds and returns 200 OK to the client.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-2.html)
 
 ### 6. Timeout
 
@@ -397,7 +403,9 @@ spec:
 
 ## Resilience Architecture
 
-![An architecture diagram showing a client request passing through an ingress gateway and rate limiting into Outlier Detection, which routes traffic to healthy pods in Service A while excluding an unhealthy one, then on to zone-matched pods in Service B under a Zone Aware Routing policy.](../../../.gitbook/assets/en-service-mesh-istio-resilience-README-3.png)
+![A client request passes the rate-limited Ingress Gateway into Outlier Detection, which excludes unhealthy Pod A3 and sends traffic only to healthy Service A pods, which then call same-zone Service B pods under Zone Aware Routing.](../../../.gitbook/assets/en-service-mesh-istio-resilience-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-readme-3.html)
 
 ## Resilience Metrics
 

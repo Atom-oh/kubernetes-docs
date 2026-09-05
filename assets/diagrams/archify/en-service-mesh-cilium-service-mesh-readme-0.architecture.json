@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar vs Sidecarless Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-cilium-service-mesh-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Application Pod"
+        },
+        "external": {
+          "label": "Per-Pod sidecar proxy (Envoy)"
+        },
+        "security": {
+          "label": "Kernel eBPF datapath"
+        },
+        "backend": {
+          "label": "Per-node Envoy (L7)"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "sidecar-path",
+        "label": "Sidecar model (Istio)",
+        "focus": [
+          "poda-sidecar",
+          "proxy-a",
+          "proxy-b",
+          "podb-sidecar"
+        ],
+        "note": "Every Pod carries its own Envoy sidecar, so each hop crosses two userspace proxies."
+      },
+      {
+        "id": "cilium-path",
+        "label": "Cilium Service Mesh model",
+        "focus": [
+          "poda-cilium",
+          "ebpf",
+          "node-envoy",
+          "podb-cilium"
+        ],
+        "note": "Kernel eBPF handles L3/L4; traffic reaches the single shared per-node Envoy only when L7 processing is needed."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "poda-sidecar",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "application",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "proxy-a",
+      "type": "external",
+      "label": "Sidecar Envoy",
+      "sublabel": "proxy-a · L4 + L7",
+      "pos": [
+        300,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "proxy-b",
+      "type": "external",
+      "label": "Sidecar Envoy",
+      "sublabel": "proxy-b · L4 + L7",
+      "pos": [
+        640,
+        90
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "podb-sidecar",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "application",
+      "pos": [
+        900,
+        90
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "poda-cilium",
+      "type": "frontend",
+      "label": "Pod A",
+      "sublabel": "application",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ebpf",
+      "type": "security",
+      "label": "eBPF datapath",
+      "sublabel": "Linux kernel · L3/L4",
+      "pos": [
+        300,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "node-envoy",
+      "type": "backend",
+      "label": "Node Envoy",
+      "sublabel": "1 per node · L7 processing",
+      "pos": [
+        640,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "podb-cilium",
+      "type": "frontend",
+      "label": "Pod B",
+      "sublabel": "application",
+      "pos": [
+        900,
+        420
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Traditional sidecar model (Istio)",
+      "wraps": [
+        "poda-sidecar",
+        "proxy-a",
+        "proxy-b",
+        "podb-sidecar"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Cilium Service Mesh model",
+      "wraps": [
+        "poda-cilium",
+        "ebpf",
+        "node-envoy",
+        "podb-cilium"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "poda-to-proxy-a",
+      "from": "poda-sidecar",
+      "to": "proxy-a",
+      "label": "app traffic"
+    },
+    {
+      "id": "proxy-a-to-proxy-b",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "label": "network (mTLS)"
+    },
+    {
+      "id": "proxy-b-to-podb",
+      "from": "proxy-b",
+      "to": "podb-sidecar",
+      "label": "app traffic"
+    },
+    {
+      "id": "poda-to-ebpf",
+      "from": "poda-cilium",
+      "to": "ebpf",
+      "label": "app traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebpf-to-podb",
+      "from": "ebpf",
+      "to": "podb-cilium",
+      "label": "L3/L4 in kernel",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ebpf-to-envoy",
+      "from": "ebpf",
+      "to": "node-envoy",
+      "label": "L7 only when needed",
+      "variant": "dashed"
+    },
+    {
+      "id": "envoy-to-podb",
+      "from": "node-envoy",
+      "to": "podb-cilium",
+      "label": "after L7 processing",
+      "variant": "dashed"
+    }
+  ]
+}

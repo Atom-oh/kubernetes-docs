@@ -24,7 +24,9 @@ Istio는 **Zero Trust 보안 모델**을 구현하여 서비스 메시 내의 �
 
 ### 보안 아키텍처 계층
 
-![Control Plane(istiod)이 두 Envoy 사이드카에 인증서와 정책을 배포하고, 사이드카 간 mTLS로 파드 간 트래픽을 암호화하며, Identity부터 Authorization까지 5단계 보안 계층이 순서대로 적용되는 Istio 보안 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-README-0.png)
+![Control Plane(istiod)의 Certificate Authority와 Configuration API가 두 Pod의 Envoy 사이드카에 인증서와 정책을 배포하고, 사이드카 간 구간만 mTLS로 암호화되며, Identity부터 Authorization까지 5단계 보안 계층이 순서대로 적용되는 Istio 보안 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-security-readme-0.html)
 
 **아키텍처 핵심 구성 요소**:
 

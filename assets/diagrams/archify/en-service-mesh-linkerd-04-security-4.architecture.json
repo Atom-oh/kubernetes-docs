@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Linkerd Authorization Policy Model",
+    "locale": "en",
+    "output": "en-service-mesh-linkerd-04-security-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "authz-model",
+        "label": "Authorization resource chain",
+        "focus": [
+          "server",
+          "serverauthz",
+          "authzpolicy"
+        ],
+        "note": "Server defines the inbound port, ServerAuthorization grants access to it, and AuthorizationPolicy applies that grant."
+      },
+      {
+        "id": "policy-modes",
+        "label": "Policy modes",
+        "focus": [
+          "authzpolicy",
+          "deny",
+          "allow"
+        ],
+        "note": "Policy resolves to default-deny (explicit allow only, recommended) or default-allow (explicit deny only)."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "Server",
+      "sublabel": "Define inbound port",
+      "pos": [
+        60,
+        90
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "serverauthz",
+      "type": "backend",
+      "label": "ServerAuthorization",
+      "sublabel": "Define access rights",
+      "pos": [
+        380,
+        90
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "authzpolicy",
+      "type": "security",
+      "label": "AuthorizationPolicy",
+      "sublabel": "Apply policy",
+      "pos": [
+        700,
+        90
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "deny",
+      "type": "backend",
+      "label": "default-deny",
+      "sublabel": "Explicit allow only",
+      "tag": "Recommended",
+      "pos": [
+        380,
+        330
+      ],
+      "size": [
+        210,
+        64
+      ]
+    },
+    {
+      "id": "allow",
+      "type": "backend",
+      "label": "default-allow",
+      "sublabel": "Explicit deny only",
+      "pos": [
+        700,
+        330
+      ],
+      "size": [
+        210,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Authorization Model",
+      "wraps": [
+        "server",
+        "serverauthz",
+        "authzpolicy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Policy Modes",
+      "wraps": [
+        "deny",
+        "allow"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "server-to-serverauthz",
+      "from": "server",
+      "to": "serverauthz",
+      "label": "references Server",
+      "variant": "emphasis"
+    },
+    {
+      "id": "serverauthz-to-authzpolicy",
+      "from": "serverauthz",
+      "to": "authzpolicy",
+      "label": "applies grant",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authzpolicy-to-deny",
+      "from": "authzpolicy",
+      "to": "deny",
+      "label": "default-deny mode",
+      "variant": "security"
+    },
+    {
+      "id": "authzpolicy-to-allow",
+      "from": "authzpolicy",
+      "to": "allow",
+      "label": "default-allow mode",
+      "labelDy": 60
+    }
+  ]
+}

@@ -30,7 +30,9 @@ kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable
 
 vLLM is an LLM inference engine with the following characteristics:
 
-![Diagram grouping vLLM's core features, its internal component pipeline, and the resulting benefits such as memory efficiency and high throughput.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-0.svg)
+![Diagram showing how vLLM's key features yield memory efficiency, high throughput and scalability, plus the core pipeline from request scheduler and model loader through the inference engine to the KV cache manager and API server.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-0.html)
 
 ### Key Features of vLLM
 
@@ -207,7 +209,9 @@ response = client.chat.completions.create(
 
 System requirements for deploying vLLM on EKS:
 
-![Diagram showing hardware and software prerequisites for vLLM, and how GPU memory determines the supported model size tier.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-1.svg)
+![Diagram showing hardware and software prerequisites for vLLM, and how GPU memory determines the supported model size tier.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-1.html)
 
 1. **Hardware**:
    - NVIDIA GPU (Volta, Turing, Ampere, Hopper architecture)
@@ -231,7 +235,9 @@ System requirements for deploying vLLM on EKS:
 
 ## EKS Infrastructure Configuration
 
-![Architecture diagram of an Amazon EKS cluster running vLLM: a control plane, GPU and CPU node groups, storage and networking resources, and supporting AWS services.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-2.svg)
+![Diagram of the EKS infrastructure for vLLM: the control plane schedules pods onto GPU and CPU node groups, nodes load model weights from FSx for Lustre fed by S3, and ECR, CloudWatch, and IAM support the cluster.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html)
 
 ## Storage Configuration
 
@@ -326,7 +332,9 @@ spec:
 
 The following diagram shows two main architectures for deploying vLLM on EKS:
 
-![Diagram comparing a single-node vLLM pod deployment with a multi-node NCCL-synchronized deployment, both fed by a load balancer and sharing FSx/S3-backed storage.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-3.svg)
+![Diagram of the vLLM deployment architecture on EKS: client requests pass through a Load Balancer and Kubernetes Service to either a single-node pod with 8 GPUs or NCCL-linked multi-node pods, all mounting models from FSx for Lustre fed by S3.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html)
 
 ### Single Node Deployment
 
@@ -518,7 +526,9 @@ spec:
 
 ## Performance Optimization
 
-![Diagram showing GPU memory, throughput, and network optimization techniques, each with its configuration flag, converging on overall performance improvement.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-4.svg)
+![Diagram showing GPU memory, throughput, and network optimization techniques, each with its configuration flag, converging on overall performance improvement.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html)
 
 ### GPU Memory Optimization
 
@@ -695,7 +705,9 @@ This is a single run (n=1) on one model, one precision (bf16), one GPU type, and
 
 ## Monitoring and Logging
 
-![Diagram showing vLLM, GPU, and Kubernetes metrics flowing into a Prometheus/Grafana monitoring stack that produces dashboards and alerts, alongside a separate logging stack.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-5.svg)
+![Diagram showing vLLM, GPU, and Kubernetes metrics flowing into Prometheus, which feeds Grafana dashboards and Alert Manager alerts, while vLLM container logs travel separately through Fluentd to CloudWatch Logs and ElasticSearch/Kibana.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html)
 
 ### Prometheus Metrics
 
@@ -771,7 +783,9 @@ data:
 
 ## Autoscaling
 
-![Diagram showing CPU, GPU, request-rate, and queue-length signals driving pod-level autoscaling, which in turn drives GPU node autoscaling and spot capacity.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-6.svg)
+![Diagram showing CPU and GPU utilization, request rate, and queue length triggering pod-level autoscaling through HPA, KEDA, and custom metrics, which then drives Karpenter and Cluster Autoscaler node scaling with Spot instances for cost savings.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html)
 
 ### HPA (Horizontal Pod Autoscaler)
 
@@ -916,7 +930,9 @@ securityContext:
 
 ## Client Integration
 
-![Diagram showing client SDKs reaching vLLM through an API gateway, a security layer for authentication and rate limiting, and finally the load-balanced backend service.](../../assets/diagrams/rendered/en-ai-ml-02-vllm-deployment-7.svg)
+![Diagram showing client SDKs reaching vLLM through an API gateway, a security layer for authentication and rate limiting, and finally the load-balanced backend service.](../.gitbook/assets/en-ai-ml-02-vllm-deployment-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html)
 
 ### API Gateway
 

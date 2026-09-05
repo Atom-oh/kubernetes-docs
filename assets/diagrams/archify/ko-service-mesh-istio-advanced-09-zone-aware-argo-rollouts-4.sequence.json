@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Canary 배포 중 트래픽 흐름 — setWeight: 10",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      900,
+      620
+    ],
+    "animation": "trace",
+    "views": [
+      {
+        "id": "request",
+        "label": "요청 진입",
+        "focus": [
+          "client",
+          "vs"
+        ],
+        "note": "Zone A의 Client 요청이 공통 VirtualService의 zone-a-route에 도달한다."
+      },
+      {
+        "id": "stable-path",
+        "label": "Stable 90%",
+        "focus": [
+          "vs",
+          "stable"
+        ],
+        "note": "요청의 90%는 stable-a subset(v1)으로 전달된다."
+      },
+      {
+        "id": "canary-path",
+        "label": "Canary 10%",
+        "focus": [
+          "vs",
+          "canary"
+        ],
+        "note": "요청의 10%는 canary-a subset(v2)으로 전달된다. Argo Rollouts가 weight를 10 → 20 → 50 → 80 → 100으로 올린다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "일반 호출"
+        },
+        "emphasis": {
+          "label": "핵심 호출"
+        },
+        "return": {
+          "label": "응답"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client",
+      "sublabel": "Zone A"
+    },
+    {
+      "id": "vs",
+      "type": "backend",
+      "label": "VirtualService",
+      "sublabel": "zone-a-route"
+    },
+    {
+      "id": "stable",
+      "type": "backend",
+      "label": "Stable Pod",
+      "sublabel": "stable-a · weight 90"
+    },
+    {
+      "id": "canary",
+      "type": "backend",
+      "label": "Canary Pod",
+      "sublabel": "canary-a · weight 10"
+    }
+  ],
+  "segments": [
+    {
+      "from": 240,
+      "to": 330,
+      "label": "트래픽의 90%"
+    },
+    {
+      "from": 350,
+      "to": 440,
+      "label": "트래픽의 10%"
+    },
+    {
+      "from": 462,
+      "to": 505,
+      "label": "Argo Rollouts가 weight를 10 → 20 → 50 → 80 → 100으로 점진 변경"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-api",
+      "from": "client",
+      "to": "vs",
+      "y": 200,
+      "label": "GET /api",
+      "variant": "emphasis",
+      "note": "Canary 배포 진행 중 · setWeight: 10"
+    },
+    {
+      "id": "to-stable",
+      "from": "vs",
+      "to": "stable",
+      "y": 265,
+      "label": "subset: stable-a · weight: 90",
+      "variant": "emphasis"
+    },
+    {
+      "id": "stable-resp",
+      "from": "stable",
+      "to": "vs",
+      "y": 310,
+      "label": "Response (v1)",
+      "variant": "return"
+    },
+    {
+      "id": "to-canary",
+      "from": "vs",
+      "to": "canary",
+      "y": 375,
+      "label": "subset: canary-a · weight: 10",
+      "variant": "default"
+    },
+    {
+      "id": "canary-resp",
+      "from": "canary",
+      "to": "vs",
+      "y": 420,
+      "label": "Response (v2)",
+      "variant": "return"
+    },
+    {
+      "id": "resp",
+      "from": "vs",
+      "to": "client",
+      "y": 485,
+      "label": "Response",
+      "variant": "return",
+      "note": "Argo Rollouts가 weight를 10 → 20 → 50 → 80 → 100으로 점진 변경"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "vs",
+      "from": 200,
+      "to": 492,
+      "type": "backend"
+    },
+    {
+      "participant": "stable",
+      "from": 260,
+      "to": 317,
+      "type": "backend"
+    },
+    {
+      "participant": "canary",
+      "from": 370,
+      "to": 427,
+      "type": "backend"
+    }
+  ]
+}

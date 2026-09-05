@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 모니터링 및 로깅",
+    "output": "ko-ai-ml-02-vllm-deployment-5.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "metrics", "label": "메트릭 수집", "focus": ["kube-metrics", "gpu-metrics", "vllm-metrics", "prometheus"], "note": "vLLM·GPU·Kubernetes 메트릭이 Prometheus에 모이며, vLLM 메트릭은 ServiceMonitor가 15초 간격으로 수집한다." },
+      { "id": "outputs", "label": "대시보드와 알림", "focus": ["prometheus", "grafana", "alertmanager", "dashboards", "alerts"], "note": "Prometheus 데이터를 Grafana 대시보드로 시각화하고 Alert Manager가 알림으로 보낸다." },
+      { "id": "logging", "label": "로그 파이프라인", "focus": ["vllm-metrics", "fluentd", "cloudwatch", "elasticsearch", "kibana"], "note": "vLLM 컨테이너 로그는 Fluentd가 tail하여 CloudWatch Logs와 ElasticSearch로 전달한다." }
+    ]
+  },
+  "components": [
+    { "id": "kube-metrics", "type": "backend", "label": "Kubernetes 메트릭", "sublabel": "노드 · 파드", "pos": [40, 80], "size": [170, 60] },
+    { "id": "gpu-metrics", "type": "backend", "label": "GPU 메트릭", "sublabel": "사용률 · 메모리", "pos": [40, 180], "size": [170, 60] },
+    { "id": "vllm-metrics", "type": "backend", "label": "vLLM 메트릭", "sublabel": "metrics :8001", "pos": [40, 280], "size": [170, 60] },
+    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "시계열 저장", "pos": [320, 180], "size": [160, 60], "tag": "TSDB" },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "시각화", "pos": [580, 80], "size": [160, 60] },
+    { "id": "alertmanager", "type": "backend", "label": "Alert Manager", "sublabel": "알림 라우팅", "pos": [580, 280], "size": [160, 60] },
+    { "id": "dashboards", "type": "frontend", "label": "대시보드", "sublabel": "GPU 사용률 · 처리량 · 지연 · 오류율", "pos": [840, 80], "size": [230, 60] },
+    { "id": "alerts", "type": "external", "label": "알림", "sublabel": "지연 · 처리량 · GPU 오류 · OOM", "pos": [840, 280], "size": [230, 60] },
+    { "id": "fluentd", "type": "backend", "label": "Fluentd", "sublabel": "로그 수집", "pos": [320, 500], "size": [160, 60] },
+    { "id": "cloudwatch", "type": "cloud", "label": "CloudWatch Logs", "sublabel": "/eks/vllm/logs", "pos": [580, 440], "size": [160, 60] },
+    { "id": "elasticsearch", "type": "database", "label": "ElasticSearch", "sublabel": "로그 인덱스", "pos": [580, 560], "size": [160, 60] },
+    { "id": "kibana", "type": "frontend", "label": "Kibana", "sublabel": "로그 검색", "pos": [840, 560], "size": [160, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "메트릭 수집", "wraps": ["kube-metrics", "gpu-metrics", "vllm-metrics"] },
+    { "kind": "region", "label": "모니터링 스택", "wraps": ["prometheus", "grafana", "alertmanager"] },
+    { "kind": "region", "label": "로깅 스택", "wraps": ["fluentd", "cloudwatch", "elasticsearch", "kibana"] }
+  ],
+  "connections": [
+    { "id": "kube-to-prom", "from": "kube-metrics", "to": "prometheus" },
+    { "id": "gpu-to-prom", "from": "gpu-metrics", "to": "prometheus" },
+    { "id": "vllm-to-prom", "from": "vllm-metrics", "to": "prometheus", "label": "scrape 15s", "variant": "emphasis" },
+    { "id": "prom-to-grafana", "from": "prometheus", "to": "grafana", "variant": "emphasis" },
+    { "id": "prom-to-alertmanager", "from": "prometheus", "to": "alertmanager" },
+    { "id": "grafana-to-dashboards", "from": "grafana", "to": "dashboards", "variant": "emphasis" },
+    { "id": "alertmanager-to-alerts", "from": "alertmanager", "to": "alerts" },
+    { "id": "vllm-to-fluentd", "from": "vllm-metrics", "to": "fluentd", "label": "컨테이너 로그", "variant": "dashed" },
+    { "id": "fluentd-to-cloudwatch", "from": "fluentd", "to": "cloudwatch", "variant": "dashed" },
+    { "id": "fluentd-to-elasticsearch", "from": "fluentd", "to": "elasticsearch", "variant": "dashed" },
+    { "id": "elasticsearch-to-kibana", "from": "elasticsearch", "to": "kibana", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "메트릭", "items": ["vllm-metrics Service(:8001)를 ServiceMonitor가 15s 간격으로 수집", "Prometheus 데이터로 Grafana 대시보드와 Alert Manager 알림 구성"] },
+    { "dot": "violet", "title": "로그", "items": ["Fluentd가 /var/log/containers/vllm-*.log를 tail", "CloudWatch Logs 로그 그룹 /eks/vllm/logs로 전송(us-west-2)"] }
+  ]
+}

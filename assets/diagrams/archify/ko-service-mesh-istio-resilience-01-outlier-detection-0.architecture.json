@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Outlier Detection 개요",
+    "output": "ko-service-mesh-istio-resilience-01-outlier-detection-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "normal-traffic",
+        "label": "정상 트래픽 경로",
+        "focus": [
+          "client",
+          "envoy",
+          "pod1",
+          "pod2"
+        ],
+        "note": "클라이언트 요청은 Envoy Proxy를 거쳐 정상 파드에만 전달된다."
+      },
+      {
+        "id": "eject-recover",
+        "label": "제외와 복구",
+        "focus": [
+          "envoy",
+          "pod3"
+        ],
+        "note": "임계값을 넘은 Pod 3은 트래픽에서 제외되고, 30초 후 복구를 시도한다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "external": {
+          "label": "외부 시스템"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "클라이언트 요청",
+      "sublabel": "서비스 호출",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "backend",
+      "label": "Envoy Proxy",
+      "sublabel": "Outlier Detection",
+      "tag": "로드 밸런서",
+      "pos": [
+        290,
+        248
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "pod1",
+      "type": "backend",
+      "label": "Pod 1",
+      "sublabel": "응답 시간 50ms · 에러율 0%",
+      "pos": [
+        640,
+        80
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod2",
+      "type": "backend",
+      "label": "Pod 2",
+      "sublabel": "응답 시간 60ms · 에러율 1%",
+      "pos": [
+        640,
+        220
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "pod3",
+      "type": "backend",
+      "label": "Pod 3",
+      "sublabel": "응답 시간 5000ms · 에러율 80%",
+      "pos": [
+        640,
+        430
+      ],
+      "size": [
+        200,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "정상 파드",
+      "wraps": [
+        "pod1",
+        "pod2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "비정상 파드",
+      "wraps": [
+        "pod3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-to-envoy",
+      "from": "client",
+      "to": "envoy",
+      "label": "요청",
+      "variant": "emphasis"
+    },
+    {
+      "id": "envoy-to-pod1",
+      "from": "envoy",
+      "to": "pod1",
+      "label": "트래픽 전송",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "envoy-to-pod2",
+      "from": "envoy",
+      "to": "pod2",
+      "label": "트래픽 전송",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "envoy-to-pod3",
+      "from": "envoy",
+      "to": "pod3",
+      "label": "제외됨",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "pod3-to-envoy",
+      "from": "pod3",
+      "to": "envoy",
+      "label": "30초 후 복구 시도",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "주요 기능",
+      "items": [
+        "자동 감지: 에러율, 지연시간, 응답 실패를 모니터링",
+        "자동 제외: 임계값 초과 시 트래픽에서 제외",
+        "자동 복구: 일정 시간 후 복구 시도"
+      ]
+    }
+  ]
+}

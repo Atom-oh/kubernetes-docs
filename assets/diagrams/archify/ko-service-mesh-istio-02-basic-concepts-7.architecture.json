@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ambient Mode: 노드 레벨 트래픽 처리",
+    "output": "ko-service-mesh-istio-02-basic-concepts-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      590
+    ],
+    "views": [
+      {
+        "id": "l4-path",
+        "label": "L4 투명 리다이렉트",
+        "focus": [
+          "app1",
+          "app2",
+          "ztunnel"
+        ],
+        "note": "사이드카 없는 파드의 트래픽이 노드당 하나인 ztunnel로 투명하게 리다이렉트된다."
+      },
+      {
+        "id": "l7-path",
+        "label": "선택적 L7 처리",
+        "focus": [
+          "ztunnel",
+          "waypoint"
+        ],
+        "note": "L7 기능이 필요할 때만 Waypoint Proxy를 거친다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "frontend": {
+          "label": "프런트엔드"
+        },
+        "security": {
+          "label": "보안 구성 요소"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "사이드카 없음",
+      "pos": [
+        150,
+        150
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "애플리케이션",
+      "sublabel": "사이드카 없음",
+      "pos": [
+        430,
+        150
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ztunnel",
+      "type": "security",
+      "label": "ztunnel",
+      "sublabel": "노드당 1개 · L4 프록시",
+      "pos": [
+        285,
+        370
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "tag": "L4"
+    },
+    {
+      "id": "waypoint",
+      "type": "backend",
+      "label": "Waypoint Proxy",
+      "sublabel": "L7 프록시 · 선택적",
+      "pos": [
+        690,
+        370
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "tag": "L7"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Worker Node",
+      "wraps": [
+        "app1",
+        "app2",
+        "ztunnel",
+        "waypoint"
+      ],
+      "pad": 130
+    },
+    {
+      "kind": "security-group",
+      "label": "파드 1",
+      "wraps": [
+        "app1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "파드 2",
+      "wraps": [
+        "app2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "app1-ztunnel",
+      "from": "app1",
+      "to": "ztunnel",
+      "label": "투명한 리다이렉트",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app2-ztunnel",
+      "from": "app2",
+      "to": "ztunnel",
+      "label": "투명한 리다이렉트",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ztunnel-waypoint",
+      "from": "ztunnel",
+      "to": "waypoint",
+      "label": "L7 필요시",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "장점",
+      "items": [
+        "낮은 리소스 사용 (노드당 1개)",
+        "빠른 파드 시작",
+        "간단한 운영",
+        "점진적 L7 기능 적용 가능"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "단점",
+      "items": [
+        "상대적으로 새로운 기술 (덜 성숙)",
+        "일부 고급 기능 제한적",
+        "파드별 세밀한 제어 어려움"
+      ]
+    }
+  ]
+}

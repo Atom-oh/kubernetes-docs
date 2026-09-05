@@ -20,7 +20,9 @@
 
 하나의 deployment는 Ray Serve의 요청 라우터 뒤에 actor replica를 더 추가하는 것만으로 수평 확장됩니다. 이는 Ray에서 actor 기반 서비스가 확장되는 방식과 동일합니다. 더 흥미로운 점은, Ray Serve가 여러 deployment를 하나의 서빙 파이프라인 — application이라 부르는 단위 — 으로 조합할 수 있게 해준다는 것입니다. 흔한 예로 2단계 파이프라인을 들 수 있습니다. 한 deployment가 전처리(토큰화, 이미지 리사이즈, 피처 추출)를 담당하고, 그 출력을 실제 모델 추론을 수행하는 두 번째 deployment로 넘기는 구조입니다. 파이프라인의 각 deployment는 여전히 그 아래에서는 단순히 actor replica 그룹일 뿐이므로, 각각 독립적으로 스케일을 조절하고, 버전을 관리하고, 리소스를 배정할 수 있습니다.
 
-![Ray Serve의 요청 처리 흐름(클라이언트 → 인그레스 → 전처리·모델 추론 배포 → 응답)과, 그 위에서 3단계로 감시하며 각각 replica 수·worker Pod 수·노드 수를 조정하는 오토스케일링 체인(Ray Serve Autoscaler → Ray/KubeRay Autoscaler → Karpenter)을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-ai-ml-ray-04-ray-serve-0.svg)
+![Ray Serve의 요청 처리 흐름(클라이언트 → 인그레스 → 전처리·모델 추론 deployment → 응답)과, 그 위에서 replica 수·worker Pod 수·노드 수를 차례로 조정하는 3단계 오토스케일링 체인(Ray Serve Autoscaler → Ray/KubeRay Autoscaler → Karpenter)을 보여준다.](../../.gitbook/assets/ko-ai-ml-ray-04-ray-serve-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-ray-04-ray-serve-0.html)
 
 ## Ray Serve LLM
 

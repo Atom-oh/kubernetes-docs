@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Service Mesh의 기본 개념",
+    "output": "ko-service-mesh-istio-comparison-01-service-mesh-comparison-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "서비스"
+        },
+        "security": {
+          "label": "사이드카 프록시"
+        },
+        "cloud": {
+          "label": "컨트롤 플레인"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "without-mesh",
+        "label": "Service Mesh 도입 전",
+        "focus": [
+          "svc-a1",
+          "svc-b1",
+          "svc-c1"
+        ],
+        "note": "서비스가 서로 직접 호출하며 재시도·암호화·메트릭을 각자 구현한다."
+      },
+      {
+        "id": "with-mesh",
+        "label": "Service Mesh 도입 후",
+        "focus": [
+          "app-a",
+          "proxy-a",
+          "app-b",
+          "proxy-b",
+          "app-c",
+          "proxy-c",
+          "control"
+        ],
+        "note": "Sidecar Proxy가 mTLS 통신을 맡고 Control Plane이 설정을 배포한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "svc-a1",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "svc-b1",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "svc-c1",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        60,
+        410
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "control",
+      "type": "cloud",
+      "label": "Control Plane",
+      "sublabel": "정책 관리",
+      "pos": [
+        670,
+        90
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "app-a",
+      "type": "backend",
+      "label": "Service A",
+      "pos": [
+        420,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "proxy-a",
+      "type": "security",
+      "label": "Sidecar Proxy",
+      "pos": [
+        420,
+        290
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "app-b",
+      "type": "backend",
+      "label": "Service B",
+      "pos": [
+        670,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "proxy-b",
+      "type": "security",
+      "label": "Sidecar Proxy",
+      "pos": [
+        670,
+        290
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "app-c",
+      "type": "backend",
+      "label": "Service C",
+      "pos": [
+        920,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ]
+    },
+    {
+      "id": "proxy-c",
+      "type": "security",
+      "label": "Sidecar Proxy",
+      "pos": [
+        920,
+        290
+      ],
+      "size": [
+        140,
+        56
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Service Mesh 도입 전",
+      "wraps": [
+        "svc-a1",
+        "svc-b1",
+        "svc-c1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Service Mesh 도입 후",
+      "wraps": [
+        "control",
+        "app-a",
+        "proxy-a",
+        "app-b",
+        "proxy-b",
+        "app-c",
+        "proxy-c"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod A",
+      "wraps": [
+        "app-a",
+        "proxy-a"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod B",
+      "wraps": [
+        "app-b",
+        "proxy-b"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod C",
+      "wraps": [
+        "app-c",
+        "proxy-c"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a1-to-b1",
+      "from": "svc-a1",
+      "to": "svc-b1",
+      "label": "직접 호출",
+      "labelDy": 24
+    },
+    {
+      "id": "b1-to-c1",
+      "from": "svc-b1",
+      "to": "svc-c1",
+      "label": "직접 호출",
+      "labelDy": 24
+    },
+    {
+      "id": "app-a-proxy",
+      "from": "app-a",
+      "to": "proxy-a"
+    },
+    {
+      "id": "app-b-proxy",
+      "from": "app-b",
+      "to": "proxy-b"
+    },
+    {
+      "id": "app-c-proxy",
+      "from": "app-c",
+      "to": "proxy-c"
+    },
+    {
+      "id": "proxy-a-b",
+      "from": "proxy-a",
+      "to": "proxy-b",
+      "label": "mTLS 자동 암호화",
+      "variant": "security"
+    },
+    {
+      "id": "proxy-b-c",
+      "from": "proxy-b",
+      "to": "proxy-c",
+      "label": "mTLS",
+      "variant": "security"
+    },
+    {
+      "id": "cp-proxy-a",
+      "from": "control",
+      "to": "proxy-a",
+      "label": "설정 배포",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "cp-proxy-b",
+      "from": "control",
+      "to": "proxy-b",
+      "variant": "dashed"
+    },
+    {
+      "id": "cp-proxy-c",
+      "from": "control",
+      "to": "proxy-c",
+      "label": "설정 배포",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "도입 전 문제점",
+      "items": [
+        "재시도 로직을 각 서비스에 구현",
+        "서비스 간 암호화 수동 설정",
+        "메트릭 수집 일관성 없음",
+        "트래픽 제어 어려움"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "도입 후 장점",
+      "items": [
+        "자동 재시도 및 타임아웃",
+        "자동 mTLS 암호화",
+        "통합 메트릭 및 추적",
+        "세밀한 트래픽 제어"
+      ]
+    }
+  ]
+}

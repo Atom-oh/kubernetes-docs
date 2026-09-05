@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AI/ML 워크로드의 특성",
+    "output": "ko-ai-ml-01-ai-ml-workloads-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "워크로드 특성"
+        },
+        "cloud": {
+          "label": "리소스 요구사항"
+        },
+        "external": {
+          "label": "워크로드 유형"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "resource-needs",
+        "label": "리소스 요구사항",
+        "focus": [
+          "resource",
+          "gpu",
+          "memory",
+          "cpu",
+          "network"
+        ],
+        "note": "리소스 집약적 특성은 GPU 가속, 대용량 메모리, 고성능 CPU, 고속 네트워크 요구로 이어진다."
+      },
+      {
+        "id": "workload-types",
+        "label": "워크로드 유형",
+        "focus": [
+          "diversity",
+          "training",
+          "inference",
+          "dataprep",
+          "hpo"
+        ],
+        "note": "워크로드 다양성은 모델 훈련, 추론, 데이터 전처리, 하이퍼파라미터 최적화를 포괄한다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "resource",
+      "type": "backend",
+      "label": "리소스 집약적",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "sublabel": "많은 컴퓨팅 리소스"
+    },
+    {
+      "id": "data",
+      "type": "backend",
+      "label": "데이터 집약적",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "sublabel": "대용량 데이터셋 접근"
+    },
+    {
+      "id": "distributed",
+      "type": "backend",
+      "label": "분산 처리",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "sublabel": "여러 노드에 걸친 훈련"
+    },
+    {
+      "id": "diversity",
+      "type": "backend",
+      "label": "워크로드 다양성",
+      "pos": [
+        40,
+        320
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "sublabel": "여러 유형의 워크로드"
+    },
+    {
+      "id": "processing",
+      "type": "backend",
+      "label": "배치 및 실시간 처리",
+      "pos": [
+        40,
+        410
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "sublabel": "배치 처리 + 실시간 추론"
+    },
+    {
+      "id": "gpu",
+      "type": "cloud",
+      "label": "GPU 가속",
+      "pos": [
+        430,
+        50
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "cloud",
+      "label": "대용량 메모리",
+      "pos": [
+        660,
+        50
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "cpu",
+      "type": "cloud",
+      "label": "고성능 CPU",
+      "pos": [
+        430,
+        140
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "network",
+      "type": "cloud",
+      "label": "고속 네트워크",
+      "pos": [
+        660,
+        140
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "training",
+      "type": "external",
+      "label": "모델 훈련",
+      "pos": [
+        430,
+        320
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "inference",
+      "type": "external",
+      "label": "모델 추론",
+      "pos": [
+        660,
+        320
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "dataprep",
+      "type": "external",
+      "label": "데이터 전처리",
+      "pos": [
+        430,
+        410
+      ],
+      "size": [
+        210,
+        60
+      ]
+    },
+    {
+      "id": "hpo",
+      "type": "external",
+      "label": "하이퍼파라미터 최적화",
+      "pos": [
+        660,
+        410
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "sublabel": "HPO"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "AI/ML 워크로드 특성",
+      "wraps": [
+        "resource",
+        "data",
+        "distributed",
+        "diversity",
+        "processing"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "리소스 요구사항",
+      "wraps": [
+        "gpu",
+        "memory",
+        "cpu",
+        "network"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "워크로드 유형",
+      "wraps": [
+        "training",
+        "inference",
+        "dataprep",
+        "hpo"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "resource-to-needs",
+      "from": "resource",
+      "to": "gpu",
+      "label": "필요 리소스",
+      "variant": "emphasis"
+    },
+    {
+      "id": "diversity-to-types",
+      "from": "diversity",
+      "to": "training",
+      "label": "포함 유형",
+      "variant": "emphasis"
+    }
+  ]
+}

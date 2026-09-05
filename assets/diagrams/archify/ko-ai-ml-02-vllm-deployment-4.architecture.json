@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM 성능 최적화",
+    "output": "ko-ai-ml-02-vllm-deployment-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [1340, 600],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": { "label": "vLLM 서버 옵션" },
+        "cloud": { "label": "EKS / AWS 인프라 설정" },
+        "external": { "label": "성능 향상 (수렴 지점)" }
+      }
+    },
+    "views": [
+      { "id": "gpu-memory", "label": "GPU 메모리 최적화", "focus": ["memory-util", "quantization", "swap-space", "performance"], "note": "GPU 메모리 사용률, 양자화, 스왑 공간으로 vLLM의 GPU 메모리 사용량을 최적화한다." },
+      { "id": "throughput", "label": "처리량 최적화", "focus": ["batch-size", "kv-cache", "tensor-parallel", "performance"], "note": "배치 크기, KV 캐시 블록, 텐서 병렬 크기로 vLLM의 처리량을 최적화한다." },
+      { "id": "network", "label": "네트워크 최적화", "focus": ["efa", "nccl", "node-placement", "performance"], "note": "분산 배포에서 EFA, NCCL 설정, 노드 배치로 네트워크 성능을 최적화한다." }
+    ]
+  },
+  "components": [
+    { "id": "efa", "type": "cloud", "label": "EFA(Elastic Fabric Adapter) 활용", "sublabel": "vpc.amazonaws.com/efa: 1", "pos": [320, 60], "size": [210, 60] },
+    { "id": "nccl", "type": "cloud", "label": "NCCL 설정 최적화", "sublabel": "NCCL_DEBUG=INFO", "pos": [560, 60], "size": [210, 60] },
+    { "id": "node-placement", "type": "cloud", "label": "노드 배치 최적화", "sublabel": "topology.kubernetes.io/zone", "pos": [800, 60], "size": [210, 60] },
+
+    { "id": "memory-util", "type": "backend", "label": "GPU 메모리 사용률 조정", "sublabel": "--gpu-memory-utilization=0.9", "pos": [40, 240], "size": [210, 60] },
+    { "id": "quantization", "type": "backend", "label": "양자화 적용", "sublabel": "--quantization awq", "pos": [40, 340], "size": [210, 60] },
+    { "id": "swap-space", "type": "backend", "label": "스왑 공간 활용", "sublabel": "--swap-space=16", "pos": [40, 440], "size": [210, 60] },
+
+    { "id": "batch-size", "type": "backend", "label": "배치 크기 조정", "sublabel": "--max-num-batched-tokens=8192", "pos": [1080, 240], "size": [210, 60] },
+    { "id": "kv-cache", "type": "backend", "label": "KV 캐시 최적화", "sublabel": "--block-size=16", "pos": [1080, 340], "size": [210, 60] },
+    { "id": "tensor-parallel", "type": "backend", "label": "텐서 병렬 처리 조정", "sublabel": "--tensor-parallel-size=8", "pos": [1080, 440], "size": [210, 60] },
+
+    { "id": "performance", "type": "external", "label": "성능 향상", "sublabel": "세 영역의 튜닝 옵션이 수렴", "pos": [560, 350], "size": [210, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "네트워크 최적화", "wraps": ["efa", "nccl", "node-placement"] },
+    { "kind": "region", "label": "GPU 메모리 최적화", "wraps": ["memory-util", "quantization", "swap-space"] },
+    { "kind": "region", "label": "처리량 최적화", "wraps": ["batch-size", "kv-cache", "tensor-parallel"] }
+  ],
+  "connections": [
+    { "id": "efa-perf", "from": "efa", "to": "performance" },
+    { "id": "nccl-perf", "from": "nccl", "to": "performance", "variant": "emphasis" },
+    { "id": "node-placement-perf", "from": "node-placement", "to": "performance" },
+    { "id": "memory-util-perf", "from": "memory-util", "to": "performance" },
+    { "id": "quantization-perf", "from": "quantization", "to": "performance", "variant": "emphasis" },
+    { "id": "swap-space-perf", "from": "swap-space", "to": "performance" },
+    { "id": "batch-size-perf", "from": "batch-size", "to": "performance" },
+    { "id": "kv-cache-perf", "from": "kv-cache", "to": "performance", "variant": "emphasis" },
+    { "id": "tensor-parallel-perf", "from": "tensor-parallel", "to": "performance" }
+  ]
+}

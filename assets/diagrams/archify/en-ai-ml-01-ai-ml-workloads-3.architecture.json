@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Distributed Training Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-01-ai-ml-workloads-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "launch",
+        "label": "MPI Job launch",
+        "focus": [
+          "launcher",
+          "workers"
+        ],
+        "note": "The Launcher pod starts the Worker pods with mpirun."
+      },
+      {
+        "id": "collective",
+        "label": "Collective communication",
+        "focus": [
+          "workers",
+          "nccl",
+          "mpi",
+          "efa"
+        ],
+        "note": "Workers exchange gradients over NCCL, which runs on top of MPI and EFA."
+      },
+      {
+        "id": "checkpoint",
+        "label": "Checkpoint storage",
+        "focus": [
+          "workers",
+          "fsx",
+          "s3",
+          "ckpt"
+        ],
+        "note": "Workers write to FSx for Lustre, which feeds S3 and the checkpoint store."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "launcher",
+      "type": "backend",
+      "label": "Launcher Pod",
+      "sublabel": "mpirun",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker Pods ×4",
+      "sublabel": "nvidia.com/gpu",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "messagebus",
+      "label": "NVIDIA NCCL",
+      "sublabel": "Collective communication",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "mpi",
+      "type": "messagebus",
+      "label": "MPI",
+      "sublabel": "rank coordination",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "efa",
+      "type": "cloud",
+      "label": "Elastic Fabric Adapter",
+      "sublabel": "EFA",
+      "pos": [
+        840,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "high-performance parallel FS",
+      "pos": [
+        380,
+        450
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "training data · model artifacts",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ckpt",
+      "type": "database",
+      "label": "Checkpoint Storage",
+      "sublabel": "model checkpoints",
+      "pos": [
+        640,
+        510
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "MPI Job",
+      "wraps": [
+        "launcher",
+        "workers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Communication Layer",
+      "wraps": [
+        "nccl",
+        "mpi",
+        "efa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Shared Storage",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ckpt"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "launch-workers",
+      "from": "launcher",
+      "to": "workers",
+      "label": "launch",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "workers-nccl",
+      "from": "workers",
+      "to": "nccl",
+      "label": "gradient exchange",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nccl-mpi",
+      "from": "nccl",
+      "to": "mpi"
+    },
+    {
+      "id": "mpi-efa",
+      "from": "mpi",
+      "to": "efa"
+    },
+    {
+      "id": "workers-fsx",
+      "from": "workers",
+      "to": "fsx",
+      "label": "write checkpoints",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "fsx-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "S3 integration"
+    },
+    {
+      "id": "fsx-ckpt",
+      "from": "fsx",
+      "to": "ckpt"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Communication",
+      "items": [
+        "Worker pods exchange gradients over NCCL",
+        "NCCL traffic runs over MPI and the Elastic Fabric Adapter (EFA)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Storage",
+      "items": [
+        "FSx for Lustre provides fast access to large datasets",
+        "S3 integration simplifies data import/export and preserves checkpoints"
+      ]
+    }
+  ]
+}

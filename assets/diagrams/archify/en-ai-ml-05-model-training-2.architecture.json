@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Slinky Architecture",
+    "locale": "en",
+    "output": "en-ai-ml-05-model-training-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "user-access",
+        "label": "User access",
+        "focus": [
+          "nlb",
+          "login",
+          "jupyterhub",
+          "slurmctld",
+          "slurmrestd"
+        ],
+        "note": "Users SSH into the login pod through the NLB, or submit jobs from JupyterHub via the slurmrestd REST API."
+      },
+      {
+        "id": "job-scheduling",
+        "label": "Job scheduling",
+        "focus": [
+          "slurmctld",
+          "slurmdbd",
+          "slurmrestd",
+          "slurmd",
+          "fsx"
+        ],
+        "note": "slurmctld dispatches jobs to the GPU slurmd pods, records accounting in slurmdbd, and keeps data and checkpoints on FSx for Lustre."
+      },
+      {
+        "id": "deploy-scale",
+        "label": "Deployment and scaling",
+        "focus": [
+          "argocd",
+          "ecr",
+          "karpenter",
+          "nodepool",
+          "slurmd"
+        ],
+        "note": "ArgoCD deploys the Slurm control plane via GitOps, Karpenter grows compute through the GPU NodePool, and images come from Amazon ECR."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "nlb",
+      "type": "external",
+      "label": "NLB",
+      "sublabel": "Network Load Balancer",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "argocd",
+      "type": "external",
+      "label": "ArgoCD",
+      "sublabel": "GitOps deployment",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "ecr",
+      "type": "external",
+      "label": "Amazon ECR",
+      "sublabel": "AWS DLC images",
+      "pos": [
+        40,
+        560
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "jupyterhub",
+      "type": "frontend",
+      "label": "JupyterHub",
+      "sublabel": "Notebook job submission",
+      "pos": [
+        300,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "login",
+      "type": "frontend",
+      "label": "Login Pod",
+      "sublabel": "SSH via NLB",
+      "pos": [
+        300,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmrestd",
+      "type": "backend",
+      "label": "slurmrestd",
+      "sublabel": "REST API",
+      "pos": [
+        560,
+        100
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmctld",
+      "type": "backend",
+      "label": "slurmctld",
+      "sublabel": "Controller daemon",
+      "pos": [
+        560,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmdbd",
+      "type": "database",
+      "label": "slurmdbd",
+      "sublabel": "Database daemon",
+      "pos": [
+        820,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "slurmd",
+      "type": "backend",
+      "label": "slurmd Pods ×4",
+      "sublabel": "8x A100 GPU each",
+      "pos": [
+        560,
+        560
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "Shared storage",
+      "pos": [
+        560,
+        700
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "karpenter",
+      "type": "cloud",
+      "label": "Karpenter",
+      "sublabel": "Auto scaling",
+      "pos": [
+        1080,
+        240
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "nodepool",
+      "type": "cloud",
+      "label": "GPU NodePool",
+      "sublabel": "Provisions GPU compute nodes",
+      "pos": [
+        1080,
+        420
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "External Services",
+      "wraps": [
+        "nlb",
+        "argocd",
+        "ecr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Amazon EKS Cluster",
+      "wraps": [
+        "jupyterhub",
+        "login",
+        "slurmrestd",
+        "slurmctld",
+        "slurmdbd",
+        "slurmd",
+        "fsx",
+        "karpenter",
+        "nodepool"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Slurm Control Plane",
+      "wraps": [
+        "slurmrestd",
+        "slurmctld",
+        "slurmdbd"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "nlb-login",
+      "from": "nlb",
+      "to": "login",
+      "label": "SSH"
+    },
+    {
+      "id": "login-ctld",
+      "from": "login",
+      "to": "slurmctld",
+      "label": "submit jobs",
+      "variant": "emphasis"
+    },
+    {
+      "id": "jupyter-restd",
+      "from": "jupyterhub",
+      "to": "slurmrestd",
+      "label": "REST API"
+    },
+    {
+      "id": "ctld-restd",
+      "from": "slurmctld",
+      "to": "slurmrestd"
+    },
+    {
+      "id": "ctld-dbd",
+      "from": "slurmctld",
+      "to": "slurmdbd",
+      "label": "accounting"
+    },
+    {
+      "id": "ctld-slurmd",
+      "from": "slurmctld",
+      "to": "slurmd",
+      "label": "dispatch jobs",
+      "variant": "emphasis",
+      "labelAt": [
+        700,
+        430
+      ]
+    },
+    {
+      "id": "slurmd-fsx",
+      "from": "slurmd",
+      "to": "fsx",
+      "label": "mount /shared",
+      "labelAt": [
+        708,
+        660
+      ]
+    },
+    {
+      "id": "argocd-ctld",
+      "from": "argocd",
+      "to": "slurmctld",
+      "label": "GitOps deployment",
+      "variant": "dashed"
+    },
+    {
+      "id": "ecr-slurmd",
+      "from": "ecr",
+      "to": "slurmd",
+      "label": "image pull",
+      "variant": "dashed"
+    },
+    {
+      "id": "karpenter-nodepool",
+      "from": "karpenter",
+      "to": "nodepool"
+    },
+    {
+      "id": "nodepool-slurmd",
+      "from": "nodepool",
+      "to": "slurmd",
+      "label": "scale GPU nodes",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Slurm Control Plane",
+      "items": [
+        "slurmctld: central controller for jobs, partitions, and resources (StatefulSet with PVC)",
+        "slurmdbd: job accounting and cluster state (StatefulSet with MySQL/MariaDB)",
+        "slurmrestd: REST API for programmatic job submission (Deployment with Service)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Compute and Storage",
+      "items": [
+        "slurmd: compute daemon running on GPU nodes (DaemonSet)",
+        "SlurmNodeSet gpu-a100: 4x p4d.24xlarge, 8x A100 GPU each",
+        "FSx for Lustre mounted at /shared and shared by every compute pod"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Access and Operations",
+      "items": [
+        "Login Pod: SSH access point exposed through the NLB",
+        "JupyterHub submits jobs through the slurmrestd REST API",
+        "ArgoCD GitOps deployment, Karpenter GPU NodePool auto scaling"
+      ]
+    }
+  ]
+}

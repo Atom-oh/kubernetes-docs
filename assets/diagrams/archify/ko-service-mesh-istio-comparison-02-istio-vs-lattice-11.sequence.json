@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Istio 실제 트러블슈팅 예시 — Backend replicas=0 디버깅 흐름",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "views": [
+      {
+        "id": "investigate",
+        "label": "1. 레이어별 로그 확인",
+        "focus": [
+          "eng",
+          "app",
+          "sidecar",
+          "istiod"
+        ],
+        "note": "Application 로그는 정상이지만 Sidecar와 Istiod 로그에서 backend 관련 오류가 드러난다."
+      },
+      {
+        "id": "root-cause",
+        "label": "2. 원인 파악",
+        "focus": [
+          "eng",
+          "backend"
+        ],
+        "note": "Service는 존재하지만 istioctl analyze가 Backend Deployment의 replicas=0을 찾아낸다."
+      },
+      {
+        "id": "recover",
+        "label": "3. 복구와 검증",
+        "focus": [
+          "eng",
+          "app",
+          "istiod",
+          "backend"
+        ],
+        "note": "scale --replicas=1 후 proxy-status가 SYNCED가 되고 트래픽이 200 OK로 정상화된다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "로그 확인"
+        },
+        "emphasis": {
+          "label": "핵심 발견 · 복구 트래픽"
+        },
+        "dashed": {
+          "label": "상태 조회 (istioctl/kubectl)"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "eng",
+      "type": "external",
+      "label": "엔지니어",
+      "sublabel": "kubectl · istioctl"
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application Pod",
+      "sublabel": "app 컨테이너"
+    },
+    {
+      "id": "sidecar",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "istio-proxy"
+    },
+    {
+      "id": "istiod",
+      "type": "cloud",
+      "label": "Istiod",
+      "sublabel": "Control Plane"
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Backend Service",
+      "sublabel": "Service + Deployment"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 330,
+      "label": "레이어별 로그 확인"
+    },
+    {
+      "from": 348,
+      "to": 430,
+      "label": "원인 파악"
+    },
+    {
+      "from": 448,
+      "to": 600,
+      "label": "복구와 검증"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "eng",
+      "to": "app",
+      "y": 180,
+      "label": "1. kubectl logs app",
+      "note": "정상 로그 · Backend 호출 성공"
+    },
+    {
+      "id": "m2",
+      "from": "eng",
+      "to": "sidecar",
+      "y": 220,
+      "label": "2. kubectl logs -c istio-proxy",
+      "variant": "emphasis",
+      "note": "upstream connect error"
+    },
+    {
+      "id": "m3",
+      "from": "eng",
+      "to": "sidecar",
+      "y": 258,
+      "label": "3. istioctl proxy-config → backend cluster 없음!",
+      "variant": "dashed"
+    },
+    {
+      "id": "m4",
+      "from": "eng",
+      "to": "istiod",
+      "y": 298,
+      "label": "4. kubectl logs istiod",
+      "note": "Service backend not found"
+    },
+    {
+      "id": "m5",
+      "from": "eng",
+      "to": "backend",
+      "y": 372,
+      "label": "5. kubectl get svc → Service 존재함",
+      "variant": "dashed"
+    },
+    {
+      "id": "m6",
+      "from": "eng",
+      "to": "backend",
+      "y": 410,
+      "label": "6. istioctl analyze → replicas=0!",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m7",
+      "from": "eng",
+      "to": "backend",
+      "y": 472,
+      "label": "7. kubectl scale --replicas=1",
+      "note": "파드 시작됨"
+    },
+    {
+      "id": "m8",
+      "from": "eng",
+      "to": "istiod",
+      "y": 512,
+      "label": "8. istioctl proxy-status → SYNCED",
+      "variant": "dashed"
+    },
+    {
+      "id": "m9",
+      "from": "eng",
+      "to": "app",
+      "y": 548,
+      "label": "9. 트래픽 재시도",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m10",
+      "from": "app",
+      "to": "backend",
+      "y": 582,
+      "label": "정상 연결 (200 OK)",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "sidecar",
+      "from": 215,
+      "to": 264,
+      "type": "security"
+    },
+    {
+      "participant": "istiod",
+      "from": 293,
+      "to": 315,
+      "type": "cloud"
+    },
+    {
+      "participant": "backend",
+      "from": 467,
+      "to": 492,
+      "type": "backend"
+    },
+    {
+      "participant": "app",
+      "from": 543,
+      "to": 588,
+      "type": "frontend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "확인한 레이어 순서",
+      "items": [
+        "Application 로그 → Sidecar(istio-proxy) 로그 → Istiod 로그 → Service/Deployment 상태",
+        "Application 로그만 보면 정상이라 Sidecar 로그를 봐야 오류가 드러난다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "근본 원인",
+      "items": [
+        "Backend Deployment가 replicas=0으로 스케일되어 엔드포인트가 없었다",
+        "Service는 존재하지만 Envoy에 backend cluster가 생성되지 않아 upstream connect error 발생"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "복구 검증",
+      "items": [
+        "kubectl scale --replicas=1 후 파드 시작",
+        "istioctl proxy-status가 SYNCED, 재시도 트래픽 200 OK"
+      ]
+    }
+  ]
+}

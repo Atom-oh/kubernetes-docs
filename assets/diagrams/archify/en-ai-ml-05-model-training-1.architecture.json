@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Distributed Training Strategies",
+    "locale": "en",
+    "output": "en-ai-ml-05-model-training-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Input data"
+        },
+        "backend": {
+          "label": "Compute step"
+        },
+        "messagebus": {
+          "label": "Communication / combine step"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "dp",
+        "label": "Data Parallelism",
+        "focus": [
+          "dp-shards",
+          "dp-replicas",
+          "dp-sync"
+        ],
+        "note": "Each data shard trains a full model replica; gradients are synchronized with AllReduce."
+      },
+      {
+        "id": "tp",
+        "label": "Tensor Parallelism",
+        "focus": [
+          "tp-layer",
+          "tp-gpus",
+          "tp-combine"
+        ],
+        "note": "A single layer's weights are split by columns across GPUs, then the partial results are combined."
+      },
+      {
+        "id": "pp",
+        "label": "Pipeline Parallelism",
+        "focus": [
+          "pp-micro",
+          "pp-stage1",
+          "pp-stage23"
+        ],
+        "note": "Layers are grouped into stages on separate GPUs and micro-batches flow through the stages in order."
+      },
+      {
+        "id": "ep",
+        "label": "Expert Parallelism (MoE)",
+        "focus": [
+          "ep-router",
+          "ep-experts",
+          "ep-output"
+        ],
+        "note": "The router/gating sends each token to a subset of experts, whose outputs are then combined."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "dp-shards",
+      "type": "database",
+      "label": "Data Shards 1-3",
+      "sublabel": "per-shard input",
+      "pos": [
+        50,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "dp-replicas",
+      "type": "backend",
+      "label": "Model Replicas 1-3",
+      "sublabel": "full model per GPU",
+      "pos": [
+        250,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "dp-sync",
+      "type": "messagebus",
+      "label": "Gradient Sync",
+      "sublabel": "AllReduce",
+      "pos": [
+        450,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "tp-layer",
+      "type": "backend",
+      "label": "Single Layer",
+      "sublabel": "attention / FFN",
+      "pos": [
+        720,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "tp-gpus",
+      "type": "backend",
+      "label": "GPU 1 / GPU 2",
+      "sublabel": "columns 0-N/2 · N/2-N",
+      "pos": [
+        920,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "tp-combine",
+      "type": "messagebus",
+      "label": "Combine Results",
+      "sublabel": "intra-layer communication",
+      "pos": [
+        1120,
+        90
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "pp-micro",
+      "type": "database",
+      "label": "Micro-batches",
+      "sublabel": "fed in sequence",
+      "pos": [
+        50,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "pp-stage1",
+      "type": "backend",
+      "label": "Stage 1",
+      "sublabel": "layers 1-4 · GPU 1",
+      "pos": [
+        250,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "pp-stage23",
+      "type": "backend",
+      "label": "Stage 2 → 3",
+      "sublabel": "layers 5-12 · GPU 2-3",
+      "pos": [
+        450,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "ep-router",
+      "type": "backend",
+      "label": "Router / Gating",
+      "sublabel": "picks experts per token",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "ep-experts",
+      "type": "backend",
+      "label": "Experts 1-4",
+      "sublabel": "GPU 1-4",
+      "pos": [
+        920,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    },
+    {
+      "id": "ep-output",
+      "type": "messagebus",
+      "label": "Combined Output",
+      "sublabel": "merges expert outputs",
+      "pos": [
+        1120,
+        330
+      ],
+      "size": [
+        140,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Data Parallelism",
+      "wraps": [
+        "dp-shards",
+        "dp-replicas",
+        "dp-sync"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Tensor Parallelism",
+      "wraps": [
+        "tp-layer",
+        "tp-gpus",
+        "tp-combine"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Pipeline Parallelism",
+      "wraps": [
+        "pp-micro",
+        "pp-stage1",
+        "pp-stage23"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Expert Parallelism (MoE)",
+      "wraps": [
+        "ep-router",
+        "ep-experts",
+        "ep-output"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dp-feed",
+      "from": "dp-shards",
+      "to": "dp-replicas"
+    },
+    {
+      "id": "dp-grad",
+      "from": "dp-replicas",
+      "to": "dp-sync",
+      "label": "gradients",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tp-split",
+      "from": "tp-layer",
+      "to": "tp-gpus",
+      "label": "by column"
+    },
+    {
+      "id": "tp-merge",
+      "from": "tp-gpus",
+      "to": "tp-combine",
+      "label": "partials",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pp-in",
+      "from": "pp-micro",
+      "to": "pp-stage1"
+    },
+    {
+      "id": "pp-next",
+      "from": "pp-stage1",
+      "to": "pp-stage23",
+      "label": "activations"
+    },
+    {
+      "id": "ep-route",
+      "from": "ep-router",
+      "to": "ep-experts",
+      "label": "routing"
+    },
+    {
+      "id": "ep-merge",
+      "from": "ep-experts",
+      "to": "ep-output",
+      "label": "outputs",
+      "variant": "emphasis"
+    }
+  ]
+}

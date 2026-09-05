@@ -15,7 +15,9 @@ MLflow is an open-source platform for managing the machine learning lifecycle ‚Ä
 | **Model Registry** | Give a model a stable, versioned identity independent of any one training run | [Part 2](02-model-registry.md) |
 | **EKS Deployment** | Run the tracking server, backend store, and artifact store on EKS | [Part 3](03-eks-deployment.md) |
 
-![A three-stage pipeline diagram showing MLflow Tracking (experiments, runs, traces) feeding the Model Registry (registered models, aliases), which is in turn resolved by a Serving stage that is out of scope for this documentation series.](../../.gitbook/assets/en-ai-ml-mlflow-README-0.png)
+![A three-stage pipeline diagram showing MLflow Tracking (experiments, runs, traces) feeding the Model Registry (registered models, aliases), which is in turn resolved by a Serving stage that is out of scope for this documentation series.](../../.gitbook/assets/en-ai-ml-mlflow-readme-0.png)
+
+[üîç View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-readme-0.html)
 
 ## Why Run This on EKS
 

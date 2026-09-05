@@ -17,7 +17,9 @@ Zone Aware Routing is a feature that optimizes traffic by recognizing Kubernetes
 
 Zone Aware Routing provides the following benefits:
 
-![A client pod in Availability Zone A sends 80% of its traffic to two service pods in its own zone and fails over 10% each to service pods in Availability Zone B and Availability Zone C.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-03-zone-aware-routing-0.svg)
+![A client pod in Availability Zone A sends 80% of its traffic to two service pods in its own zone and fails over 10% each to service pods in Availability Zone B and Availability Zone C.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-03-zone-aware-routing-0.html)
 
 ### Benefits
 
@@ -31,7 +33,9 @@ Zone Aware Routing provides the following benefits:
 
 ### Locality Load Balancing Algorithm
 
-![A request is routed by first checking for healthy pods in the same zone; if none, it checks the adjacent zone; and if none there either, it falls back to another region.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-03-zone-aware-routing-1.svg)
+![A request is routed by first checking for healthy pods in the same zone; if none, it checks the adjacent zone; and if none there either, it falls back to another region.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-03-zone-aware-routing-1.html)
 
 ### Locality Hierarchy
 
@@ -57,7 +61,9 @@ us-west-2/us-west-2a/*
 
 #### How It Works
 
-![Istiod's service discovery reads the topology.kubernetes.io/zone label on each Node to determine Pod locality without needing zone labels on the pods themselves, then generates EDS and pushes that locality information to the Envoy proxy.](../../../../assets/diagrams/rendered/en-service-mesh-istio-resilience-03-zone-aware-routing-2.svg)
+![Istiod's service discovery reads the topology.kubernetes.io/zone label on each Node to determine Pod locality without needing zone labels on the pods themselves, then generates EDS and pushes that locality information to the Envoy proxy.](../../../.gitbook/assets/en-service-mesh-istio-resilience-03-zone-aware-routing-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-resilience-03-zone-aware-routing-2.html)
 
 #### Step-by-Step Process
 

@@ -1,0 +1,249 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Blue/Green Deployment Operation Flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "preview",
+        "label": "Preview deploy + pre-analysis",
+        "focus": [
+          "start",
+          "preview",
+          "pre_analysis",
+          "abort"
+        ],
+        "note": "The new version goes to the previewService (test-preview) and is checked by the prePromotionAnalysis smoke-test; failure aborts the rollout."
+      },
+      {
+        "id": "promote",
+        "label": "Manual approval + Active switch",
+        "focus": [
+          "pre_analysis",
+          "wait",
+          "switch"
+        ],
+        "note": "With autoPromotionEnabled: false, the Rollout switches the activeService from Blue to Green only after a promote command."
+      },
+      {
+        "id": "post",
+        "label": "Post-analysis, cleanup, rollback",
+        "focus": [
+          "switch",
+          "post_analysis",
+          "rollback",
+          "scale_down",
+          "done"
+        ],
+        "note": "If postPromotionAnalysis (comprehensive-analysis) fails, traffic rolls back to Blue; if it passes, the old version is removed after 10 min."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Start / complete"
+        },
+        "cloud": {
+          "label": "Deploy / switch / cleanup"
+        },
+        "security": {
+          "label": "Analysis gate"
+        },
+        "backend": {
+          "label": "Manual approval"
+        },
+        "external": {
+          "label": "Abort / rollback"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "preview_stage",
+      "label": "Preview Deployment + Pre-analysis"
+    },
+    {
+      "id": "promote_stage",
+      "label": "Manual Approval + Active Service Switch"
+    },
+    {
+      "id": "verify_stage",
+      "label": "Post-analysis + Previous Version Cleanup"
+    },
+    {
+      "id": "done_stage",
+      "label": "Complete"
+    },
+    {
+      "id": "exceptions",
+      "label": "Abort / rollback",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "preview",
+    "pre_analysis",
+    "wait",
+    "switch",
+    "post_analysis",
+    "scale_down",
+    "done"
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "preview_stage",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "Start deployment",
+      "sublabel": "new version · Rollout update"
+    },
+    {
+      "id": "preview",
+      "lane": "preview_stage",
+      "col": 1,
+      "width": 160,
+      "type": "cloud",
+      "label": "Deploy to Preview",
+      "sublabel": "previewService: test-preview"
+    },
+    {
+      "id": "pre_analysis",
+      "lane": "preview_stage",
+      "col": 2,
+      "width": 160,
+      "type": "security",
+      "label": "Pre-analysis",
+      "sublabel": "smoke-test template"
+    },
+    {
+      "id": "wait",
+      "lane": "promote_stage",
+      "col": 3,
+      "width": 160,
+      "type": "backend",
+      "label": "Wait for approval",
+      "sublabel": "autoPromotionEnabled: false"
+    },
+    {
+      "id": "switch",
+      "lane": "promote_stage",
+      "col": 4,
+      "width": 160,
+      "type": "cloud",
+      "label": "Switch Active",
+      "sublabel": "Blue → Green",
+      "tag": "traffic switch"
+    },
+    {
+      "id": "post_analysis",
+      "lane": "verify_stage",
+      "col": 4,
+      "width": 160,
+      "type": "security",
+      "label": "Post-analysis",
+      "sublabel": "comprehensive-analysis"
+    },
+    {
+      "id": "scale_down",
+      "lane": "verify_stage",
+      "col": 5,
+      "width": 160,
+      "type": "cloud",
+      "label": "Scale down old",
+      "sublabel": "scaleDownDelaySeconds: 600"
+    },
+    {
+      "id": "done",
+      "lane": "done_stage",
+      "col": 5,
+      "width": 160,
+      "type": "frontend",
+      "label": "Rollout complete",
+      "sublabel": "Green is Active"
+    },
+    {
+      "id": "abort",
+      "lane": "exceptions",
+      "col": 2,
+      "width": 160,
+      "type": "external",
+      "label": "Deployment abort",
+      "sublabel": "pre-analysis failed"
+    },
+    {
+      "id": "rollback",
+      "lane": "exceptions",
+      "col": 4,
+      "width": 160,
+      "type": "external",
+      "label": "Roll back",
+      "sublabel": "Green → Blue"
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-preview",
+      "from": "start",
+      "to": "preview"
+    },
+    {
+      "id": "preview-pre",
+      "from": "preview",
+      "to": "pre_analysis"
+    },
+    {
+      "id": "pre-abort",
+      "from": "pre_analysis",
+      "to": "abort",
+      "label": "Failure",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "pre-wait",
+      "from": "pre_analysis",
+      "to": "wait",
+      "label": "Success",
+      "variant": "emphasis"
+    },
+    {
+      "id": "wait-switch",
+      "from": "wait",
+      "to": "switch",
+      "label": "promote command",
+      "variant": "emphasis"
+    },
+    {
+      "id": "switch-post",
+      "from": "switch",
+      "to": "post_analysis"
+    },
+    {
+      "id": "post-rollback",
+      "from": "post_analysis",
+      "to": "rollback",
+      "label": "Failure",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "id": "post-scale",
+      "from": "post_analysis",
+      "to": "scale_down",
+      "label": "Success",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scale-done",
+      "from": "scale_down",
+      "to": "done"
+    }
+  ]
+}

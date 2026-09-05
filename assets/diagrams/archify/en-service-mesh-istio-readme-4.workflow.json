@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Service Mesh Gradual Adoption Strategy",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Adoption phase"
+        },
+        "cloud": {
+          "label": "Final target phase"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "rollout",
+      "label": "Phased adoption order"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "Phase 1",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "Phase 2",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "Phase 3",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "p4",
+      "label": "Phase 4",
+      "fromCol": 3,
+      "toCol": 3,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "observability",
+    "security",
+    "traffic",
+    "advanced"
+  ],
+  "nodes": [
+    {
+      "id": "observability",
+      "lane": "rollout",
+      "col": 0,
+      "width": 160,
+      "type": "frontend",
+      "label": "Observability",
+      "sublabel": "Metrics only"
+    },
+    {
+      "id": "security",
+      "lane": "rollout",
+      "col": 1,
+      "width": 160,
+      "type": "frontend",
+      "label": "Security",
+      "sublabel": "Apply mTLS"
+    },
+    {
+      "id": "traffic",
+      "lane": "rollout",
+      "col": 2,
+      "width": 160,
+      "type": "frontend",
+      "label": "Traffic Management",
+      "sublabel": "Canary deployment"
+    },
+    {
+      "id": "advanced",
+      "lane": "rollout",
+      "col": 3,
+      "width": 160,
+      "type": "cloud",
+      "label": "Advanced Features",
+      "sublabel": "Use all features",
+      "tag": "final target"
+    }
+  ],
+  "edges": [
+    {
+      "id": "obs-sec",
+      "from": "observability",
+      "to": "security",
+      "label": "after validation"
+    },
+    {
+      "id": "sec-traffic",
+      "from": "security",
+      "to": "traffic",
+      "label": "after validation"
+    },
+    {
+      "id": "traffic-adv",
+      "from": "traffic",
+      "to": "advanced",
+      "label": "after validation",
+      "variant": "emphasis"
+    }
+  ]
+}

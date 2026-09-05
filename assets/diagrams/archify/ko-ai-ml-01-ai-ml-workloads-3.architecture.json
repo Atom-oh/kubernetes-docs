@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "분산 훈련 아키텍처",
+    "output": "ko-ai-ml-01-ai-ml-workloads-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "launch",
+        "label": "MPI Job 기동",
+        "focus": [
+          "launcher",
+          "workers"
+        ],
+        "note": "Launcher 파드가 mpirun으로 Worker 파드들을 기동한다."
+      },
+      {
+        "id": "collective",
+        "label": "집합 통신",
+        "focus": [
+          "workers",
+          "nccl",
+          "mpi",
+          "efa"
+        ],
+        "note": "Worker들이 NCCL로 그래디언트를 교환하고, NCCL은 MPI와 EFA 위에서 동작한다."
+      },
+      {
+        "id": "checkpoint",
+        "label": "체크포인트 저장",
+        "focus": [
+          "workers",
+          "fsx",
+          "s3",
+          "ckpt"
+        ],
+        "note": "Worker가 FSx for Lustre에 기록하면 S3와 체크포인트 저장소로 이어진다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "백엔드 서비스"
+        },
+        "cloud": {
+          "label": "클라우드 서비스"
+        },
+        "database": {
+          "label": "데이터 저장소"
+        },
+        "messagebus": {
+          "label": "메시지 버스"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "launcher",
+      "type": "backend",
+      "label": "Launcher 파드",
+      "sublabel": "mpirun",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "workers",
+      "type": "backend",
+      "label": "Worker 파드 ×4",
+      "sublabel": "nvidia.com/gpu",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "nccl",
+      "type": "messagebus",
+      "label": "NVIDIA NCCL",
+      "sublabel": "집합 통신",
+      "pos": [
+        380,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "mpi",
+      "type": "messagebus",
+      "label": "MPI",
+      "sublabel": "랭크 조정",
+      "pos": [
+        610,
+        240
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "efa",
+      "type": "cloud",
+      "label": "Elastic Fabric Adapter",
+      "sublabel": "EFA",
+      "pos": [
+        840,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fsx",
+      "type": "database",
+      "label": "FSx for Lustre",
+      "sublabel": "고성능 병렬 파일 시스템",
+      "pos": [
+        380,
+        450
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "Amazon S3",
+      "sublabel": "훈련 데이터 · 모델 아티팩트",
+      "pos": [
+        640,
+        400
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ckpt",
+      "type": "database",
+      "label": "체크포인트 저장소",
+      "sublabel": "모델 체크포인트",
+      "pos": [
+        640,
+        510
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "MPI Job",
+      "wraps": [
+        "launcher",
+        "workers"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "통신 계층",
+      "wraps": [
+        "nccl",
+        "mpi",
+        "efa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "공유 스토리지",
+      "wraps": [
+        "fsx",
+        "s3",
+        "ckpt"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "launch-workers",
+      "from": "launcher",
+      "to": "workers",
+      "label": "기동",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "workers-nccl",
+      "from": "workers",
+      "to": "nccl",
+      "label": "그래디언트 교환",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nccl-mpi",
+      "from": "nccl",
+      "to": "mpi"
+    },
+    {
+      "id": "mpi-efa",
+      "from": "mpi",
+      "to": "efa"
+    },
+    {
+      "id": "workers-fsx",
+      "from": "workers",
+      "to": "fsx",
+      "label": "체크포인트 기록",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "fsx-s3",
+      "from": "fsx",
+      "to": "s3",
+      "label": "S3 연동"
+    },
+    {
+      "id": "fsx-ckpt",
+      "from": "fsx",
+      "to": "ckpt"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "통신",
+      "items": [
+        "Worker 파드들은 NCCL로 그래디언트를 교환한다",
+        "NCCL 통신은 MPI와 Elastic Fabric Adapter(EFA) 위에서 동작한다"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "스토리지",
+      "items": [
+        "FSx for Lustre는 대규모 데이터셋에 빠른 액세스를 제공한다",
+        "S3 통합으로 데이터 가져오기·내보내기를 간소화하고, 체크포인트를 보존한다"
+      ]
+    }
+  ]
+}

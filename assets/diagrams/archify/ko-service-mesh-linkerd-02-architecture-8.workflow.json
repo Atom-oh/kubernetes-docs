@@ -1,0 +1,226 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "사이드카 주입 워크플로우",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "webhook",
+        "label": "Admission Webhook 호출",
+        "focus": [
+          "request",
+          "webhook",
+          "check"
+        ],
+        "note": "Pod 생성 요청이 API 서버에 들어오면 Proxy Injector의 Admission Webhook(8443)이 호출되어 주입 조건 확인을 시작한다."
+      },
+      {
+        "id": "conditions",
+        "label": "주입 조건 확인",
+        "focus": [
+          "check",
+          "ns",
+          "podann",
+          "workload"
+        ],
+        "note": "네임스페이스 주석, Pod 주석(linkerd.io/inject), 워크로드 타입을 보고 사이드카를 주입할지 판단한다."
+      },
+      {
+        "id": "inject",
+        "label": "사이드카 주입과 Pod 생성",
+        "focus": [
+          "ns",
+          "podann",
+          "workload",
+          "inject",
+          "create"
+        ],
+        "note": "조건을 만족하면 linkerd-proxy 사이드카가 Pod 스펙에 추가되고, 그 상태로 Pod 생성이 진행된다."
+      }
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Pod 생성 요청·결과"
+        },
+        "backend": {
+          "label": "Proxy Injector"
+        },
+        "cloud": {
+          "label": "주입 조건 판단 기준"
+        },
+        "security": {
+          "label": "사이드카 주입"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "apiserver",
+      "label": "API 서버"
+    },
+    {
+      "id": "injector",
+      "label": "Proxy Injector (Admission Webhook)"
+    },
+    {
+      "id": "conditions",
+      "label": "주입 조건"
+    },
+    {
+      "id": "result",
+      "label": "주입 완료 · Pod 생성"
+    }
+  ],
+  "groups": [
+    {
+      "id": "cond_group",
+      "label": "판단 기준 3가지",
+      "lane": "conditions",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "webhook",
+    "check",
+    "podann",
+    "inject",
+    "create"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "apiserver",
+      "col": 0,
+      "width": 184,
+      "type": "frontend",
+      "label": "Pod 생성 요청",
+      "sublabel": "Deployment 등 워크로드 생성"
+    },
+    {
+      "id": "webhook",
+      "lane": "apiserver",
+      "col": 1,
+      "width": 184,
+      "type": "backend",
+      "label": "Webhook 호출",
+      "sublabel": "Admission Webhook · 8443"
+    },
+    {
+      "id": "check",
+      "lane": "injector",
+      "col": 2,
+      "width": 184,
+      "type": "backend",
+      "label": "주입 조건 확인",
+      "sublabel": "linkerd.io/inject 평가"
+    },
+    {
+      "id": "ns",
+      "lane": "conditions",
+      "col": 1,
+      "width": 184,
+      "type": "cloud",
+      "label": "네임스페이스 주석",
+      "sublabel": "linkerd.io/inject: enabled"
+    },
+    {
+      "id": "podann",
+      "lane": "conditions",
+      "col": 2,
+      "width": 184,
+      "type": "cloud",
+      "label": "Pod 주석",
+      "sublabel": "enabled | disabled 오버라이드"
+    },
+    {
+      "id": "workload",
+      "lane": "conditions",
+      "col": 3,
+      "width": 184,
+      "type": "cloud",
+      "label": "워크로드 타입",
+      "sublabel": "주입 대상 여부"
+    },
+    {
+      "id": "inject",
+      "lane": "result",
+      "col": 2,
+      "width": 184,
+      "type": "security",
+      "label": "사이드카 주입",
+      "sublabel": "linkerd-proxy 컨테이너 추가"
+    },
+    {
+      "id": "create",
+      "lane": "result",
+      "col": 4,
+      "width": 184,
+      "type": "frontend",
+      "label": "Pod 생성",
+      "sublabel": "프록시 포함 Pod 실행"
+    }
+  ],
+  "edges": [
+    {
+      "id": "request-webhook",
+      "from": "request",
+      "to": "webhook"
+    },
+    {
+      "id": "webhook-check",
+      "from": "webhook",
+      "to": "check"
+    },
+    {
+      "id": "check-ns",
+      "from": "check",
+      "to": "ns",
+      "role": "branch"
+    },
+    {
+      "id": "check-podann",
+      "from": "check",
+      "to": "podann"
+    },
+    {
+      "id": "check-workload",
+      "from": "check",
+      "to": "workload",
+      "role": "branch"
+    },
+    {
+      "id": "ns-inject",
+      "from": "ns",
+      "to": "inject",
+      "role": "branch"
+    },
+    {
+      "id": "podann-inject",
+      "from": "podann",
+      "to": "inject",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "workload-inject",
+      "from": "workload",
+      "to": "inject",
+      "role": "branch"
+    },
+    {
+      "id": "inject-create",
+      "from": "inject",
+      "to": "create",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

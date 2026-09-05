@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "vLLM System Requirements",
+    "locale": "en",
+    "output": "en-ai-ml-02-vllm-deployment-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "cloud": {
+          "label": "Hardware"
+        },
+        "external": {
+          "label": "Requirements by Model Size"
+        },
+        "backend": {
+          "label": "Software"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "memory-tiers",
+        "label": "GPU memory and model size",
+        "focus": [
+          "gpu",
+          "gpu-memory",
+          "model-7b",
+          "model-13b",
+          "model-70b"
+        ],
+        "note": "GPU memory capacity determines which model size tier can be served."
+      },
+      {
+        "id": "software-stack",
+        "label": "Software stack",
+        "focus": [
+          "cuda",
+          "python",
+          "pytorch"
+        ],
+        "note": "Minimum software versions required to run vLLM."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gpu",
+      "type": "cloud",
+      "label": "NVIDIA GPU",
+      "sublabel": "Volta / Turing / Ampere / Hopper",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "gpu-memory",
+      "type": "cloud",
+      "label": "GPU Memory",
+      "sublabel": "Varies by model size",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "Key requirement"
+    },
+    {
+      "id": "cpu",
+      "type": "cloud",
+      "label": "CPU Cores",
+      "sublabel": "vCPU count",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-7b",
+      "type": "external",
+      "label": "7B Model",
+      "sublabel": "Minimum 16GB GPU memory",
+      "pos": [
+        400,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-13b",
+      "type": "external",
+      "label": "13B Model",
+      "sublabel": "Minimum 24GB GPU memory",
+      "pos": [
+        400,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "model-70b",
+      "type": "external",
+      "label": "70B Model",
+      "sublabel": "Minimum 80GB GPU memory",
+      "pos": [
+        400,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "or multi-GPU"
+    },
+    {
+      "id": "cuda",
+      "type": "backend",
+      "label": "CUDA",
+      "sublabel": "12.1 or higher",
+      "pos": [
+        760,
+        70
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "python",
+      "type": "backend",
+      "label": "Python",
+      "sublabel": "3.9 or higher",
+      "pos": [
+        760,
+        210
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "pytorch",
+      "type": "backend",
+      "label": "PyTorch",
+      "sublabel": "2.4.0 or higher",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Hardware",
+      "wraps": [
+        "gpu",
+        "gpu-memory",
+        "cpu"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Requirements by Model Size",
+      "wraps": [
+        "model-7b",
+        "model-13b",
+        "model-70b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Software",
+      "wraps": [
+        "cuda",
+        "python",
+        "pytorch"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "gpu-to-memory",
+      "from": "gpu",
+      "to": "gpu-memory",
+      "label": "VRAM capacity",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "memory-to-7b",
+      "from": "gpu-memory",
+      "to": "model-7b",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "memory-to-13b",
+      "from": "gpu-memory",
+      "to": "model-13b",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "memory-to-70b",
+      "from": "gpu-memory",
+      "to": "model-70b",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "orange",
+      "title": "GPU memory thresholds",
+      "items": [
+        "7B model: minimum 16GB GPU memory",
+        "13B model: minimum 24GB GPU memory",
+        "70B model: minimum 80GB GPU memory (or distributed across multiple GPUs)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "EKS GPU node types",
+      "items": [
+        "p5.48xlarge: 8x H100, 80GB each",
+        "p4d.24xlarge: 8x A100, 40GB or 80GB each",
+        "g6.12xlarge: 4x L4, 24GB each (cost-effective)",
+        "g6e.12xlarge: 4x L40S, 48GB each"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Software",
+      "items": [
+        "CUDA 12.1 or higher (CUDA 12.4 recommended for FP8)",
+        "Python 3.9 or higher",
+        "PyTorch 2.4.0 or higher"
+      ]
+    }
+  ]
+}

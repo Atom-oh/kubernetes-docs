@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kong Mesh Architecture",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-4.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "control",
+        "label": "Control plane",
+        "focus": [
+          "global-cp",
+          "zone-cp"
+        ],
+        "note": "The optional Global Control Plane syncs multi-zone policies to the Zone Control Plane."
+      },
+      {
+        "id": "config",
+        "label": "Configuration",
+        "focus": [
+          "zone-cp",
+          "dp1",
+          "dp2",
+          "dp-vm"
+        ],
+        "note": "The Zone Control Plane pushes the same configuration to Kuma DP on Kubernetes pods and VMs."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS",
+        "focus": [
+          "dp1",
+          "dp2",
+          "dp-vm"
+        ],
+        "note": "Every data plane, pod or VM, talks to the others over mTLS."
+      }
+    ],
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "global-cp",
+      "type": "backend",
+      "label": "Kong Mesh Global Control Plane",
+      "sublabel": "optional · multi-zone policy",
+      "pos": [
+        430,
+        40
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "zone-cp",
+      "type": "backend",
+      "label": "Kong Mesh Zone Control Plane",
+      "sublabel": "local data plane management",
+      "pos": [
+        430,
+        180
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "dp1",
+      "type": "security",
+      "label": "Envoy / Kuma DP",
+      "sublabel": "sidecar",
+      "pos": [
+        460,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 1",
+      "pos": [
+        460,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dp2",
+      "type": "security",
+      "label": "Envoy / Kuma DP",
+      "sublabel": "sidecar",
+      "pos": [
+        90,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Pod 2",
+      "pos": [
+        90,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "dp-vm",
+      "type": "security",
+      "label": "Kuma DP",
+      "sublabel": "VM data plane",
+      "pos": [
+        830,
+        360
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "app-vm",
+      "type": "frontend",
+      "label": "Legacy App",
+      "sublabel": "VM",
+      "pos": [
+        830,
+        480
+      ],
+      "size": [
+        200,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "global-cp",
+        "zone-cp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane (Kubernetes + VM)",
+      "wraps": [
+        "dp2",
+        "app2",
+        "dp1",
+        "app1",
+        "dp-vm",
+        "app-vm"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "dp2",
+        "app2"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "dp1",
+        "app1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "VM",
+      "wraps": [
+        "dp-vm",
+        "app-vm"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "sync-policies",
+      "from": "global-cp",
+      "to": "zone-cp",
+      "label": "Sync policies",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        560,
+        140
+      ]
+    },
+    {
+      "id": "config-dp1",
+      "from": "zone-cp",
+      "to": "dp1",
+      "label": "Configuration",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        560,
+        300
+      ]
+    },
+    {
+      "id": "config-dp2",
+      "from": "zone-cp",
+      "to": "dp2",
+      "label": "Configuration",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "config-dpvm",
+      "from": "zone-cp",
+      "to": "dp-vm",
+      "label": "Configuration",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "mtls-1-2",
+      "from": "dp1",
+      "to": "dp2",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "mtls-1-vm",
+      "from": "dp1",
+      "to": "dp-vm",
+      "label": "mTLS",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "dp1-app1",
+      "from": "dp1",
+      "to": "app1"
+    },
+    {
+      "id": "dp2-app2",
+      "from": "dp2",
+      "to": "app2"
+    },
+    {
+      "id": "dpvm-appvm",
+      "from": "dp-vm",
+      "to": "app-vm"
+    }
+  ]
+}

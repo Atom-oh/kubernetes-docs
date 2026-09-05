@@ -1,0 +1,205 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "점진적 Istio 도입",
+    "output": "public/archmaps/ko-service-mesh-istio-best-practices-0.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1232,
+      282
+    ],
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "시작 상태"
+        },
+        "backend": {
+          "label": "관측 단계"
+        },
+        "security": {
+          "label": "mTLS 정책 단계"
+        },
+        "cloud": {
+          "label": "고급 기능 단계"
+        },
+        "external": {
+          "label": "최종 상태"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "observe",
+        "label": "관측 먼저",
+        "focus": [
+          "start",
+          "phase1"
+        ],
+        "note": "Sidecar 주입만 켜고 메트릭·로그·트레이스와 성능 영향을 먼저 확인합니다."
+      },
+      {
+        "id": "mtls",
+        "label": "mTLS 강화",
+        "focus": [
+          "phase2",
+          "phase3"
+        ],
+        "note": "PeerAuthentication을 PERMISSIVE로 시작해 검증 후 STRICT로 전환합니다."
+      },
+      {
+        "id": "advanced",
+        "label": "고급 기능",
+        "focus": [
+          "phase4",
+          "done"
+        ],
+        "note": "Traffic Management, Authorization Policy, Rate Limiting을 지속적으로 도입합니다."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "rollout",
+      "label": "배포 전략 · 단계별 도입"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "phase1",
+    "phase2",
+    "phase3",
+    "phase4",
+    "done"
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "start"
+    ],
+    "allowedTerminals": [
+      "done"
+    ],
+    "requiredPaths": [
+      {
+        "from": "start",
+        "to": "done"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "lane": "rollout",
+      "col": 0,
+      "type": "frontend",
+      "label": "시작",
+      "sublabel": "Istio 미적용",
+      "width": 90
+    },
+    {
+      "id": "phase1",
+      "lane": "rollout",
+      "col": 1,
+      "type": "backend",
+      "label": "Observability",
+      "sublabel": "Sidecar 주입만",
+      "tag": "Phase 1 · 1-2주",
+      "width": 122
+    },
+    {
+      "id": "phase2",
+      "lane": "rollout",
+      "col": 2,
+      "type": "security",
+      "label": "mTLS PERMISSIVE",
+      "sublabel": "PeerAuthentication",
+      "tag": "Phase 2 · 1-2주",
+      "width": 138
+    },
+    {
+      "id": "phase3",
+      "lane": "rollout",
+      "col": 3,
+      "type": "security",
+      "label": "mTLS STRICT",
+      "sublabel": "PeerAuthentication",
+      "tag": "Phase 3 · 1주",
+      "width": 124
+    },
+    {
+      "id": "phase4",
+      "lane": "rollout",
+      "col": 4,
+      "type": "cloud",
+      "label": "Advanced Features",
+      "sublabel": "트래픽·인가·Rate Limit",
+      "tag": "Phase 4 · 지속적",
+      "width": 152
+    },
+    {
+      "id": "done",
+      "lane": "rollout",
+      "col": 5,
+      "type": "external",
+      "label": "완전 도입",
+      "sublabel": "메시 전면 적용",
+      "width": 114
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "phase1",
+      "label": "istio-injection=enabled",
+      "role": "main"
+    },
+    {
+      "from": "phase1",
+      "to": "phase2",
+      "label": "성능 영향 평가 후",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "phase2",
+      "to": "phase3",
+      "label": "mode: STRICT",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "from": "phase3",
+      "to": "phase4",
+      "label": "정책 확장",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "from": "phase4",
+      "to": "done",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "단계별 소요 기간",
+      "items": [
+        "Phase 1 Observability: 1-2주 — Sidecar 주입 후 메트릭·로그·트레이스 확인",
+        "Phase 2 mTLS PERMISSIVE: 1-2주 — 평문과 mTLS 동시 허용",
+        "Phase 3 mTLS STRICT: 1주 — mTLS만 허용으로 전환",
+        "Phase 4 Advanced Features: 지속적"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Phase 4 고급 기능",
+      "items": [
+        "Traffic Management (Canary, Circuit Breaker)",
+        "Authorization Policy",
+        "Rate Limiting"
+      ]
+    }
+  ]
+}

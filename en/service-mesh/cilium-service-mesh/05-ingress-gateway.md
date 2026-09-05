@@ -9,7 +9,9 @@ Cilium Service Mesh natively supports Kubernetes Ingress Controller and Gateway 
 
 ## Architecture
 
-![An external client's request passes through a cloud load balancer into the Kubernetes cluster, where a Gateway or Ingress resource hands it to the Cilium Envoy L7 proxy, which routes it to one of three backend services.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-05-ingress-gateway-0.svg)
+![An external client's request passes through a cloud load balancer into the Kubernetes cluster, where a Gateway or Ingress resource hands it to the Cilium Envoy L7 proxy, which routes it to one of three backend services.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-05-ingress-gateway-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-05-ingress-gateway-0.html)
 
 ## Cilium Ingress Controller
 
@@ -560,7 +562,9 @@ spec:
 
 ### Hybrid Architecture
 
-![An external client reaches an Application Load Balancer for HTTP traffic and a Network Load Balancer for low-level traffic; the ALB hands off to the Cilium Gateway for L7 routing to the web app and API server, while the NLB hands off to Cilium's eBPF-based L4 load balancer for the gRPC service.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-05-ingress-gateway-1.svg)
+![External client traffic splits across an AWS ALB and NLB; the ALB feeds the Cilium Gateway for L7 routing to the web app and API server, while the NLB feeds Cilium LB for L4 load balancing to the gRPC service.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-05-ingress-gateway-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-05-ingress-gateway-1.html)
 
 ## Multi-tenant Gateway
 
@@ -773,7 +777,9 @@ spec:
 
 ### Selection Guide
 
-![A decision tree for choosing an ingress path on EKS: it asks whether AWS-native integration and WAF/Shield are needed, and whether high-performance L4 load balancing is required, routing to AWS ALB, NLB plus Cilium, or Cilium Gateway alone.](../../../assets/diagrams/rendered/en-service-mesh-cilium-service-mesh-05-ingress-gateway-2.svg)
+![A decision tree for choosing an ingress path on EKS: it asks whether AWS-native integration and WAF/Shield are needed, and whether high-performance L4 load balancing is required, routing to AWS ALB, NLB plus Cilium, or Cilium Gateway alone.](../../.gitbook/assets/en-service-mesh-cilium-service-mesh-05-ingress-gateway-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-cilium-service-mesh-05-ingress-gateway-2.html)
 
 ## Monitoring
 

@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Argo Rollouts + Istio Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-traffic-management-04-traffic-splitting-1.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1300,
+      830
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Argo"
+        },
+        "cloud": {
+          "label": "Istio"
+        },
+        "frontend": {
+          "label": "Pods"
+        },
+        "external": {
+          "label": "Metrics"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "split-control",
+        "label": "Traffic split control",
+        "focus": [
+          "rollout",
+          "vs",
+          "dr",
+          "stable",
+          "canary"
+        ],
+        "note": "Rollout updates VirtualService weights; DestinationRule subsets separate stable and canary pods."
+      },
+      {
+        "id": "analysis-gate",
+        "label": "Metric-based approve/reject",
+        "focus": [
+          "analysis",
+          "prom",
+          "rollout",
+          "stable",
+          "canary"
+        ],
+        "note": "AnalysisTemplate queries Prometheus to approve each Rollout step or trigger a rollback."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rollout",
+      "type": "backend",
+      "label": "Rollout Resource",
+      "sublabel": "Deployment strategy",
+      "pos": [
+        110,
+        200
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "analysis",
+      "type": "backend",
+      "label": "AnalysisTemplate",
+      "sublabel": "Metric analysis",
+      "pos": [
+        110,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vs",
+      "type": "cloud",
+      "label": "VirtualService",
+      "sublabel": "Traffic splitting",
+      "pos": [
+        510,
+        200
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "dr",
+      "type": "cloud",
+      "label": "DestinationRule",
+      "sublabel": "Subset definition",
+      "pos": [
+        510,
+        430
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "stable",
+      "type": "frontend",
+      "label": "Stable Pods",
+      "sublabel": "v1",
+      "pos": [
+        910,
+        60
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "canary",
+      "type": "frontend",
+      "label": "Canary Pods",
+      "sublabel": "v2",
+      "pos": [
+        910,
+        320
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "Metric collection",
+      "pos": [
+        910,
+        560
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "external",
+      "label": "Grafana",
+      "sublabel": "Visualization",
+      "pos": [
+        910,
+        670
+      ],
+      "size": [
+        170,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Argo Rollouts Controller",
+      "wraps": [
+        "rollout",
+        "analysis"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Istio Service Mesh",
+      "wraps": [
+        "vs",
+        "dr"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kubernetes",
+      "wraps": [
+        "stable",
+        "canary"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Monitoring",
+      "wraps": [
+        "prom",
+        "grafana"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rollout-vs",
+      "from": "rollout",
+      "to": "vs",
+      "label": "Update weights",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rollout-dr",
+      "from": "rollout",
+      "to": "dr",
+      "label": "Update subset labels",
+      "labelSegment": 2
+    },
+    {
+      "id": "rollout-stable",
+      "from": "rollout",
+      "to": "stable",
+      "label": "Manage"
+    },
+    {
+      "id": "rollout-canary",
+      "from": "rollout",
+      "to": "canary",
+      "label": "Manage"
+    },
+    {
+      "id": "vs-stable",
+      "from": "vs",
+      "to": "stable",
+      "label": "90% traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vs-canary",
+      "from": "vs",
+      "to": "canary",
+      "label": "10% traffic",
+      "variant": "emphasis"
+    },
+    {
+      "id": "analysis-prom",
+      "from": "analysis",
+      "to": "prom",
+      "label": "Metric query"
+    },
+    {
+      "id": "analysis-rollout",
+      "from": "analysis",
+      "to": "rollout",
+      "label": "Approve / reject"
+    },
+    {
+      "id": "stable-prom",
+      "from": "stable",
+      "to": "prom",
+      "label": "Send metrics",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          1150,
+          92
+        ],
+        [
+          1150,
+          592
+        ]
+      ]
+    },
+    {
+      "id": "canary-prom",
+      "from": "canary",
+      "to": "prom",
+      "label": "Send metrics",
+      "variant": "dashed",
+      "labelDy": 60
+    },
+    {
+      "id": "prom-grafana",
+      "from": "prom",
+      "to": "grafana",
+      "label": "Visualize",
+      "variant": "dashed",
+      "labelDy": 26
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "What Rollout does",
+      "items": [
+        "Only updates the VirtualService weight values (resource must pre-exist)",
+        "Manages rollouts-pod-template-hash labels on DestinationRule subsets at runtime"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "AnalysisTemplate",
+      "items": [
+        "Measures success rate and latency via Prometheus queries (e.g. success rate >= 95%)",
+        "Rolls back automatically once failureLimit is exceeded"
+      ]
+    }
+  ]
+}

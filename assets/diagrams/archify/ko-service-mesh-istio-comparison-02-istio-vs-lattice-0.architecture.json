@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio 아키텍처",
+    "output": "ko-service-mesh-istio-comparison-02-istio-vs-lattice-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "data-path",
+        "label": "데이터 경로",
+        "focus": [
+          "frontend-app",
+          "frontend-proxy",
+          "backend-proxy",
+          "backend-app"
+        ],
+        "note": "App → Envoy → mTLS → Envoy → App. 모든 파드 간 트래픽이 사이드카를 거친다."
+      },
+      {
+        "id": "control-plane",
+        "label": "컨트롤 플레인",
+        "focus": [
+          "istiod",
+          "frontend-proxy",
+          "backend-proxy"
+        ],
+        "note": "Istiod가 각 Envoy 사이드카에 xDS 설정을 배포한다."
+      },
+      {
+        "id": "observability",
+        "label": "관찰성",
+        "focus": [
+          "frontend-proxy",
+          "backend-proxy",
+          "prometheus",
+          "jaeger",
+          "kiali"
+        ],
+        "note": "사이드카가 메트릭과 트레이스를 내보내고 Kiali는 Prometheus를 조회한다."
+      }
+    ],
+    "viewBox": [
+      1200,
+      740
+    ]
+  },
+  "components": [
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "통합 컨트롤 플레인",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "frontend-app",
+      "type": "frontend",
+      "label": "Frontend App",
+      "pos": [
+        70,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "frontend-proxy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "50-150MB",
+      "pos": [
+        290,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "backend-proxy",
+      "type": "security",
+      "label": "Envoy Sidecar",
+      "sublabel": "50-150MB",
+      "pos": [
+        740,
+        240
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "backend-app",
+      "type": "backend",
+      "label": "Backend App",
+      "pos": [
+        980,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": "메트릭",
+      "pos": [
+        520,
+        530
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "jaeger",
+      "type": "database",
+      "label": "Jaeger",
+      "sublabel": "트레이스",
+      "pos": [
+        520,
+        420
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "kiali",
+      "type": "frontend",
+      "label": "Kiali",
+      "sublabel": "메시 대시보드",
+      "pos": [
+        520,
+        640
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "컨트롤 플레인 (istio-system)",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Namespace: production",
+      "wraps": [
+        "frontend-app",
+        "frontend-proxy",
+        "backend-proxy",
+        "backend-app"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod: frontend",
+      "wraps": [
+        "frontend-app",
+        "frontend-proxy"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod: backend",
+      "wraps": [
+        "backend-proxy",
+        "backend-app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "관찰성 (Observability)",
+      "wraps": [
+        "prometheus",
+        "jaeger",
+        "kiali"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "fe-app-to-proxy",
+      "from": "frontend-app",
+      "to": "frontend-proxy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy-mtls",
+      "from": "frontend-proxy",
+      "to": "backend-proxy",
+      "label": "mTLS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "be-proxy-to-app",
+      "from": "backend-proxy",
+      "to": "backend-app",
+      "variant": "emphasis"
+    },
+    {
+      "id": "xds-frontend",
+      "from": "istiod",
+      "to": "frontend-proxy",
+      "label": "xDS 설정"
+    },
+    {
+      "id": "xds-backend",
+      "from": "istiod",
+      "to": "backend-proxy",
+      "label": "xDS 설정"
+    },
+    {
+      "id": "fe-metrics",
+      "from": "frontend-proxy",
+      "to": "prometheus",
+      "label": "메트릭",
+      "variant": "dashed",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "be-metrics",
+      "from": "backend-proxy",
+      "to": "prometheus",
+      "variant": "dashed",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "fe-traces",
+      "from": "frontend-proxy",
+      "to": "jaeger",
+      "variant": "dashed",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "be-traces",
+      "from": "backend-proxy",
+      "to": "jaeger",
+      "label": "트레이스",
+      "variant": "dashed",
+      "fromSide": "bottom"
+    },
+    {
+      "id": "kiali-query",
+      "from": "kiali",
+      "to": "prometheus",
+      "label": "쿼리",
+      "variant": "dashed"
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ray on EKS Component Map",
+    "locale": "en",
+    "output": "en-ai-ml-ray-readme-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "operator-path",
+        "label": "Operator path",
+        "focus": [
+          "architecture",
+          "operator"
+        ],
+        "note": "The KubeRay Operator translates a Ray cluster's head/worker shape into RayCluster/RayJob/RayService resources."
+      },
+      {
+        "id": "workloads",
+        "label": "Training and serving",
+        "focus": [
+          "operator",
+          "train",
+          "serve"
+        ],
+        "note": "Distributed training and tuning (Ray Train & Tune) and model/LLM serving (Ray Serve) both run on the same operator."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "architecture",
+      "type": "backend",
+      "label": "Ray Architecture",
+      "sublabel": "Tasks / Actors / Object store",
+      "tag": "Part 1",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "operator",
+      "type": "cloud",
+      "label": "KubeRay Operator",
+      "sublabel": "RayCluster / RayJob / RayService",
+      "tag": "Part 2",
+      "pos": [
+        460,
+        250
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "train",
+      "type": "backend",
+      "label": "Ray Train & Tune",
+      "sublabel": "Distributed training, hyperparameter tuning",
+      "tag": "Part 3",
+      "pos": [
+        840,
+        120
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "serve",
+      "type": "frontend",
+      "label": "Ray Serve",
+      "sublabel": "Model serving, LLM serving",
+      "tag": "Part 4",
+      "pos": [
+        840,
+        380
+      ],
+      "size": [
+        230,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Amazon EKS cluster",
+      "wraps": [
+        "operator",
+        "train",
+        "serve"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "arch-to-operator",
+      "from": "architecture",
+      "to": "operator",
+      "label": "as K8s resources",
+      "variant": "emphasis"
+    },
+    {
+      "id": "operator-to-train",
+      "from": "operator",
+      "to": "train",
+      "label": "runs training and tuning"
+    },
+    {
+      "id": "operator-to-serve",
+      "from": "operator",
+      "to": "serve",
+      "label": "deploy serving via RayService"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Core primitives",
+      "items": [
+        "Every library builds on tasks, actors, and the shared object store",
+        "A Ray cluster consists of a head node and worker nodes"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "KubeRay Operator",
+      "items": [
+        "Runs Ray clusters declaratively as RayCluster/RayJob/RayService resources",
+        "Two-tier autoscaling pattern together with Karpenter"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Training and serving",
+      "items": [
+        "Ray Train & Tune: distributed model training and hyperparameter search",
+        "Ray Serve: model serving, including dedicated LLM-serving building blocks"
+      ]
+    }
+  ]
+}

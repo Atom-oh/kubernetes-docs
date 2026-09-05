@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Istio Detailed Architecture",
+    "locale": "en",
+    "output": "en-service-mesh-istio-comparison-01-service-mesh-comparison-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Istiod"
+        },
+        "frontend": {
+          "label": "Application"
+        },
+        "security": {
+          "label": "Envoy proxy"
+        },
+        "database": {
+          "label": "Istio CRD"
+        }
+      }
+    },
+    "views": [
+      {
+        "id": "config",
+        "label": "Config → Istiod",
+        "focus": [
+          "cfg-traffic",
+          "cfg-security",
+          "istiod"
+        ],
+        "note": "Istiod watches CRDs such as VirtualService and DestinationRule and turns them into proxy configuration."
+      },
+      {
+        "id": "xds",
+        "label": "xDS config push",
+        "focus": [
+          "istiod",
+          "envoy1",
+          "envoy2"
+        ],
+        "note": "A single Istiod pushes configuration to every Envoy sidecar over the xDS API."
+      },
+      {
+        "id": "mtls",
+        "label": "Pod-to-pod mTLS",
+        "focus": [
+          "app1",
+          "envoy1",
+          "envoy2",
+          "app2"
+        ],
+        "note": "Application traffic passes through the sidecar and is encrypted with mTLS between the Envoys."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "cfg-traffic",
+      "type": "database",
+      "label": "Traffic management CRDs",
+      "sublabel": "VirtualService · DestinationRule · Gateway",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "cfg-security",
+      "type": "database",
+      "label": "Security CRDs",
+      "sublabel": "PeerAuthentication · AuthorizationPolicy",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        290,
+        64
+      ]
+    },
+    {
+      "id": "istiod",
+      "type": "backend",
+      "label": "Istiod",
+      "sublabel": "Unified control plane (Pilot + Citadel + Galley)",
+      "pos": [
+        560,
+        120
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "app1",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Business logic",
+      "pos": [
+        420,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "envoy1",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        420,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "app2",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "Business logic",
+      "pos": [
+        820,
+        480
+      ],
+      "size": [
+        180,
+        60
+      ]
+    },
+    {
+      "id": "envoy2",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "Sidecar",
+      "pos": [
+        820,
+        360
+      ],
+      "size": [
+        180,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Configuration (Kubernetes CRD)",
+      "wraps": [
+        "cfg-traffic",
+        "cfg-security"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Control Plane",
+      "wraps": [
+        "istiod"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data Plane",
+      "wraps": [
+        "app1",
+        "envoy1",
+        "app2",
+        "envoy2"
+      ],
+      "pad": 56
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 1",
+      "wraps": [
+        "app1",
+        "envoy1"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Pod 2",
+      "wraps": [
+        "app2",
+        "envoy2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "traffic-crd-to-istiod",
+      "from": "cfg-traffic",
+      "to": "istiod",
+      "label": "watch CRDs",
+      "variant": "dashed"
+    },
+    {
+      "id": "security-crd-to-istiod",
+      "from": "cfg-security",
+      "to": "istiod",
+      "variant": "dashed"
+    },
+    {
+      "id": "istiod-to-envoy1",
+      "from": "istiod",
+      "to": "envoy1",
+      "label": "xDS config",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "istiod-to-envoy2",
+      "from": "istiod",
+      "to": "envoy2",
+      "label": "xDS config",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "app1-to-envoy1",
+      "from": "app1",
+      "to": "envoy1"
+    },
+    {
+      "id": "app2-to-envoy2",
+      "from": "app2",
+      "to": "envoy2"
+    },
+    {
+      "id": "envoy-mtls",
+      "from": "envoy1",
+      "to": "envoy2",
+      "label": "mTLS",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Istiod",
+      "items": [
+        "Pilot, Citadel and Galley merged into one control plane",
+        "Configured through Kubernetes CRDs (VirtualService, DestinationRule, etc.)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Envoy data plane",
+      "items": [
+        "The C++ Envoy proxy is injected as a sidecar",
+        "Traffic between Envoys is automatically encrypted with mTLS"
+      ]
+    }
+  ]
+}

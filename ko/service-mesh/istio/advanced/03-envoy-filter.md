@@ -149,7 +149,9 @@ spec:
 
 ### X-Forwarded-For 개요
 
-![클라이언트의 요청이 로드 밸런서와 Istio Gateway를 거쳐 Envoy Sidecar에 도달하는 과정에서 X-Forwarded-For 헤더에 각 홉의 IP가 누적되는 과정을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-0.svg)
+![클라이언트의 요청이 로드 밸런서와 Istio Gateway를 거쳐 Envoy Sidecar에 도달하는 과정에서 X-Forwarded-For 헤더에 각 홉의 IP가 누적되는 과정을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-0.html)
 
 ### XFF 설정 옵션
 
@@ -246,7 +248,9 @@ xff_num_trusted_hops: 3 → 마지막 3개 신뢰
 
 #### 시나리오 1: AWS ALB + Istio Gateway
 
-![클라이언트 요청이 AWS ALB를 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 ALB의 IP 한 홉만 추가되는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-1.svg)
+![클라이언트 요청이 AWS ALB를 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 ALB의 IP 한 홉만 추가되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-1.html)
 
 **설정**:
 
@@ -285,7 +289,9 @@ spec:
 
 #### 시나리오 2: Client → CloudFront → ALB → Gateway
 
-![클라이언트 요청이 CloudFront와 AWS ALB를 차례로 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 두 홉의 IP가 누적되는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-2.svg)
+![클라이언트 요청이 CloudFront와 AWS ALB를 차례로 거쳐 Istio Gateway에 도달하면서 X-Forwarded-For 헤더에 두 홉의 IP가 누적되는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-2.html)
 
 **설정**:
 
@@ -328,7 +334,9 @@ xff_num_trusted_hops: 2 → 마지막 2개(CloudFront, ALB) 신뢰
 
 #### 시나리오 3: Client → CloudFront → NLB → ALB → Gateway
 
-![클라이언트 요청이 CloudFront, L4인 NLB, ALB를 차례로 거쳐 Istio Gateway에 도달하며, NLB는 XFF 헤더를 읽거나 수정하지 않아 체인에 영향을 주지 않는다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-3.svg)
+![클라이언트 요청이 CloudFront, L4인 NLB, ALB를 차례로 거쳐 Istio Gateway에 도달하며, NLB는 XFF 헤더를 읽거나 수정하지 않아 체인에 영향을 주지 않는다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-3.html)
 
 **설정**:
 
@@ -374,7 +382,9 @@ xff_num_trusted_hops: 2 → 마지막 2개(CloudFront, ALB) 신뢰
 
 #### 시나리오 4: Client → ALB → Gateway (직접 연결)
 
-![중간 CDN 없이 클라이언트가 AWS ALB에 직접 연결되어 Istio Gateway에 도달하며, ALB의 IP 한 홉만 XFF 헤더에 추가되는 가장 단순한 구성을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-4.svg)
+![중간 CDN 없이 클라이언트가 AWS ALB에 직접 연결되어 Istio Gateway에 도달하며, ALB의 IP 한 홉만 XFF 헤더에 추가되는 가장 단순한 구성을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-4.html)
 
 **설정**:
 
@@ -677,7 +687,9 @@ spec:
 
 #### 아키텍처 개요
 
-![인터넷의 일반 사용자와 회사 사용자가 AWS ALB를 거쳐 Istio Gateway의 Envoy에 도달하고, Envoy가 추출한 원본 IP를 바탕으로 App A-C는 모든 클라이언트를 허용하지만 App F-G는 AuthorizationPolicy로 회사 IP만 허용하는 구조를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-5.svg)
+![인터넷의 일반 사용자와 회사 사용자가 AWS ALB를 거쳐 Istio Gateway의 Envoy에 도달하고, Envoy가 추출한 원본 IP를 바탕으로 App A-C는 모든 클라이언트를 허용하지만 App F-G는 AuthorizationPolicy로 회사 IP만 허용하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-5.html)
 
 #### 핵심 원리
 
@@ -775,7 +787,9 @@ spec:
 
 #### 동작 흐름
 
-![동일한 클라이언트 IP가 Gateway를 거쳐 제한 없는 App A에는 200 OK로 허용되지만, AuthorizationPolicy가 걸린 App F에는 403 Forbidden으로 거부되는 시퀀스를 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-6.svg)
+![동일한 클라이언트 IP가 Gateway를 거쳐 제한 없는 App A에는 200 OK로 허용되지만, AuthorizationPolicy가 걸린 App F에는 403 Forbidden으로 거부되는 시퀀스를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-6.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-6.html)
 
 #### 왜 Gateway 설정이 필요한가?
 
@@ -1093,7 +1107,9 @@ spec:
 
 ### 정적 응답 개요
 
-![클라이언트 요청이 Envoy Proxy에 도달했을 때 조건이 일치하면 백엔드 서비스를 거치지 않고 Envoy가 직접 정적 응답을 반환하고, 조건이 일치하지 않으면 백엔드로 프록시된다는 것을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-03-envoy-filter-7.svg)
+![클라이언트 요청이 Envoy Proxy에 도달했을 때 조건이 일치하면 백엔드 서비스를 거치지 않고 Envoy가 직접 정적 응답을 반환하고, 조건이 일치하지 않으면 백엔드로 프록시된다는 것을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-03-envoy-filter-7.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-03-envoy-filter-7.html)
 
 ### 사용 사례
 

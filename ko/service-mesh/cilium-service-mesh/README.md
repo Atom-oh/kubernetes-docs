@@ -19,11 +19,15 @@ Cilium Service Mesh의 핵심 가치는 **통합된 네트워킹과 서비스 �
 
 ## 사이드카 vs 사이드카리스 아키텍처
 
-![Istio의 Pod당 사이드카 프록시 체인과 Cilium이 노드당 하나의 공유 Envoy로 L7 처리를 넘겨주는 eBPF 데이터패스를 나란히 비교하는 아키텍처 다이어그램입니다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-README-0.png)
+![Istio의 Pod당 사이드카 프록시 체인과 Cilium이 노드당 하나의 공유 Envoy로 L7 처리를 넘겨주는 eBPF 데이터패스를 나란히 비교하는 아키텍처 다이어그램을 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-readme-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-readme-0.html)
 
 ### 아키텍처 비교 다이어그램
 
-![Istio의 사이드카 방식은 각 Envoy가 L3/L4와 L7을 모두 처리하지만, Cilium eBPF 방식은 커널의 eBPF가 L3/L4를 처리하고 L7만 공유 Envoy로 넘기는 구조적 차이를 보여주는 아키텍처 다이어그램입니다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-README-1.png)
+![Istio의 사이드카 방식은 Pod마다 붙는 Envoy가 L3/L4와 L7을 모두 처리하지만, Cilium eBPF 방식은 커널의 eBPF가 L3/L4를 처리하고 L7만 노드당 하나의 공유 Envoy로 넘기는 구조적 차이를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-readme-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-readme-1.html)
 
 ## 서비스 메시 비교
 
@@ -45,7 +49,9 @@ Cilium Service Mesh의 핵심 가치는 **통합된 네트워킹과 서비스 �
 
 ### 리소스 사용량 비교
 
-![노드당 공유 Envoy를 쓰는 Cilium Service Mesh는 총 약 500MB만 사용하는 반면, Pod마다 사이드카를 두는 Istio는 약 5GB, Linkerd는 약 2GB를 사용해 사이드카리스 구조의 메모리 효율성을 보여주는 막대 그래프입니다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-README-2.png)
+![100 Pod 클러스터에서 노드당 공유 Envoy 하나만 쓰는 Cilium Service Mesh는 총 약 500MB에 그치지만, Pod마다 사이드카를 두는 Istio는 약 5GB, Linkerd는 약 2GB를 차지하는 메시 메모리 총량 비교를 보여준다.](../../.gitbook/assets/ko-service-mesh-cilium-service-mesh-readme-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-cilium-service-mesh-readme-2.html)
 
 ## Cilium Service Mesh를 선택해야 할 때
 

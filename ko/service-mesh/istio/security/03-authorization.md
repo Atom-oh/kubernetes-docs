@@ -28,7 +28,9 @@ Istio AuthorizationPolicy는 서비스에 대한 세밀한 접근 제어를 제�
 - **Operation**: HTTP 메서드, 경로, 포트
 - **Conditions**: 커스텀 조건 (헤더, JWT 클레임 등)
 
-![요청이 AuthorizationPolicy 안에서 Service Account, Namespace, HTTP Method 순으로 세 가지 조건을 검사하며, 모두 일치하면 허용되고 어느 단계든 불일치하면 즉시 거부로 이동하는 흐름을 보여준다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-security-03-authorization-0.svg)
+![요청이 AuthorizationPolicy 안에서 Service Account, Namespace, HTTP Method 순으로 세 가지 조건을 검사하며, 모두 일치하면 허용되고 어느 단계든 불일치하면 즉시 거부로 이동하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-security-03-authorization-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-security-03-authorization-0.html)
 
 ## 기본 정책
 

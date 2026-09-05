@@ -22,7 +22,9 @@
 
 **문제 시나리오**:
 
-![Spot Instance로 인해 Zone C의 모든 Pod가 중단되기 전과 후를 비교하여, Zone별로 분리된 PodDisruptionBudget이 다른 Zone에는 영향을 주지 않지만 Zone C 자체의 가용성 비율은 무너짐을 보여주는 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.svg)
+![Spot Instance 중단으로 Zone C의 Pod 3개가 모두 사라지기 전과 후를 비교해, 최소 6개 Pod를 요구하는 PodDisruptionBudget 33%가 6/9에서 6/6=100%가 되어 남은 Zone에 여유가 없어지는 문제 시나리오를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-0.html)
 
 **왜 Zone별 Rollout이 필요한가?**
 
@@ -123,7 +125,9 @@ spec:
 
 ### 전체 구조
 
-![클라이언트가 단일 VirtualService를 호출하고, DestinationRule의 locality 설정에 따라 각 Zone의 독립적인 Rollout이 관리하는 stable/canary Pod로 트래픽이 분배되는 전체 아키텍처를 보여줍니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.svg)
+![클라이언트가 단일 VirtualService(test.default)를 호출하면 DestinationRule의 locality 설정에 따라 각 Zone의 Pod로 stable/canary 가중치가 나뉘고, Zone별 Argo Rollout이 자기 Zone의 route 가중치만 독립적으로 관리하는 전체 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-1.html)
 
 ### 핵심 컴포넌트
 
@@ -651,15 +655,21 @@ spec:
 
 ### 정상 상태 (Zone-local 트래픽)
 
-![정상 상태에서 Client A의 요청이 같은 Zone A의 Envoy Sidecar와 Pod만 거쳐 처리되고, 다른 Zone의 Pod는 사용되지 않음을 보여주는 시퀀스 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.svg)
+![정상 상태에서 Client A의 GET /api 요청이 같은 Zone A의 Envoy Sidecar와 Pod A만 거쳐 처리되고 Zone B의 Pod B는 사용되지 않는 zone-local 트래픽 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-2.html)
 
 ### Failover 시나리오
 
-![Zone A의 Pod가 3회 연속 오류를 반환하면 Outlier Detection이 해당 엔드포인트를 제외하고, DestinationRule의 failover 규칙에 따라 요청이 Zone B의 Pod로 자동 전환되는 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.svg)
+![Zone A의 Pod A가 3회 연속 timeout/5xx 오류를 반환해 consecutiveErrors: 3에 도달하면 Envoy Sidecar의 Outlier Detection이 Pod A를 30초(baseEjectionTime) 동안 제외하고, DestinationRule failover 규칙(us-east-1a → us-east-1b)에 따라 요청을 Zone B의 Pod B로 전환하여 응답을 받는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-3.html)
 
 ### Canary 배포 중 트래픽 흐름
 
-![Argo Rollouts가 점진적으로 조정하는 weight에 따라 VirtualService가 요청의 90%는 stable subset으로, 10%는 canary subset으로 분배하는 Canary 배포 중 트래픽 흐름을 보여주는 시퀀스 다이어그램입니다.](../../../../assets/diagrams/rendered/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.svg)
+![Canary 배포 중 Zone A의 Client 요청을 VirtualService가 Argo Rollouts가 점진적으로 조정하는 weight에 따라 90%는 stable-a subset Pod로, 10%는 canary-a subset Pod로 나누어 전달하는 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-09-zone-aware-argo-rollouts-4.html)
 
 ## 문제 해결
 

@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Sidecar Mode: Envoy Proxy per Pod",
+    "locale": "en",
+    "output": "en-service-mesh-istio-02-basic-concepts-6.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "inbound",
+        "label": "Inbound traffic",
+        "focus": [
+          "external",
+          "envoy",
+          "app"
+        ],
+        "note": "An external request first reaches the Envoy sidecar, which hands it to the application container over local communication."
+      },
+      {
+        "id": "outbound",
+        "label": "Outbound calls",
+        "focus": [
+          "app",
+          "envoy",
+          "target"
+        ],
+        "note": "The application's outbound calls also pass through the same sidecar before going out over the network to the target service."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "external",
+      "type": "external",
+      "label": "External Request",
+      "sublabel": "client / other service",
+      "pos": [
+        40,
+        440
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "Application Container",
+      "sublabel": "business logic",
+      "pos": [
+        340,
+        130
+      ],
+      "size": [
+        180,
+        64
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "security",
+      "label": "Envoy Proxy",
+      "sublabel": "sidecar container",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        200,
+        64
+      ]
+    },
+    {
+      "id": "target",
+      "type": "external",
+      "label": "Target Service",
+      "sublabel": "another pod in the mesh",
+      "pos": [
+        840,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod",
+      "wraps": [
+        "app",
+        "envoy"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "external-to-envoy",
+      "from": "external",
+      "to": "envoy",
+      "label": "Traffic",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          580,
+          472
+        ]
+      ]
+    },
+    {
+      "id": "envoy-to-app",
+      "from": "envoy",
+      "to": "app",
+      "label": "Local",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "right",
+      "via": [
+        [
+          580,
+          162
+        ]
+      ]
+    },
+    {
+      "id": "app-to-envoy",
+      "from": "app",
+      "to": "envoy",
+      "label": "Outbound call",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          430,
+          332
+        ]
+      ],
+      "labelSegment": 0
+    },
+    {
+      "id": "envoy-to-target",
+      "from": "envoy",
+      "to": "target",
+      "label": "Network",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Advantages",
+      "items": [
+        "Mature and stable",
+        "All Istio features supported",
+        "Fine-grained control per pod"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Disadvantages",
+      "items": [
+        "Resource overhead (Envoy per pod)",
+        "Increased startup time (Init Container)",
+        "Complex permission setup (iptables)"
+      ]
+    }
+  ]
+}

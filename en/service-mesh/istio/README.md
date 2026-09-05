@@ -78,13 +78,17 @@ A service mesh is a powerful tool, but it's not suitable for every situation. Ca
 
 ### Decision Flow
 
-![Decision flowchart for whether to adopt a service mesh, based on microservice count, then complex traffic/security/observability needs, then available operations resources.](../../.gitbook/assets/en-service-mesh-istio-README-0.png)
+![Decision flow for adopting a service mesh: checking microservices architecture, 10+ services, complex traffic/security/observability needs, and ops resources in turn leads to mesh recommended, not needed, alternatives, or careful review.](../../.gitbook/assets/en-service-mesh-istio-readme-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-readme-0.html)
 
 ### When Service Mesh is Needed ✅
 
 #### 1. Complex Microservices Environment
 
-![Comparison showing four services wiring mTLS, retries, and logging by hand without a mesh, versus a single service mesh applying those controls automatically to the same four services.](../../.gitbook/assets/en-service-mesh-istio-README-1.png)
+![Side-by-side comparison of four services hand-wiring mTLS, retries, and logging without a mesh versus a Service Mesh automatically handling and controlling communication between the same four services.](../../.gitbook/assets/en-service-mesh-istio-readme-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-readme-1.html)
 
 **Recommended Criteria**:
 
@@ -152,7 +156,9 @@ spec:
 
 #### 1. Simple Architecture
 
-![A user request passing through a load balancer to a single monolithic application and its database — simple enough that an ingress controller suffices without a service mesh.](../../.gitbook/assets/en-service-mesh-istio-README-2.png)
+![A user request passing through a load balancer (Ingress Controller) to a single monolithic application and its database — simple enough that an ingress controller suffices without a service mesh.](../../.gitbook/assets/en-service-mesh-istio-readme-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-readme-2.html)
 
 **Use Instead**:
 
@@ -232,7 +238,9 @@ spec:
 
 Cilium provides many features at the **network level** based on eBPF:
 
-![Three-way comparison of Istio's L7 proxy-based traffic control, Cilium's eBPF kernel-level networking, and the usage scenarios where each — or both together — is the right choice.](../../.gitbook/assets/en-service-mesh-istio-README-3.png)
+![Comparison of Istio's L7 proxy-based service mesh and Cilium's eBPF kernel-level CNI, linked to the usage scenarios where complex L7 logic calls for a service mesh, policy and performance call for Cilium, and large enterprises use both.](../../.gitbook/assets/en-service-mesh-istio-readme-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-readme-3.html)
 
 **When Cilium is More Suitable**:
 
@@ -287,7 +295,9 @@ Answer the following questions before adoption:
 
 If you determine that a Service Mesh is needed, adopt it gradually:
 
-![Four-phase rollout moving from observability-only metric collection, to mTLS security, to canary traffic management, and finally to the full advanced feature set — each phase gated by validation.](../../.gitbook/assets/en-service-mesh-istio-README-4.png)
+![Four-phase rollout moving from observability-only metric collection, to mTLS security, to canary traffic management, and finally to the full advanced feature set — each phase gated by validation.](../../.gitbook/assets/en-service-mesh-istio-readme-4.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-readme-4.html)
 
 **Recommended Order**:
 
@@ -335,7 +345,9 @@ If you determine that a Service Mesh is needed, adopt it gradually:
 
 Istio consists of a Control Plane and a Data Plane:
 
-![Architecture showing istiod's Pilot and Citadel pushing configuration and certificates down to Envoy sidecar proxies, which carry each application's requests and exchange mTLS-encrypted traffic between pods.](../../.gitbook/assets/en-service-mesh-istio-README-5.png)
+![Istio's Control Plane and Data Plane: istiod's Pilot pushes routing configuration and Citadel issues certificates to the Envoy sidecar in each pod, and the Envoys intercept application requests and exchange mTLS-encrypted traffic.](../../.gitbook/assets/en-service-mesh-istio-readme-5.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-readme-5.html)
 
 **Control Plane (istiod)**:
 

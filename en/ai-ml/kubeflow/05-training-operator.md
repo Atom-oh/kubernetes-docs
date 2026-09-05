@@ -69,7 +69,9 @@ Regardless of which framework's runtime is in play, multi-worker distributed tra
 
 On EKS specifically, this interacts directly with however your GPU node pools are provisioned and scaled. A distributed job that needs, say, 8 GPU workers needs 8 GPU-capable nodes (or slots) available at once — not one at a time as they trickle in from an autoscaler. The mechanics of sizing and scaling GPU node pools (Karpenter NodePools, instance type selection, binpacking GPUs) are covered in this site's autoscaling and GPU scheduling material rather than re-derived here. The point to carry into this document is simply that gang-scheduling requirements and GPU node pool elasticity need to be designed together, since a training job that can't get all its workers scheduled at once will stall regardless of how correct its `TrainJob`/runtime configuration is.
 
-![The Kubeflow Trainer Controller watches both the TrainJob and its referenced ClusterTrainingRuntime, creates a JobSet that spawns gang-scheduled worker pods, which discover each other through a headless Service and report progress and metrics back to the controller, which in turn writes that into TrainJob status.](../../../assets/diagrams/rendered/en-ai-ml-kubeflow-05-training-operator-0.svg)
+![The Trainer Controller watches the TrainJob and its ClusterTrainingRuntime, creates a JobSet/PodGroup of gang-scheduled worker Pods that find each other through a headless Service and report progress and metrics back, which land in TrainJob.status.](../../.gitbook/assets/en-ai-ml-kubeflow-05-training-operator-0.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-05-training-operator-0.html)
 
 ## Cross-Reference: Katib and TrainJob
 
