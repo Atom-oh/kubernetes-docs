@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "iptables 모드 아키텍처",
+    "output": "ko-networking-calico-06-ebpf-dataplane-3.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "table-traversal",
+        "label": "iptables 테이블 순회",
+        "focus": [
+          "veth",
+          "raw",
+          "mangle",
+          "nat",
+          "filter"
+        ],
+        "note": "veth를 지난 패킷이 raw, mangle, nat, filter 네 테이블을 순서대로 선형 검색한다."
+      },
+      {
+        "id": "rule-explosion",
+        "label": "규칙 폭발 지점",
+        "focus": [
+          "nat",
+          "filter"
+        ],
+        "note": "서비스/엔드포인트 수에 비례해 규칙이 늘어나는 nat, filter 테이블이 지연의 주요 원인이다."
+      }
+    ],
+    "viewBox": [
+      1232,
+      252
+    ]
+  },
+  "components": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Application",
+      "sublabel": "패킷 송신",
+      "pos": [
+        40,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "veth",
+      "type": "backend",
+      "label": "veth pair",
+      "sublabel": "Pod-호스트 연결",
+      "pos": [
+        228,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "raw",
+      "type": "backend",
+      "label": "raw table",
+      "pos": [
+        364,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "mangle",
+      "type": "backend",
+      "label": "mangle table",
+      "pos": [
+        500,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "nat",
+      "type": "security",
+      "label": "nat table",
+      "sublabel": "SNAT/DNAT",
+      "pos": [
+        636,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "filter",
+      "type": "security",
+      "label": "filter table",
+      "sublabel": "정책 적용",
+      "pos": [
+        772,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "Routing Table",
+      "sublabel": "경로 결정",
+      "pos": [
+        908,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    },
+    {
+      "id": "eth0",
+      "type": "external",
+      "label": "eth0",
+      "sublabel": "노드 밖으로 전송",
+      "pos": [
+        1044,
+        100
+      ],
+      "size": [
+        104,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Pod",
+      "wraps": [
+        "app"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Host Network Stack",
+      "wraps": [
+        "veth",
+        "raw",
+        "mangle",
+        "nat",
+        "filter",
+        "route",
+        "eth0"
+      ],
+      "pad": 44
+    },
+    {
+      "kind": "security-group",
+      "label": "iptables Processing",
+      "wraps": [
+        "raw",
+        "mangle",
+        "nat",
+        "filter"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "app-veth",
+      "from": "app",
+      "to": "veth",
+      "variant": "emphasis"
+    },
+    {
+      "id": "veth-raw",
+      "from": "veth",
+      "to": "raw"
+    },
+    {
+      "id": "raw-mangle",
+      "from": "raw",
+      "to": "mangle"
+    },
+    {
+      "id": "mangle-nat",
+      "from": "mangle",
+      "to": "nat"
+    },
+    {
+      "id": "nat-filter",
+      "from": "nat",
+      "to": "filter"
+    },
+    {
+      "id": "filter-route",
+      "from": "filter",
+      "to": "route"
+    },
+    {
+      "id": "route-eth0",
+      "from": "route",
+      "to": "eth0",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "iptables 모드의 문제점",
+      "items": [
+        "선형 검색: 규칙이 많아질수록 성능 저하",
+        "규칙 증가: 서비스/엔드포인트 수에 비례하여 규칙 폭발",
+        "높은 지연: 체인 순회에 따른 오버헤드",
+        "복잡한 NAT: kube-proxy의 NAT 규칙 복잡성"
+      ]
+    }
+  ]
+}

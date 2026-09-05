@@ -16,7 +16,9 @@ BGP(Border Gateway Protocol)는 Calico의 핵심 차별화 요소입니다. Cili
 
 BGP(Border Gateway Protocol)는 인터넷의 핵심 라우팅 프로토콜로, 자율 시스템(Autonomous System, AS) 간에 라우팅 정보를 교환합니다. 현재 BGP-4가 표준이며, RFC 4271에 정의되어 있습니다.
 
-![세 개의 자율 시스템(AS 64512, AS 64513, AS 64514)에서 같은 AS 내부 라우터는 iBGP로, AS 경계를 넘는 라우터끼리는 eBGP로 연결되어 라우팅 정보를 교환하는 모습을 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-0.svg)
+![세 개의 자율 시스템(AS 64512, AS 64513, AS 64514)에서 같은 AS 내부 라우터는 iBGP로, AS 경계를 넘는 라우터끼리는 eBGP로 연결되어 라우팅 정보를 교환하는 모습을 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-04-bgp-deep-dive-0.html)
 
 ### AS 번호 (Autonomous System Number)
 
@@ -56,7 +58,9 @@ BGP는 두 가지 모드로 운영됩니다:
 | Administrative Distance | 200                 | 20                  |
 | 사용 사례                   | 클러스터 내부             | 외부 라우터 연결           |
 
-![AS 64512에 속한 3개의 Kubernetes 노드가 서로 iBGP로 완전 연결되어 있고, 각 노드가 별도의 AS 64513에 속한 ToR 스위치와 개별적으로 eBGP를 맺는 구조를 보여준다.](../../../assets/diagrams/rendered/ko-networking-calico-04-bgp-deep-dive-1.svg)
+![AS 64512에 속한 3개의 Kubernetes 노드가 서로 iBGP로 완전 연결되어 있고, 각 노드가 별도의 AS 64513에 속한 ToR 스위치와 개별적으로 eBGP를 맺는 구조를 보여준다.](../../.gitbook/assets/ko-networking-calico-04-bgp-deep-dive-1.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-04-bgp-deep-dive-1.html)
 
 ### BGP 경로 선택 알고리즘
 

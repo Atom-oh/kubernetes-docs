@@ -122,7 +122,9 @@ Calico는 컨테이너, 가상 머신, 네이티브 호스트 기반 워크로�
 
 > **Calico**는 클라우드 네이티브 애플리케이션을 위한 **확장 가능한 네트워킹**과 **네트워크 보안** 솔루션으로, 표준 Linux 네트워킹 도구를 활용하여 고성능의 유연한 네트워크 패브릭을 제공합니다.
 
-![네트워킹, 보안, 관측성, IPAM이라는 Calico의 네 가지 핵심 기능이 모두 프로덕션 워크로드를 지원한다는 것을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-calico-01-introduction-0.svg)
+![네트워킹, 보안, 관측성, IPAM이라는 Calico의 네 가지 핵심 기능이 모두 프로덕션 워크로드를 지원한다는 것을 보여준다.](../../.gitbook/assets/ko-networking-calico-01-introduction-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-01-introduction-0.html)
 
 ## Project Calico의 역사
 
@@ -179,7 +181,9 @@ Kubernetes 표준 NetworkPolicy를 완전히 지원하며, Calico 확장 정책�
 
 **정책 계층:**
 
-![GlobalNetworkPolicy, NetworkPolicy, HostEndpoint Policy가 클러스터 전체에서 네임스페이스, 노드 단위로 점차 범위가 좁아지는 3단계 정책 계층을 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-calico-01-introduction-2.svg)
+![GlobalNetworkPolicy, NetworkPolicy, HostEndpoint Policy가 클러스터 전체에서 네임스페이스, 노드 단위로 점차 범위가 좁아지는 3단계 Calico 정책 계층을 보여준다.](../../.gitbook/assets/ko-networking-calico-01-introduction-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-01-introduction-2.html)
 
 **지원 기능:**
 - Ingress/Egress 규칙
@@ -208,7 +212,9 @@ Typha 컴포넌트를 통해 수천 노드 클러스터를 지원합니다.
 - 100,000+ Pod 지원
 - 수백만 개의 Network Policy 규칙
 
-![Typha 없이는 Datastore가 모든 Felix 에이전트에 직접 연결돼야 하지만, Typha를 3대 두면 Datastore는 Typha에만 연결되고 Typha가 각 Felix 그룹으로 연결을 분산시켜 대규모 클러스터를 지원한다는 것을 비교하는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-calico-01-introduction-3.svg)
+![Typha 없이는 Datastore가 모든 Felix 에이전트에 직접 연결돼야 하지만, Typha를 3대 두면 Datastore는 Typha에만 연결되고 Typha가 각 Felix 그룹으로 연결을 분산시켜 대규모 클러스터를 지원한다는 것을 비교하여 보여준다.](../../.gitbook/assets/ko-networking-calico-01-introduction-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-01-introduction-3.html)
 
 ### 5. 멀티 환경 지원
 
@@ -230,7 +236,9 @@ Typha 컴포넌트를 통해 수천 노드 클러스터를 지원합니다.
 
 ### Calico의 클라우드 네이티브 접근
 
-![Pod들이 각 노드의 Felix를 거쳐 BGP로 네트워크에 연결되는 분산 구조와, 무제한 확장·동적 구성·분산 처리라는 세 가지 장점을 함께 보여주는 다이어그램.](../../../assets/diagrams/rendered/ko-networking-calico-01-introduction-5.svg)
+![Pod들이 각 노드의 Felix를 거쳐 BGP로 네트워크에 연결되는 분산 구조와, 무제한 확장·동적 구성·분산 처리라는 세 가지 장점을 함께 보여준다.](../../.gitbook/assets/ko-networking-calico-01-introduction-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-01-introduction-5.html)
 
 ### 주요 차이점
 

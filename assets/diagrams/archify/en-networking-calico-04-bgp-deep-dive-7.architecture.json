@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Multi-Rack with Route Reflectors",
+    "locale": "en",
+    "output": "en-networking-calico-04-bgp-deep-dive-7.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "rr-mesh",
+        "label": "Route reflector mesh",
+        "focus": [
+          "rr1",
+          "rr2"
+        ],
+        "note": "Both route reflectors share cluster ID 1.0.0.1 and peer with each other (route-reflector-mesh BGPPeer)."
+      },
+      {
+        "id": "rack-uplinks",
+        "label": "Rack 2 dual uplink",
+        "focus": [
+          "rr1",
+          "rr2",
+          "rack2"
+        ],
+        "note": "Rack 2's dual uplink is drawn; Rack 1 and Rack 3 mirror it, so losing one reflector does not isolate any rack."
+      },
+      {
+        "id": "all-racks",
+        "label": "All compute racks",
+        "focus": [
+          "rr1",
+          "rr2",
+          "rack1",
+          "rack2",
+          "rack3"
+        ],
+        "note": "Racks never peer with each other directly; every route reaches other racks through the reflectors, avoiding a full mesh."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "rr1",
+      "type": "backend",
+      "label": "Route Reflector 1",
+      "sublabel": "cluster-id 1.0.0.1",
+      "pos": [
+        255,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rr2",
+      "type": "backend",
+      "label": "Route Reflector 2",
+      "sublabel": "cluster-id 1.0.0.1",
+      "pos": [
+        645,
+        60
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rack1",
+      "type": "cloud",
+      "label": "Compute Rack 1",
+      "sublabel": "Nodes 1-3",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rack2",
+      "type": "cloud",
+      "label": "Compute Rack 2",
+      "sublabel": "Nodes 4-6",
+      "pos": [
+        450,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "rack3",
+      "type": "cloud",
+      "label": "Compute Rack 3",
+      "sublabel": "Nodes 7-9",
+      "pos": [
+        840,
+        320
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Management Rack",
+      "wraps": [
+        "rr1",
+        "rr2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Compute Racks",
+      "wraps": [
+        "rack1",
+        "rack2",
+        "rack3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "rr1-rr2",
+      "from": "rr1",
+      "to": "rr2",
+      "label": "RR-to-RR peering",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rr1-rack1",
+      "from": "rr1",
+      "to": "rack1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rr1-rack2",
+      "from": "rr1",
+      "to": "rack2",
+      "label": "rack-to-RR peering",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rr2-rack2",
+      "from": "rr2",
+      "to": "rack2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "rr2-rack3",
+      "from": "rr2",
+      "to": "rack3",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Management rack",
+      "items": [
+        "Two route reflectors labelled calico-route-reflector=true",
+        "Shared routeReflectorClusterID 1.0.0.1",
+        "route-reflector-mesh BGPPeer keeps them in sync"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Compute racks",
+      "items": [
+        "Nodes peer only with the reflectors (peer-to-route-reflectors BGPPeer)",
+        "No node-to-node full mesh between racks",
+        "Cross-rack pod routes are learned via the reflectors"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Failure tolerance",
+      "items": [
+        "Every rack has a session to both reflectors",
+        "Losing one reflector does not isolate any rack"
+      ]
+    }
+  ]
+}

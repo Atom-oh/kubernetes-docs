@@ -8,7 +8,9 @@ Calico는 전통적인 iptables 기반 데이터플레인과 함께 현대적인
 
 이 문서에서는 eBPF의 기본 개념부터 Calico에서의 활용, 마이그레이션 방법, 그리고 성능 최적화까지 심층적으로 다룹니다.
 
-![iptables 모드와 eBPF 모드 두 가지 데이터플레인 옵션과 그 사이의 마이그레이션 경로를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-0.svg)
+![Calico의 두 가지 데이터플레인 옵션인 iptables 모드(전통적, 안정적)와 eBPF 모드(고성능, 현대적)를 나란히 놓고 iptables 모드에서 eBPF 모드로 향하는 마이그레이션 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-0.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-0.html)
 
 ## eBPF 기본 개념
 
@@ -32,7 +34,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### eBPF Hook Points
 
-![패킷이 NIC에서 XDP, TC Ingress, Socket Filter를 거쳐 라우팅된 뒤 Socket Ops와 TC Egress를 지나 다시 나가는 eBPF Hook Point 파이프라인을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-2.svg)
+![패킷이 NIC에서 XDP, TC Ingress, Socket Filter를 거쳐 라우팅된 뒤 Socket Ops와 TC Egress를 지나 다시 NIC로 나가는 eBPF Hook Point 파이프라인을 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-2.html)
 
 **Hook Point별 특징:**
 
@@ -52,7 +56,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### iptables 모드 아키텍처
 
-![Pod의 패킷이 veth를 지나 raw, mangle, nat, filter 네 개의 iptables 테이블을 순서대로 통과한 뒤 라우팅 테이블을 거쳐 eth0로 나가는 iptables 모드의 선형 처리 경로를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-3.svg)
+![Pod의 패킷이 veth를 지나 raw, mangle, nat, filter 네 개의 iptables 테이블을 순서대로 통과한 뒤 라우팅 테이블을 거쳐 eth0로 나가는 iptables 모드의 선형 처리 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-3.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-3.html)
 
 **iptables 모드의 문제점:**
 
@@ -63,7 +69,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 ### eBPF 모드 아키텍처
 
-![Pod의 패킷이 veth를 지나 하나의 TC eBPF 프로그램에서 Policy·NAT·CT 맵을 조회해 정책, NAT, 라우팅을 한 번에 처리한 뒤 eth0로 나가는 eBPF 모드의 단일 처리 경로를 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-4.svg)
+![Pod의 패킷이 veth pair를 지나 Host Network Stack의 TC eBPF 프로그램 하나에서 Policy Map, NAT Map, CT Map을 O(1) 해시 조회로 참조해 정책, NAT, 라우팅을 한 번에 처리한 뒤 eth0로 나가는 eBPF 모드의 단일 처리 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-4.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-4.html)
 
 **eBPF 모드의 장점:**
 
@@ -128,7 +136,9 @@ eBPF(extended Berkeley Packet Filter)는 Linux 커널 내에서 샌드박스된 
 
 Calico는 다양한 eBPF 프로그램을 사용하여 네트워킹 기능을 구현합니다:
 
-![TC Programs, XDP 프로그램, Socket Programs 세 그룹의 eBPF 프로그램이 각각 Policy Map, NAT Backend Map, NAT Frontend Map, Conntrack Map을 참조하며 NAT Frontend Map이 TC와 Socket 양쪽에서 공유되는 중심 데이터임을 보여주는 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-5.svg)
+![TC Programs(from_host, to_host, to_workload, from_workload), Socket Programs(connect4/6, sendmsg4/6), XDP 프로그램이 각각 Policy Map, NAT Backend Map, NAT Frontend Map, Conntrack Map을 조회하며 NAT Frontend Map은 TC와 Socket 양쪽이 함께 참조하는 서비스 VIP 맵임을 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-5.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-5.html)
 
 ### BPF Map 구조
 
@@ -572,7 +582,9 @@ Calico eBPF는 kube-proxy의 모든 기능을 대체할 수 있습니다:
 
 ### 서비스 처리 흐름
 
-![Client Pod가 보낸 ClusterIP 패킷을 eBPF 프로그램이 NAT Map에서 백엔드를 조회해 해시로 선택하고 DNAT한 뒤 Backend Pod로 전달하며, 응답이 오면 역방향 NAT을 적용해 클라이언트에게 그대로 돌려주는 kube-proxy 없는 서비스 처리 경로를 보여주는 시퀀스 다이어그램](../../../assets/diagrams/rendered/ko-networking-calico-06-ebpf-dataplane-8.svg)
+![Client Pod가 보낸 ClusterIP 패킷을 eBPF 프로그램이 NAT Map에서 백엔드를 조회해 해시로 선택하고 DNAT한 뒤 Backend Pod로 전달하며, 응답이 오면 역방향 NAT을 적용해 클라이언트에게 그대로 돌려주는 kube-proxy 없는 서비스 처리 경로를 보여준다.](../../.gitbook/assets/ko-networking-calico-06-ebpf-dataplane-8.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-calico-06-ebpf-dataplane-8.html)
 
 ### 설정 예시
 

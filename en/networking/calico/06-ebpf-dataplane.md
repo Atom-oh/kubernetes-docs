@@ -51,13 +51,17 @@ eBPF (extended Berkeley Packet Filter) is a revolutionary technology that allows
 
 ### Architecture Comparison
 
-![Diagram contrasting a packet traversing seven sequential iptables chains with the same packet traversing a single eBPF program that consults BPF maps between TC ingress and egress hooks.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-1.svg)
+![Diagram contrasting a packet traversing seven sequential iptables chains with the same packet traversing a single eBPF program that consults BPF maps between TC ingress and egress hooks.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-11.html)
 
 ### eBPF Program Types in Calico
 
 Calico uses multiple eBPF program types for different functions:
 
-![Diagram showing XDP and TC ingress hooks feeding socket-level sockops and sk_msg programs, which hand off to a TC egress hook, with the cgroup scope program shown as an unconnected socket-level primitive.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-2.svg)
+![Diagram showing XDP and TC ingress hooks feeding socket-level sockops and sk_msg programs, which hand off to a TC egress hook, with the cgroup scope program shown as an unconnected socket-level primitive.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-2.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-2.html)
 
 ### TC (Traffic Control) Programs
 
@@ -82,7 +86,9 @@ Egress TC Program Functions:
 
 XDP provides the earliest packet processing hook:
 
-![Flowchart showing a packet arriving from the network card into an XDP program, which returns one of four verdicts: drop for DDoS protection, pass to normal TC processing, direct TX return, or redirect to another interface.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-3.svg)
+![Flowchart showing a packet arriving from the network card into an XDP program, which returns one of four verdicts: drop for DDoS protection, pass to normal TC processing, direct TX return, or redirect to another interface.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-3.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-3.html)
 
 ### Socket Programs
 
@@ -255,7 +261,9 @@ int bpf_connect4(struct bpf_sock_addr *ctx) {
 
 ### XDP Processing Levels
 
-![Diagram showing that XDP programs offloaded onto the NIC are fastest, programs run natively in the driver are fast, and programs run in the generic network stack are the slowest but work on any NIC.](../../../assets/diagrams/rendered/en-networking-calico-06-ebpf-dataplane-6.svg)
+![Diagram showing that XDP programs offloaded onto the NIC are fastest, programs run natively in the driver are fast, and programs run in the generic network stack are the slowest but work on any NIC.](../../.gitbook/assets/en-networking-calico-06-ebpf-dataplane-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-06-ebpf-dataplane-10.html)
 
 ### XDP Modes
 

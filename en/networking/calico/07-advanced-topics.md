@@ -7,7 +7,9 @@
 
 This chapter covers advanced Calico topics for production environments, including IPAM deep dive, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows container support, and large-scale cluster design patterns.
 
-![A sequential overview flow of six advanced Calico topics covered in this chapter: IPAM internals, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows support, and large-scale cluster design.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-0.svg)
+![A sequential overview flow of six advanced Calico topics covered in this chapter: IPAM internals, WireGuard encryption, Egress Gateway, multi-cluster federation, Windows support, and large-scale cluster design.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-11.html)
 
 ## IPAM Deep Dive
 
@@ -423,7 +425,9 @@ kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.metadata.ann
 
 ### WireGuard vs IPsec Comparison
 
-![Side-by-side comparison of WireGuard and IPsec encryption on four traits: cryptography, code complexity, key exchange, and per-packet overhead.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-4.svg)
+![Side-by-side comparison of WireGuard and IPsec encryption on four traits: cryptography, code complexity, key exchange, and per-packet overhead.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-10.html)
 
 | Feature | WireGuard | IPsec |
 |---------|-----------|-------|
@@ -844,7 +848,9 @@ Tigera offers Calico Enterprise with additional features for enterprise deployme
 
 Calico Cloud is a SaaS offering that provides:
 
-![Each customer cluster's Calico agent reports to a shared Management UI, which feeds an Analytics Engine that in turn drives threat intelligence and compliance reporting.](../../../assets/diagrams/rendered/en-networking-calico-07-advanced-topics-8.svg)
+![Each customer cluster's Calico agent reports to a shared Management UI, which feeds an Analytics Engine that in turn drives threat intelligence and compliance reporting.](../../.gitbook/assets/en-networking-calico-07-advanced-topics-8.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-07-advanced-topics-8.html)
 
 ## Large-Scale Cluster Design (1000+ Nodes)
 

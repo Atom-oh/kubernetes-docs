@@ -68,7 +68,9 @@ When a BGP speaker receives multiple routes to the same destination, it selects 
 
 Calico uses BIRD (BIRD Internet Routing Daemon) as its BGP implementation. BIRD runs as part of the `calico-node` DaemonSet on every node.
 
-![Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-1.svg)
+![Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-1.html)
 
 ### BGP Topology Options
 
@@ -237,11 +239,15 @@ spec:
 
 **Pattern 1: Dual Route Reflectors (Small/Medium Clusters)**
 
-![Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-4.svg)
+![Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-11.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-11.html)
 
 **Pattern 2: Hierarchical Route Reflectors (Large Clusters)**
 
-![A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-5.svg)
+![A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-10.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-10.html)
 
 ***
 
@@ -957,7 +963,9 @@ ip route show | grep bird
 
 ### Multi-Rack with Route Reflectors
 
-![Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.](../../../assets/diagrams/rendered/en-networking-calico-04-bgp-deep-dive-7.svg)
+![Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png)
+
+[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-7.html)
 
 ### Multi-Datacenter BGP Design
 
